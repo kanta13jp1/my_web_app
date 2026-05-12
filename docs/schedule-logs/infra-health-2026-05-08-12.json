@@ -1,0 +1,26 @@
+{
+  "run_at_jst": "2026-05-08T12:34:00+09:00",
+  "run_at_utc": "2026-05-08T03:34:00Z",
+  "supabase_health": {
+    "http_status": 200,
+    "status": "healthy",
+    "ef_response_ms": 2026,
+    "checks": {
+      "env": "ok (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "ok (850ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-08T03:33:45.833Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "response_ms": 470,
+    "status": "ok",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理"
+  },
+  "anomaly": false,
+  "action_taken": "log only (no commit per task rule: commit only on anomaly)",
+  "notes": "db_connectivity 850ms (improving vs 14:34 baseline 1159ms but still above 04:35 floor 126ms). All checks pass. EF total 2026ms ~ baseline 2.4s."
+}

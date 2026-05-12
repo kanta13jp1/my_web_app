@@ -167,6 +167,55 @@ jobs:
                   f.write('status=error\nusage_json={}\n')
           EOF
 
+      - name: Check GitHub Actions Minutes (Copilot Code Review budget)
+        id: actions_minutes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - << 'PYEOF'
+          import os, requests, json
+          from datetime import date
+
+          token = os.environ.get('GITHUB_TOKEN', '')
+          if not token:
+              print('GITHUB_TOKEN not set — skipping')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('usage_json={}\n')
+              exit(0)
+
+          try:
+              # User-level Actions billing (includes Copilot Code Review minutes from 2026-06-01)
+              resp = requests.get(
+                  'https://api.github.com/users/kanta13jp1/settings/billing/actions',
+                  headers={
+                      'Authorization': f'token {token}',
+                      'Accept': 'application/vnd.github+json',
+                      'X-GitHub-Api-Version': '2022-11-28'
+                  },
+                  timeout=10
+              )
+              if resp.ok:
+                  data = resp.json()
+                  included = data.get('included_minutes', 0)
+                  total_paid = data.get('total_paid_minutes_used', 0)
+                  total_used = data.get('total_minutes_used', 0)
+                  pct = round(total_used / max(included, 1) * 100, 1) if included else 0
+                  alert = pct >= 80
+                  note = '⚠️ Copilot Code Review がActions minutes消費開始(2026-06-01〜)' if date.today() >= date(2026, 6, 1) else 'Copilot Code Review billing starts 2026-06-01'
+                  print(f'Actions minutes: {total_used}/{included} ({pct}%) paid={total_paid}')
+                  print(note)
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'usage_json={json.dumps({"tool":"actions_minutes","used":total_used,"included":included,"pct":pct,"paid":total_paid,"alert":alert,"note":note})}\n')
+              else:
+                  print(f'Actions billing API: {resp.status_code}')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'usage_json={json.dumps({"tool":"actions_minutes","status":resp.status_code,"alert":False})}\n')
+          except Exception as e:
+              print(f'Error: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('usage_json={}\n')
+          PYEOF
+
       - name: Check Gemini Code Assist Quota
         id: gemini
         env:
@@ -205,6 +254,96 @@ jobs:
                   f.write('status=error\nusage_json={}\n')
           EOF
 
+      - name: Check Hedra API Credits
+        id: hedra
+        env:
+          HEDRA_API_KEY: ${{ secrets.HEDRA_API_KEY }}
+          HEDRA_CREDIT_WARNING_THRESHOLD: ${{ vars.HEDRA_CREDIT_WARNING_THRESHOLD || '50' }}
+          HEDRA_CREDIT_CRITICAL_THRESHOLD: ${{ vars.HEDRA_CREDIT_CRITICAL_THRESHOLD || '20' }}
+          HEDRA_CREDIT_STOP_THRESHOLD: ${{ vars.HEDRA_CREDIT_STOP_THRESHOLD || '5' }}
+        run: |
+          python3 - << 'EOF'
+          import os, requests, json
+
+          api_key = os.environ.get('HEDRA_API_KEY', '')
+          warning = int(os.environ.get('HEDRA_CREDIT_WARNING_THRESHOLD', '50') or 50)
+          critical = int(os.environ.get('HEDRA_CREDIT_CRITICAL_THRESHOLD', '20') or 20)
+          stop = int(os.environ.get('HEDRA_CREDIT_STOP_THRESHOLD', '5') or 5)
+
+          if not api_key:
+              print('HEDRA_API_KEY not set — skipping')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=skipped\nusage_json={}\n')
+              exit(0)
+
+          try:
+              resp = requests.get(
+                  'https://api.hedra.com/web-app/public/billing/credits',
+                  headers={'X-API-Key': api_key},
+                  timeout=10,
+              )
+              if resp.ok:
+                  data = resp.json()
+                  remaining = int(data.get('remaining', 0) or 0)
+                  expiring = int(data.get('expiring', 0) or 0)
+                  used = int(data.get('used', 0) or 0)
+                  severity = 'ok'
+                  threshold = warning
+                  if remaining <= stop:
+                      severity = 'stop'
+                      threshold = stop
+                  elif remaining <= critical:
+                      severity = 'critical'
+                      threshold = critical
+                  elif remaining <= warning:
+                      severity = 'warning'
+                      threshold = warning
+                  alert = severity != 'ok'
+                  print(f'Hedra credits: remaining={remaining} used={used} expiring={expiring} severity={severity}')
+                  payload = {
+                      'tool': 'hedra',
+                      'remaining': remaining,
+                      'used': used,
+                      'expiring': expiring,
+                      'workspace_credits': data.get('workspace_credits', {}),
+                      'alert': alert,
+                      'severity': severity,
+                      'threshold': threshold,
+                      'warning_threshold': warning,
+                      'critical_threshold': critical,
+                      'stop_threshold': stop,
+                      'source': 'hedra.get_credits',
+                  }
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write('status=ok\n')
+                      f.write(f'usage_json={json.dumps(payload, separators=(",", ":"))}\n')
+              else:
+                  print(f'Hedra credits API error: {resp.status_code}')
+                  payload = {
+                      'tool': 'hedra',
+                      'status': resp.status_code,
+                      'error': resp.text[:200],
+                      'alert': True,
+                      'severity': 'unknown',
+                      'source': 'hedra.get_credits',
+                  }
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write('status=api_error\n')
+                      f.write(f'usage_json={json.dumps(payload, separators=(",", ":"))}\n')
+          except Exception as e:
+              print(f'Error: {e}')
+              payload = {
+                  'tool': 'hedra',
+                  'error': str(e),
+                  'alert': True,
+                  'severity': 'unknown',
+                  'source': 'hedra.get_credits',
+              }
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=error\n')
+                  f.write(f'usage_json={json.dumps(payload, separators=(",", ":"))}\n')
+          EOF
+
       - name: Save quota data to Supabase
         if: ${{ github.event.inputs.dry_run != 'true' }}
         env:
@@ -213,13 +352,17 @@ jobs:
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
+          HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json }}
+          QUOTA_ALERT_WEBHOOK_URL: ${{ secrets.QUOTA_ALERT_WEBHOOK_URL }}
         run: |
           python3 - << 'EOF'
           import os, requests, json
           from datetime import date
 
           service_key = os.environ['SUPABASE_SERVICE_ROLE_KEY']
-          base_url = 'https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_quota_usage'
+          rest_base_url = 'https://smmkxxavexumewbfaqpy.supabase.co/rest/v1'
+          quota_url = f'{rest_base_url}/ai_quota_usage'
+          notification_url = f'{rest_base_url}/app_notifications'
           headers = {
               'apikey': service_key,
               'Authorization': f'Bearer {service_key}',
@@ -228,7 +371,7 @@ jobs:
           }
           today = date.today().isoformat()
 
-          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'GEMINI_USAGE']
+          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'GEMINI_USAGE', 'HEDRA_USAGE']
           for env_key in tools:
               raw = os.environ.get(env_key, '{}')
               if not raw or raw == '{}':
@@ -243,11 +386,32 @@ jobs:
                       'usage_json': data,
                       'alert': data.get('alert', False)
                   }
-                  resp = requests.post(base_url, headers=headers, json=row, timeout=10)
+                  resp = requests.post(quota_url, headers=headers, json=row, timeout=10)
                   if resp.ok:
                       print(f"Saved {data['tool']} quota data")
                   else:
                       print(f"Failed to save {data['tool']}: {resp.status_code} {resp.text[:100]}")
+                  if data.get('tool') == 'hedra' and data.get('alert'):
+                      remaining = data.get('remaining', 'unknown')
+                      severity = data.get('severity', 'warning')
+                      message = (
+                          f"Hedra API credits are low: remaining={remaining}, "
+                          f"severity={severity}, threshold={data.get('threshold', 'n/a')}."
+                      )
+                      notification = {
+                          'user_id': None,
+                          'title': 'Hedra API credits alert',
+                          'message': message,
+                          'type': 'system',
+                          'link': '/quota-dashboard',
+                          'is_read': False,
+                      }
+                      nresp = requests.post(notification_url, headers=headers, json=notification, timeout=10)
+                      print(f"Hedra notification status: {nresp.status_code}")
+                      webhook = os.environ.get('QUOTA_ALERT_WEBHOOK_URL', '')
+                      if webhook:
+                          wresp = requests.post(webhook, json={'text': message}, timeout=10)
+                          print(f"Hedra webhook status: {wresp.status_code}")
               except Exception as e:
                   print(f'Error saving {env_key}: {e}')
           EOF
@@ -259,6 +423,7 @@ jobs:
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
+          HEDRA_USAGE: ${{ steps.hedra.outputs.usage_json }}
         run: |
           python3 - << 'EOF'
           import os, json
@@ -273,6 +438,7 @@ jobs:
               ('OPENAI_USAGE', 'OpenAI (CODEX)'),
               ('COPILOT_USAGE', 'GitHub Copilot'),
               ('GEMINI_USAGE', 'Gemini Code Assist'),
+              ('HEDRA_USAGE', 'Hedra API credits'),
           ]:
               raw = os.environ.get(env_key, '{}')
               if not raw or raw == '{}':

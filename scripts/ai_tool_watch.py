@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Watch official Claude Code and Codex pages for workflow-relevant changes.
+"""Watch official AI coding tool pages for workflow-relevant changes.
 
 The script is intentionally dependency-free so it can run in GitHub Actions,
 Codex sessions, Claude Code hooks, or a plain local shell.
@@ -70,6 +70,24 @@ SOURCES: list[Source] = [
         "Codex overview",
         "https://openai.com/codex/",
         "Codex",
+    ),
+    Source(
+        "cursor-changelog",
+        "Cursor changelog",
+        "https://cursor.com/changelog",
+        "Cursor",
+    ),
+    Source(
+        "gemini-code-assist-release-notes",
+        "Gemini Code Assist release notes",
+        "https://developers.google.com/gemini-code-assist/resources/release-notes",
+        "Gemini Code Assist",
+    ),
+    Source(
+        "devin-release-notes",
+        "Devin release notes",
+        "https://docs.devin.ai/release-notes",
+        "Devin",
     ),
 ]
 
@@ -175,17 +193,13 @@ HARNESS_NOTEBOOK = {
 HARNESS_LANES = [
     (
         "Claude Code",
-        "Owns problem framing, architecture, review gates, and hook design.",
+        "Claude Code #1 owns problem framing, architecture, review gates, and hook design.",
     ),
     (
         "Codex #1",
         "Owns cross-cutting implementation, SQL/migration review, "
-        "UI/browser QA, and scoped fix PRs.",
-    ),
-    (
-        "Codex #2",
-        "Owns CI repair, synchronization, Edge Functions, GitHub Actions, "
-        "and deterministic automation.",
+        "UI/browser QA, CI repair, Edge Functions, GitHub Actions, "
+        "and legacy Codex #2/#3 implementation lanes.",
     ),
     (
         "GitHub Actions",
@@ -263,6 +277,24 @@ def extract_latest_signal(source: Source, text: str) -> str:
         match = re.search(r"GPT-5\.5 and Codex app updates", text)
         if match:
             return "GPT-5.5 and Codex app updates"
+    if source.slug == "cursor-changelog":
+        match = re.search(r"\b(\d+(?:\.\d+)*)\s+([A-Z][a-z]+ \d{1,2}, 2026)\b", text)
+        if match:
+            return f"{match.group(1)} / {match.group(2)}"
+    if source.slug == "gemini-code-assist-release-notes":
+        match = re.search(
+            r"\b([A-Z][a-z]+ \d{1,2}, 2026)\s+VS Code Gemini Code Assist\s+([0-9.]+)",
+            text,
+        )
+        if match:
+            return f"VS Code Gemini Code Assist {match.group(2)} / {match.group(1)}"
+        match = re.search(r"\b([A-Z][a-z]+ \d{1,2}, 2026)\b", text)
+        if match:
+            return match.group(1)
+    if source.slug == "devin-release-notes":
+        match = re.search(r"\b([A-Z][a-z]+ \d{1,2}, 2026)\b", text)
+        if match:
+            return match.group(1)
     title = re.search(r"([A-Z][A-Za-z0-9 .,/+-]{8,90})", text)
     return title.group(1).strip() if title else "No title detected"
 
@@ -419,10 +451,10 @@ def render_markdown(report: dict[str, Any]) -> str:
         [
             "- Practical rule: every detected tool change must become a WBS route, GitHub issue, hook, workflow check, or PR; notes alone are not complete.",
             "",
-            "## 12-Instance Routing Reminder",
-            "- Claude Code instances take ambiguous design and cross-instance coordination.",
-            "- Codex #1 takes mechanical implementation and broad repo scans that need a clean worktree.",
-            "- Codex #2 takes failing checks, deploy unblockers, and sync/automation drift.",
+            "## 2-Instance Routing Reminder",
+            "- Claude Code #1 takes ambiguous design, architecture, review policy, and cross-instance coordination.",
+            "- Codex #1 takes scoped implementation, CI/deploy unblockers, Edge Functions, GitHub Actions, and broad repo scans that need a clean worktree.",
+            "- Legacy Codex #2/#3 lanes are absorbed by Codex #1; do not start extra instances for changelog follow-up work.",
             "- Rebalance owners when the WBS top-20 contains repeated manual work, repeated CI failures, or stale handoffs.",
             "",
             "<!-- generated-by: scripts/ai_tool_watch.py -->",

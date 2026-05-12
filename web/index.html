@@ -1042,7 +1042,7 @@
       var stack = String((error && error.stack) || '');
       var message = String((event && event.message) || (error && error.message) || '');
       var isMainBundle = stack.indexOf('main.dart.js') !== -1;
-      var isFocusTraversalRenderBox =
+      var isFocusTraversalRenderBoxV1 =
         isMainBundle &&
         stack.indexOf('.gN') !== -1 &&
         stack.indexOf('.gn') !== -1 &&
@@ -1050,6 +1050,17 @@
         stack.indexOf('Object.dy') !== -1 &&
         stack.indexOf('.ak') !== -1 &&
         stack.indexOf('a7') !== -1;
+      var isFocusTraversalRenderBoxV2 =
+        isMainBundle &&
+        stack.indexOf('.gn') !== -1 &&
+        stack.indexOf('.ge') !== -1 &&
+        stack.indexOf('Object.e') !== -1 &&
+        stack.indexOf('Object.d') !== -1 &&
+        (stack.indexOf('.aF') !== -1 || stack.indexOf('.aG') !== -1) &&
+        (stack.indexOf('.aU') !== -1 || stack.indexOf('.aV') !== -1) &&
+        stack.indexOf('.at') !== -1;
+      var isFocusTraversalRenderBox =
+        isFocusTraversalRenderBoxV1 || isFocusTraversalRenderBoxV2;
       var isInkResponseNull =
         message.indexOf('Null check operator used on a null value') !== -1 &&
         isMainBundle &&

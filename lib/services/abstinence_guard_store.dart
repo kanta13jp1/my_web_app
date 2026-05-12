@@ -37,6 +37,18 @@ class AbstinenceGuardState {
   });
 }
 
+class AbstinenceSlipDailyCount {
+  final DateTime date;
+  final int count;
+
+  const AbstinenceSlipDailyCount({
+    required this.date,
+    required this.count,
+  });
+
+  String get label => DateFormat('M/d').format(date);
+}
+
 class AbstinenceQuitStep {
   final String id;
   final String label;
@@ -605,10 +617,12 @@ class AbstinenceGuardStore {
 
   static Future<void> incrementSlip({
     required String itemId,
+    String triggerNote = '',
     SharedPreferences? prefs,
     DateTime? now,
   }) async {
-    final date = _startOfDay(now ?? DateTime.now());
+    final occurredAt = now ?? DateTime.now();
+    final date = _startOfDay(occurredAt);
     if (prefs != null) {
       await _incrementSlipInPrefs(store: prefs, date: date, itemId: itemId);
       return;
@@ -632,6 +646,12 @@ class AbstinenceGuardStore {
           itemId: itemId,
           state: next,
         );
+        await _insertSupabaseSlipLog(
+          userId: userId,
+          itemId: itemId,
+          slippedAt: occurredAt,
+          triggerNote: triggerNote,
+        );
         return;
       } catch (e) {
         debugPrint('AbstinenceGuardStore.incrementSlip supabase fallback: $e');
@@ -640,6 +660,30 @@ class AbstinenceGuardStore {
 
     final store = await SharedPreferences.getInstance();
     await _incrementSlipInPrefs(store: store, date: date, itemId: itemId);
+  }
+
+  static Future<List<AbstinenceSlipDailyCount>> loadSlipCountsByDate({
+    required String itemId,
+    int days = 7,
+    SharedPreferences? prefs,
+    DateTime? now,
+  }) async {
+    final safeDays = days.clamp(1, 31).toInt();
+    final anchorDate = _startOfDay(now ?? DateTime.now());
+    final counts = <AbstinenceSlipDailyCount>[];
+
+    for (var offset = safeDays - 1; offset >= 0; offset -= 1) {
+      final date = anchorDate.subtract(Duration(days: offset));
+      final states = await _loadStatesForDate(date: date, prefs: prefs);
+      counts.add(
+        AbstinenceSlipDailyCount(
+          date: date,
+          count: states[itemId]?.slipCount ?? 0,
+        ),
+      );
+    }
+
+    return counts;
   }
 
   static Future<void> clearSlip({
@@ -1019,6 +1063,24 @@ class AbstinenceGuardStore {
       },
       onConflict: 'user_id,status_date,item_id',
     );
+  }
+
+  static Future<void> _insertSupabaseSlipLog({
+    required String userId,
+    required String itemId,
+    required DateTime slippedAt,
+    String triggerNote = '',
+  }) async {
+    try {
+      await Supabase.instance.client.from('abstinence_slips').insert({
+        'user_id': userId,
+        'item_id': itemId,
+        'slipped_at': slippedAt.toIso8601String(),
+        if (triggerNote.trim().isNotEmpty) 'trigger_note': triggerNote.trim(),
+      });
+    } catch (e) {
+      debugPrint('AbstinenceGuardStore slip log insert skipped: $e');
+    }
   }
 
   static Map<String, _StoredAbstinenceState> _meaningfulStatesOnly(

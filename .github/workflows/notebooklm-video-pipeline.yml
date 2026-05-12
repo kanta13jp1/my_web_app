@@ -48,6 +48,11 @@ on:
         description: 'Output filename slug (e.g. gemini-organizing-tips)'
         required: true
         type: string
+      generate_shorts_package:
+        description: 'Also build 9:16 Shorts package metadata after transcription'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -168,6 +173,17 @@ jobs:
           python scripts/video/build_srt.py \
             videos/edit/transcripts/${{ inputs.slug }}.json \
             videos/master.srt
+
+      - name: Step 3b - Build Shorts package manifest (optional)
+        if: ${{ inputs.generate_shorts_package }}
+        run: |
+          python scripts/video/build_shorts_package.py \
+            videos/edit/transcripts/${{ inputs.slug }}.json \
+            --source-video videos/${{ inputs.slug }}.mp4 \
+            --source-url "notebooklm://${{ inputs.notebook_id }}/${{ inputs.artifact_id }}" \
+            --title "${{ inputs.title }}" \
+            --output-dir videos/shorts \
+            --count 3
 
       - name: Step 4 — Generate intro/outro cards
         env:

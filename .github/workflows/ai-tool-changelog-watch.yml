@@ -1,6 +1,7 @@
 name: AI Tool Changelog Watch (Claude Code + Codex CLI 月次新機能 fetch)
 
-# Win版#132 part 99 直接実装 (= part 98 の Codex#2 cross-instance-pr を Win territory で先行実装)
+# Win版#132 part 99 直接実装 (= part 98 の historical Codex#2 cross-instance-pr を先行実装)
+# 2026-05-07 Codex #1 closeout: canonical flow is Claude Code #1 + Codex #1.
 # AI_FLEET_SYNERGY 原則 #3 (Automate Feature Monitoring) dogfood
 # fleet 自身が fleet 自身を進化させる infrastructure
 
@@ -24,7 +25,7 @@ permissions:
 
 jobs:
   fetch-and-summarize:
-    name: Fetch + Summarize + Issue
+    name: Fetch + Summarize + Issue + Draft
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -78,19 +79,20 @@ jobs:
             --month "${{ steps.tag.outputs.month }}" \
             --output "docs/ai-tool-changelog/${{ steps.tag.outputs.month }}.md"
 
-      - name: Create GitHub Issues for high-priority items
+      - name: Create GitHub Issues and cross-instance drafts for high-priority items
         run: |
           python scripts/ai_tool_changelog_to_issues.py \
             --input "docs/ai-tool-changelog/${{ steps.tag.outputs.month }}.md" \
             --label  ai-tool-update \
-            --repo "${{ github.repository }}"
+            --repo "${{ github.repository }}" \
+            --draft-dir "docs/cross-instance-prs/drafts/ai-tool-update"
         continue-on-error: true  # API quota 等で失敗しても summary commit は実施
 
       - name: Commit summary
         run: |
           git config user.name  "ai-tool-changelog-watch[bot]"
           git config user.email "ai-tool-changelog-watch@users.noreply.github.com"
-          git add docs/ai-tool-changelog/ .ci-logs/ || true
+          git add docs/ai-tool-changelog/ docs/cross-instance-prs/drafts/ai-tool-update/ .ci-logs/ || true
           if git diff --staged --quiet; then
             echo "no changes to commit"
           else

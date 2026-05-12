@@ -1,0 +1,21 @@
+{
+  "scheduled_at_jst": "2026-05-07T23:34:21+09:00",
+  "ef_health_check": {
+    "status": "healthy",
+    "checks": {
+      "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+      "db_connectivity": { "ok": true, "latencyMs": 184, "detail": "profiles reachable in 184ms" },
+      "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+      "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+    },
+    "timestamp_utc": "2026-05-07T14:34:21.205Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "ok": true,
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "note": "Page reachable; SPA loader state visible (normal pre-hydration)"
+  },
+  "anomalies": [],
+  "action": "no-op (status=healthy)"
+}

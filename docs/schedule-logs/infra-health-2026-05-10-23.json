@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-05-10T14:33:50Z",
+  "jst_hour": "2026-05-10-23",
+  "ef_health": {
+    "status": "healthy",
+    "http_status": 200,
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (188ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "status": "ok",
+    "note": "Flutter Web shell served; 'Loading application...' is expected pre-bootstrap state"
+  },
+  "action": "none",
+  "incident_report": null
+}

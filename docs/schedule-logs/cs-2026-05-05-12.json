@@ -1,0 +1,7 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-05T12:11:39Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件 (GHAキャッシュ参照) / auto-review Issue: 0件 / workflow-failure修復: 0件 (sandbox制限) / Schedule健全性: 正常 (CSチェック11回/本日)"
+}

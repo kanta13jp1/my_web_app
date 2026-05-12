@@ -1047,3 +1047,12 @@ S (Solutions)  = API呼び出し・計算コード → スクリプト
 ---
 
 > **インスタンス別スコープ早見表**: `lib/` + `supabase/functions/` + `docs/DESIGN.md` → **VSCode版** / `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema) → **Windowsアプリ版** / `.github/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` → **PowerShell版** / `memory/` + `docs/GROWTH_STRATEGY_ROADMAP.md` (末尾追記) + `docs/cross-instance-prs/` + `COMPRESSED_PROMPT_V3.md` (数値更新) → **全インスタンス共有**
+## Current 2-Instance Override (2026-05-05)
+
+Canonical development flow is now exactly two human-operated instances:
+
+- Claude Code #1 (Windows app): architecture, research, docs, UX triage, WBS design/spec, and old Win/VSCode/PS#1/PS#3/PS#4/WEB/mobile lanes.
+- Codex #1 (Windows app): implementation, CI, GitHub PR work, Edge Functions, workflows, and old Codex/PS#2/PS#5/PS#6 lanes.
+- User and Automation remain non-development lanes for manual decisions, scheduled jobs, and GitHub Actions.
+
+Any 3-instance, 12-fleet, Codex#2, or PS#1-6 routing below this section is historical legacy context only. New sessions must not start extra AI instances or extra dev servers unless explicitly requested by the user.

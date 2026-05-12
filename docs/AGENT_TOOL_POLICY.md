@@ -38,6 +38,17 @@ Before an Edge Function executes an external tool, it should call
 `evaluateAgentToolPolicy()`. If `blockedReason` is present, the function should
 skip execution and persist `auditPayload` to the audit log.
 
+`ai-hub` now exposes the server-side gate as
+`agent.tool_policy.evaluate`. Authenticated callers pass `actor_agent_id` or
+`actor_role`, `tool_name`, `requested_scopes`, optional `allowed_scopes`,
+optional `side_effects`, and optional `approval` metadata. The action writes a
+row to `agent_tool_execution_logs` and returns HTTP 403 when a scope is missing
+or a high-risk scope lacks CEO approval.
+
+`agent.run` also uses the same gate when a request includes `tool_name` or
+`requested_scopes`, so execution intents fail closed before they are queued.
+Existing simple `agent.run` calls without tool metadata keep their old behavior.
+
 `mcp_auth_guard.logMcpInvocation()` now writes MCP calls to `mcp_audit_log`
 through the Supabase service role when runtime secrets are present, and falls
 back to structured console logging in local/test environments. This gives the
@@ -48,3 +59,43 @@ CEO approval screens.
 This follows the Harness Engineering direction from NotebookLM
 `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`: Claude Code, Codex, and external AI
 agents should operate inside explicit scopes, approval gates, and audit logs.
+
+## Managed MCP Server Control
+
+Issue #1586 adds a repo-managed MCP access register:
+
+- authoritative config: `config/managed-mcp.json`
+- policy notes: `docs/automation/managed-mcp-access-control.md`
+- deterministic checker: `scripts/check_managed_mcp_policy.py`
+
+The default decision is deny. Any MCP server or plugin connector that is not in
+`allowedMcpServers` or `deniedMcpServers` must be treated as unmanaged at
+session start. Allowed entries must record purpose, permissions, data
+classification, approver, human-approval scopes, audit log, and reason. Denied
+entries must record a denial reason and review date.
+
+`scripts/codex_session_check.py` includes the managed MCP snapshot so local
+sessions warn on unmanaged servers, denied servers, expired or auth-required
+connectors, and dangerous permission settings. CI validates the JSON register
+without reading local secrets.
+
+## Containerized MCP / Dynamic MCP Isolation
+
+Issue #1645 adds the container isolation layer for MCP and Dynamic MCP style
+tool discovery:
+
+- isolation contract: `config/mcp-container-isolation.json`
+- runbook and execution matrix: `docs/MCP_CONTAINER_ISOLATION_RUNBOOK.md`
+- deterministic checker: `scripts/check_mcp_container_isolation.py`
+- low-risk stdio PoC: `tools/mcp-container-isolation/`
+
+Dynamic tool discovery does not weaken this policy. A discovered MCP server must
+still be recorded in the managed MCP register or treated as unmanaged, classified
+by requested scope, launched through an isolated container path when execution is
+needed, and audited in the PR, issue, workflow summary, or durable MCP log.
+
+`delete`, `send`, `purchase`, and `external_share` keep the existing fail-closed
+CEO approval requirement. The MCP isolation contract also treats
+`credential_access`, `shell_execute`, `filesystem_write`, and
+`production_write` as high-risk launch scopes. A container boundary is not an
+approval substitute for those scopes.

@@ -4,7 +4,7 @@ tags: Flutter,Supabase,個人開発,buildinpublic,Dart
 published: true
 ---
 
-# ブログ下書き 2026-04-04
+# ブログ下書き 2026-04-04 — 2026-04-04-goal-tracker-bookmark-sync
 
 ## タイトル案
 1. Flutter × Supabase で目標管理＋ブックマーク同期アプリを1日で実装した話

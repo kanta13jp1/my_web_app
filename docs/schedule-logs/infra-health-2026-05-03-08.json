@@ -1,0 +1,22 @@
+{
+  "timestamp_jst": "2026-05-03T08:33+09:00",
+  "ef_health_check": {
+    "status": "healthy",
+    "ef_timestamp": "2026-05-02T23:33:08.563Z",
+    "checks": {
+      "env": "configured (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "operational (976ms, profiles reachable)",
+      "wbs_tasks": "accessible",
+      "ai_circuit_breaker": "active"
+    },
+    "notes": "db_connectivity latency 976ms vs prior hour 155ms — still healthy but ~6x slower; monitor next runs"
+  },
+  "firebase_hosting": {
+    "status": "ok",
+    "url": "https://my-web-app-b67f4.web.app/",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "notes": "WebFetch reported 'Loading application...' = expected Flutter Web SPA pre-hydration state, not anomaly"
+  },
+  "anomaly": false,
+  "action_taken": "log only (no commit per task spec — anomaly=false)"
+}

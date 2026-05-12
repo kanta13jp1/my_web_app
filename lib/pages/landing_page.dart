@@ -545,7 +545,7 @@ $input
     }
 
     if (text.contains('タスク') ||
-        text.contains('TODO') ||
+        RegExp('[Tt][Oo][Dd][Oo]').hasMatch(text) ||
         text.contains('仕事') ||
         text.contains('課題')) {
       return (
@@ -1607,6 +1607,7 @@ $input
         color: Color(0xFFD97706)
       ),
       (key: 'codex', name: 'Codex', emoji: '⚡', color: Color(0xFF10B981)),
+      (key: 'replit', name: 'Replit', emoji: '💻', color: Color(0xFFF5821B)),
       (
         key: 'netkeiba',
         name: 'netkeiba',
@@ -1691,7 +1692,7 @@ $input
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '1825社との機能比較',
+                        '1894社との機能比較',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
@@ -1766,7 +1767,7 @@ $input
                   size: 14,
                 ),
                 label: const Text(
-                  '全1825社を見る →',
+                  '全1894社を見る →',
                   style: TextStyle(fontSize: 13, height: 1.5),
                 ),
               ),

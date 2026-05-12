@@ -1,0 +1,860 @@
+{
+  "notebooks": {
+    "02e9cf0a-55f6-4896-b0de-29278f3b18d0": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1240",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "次期CATS開発プロセス及びアーキテクチャQA集"
+    },
+    "0829f536-32d7-4b49-917f-26d27b43e0c7": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1660",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "competitive-intel",
+      "skip_reason": "",
+      "title": "Google I/O 2026: Strategic Defense and Competitive Analysis Briefing"
+    },
+    "0b7a7406-b695-48f9-b9b2-30dd1b08aef4": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1301",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Slack and Notion Manual Setup Protocol"
+    },
+    "0dbe8df1-7225-4a03-b155-cd7bed34b50b": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "developer-tool-watch",
+      "skip_reason": "",
+      "title": "Gemini Code Assist: Quotas and System Limits"
+    },
+    "0f52e149-b074-44d2-931c-c43b4c527767": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1313",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Next-Generation CATS Project Status and Architecture Memo"
+    },
+    "110ca978-707c-4fc5-820d-d50b74ee910c": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1364",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "AWS Black Belt Online Seminar: Amazon AppStream 2.0"
+    },
+    "173db965-435a-429a-bcdf-7b38ffe68efb": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1370",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Personal Cash Flow Ledger and Withdrawal Analysis 2026"
+    },
+    "17cd45cd-5166-4b3f-aefb-107e2c1e3589": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1660",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "competitive-intel",
+      "skip_reason": "",
+      "title": "Competitive Intelligence Report: 2026 AI Infrastructure and Marketplace Trends"
+    },
+    "1aced136-1352-4933-b727-478d3c35b360": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "ai-dev-workflow",
+      "skip_reason": "",
+      "title": "Claude Code Masterclass: From Foundations to Agentic Workflows"
+    },
+    "1b808a60-85d6-49f7-ab80-0e90a43cf1d8": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "integration-reliability",
+      "skip_reason": "",
+      "title": "Streamlining MCP Authentication with WorkOS AuthKit"
+    },
+    "20ef0ed7-8864-41ee-9d6e-8c85696d205a": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1394",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The Enterprise of Self"
+    },
+    "239c758b-8a8f-4a9e-9d1d-1bdcafaacc09": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "developer-tool-watch",
+      "skip_reason": "",
+      "title": "Gemini Code Assist Release Notes"
+    },
+    "25e74fc2-784d-4b82-88ff-75c69f1a668c": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1391",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Kepion Team Memory Scoping Fix and Per-Business Scoring Update"
+    },
+    "27730002-fe8c-40ff-b2c3-431ab8f40a9a": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1180",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "DEV Community Newsletter: AI Evolution and Developer Wins"
+    },
+    "284ad4be-ffca-449a-9725-cab9337f3325": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1252",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Nomic Platform: Domain-Specific AI for Project Delivery"
+    },
+    "28590c8b-8147-424f-b1a3-03facef824b9": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1334",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Building a Flutter Web Personal KPI Dashboard with Supabase"
+    },
+    "29540f60-4afa-4825-8e33-6751040caef2": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1319",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "GitHub Authentication and Session Management Error Interface"
+    },
+    "2af23b5e-510a-4a2d-bd51-3b60731dd868": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1280",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "YouTube Platform Information and Policies"
+    },
+    "2eb9f737-82f2-4d73-8b4d-fd869e905d70": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1246",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The Mechanics of Prediction: Inside Large Language Models"
+    },
+    "2ee2ea76-4a19-4586-926e-9e3fdca4463c": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1221",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Mastering GPT-Image-2: The Complete Prompt Engineering Guide"
+    },
+    "2f516389-a41f-499d-bc05-ae54562a6295": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1537",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Mastering Descript: AI Video Editing and Underlord Co-Editor Guide"
+    },
+    "2fc6d86f-2bbd-4fdc-ad9e-f302d93b5c6e": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1234",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Imbue: Empowering Human Agency Through AI Reasoning and Coding"
+    },
+    "31ddb877-b168-4f86-abc8-2451e7c0f36a": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1304",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Automating High-Volume Article Publishing via GitHub Actions and Supabase"
+    },
+    "3545ffe5-37b0-4d96-87f5-599039add518": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1265",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Pleias: Open Data Layers for Enterprise AI Training"
+    },
+    "386e02ec-cc1a-43ea-b1cb-f66176b9841e": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1403",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "jibun-research-20260416-163955"
+    },
+    "41231bac-c9d5-4c03-8129-edb68dc048bc": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1325",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Lessons from 50 User Interviews for a DevOps SaaS"
+    },
+    "47bd101a-533e-45b0-be0b-7a3299b2538d": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "integration-reliability",
+      "skip_reason": "",
+      "title": "Managing Notion Database IDs and API Page Properties"
+    },
+    "491f57bc-68a1-4b12-b1f8-5eaffbc0fe8e": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1228",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Architecting the Frontier of Collaborative Intelligence"
+    },
+    "4ba6066d-381c-4b4b-ad1a-5f7495761199": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "ai-dev-workflow",
+      "skip_reason": "",
+      "title": "BSLW Schedule Working Status Manual Editing Function Specification"
+    },
+    "4fb089e8-9d35-4bc4-b6ba-116c1777bb1e": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1203",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Cartesia Sonic: The Vanguard of Real-Time Voice AI"
+    },
+    "52daba63-0971-42a8-a9d6-f3dbff3466bd": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "ai-dev-workflow",
+      "skip_reason": "",
+      "title": "Claude Code: The Agentic Future of Terminal Programming"
+    },
+    "54b6f2f2-6831-4376-b2dd-99a1a4bf90ec": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1255",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Writer AI Studio Comprehensive Development and Management Guide"
+    },
+    "5578d76e-012f-4739-bf1d-c47f5f4693ba": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1376",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The Browser Privacy and X Access Directive"
+    },
+    "55a65bf0-61cc-4c73-aa44-662b2baa9a63": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1358",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Winget Local Environment Configuration for Windows 11"
+    },
+    "569fcf08-91d2-4e04-8634-d9f49d2bf616": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1316",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The 3-Layer Design for Bundling AI as a Solo CEO"
+    },
+    "579bd686-f17e-414a-894f-822f29b5c11e": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1258",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "8 Gemini Tips for Organizing Your Space and Life"
+    },
+    "59536494-36fd-4c28-8444-df9c2c570f9c": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1406",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Me Inc. AI-Powered Executive Simulation App Repository"
+    },
+    "5e03281b-e9de-43d4-bd58-07546dd5a478": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1243",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Machine Learning Systems: The AI Engineering Curriculum"
+    },
+    "64fc639e-a6ac-4e32-84a8-f3f7278b6d6d": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "ai-dev-workflow",
+      "skip_reason": "",
+      "title": "Automating Technical Blogs with Claude Code and Supabase Edge Functions"
+    },
+    "6884b88d-5a70-463c-9e48-7482ff504ac1": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1400",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The Architecture of Functional Emotion in AI"
+    },
+    "6a7f61ea-5463-4ed5-aba0-7dd7dcc404ad": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "developer-tool-watch",
+      "skip_reason": "",
+      "title": "Mastering Visual Studio Code Dev Containers"
+    },
+    "6deda071-e5a5-488f-9fc9-f3697c13a157": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Anthropic Claude Design Plugin and Platform Ecosystem"
+    },
+    "72d24a65-a81d-4b0a-a413-7ae3cd335dcc": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "developer-tool-watch",
+      "skip_reason": "",
+      "title": "Gemini Code Assist Release Notes"
+    },
+    "7ccb0520-04f2-4775-adaa-1acf96025bd1": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1529",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Weights & Biases: Comprehensive AI Developer Platform Guide"
+    },
+    "7e39f060-7f61-4a31-babb-237da14f06aa": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1382",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Rapid AI Scaling and the Perils of Invisible Defaults"
+    },
+    "7e72ced1-67b5-4f47-a3a0-2327236ffbd5": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1349",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "衆議院憲法審査会：憲法改正の論点と起草への進路"
+    },
+    "7f26d8be-f969-4bb4-81dd-d257728158eb": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1412",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "国民民主党 玉木代表による備蓄米に関する質問"
+    },
+    "819f4e8d-d48f-4a09-8920-89cf83da9091": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1379",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Kepion: Building an Autonomous AI Company Orchestrator"
+    },
+    "850dfd54-0be1-47de-bd7f-4d4e51808fed": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "developer-tool-watch",
+      "skip_reason": "",
+      "title": "Visual Studio Code 1.118 Release Notes"
+    },
+    "8a74030c-f0d2-4aeb-b2c3-4e3673564ed6": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1184",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Hedra API Guide: Generating Digital Assets"
+    },
+    "8b3d152f-a391-4019-b64c-79711cd07eac": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1648",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The Tactile Reflex of the Tresses"
+    },
+    "9429530e-f350-44f6-ad2e-1df215c36eb2": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1249",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The Character of Claude: Philosophy and Ethics at Anthropic"
+    },
+    "969632ac-01be-4d40-9f4f-47baadc92e7f": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1665",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Diary of a Digital Architect: Logic and Impulse"
+    },
+    "971910f8-b814-43bb-8bc3-591df138666d": {
+      "disposition": "skipped",
+      "existing_issue_number": "",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "skip",
+      "skip_reason": "non_project_compliance_template",
+      "title": "Internal Review Record Sheet for Non-TCF Projects"
+    },
+    "9871b0b1-0748-4d7d-99bc-bd6aea2231f6": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "ai-dev-workflow",
+      "skip_reason": "",
+      "title": "Claude Code and Obsidian: Building Your AI Second Brain"
+    },
+    "9b2e686f-1189-4187-a5bf-e8347cb9d5f2": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1322",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Building Notion-Style Comments with Flutter and Supabase"
+    },
+    "9b8885ef-86a6-45c4-8e3d-2dc6fd601fd0": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "ai-dev-workflow",
+      "skip_reason": "",
+      "title": "Automating SaaS Operations with Claude Code Schedule"
+    },
+    "9cf1602a-3f69-4811-a1da-b516379b299f": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1298",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Vercel Security Browser Verification Page"
+    },
+    "9de41659-0832-4523-9d85-6737645a8ebe": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1231",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The Threshold of Digital Access"
+    },
+    "9eb645cd-31f2-4f45-b615-68c776f06f70": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1237",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Next-Generation Accounting System Impact Survey and Formal Quote Request"
+    },
+    "a9d5de3e-f3b9-433f-b51d-d1bb12cc7b79": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1295",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "VS Code Integrated Terminal Troubleshooting Guide"
+    },
+    "ab987be4-3e04-43aa-a94a-76eaaaad1fb9": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1373",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Software Engineering at Google: Sustainability and Scale at Work"
+    },
+    "afe03631-76b8-4d77-b7a3-62ec54e4ebca": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1286",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "GitHub Branch Protection and Repository Ruleset Configuration"
+    },
+    "b0ca91aa-ae60-498d-a1d0-ed2fcf2a0a7f": {
+      "disposition": "skipped",
+      "existing_issue_number": "",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "skip",
+      "skip_reason": "non_current_stack",
+      "title": "EKS Manifest IaC Pipeline Operations Guide"
+    },
+    "b7034883-0cc8-45fe-b816-bd596de00210": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1193",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Project Vend: The Life and Times of Claudius the Shopkeeper"
+    },
+    "b74e9ada-b9b1-4917-9b8c-66afcb7bf6ce": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Code with Claude 開会の基調講演"
+    },
+    "bc58b50b-5fc4-4840-9a62-b397d6d3b65a": {
+      "disposition": "priority_reference",
+      "existing_issue_number": "1606",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "harness-reference",
+      "skip_reason": "",
+      "title": "Codex vs Claude Code: The Ultimate AI Development Synergy"
+    },
+    "bc98957a-f609-417f-a655-6e581b0056ab": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1307",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The 30-Day SaaS Blueprint: From Zero to $1,287 MRR"
+    },
+    "bdec9ea5-c6f6-4c7d-923c-9bdf87d553d0": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1277",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "AI Agent Revolution and The Future of Workflow Automation"
+    },
+    "c3b1d9f2-1cc9-41ef-91d1-480d60b9df63": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Claude API Cost Optimization Strategies"
+    },
+    "c60da02b-69b2-4c09-8708-8ddec784ebba": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1660",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "competitive-intel",
+      "skip_reason": "",
+      "title": "Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary"
+    },
+    "c7e786bb-b4fb-466e-9382-efdb739b992f": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1388",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Building a Voice AI GMAT Tutor with Long-Term Memory"
+    },
+    "cc9ac313-d42e-47a9-93e3-bcd5a4e61020": {
+      "disposition": "skipped",
+      "existing_issue_number": "",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "skip",
+      "skip_reason": "non_current_stack",
+      "title": "React Frontend Implementation and Material-UI Architecture Guide"
+    },
+    "d1b0fef3-155a-455f-a23c-4ec34bc9de4d": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1199",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "ADHDとNotebookLM：認知負荷の軽減ツール"
+    },
+    "d3264dd4-c3bc-4b63-8fb2-6c7003ff111d": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1292",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Supabase General Project Settings and Infrastructure Dashboard"
+    },
+    "d420e53f-3477-4aac-b4c7-6a1f8703370c": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1187",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Corporate Headquarters Selection and Registration Protocol"
+    },
+    "d6dd44af-a129-42fa-b30c-e9a87916eca0": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1385",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Building a Zero-Cost Amazon Price Tracker in Python"
+    },
+    "d83954af-f6a7-44fa-a1fe-fbc75b5ae7be": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1660",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "competitive-intel",
+      "skip_reason": "",
+      "title": "Competitor Discovery Report: April 2026 Status Update"
+    },
+    "d89ae1f5-6081-4084-b573-6d817e4abaf4": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "ai-dev-workflow",
+      "skip_reason": "",
+      "title": "Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks"
+    },
+    "d91788ce-67b5-4fcd-86dd-779de2e56972": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1346",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "国民民主党の政策と日本の未来"
+    },
+    "da2a95d1-2db3-4677-9e67-52fae69fb8e9": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1218",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "D-ID: Comprehensive Guide to AI Video Creation and Business Strategy"
+    },
+    "dd2b382d-88d7-4a79-b6a7-11e420f62759": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1367",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "The Ghost in the Schema: Emergent AI Semantic Abstraction"
+    },
+    "ddde5a4b-ce1a-405d-8291-a334a9371454": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1209",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Vibe Coding: Responsible Engineering in the Era of AI Agents"
+    },
+    "e89d2ca7-1dc9-41a1-8fe2-bad5103a757b": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1215",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Anthropic Evolution: Claude Apps, Opus 4.7, and Enterprise Expansion"
+    },
+    "ea6cff25-574d-4b8b-ad72-ab47cf1ed01f": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1212",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "jibun-master-brain"
+    },
+    "ed1aac00-a9a0-4937-94c0-e835b71016c3": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Mastering Claude: A Guide to Intelligent Collaboration"
+    },
+    "f0895eb0-03e9-499d-ad8a-84b76417bd53": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1638",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "ai-dev-workflow",
+      "skip_reason": "",
+      "title": "Claude Code Remote Control Guide"
+    },
+    "f167dcc3-ca79-4c47-91f3-7ef90a409025": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1660",
+      "first_seen_at": "2026-05-02T21:45:45Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "competitive-intel",
+      "skip_reason": "",
+      "title": "Competitive AI Intelligence Report: The Multi-Agent Convergence"
+    },
+    "f24897ad-12df-4d1a-a3a4-f7bb2eb08e73": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1331",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Surviving the Paddle Approval Process: A SaaS Founder's Guide"
+    },
+    "f404e403-d347-4baf-850b-3702fb3c13ab": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1310",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "CATS System Planned Outage Notification and Correspondence"
+    },
+    "f45600f2-1883-4043-bfec-b1309f468889": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1397",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "Firebase Service Plans and Pricing Guide"
+    },
+    "f56cc07c-4e9e-4370-be5f-5d5fa919ff78": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1337",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "unclassified",
+      "skip_reason": "",
+      "title": "TraceHawk vs Datadog: AI Agent Observability in 2026"
+    },
+    "f985728b-3976-4b24-b8c6-a3f318905e34": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "developer-tool-watch",
+      "skip_reason": "",
+      "title": "Devin Documentation Release Notes 2026"
+    },
+    "fdea9e6d-a2dd-428d-997c-36cba9626afd": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "developer-tool-watch",
+      "skip_reason": "",
+      "title": "Cursor Product Updates and Agent Innovation Changelog"
+    },
+    "fe10a9f9-f50a-42cc-b5bd-1da5f5ab0917": {
+      "disposition": "route_existing_issue",
+      "existing_issue_number": "1628",
+      "first_seen_at": "2026-05-02T18:05:12Z",
+      "last_seen_at": "2026-05-02T21:47:09Z",
+      "route": "developer-tool-watch",
+      "skip_reason": "",
+      "title": "Visual Studio Code April 2026 Release Notes"
+    }
+  },
+  "updated_at": "2026-05-02T21:46:22Z"
+}

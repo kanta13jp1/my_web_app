@@ -8,6 +8,12 @@ on:
       - staging
       - develop
   workflow_dispatch:
+    inputs:
+      ultrareview:
+        description: 'Run claude ultrareview (multi-agent, billed) — set true to enable'
+        required: false
+        default: 'false'
+        type: string
 
 concurrency:
   group: claude-agent-review-${{ github.event.pull_request.number || github.run_id }}
@@ -199,3 +205,117 @@ jobs:
             echo ""
             echo "**PR**: #${{ github.event.pull_request.number || 'N/A' }} | **Actor**: ${{ github.actor }}"
           } >> $GITHUB_STEP_SUMMARY
+
+  high-risk-ultrareview-gate:
+    name: High-risk ultrareview gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Collect changed files
+        run: |
+          mkdir -p .ci-logs
+          git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            > .ci-logs/high-risk-changed-files.txt
+
+      - name: Check high-risk ultrareview contract
+        run: |
+          set +e
+          python scripts/check_high_risk_ultrareview_gate.py \
+            --event "$GITHUB_EVENT_PATH" \
+            --changed-files .ci-logs/high-risk-changed-files.txt \
+            > .ci-logs/high-risk-ultrareview-gate.txt 2>&1
+          status=$?
+          cat .ci-logs/high-risk-ultrareview-gate.txt
+          cat .ci-logs/high-risk-ultrareview-gate.txt >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Upload gate evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: high-risk-ultrareview-gate
+          path: .ci-logs/high-risk-*.txt
+          if-no-files-found: ignore
+
+  # --- bc58b50b #1765/#1779: claude ultrareview (opt-in, workflow_dispatch only) ---
+  # Runs comprehensive multi-agent review via Claude Code CLI.
+  # Triggered manually; never blocks PRs; billed separately.
+  ultrareview:
+    name: Claude ultrareview (opt-in)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.ultrareview == 'true'
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code@latest 2>&1 | tail -3
+
+      - name: Run ultrareview
+        id: ultrareview
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLAUDE_CODE_MAX_OUTPUT_TOKENS: "4000"
+        run: |
+          PR_NUM="${{ github.event.pull_request.number }}"
+          if [ -z "$PR_NUM" ]; then
+            echo "No PR number available, running diff-based review instead"
+            PR_NUM=""
+          fi
+
+          REVIEW_OUTPUT=""
+          if [ -n "$PR_NUM" ]; then
+            # Try claude ultrareview (Claude Code v2.1.126+)
+            REVIEW_OUTPUT=$(claude --non-interactive ultrareview "$PR_NUM" 2>&1) || \
+            REVIEW_OUTPUT=$(claude -p "Perform a comprehensive multi-perspective ultrareview of PR #${PR_NUM} in the kanta13jp1/my_web_app repository. Cover: security vulnerabilities, architecture violations (Edge Function first), dummy data, EF count limits, and Dart/Flutter best practices." --non-interactive 2>&1) || \
+            REVIEW_OUTPUT="ultrareview requires Claude Code v2.1.126+ with ANTHROPIC_API_KEY and GitHub access"
+          else
+            REVIEW_OUTPUT="No PR context — ultrareview skipped for branch push"
+          fi
+
+          echo "output<<ULTRA_EOF" >> $GITHUB_OUTPUT
+          echo "$REVIEW_OUTPUT" | head -200 >> $GITHUB_OUTPUT
+          echo "ULTRA_EOF" >> $GITHUB_OUTPUT
+
+      - name: Post ultrareview comment
+        if: steps.ultrareview.outputs.output != ''
+        continue-on-error: true
+        uses: actions/github-script@v9
+        env:
+          ULTRA_BODY: ${{ steps.ultrareview.outputs.output }}
+        with:
+          script: |
+            const body = process.env.ULTRA_BODY || '';
+            if (!body || !context.issue?.number) return;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## 🔬 Claude ultrareview (multi-agent)\n\n${body}\n\n---\n*Claude Code ultrareview — [bc58b50b #1779](https://github.com/kanta13jp1/my_web_app/issues/1779)*`
+            });

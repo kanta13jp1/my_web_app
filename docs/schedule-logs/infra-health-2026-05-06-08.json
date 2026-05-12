@@ -1,0 +1,21 @@
+{
+  "run_at_jst": "2026-05-06 08:04 JST",
+  "run_at_utc": "2026-05-05T23:04:17Z",
+  "supabase": {
+    "status": "healthy",
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (1402ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "ef_timestamp": "2026-05-05T23:04:13.357Z"
+  },
+  "firebase": {
+    "status": "ok",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "note": "Flutter SPA 'Loading application...' = expected client-side render"
+  },
+  "anomaly": false,
+  "action_taken": "log only (no commit per task spec — healthy)"
+}

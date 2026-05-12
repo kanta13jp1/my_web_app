@@ -1,4 +1,4 @@
-﻿import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -66,7 +66,9 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const body = req.method === "GET"
-      ? ({ endDate: url.searchParams.get("endDate") ?? undefined } as WeeklyDigestRequest)
+      ? ({
+        endDate: url.searchParams.get("endDate") ?? undefined,
+      } as WeeklyDigestRequest)
       : (await req.json().catch(() => ({}))) as WeeklyDigestRequest;
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -200,13 +202,11 @@ serve(async (req) => {
 // -----------------------------------------------------------------------
 
 function buildWeekRanges(endDateInput: string | undefined) {
-  const end = endDateInput
-    ? new Date(endDateInput)
-    : (() => {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      return d;
-    })();
+  const end = endDateInput ? new Date(endDateInput) : (() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })();
 
   const currentStart = new Date(end);
   currentStart.setDate(end.getDate() - 6);
@@ -295,19 +295,26 @@ function buildBrief({
   referralsCompleted: number;
   referralsDelta: number;
 }): string {
-  const arrow = (n: number) => n > 0 ? `↑${n}` : n < 0 ? `↓${Math.abs(n)}` : "→";
+  const arrow = (n: number) =>
+    n > 0 ? `↑${n}` : n < 0 ? `↓${Math.abs(n)}` : "→";
   const lines: string[] = [
     `## 自分株式会社 週次 Growth Digest`,
     `期間: ${currentWeek.startDate} ～ ${currentWeek.endDate}`,
     ``,
-    `### サインアップ CTA クリック 合計: ${signupSubmitTotal} ${arrow(signupSubmitDelta)}`,
+    `### サインアップ CTA クリック 合計: ${signupSubmitTotal} ${
+      arrow(signupSubmitDelta)
+    }`,
     ``,
     `### チャネル別`,
   ];
 
   for (const ch of channels) {
     lines.push(
-      `- **${ch.label}**: タッチ ${ch.touches}${arrow(ch.touchesDelta)} / CTA ${ch.signupSubmits}${arrow(ch.signupSubmitsDelta)} / CVR ${ch.cvr}%`,
+      `- **${ch.label}**: タッチ ${ch.touches}${
+        arrow(ch.touchesDelta)
+      } / CTA ${ch.signupSubmits}${
+        arrow(ch.signupSubmitsDelta)
+      } / CVR ${ch.cvr}%`,
     );
   }
 
@@ -324,7 +331,9 @@ function buildBrief({
 
   lines.push(``);
   lines.push(
-    `> 前週比: CTA ${arrow(signupSubmitDelta)} / referral ${arrow(referralsDelta)}`,
+    `> 前週比: CTA ${arrow(signupSubmitDelta)} / referral ${
+      arrow(referralsDelta)
+    }`,
   );
 
   return lines.join("\n");

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_version.dart';
 import '../services/theme_service.dart';
+import 'ai_share_button_settings_page.dart';
 import 'profile_settings_page.dart';
 import 'asset_management_page.dart';
 import 'financial_report_page.dart';
 import 'admin_analytics_page.dart';
 import 'feedback_page.dart';
+import 'offline_secure_mode_settings_page.dart';
 import 'theme_selector_page.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -50,6 +52,18 @@ class SettingsPage extends StatelessWidget {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.auto_awesome_motion_outlined),
+            title: const Text('AIシェアボタン'),
+            subtitle: const Text('表示と位置'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AiShareButtonSettingsPage(),
+              ),
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
             title: const Text('アセット管理'),
             trailing: const Icon(Icons.arrow_forward_ios),
@@ -65,6 +79,18 @@ class SettingsPage extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const FinancialReportPage()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.security_outlined),
+            title: const Text('オフラインセキュアモード'),
+            subtitle: const Text('ローカルRAGと外部API遮断ポリシー'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const OfflineSecureModeSettingsPage(),
+              ),
             ),
           ),
           const Divider(),
@@ -93,10 +119,9 @@ class SettingsPage extends StatelessWidget {
               child: Text(
                 AppVersion.display,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
               ),
             ),

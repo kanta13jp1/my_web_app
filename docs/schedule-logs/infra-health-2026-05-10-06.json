@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-05-10T06:33:05.709Z",
+  "run_jst": "2026-05-10 15:33 JST",
+  "supabase_health": {
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (708ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "status": "ok",
+    "note": "static shell rendered, Flutter SPA bootstrap loading state expected"
+  },
+  "anomalies": [],
+  "action": "none (healthy)"
+}

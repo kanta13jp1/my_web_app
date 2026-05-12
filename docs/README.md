@@ -4,6 +4,8 @@
 
 **最終更新**: 2026-04-17
 
+**AI tool update gate (2026-05-07 #1706)**: Claude/Codex/Gemini/Copilot capability claims are verified through official sources and the Claude Code #1 + Codex #1 two-instance flow before adoption.
+
 ---
 
 ## 📌 常時参照ドキュメント

@@ -1,0 +1,163 @@
+name: Codex Session Safety Cron
+
+# Win版#132 part 117 (2026-05-03) — Issue #1647 着地
+# Codex Memory + Thread Automations 定常タスク完全自律化 の最初の 1 つ.
+# scripts/codex_session_check.py を daily 実行 → JSON 結果を Issue #1422 に comment.
+# warning (= behind > 50 / dirty_count > 0 / notebooklm state != ok) 検出時 → 専用 Issue 自動作成.
+
+on:
+  schedule:
+    - cron: "0 22 * * *"  # daily 07:00 JST (= 22:00 UTC)
+  workflow_dispatch:
+    inputs:
+      strict_mode:
+        description: "Exit non-zero on warnings (= true で次 step skip)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: codex-session-safety-cron
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Run codex_session_check + report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      ISSUE_TRACKING_NUMBER: "1422"
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run codex_session_check (JSON)
+        id: check
+        run: |
+          SESSION_CHECK_JSON="$RUNNER_TEMP/session_check.json"
+          python scripts/codex_session_check.py --json > "$SESSION_CHECK_JSON"
+          echo "Saved session_check.json ($(wc -c < "$SESSION_CHECK_JSON") bytes)"
+          # extract warning signals
+          BEHIND=$(jq -r '.behind // 0' "$SESSION_CHECK_JSON")
+          DIRTY=$(jq -r '.dirty_count // 0' "$SESSION_CHECK_JSON")
+          NB_STATE=$(jq -r '.notebooklm.state // "unknown"' "$SESSION_CHECK_JSON")
+          NB_COUNT=$(jq -r '.notebooklm.notebook_count // 0' "$SESSION_CHECK_JSON")
+          BC58_FOUND=$(jq -r '.notebooklm.harness_notebook_found // false' "$SESSION_CHECK_JSON")
+
+          echo "behind=$BEHIND" >> $GITHUB_OUTPUT
+          echo "dirty=$DIRTY" >> $GITHUB_OUTPUT
+          echo "nb_state=$NB_STATE" >> $GITHUB_OUTPUT
+          echo "nb_count=$NB_COUNT" >> $GITHUB_OUTPUT
+          echo "bc58_found=$BC58_FOUND" >> $GITHUB_OUTPUT
+
+          # warning 判定
+          WARNINGS=()
+          if [ "$BEHIND" -gt 50 ]; then WARNINGS+=("behind > 50 (= $BEHIND commits)"); fi
+          if [ "$DIRTY" -gt 0 ]; then WARNINGS+=("dirty_count > 0 (= $DIRTY paths)"); fi
+          if [ "$NB_STATE" != "ok" ] && [ "$NB_STATE" != "skipped_ci_unavailable" ]; then WARNINGS+=("notebooklm state != ok (= $NB_STATE)"); fi
+          if [ "$NB_STATE" = "ok" ] && [ "$BC58_FOUND" != "true" ]; then WARNINGS+=("bc58b50b harness notebook missing"); fi
+
+          if [ ${#WARNINGS[@]} -eq 0 ]; then
+            echo "has_warnings=false" >> $GITHUB_OUTPUT
+            echo "✅ No warnings"
+          else
+            echo "has_warnings=true" >> $GITHUB_OUTPUT
+            printf '⚠️ Warnings:\n'
+            printf '  - %s\n' "${WARNINGS[@]}"
+            {
+              echo 'warnings_md<<EOF'
+              for w in "${WARNINGS[@]}"; do echo "- $w"; done
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment to tracking Issue (#1422)
+        if: always()
+        env:
+          BEHIND: ${{ steps.check.outputs.behind }}
+          DIRTY: ${{ steps.check.outputs.dirty }}
+          NB_STATE: ${{ steps.check.outputs.nb_state }}
+          NB_COUNT: ${{ steps.check.outputs.nb_count }}
+          BC58_FOUND: ${{ steps.check.outputs.bc58_found }}
+          HAS_WARNINGS: ${{ steps.check.outputs.has_warnings }}
+        run: |
+          ICON="✅"
+          if [ "$HAS_WARNINGS" = "true" ]; then ICON="⚠️"; fi
+          BODY=$(cat <<EOF
+          $ICON Codex Session Safety Cron $(date -u '+%Y-%m-%d %H:%M UTC')
+
+          | metric | value |
+          | --- | --- |
+          | ahead/behind | 0 / $BEHIND |
+          | dirty_count | $DIRTY |
+          | notebooklm.state | $NB_STATE |
+          | notebooklm.notebook_count | $NB_COUNT |
+          | bc58b50b harness found | $BC58_FOUND |
+
+          source: \`scripts/codex_session_check.py --json\` (= [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) 着地)
+          workflow: \`.github/workflows/codex-session-safety-cron.yml\`
+          run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          EOF
+          )
+          gh issue comment "$ISSUE_TRACKING_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$BODY" || true
+
+      - name: Open warning Issue (= when behind > 50 OR dirty > 0 OR notebooklm broken)
+        if: steps.check.outputs.has_warnings == 'true'
+        env:
+          WARNINGS_MD: ${{ steps.check.outputs.warnings_md }}
+        run: |
+          # dedup: 直近 24h で同 title の Issue があれば skip
+          TODAY=$(date -u '+%Y-%m-%d')
+          TITLE="[automation] Codex session safety warning $TODAY"
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --search "$TITLE in:title is:open" --json number --jq 'length')
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "Skip: same-title open Issue already exists ($EXISTING)"
+            exit 0
+          fi
+          BODY=$(cat <<EOF
+          ## 自動検出された Codex session safety 異常 ($(date -u '+%Y-%m-%d %H:%M UTC'))
+
+          $WARNINGS_MD
+
+          ## 推奨対応
+
+          - **behind > 50**: 古い branch 状態 → 全 instance で \`git fetch origin main && git pull --rebase origin main\` 実行
+          - **dirty_count > 0**: uncommitted 変更検出 → WIP commit 推奨 (= [STASH-SAFETY] rule)
+          - **notebooklm.state != ok**: cookie 期限切れ可能性 → \`notebooklm login\` 再認証
+          - **bc58b50b harness missing**: AI Fleet Synergy notebook ID 不一致 → \`scripts/codex_session_check.py\` の HARNESS_NOTEBOOK_ID 確認
+
+          ## 関連
+
+          - Issue [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) (= Codex Memory + Thread Automations)
+          - Issue [#1422](https://github.com/kanta13jp1/my_web_app/issues/1422) (= AI tool watch tracking)
+          - workflow: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+
+          (auto-opened by codex-session-safety-cron.yml)
+          EOF
+          )
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$TITLE" \
+            --label "automation,enhancement" \
+            --body "$BODY"
+
+      - name: Strict mode exit
+        if: steps.check.outputs.has_warnings == 'true' && inputs.strict_mode == 'true'
+        run: exit 1

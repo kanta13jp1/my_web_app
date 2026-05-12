@@ -1,0 +1,137 @@
+name: mcp-audit-anomaly-cron
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mcp-audit-anomaly-cron.yml"
+      - "scripts/mcp_audit_anomaly.ts"
+      - "scripts/mcp_audit_anomaly_test.ts"
+      - "terraform/mcp_oauth_clients/**"
+  schedule:
+    - cron: "7 * * * *" # hourly :07
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run detection without writing anomaly_score or suspending clients"
+        required: false
+        default: "false"
+      suspend_clients:
+        description: "Suspend anomalous clients after marking audit rows"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-audit-anomaly
+  cancel-in-progress: false
+
+jobs:
+  script-test:
+    name: MCP audit anomaly script test
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Deno check
+        run: deno check scripts/mcp_audit_anomaly.ts scripts/mcp_audit_anomaly_test.ts
+
+      - name: Deno lint
+        run: deno lint scripts/mcp_audit_anomaly.ts scripts/mcp_audit_anomaly_test.ts
+
+      - name: Deno test
+        run: deno test scripts/mcp_audit_anomaly_test.ts
+
+  detect:
+    name: Detect MCP audit anomalies
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Detect anomaly
+        run: >
+          deno run
+          --allow-env
+          --allow-net
+          --allow-write=mcp-audit-anomaly-summary.json
+          scripts/mcp_audit_anomaly.ts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          MCP_AUDIT_ANOMALY_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          MCP_AUDIT_ANOMALY_SUSPEND: ${{ github.event.inputs.suspend_clients || 'false' }}
+          MCP_AUDIT_ANOMALY_SUMMARY: mcp-audit-anomaly-summary.json
+
+      - name: Summarize anomaly run
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f mcp-audit-anomaly-summary.json ]]; then
+            echo "## MCP audit anomaly cron" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          data = json.load(open("mcp-audit-anomaly-summary.json", encoding="utf-8"))
+          print(f"- checked_at: {data.get('checked_at')}")
+          print(f"- rows_scanned: {data.get('rows_scanned')}")
+          print(f"- anomalies: {len(data.get('anomalies', []))}")
+          print(f"- dry_run: {data.get('dry_run')}")
+          print(f"- suspend_enabled: {data.get('suspend_enabled')}")
+          PY
+          else
+            echo "mcp-audit-anomaly-summary.json was not created." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload anomaly summary
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mcp-audit-anomaly-summary
+          path: mcp-audit-anomaly-summary.json
+          if-no-files-found: ignore
+
+  terraform-plan:
+    name: Terraform MCP OAuth client plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.8.5
+
+      - name: Terraform init
+        run: terraform -chdir=terraform/mcp_oauth_clients init -backend=false
+
+      - name: Terraform validate
+        run: terraform -chdir=terraform/mcp_oauth_clients validate
+
+      - name: Terraform plan example clients
+        run: >
+          terraform -chdir=terraform/mcp_oauth_clients plan
+          -input=false
+          -lock=false
+          -var-file=examples/clients.tfvars
