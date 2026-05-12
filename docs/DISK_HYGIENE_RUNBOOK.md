@@ -1738,3 +1738,54 @@ $ grep dev_cache_cleanup ~/.claude/settings.json
 
 > **v17 status**: part 203-b iterative ask v16 layer ship / `docs/cross-instance-prs/20260512_codex_wbs_top5_v17_mandatory_per_session_compression_part203b.md` Part C spec / 累積 13 layer / Codex 11+6=17 件 5/30 期限.
 
+
+### §17.21 v18 disk hygiene cascade (= part 204-b / 5 layer K-O / 累積 18 layer)
+
+#### 17.21.1 part 204 functional verify 発見
+
+part 204 (= 2026-05-12 12:15 JST) v15 Layer 1 manual fire 第 3 例累積:
+
+- PRE 91.37% → POST 87.06% / DELTA +1140 MB
+- **partial recovery 87% > 85% 残存** = v15 Layer 1 単独では full recovery 不能
+- 過去最高 freed amount update (= 第 2 例 +1026 → 第 3 例 +1140 = +11% improvement)
+- ただし 85% threshold 上残存 = effective ceiling reach
+
+**v18 = partial recovery 問題への直接回答** (= 5 layer cascade K-O).
+
+#### 17.21.2 v18 spec (= 5 layer K-O / 累積 18 layer)
+
+- **Layer K: disk hygiene cascade** (= main / v15 Layer 1 fire 後 RAM% > 85% で automatic cascade fire / Step 1 worktree_cleanup --tier2 / Step 2 dev_cache_cleanup --tier18 / Step 3 last resort browser/Codex 閉じる interactive prompt)
+- **Layer L: pre-commit hard gate** (= git commit/push 前 hook で RAM > 80% OR C: < 10 GB block / exit 1 で commit 中断 / Layer K cascade fire 強制)
+- **Layer M: hourly forced compression** (= Win Task Scheduler hourly cron / interactive session 中でも fire / +16 pt/3 min build-up を hourly 回収 / part 204 measured drift)
+- **Layer N: post-PR-merge cleanup hook** (= GHA workflow / PR merge 直後 fire / merged branch + worktree + dev_cache 自動 cleanup / PR cascade による disk pressure 増加防止)
+- **Layer O: cross-session RAM trend dashboard** (= session-delta.csv 7-day rolling chart / 自動 weekly GHA cron auto-report / regression detection / Slack post)
+
+#### 17.21.3 累積 18 layer (= v15 3 + v16 5 + v17 5 + v18 5)
+
+| Layer | Phase | Trigger | Fail-closed | Observability |
+|-------|-------|---------|-------------|---------------|
+| ... (v15-v17 既出 ↑ 17.20.3) | | | | |
+| **v18-K** | **post-v15-fire** | **POST RAM > 85% cascade** | ✅ cascade fire | **cascade.log** |
+| **v18-L** | **pre-commit** | **RAM>80 OR C<10GB block** | ✅ block exit 1 | **pre-commit-block.log** |
+| **v18-M** | **hourly cron** | **Win Task Scheduler PT1H** | ❌ background | **hourly-fire.log** |
+| **v18-N** | **post-PR-merge** | **GHA workflow trigger** | ❌ informational | **GHA artifact** |
+| **v18-O** | **weekly dashboard** | **GHA Mon 06:00 cron** | ❌ informational | **docs/dashboards/ram_trend_<date>.md** |
+
+#### 17.21.4 session_kpi.py 拡張 (= v15 5 + v16 3 + v17 5 + v18 5 = 18 metric)
+
+- **v18 5 metric NEW**:
+  - `cascade_fired_count` (int / Layer K)
+  - `pre_commit_blocked_count` (int / Layer L)
+  - `hourly_fire_count` (int / Layer M / 24 hour rolling)
+  - `post_pr_cleanup_count` (int / Layer N / weekly rolling)
+  - `dashboard_ram_trend_7day` (string / Layer O / "improving" | "stable" | "degrading")
+
+#### 17.21.5 Codex impl 待ち (= 5/30 期限 / 5 deliverable NEW / 累積 22)
+
+- `scripts/disk_hygiene_cascade.ps1` (= Layer K cascade)
+- `.git/hooks/pre-commit` + `scripts/pre_commit_hard_gate.ps1` (= Layer L hard gate)
+- `scripts/hourly_forced_compression.ps1` + Task Scheduler XML install (= Layer M)
+- `.github/workflows/post-pr-merge-cleanup.yml` (= Layer N)
+- `scripts/cross_session_ram_dashboard.py` (= Layer O)
+
+> **v18 status**: part 204-b iterative ask v17 layer ship / `docs/cross-instance-prs/20260512_codex_wbs_top5_v18_disk_hygiene_cascade_part204b.md` Part B spec / 累積 18 layer / Codex 17+5=22 件 5/30 期限.
