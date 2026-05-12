@@ -4,10 +4,10 @@ Issue: https://github.com/kanta13jp1/my_web_app/issues/1495
 
 ## Scope
 
-Codex #2 owns the deterministic build and release automation. Claude Code keeps
-store policy, product gates, review conditions, and final go/no-go ownership.
-Codex #1 should take code-level mobile compatibility fixes that are not workflow
-or signing automation.
+Codex #1 owns the deterministic build and release automation in the current
+two-instance flow. Any older multi-Codex ownership notes are absorbed into
+Codex #1. Claude Code keeps store policy, product gates, review conditions, and
+final go/no-go ownership.
 
 ## Current App Metadata
 
@@ -17,8 +17,10 @@ or signing automation.
 | Android applicationId / namespace | `jp.kanta13.jibun` |
 | iOS bundle identifier | `jp.kanta13.jibun` |
 | Flutter build workflow | `.github/workflows/mobile-release-build.yml` |
+| Distribution readiness gate | `.github/workflows/mobile-distribution-readiness.yml` |
 | Native CI entrypoint | `lib/main_mobile.dart` |
 | Metadata gate | `python scripts/check_mobile_release_readiness.py` |
+| Distribution gate | `python scripts/check_mobile_distribution_readiness.py` |
 
 Do not upload to either store until the bundle identifiers are confirmed as the
 final public identifiers. Changing them after a first store upload is painful or
@@ -52,6 +54,28 @@ Release build:
 git tag mobile-v1.0.0
 git push origin mobile-v1.0.0
 ```
+
+Distribution readiness report:
+
+```powershell
+gh workflow run mobile-distribution-readiness.yml `
+  -f platform=all `
+  -f require_distribution_secrets=false
+```
+
+Strict pre-distribution gate after secrets are configured:
+
+```powershell
+gh workflow run mobile-distribution-readiness.yml `
+  -f platform=all `
+  -f require_distribution_secrets=true
+```
+
+The non-strict gate is allowed to warn when signing/store secrets are missing.
+The strict gate fails on missing secrets and should be green before Play
+Internal testing or TestFlight upload. The workflow writes a
+`mobile-distribution-readiness-report` artifact with only boolean secret
+presence, never secret values.
 
 Artifacts:
 
@@ -87,15 +111,20 @@ iOS / TestFlight:
 - `APP_STORE_CONNECT_KEY_ID`
 - `APP_STORE_CONNECT_ISSUER_ID`
 - `APP_STORE_CONNECT_API_KEY_P8`
-- Signing certificate and provisioning profile, or a Fastlane Match equivalent
+- `IOS_SIGNING_CERTIFICATE_BASE64`
+- `IOS_SIGNING_CERTIFICATE_PASSWORD`
+- `IOS_PROVISIONING_PROFILE_BASE64`
+- Or a Fastlane Match equivalent documented in the same strict gate report
 
 ## Release Checklist
 
 - [ ] Confirm final Android applicationId and iOS bundle identifier.
 - [ ] Confirm app display name, icon, splash, screenshots, and store category.
 - [ ] Run `python scripts/check_mobile_release_readiness.py`.
+- [ ] Run `python scripts/check_mobile_distribution_readiness.py --platform all`.
 - [ ] Run Android AAB workflow and keep the artifact.
 - [ ] Run iOS simulator CI workflow and keep the artifact.
+- [ ] Run `mobile-distribution-readiness.yml` with `require_distribution_secrets=true`.
 - [ ] Configure Android signing and Google Play internal testing upload.
 - [ ] Configure iOS signing and TestFlight upload.
 - [ ] Verify Supabase redirect URLs, Google login, deep links, and notification permissions.
@@ -111,7 +140,7 @@ iOS / TestFlight:
   needs Apple signing material and should be wired after the developer account
   values are confirmed.
 - If the full `lib/main.dart` mobile build fails in GitHub Actions because of
-  web-only imports, route the code split to Codex #1. Codex #2 should keep the
+  web-only imports, route the code split to Codex #1. Codex #1 should keep the
   workflow green by adding a mobile-safe target only after Claude Code confirms
   the product surface for the first app release.
 - Web-only features parked for the first mobile artifact: browser OGP sharing,
@@ -126,6 +155,7 @@ Claude Code changes into `codex-runtime`, `hooks`, `integration`,
 hooks are:
 
 - scheduled mobile build smoke after metadata/signing is stable,
+- strict distribution readiness report after signing/store secrets are present,
 - automatic issue update when `mobile-release-build.yml` fails,
 - release-tag workflow that publishes both platform artifacts from one tag,
 - mobile UAT task generation for the dedicated mobile instance.
