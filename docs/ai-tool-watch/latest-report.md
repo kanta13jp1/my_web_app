@@ -1,16 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-11T21:45:46Z`
-- Previous check: `2026-05-10T21:34:01Z`
+- Checked at: `2026-05-12T21:45:18Z`
+- Previous check: `2026-05-11T21:45:46Z`
 - Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.139 / May 11, 2026
+- `changed` Claude Code changelog: 2.1.140 / May 12, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `changed` Codex changelog: 2026-05-08 / Codex CLI 0.130.0 pre
+- `changed` Codex changelog: 2026-05-11 / Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Cursor changelog: 3.3 / May 7, 2026
+- `changed` Codex overview: AI Coding Partner from OpenAI
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -22,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.139 / May 11, 2026
+  - Latest signal: 2.1.140 / May 12, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -40,20 +40,22 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-08 / Codex CLI 0.130.0 pre
+  - Latest signal: 2026-05-11 / Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: ( #21642 , #21676 ) Windows sandbox setup now grants sandbox users access to the desktop runtime binary cache.
+  - Short signal: Also updated the Agent approvals & security and Sandbox docs so they explain more clearly how Auto-review relates to the sandbox boundary.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...
   - Short signal: Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.
-- **Codex overview** (HTTP 403)
+- **Codex overview** (HTTP 200)
   - URL: https://openai.com/codex/
-  - Latest signal: No title detected
-  - Keyword groups: none
+  - Latest signal: AI Coding Partner from OpenAI
+  - Keyword groups: schedule, codex-runtime, quality-cost
+  - Short signal: Designed for multi-agent workflows The Codex app is a command center for agentic coding.
+  - Short signal: With built-in worktrees and cloud environments, agents work in parallel across projects, completing weeks of work in days.
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
   - Latest signal: 3.3 / May 7, 2026
