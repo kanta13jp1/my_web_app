@@ -84,6 +84,41 @@ void main() {
     );
   });
 
+  test('searchCalendarEventsForDisplay matches title and description', () {
+    Map<String, dynamic> event(
+      String title,
+      String description,
+      DateTime start,
+    ) {
+      return {
+        'title': title,
+        'description': description,
+        'start_at': start.toIso8601String(),
+        'end_at': start.add(const Duration(hours: 1)).toIso8601String(),
+      };
+    }
+
+    final day = DateTime(2026, 5, 9);
+    final matches = searchCalendarEventsForDisplay(
+      [
+        event(
+          'Budget review',
+          'Revise forecast',
+          day.add(const Duration(hours: 9)),
+        ),
+        event('Dentist', 'Annual cleaning', day.add(const Duration(hours: 13))),
+        event(
+          'Planning',
+          'Weekly roadmap',
+          day.add(const Duration(hours: 10)),
+        ),
+      ],
+      'annual cleaning',
+    );
+
+    expect(matches.map((event) => event['title']), ['Dentist']);
+  });
+
   Widget testWidget() {
     return MaterialApp(
       home: CalendarEventsPage(supabaseClient: mockSupabaseClient),
@@ -113,6 +148,66 @@ void main() {
     expect(find.text('00:00'), findsOneWidget);
     expect(find.text('23:00'), findsOneWidget);
   });
+
+  testWidgets(
+    'CalendarEventsPage searches loaded events and jumps to result day',
+    (tester) async {
+      final today = DateTime.now();
+      final selectedDay = DateTime(today.year, today.month, today.day);
+      final tomorrow = selectedDay.add(const Duration(days: 1));
+      final budgetStart = DateTime(
+        selectedDay.year,
+        selectedDay.month,
+        selectedDay.day,
+        9,
+      );
+      final dentistStart = DateTime(
+        tomorrow.year,
+        tomorrow.month,
+        tomorrow.day,
+        13,
+      );
+      stubCalendarList([
+        {
+          'event_id': 'event-budget',
+          'title': 'Budget review',
+          'description': 'Revise forecast',
+          'start_at': budgetStart.toIso8601String(),
+          'end_at': budgetStart.add(const Duration(hours: 1)).toIso8601String(),
+          'all_day': false,
+          'color': '#4285f4',
+        },
+        {
+          'event_id': 'event-dentist',
+          'title': 'Dentist',
+          'description': 'Annual cleaning',
+          'start_at': dentistStart.toIso8601String(),
+          'end_at':
+              dentistStart.add(const Duration(hours: 1)).toIso8601String(),
+          'all_day': false,
+          'color': '#34a853',
+        },
+      ]);
+
+      await tester.pumpWidget(testWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Budget review'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('calendar_events_search_button')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'cleaning');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dentist'), findsOneWidget);
+
+      await tester.tap(find.text('Dentist'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dentist'), findsOneWidget);
+      expect(find.text('Budget review'), findsNothing);
+    },
+  );
 
   testWidgets('event tap opens detail sheet and edit saves calendar.update', (
     tester,
