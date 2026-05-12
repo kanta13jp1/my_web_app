@@ -15,6 +15,11 @@ import {
   postTweet,
   uploadMediaFromUrl,
 } from "../_shared/x-client.ts";
+import {
+  externalFetch,
+  externalFetchErrorPayload,
+  isExternalFetchError,
+} from "../_shared/external_fetch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +48,14 @@ async function getUserId(req: Request): Promise<string | null> {
     data: { user },
   } = await c.auth.getUser();
   return user?.id ?? null;
+}
+
+function isServiceRoleRequest(req: Request): boolean {
+  const token = (req.headers.get("Authorization") ?? "").replace(
+    /^Bearer\s+/i,
+    "",
+  ).trim();
+  return Boolean(SERVICE_ROLE_KEY && token && token === SERVICE_ROLE_KEY);
 }
 
 async function listItems(
@@ -96,6 +109,841 @@ function asString(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function asStringList(value: unknown, fallback: string[]): string[] {
+  return Array.isArray(value)
+    ? value.map((item) => String(item).trim()).filter(Boolean)
+    : fallback;
+}
+
+function normalizeMaintenanceScope(value: unknown): "system" | "feature" {
+  return asString(value).toLowerCase() === "feature" ? "feature" : "system";
+}
+
+function normalizeMaintenanceSeverity(
+  value: unknown,
+): "info" | "warning" | "critical" {
+  const normalized = asString(value, "info").toLowerCase();
+  if (normalized === "critical" || normalized === "warning") return normalized;
+  return "info";
+}
+
+function normalizeMaintenanceTimestamp(value: unknown, field: string): string {
+  const raw = asString(value);
+  const parsed = raw ? new Date(raw) : null;
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    throw new Error(`${field} must be a valid ISO timestamp`);
+  }
+  return parsed.toISOString();
+}
+
+function normalizeMaintenanceNoticeDays(value: unknown): number {
+  const raw = typeof value === "number" ? value : Number(value ?? 3);
+  if (!Number.isFinite(raw)) return 3;
+  return Math.max(0, Math.min(30, Math.round(raw)));
+}
+
+function maintenanceFeatureList(value: unknown): string[] {
+  return asStringList(value, [])
+    .map((item) => item.replace(/^\/+/, "").toLowerCase())
+    .filter(Boolean);
+}
+
+function maintenancePayload(
+  body: Record<string, unknown>,
+  userId: string | null,
+  partial = false,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (!partial || body.scope !== undefined) {
+    payload.scope = normalizeMaintenanceScope(body.scope);
+  }
+  if (!partial || body.affected_features !== undefined) {
+    payload.affected_features = maintenanceFeatureList(body.affected_features);
+  }
+  if (!partial || body.starts_at !== undefined) {
+    payload.starts_at = normalizeMaintenanceTimestamp(
+      body.starts_at,
+      "starts_at",
+    );
+  }
+  if (!partial || body.ends_at !== undefined) {
+    payload.ends_at = normalizeMaintenanceTimestamp(body.ends_at, "ends_at");
+  }
+  if (!partial || body.notice_days_before !== undefined) {
+    payload.notice_days_before = normalizeMaintenanceNoticeDays(
+      body.notice_days_before,
+    );
+  }
+  if (!partial || body.message_ja !== undefined) {
+    const message = asString(body.message_ja);
+    if (!message) throw new Error("message_ja is required");
+    payload.message_ja = message;
+  }
+  if (body.message_en !== undefined) {
+    payload.message_en = asString(body.message_en) || null;
+  }
+  if (!partial || body.severity !== undefined) {
+    payload.severity = normalizeMaintenanceSeverity(body.severity);
+  }
+  if (!partial && userId) payload.created_by = userId;
+  const scope = payload.scope ?? body.scope;
+  const features = payload.affected_features ?? body.affected_features;
+  if (scope === "feature" && maintenanceFeatureList(features).length === 0) {
+    throw new Error("affected_features is required for feature scope");
+  }
+  const starts = payload.starts_at ? new Date(String(payload.starts_at)) : null;
+  const ends = payload.ends_at ? new Date(String(payload.ends_at)) : null;
+  if (starts && ends && ends <= starts) {
+    throw new Error("ends_at must be after starts_at");
+  }
+  return payload;
+}
+
+function maintenanceWindowVisible(
+  row: Record<string, unknown>,
+  now: Date,
+): boolean {
+  const startsAt = new Date(asString(row.starts_at));
+  const endsAt = new Date(asString(row.ends_at));
+  if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
+    return false;
+  }
+  const noticeDays = normalizeMaintenanceNoticeDays(row.notice_days_before);
+  const visibleFrom = new Date(startsAt.getTime() - noticeDays * 86400000);
+  return now >= visibleFrom && now < endsAt;
+}
+
+function billingPriceId(tier: string): string {
+  const normalized = tier === "team" ? "TEAM" : "PRO";
+  return Deno.env.get(`STRIPE_${normalized}_PRICE_ID`) ??
+    Deno.env.get(`STRIPE_PRICE_${normalized}`) ??
+    "";
+}
+
+function stripeSecretKey(): string {
+  return Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+}
+
+function normalizeCheckoutTier(value: unknown): "pro" | "team" {
+  return String(value ?? "pro").toLowerCase() === "team" ? "team" : "pro";
+}
+
+function currentBillingPeriodStart(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    .toISOString()
+    .slice(0, 10);
+}
+
+function billingReturnUrl(value: unknown, fallbackPath: string): string {
+  const raw = asString(value);
+  if (raw) {
+    try {
+      const url = new URL(raw);
+      if (url.protocol === "http:" || url.protocol === "https:") {
+        return url.toString();
+      }
+    } catch {
+      // Fall through to the deployment fallback.
+    }
+  }
+  const base = Deno.env.get("PUBLIC_SITE_URL") ??
+    Deno.env.get("SITE_URL") ??
+    "https://my-web-app-b6f7f4.web.app";
+  return new URL(fallbackPath, base).toString();
+}
+
+function withBillingParam(url: string, value: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set("billing", value);
+  return parsed.toString();
+}
+
+async function stripePostForm(
+  path: string,
+  params: Record<string, string>,
+): Promise<Record<string, unknown>> {
+  const key = stripeSecretKey();
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  const response = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams(params),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = asRecord(data.error) ?? {};
+    throw new Error(
+      asString(err.message) || `Stripe API failed: ${response.status}`,
+    );
+  }
+  return asRecord(data) ?? {};
+}
+
+async function getBillingSubscription(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await admin
+    .from("billing_subscriptions")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return asRecord(data);
+}
+
+async function getOrCreateStripeCustomer(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<string> {
+  const current = await getBillingSubscription(admin, userId);
+  const existingCustomer = asString(current?.stripe_customer_id);
+  if (existingCustomer) return existingCustomer;
+
+  const { data: userData, error: userError } = await admin.auth.admin
+    .getUserById(userId);
+  if (userError) throw new Error(userError.message);
+
+  const customer = await stripePostForm("/customers", {
+    email: userData.user?.email ?? "",
+    "metadata[user_id]": userId,
+  });
+  const customerId = asString(customer.id);
+  if (!customerId) throw new Error("Stripe customer id missing");
+
+  const { error } = await admin.from("billing_subscriptions").upsert({
+    user_id: userId,
+    stripe_customer_id: customerId,
+    tier: asString(current?.tier, "free"),
+    status: asString(current?.status, "active"),
+    metadata: { ...(asRecord(current?.metadata) ?? {}), source: "checkout" },
+  }, { onConflict: "user_id" });
+  if (error) throw new Error(error.message);
+  return customerId;
+}
+
+function defaultNewsSignalFeeds(): Array<Record<string, string>> {
+  return [
+    {
+      title: "NHK NEWS WEB",
+      url: "https://www3.nhk.or.jp/rss/news/cat0.xml",
+      category: "総合",
+    },
+    {
+      title: "ITmedia NEWS",
+      url: "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml",
+      category: "IT",
+    },
+    {
+      title: "ITmedia AI+",
+      url: "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml",
+      category: "AI",
+    },
+    {
+      title: "CNET Japan",
+      url: "http://feed.japan.cnet.com/rss/index.rdf",
+      category: "IT",
+    },
+  ];
+}
+
+async function fetchNewsSignalsForDraft(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const url = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/tools-hub`;
+  const feeds = Array.isArray(body.feeds) && body.feeds.length > 0
+    ? body.feeds
+    : defaultNewsSignalFeeds();
+  const res = await externalFetch(
+    "tools-hub.rss.fetch_latest",
+    url,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(SUPABASE_ANON_KEY ? { apikey: SUPABASE_ANON_KEY } : {}),
+        ...(SERVICE_ROLE_KEY
+          ? { Authorization: `Bearer ${SERVICE_ROLE_KEY}` }
+          : {}),
+      },
+      body: JSON.stringify({
+        action: "rss.fetch_latest",
+        feeds,
+        per_feed_limit: Number(body.per_feed_limit ?? 10),
+        limit: Number(body.limit ?? 80),
+        signal_limit: Number(body.signal_limit ?? 8),
+      }),
+    },
+    { traceId: "schedule-hub.blog.news_signal_draft" },
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`tools-hub rss.fetch_latest failed: ${res.status}`);
+  }
+  return asRecord(data) ?? {};
+}
+
+function newsSignalTitle(signal: Record<string, unknown>): string {
+  return asString(signal.title, "(無題)");
+}
+
+function shortenNewsDraftTitle(value: string, maxLength = 80): string {
+  return value.length <= maxLength
+    ? value
+    : `${value.slice(0, Math.max(1, maxLength - 3))}...`;
+}
+
+function buildNewsSignalDraftMarkdown(
+  signals: Record<string, unknown>[],
+  fetchedAt: string,
+): string {
+  const lead = signals[0] ?? {};
+  const leadSummary = asString(lead.summary);
+  const lines = [
+    `# ${newsSignalTitle(lead)}`,
+    "",
+    "> RSSニュースをAI外部脳の素材として取り込み、重要シグナルを抽出した自動下書きです。",
+    "",
+    `- 取得時刻: ${fetchedAt}`,
+    `- 主要カテゴリ: ${asString(lead.category, "総合")}`,
+    `- 初期信頼度: ${asString(lead.confidence, "unknown")}`,
+    "",
+    "## 要点",
+    "",
+    leadSummary ? `- ${leadSummary}` : "- 本文要約は公開前に追記する。",
+    "",
+    "## 注目シグナル",
+    "",
+  ];
+  for (const signal of signals) {
+    lines.push(
+      `### ${newsSignalTitle(signal)}`,
+      "",
+      `- スコア: ${String(signal.signal_score ?? 0)}`,
+      `- 出典: ${asString(signal.source, "RSS")}`,
+      `- URL: ${asString(signal.url)}`,
+      `- なぜ重要か: ${asString(signal.why_it_matters, "要確認")}`,
+      `- 検証メモ: ${asString(signal.verification_warning, "一次情報を確認")}`,
+      "",
+    );
+  }
+  lines.push(
+    "## 公開前チェック",
+    "",
+    "- 一次情報と公開日時を確認する",
+    "- 固有名詞、金額、引用元を確認する",
+    "- 投資・医療・法律など高リスク領域は断定表現を避ける",
+    "- 関連する既存メモやブログ記事へリンクする",
+    "",
+    "## 次の自動化",
+    "",
+    "- raw/news に原文を保存",
+    "- wiki/sources に要約を保存",
+    "- blog_posts の draft を人間レビュー後に公開",
+  );
+  return lines.join("\n");
+}
+
+function newsMemoryDate(fetchedAt: string): string {
+  return (/^\d{4}-\d{2}-\d{2}/.exec(fetchedAt)?.[0]) ??
+    new Date().toISOString().slice(0, 10);
+}
+
+function newsMemorySlug(signal: Record<string, unknown>): string {
+  const key = asString(signal.id) ||
+    asString(signal.cluster_key) ||
+    asString(signal.url) ||
+    newsSignalTitle(signal);
+  const slug = key
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+  return slug || "news-signal";
+}
+
+function newsMemorySnippet(content: string): string {
+  return content.replace(/\s+/g, " ").trim().slice(0, 280);
+}
+
+function buildRawNewsMemoryContent(
+  signal: Record<string, unknown>,
+  fetchedAt: string,
+): string {
+  return [
+    `# ${newsSignalTitle(signal)}`,
+    "",
+    `Source: ${asString(signal.url)}`,
+    `Fetched: ${fetchedAt}`,
+    `Published: ${asString(signal.published_at, "unknown")}`,
+    `RSS Source: ${asString(signal.source, "RSS")}`,
+    `Category: ${asString(signal.category, "general")}`,
+    "",
+    "## Raw Summary",
+    "",
+    asString(signal.summary, "No summary supplied by RSS feed."),
+    "",
+    "## Signal Metadata",
+    "",
+    `- score: ${String(signal.signal_score ?? 0)}`,
+    `- confidence: ${asString(signal.confidence, "unknown")}`,
+    `- cluster_key: ${asString(signal.cluster_key)}`,
+  ].join("\n");
+}
+
+function buildWikiNewsSourceContent(
+  signal: Record<string, unknown>,
+  fetchedAt: string,
+): string {
+  return [
+    `# ${newsSignalTitle(signal)}`,
+    "",
+    "## Source",
+    "",
+    `- URL: ${asString(signal.url)}`,
+    `- RSS: ${asString(signal.source, "RSS")}`,
+    `- fetched_at: ${fetchedAt}`,
+    "",
+    "## Summary",
+    "",
+    asString(signal.summary, "公開前に本文要約を追記する。"),
+    "",
+    "## Why It Matters",
+    "",
+    asString(signal.why_it_matters, "要確認"),
+    "",
+    "## Verification",
+    "",
+    asString(
+      signal.verification_warning,
+      "一次情報、日時、固有名詞を確認する。",
+    ),
+    "",
+    "## Links",
+    "",
+    "- [[blog-news-automation]]",
+    "- [[ai-external-brain]]",
+  ].join("\n");
+}
+
+async function sha256Hex(content: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(content),
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function memoryIndexRow(
+  filePath: string,
+  title: string,
+  content: string,
+  source: string,
+  metadata: Record<string, unknown>,
+) {
+  return {
+    file_path: filePath,
+    title,
+    content,
+    snippet: newsMemorySnippet(content),
+    content_hash: await sha256Hex(content),
+    source,
+    metadata,
+  };
+}
+
+async function upsertExternalBrainNewsSignals(
+  admin: SupabaseClient,
+  signals: Record<string, unknown>[],
+  fetchedAt: string,
+  context: {
+    dedupeKey: string;
+    postId: string;
+    userId: string | null;
+    targetPlatforms: string[];
+    tags: string[];
+  },
+) {
+  const date = newsMemoryDate(fetchedAt);
+  const rows = [];
+  for (const signal of signals.slice(0, 8)) {
+    const slug = newsMemorySlug(signal);
+    const baseMetadata = {
+      kind: "news_signal",
+      generated_by: "schedule-hub.blog.news_signal_draft",
+      fetched_at: fetchedAt,
+      post_id: context.postId,
+      dedupe_key: context.dedupeKey,
+      user_id: context.userId,
+      url: asString(signal.url),
+      source_name: asString(signal.source, "RSS"),
+      category: asString(signal.category, "general"),
+      signal_score: Number(signal.signal_score ?? 0),
+      confidence: asString(signal.confidence, "unknown"),
+      target_platforms: context.targetPlatforms,
+      tags: context.tags,
+    };
+    const rawContent = buildRawNewsMemoryContent(signal, fetchedAt);
+    rows.push(
+      await memoryIndexRow(
+        `raw/news/${date}/${slug}.md`,
+        `raw: ${newsSignalTitle(signal)}`,
+        rawContent,
+        "ai_external_brain_raw_news",
+        { ...baseMetadata, layer: "raw" },
+      ),
+    );
+    const wikiContent = buildWikiNewsSourceContent(signal, fetchedAt);
+    rows.push(
+      await memoryIndexRow(
+        `wiki/sources/news/${date}/${slug}.md`,
+        `wiki: ${newsSignalTitle(signal)}`,
+        wikiContent,
+        "ai_external_brain_wiki_source",
+        { ...baseMetadata, layer: "wiki" },
+      ),
+    );
+  }
+  if (rows.length === 0) {
+    return { success: true, upserted: 0, file_paths: [] };
+  }
+  const { data, error } = await admin
+    .from("memory_index")
+    .upsert(rows, { onConflict: "file_path" })
+    .select("file_path");
+  if (error) throw new Error(error.message);
+  const filePaths = (data ?? [])
+    .map((row: Record<string, unknown>) => asString(row.file_path))
+    .filter(Boolean);
+  return {
+    success: true,
+    upserted: filePaths.length || rows.length,
+    file_paths: filePaths.length ? filePaths : rows.map((row) => row.file_path),
+  };
+}
+
+type NewsLintSeverity = "info" | "warning" | "review_required" | "error";
+
+type NewsLintFinding = {
+  severity: NewsLintSeverity;
+  code: string;
+  file_path: string;
+  title: string;
+  message: string;
+  post_id?: string;
+  url?: string;
+};
+
+function newsRiskFlags(text: string): string[] {
+  const lower = text.toLowerCase();
+  const groups: Array<[string, string[]]> = [
+    ["finance", [
+      "投資",
+      "利益",
+      "市場",
+      "株",
+      "暗号資産",
+      "仮想通貨",
+      "トレード",
+      "trading",
+      "crypto",
+      "market",
+      "profit",
+      "price",
+    ]],
+    ["election", ["選挙", "投票", "候補", "政党", "議員", "election", "vote"]],
+    ["medical", ["医療", "病院", "薬", "治療", "medical", "medicine"]],
+    ["legal", ["法律", "規制", "訴訟", "判決", "legal", "lawsuit"]],
+    ["disaster", ["地震", "災害", "避難", "台風", "disaster", "earthquake"]],
+    ["security", [
+      "脆弱性",
+      "漏洩",
+      "攻撃",
+      "security",
+      "breach",
+      "vulnerability",
+    ]],
+  ];
+  return groups
+    .filter(([, keywords]) =>
+      keywords.some((keyword) => lower.includes(keyword.toLowerCase()))
+    )
+    .map(([name]) => name);
+}
+
+function sourceUrlFromNewsMemory(
+  content: string,
+  metadata: Record<string, unknown>,
+): string {
+  const fromMeta = asString(metadata.url);
+  if (fromMeta) return fromMeta;
+  const sourceMatch = content.match(/^Source:\s*(https?:\/\/\S+)/im);
+  if (sourceMatch) return sourceMatch[1].trim();
+  const urlMatch = content.match(/^-\s*URL:\s*(https?:\/\/\S+)/im);
+  return urlMatch?.[1]?.trim() ?? "";
+}
+
+function fetchedAtFromNewsMemory(
+  row: Record<string, unknown>,
+  metadata: Record<string, unknown>,
+): string {
+  return asString(metadata.fetched_at) || asString(row.updated_at) ||
+    new Date().toISOString();
+}
+
+function lintBlock(
+  summary: Record<string, unknown>,
+  findings: NewsLintFinding[],
+) {
+  const lines = [
+    "NEWS_SIGNAL_LINT_START",
+    `checked_at=${summary.checked_at}`,
+    `status=${summary.status}`,
+    `findings=${summary.finding_count}`,
+  ];
+  for (const finding of findings.slice(0, 8)) {
+    lines.push(
+      `- [${finding.severity}] ${finding.code}: ${finding.message} (${finding.file_path})`,
+    );
+  }
+  lines.push("NEWS_SIGNAL_LINT_END");
+  return lines.join("\n");
+}
+
+function replaceLintBlock(notes: string, block: string): string {
+  const cleaned = notes
+    .replace(/NEWS_SIGNAL_LINT_START[\s\S]*?NEWS_SIGNAL_LINT_END/g, "")
+    .trim();
+  return [cleaned, block].filter(Boolean).join("\n\n");
+}
+
+async function checkNewsUrl(url: string): Promise<boolean> {
+  if (!/^https?:\/\//i.test(url)) return false;
+  try {
+    const head = await externalFetch("news-source", url, {
+      method: "HEAD",
+      headers: {
+        "User-Agent":
+          "my-web-app-news-lint/1.0 (+https://my-web-app-b67f4.web.app)",
+      },
+    }, {
+      retries: 1,
+      timeoutMs: 7_000,
+      traceId: "schedule-hub.blog.news_signal_lint.head",
+    });
+    if (head.ok || head.status === 405 || head.status === 403) return true;
+    const get = await externalFetch("news-source", url, {
+      method: "GET",
+      headers: {
+        "User-Agent":
+          "my-web-app-news-lint/1.0 (+https://my-web-app-b67f4.web.app)",
+      },
+    }, {
+      retries: 1,
+      timeoutMs: 7_000,
+      traceId: "schedule-hub.blog.news_signal_lint.get",
+    });
+    return get.ok || get.status === 403;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function lintExternalBrainNewsSignals(
+  admin: SupabaseClient,
+  body: Record<string, unknown>,
+) {
+  const limit = clampNumber(body.limit, 80, 1, 300);
+  const maxAgeDays = clampNumber(body.max_age_days, 3, 1, 30);
+  const verifyLinks = Boolean(body.verify_links ?? false);
+  const updatePosts = body.update_posts !== false;
+  const checkedAt = new Date().toISOString();
+  const { data, error } = await admin
+    .from("memory_index")
+    .select("file_path,title,content,source,metadata,updated_at")
+    .in("source", [
+      "ai_external_brain_raw_news",
+      "ai_external_brain_wiki_source",
+    ])
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+
+  const rows = ((data ?? []) as Array<Record<string, unknown>>)
+    .filter((row) => asString(row.file_path));
+  const findings: NewsLintFinding[] = [];
+  const byKey = new Map<string, { raw: boolean; wiki: boolean }>();
+  const postFindings = new Map<string, NewsLintFinding[]>();
+  const linkChecks: Array<Promise<void>> = [];
+
+  for (const row of rows) {
+    const filePath = asString(row.file_path);
+    const title = asString(row.title, filePath);
+    const content = asString(row.content);
+    const metadata = asRecord(row.metadata) ?? {};
+    const postId = asString(metadata.post_id);
+    const url = sourceUrlFromNewsMemory(content, metadata);
+    const key = asString(metadata.dedupe_key) || asString(metadata.url) ||
+      filePath.replace(/^(raw\/news|wiki\/sources\/news)\//, "");
+    const pair = byKey.get(key) ?? { raw: false, wiki: false };
+    if (filePath.startsWith("raw/news/")) pair.raw = true;
+    if (filePath.startsWith("wiki/sources/news/")) pair.wiki = true;
+    byKey.set(key, pair);
+
+    const addFinding = (
+      severity: NewsLintSeverity,
+      code: string,
+      message: string,
+      targetUrl = url,
+    ) => {
+      const finding: NewsLintFinding = {
+        severity,
+        code,
+        file_path: filePath,
+        title,
+        message,
+        post_id: postId || undefined,
+        url: targetUrl || undefined,
+      };
+      findings.push(finding);
+      if (postId) {
+        postFindings.set(postId, [
+          ...(postFindings.get(postId) ?? []),
+          finding,
+        ]);
+      }
+    };
+
+    if (!url) {
+      addFinding("error", "missing_source_url", "Source URL is missing.");
+    } else if (!/^https?:\/\//i.test(url)) {
+      addFinding("error", "invalid_source_url", "Source URL is not http(s).");
+    }
+    if (
+      content.includes("公開前に本文要約を追記") ||
+      content.includes("No summary supplied")
+    ) {
+      addFinding("warning", "summary_stub", "Summary is still a stub.");
+    }
+    const risks = newsRiskFlags(`${title}\n${content}`);
+    if (risks.length > 0) {
+      addFinding(
+        "review_required",
+        "high_risk_topic",
+        `Human review required before publish: ${risks.join(",")}.`,
+      );
+    }
+    const fetchedAt = Date.parse(fetchedAtFromNewsMemory(row, metadata));
+    if (Number.isFinite(fetchedAt)) {
+      const ageDays = (Date.now() - fetchedAt) / 86_400_000;
+      if (ageDays > maxAgeDays) {
+        addFinding(
+          "warning",
+          "stale_source",
+          `Source is older than ${maxAgeDays} days.`,
+        );
+      }
+    }
+    if (verifyLinks && url && linkChecks.length < 20) {
+      linkChecks.push((async () => {
+        if (!(await checkNewsUrl(url))) {
+          addFinding(
+            "error",
+            "source_link_unreachable",
+            "Source URL did not respond.",
+          );
+        }
+      })());
+    }
+  }
+
+  await Promise.all(linkChecks);
+  for (const [key, pair] of byKey.entries()) {
+    if (!pair.raw || !pair.wiki) {
+      findings.push({
+        severity: "warning",
+        code: "raw_wiki_pair_incomplete",
+        file_path: key,
+        title: key,
+        message: "External-brain raw/wiki pair is incomplete.",
+      });
+    }
+  }
+
+  const blocking = findings.filter((finding) =>
+    finding.severity === "error" || finding.severity === "review_required"
+  );
+  const summary = {
+    checked_at: checkedAt,
+    status: blocking.length > 0 ? "review_required" : "pass",
+    row_count: rows.length,
+    finding_count: findings.length,
+    blocking_count: blocking.length,
+  };
+
+  let updatedPosts = 0;
+  if (updatePosts && postFindings.size > 0) {
+    const postIds = [...postFindings.keys()].filter(Boolean);
+    const { data: posts } = await admin
+      .from("blog_posts")
+      .select("id,notes,status")
+      .in("id", postIds);
+    for (const rawPost of posts ?? []) {
+      const post = rawPost as Record<string, unknown>;
+      const postId = asString(post.id);
+      const localFindings = postFindings.get(postId) ?? [];
+      const nextNotes = replaceLintBlock(
+        asString(post.notes),
+        lintBlock(summary, localFindings),
+      );
+      const shouldHold = localFindings.some((finding) =>
+        finding.severity === "error" ||
+        finding.severity === "review_required"
+      );
+      const update: Record<string, unknown> = { notes: nextNotes };
+      if (shouldHold && asString(post.status) === "ready") {
+        update.status = "draft";
+      }
+      const { error: updateErr } = await admin
+        .from("blog_posts")
+        .update(update)
+        .eq("id", postId);
+      if (!updateErr) updatedPosts++;
+    }
+  }
+
+  await admin.from("hub_data").insert({
+    source: "blog_news_signal_lint",
+    metadata: {
+      ...summary,
+      updated_posts: updatedPosts,
+      verify_links: verifyLinks,
+    },
+  });
+
+  return {
+    success: blocking.length === 0,
+    ...summary,
+    updated_posts: updatedPosts,
+    findings,
+  };
+}
+
 function normalizeNotionId(value: unknown): string {
   const raw = asString(value);
   if (!raw) return "";
@@ -137,18 +985,65 @@ function notionHeaders(token: string): Record<string, string> {
   };
 }
 
+function mergeHeaders(
+  base: Record<string, string>,
+  extra: HeadersInit | undefined,
+): HeadersInit {
+  return { ...base, ...Object.fromEntries(new Headers(extra ?? {}).entries()) };
+}
+
+async function qiitaFetch(
+  path: string,
+  token: string,
+  init: RequestInit = {},
+  traceId = "schedule-hub.qiita",
+): Promise<Response> {
+  const url = path.startsWith("http")
+    ? path
+    : `https://qiita.com/api/v2${path}`;
+  return await externalFetch(
+    "qiita",
+    url,
+    {
+      ...init,
+      headers: mergeHeaders({ Authorization: `Bearer ${token}` }, init.headers),
+    },
+    { traceId },
+  );
+}
+
+async function devtoFetch(
+  path: string,
+  apiKey: string,
+  init: RequestInit = {},
+  traceId = "schedule-hub.devto",
+): Promise<Response> {
+  const url = path.startsWith("http") ? path : `https://dev.to/api${path}`;
+  return await externalFetch(
+    "dev.to",
+    url,
+    {
+      ...init,
+      headers: mergeHeaders({ "api-key": apiKey }, init.headers),
+    },
+    { traceId },
+  );
+}
+
 async function notionFetch(
   token: string,
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  return await fetch(`https://api.notion.com/v1${path}`, {
-    ...init,
-    headers: {
-      ...notionHeaders(token),
-      ...(init.headers ?? {}),
+  return await externalFetch(
+    "notion",
+    `https://api.notion.com/v1${path}`,
+    {
+      ...init,
+      headers: mergeHeaders(notionHeaders(token), init.headers),
     },
-  });
+    { traceId: `schedule-hub.notion${path}` },
+  );
 }
 
 function notionRichText(content: string): Array<Record<string, unknown>> {
@@ -199,7 +1094,12 @@ async function listNotionChildren(
     );
     url.searchParams.set("page_size", String(pageSize));
     if (cursor) url.searchParams.set("start_cursor", cursor);
-    const resp = await fetch(url, { headers: notionHeaders(token) });
+    const resp = await externalFetch(
+      "notion",
+      url,
+      { headers: notionHeaders(token) },
+      { traceId: "schedule-hub.notion.children" },
+    );
     if (!resp.ok) {
       const detail = await resp.text().catch(() => "");
       throw new Error(
@@ -671,6 +1571,8 @@ serve(async (req: Request) => {
       "health.check",
       "blog.auto_publish",
       "blog.create",
+      "blog.recent_posted", // Win版#132 part 124: tech-blog-tracker page 用 public read
+      "blog.backfill_from_apis", // Win版#132 part 124: 過去 dev.to + Qiita 投稿を hub_data に backfill
       "reminders.study",
       "notion.sync_wbs",
       "notion.preflight_wbs",
@@ -679,15 +1581,177 @@ serve(async (req: Request) => {
       "notion.fix_wbs_all_instances",
       "wbs.unblock_dependents",
       "x.post_with_media",
+      "maintenance.list_active",
     ];
+    const serviceRoleRequest = isServiceRoleRequest(req);
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
-      userId = await getUserId(req);
-      if (!userId) return json({ error: "Unauthorized" }, 401);
+      if (!serviceRoleRequest) {
+        userId = await getUserId(req);
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+      }
     }
 
     switch (action) {
+      case "billing.status": {
+        const billing = await getBillingSubscription(admin, userId!);
+        const periodStart = currentBillingPeriodStart();
+        const { data: usage, error: usageError } = await admin
+          .from("billing_usage_counters")
+          .select("*")
+          .eq("user_id", userId!)
+          .eq("period_start", periodStart)
+          .maybeSingle();
+        if (usageError) throw new Error(usageError.message);
+        return json({
+          success: true,
+          billing: billing ?? {
+            user_id: userId,
+            tier: "free",
+            status: "active",
+            current_period_end: null,
+            cancel_at_period_end: false,
+          },
+          usage: usage ?? {
+            user_id: userId,
+            period_start: periodStart,
+            ai_query_count: 0,
+            ef_call_count: 0,
+          },
+        });
+      }
+
+      case "billing.create_checkout_session": {
+        const tier = normalizeCheckoutTier(body.tier);
+        const priceId = billingPriceId(tier);
+        if (!priceId) {
+          return json({
+            error: `STRIPE_${tier.toUpperCase()}_PRICE_ID not configured`,
+          }, 503);
+        }
+        const customerId = await getOrCreateStripeCustomer(admin, userId!);
+        const returnUrl = billingReturnUrl(
+          body.return_url,
+          "/subscription-billing",
+        );
+        const session = await stripePostForm("/checkout/sessions", {
+          mode: "subscription",
+          customer: customerId,
+          "line_items[0][price]": priceId,
+          "line_items[0][quantity]": "1",
+          success_url: withBillingParam(returnUrl, "success"),
+          cancel_url: withBillingParam(returnUrl, "cancel"),
+          allow_promotion_codes: "true",
+          "metadata[user_id]": userId!,
+          "metadata[tier]": tier,
+          "subscription_data[metadata][user_id]": userId!,
+          "subscription_data[metadata][tier]": tier,
+        });
+        return json({
+          success: true,
+          id: session.id,
+          checkout_url: session.url,
+        });
+      }
+
+      case "billing.create_portal_session": {
+        const customerId = await getOrCreateStripeCustomer(admin, userId!);
+        const returnUrl = billingReturnUrl(
+          body.return_url,
+          "/subscription-billing",
+        );
+        const session = await stripePostForm("/billing_portal/sessions", {
+          customer: customerId,
+          return_url: returnUrl,
+        });
+        return json({
+          success: true,
+          id: session.id,
+          portal_url: session.url,
+        });
+      }
+
       // ─── Digest ───────────────────────────────────────────────────────────────
+      case "maintenance.list_active": {
+        const now = new Date(asString(body.now) || new Date().toISOString());
+        if (Number.isNaN(now.getTime())) {
+          return json(
+            { success: false, error: "now must be ISO timestamp" },
+            400,
+          );
+        }
+        const { data, error } = await admin
+          .from("maintenance_windows")
+          .select("*")
+          .gt("ends_at", now.toISOString())
+          .order("starts_at", { ascending: true })
+          .limit(50);
+        if (error) throw new Error(error.message);
+        const windows = (data ?? [])
+          .map((row) => asRecord(row) ?? {})
+          .filter((row) => maintenanceWindowVisible(row, now))
+          .map((row) => {
+            const startsAt = new Date(asString(row.starts_at));
+            const noticeDays = normalizeMaintenanceNoticeDays(
+              row.notice_days_before,
+            );
+            return {
+              ...row,
+              banner_visible_from: new Date(
+                startsAt.getTime() - noticeDays * 86400000,
+              ).toISOString(),
+              active: startsAt <= now,
+            };
+          });
+        return json({ success: true, windows });
+      }
+
+      case "maintenance.list": {
+        const { data, error } = await admin
+          .from("maintenance_windows")
+          .select("*")
+          .order("starts_at", { ascending: false })
+          .limit(100);
+        if (error) throw new Error(error.message);
+        return json({ success: true, windows: data ?? [] });
+      }
+
+      case "maintenance.create": {
+        const payload = maintenancePayload(body, userId);
+        const { data, error } = await admin
+          .from("maintenance_windows")
+          .insert(payload)
+          .select("*")
+          .single();
+        if (error) throw new Error(error.message);
+        return json({ success: true, window: data });
+      }
+
+      case "maintenance.update": {
+        const id = asString(body.id);
+        if (!id) return json({ success: false, error: "id required" }, 400);
+        const payload = maintenancePayload(body, userId, true);
+        const { data, error } = await admin
+          .from("maintenance_windows")
+          .update(payload)
+          .eq("id", id)
+          .select("*")
+          .single();
+        if (error) throw new Error(error.message);
+        return json({ success: true, window: data });
+      }
+
+      case "maintenance.delete": {
+        const id = asString(body.id);
+        if (!id) return json({ success: false, error: "id required" }, 400);
+        const { error } = await admin
+          .from("maintenance_windows")
+          .delete()
+          .eq("id", id);
+        if (error) throw new Error(error.message);
+        return json({ success: true });
+      }
+
       case "digest.run": {
         const today = new Date().toISOString().split("T")[0];
         const [usersRes, newFrRes, openFrRes, topFrRes, achievementsRes] =
@@ -937,10 +2001,9 @@ serve(async (req: Request) => {
         const results: Record<string, unknown> = {};
 
         if (qiitaToken && body.platform === "qiita") {
-          const qr = await fetch("https://qiita.com/api/v2/items", {
+          const qr = await qiitaFetch("/items", qiitaToken, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${qiitaToken}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -951,15 +2014,14 @@ serve(async (req: Request) => {
               })),
               private: false,
             }),
-          });
+          }, "schedule-hub.blog.publish.qiita");
           results.qiita = { ok: qr.ok, status: qr.status };
         }
 
         if (devtoKey && body.platform === "devto") {
-          const dr = await fetch("https://dev.to/api/articles", {
+          const dr = await devtoFetch("/articles", devtoKey, {
             method: "POST",
             headers: {
-              "api-key": devtoKey,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -970,7 +2032,7 @@ serve(async (req: Request) => {
                 tags: body.tags ?? [],
               },
             }),
-          });
+          }, "schedule-hub.blog.publish.devto");
           results.devto = { ok: dr.ok, status: dr.status };
         }
 
@@ -1008,10 +2070,9 @@ serve(async (req: Request) => {
             const tagObjects = rawTags.slice(0, 5).map((t: string) => ({
               name: t.slice(0, 20),
             }));
-            const qr = await fetch("https://qiita.com/api/v2/items", {
+            const qr = await qiitaFetch("/items", qiitaToken, {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${qiitaToken}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -1023,7 +2084,7 @@ serve(async (req: Request) => {
                 private: false,
                 tweet: false,
               }),
-            });
+            }, "schedule-hub.blog.auto_publish.qiita");
             if (qr.ok) {
               const qd = await qr.json() as { url: string; id: string };
               results.qiita = { ok: true, url: qd.url };
@@ -1032,7 +2093,9 @@ serve(async (req: Request) => {
               results.qiita = { ok: false, error: `${qr.status}: ${errText}` };
             }
           } catch (e) {
-            results.qiita = { ok: false, error: String(e) };
+            results.qiita = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
         } else if (platforms.includes("qiita")) {
           results.qiita = { ok: false, error: "QIITA_ACCESS_TOKEN not set" };
@@ -1043,10 +2106,9 @@ serve(async (req: Request) => {
             const cleanTags = rawTags.slice(0, 4).map((t: string) =>
               t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
             ).filter((t: string) => t.length > 0);
-            const dr = await fetch("https://dev.to/api/articles", {
+            const dr = await devtoFetch("/articles", devtoKey, {
               method: "POST",
               headers: {
-                "api-key": devtoKey,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -1057,7 +2119,7 @@ serve(async (req: Request) => {
                   tags: cleanTags.length > 0 ? cleanTags : ["flutter"],
                 },
               }),
-            });
+            }, "schedule-hub.blog.auto_publish.devto");
             if (dr.ok) {
               const dd = await dr.json() as { url: string; id: number };
               results.devto = { ok: true, url: dd.url };
@@ -1066,13 +2128,622 @@ serve(async (req: Request) => {
               results.devto = { ok: false, error: `${dr.status}: ${errText}` };
             }
           } catch (e) {
-            results.devto = { ok: false, error: String(e) };
+            results.devto = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
         } else if (platforms.includes("devto")) {
           results.devto = { ok: false, error: "DEVTO_API_KEY not set" };
         }
 
+        // Win版#132 part 124: 投稿成功後、hub_data に status='posted' を記録
+        // (= tech-blog-tracker page が EF blog.recent_posted 経由で集計可能にする)
+        try {
+          const successPlatforms: string[] = [];
+          const platformUrls: Record<string, string> = {};
+          for (const p of ["qiita", "devto"]) {
+            const r = results[p] as { ok?: boolean; url?: string } | undefined;
+            if (r?.ok && typeof r.url === "string") {
+              successPlatforms.push(p);
+              platformUrls[p] = r.url;
+            }
+          }
+          if (successPlatforms.length > 0) {
+            const blogId = body.id ? String(body.id) : null;
+            const postedAt = new Date().toISOString();
+            const baseMeta = {
+              title,
+              status: "posted",
+              posted_at: postedAt,
+              target_platforms: successPlatforms,
+              platform_urls: platformUrls,
+              tags: rawTags,
+            };
+            if (blogId) {
+              // 既存 hub_data row (= blog.create で作った draft) を update.
+              // Workflow が qiita + devto 別 call で auto_publish するため、
+              // target_platforms + platform_urls は merge する.
+              const { data: existing } = await admin
+                .from("hub_data")
+                .select("metadata")
+                .eq("id", blogId)
+                .single();
+              const currentMeta =
+                (existing?.metadata as Record<string, unknown>) ?? {};
+              const prevTargets = Array.isArray(currentMeta.target_platforms)
+                ? (currentMeta.target_platforms as string[])
+                : [];
+              const prevUrls =
+                (currentMeta.platform_urls as Record<string, string>) ?? {};
+              const mergedTargets = Array.from(
+                new Set([...prevTargets, ...successPlatforms]),
+              );
+              const mergedUrls = { ...prevUrls, ...platformUrls };
+              await admin
+                .from("hub_data")
+                .update({
+                  metadata: {
+                    ...currentMeta,
+                    ...baseMeta,
+                    target_platforms: mergedTargets,
+                    platform_urls: mergedUrls,
+                  },
+                })
+                .eq("id", blogId);
+            } else {
+              // id 未指定 (= 直接 auto_publish 呼び出し) の場合は新規 insert
+              await admin.from("hub_data").insert({
+                source: "blog_post",
+                metadata: { ...baseMeta, user_id: "system" },
+              });
+            }
+          }
+        } catch (dbErr) {
+          // DB 書き込み失敗しても publish 結果は返す (= degrade safe)
+          console.error("blog.auto_publish DB write failed:", dbErr);
+        }
+
         return json({ success: true, results });
+      }
+
+      // blog.publish_post — blog_posts行のcontentを読んでQiita/dev.toに公開し、statusを更新
+      case "blog.publish_post": {
+        const postId = String(body.id ?? "");
+        if (!postId) return json({ error: "id required" }, 400);
+
+        const { data: post, error: fetchErr } = await admin
+          .from("blog_posts")
+          .select("id, title, content, target_platforms, tags")
+          .eq("id", postId)
+          .single();
+        if (fetchErr || !post) return json({ error: "Post not found" }, 404);
+
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        const ppTitle = String((post as Record<string, unknown>).title ?? "");
+        const rawContent = String(
+          (post as Record<string, unknown>).content ?? body.content ?? "",
+        );
+        const ppContent = rawContent
+          .replace(/^---[\r\n][\s\S]*?[\r\n]---[\r\n]?/, "")
+          .trimStart();
+
+        if (!ppContent.trim()) {
+          return json(
+            {
+              error:
+                "Content is empty. Edit the draft and add markdown content before publishing.",
+            },
+            400,
+          );
+        }
+
+        const ppRawTags: string[] =
+          Array.isArray((post as Record<string, unknown>).tags)
+            ? ((post as Record<string, unknown>).tags as string[])
+            : (body.tags as string[]) ?? [];
+        const ppTargetPlatforms = (post as Record<string, unknown>)
+          .target_platforms;
+        const ppPlatforms: string[] = Array.isArray(ppTargetPlatforms)
+          ? ppTargetPlatforms
+          : ["qiita", "devto"];
+        const ppResults: Record<string, unknown> = {};
+
+        if (ppPlatforms.includes("qiita") && qiitaToken) {
+          try {
+            const tagObjects = ppRawTags
+              .slice(0, 5)
+              .map((t: string) => ({ name: t.slice(0, 20) }));
+            const qr = await qiitaFetch("/items", qiitaToken, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title: ppTitle,
+                body: ppContent,
+                tags: tagObjects.length > 0
+                  ? tagObjects
+                  : [{ name: "Flutter" }],
+                private: false,
+                tweet: false,
+              }),
+            }, "schedule-hub.blog.publish_post.qiita");
+            if (qr.ok) {
+              const qd = await qr.json() as { url: string; id: string };
+              ppResults.qiita = { ok: true, url: qd.url };
+            } else {
+              ppResults.qiita = {
+                ok: false,
+                error: `${qr.status}: ${await qr.text()}`,
+              };
+            }
+          } catch (e) {
+            ppResults.qiita = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
+          }
+        }
+
+        if (ppPlatforms.includes("devto") && devtoKey) {
+          try {
+            const cleanTags = ppRawTags
+              .slice(0, 4)
+              .map((t: string) =>
+                t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
+              )
+              .filter((t: string) => t.length > 0);
+            const dr = await devtoFetch("/articles", devtoKey, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                article: {
+                  title: ppTitle,
+                  body_markdown: ppContent,
+                  published: true,
+                  tags: cleanTags.length > 0 ? cleanTags : ["flutter"],
+                },
+              }),
+            }, "schedule-hub.blog.publish_post.devto");
+            if (dr.ok) {
+              const dd = await dr.json() as { url: string; id: number };
+              ppResults.devto = { ok: true, url: dd.url };
+            } else {
+              ppResults.devto = {
+                ok: false,
+                error: `${dr.status}: ${await dr.text()}`,
+              };
+            }
+          } catch (e) {
+            ppResults.devto = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
+          }
+        }
+
+        const successUrls = (
+          Object.values(ppResults) as Array<{ ok: boolean; url?: string }>
+        )
+          .filter((v) => v.ok)
+          .map((v) => v.url)
+          .filter(Boolean) as string[];
+
+        if (successUrls.length > 0) {
+          await admin
+            .from("blog_posts")
+            .update({
+              status: "posted",
+              posted_at: new Date().toISOString(),
+              url: successUrls[0],
+            })
+            .eq("id", postId);
+        }
+
+        return json({ success: true, results: ppResults });
+      }
+
+      // blog.update_post — blog_posts行のフィールドを更新
+      case "blog.update_post": {
+        const upId = String(body.id ?? "");
+        if (!upId) return json({ error: "id required" }, 400);
+        const upFields: Record<string, unknown> = {};
+        if (body.title !== undefined) upFields.title = String(body.title);
+        if (body.content !== undefined) upFields.content = String(body.content);
+        if (body.notes !== undefined) upFields.notes = String(body.notes);
+        if (
+          body.status !== undefined &&
+          ["draft", "ready", "posted", "skipped"].includes(String(body.status))
+        ) {
+          upFields.status = String(body.status);
+        }
+        if (Array.isArray(body.target_platforms)) {
+          upFields.target_platforms = body.target_platforms;
+        }
+        if (Array.isArray(body.tags)) upFields.tags = body.tags;
+        if (Object.keys(upFields).length === 0) {
+          return json({ error: "No fields to update" }, 400);
+        }
+        const { error: upErr } = await admin
+          .from("blog_posts")
+          .update(upFields)
+          .eq("id", upId);
+        if (upErr) return json({ error: upErr.message }, 500);
+        return json({ success: true });
+      }
+
+      // blog.delete_post — blog_postsから削除 (admin SERVICE_ROLE_KEY必要)
+      case "blog.delete_post": {
+        const delId = String(body.id ?? "");
+        if (!delId) return json({ error: "id required" }, 400);
+        const { error: delErr } = await admin
+          .from("blog_posts")
+          .delete()
+          .eq("id", delId);
+        if (delErr) return json({ error: delErr.message }, 500);
+        return json({ success: true });
+      }
+
+      // blog.insert_post — blog_postsに新規ドラフトを直接挿入
+      case "blog.insert_post": {
+        const insTitle = String(body.title ?? "");
+        if (!insTitle) return json({ error: "title required" }, 400);
+        const { data: newPost, error: insErr } = await admin
+          .from("blog_posts")
+          .insert({
+            title: insTitle,
+            content: String(body.content ?? ""),
+            notes: String(body.notes ?? ""),
+            status: "draft",
+            target_platforms: Array.isArray(body.target_platforms)
+              ? body.target_platforms
+              : ["qiita", "devto"],
+            tags: Array.isArray(body.tags) ? body.tags : [],
+            ...(userId ? { created_by: userId } : {}),
+          })
+          .select("id, title, status, created_at")
+          .single();
+        if (insErr) return json({ error: insErr.message }, 500);
+        return json({ success: true, post: newPost });
+      }
+
+      case "blog.news_signal_draft": {
+        const force = Boolean(body.force ?? false);
+        const signalData = await fetchNewsSignalsForDraft(body);
+        const rawSignals = Array.isArray(signalData.signals)
+          ? signalData.signals
+          : [];
+        const signals = rawSignals
+          .map((signal) => asRecord(signal))
+          .filter((signal): signal is Record<string, unknown> =>
+            signal !== null
+          )
+          .slice(0, Math.min(Math.max(Number(body.signal_limit ?? 5), 1), 12));
+        if (signals.length === 0) {
+          return json({
+            success: true,
+            created: false,
+            reason: "no_signals",
+            fetched_at: signalData.fetched_at ?? null,
+          });
+        }
+
+        const fetchedAt = asString(
+          signalData.fetched_at,
+          new Date().toISOString(),
+        );
+        const topKey = asString(signals[0].id) ||
+          asString(signals[0].cluster_key) ||
+          newsSignalTitle(signals[0]);
+        const dedupeKey = asString(
+          body.dedupe_key,
+          `news-signal:${fetchedAt.slice(0, 10)}:${topKey}`,
+        );
+        if (!force) {
+          const { data: existing, error: existingErr } = await admin
+            .from("blog_posts")
+            .select("id, title, status, created_at")
+            .ilike("notes", `%AI_NEWS_SIGNAL_DRAFT_KEY=${dedupeKey}%`)
+            .limit(1)
+            .maybeSingle();
+          if (existingErr) return json({ error: existingErr.message }, 500);
+          if (existing) {
+            return json({
+              success: true,
+              created: false,
+              duplicate: true,
+              post: existing,
+              dedupe_key: dedupeKey,
+            });
+          }
+        }
+
+        const title = shortenNewsDraftTitle(
+          asString(body.title) ||
+            `ニュースシグナル: ${newsSignalTitle(signals[0])}`,
+        );
+        const content = buildNewsSignalDraftMarkdown(signals, fetchedAt);
+        const targetPlatforms = asStringList(body.target_platforms, [
+          "note",
+          "qiita",
+          "devto",
+        ]);
+        const tags = asStringList(body.tags, [
+          "AI",
+          "ニュース",
+          "自動化",
+          "外部脳",
+        ]);
+        const notes = [
+          `AI_NEWS_SIGNAL_DRAFT_KEY=${dedupeKey}`,
+          `Generated from schedule-hub blog.news_signal_draft at ${
+            new Date().toISOString()
+          }`,
+          asString(body.notes),
+        ].filter(Boolean).join("\n");
+        const { data: newPost, error: insertErr } = await admin
+          .from("blog_posts")
+          .insert({
+            title,
+            content,
+            notes,
+            status: "draft",
+            target_platforms: targetPlatforms,
+            tags,
+            ...(userId ? { created_by: userId } : {}),
+          })
+          .select("id, title, status, created_at")
+          .single();
+        if (insertErr) return json({ error: insertErr.message }, 500);
+        const postId = asString(
+          (newPost as Record<string, unknown> | null)?.id,
+        );
+        let externalBrain: Record<string, unknown> | null = null;
+        if (body.external_brain !== false) {
+          try {
+            externalBrain = await upsertExternalBrainNewsSignals(
+              admin,
+              signals,
+              fetchedAt,
+              {
+                dedupeKey,
+                postId,
+                userId,
+                targetPlatforms,
+                tags,
+              },
+            );
+            const filePaths = Array.isArray(externalBrain.file_paths)
+              ? externalBrain.file_paths.map((path) => String(path)).filter(
+                Boolean,
+              )
+              : [];
+            if (postId && filePaths.length > 0) {
+              const { error: notesErr } = await admin
+                .from("blog_posts")
+                .update({
+                  notes: [
+                    notes,
+                    `EXTERNAL_BRAIN_FILE_PATHS=${filePaths.join(",")}`,
+                  ].join("\n"),
+                })
+                .eq("id", postId);
+              if (notesErr) {
+                externalBrain = {
+                  ...externalBrain,
+                  notes_warning: notesErr.message,
+                };
+              }
+            }
+          } catch (err) {
+            externalBrain = {
+              success: false,
+              error: err instanceof Error ? err.message : String(err),
+            };
+          }
+        }
+        return json({
+          success: true,
+          created: true,
+          post: newPost,
+          dedupe_key: dedupeKey,
+          signal_count: signals.length,
+          fetched_at: fetchedAt,
+          external_brain: externalBrain,
+        });
+      }
+
+      case "blog.news_signal_lint": {
+        const result = await lintExternalBrainNewsSignals(admin, body);
+        return json(result, result.success ? 200 : 207);
+      }
+      // Win版#132 part 124: 過去 dispatch 済の dev.to + Qiita 記事を hub_data に backfill する.
+      // 既存の T-1 dispatch (= part 124 fix 前) は hub_data に記録されていないため、
+      // tech-blog-tracker page で過去投稿が見えない. 本 action で API 経由で取得 → 既存 row 検出 →
+      // 未登録分を新規 insert する (= 同 url 重複は skip).
+      case "blog.backfill_from_apis": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        const days = Math.min(Math.max(Number(body.days ?? 30), 1), 365);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        const sinceIso = since.toISOString();
+
+        // 既存 hub_data の url を全部集めて dedup 用 set 構築
+        const { data: existingData } = await admin
+          .from("hub_data")
+          .select("metadata")
+          .eq("source", "blog_post")
+          .gte("created_at", sinceIso);
+        const existingUrls = new Set<string>();
+        for (const row of existingData ?? []) {
+          const m = (row.metadata as Record<string, unknown>) ?? {};
+          const urls = (m.platform_urls as Record<string, string>) ?? {};
+          for (const u of Object.values(urls)) {
+            if (u) existingUrls.add(u);
+          }
+        }
+
+        const inserts: Array<Record<string, unknown>> = [];
+        const summary: Record<string, number> = {
+          qiita_fetched: 0,
+          devto_fetched: 0,
+          inserted: 0,
+          skipped_dup: 0,
+          skipped_old: 0,
+        };
+
+        // ── Qiita 取得 ──────────────────────────────────────────────────
+        if (qiitaToken) {
+          try {
+            const qr = await qiitaFetch(
+              "/authenticated_user/items?per_page=100",
+              qiitaToken,
+              {},
+              "schedule-hub.blog.backfill.qiita",
+            );
+            if (qr.ok) {
+              const articles = await qr.json() as Array<{
+                id: string;
+                title: string;
+                url: string;
+                created_at: string;
+                tags: Array<{ name: string }>;
+              }>;
+              summary.qiita_fetched = articles.length;
+              for (const a of articles) {
+                if (new Date(a.created_at) < since) {
+                  summary.skipped_old++;
+                  continue;
+                }
+                if (existingUrls.has(a.url)) {
+                  summary.skipped_dup++;
+                  continue;
+                }
+                inserts.push({
+                  source: "blog_post",
+                  metadata: {
+                    title: a.title,
+                    status: "posted",
+                    posted_at: a.created_at,
+                    target_platforms: ["qiita"],
+                    platform_urls: { qiita: a.url },
+                    tags: a.tags.map((t) => t.name),
+                    user_id: "system",
+                    backfilled: true,
+                    source_api: "qiita",
+                    external_id: a.id,
+                  },
+                });
+                existingUrls.add(a.url);
+              }
+            }
+          } catch (e) {
+            console.error("qiita backfill fetch failed:", e);
+          }
+        }
+
+        // ── dev.to 取得 ─────────────────────────────────────────────────
+        if (devtoKey) {
+          try {
+            const dr = await devtoFetch(
+              "/articles/me/published?per_page=1000",
+              devtoKey,
+              {},
+              "schedule-hub.blog.backfill.devto",
+            );
+            if (dr.ok) {
+              const articles = await dr.json() as Array<{
+                id: number;
+                title: string;
+                url: string;
+                published_at: string;
+                tag_list: string[];
+              }>;
+              summary.devto_fetched = articles.length;
+              for (const a of articles) {
+                if (!a.published_at) continue;
+                if (new Date(a.published_at) < since) {
+                  summary.skipped_old++;
+                  continue;
+                }
+                if (existingUrls.has(a.url)) {
+                  summary.skipped_dup++;
+                  continue;
+                }
+                inserts.push({
+                  source: "blog_post",
+                  metadata: {
+                    title: a.title,
+                    status: "posted",
+                    posted_at: a.published_at,
+                    target_platforms: ["devto"],
+                    platform_urls: { devto: a.url },
+                    tags: a.tag_list,
+                    user_id: "system",
+                    backfilled: true,
+                    source_api: "devto",
+                    external_id: String(a.id),
+                  },
+                });
+                existingUrls.add(a.url);
+              }
+            }
+          } catch (e) {
+            console.error("devto backfill fetch failed:", e);
+          }
+        }
+
+        // ── 一括 insert ─────────────────────────────────────────────────
+        if (inserts.length > 0) {
+          const { error: insErr } = await admin.from("hub_data").insert(
+            inserts,
+          );
+          if (insErr) {
+            return json({
+              success: false,
+              error: insErr.message,
+              summary,
+            }, 500);
+          }
+          summary.inserted = inserts.length;
+        }
+
+        return json({ success: true, summary });
+      }
+
+      // Win版#132 part 124: tech-blog-tracker page 用 public read action.
+      // service_role 経由で hub_data の posted blog_post を返す (= user 認証不要 / 安全な metadata のみ).
+      case "blog.recent_posted": {
+        const days = Math.min(Math.max(Number(body.days ?? 30), 1), 365);
+        const limit = Math.min(Math.max(Number(body.limit ?? 200), 1), 500);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+          .toISOString();
+        const { data, error } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "blog_post")
+          .filter("metadata->>status", "eq", "posted")
+          .gte("created_at", since)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (error) {
+          return json({ error: error.message }, 500);
+        }
+        const items = (data ?? []).map((row) => {
+          const m = (row.metadata as Record<string, unknown>) ?? {};
+          return {
+            id: row.id,
+            title: m.title ?? "",
+            status: m.status ?? "posted",
+            posted_at: m.posted_at ?? row.created_at,
+            target_platforms: m.target_platforms ?? [],
+            platform_urls: m.platform_urls ?? {},
+            tags: m.tags ?? [],
+            created_at: row.created_at,
+          };
+        });
+        return json({ success: true, items, count: items.length });
       }
 
       // ─── Blog Management: Qiita / dev.to ─────────────────────────────────────
@@ -1085,9 +2756,11 @@ serve(async (req: Request) => {
         }
         const page = Number(body.page ?? 1);
         const perPage = Math.min(Number(body.per_page ?? 100), 100);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/authenticated_user/items?page=${page}&per_page=${perPage}`,
-          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        const qr = await qiitaFetch(
+          `/authenticated_user/items?page=${page}&per_page=${perPage}`,
+          qiitaToken,
+          {},
+          "schedule-hub.blog.qiita_list",
         );
         if (!qr.ok) {
           return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
@@ -1112,9 +2785,11 @@ serve(async (req: Request) => {
         }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/items/${itemId}/comments`,
-          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        const qr = await qiitaFetch(
+          `/items/${itemId}/comments`,
+          qiitaToken,
+          {},
+          "schedule-hub.blog.qiita_comments",
         );
         if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
         const comments = await qr.json() as Array<{
@@ -1138,14 +2813,13 @@ serve(async (req: Request) => {
         if (!itemId || !replyBody) {
           return json({ error: "item_id and body required" }, 400);
         }
-        const qr = await fetch("https://qiita.com/api/v2/comments", {
+        const qr = await qiitaFetch("/comments", qiitaToken, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${qiitaToken}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ item_id: itemId, body: replyBody }),
-        });
+        }, "schedule-hub.blog.qiita_comment_post");
         if (!qr.ok) {
           return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
         }
@@ -1161,9 +2835,11 @@ serve(async (req: Request) => {
         }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/items/${itemId}/likes`,
-          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        const qr = await qiitaFetch(
+          `/items/${itemId}/likes`,
+          qiitaToken,
+          {},
+          "schedule-hub.blog.qiita_likers",
         );
         if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
         const likers = await qr.json() as Array<
@@ -1180,12 +2856,11 @@ serve(async (req: Request) => {
         }
         const userId = String(body.user_id ?? "");
         if (!userId) return json({ error: "user_id required" }, 400);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/users/${userId}/following`,
-          {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${qiitaToken}` },
-          },
+        const qr = await qiitaFetch(
+          `/users/${userId}/following`,
+          qiitaToken,
+          { method: "PUT" },
+          "schedule-hub.blog.qiita_follow",
         );
         // 204 No Content = success
         const ok = qr.status === 204 || qr.ok;
@@ -1200,12 +2875,11 @@ serve(async (req: Request) => {
         }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/items/${itemId}`,
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${qiitaToken}` },
-          },
+        const qr = await qiitaFetch(
+          `/items/${itemId}`,
+          qiitaToken,
+          { method: "DELETE" },
+          "schedule-hub.blog.qiita_delete",
         );
         return json({
           success: qr.status === 204,
@@ -1230,16 +2904,17 @@ serve(async (req: Request) => {
             name: t,
           }));
         }
-        const qr = await fetch(
-          `https://qiita.com/api/v2/items/${itemId}`,
+        const qr = await qiitaFetch(
+          `/items/${itemId}`,
+          qiitaToken,
           {
             method: "PATCH",
             headers: {
-              Authorization: `Bearer ${qiitaToken}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify(patchBody),
           },
+          "schedule-hub.blog.qiita_update",
         );
         if (!qr.ok) {
           return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
@@ -1261,9 +2936,11 @@ serve(async (req: Request) => {
         if (!devtoKey) return json({ error: "DEVTO_API_KEY not set" }, 500);
         const page = Number(body.page ?? 1);
         const perPage = Math.min(Number(body.per_page ?? 100), 1000);
-        const dr = await fetch(
-          `https://dev.to/api/articles/me?page=${page}&per_page=${perPage}`,
-          { headers: { "api-key": devtoKey } },
+        const dr = await devtoFetch(
+          `/articles/me?page=${page}&per_page=${perPage}`,
+          devtoKey,
+          {},
+          "schedule-hub.blog.devto_list",
         );
         if (!dr.ok) {
           return json(
@@ -1283,6 +2960,47 @@ serve(async (req: Request) => {
         return json({ success: true, articles, total: articles.length });
       }
 
+      case "blog.devto_sync_engagement": {
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        if (!devtoKey) return json({ error: "DEVTO_API_KEY not set" }, 500);
+        const perPage = Math.min(Number(body.per_page ?? 1000), 1000);
+        const dr = await fetch(
+          `https://dev.to/api/articles/me/published?per_page=${perPage}`,
+          { headers: { "api-key": devtoKey } },
+        );
+        if (!dr.ok) {
+          return json(
+            { error: `dev.to ${dr.status}: ${await dr.text()}` },
+            502,
+          );
+        }
+        const articles = await dr.json() as Array<{
+          id: number;
+          title: string;
+          url: string;
+          public_reactions_count?: number;
+          comments_count?: number;
+          page_views_count?: number;
+        }>;
+        const rows = articles.map((article) => ({
+          platform: "devto",
+          article_id: String(article.id),
+          title: article.title,
+          url: article.url,
+          likes_count: Number(article.public_reactions_count ?? 0),
+          comments_count: Number(article.comments_count ?? 0),
+          views_count: Number(article.page_views_count ?? 0),
+          updated_at: new Date().toISOString(),
+        }));
+        if (rows.length > 0) {
+          const { error: upsertErr } = await admin
+            .from("blog_engagement")
+            .upsert(rows, { onConflict: "platform,article_id" });
+          if (upsertErr) return json({ error: upsertErr.message }, 500);
+        }
+        return json({ success: true, synced: rows.length });
+      }
+
       // blog.sync_engagement — Qiita 全記事の likes/comments/likers を DB に同期
       // body: { auto_reply?: bool, auto_follow?: bool, reply_template?: string }
       case "blog.sync_engagement": {
@@ -1298,9 +3016,11 @@ serve(async (req: Request) => {
         );
 
         // 1. 全記事取得
-        const articlesRes = await fetch(
-          "https://qiita.com/api/v2/authenticated_user/items?page=1&per_page=100",
-          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        const articlesRes = await qiitaFetch(
+          "/authenticated_user/items?page=1&per_page=100",
+          qiitaToken,
+          {},
+          "schedule-hub.blog.sync_engagement.articles",
         );
         if (!articlesRes.ok) {
           return json({ error: `Qiita list: ${articlesRes.status}` }, 502);
@@ -1336,9 +3056,11 @@ serve(async (req: Request) => {
         for (const article of articles) {
           // comments
           if (article.comments_count > 0) {
-            const cr = await fetch(
-              `https://qiita.com/api/v2/items/${article.id}/comments`,
-              { headers: { Authorization: `Bearer ${qiitaToken}` } },
+            const cr = await qiitaFetch(
+              `/items/${article.id}/comments`,
+              qiitaToken,
+              {},
+              "schedule-hub.blog.sync_engagement.comments",
             );
             if (cr.ok) {
               const comments = await cr.json() as Array<{
@@ -1375,17 +3097,16 @@ serve(async (req: Request) => {
 
                 // auto-reply
                 if (autoReply && !alreadyReplied) {
-                  const rr = await fetch("https://qiita.com/api/v2/comments", {
+                  const rr = await qiitaFetch("/comments", qiitaToken, {
                     method: "POST",
                     headers: {
-                      Authorization: `Bearer ${qiitaToken}`,
                       "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
                       item_id: article.id,
                       body: replyTemplate,
                     }),
-                  });
+                  }, "schedule-hub.blog.sync_engagement.reply");
                   if (rr.ok) {
                     await admin.from("blog_comments")
                       .update({
@@ -1404,9 +3125,11 @@ serve(async (req: Request) => {
 
           // likers (LGTM)
           if (article.likes_count > 0) {
-            const lr = await fetch(
-              `https://qiita.com/api/v2/items/${article.id}/likes`,
-              { headers: { Authorization: `Bearer ${qiitaToken}` } },
+            const lr = await qiitaFetch(
+              `/items/${article.id}/likes`,
+              qiitaToken,
+              {},
+              "schedule-hub.blog.sync_engagement.likes",
             );
             if (lr.ok) {
               const likers = await lr.json() as Array<
@@ -1438,12 +3161,11 @@ serve(async (req: Request) => {
 
                 // auto-follow
                 if (autoFollow && !alreadyFollowed) {
-                  const fr = await fetch(
-                    `https://qiita.com/api/v2/users/${uid}/following`,
-                    {
-                      method: "PUT",
-                      headers: { Authorization: `Bearer ${qiitaToken}` },
-                    },
+                  const fr = await qiitaFetch(
+                    `/users/${uid}/following`,
+                    qiitaToken,
+                    { method: "PUT" },
+                    "schedule-hub.blog.sync_engagement.follow",
                   );
                   if (fr.status === 204 || fr.ok) {
                     await admin.from("blog_likers")
@@ -1480,11 +3202,11 @@ serve(async (req: Request) => {
         const articleId = Number(body.article_id);
         if (!articleId) return json({ error: "article_id required" }, 400);
         // dev.to は物理削除不可 → unpublish で対応
-        const dr = await fetch(`https://dev.to/api/articles/${articleId}`, {
+        const dr = await devtoFetch(`/articles/${articleId}`, devtoKey, {
           method: "PUT",
-          headers: { "api-key": devtoKey, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ article: { published: false } }),
-        });
+        }, "schedule-hub.blog.devto_delete");
         return json({
           success: dr.ok,
           status: dr.status,
@@ -1861,15 +3583,11 @@ serve(async (req: Request) => {
 
           try {
             // 既存 page を id (Title) で検索
-            const queryResp = await fetch(
-              `https://api.notion.com/v1/databases/${dbId}/query`,
+            const queryResp = await notionFetch(
+              token,
+              `/databases/${dbId}/query`,
               {
                 method: "POST",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "Notion-Version": "2022-06-28",
-                  "Content-Type": "application/json",
-                },
                 body: JSON.stringify({
                   filter: { property: "id", title: { equals: String(t.id) } },
                   page_size: 1,
@@ -1891,15 +3609,11 @@ serve(async (req: Request) => {
 
             if (existingPageId) {
               // patch
-              const patchResp = await fetch(
-                `https://api.notion.com/v1/pages/${existingPageId}`,
+              const patchResp = await notionFetch(
+                token,
+                `/pages/${existingPageId}`,
                 {
                   method: "PATCH",
-                  headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Notion-Version": "2022-06-28",
-                    "Content-Type": "application/json",
-                  },
                   body: JSON.stringify({ properties }),
                 },
               );
@@ -1913,21 +3627,13 @@ serve(async (req: Request) => {
               }
             } else {
               // create
-              const createResp = await fetch(
-                `https://api.notion.com/v1/pages`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Notion-Version": "2022-06-28",
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    parent: { database_id: dbId },
-                    properties,
-                  }),
-                },
-              );
+              const createResp = await notionFetch(token, "/pages", {
+                method: "POST",
+                body: JSON.stringify({
+                  parent: { database_id: dbId },
+                  properties,
+                }),
+              });
               if (createResp.ok) created++;
               else {
                 failed++;
@@ -2211,7 +3917,8 @@ serve(async (req: Request) => {
         for (let i = 0; i < 10; i++) {
           const pageSize = Math.min(maxPages - pages.length, 100);
           if (pageSize <= 0) break;
-          const queryResp: Response = await fetch(
+          const queryResp: Response = await externalFetch(
+            "notion",
             `https://api.notion.com/v1/databases/${dbId}/query`,
             {
               method: "POST",
@@ -2222,6 +3929,7 @@ serve(async (req: Request) => {
                 ...(cursor ? { start_cursor: cursor } : {}),
               }),
             },
+            { traceId: "schedule-hub.notion.fix_wbs_all_instances.query" },
           );
           if (!queryResp.ok) {
             const text = await queryResp.text().catch(() => "");
@@ -2311,13 +4019,15 @@ serve(async (req: Request) => {
             }
           }
 
-          const patchResp = await fetch(
+          const patchResp = await externalFetch(
+            "notion",
             `https://api.notion.com/v1/pages/${pageId}`,
             {
               method: "PATCH",
               headers: notionHeaders,
               body: JSON.stringify({ properties }),
             },
+            { traceId: "schedule-hub.notion.fix_wbs_all_instances.patch" },
           );
           if (patchResp.ok) {
             updated++;
@@ -2331,7 +4041,8 @@ serve(async (req: Request) => {
           await new Promise((r) => setTimeout(r, delayMs));
         }
 
-        const verifyResp = await fetch(
+        const verifyResp = await externalFetch(
+          "notion",
           `https://api.notion.com/v1/databases/${dbId}/query`,
           {
             method: "POST",
@@ -2341,6 +4052,7 @@ serve(async (req: Request) => {
               page_size: 1,
             }),
           },
+          { traceId: "schedule-hub.notion.fix_wbs_all_instances.verify" },
         );
         let remainingAll: number | null = null;
         if (verifyResp.ok) {
@@ -2434,6 +4146,12 @@ serve(async (req: Request) => {
         return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (e) {
+    if (isExternalFetchError(e)) {
+      return json({
+        success: false,
+        ...externalFetchErrorPayload(e),
+      }, 503);
+    }
     return json({ error: String(e) }, 500);
   }
 });

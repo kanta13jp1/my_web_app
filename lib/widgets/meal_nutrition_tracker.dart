@@ -70,8 +70,9 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:
-            Text('${estimate.label}: ${estimate.facts.calories} kcalで記録しました'),
+        content: Text(
+          '${estimate.label}: ${estimate.facts.calories} kcalで記録しました',
+        ),
       ),
     );
   }
@@ -100,12 +101,7 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
   }
 
   Widget _buildInputPanel(BuildContext context) {
-    const quickMeals = <String>[
-      '吉野家 うな重',
-      'すき家 うな牛',
-      'ラーメン',
-      '野菜サラダ',
-    ];
+    const quickMeals = <String>['吉野家 うな重', 'すき家 うな牛', 'ラーメン', '野菜サラダ'];
 
     return Card(
       child: Padding(
@@ -115,9 +111,9 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
           children: <Widget>[
             Text(
               '食事内容を記録',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
@@ -214,9 +210,9 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
             const SizedBox(height: 6),
             Text(
               value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(label, textAlign: TextAlign.center),
           ],
@@ -252,8 +248,8 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
                 Text(
                   warnings.isEmpty ? '今週の栄養バランスは安定しています' : '栄養アラート',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -273,10 +269,7 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
     );
   }
 
-  Widget _buildWeeklyChart(
-    BuildContext context,
-    NutritionWeekSummary summary,
-  ) {
+  Widget _buildWeeklyChart(BuildContext context, NutritionWeekSummary summary) {
     final average = summary.dailyAverage;
     return Card(
       key: const Key('meal_nutrition_week_chart'),
@@ -287,9 +280,9 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
           children: <Widget>[
             Text(
               '1週間の栄養バランス',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _nutritionBar(
@@ -364,17 +357,15 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 10,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
                 ),
               ),
               const SizedBox(width: 8),
               SizedBox(
                 width: 84,
-                child: Text(
-                  valueText,
-                  textAlign: TextAlign.right,
-                ),
+                child: Text(valueText, textAlign: TextAlign.right),
               ),
             ],
           ),
@@ -398,12 +389,14 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
       children: <Widget>[
         Text(
           '最近の食事ログ',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...logs.take(14).map(
+        ...logs
+            .take(14)
+            .map(
               (log) => Card(
                 child: ListTile(
                   leading: const Icon(Icons.restaurant_menu),

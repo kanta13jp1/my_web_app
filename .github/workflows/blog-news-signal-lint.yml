@@ -1,0 +1,78 @@
+name: Blog News Signal Lint
+
+on:
+  workflow_dispatch:
+    inputs:
+      verify_links:
+        description: "true to perform live source URL checks"
+        required: false
+        default: "false"
+      max_age_days:
+        description: "Warn when news memory is older than this many days"
+        required: false
+        default: "3"
+  schedule:
+    # 06:45 JST, after the news signal draft job.
+    - cron: "45 21 * * *"
+
+concurrency:
+  group: blog-news-signal-lint
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      VERIFY_LINKS: ${{ github.event.inputs.verify_links || 'false' }}
+      MAX_AGE_DAYS: ${{ github.event.inputs.max_age_days || '3' }}
+
+    steps:
+      - name: Lint external-brain news signals
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          url = os.environ["SUPABASE_URL"].rstrip("/")
+          key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+          if not key:
+              raise SystemExit("SUPABASE_SERVICE_ROLE_KEY is required")
+
+          payload = {
+              "action": "blog.news_signal_lint",
+              "limit": 120,
+              "max_age_days": int(os.environ.get("MAX_AGE_DAYS") or "3"),
+              "verify_links": os.environ.get("VERIFY_LINKS", "false").lower() == "true",
+              "update_posts": True,
+          }
+          print(json.dumps(payload, ensure_ascii=False, indent=2))
+          req = urllib.request.Request(
+              f"{url}/functions/v1/schedule-hub",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={
+                  "Authorization": f"Bearer {key}",
+                  "apikey": key,
+                  "Content-Type": "application/json",
+              },
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=60) as res:
+                  body = res.read().decode("utf-8")
+                  print(f"HTTP {res.status}")
+                  print(body[:5000])
+          except urllib.error.HTTPError as exc:
+              body = exc.read().decode("utf-8", "replace")
+              print(f"HTTP {exc.code}")
+              print(body[:5000])
+              if exc.code >= 500:
+                  raise
+          PY

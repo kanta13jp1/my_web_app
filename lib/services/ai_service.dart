@@ -6,6 +6,7 @@ import '../utils/app_logger.dart';
 import '../main.dart';
 import 'dart:math';
 import 'magi_system_settings_service.dart';
+import 'offline_secure_mode_settings_service.dart';
 
 class AIServiceException implements Exception {
   final String message;
@@ -71,6 +72,7 @@ class AIService {
   final String? _deepSeekApiKey;
   final http.Client _httpClient;
   final MagiSystemSettingsService _magiSettingsService;
+  final OfflineSecureModeSettingsService _offlineSettingsService;
   static const int _maxRetries = 3;
   static const int _initialRetryDelayMs = 1000;
   static const int _magiOpinionMaxLength = 900;
@@ -91,12 +93,15 @@ class AIService {
     http.Client? httpClient,
     MagiSystemSettingsService magiSettingsService =
         const MagiSystemSettingsService(),
+    OfflineSecureModeSettingsService offlineSettingsService =
+        const OfflineSecureModeSettingsService(),
   ])  : _supabase = supabaseClient ?? supabase,
         _openAIApiKey = openAIApiKey,
         _anthropicApiKey = anthropicApiKey,
         _deepSeekApiKey = deepSeekApiKey,
         _httpClient = httpClient ?? http.Client(),
-        _magiSettingsService = magiSettingsService;
+        _magiSettingsService = magiSettingsService,
+        _offlineSettingsService = offlineSettingsService;
 
   AIService.withMagiKeys({
     SupabaseClient? supabaseClient,
@@ -107,6 +112,8 @@ class AIService {
     http.Client? httpClient,
     MagiSystemSettingsService magiSettingsService =
         const MagiSystemSettingsService(),
+    OfflineSecureModeSettingsService offlineSettingsService =
+        const OfflineSecureModeSettingsService(),
   }) : this(
           supabaseClient,
           geminiApiKey,
@@ -115,6 +122,7 @@ class AIService {
           deepSeekApiKey,
           httpClient,
           magiSettingsService,
+          offlineSettingsService,
         );
 
   /// レート制限エラー時に指数バックオフで再試行するヘルパー
@@ -181,9 +189,10 @@ class AIService {
     }
 
     try {
+      final requestBody = await _withOfflinePolicy(functionName, body);
       final response = await _supabase.functions.invoke(
         functionName,
-        body: body,
+        body: requestBody,
       );
 
       // 正常系のレスポンスをマップとして扱う
@@ -280,6 +289,24 @@ class AIService {
       // 予期しないエラーも AIServiceException に包む
       throw AIServiceException('予期しないエラー: ${e.toString()}');
     }
+  }
+
+  Future<Map<String, dynamic>> _withOfflinePolicy(
+    String functionName,
+    Map<String, dynamic> body,
+  ) async {
+    if (functionName != 'ai-hub') return body;
+    final action = body['action']?.toString().trim();
+    if (action != 'provider.chat' &&
+        action != 'provider.chat_auto' &&
+        action != 'edge_llm.invoke') {
+      return body;
+    }
+    final settings = await _offlineSettingsService.loadSettingsOrDefaults();
+    return <String, dynamic>{
+      ...body,
+      ...settings.toAiHubPolicyPayload(),
+    };
   }
 
   // =========================================================================
@@ -837,6 +864,7 @@ class AIService {
         );
       }
     }
+
     return null;
   }
 

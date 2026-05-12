@@ -333,6 +333,13 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('人生目標管理'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.insights),
+            tooltip: '月次 KPI 台帳',
+            onPressed: () => Navigator.of(context).pushNamed('/life-goals-kpi'),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,

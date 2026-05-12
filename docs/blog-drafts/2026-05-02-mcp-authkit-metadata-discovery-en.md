@@ -1,6 +1,6 @@
 ---
 title: "Why your MCP server should serve OAuth Protected Resource Metadata — AuthKit + RFC 9728"
-published: false
+published: true
 tags: mcp, oauth, workos, supabase
 canonical_url: null
 ---

@@ -15,7 +15,7 @@ Flutter のユニットテストを書けるようになったら、次のステ
 `flutter_driver` は非推奨になった。現在の公式推奨は `integration_test` パッケージだ。
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml — 2030-01-19-flutter-testing-advanced
 dev_dependencies:
   integration_test:
     sdk: flutter

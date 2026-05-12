@@ -250,7 +250,7 @@ URL だけ設定すれば後は自動認可) はこのメタデータがあっ�
 - `sampling` capability は本サービスでは使わない方向 → 申告から除外
   (= Sampling-Based Injection 攻撃ベクトルの完全排除)
 - `tools/list` の各 tool は最小 input/output スキーマで定義 (フィールド爆発防止)
-- 将来 AttestMCP 対応時の migration plan を docs/architecture/mcp-attest-roadmap.md に
+- 将来 AttestMCP 対応時の migration plan を docs/mcp-attest-roadmap.md に
   下書きしておく (実装は不要 / 設計負債を可視化)
 
 ---
@@ -303,7 +303,7 @@ ai-hub team の運用 runbook に追加。
 「実装当時の仕様策定状況」を天秤にかけ **意図的に DCR を継続採用**。設計判断の
 根拠を残す。
 
-**応用**: docs/architecture/mcp-dcr-vs-cimd-decision.md を作り、
+**応用**: docs/mcp-dcr-vs-cimd-decision.md を作り、
 「自分株式会社では Phase 1 で DCR を採用 / Phase 2 (2027 Q1) で CIMD migration 検討」
 を明記。設計判断の年代記化。
 

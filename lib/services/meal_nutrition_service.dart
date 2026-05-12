@@ -138,10 +138,7 @@ class MealNutritionEstimate {
 }
 
 class MealNutritionLog {
-  const MealNutritionLog({
-    required this.loggedAt,
-    required this.estimate,
-  });
+  const MealNutritionLog({required this.loggedAt, required this.estimate});
 
   final DateTime loggedAt;
   final MealNutritionEstimate estimate;
@@ -155,7 +152,8 @@ class MealNutritionLog {
 
   static MealNutritionLog fromJson(Map<String, dynamic> json) {
     return MealNutritionLog(
-      loggedAt: DateTime.tryParse(json['loggedAt'] as String? ?? '') ??
+      loggedAt:
+          DateTime.tryParse(json['loggedAt'] as String? ?? '') ??
           DateTime.now(),
       estimate: MealNutritionEstimate.fromJson(
         (json['estimate'] as Map?)?.cast<String, dynamic>() ??
@@ -309,9 +307,9 @@ class MealNutritionService {
   MealNutritionEstimate estimate(String rawText) {
     final normalized = normalize(rawText);
     final profile = catalog.cast<MealNutritionProfile?>().firstWhere(
-          (candidate) => candidate!.matches(normalized),
-          orElse: () => null,
-        );
+      (candidate) => candidate!.matches(normalized),
+      orElse: () => null,
+    );
 
     if (profile != null) {
       return MealNutritionEstimate(
@@ -350,8 +348,7 @@ class MealNutritionService {
     final weekLogs = logs.where((log) {
       final day = _dateOnly(log.loggedAt);
       return !day.isBefore(start) && !day.isAfter(anchor);
-    }).toList()
-      ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+    }).toList()..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
 
     final total = weekLogs.fold(
       const NutritionFacts(
@@ -405,8 +402,9 @@ class MealNutritionService {
     }
     final warnings = <String>[];
     if (average.vegetablesG < 180) {
-      warnings
-          .add('野菜不足: 1日平均${average.vegetablesG.round()}gです。目標350gに届いていません。');
+      warnings.add(
+        '野菜不足: 1日平均${average.vegetablesG.round()}gです。目標350gに届いていません。',
+      );
     }
     if (average.sodiumMg > dailyTarget.sodiumMg) {
       warnings.add('塩分過多: 1日平均${average.sodiumMg}mgです。汁物・たれ・外食頻度を調整してください。');

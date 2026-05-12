@@ -134,7 +134,7 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
                     alignment: Alignment.center,
                     children: [
                       Semantics(
-                        label: 'アプリバージョン $versionText',
+                        label: 'Release Notes $versionText',
                         button: true,
                         child: Material(
                           color: Colors.transparent,
@@ -142,8 +142,8 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
                           child: InkWell(
                             key: const Key('global_header_version_badge'),
                             borderRadius: BorderRadius.circular(10),
-                            onTap: () =>
-                                Navigator.of(context).pushNamed('/settings'),
+                            onTap: () => Navigator.of(context)
+                                .pushNamed('/release-notes'),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -191,8 +191,8 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
                             ),
                             child: Text(
                               AppVersion.isDev
-                                  ? 'アプリバージョン (開発ビルド)'
-                                  : 'アプリバージョン',
+                                  ? 'Release Notes (dev build)'
+                                  : 'Release Notes',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,

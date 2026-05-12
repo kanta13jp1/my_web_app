@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/pages/privacy_policy_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,9 @@ class JibunMobileApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
+      routes: {
+        '/privacy': (_) => const PrivacyPolicyPage(showBackButton: false),
+      },
       home: const MobileReleaseShell(),
     );
   }

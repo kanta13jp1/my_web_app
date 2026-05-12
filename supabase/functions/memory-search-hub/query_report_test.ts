@@ -1,8 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import {
-  buildQueryRouteDecision,
-  parseQueryReport,
-} from "./query_report.ts";
+import { buildQueryRouteDecision, parseQueryReport } from "./query_report.ts";
 
 Deno.test("parseQueryReport reads reformulated XML style tags", () => {
   const report = parseQueryReport(`

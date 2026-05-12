@@ -1,0 +1,130 @@
+name: Wiki Compile Cron (Karpathy Compile cycle)
+
+# Win版#132 part 132 (2026-05-04) — Issue #1976 着地
+# Karpathy 4 サイクル の Compile を daily 自動化:
+# raw layer (memory/ + docs/competitor-reports/ + docs/cs-notes/ +
+#           docs/incident-reports/ + docs/daily-reports/) を scan →
+# 概念抽出 → docs/concepts/<slug>.md + docs/INDEX.md 自動更新 → commit + push
+#
+# Karpathy 3 層 + 4 サイクルの自分株式会社 dogfood map (= part 128 で識別):
+# - Cycle 1 Ingest : scripts/memory_ingest.py (part 111)
+# - Cycle 2 Compile: scripts/wiki_compile.py (本 cron / NEW)
+# - Cycle 3 Query  : notebooklm CLI
+# - Cycle 4 Lint   : scripts/knowledge_vault_lint.py (part 105)
+
+on:
+  schedule:
+    - cron: "0 17 * * *"  # daily 02:00 JST (= 17:00 UTC) — 全 instance wrap-up + residuals-sync 後
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "raw layer scan 期間 (default 30 / 0 = 全期間)"
+        required: false
+        default: "30"
+        type: string
+      min_sources:
+        description: "概念 page 生成 min source 数 (default 5)"
+        required: false
+        default: "5"
+        type: string
+      limit:
+        description: "Max concept pages per run (default 50)"
+        required: false
+        default: "50"
+        type: string
+      apply:
+        description: "実書込 (true) or dry-run (false)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki-compile-cron
+  cancel-in-progress: false
+
+jobs:
+  compile:
+    name: Run wiki_compile + commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 5
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Resolve params
+        id: params
+        run: |
+          DAYS="${{ inputs.days || '30' }}"
+          MIN_SRC="${{ inputs.min_sources || '5' }}"
+          LIMIT="${{ inputs.limit || '50' }}"
+          APPLY="${{ inputs.apply || 'true' }}"
+          echo "days=$DAYS"     >> $GITHUB_OUTPUT
+          echo "min_src=$MIN_SRC" >> $GITHUB_OUTPUT
+          echo "limit=$LIMIT"   >> $GITHUB_OUTPUT
+          echo "apply=$APPLY"   >> $GITHUB_OUTPUT
+
+      - name: Run wiki_compile.py
+        id: run
+        run: |
+          ARGS="--days ${{ steps.params.outputs.days }} --min-sources ${{ steps.params.outputs.min_src }} --limit ${{ steps.params.outputs.limit }}"
+          if [ "${{ steps.params.outputs.apply }}" = "true" ]; then
+            ARGS="$ARGS --apply"
+          fi
+          echo "Args: $ARGS"
+          PYTHONUTF8=1 python scripts/wiki_compile.py $ARGS | tee compile_report.txt
+
+      - name: Git commit + push (= apply mode のみ)
+        if: steps.params.outputs.apply == 'true'
+        env:
+          GIT_AUTHOR_NAME: "wiki-compile-cron"
+          GIT_AUTHOR_EMAIL: "noreply@github.com"
+          GIT_COMMITTER_NAME: "wiki-compile-cron"
+          GIT_COMMITTER_EMAIL: "noreply@github.com"
+        run: |
+          git config user.name "wiki-compile-cron"
+          git config user.email "noreply@github.com"
+          if [ -z "$(git status --porcelain docs/concepts/ docs/INDEX.md)" ]; then
+            echo "No wiki changes — skip commit"
+            exit 0
+          fi
+          git add docs/concepts/ docs/INDEX.md
+          git commit -m "自動: wiki compile (Karpathy Compile cycle) $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push origin HEAD:main
+
+      - name: Comment summary to tracking Issue (#1976)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY=$(cat <<EOF
+          🧠 Wiki Compile Cron $(date -u '+%Y-%m-%d %H:%M UTC')
+
+          mode: \`${{ steps.params.outputs.apply == 'true' && 'apply' || 'dry-run' }}\`
+          days: ${{ steps.params.outputs.days }}
+          min-sources: ${{ steps.params.outputs.min_src }}
+          limit: ${{ steps.params.outputs.limit }}
+
+          \`\`\`
+          $(tail -10 compile_report.txt)
+          \`\`\`
+
+          script: \`scripts/wiki_compile.py\` (= Karpathy Compile cycle / Win版#132 part 132)
+          workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          EOF
+          )
+          gh issue comment 1976 --repo "$GITHUB_REPOSITORY" --body "$BODY" || true

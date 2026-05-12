@@ -81,7 +81,10 @@ export function parseAiActionEnvelope(
     }
     const ax = a as Record<string, unknown>;
     if (ax.op !== "insert" && ax.op !== "update" && ax.op !== "delete") {
-      return { ok: false, error: `actions[${i}].op must be insert|update|delete` };
+      return {
+        ok: false,
+        error: `actions[${i}].op must be insert|update|delete`,
+      };
     }
     if (typeof ax.table !== "string" || !ALLOWED_TABLES.has(ax.table)) {
       return {
@@ -95,12 +98,22 @@ export function parseAiActionEnvelope(
         error: `actions[${i}].reasoning is required (Sculptor UI needs it)`,
       };
     }
-    if ((ax.op === "update" || ax.op === "delete") && typeof ax.id !== "string") {
-      return { ok: false, error: `actions[${i}] op=${ax.op} requires string id` };
+    if (
+      (ax.op === "update" || ax.op === "delete") && typeof ax.id !== "string"
+    ) {
+      return {
+        ok: false,
+        error: `actions[${i}] op=${ax.op} requires string id`,
+      };
     }
-    if ((ax.op === "insert" || ax.op === "update") &&
-        (typeof ax.payload !== "object" || ax.payload === null)) {
-      return { ok: false, error: `actions[${i}] op=${ax.op} requires payload object` };
+    if (
+      (ax.op === "insert" || ax.op === "update") &&
+      (typeof ax.payload !== "object" || ax.payload === null)
+    ) {
+      return {
+        ok: false,
+        error: `actions[${i}] op=${ax.op} requires payload object`,
+      };
     }
 
     const built: AiAction = {

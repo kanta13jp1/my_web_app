@@ -1,0 +1,23 @@
+{
+  "status": "healthy",
+  "checks": {
+    "env": {
+      "ok": true,
+      "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set"
+    },
+    "db_connectivity": {
+      "ok": true,
+      "latencyMs": 844,
+      "detail": "profiles reachable in 844ms"
+    },
+    "wbs_tasks": {
+      "ok": true,
+      "detail": "wbs_tasks reachable"
+    },
+    "ai_circuit_breaker": {
+      "ok": true,
+      "detail": "ai_circuit_breaker reachable"
+    }
+  },
+  "timestamp": "2026-05-07T05:04:46.293Z"
+}

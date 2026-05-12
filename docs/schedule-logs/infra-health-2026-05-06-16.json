@@ -1,0 +1,21 @@
+{
+  "task": "infra-health-check",
+  "run_at_jst": "2026-05-06T16:33+09:00",
+  "supabase": {
+    "http_code": 200,
+    "status": "healthy",
+    "db_latency_ms": 1026,
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "status": "loading_application_rendered_static_ok"
+  },
+  "anomaly": false,
+  "commit_pushed": false
+}

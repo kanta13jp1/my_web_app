@@ -75,7 +75,9 @@ function firstJsonObject(text: string): Record<string, unknown> | null {
   if (start < 0 || end <= start) return null;
   try {
     const parsed = JSON.parse(text.slice(start, end + 1));
-    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+    if (
+      typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+    ) {
       return parsed as Record<string, unknown>;
     }
   } catch {

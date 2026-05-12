@@ -334,7 +334,7 @@ score = 期限ペナルティ (50/30/15) + 進捗停滞 (30/20/10) +
 
 ### 動作確認 (deploy 完了後)
 ```bash
-# 自 instance task 0 件想定 → suggest
+# 自 instance task 0 件想定 → suggest — 2026-04-30_devto_draft
 curl -sS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
   -H "Authorization: Bearer $ANON_KEY" \
   -H "Content-Type: application/json" \

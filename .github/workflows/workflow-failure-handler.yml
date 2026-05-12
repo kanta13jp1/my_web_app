@@ -8,15 +8,16 @@ on:
       - "Deploy to Production"
       - "Deploy to Staging"
       - "Deploy to Development"
+      - "Release Readiness Gate"
       - "E2E Smoke"
       - "CI Auto-Fix (CI失敗自動修復)"
-      # Schedule: コンテンツ
+      # Schedule: content
       - "Blog Draft (AI自動生成・毎日)"
       - "Blog Publish (技術記事投稿)"
       - "Blog Engagement (毎日・コメント返信/フォロー/重複削除)"
       - "Blog Verify (過去記事の事実確認)"
       - "Blog Draft Register (blog_posts テーブル自動登録)"
-      # Schedule: 運用
+      # Schedule: operations
       - "CS Check (自動サポート対応)"
       - "Daily Report (日次レポート + X投稿 + 競合モニタリング)"
       - "Scheduled Analysis Batch"
@@ -25,13 +26,13 @@ on:
       - "Edge Function UI Audit (UI導線チェック)"
       - "GitHub Issue Fix"
       - "Self Devin Schedule"
-      # Schedule: 競合・AI
+      # Schedule: competitor / AI
       - "Competitor Monitoring (競合インテリジェンスレポート)"
       - "Competitor Discovery (週次自動候補発掘)"
       - "AI大学コンテンツ更新 (2時間毎)"
       - "YouTube Analysis (Real Value競合分析)"
       - "Horse Racing Auto Update"
-      # Schedule: WBS / 通知
+      # Schedule: WBS / notifications
       - "WBS AI Review (1h cron)"
       - "WBS Staleness Audit"
       - "WBS User Tasks Notify (毎朝 + manual)"
@@ -44,166 +45,401 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
   issues: write
 
 jobs:
-  create-issue:
-    name: Create Failure Issue
-    if: github.event.workflow_run.conclusion == 'failure'
+  cluster-or-recover:
+    name: Cluster Failure Or Recover Issue
+    if: github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     steps:
-      - name: Check for duplicate issue
-        id: check
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Detect failed job and log
+        id: detect_failure
+        if: github.event.workflow_run.conclusion == 'failure'
         uses: actions/github-script@v9
         with:
           script: |
-            const runId = context.payload.workflow_run.id;
-            const { data: issues } = await github.rest.issues.listForRepo({
+            const fs = require('fs');
+            const run = context.payload.workflow_run;
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: run.id,
+              filter: 'latest',
+              per_page: 100,
+            });
+
+            const badConclusions = new Set(['failure', 'timed_out', 'action_required', 'cancelled']);
+            const failedJob =
+              jobs.find((job) => badConclusions.has(job.conclusion)) ||
+              jobs.find((job) => job.status !== 'completed') ||
+              jobs[0] ||
+              {};
+            const failedStep =
+              (failedJob.steps || []).find((step) => badConclusions.has(step.conclusion)) ||
+              (failedJob.steps || []).find((step) => step.status !== 'completed') ||
+              {};
+
+            let logText = '';
+            if (failedJob.id) {
+              try {
+                const response = await github.request(
+                  'GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs',
+                  {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    job_id: failedJob.id,
+                  },
+                );
+                if (typeof response.data === 'string') {
+                  logText = response.data;
+                } else if (Buffer.isBuffer(response.data)) {
+                  logText = response.data.toString('utf8');
+                } else {
+                  logText = JSON.stringify(response.data);
+                }
+              } catch (error) {
+                core.warning(`Could not download failed job log: ${error.message}`);
+              }
+            }
+
+            const failedJobName = failedJob.name || 'unknown-job';
+            const failedStepName = failedStep.name || failedJobName || 'unknown-step';
+            if (!logText) {
+              logText = [
+                `workflow=${run.name}`,
+                `job=${failedJobName}`,
+                `step=${failedStepName}`,
+                `conclusion=${run.conclusion}`,
+              ].join('\n');
+            }
+            if (logText.length > 250000) {
+              logText = logText.slice(-250000);
+            }
+
+            fs.writeFileSync('/tmp/workflow-failure.log', logText, 'utf8');
+            core.setOutput('failed_job', failedJobName);
+            core.setOutput('failed_step', failedStepName);
+            core.setOutput('log_path', '/tmp/workflow-failure.log');
+
+      - name: Compute root-cause key
+        id: root_cause
+        if: github.event.workflow_run.conclusion == 'failure'
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          FAILED_STEP: ${{ steps.detect_failure.outputs.failed_step }}
+        run: |
+          python scripts/ci_failure_digest.py workflow-root-cause \
+            --workflow-name "$WORKFLOW_NAME" \
+            --branch "$HEAD_BRANCH" \
+            --failed-step "$FAILED_STEP" \
+            --log /tmp/workflow-failure.log \
+            --json /tmp/workflow-root-cause.json
+
+      - name: Create or update failure issue
+        id: handle_failure
+        if: github.event.workflow_run.conclusion == 'failure'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const run = context.payload.workflow_run;
+            const root = JSON.parse(fs.readFileSync('/tmp/workflow-root-cause.json', 'utf8'));
+            const shortSha = (run.head_sha || '').substring(0, 7) || 'unknown';
+            const escaped = (value) => String(value || '').replace(/\|/g, '\\|');
+            const marker = `<!-- root_cause_key: ${root.root_cause_key} -->`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               labels: 'workflow-failure',
               state: 'open',
-              per_page: 50,
+              per_page: 100,
             });
-            const exists = issues.some(i => i.body && i.body.includes(`run_id: ${runId}`));
-            core.setOutput('exists', exists ? 'true' : 'false');
-            if (exists) core.info('Duplicate — skipping issue creation.');
+            const duplicate = issues.find((issue) => !issue.pull_request && (issue.body || '').includes(marker));
+            const now = new Date().toISOString();
 
-      - name: Create GitHub Issue
-        id: create
-        if: steps.check.outputs.exists == 'false'
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const run = context.payload.workflow_run;
-            const jst = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+            if (duplicate) {
+              const body = [
+                '## Duplicate failure occurrence',
+                '',
+                'A later failure matched the same root-cause key, so no new issue was created.',
+                '',
+                '| Field | Value |',
+                '| --- | --- |',
+                `| Workflow | \`${escaped(run.name)}\` |`,
+                `| Branch | \`${escaped(run.head_branch)}\` |`,
+                `| Failed step | \`${escaped(root.failed_step)}\` |`,
+                `| Category | \`${escaped(root.failure_category)}\` |`,
+                `| Error signature | \`${escaped(root.error_signature)}\` |`,
+                `| Failed run | [${run.id}](${run.html_url}) |`,
+                `| Observed at | \`${now}\` |`,
+                '',
+                `<!-- duplicate_run_id: ${run.id} -->`,
+                `<!-- root_cause_key: ${root.root_cause_key} -->`,
+              ].join('\n');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: duplicate.number,
+                body,
+              });
+              core.setOutput('exists', 'true');
+              core.setOutput('action', 'commented');
+              core.setOutput('issue_number', String(duplicate.number));
+              core.setOutput('issue_url', duplicate.html_url);
+              core.setOutput('root_cause_key', root.root_cause_key);
+              core.setOutput('failure_category', root.failure_category);
+              core.setOutput('failed_step', root.failed_step);
+              return;
+            }
 
             const body = [
-              `## ワークフロー失敗: ${run.name}`,
+              `## Workflow failure cluster: ${run.name}`,
               '',
-              '| 項目 | 値 |',
+              'This issue was created by `workflow-failure-handler.yml` and is keyed by workflow, branch, failed step, and a normalized error signature.',
+              '',
+              '| Field | Value |',
               '| --- | --- |',
-              `| ワークフロー | \`${run.name}\` |`,
-              `| 実行 ID | \`${run.id}\` |`,
-              `| ブランチ | \`${run.head_branch}\` |`,
-              `| コミット | \`${run.head_sha.substring(0, 7)}\` |`,
-              `| 失敗日時 (JST) | ${jst} |`,
-              `| ログ | [GitHub Actions ログを確認](${run.html_url}) |`,
+              `| Workflow | \`${escaped(run.name)}\` |`,
+              `| Branch | \`${escaped(run.head_branch)}\` |`,
+              `| Commit | \`${shortSha}\` |`,
+              `| Failed step | \`${escaped(root.failed_step)}\` |`,
+              `| Category | \`${escaped(root.failure_category)}\` |`,
+              `| Error signature | \`${escaped(root.error_signature)}\` |`,
+              `| Failed run | [${run.id}](${run.html_url}) |`,
+              `| Root-cause key | \`${root.root_cause_key}\` |`,
+              `| Recovery scope | \`${root.recovery_scope_key}\` |`,
               '',
-              '## 自動対応チェックリスト',
+              '## Recovery rule',
               '',
-              '- [ ] ログURLでエラー内容を特定',
-              '- [ ] 修正コードをプッシュ (flutter analyze / deno lint 0エラー確認)',
-              '- [ ] このIssueをクローズ',
+              'A later successful run of the same workflow and branch will comment with the success run URL and close this issue only when this root-cause marker is present.',
               '',
-              '> このIssueは `workflow-failure-handler.yml` により自動生成されました。',
-              '> `cs-check` スケジュールタスクが自動修復を試みます。',
+              '## Triage checklist',
+              '',
+              '- [ ] Inspect the failed step and log.',
+              '- [ ] Fix the root cause or confirm that the external dependency has recovered.',
+              '- [ ] Confirm a later successful run closes this issue automatically.',
               '',
               `<!-- run_id: ${run.id} -->`,
               `<!-- workflow_name: ${run.name} -->`,
               `<!-- head_branch: ${run.head_branch} -->`,
+              `<!-- failed_step: ${root.failed_step} -->`,
+              `<!-- failure_category: ${root.failure_category} -->`,
+              `<!-- error_signature: ${root.error_signature} -->`,
+              `<!-- root_cause_key: ${root.root_cause_key} -->`,
+              `<!-- recovery_scope_key: ${root.recovery_scope_key} -->`,
+              `<!-- first_failure_at: ${now} -->`,
             ].join('\n');
 
             const { data: issue } = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `[CI失敗] ${run.name} (${run.head_branch})`,
+              title: `[workflow-failure] ${run.name} (${run.head_branch}) ${root.failure_category}`,
               body,
               labels: ['workflow-failure', 'bug'],
             });
-
+            core.setOutput('exists', 'false');
+            core.setOutput('action', 'created');
             core.setOutput('issue_number', String(issue.number));
             core.setOutput('issue_url', issue.html_url);
-            core.info(`Created issue #${issue.number}`);
+            core.setOutput('root_cause_key', root.root_cause_key);
+            core.setOutput('failure_category', root.failure_category);
+            core.setOutput('failed_step', root.failed_step);
 
-      - name: Notify Slack on Failure
-        if: steps.check.outputs.exists == 'false'
+      - name: Compute recovery scope
+        id: recovery_scope
+        if: github.event.workflow_run.conclusion == 'success'
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          python scripts/ci_failure_digest.py workflow-scope \
+            --workflow-name "$WORKFLOW_NAME" \
+            --branch "$HEAD_BRANCH" \
+            --json /tmp/workflow-recovery-scope.json
+
+      - name: Close recovered failure issues
+        id: recover
+        if: github.event.workflow_run.conclusion == 'success'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const run = context.payload.workflow_run;
+            const scope = JSON.parse(fs.readFileSync('/tmp/workflow-recovery-scope.json', 'utf8'));
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'workflow-failure',
+              state: 'open',
+              per_page: 100,
+            });
+            const markers = (body) => {
+              const out = {};
+              const re = /<!--\s*([A-Za-z0-9_-]+):\s*([\s\S]*?)\s*-->/g;
+              let match;
+              while ((match = re.exec(body || '')) !== null) {
+                out[match[1]] = match[2].trim();
+              }
+              return out;
+            };
+            const candidates = issues
+              .filter((issue) => !issue.pull_request)
+              .map((issue) => ({ issue, markers: markers(issue.body || '') }))
+              .filter(({ markers }) =>
+                markers.workflow_name === run.name &&
+                markers.head_branch === run.head_branch &&
+                markers.recovery_scope_key === scope.recovery_scope_key &&
+                Boolean(markers.root_cause_key)
+              );
+
+            const closed = [];
+            for (const { issue, markers } of candidates) {
+              const body = [
+                '## Recovery confirmed',
+                '',
+                'A successful workflow run matched this issue recovery scope and root-cause marker.',
+                '',
+                '| Field | Value |',
+                '| --- | --- |',
+                `| Success run | [${run.id}](${run.html_url}) |`,
+                `| Workflow | \`${run.name}\` |`,
+                `| Branch | \`${run.head_branch}\` |`,
+                `| Root-cause key | \`${markers.root_cause_key}\` |`,
+                `| Recovery scope | \`${scope.recovery_scope_key}\` |`,
+                '',
+                `<!-- recovery_run_id: ${run.id} -->`,
+                `<!-- root_cause_key: ${markers.root_cause_key} -->`,
+                `<!-- recovery_scope_key: ${scope.recovery_scope_key} -->`,
+              ].join('\n');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body,
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'completed',
+              });
+              closed.push(`#${issue.number}`);
+            }
+            core.setOutput('closed_count', String(closed.length));
+            core.setOutput('closed_issues', closed.join(', '));
+
+      - name: Notify Slack on new failure cluster
+        if: github.event.workflow_run.conclusion == 'failure' && steps.handle_failure.outputs.action == 'created'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
           WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          ISSUE_NUMBER: ${{ steps.create.outputs.issue_number }}
-          ISSUE_URL: ${{ steps.create.outputs.issue_url }}
+          ISSUE_NUMBER: ${{ steps.handle_failure.outputs.issue_number }}
+          ISSUE_URL: ${{ steps.handle_failure.outputs.issue_url }}
+          ROOT_CAUSE_KEY: ${{ steps.handle_failure.outputs.root_cause_key }}
+          FAILURE_CATEGORY: ${{ steps.handle_failure.outputs.failure_category }}
         run: |
           if [ -z "$SLACK_WEBHOOK_URL" ]; then
-            echo "⚠️ SLACK_WEBHOOK_URL が未設定のためスキップ"
+            echo "SLACK_WEBHOOK_URL is not configured; skipping Slack notification."
             exit 0
           fi
 
-          JST=$(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')
-          SHORT_SHA="${HEAD_SHA:0:7}"
+          python - <<'PY'
+          import json
+          import os
 
-          # Issue リンクブロックの有無
-          if [ -n "$ISSUE_NUMBER" ]; then
-            ISSUE_BLOCK="{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\"Issue #${ISSUE_NUMBER}\"},\"url\":\"${ISSUE_URL}\",\"style\":\"danger\"}"
-          else
-            ISSUE_BLOCK="{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\"Workflow Logs\"},\"url\":\"${WORKFLOW_URL}\",\"style\":\"danger\"}"
-          fi
-
-          cat <<PAYLOAD > /tmp/slack_payload.json
-          {
-            "text": "❌ スケジュールタスク失敗: ${WORKFLOW_NAME}",
-            "blocks": [
-              {
-                "type": "header",
-                "text": { "type": "plain_text", "text": "❌ スケジュールタスク失敗" }
-              },
-              {
-                "type": "section",
-                "fields": [
-                  { "type": "mrkdwn", "text": "*ワークフロー:*\n\`${WORKFLOW_NAME}\`" },
-                  { "type": "mrkdwn", "text": "*ブランチ:*\n\`${HEAD_BRANCH}\`" },
-                  { "type": "mrkdwn", "text": "*コミット:*\n\`${SHORT_SHA}\`" },
-                  { "type": "mrkdwn", "text": "*失敗日時:*\n${JST}" }
-                ]
-              },
-              {
-                "type": "actions",
-                "elements": [
+          short_sha = (os.environ.get("HEAD_SHA") or "")[:7] or "unknown"
+          payload = {
+              "text": f"Workflow failure: {os.environ.get('WORKFLOW_NAME')}",
+              "blocks": [
                   {
-                    "type": "button",
-                    "text": { "type": "plain_text", "text": "Workflow Logs" },
-                    "url": "${WORKFLOW_URL}"
+                      "type": "header",
+                      "text": {"type": "plain_text", "text": "Workflow failure"},
                   },
-                  ${ISSUE_BLOCK}
-                ]
-              }
-            ]
+                  {
+                      "type": "section",
+                      "fields": [
+                          {"type": "mrkdwn", "text": f"*Workflow:*\n`{os.environ.get('WORKFLOW_NAME')}`"},
+                          {"type": "mrkdwn", "text": f"*Branch:*\n`{os.environ.get('HEAD_BRANCH')}`"},
+                          {"type": "mrkdwn", "text": f"*Commit:*\n`{short_sha}`"},
+                          {"type": "mrkdwn", "text": f"*Category:*\n`{os.environ.get('FAILURE_CATEGORY')}`"},
+                          {"type": "mrkdwn", "text": f"*Root cause:*\n`{os.environ.get('ROOT_CAUSE_KEY')}`"},
+                      ],
+                  },
+                  {
+                      "type": "actions",
+                      "elements": [
+                          {
+                              "type": "button",
+                              "text": {"type": "plain_text", "text": "Workflow Logs"},
+                              "url": os.environ.get("WORKFLOW_URL"),
+                          },
+                          {
+                              "type": "button",
+                              "text": {"type": "plain_text", "text": f"Issue #{os.environ.get('ISSUE_NUMBER')}"},
+                              "url": os.environ.get("ISSUE_URL"),
+                              "style": "danger",
+                          },
+                      ],
+                  },
+              ],
           }
-          PAYLOAD
+          with open("/tmp/slack_payload.json", "w", encoding="utf-8") as fh:
+              json.dump(payload, fh)
+          PY
 
           curl -s -X POST -H 'Content-type: application/json' \
             --data @/tmp/slack_payload.json \
             "$SLACK_WEBHOOK_URL" \
             --max-time 10 || true
-          echo "✅ Slack通知送信"
+          echo "Slack notification attempted."
 
       - name: Job Summary
         if: always()
         env:
           WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
           CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-          ISSUE_NUMBER: ${{ steps.create.outputs.issue_number }}
-          ISSUE_URL: ${{ steps.create.outputs.issue_url }}
-          ALREADY_EXISTS: ${{ steps.check.outputs.exists }}
+          ISSUE_ACTION: ${{ steps.handle_failure.outputs.action }}
+          ISSUE_NUMBER: ${{ steps.handle_failure.outputs.issue_number }}
+          ISSUE_URL: ${{ steps.handle_failure.outputs.issue_url }}
+          ROOT_CAUSE_KEY: ${{ steps.handle_failure.outputs.root_cause_key }}
+          FAILURE_CATEGORY: ${{ steps.handle_failure.outputs.failure_category }}
+          CLOSED_COUNT: ${{ steps.recover.outputs.closed_count }}
+          CLOSED_ISSUES: ${{ steps.recover.outputs.closed_issues }}
         run: |
           {
             echo "## Workflow Failure Handler $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
             echo ""
-            echo "| 項目 | 値 |"
+            echo "| Field | Value |"
             echo "| --- | --- |"
-            echo "| 対象ワークフロー | \`${WORKFLOW_NAME}\` |"
-            echo "| 結論 | \`${CONCLUSION}\` |"
-            if [ "${ALREADY_EXISTS}" = "true" ]; then
-              echo "| Issue | スキップ (同一 run_id のIssue既存) |"
-            elif [ -n "${ISSUE_NUMBER}" ]; then
-              echo "| Issue | [#${ISSUE_NUMBER}](${ISSUE_URL}) 作成 |"
+            echo "| Workflow | \`${WORKFLOW_NAME}\` |"
+            echo "| Conclusion | \`${CONCLUSION}\` |"
+            if [ "${CONCLUSION}" = "failure" ]; then
+              echo "| Failure category | \`${FAILURE_CATEGORY:-unknown}\` |"
+              echo "| Root-cause key | \`${ROOT_CAUSE_KEY:-unknown}\` |"
+              if [ "${ISSUE_ACTION}" = "created" ]; then
+                echo "| Issue | [#${ISSUE_NUMBER}](${ISSUE_URL}) created |"
+              elif [ "${ISSUE_ACTION}" = "commented" ]; then
+                echo "| Issue | [#${ISSUE_NUMBER}](${ISSUE_URL}) updated as duplicate |"
+              else
+                echo "| Issue | none |"
+              fi
             else
-              echo "| Issue | 作成対象なし |"
+              echo "| Closed recovered issues | \`${CLOSED_COUNT:-0}\` |"
+              echo "| Issues | \`${CLOSED_ISSUES:-none}\` |"
             fi
           } >> "$GITHUB_STEP_SUMMARY"

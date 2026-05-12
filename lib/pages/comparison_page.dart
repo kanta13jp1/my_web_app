@@ -130,6 +130,55 @@ const _defaultInfo = _CompetitorInfo(
   ],
 );
 
+_CompetitorInfo _fintechTradingAiInfo({
+  required String name,
+  required String searchKeyword,
+  required Color accentColor,
+  required String providerCapability,
+}) {
+  return _CompetitorInfo(
+    name: name,
+    emoji: 'FX',
+    tagline: '$name is a FinTech/trading intelligence provider. Jibun Company '
+        'turns that domain knowledge into AI University learning, personal '
+        'finance review, KPI tracking, and WBS execution.',
+    searchKeyword: searchKeyword,
+    accentColor: accentColor,
+    painPoints: [
+      '$name is optimized for $providerCapability, but it does not connect that insight to personal WBS execution.',
+      'FinTech/trading expertise can stay isolated from monthly KPI ledgers, learning plans, and task automation.',
+      'Professional market tools are heavy for individual operators who need action, review, and learning in one flow.',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: providerCapability,
+        competitorHas: true,
+        weHave: false,
+      ),
+      const _FeatureComparison(
+        feature: 'AI University FinTech/Trading AI curriculum',
+        competitorHas: false,
+        weHave: true,
+      ),
+      const _FeatureComparison(
+        feature: 'Personal finance/KPI/WBS integration',
+        competitorHas: false,
+        weHave: true,
+      ),
+      const _FeatureComparison(
+        feature: 'Competitive intelligence to action loop',
+        competitorHas: false,
+        weHave: true,
+      ),
+      const _FeatureComparison(
+        feature: 'Free personal OS entry point',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  );
+}
+
 final _competitorInfo = <String, _CompetitorInfo>{
   'notion': const _CompetitorInfo(
     name: 'Notion',
@@ -6292,6 +6341,55 @@ final _competitorInfo = <String, _CompetitorInfo>{
         weHave: true,
       ),
     ],
+  ),
+  'bloomberg-terminal': _fintechTradingAiInfo(
+    name: 'Bloomberg Terminal',
+    searchKeyword: 'Bloomberg Terminal alternative FinTech trading AI',
+    accentColor: const Color(0xFF141414),
+    providerCapability: 'Real-time market data, news, and terminal workflows',
+  ),
+  'refinitiv-eikon': _fintechTradingAiInfo(
+    name: 'Refinitiv Eikon',
+    searchKeyword: 'Refinitiv Eikon alternative market intelligence AI',
+    accentColor: const Color(0xFFFF7A00),
+    providerCapability: 'Institutional market data and analyst research',
+  ),
+  'factset': _fintechTradingAiInfo(
+    name: 'FactSet',
+    searchKeyword: 'FactSet alternative investment analytics AI',
+    accentColor: const Color(0xFF0F4C81),
+    providerCapability: 'Portfolio analytics, estimates, and company data',
+  ),
+  'sentieo': _fintechTradingAiInfo(
+    name: 'Sentieo',
+    searchKeyword: 'Sentieo alternative financial research AI',
+    accentColor: const Color(0xFF3559E0),
+    providerCapability: 'Financial document search and research notes',
+  ),
+  'koyfin': _fintechTradingAiInfo(
+    name: 'Koyfin',
+    searchKeyword: 'Koyfin alternative market dashboard AI',
+    accentColor: const Color(0xFF1E8E5A),
+    providerCapability: 'Market dashboards, charts, and macro data',
+  ),
+  'atom-finance': _fintechTradingAiInfo(
+    name: 'Atom Finance',
+    searchKeyword: 'Atom Finance alternative investing research AI',
+    accentColor: const Color(0xFF1D4ED8),
+    providerCapability: 'Retail investing research and portfolio insights',
+  ),
+  'claude-pro-finance': _fintechTradingAiInfo(
+    name: 'Claude Pro Finance',
+    searchKeyword: 'Claude Pro Finance alternative trading AI tutor',
+    accentColor: const Color(0xFF7C3AED),
+    providerCapability: 'AI-assisted finance reasoning and trade review',
+  ),
+  'cursor-jibun-finance': _fintechTradingAiInfo(
+    name: 'Cursor Jibun Finance',
+    searchKeyword: 'Cursor finance workflow alternative personal AI OS',
+    accentColor: const Color(0xFF111827),
+    providerCapability:
+        'Code-driven finance automation and personal dashboards',
   ),
   'perplexity-ai': const _CompetitorInfo(
     name: 'Perplexity AI',
@@ -64910,6 +65008,2141 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'deepeval-confident-ai': const _CompetitorInfo(
+    name: 'DeepEval',
+    emoji: '🧪',
+    tagline:
+        'DeepEval・Confident AI製LLM評価フレームワーク・pytest互換・RAGパイプライン評価・LLM-as-Judge・14+メトリクス・CIインテグレーション対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DeepEval代替 LLM評価フレームワーク RAG評価 LLM-as-Judge pytest CI品質ゲート',
+    accentColor: Color(0xFF00D0A0),
+    painPoints: [
+      'エンジニア/MLOps特化・個人ライフ管理は別途必要',
+      'LLM評価専用・AI個人アシスタント機能なし',
+      '開発者向けツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'pytest互換LLM評価・RAGパイプライン・14+メトリクス・CI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'promptfoo-llm-testing': const _CompetitorInfo(
+    name: 'promptfoo',
+    emoji: '🔬',
+    tagline:
+        'promptfoo・OSSのLLMテスト・レッドチーミングツール・YAMLベース設定・脆弱性スキャン・CI/CD統合・プロンプト比較・A/Bテスト対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'promptfoo代替 LLMテスト レッドチーミング プロンプト評価 CI脆弱性スキャン YAML',
+    accentColor: Color(0xFF00A8E8),
+    painPoints: [
+      '開発者/セキュリティエンジニア特化・個人ライフ管理は別途必要',
+      'LLMテスト専用・総合個人AIアシスタントなし',
+      'プロンプト評価ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'YAMLベースLLMテスト・レッドチーミング・脆弱性スキャン・CI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lm-evaluation-harness-eleutherai': const _CompetitorInfo(
+    name: 'lm-evaluation-harness',
+    emoji: '📊',
+    tagline:
+        'lm-evaluation-harness・EleutherAI製OSSベンチマーク基盤・200+タスク・MMLU/HellaSwag/HumanEval対応・Hugging Face統合・学術標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'lm-evaluation-harness代替 EleutherAI LLMベンチマーク MMLU HumanEval Hugging Face評価',
+    accentColor: Color(0xFF6B4FFF),
+    painPoints: [
+      '研究者/MLエンジニア特化・個人ライフ管理は別途必要',
+      'LLMベンチマーク専用・AI個人アシスタント機能なし',
+      '評価ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '200+ベンチマーク・MMLU/HellaSwag/HumanEval・Hugging Face統合・学術標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lighteval-huggingface': const _CompetitorInfo(
+    name: 'LightEval',
+    emoji: '⚡',
+    tagline:
+        'LightEval・HuggingFace製軽量LLM評価ライブラリ・シングルコード評価・カスタムタスク・Transformers完全統合・高速実行・研究者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'LightEval代替 HuggingFace LLM評価 軽量ベンチマーク Transformers カスタムタスク',
+    accentColor: Color(0xFFFF9B00),
+    painPoints: [
+      'HuggingFace依存・個人ライフ管理は別途必要',
+      'LLM評価専用・総合個人AIアシスタントなし',
+      'ML研究ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '軽量LLM評価・Transformers統合・カスタムタスク・高速実行',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ragas-rag-evaluation': const _CompetitorInfo(
+    name: 'Ragas',
+    emoji: '🎯',
+    tagline:
+        'Ragas・RAGパイプライン評価フレームワーク・Faithfulness/Answer Relevancy/Context Precision/Recall・LangChain統合・自動化評価で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ragas代替 RAG評価 Faithfulness Answer Relevancy LangChain RAGパイプライン品質',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      'RAGシステム開発者特化・個人ライフ管理は別途必要',
+      'RAG評価専用・AI個人アシスタント機能なし',
+      '評価メトリクスツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'RAG Faithfulness/Relevancy/Precision評価・LangChain統合・自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trulens-truera': const _CompetitorInfo(
+    name: 'TruLens',
+    emoji: '🔍',
+    tagline:
+        'TruLens・TruEra製RAGトライアド評価・ハルシネーション検出・Answer Relevance/Context Relevance/Groundedness・LlamaIndex/LangChain対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TruLens代替 TruEra RAGトライアド ハルシネーション検出 LlamaIndex LangChain LLM評価',
+    accentColor: Color(0xFF4B9AF9),
+    painPoints: [
+      'AI開発者/MLOps特化・個人ライフ管理は別途必要',
+      'RAGトライアド評価専用・総合個人AIアシスタントなし',
+      '評価ダッシュボードツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'RAGトライアド評価・ハルシネーション検出・LlamaIndex/LangChain統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'giskard-ml-testing': const _CompetitorInfo(
+    name: 'Giskard',
+    emoji: '🛡️',
+    tagline:
+        'Giskard・OSS MLテストフレームワーク・LLMバイアス/脆弱性検出・自動化スキャン・CI統合・Hugging Face/LangChain対応・OWASP LLM Top10対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Giskard代替 MLテスト LLMバイアス検出 OWASP LLM脆弱性スキャン CI自動化 Hugging Face',
+    accentColor: Color(0xFF9B59B6),
+    painPoints: [
+      'MLエンジニア/QA特化・個人ライフ管理は別途必要',
+      'MLテスト専用・AI個人アシスタント機能なし',
+      '脆弱性スキャンツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS LLMバイアス/脆弱性検出・OWASP LLM Top10・CI統合・自動化スキャン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'braintrust-llm-evals': const _CompetitorInfo(
+    name: 'Braintrust',
+    emoji: '🧠',
+    tagline:
+        'Braintrust・LLMエバル統合プラットフォーム・ロギング/トレーシング/A/Bテスト・プロダクション評価・スコアリング自動化・チーム協働で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Braintrust代替 LLMエバル プロダクション評価 A/Bテスト ロギング トレーシング LLM品質',
+    accentColor: Color(0xFFFF5A00),
+    painPoints: [
+      'AI/LLMプロダクト開発者特化・個人ライフ管理は別途必要',
+      'LLMエバル専用・総合個人AIアシスタントなし',
+      'プロダクション評価ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMエバル統合・ロギング/トレーシング/A/Bテスト・プロダクション評価',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'helm-stanford-eval': const _CompetitorInfo(
+    name: 'HELM',
+    emoji: '🎓',
+    tagline:
+        'HELM・Stanford製Holistic Evaluation of Language Models・100+シナリオ・30+メトリクス・公平性/堅牢性/校正度・LLM総合ベンチマーク学術標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'HELM代替 Stanford LLM総合評価 Holistic Evaluation ベンチマーク 公平性 堅牢性 学術標準',
+    accentColor: Color(0xFF3D5AFE),
+    painPoints: [
+      '研究者/学術機関特化・個人ライフ管理は別途必要',
+      '学術LLM評価専用・AI個人アシスタント機能なし',
+      'ベンチマーク研究ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '100+シナリオ・30+メトリクス・公平性/堅牢性/校正度・Stanford学術標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coderabbit-ai-review': const _CompetitorInfo(
+    name: 'CodeRabbit',
+    emoji: '🐰',
+    tagline:
+        'CodeRabbit・AIコードレビューボット・PR自動レビュー・GitHub・GitLab統合・コード品質自動チェックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CodeRabbit代替 AIコードレビュー PR自動レビュー GitHub AI GitLabコードチェック',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      'コードレビュー専用・個人ライフ管理は別途必要',
+      'エンジニアチーム向け・AI個人アシスタント機能なし',
+      'PR/コード品質ツール・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコードレビューボット・PR自動レビュー・GitHub/GitLab統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'greptile-codebase-ai': const _CompetitorInfo(
+    name: 'Greptile',
+    emoji: '🔍',
+    tagline: 'Greptile・AIコードベース横断検索・自然言語質問・PR文脈理解・コードベースQ&Aで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Greptile代替 AIコードベース検索 自然言語クエリ PRコンテキスト コードQ&A',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      'コードベース検索専用・個人ライフ管理は別途必要',
+      '開発者向けコードQ&Aツール・AI個人アシスタント機能なし',
+      'PRコンテキスト解析特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコードベース横断検索・自然言語質問・PR文脈理解',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qodo-ai-testing': const _CompetitorInfo(
+    name: 'Qodo',
+    emoji: '🧩',
+    tagline:
+        'Qodo(旧CodiumAI)・AIテスト生成・PR-Agent・コード整合性検証・テストカバレッジ自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Qodo代替 CodiumAI AIテスト生成 PR-Agent コード整合性 テストカバレッジ自動化',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      'テスト生成・コード整合性専用・個人ライフ管理は別途必要',
+      '開発者向けAIテストツール・AI個人アシスタント機能なし',
+      'PR-Agent/コード品質特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIテスト生成・PR-Agent・コード整合性検証・テストカバレッジ自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pieces-for-developers': const _CompetitorInfo(
+    name: 'Pieces for Developers',
+    emoji: '🧩',
+    tagline:
+        'Pieces for Developers・AIスニペット管理・ローカルLLM・オフライン対応・開発ワークフロー最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pieces for Developers代替 AIスニペット管理 ローカルLLM オフライン開発ツール',
+    accentColor: Color(0xFF00A8E8),
+    painPoints: [
+      'スニペット管理・開発ワークフロー専用・個人ライフ管理は別途必要',
+      '開発者向けローカルLLMツール・AI個人アシスタント機能なし',
+      'コードスニペット特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIスニペット管理・ローカルLLM・オフライン対応・開発ワークフロー最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sourcegraph-cody': const _CompetitorInfo(
+    name: 'Sourcegraph Cody',
+    emoji: '🦊',
+    tagline:
+        'Sourcegraph Cody・全社コードベース横断AI・Context fetcher・VSCode/JetBrains統合・エンタープライズコード理解で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sourcegraph Cody代替 全社コードベースAI Context fetcher VSCode JetBrains エンタープライズ',
+    accentColor: Color(0xFFFF5F6D),
+    painPoints: [
+      '全社コードベース横断AI専用・個人ライフ管理は別途必要',
+      'エンタープライズ開発者向け・AI個人アシスタント機能なし',
+      'コードコンテキスト理解特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '全社コードベース横断AI・Context fetcher・VSCode/JetBrains統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sweep-ai-agent': const _CompetitorInfo(
+    name: 'Sweep AI',
+    emoji: '🧹',
+    tagline:
+        'Sweep AI・Issue→PR自動変換・自然言語でコード修正・OSS AIエージェント・GitHub Issue自動解決で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sweep AI代替 Issue PR自動変換 自然言語コード修正 OSS AIエージェント GitHub',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'Issue→PR自動変換専用・個人ライフ管理は別途必要',
+      'GitHub Issue解決AIエージェント・AI個人アシスタント機能なし',
+      'OSSコード自動修正特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Issue→PR自動変換・自然言語コード修正・OSS AIエージェント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aider-ai-programmer': const _CompetitorInfo(
+    name: 'Aider',
+    emoji: '⌨️',
+    tagline:
+        'Aider・OSSターミナルAIペアプログラマー・git自動コミット・マルチファイル編集・コマンドライン開発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Aider代替 OSS ターミナルAI ペアプログラミング git自動コミット マルチファイル編集',
+    accentColor: Color(0xFF009688),
+    painPoints: [
+      'ターミナルAIペアプロ専用・個人ライフ管理は別途必要',
+      'OSS開発者向けCLIツール・AI個人アシスタント機能なし',
+      'gitコミット自動化特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSターミナルAIペアプロ・git自動コミット・マルチファイル編集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'openhands-all-hands': const _CompetitorInfo(
+    name: 'OpenHands',
+    emoji: '🤖',
+    tagline:
+        'OpenHands(旧OpenDevin)・All Hands AI・OSS自律AIエージェント・Docker実行環境・コード自動実装で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OpenHands代替 OpenDevin All Hands AI OSS自律エージェント Docker コード自動実装',
+    accentColor: Color(0xFFE91E63),
+    painPoints: [
+      'OSS自律AIエージェント専用・個人ライフ管理は別途必要',
+      'Docker実行環境コーディング特化・AI個人アシスタント機能なし',
+      '自律コード実装エージェント・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS自律AIエージェント・Docker実行環境・コード自動実装',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'applitools-visual-ai': const _CompetitorInfo(
+    name: 'Applitools',
+    emoji: '👁️',
+    tagline:
+        'Applitools・AI Visual Testing・Eyes SDK・Ultrafast Grid・クロスブラウザ視覚的回帰テスト自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Applitools代替 AI Visual Testing 視覚的回帰テスト Eyes SDK クロスブラウザ自動テスト',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      'ビジュアルテスト専用・個人ライフ管理は別途必要',
+      'エンタープライズQAチーム向け・AI個人アシスタント機能なし',
+      '視覚的回帰テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Visual Testing・Eyes SDK・Ultrafast Grid・クロスブラウザ対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'happo-visual-regression': const _CompetitorInfo(
+    name: 'Happo',
+    emoji: '📸',
+    tagline:
+        'Happo・クロスブラウザ視覚的リグレッションテスト・コンポーネントスクリーンショット・PR差分確認で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Happo代替 クロスブラウザ視覚的リグレッション コンポーネントスクリーンショット PR差分確認',
+    accentColor: Color(0xFF7B1FA2),
+    painPoints: [
+      '視覚的リグレッションテスト専用・個人ライフ管理は別途必要',
+      'フロントエンドQAツール・AI個人アシスタント機能なし',
+      'コンポーネントスクリーンショット特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クロスブラウザ視覚的リグレッション・コンポーネントスクリーンショット・PR差分',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lost-pixel-oss-visual': const _CompetitorInfo(
+    name: 'Lost Pixel',
+    emoji: '🔎',
+    tagline:
+        'Lost Pixel・OSSビジュアルリグレッションテスト・Storybook/Ladle/Histoire対応・自己ホスト可能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lost Pixel代替 OSSビジュアルリグレッション Storybook視覚テスト 自己ホスト フロントエンドCI',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'OSS視覚テスト専用・個人ライフ管理は別途必要',
+      '開発者向けフロントエンドQAツール・AI個人アシスタント機能なし',
+      'Storybookビジュアルテスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSビジュアルリグレッション・Storybook/Ladle/Histoire対応・自己ホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'argos-ci-visual-testing': const _CompetitorInfo(
+    name: 'Argos CI',
+    emoji: '🐕',
+    tagline:
+        'Argos CI・OSSビジュアルテストCI統合・GitHub Actions対応・スクリーンショット差分自動検出で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Argos CI代替 OSSビジュアルテスト CI統合 GitHub Actions スクリーンショット差分検出',
+    accentColor: Color(0xFFFF7043),
+    painPoints: [
+      'CI統合ビジュアルテスト専用・個人ライフ管理は別途必要',
+      '開発者向けCIビジュアルQAツール・AI個人アシスタント機能なし',
+      'スクリーンショット差分検出特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSビジュアルテストCI統合・GitHub Actions対応・スクリーンショット差分',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'backstopjs-visual-regression': const _CompetitorInfo(
+    name: 'BackstopJS',
+    emoji: '🧪',
+    tagline:
+        'BackstopJS・OSS CSS視覚的リグレッションテスト・Puppeteer/Playwright/Casper対応・HTMLレポート生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'BackstopJS代替 CSS視覚リグレッション Puppeteer Playwright OSS フロントエンドテスト',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      'CSS視覚リグレッションテスト専用・個人ライフ管理は別途必要',
+      '開発者向けOSSテストツール・AI個人アシスタント機能なし',
+      'Puppeteer/Playwright視覚テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS CSS視覚リグレッション・Puppeteer/Playwright/Casper対応・HTMLレポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'reg-suit-visual-regression': const _CompetitorInfo(
+    name: 'reg-suit',
+    emoji: '📊',
+    tagline:
+        'reg-suit・OSSビジュアルリグレッションテストフレームワーク・S3/GCS対応・フレームワーク非依存で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'reg-suit代替 OSSビジュアルリグレッション S3 GCS フレームワーク非依存 フロントエンドCI',
+    accentColor: Color(0xFF00897B),
+    painPoints: [
+      'ビジュアルリグレッションフレームワーク専用・個人ライフ管理は別途必要',
+      '開発者向けOSSテストツール・AI個人アシスタント機能なし',
+      'S3/GCS対応視覚テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSビジュアルリグレッション・S3/GCS対応・フレームワーク非依存',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'screener-saucelabs-visual': const _CompetitorInfo(
+    name: 'Screener (Sauce Labs)',
+    emoji: '🖥️',
+    tagline:
+        'Screener by Sauce Labs・AIビジュアルテスト・クロスブラウザ/デバイス視覚テスト・CI/CD統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Screener Sauce Labs代替 AIビジュアルテスト クロスブラウザ視覚テスト エンタープライズQA CI/CD',
+    accentColor: Color(0xFFE53935),
+    painPoints: [
+      'エンタープライズビジュアルテスト専用・個人ライフ管理は別途必要',
+      'QAチーム向けSaaS・AI個人アシスタント機能なし',
+      'クロスブラウザ視覚QA特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIビジュアルテスト・クロスブラウザ/デバイス・CI/CD統合・Sauce Labs連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'diffy-visual-regression': const _CompetitorInfo(
+    name: 'Diffy',
+    emoji: '🔄',
+    tagline:
+        'Diffy・API/UIビジュアルリグレッションテスト・本番/ステージング差分検出・自動スクリーンショット比較で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Diffy代替 API UIビジュアルリグレッション 本番ステージング差分検出 スクリーンショット比較',
+    accentColor: Color(0xFF5C6BC0),
+    painPoints: [
+      'API/UIビジュアルリグレッション専用・個人ライフ管理は別途必要',
+      '開発者向けデプロイ差分検出ツール・AI個人アシスタント機能なし',
+      '本番/ステージング比較特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'API/UIビジュアルリグレッション・本番/ステージング差分・自動スクリーンショット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'visual-regression-tracker-vrt': const _CompetitorInfo(
+    name: 'Visual Regression Tracker',
+    emoji: '📈',
+    tagline:
+        'Visual Regression Tracker・OSSセルフホスト型ビジュアルリグレッション管理・マルチ言語SDK・チーム承認フローで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Visual Regression Tracker代替 OSSセルフホスト ビジュアルリグレッション マルチ言語SDK チーム承認フロー',
+    accentColor: Color(0xFF6D4C41),
+    painPoints: [
+      'OSSビジュアルリグレッション管理専用・個人ライフ管理は別途必要',
+      '開発チーム向けセルフホストQAツール・AI個人アシスタント機能なし',
+      'ビジュアル差分チーム承認特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSセルフホスト型VRT・マルチ言語SDK・チーム承認フロー・Playwright対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bruno-oss-api': const _CompetitorInfo(
+    name: 'Bruno',
+    emoji: '🐶',
+    tagline:
+        'Bruno・OSSローカルAPIクライアント・Git管理可能・Postman/Insomnia代替・オフライン完全対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Bruno代替 OSSAPIクライアント Gitフレンドリー Postman代替 Insomnia代替 オフラインAPI',
+    accentColor: Color(0xFFFF6F00),
+    painPoints: [
+      'OSSAPIクライアント専用・個人ライフ管理は別途必要',
+      '開発者向けAPIテストツール・AI個人アシスタント機能なし',
+      'Gitベース設定特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSローカルAPIクライアント・Git管理可能・Postman/Insomnia代替・完全オフライン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'thunder-client-vscode': const _CompetitorInfo(
+    name: 'Thunder Client',
+    emoji: '⚡',
+    tagline:
+        'Thunder Client・VSCode拡張APIクライアント・軽量・Git同期・ローカルスクリプト不要・Postman代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Thunder Client代替 VSCode API拡張 軽量APIクライアント Git同期 Postman代替 IDE統合',
+    accentColor: Color(0xFFFF6D00),
+    painPoints: [
+      'VSCode拡張APIクライアント専用・個人ライフ管理は別途必要',
+      'IDE内開発者向けツール・AI個人アシスタント機能なし',
+      'API開発テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VSCode拡張軽量APIクライアント・Git同期・スクリプト不要・Postman代替',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'httpie-api-client': const _CompetitorInfo(
+    name: 'HTTPie',
+    emoji: '🌐',
+    tagline:
+        'HTTPie・人間向けHTTPクライアント・CLI/デスクトップGUI/Web・JSON強調表示・REST/GraphQL対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'HTTPie代替 人間向けHTTPクライアント CLI APIテスト JSON強調 REST GraphQL デスクトップ',
+    accentColor: Color(0xFF009688),
+    painPoints: [
+      'HTTPクライアント専用・個人ライフ管理は別途必要',
+      '開発者向けCLI/GUIツール・AI個人アシスタント機能なし',
+      'REST/GraphQL APIテスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '人間向けHTTPクライアント・CLI/デスクトップGUI/Web・JSON強調・REST/GraphQL',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rapidapi-platform': const _CompetitorInfo(
+    name: 'RapidAPI Client',
+    emoji: '🚀',
+    tagline:
+        'RapidAPI Client・API marketplace統合・APIハブ・設計/テスト/モニタリング一体型・エンタープライズAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'RapidAPI Client代替 API marketplace統合 APIハブ 設計テストモニタリング エンタープライズAPI',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      'API marketplace/クライアント専用・個人ライフ管理は別途必要',
+      'エンタープライズ開発者向け・AI個人アシスタント機能なし',
+      'API管理ハブ特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'API marketplace統合・設計/テスト/モニタリング一体型・エンタープライズ対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apidog-all-in-one': const _CompetitorInfo(
+    name: 'Apidog',
+    emoji: '🐶',
+    tagline:
+        'Apidog・API設計/Mock/テスト/ドキュメント統合プラットフォーム・Postman+Swagger代替・チーム協働で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apidog代替 API設計Mock統合 Postman Swagger代替 APIドキュメント チーム協働 オールインワン',
+    accentColor: Color(0xFFFF4081),
+    painPoints: [
+      'API設計/Mock/テスト統合ツール専用・個人ライフ管理は別途必要',
+      '開発チーム向けAPIプラットフォーム・AI個人アシスタント機能なし',
+      'API開発統合特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'API設計/Mock/テスト/ドキュメント統合・Postman+Swagger代替・チーム協働',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paw-api-tool': const _CompetitorInfo(
+    name: 'Paw',
+    emoji: '🐾',
+    tagline:
+        'Paw・Mac向けフル機能APIクライアント・動的値・コード生成・拡張機能・RapidAPI買収で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Paw代替 Mac APIクライアント フル機能 動的値 コード生成 拡張機能 RapidAPI Mac専用',
+    accentColor: Color(0xFF795548),
+    painPoints: [
+      'Mac向けAPIクライアント専用・個人ライフ管理は別途必要',
+      'Mac開発者向けネイティブツール・AI個人アシスタント機能なし',
+      'API開発/テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Mac向けフル機能APIクライアント・動的値・コード生成・拡張機能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'restfox-oss': const _CompetitorInfo(
+    name: 'Restfox',
+    emoji: '🦊',
+    tagline:
+        'Restfox・OSSブラウザ対応APIクライアント・PWA・Postman代替・プライバシー重視・自己ホスト可能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Restfox代替 OSSブラウザAPIクライアント PWA Postman代替 プライバシー重視 自己ホスト',
+    accentColor: Color(0xFF0288D1),
+    painPoints: [
+      'OSSブラウザAPIクライアント専用・個人ライフ管理は別途必要',
+      '開発者向けプライバシー重視ツール・AI個人アシスタント機能なし',
+      'PWA対応API開発特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSブラウザ対応APIクライアント・PWA・Postman代替・プライバシー重視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'requestly-api-client': const _CompetitorInfo(
+    name: 'Requestly',
+    emoji: '🔧',
+    tagline:
+        'Requestly・HTTP傍受/モック・APIモッキング・リクエスト変更・チーム共有・フロントエンド開発加速で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Requestly代替 HTTP傍受 APIモッキング リクエスト変更 フロントエンド開発 チーム共有',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'HTTP傍受/APIモック専用・個人ライフ管理は別途必要',
+      'フロントエンド開発者向けツール・AI個人アシスタント機能なし',
+      'APIモッキング特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HTTP傍受/モック・APIモッキング・リクエスト変更・フロントエンド開発加速',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'milkman-oss-api': const _CompetitorInfo(
+    name: 'Milkman',
+    emoji: '🥛',
+    tagline:
+        'Milkman・OSSマルチプロトコルAPIクライアント・JVM/JavaFX・HTTP/gRPC/WebSocket/Kafka対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Milkman代替 OSSマルチプロトコルAPI JVM JavaFX HTTP gRPC WebSocket Kafka APIクライアント',
+    accentColor: Color(0xFF5C6BC0),
+    painPoints: [
+      'マルチプロトコルAPIクライアント専用・個人ライフ管理は別途必要',
+      '開発者向けJVM OSSツール・AI個人アシスタント機能なし',
+      'gRPC/WebSocket/Kafka対応特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSマルチプロトコル・HTTP/gRPC/WebSocket/Kafka対応・JVM/JavaFX',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'llamaindex-rag-framework': const _CompetitorInfo(
+    name: 'LlamaIndex',
+    emoji: '🦙',
+    tagline:
+        'LlamaIndex・データ接続/インデックス/RAGフレームワーク・LLMアプリ基盤・カスタムデータ統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LlamaIndex代替 RAGフレームワーク データ接続 LLMアプリ基盤 カスタムデータ統合 AI開発',
+    accentColor: Color(0xFF6A1B9A),
+    painPoints: [
+      'RAGフレームワーク専用・個人ライフ管理は別途必要',
+      '開発者向けLLM統合ツール・AI個人アシスタント機能なし',
+      'データインデックス/検索特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データ接続/インデックス/RAGフレームワーク・LLMアプリ基盤・カスタムデータ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'haystack-deepset-nlp': const _CompetitorInfo(
+    name: 'Haystack',
+    emoji: '🌾',
+    tagline:
+        'Haystack(deepset)・OSS NLP/RAGフレームワーク・パイプライン設計・マルチLLM対応・エンタープライズNLPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Haystack代替 deepset NLP RAGフレームワーク パイプライン設計 マルチLLM エンタープライズNLP',
+    accentColor: Color(0xFFFF8F00),
+    painPoints: [
+      'NLP/RAGパイプラインフレームワーク専用・個人ライフ管理は別途必要',
+      '開発者向けNLPツール・AI個人アシスタント機能なし',
+      'エンタープライズNLP特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS NLP/RAGフレームワーク・パイプライン設計・マルチLLM対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'semantic-kernel-microsoft': const _CompetitorInfo(
+    name: 'Semantic Kernel',
+    emoji: '🔮',
+    tagline:
+        'Microsoft Semantic Kernel・エンタープライズLLMオーケストレーション・C#/Python/Java対応・プラグイン設計で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Semantic Kernel代替 Microsoft LLMオーケストレーション C# Python Java プラグイン設計',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      'エンタープライズLLMオーケストレーション専用・個人ライフ管理は別途必要',
+      'Microsoft開発者向けSDK・AI個人アシスタント機能なし',
+      'C#/Python/Java LLM統合特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズLLMオーケストレーション・C#/Python/Java対応・プラグイン設計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dspy-stanford-llm': const _CompetitorInfo(
+    name: 'DSPy',
+    emoji: '🎓',
+    tagline:
+        'DSPy(Stanford)・LLMプログラミングフレームワーク・プロンプト自動最適化・宣言的パイプライン・研究→本番で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DSPy代替 Stanford LLMプログラミング プロンプト自動最適化 宣言的パイプライン 研究AI',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      'LLMプログラミング/プロンプト最適化専用・個人ライフ管理は別途必要',
+      '研究者向け開発フレームワーク・AI個人アシスタント機能なし',
+      'プロンプト最適化特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMプログラミング・プロンプト自動最適化・宣言的パイプライン・Stanford研究',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'langflow-visual-llm': const _CompetitorInfo(
+    name: 'LangFlow',
+    emoji: '🌊',
+    tagline:
+        'LangFlow・ビジュアルLLMワークフロービルダー・LangChain視覚化・ノーコードAIパイプライン・RAG構築UIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LangFlow代替 ビジュアルLLMワークフロー LangChain視覚化 ノーコードAI RAGビルダー',
+    accentColor: Color(0xFF00ACC1),
+    painPoints: [
+      'ビジュアルLLMワークフロービルダー専用・個人ライフ管理は別途必要',
+      '開発者向けノーコードAIツール・AI個人アシスタント機能なし',
+      'LangChain視覚化特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルLLMワークフロービルダー・LangChain視覚化・ノーコードAIパイプライン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flowise-oss-llm': const _CompetitorInfo(
+    name: 'Flowise',
+    emoji: '🌀',
+    tagline:
+        'Flowise・OSS ローコードLLMワークフロービルダー・セルフホスト・LangChain/LlamaIndex統合・Docker対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Flowise代替 OSS ローコードLLMワークフロー セルフホスト LangChain LlamaIndex統合 Docker',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'OSSローコードLLMワークフロービルダー専用・個人ライフ管理は別途必要',
+      '開発者向けセルフホストAIツール・AI個人アシスタント機能なし',
+      'LLMワークフロー特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSローコードLLMビルダー・セルフホスト・LangChain/LlamaIndex統合・Docker',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dify-ai-platform': const _CompetitorInfo(
+    name: 'Dify',
+    emoji: '✨',
+    tagline:
+        'Dify・AIアプリ開発プラットフォーム・OSS/SaaS・RAGパイプライン・ビジュアルプロンプト管理・エージェント構築で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dify代替 AIアプリ開発プラットフォーム OSS RAGパイプライン ビジュアルプロンプト管理 エージェント構築',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      'AIアプリ開発プラットフォーム専用・個人ライフ管理は別途必要',
+      '開発チーム向けAI構築ツール・AI個人アシスタント機能なし',
+      'RAGパイプライン/エージェント特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIアプリ開発・RAGパイプライン・ビジュアルプロンプト管理・エージェント構築',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vercel-ai-sdk': const _CompetitorInfo(
+    name: 'Vercel AI SDK',
+    emoji: '▲',
+    tagline:
+        'Vercel AI SDK・フロントエンドAI統合・Next.js/React向けLLM統合・ストリーミング対応・エッジAIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vercel AI SDK代替 フロントエンドAI統合 Next.js React LLM統合 ストリーミング エッジAI',
+    accentColor: Color(0xFF212121),
+    painPoints: [
+      'フロントエンドAI統合SDK専用・個人ライフ管理は別途必要',
+      'Next.js/React開発者向けSDK・AI個人アシスタント機能なし',
+      'フロントエンドLLM統合特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フロントエンドAI統合・Next.js/React向けLLM・ストリーミング・エッジAI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rivet-ai-visual': const _CompetitorInfo(
+    name: 'Rivet',
+    emoji: '🔩',
+    tagline:
+        'Rivet・ビジュアルAIエージェントプログラミング・IronClad製OSS・グラフベースLLMワークフロー・デバッグ機能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rivet代替 ビジュアルAIエージェント OSS グラフベースLLMワークフロー デバッグ IronClad',
+    accentColor: Color(0xFFE91E63),
+    painPoints: [
+      'ビジュアルAIエージェントプログラミング専用・個人ライフ管理は別途必要',
+      '開発者向けグラフベースLLMツール・AI個人アシスタント機能なし',
+      'LLMワークフローデバッグ特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルAIエージェント・OSS・グラフベースLLMワークフロー・デバッグ機能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'continue-dev-oss': const _CompetitorInfo(
+    name: 'Continue.dev',
+    emoji: '🔗',
+    tagline:
+        'Continue.dev・OSS IDE拡張・任意LLM接続・ローカルモデル対応・VSCode/JetBrains AIコーディングアシスタントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Continue.dev代替 OSS IDE拡張 任意LLM接続 ローカルモデル VSCode JetBrains AIコーディング',
+    accentColor: Color(0xFF1976D2),
+    painPoints: [
+      'OSS IDE AIコーディング拡張専用・個人ライフ管理は別途必要',
+      '開発者向け任意LLM接続ツール・AI個人アシスタント機能なし',
+      'ローカルモデル開発特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS IDE拡張・任意LLM接続・ローカルモデル対応・VSCode/JetBrains統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  // ── Vector Search / Embedding Platforms ─────────────────────────────────
+  'nomic-ai-vector-search': const _CompetitorInfo(
+    name: 'Nomic AI',
+    emoji: '🗺️',
+    tagline:
+        'Nomic AI・Nomic Atlas可視化+Nomic Embed高性能埋め込み・8192トークン長・OSS・ドメイン特化AI構築基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nomic AI代替 ベクター検索 Nomic Embed テキスト埋め込み Nomic Atlas 高次元可視化 OpenAI ada代替',
+    accentColor: Color(0xFF5C6BC0),
+    painPoints: [
+      'ベクター検索・埋め込み特化・個人のライフ管理は別途必要',
+      '開発者向けEmbedding API・一般ユーザー向けプロダクトではない',
+      'OpenAI/Pineconeとの比較でエコシステム規模・マネージドサービスが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Nomic Embed (8192トークン/OSS/Apache2.0) + Nomic Atlas高次元データ可視化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  // ── Code Quality / Static Analysis ──────────────────────────────────────
+  'codefactor-code-review': const _CompetitorInfo(
+    name: 'CodeFactor',
+    emoji: '🔎',
+    tagline:
+        'CodeFactor・リアルタイム自動コードレビュー・GitHub/GitLab/Bitbucket統合・25言語・コード品質スコアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'CodeFactor代替 自動コードレビュー リアルタイム GitHub統合 コード品質 静的解析 SonarCloud代替',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      'OSS無料/有料・コードレビュー特化・個人のライフ管理は別途必要',
+      'コード品質スコア特化・個人AI管理機能なし',
+      'SonarCloud/Codacyとの比較でサポート言語・エンタープライズ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム自動コードレビュー・25言語・GitHub/GitLab/Bitbucket統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codacy-quality-platform': const _CompetitorInfo(
+    name: 'Codacy',
+    emoji: '🛡️',
+    tagline:
+        'Codacy・自動コードレビュー・セキュリティ+品質+カバレッジ統合・40言語・Pull Request自動チェックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Codacy代替 自動コードレビュー セキュリティ コード品質 カバレッジ SonarCloud代替 CodeFactor代替',
+    accentColor: Color(0xFF7B1FA2),
+    painPoints: [
+      'OSS無料/有料・コードレビュー+セキュリティ特化・個人のライフ管理は別途必要',
+      '開発品質プラットフォーム・個人AI管理は別途必要',
+      'SonarCloud/CodeFactorとの比較でUI複雑・有料プランコスト・速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動コードレビュー・40言語・セキュリティ+品質+カバレッジ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qodana-jetbrains-quality': const _CompetitorInfo(
+    name: 'Qodana',
+    emoji: '🧠',
+    tagline:
+        'Qodana・JetBrains製AI支援コード品質チェック・60+言語・IDE統合・CI/CD対応・静的解析+ライセンス検査で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Qodana代替 JetBrains コード品質 AI静的解析 IntelliJ CI/CD統合 SonarQube代替',
+    accentColor: Color(0xFFFF7043),
+    painPoints: [
+      'JetBrains IDEエコシステム前提・個人のライフ管理は別途必要',
+      'コード品質検査特化・個人AI管理・財務管理は別途必要',
+      'SonarQube/DeepSourceとの比較でJetBrains依存・OSSコミュニティが小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JetBrains製AI支援静的解析・60+言語・ライセンス検査・CI/CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'klocwork-perforce-sast': const _CompetitorInfo(
+    name: 'Klocwork',
+    emoji: '⚙️',
+    tagline:
+        'Klocwork・Perforce製組み込み/車載向け静的解析・MISRA/CERT準拠・リアルタイムデスクトップ解析・ISO 26262対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Klocwork代替 組み込み静的解析 Perforce MISRA CERT ISO26262 車載ソフトウェア SAST',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      '組み込み/車載向けエンタープライズ特化・個人のライフ管理は別途必要',
+      '高価なライセンス・大規模チーム向け・個人利用コスト高',
+      'SonarQube/Veracodeとの比較でコスト・Web/クラウド向けが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '組み込み/車載向け静的解析・MISRA/CERT・ISO 26262・リアルタイムIDE解析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'checkstyle-java-lint': const _CompetitorInfo(
+    name: 'Checkstyle',
+    emoji: '✅',
+    tagline:
+        'Checkstyle・Java向けOSSコードスタイルチェッカー・Google/Sunスタイルガイド準拠・Mavenプラグイン統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Checkstyle代替 Java コードスタイル Google Sunスタイル OSS Mavenプラグイン PMD代替',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'Java専用スタイルチェッカー・個人のライフ管理は別途必要',
+      'スタイル検査のみ・セキュリティ・品質分析は別途必要',
+      'SonarQube/PMDとの比較でバグ検出・複雑度分析が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Java OSSスタイルチェック・Google/Sunガイド・Mavenプラグイン・CI/CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  // ── AI Agent Evaluation Benchmarks ──────────────────────────────────────
+  'agentbench-tsinghua-eval': const _CompetitorInfo(
+    name: 'AgentBench',
+    emoji: '🤖',
+    tagline:
+        'AgentBench・清華大学製AIエージェント評価・8環境統合・OS/DB/Web/Knowledge/Game横断・LLMエージェント比較基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AgentBench代替 AIエージェント評価 清華大学 LLMエージェント ベンチマーク OSWorld代替',
+    accentColor: Color(0xFF1976D2),
+    painPoints: [
+      'AI研究・エージェント評価専用・個人のライフ管理は別途必要',
+      'エージェントベンチマーク特化・一般ユーザー向けプロダクトではない',
+      'OSWorld/WebArenaとの比較でGUI操作・実環境タスクが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMエージェント評価・8環境統合・OS/DB/Web/Game横断ベンチマーク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'osworld-cmu-desktop-eval': const _CompetitorInfo(
+    name: 'OSWorld',
+    emoji: '🖥️',
+    tagline:
+        'OSWorld・CMU製デスクトップGUI操作AIエージェント評価・369タスク・Mac/Windows/Ubuntu・実環境スクリーンショット観察で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OSWorld代替 デスクトップGUI AIエージェント評価 CMU Computer Use スクリーンショット ベンチマーク',
+    accentColor: Color(0xFF6A1B9A),
+    painPoints: [
+      'GUI操作エージェント評価専用・個人のライフ管理は別途必要',
+      'AI研究ベンチマーク・一般ユーザー向けプロダクトではない',
+      'AgentBench/WebArenaとの比較でWeb/DB操作評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デスクトップGUI操作評価・369タスク・Mac/Win/Ubuntu実環境・スクリーンショット観察',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'webarena-cmu-web-eval': const _CompetitorInfo(
+    name: 'WebArena',
+    emoji: '🌐',
+    tagline:
+        'WebArena・CMU製Webナビゲーションエージェント評価・812タスク・5実Webサイト環境・複合指示理解で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'WebArena代替 Webナビゲーション AIエージェント評価 CMU ベンチマーク Mind2Web代替',
+    accentColor: Color(0xFF00838F),
+    painPoints: [
+      'Webナビゲーション評価専用・個人のライフ管理は別途必要',
+      'AI研究ベンチマーク・一般ユーザー向けプロダクトではない',
+      'OSWorld/Mind2Webとの比較でデスクトップ/モバイル操作評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Webナビゲーション評価・812タスク・5実環境Webサイト・複合指示理解',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'swe-agent-princeton-eval': const _CompetitorInfo(
+    name: 'SWE-agent',
+    emoji: '🔧',
+    tagline:
+        'SWE-agent・Princeton製GitHubバグ自動修正AIエージェント・SWE-bench評価・自律コード編集・PR自動生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SWE-agent代替 GitHub Issue自動修正 Princeton AIエージェント SWE-bench コード自動修正',
+    accentColor: Color(0xFFF57F17),
+    painPoints: [
+      'GitHub Issue自動修正エージェント特化・個人のライフ管理は別途必要',
+      'AI研究ツール・一般ユーザー向けプロダクトではない',
+      'AgentBench/OSWorldとの比較でGUI・マルチドメイン評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GitHub Issue自動修正・SWE-bench評価・自律コード編集・PR自動生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tau-bench-tool-eval': const _CompetitorInfo(
+    name: 'τ-bench',
+    emoji: '📊',
+    tagline:
+        'τ-bench・ツール呼び出しAIエージェント評価ベンチマーク・小売/航空ドメイン・APIコール精度・マルチターン会話評価で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'tau-bench代替 ツール呼び出し AIエージェント評価 API呼び出し精度 マルチターン ベンチマーク',
+    accentColor: Color(0xFF37474F),
+    painPoints: [
+      'ツール呼び出しエージェント評価専用・個人のライフ管理は別途必要',
+      'AI研究ベンチマーク・一般ユーザー向けプロダクトではない',
+      'AgentBench/WebArenaとの比較でドメイン範囲・タスク数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ツール呼び出しエージェント評価・小売/航空ドメイン・APIコール精度・マルチターン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'assistgui-windows-agent': const _CompetitorInfo(
+    name: 'AssistGUI',
+    emoji: '🪟',
+    tagline:
+        'AssistGUI・Windows GUI操作AIエージェント評価・Office/ブラウザ統合・実環境スクリーンショット観察・タスク完了率評価で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AssistGUI代替 Windows GUI AIエージェント評価 Office操作 スクリーンショット ベンチマーク',
+    accentColor: Color(0xFF0277BD),
+    painPoints: [
+      'Windows GUI評価専用・個人のライフ管理は別途必要',
+      'AI研究ベンチマーク・一般ユーザー向けプロダクトではない',
+      'OSWorld/AppAgentとの比較でモバイル・クロスプラットフォーム評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Windows GUI操作評価・Office/ブラウザ統合・実環境・タスク完了率測定',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mind2web-web-task-eval': const _CompetitorInfo(
+    name: 'Mind2Web',
+    emoji: '🧩',
+    tagline:
+        'Mind2Web・汎用Webエージェント評価データセット・2K+タスク・137Webサイト・自然言語→Web操作変換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mind2Web代替 汎用Webエージェント評価 自然言語Web操作 ベンチマーク WebArena代替',
+    accentColor: Color(0xFF558B2F),
+    painPoints: [
+      'Webエージェント評価専用・個人のライフ管理は別途必要',
+      'AI研究データセット・一般ユーザー向けプロダクトではない',
+      'WebArena/OSWorldとの比較でライブ実行環境・タスク数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '汎用Webエージェント評価・2K+タスク・137サイト・自然言語→Web操作',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'workarena-servicenow-eval': const _CompetitorInfo(
+    name: 'WorkArena',
+    emoji: '🏢',
+    tagline:
+        'WorkArena・ServiceNow製企業業務AIエージェント評価・291タスク・ITSMワークフロー・実Webブラウザ環境で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'WorkArena代替 ServiceNow企業業務 AIエージェント評価 ITSM ワークフロー ベンチマーク',
+    accentColor: Color(0xFF00695C),
+    painPoints: [
+      '企業業務エージェント評価専用・個人のライフ管理は別途必要',
+      'ServiceNow依存のエンタープライズ特化・一般ユーザー向けではない',
+      'AgentBench/WebArenaとの比較でSaaS汎用性・コミュニティが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '企業業務AIエージェント評価・291タスク・ServiceNow/ITSM・実ブラウザ環境',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appagent-mobile-eval': const _CompetitorInfo(
+    name: 'AppAgent',
+    emoji: '📱',
+    tagline:
+        'AppAgent・モバイルアプリ操作AIエージェント評価・Android/iOSタップ/スワイプ自動化・スクリーンショット観察・人間デモ模倣学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AppAgent代替 モバイルアプリ操作 AIエージェント Android iOS自動化 スクリーンショット',
+    accentColor: Color(0xFFAD1457),
+    painPoints: [
+      'モバイルアプリ操作エージェント評価専用・個人のライフ管理は別途必要',
+      'AI研究ツール・一般ユーザー向けプロダクトではない',
+      'AssistGUI/OSWorldとの比較でデスクトップ・Web評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイルアプリ操作評価・Android/iOS・タップ/スワイプ自動化・人間デモ模倣',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -65013,6 +67246,14 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'paidy': 'finance',
     'wise': 'finance',
     'coincheck': 'finance',
+    'bloomberg-terminal': 'finance',
+    'refinitiv-eikon': 'finance',
+    'factset': 'finance',
+    'sentieo': 'finance',
+    'koyfin': 'finance',
+    'atom-finance': 'finance',
+    'claude-pro-finance': 'finance',
+    'cursor-jibun-finance': 'finance',
     'klarna-ai': 'finance',
     'freee-insurance': 'finance',
     'jobcan': 'hr',
@@ -65300,6 +67541,51 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'vegeta-go-http-load-testing': 'perf-testing',
     'hey-http-load-generator': 'perf-testing',
     'neoload-tricentis-enterprise': 'perf-testing',
+    'deepeval-confident-ai': 'llm-eval',
+    'promptfoo-llm-testing': 'llm-eval',
+    'lm-evaluation-harness-eleutherai': 'llm-eval',
+    'lighteval-huggingface': 'llm-eval',
+    'ragas-rag-evaluation': 'llm-eval',
+    'trulens-truera': 'llm-eval',
+    'giskard-ml-testing': 'llm-eval',
+    'braintrust-llm-evals': 'llm-eval',
+    'helm-stanford-eval': 'llm-eval',
+    'coderabbit-ai-review': 'ai-coding-agent',
+    'greptile-codebase-ai': 'ai-coding-agent',
+    'qodo-ai-testing': 'ai-coding-agent',
+    'pieces-for-developers': 'ai-coding-agent',
+    'sourcegraph-cody': 'ai-coding-agent',
+    'sweep-ai-agent': 'ai-coding-agent',
+    'aider-ai-programmer': 'ai-coding-agent',
+    'openhands-all-hands': 'ai-coding-agent',
+    'continue-dev-oss': 'ai-coding-agent',
+    'applitools-visual-ai': 'visual-regression',
+    'happo-visual-regression': 'visual-regression',
+    'lost-pixel-oss-visual': 'visual-regression',
+    'argos-ci-visual-testing': 'visual-regression',
+    'backstopjs-visual-regression': 'visual-regression',
+    'reg-suit-visual-regression': 'visual-regression',
+    'screener-saucelabs-visual': 'visual-regression',
+    'diffy-visual-regression': 'visual-regression',
+    'visual-regression-tracker-vrt': 'visual-regression',
+    'bruno-oss-api': 'api-client',
+    'thunder-client-vscode': 'api-client',
+    'httpie-api-client': 'api-client',
+    'rapidapi-platform': 'api-client',
+    'apidog-all-in-one': 'api-client',
+    'paw-api-tool': 'api-client',
+    'restfox-oss': 'api-client',
+    'requestly-api-client': 'api-client',
+    'milkman-oss-api': 'api-client',
+    'llamaindex-rag-framework': 'llm-framework',
+    'haystack-deepset-nlp': 'llm-framework',
+    'semantic-kernel-microsoft': 'llm-framework',
+    'dspy-stanford-llm': 'llm-framework',
+    'langflow-visual-llm': 'llm-framework',
+    'flowise-oss-llm': 'llm-framework',
+    'dify-ai-platform': 'llm-framework',
+    'vercel-ai-sdk': 'llm-framework',
+    'rivet-ai-visual': 'llm-framework',
   };
 
   @override

@@ -367,6 +367,23 @@ jobs:
           DOWN: ${{ steps.availability.outputs.down_count }}
           USED_MODEL: ${{ steps.ai_report.outputs.used_model }}
 
+      - name: Step 5b - news pattern detector + source-risk filter
+        id: patterns
+        run: |
+          OUTPUT_FILE="${{ steps.report.outputs.output_file }}"
+          TODAY="${{ steps.report.outputs.today }}"
+          if [ -f "$OUTPUT_FILE" ]; then
+            python3 scripts/news_pattern_detector.py \
+              --source "$OUTPUT_FILE" \
+              --label competitor-monitoring \
+              --output "docs/competitor-reports/${TODAY}-patterns.json" \
+              --markdown "docs/competitor-reports/${TODAY}-patterns.md" \
+              --min-confidence 0.50
+          else
+            echo "pattern_count=0" >> "$GITHUB_OUTPUT"
+            echo "issue_candidate_count=0" >> "$GITHUB_OUTPUT"
+          fi
+
       # ── Step 6: コミット ─────────────────────────────────────────────────
       - name: Step 6 - コミット & push
         run: |
@@ -409,6 +426,8 @@ jobs:
           SPECIAL_EVENT="${{ steps.calendar.outputs.special_event }}"
           DOWN="${{ steps.availability.outputs.down_count }}"
           USED_MODEL="${{ steps.ai_report.outputs.used_model }}"
+          PATTERNS="${{ steps.patterns.outputs.pattern_count }}"
+          ISSUE_CANDIDATES="${{ steps.patterns.outputs.issue_candidate_count }}"
 
           COMP_COUNT="${{ steps.availability.outputs.comp_count }}"
           DOWN_ICON=$([ "${DOWN:-0}" = "0" ] && echo "✅ 全${COMP_COUNT:-?}社正常" || echo "⚠️ ${DOWN}社 要注意")
@@ -425,5 +444,6 @@ jobs:
             echo "| 可用性 (${COMP_COUNT:-?}社) | $DOWN_ICON |"
             echo "| AIモデル | $USED_MODEL |"
             echo "| レポートファイル | docs/competitor-reports/${TODAY}.md |"
+            echo "| Pattern detector | ${PATTERNS:-0} patterns / ${ISSUE_CANDIDATES:-0} issue candidates |"
             echo "$EVENT_ROW"
           } >> $GITHUB_STEP_SUMMARY

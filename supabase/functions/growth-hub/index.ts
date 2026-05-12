@@ -7,12 +7,10 @@
 //   seo-optimizer, send-waitlist-notification, viral-ad-generator, viral-growth-engine
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import {
-  createClient,
-  SupabaseClient,
-} from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
   getXAccountHandle,
+  isXApiError,
   isXConfigured,
   postTweet,
   uploadMediaFromUrl,
@@ -33,6 +31,10 @@ function json(data: unknown, status = 200): Response {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 async function getUserId(req: Request): Promise<string | null> {
@@ -916,31 +918,66 @@ serve(async (req: Request) => {
           });
         }
 
-        const uploadedMedia = mediaUrl
-          ? await uploadMediaFromUrl(mediaUrl, {
-            mediaType: mediaType || undefined,
-          })
-          : null;
-        const result = await postTweet({
-          text,
-          mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
-        });
-        const log = await addItem(admin, "x_post_log", userId!, {
-          ...baseLog,
-          status: "posted",
-          tweet_id: result.tweetId,
-          account: result.account,
-          media_id: uploadedMedia?.mediaId ?? null,
-          media_type: uploadedMedia?.mediaType ?? null,
-        });
-        return json({
-          success: true,
-          posted: true,
-          text,
-          tweetId: result.tweetId,
-          account: result.account,
-          log,
-        });
+        try {
+          const uploadedMedia = mediaUrl
+            ? await uploadMediaFromUrl(mediaUrl, {
+              mediaType: mediaType || undefined,
+            })
+            : null;
+          const result = await postTweet({
+            text,
+            mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
+          });
+          const log = await addItem(admin, "x_post_log", userId!, {
+            ...baseLog,
+            status: "posted",
+            tweet_id: result.tweetId,
+            account: result.account,
+            media_id: uploadedMedia?.mediaId ?? null,
+            media_type: uploadedMedia?.mediaType ?? null,
+          });
+          return json({
+            success: true,
+            posted: true,
+            text,
+            tweetId: result.tweetId,
+            account: result.account,
+            log,
+          });
+        } catch (error) {
+          const xPayload = isXApiError(error) ? error.payload : null;
+          const message = errorMessage(error);
+          const failureLog = {
+            ...baseLog,
+            status: "failed",
+            error: message,
+            code: xPayload?.code ?? "x_post_failed",
+            x_api_status: xPayload?.status ?? null,
+            x_api_reason: xPayload?.reason ?? null,
+            action_required: xPayload?.actionRequired ?? null,
+          };
+          let log: unknown = null;
+          try {
+            log = await addItem(admin, "x_post_log", userId!, failureLog);
+          } catch (_logError) {
+            log = failureLog;
+          }
+          return json({
+            success: false,
+            posted: false,
+            error: message,
+            code: xPayload?.code ?? "x_post_failed",
+            account: getXAccountHandle(),
+            xApiStatus: xPayload?.status ?? null,
+            xApiReason: xPayload?.reason ?? null,
+            xApiTitle: xPayload?.title ?? null,
+            requiredEnrollment: xPayload?.requiredEnrollment ?? null,
+            registrationUrl: xPayload?.registrationUrl ?? null,
+            actionRequired: xPayload?.actionRequired ??
+              "Check X API credentials and posting permissions.",
+            log,
+          });
+        }
       }
 
       // ─── Automation ───────────────────────────────────────────────────────────

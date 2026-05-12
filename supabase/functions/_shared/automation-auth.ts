@@ -40,7 +40,9 @@ export async function authorizeAutomationActor(
     );
   }
   if (email === "" || !allowedEmails.has(email)) {
-    throw new Error("Forbidden. This user is not allowed to access automation controls.");
+    throw new Error(
+      "Forbidden. This user is not allowed to access automation controls.",
+    );
   }
 
   return {
@@ -61,7 +63,8 @@ function getBearerToken(req: Request): string {
 
   try {
     const url = new URL(req.url);
-    const param = url.searchParams.get("token") ?? url.searchParams.get("apikey") ?? "";
+    const param = url.searchParams.get("token") ??
+      url.searchParams.get("apikey") ?? "";
     return param.trim();
   } catch {
     return "";

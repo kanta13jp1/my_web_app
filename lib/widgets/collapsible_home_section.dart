@@ -46,6 +46,18 @@ class _CollapsibleHomeSectionState extends State<CollapsibleHomeSection>
   bool? _expanded;
   late final AnimationController _anim;
 
+  String get _effectiveTitle {
+    return switch (widget.storageKey) {
+      'home_tier_recent' => '最近使った機能',
+      'home_tier_popular' => 'よく使われる機能（ユーザー全体）',
+      'home_tier_system' => 'システム固定機能',
+      'home_tier_pinned' => 'お気に入り（ピン止め）',
+      'home_tier_new' => '最近追加された機能',
+      'home_tier_recommend' => 'AIおすすめ機能',
+      _ => widget.title,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -123,7 +135,7 @@ class _CollapsibleHomeSectionState extends State<CollapsibleHomeSection>
                   ],
                   Expanded(
                     child: Text(
-                      widget.title,
+                      _effectiveTitle,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,

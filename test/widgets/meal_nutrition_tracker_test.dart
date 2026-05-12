@@ -8,9 +8,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: MealNutritionTracker()),
-      ),
+      const MaterialApp(home: Scaffold(body: MealNutritionTracker())),
     );
     await tester.pumpAndSettle();
 

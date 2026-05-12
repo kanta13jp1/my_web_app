@@ -1,0 +1,22 @@
+{
+  "timestamp_jst": "2026-05-03T09:33+09:00",
+  "ef_health_check": {
+    "status": "healthy",
+    "ef_timestamp": "2026-05-03T00:33:39.840Z",
+    "checks": {
+      "env": "configured (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "operational (253ms, profiles reachable)",
+      "wbs_tasks": "accessible",
+      "ai_circuit_breaker": "active"
+    },
+    "notes": "db_connectivity latency 253ms — recovered from prior hour 976ms spike, back near typical 155-300ms band"
+  },
+  "firebase_hosting": {
+    "status": "ok",
+    "url": "https://my-web-app-b67f4.web.app/",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "notes": "Flutter Web SPA serving normally; 'Loading application...' = expected pre-hydration state, no error messages"
+  },
+  "anomaly": false,
+  "action_taken": "log only (no commit per task spec — anomaly=false)"
+}

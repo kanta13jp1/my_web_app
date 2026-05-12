@@ -1,10 +1,11 @@
-﻿// admin-hub — 管理・サポート・監視・分析統合EF
+// admin-hub — 管理・サポート・監視・分析統合EF
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -83,8 +84,8 @@ serve(async (req: Request) => {
     // Service-role key bypass: schedule tasks (cs-check etc.) use the service key,
     // which cannot pass auth.getUser(). Allow access for admin actions.
     const authHeader = req.headers.get("Authorization") ?? "";
-    const isServiceRole =
-      SERVICE_ROLE_KEY !== "" && authHeader === `Bearer ${SERVICE_ROLE_KEY}`;
+    const isServiceRole = SERVICE_ROLE_KEY !== "" &&
+      authHeader === `Bearer ${SERVICE_ROLE_KEY}`;
     if (!userId && !isServiceRole) {
       return json({ error: "Unauthorized" }, 401);
     }
@@ -169,9 +170,7 @@ serve(async (req: Request) => {
         return json({
           success: true,
           results: results.map((r) =>
-            r.status === "fulfilled"
-              ? r.value
-              : { site: "unknown", ok: false }
+            r.status === "fulfilled" ? r.value : { site: "unknown", ok: false }
           ),
         });
       }
@@ -201,7 +200,8 @@ serve(async (req: Request) => {
         ]);
         const t1 = Date.now();
         const dbOk = hubCheck.status === "fulfilled" && !hubCheck.value.error;
-        const achieveOk = achieveCheck.status === "fulfilled" && !achieveCheck.value.error;
+        const achieveOk = achieveCheck.status === "fulfilled" &&
+          !achieveCheck.value.error;
         const efOk = efCheck.status === "fulfilled" && !efCheck.value.error;
         const allOk = dbOk && achieveOk;
         const status = allOk ? (efOk ? "healthy" : "degraded") : "unhealthy";
@@ -316,7 +316,10 @@ serve(async (req: Request) => {
 
       // ---- Admin notifications ----
       case "admin.notify": {
-        const SEVERITY: Record<string, { priority: number; label: string; color: string }> = {
+        const SEVERITY: Record<
+          string,
+          { priority: number; label: string; color: string }
+        > = {
           critical: { priority: 1, label: "緊急", color: "#dc2626" },
           warning: { priority: 2, label: "警告", color: "#f59e0b" },
           info: { priority: 3, label: "情報", color: "#3b82f6" },
@@ -341,7 +344,12 @@ serve(async (req: Request) => {
         const severityFilter: string | undefined = body.severity;
         const categoryFilter: string | undefined = body.category;
         const limit: number = typeof body.limit === "number" ? body.limit : 50;
-        const items = await listItems(admin, "admin_notification", userId, limit);
+        const items = await listItems(
+          admin,
+          "admin_notification",
+          userId,
+          limit,
+        );
         const { data: reads } = await admin
           .from("hub_data")
           .select("metadata")
@@ -350,7 +358,11 @@ serve(async (req: Request) => {
           .limit(500);
         const readIds = new Set<string>(
           (reads ?? [])
-            .map((r) => (r.metadata as Record<string, unknown>)?.notificationId as string | undefined)
+            .map((r) =>
+              (r.metadata as Record<string, unknown>)?.notificationId as
+                | string
+                | undefined
+            )
             .filter((x): x is string => typeof x === "string"),
         );
         const notifications = items
@@ -375,7 +387,9 @@ serve(async (req: Request) => {
             return true;
           });
         const unreadCount = notifications.filter((n) => !n.is_read).length;
-        const criticalCount = notifications.filter((n) => n.severity === "critical").length;
+        const criticalCount = notifications.filter((n) =>
+          n.severity === "critical"
+        ).length;
         return json({
           success: true,
           totalCount: notifications.length,
@@ -404,9 +418,15 @@ serve(async (req: Request) => {
           .gte("created_at", new Date(Date.now() - 24 * 3600000).toISOString())
           .order("created_at", { ascending: false })
           .limit(100);
-        const bySeverity: Record<string, number> = { critical: 0, warning: 0, info: 0, success: 0 };
+        const bySeverity: Record<string, number> = {
+          critical: 0,
+          warning: 0,
+          info: 0,
+          success: 0,
+        };
         for (const r of recent ?? []) {
-          const sev = ((r.metadata ?? {}) as Record<string, unknown>).severity as string;
+          const sev = ((r.metadata ?? {}) as Record<string, unknown>)
+            .severity as string;
           if (sev in bySeverity) bySeverity[sev]++;
         }
         return json({
@@ -436,7 +456,11 @@ serve(async (req: Request) => {
         const tables = [
           { key: "profile", table: "user_profiles", label: "プロフィール" },
           { key: "notes", table: "notes", label: "ノート" },
-          { key: "feature_requests", table: "feature_requests", label: "機能リクエスト" },
+          {
+            key: "feature_requests",
+            table: "feature_requests",
+            label: "機能リクエスト",
+          },
           { key: "notifications", table: "app_notifications", label: "通知" },
         ];
         const counts: Array<{ key: string; label: string; count: number }> = [];
@@ -503,12 +527,11 @@ serve(async (req: Request) => {
         });
         return json({
           success: true,
-          users:
-            data?.users?.map((u) => ({
-              id: u.id,
-              email: u.email,
-              created_at: u.created_at,
-            })) ?? [],
+          users: data?.users?.map((u) => ({
+            id: u.id,
+            email: u.email,
+            created_at: u.created_at,
+          })) ?? [],
           total: data?.total ?? 0,
         });
       }

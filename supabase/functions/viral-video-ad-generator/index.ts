@@ -13,6 +13,12 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildHedraTextToSpeechAudioGeneration,
+  isHedraInvalidTextToSpeechModelError,
+  resolveConfiguredHedraTextToSpeechModelId,
+  stripHedraTextToSpeechModelId,
+} from "./hedra_tts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -479,9 +485,15 @@ async function createHedraPresenterVideo(params: {
   imageUrl: string | null;
   lang: "ja" | "en";
 }): Promise<HedraVideoResult> {
-  const imageUrl = firstNonEmptyString(params.imageUrl);
-  if (!imageUrl) {
+  const rawImageUrl = firstNonEmptyString(params.imageUrl);
+  if (!rawImageUrl) {
     throw new Error("Hedra avatar video requires imageUrl");
+  }
+  const imageUrl = normalizeHedraStartKeyframeUrl(rawImageUrl);
+  if (!imageUrl) {
+    throw new Error(
+      "Hedra avatar image must be a public http(s) URL under 2083 characters. Regenerate the share image so it can be stored before video generation.",
+    );
   }
 
   const voiceId = await resolveHedraVoiceId(
@@ -489,7 +501,9 @@ async function createHedraPresenterVideo(params: {
     params.voice,
     params.lang,
   );
-  const ttsModelId = await resolveHedraTextToSpeechModelId(params.apiKey);
+  const ttsModelId = resolveConfiguredHedraTextToSpeechModelId(
+    HEDRA_TTS_MODEL_ID,
+  );
   const hedraLanguage = hedraLanguageForLang(params.lang);
   const ttsScript = scriptForHedraVoice(
     params.script,
@@ -497,33 +511,57 @@ async function createHedraPresenterVideo(params: {
     params.title,
   )
     .join("\n");
-  const payload = await hedraJsonRequest(params.apiKey, "/generations", {
-    method: "POST",
-    body: {
-      type: "video",
-      ai_model_id: HEDRA_AVATAR_MODEL_ID,
-      start_keyframe_url: imageUrl,
-      audio_generation: {
-        type: "text_to_speech",
-        voice_id: voiceId,
-        model_id: ttsModelId,
-        text: ttsScript.slice(0, 1800),
-        stability: 0.5,
-        speed: 1.0,
-        language: hedraLanguage,
-      },
-      generated_video_inputs: {
-        text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
-        aspect_ratio: "16:9",
-        resolution: "540p",
-        enhance_prompt: true,
-      },
+  const generationBody: Record<string, unknown> = {
+    type: "video",
+    ai_model_id: HEDRA_AVATAR_MODEL_ID,
+    start_keyframe_url: imageUrl,
+    audio_generation: buildHedraTextToSpeechAudioGeneration({
+      voiceId,
+      modelId: ttsModelId,
+      text: ttsScript.slice(0, 1800),
+      language: hedraLanguage,
+    }),
+    generated_video_inputs: {
+      text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
+      aspect_ratio: "16:9",
+      resolution: "540p",
+      enhance_prompt: true,
     },
-  });
+  };
+  const payload = await createHedraGenerationWithTtsModelFallback(
+    params.apiKey,
+    generationBody,
+    ttsModelId != null,
+  );
   return await pollHedraGeneration(
     params.apiKey,
     normalizeHedraVideoResponse(payload),
   );
+}
+
+async function createHedraGenerationWithTtsModelFallback(
+  apiKey: string,
+  body: Record<string, unknown>,
+  canRetryWithoutTtsModel: boolean,
+): Promise<unknown> {
+  try {
+    return await hedraJsonRequest(apiKey, "/generations", {
+      method: "POST",
+      body,
+    });
+  } catch (error) {
+    if (
+      !canRetryWithoutTtsModel ||
+      !isHedraInvalidTextToSpeechModelError(error)
+    ) {
+      throw error;
+    }
+
+    return await hedraJsonRequest(apiKey, "/generations", {
+      method: "POST",
+      body: stripHedraTextToSpeechModelId(body),
+    });
+  }
 }
 
 async function getHedraGenerationStatus(
@@ -601,72 +639,6 @@ async function resolveHedraVoiceId(
     throw new Error("Hedra voice_id could not be resolved");
   }
   return voiceId;
-}
-
-async function resolveHedraTextToSpeechModelId(
-  apiKey: string,
-): Promise<string> {
-  const configured = firstNonEmptyString(HEDRA_TTS_MODEL_ID);
-  if (configured) {
-    if (!isUuid(configured)) {
-      throw new Error("HEDRA_TTS_MODEL_ID must be a UUID");
-    }
-    return configured;
-  }
-
-  const targetedModels = await listHedraModels(apiKey, "text_to_speech");
-  const allModels = targetedModels.length > 0
-    ? targetedModels
-    : await listHedraModels(apiKey);
-  const ttsModel = allModels
-    .map((model) => asRecord(model))
-    .find((model) => isHedraTextToSpeechModel(model));
-  const modelId = firstNonEmptyString(ttsModel?.["id"]);
-  if (!modelId) {
-    throw new Error(
-      "Hedra text_to_speech model_id could not be resolved; set HEDRA_TTS_MODEL_ID",
-    );
-  }
-  return modelId;
-}
-
-async function listHedraModels(
-  apiKey: string,
-  type?: string,
-): Promise<unknown[]> {
-  const query = type == null ? "" : `?types=${encodeURIComponent(type)}`;
-  const payload = await hedraJsonRequest(apiKey, `/models${query}`, {
-    method: "GET",
-  });
-  if (Array.isArray(payload)) return payload;
-  const data = asRecord(payload)?.["data"];
-  return Array.isArray(data) ? data : [];
-}
-
-function isHedraTextToSpeechModel(
-  model: Record<string, unknown> | null,
-): boolean {
-  const id = firstNonEmptyString(model?.["id"]);
-  if (!id) return false;
-  const type = normalizeHedraModelType(model?.["type"]);
-  if (type === "text_to_speech" || type === "tts") return true;
-  const haystack = `${model?.["name"] ?? ""} ${model?.["description"] ?? ""}`
-    .toLowerCase();
-  return [
-    "text to speech",
-    "text-to-speech",
-    "tts",
-    "elevenlabs",
-    "minimax",
-    "voice",
-    "speech",
-  ].some((marker) => haystack.includes(marker));
-}
-
-function normalizeHedraModelType(value: unknown): string {
-  return typeof value === "string"
-    ? value.trim().toLowerCase().replaceAll("-", "_").replaceAll(" ", "_")
-    : "";
 }
 
 async function hedraJsonRequest(
@@ -792,6 +764,19 @@ function firstNonEmptyString(...values: unknown[]): string | null {
     }
   }
   return null;
+}
+
+function normalizeHedraStartKeyframeUrl(value: string | null): string | null {
+  if (!value) return null;
+  if (value.length > 2083) return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function firstNumber(...values: unknown[]): number | null {

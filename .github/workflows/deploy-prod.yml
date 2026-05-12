@@ -96,6 +96,19 @@ jobs:
         run: |
           sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}+${{ github.run_number }}/" pubspec.yaml
 
+      - name: Generate Release Notes data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/generate_release_notes.py \
+            --repo "${{ github.repository }}" \
+            --version "${{ steps.version.outputs.version }}" \
+            --build "${{ github.run_number }}" \
+            --commit "${{ github.sha }}" \
+            --date "$(date -u +%Y-%m-%d)" \
+            --deploy-url "https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app" \
+            --output web/release-notes.json
+
       - name: Check migration timestamp collisions
         run: python scripts/check_migration_timestamps.py
 
@@ -241,7 +254,7 @@ jobs:
 
       - name: Upload Supabase migration logs
         if: always() && hashFiles('.deploy-logs/**') != ''
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: supabase-migration-logs
           path: .deploy-logs/
@@ -571,6 +584,7 @@ jobs:
           deploy_function admin-hub --no-verify-jwt
           deploy_function app-hub --no-verify-jwt
           deploy_function schedule-hub --no-verify-jwt
+          deploy_function stripe-webhook --no-verify-jwt
 
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
           deploy_function tools-hub --no-verify-jwt
@@ -585,8 +599,9 @@ jobs:
           deploy_function ai-writing-assistant --no-verify-jwt
           deploy_function viral-video-ad-generator --no-verify-jwt
           deploy_function memory-search-hub --no-verify-jwt
+          deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 20 functions deployed (ハードキャップ50本に対し20本 — 余裕30本)
+          # Total: 22 functions deployed (ハードキャップ50本に対し22本 — 余裕28本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
@@ -642,6 +657,7 @@ jobs:
       - name: Write version.json
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
+          cp web/release-notes.json build/web/release-notes.json
 
       - name: Cache-bust OGP image URLs
         run: |
@@ -733,6 +749,7 @@ jobs:
             - **Environment**: Production
             - **Commit**: ${{ github.sha }}
             - **Deployed Site**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app
+            - **Release Notes JSON**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app/release-notes.json
           draft: false
           prerelease: false
         env:
@@ -766,7 +783,7 @@ jobs:
             echo "| コミット | \`${SHA}\` |"
             echo "| Actor | ${{ github.actor }} |"
             echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
-            echo "| Edge Functions | 15本デプロイ済み (ハードキャップ50本以下) |"
+            echo "| Edge Functions | 21本デプロイ済み (ハードキャップ50本以下) |"
           } >> $GITHUB_STEP_SUMMARY
 
   # -----------------------------------------------------------------

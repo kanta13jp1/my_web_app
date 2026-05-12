@@ -1,0 +1,25 @@
+{
+  "task": "infra-health-check",
+  "ranAt": "2026-05-05T22:32:34+09:00",
+  "instance": "Win Claude (scheduled)",
+  "supabase": {
+    "endpoint": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/health-check",
+    "httpStatus": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (139ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-05T13:32:26.956Z"
+  },
+  "firebase": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "reachable": true,
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "note": "Loading application... = Flutter Web bootstrap pre-hydration / normal"
+  },
+  "result": "healthy",
+  "action": "no commit (per spec — commit only on abnormality / pre-existing WIP on daily-report)"
+}
