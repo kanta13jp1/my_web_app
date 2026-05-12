@@ -1,0 +1,19 @@
+services:
+  mcp-low-risk-poc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-web-app/mcp-low-risk-poc:1645
+    network_mode: "none"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    environment:
+      MCP_SERVER_ID: low-risk-stdio-poc
+      MCP_AUDIT_HINT: issue-1645
+    stdin_open: true
+    tty: false

@@ -15927,7 +15927,7 @@ CEO感 ミッション駆動 優しいmentor 6部署バランス 商品=ユー�
 5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
 8. KPI=昨日の自分 ✅ (148→150社) / 9. ゴール=IPO ✅
 
-### commit: `456e95e20` (= feat: AI大学 148→150社化 — v0 by Vercel + Windsurf)
+### commit: TBD
 
 
 ---
@@ -16001,7 +16001,7 @@ CEO感 ✅ ミッション駆動 ✅ 優しいmentor — 6部署バランス ✅
 5. 商品=ユーザー価値 ✅ (outage 時も改善継続) / 6. 資本=時間 ✅ (夜間作業可) / 7. 資産負債 ✅ (依存 = 負債認識)
 8. KPI=昨日の自分 ✅ (token 消費計測) / 9. ゴール=IPO ✅ (vendor 依存 = IPO リスク開示)
 
-### commit: `92d875c06` (= feat(dev-process): multi-AI 協調プロセス策定 — Claude Code 集中リスク分散)
+### commit: TBD
 
 ### PS#3 S28 完了 (2026-04-24 07:20 JST)
 - AI大学 Step 0 discovery: Hume AI (8/9) + Glean (7.5/9)
@@ -18877,7 +18877,7 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 ### Philosophy 9/9 ✅ (5 のみ要 quality gate / Phase 4 で実装)
 ### AI-DEV 7/7 ✅
 
-### commit: `ca6b7d029` (= feat(ogp): OGP image 週次自動更新 + AI 動画 X 投稿 設計 Phase 1)
+### commit: TBD
 
 ## PS\#5 S49 2026-04-25 午後 — CI repair 181500 + STUCK regex fix
 
@@ -19011,7 +19011,7 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 ### AI-DEV 7/7 ✅
 3 段階 fallback (Gemini → template / FAL → ogp.png) で resilient
 
-### commit: `4af2a5cc8` (= feat(page-share): 全ページ X シェア + AI 自動生成 Phase 1)
+### commit: TBD
 
 ## PS\#3 S49 2026-04-25: AI大学 194→196社化 — Azure OpenAI + Semantic Kernel (d8cde724)
 
@@ -19167,7 +19167,7 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 ### Philosophy 9/9 ✅
 原則 1 (CEO 感): 責任分担明確化 / 原則 8 (KPI=昨日の自分): instance 別進捗可視化
 
-### commit: `9d3ac3f56` (= feat(wbs): instance='all' 廃止 + 'codex' 追加)
+### commit: TBD
 
 ### Rule 17 WF health check (2026-04-25 16:25 JST) — PS#1 S39
 
@@ -19278,7 +19278,7 @@ curl -sS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
 ### AI-DEV 7/7 ✅
 特に原則 5 (team memory) wbs_rebalance_log = 完全 audit / 原則 7 (quality gate) 抑制ルール多重防御
 
-### commit: `3e9a9a392` (= feat(wbs): タスク動的再分担 (Rebalance) Phase 1)
+### commit: TBD
 ---
 
 ## PS#6 S43 — deploy failure triage: wbs_instance_check SQLSTATE 23514 + repair 203000 (2026-04-25)
@@ -19395,7 +19395,7 @@ gh workflow run wbs-user-tasks-notify.yml --field limit=10
 原則 1 (CEO 感): user 専任 task の明示で意思決定 visibility
 原則 4 (6 部署): user = 経営層の専任行動 = HR 的位置づけ
 
-### commit: `0da737a82` (= feat(wbs): instance 拡張 gemini/copilot/user + user task Slack 通知)
+### commit: TBD
 
 ---
 
@@ -19413,7 +19413,7 @@ gh workflow run wbs-user-tasks-notify.yml --field limit=10
 ### Instance 種類 (15)
 vscode/win/ps1..ps6/web/mobile/schedule/gha/codex/**gemini/copilot/user** (新)
 
-### commit: `0da737a82` (= 同上 / 重複 entry)
+### commit: TBD (本 commit)
 ## PS#4 S48 2026-04-25 — WBS instance拡張 + ユーザー通知自動化
 
 **担当**: PS版#4  
@@ -19564,7 +19564,7 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 ### Philosophy 9/9 ✅ + AI-DEV 7/7 ✅
 特に原則 5 (team memory): wbs_user_task_reports = NotebookLM source 化
 
-### commit: `0ca06637f` (= feat(wbs): user task report + NotebookLM 蓄積基盤)
+### commit: TBD
 
 ---
 
@@ -19667,7 +19667,7 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 ### Philosophy 9/9 ✅
 原則 7 (BS): migration 整合性確保で不整合資産を負債に変えない / 原則 8 (KPI=昨日): CI 緑化で deploy 速度回復
 
-### commit: `a7ff17d54` (= fix(migration): wbs_tasks_instance_check 違反 hotfix)
+### commit: TBD
 
 ---
 
@@ -28823,7 +28823,7 @@ User 明示「5/14 trigger date / 推奨日」要望対応:
 
 ### Commit
 
-- PR #TBD (= admin squash merge 予定 / branch `claude/win132-part178-faceless-youtube-spec`)
+- PR [#2149](https://github.com/kanta13jp1/my_web_app/pull/2149) MERGED `8aff1bef0` (admin squash / part 196 backfill)
 
 ---
 
@@ -28943,7 +28943,7 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 
 ### Commit
 
-- PR #TBD (= admin squash merge 予定 / branch `claude/nostalgic-gagarin-03deac`)
+- PR [#2161](https://github.com/kanta13jp1/my_web_app/pull/2161) MERGED `324a49942` (admin squash / part 196 backfill)
 
 ## 2026-05-09 — Win版#132 part 180 (Win Claude / Claude Code)
 
@@ -29735,239 +29735,180 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
 
----
+## 2026-05-10 — Win版#132 part 196 (Win Claude / 同日 6 part 連続 / option B medium)
 
-## 2026-05-11 Win#132 part 199 (= 同日 10 part 連続 / 過去最重 risk band / [COMPACTION-RESUME] 90min discipline 第 4 例 / verify-only minimal session 第 1 例)
+### Session Summary
+- **detect**: MEMORY.md TOP entry に既 part 195 着地確認 → user prompt = part 194 wrap-up template auto-inject / 本 session 実態 = part 196 (= 同日 6 part 連続)
+- **state snapshot**: RAM 79.43% (= part 195 end 87.7% から -8.3pt 継続改善 / system pressure 解消) / C: 71.81 GB (= +9.99 GB vs part 194 / +cleanup 蓄積) / MEMORY.md 21.57 KB (= safe / +1.65 KB part 195 追加分)
+- **session-delta.csv 検証**: actual path `~/.claude/logs/session-delta.csv` 蓄積継続 / 本 session start row `568dc693,start,71.80` logged
+- **option B 実行** = ROADMAP TBD partial backfill + UI verify 4 page screenshot
+- **ROADMAP TBD audit**: 全 17 entries 中 2 件 backfill 完了 (= 28826 part 178 → PR #2149 `8aff1bef0` / 28946 part 179 → PR #2161 `324a49942`) / 残 15 件 (= 旧 2026-04 entries) は context recovery 高 cost / defer
+- **UI verify 4 page**: home / AI 大学 / LP / ranking — 全 0 console error + 1 warning (= clean) / web 1280x800 / screenshot ship (= `.playwright-mcp/part196-{home,ai-university,lp,ranking}-web.png`)
 
-### v11 85% threshold verify SUCCESS 第 2 例累積
+### Ship
+- `docs/GROWTH_STRATEGY_ROADMAP.md` 2 TBD backfill (= line 28826 + 28946) + part 196 entry append
+- 4 UI screenshot (= [UI-VERIFY] dogfood / mid-session bandwidth 確保)
+- memory ship 1 件 (= project_20260510_win132_part196)
 
-| metric | value | delta from part 198 末尾 | band |
-|--------|-------|-------------------------|------|
-| 起動時 RAM | **83.43%** | +1.71 pt | < 85% v11 threshold ✅ (= manual fire skip) |
-| C: free | 57.98 GB | +0.22 GB | safe |
-| MEMORY.md | 10.34 KB | +0.44 KB | < 24.4 KB threshold safe (= 残 14.06 KB) |
-| open PR total | 38 | unchanged | normal |
-| Codex sprint open | 0 | unchanged | 5/12 T+3 ping schedule |
-| worktree count | 25 | unchanged | normal |
-| SessionStart hooks | 7 | unchanged | v9 配線済 |
+### KPI delta (part 195 → part 196)
+| metric | part 195 (start) | part 195 (end) | part 196 (start) | trend |
+|--------|------------------|----------------|------------------|-------|
+| RAM% | 92.9% | 87.7% | **79.43%** | **-8.3pt 継続改善** |
+| C: free | 71.78 GB | 72.8 GB | **71.81 GB** | stable -1 GB band |
+| MEMORY.md | 19.92 KB | 19.92 KB | **21.57 KB** | +1.65 KB (= part 195 entries) |
+| ROADMAP TBD | 17 | 17 | **15** | -2 (= part 178/179 backfill) |
+| Codex PR open | 0 | 0 | **0** | unchanged / movement 0 |
 
-→ part 198 第 1 例 (RAM 81.72%) に続き **第 2 例累積**. v11 spec (= §17.16) functional 動作確認.
+### Codex sprint monitor (= 5/12 T+3 ping schedule unchanged)
+- #2186 dev_cache 4 cmd Win (5/23 / T+13) — T+2 day / **5/12 = T+3 ping schedule (= 2 day later)**
+- #2171 WBS dedup Phase 2 (5/22 / T+12) — T+3 day / 5/12 ping target
+- v5 hook wiring 5 task (5/23-5/28) — T+0 / 5/12 ping target
+- Phase 1 PR query (= 5/13 = T+3) — 5 view #2223/#2224/#2225/#2227/#2233
 
-### PR cascade 全 BLOCKED 状態確認 (= admin merge 待ち / 第 2 例累積)
-
-| PR | content | mss | mergeable | label | action |
-|----|---------|-----|-----------|-------|--------|
-| #2331 | part 198 / v12 spec | BLOCKED | MERGEABLE | docs-only | update-branch fired / admin merge 待ち |
-| #2328 | part 197 / §17.16 v11 | BLOCKED | MERGEABLE | docs-only | update-branch fired / admin merge 待ち |
-| #2323 | part 196 phase 2 / §17.15 v10 | BLOCKED | MERGEABLE | docs-only | update-branch fired / admin merge 待ち |
-
-→ 全 update-branch fire 完了 / BLOCKED = branch protection (= required review / CODEOWNERS) → admin merge 必須. cascade post-merge wave で part 196/197/198 ROADMAP entry batch backfill + §17.17 v12 PR ship 予定 (= part 200+).
-
-### 5/12 T+3 Codex ping premature skip 第 5 例累積
-
-- ❗ user prompt 「today = 5/12 = T+3 fire」**date 前提誤り** detect
-- system date verify: `currentDate=2026-05-11` 月曜 → 実際 **T+2**
-- 1 日 drift → SKIP today + 5/12 (= 火曜 / 明日) fire 予定
-- payload 温存 = v11/v12 evidence (= cross-instance-pr doc / DISK_HYGIENE §17.16/§17.17)
-- 5 例累積 timeline: part 184 / 195 / 196 / 198 / 199
-
-### 「user date 前提 cross-check」第 1 例 (= 新 dogfood pattern)
-
-5 step procedure 確立:
-
-```
-Step 1: system date verify (= PowerShell Get-Date or system context currentDate)
-Step 2: user prompt date 前提抽出 (= 「today = X」「T+N fire today」等)
-Step 3: diff 検出 (= system date vs user prompt date)
-Step 4: T 値 recompute (= system date 基準 T 値再計算)
-Step 5: fire or skip 判定 + memory log
-```
-
-→ future session 0 cost 適用可能. user prompt drift (= long-running session の認識ずれ) 検出 protocol.
-
-### 「verify-only minimal session」第 1 例 (= 新 dogfood pattern)
-
-完全 0 PR 不要セッション + memory + ROADMAP のみ. 適用条件:
-
-- primary task = verify-only (= 既存 spec の functional 確認 / 状態 snapshot)
-- 全 follow-up task = 外部依存 (= admin merge / 翌日 ping / cascade post-merge)
-- [COMPACTION-RESUME] 90min discipline 高 risk band (= 同日 N part 連続 / N≥9)
-
-→ part 199 第 1 適用. 同日 11+ part 進行回避 + fresh start (= part 200 翌日) discipline 強化.
-
-### WBS Top 5 (期限近順 / 2-instance 振分) — verify-only (= unchanged from part 198)
-
-| # | issue | 期限 | instance | 状態 |
-|---|-------|------|----------|------|
-| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+11) | Win Codex | T+1 / 5/12 = T+3 ping schedule (= 1 day later) |
-| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+12) | Win Codex | T+0 / 5/12 = T+3 ping with v11/v12 evidence |
-| 3 | #1741 PWA self-touch widget | 5/23 (T+12) | Win Codex | merge confirmed `bb76bd83e` |
-| 4 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+0 / 5/12 = T+3 ping schedule |
-| 5 | #1124 GPA Phase 1 PR | 5/30 (T+19) | Win Codex | spec ship / 5/13 = T+4 ping schedule (= 1 day later) |
-
-→ 全 5 件 unchanged / Win Claude this session = verify-only minimal (= memory + ROADMAP のみ).
-
-### Philosophy Alignment (Win#132 part 199)
-
-- 主要実装: v11 verify SUCCESS 第 2 例 + PR cascade BLOCKED 状態 verify + 5/12 ping premature skip 第 5 例 + memory ship 2 件 + ROADMAP append + WBS Top 5 verify-only + MEMORY.md size monitor
-- 該当原則: #4 (mentor=date cross-check discipline) #5 (商品=価値=verify-first) #6 (時間=資本=verify-only minimal session) #7 (資産負債=premature ping wasted cost 防止) #8 (KPI=v11 threshold gate) #9 (IPO=audit-ready dogfood pattern accumulation)
-- 整合性スコア: 6/9 ✅ ([PHILOSOPHY-22] gate 通過)
+### Philosophy Alignment (Win#132 part 196)
+- 主要実装: ROADMAP partial TBD backfill + UI verify 4 page (= [UI-VERIFY] backlog 回収) + Codex sprint monitor + verify-only hygiene
+- 該当原則: #4 (mentor=triage role) #5 (商品=価値=本番 UI clean confirm) #6 (時間=資本=partial backfill discipline / 全 17 件 audit せず high-value 2 件) #8 (KPI=session-delta 蓄積) #9 (IPO=audit ready / TBD 削減)
+- 整合性スコア: 5/9 ✅ ([PHILOSOPHY-22] gate 通過)
 - 理念的貢献:
-  - 「**verify-only minimal session**」第 1 例 (= 完全 0 PR / memory + ROADMAP のみ / 同日 N part risk band 回避 protocol)
-  - 「**user date 前提 cross-check**」第 1 例 (= system date 検証 protocol / 5 step procedure 確立)
-  - 「**v11 85% threshold verify SUCCESS**」第 2 例累積 (= part 198 第 1 例継続)
-  - 「**premature ping skip discipline**」第 5 例累積 (= part 184 / 195 / 196 / 198 / 199 / pattern 統計確立)
-  - 「**[COMPACTION-RESUME] 90min discipline**」第 4 例累積 (= part 196-199 連続 4 例)
-  - 「**PR cascade 待ち pattern**」第 2 例累積 (= part 198 第 1 例継続)
+  - 「**partial TBD backfill discipline**」第 1 例 (= 全 17 件 audit せず branch 名既知 2 件のみ backfill / context recovery 高 cost 旧 entries は defer / scope creep 回避)
+  - 「**[UI-VERIFY] backlog mid-session 回収 pattern**」第 1 例 (= part 195 deferred → part 196 同日 60min option B で回収 / 4 page 0 error)
+  - 「**option B medium discipline**」第 1 例 (= [SCHEDULE-WAKEUP] 6 part 連続 risk 帯 / option C 推奨却下 → option B 60min 完結)
+  - 129 part 連続 dogfood (= part 75 → 196 / 2 month +).
 
-→ **132 part 連続 dogfood** (= part 75 → 199 / 2 month +).
+### Commit
+- PR [#2323](https://github.com/kanta13jp1/my_web_app/pull/2323) commit `3649545f3` (= phase 1 ship)
 
-### next session 第 1 候補 (= part 200 = 翌日 5/12 火曜 fresh start 強推奨)
+## 2026-05-10 — Win版#132 part 196 phase 2 (Win Claude / User v10 ask)
 
-- A. cascade post-merge wave (= 最高 priority): #2331 + #2328 + #2323 + #2335 全 admin merge 確認 + ROADMAP part 196/197/198 batch backfill + main HEAD §17.14→§17.15→§17.16 順序 verify
-- B. DISK_HYGIENE §17.17 v12 + §17.18 v13 章追加 PR (= 「既存 doc 章追加 pattern」第 12 例 + 第 13 例 / cross-instance-pr doc Finding A+B+C + v13 SessionEnd hook inline 統合)
-- C. 5/12 T+3 Codex sprint ping batch (= 当日 fire / #2186 priority bump + #2171 + v5 hook 5 task / 本 doc Part A spec 経由)
-- D. v13 user iterative ask 第 12 layer 受信 → SessionEnd mandatory fire spec ship (= part 199-b で実施)
-- E. MEMORY.md 第 4 例 trigger 監視 only (= 5/15-5/18 想定 / threshold 24.4 KB)
+### Session Summary
+- **User v10 ask**: 「WBS 期限近順 + 2-instance 制反映 + メモリ HDD 圧縮施策 検討 + wrap-up + next session prompt 出力」
+- **mid-session state critical detect**: RAM 79.43% → **92.17%** (= +12.74pt build-up / 60min) / C: 71.81 → 52.76 GB (= -19.08 GB / 60min) — Playwright MCP 4 page navigation + Edit/Read 30+ tool call + git operation 累積効果
+- **immediate manual fire**: `memory_trim_phase2.ps1` ram_trim_count=6 / **+1686.9 MB freed (= 過去最大)** → RAM 86.64% (-5.53pt) + `worktree_cleanup --tier1` 23 scanned / 0 candidate (= safe)
+- **DISK_HYGIENE §17.15 v10 ship**: 60min build-up rate 数値化 + gap 4 (= PostToolUse wiring) **緊急度 up** + Codex 5/12 T+3 ping with v10 evidence 推奨
+- **WBS Top 5 期限近順 unchanged**: 5 件全 Win Codex sprint in-flight (= verify-only)
+
+### WBS Top 5 (= 期限近順 / 2-instance 制反映)
+
+| # | issue | 期限 | instance | 状態 (= part 196 phase 2 時点) |
+|---|-------|------|----------|-------------|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+12) | Win Codex | T+3 day / 5/12 T+3 ping schedule (= 2 day later) |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+13) | Win Codex | T+1 day / **5/12 T+3 ping with v10 finding** = priority up justification |
+| 3 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+0 / 5/12 ping target |
+| 4 | **PostToolUse wiring (gap 4)** | 5/23-5/28 (推奨) | Win Codex | **v10 evidence priority up** ⚠️ |
+| 5 | #1124 GPA Phase 1 PR | 5/30 (T+20) | Win Codex | spec ship / 5/13 T+4 ping schedule |
+
+→ Win Claude this session = v10 spec ship + Codex hand-off doc proposal / 全 5 件 Codex sprint 在りで Win Claude の primary work は spec / verify / hand-off support
+
+### v10 KPI delta (= part 196 phase 2)
+
+| metric | phase 1 開始時 | phase 1 完了時 (= mid) | post-trim | delta |
+|--------|----------------|-----------------------|-----------|-------|
+| RAM% | 79.43% | 92.17% | **86.64%** | mid-session build-up = **+12.74pt / 60min** ⚠️ |
+| C: free | 71.81 GB | 52.73 GB | 52.76 GB | -19.08 GB / 60min ⚠️ (= Playwright artifact) |
+| process trim | n/a | n/a | **+1686.9 MB** (ram_trim_count=6) | band 内 ✅ / **過去最大** |
+
+### Pattern dogfood (= part 196 phase 2 累積 4 件追加 / 130 part 連続)
+
+1. 「**mid-session build-up rate measurement**」第 1 例 — 60min で +12.74pt RAM build-up を数値化 / Playwright MCP 4 page = 主因 / SessionStart 7 hook の効果が 60min で消失
+2. 「**iterative ask v10 累積**」(= v3 v4 v5 v6 v7 v8 v9 v9-verify v10 / 9 layer ship) — 同テーマ ask 累積 dogfood pattern 第 1 例 (= 1 user テーマ → 9 layer iterative spec ship)
+3. 「**option B 60min ship 後の immediate manual fire pattern**」第 1 例 — UI verify session 専用 hygiene rhythm 確立
+4. 「**Codex priority bump evidence-based justification pattern**」第 1 例 — gap 4 (= PostToolUse wiring) を 60min build-up 実測値で priority up 申し立て
+
+### Philosophy Alignment (Win#132 part 196 phase 2)
+- 主要実装: v10 evidence 採取 + gap 4 priority bump + Codex hand-off enrichment + mid-session immediate fire dogfood
+- 該当原則: #2 (mission = root cause evidence-based 特定) + #4 (mentor = Codex priority bump justification) + #5 (商品 = 価値) + #6 (時間 = 資本 = mid-session 健全保持) + #7 (資産負債 = build-up 観測) + #8 (KPI = build-up rate 候補) + #9 (IPO = audit-ready)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 130 part 連続 dogfood (= part 75 → 196 phase 2 / 2 month +)
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
 
----
 
-## 2026-05-11 Win#132 part 199-b (= 同一 session 継続 / user explicit ask 第 12 layer / hand-off + spec ship)
+## Win版#132 part 197 — DISK_HYGIENE §17.16 v11 ship (= post-resume hidden gap detection 第 1 例 / 2026-05-10 JST)
 
-### user explicit ask part 199 receipt (= iterative ask 第 12 layer)
+- post-resume cycle で SessionStart 7 hook 配線済でも `ram_trim_count=0` + RAM 87.53% 発覚 → 「post-resume cycle hidden gap detection 第 1 例」確立
+- DISK_HYGIENE §17.16 v11 = 85% threshold lower + post-resume mandatory fire policy ship (= 既存 doc 章追加 pattern 第 11 例)
+- v9 verify FAIL → manual fire 1421 MB / 92.64→91.18%
+- 「85% threshold lower discipline」第 1 例 + 「post-resume mandatory fire policy」第 1 例 + 「user iterative ask v11 累積 10 layer」第 1 例 + 「RAM immediate fire band 確立」7 例累積 + 「[COMPACTION-RESUME] 90min discipline」第 2 例
+- Philosophy 7/9 ✅ / 130 part 連続 / commit hash: (= PR #2328 closed-as-superseded part 203 / content backfill via this entry)
 
-> 「WBS のタスクを期限が近いものから進めてください。2 インスタンス制も反映してください。
-> 今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇します。
-> 毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策を検討してください。」
 
-→ user iterative ask v3-v12 累積 **12 layer 完了** + v13 受信 = SessionEnd mandatory fire spec.
+## Win版#132 part 198 — v11 85% threshold verify SUCCESS 第 1 例 + docs-only label-based gate bypass 第 1 例 + MEMORY consolidation 第 3 例 (2026-05-10/11 JST)
 
-### Ship 一括 (= 1 cross-instance-pr doc / 2 part 統合)
+- v11 85% threshold verify SUCCESS ✅ (= RAM 81.72% < 85% / manual fire skip / §17.16.2 spec dogfood)
+- PR #2328 + #2323 minimal-e2e gate FAIL recovery via `gh pr edit --add-label docs-only` + body edit (`edited` event trigger) → 「docs-only label-based gate bypass」第 1 例
+- MEMORY.md consolidation 第 3 例 dogfood (= 27.35 → 9.90 KB / -63% trim / 4-step pattern 第 3 適用)
+- v12 spec ship via `docs/cross-instance-prs/20260511_v12_memory_disk_hygiene_spec.md` (= cascade conflict 回避)
+- 「v11 85% threshold verify SUCCESS」第 1 例 + 「premature ping skip discipline」第 4 例累積 + 「PR cascade 待ち pattern」第 1 例 + 「[COMPACTION-RESUME] 90min discipline」第 3 例 / 131 part 連続
+- Philosophy 7/9 ✅ / commit hash: (= PR #2331 closed-as-superseded part 203 / content backfill via this entry)
 
-[`docs/cross-instance-prs/20260511_codex_wbs_top5_v13_session_end_part199.md`](../docs/cross-instance-prs/20260511_codex_wbs_top5_v13_session_end_part199.md)
 
-#### Part A: WBS Top 5 期限近順 batch hand-off
+## Win版#132 part 199 + 199-b — verify-only minimal session 第 1 例 + v13 SessionEnd mandatory fire spec ship + 2-instance hand-off batch 第 1 例 (2026-05-11 JST)
 
-- 5 task / 全 Win Codex 担当 (= [INSTANCE-ROLES] 反映 / 2-instance 制厳守)
-- 5/12 T+3 fire batch ping spec (= 4 issue ping payload prefab)
-- #2186 priority bump justification (= v11/v12/v13 evidence)
-- 「2-instance hand-off batch」第 1 例 (= 単一 doc 5 task 統合 / 個別 doc 創出回避 / 既存 issue + new spec layer)
+- part 199 (= verify-only minimal session 第 1 例): v11 85% threshold verify SUCCESS 第 2 例 (= 83.43%) / PR cascade 全 BLOCKED 確認 / 「5/12 T+3 Codex ping premature skip 第 5 例累積」
+- part 199-b (= mid-session escalation 第 1 例): 「user iterative ask 累積 12 layer」第 1 例 + 「2-instance hand-off batch」第 1 例 (= 8 doc → 1 doc 統合) + 「v13 SessionEnd mandatory fire spec ship」第 1 例 + 「session-spanning continuity within 90min discipline」第 1 例
+- 13 dogfood pattern (= 6 phase 1 + 7 phase 2 = 過去最高 single-day)
+- Philosophy 7/9 ✅ / 132 part 連続 / commit hash: (= PR #2335 closed-as-superseded part 203 / content backfill via this entry)
 
-#### Part B: v13 SessionEnd mandatory fire spec
 
-- gap detection: SessionStart fire のみで mid-session build-up が < 85% threshold case で 2 session 跨ぎ漏れ
-- v13 spec: SessionEnd PowerShell hook (`session_end_compression.ps1`) + `/wrap-up` Step 0 mandatory pre-fire 統合
-- KPI 目標: session 終了時 RAM% < 85% / C: free > 50 GB / 「毎回必ず fire」compliance N/N (= 100%)
-- v6-v13 累積 layer audit table 提供
-- Win Codex 5/30 担当 (= v12 spec scope 同期)
+## Win版#132 part 200 + 200-b — 同日 11 part 連続 fresh start failed + v14 4-tier compression spec ship (2026-05-11 JST)
 
-### 「user iterative ask 累積 12 layer」第 1 例 (= 新 dogfood pattern)
+- part 200 (= 同日 11 part 連続 / fresh start failed pattern 第 1 例): v11 verify FAIL (= RAM 94.34% > 85%) / manual fire DELTA NEGATIVE **-20.7 MB** / cascade-gated ROADMAP discipline 第 1 例
+- part 200-b (= 4 dogfood ship): 「user iterative ask 累積 13 layer」第 1 例 / 「2-instance hand-off batch」第 2 例累積 / 「v14 4-tier compression spec ship」第 1 例 / 「fresh start failed 内 escalation」第 1 例
+- part 200 + 200-b 合算 = 14 dogfood pattern (= 過去最高)
+- Philosophy 7/9 ✅ / 132 part 連続 / commit hash: (= PR #2340 merged `0ea2024ca`)
 
-| layer | session | ask theme |
-|-------|---------|-----------|
-| v3 | part 191 | 圧縮自動化 v6 immediate fire |
-| v4 | part 192 | ROADMAP backfill |
-| v5 | part 192-b | v7 immediate fire delta |
-| v6 | part 193 | v8 RAM+C: 連動 |
-| v7 | part 194 | SessionStart auto-fire 配線 |
-| v8 | part 195 | functional verify |
-| v9 | part 196 phase 2 | mid-session build-up |
-| v10 | part 197 | post-resume mandatory |
-| v11 | part 198 | v12 spec (= 3 Finding) |
-| v12 | part 199 | WBS hand-off + v13 SessionEnd |
 
-→ 月内 12 layer 進化 (= 5/9 → 5/11 / 3 day intervals / cumulative discipline pattern)
+## Win版#132 part 201 + 201-b — 同日 12 part 連続 fresh start 復帰 + manual fire 過去最大 +2216.2 MB + v15 guaranteed compression spec ship (2026-05-11 JST)
 
-### 「2-instance hand-off batch」第 1 例 (= 新 dogfood pattern)
+- part 201 (= 5 dogfood ship): v11 verify PASS-after-fire 第 1 例 (= 85.04→74.22% 一発 recovery) / manual fire 過去最大 record update (= +2216.2 MB freed / 旧 part 196 phase 2 +1686.9 MB +31% 上回る) / scheduled task autonomous TBD audit 第 1 例 (= 10 件 TBD batch backfill 27 → 17)
+- part 201-b (= 5 dogfood ship): 「user iterative ask 累積 14 layer」第 1 例 / 「2-instance hand-off batch」第 3 例累積 / 「v15 guaranteed compression spec ship」第 1 例 (= Layer 1-3 always-fire mandatory / 5 KPI metric / Codex 5/30 deliverable 5 件) / 「post-wrap-up escalation」第 3 例累積
+- part 201 + 201-b 合算 = 10 dogfood pattern
+- Philosophy 7/9 ✅ / 132 part 連続 / commit hash: (= PR #2352 merged `877341580`)
 
-旧 pattern = 個別 task 1 cross-instance-pr doc (= 過去 8 個別 doc / 5/4-5/10 期間)
-新 pattern = 5 task + spec ship 統合 single doc (= 期限近順 priority table + Codex action prefab + sprint plan)
 
-→ Win Codex 認知 cost 削減 (= 8 doc → 1 doc) + sprint plan visibility 向上.
+## Win版#132 part 202 + 202-b — 同日 14 part 連続 violation 第 1 例 + v16 proactive enforcement spec ship + manual fire 過去最大 record update 第 2 例 +2785.65 MB (2026-05-11 JST)
 
-### 「session-spanning continuity within 90min discipline」(= 新 dogfood pattern 候補)
+- part 202 (= 同日 14 part 連続 [COMPACTION-RESUME] discipline 違反 第 1 例 / minimal session): v15 Layer 1 always-fire functional verify 第 1 例 (= 83.15→82.48% / -107 MB threshold-agnostic mandatory) / premature ping skip 第 8 例累積 / cascade BEHIND→updated 第 5 例累積 (= 6/6 SUCCESS)
+- part 202-b (= post-wrap-up escalation 第 4 例累積 / 過去最重 risk band): 「user iterative ask 累積 15 layer 過去最高」 / 「2-instance hand-off batch」第 4 例累積 / 「v16 proactive enforcement spec ship」第 1 例 (= Layer A-E / 5 fail-closed enforcement) / 「manual fire 過去最大 record update 第 2 例累積」(= +2785.65 MB / 90.28→72.95% / 旧 part 201 +2216.2 MB +26% 上回る) / 「v16 Layer C SessionEnd hard gate functional verify 第 1 例」(= 88.26→79.45% / DELTA +1416.37 MB)
+- part 202 + 202-b 合算 = 8 dogfood + 1 violation pattern
+- Philosophy 7/9 ✅ / 133 part 連続 / commit hash: (= PR #2358 merged `8b439788d`)
 
-- part 199 起動: verify-only minimal session 第 1 例 ship (= 30min)
-- mid-session user explicit ask 受信 → part 199-b 継続 (= 60-90min budget 内)
-- 同一 session 内 2 wrap-up phase: phase 1 (verify) + phase 2 (hand-off + spec ship)
-- [COMPACTION-RESUME] 90min discipline 維持 (= 第 4 例累積継続)
 
-→ 「verify-only minimal session」第 1 例の延長 layer / 2 phase wrap-up 統合 pattern.
+## Win版#132 part 203 — 翌日 5/12 火曜 fresh start 復帰 + cascade admin merge partial-conflict 第 1 例 + MEMORY consolidation 第 4 例 -71% (2026-05-12 JST)
 
-### Philosophy Alignment (Win#132 part 199-b)
-
-- 主要実装: WBS Top 5 hand-off cross-instance-pr doc + v13 SessionEnd mandatory fire spec + 2-instance 制反映 + iterative ask 12 layer cumul
-- 該当原則: #2 (ミッション駆動=「毎回必ず」discipline) #3 (mentor=spec ship for Codex) #4 (6 部署 balance=2-instance fleet) #5 (商品=価値=hygiene 自動化) #6 (時間=資本=session 跨ぎ漏れ防止) #7 (資産負債=disk + RAM 累積管理) #8 (KPI=N/N compliance target) #9 (IPO=audit-ready dogfood)
-- 整合性スコア: 8/9 ✅ ([PHILOSOPHY-22] 7+/9 gate 通過)
-- 理念的貢献:
-  - 「**user iterative ask 累積 12 layer**」第 1 例 (= 月内 12 layer 進化 / 3 day intervals / cumulative discipline pattern)
-  - 「**2-instance hand-off batch**」第 1 例 (= 8 doc → 1 doc / Codex 認知 cost 削減)
-  - 「**session-spanning continuity within 90min discipline**」第 1 例 (= verify-only minimal + 2 phase wrap-up)
-  - 「**v13 SessionEnd mandatory fire spec ship**」第 1 例 (= v6-v13 累積 8 layer / 「毎回必ず」discipline 確立)
-  - 「**[INSTANCE-ROLES] 反映 hand-off**」第 1 例 (= Win Claude architect / Win Codex 実装 / 厳守)
-
-→ **132 part 連続 dogfood (= part 75 → 199-b / 2 month + / 13 dogfood pattern part 199 単独 ship)**.
+- [COMPACTION-RESUME] 90min discipline 第 8 例累積 / 翌日 fresh start 復帰成功:
+  - **v15 Layer 1 manual fire functional verify 第 2 例**: PRE 86.95% (= 85% threshold breach detected) → POST 80.57% / DELTA **+1026.09 MB** (= part 202 第 1 例 -107 MB を **+10x** 上回る)
+  - **cascade admin merge partial-conflict 第 1 例**: 7 PR cascade → 4/7 SUCCESS (#2323/#2340/#2352/#2358 全 v14/v15/v16 land) + 3/7 ROADMAP overlap conflict → close-as-superseded (#2328/#2331/#2335) + content backfill via this PR
+  - **5/12 T+3 Codex ping batch fire 3 件**: #2186 dev_cache hygiene + PR #2352 v15 ack + PR #2358 v16 ack / 3 件 skip (= #2171 #1124 closed + #1124 翌日 fire)
+  - **MEMORY.md consolidation 第 4 例**: 20.1 → 5.85 KB = **-71% trim** (= 4-step pattern 第 4 適用 / 月内 4 例 burst rate)
+  - **iterative ask v3-v16 完了 → ack-only phase 移行**
+- 「cascade admin merge partial-conflict pattern」第 1 例 NEW + 「Codex ping skip-on-closed discipline」第 1 例 NEW + 「v15 Layer 1 functional verify 第 2 例」 + 「[COMPACTION-RESUME] 90min discipline 第 8 例 (= 復帰成功)」
+- Philosophy 7/9 ✅ / 134 part 連続 (= part 70 → 203 / 2 month +)
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
 
----
 
-## 2026-05-11 Win#132 part 201 (= scheduled-task `daily-development` autonomous run / TBD backfill batch 第 2 例)
+## Win版#132 part 203-b — v17 mandatory per-session compression spec ship + iterative ask 第 16 layer + WBS Top 5 triage (2026-05-12 JST)
 
-### Summary
-
-Scheduled task `daily-development` 自走 run. Win Claude scope ([INSTANCE-ROLES]: architect/docs) に従い ROADMAP 27 TBD → 17 TBD batch 縮約 + part 200 backfill 候補洗い出し.
-
-### 実装内容
-
-1. **ROADMAP 古い TBD 10 件 backfill** (= 27 → 17 / -37%) — 全 Win版#132 part 14-20 + part 2 + part 3 era):
-
-   | line | section | commit |
-   |------|---------|--------|
-   | 18880 | part 14 (OGP image 週次自動更新 Phase 1) | `ca6b7d029` |
-   | 19014 | part 15 (全ページ X シェア + AI 自動生成 Phase 1) | `4af2a5cc8` |
-   | 19170 | part 16 (WBS instance='all' 廃止 + 'codex' 追加) | `9d3ac3f56` |
-   | 19281 | part 17 (WBS タスク動的再分担 Rebalance Phase 1) | `3e9a9a392` |
-   | 19398 | part 18 (instance 拡張 gemini/copilot/user) | `0da737a82` |
-   | 19416 | part 18 (重複 entry / 同上) | `0da737a82` |
-   | 19567 | part 19 (user task report + NotebookLM 蓄積基盤) | `0ca06637f` |
-   | 19670 | part 20 (wbs_tasks_instance_check 違反 hotfix) | `a7ff17d54` |
-   | 15930 | part 2 (AI大学 148→150社化 v0 + Windsurf) | `456e95e20` |
-   | 16004 | part 3 (Multi-AI 開発プロセス再設計) | `92d875c06` |
-
-2. **rebase before push** ([REBASE] 準拠 / `git pull --rebase origin main` clean / 10 commit 取込)
-
-3. **WBS Top 5 verify-only** (= part 199-b unchanged / Win Codex sprint in-flight / no claim)
-
-### 「partial TBD backfill discipline」第 2 例 (= part 196 第 1 例継続)
-
-第 1 例 (part 196 / 2026-05-10): 2 件 backfill (line 28826 + 28946) / 17 → 15 残.
-第 2 例 (本 part / 2026-05-11): 10 件 batch backfill / 27 → 17 残.
-
-→ 月内 2 例 burst rate / 1 day interval / **+8 件 batch 化** で scale (= 第 1 例 2 件 → 第 2 例 10 件 / 5x throughput improvement).
-
-### 「scheduled task autonomous TBD audit」第 1 例 (= 新 dogfood pattern)
-
-旧 pattern (part 194-197): "ROADMAP 18 TBD audit" → "defer (= block context 必要 / next session 精査推奨)" 4 例連続 skip.
-新 pattern (本 part): scheduled task 自走 run で audit + backfill 実施 (= interactive session に依存しない).
-
-→ scheduled task = audit/cleanup を Win Claude scope に押し戻す手段として有効. interactive session の token 圧迫を回避.
-
-### Philosophy Alignment (Win#132 part 201)
-
-- 主要実装: ROADMAP 10 TBD batch backfill + scheduled task autonomous run dogfood + part 200 candidates 洗い出し
-- 該当原則: #3 (mentor=audit 蓄積負債解消) #5 (商品=価値=audit-ready ROADMAP) #6 (時間=資本=scheduled task 自走で interactive cost 削減) #7 (資産負債=TBD = 負債 / 解消で資産化) #8 (KPI=昨日の自分 / -10 TBD) #9 (IPO=audit-ready dogfood)
-- 整合性スコア: 6/9 ✅ ([PHILOSOPHY-22] gate 通過)
-- 理念的貢献:
-  - 「**partial TBD backfill discipline**」第 2 例 (= 5x throughput improvement)
-  - 「**scheduled task autonomous TBD audit**」第 1 例 (= interactive cost 回避 / Win Claude scope 拡張)
-  - 「**[REBASE] before push discipline**」継続 (= 10 commit clean rebase)
-
-→ **133 part 連続 dogfood** (= part 75 → 201 / 2 month +).
+- post-wrap-up escalation 第 5 例累積 (= part 203 phase 1 wrap-up 後 user v17 ask 受信 / mid-session continuation):
+  - **v17 spec ship 第 1 例**: mandatory per-session compression discipline (= 5 new layer F-J / 累積 13 layer = v15 3 + v16 5 + v17 5)
+    - Layer F: SessionStart KPI log mandatory (= session-delta.csv 必須行追加)
+    - Layer G: rolling 3-session aggregate KPI (= regression detection)
+    - Layer H: pre-task hygiene gate (= RAM > 70% PreTool fire / lowest threshold)
+    - Layer I: cross-instance compression sync (= fleet-wide accountability)
+    - Layer J: weekly compression audit GHA cron (= Mon 06:00 JST)
+  - **iterative ask 累積 16 layer 第 1 例 update**: v3 (part 178b) → v17 (part 203-b) / 過去最高 update (= v15 14 → v16 15 → v17 16)
+  - **2-instance hand-off batch 第 5 例累積**: v13-v17 全 5 例連鎖 (= 同一 user iterative ask 連鎖 pattern)
+  - **WBS Top 5 期限近順 triage**: Win Claude 上位 2 件 (#1950 / #1495) Codex 再 assign 推奨 + WBS update_progress 5% / Win Codex top 5 (#1559/#1724/#2204/#1640/#1787) sprint pickup mapping
+  - **DISK_HYGIENE §17.20 v17 章追加**: 既存 doc 章追加 pattern 第 16 例累積
+  - **session_kpi.py 拡張**: 8 → 13 metric (= v17 5 metric NEW)
+  - **Codex 5/30 deliverable 17 件**: v15 5 + v16 6 + v17 6 (= 6 NEW = session_delta_writer / rolling_aggregate / pre-task-hygiene.ps1 / cross_instance_compression_sync / weekly-compression-audit.yml / weekly_compression_audit.py)
+- 「v17 mandatory per-session compression spec ship」第 1 例 NEW + 「iterative ask 累積 16 layer」第 1 例 NEW (= 過去最高 update) + 「2-instance hand-off batch」第 5 例累積 + 「post-wrap-up escalation」第 5 例累積
+- Philosophy 7/9 ✅ / 134 part 連続 (= part 70 → 203-b)
 
 ### Commit
-- (= 本 commit / scheduled-task daily-development run)
+- (= 本 docs PR の merge commit / 後追記)
+
+

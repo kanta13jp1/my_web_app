@@ -102,4 +102,23 @@ void main() {
     expect(tasks, hasLength(1));
     expect(tasks.single.id, 'codex-copy');
   });
+
+  test('additional request titles are treated as feature request tasks', () {
+    final task = _task(
+      id: 'additional-request',
+      title: '[\u8ffd\u52a0\u8981\u671b] WBS schedule priority',
+    );
+
+    expect(task.isFeatureRequestTask, isTrue);
+  });
+
+  test('Issue-linked tasks are detected from explicit issue numbers', () {
+    final task = _task(
+      id: 'issue-linked',
+      title: '[Issue #1559] AI Tool Watch routing',
+      issueNumber: 1559,
+    );
+
+    expect(task.isGithubIssueLinkedTask, isTrue);
+  });
 }

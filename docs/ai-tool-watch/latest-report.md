@@ -1,12 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-10T21:34:01Z`
-- Previous check: `2026-05-09T21:30:36Z`
-- Changed/new official sources: `1`
+- Checked at: `2026-05-11T21:45:46Z`
+- Previous check: `2026-05-10T21:34:01Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
+- `changed` Claude Code changelog: 2.1.139 / May 11, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
 - `changed` Codex changelog: 2026-05-08 / Codex CLI 0.130.0 pre
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+- `changed` Cursor changelog: 3.3 / May 7, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -18,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.138 / May 9, 2026
+  - Latest signal: 2.1.139 / May 11, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -53,9 +57,9 @@
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
   - Latest signal: 3.3 / May 7, 2026
-  - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
+  - Keyword groups: schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...
-  - Short signal: # PR review A new PR review experience is now available in Cursor 3.
+  - Short signal: It reads the entire thread for context before implementing a solution and creating a PR for your team to review.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.81.0 / May 08, 2026

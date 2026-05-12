@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-05-10",
+    "date": "2026-05-11",
     "users": {
       "total": 37
     },
@@ -34,27 +34,27 @@
     },
     "recentAchievements": [
       {
+        "title": "Codex #1: Issue #1964 FinTech disruption / Trading x AI seed",
+        "completed_at": "2026-05-12T00:00:00+00:00"
+      },
+      {
+        "title": "Codex #1: prioritized GitHub Issue-linked WBS task dates",
+        "completed_at": "2026-05-11T15:03:02.581237+00:00"
+      },
+      {
+        "title": "Codex #1: WBS dedup v2 active issue uniqueness",
+        "completed_at": "2026-05-11T13:10:07.632842+00:00"
+      },
+      {
+        "title": "Codex #1: prioritized additional-request WBS task dates",
+        "completed_at": "2026-05-11T10:57:06.373613+00:00"
+      },
+      {
         "title": "Codex #1: completed duplicate GitHub-origin WBS rows",
         "completed_at": "2026-05-11T00:00:00+00:00"
-      },
-      {
-        "title": "Codex #1: completed duplicate non-Issue WBS title rows",
-        "completed_at": "2026-05-11T00:00:00+00:00"
-      },
-      {
-        "title": "PS#6 S163: 競馬予測EF confidence 79 terms — largeFieldPerformerBonus追加",
-        "completed_at": "2026-05-04T00:00:00+00:00"
-      },
-      {
-        "title": "PS#6 S164: 競馬予測EF confidence 80 terms — jockeyHorseReunionBonus追加",
-        "completed_at": "2026-05-04T00:00:00+00:00"
-      },
-      {
-        "title": "PS#5 S125: Blog投稿管理 完全実装 (RLS緩和/content列/EF publish/CRUD UI)",
-        "completed_at": "2026-05-04T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-05-11T07:48:41+09:00",
-  "report_date": "2026-05-11"
+  "fetched_at": "2026-05-12T07:49:33+09:00",
+  "report_date": "2026-05-12"
 }

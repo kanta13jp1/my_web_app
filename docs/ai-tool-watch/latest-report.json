@@ -11,7 +11,117 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3dd3635452d2d04c87bd89d73f960dc1e158d34e138a6f604804d06848eb6806",
+      "hash": "420b6643a1b767c7c158bbdc11e7d3a2a4bd7df1715242b41301b820c38b8537",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure",
+          "ultrareview"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2.1.139 / May 11, 2026",
+      "name": "Claude Code changelog",
+      "owner": "Claude Code",
+      "previous_hash": "63957c96921e2aef5d41e089fb03c5dbad7bfdb75b3783a3266eb4dc124d57fe",
+      "slug": "claude-code-changelog",
+      "snippets": [
+        "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
+        "This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.139 May 11, 2026 Added agent view (Research Preview): a single list of every Claude Code session — running, blocked on you, or done."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "f735a5c6070e6523c336317636eb76229fd5be6eaf94effc38c68818e2db20e7",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "7018ca8cde191d7c3d63cb7fbca172849fe993924cd26213df56e7d5b79b62ee",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "For a quickstart guide with examples, see Automate workflows with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "fbf5d0429d0b363df106853498b330d47724043eb4fc37f562a4f52a9158e390",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -59,7 +169,7 @@
       "latest_signal": "2026-05-08 / Codex CLI 0.130.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "3481e8c38ac43a2983c92ddddaa6332d2047ed4c13c1638a0213d06c86ecba66",
+      "previous_hash": "3dd3635452d2d04c87bd89d73f960dc1e158d34e138a6f604804d06848eb6806",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -68,9 +178,97 @@
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "03fac250c3251a289543df95dc58a1c9e579a3432696afc66ee9028aa5fa7f98",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "in-app browser",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "674496770448525f6f4618967b90695936144cb101d2016bfbc383acb6706831",
+      "slug": "codex-use-cases",
+      "snippets": [
+        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
+        "Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.",
+        "Featured Start with the most common Codex workflows."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "d7f95effa650dfbd567ae8eedd689e4ab52dce30197f5d5a3c29f7800877ea20",
+      "keyword_groups": {
+        "codex-runtime": [
+          "subagents"
+        ],
+        "integration": [
+          "MCP"
+        ],
+        "quality-cost": [
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "workflow"
+        ]
+      },
+      "latest_signal": "3.3 / May 7, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "b4c27e0c0b2330ef868b43ff33074ac70a3ef06df0720aa1c2b5b590d03f1a64",
+      "slug": "cursor-changelog",
+      "snippets": [
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
+        "It reads the entire thread for context before implementing a solution and creating a PR for your team to review.",
+        "May 11, 2026 · Changelog Bugbot Effort Levels Teams admins and Individual plan users can now customize the effort level Bugbot uses for its PR reviews, with three different..."
+      ],
+      "status": 200,
+      "url": "https://cursor.com/changelog"
     }
   ],
-  "checked_at": "2026-05-10T21:34:01Z",
+  "checked_at": "2026-05-11T21:45:46Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -122,13 +320,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-09T21:30:36Z",
+  "previous_checked_at": "2026-05-10T21:34:01Z",
   "sources": [
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "63957c96921e2aef5d41e089fb03c5dbad7bfdb75b3783a3266eb4dc124d57fe",
+      "hash": "420b6643a1b767c7c158bbdc11e7d3a2a4bd7df1715242b41301b820c38b8537",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -172,7 +370,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.138 / May 9, 2026",
+      "latest_signal": "2.1.139 / May 11, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
       "previous_hash": "63957c96921e2aef5d41e089fb03c5dbad7bfdb75b3783a3266eb4dc124d57fe",
@@ -180,16 +378,16 @@
       "snippets": [
         "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
         "This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.138 May 9, 2026 Internal fixes ​ 2.1.137 May 9, 2026 [VSCode] Fixed extension failing to activate on Windows ​ 2.1.136 May 8, 2026 Added..."
+        "​ 2.1.139 May 11, 2026 Added agent view (Research Preview): a single list of every Claude Code session — running, blocked on you, or done."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7018ca8cde191d7c3d63cb7fbca172849fe993924cd26213df56e7d5b79b62ee",
+      "hash": "f735a5c6070e6523c336317636eb76229fd5be6eaf94effc38c68818e2db20e7",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -285,7 +483,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3dd3635452d2d04c87bd89d73f960dc1e158d34e138a6f604804d06848eb6806",
+      "hash": "fbf5d0429d0b363df106853498b330d47724043eb4fc37f562a4f52a9158e390",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -333,7 +531,7 @@
       "latest_signal": "2026-05-08 / Codex CLI 0.130.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "3481e8c38ac43a2983c92ddddaa6332d2047ed4c13c1638a0213d06c86ecba66",
+      "previous_hash": "3dd3635452d2d04c87bd89d73f960dc1e158d34e138a6f604804d06848eb6806",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -344,10 +542,10 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "674496770448525f6f4618967b90695936144cb101d2016bfbc383acb6706831",
+      "hash": "03fac250c3251a289543df95dc58a1c9e579a3432696afc66ee9028aa5fa7f98",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -412,21 +610,16 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "b4c27e0c0b2330ef868b43ff33074ac70a3ef06df0720aa1c2b5b590d03f1a64",
+      "hash": "d7f95effa650dfbd567ae8eedd689e4ab52dce30197f5d5a3c29f7800877ea20",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
         ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
         "integration": [
-          "MCP",
-          "Slack"
+          "MCP"
         ],
         "quality-cost": [
           "review",
@@ -435,7 +628,6 @@
         "schedule": [
           "automation",
           "automations",
-          "schedule",
           "workflow"
         ]
       },
@@ -446,8 +638,8 @@
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
-        "# PR review A new PR review experience is now available in Cursor 3.",
-        "The Reviews tab now shows inline review threads and top-level PR comments."
+        "It reads the entire thread for context before implementing a solution and creating a PR for your team to review.",
+        "May 11, 2026 · Changelog Bugbot Effort Levels Teams admins and Individual plan users can now customize the effort level Bugbot uses for its PR reviews, with three different..."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"

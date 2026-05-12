@@ -1,6 +1,6 @@
 # Blog and News Automation Runbook
 
-Last updated: 2026-05-05
+Last updated: 2026-05-12
 
 ## Blog Flow
 
@@ -20,6 +20,8 @@ Last updated: 2026-05-05
 - Qiita tags are limited to 5 and dev.to tags to 4 by `schedule-hub`.
 - Existing `blog-engagement.yml` syncs engagement, and the UI exposes manual
   sync for recovery.
+- Production route and RSS regressions are caught by
+  `blog-news-prod-smoke.yml` before manual external posting checks are needed.
 
 ## News Flow
 
@@ -56,6 +58,22 @@ Last updated: 2026-05-05
    `NEWS_SIGNAL_LINT_START` and `NEWS_SIGNAL_LINT_END`.
 5. If a `ready` post has an error or high-risk finding, the action moves it back
    to `draft` so the publish workflow cannot send it without review.
+
+## Production Smoke Flow
+
+1. `.github/workflows/blog-news-prod-smoke.yml` runs after a successful
+   production deploy and can also be run manually.
+2. `scripts/blog_news_prod_smoke.py` checks the public Flutter routes:
+   `/blog`, `/blog/compose`, and `/news-rss`.
+3. When `SUPABASE_SERVICE_ROLE_KEY` is available, the smoke performs read-only
+   `blog_posts` checks for the latest posted article and the `ready` queue. If a
+   posted article exists, it also checks `/blog/post?id=<postId>`.
+4. The smoke calls `tools-hub` `rss.fetch_latest` with the public anon key read
+   from `lib/main.dart`. Source outages are reported as warnings when the Edge
+   Function still returns a structured partial-success payload.
+5. The smoke writes `tmp/blog-news-prod-smoke/report.json` as an Actions
+   artifact. It never calls `blog.publish_post`, `blog.auto_publish`, or
+   external posting APIs.
 
 ## Two-Instance Operating Rule
 
