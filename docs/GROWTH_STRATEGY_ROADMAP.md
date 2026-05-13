@@ -30100,3 +30100,60 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
   - 8 ⚠️ KPI dashboard 未着手 (= 5-sess rolling defer)
   - 9 ✅ memory + ROADMAP discipline 143 part 連続 update
 - 懸念: 部 211 same-day +11 min 過去最短 violation = v21 Layer Z + Layer AA effectiveness 立証必要 (= Codex 5/22 sprint pickup 待ち)
+
+---
+
+## Win版#132 part 211-b — v22 effectiveness measurement + auto-tuning spec ship (= same-day turn 2 user direct ask 第 3 例累積 / 2026-05-13 水 10:30-11:00 JST)
+
+### 概要
+- インスタンス: Win Claude #132 (part 211-b / 同 session shadow)
+- セッション: 2026-05-13 (水) 10:30-11:00 JST (= part 211 turn 2 / 同 session 累積 ~46 min)
+- トリガー: same-day turn 2 user direct ask 第 3 例累積 (= 部 208 v20 + 部 210 v21 + 部 211-b v22)
+- post-wrap-up escalation 第 8 例累積 (= part 210 第 7 例 → part 211-b 第 8 例)
+- iterative ask 累積 21 layer 過去最高 update (= v21 20 → v22 21)
+
+### Ship (= 6 件)
+
+1. **v22 spec ship 第 1 例** (= 5 new layer EE-II / 累積 38 layer / preventive → adaptive 移行)
+  - Layer EE: PRE/POST paired-row per compression fire (= session-delta.csv `fire_id` column 追加 / per-fire granularity)
+  - Layer FF: 7-day rolling effectiveness dashboard (= median reclaim_mb_fire + quota_pass_rate / daily GHA)
+  - Layer GG: auto-tune compression freq (= 5-stage scale / last 3 fires median 基準で +/-1 stage)
+  - Layer HH: compression yield anomaly detection (= reclaim < -500 OR ram +3pt = DEGRADED)
+  - Layer II: cross-session compression "fatigue" tracking (= 3x consecutive < 100 MB → mandatory cascade)
+2. **DISK_HYGIENE §17.25 v22 章追加** (= 既存 doc 章追加 pattern 第 20 例累積 / 部 210 §17.22-24 back-fill batch + part 211-b §17.25)
+3. **cross-instance-prs/20260513_codex_wbs_top5_v22_effectiveness_measurement_part211b.md** (= 2-instance hand-off batch 第 8 例累積 / Codex 5/22 sprint pickup)
+4. **session_kpi.py 拡張**: 33 → 38 metric (= v22 5 metric NEW)
+5. **Codex 5/30 deliverable 42 件** (= v15 5 + v16 6 + v17 6 + v18 5 + v19 5 + v20 5 + v21 5 + v22 5 / 平均 4.7 件/day / 5/22-5/30 sprint 9 day)
+6. **iterative ask 累積 21 layer 過去最高 update** (= 月内 平均 1.0 day interval / 100% ship rate / v15 (5/11) → v22 (5/13) = 月内 8 連続)
+
+### v22 期待効果
+- 圧縮が「効いているか」不明 → Layer EE per-fire reclaim_mb capture
+- 圧縮 freq 固定 → Layer GG 5-stage auto-tune
+- 低 yield 反復 (= diminishing returns) → Layer II fatigue → cascade auto-trigger
+- 異常 fire (= 逆効果) → Layer HH DEGRADED warn
+- 7-day trend 不可視 → Layer FF dashboard markdown daily
+
+### WBS top 5 priority:high (= 期限近順 / 2-instance assignment)
+1. **#1495 P0 Mobile day-of**: 期限 5/14 24:00 残 ~37h / Win Claude triage 済 / 15:00+22:00 ping wait
+2. **#2204 P1 Calendar EPIC**: design / Win Claude / 期限なし / defer
+3. **#1950 P1 ブログ E2E**: Codex slice merged / 残 polish = Win Codex / 5/22 sprint pickup
+4. **#1962 P1 VSCode dormant**: 2-instance 体制 deprecated / skip
+5. **#1787 P1 AI Tool 2026-05**: Win Claude / defer
+
+### Commit
+- (= 本 docs commit hash 後追記)
+
+### Philosophy Alignment (Win#132 part 211-b)
+- 主要実装: v22 spec ship (= 5 layer EE-II / 累積 38 layer / preventive → adaptive 移行)
+- 該当原則: 1 (CEO 感) + 2 (ミッション駆動) + 4 (6 部署) + 5 (商品=価値) + 6 (資本=時間) + 7 (資産負債) + 8 (KPI=昨日の自分) + 9 (IPO/ウェルビーイング) — 計 8/9 ✅
+- 整合性スコア: **8/9 ✅** (= part 204-b/210/211 同等 / 過去最高水準維持)
+- 理念的貢献:
+  - 1 ✅ CEO 自己責任 = user explicit request "毎セッション必ず圧縮" 起点で v22 即 design ship same-day turn 2
+  - 2 ✅ ミッション = 資源枯渇で開発停止回避 / v22 = preventive 33 layer に measurement + auto-tuning 加算
+  - 4 ✅ 人事 (= 自分) 最優先 / Layer HH DEGRADED warn = 自分 wellbeing protection
+  - 5 ✅ 商品=ユーザー価値 = Layer GG adaptive freq = battery save (= 自分 = end user の experience)
+  - 6 ✅ 資本=時間 = Layer FF dashboard = 7-day capital 自動 monitor / Layer II fatigue auto-cascade = 時間ロス自動回避
+  - 7 ✅ 資産負債 = session_kpi.py 38 metric で 知的資産 完全可視化
+  - 8 ✅ KPI=昨日の自分 = per-fire reclaim_mb で前 fire との比較 base 強化
+  - 9 ✅ IPO 視野 = adaptive compression = systemic resource health 持続可能化
+- 懸念: 3 (mentor) unaddressed continue (= part 212+ で wbs.rebalance_suggest 経由 mentor 候補 task 引取検討 / 累積 8 例 unaddressed)

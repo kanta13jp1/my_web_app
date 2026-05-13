@@ -1937,3 +1937,80 @@ User explicit request 2026-05-13 10:03 JST:
 | Violation | 第 2 例累積 | recovery confirmed | within session | Layer BB evidence (= retroactive compression record establish) |
 
 > **v21 status**: part 210 spec ship (= part 209 同日 +7h gap recover) / 累積 33 layer / Codex 32+5=37 件 5/30 期限 / iterative ask v15-v21 累積 20 layer 過去最高 update (= v20 19 → v21 20).
+
+### §17.25 v22 compression effectiveness measurement + auto-tuning (= part 211-b / 5 layer EE-II / 累積 38 layer)
+
+#### 17.25.1 part 211 same-day +11 min minimum session 第 4 例 → user direct ask v22
+
+part 211 (= 2026-05-13 10:14 JST same-day +11 min minimum session 第 4 例 過去最短 update) 後 同 session turn 2 で user direct ask:
+
+> 「今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇します。毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策を検討してください。」
+
+→ **v15-v21 累積 33 layer = ALL preventive / structural enforcement** だが **measurement + auto-tuning は欠如**.
+→ **v22 中核 = preventive → adaptive (= data-driven measurement + auto-reaction)**.
+
+**Pattern accumulation**:
+- **post-wrap-up escalation 第 8 例累積** (= part 210 第 7 例 → part 211-b 第 8 例)
+- **same-day turn 2 user direct ask 第 3 例累積** (= 部 208 第 1 + 部 210 第 2 + 部 211-b 第 3)
+- **iterative ask 累積 21 layer 過去最高 update** (= v15 14 → v21 20 → v22 21)
+
+#### 17.25.2 v22 spec (= 5 layer EE-II / 累積 38 layer)
+
+- **Layer EE: PRE/POST paired-row per compression fire** (= session-delta.csv schema 拡張 / `fire_id` column 追加 / 各 fire で start_row + end_row pair / per-fire granularity / 現行 session start/end のみ → per-fire 細分化 / `reclaim_mb_fire` 計算可能)
+- **Layer FF: 7-day rolling effectiveness dashboard** (= `scripts/compression_effectiveness_dashboard.py` / median `reclaim_mb_fire` + median `ram_delta_pt_fire` + total `fire_count` + `quota_pass_rate_pct` / output `docs/compression-effectiveness.md` / daily GHA cron generate)
+- **Layer GG: auto-tune compression freq based on effectiveness** (= `~/.claude/hooks/adaptive-compression-tuner.ps1` / 5-stage scale (1=hourly / 2=every 30min / 3=every 15min / 4=every 5min / 5=continuous) / last 3 fires median < 200 MB → +1 stage (= 圧縮 freq UP) / median > 1 GB → -1 stage (= freq DOWN to save battery) / write to `~/.claude/state/compression_freq_stage.txt`)
+- **Layer HH: compression yield anomaly detection** (= `~/.claude/hooks/compression-anomaly-detector.ps1` / per-fire reclaim_mb < -500 OR ram_delta_pt > +3 = **DEGRADED** warn / write to `~/.claude/logs/compression_anomaly.log` / GHA daily summarize → `docs/compression-anomaly-report.md`)
+- **Layer II: cross-session compression "fatigue" tracking** (= `scripts/compression_fatigue_monitor.py` / consecutive 3 low-yield fires (= each < 100 MB reclaim) = **FATIGUE** state / mandatory `disk_hygiene_cascade.ps1` (= v18 Layer K) trigger / break diminishing returns spiral / fatigue counter reset on high-yield fire)
+
+#### 17.25.3 累積 38 layer (= v15 3 + v16 5 + v17 5 + v18 5 + v19 5 + v20 5 + v21 5 + v22 5)
+
+| Layer | Phase | Trigger | Fail-closed | Observability |
+|-------|-------|---------|-------------|---------------|
+| ... (v15-v21 既出) | | | | |
+| **v22-EE** | **per-fire KPI paired-row** | **every compression fire** | ✅ schema enforce | **session-delta.csv fire_id column** |
+| **v22-FF** | **7-day effectiveness dashboard** | **daily GHA cron 09:00 JST** | ❌ informational | **docs/compression-effectiveness.md** |
+| **v22-GG** | **adaptive freq tuner** | **after every 3 fires** | ✅ stage adjust | **~/.claude/state/compression_freq_stage.txt** |
+| **v22-HH** | **anomaly detector** | **per-fire post-write** | ✅ DEGRADED warn | **compression_anomaly.log + docs report** |
+| **v22-II** | **fatigue monitor** | **after every fire** | ✅ FATIGUE = mandatory cascade | **compression_fatigue_state.json** |
+
+#### 17.25.4 session_kpi.py 拡張 (= v15 5 + v16 3 + v17 5 + v18 5 + v19 5 + v20 5 + v21 5 + v22 5 = 38 metric)
+
+- **v22 5 metric NEW**:
+  - `compression_fire_yield_mb` (float / Layer EE / per-fire reclaim / -inf to +inf)
+  - `effectiveness_7d_median_mb` (float / Layer FF / rolling 7-day / dashboard input)
+  - `compression_freq_stage` (int 1-5 / Layer GG / current tier / 3=default)
+  - `anomaly_event_count_24h` (int / Layer HH / 24h rolling / 0=healthy)
+  - `low_yield_consecutive_count` (int / Layer II / fatigue counter / >=3 = trigger cascade)
+
+#### 17.25.5 Codex impl 待ち (= 5/30 期限 / 5 deliverable NEW / 累積 42)
+
+- `scripts/per_fire_kpi_writer.py` (= Layer EE / extend `session_delta_tracker.py` to support per-fire mode / `--fire-id` arg / write paired start/end rows)
+- `scripts/compression_effectiveness_dashboard.py` (= Layer FF / read session-delta.csv → aggregate 7-day → emit `docs/compression-effectiveness.md`)
+- `~/.claude/hooks/adaptive-compression-tuner.ps1` (= Layer GG / hook fires after 3 PostToolUse / reads last 3 fire yields / writes stage)
+- `~/.claude/hooks/compression-anomaly-detector.ps1` (= Layer HH / hook fires after each compression / threshold check / log if DEGRADED)
+- `scripts/compression_fatigue_monitor.py` (= Layer II / read session-delta.csv → check last 3 fires < 100 MB each → trigger cascade)
+
+#### 17.25.6 v22 期待効果 (= preventive → adaptive 移行)
+
+| 課題 | v15-v21 status | v22 解決 |
+|------|----------------|---------|
+| 圧縮が「効いているか」不明 | fire_count しか分からない | Layer EE per-fire reclaim_mb capture |
+| 圧縮 freq が固定 (= 30min PostToolUse) | adaptive 不可 | Layer GG 5-stage auto-tune |
+| 低 yield fire が反復 (= diminishing returns) | 検知不可 | Layer II fatigue → cascade auto-trigger |
+| 異常 fire (= 逆に disk 増 / RAM 増) | 検知不可 | Layer HH DEGRADED warn |
+| 7-day trend 不可視 | 個別 session のみ | Layer FF dashboard markdown daily |
+
+#### 17.25.7 期待 measurement (= v15-v21 base) と v22 検証 KPI
+
+| Metric | v15-v21 累積 | v22 加算 目標 (= 5/30 sprint end) |
+|--------|-------------|-----------------------------------|
+| 累積 layer | 33 | **38** |
+| session_kpi.py metric | 33 | **38** |
+| Codex deliverable | 37 | **42** |
+| iterative ask total | 20 | **21** (= v22 ship = 過去最高 update) |
+| per-fire granularity | 0 | **session-delta.csv fire_id column 追加** |
+| effectiveness dashboard | 不在 | **docs/compression-effectiveness.md (= daily GHA)** |
+| adaptive tuning | 固定 freq | **5-stage auto-tune** |
+| fatigue detection | 不在 | **3-fire consecutive low-yield → mandatory cascade** |
+
+> **v22 status**: part 211-b spec ship (= same-day turn 2 user direct ask 第 3 例累積 / post-wrap-up escalation 第 8 例累積) / 累積 38 layer / Codex 37+5=**42 件 5/30 期限** / iterative ask v15-v22 累積 **21 layer 過去最高 update** (= v21 20 → v22 21) / Codex sprint 5/22-5/30 残 9 day で 42 deliverable = 平均 4.7 件/day pace.
