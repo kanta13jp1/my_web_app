@@ -40,7 +40,25 @@ void main() {
     return response;
   }
 
-  void stubCalendarList(List<Map<String, dynamic>> events) {
+  void stubCalendarList(
+    List<Map<String, dynamic>> events, {
+    List<Map<String, dynamic>> calendars = const [
+      {
+        'calendar_id': 'default',
+        'calendar_name': 'Default',
+        'color': '#4285f4',
+        'is_default': true,
+      },
+    ],
+  }) {
+    when(
+      mockFunctionsClient.invoke(
+        'app-hub',
+        body: {'action': 'calendar.list_calendars'},
+      ),
+    ).thenAnswer(
+      (_) async => mockResponse({'success': true, 'calendars': calendars}),
+    );
     when(
       mockFunctionsClient.invoke('app-hub', body: {'action': 'calendar.list'}),
     ).thenAnswer(
@@ -108,7 +126,11 @@ void main() {
           day.add(const Duration(hours: 9)),
         ),
         event('Dentist', 'Annual cleaning', day.add(const Duration(hours: 13))),
-        event('Planning', 'Weekly roadmap', day.add(const Duration(hours: 10))),
+        event(
+          'Planning',
+          'Weekly roadmap',
+          day.add(const Duration(hours: 10)),
+        ),
       ],
       'annual cleaning',
     );
@@ -121,6 +143,16 @@ void main() {
     expect(calendarEventReminderMinutes({'reminder_min': '30'}), 30);
     expect(calendarEventReminderMinutes({'reminder_min': 7}), isNull);
     expect(calendarEventReminderMinutes({'reminder_min': null}), isNull);
+  });
+
+  test('calendar helpers normalize default calendar metadata', () {
+    expect(calendarEventCalendarId({}), 'default');
+    expect(calendarEventCalendarName({}), 'Default');
+    expect(
+      calendarEventCalendarId({'calendar_id': 'work-calendar'}),
+      'work-calendar',
+    );
+    expect(calendarEventCalendarName({'calendar_name': 'Work'}), 'Work');
   });
 
   Widget testWidget() {
@@ -242,6 +274,7 @@ void main() {
           'all_day': false,
           'color': '#ea4335',
           'reminder_min': null,
+          'calendar_id': 'default',
         },
       ),
     ).thenAnswer((_) async => mockResponse({'success': true}));
@@ -282,6 +315,86 @@ void main() {
           'all_day': false,
           'color': '#ea4335',
           'reminder_min': null,
+          'calendar_id': 'default',
+        },
+      ),
+    ).called(1);
+  });
+
+  testWidgets('calendar drawer toggles visible calendars', (tester) async {
+    final today = DateTime.now();
+    final startAt = DateTime(today.year, today.month, today.day, 10);
+    final calendars = [
+      {
+        'calendar_id': 'default',
+        'calendar_name': 'Default',
+        'color': '#4285f4',
+        'is_default': true,
+      },
+      {
+        'calendar_id': 'work',
+        'calendar_name': 'Work',
+        'color': '#ea4335',
+        'is_default': false,
+      },
+    ];
+    final defaultEvent = {
+      'event_id': 'event-default',
+      'title': 'Default standup',
+      'start_at': startAt.toIso8601String(),
+      'end_at': startAt.add(const Duration(hours: 1)).toIso8601String(),
+      'all_day': false,
+      'color': '#4285f4',
+      'calendar_id': 'default',
+      'calendar_name': 'Default',
+    };
+    final workEvent = {
+      'event_id': 'event-work',
+      'title': 'Work review',
+      'start_at': startAt.toIso8601String(),
+      'end_at': startAt.add(const Duration(hours: 1)).toIso8601String(),
+      'all_day': false,
+      'color': '#ea4335',
+      'calendar_id': 'work',
+      'calendar_name': 'Work',
+    };
+    stubCalendarList([defaultEvent, workEvent], calendars: calendars);
+    when(
+      mockFunctionsClient.invoke(
+        'app-hub',
+        body: {
+          'action': 'calendar.list',
+          'calendar_ids': ['default'],
+        },
+      ),
+    ).thenAnswer(
+      (_) async => mockResponse({
+        'success': true,
+        'events': [defaultEvent],
+      }),
+    );
+
+    await tester.pumpWidget(testWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Default standup'), findsOneWidget);
+    expect(find.text('Work review'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Open navigation menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('calendar_toggle_work')));
+    await tester.pumpAndSettle();
+    Navigator.of(tester.element(find.text('Calendars'))).pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Default standup'), findsOneWidget);
+    expect(find.text('Work review'), findsNothing);
+    verify(
+      mockFunctionsClient.invoke(
+        'app-hub',
+        body: {
+          'action': 'calendar.list',
+          'calendar_ids': ['default'],
         },
       ),
     ).called(1);

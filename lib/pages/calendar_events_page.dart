@@ -30,6 +30,10 @@ class CalendarEventsPage extends StatefulWidget {
 
 enum _CalendarView { month, week, day }
 
+const String _defaultCalendarId = 'default';
+const String _defaultCalendarName = 'Default';
+const String _defaultCalendarColor = '#4285f4';
+
 String _formatClock(DateTime d) =>
     '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
@@ -75,10 +79,24 @@ String _eventDateTimeLabel(Map<String, dynamic> event) {
 
 String _eventColorHex(Map<String, dynamic> event) {
   final raw = event['color']?.toString().trim();
-  if (raw == null || raw.isEmpty) return '#4285f4';
+  if (raw == null || raw.isEmpty) return _defaultCalendarColor;
   final normalized = raw.startsWith('#') ? raw : '#$raw';
   final lower = normalized.toLowerCase();
-  return RegExp(r'^#[0-9a-f]{6}$').hasMatch(lower) ? lower : '#4285f4';
+  return RegExp(r'^#[0-9a-f]{6}$').hasMatch(lower)
+      ? lower
+      : _defaultCalendarColor;
+}
+
+@visibleForTesting
+String calendarEventCalendarId(Map<String, dynamic> event) {
+  final id = event['calendar_id']?.toString().trim() ?? '';
+  return id.isEmpty ? _defaultCalendarId : id;
+}
+
+@visibleForTesting
+String calendarEventCalendarName(Map<String, dynamic> event) {
+  final name = event['calendar_name']?.toString().trim() ?? '';
+  return name.isEmpty ? _defaultCalendarName : name;
 }
 
 const List<int> _calendarReminderOptions = [-1, 0, 5, 10, 15, 30, 60];
@@ -171,6 +189,31 @@ int _clampInt(int value, int min, int max) {
   return value;
 }
 
+class _CalendarListItem {
+  const _CalendarListItem({
+    required this.id,
+    required this.name,
+    required this.color,
+    this.isDefault = false,
+  });
+
+  factory _CalendarListItem.fromMap(Map<String, dynamic> data) {
+    final id = data['calendar_id']?.toString().trim() ?? '';
+    final name = data['calendar_name']?.toString().trim() ?? '';
+    return _CalendarListItem(
+      id: id.isEmpty ? _defaultCalendarId : id,
+      name: name.isEmpty ? _defaultCalendarName : name,
+      color: _eventColorHex({'color': data['color']}),
+      isDefault: data['is_default'] == true,
+    );
+  }
+
+  final String id;
+  final String name;
+  final String color;
+  final bool isDefault;
+}
+
 class _CalendarEventsPageState extends State<CalendarEventsPage> {
   late final SupabaseClient _supabase =
       widget._supabaseClient ?? Supabase.instance.client;
@@ -181,11 +224,21 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   // キー: 'YYYY-MM-DD', 値: イベントリスト
   final Map<String, List<Map<String, dynamic>>> _eventsByDate = {};
   final Map<String, Timer> _reminderTimers = {};
+  final List<_CalendarListItem> _calendars = [
+    const _CalendarListItem(
+      id: _defaultCalendarId,
+      name: _defaultCalendarName,
+      color: _defaultCalendarColor,
+      isDefault: true,
+    ),
+  ];
+  final Set<String> _visibleCalendarIds = {_defaultCalendarId};
 
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.month;
   _CalendarView _calendarView = _CalendarView.month;
+  bool _hasLoadedCalendars = false;
 
   // 選択日のイベントリスト
   List<Map<String, dynamic>> get _selectedDayEvents {
@@ -198,6 +251,23 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       _eventsByDate.values.expand((events) {
         return events;
       }),
+    );
+  }
+
+  _CalendarListItem get _defaultCalendar => _calendars.firstWhere(
+        (calendar) => calendar.id == _defaultCalendarId,
+        orElse: () => const _CalendarListItem(
+          id: _defaultCalendarId,
+          name: _defaultCalendarName,
+          color: _defaultCalendarColor,
+          isDefault: true,
+        ),
+      );
+
+  _CalendarListItem _calendarForId(String id) {
+    return _calendars.firstWhere(
+      (calendar) => calendar.id == id,
+      orElse: () => _defaultCalendar,
     );
   }
 
@@ -305,6 +375,58 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     super.dispose();
   }
 
+  Future<void> _fetchCalendars() async {
+    final res = await _supabase.functions.invoke(
+      'app-hub',
+      body: {'action': 'calendar.list_calendars'},
+    );
+    final data = res.data;
+    final rawCalendars =
+        data is Map<String, dynamic> && data['calendars'] is List
+            ? data['calendars'] as List
+            : <dynamic>[];
+    final nextCalendars = <_CalendarListItem>[];
+    for (final raw in rawCalendars) {
+      if (raw is! Map) continue;
+      nextCalendars.add(
+        _CalendarListItem.fromMap(Map<String, dynamic>.from(raw)),
+      );
+    }
+    if (nextCalendars.every((calendar) => calendar.id != _defaultCalendarId)) {
+      nextCalendars.insert(
+        0,
+        const _CalendarListItem(
+          id: _defaultCalendarId,
+          name: _defaultCalendarName,
+          color: _defaultCalendarColor,
+          isDefault: true,
+        ),
+      );
+    }
+    final knownIds = nextCalendars.map((calendar) => calendar.id).toSet();
+    setState(() {
+      final shouldSelectAll = !_hasLoadedCalendars ||
+          (_visibleCalendarIds.length == _calendars.length &&
+              _calendars.every(
+                (calendar) => _visibleCalendarIds.contains(calendar.id),
+              ));
+      _calendars
+        ..clear()
+        ..addAll(nextCalendars);
+      _hasLoadedCalendars = true;
+      _visibleCalendarIds
+        ..removeWhere((id) => !knownIds.contains(id))
+        ..addAll(
+          shouldSelectAll || _visibleCalendarIds.isEmpty
+              ? knownIds
+              : const <String>{},
+        );
+      if (_visibleCalendarIds.isEmpty) {
+        _visibleCalendarIds.add(_defaultCalendarId);
+      }
+    });
+  }
+
   Future<void> _fetchMonth(DateTime month) async {
     if (_supabase.auth.currentUser == null) {
       setState(() => _isLoading = false);
@@ -315,9 +437,15 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       _errorMessage = null;
     });
     try {
+      await _fetchCalendars();
       final res = await _supabase.functions.invoke(
         'app-hub',
-        body: {'action': 'calendar.list'},
+        body: _visibleCalendarIds.length == _calendars.length
+            ? {'action': 'calendar.list'}
+            : {
+                'action': 'calendar.list',
+                'calendar_ids': _visibleCalendarIds.toList(),
+              },
       );
       final data = res.data;
       final rawEvents = data is Map<String, dynamic> && data['events'] is List
@@ -359,6 +487,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     bool allDay = false,
     String color = '#4285f4',
     int? reminderMinutes,
+    String calendarId = _defaultCalendarId,
   }) async {
     try {
       final end =
@@ -374,6 +503,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'all_day': allDay,
           'color': color,
           'reminder_min': reminderMinutes,
+          'calendar_id': calendarId,
         },
       );
       final data = res.data;
@@ -388,6 +518,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'end_at': end.toIso8601String(),
           'all_day': allDay,
           'reminder_min': reminderMinutes,
+          'calendar_id': calendarId,
+          'calendar_name': _calendarForId(calendarId).name,
         });
         await _syncDeviceReminder(
           eventId: eventId,
@@ -413,6 +545,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     bool allDay = false,
     String color = '#4285f4',
     int? reminderMinutes,
+    String calendarId = _defaultCalendarId,
     bool cancelReminderWhenNone = false,
   }) async {
     if (eventId.isEmpty) {
@@ -434,6 +567,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'all_day': allDay,
           'color': color,
           'reminder_min': reminderMinutes,
+          'calendar_id': calendarId,
         },
       );
       if (reminderMinutes == null) {
@@ -448,6 +582,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'end_at': end.toIso8601String(),
           'all_day': allDay,
           'reminder_min': reminderMinutes,
+          'calendar_id': calendarId,
+          'calendar_name': _calendarForId(calendarId).name,
         });
       }
       await _syncDeviceReminder(
@@ -485,6 +621,61 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
         setState(() => _errorMessage = 'イベントの削除に失敗しました: $e');
       }
     }
+  }
+
+  Future<void> _createCalendar({
+    required String name,
+    required String color,
+  }) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    try {
+      final res = await _supabase.functions.invoke(
+        'app-hub',
+        body: {
+          'action': 'calendar.create_calendar',
+          'calendar_name': trimmed,
+          'color': color,
+        },
+      );
+      final data = res.data;
+      final calendar = data is Map ? data['calendar'] : null;
+      final calendarId =
+          calendar is Map ? calendar['calendar_id']?.toString() ?? '' : '';
+      if (calendarId.isNotEmpty) {
+        _visibleCalendarIds.add(calendarId);
+      }
+      await _fetchMonth(_focusedDay);
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'Failed to add calendar: $e');
+    }
+  }
+
+  Future<void> _deleteCalendar(String calendarId) async {
+    if (calendarId == _defaultCalendarId) return;
+    try {
+      await _supabase.functions.invoke(
+        'app-hub',
+        body: {'action': 'calendar.delete_calendar', 'calendar_id': calendarId},
+      );
+      _visibleCalendarIds.remove(calendarId);
+      await _fetchMonth(_focusedDay);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'Failed to delete calendar: $e');
+      }
+    }
+  }
+
+  void _toggleCalendarVisibility(String calendarId, bool visible) {
+    setState(() {
+      if (visible) {
+        _visibleCalendarIds.add(calendarId);
+      } else if (_visibleCalendarIds.length > 1) {
+        _visibleCalendarIds.remove(calendarId);
+      }
+    });
+    _fetchMonth(_focusedDay);
   }
 
   List<Map<String, dynamic>> _eventsLoader(DateTime day) {
@@ -568,6 +759,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     }
     buffer
       ..writeln()
+      ..writeln('Calendar: ${calendarEventCalendarName(event)}')
       ..writeln('Color: ${_eventColorHex(event)}');
     final eventId = event['event_id']?.toString() ?? '';
     if (eventId.isNotEmpty) {
@@ -653,6 +845,16 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.outline,
                             ),
+                          ),
+                          const SizedBox(height: 8),
+                          Chip(
+                            avatar: _ColorDot(
+                              colorHex: _calendarForId(
+                                calendarEventCalendarId(event),
+                              ).color,
+                            ),
+                            label: Text(calendarEventCalendarName(event)),
+                            visualDensity: VisualDensity.compact,
                           ),
                         ],
                       ),
@@ -744,6 +946,13 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: _CalendarFilterDrawer(
+        calendars: _calendars,
+        visibleCalendarIds: _visibleCalendarIds,
+        onToggle: _toggleCalendarVisibility,
+        onAddCalendar: () => _showAddCalendarDialog(context),
+        onDeleteCalendar: _confirmDeleteCalendar,
+      ),
       appBar: AppBar(
         title: const Text('カレンダー'),
         actions: [
@@ -951,6 +1160,93 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     _showEventDialog(context);
   }
 
+  void _showAddCalendarDialog(BuildContext context) {
+    final nameCtrl = TextEditingController();
+    final colors = ['#4285f4', '#ea4335', '#34a853', '#fbbc05', '#9334e6'];
+    var selectedColor = colors.first;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Add calendar'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                key: const Key('calendar_name_field'),
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Calendar name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final color in colors)
+                    GestureDetector(
+                      onTap: () => setDialogState(() => selectedColor = color),
+                      child: _ColorDot(
+                        colorHex: color,
+                        selected: selectedColor == color,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameCtrl.text.trim();
+                if (name.isEmpty) return;
+                Navigator.pop(ctx);
+                _createCalendar(name: name, color: selectedColor);
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteCalendar(_CalendarListItem calendar) {
+    if (calendar.isDefault) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete calendar'),
+        content: Text(
+          'Delete "${calendar.name}"? Existing events move to Default.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteCalendar(calendar.id);
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showEditEventDialog(BuildContext context, Map<String, dynamic> event) {
     _showEventDialog(context, event: event);
   }
@@ -984,6 +1280,10 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     if (!colors.contains(selectedColor)) {
       selectedColor = colors.first;
     }
+    var selectedCalendarId = calendarEventCalendarId(event ?? {});
+    if (_calendars.every((calendar) => calendar.id != selectedCalendarId)) {
+      selectedCalendarId = _defaultCalendarId;
+    }
     var selectedReminder = calendarEventReminderMinutes(event ?? {}) ?? -1;
 
     String fmtTime(TimeOfDay t) =>
@@ -1014,6 +1314,38 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     border: OutlineInputBorder(),
                   ),
                   maxLines: 2,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  key: const Key('calendar_calendar_dropdown'),
+                  initialValue: selectedCalendarId,
+                  decoration: const InputDecoration(
+                    labelText: 'Calendar',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.calendar_month),
+                  ),
+                  items: [
+                    for (final calendar in _calendars)
+                      DropdownMenuItem<String>(
+                        value: calendar.id,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _ColorDot(colorHex: calendar.color),
+                            const SizedBox(width: 8),
+                            Flexible(child: Text(calendar.name)),
+                          ],
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    final calendar = _calendarForId(value);
+                    setDialogState(() {
+                      selectedCalendarId = value;
+                      selectedColor = calendar.color;
+                    });
+                  },
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -1199,6 +1531,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     allDay: allDay,
                     color: selectedColor,
                     reminderMinutes: reminderMinutes,
+                    calendarId: selectedCalendarId,
                     cancelReminderWhenNone:
                         calendarEventReminderMinutes(event) != null,
                   );
@@ -1211,6 +1544,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     allDay: allDay,
                     color: selectedColor,
                     reminderMinutes: reminderMinutes,
+                    calendarId: selectedCalendarId,
                   );
                 }
               },
@@ -1354,6 +1688,106 @@ class _EventMetadataRow extends StatelessWidget {
             child: SelectableText(value, style: theme.textTheme.bodySmall),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ColorDot extends StatelessWidget {
+  const _ColorDot({required this.colorHex, this.selected = false});
+
+  final String colorHex;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: Color(
+          int.parse('FF${colorHex.replaceFirst('#', '')}', radix: 16),
+        ),
+        shape: BoxShape.circle,
+        border: selected
+            ? Border.all(
+                color: Theme.of(context).colorScheme.onSurface,
+                width: 2.5,
+              )
+            : null,
+      ),
+    );
+  }
+}
+
+class _CalendarFilterDrawer extends StatelessWidget {
+  const _CalendarFilterDrawer({
+    required this.calendars,
+    required this.visibleCalendarIds,
+    required this.onToggle,
+    required this.onAddCalendar,
+    required this.onDeleteCalendar,
+  });
+
+  final List<_CalendarListItem> calendars;
+  final Set<String> visibleCalendarIds;
+  final void Function(String calendarId, bool visible) onToggle;
+  final VoidCallback onAddCalendar;
+  final ValueChanged<_CalendarListItem> onDeleteCalendar;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.calendar_month),
+              title: const Text('Calendars'),
+              trailing: IconButton(
+                key: const Key('calendar_add_calendar_button'),
+                icon: const Icon(Icons.add),
+                tooltip: 'Add calendar',
+                onPressed: onAddCalendar,
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                itemCount: calendars.length,
+                itemBuilder: (context, index) {
+                  final calendar = calendars[index];
+                  final visible = visibleCalendarIds.contains(calendar.id);
+                  return CheckboxListTile(
+                    key: Key('calendar_toggle_${calendar.id}'),
+                    value: visible,
+                    onChanged: (value) {
+                      if (value == null) return;
+                      onToggle(calendar.id, value);
+                    },
+                    secondary: _ColorDot(colorHex: calendar.color),
+                    title: Text(calendar.name, overflow: TextOverflow.ellipsis),
+                    subtitle: calendar.isDefault
+                        ? Text('Default', style: theme.textTheme.bodySmall)
+                        : null,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    tristate: false,
+                  );
+                },
+              ),
+            ),
+            const Divider(height: 1),
+            for (final calendar in calendars.where((item) => !item.isDefault))
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.delete_outline),
+                title: Text(calendar.name, overflow: TextOverflow.ellipsis),
+                onTap: () => onDeleteCalendar(calendar),
+              ),
+          ],
+        ),
       ),
     );
   }

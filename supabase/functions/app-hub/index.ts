@@ -118,12 +118,87 @@ async function updateItem(
 }
 
 const CALENDAR_REMINDER_MINUTES = new Set([0, 5, 10, 15, 30, 60]);
+const DEFAULT_CALENDAR_ID = "default";
+const DEFAULT_CALENDAR_NAME = "Default";
+const DEFAULT_CALENDAR_COLOR = "#4285f4";
+
+type CalendarListResponseItem = {
+  calendar_id: string;
+  calendar_name: string;
+  color: string;
+  is_default: boolean;
+  id?: string;
+  created_at?: string;
+};
 
 function normalizeCalendarReminderMinutes(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const minutes = typeof value === "number" ? value : Number(value);
   if (!Number.isInteger(minutes)) return null;
   return CALENDAR_REMINDER_MINUTES.has(minutes) ? minutes : null;
+}
+
+function normalizeCalendarId(value: unknown): string {
+  const id = value?.toString().trim() ?? "";
+  return id.length === 0 || id === "null" || id === "undefined"
+    ? DEFAULT_CALENDAR_ID
+    : id;
+}
+
+function normalizeCalendarName(
+  value: unknown,
+  fallback = DEFAULT_CALENDAR_NAME,
+): string {
+  const name = value?.toString().trim() ?? "";
+  return name || fallback;
+}
+
+function normalizeCalendarColor(value: unknown): string {
+  const raw = value?.toString().trim() ?? "";
+  const normalized = raw.startsWith("#") ? raw : `#${raw}`;
+  return /^#[0-9a-fA-F]{6}$/.test(normalized)
+    ? normalized.toLowerCase()
+    : DEFAULT_CALENDAR_COLOR;
+}
+
+async function listCalendars(admin: SupabaseClient, userId: string) {
+  const items = await listItems(admin, "calendar_calendar", userId, 100);
+  const seen = new Set([DEFAULT_CALENDAR_ID]);
+  const calendars: CalendarListResponseItem[] = [
+    {
+      calendar_id: DEFAULT_CALENDAR_ID,
+      calendar_name: DEFAULT_CALENDAR_NAME,
+      color: DEFAULT_CALENDAR_COLOR,
+      is_default: true,
+    },
+  ];
+
+  for (const item of items.reverse()) {
+    const meta = (item.metadata ?? {}) as Record<string, unknown>;
+    const calendarId = normalizeCalendarId(meta.calendar_id ?? item.id);
+    if (calendarId === DEFAULT_CALENDAR_ID || seen.has(calendarId)) continue;
+    seen.add(calendarId);
+    calendars.push({
+      calendar_id: calendarId,
+      calendar_name: normalizeCalendarName(meta.calendar_name ?? meta.name),
+      color: normalizeCalendarColor(meta.color),
+      is_default: false,
+      id: item.id,
+      created_at: item.created_at,
+    });
+  }
+  return calendars;
+}
+
+async function calendarNameById(
+  admin: SupabaseClient,
+  userId: string,
+  calendarId: string,
+) {
+  if (calendarId === DEFAULT_CALENDAR_ID) return DEFAULT_CALENDAR_NAME;
+  const calendars = await listCalendars(admin, userId);
+  return calendars.find((calendar) => calendar.calendar_id === calendarId)
+    ?.calendar_name ?? DEFAULT_CALENDAR_NAME;
 }
 
 serve(async (req: Request) => {
@@ -251,20 +326,103 @@ serve(async (req: Request) => {
       }
 
       // --- Calendar ---
-      case "calendar.list": {
-        const items = await listItems(admin, "calendar_event", userId);
-        const events = items.map((it) => {
-          const meta = (it.metadata ?? {}) as Record<string, unknown>;
-          return {
+      case "calendar.list_calendars": {
+        const calendars = await listCalendars(admin, userId);
+        return json({ success: true, calendars });
+      }
+
+      case "calendar.create_calendar": {
+        const calendarId = crypto.randomUUID();
+        const calendarName = normalizeCalendarName(body.calendar_name);
+        const color = normalizeCalendarColor(body.color);
+        const item = await addItem(admin, "calendar_calendar", userId, {
+          calendar_id: calendarId,
+          calendar_name: calendarName,
+          color,
+        });
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          calendar: {
             ...meta,
+            id: item.id,
+            created_at: item.created_at,
+            is_default: false,
+          },
+        });
+      }
+
+      case "calendar.delete_calendar": {
+        const calendarId = normalizeCalendarId(body.calendar_id ?? body.id);
+        if (calendarId === DEFAULT_CALENDAR_ID) {
+          return json({ error: "Default calendar cannot be deleted" }, 400);
+        }
+
+        const calendars = await listItems(
+          admin,
+          "calendar_calendar",
+          userId,
+          100,
+        );
+        const calendar = calendars.find((item) => {
+          const meta = (item.metadata ?? {}) as Record<string, unknown>;
+          return normalizeCalendarId(meta.calendar_id ?? item.id) ===
+            calendarId;
+        });
+        if (!calendar) return json({ error: "Calendar not found" }, 404);
+
+        await deleteItem(
+          admin,
+          "calendar_calendar",
+          userId,
+          String(calendar.id),
+        );
+
+        const events = await listItems(admin, "calendar_event", userId, 500);
+        for (const event of events) {
+          const meta = (event.metadata ?? {}) as Record<string, unknown>;
+          if (normalizeCalendarId(meta.calendar_id) !== calendarId) continue;
+          await updateItem(admin, "calendar_event", userId, String(event.id), {
+            calendar_id: DEFAULT_CALENDAR_ID,
+            calendar_name: DEFAULT_CALENDAR_NAME,
+          });
+        }
+        return json({ success: true });
+      }
+
+      case "calendar.list": {
+        const requestedIds = Array.isArray(body.calendar_ids)
+          ? new Set(body.calendar_ids.map(normalizeCalendarId))
+          : null;
+        const calendars = await listCalendars(admin, userId);
+        const names = new Map(
+          calendars.map((calendar) => [
+            calendar.calendar_id,
+            calendar.calendar_name,
+          ]),
+        );
+        const items = await listItems(admin, "calendar_event", userId);
+        const events = items.flatMap((it) => {
+          const meta = (it.metadata ?? {}) as Record<string, unknown>;
+          const calendarId = normalizeCalendarId(meta.calendar_id);
+          if (requestedIds && !requestedIds.has(calendarId)) return [];
+          return [{
+            ...meta,
+            calendar_id: calendarId,
+            calendar_name: normalizeCalendarName(
+              meta.calendar_name,
+              names.get(calendarId) ?? DEFAULT_CALENDAR_NAME,
+            ),
             event_id: it.id,
             created_at: it.created_at,
-          };
+          }];
         });
         return json({ success: true, events });
       }
 
       case "calendar.create": {
+        const calendarId = normalizeCalendarId(body.calendar_id);
+        const calendarName = await calendarNameById(admin, userId, calendarId);
         const item = await addItem(admin, "calendar_event", userId, {
           title: body.title,
           start_at: body.start_at,
@@ -273,6 +431,8 @@ serve(async (req: Request) => {
           all_day: body.all_day ?? false,
           color: body.color ?? "#4285f4",
           reminder_min: normalizeCalendarReminderMinutes(body.reminder_min),
+          calendar_id: calendarId,
+          calendar_name: calendarName,
         });
         const meta = (item.metadata ?? {}) as Record<string, unknown>;
         return json({
@@ -298,6 +458,15 @@ serve(async (req: Request) => {
         if (Object.hasOwn(body, "reminder_min")) {
           patch.reminder_min = normalizeCalendarReminderMinutes(
             body.reminder_min,
+          );
+        }
+        if (Object.hasOwn(body, "calendar_id")) {
+          const calendarId = normalizeCalendarId(body.calendar_id);
+          patch.calendar_id = calendarId;
+          patch.calendar_name = await calendarNameById(
+            admin,
+            userId,
+            calendarId,
           );
         }
         const item = await updateItem(
