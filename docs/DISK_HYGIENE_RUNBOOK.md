@@ -1789,3 +1789,151 @@ part 204 (= 2026-05-12 12:15 JST) v15 Layer 1 manual fire 第 3 例累積:
 - `scripts/cross_session_ram_dashboard.py` (= Layer O)
 
 > **v18 status**: part 204-b iterative ask v17 layer ship / `docs/cross-instance-prs/20260512_codex_wbs_top5_v18_disk_hygiene_cascade_part204b.md` Part B spec / 累積 18 layer / Codex 17+5=22 件 5/30 期限.
+
+### §17.22 v19 mandatory per-session compression CONTRACT (= part 207 / 5 layer P-T / 累積 23 layer)
+
+#### 17.22.1 part 207 rolling 4-session aggregate 発見
+
+part 207 (= 2026-05-13 00:51 JST) v15-v18 ship 後 first 4-session rolling aggregate:
+
+- 4-sess reclaim avg **-491.5 MB ❌** (= ALL 4 sessions FAIL v19-R quota (a) ≥ +500 MB)
+- v17 Layer G rolling 3-session 53.62/59.30/47.78 → avg 53.57 GB
+- 「**v15-v18 spec 既 ship でも実 fire rate 0%」**= existential gap
+
+**v19 = compression CONTRACT 中核** (= threshold-triggered → ALWAYS-FIRE mandatory + wrap-up exit-1 fail-closed).
+
+#### 17.22.2 v19 spec (= 5 layer P-T / 累積 23 layer)
+
+- **Layer P: SessionStart compression mandatory** (= always-fire / threshold 不問 / wbs-trim-ram OR v15 Layer 1 / SessionStart hook 必須 path)
+- **Layer Q: PostToolUse periodic** (= 50 tool call ごと force fire / interactive session 中 build-up 回収)
+- **Layer R: SessionEnd 3 layer always-fire** (= wbs-trim-ram + dev_cache cleanup + git-gc / wrap-up前 mandatory)
+- **Layer S: 5 KPI metric** (= session_reclaim_mb / pre_post_ram_delta / pre_post_c_delta / compression_fire_count / quota_pass)
+- **Layer T: quota CONTRACT** (= (a) reclaim ≥ +500 MB OR (b) RAM Δ ≥ -5 pt OR (c) C: Δ ≥ +0.5 GB / wrap-up exit 1 fail-closed if NONE)
+
+#### 17.22.3 累積 23 layer (= v15 3 + v16 5 + v17 5 + v18 5 + v19 5)
+
+| Layer | Phase | Trigger | Fail-closed | Observability |
+|-------|-------|---------|-------------|---------------|
+| ... (v15-v18 既出 ↑ 17.21.3) | | | | |
+| **v19-P** | **SessionStart** | **always-fire mandatory** | ✅ block start | **session_kpi.py** |
+| **v19-Q** | **PostToolUse** | **50 tool call periodic** | ✅ block tool | **tool_count.log** |
+| **v19-R** | **SessionEnd** | **wbs-trim + dev_cache + git-gc** | ✅ wrap-up exit 1 | **session_kpi.py final** |
+| **v19-S** | **measurement** | **5 KPI metric collect** | ❌ informational | **session-delta.csv** |
+| **v19-T** | **quota CONTRACT** | **(a) OR (b) OR (c) check** | ✅ wrap-up exit 1 | **quota.log** |
+
+#### 17.22.4 Codex impl 待ち (= 5/30 期限 / 5 deliverable NEW / 累積 27)
+
+- `~/.claude/hooks/session-start-compress.ps1` (= Layer P)
+- `~/.claude/hooks/post-tool-periodic-compress.ps1` (= Layer Q)
+- `~/.claude/hooks/session-end-compress.ps1` (= Layer R)
+- `scripts/session_kpi_v19.py` extend (= Layer S)
+- `scripts/wrap_up_quota_gate.ps1` (= Layer T)
+
+> **v19 status**: part 207 spec ship / 累積 23 layer / Codex 22+5=27 件 5/30 期限 / part 208 retroactive dogfood 第 1 例 ALL 3 FAIL 確証.
+
+### §17.23 v20 fleet adaptive compression (= part 208 / 5 layer U-Y / 累積 28 layer)
+
+#### 17.23.1 part 208 fleet expansion 発見
+
+part 208 (= 2026-05-13 01:35 JST same-day minimum session 第 3 例) v19 spec ship 後 fleet 横断視点拡張:
+
+- single-instance enforce (v19) = Win Claude only / Win Codex も同 problem (= dev_cache 蓄積 / RAM creep)
+- inter-session gap (sleep) でも cron base compression 必要
+- multi-instance concurrent fire 衝突 risk (= 2 instance simultaneous compression = error / duplicate work)
+- adaptive frequency = drain rate (= GB/hour) base で escalate
+- emergency exit threshold = data loss prevention 上書き
+
+**v20 = fleet adaptive compression** (= inter-session GHA cron + semaphore + adaptive freq + statusline visible + hard exit).
+
+#### 17.23.2 v20 spec (= 5 layer U-Y / 累積 28 layer)
+
+- **Layer U: inter-session GHA cron 30 min** (= sleep 中 / interactive session 不問 / Win Task Scheduler 補完 / GHA self-hosted runner future)
+- **Layer V: multi-instance semaphore** (= `.claude/compression.lock` file lock / duplicate fire 回避 / 2-instance concurrent safe)
+- **Layer W: adaptive frequency dial** (= drain rate -2 GB/h base normal / -3 GB/h escalate fire freq 2x / -5 GB/h max 4x)
+- **Layer X: caveman statusline 拡張** (= live RAM% / C: GB / drain rate visible / kpi_pass green/red badge)
+- **Layer Y: hard exit emergency** (= C:<5 GB OR RAM>98% / WIP commit + exit 17 / data loss prevention 上書き / v20 中 unique fail-closed mode)
+
+#### 17.23.3 累積 28 layer (= v15 3 + v16 5 + v17 5 + v18 5 + v19 5 + v20 5)
+
+| Layer | Phase | Trigger | Fail-closed | Observability |
+|-------|-------|---------|-------------|---------------|
+| ... (v15-v19 既出) | | | | |
+| **v20-U** | **inter-session** | **GHA cron 30 min** | ❌ informational | **GHA artifact** |
+| **v20-V** | **multi-instance** | **lock file semaphore** | ✅ skip duplicate | **compression.lock** |
+| **v20-W** | **adaptive freq** | **drain rate base** | ❌ background | **drain_rate.log** |
+| **v20-X** | **statusline** | **live display** | ❌ informational | **statusline render** |
+| **v20-Y** | **hard exit** | **C<5 OR RAM>98** | ✅ exit 17 + WIP commit | **emergency_exit.log** |
+
+#### 17.23.4 Codex impl 待ち (= 5/30 期限 / 5 deliverable NEW / 累積 32)
+
+- `.github/workflows/inter-session-compress.yml` (= Layer U / 30min cron)
+- `scripts/compression_semaphore.ps1` (= Layer V)
+- `scripts/adaptive_freq_dial.ps1` (= Layer W)
+- `~/.claude/hooks/caveman-statusline-v20.ps1` extend (= Layer X)
+- `scripts/hard_exit_emergency.ps1` (= Layer Y)
+
+> **v20 status**: part 208 spec ship / 累積 28 layer / Codex 27+5=32 件 5/30 期限 / 9-day sprint 5/22-5/30.
+
+### §17.24 v21 structural prevention + per-session guarantee (= part 209 後 part 210 / 5 layer Z-DD / 累積 33 layer)
+
+#### 17.24.1 part 209 same-day 3-part chain violation 第 2 例 発見
+
+part 209 (= 2026-05-13 02:53 JST same-day 3-part chain) 後 同日 10:03 JST resume で发覚:
+
+- **same-day violation 第 2 例累積** (= part 207-208-209 全 5/13 連鎖 / 第 1 例 part 202 14-part 連続)
+- **[SCHEDULE-WAKEUP] 深夜 02-06 zone violation risk 第 1 例 explicit log**
+- **minimum session 第 4 例累積** (= part 209 で compression NOT fire = "毎セッション" gap 第 1 例)
+- **想定 vs. 実態 mismatch 第 4 例累積** (= ambiguous 「翌日」表現 confusion / part 205+206+209 + initial part 202)
+- **+7h gap recovery 第 1 例確証** (= part 209 end 45.19 → part 210 start 51.31 = +6.12 GB / cron 効果 = v18 Layer M precursor 測定)
+
+User explicit request 2026-05-13 10:03 JST:
+> 「今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇します。毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策を検討してください。」
+
+→ **v21 中核 = structural prevention + per-session compression GUARANTEED unavoidable**.
+
+#### 17.24.2 v21 spec (= 5 layer Z-DD / 累積 33 layer)
+
+- **Layer Z: SessionStart 認識前 background compression fire** (= unavoidable / minimum session でも必ず fire / `Start-Process` non-blocking / "毎セッション必ず" 中核 / v19 Layer P 強化 = always-fire AND background AND 認識前)
+- **Layer AA: SessionStart hook date diff + 02-06 zone warning auto-inject** (= 前 session end timestamp diff calc → +6h 未満 OR 02-06 zone overlap で `[SAME-DAY VIOLATION RISK]` warning stdout + read-only mode hint / same-day violation 構造的 prevention / part 209 第 2 例 base)
+- **Layer BB: /wrap-up exit-fail if no compression record** (= session_kpi.py で `compression_fire_count > 0` 必須 / `quota_pass = true` 必須 / 違反 = wrap-up skill exit 1 / "毎セッション" enforce verify gate)
+- **Layer CC: /wrap-up absolute timestamp embed mandatory** (= 「翌日」「翌週」ambiguous 表現排除 / `next session = YYYY-MM-DD <weekday> NN:NN JST 以降` absolute / 想定 vs. 実態 mismatch 第 4 例 prevention)
+- **Layer DD: cross-AI quota verify** (= Win Codex 同 v19-R quota retroactive check / fleet 横断 verify / 2-instance simultaneous KPI tracking / 1 instance fail = whole fleet alert)
+
+#### 17.24.3 累積 33 layer (= v15 3 + v16 5 + v17 5 + v18 5 + v19 5 + v20 5 + v21 5)
+
+| Layer | Phase | Trigger | Fail-closed | Observability |
+|-------|-------|---------|-------------|---------------|
+| ... (v15-v20 既出) | | | | |
+| **v21-Z** | **SessionStart pre-recognition** | **background non-blocking fire** | ✅ unavoidable | **session_kpi.py initial_fire** |
+| **v21-AA** | **SessionStart date diff** | **+6h 未満 OR 02-06 zone** | ✅ warning inject | **same_day_warning.log** |
+| **v21-BB** | **wrap-up exit-fail** | **no compression record** | ✅ wrap-up exit 1 | **quota.log + skill exit code** |
+| **v21-CC** | **wrap-up absolute timestamp** | **ambiguous 「翌日」block** | ✅ template enforce | **wrap_up.md template** |
+| **v21-DD** | **cross-AI quota** | **Win Codex retro check** | ❌ informational alert | **fleet_quota_dashboard.md** |
+
+#### 17.24.4 session_kpi.py 拡張 (= v15 5 + v16 3 + v17 5 + v18 5 + v19 5 + v20 5 + v21 5 = 33 metric)
+
+- **v21 5 metric NEW**:
+  - `pre_recognition_fire_ms` (int / Layer Z / SessionStart 0ms 目標)
+  - `same_day_warning_count` (int / Layer AA / 24h rolling)
+  - `wrap_up_exit_fail_count` (int / Layer BB / quota gate trigger)
+  - `absolute_timestamp_embed_ok` (bool / Layer CC / wrap-up template verify)
+  - `cross_ai_quota_pass_pct` (float / Layer DD / fleet 2-instance rolling)
+
+#### 17.24.5 Codex impl 待ち (= 5/30 期限 / 5 deliverable NEW / 累積 37)
+
+- `~/.claude/hooks/session-start-pre-recognition-fire.ps1` (= Layer Z / background non-blocking)
+- `~/.claude/hooks/session-start-date-diff-warn.ps1` (= Layer AA)
+- `~/.claude/skills/wrap-up/SKILL.md` update + `scripts/wrap_up_compression_verify.ps1` (= Layer BB)
+- `~/.claude/skills/wrap-up/SKILL.md` template update (= Layer CC)
+- `scripts/cross_ai_quota_dashboard.py` (= Layer DD)
+
+#### 17.24.6 part 210 dogfood data (= 第 1 例 base / v21 直接 evidence)
+
+| Metric | part 209 end | part 210 start | Delta | v21 Layer evidence |
+|--------|--------------|-----------------|-------|---------------------|
+| C: free GB | 45.19 | 51.31 | **+6.12** | Layer Z precursor (= cron 効果 / +7h idle で natural recovery 第 1 例) |
+| RAM % | 87.67 | 84.48 | **-3.19** | Layer Z precursor (= 85% threshold 自然解消 / partial breach 第 6 例 RESOLVED) |
+| Same-day | 5/13 02:53 | 5/13 10:03 | +7h10min | Layer AA evidence (= same-day continuation でも +6h+ gap = normal pacing 可能 / 但し 02-06 zone は wakeup 禁止) |
+| Violation | 第 2 例累積 | recovery confirmed | within session | Layer BB evidence (= retroactive compression record establish) |
+
+> **v21 status**: part 210 spec ship (= part 209 同日 +7h gap recover) / 累積 33 layer / Codex 32+5=37 件 5/30 期限 / iterative ask v15-v21 累積 20 layer 過去最高 update (= v20 19 → v21 20).
