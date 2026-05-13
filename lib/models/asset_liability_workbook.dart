@@ -116,17 +116,9 @@ class AssetLiabilityPaymentDayRisk {
   bool get hasEstimatedPayments => estimatedPaymentCount > 0;
 }
 
-enum AssetLiabilityCashRiskLevel {
-  normal,
-  watch,
-  caution,
-  short,
-}
+enum AssetLiabilityCashRiskLevel { normal, watch, caution, short }
 
-enum AssetLiabilityCashflowEventType {
-  payment,
-  income,
-}
+enum AssetLiabilityCashflowEventType { payment, income }
 
 class AssetLiabilityIncomePlan {
   final String id;
@@ -294,6 +286,51 @@ class AssetLiabilityMonthlySnapshotComparison {
   bool get hasPrevious => netWorthDelta != null;
 }
 
+enum AssetLiabilityMonthlyChartMetric {
+  positiveAssetTotal,
+  liabilityTotal,
+  netWorth,
+  cashLikeTotal,
+}
+
+class AssetLiabilityMonthlyChartPoint {
+  final String monthKey;
+  final double value;
+  final double? deltaFromPrevious;
+  final bool worsened;
+
+  const AssetLiabilityMonthlyChartPoint({
+    required this.monthKey,
+    required this.value,
+    required this.deltaFromPrevious,
+    required this.worsened,
+  });
+}
+
+class AssetLiabilityMonthlyChartSeries {
+  final AssetLiabilityMonthlyChartMetric metric;
+  final String label;
+  final List<AssetLiabilityMonthlyChartPoint> points;
+
+  const AssetLiabilityMonthlyChartSeries({
+    required this.metric,
+    required this.label,
+    required this.points,
+  });
+}
+
+class AssetLiabilityMonthlyChartData {
+  final List<String> monthKeys;
+  final List<AssetLiabilityMonthlyChartSeries> series;
+
+  const AssetLiabilityMonthlyChartData({
+    required this.monthKeys,
+    required this.series,
+  });
+
+  bool get hasEnoughData => monthKeys.length >= 2;
+}
+
 class AssetLiabilityCsvExportBundle {
   final String monthlyHistoryCsv;
   final String paymentScheduleCsv;
@@ -377,9 +414,7 @@ class AssetLiabilityWorkbook {
 
   List<AssetLiabilityIncomePlan> get unassignedDestinationIncomePlans {
     return incomePlans
-        .where(
-          (plan) => !plan.received && plan.destinationAccountId == null,
-        )
+        .where((plan) => !plan.received && plan.destinationAccountId == null)
         .toList();
   }
 

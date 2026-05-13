@@ -39,10 +39,7 @@ enum AssetManagementInitialFocus {
   mustTasks,
 }
 
-enum AssetDebtPlannerMode {
-  ask,
-  code,
-}
+enum AssetDebtPlannerMode { ask, code }
 
 class AssetManagementPage extends StatefulWidget {
   final AssetManagementInitialFocus initialFocus;
@@ -68,9 +65,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const String _bankSheetId =
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
   static const String _smbcSheetGid = '0';
-  static const List<String> _jibunCandidateSheetGids = <String>[
-    '0',
-  ];
+  static const List<String> _jibunCandidateSheetGids = <String>['0'];
 
   final _supabase = Supabase.instance.client;
 
@@ -136,8 +131,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     '[その他]',
   ];
   DateTime _selectedFlowDate = DateTime.now();
-  DateTime _selectedFlowHistoryMonth =
-      DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime _selectedFlowHistoryMonth = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    1,
+  );
   String _selectedSource = '[現金]';
   String _selectedTransferDestination = '[銀行口座]';
   String _selectedFlowType = '支出'; // 支出 / 収入 / 振替
@@ -147,8 +145,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<Map<String, dynamic>> _recentFlows = []; // 収支履歴
 
   // --- サブスク（固定費）用変数 ---
-  DateTime _selectedSubscriptionHistoryMonth =
-      DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime _selectedSubscriptionHistoryMonth = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    1,
+  );
   List<Map<String, dynamic>> _subscriptions = [];
   List<Map<String, dynamic>> _subscriptionsThreeMonths = [];
   bool _isLoadingSubscriptions = false;
@@ -198,10 +199,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const double _compactWidthBreakpoint = 420;
   static const List<String> _flowTypeOptions = ['支出', '収入', '振替'];
   static const String _smbcCsvSource = '[三井住友銀行]';
-  static final RegExp _flowImportMarkerPattern =
-      RegExp(r'\s*\[import:smbc:[^\]]+\]\s*$');
-  static final RegExp _smbcImportKeyPattern =
-      RegExp(r'\[import:(smbc:[^\]]+)\]\s*$');
+  static final RegExp _flowImportMarkerPattern = RegExp(
+    r'\s*\[import:smbc:[^\]]+\]\s*$',
+  );
+  static final RegExp _smbcImportKeyPattern = RegExp(
+    r'\[import:(smbc:[^\]]+)\]\s*$',
+  );
   bool get _isCompact =>
       MediaQuery.sizeOf(context).width < _compactWidthBreakpoint;
 
@@ -216,11 +219,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      final previousMonthKey =
-          AssetLiabilityMonthlyStateStore.formatMonthKey(_now);
+      final previousMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        _now,
+      );
       final nextNow = DateTime.now();
-      final nextMonthKey =
-          AssetLiabilityMonthlyStateStore.formatMonthKey(nextNow);
+      final nextMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        nextNow,
+      );
       setState(() => _now = nextNow);
       if (nextMonthKey != previousMonthKey &&
           nextMonthKey != _loadedAssetLiabilityMonthKey) {
@@ -323,10 +328,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String _sourceLabel(String source) =>
       source.replaceAll('[', '').replaceAll(']', '').trim();
 
-  List<String> _transferDestinationOptions(
-    String source, {
-    String? include,
-  }) {
+  List<String> _transferDestinationOptions(String source, {String? include}) {
     final options = [
       for (final item in _sourceOptions)
         if (item != source) item,
@@ -343,10 +345,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return options;
   }
 
-  String _resolvedTransferDestination(
-    String source, {
-    String? preferred,
-  }) {
+  String _resolvedTransferDestination(String source, {String? preferred}) {
     if (preferred != null && preferred.isNotEmpty && preferred != source) {
       return preferred;
     }
@@ -583,9 +582,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  KgiCsfKpiPlan _buildWasteTrainingPlan(
-    AssetWasteTrainingSnapshot snapshot,
-  ) {
+  KgiCsfKpiPlan _buildWasteTrainingPlan(AssetWasteTrainingSnapshot snapshot) {
     final zeroWasteTarget = max(1, snapshot.elapsedDays);
     final ruleTarget = max(1, snapshot.ruleTargetCount);
     final violationClear = snapshot.todayViolationCount == 0 ? 1 : 0;
@@ -635,8 +632,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final current = _wasteTrainingAiReviewFuture;
     if (current == null || _wasteTrainingAiReviewKey != key) {
       _wasteTrainingAiReviewKey = key;
-      _wasteTrainingAiReviewFuture =
-          _wasteTrainingAiService.generateReview(snapshot);
+      _wasteTrainingAiReviewFuture = _wasteTrainingAiService.generateReview(
+        snapshot,
+      );
     }
     return _wasteTrainingAiReviewFuture!;
   }
@@ -711,11 +709,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     final stats = <String, Map<String, int>>{
       for (final month in months)
-        _monthKey(month): {
-          'total': 0,
-          'completed': 0,
-          'pending': 0,
-        },
+        _monthKey(month): {'total': 0, 'completed': 0, 'pending': 0},
     };
 
     for (final task in _mustTasks) {
@@ -775,10 +769,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _loadAssetLiabilityMonthlyState() async {
     try {
       final targetMonth = _now;
-      final monthKey =
-          AssetLiabilityMonthlyStateStore.formatMonthKey(targetMonth);
-      final state =
-          await _assetLiabilityMonthlyStateStore.loadMonth(targetMonth);
+      final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        targetMonth,
+      );
+      final state = await _assetLiabilityMonthlyStateStore.loadMonth(
+        targetMonth,
+      );
       final defaultSources =
           await _assetLiabilityMonthlyStateStore.loadDefaultPaymentSources();
       final templates =
@@ -810,8 +806,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _recurringIncomeTemplates =
             List<AssetLiabilityRecurringIncomeTemplate>.from(templates);
-        _monthlySnapshots =
-            List<AssetLiabilityMonthlySnapshot>.from(monthlySnapshots);
+        _monthlySnapshots = List<AssetLiabilityMonthlySnapshot>.from(
+          monthlySnapshots,
+        );
         _loadedAssetLiabilityMonthKey = monthKey;
         _syncMonthlyPaymentControllers();
       });
@@ -833,9 +830,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           paymentSourceAccountIds: Map<String, String>.from(
             _paymentSourceAccountIds,
           ),
-          incomePlans: List<AssetLiabilityIncomePlan>.from(
-            _monthlyIncomePlans,
-          ),
+          incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
         ),
       );
     } catch (e) {
@@ -863,15 +858,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _monthlySnapshots = List<AssetLiabilityMonthlySnapshot>.from(snapshots);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$monthKey のスナップショットを保存しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$monthKey のスナップショットを保存しました')));
     } catch (e) {
       debugPrint('Error saving asset liability monthly snapshot: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('スナップショット保存に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('スナップショット保存に失敗しました: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -904,9 +899,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       bundle.accountCashflowCsv,
       'asset_liability_account_cashflow_${monthKey}_$stamp.csv',
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('資産/負債ボードのCSV 4種類を出力しました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('資産/負債ボードのCSV 4種類を出力しました')));
   }
 
   void _scheduleAssetLiabilityStateIdMigration(
@@ -932,14 +927,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _defaultPaymentSourceAccountIds,
       legacyKeyToAccountId,
     );
-    if (_sameDoubleMap(
-          _monthlyPaymentOverrides,
-          migrated.paymentOverrides,
-        ) &&
-        _sameStringSet(
-          _monthlyPaidAccountNames,
-          migrated.paidAccountNames,
-        ) &&
+    if (_sameDoubleMap(_monthlyPaymentOverrides, migrated.paymentOverrides) &&
+        _sameStringSet(_monthlyPaidAccountNames, migrated.paidAccountNames) &&
         _sameStringMap(
           _paymentSourceAccountIds,
           migrated.paymentSourceAccountIds,
@@ -1073,7 +1062,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   void _updatePaymentSourceAccount(
-      String liabilityId, String? sourceAccountId) {
+    String liabilityId,
+    String? sourceAccountId,
+  ) {
     setState(() {
       if (sourceAccountId == null || sourceAccountId.isEmpty) {
         _paymentSourceAccountIds.remove(liabilityId);
@@ -1144,9 +1135,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     unawaited(_saveAssetLiabilityMonthlyState());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('前月設定をコピーしました。支払済み・入金済み状態はコピーしていません。'),
-      ),
+      const SnackBar(content: Text('前月設定をコピーしました。支払済み・入金済み状態はコピーしていません。')),
     );
   }
 
@@ -1208,8 +1197,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   void _deleteRecurringIncomeTemplate(String templateId) {
-    final currentMonthKey =
-        AssetLiabilityMonthlyStateStore.formatMonthKey(_now);
+    final currentMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+      _now,
+    );
     setState(() {
       _recurringIncomeTemplates = _recurringIncomeTemplates
           .where((template) => template.id != templateId)
@@ -1251,8 +1241,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('日付'),
-                      subtitle:
-                          Text(DateFormat('yyyy/MM/dd').format(selectedDate)),
+                      subtitle: Text(
+                        DateFormat('yyyy/MM/dd').format(selectedDate),
+                      ),
                       trailing: const Icon(Icons.calendar_today_outlined),
                       onTap: () async {
                         final picked = await showDatePicker(
@@ -1396,9 +1387,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     TextField(
                       controller: dayController,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: const InputDecoration(labelText: '毎月の日付'),
                     ),
                     TextField(
@@ -1468,10 +1457,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       destinationAccountId: selectedDestinationId,
                       destinationAccountName: destinationName,
                     );
-                    final generatedId =
-                        _generatedPlanIdForTemplate(template, _now);
-                    final previousGeneratedPlan =
-                        _monthlyIncomePlans.where((plan) {
+                    final generatedId = _generatedPlanIdForTemplate(
+                      template,
+                      _now,
+                    );
+                    final previousGeneratedPlan = _monthlyIncomePlans.where((
+                      plan,
+                    ) {
                       return plan.id == generatedId;
                     }).toList();
                     final generatedPlan = _incomePlanForTemplate(
@@ -1536,12 +1528,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     final liabilities = snapshot.entries
         .where((e) => e.value < 0)
-        .map(
-          (e) => <String, dynamic>{
-            'name': e.key,
-            'balance': e.value.abs(),
-          },
-        )
+        .map((e) => <String, dynamic>{'name': e.key, 'balance': e.value.abs()})
         .toList();
 
     liabilities.sort(
@@ -1617,9 +1604,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          enabled ? '完済までの収監モードを開始しました' : '完済までの収監モードを中断しました',
-        ),
+        content: Text(enabled ? '完済までの収監モードを開始しました' : '完済までの収監モードを中断しました'),
       ),
     );
   }
@@ -1662,9 +1647,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _debtLockdownSnapshot = snapshot;
       _debtLockdownLoadedForDebt = remainingDebt;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('違反を記録しました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('違反を記録しました')));
   }
 
   Future<void> _showDebtLockdownViolationDialog(double remainingDebt) async {
@@ -1756,9 +1741,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (!mounted) {
           return;
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('違反内容を入力してください')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('違反内容を入力してください')));
         return;
       }
 
@@ -1895,9 +1880,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       if (monthlyBudget <= 0 || targetMonths <= 0) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('返済予算と目標期間を正しく入力してください')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('返済予算と目標期間を正しく入力してください')));
         return;
       }
 
@@ -1969,9 +1954,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     if (inputDebts.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('返済対象の負債データを作成できませんでした')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('返済対象の負債データを作成できませんでした')));
       return;
     }
 
@@ -2018,9 +2003,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('返済計画の作成に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('返済計画の作成に失敗しました: $e')));
     } finally {
       if (mounted) {
         setState(() => _isGeneratingDebtPlan = false);
@@ -2062,8 +2047,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _mustTaskSignatureFromMap(Map<String, dynamic> task) {
     final title = (task['title'] ?? '').toString().trim().toLowerCase();
-    final deadline =
-        DateTime.tryParse(task['deadline']?.toString() ?? '')?.toLocal();
+    final deadline = DateTime.tryParse(
+      task['deadline']?.toString() ?? '',
+    )?.toLocal();
     final deadlineKey =
         deadline == null ? '' : DateFormat('yyyy-MM-dd').format(deadline);
     return '$title|$deadlineKey';
@@ -2085,18 +2071,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final selectedTasks = _selectedDebtExecutionTasks;
     if (selectedTasks.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('追加する Code タスクを選択してください')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('追加する Code タスクを選択してください')));
       return;
     }
 
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ログイン後に Code タスクを追加できます')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ログイン後に Code タスクを追加できます')));
       return;
     }
 
@@ -2143,15 +2129,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _scrollTo(_keyMust);
       final suffix = skippedCount > 0 ? '（重複 $skippedCount 件を除外）' : '';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Code タスクを ${rows.length} 件追加しました$suffix'),
-        ),
+        SnackBar(content: Text('Code タスクを ${rows.length} 件追加しました$suffix')),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Code タスクの追加に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Code タスクの追加に失敗しました: $e')));
     } finally {
       if (mounted) {
         setState(() => _isApplyingDebtExecutionTasks = false);
@@ -2230,19 +2214,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final todayStr = _dateOnly(DateTime.now());
 
     try {
-      await _supabase.from('cfo_daily_closings').upsert(
-        {
-          'user_id': userId,
-          'date': todayStr,
-          'assets_done': _assetsDone,
-          'liabilities_done': _liabilitiesDone,
-          'fixed_costs_done': _fixedCostsDone,
-          'flows_done': _flowsDone,
-          'must_tasks_done': _mustTasksDone,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        },
-        onConflict: 'user_id,date',
-      );
+      await _supabase.from('cfo_daily_closings').upsert({
+        'user_id': userId,
+        'date': todayStr,
+        'assets_done': _assetsDone,
+        'liabilities_done': _liabilitiesDone,
+        'fixed_costs_done': _fixedCostsDone,
+        'flows_done': _flowsDone,
+        'must_tasks_done': _mustTasksDone,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'user_id,date');
     } catch (e) {
       debugPrint('upsert closing error: $e');
     }
@@ -2451,9 +2432,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     await Clipboard.setData(ClipboardData(text: buf.toString()));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('サマリーをコピーしました（投稿用）')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('サマリーをコピーしました（投稿用）')));
   }
 
   // ==========================================
@@ -2464,10 +2445,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Uri.https(
       'docs.google.com',
       '/spreadsheets/d/$_bankSheetId/export',
-      <String, String>{
-        'format': 'csv',
-        'gid': gid,
-      },
+      <String, String>{'format': 'csv', 'gid': gid},
     );
   }
 
@@ -2603,9 +2581,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('データ取得に失敗しました: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('データ取得に失敗しました: $e')));
       }
     } finally {
       if (mounted) {
@@ -2627,9 +2605,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       final resolvedBalance = balance;
       if (resolvedBalance == null) {
-        throw Exception(
-          'じぶん銀行の残高行が見つかりませんでした。GoogleシートのGIDまたは日付/残高列を確認してください',
-        );
+        throw Exception('じぶん銀行の残高行が見つかりませんでした。GoogleシートのGIDまたは日付/残高列を確認してください');
       }
       const jibunName = 'じぶん銀行';
       setState(() {
@@ -2647,9 +2623,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('データ取得に失敗しました: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('データ取得に失敗しました: $e')));
       }
     } finally {
       if (mounted) {
@@ -2732,8 +2708,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         .where((entry) => _assetTypes.contains(entry.assetType))
         .toList();
     entries.sort((a, b) {
-      final groupCompare =
-          a.group.toLowerCase().compareTo(b.group.toLowerCase());
+      final groupCompare = a.group.toLowerCase().compareTo(
+            b.group.toLowerCase(),
+          );
       if (groupCompare != 0) {
         if (a.group.isEmpty) return 1;
         if (b.group.isEmpty) return -1;
@@ -2811,8 +2788,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (existing != null)
               TextButton(
                 onPressed: () async {
-                  final entries =
-                      await widget.watchlistService.removeEntry(type);
+                  final entries = await widget.watchlistService.removeEntry(
+                    type,
+                  );
                   if (!mounted) return;
                   setState(() {
                     _setWatchlistEntries(entries);
@@ -2902,8 +2880,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       controller.text = '-$current';
     }
 
-    controller.selection =
-        TextSelection.collapsed(offset: controller.text.length);
+    controller.selection = TextSelection.collapsed(
+      offset: controller.text.length,
+    );
   }
 
   Future<void> _recordAssetAmountForToday(
@@ -2956,18 +2935,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         lastDate == today ||
         lastDate != _yesterdayDateKey()) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$type は昨日の記録がある場合のみ簡易更新できます')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$type は昨日の記録がある場合のみ簡易更新できます')));
       return;
     }
 
     final lastAmount = _assetData[lastDate]?[type];
     if (lastAmount == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$type の前回残高が見つかりません')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$type の前回残高が見つかりません')));
       return;
     }
 
@@ -2981,17 +2960,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _saveSingleAssetData(String type) async {
     final controller = _controllers[type];
     if (controller == null || controller.text.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$type の金額を入力してください')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$type の金額を入力してください')));
       return;
     }
 
     final cleanText = controller.text.replaceAll(',', '');
     final parsedAmount = double.tryParse(cleanText);
     if (parsedAmount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$type の金額形式が不正です')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$type の金額形式が不正です')));
       return;
     }
     final double amount = parsedAmount;
@@ -3047,8 +3027,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       _controllers.forEach((_, controller) => controller.clear());
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('資産・負債を一括記録しました。')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('資産・負債を一括記録しました。')));
       }
       await _fetchTodayClosing();
     } catch (e) {
@@ -3132,7 +3113,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               if (context.mounted) Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB91C1C)),
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
             child: const Text('削除'),
           ),
         ],
@@ -3215,8 +3197,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration:
-                        const InputDecoration(labelText: '名称 (例: モビット, 家賃)'),
+                    decoration: const InputDecoration(
+                      labelText: '名称 (例: モビット, 家賃)',
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -3244,8 +3227,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       decoration: BoxDecoration(
                         border: Border.all(
-                            color:
-                                Theme.of(context).colorScheme.outlineVariant),
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -3257,8 +3240,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Icon(
                             Icons.calendar_today,
                             size: 16,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -3336,8 +3320,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
                     if (mounted) {
                       setState(() {
-                        _selectedSubscriptionHistoryMonth =
-                            _monthStart(dueDate);
+                        _selectedSubscriptionHistoryMonth = _monthStart(
+                          dueDate,
+                        );
                       });
                     }
                     if (context.mounted) Navigator.pop(context);
@@ -3379,7 +3364,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB91C1C)),
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('削除'),
           ),
@@ -3482,8 +3468,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       final knownImportKeys = <String>{};
       for (final flow in _recentFlows) {
-        final key =
-            _extractSmbcImportKey(flow['description']?.toString() ?? '');
+        final key = _extractSmbcImportKey(
+          flow['description']?.toString() ?? '',
+        );
         if (key != null) {
           knownImportKeys.add(key);
         }
@@ -3554,9 +3541,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('Error importing SMBC CSV: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('三井住友CSVの取込に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('三井住友CSVの取込に失敗しました: $e')));
     } finally {
       if (mounted) {
         setState(() => _isImportingSmbcCsv = false);
@@ -3625,10 +3612,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String memo,
     String? wasteCategory,
     bool isTransfer,
-  }) _parseFlowDescription(
-    String description, {
-    String? actionType,
-  }) {
+  }) _parseFlowDescription(String description, {String? actionType}) {
     final normalizedDescription = _stripFlowImportMarker(description.trim());
     final isExpense = _isExpenseActionType(actionType ?? '');
     final wasteCategory = isExpense
@@ -3638,9 +3622,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? WasteTrackingService.stripWasteMarker(normalizedDescription)
         : normalizedDescription;
     if (_isTransferActionType(actionType ?? '')) {
-      final transferMatch =
-          RegExp(r'^(\[[^\]]+\])\s*->\s*(\[[^\]]+\])(?:\s+(.*))?$')
-              .firstMatch(normalized);
+      final transferMatch = RegExp(
+        r'^(\[[^\]]+\])\s*->\s*(\[[^\]]+\])(?:\s+(.*))?$',
+      ).firstMatch(normalized);
       if (transferMatch != null) {
         return (
           source: transferMatch.group(1)?.trim() ?? '',
@@ -3681,8 +3665,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (parsed.isTransfer) {
       final fromLabel = _sourceLabel(parsed.source);
       final toLabel = _sourceLabel(parsed.destination);
-      final routeParts =
-          [fromLabel, toLabel].where((part) => part.trim().isNotEmpty).toList();
+      final routeParts = [
+        fromLabel,
+        toLabel,
+      ].where((part) => part.trim().isNotEmpty).toList();
       final routeLabel = routeParts.join(' → ');
       if (routeLabel.isEmpty) {
         return parsed.memo;
@@ -3746,9 +3732,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     if (isTransfer && _selectedSource == _selectedTransferDestination) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('振替元と振替先は別の口座を選択してください')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('振替元と振替先は別の口座を選択してください')));
       return;
     }
 
@@ -3782,9 +3768,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              isTransfer ? '振替を記録しました' : '収支を記録しました',
-            ),
+            content: Text(isTransfer ? '振替を記録しました' : '収支を記録しました'),
             backgroundColor: Theme.of(context).colorScheme.onSurface,
           ),
         );
@@ -4040,9 +4024,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       if (isTransfer && selectedSource == selectedDestination) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('振替元と振替先は別の口座を選択してください')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('振替元と振替先は別の口座を選択してください')));
         return;
       }
 
@@ -4071,18 +4055,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            isTransfer ? '振替記録を更新しました' : '収支記録を更新しました',
-          ),
+          content: Text(isTransfer ? '振替記録を更新しました' : '収支記録を更新しました'),
           backgroundColor: Theme.of(context).colorScheme.onSurface,
         ),
       );
     } catch (e) {
       debugPrint('Error editing flow: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('収支記録の更新に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('収支記録の更新に失敗しました: $e')));
     } finally {
       memoController.dispose();
       amountController.dispose();
@@ -4102,10 +4084,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? _flowDisplayTitle(flow)
         : (parsed.memo.isNotEmpty ? parsed.memo : 'この収支記録');
     final amount = (flow['amount'] as num?)?.toInt() ?? 0;
-    final date = DateTime.tryParse(
-          flow['occurred_at']?.toString() ?? '',
-        )?.toLocal() ??
-        DateTime.now();
+    final date =
+        DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal() ??
+            DateTime.now();
     final typeLabel = _actionTypeToFlowLabel(actionType);
 
     final confirmed = await showDialog<bool>(
@@ -4122,11 +4103,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('削除',
-                style: TextStyle(
-                  color: Color(0xFFB91C1C),
-                  height: 1.5,
-                )),
+            child: const Text(
+              '削除',
+              style: TextStyle(color: Color(0xFFB91C1C), height: 1.5),
+            ),
           ),
         ],
       ),
@@ -4164,9 +4144,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('Error deleting flow: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('収支記録の削除に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('収支記録の削除に失敗しました: $e')));
     }
   }
 
@@ -4212,8 +4192,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 TextField(
                   controller: titleController,
-                  decoration:
-                      const InputDecoration(labelText: 'タスク内容 (例: 確定申告)'),
+                  decoration: const InputDecoration(
+                    labelText: 'タスク内容 (例: 確定申告)',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 InkWell(
@@ -4235,8 +4216,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -4352,16 +4333,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _fetchTodayClosing();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('支払日を更新しました: $dueDateStr')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('支払日を更新しました: $dueDateStr')));
     } catch (e) {
       debugPrint('edit due_date error: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('支払日の更新に失敗: $e'),
-            backgroundColor: const Color(0xFFB91C1C)),
+          content: Text('支払日の更新に失敗: $e'),
+          backgroundColor: const Color(0xFFB91C1C),
+        ),
       );
     }
   }
@@ -4377,8 +4359,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? '（未設定）'
         : (candidates.contains(current) ? current : 'その他');
 
-    final custom =
-        TextEditingController(text: selected == 'その他' ? current : '');
+    final custom = TextEditingController(
+      text: selected == 'その他' ? current : '',
+    );
 
     final ok = await showDialog<bool>(
       context: context,
@@ -4636,10 +4619,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               color: const Color(0xFF0F766E).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.merge_type,
-              color: Color(0xFF0F766E),
-            ),
+            child: const Icon(Icons.merge_type, color: Color(0xFF0F766E)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -5152,10 +5132,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 8),
             Text(
               '${(p * 100).toInt()}% 完了',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
             const SizedBox(height: 12),
             CheckboxListTile(
@@ -5334,24 +5311,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           Text(
             '純資産: ${netWorth == null ? "未記録" : _formatYen(netWorth)}',
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.5,
-            ),
+            style: const TextStyle(fontSize: 12, height: 1.5),
           ),
           Text(
             '固定費: ${_formatYen(fixedCost)}',
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.5,
-            ),
+            style: const TextStyle(fontSize: 12, height: 1.5),
           ),
           Text(
             'タスク: $completedTasks/$totalTasks 完了',
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.5,
-            ),
+            style: const TextStyle(fontSize: 12, height: 1.5),
           ),
           Text(
             '未完了: $pendingTasks',
@@ -5394,17 +5362,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         fixedDiff <= 0 ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
 
     final currentTask = taskStatsByMonth[currentKey] ??
-        {
-          'total': 0,
-          'completed': 0,
-          'pending': 0,
-        };
-    final nextTask = taskStatsByMonth[nextKey] ??
-        {
-          'total': 0,
-          'completed': 0,
-          'pending': 0,
-        };
+        {'total': 0, 'completed': 0, 'pending': 0};
+    final nextTask =
+        taskStatsByMonth[nextKey] ?? {'total': 0, 'completed': 0, 'pending': 0};
 
     return Card(
       elevation: 2,
@@ -5523,8 +5483,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         .where((e) => e.value < 0)
         .toList()
       ..sort((a, b) => a.value.compareTo(b.value));
-    final totalDebt =
-        liabilities.fold<double>(0, (sum, e) => sum + e.value.abs());
+    final totalDebt = liabilities.fold<double>(
+      0,
+      (sum, e) => sum + e.value.abs(),
+    );
     _ensureDebtLockdownSnapshotLoaded(totalDebt);
 
     return Card(
@@ -5719,8 +5681,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color:
-                            Theme.of(context).colorScheme.surfaceContainerLow,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: MarkdownBody(
@@ -5852,7 +5815,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       onPressed: isReleased
                           ? null
                           : () => _setDebtLockdownEnabled(
-                              !isEnabled, remainingDebt),
+                                !isEnabled,
+                                remainingDebt,
+                              ),
                       icon: Icon(isEnabled ? Icons.pause_circle : Icons.shield),
                       label: Text(isEnabled ? '収監モードを中断' : '収監モードを開始'),
                     ),
@@ -6062,8 +6027,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ? const Color(0xFF1A0A4E).withValues(alpha: 0.63)
             : const Color(0xFFF6F3FF),
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: const Color(0xFF7C3AED).withValues(alpha: 0.16)),
+        border: Border.all(
+          color: const Color(0xFF7C3AED).withValues(alpha: 0.16),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -6160,9 +6126,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHigh,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHigh,
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Text(
@@ -6217,7 +6183,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               ),
                             )
                           : const Icon(
-                              Icons.playlist_add_check_circle_outlined),
+                              Icons.playlist_add_check_circle_outlined,
+                            ),
                       label: Text('必須タスクへ追加 ($selectedCount)'),
                     ),
                   ],
@@ -6235,12 +6202,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _clearDebtExecutionTaskSelection,
-                        icon: const Icon(
-                          Icons.remove_done,
-                        ),
-                        label: const Text(
-                          '選択解除',
-                        ),
+                        icon: const Icon(Icons.remove_done),
+                        label: const Text('選択解除'),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -6261,10 +6224,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 ),
                               )
                             : const Icon(
-                                Icons.playlist_add_check_circle_outlined),
-                        label: Text(
-                          '必須タスクへ追加 ($selectedCount)',
-                        ),
+                                Icons.playlist_add_check_circle_outlined,
+                              ),
+                        label: Text('必須タスクへ追加 ($selectedCount)'),
                       ),
                     ),
                   ],
@@ -6305,10 +6267,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Row(
               children: [
-                Icon(
-                  Icons.table_chart_outlined,
-                  color: Color(0xFF0F766E),
-                ),
+                Icon(Icons.table_chart_outlined, color: Color(0xFF0F766E)),
                 SizedBox(width: 8),
                 Text(
                   '資産/負債 管理ボード',
@@ -6454,11 +6413,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.info_outline,
-            size: 20,
-            color: Color(0xFFD97706),
-          ),
+          const Icon(Icons.info_outline, size: 20, color: Color(0xFFD97706)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -6586,10 +6541,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           const Text(
             '支払日別リスク',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
           ),
           const SizedBox(height: 8),
           ...workbook.paymentDayRisks.map(_buildPaymentRiskRow),
@@ -6611,10 +6563,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           Container(
             width: 56,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
@@ -6675,10 +6624,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const Expanded(
                 child: Text(
                   '収入予定',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
                 ),
               ),
               Wrap(
@@ -6757,10 +6703,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         DataCell(
                           Checkbox(
                             value: plan.received,
-                            onChanged: (value) => _toggleIncomeReceived(
-                              plan.id,
-                              value ?? false,
-                            ),
+                            onChanged: (value) =>
+                                _toggleIncomeReceived(plan.id, value ?? false),
                           ),
                         ),
                         DataCell(
@@ -6777,8 +6721,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               ),
                               IconButton(
                                 tooltip: '削除',
-                                icon:
-                                    const Icon(Icons.delete_outline, size: 18),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                ),
                                 onPressed: () => _deleteIncomePlan(plan.id),
                               ),
                             ],
@@ -6794,9 +6740,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildUnassignedIncomeWarning(
-    List<AssetLiabilityIncomePlan> plans,
-  ) {
+  Widget _buildUnassignedIncomeWarning(List<AssetLiabilityIncomePlan> plans) {
     final names = plans.map((plan) => plan.name).join('、');
     return Container(
       width: double.infinity,
@@ -6820,9 +6764,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildRecurringIncomeTemplateList(
-    AssetLiabilityWorkbook workbook,
-  ) {
+  Widget _buildRecurringIncomeTemplateList(AssetLiabilityWorkbook workbook) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -6853,10 +6795,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       children: [
         const Text(
           '支払日順 資金繰り',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            height: 1.4,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 4),
         Text(
@@ -6931,10 +6870,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               value: validSelected ? selected : '',
               isExpanded: true,
               items: [
-                const DropdownMenuItem<String>(
-                  value: '',
-                  child: Text('未設定'),
-                ),
+                const DropdownMenuItem<String>(value: '', child: Text('未設定')),
                 for (final account in options)
                   DropdownMenuItem<String>(
                     value: account.id,
@@ -7035,10 +6971,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return row.paymentAmountEstimated ? '推定' : '実額';
   }
 
-  Widget _buildTextStatusChip({
-    required String label,
-    required Color color,
-  }) {
+  Widget _buildTextStatusChip({required String label, required Color color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -7068,10 +7001,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       children: [
         const Text(
           '口座別資金繰り',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            height: 1.4,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 8),
         SingleChildScrollView(
@@ -7094,12 +7024,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   cells: [
                     DataCell(Text(summary.accountName)),
                     DataCell(
-                        Text(_formatManagementYen(summary.currentBalance))),
+                      Text(_formatManagementYen(summary.currentBalance)),
+                    ),
                     DataCell(
                       Text(_formatManagementYen(summary.upcomingPayments)),
                     ),
                     DataCell(
-                        Text(_formatManagementYen(summary.upcomingIncome))),
+                      Text(_formatManagementYen(summary.upcomingIncome)),
+                    ),
                     DataCell(
                       Text(_formatManagementYen(summary.projectedBalance)),
                     ),
@@ -7146,8 +7078,327 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _buildMonthlySnapshotChart(AssetLiabilityMonthlyChartData chartData) {
+    final theme = Theme.of(context);
+    if (!chartData.hasEnoughData) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.show_chart,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'グラフ表示には2か月以上の履歴が必要です',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final allValues = [
+      for (final series in chartData.series)
+        for (final point in series.points) point.value,
+    ];
+    final minValue = allValues.reduce(min);
+    final maxValue = allValues.reduce(max);
+    final valueRange = maxValue - minValue;
+    final padding = valueRange == 0
+        ? max(maxValue.abs() * 0.1, 10000.0)
+        : valueRange * 0.12;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 260,
+            child: LineChart(
+              LineChartData(
+                minX: 0,
+                maxX: (chartData.monthKeys.length - 1).toDouble(),
+                minY: minValue - padding,
+                maxY: maxValue + padding,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: value == 0
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.outlineVariant,
+                    strokeWidth: value == 0 ? 1.2 : 0.8,
+                  ),
+                ),
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                ),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 62,
+                      getTitlesWidget: (value, meta) => SideTitleWidget(
+                        meta: meta,
+                        space: 8,
+                        child: Text(
+                          _formatCompactManagementYen(value),
+                          style: const TextStyle(fontSize: 10, height: 1.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: chartData.monthKeys.length > 8 ? 2 : 1,
+                      reservedSize: 30,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.round();
+                        if ((value - index).abs() > 0.01 ||
+                            index < 0 ||
+                            index >= chartData.monthKeys.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final monthKey = chartData.monthKeys[index];
+                        final label = monthKey.length >= 7
+                            ? monthKey.substring(5)
+                            : monthKey;
+                        return SideTitleWidget(
+                          meta: meta,
+                          child: Text(
+                            label,
+                            style: const TextStyle(fontSize: 10, height: 1.5),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (spots) {
+                      return spots.map((spot) {
+                        if (spot.barIndex < 0 ||
+                            spot.barIndex >= chartData.series.length) {
+                          return null;
+                        }
+                        final series = chartData.series[spot.barIndex];
+                        final pointIndex = spot.x.round();
+                        if (pointIndex < 0 ||
+                            pointIndex >= series.points.length) {
+                          return null;
+                        }
+                        final point = series.points[pointIndex];
+                        final deltaLabel = point.deltaFromPrevious == null
+                            ? ''
+                            : '\n前月比 ${_formatManagementDeltaYen(point.deltaFromPrevious)}';
+                        final worsenedLabel = point.worsened ? ' 悪化' : '';
+                        return LineTooltipItem(
+                          '${series.label} ${point.monthKey}\n'
+                          '${_formatManagementYen(point.value)}'
+                          '$deltaLabel$worsenedLabel',
+                          TextStyle(
+                            color: _monthlyChartSeriesColor(series.metric),
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                  handleBuiltInTouches: true,
+                ),
+                lineBarsData: [
+                  for (final series in chartData.series)
+                    LineChartBarData(
+                      spots: [
+                        for (var index = 0;
+                            index < series.points.length;
+                            index++)
+                          FlSpot(index.toDouble(), series.points[index].value),
+                      ],
+                      isCurved: false,
+                      color: _monthlyChartSeriesColor(series.metric),
+                      barWidth: 2.5,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) {
+                          final point =
+                              index >= 0 && index < series.points.length
+                                  ? series.points[index]
+                                  : null;
+                          final worsened = point?.worsened ?? false;
+                          final color = worsened
+                              ? const Color(0xFFB91C1C)
+                              : _monthlyChartSeriesColor(series.metric);
+                          return FlDotCirclePainter(
+                            radius: worsened ? 5 : 3,
+                            color: color,
+                            strokeWidth: 2,
+                            strokeColor: theme.colorScheme.surface,
+                          );
+                        },
+                      ),
+                      belowBarData: BarAreaData(show: false),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              for (final series in chartData.series)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: _monthlyChartSeriesColor(series.metric),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      series.label,
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildMonthlySnapshotDeteriorationSummary(chartData),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlySnapshotDeteriorationSummary(
+    AssetLiabilityMonthlyChartData chartData,
+  ) {
+    final theme = Theme.of(context);
+    final worsenedLabels = <String>[];
+    for (final series in chartData.series) {
+      for (final point in series.points) {
+        if (point.worsened) {
+          worsenedLabels.add(
+            '${point.monthKey} ${series.label} '
+            '${_formatManagementDeltaYen(point.deltaFromPrevious)}',
+          );
+        }
+      }
+    }
+
+    if (worsenedLabels.isEmpty) {
+      return Text(
+        '前月比が悪化している月はありません。',
+        style: TextStyle(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontSize: 12,
+          height: 1.5,
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          '悪化月',
+          style: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
+        for (final label in worsenedLabels.take(8))
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEE2E2),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFFCA5A5)),
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF991B1B),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ),
+        if (worsenedLabels.length > 8)
+          Text(
+            '+${worsenedLabels.length - 8}件',
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Color _monthlyChartSeriesColor(AssetLiabilityMonthlyChartMetric metric) {
+    switch (metric) {
+      case AssetLiabilityMonthlyChartMetric.positiveAssetTotal:
+        return const Color(0xFF0D9488);
+      case AssetLiabilityMonthlyChartMetric.liabilityTotal:
+        return const Color(0xFFB91C1C);
+      case AssetLiabilityMonthlyChartMetric.netWorth:
+        return const Color(0xFF4F46E5);
+      case AssetLiabilityMonthlyChartMetric.cashLikeTotal:
+        return const Color(0xFFD97706);
+    }
+  }
+
   Widget _buildMonthlySnapshotSection(AssetLiabilityWorkbook workbook) {
     final comparisons = _assetLiabilityHistoryService.compareSnapshots(
+      _monthlySnapshots,
+    );
+    final chartData = _assetLiabilityHistoryService.buildMonthlyChartData(
       _monthlySnapshots,
     );
 
@@ -7166,10 +7417,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const Expanded(
                 child: Text(
                   '月次履歴（保存時点）',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
                 ),
               ),
               Wrap(
@@ -7209,6 +7457,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
           const SizedBox(height: 8),
+          _buildMonthlySnapshotChart(chartData),
+          const SizedBox(height: 12),
           if (comparisons.isEmpty)
             Text(
               'まだ月次スナップショットはありません。',
@@ -7274,9 +7524,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                         DataCell(
                           Text(
-                            _formatManagementYen(
-                              comparison.snapshot.netWorth,
-                            ),
+                            _formatManagementYen(comparison.snapshot.netWorth),
                           ),
                         ),
                         DataCell(
@@ -7350,10 +7598,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           const Text(
             '口座間移動の提案',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
           ),
           const SizedBox(height: 4),
           Text(
@@ -7389,10 +7634,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       children: [
         const Text(
           '負債マスタ（残高順）',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            height: 1.4,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 8),
         SingleChildScrollView(
@@ -7434,12 +7676,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     DataCell(_buildPaidCheckbox(row)),
                     DataCell(Text(_formatManagementPercent(row.annualRate))),
                     DataCell(
-                      Text(
-                        _formatManagementYen(row.monthlyInterestEstimate),
-                      ),
+                      Text(_formatManagementYen(row.monthlyInterestEstimate)),
                     ),
                     DataCell(
-                        Text(_formatManagementPercent(row.liabilityShare))),
+                      Text(_formatManagementPercent(row.liabilityShare)),
+                    ),
                   ],
                 ),
             ],
@@ -7456,9 +7697,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: TextField(
         controller: controller,
         keyboardType: TextInputType.number,
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
-        ],
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))],
         onChanged: (value) => _updateMonthlyPaymentOverride(row.id, value),
         decoration: InputDecoration(
           isDense: true,
@@ -7526,10 +7765,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           const Text(
             '返済優先（推定金利順）',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
           ),
           const SizedBox(height: 8),
           for (var index = 0; index < rows.length; index++)
@@ -7649,6 +7885,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return '$sign¥${NumberFormat('#,###').format(value.abs().round())}';
   }
 
+  String _formatCompactManagementYen(num value) {
+    final sign = value < 0 ? '-' : '';
+    final absolute = value.abs();
+    if (absolute >= 100000000) {
+      return '$sign¥${(absolute / 100000000).toStringAsFixed(1)}億';
+    }
+    if (absolute >= 10000) {
+      return '$sign¥${(absolute / 10000).toStringAsFixed(0)}万';
+    }
+    return '$sign¥${NumberFormat('#,###').format(absolute.round())}';
+  }
+
   String _formatManagementPercent(num value) {
     return '${(value * 100).toStringAsFixed(1)}%';
   }
@@ -7664,13 +7912,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Row(
               children: [
-                Icon(
-                  Icons.account_balance,
-                  color: Color(0xFF0D9488),
-                ),
-                SizedBox(
-                  width: 8,
-                ),
+                Icon(Icons.account_balance, color: Color(0xFF0D9488)),
+                SizedBox(width: 8),
                 Text(
                   '①資産・②負債の全容把握',
                   style: TextStyle(
@@ -7712,8 +7955,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.cloud_download,
-                          color: Color(0xFF0D9488)),
+                      : const Icon(
+                          Icons.cloud_download,
+                          color: Color(0xFF0D9488),
+                        ),
                   label: const Text('三井住友から取得'),
                 ),
                 TextButton.icon(
@@ -7724,8 +7969,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.cloud_download,
-                          color: Color(0xFFea580c)),
+                      : const Icon(
+                          Icons.cloud_download,
+                          color: Color(0xFFea580c),
+                        ),
                   label: const Text('じぶん銀行から取得'),
                 ),
               ],
@@ -7842,8 +8089,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         if (canQuickUpdate) ...[
                           OutlinedButton.icon(
                             onPressed: () => _quickUpdateAssetData(type),
-                            icon:
-                                const Icon(Icons.history_toggle_off, size: 16),
+                            icon: const Icon(
+                              Icons.history_toggle_off,
+                              size: 16,
+                            ),
                             label: const Text('同額'),
                           ),
                           const SizedBox(width: 8),
@@ -8093,10 +8342,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               child: const Text(
                 'Use the star button on any asset row to add it here.',
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.5,
-                ),
+                style: TextStyle(fontSize: 12, height: 1.5),
               ),
             )
           else
@@ -8182,10 +8428,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       const SizedBox(height: 10),
                       Text(
                         entry.memo,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 12, height: 1.5),
                       ),
                     ],
                   ],
@@ -8253,11 +8496,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('純資産:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    height: 1.5,
-                  )),
+              const Text(
+                '純資産:',
+                style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              ),
               Text(
                 '¥${NumberFormat('#,###').format(totalAssets + totalLiabilities)}',
                 style: const TextStyle(
@@ -8331,8 +8573,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
                     ),
                     items: ['支出', '収入']
                         .map(
@@ -8340,10 +8584,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: val,
                             child: Text(
                               val,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                height: 1.6,
-                              ),
+                              style: const TextStyle(fontSize: 13, height: 1.6),
                             ),
                           ),
                         )
@@ -8375,8 +8616,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       decoration: BoxDecoration(
                         border: Border.all(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -8386,8 +8627,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Icon(
                             Icons.calendar_today,
                             size: 16,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -8403,7 +8645,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: const Color(0xFF475569).withValues(alpha: 0.12)),
+                  color: const Color(0xFF475569).withValues(alpha: 0.12),
+                ),
               ),
               child: Row(
                 children: [
@@ -8462,8 +8705,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
                     ),
                     items: _sourceOptions
                         .map(
@@ -8471,10 +8716,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: source,
                             child: Text(
                               source.replaceAll('[', '').replaceAll(']', ''),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                height: 1.6,
-                              ),
+                              style: const TextStyle(fontSize: 13, height: 1.6),
                             ),
                           ),
                         )
@@ -8538,10 +8780,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     children: [
                       Text(
                         '$visibleMonthLabel 収入',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 10, height: 1.5),
                       ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalIncome)}',
@@ -8558,10 +8797,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     children: [
                       Text(
                         '$visibleMonthLabel 支出',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 10, height: 1.5),
                       ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalExpense)}',
@@ -8576,11 +8812,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   Column(
                     children: [
-                      const Text('収支差額',
-                          style: TextStyle(
-                            fontSize: 10,
-                            height: 1.5,
-                          )),
+                      const Text(
+                        '収支差額',
+                        style: TextStyle(fontSize: 10, height: 1.5),
+                      ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
                         style: TextStyle(
@@ -8628,17 +8863,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               : const Color(0xFFB91C1C),
                           size: 20,
                         ),
-                        title: Text(desc,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              height: 1.6,
-                            )),
+                        title: Text(
+                          desc,
+                          style: const TextStyle(fontSize: 13, height: 1.6),
+                        ),
                         subtitle: Text(
                           '${DateFormat('MM/dd').format(date)} ・ タップで編集',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            height: 1.5,
-                          ),
+                          style: const TextStyle(fontSize: 11, height: 1.5),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -8760,8 +8991,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
                     ),
                     items: _flowTypeOptions
                         .map(
@@ -8769,10 +9002,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: value,
                             child: Text(
                               value,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                height: 1.6,
-                              ),
+                              style: const TextStyle(fontSize: 13, height: 1.6),
                             ),
                           ),
                         )
@@ -8806,8 +9036,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       decoration: BoxDecoration(
                         border: Border.all(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -8817,8 +9047,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Icon(
                             Icons.calendar_today,
                             size: 16,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -8834,7 +9065,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: const Color(0xFF475569).withValues(alpha: 0.12)),
+                  color: const Color(0xFF475569).withValues(alpha: 0.12),
+                ),
               ),
               child: Row(
                 children: [
@@ -8905,10 +9137,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: source,
                             child: Text(
                               _sourceLabel(source),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                height: 1.6,
-                              ),
+                              style: const TextStyle(fontSize: 13, height: 1.6),
                             ),
                           ),
                         )
@@ -9049,10 +9278,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     children: [
                       Text(
                         '$visibleMonthLabel 収入',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 10, height: 1.5),
                       ),
                       Text(
                         '￥${NumberFormat('#,###').format(totalIncome)}',
@@ -9069,10 +9295,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     children: [
                       Text(
                         '$visibleMonthLabel 支出',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          height: 1.5,
-                        ),
+                        style: const TextStyle(fontSize: 10, height: 1.5),
                       ),
                       Text(
                         '￥${NumberFormat('#,###').format(totalExpense)}',
@@ -9087,11 +9310,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   Column(
                     children: [
-                      const Text('収支差額',
-                          style: TextStyle(
-                            fontSize: 10,
-                            height: 1.5,
-                          )),
+                      const Text(
+                        '収支差額',
+                        style: TextStyle(fontSize: 10, height: 1.5),
+                      ),
                       Text(
                         '￥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
                         style: TextStyle(
@@ -9165,17 +9387,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     title: Text(
                       _flowDisplayTitle(item),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.6,
-                      ),
+                      style: const TextStyle(fontSize: 13, height: 1.6),
                     ),
                     subtitle: Text(
                       subtitleParts.join(' ・ '),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        height: 1.5,
-                      ),
+                      style: const TextStyle(fontSize: 11, height: 1.5),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -9227,8 +9443,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final visibleSubscriptions = _subscriptionsForMonth(
       _selectedSubscriptionHistoryMonth,
     );
-    final visibleMonthLabel =
-        _flowMonthLabel(_selectedSubscriptionHistoryMonth);
+    final visibleMonthLabel = _flowMonthLabel(
+      _selectedSubscriptionHistoryMonth,
+    );
     final canMoveForward = !_isSameMonth(
       _selectedSubscriptionHistoryMonth,
       DateTime(DateTime.now().year + 5, 12, 1),
@@ -9418,7 +9635,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: const Color(0xFFB91C1C).withValues(alpha: 0.12)),
+                  color: const Color(0xFFB91C1C).withValues(alpha: 0.12),
+                ),
               ),
               child: Row(
                 children: [
@@ -9476,9 +9694,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               : visibleSubscriptions.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.all(32),
-                      child: Center(
-                        child: Text('$visibleMonthLabel の固定費はありません'),
-                      ),
+                      child:
+                          Center(child: Text('$visibleMonthLabel の固定費はありません')),
                     )
                   : ListView.builder(
                       shrinkWrap: true,
@@ -9551,9 +9768,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                   style: TextStyle(
                                     color: isPaid
                                         ? const Color(0xFF9CA3AF)
-                                        : Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
                                     fontSize: 12,
                                     height: 1.5,
                                   ),
@@ -9609,7 +9826,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               icon: const Icon(Icons.add),
               label: const Text('固定費を追加'),
               style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF991B1B)),
+                foregroundColor: const Color(0xFF991B1B),
+              ),
             ),
           ),
         ],
@@ -9664,8 +9882,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           final task = _mustTasks[index];
                           final isCompleted =
                               (task['is_completed'] as bool?) == true;
-                          final deadline =
-                              DateTime.parse(task['deadline']).toLocal();
+                          final deadline = DateTime.parse(
+                            task['deadline'],
+                          ).toLocal();
                           final isOverdue =
                               !isCompleted && deadline.isBefore(DateTime.now());
 
@@ -9702,7 +9921,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               icon: const Icon(Icons.add),
               label: const Text('タスクを追加'),
               style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF64748B)),
+                foregroundColor: const Color(0xFF64748B),
+              ),
             ),
           ],
         ),
@@ -9765,11 +9985,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Text('個別',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.5,
-                      )),
+                  const Text('個別', style: TextStyle(fontSize: 10, height: 1.5)),
                   Switch(
                     value: _isStacked,
                     activeThumbColor: const Color(0xFF0D9488),
@@ -9780,11 +9996,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       });
                     },
                   ),
-                  const Text('合計',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.5,
-                      )),
+                  const Text('合計', style: TextStyle(fontSize: 10, height: 1.5)),
                 ],
               ),
             const SizedBox(height: 24),
@@ -9814,9 +10026,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         gridData: const FlGridData(show: true),
         titlesData: _buildChartTitles(),
         borderData: FlBorderData(
-            show: true,
-            border: Border.all(
-                color: Theme.of(context).colorScheme.outlineVariant)),
+          show: true,
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
         lineBarsData: _lineChartBars,
       ),
     );
@@ -9838,9 +10052,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               final date = dateStr.isNotEmpty
                   ? DateFormat('MM/dd').format(DateTime.parse(dateStr))
                   : '';
-              final val =
-                  NumberFormat.simpleCurrency(locale: 'ja_JP', decimalDigits: 0)
-                      .format(rod.toY);
+              final val = NumberFormat.simpleCurrency(
+                locale: 'ja_JP',
+                decimalDigits: 0,
+              ).format(rod.toY);
               return BarTooltipItem(
                 '$date\n$val',
                 TextStyle(
@@ -9861,12 +10076,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           getDrawingHorizontalLine: (value) {
             if (value == 0) {
               return FlLine(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  strokeWidth: 1);
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                strokeWidth: 1,
+              );
             }
             return FlLine(
-                color: Theme.of(context).colorScheme.outlineVariant,
-                strokeWidth: 1);
+              color: Theme.of(context).colorScheme.outlineVariant,
+              strokeWidth: 1,
+            );
           },
         ),
         borderData: FlBorderData(show: false),
@@ -9898,14 +10115,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(
-      fontSize: 10,
-      height: 1.5,
-    );
+    const style = TextStyle(fontSize: 10, height: 1.5);
     String text = '';
     if (value.toInt() < _sortedDates.length) {
-      text = DateFormat('MM/dd')
-          .format(DateTime.parse(_sortedDates[value.toInt()]));
+      text = DateFormat(
+        'MM/dd',
+      ).format(DateTime.parse(_sortedDates[value.toInt()]));
     }
     return SideTitleWidget(
       meta: meta,
@@ -9918,11 +10133,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return SideTitleWidget(
       meta: meta,
       space: 8,
-      child: Text(format.format(value),
-          style: const TextStyle(
-            fontSize: 10,
-            height: 1.5,
-          )),
+      child: Text(
+        format.format(value),
+        style: const TextStyle(fontSize: 10, height: 1.5),
+      ),
     );
   }
 
@@ -9935,8 +10149,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     double total = 0;
     assetsOnDate.forEach((_, value) => total += value);
     final formattedDate = DateFormat('yyyy/MM/dd').format(DateTime.parse(date));
-    final formattedTotal =
-        NumberFormat.simpleCurrency(locale: 'ja_JP').format(total);
+    final formattedTotal = NumberFormat.simpleCurrency(
+      locale: 'ja_JP',
+    ).format(total);
     final tooltips = <LineTooltipItem>[
       LineTooltipItem(
         '$formattedDate\n',
@@ -9961,16 +10176,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ..sort((a, b) => b.value.compareTo(a.value));
     for (var entry in sortedAssets) {
       final color = _colors[_assetTypes.indexOf(entry.key) % _colors.length];
-      final formattedValue =
-          NumberFormat.simpleCurrency(locale: 'ja_JP').format(entry.value);
+      final formattedValue = NumberFormat.simpleCurrency(
+        locale: 'ja_JP',
+      ).format(entry.value);
       tooltips.add(
         LineTooltipItem(
           '${entry.key}: $formattedValue',
-          TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            height: 1.5,
-          ),
+          TextStyle(color: color, fontWeight: FontWeight.bold, height: 1.5),
         ),
       );
     }
