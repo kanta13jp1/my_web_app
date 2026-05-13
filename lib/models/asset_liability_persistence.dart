@@ -3,75 +3,50 @@ import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 
 /// Supabase persistence draft for the asset/liability board.
 ///
-/// Proposed tables:
+/// Schema foundation tables:
 /// - asset_liability_monthly_states
-///   - user_id uuid not null
-///   - month_key text not null
-///   - payment_overrides jsonb not null default '{}'
-///   - paid_account_ids jsonb not null default '[]'
-///   - payment_source_account_ids jsonb not null default '{}'
-///   - income_plans jsonb not null default '[]'
-///   - created_at timestamptz not null default now()
-///   - updated_at timestamptz not null default now()
-///   - primary key (user_id, month_key)
-/// - asset_liability_user_settings
-///   - user_id uuid primary key
-///   - default_payment_source_account_ids jsonb not null default '{}'
-///   - recurring_income_templates jsonb not null default '[]'
-///   - created_at timestamptz not null default now()
-///   - updated_at timestamptz not null default now()
+/// - asset_liability_income_plans
+/// - asset_liability_recurring_income_templates
+/// - asset_liability_payment_source_settings
 /// - asset_liability_monthly_snapshots
+///
+/// Common columns:
+///   - id uuid primary key default gen_random_uuid()
 ///   - user_id uuid not null
 ///   - month_key text not null
-///   - saved_at timestamptz not null
-///   - positive_asset_total numeric not null
-///   - liability_total numeric not null
-///   - net_worth numeric not null
-///   - cash_like_total numeric not null
-///   - monthly_scheduled_payment_total numeric not null
-///   - monthly_paid_payment_total numeric not null
-///   - monthly_unpaid_payment_total numeric not null
-///   - overdue_payment_count integer not null
+///   - payload jsonb not null default '{}'
 ///   - created_at timestamptz not null default now()
 ///   - updated_at timestamptz not null default now()
-///   - primary key (user_id, month_key)
+///
+/// Runtime note:
+/// SharedPreferences remains the primary store until a later repository adapter
+/// enables Supabase reads/writes. UI code should continue to depend on
+/// AssetLiabilityRepository rather than calling Supabase directly.
 class AssetLiabilitySupabaseTablePlan {
   static const String monthlyStatesTable = 'asset_liability_monthly_states';
-  static const String userSettingsTable = 'asset_liability_user_settings';
+  static const String incomePlansTable = 'asset_liability_income_plans';
+  static const String recurringIncomeTemplatesTable =
+      'asset_liability_recurring_income_templates';
+  static const String paymentSourceSettingsTable =
+      'asset_liability_payment_source_settings';
   static const String monthlySnapshotsTable =
       'asset_liability_monthly_snapshots';
 
-  static const List<String> monthlyStateColumns = <String>[
-    'user_id',
-    'month_key',
-    'payment_overrides',
-    'paid_account_ids',
-    'payment_source_account_ids',
-    'income_plans',
-    'created_at',
-    'updated_at',
+  static const String globalMonthKey = 'global';
+
+  static const List<String> payloadTables = <String>[
+    monthlyStatesTable,
+    incomePlansTable,
+    recurringIncomeTemplatesTable,
+    paymentSourceSettingsTable,
+    monthlySnapshotsTable,
   ];
 
-  static const List<String> userSettingsColumns = <String>[
-    'user_id',
-    'default_payment_source_account_ids',
-    'recurring_income_templates',
-    'created_at',
-    'updated_at',
-  ];
-
-  static const List<String> monthlySnapshotColumns = <String>[
+  static const List<String> commonPayloadColumns = <String>[
+    'id',
     'user_id',
     'month_key',
-    'saved_at',
-    'positive_asset_total',
-    'liability_total',
-    'net_worth',
-    'cash_like_total',
-    'monthly_scheduled_payment_total',
-    'monthly_paid_payment_total',
-    'monthly_unpaid_payment_total',
-    'overdue_payment_count',
+    'payload',
     'created_at',
     'updated_at',
   ];

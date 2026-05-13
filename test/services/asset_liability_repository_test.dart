@@ -272,12 +272,16 @@ void main() {
         'asset_liability_monthly_states',
       );
       expect(
-        AssetLiabilitySupabaseTablePlan.monthlyStateColumns,
-        containsAll(<String>['user_id', 'month_key', 'updated_at']),
+        AssetLiabilitySupabaseTablePlan.incomePlansTable,
+        'asset_liability_income_plans',
       );
       expect(
-        AssetLiabilitySupabaseTablePlan.monthlySnapshotColumns,
-        containsAll(<String>['user_id', 'month_key', 'created_at']),
+        AssetLiabilitySupabaseTablePlan.paymentSourceSettingsTable,
+        'asset_liability_payment_source_settings',
+      );
+      expect(
+        AssetLiabilitySupabaseTablePlan.commonPayloadColumns,
+        containsAll(<String>['id', 'user_id', 'month_key', 'payload']),
       );
     });
   });
