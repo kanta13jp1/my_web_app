@@ -6288,6 +6288,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       paymentSourceAccountIds: _paymentSourceAccountIds,
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
       incomePlans: _monthlyIncomePlans,
+      includeDefaultFixedPayments: true,
     );
     _scheduleAssetLiabilityStateIdMigration(workbook);
     final warningColor = workbook.cashAfterScheduledPayments < 0

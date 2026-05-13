@@ -101,6 +101,7 @@ void main() {
             received: false,
           ),
         ],
+        includeDefaultFixedPayments: true,
       );
 
       final bundle = historyService.buildCsvExportBundle(
@@ -125,6 +126,8 @@ void main() {
       expect(bundle.monthlyHistoryCsv, contains('2026-05'));
       expect(bundle.paymentScheduleCsv, contains('支払先'));
       expect(bundle.paymentScheduleCsv, contains('モビット'));
+      expect(bundle.paymentScheduleCsv, contains('KDDI'));
+      expect(bundle.paymentScheduleCsv, contains('2026-05-25'));
       expect(bundle.incomePlansCsv, contains('"Bonus, side income"'));
       expect(bundle.accountCashflowCsv, contains('口座,現在残高'));
       expect(bundle.accountCashflowCsv, contains('bank'));

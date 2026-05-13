@@ -3,6 +3,10 @@ import 'dart:math';
 import '../models/asset_liability_workbook.dart';
 
 class AssetLiabilityPlanningService {
+  static const String kddiProviderAccountId = 'kddi_provider';
+  static const String kddiProviderAccountName = 'KDDI';
+  static const double kddiProviderMonthlyPaymentAmount = 5764;
+
   const AssetLiabilityPlanningService();
 
   AssetLiabilityWorkbook buildWorkbook({
@@ -15,8 +19,18 @@ class AssetLiabilityPlanningService {
         const <String, String>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
+    bool includeDefaultFixedPayments = false,
   }) {
-    final accounts = latestSnapshot.entries
+    final shouldIncludeDefaultKddiProvider =
+        includeDefaultFixedPayments && !_hasKddiProvider(latestSnapshot);
+    final effectiveSnapshot = shouldIncludeDefaultKddiProvider
+        ? _withDefaultFixedPayments(latestSnapshot)
+        : latestSnapshot;
+    final effectiveMonthlyPaymentOverrides = _withDefaultFixedPaymentOverrides(
+      monthlyPaymentOverrides: monthlyPaymentOverrides,
+      includeDefaultKddiProvider: shouldIncludeDefaultKddiProvider,
+    );
+    final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
         .map(
           (entry) => _classifyAccount(
@@ -64,7 +78,7 @@ class AssetLiabilityPlanningService {
           (account) => _buildDebtRow(
             account: account,
             liabilityTotal: liabilityTotal,
-            monthlyPaymentOverrides: monthlyPaymentOverrides,
+            monthlyPaymentOverrides: effectiveMonthlyPaymentOverrides,
             paidAccountNames: paidAccountNames,
             paymentSourceAccountIds: effectivePaymentSourceAccountIds,
             accountsById: accountsById,
@@ -266,6 +280,18 @@ class AssetLiabilityPlanningService {
         name: name,
         balance: balance,
         paymentDay: 27,
+      );
+    }
+    if (_accountIdForName(name) == kddiProviderAccountId) {
+      return _liability(
+        name: name,
+        balance: balance,
+        kind: AssetLiabilityAccountKind.utility,
+        paymentDay: 25,
+        annualRate: 0,
+        minimumPaymentRate: 1,
+        minimumPaymentFloor: balance.abs(),
+        fullPaymentEstimate: true,
       );
     }
     if (key == 'au' || _containsAny(key, const <String>['通信', '携帯'])) {
@@ -802,6 +828,9 @@ class AssetLiabilityPlanningService {
     if (_containsAny(key, const <String>['ファミペイ', 'famipay'])) {
       return 'famipay_card';
     }
+    if (_containsAny(key, const <String>['kddi'])) {
+      return kddiProviderAccountId;
+    }
     if (key == 'au' || _containsAny(key, const <String>['通信', '携帯'])) {
       return 'au';
     }
@@ -819,6 +848,37 @@ class AssetLiabilityPlanningService {
     }
 
     return _fallbackAccountId(name);
+  }
+
+  Map<String, double> _withDefaultFixedPayments(
+    Map<String, double> latestSnapshot,
+  ) {
+    final result = Map<String, double>.from(latestSnapshot);
+    if (!_hasKddiProvider(result)) {
+      result[kddiProviderAccountName] = -kddiProviderMonthlyPaymentAmount;
+    }
+    return result;
+  }
+
+  Map<String, double> _withDefaultFixedPaymentOverrides({
+    required Map<String, double> monthlyPaymentOverrides,
+    required bool includeDefaultKddiProvider,
+  }) {
+    if (!includeDefaultKddiProvider ||
+        monthlyPaymentOverrides.containsKey(kddiProviderAccountId) ||
+        monthlyPaymentOverrides.containsKey(kddiProviderAccountName)) {
+      return monthlyPaymentOverrides;
+    }
+    return <String, double>{
+      kddiProviderAccountId: kddiProviderMonthlyPaymentAmount,
+      ...monthlyPaymentOverrides,
+    };
+  }
+
+  bool _hasKddiProvider(Map<String, double> snapshot) {
+    return snapshot.keys.any(
+      (name) => _accountIdForName(name) == kddiProviderAccountId,
+    );
   }
 
   String _fallbackAccountId(String name) {
