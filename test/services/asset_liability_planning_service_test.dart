@@ -475,5 +475,100 @@ void main() {
       expect(cashSummary.projectedBalance, 10000);
       expect(workbook.cashAfterScheduledPayments, 5000);
     });
+
+    test('adds KDDI provider as a separate day 25 fixed payment', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'au': -32152,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        defaultPaymentSourceAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'custom_cash',
+        },
+        includeDefaultFixedPayments: true,
+      );
+
+      final au = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'au',
+      );
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final kddiCashflow = workbook.cashflowRows.firstWhere(
+        (row) =>
+            row.accountId ==
+            AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+
+      expect(au.name, 'au');
+      expect(au.paymentDay, 11);
+      expect(kddi.name, AssetLiabilityPlanningService.kddiProviderAccountName);
+      expect(kddi.kind, AssetLiabilityAccountKind.utility);
+      expect(kddi.paymentDay, 25);
+      expect(kddi.manualPaymentAmount, 5764);
+      expect(kddi.paymentAmountEstimated, isFalse);
+      expect(
+        kddi.scheduledPaymentAmount,
+        AssetLiabilityPlanningService.kddiProviderMonthlyPaymentAmount,
+      );
+      expect(kddi.paymentSourceAccountId, 'custom_cash');
+      expect(kddi.paymentSourceAccountName, 'cash');
+      expect(kddiCashflow.paymentDay, 25);
+      expect(
+        kddiCashflow.paymentAmount,
+        AssetLiabilityPlanningService.kddiProviderMonthlyPaymentAmount,
+      );
+      expect(kddiCashflow.paid, isFalse);
+      expect(
+        kddiCashflow.cashAfterPayment,
+        closeTo(
+          kddiCashflow.cashBeforePayment -
+              AssetLiabilityPlanningService.kddiProviderMonthlyPaymentAmount,
+          0.001,
+        ),
+      );
+      expect(
+        workbook.monthlyUnpaidPaymentTotal,
+        closeTo(
+          au.scheduledPaymentAmount + kddi.scheduledPaymentAmount,
+          0.001,
+        ),
+      );
+    });
+
+    test('treats paid KDDI provider payment as reflected in cashflow', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'au': -32152,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        paidAccountNames: const <String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId,
+        },
+        includeDefaultFixedPayments: true,
+      );
+
+      final au = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'au',
+      );
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final kddiCashflow = workbook.cashflowRows.firstWhere(
+        (row) =>
+            row.accountId ==
+            AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+
+      expect(kddi.paid, isTrue);
+      expect(kddiCashflow.paid, isTrue);
+      expect(kddiCashflow.cashBeforePayment, kddiCashflow.cashAfterPayment);
+      expect(
+        workbook.monthlyUnpaidPaymentTotal,
+        closeTo(au.scheduledPaymentAmount, 0.001),
+      );
+    });
   });
 }
