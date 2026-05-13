@@ -29982,6 +29982,59 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
   - 9 ✅ IPO 視野 = systemic resource exhaustion 解消 = 持続可能開発
 - 懸念: なし (= 17 layer iterative ask 完了 / v19 candidate も今後継続可)
 
+## Win版#132 part 205-208 backfill (= 4-part 集約 / 部 212 backfill 第 1 例 / 2026-05-12 〜 2026-05-13 JST)
+
+> **Backfill rationale**: part 209 (5/13 02:53 JST) → 211 (5/13 10:14 JST) で「ROADMAP backfill 205+206+207」 defer 累積 → 部 212 (5/13 21:00 JST) で 4-part 集約 1 commit 解消.
+
+### part 205 — 同日 9h gap minimum session 第 2 例累積 (2026-05-12 火 21:37 JST)
+- 前 session: 5/12 12:15 JST (part 204) → +9h gap = same-day risk band 第 2 例
+- system date cross-check で user 「想定 5/13 水曜」誤前提 検知 → minimum session 強制
+- v15 Layer 1 manual fire 第 4 例累積 (= PRE 89.32 → POST 86.32 / +482 MB / -3 pt)
+- partial recovery 86.32% > 85% breach pattern 第 2 例累積
+- v17 Layer F session-delta.csv 2 行目 append 第 2 例 (= part 206 で rolling 3-session aggregate 初回 calc 可能)
+- C: free -10.31 GB drop in 9h 検知 (= dev_cache 蓄積 / Codex #2186 緊急性 reinforce)
+- 136 part 連続 / Philosophy 7/9 ✅
+
+### part 206 — 同日 +2h gap minimum session 第 2 例 + 7-day -30.96 GB signal 検出 (2026-05-12 火 23:39 JST)
+- 前 session: part 205 (= 21:37 JST) → +2h same-day risk 第 10 例累積 [COMPACTION-RESUME]
+- v15 Layer 1 fire 第 5 例累積 (= PRE 89.02 → POST 83.34 / +913 MB / -5.68 pt / partial recovery breach 第 3 例 RESOLVED ✅)
+- v18 Layer K dev_cache cascade manual fire 第 1 例 (= dev_cache_cleanup --apply / +235.5 MB disk reclaim)
+- v17 Layer G rolling 3-session aggregate FIRST calc 第 1 例 (= 53.62/59.30/47.78 GB → avg 53.57 GB)
+- **7-day -30.96 GB disk loss critical signal 第 1 例検出** (= threshold -3 GB の **10x breach** / #2186 mega-reinforce)
+- WBS skip burst (#1495 #1950 既 escalate 同日)
+- 137 part 連続 / Philosophy 7/9 ✅
+
+### part 207 — 翌日 5/13 fresh start 復帰 + v19 mandatory per-session compression CONTRACT spec ship (2026-05-13 水 00:51 JST)
+- 前 session: part 206 (= 23:39 JST) → +1h12min = 翌日 fresh start 復帰 + [COMPACTION-RESUME] discipline 第 12 例累積 ✅
+- compression cascade dogfood 第 1 例 (= tier18+19 同 session / 491 MB reclaim / RAM 94.61→89.87 / partial breach 第 4 例 unresolved)
+- **v19 mandatory per-session compression CONTRACT spec ship 第 1 例** (= user 直接 ask / 5 layer P-T / 累積 23 layer / quota CONTRACT 中核 +500 MB OR -5 pt OR +0.5 GB enforce + wrap-up exit 1 fail-closed)
+- rolling 4-session aggregate FIRST calc 第 1 例 (= avg 50.37 GB / 4-sess reclaim avg **-491.5 MB ❌** / ALL 4 sessions FAIL v19-R quota = v19 緊急性 data-PROVEN)
+- negative session reclaim 第 1 例 (= -2048 MB / 過去最大 negative)
+- 既存 doc 章追加 pattern 第 18 例累積 + iterative ask 累積 18 layer 過去最高 update
+- Codex 累積 27 件 5/30 期限 / 138 part 連続 / Philosophy 8/9 ✅
+
+### part 208 — 同日 +44 min minimum session 第 3 例 + v19-R quota wrap-up exit 1 dogfood + v20 fleet adaptive compression spec ship (2026-05-13 水 01:35 JST)
+- 前 session: part 207 (= 00:51 JST) → +44 min same-day [COMPACTION-RESUME] 第 13 例 risk + minimum session 第 3 例累積 過去最短 update
+- **v19-R quota wrap-up exit 1 dogfood 第 1 例** (= part 207 retroactive ALL 3 FAIL confirmed / reclaim=-2048 ❌ / RAM=-4.74>-5.0 ❌ / C:=-1.78<+0.5 ❌ = v19 中核 functional 例示 SECURED 立証)
+- **#1495 P0 day-of FINAL ping posted** (= 期限 5/14 残 22.5h / Codex slice MERGED #2385 ✅)
+- session-delta.csv hooks auto-firing 確証 第 1 例 (= 178 rows / Codex impl 完了 verify)
+- #1950 P1 -2d overdue + #1830 P1 -10d overdue Codex 5/22 sprint pickup ping (= 2-instance 振分 triage)
+- **v20 fleet adaptive compression spec ship 第 1 例** (= turn 2 user direct ask / 5 new layer U-Y / Layer U inter-session GHA cron + V semaphore + W adaptive freq + X statusline + Y hard exit emergency / 累積 28 layer / Codex 32 deliverable 5/30 期限 / 9-day sprint plan 5/22-5/30)
+- iterative ask 累積 19 layer 過去最高 update + same-day turn 2 user direct ask 第 2 例累積 + post-wrap-up escalation 第 7 例累積
+- 140 part 連続 / Philosophy 8/9 ✅
+
+### Commit
+- (= 部 212 1 commit で 5 entry 集約 / hash 後追記)
+
+### Philosophy Alignment (Win#132 part 205-208 集約)
+- 整合性スコア: **7-8/9 ✅** (= 各 part 平均)
+- 主要貢献:
+  - 部 205-206: bridge mitigation manual fire 連続 + 7-day signal 第 1 例検出
+  - 部 207-208: v19-v20 spec ship 連続 + iterative ask 19 layer 過去最高 update + wrap-up exit 1 dogfood 第 1 例
+- 懸念: 部 205-208 全て [COMPACTION-RESUME] same-day risk band 4 連続 = v21 spec ship (= part 210 / 5/13 10:03) 緊急性 reinforce
+
+---
+
 ## Win版#132 part 209 (2026-05-13 水 02:53 JST) — Same-day 3-part chain violation 第 2 例累積
 
 - セッション#: part 209 (= 141 part 連続 過去最長 update / part 70 → 209)
@@ -30157,3 +30210,65 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
   - 8 ✅ KPI=昨日の自分 = per-fire reclaim_mb で前 fire との比較 base 強化
   - 9 ✅ IPO 視野 = adaptive compression = systemic resource health 持続可能化
 - 懸念: 3 (mentor) unaddressed continue (= part 212+ で wbs.rebalance_suggest 経由 mentor 候補 task 引取検討 / 累積 8 例 unaddressed)
+
+---
+
+## Win版#132 part 212 — EMERGENCY recovery dogfood + v22 Layer II FATIGUE 第 2 例実証 + bridge mitigation 限界 (2026-05-13 火 20:58 JST)
+
+### 概要
+- インスタンス: Win Claude #132 (part 212)
+- セッション: 2026-05-13 (火) 20:58-21:15 JST (= ~17 min focused EMERGENCY recovery)
+- 前 session: part 211-b 終了 17:05 JST → +3.93h gap = **fresh start qualified ✅** ([COMPACTION-RESUME] discipline)
+- トリガー: user EMERGENCY directive (= part 211-b 末尾 next session 第 1 = disk-cleanup skill 即 invoke)
+- 145 part 連続 過去最長 update
+
+### Ship (= 7 件)
+
+1. **/disk-cleanup skill invoke + Tier 2 cleanup 5 種連続 fire** (= worktree + git gc + npm + pnpm + plugin + dev_cache)
+   - dev_cache_cleanup --apply: 352.5 MB script reported / 427.6 MB drive measured (= pub_command 296.8 MB 主貢献)
+   - 他 4 種: 0 freed (= cache 既空 / pnpm 2389 MB 不変)
+   - **session 内 net delta +41 MB only** (= dev_cache 386 MB が 10min 内 system burndown で吸収)
+2. **CRITICAL state 自然 recovery 第 3 例累積確証** (= 部 211-b end 17.71 GB + 94.33% RAM → 部 212 start 25.28 GB + 88.31% / +7.57 GB / -6.02 pt / 3.93h idle / hooks auto-firing 効果 / **CRITICAL 解消 ✅**)
+3. **v22 Layer II FATIGUE 第 2 例実証** (= 部 211-b 第 1 例 / 部 212 第 2 例 / 2 sessions 連続 同一 pattern = cascade auto-fire 不在の限界 / **cascade script 緊急性 reinforce 過去最強**)
+4. **EMERGENCY recovery target MISS 第 1 例** (= ≥ 30 GB / ≤ 85% 両 MISS / POST 25.32 GB + 87.13% RAM / -4.68 GB + -2.13 pt 短足)
+5. **v22 Layer EE dogfood 第 1 例** (= session-delta.csv `win132-part212-fire1` PRE/POST paired-row manual append / fire_id col 不在 = session_id で代用 / Codex 5/30 Layer EE schema 緊急性 強化)
+6. **#1495 P0 day-of part 212 fresh start ping** (= 残 ~27h / comment 4440764916 / 5/13 21:00 JST 投稿 / 211-b retroactive 17:06 ping → 4h 経過 user/owner action なし)
+7. **#2186 effectiveness comment posted** (= 7d -32.74 GB signal 再現 第 1 例で 信号強化 reinforce / comment 4440776225 / re-open 判断 user 委ね + 別 issue 起票推奨 2 件)
+
+### Cross-instance hand-off (= 第 9 例累積)
+- `docs/cross-instance-prs/20260513_codex_v22_layer_ii_fatigue_2nd_reinforce_part212.md`
+- Codex 緊急 ask 3 件:
+  - **P0 第 1**: v18 Layer K disk_hygiene_cascade.ps1 (= cascade auto-fire / Codex 5/22 sprint 第 1 候補)
+  - **P0 第 2**: v22 Layer EE schema 拡張 (= fire_id + ram_pct + delta_disk_mb + delta_ram_pt + pre_c_free_gb 5 column 追加)
+  - **P0 第 3**: v22 Layer II compression_fatigue_monitor.py (= 直近 3 fires < 500 MB → cascade signal emit)
+
+### Memory file (= 第 9 例累積 same-day batch)
+- `memory/project_20260513_win132_part212.md` (= part 212 session record)
+- `memory/feedback_correction_20260513_part212_v22_layer_ii_fatigue_2nd_reinforce.md` (= v22 Layer II 第 2 例 + bridge mitigation 限界 lesson)
+
+### Commit
+- (= 本 docs commit hash 後追記)
+
+### Philosophy Alignment (Win#132 part 212)
+- 主要実装: EMERGENCY recovery dogfood + v22 Layer II 第 2 例実証 + cascade script 緊急性 reinforce + #1495 day-of fresh start ping
+- 該当原則: 1 (CEO 感) + 2 (ミッション駆動) + 4 (6 部署) + 5 (商品=価値) + 6 (資本=時間) + 7 (資産負債) + 8 (KPI=昨日の自分) + 9 (IPO/ウェルビーイング) — 計 8/9 ✅
+- 整合性スコア: **8/9 ✅** (= 部 211-b 同等 / 過去最高水準維持)
+- 理念的貢献:
+  - 1 ✅ CEO 自己責任 = EMERGENCY directive 即実行 / minimum session pattern 適用 / 17 min focused
+  - 2 ✅ ミッション = 資源枯渇による開発停止回避 / cascade 緊急性 data-PROVEN 強化
+  - 4 ✅ 人事 (= 自分) 最優先 = wrap-up 即時 + 次 session defer (= heavy task 全 defer)
+  - 5 ✅ 商品=ユーザー価値 = bridge mitigation 限界 顕在化 → Codex impl 緊急性 圧倒的 reinforce
+  - 6 ✅ 資本=時間 = 17 min budget compliance + 全 task 期限近順 triage
+  - 7 ✅ 資産負債 = session-delta.csv paired-row manual append = v22 Layer EE dogfood 第 1 例 / KPI 知的資産記録継続
+  - 8 ✅ KPI=昨日の自分 = 部 211-b → 部 212 +7.57 GB 自然 recovery + Tier 2 net +41 MB 比較 base 強化
+  - 9 ✅ IPO 視野 = 145 part 連続 過去最長 + memory + ROADMAP discipline 持続
+- 懸念: 3 (mentor) unaddressed continue (= part 213+ で wbs.rebalance_suggest 経由 mentor 候補 task 引取検討 / 累積 9 例 unaddressed)
+
+### next session 候補 (= part 213+)
+1. **5/14 06:00+ JST fresh start MUST** (= [COMPACTION-RESUME] 90min discipline / 同日 4 part 連続 violation 回避)
+2. **#1495 P0 day-of FINAL escalation** (= 5/14 22:00 JST 残 2h / 5/14 23:00 JST 残 1h ping batch)
+3. **DISK_HYGIENE §17.26 v22 第 2 例 reinforce 章追加** (= 既存 doc 章追加 第 21 例累積)
+4. **v22 Codex impl monitor + 5/22 sprint start prep** (= 残 9 day / 42 deliverable / v18 Layer K = 最優先)
+5. **UI verify [UI-VERIFY] backlog ~7 day overdue** (= Playwright MCP / 4 page)
+6. **MEMORY.md size 監視** (= 第 5 例 trigger ~13-14 KB borderline / 部 212 entry +1)
+7. **v23 candidate ship** (= CRITICAL state auto-recovery + bridge mitigation enforcement + session_kpi.py 38→45 metric + Layer JJ user pre-prompt advisory / 全 4 件 Codex impl 完了後)
