@@ -138,6 +138,13 @@ function normalizeCalendarReminderMinutes(value: unknown): number | null {
   return CALENDAR_REMINDER_MINUTES.has(minutes) ? minutes : null;
 }
 
+function normalizeCalendarRRule(value: unknown): string | null {
+  const rrule = value?.toString().trim() ?? "";
+  return rrule.length === 0 || rrule === "null" || rrule === "undefined"
+    ? null
+    : rrule;
+}
+
 function normalizeCalendarId(value: unknown): string {
   const id = value?.toString().trim() ?? "";
   return id.length === 0 || id === "null" || id === "undefined"
@@ -433,6 +440,7 @@ serve(async (req: Request) => {
           reminder_min: normalizeCalendarReminderMinutes(body.reminder_min),
           calendar_id: calendarId,
           calendar_name: calendarName,
+          rrule: normalizeCalendarRRule(body.rrule),
         });
         const meta = (item.metadata ?? {}) as Record<string, unknown>;
         return json({
@@ -459,6 +467,9 @@ serve(async (req: Request) => {
           patch.reminder_min = normalizeCalendarReminderMinutes(
             body.reminder_min,
           );
+        }
+        if (Object.hasOwn(body, "rrule")) {
+          patch.rrule = normalizeCalendarRRule(body.rrule);
         }
         if (Object.hasOwn(body, "calendar_id")) {
           const calendarId = normalizeCalendarId(body.calendar_id);

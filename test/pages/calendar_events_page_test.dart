@@ -155,6 +155,37 @@ void main() {
     expect(calendarEventCalendarName({'calendar_name': 'Work'}), 'Work');
   });
 
+  test('recurrence helpers normalize and expand weekly RRULE metadata', () {
+    final rrule = normalizeCalendarEventRRule('FREQ=WEEKLY;COUNT=3');
+    expect(rrule, 'RRULE:FREQ=WEEKLY;COUNT=3');
+
+    final startAt = DateTime(2026, 5, 11, 9);
+    final endAt = DateTime(2026, 5, 11, 10);
+    final expanded = expandRecurringCalendarEventsForRange(
+      [
+        {
+          'event_id': 'series-1',
+          'title': 'Weekly planning',
+          'start_at': startAt.toIso8601String(),
+          'end_at': endAt.toIso8601String(),
+          'all_day': false,
+          'rrule': rrule,
+        },
+      ],
+      rangeStart: DateTime(2026, 5),
+      rangeEnd: DateTime(2026, 6),
+    );
+
+    expect(expanded, hasLength(3));
+    expect(expanded.map((event) => event['series_event_id']).toSet(), {
+      'series-1',
+    });
+    expect(
+      expanded.map((event) => DateTime.parse(event['start_at'] as String).day),
+      [11, 18, 25],
+    );
+  });
+
   Widget testWidget() {
     return MaterialApp(
       home: CalendarEventsPage(supabaseClient: mockSupabaseClient),
@@ -275,6 +306,7 @@ void main() {
           'color': '#ea4335',
           'reminder_min': null,
           'calendar_id': 'default',
+          'rrule': null,
         },
       ),
     ).thenAnswer((_) async => mockResponse({'success': true}));
@@ -316,9 +348,111 @@ void main() {
           'color': '#ea4335',
           'reminder_min': null,
           'calendar_id': 'default',
+          'rrule': null,
         },
       ),
     ).called(1);
+  });
+
+  testWidgets('add event dialog saves recurrence RRULE metadata', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    stubCalendarList(const []);
+    when(
+      mockFunctionsClient.invoke(
+        'app-hub',
+        body: argThat(
+          isA<Map<String, dynamic>>().having(
+            (body) => body['action'],
+            'action',
+            'calendar.create',
+          ),
+          named: 'body',
+        ),
+      ),
+    ).thenAnswer(
+      (_) async => mockResponse({
+        'success': true,
+        'event': {'event_id': 'event-daily'},
+      }),
+    );
+
+    await tester.pumpWidget(testWidget());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Daily standup');
+    final recurrenceDropdown = find.byKey(
+      const Key('calendar_recurrence_dropdown'),
+    );
+    await tester.ensureVisible(recurrenceDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(recurrenceDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Daily').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(ElevatedButton).last);
+    await tester.pumpAndSettle();
+
+    final captured = verify(
+      mockFunctionsClient.invoke(
+        'app-hub',
+        body: captureAnyNamed('body'),
+      ),
+    ).captured;
+    expect(
+      captured.whereType<Map<String, dynamic>>().any(
+            (body) =>
+                body['action'] == 'calendar.create' &&
+                body['rrule'] == 'RRULE:FREQ=DAILY',
+          ),
+      isTrue,
+    );
+  });
+
+  testWidgets('recurring event edit asks for edit scope before form', (
+    tester,
+  ) async {
+    final today = DateTime.now();
+    final startAt = DateTime(today.year, today.month, today.day, 9);
+    stubCalendarList([
+      {
+        'event_id': 'series-1',
+        'title': 'Recurring planning',
+        'start_at': startAt.toIso8601String(),
+        'end_at': startAt.add(const Duration(hours: 1)).toIso8601String(),
+        'all_day': false,
+        'color': '#4285f4',
+        'rrule': 'RRULE:FREQ=DAILY;COUNT=2',
+      },
+    ]);
+
+    await tester.pumpWidget(testWidget());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Recurring planning'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('This event only'), findsOneWidget);
+    expect(find.text('This and following events'), findsOneWidget);
+    expect(find.text('All events'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('calendar_edit_scope_all')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('calendar_recurrence_dropdown')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('calendar drawer toggles visible calendars', (tester) async {
