@@ -56,6 +56,7 @@ dependencies:
   pdf: ^3.11.1                     # PDF生成 (選挙KPIレポート出力)
   printing: ^5.13.2                # PDF印刷 (選挙KPIレポート出力)
   sentry_flutter: ^9.20.0
+  rrule: ^0.2.18
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:rrule/rrule.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -30,9 +31,24 @@ class CalendarEventsPage extends StatefulWidget {
 
 enum _CalendarView { month, week, day }
 
+enum _CalendarRecurrencePreset { none, daily, weekly, monthly, yearly, custom }
+
+enum _RecurrenceEditScope { thisEvent, following, all }
+
 const String _defaultCalendarId = 'default';
 const String _defaultCalendarName = 'Default';
 const String _defaultCalendarColor = '#4285f4';
+const int _maxExpandedOccurrences = 732;
+
+const Map<int, String> _weekdayLabels = {
+  DateTime.monday: 'Mon',
+  DateTime.tuesday: 'Tue',
+  DateTime.wednesday: 'Wed',
+  DateTime.thursday: 'Thu',
+  DateTime.friday: 'Fri',
+  DateTime.saturday: 'Sat',
+  DateTime.sunday: 'Sun',
+};
 
 String _formatClock(DateTime d) =>
     '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
@@ -116,11 +132,284 @@ int? calendarEventReminderMinutes(Map<String, dynamic> event) {
   return normalizeCalendarReminderMinutes(event['reminder_min']);
 }
 
+@visibleForTesting
+String? normalizeCalendarEventRRule(Object? value) {
+  final raw = value?.toString().trim() ?? '';
+  if (raw.isEmpty) return null;
+  final candidate = raw.toUpperCase().startsWith('RRULE:') ? raw : 'RRULE:$raw';
+  try {
+    return RecurrenceRule.fromString(
+      candidate,
+      options: const RecurrenceRuleFromStringOptions.lenient(),
+    ).toString();
+  } catch (_) {
+    return null;
+  }
+}
+
+@visibleForTesting
+String? calendarEventRRule(Map<String, dynamic> event) {
+  return normalizeCalendarEventRRule(event['rrule']);
+}
+
+@visibleForTesting
+String calendarEventSeriesId(Map<String, dynamic> event) {
+  final seriesId = event['series_event_id']?.toString().trim() ?? '';
+  if (seriesId.isNotEmpty) return seriesId;
+  return event['event_id']?.toString().trim() ?? '';
+}
+
+@visibleForTesting
+bool calendarEventIsRecurrenceOccurrence(Map<String, dynamic> event) {
+  return event['is_occurrence'] == true &&
+      (event['series_event_id']?.toString().trim().isNotEmpty ?? false);
+}
+
+@visibleForTesting
+String calendarEventRecurrenceLabel(Map<String, dynamic> event) {
+  final rrule = calendarEventRRule(event);
+  if (rrule == null) return 'Does not repeat';
+  try {
+    final rule = RecurrenceRule.fromString(
+      rrule,
+      options: const RecurrenceRuleFromStringOptions.lenient(),
+    );
+    final hasCustomParts = rule.count != null ||
+        rule.until != null ||
+        rule.hasByWeekDays ||
+        rule.hasByMonthDays ||
+        rule.hasByMonths;
+    if (hasCustomParts) return 'Custom recurrence';
+    return switch (rule.frequency) {
+      Frequency.daily => 'Daily',
+      Frequency.weekly => 'Weekly',
+      Frequency.monthly => 'Monthly',
+      Frequency.yearly => 'Yearly',
+      _ => 'Custom recurrence',
+    };
+  } catch (_) {
+    return 'Custom recurrence';
+  }
+}
+
+@visibleForTesting
+List<Map<String, dynamic>> expandRecurringCalendarEventsForRange(
+  Iterable<Map<String, dynamic>> events, {
+  required DateTime rangeStart,
+  required DateTime rangeEnd,
+}) {
+  final expanded = <Map<String, dynamic>>[];
+
+  for (final event in events) {
+    final rrule = calendarEventRRule(event);
+    final start = _eventDateTime(event, 'start_at');
+    if (rrule == null || start == null) {
+      expanded.add(event);
+      continue;
+    }
+
+    final end = _eventDateTime(event, 'end_at');
+    final duration = _eventDuration(event, start, end);
+    final seriesId = calendarEventSeriesId(event);
+    if (seriesId.isEmpty) {
+      expanded.add(event);
+      continue;
+    }
+
+    try {
+      final rule = RecurrenceRule.fromString(
+        rrule,
+        options: const RecurrenceRuleFromStringOptions.lenient(),
+      );
+      final recurrenceStartUtc = start.toUtc();
+      final afterCandidate = rangeStart.subtract(duration).toUtc();
+      final afterUtc = afterCandidate.isAfter(recurrenceStartUtc)
+          ? afterCandidate
+          : recurrenceStartUtc;
+      final beforeUtc = rangeEnd.toUtc();
+      if (beforeUtc.isBefore(recurrenceStartUtc)) continue;
+      final starts = rule
+          .getInstances(
+            start: recurrenceStartUtc,
+            after: rule.count == null ? afterUtc : null,
+            includeAfter: true,
+            before: beforeUtc,
+          )
+          .take(_maxExpandedOccurrences);
+
+      for (final occurrenceUtc in starts) {
+        final occurrenceStart = occurrenceUtc.toLocal();
+        final occurrenceEnd = occurrenceStart.add(duration);
+        if (!_eventRangeOverlaps(
+          occurrenceStart,
+          occurrenceEnd,
+          rangeStart,
+          rangeEnd,
+        )) {
+          continue;
+        }
+        expanded.add({
+          ...event,
+          'event_id': '$seriesId@${occurrenceUtc.toIso8601String()}',
+          'series_event_id': seriesId,
+          'series_start_at': event['start_at'],
+          'series_end_at': event['end_at'],
+          'is_occurrence': true,
+          'occurrence_start_at': occurrenceStart.toIso8601String(),
+          'start_at': occurrenceStart.toIso8601String(),
+          'end_at': occurrenceEnd.toIso8601String(),
+          'rrule': rrule,
+        });
+      }
+    } catch (_) {
+      expanded.add(event);
+    }
+  }
+
+  return expanded;
+}
+
 String _calendarReminderLabel(int? minutes) {
   if (minutes == null || minutes < 0) return 'No reminder';
   if (minutes == 0) return 'At start time';
   if (minutes == 60) return '1 hour before';
   return '$minutes minutes before';
+}
+
+Duration _eventDuration(
+  Map<String, dynamic> event,
+  DateTime start,
+  DateTime? end,
+) {
+  final fallback = _eventIsAllDay(event)
+      ? const Duration(days: 1)
+      : const Duration(hours: 1);
+  if (end == null) return fallback;
+  final duration = end.difference(start);
+  return duration > Duration.zero ? duration : fallback;
+}
+
+bool _eventRangeOverlaps(
+  DateTime start,
+  DateTime end,
+  DateTime rangeStart,
+  DateTime rangeEnd,
+) {
+  final safeEnd =
+      end.isAfter(start) ? end : start.add(const Duration(hours: 1));
+  return safeEnd.isAfter(rangeStart) && start.isBefore(rangeEnd);
+}
+
+_CalendarRecurrencePreset _recurrencePresetForRRule(String? rrule) {
+  if (rrule == null) return _CalendarRecurrencePreset.none;
+  try {
+    final rule = RecurrenceRule.fromString(
+      rrule,
+      options: const RecurrenceRuleFromStringOptions.lenient(),
+    );
+    final hasCustomParts = rule.count != null ||
+        rule.until != null ||
+        rule.hasByWeekDays ||
+        rule.hasByMonthDays ||
+        rule.hasByMonths;
+    if (hasCustomParts) return _CalendarRecurrencePreset.custom;
+    return switch (rule.frequency) {
+      Frequency.daily => _CalendarRecurrencePreset.daily,
+      Frequency.weekly => _CalendarRecurrencePreset.weekly,
+      Frequency.monthly => _CalendarRecurrencePreset.monthly,
+      Frequency.yearly => _CalendarRecurrencePreset.yearly,
+      _ => _CalendarRecurrencePreset.custom,
+    };
+  } catch (_) {
+    return _CalendarRecurrencePreset.custom;
+  }
+}
+
+DateTime? _recurrenceUntilForRRule(String? rrule) {
+  if (rrule == null) return null;
+  try {
+    return RecurrenceRule.fromString(
+      rrule,
+      options: const RecurrenceRuleFromStringOptions.lenient(),
+    ).until?.toLocal();
+  } catch (_) {
+    return null;
+  }
+}
+
+int? _recurrenceCountForRRule(String? rrule) {
+  if (rrule == null) return null;
+  try {
+    return RecurrenceRule.fromString(
+      rrule,
+      options: const RecurrenceRuleFromStringOptions.lenient(),
+    ).count;
+  } catch (_) {
+    return null;
+  }
+}
+
+Set<int> _recurrenceWeekdaysForRRule(String? rrule, DateTime fallback) {
+  if (rrule == null) return {fallback.weekday};
+  try {
+    final rule = RecurrenceRule.fromString(
+      rrule,
+      options: const RecurrenceRuleFromStringOptions.lenient(),
+    );
+    final weekdays = rule.byWeekDays.map((entry) => entry.day).toSet();
+    return weekdays.isEmpty ? {fallback.weekday} : weekdays;
+  } catch (_) {
+    return {fallback.weekday};
+  }
+}
+
+String _recurrencePresetLabel(_CalendarRecurrencePreset preset) {
+  return switch (preset) {
+    _CalendarRecurrencePreset.none => 'Does not repeat',
+    _CalendarRecurrencePreset.daily => 'Daily',
+    _CalendarRecurrencePreset.weekly => 'Weekly',
+    _CalendarRecurrencePreset.monthly => 'Monthly',
+    _CalendarRecurrencePreset.yearly => 'Yearly',
+    _CalendarRecurrencePreset.custom => 'Custom',
+  };
+}
+
+Frequency _frequencyForPreset(_CalendarRecurrencePreset preset) {
+  return switch (preset) {
+    _CalendarRecurrencePreset.daily => Frequency.daily,
+    _CalendarRecurrencePreset.weekly => Frequency.weekly,
+    _CalendarRecurrencePreset.monthly => Frequency.monthly,
+    _CalendarRecurrencePreset.yearly => Frequency.yearly,
+    _ => Frequency.weekly,
+  };
+}
+
+DateTime _rruleUntilDate(DateTime date) {
+  return DateTime.utc(date.year, date.month, date.day, 23, 59, 59);
+}
+
+String? _buildCalendarRRule({
+  required _CalendarRecurrencePreset preset,
+  required DateTime eventDate,
+  DateTime? untilDate,
+  int? count,
+  Set<int> weekdays = const {},
+}) {
+  if (preset == _CalendarRecurrencePreset.none) return null;
+  final normalizedCount = count != null && count > 0 ? count : null;
+  final normalizedUntil = normalizedCount == null && untilDate != null
+      ? _rruleUntilDate(untilDate)
+      : null;
+  final selectedWeekdays = weekdays.isEmpty ? {eventDate.weekday} : weekdays;
+  final byWeekDays = selectedWeekdays.map(ByWeekDayEntry.new).toList()..sort();
+  final rule = RecurrenceRule(
+    frequency: _frequencyForPreset(preset),
+    until: normalizedUntil,
+    count: normalizedCount,
+    byWeekDays:
+        preset == _CalendarRecurrencePreset.custom ? byWeekDays : const [],
+  );
+  return rule.toString();
 }
 
 @visibleForTesting
@@ -452,10 +741,20 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           ? data['events'] as List
           : <dynamic>[];
 
+      final monthStart = DateTime(month.year, month.month);
+      final visibleRangeStart = monthStart.subtract(const Duration(days: 7));
+      final visibleRangeEnd =
+          DateTime(month.year, month.month + 1).add(const Duration(days: 7));
       final newMap = <String, List<Map<String, dynamic>>>{};
-      for (final e in rawEvents) {
-        if (e is! Map) continue;
-        final ev = Map<String, dynamic>.from(e);
+      final parsedEvents = <Map<String, dynamic>>[];
+      for (final raw in rawEvents) {
+        if (raw is Map) parsedEvents.add(Map<String, dynamic>.from(raw));
+      }
+      for (final ev in expandRecurringCalendarEventsForRange(
+        parsedEvents,
+        rangeStart: visibleRangeStart,
+        rangeEnd: visibleRangeEnd,
+      )) {
         final startAt = ev['start_at']?.toString() ?? '';
         if (startAt.isEmpty) continue;
         final date = DateTime.tryParse(startAt);
@@ -488,6 +787,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     String color = '#4285f4',
     int? reminderMinutes,
     String calendarId = _defaultCalendarId,
+    String? rrule,
   }) async {
     try {
       final end =
@@ -504,6 +804,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'color': color,
           'reminder_min': reminderMinutes,
           'calendar_id': calendarId,
+          'rrule': rrule,
         },
       );
       final data = res.data;
@@ -520,6 +821,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'reminder_min': reminderMinutes,
           'calendar_id': calendarId,
           'calendar_name': _calendarForId(calendarId).name,
+          'rrule': rrule,
         });
         await _syncDeviceReminder(
           eventId: eventId,
@@ -546,6 +848,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     String color = '#4285f4',
     int? reminderMinutes,
     String calendarId = _defaultCalendarId,
+    String? rrule,
     bool cancelReminderWhenNone = false,
   }) async {
     if (eventId.isEmpty) {
@@ -568,6 +871,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'color': color,
           'reminder_min': reminderMinutes,
           'calendar_id': calendarId,
+          'rrule': rrule,
         },
       );
       if (reminderMinutes == null) {
@@ -584,6 +888,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'reminder_min': reminderMinutes,
           'calendar_id': calendarId,
           'calendar_name': _calendarForId(calendarId).name,
+          'rrule': rrule,
         });
       }
       await _syncDeviceReminder(
@@ -719,7 +1024,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   }
 
   void _confirmDeleteEvent(BuildContext context, Map<String, dynamic> event) {
-    final eventId = event['event_id']?.toString() ?? '';
+    final eventId = calendarEventSeriesId(event);
     if (eventId.isEmpty) return;
     showDialog(
       context: context,
@@ -760,6 +1065,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     buffer
       ..writeln()
       ..writeln('Calendar: ${calendarEventCalendarName(event)}')
+      ..writeln('Repeats: ${calendarEventRecurrenceLabel(event)}')
       ..writeln('Color: ${_eventColorHex(event)}');
     final eventId = event['event_id']?.toString() ?? '';
     if (eventId.isNotEmpty) {
@@ -810,6 +1116,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     final color = _eventColor(event);
     final description = event['description']?.toString().trim() ?? '';
     final metadataRows = _eventMetadataRows(event);
+    final rrule = calendarEventRRule(event);
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -856,6 +1163,12 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                             label: Text(calendarEventCalendarName(event)),
                             visualDensity: VisualDensity.compact,
                           ),
+                          if (rrule != null)
+                            Chip(
+                              avatar: const Icon(Icons.repeat, size: 18),
+                              label: Text(calendarEventRecurrenceLabel(event)),
+                              visualDensity: VisualDensity.compact,
+                            ),
                         ],
                       ),
                     ),
@@ -1113,8 +1426,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                             color: _eventColor(event),
                             onTap: () => _showEventDetailsSheet(context, event),
                             onDelete: () {
-                              final eventId =
-                                  event['event_id']?.toString() ?? '';
+                              final eventId = calendarEventSeriesId(event);
                               if (eventId.isEmpty) return;
                               showDialog(
                                 context: context,
@@ -1247,44 +1559,134 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     );
   }
 
-  void _showEditEventDialog(BuildContext context, Map<String, dynamic> event) {
-    _showEventDialog(context, event: event);
+  Future<void> _showEditEventDialog(
+    BuildContext context,
+    Map<String, dynamic> event,
+  ) async {
+    var scope = _RecurrenceEditScope.all;
+    if (calendarEventRRule(event) != null) {
+      final selectedScope = await _chooseRecurrenceEditScope(context, event);
+      if (!context.mounted || selectedScope == null) return;
+      scope = selectedScope;
+      if (scope != _RecurrenceEditScope.all) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This recurrence scope needs series exception support. Choose all events for now.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+    if (!context.mounted) return;
+    _showEventDialog(context, event: event, recurrenceScope: scope);
   }
 
-  void _showEventDialog(BuildContext context, {Map<String, dynamic>? event}) {
+  Future<_RecurrenceEditScope?> _chooseRecurrenceEditScope(
+    BuildContext context,
+    Map<String, dynamic> event,
+  ) {
+    return showDialog<_RecurrenceEditScope>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit recurring event'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              key: const Key('calendar_edit_scope_this'),
+              leading: const Icon(Icons.event),
+              title: const Text('This event only'),
+              subtitle: Text(_eventDateTimeLabel(event)),
+              onTap: () => Navigator.pop(ctx, _RecurrenceEditScope.thisEvent),
+            ),
+            ListTile(
+              key: const Key('calendar_edit_scope_following'),
+              leading: const Icon(Icons.update),
+              title: const Text('This and following events'),
+              onTap: () => Navigator.pop(ctx, _RecurrenceEditScope.following),
+            ),
+            ListTile(
+              key: const Key('calendar_edit_scope_all'),
+              leading: const Icon(Icons.repeat),
+              title: const Text('All events'),
+              onTap: () => Navigator.pop(ctx, _RecurrenceEditScope.all),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Map<String, dynamic> _eventForRecurrenceEdit(
+    Map<String, dynamic> event,
+    _RecurrenceEditScope scope,
+  ) {
+    if (scope != _RecurrenceEditScope.all ||
+        !calendarEventIsRecurrenceOccurrence(event)) {
+      return event;
+    }
+    return {
+      ...event,
+      'event_id': calendarEventSeriesId(event),
+      'start_at': event['series_start_at'] ?? event['start_at'],
+      'end_at': event['series_end_at'] ?? event['end_at'],
+      'is_occurrence': false,
+    };
+  }
+
+  void _showEventDialog(
+    BuildContext context, {
+    Map<String, dynamic>? event,
+    _RecurrenceEditScope recurrenceScope = _RecurrenceEditScope.all,
+  }) {
     final isEditing = event != null;
-    final eventId = event?['event_id']?.toString() ?? '';
-    final initialStart = event == null
+    final editEvent =
+        event == null ? null : _eventForRecurrenceEdit(event, recurrenceScope);
+    final eventId = editEvent == null ? '' : calendarEventSeriesId(editEvent);
+    final initialStart = editEvent == null
         ? _selectedDay
-        : (_eventDateTime(event, 'start_at') ?? _selectedDay);
-    final initialEnd = event == null
+        : (_eventDateTime(editEvent, 'start_at') ?? _selectedDay);
+    final initialEnd = editEvent == null
         ? initialStart.add(const Duration(hours: 1))
-        : (_eventDateTime(event, 'end_at') ??
+        : (_eventDateTime(editEvent, 'end_at') ??
             initialStart.add(const Duration(hours: 1)));
     final titleCtrl = TextEditingController(
-      text: event?['title']?.toString() ?? '',
+      text: editEvent?['title']?.toString() ?? '',
     );
     final descCtrl = TextEditingController(
-      text: event?['description']?.toString() ?? '',
+      text: editEvent?['description']?.toString() ?? '',
     );
     var eventDate = DateTime(
       initialStart.year,
       initialStart.month,
       initialStart.day,
     );
-    var allDay = event == null ? false : _eventIsAllDay(event);
+    var allDay = editEvent == null ? false : _eventIsAllDay(editEvent);
     var startTime = TimeOfDay.fromDateTime(initialStart);
     var endTime = TimeOfDay.fromDateTime(initialEnd);
     final colors = ['#4285f4', '#ea4335', '#34a853', '#fbbc05', '#9334e6'];
-    var selectedColor = event == null ? colors.first : _eventColorHex(event);
+    var selectedColor =
+        editEvent == null ? colors.first : _eventColorHex(editEvent);
     if (!colors.contains(selectedColor)) {
       selectedColor = colors.first;
     }
-    var selectedCalendarId = calendarEventCalendarId(event ?? {});
+    var selectedCalendarId = calendarEventCalendarId(editEvent ?? {});
     if (_calendars.every((calendar) => calendar.id != selectedCalendarId)) {
       selectedCalendarId = _defaultCalendarId;
     }
-    var selectedReminder = calendarEventReminderMinutes(event ?? {}) ?? -1;
+    var selectedReminder = calendarEventReminderMinutes(editEvent ?? {}) ?? -1;
+    final initialRRule = calendarEventRRule(editEvent ?? {});
+    var selectedRecurrence = _recurrencePresetForRRule(initialRRule);
+    var recurrenceUntil = _recurrenceUntilForRRule(initialRRule);
+    final recurrenceCountCtrl = TextEditingController(
+      text: _recurrenceCountForRRule(initialRRule)?.toString() ?? '',
+    );
+    var selectedWeekdays = _recurrenceWeekdaysForRRule(
+      initialRRule,
+      initialStart,
+    );
 
     String fmtTime(TimeOfDay t) =>
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
@@ -1454,6 +1856,101 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     setDialogState(() => selectedReminder = value);
                   },
                 ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<_CalendarRecurrencePreset>(
+                  key: const Key('calendar_recurrence_dropdown'),
+                  initialValue: selectedRecurrence,
+                  decoration: const InputDecoration(
+                    labelText: 'Repeat',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.repeat),
+                  ),
+                  items: [
+                    for (final preset in _CalendarRecurrencePreset.values)
+                      DropdownMenuItem<_CalendarRecurrencePreset>(
+                        value: preset,
+                        child: Text(_recurrencePresetLabel(preset)),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setDialogState(() {
+                      selectedRecurrence = value;
+                      if (selectedRecurrence ==
+                          _CalendarRecurrencePreset.none) {
+                        recurrenceUntil = null;
+                        recurrenceCountCtrl.clear();
+                      }
+                      if (selectedWeekdays.isEmpty) {
+                        selectedWeekdays = {eventDate.weekday};
+                      }
+                    });
+                  },
+                ),
+                if (selectedRecurrence == _CalendarRecurrencePreset.custom) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final entry in _weekdayLabels.entries)
+                        FilterChip(
+                          key: Key('calendar_recurrence_weekday_${entry.key}'),
+                          label: Text(entry.value),
+                          selected: selectedWeekdays.contains(entry.key),
+                          onSelected: (selected) {
+                            setDialogState(() {
+                              if (selected) {
+                                selectedWeekdays.add(entry.key);
+                              } else if (selectedWeekdays.length > 1) {
+                                selectedWeekdays.remove(entry.key);
+                              }
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          key: const Key('calendar_recurrence_until_button'),
+                          icon: const Icon(Icons.event_available),
+                          label: Text(
+                            recurrenceUntil == null
+                                ? 'Until date'
+                                : 'Until ${_formatDate(recurrenceUntil!)}',
+                          ),
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: ctx,
+                              initialDate: recurrenceUntil ?? eventDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2035),
+                            );
+                            if (picked != null) {
+                              setDialogState(() => recurrenceUntil = picked);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 120,
+                        child: TextField(
+                          key: const Key('calendar_recurrence_count_field'),
+                          controller: recurrenceCountCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Count',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 8),
                 const Text('カラー:', style: TextStyle(fontSize: 13, height: 1.5)),
                 const SizedBox(height: 6),
@@ -1521,6 +2018,15 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                       );
                 final reminderMinutes =
                     selectedReminder < 0 ? null : selectedReminder;
+                final recurrenceCount =
+                    int.tryParse(recurrenceCountCtrl.text.trim());
+                final rrule = _buildCalendarRRule(
+                  preset: selectedRecurrence,
+                  eventDate: eventDate,
+                  untilDate: recurrenceUntil,
+                  count: recurrenceCount,
+                  weekdays: selectedWeekdays,
+                );
                 if (isEditing) {
                   _updateEvent(
                     eventId: eventId,
@@ -1532,8 +2038,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     color: selectedColor,
                     reminderMinutes: reminderMinutes,
                     calendarId: selectedCalendarId,
+                    rrule: rrule,
                     cancelReminderWhenNone:
-                        calendarEventReminderMinutes(event) != null,
+                        calendarEventReminderMinutes(editEvent ?? {}) != null,
                   );
                 } else {
                   _createEvent(
@@ -1545,6 +2052,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     color: selectedColor,
                     reminderMinutes: reminderMinutes,
                     calendarId: selectedCalendarId,
+                    rrule: rrule,
                   );
                 }
               },
