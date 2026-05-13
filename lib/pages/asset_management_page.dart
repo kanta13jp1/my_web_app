@@ -20,6 +20,7 @@ import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
@@ -45,6 +46,7 @@ class AssetManagementPage extends StatefulWidget {
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
+  final AssetLiabilityRepository? assetLiabilityRepository;
   final String? entryLabel;
   final String? entryDescription;
 
@@ -53,6 +55,7 @@ class AssetManagementPage extends StatefulWidget {
     this.initialFocus = AssetManagementInitialFocus.overview,
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
+    this.assetLiabilityRepository,
     this.entryLabel,
     this.entryDescription,
   });
@@ -159,8 +162,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isLoadingTasks = false;
 
   // --- 返済計画用 ---
-  final AssetLiabilityMonthlyStateStore _assetLiabilityMonthlyStateStore =
-      const AssetLiabilityMonthlyStateStore();
+  late final AssetLiabilityRepository _assetLiabilityRepository;
   final AssetLiabilityPlanningService _assetLiabilityPlanner =
       const AssetLiabilityPlanningService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
@@ -211,6 +213,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
+    _assetLiabilityRepository = widget.assetLiabilityRepository ??
+        const SharedPreferencesAssetLiabilityRepository();
     _loadDataFromSupabase();
     _loadAssetLiabilityMonthlyState();
     _loadWatchlistEntries();
@@ -772,15 +776,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
         targetMonth,
       );
-      final state = await _assetLiabilityMonthlyStateStore.loadMonth(
-        targetMonth,
-      );
+      final state = await _assetLiabilityRepository.loadMonth(targetMonth);
       final defaultSources =
-          await _assetLiabilityMonthlyStateStore.loadDefaultPaymentSources();
+          await _assetLiabilityRepository.loadDefaultPaymentSources();
       final templates =
-          await _assetLiabilityMonthlyStateStore.loadRecurringIncomeTemplates();
+          await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
-          await _assetLiabilityMonthlyStateStore.loadMonthlySnapshots();
+          await _assetLiabilityRepository.loadMonthlySnapshots();
       final incomePlansWithTemplates =
           AssetLiabilityMonthlyStateStore.applyRecurringIncomeTemplates(
         month: targetMonth,
@@ -822,7 +824,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _saveAssetLiabilityMonthlyState() async {
     try {
-      await _assetLiabilityMonthlyStateStore.saveMonth(
+      await _assetLiabilityRepository.saveMonth(
         month: _now,
         state: AssetLiabilityMonthlyState(
           paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
@@ -851,9 +853,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         workbook: workbook,
         savedAt: DateTime.now(),
       );
-      await _assetLiabilityMonthlyStateStore.saveMonthlySnapshot(snapshot);
-      final snapshots =
-          await _assetLiabilityMonthlyStateStore.loadMonthlySnapshots();
+      await _assetLiabilityRepository.saveMonthlySnapshot(snapshot);
+      final snapshots = await _assetLiabilityRepository.loadMonthlySnapshots();
       if (!mounted) return;
       setState(() {
         _monthlySnapshots = List<AssetLiabilityMonthlySnapshot>.from(snapshots);
@@ -1077,7 +1078,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _saveDefaultPaymentSources() async {
     try {
-      await _assetLiabilityMonthlyStateStore.saveDefaultPaymentSources(
+      await _assetLiabilityRepository.saveDefaultPaymentSources(
         Map<String, String>.from(_defaultPaymentSourceAccountIds),
       );
     } catch (e) {
@@ -1087,7 +1088,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _saveRecurringIncomeTemplates() async {
     try {
-      await _assetLiabilityMonthlyStateStore.saveRecurringIncomeTemplates(
+      await _assetLiabilityRepository.saveRecurringIncomeTemplates(
         List<AssetLiabilityRecurringIncomeTemplate>.from(
           _recurringIncomeTemplates,
         ),
@@ -1112,8 +1113,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _copyPreviousMonthSettings() async {
-    final copied =
-        await _assetLiabilityMonthlyStateStore.copyPreviousMonthToMonth(_now);
+    final copied = await _assetLiabilityRepository.copyPreviousMonthToMonth(
+      _now,
+    );
     final incomePlansWithTemplates =
         AssetLiabilityMonthlyStateStore.applyRecurringIncomeTemplates(
       month: _now,
