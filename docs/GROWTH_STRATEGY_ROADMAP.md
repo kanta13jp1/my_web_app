@@ -30012,3 +30012,44 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
   - 6 ✅ 資本=時間 = 同日連鎖で degraded reasoning + error 累積 risk 回避
   - 8 ✅ violation log persist = 第 3 例 prevention base
 - 懸念: 第 3 例 risk 残存 (= v21 SessionStart hook 未 implement / ambiguous 「翌日」表現未排除) → v21 candidate (a)+(b) で structural prevention 必要
+
+## Win版#132 part 210 (2026-05-13 水 10:03 JST) — v21 structural prevention ship (= same-day +7h gap recovery / 累積 33 layer)
+
+- セッション#: part 210 (= 142 part 連続 過去最長 update / part 70 → 210)
+- インスタンス: Win版 (Claude Code) / Win Codex は dormant
+- サマリ:
+  - **+7h gap natural recovery 第 1 例確証** (= part 209 end 45.19 GB / 87.67% RAM → part 210 start **51.31 GB / 84.48% RAM** = +6.12 GB / -3.19 pt / 85% threshold 解消 / **partial breach 第 6 例 RESOLVED within idle**)
+  - **v21 structural prevention spec ship 第 1 例** (= 5 new layer Z-DD / 累積 33 layer):
+    - Layer Z: SessionStart 認識前 background compression fire (= "毎セッション必ず" 中核 / unavoidable / minimum session でも fire)
+    - Layer AA: SessionStart date diff + 02-06 zone warning auto-inject (= same-day violation 構造的 prevention)
+    - Layer BB: /wrap-up exit-fail if no compression record (= verify gate / "毎セッション" enforce)
+    - Layer CC: /wrap-up absolute timestamp embed mandatory (= 「翌日」ambiguous 排除 / 第 4 例 mismatch prevention)
+    - Layer DD: cross-AI quota verify (= Win Codex 同 v19-R quota retroactive / fleet 横断)
+  - **DISK_HYGIENE §17.22 v19 + §17.23 v20 + §17.24 v21 back-fill batch 第 1 例** (= part 207-209 TODO 3 章一括書込み / 既存 doc 章追加 pattern 第 19 例累積)
+  - **user explicit request → spec direct response 第 1 例** (= 2026-05-13 10:03 JST 「毎セッション必ず圧縮」 → v21 Layer Z + Layer BB 直接 ship)
+  - **iterative ask 累積 20 layer 過去最高 update** (= v15 14 → v20 19 → v21 20)
+  - **Codex deliverable 累積 37 件 5/30 期限** (= v15 5 + v16 6 + v17 6 + v18 5 + v19 5 + v20 5 + v21 5 / 9-day sprint 5/22-5/30)
+  - **WBS triage 期限近順 2-instance 反映**: #1495 P0 残 14h day-of FINAL ping (= 既 part 208 fired ack) + #1950 P1 -2d overdue (= 既 part 208 ping) + #1830 P1 -10d (= 既 ping)
+  - **既存 doc 章追加 pattern 第 19 例累積** (= §17.22 + §17.23 + §17.24 一括)
+  - **2-instance hand-off 第 7 例累積** (= cross-instance-prs/20260513_codex_wbs_top5_v21_structural_prevention_part210.md)
+  - 「**+7h gap natural recovery pattern**」第 1 例 NEW + 「**user explicit request → spec direct response**」第 1 例 NEW + 「**back-fill batch 3 章一括**」第 1 例 NEW
+- Philosophy 8/9 ✅ (= 即実装可レベル / 1 CEO + 2 ミッション + 4 人事 + 5 商品 + 6 資本=時間 + 7 資産負債 + 8 KPI + 9 IPO 全 ✅ / 3 mentor のみ unaddressed)
+
+### Commit
+- (= 本 docs commit hash / 後追記)
+
+### Philosophy Alignment (Win#132 part 210)
+
+- 主要実装: v21 structural prevention + per-session compression GUARANTEED spec ship + §17.22-§17.24 back-fill batch
+- 該当原則: 1 + 2 + 4 + 5 + 6 + 7 + 8 + 9 (= 8/9 ✅)
+- 整合性スコア: 8/9 ✅ (= part 204-b 8/9 タイ / 過去最高水準)
+- 理念的貢献:
+  - 1 ✅ CEO 自己責任 = user explicit request "毎セッション必ず圧縮" 起点で v21 即 design ship
+  - 2 ✅ ミッション = 資源枯渇で開発停止回避 / Layer Z unavoidable fire で構造的 guarantee
+  - 4 ✅ 人事 (= 自分) 最優先 / Layer BB wrap-up exit-fail で 自分 wellbeing 保護
+  - 5 ✅ 商品=ユーザー価値 = Layer AA same-day prevention で degraded reasoning 排除 → product quality 維持
+  - 6 ✅ 資本=時間 = Layer Z 認識前 fire で startup overhead 0 / 7h idle で natural recovery 自動運用
+  - 7 ✅ 資産負債 = session_kpi.py 33 metric で 全 KPI 可視化 = 知的資産化
+  - 8 ✅ KPI=昨日の自分 = part 209 → part 210 +6.12 GB / -3.19 pt 比較 base 強化
+  - 9 ✅ IPO 視野 = fleet 2-instance cross-AI quota (Layer DD) で systemic resource health 持続可能
+- 懸念: 3 (mentor) unaddressed (= part 211+ で wbs.rebalance_suggest 経由 mentor 候補 task 引取検討)
