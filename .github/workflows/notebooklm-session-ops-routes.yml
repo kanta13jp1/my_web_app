@@ -1,0 +1,23 @@
+name: NotebookLM Session Ops Routes
+
+on:
+  pull_request:
+    paths:
+      - "config/notebooklm-session-ops-routes.json"
+      - "docs/NOTEBOOKLM_SESSION_OPS_ROUTING.md"
+      - "docs/notebooklm-intake/**"
+      - "docs/ai-tool-watch/**"
+      - "scripts/check_notebooklm_session_ops_routes.py"
+      - ".github/workflows/notebooklm-session-ops-routes.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate NotebookLM session-ops routes
+        run: python scripts/check_notebooklm_session_ops_routes.py

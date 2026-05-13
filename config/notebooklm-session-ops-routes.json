@@ -1,0 +1,473 @@
+{
+  "schemaVersion": 1,
+  "issue": 1638,
+  "status": "active",
+  "lastReviewed": "2026-05-14",
+  "latestNotebooklmReport": "docs/notebooklm-intake/latest-report.md",
+  "latestAiToolWatchReport": "docs/ai-tool-watch/latest-report.md",
+  "ownerModel": {
+    "activeInstances": [
+      "Claude Code #1",
+      "Codex #1"
+    ],
+    "designOwner": "Claude Code #1",
+    "implementationOwner": "Codex #1",
+    "externalMemoryOwner": "NotebookLM",
+    "notes": "Legacy Codex #2/#3 lanes are dormant; any implementation lane is absorbed by Codex #1 under the two-instance policy."
+  },
+  "verificationPolicy": {
+    "notebooklmIsAdvisory": true,
+    "requireOfficialOrAiToolWatchEvidence": true,
+    "forbidRawNotebooklmDump": true,
+    "requireExistingIssueOrRepoLanding": true,
+    "allowedLandingTypes": [
+      "config",
+      "docs",
+      "issue",
+      "script",
+      "workflow"
+    ]
+  },
+  "routes": [
+    {
+      "shortId": "1aced136",
+      "title": "Claude Code Masterclass: From Foundations to Agentic Workflows",
+      "routeId": "agentic-session-workflow",
+      "disposition": "adopt-with-gate",
+      "owner": "Claude Code #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code changelog"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "hooks"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/CLAUDE_CODE_MASTERCLASS_AGENTIC_WORKFLOW.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/DEV_PROCESS_MULTI_AI.md"
+        },
+        {
+          "type": "config",
+          "path": "config/context-injection-map.json"
+        },
+        {
+          "type": "issue",
+          "issue": 1638
+        }
+      ],
+      "nextAction": "Use the two-instance routing rules before turning masterclass workflow advice into hooks, CI, or WBS changes."
+    },
+    {
+      "shortId": "9b8885ef",
+      "title": "Automating SaaS Operations with Claude Code Schedule",
+      "routeId": "schedule-automation-proof",
+      "disposition": "adopt-with-gate",
+      "owner": "Codex #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code GitHub Actions"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "schedule"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/SCHEDULE_TASKS.md"
+        },
+        {
+          "type": "workflow",
+          "path": ".github/workflows/schedule-resilience-watch.yml"
+        },
+        {
+          "type": "issue",
+          "issue": 1783
+        },
+        {
+          "type": "issue",
+          "issue": 1638
+        }
+      ],
+      "nextAction": "Prefer deterministic GitHub Actions proof before adopting any NotebookLM-derived schedule behavior."
+    },
+    {
+      "shortId": "ed1aac00",
+      "title": "Mastering Claude: A Guide to Intelligent Collaboration",
+      "routeId": "collaboration-operating-model",
+      "disposition": "route-only",
+      "owner": "Claude Code #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code changelog"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "integration"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/AI_FLEET_SYNERGY_PLAYBOOK.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/FLEET_2_INSTANCE_TRANSITION.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/WBS_2_INSTANCE_ROUTING.md"
+        },
+        {
+          "type": "issue",
+          "issue": 1638
+        }
+      ],
+      "nextAction": "Keep collaboration guidance as routing context unless a future official signal creates a narrow implementation task."
+    },
+    {
+      "shortId": "d89ae1f5",
+      "title": "Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks",
+      "routeId": "memory-and-hook-state",
+      "disposition": "adopt-with-gate",
+      "owner": "Claude Code #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code hooks reference"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "hooks"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/CODEX_MEMORY_AUTOMATIONS.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/PRECOMPACT_MEMORY_BACKUP_SPEC.md"
+        },
+        {
+          "type": "script",
+          "path": "scripts/codex_session_check.py"
+        },
+        {
+          "type": "issue",
+          "issue": 1564
+        },
+        {
+          "type": "issue",
+          "issue": 1647
+        }
+      ],
+      "nextAction": "Treat memory advice as hook or session-check work only after it can be validated by repo checks."
+    },
+    {
+      "shortId": "b74e9ada",
+      "title": "Code with Claude Opening Keynote",
+      "routeId": "official-keynote-triage",
+      "disposition": "route-only",
+      "owner": "Claude Code #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code changelog"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "codex-runtime"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/AI_FLEET_SYNERGY_PLAYBOOK.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/CODEX_UI_QA_PLAYBOOK.md"
+        },
+        {
+          "type": "issue",
+          "issue": 1646
+        },
+        {
+          "type": "issue",
+          "issue": 1787
+        }
+      ],
+      "nextAction": "Adopt only claims that appear in official changelogs or the AI Tool Watch report."
+    },
+    {
+      "shortId": "64fc639e",
+      "title": "Automating Technical Blogs with Claude Code and Supabase Edge Functions",
+      "routeId": "blog-news-automation",
+      "disposition": "adopt-with-gate",
+      "owner": "Codex #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code GitHub Actions"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "schedule"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/BLOG_NEWS_AUTOMATION_RUNBOOK.md"
+        },
+        {
+          "type": "workflow",
+          "path": ".github/workflows/blog-news-prod-smoke.yml"
+        },
+        {
+          "type": "issue",
+          "issue": 1950
+        },
+        {
+          "type": "issue",
+          "issue": 1638
+        }
+      ],
+      "nextAction": "Route blog automation changes through smoke-proofed workflows before any external publish step."
+    },
+    {
+      "shortId": "f0895eb0",
+      "title": "Claude Code Remote Control Guide",
+      "routeId": "remote-control-state-check",
+      "disposition": "manual-or-verify-only",
+      "owner": "Claude Code #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code changelog"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "integration"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/INSTANCE_CONFIG.md"
+        },
+        {
+          "type": "script",
+          "path": "scripts/codex_session_check.py"
+        },
+        {
+          "type": "issue",
+          "issue": 1962
+        },
+        {
+          "type": "issue",
+          "issue": 1638
+        }
+      ],
+      "nextAction": "Keep Remote Control as a local verification/manual setting; never infer it from NotebookLM alone."
+    },
+    {
+      "shortId": "52daba63",
+      "title": "Claude Code: The Agentic Future of Terminal Programming",
+      "routeId": "terminal-agent-boundary",
+      "disposition": "route-only",
+      "owner": "Claude Code #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Codex overview"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "codex-runtime"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/CODEX_WORKFLOW.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/AGENT_TOOL_POLICY.md"
+        },
+        {
+          "type": "config",
+          "path": "config/managed-mcp.json"
+        },
+        {
+          "type": "issue",
+          "issue": 1638
+        }
+      ],
+      "nextAction": "Use repo tool policy and worktree isolation as the boundary before terminal-agent workflow changes."
+    },
+    {
+      "shortId": "c3b1d9f2",
+      "title": "Claude API Cost Optimization Strategies",
+      "routeId": "quality-cost-controls",
+      "disposition": "adopt-with-gate",
+      "owner": "Codex #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code changelog"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "quality-cost"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/AI_FALLBACK_RUNBOOK.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/AGENT_TOOL_POLICY.md"
+        },
+        {
+          "type": "issue",
+          "issue": 1638
+        }
+      ],
+      "nextAction": "Convert cost advice into budget or fallback checks only when official source evidence is present."
+    },
+    {
+      "shortId": "9871b0b1",
+      "title": "Claude Code and Obsidian: Building Your AI Second Brain",
+      "routeId": "second-brain-memory-consolidation",
+      "disposition": "adopt-with-gate",
+      "owner": "Claude Code #1",
+      "implementationOwner": "Codex #1",
+      "verifiedBy": [
+        {
+          "type": "notebooklm-report",
+          "path": "docs/notebooklm-intake/latest-report.md",
+          "issue": 1638
+        },
+        {
+          "type": "official-source-signal",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "source": "Claude Code hooks reference"
+        },
+        {
+          "type": "ai-tool-watch-group",
+          "path": "docs/ai-tool-watch/latest-report.md",
+          "group": "integration"
+        }
+      ],
+      "landingTargets": [
+        {
+          "type": "docs",
+          "path": "docs/SECOND_BRAIN_PRINCIPLES.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/OBSIDIAN_INGEST_PIPELINE.md"
+        },
+        {
+          "type": "docs",
+          "path": "docs/NOTEBOOKLM_GUIDE.md"
+        },
+        {
+          "type": "issue",
+          "issue": 1638
+        }
+      ],
+      "nextAction": "Use Second Brain content as memory consolidation context, not as an unreviewed source of implementation facts."
+    }
+  ]
+}

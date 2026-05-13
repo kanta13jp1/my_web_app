@@ -26,3 +26,13 @@ The gate writes:
 NotebookLM is an external memory source. Claims from NotebookLM should route
 work, but implementation still needs repository checks, official or primary
 source verification, and GitHub Actions proof.
+
+## Claude Code Session-Ops Routes
+
+For #1638 Claude Code operations notebooks, use
+`config/notebooklm-session-ops-routes.json` and
+`docs/NOTEBOOKLM_SESSION_OPS_ROUTING.md`. The guard command is:
+
+```powershell
+python scripts/check_notebooklm_session_ops_routes.py
+```
