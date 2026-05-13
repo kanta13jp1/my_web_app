@@ -1,5 +1,39 @@
 # AI Fallback Runbook — 自分株式会社
 
+## #1787 2026-05 AI Tool Routing Update
+
+This update folds the May 2026 AI-tool signals into the current two-instance
+operating model:
+
+- Claude Code #1 reviews adoption risk and decides adopt/defer/ignore for
+  Claude Code, Codex CLI, Copilot, Gemini Code Assist, Cursor, and Devin release
+  signals.
+- Codex #1 owns scoped implementation, CI, merge follow-up, WBS sync
+  verification, branch/worktree cleanup, and session memory/disk hygiene.
+- Codex #2 and Codex #3 stay historical. Do not start dormant Codex lanes,
+  PowerShell lane instances, or extra subagents to process WBS tasks.
+- Use `docs/ai-tool-changelog/2026-05.md` as the local source summary and verify
+  any release claim against the official source before promoting it into a
+  production fallback path.
+- Copilot Custom Agents are design-only until explicitly activated. The current
+  registry lives in `.github/agents/README.md`; agents are advisory and must not
+  merge, deploy, write production data, or run side-effecting automation.
+
+Adoption notes for this cycle:
+
+- Claude Code v2.1.121 MCP `alwaysLoad` and `claude plugin prune` can reduce
+  tool-search friction, but Claude Code #1 must approve any managed-setting or
+  plugin-store change.
+- Claude Code v2.1.116 `/resume` speed and MCP startup improvements support
+  long-session recovery, but they do not change the two-instance cap.
+- Claude Code v2.1.122 Bedrock service-tier selection and v2.1.108 prompt-cache
+  flags are provider-configuration candidates, not default environment changes.
+- OpenAI Codex CLI rust-v0.128.0 persisted `/goal` workflows are a future
+  Codex #1 planning aid; normal WBS work still uses scoped branches and PRs.
+- Cursor context-usage breakdown, Gemini Code Assist release notes, and Devin
+  CI-aware auto-fix are advisory signals unless a local verified workflow is
+  explicitly routed.
+
 ## 2026-05-07 Official AI Tool Update Gate (#1706)
 
 This runbook now treats AI-tool release claims as "verify before routing". Use
