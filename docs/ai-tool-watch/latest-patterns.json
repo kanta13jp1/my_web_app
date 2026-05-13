@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-12T21:45:20Z",
+  "generated_at": "2026-05-13T21:47:06Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -25,7 +25,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "485fac98375467e852777bace477e8192d9dffafcbac5cf17f79e43f7d01f65f",
@@ -75,7 +75,7 @@
           "latest_signal": "2.1.140 / May 12, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "420b6643a1b767c7c158bbdc11e7d3a2a4bd7df1715242b41301b820c38b8537",
+          "previous_hash": "485fac98375467e852777bace477e8192d9dffafcbac5cf17f79e43f7d01f65f",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
@@ -113,7 +113,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "72ccfb4eb8054f1f3247d3b7213dfaa2d39c87c54ebb69b1936a3d06395d37bb",
@@ -151,7 +151,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "f735a5c6070e6523c336317636eb76229fd5be6eaf94effc38c68818e2db20e7",
+          "previous_hash": "72ccfb4eb8054f1f3247d3b7213dfaa2d39c87c54ebb69b1936a3d06395d37bb",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -255,9 +255,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-7228d94ca049",
+        "entry_id": "nf-20e0b904d8b6",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-05-11 / Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Also updated the Agent approvals & security and Sandbox docs so they explain more clearly how Auto-review relates to the sandbox boundary. 2026-05-08 Codex CLI 0.130.0 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g @openai/codex@0.130.0 View details New Features Plugin details now show bundled...",
+        "text": "Codex changelog 2026-05-11 / Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Also updated the Agent approvals & security and Sandbox docs so they explain more clearly how Auto-review relates to the sandbox boundary. April 2026 li+li]:mt-12\"> 2026-04-23 GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI’s newest frontier model for complex coding, computer use,...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -266,7 +266,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3761d44f8b85f4e096195a68ff0859680c5c945ff80163b9642f113b69cc9ffd",
+          "hash": "13f6c8aec833a86c613512055fa301e09bce34cbf79a9677371778c587977402",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -281,8 +281,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "SessionStart",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -294,9 +292,7 @@
               "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
-              "quota",
               "rate limit",
               "sandbox",
               "permission",
@@ -307,26 +303,25 @@
               "automation",
               "automations",
               "schedule",
-              "GitHub Actions",
               "workflow"
             ]
           },
           "latest_signal": "2026-05-11 / Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "fbf5d0429d0b363df106853498b330d47724043eb4fc37f562a4f52a9158e390",
+          "previous_hash": "3761d44f8b85f4e096195a68ff0859680c5c945ff80163b9642f113b69cc9ffd",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
             "Also updated the Agent approvals & security and Sandbox docs so they explain more clearly how Auto-review relates to the sandbox boundary.",
-            "2026-05-08 Codex CLI 0.130.0 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g @openai/codex@0.130.0 View details New Features Plugin details now show bundled..."
+            "April 2026 li+li]:mt-12\"> 2026-04-23 GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI’s newest frontier model for complex coding, computer use,..."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-7228d94ca049",
+        "entry_id": "nf-20e0b904d8b6",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -355,7 +350,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5cc99f23a08bfc37dcd05e3daea80af63fb4d80025ee45d5eca4397a616cefc0",
+          "hash": "f48521848936ab808cc96219325d90967756fe3895c5358842269a8c7dd437cc",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -394,7 +389,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "03fac250c3251a289543df95dc58a1c9e579a3432696afc66ee9028aa5fa7f98",
+          "previous_hash": "5cc99f23a08bfc37dcd05e3daea80af63fb4d80025ee45d5eca4397a616cefc0",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -432,7 +427,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
@@ -456,7 +451,7 @@
           "latest_signal": "AI Coding Partner from OpenAI",
           "name": "Codex overview",
           "owner": "Codex",
-          "previous_hash": "",
+          "previous_hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
           "slug": "codex-overview",
           "snippets": [
             "Designed for multi-agent workflows The Codex app is a command center for agentic coding.",
@@ -486,18 +481,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-614eff8fefe4",
+        "entry_id": "nf-4c09af0a449f",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.3 / May 7, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog... It reads the entire thread for context before implementing a solution and creating a PR for your team to review. May 11, 2026 · Changelog Bugbot Effort Levels Teams admins and Individual plan users can now customize the effort level Bugbot uses for its PR reviews, with three different...",
+        "text": "Cursor changelog 3.3 / May 7, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog... # Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces . # Environment configuration as code To make it easier to change, debug, and review environment definitions, we have improved Dockerfile-based configuration.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d7f95effa650dfbd567ae8eedd689e4ab52dce30197f5d5a3c29f7800877ea20",
+          "hash": "8f7b19efb3ffd9b14d5ab5d709e4feab3decf0a457d6c7adf20326a903e40a77",
           "keyword_groups": {
             "codex-runtime": [
               "subagents"
@@ -506,6 +501,7 @@
               "MCP"
             ],
             "quality-cost": [
+              "permission",
               "review",
               "CI"
             ],
@@ -522,15 +518,15 @@
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
-            "It reads the entire thread for context before implementing a solution and creating a PR for your team to review.",
-            "May 11, 2026 · Changelog Bugbot Effort Levels Teams admins and Individual plan users can now customize the effort level Bugbot uses for its PR reviews, with three different..."
+            "# Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces .",
+            "# Environment configuration as code To make it easier to change, debug, and review environment definitions, we have improved Dockerfile-based configuration."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-614eff8fefe4",
+        "entry_id": "nf-4c09af0a449f",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",

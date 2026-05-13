@@ -1,16 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-12T21:45:18Z`
-- Previous check: `2026-05-11T21:45:46Z`
-- Changed/new official sources: `5`
+- Checked at: `2026-05-13T21:47:03Z`
+- Previous check: `2026-05-12T21:45:18Z`
+- Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.140 / May 12, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
 - `changed` Codex changelog: 2026-05-11 / Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Codex overview: AI Coding Partner from OpenAI
+- `changed` Cursor changelog: 3.3 / May 7, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -61,7 +59,7 @@
   - Latest signal: 3.3 / May 7, 2026
   - Keyword groups: schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...
-  - Short signal: It reads the entire thread for context before implementing a solution and creating a PR for your team to review.
+  - Short signal: # Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces .
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.81.0 / May 08, 2026
