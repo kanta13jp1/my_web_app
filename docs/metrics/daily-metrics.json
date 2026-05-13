@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-05-12",
+    "date": "2026-05-13",
     "users": {
       "total": 37
     },
@@ -34,6 +34,10 @@
     },
     "recentAchievements": [
       {
+        "title": "Scheduled Daily S4: v21 5-layer structural prevention spec (Z-DD) + same-day natural recovery 第 1 例",
+        "completed_at": "2026-05-13T00:00:00+00:00"
+      },
+      {
         "title": "Codex #1: Issue #1964 FinTech disruption / Trading x AI seed",
         "completed_at": "2026-05-12T00:00:00+00:00"
       },
@@ -48,13 +52,9 @@
       {
         "title": "Codex #1: mobile distribution readiness gate (#1495)",
         "completed_at": "2026-05-12T00:00:00+00:00"
-      },
-      {
-        "title": "Codex #1: prioritized GitHub Issue-linked WBS task dates",
-        "completed_at": "2026-05-11T15:03:02.581237+00:00"
       }
     ]
   },
-  "fetched_at": "2026-05-13T07:51:07+09:00",
-  "report_date": "2026-05-13"
+  "fetched_at": "2026-05-14T07:52:22+09:00",
+  "report_date": "2026-05-14"
 }
