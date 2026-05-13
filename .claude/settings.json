@@ -17,6 +17,10 @@
     "MAX_MCP_OUTPUT_TOKENS": "50000",
     "ENABLE_MCP_TOOL_SEARCH": "true"
   },
+  "statusLine": {
+    "type": "command",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/statusline.ps1"
+  },
   "allowManagedPermissionRulesOnly": true,
   "allowManagedHooksOnly": true,
   "hooks": {
@@ -89,6 +93,10 @@
           {
             "type": "command",
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/session-start-sync-rules.ps1"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/session-start-state-check.ps1"
           }
         ]
       }

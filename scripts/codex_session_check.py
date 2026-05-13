@@ -418,6 +418,55 @@ def context_injection_snapshot(root: Path) -> dict[str, Any]:
     }
 
 
+def first_nonempty_line(path: Path) -> str:
+    if not path.exists():
+        return ""
+    try:
+        for line in path.read_text(encoding="utf-8-sig").splitlines():
+            stripped = line.strip()
+            if stripped:
+                return stripped
+    except OSError:
+        return ""
+    return ""
+
+
+def latest_matching_file(root: Path, pattern: str) -> str:
+    try:
+        matches = sorted(
+            root.glob(pattern),
+            key=lambda item: item.stat().st_mtime,
+            reverse=True,
+        )
+    except OSError:
+        matches = []
+    if not matches:
+        return ""
+    try:
+        return str(matches[0].relative_to(root))
+    except ValueError:
+        return str(matches[0])
+
+
+def session_state_snapshot(root: Path) -> dict[str, Any]:
+    transcript_dir = root / "memory" / "transcripts"
+    session_check_dir = root / "memory" / "session-start-check"
+    return {
+        "active_issue": first_nonempty_line(root / "memory" / "active-issue.txt"),
+        "next_quality_gate": first_nonempty_line(root / "memory" / "next-quality-gate.txt"),
+        "transcripts_dir": str(transcript_dir),
+        "latest_compact_backup": latest_matching_file(root, "memory/transcripts/compact-*.md"),
+        "latest_session_start_log": latest_matching_file(
+            root,
+            "memory/session-start-check/session-start-*.log",
+        ),
+        "precompact_hook": ".claude/hooks/pre-compact-backup.ps1",
+        "session_start_hook": ".claude/hooks/session-start-state-check.ps1",
+        "statusline_hook": ".claude/hooks/statusline.ps1",
+        "setup_runbook": "docs/CLAUDE_CODE_SETUP_RUNBOOK.md",
+    }
+
+
 def parse_semver(text: str) -> tuple[int, int, int] | None:
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
     if not match:
@@ -441,6 +490,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     claude_remote_control = analyze_claude_remote_control(root)
     managed_mcp = managed_mcp_snapshot(root)
     context_injection = context_injection_snapshot(root)
+    session_state = session_state_snapshot(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -520,6 +570,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "claude_remote_control": claude_remote_control,
         "managed_mcp": managed_mcp,
         "context_injection": context_injection,
+        "session_state": session_state,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -612,6 +663,22 @@ def render_markdown(report: dict[str, Any]) -> str:
     )
     for failure in context_injection["validation_errors"][:8]:
         lines.append(f"- Validation failure: {failure}")
+
+    session_state = report["session_state"]
+    lines.extend(
+        [
+            "",
+            "## Session State Recovery",
+            f"- Active issue marker: `{session_state['active_issue'] or 'none'}`",
+            f"- Next quality gate: `{session_state['next_quality_gate'] or 'none'}`",
+            f"- Latest compact backup: `{session_state['latest_compact_backup'] or 'none'}`",
+            f"- Latest SessionStart log: `{session_state['latest_session_start_log'] or 'none'}`",
+            f"- PreCompact hook: `{session_state['precompact_hook']}`",
+            f"- SessionStart hook: `{session_state['session_start_hook']}`",
+            f"- StatusLine hook: `{session_state['statusline_hook']}`",
+            f"- Setup runbook: `{session_state['setup_runbook']}`",
+        ]
+    )
 
     lines.extend(["", "## Warnings"])
     if report["warnings"]:
