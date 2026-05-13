@@ -1,5 +1,11 @@
 # PreCompact / SessionStart / StatusLine / Setup — 通常設計 spec (#1564 / part 152)
 
+> **Codex #1 implementation note (2026-05-13 JST)**: the repo-managed slice now ships
+> `.claude/hooks/pre-compact-backup.ps1` redaction/frontmatter, `.claude/hooks/session-start-state-check.ps1`,
+> `.claude/hooks/statusline.ps1`, `.claude/settings.json` wiring, `docs/CLAUDE_CODE_SETUP_RUNBOOK.md`,
+> `memory/transcripts/.gitkeep`, and `scripts/check_session_state_hooks.py` with CI coverage.
+> User-home `~/.claude/settings.json` remains a manual per-instance action.
+
 > **status**: 設計 spec / Win版#132 part 152 / 2026-05-05
 > **issue**: [#1564](https://github.com/kanta13jp1/my_web_app/issues/1564) [追加要望][P1] Claude Code PreCompact/StatusLine/SessionStart/Setup による記憶保全
 > **scope**: 設計のみ (Win Claude territory) / 実装は Win Codex (= hook 配備 + script 拡張) ハンドオフ

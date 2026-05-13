@@ -1,0 +1,37 @@
+name: Session State Hooks
+
+on:
+  pull_request:
+    paths:
+      - ".claude/hooks/pre-compact-backup.ps1"
+      - ".claude/hooks/session-start-state-check.ps1"
+      - ".claude/hooks/statusline.ps1"
+      - ".claude/settings.json"
+      - ".github/workflows/session-state-hooks.yml"
+      - "docs/CLAUDE_CODE_SETUP_RUNBOOK.md"
+      - "memory/transcripts/**"
+      - "scripts/check_session_state_hooks.py"
+      - "scripts/codex_session_check.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate hooks and transcript secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate repo-managed session hooks
+        run: python scripts/check_session_state_hooks.py --scan-transcripts
+
+      - name: Codex session check JSON smoke
+        run: python scripts/codex_session_check.py --json > /tmp/codex-session-check.json
