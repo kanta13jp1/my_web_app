@@ -17,14 +17,17 @@ from pathlib import Path
 
 REQUIRED_FILES = [
     ".claude/hooks/pre-compact-backup.ps1",
+    ".claude/hooks/session-start-hard-gate.ps1",
     ".claude/hooks/session-start-state-check.ps1",
     ".claude/hooks/statusline.ps1",
+    ".claude/hooks/userprompt-kpi-banner.ps1",
     ".claude/settings.json",
     "docs/CLAUDE_CODE_SETUP_RUNBOOK.md",
     "memory/session-start-check/.gitignore",
     "memory/session-start-check/.gitkeep",
     "memory/transcripts/.gitignore",
     "memory/transcripts/.gitkeep",
+    "scripts/session_compression_guard.py",
 ]
 
 SECRET_PATTERNS = [
@@ -69,8 +72,20 @@ def validate_settings(root: Path, errors: list[str]) -> None:
     ]
     if not any("session-start-sync-rules.ps1" in command for command in commands):
         errors.append("SessionStart must keep session-start-sync-rules.ps1")
+    if not any("session-start-hard-gate.ps1" in command for command in commands):
+        errors.append("SessionStart must run session-start-hard-gate.ps1")
     if not any("session-start-state-check.ps1" in command for command in commands):
         errors.append("SessionStart must run session-start-state-check.ps1")
+
+    userprompt_hooks = settings.get("hooks", {}).get("UserPromptSubmit", [])
+    userprompt_commands = [
+        str(hook.get("command", ""))
+        for group in userprompt_hooks
+        for hook in group.get("hooks", [])
+        if isinstance(group, dict)
+    ]
+    if not any("userprompt-kpi-banner.ps1" in command for command in userprompt_commands):
+        errors.append("UserPromptSubmit must run userprompt-kpi-banner.ps1")
 
     precompact_hooks = settings.get("hooks", {}).get("PreCompact", [])
     precompact_commands = [
@@ -119,6 +134,40 @@ def validate_session_start(root: Path, errors: list[str]) -> None:
         require_contains(errors, text, needle, label)
 
 
+def validate_session_compression(root: Path, errors: list[str]) -> None:
+    guard_text = read_text(root, "scripts/session_compression_guard.py")
+    guard_label = "session_compression_guard.py"
+    for needle in [
+        "session_start_forced_fire",
+        "session-delta.csv",
+        "dev_cache_cleanup.py",
+        "[KPI]",
+        "SESSION_START_PHASE",
+    ]:
+        require_contains(errors, guard_text, needle, guard_label)
+
+    hard_gate_text = read_text(root, ".claude/hooks/session-start-hard-gate.ps1")
+    hard_gate_label = "session-start-hard-gate.ps1"
+    for needle in [
+        "SESSION_COMPRESSION_FAIL_CLOSED",
+        "SESSION_COMPRESSION_DRY_RUN",
+        "--mode\", \"session-start",
+        "--apply",
+        "session_compression_guard.py",
+    ]:
+        require_contains(errors, hard_gate_text, needle, hard_gate_label)
+
+    banner_text = read_text(root, ".claude/hooks/userprompt-kpi-banner.ps1")
+    banner_label = "userprompt-kpi-banner.ps1"
+    for needle in [
+        "SESSION_COMPRESSION_USERPROMPT_APPLY",
+        "--mode\", \"userprompt",
+        "--max-age-minutes\", \"30",
+        "session_compression_guard.py",
+    ]:
+        require_contains(errors, banner_text, needle, banner_label)
+
+
 def validate_statusline(root: Path, errors: list[str]) -> None:
     text = read_text(root, ".claude/hooks/statusline.ps1")
     label = "statusline.ps1"
@@ -142,6 +191,7 @@ def validate_runbook(root: Path, errors: list[str]) -> None:
         "`--maintenance`",
         "PreCompact Recovery",
         "SessionStart Recovery",
+        "Session Compression Guard",
         "StatusLine",
         "Secret Handling",
         "python scripts/check_session_state_hooks.py",
@@ -178,6 +228,7 @@ def validate(root: Path, scan: bool) -> list[str]:
     validate_settings(root, errors)
     validate_precompact(root, errors)
     validate_session_start(root, errors)
+    validate_session_compression(root, errors)
     validate_statusline(root, errors)
     validate_runbook(root, errors)
     if scan:

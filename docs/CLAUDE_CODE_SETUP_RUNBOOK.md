@@ -95,6 +95,31 @@ The hook checks:
 The hook never blocks the host session. Warnings are written to the log so the
 agent can recover the state in under one minute after context compaction.
 
+## Session Compression Guard
+
+`.claude/hooks/session-start-hard-gate.ps1` runs
+`scripts/session_compression_guard.py --mode session-start` before the regular
+state check. It emits a one-line KPI banner, appends forced cleanup fires to
+`~/.claude/logs/session-delta.csv`, and writes cooldown state to
+`~/.claude/state/session-compression-guard.json`.
+
+Default behavior is safe for repo-managed hooks:
+
+- SessionStart applies `scripts/dev_cache_cleanup.py --apply` when C: free
+  space is below 26 GB or the last cleanup fire is older than 4 hours.
+- It exits zero by default so an unavailable Python runtime or a missed 28 GB
+  target does not trap a user in a broken local shell.
+- Set `SESSION_COMPRESSION_FAIL_CLOSED=1` to enforce the 28 GB target and return
+  a non-zero exit when cleanup fails or the target is still missed.
+- Set `SESSION_COMPRESSION_DRY_RUN=1` while validating hook wiring without
+  pruning caches.
+
+`.claude/hooks/userprompt-kpi-banner.ps1` runs on `UserPromptSubmit` and emits
+the same `[KPI] C:<gb> RAM:<pct> last_fire:<min> fatigue:<state>` advisory. It
+does not run cleanup unless `SESSION_COMPRESSION_USERPROMPT_APPLY=1` is set,
+which keeps ordinary prompt entry lightweight while preserving the v23 idle-gap
+escape hatch.
+
 ## StatusLine
 
 The repo-managed status line command is:
@@ -153,6 +178,7 @@ Local verification:
 
 ```powershell
 python scripts/check_session_state_hooks.py
+python scripts/session_compression_guard_test.py
 python scripts/codex_session_check.py --json
 git diff --check
 ```

@@ -4,14 +4,18 @@ on:
   pull_request:
     paths:
       - ".claude/hooks/pre-compact-backup.ps1"
+      - ".claude/hooks/session-start-hard-gate.ps1"
       - ".claude/hooks/session-start-state-check.ps1"
       - ".claude/hooks/statusline.ps1"
+      - ".claude/hooks/userprompt-kpi-banner.ps1"
       - ".claude/settings.json"
       - ".github/workflows/session-state-hooks.yml"
       - "docs/CLAUDE_CODE_SETUP_RUNBOOK.md"
       - "memory/transcripts/**"
       - "scripts/check_session_state_hooks.py"
       - "scripts/codex_session_check.py"
+      - "scripts/session_compression_guard.py"
+      - "scripts/session_compression_guard_test.py"
   workflow_dispatch:
 
 permissions:
@@ -32,6 +36,9 @@ jobs:
 
       - name: Validate repo-managed session hooks
         run: python scripts/check_session_state_hooks.py --scan-transcripts
+
+      - name: Session compression guard unit tests
+        run: python scripts/session_compression_guard_test.py
 
       - name: Codex session check JSON smoke
         run: python scripts/codex_session_check.py --json > /tmp/codex-session-check.json
