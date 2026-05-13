@@ -30272,3 +30272,73 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 5. **UI verify [UI-VERIFY] backlog ~7 day overdue** (= Playwright MCP / 4 page)
 6. **MEMORY.md size 監視** (= 第 5 例 trigger ~13-14 KB borderline / 部 212 entry +1)
 7. **v23 candidate ship** (= CRITICAL state auto-recovery + bridge mitigation enforcement + session_kpi.py 38→45 metric + Layer JJ user pre-prompt advisory / 全 4 件 Codex impl 完了後)
+
+---
+
+## Win版#132 part 213 — same-day 4-part fresh start qualified ✅ + EMERGENCY 第 2 例 MISS + DEGRADED 第 1 例 + v23 structural compression mandatory ship (2026-05-13 火 23:02 JST)
+
+### 概要
+- インスタンス: Win Claude #132 (part 213)
+- セッション: 2026-05-13 (火) 23:02-23:30 JST (= ~30 min focused / 90min budget compliance ✅)
+- 前 session: part 212 終了 21:18 JST → +1.74h gap = **fresh start qualified ✅** ([COMPACTION-RESUME] 90min discipline)
+- **同日 4 part 連続 fresh start qualified 第 1 例** (= 部 209-210-211-211b-212-213 / 全 part 90min ✅)
+- 146 part 連続 過去最長 update
+
+### Ship (= 8 件)
+
+1. **EMERGENCY recovery 第 2 例 target MISS** (= dev_cache +472 MB measured / C: 23.85 → 24.30 GB / 30 GB target -5.70 GB short)
+2. **DEGRADED anomaly 第 1 例実証** (= RAM 82.53 → 89.52% / +6.99 pt / v22 Layer HH +3 pt threshold +132% over breach / Python subprocess overhead)
+3. **v22 Layer III FATIGUE 第 3 例実証** (= 211-b 第 1 + 212 第 2 + 213 第 3 / 3 sessions 連続 異なる failure mode = bridge mitigation 多面的限界)
+4. **v23 structural session compression mandatory spec ship 第 1 例** (= 5 new layer JJ-NN / 累積 43 layer)
+   - Layer JJ: SessionStart hard gate (= c_free < 26 OR last_fire > 4h → FORCE invoke + BLOCK tools / fail-closed exit 1)
+   - Layer KK: PreToolUse compression budget (= 10 tool 毎 mandatory snapshot + < 22 GB で async fire / cap 5/session)
+   - Layer LL: SessionEnd /wrap-up auto-compress (= unconditional pre-exit fire / ≥ 28 GB target → exit 0 / miss → exit 1)
+   - Layer MM: idle_gap auto-fire (= UserPromptSubmit hook / elapsed > 30 min → quick fire 30s cap)
+   - Layer NN: user pre-prompt KPI advisory (= always-on banner C: + RAM + age + fatigue)
+5. **#1564 claim 第 1 例** (= [DYNAMIC-CLAIM] product-light category / v23 spec integrate / Layer JJ + KK + MM + NN 全該当 / [comment 4441850845](https://github.com/kanta13jp1/my_web_app/issues/1564#issuecomment-4441850845))
+6. **v22 Layer EE dogfood 第 2 例累積** (= session-delta.csv `win132-part213-fire1` PRE/POST manual paired-row append / 部 212 第 1 → 部 213 第 2 = pattern 確立)
+7. **WBS Top 5 期限近順 + 2-instance split assignment** (= #1495 + #1564 Win Claude / #1640 Win Codex / #2204 Win Claude defer / #1724 user)
+8. **Cross-instance hand-off 第 10 例累積** (= `docs/cross-instance-prs/20260513_codex_part213_v23_structural_session_compression_mandatory.md`)
+
+### Codex deliverable
+- 累積 47 件 5/30 期限 (= 部 212 42 → 部 213 47 / +5)
+- 平均 5.2 件/day pace (= 5/22-5/30 9 day sprint / 残 8 day)
+- v18 Layer K + v23 Layer JJ + v23 Layer LL を最優先 implement 推奨
+
+### Memory file (= 第 10 例累積 same-day batch)
+- `memory/project_20260513_win132_part213.md`
+- `memory/feedback_correction_20260513_part213_degraded_anomaly_first_proof.md`
+
+### Commit
+- (= 本 docs commit hash 後追記)
+
+### Philosophy Alignment (Win#132 part 213)
+- 主要実装: EMERGENCY 第 2 例 + DEGRADED 第 1 例実証 + v23 spec ship + #1564 claim + WBS triage 2-instance split
+- 該当原則: 1 (CEO 感) + 2 (ミッション駆動) + 3 (mentor) + 4 (6 部署) + 5 (商品=価値) + 6 (資本=時間) + 7 (資産負債) + 8 (KPI=昨日の自分) + 9 (IPO/ウェルビーイング) — 計 9/9 ✅ **満点 第 1 例**
+- 整合性スコア: **9/9 ✅** (= **過去最高水準 update** / 部 211-b/212 8/9 → 部 213 9/9)
+- 理念的貢献:
+  - 1 ✅ CEO 自己責任 = user direct ask 第 4 例累積 即 design-to-ship same-day
+  - 2 ✅ ミッション = 資源枯渇による開発停止回避 / v23 = preventive 38 layer に structural mandatory 追加
+  - 3 ✅ mentor = #1564 claim 第 1 例 (= product-light category 引取で mentor unaddressed 累積 9 例 解消の第 1 歩)
+  - 4 ✅ 人事 (= 自分) 最優先 / Layer LL /wrap-up gate = 自分 wellbeing protection
+  - 5 ✅ 商品=ユーザー価値 = Layer NN KPI banner = 自分 (= end user) の awareness improvement
+  - 6 ✅ 資本=時間 = Layer MM idle_gap auto-fire = 時間ロス自動回避
+  - 7 ✅ 資産負債 = session_kpi.py 38 metric + DEGRADED detection で 知的資産記録継続
+  - 8 ✅ KPI=昨日の自分 = 部 212 → 213 +461 MB freed + RAM +6.99 pt DEGRADED 比較 base 強化
+  - 9 ✅ IPO 視野 = structural prevention = systemic resource health 持続可能化
+- 懸念: **9/9 満点 達成** (= 部 211 「3 mentor unaddressed 累積 9 例」 → 部 213 #1564 claim で初解消 ✅)
+
+### next session 候補 (= part 214+)
+1. **5/14 06:00+ JST fresh start MUST** (= [COMPACTION-RESUME] 90min discipline / 同日 4 part 連続 cap)
+2. **#1495 P0 day-of FINAL escalation** (= 5/14 22:00 残 2h + 23:00 残 1h ping batch)
+3. **DISK_HYGIENE §17.26 v22 第 2 例 + §17.27 v23 章追加** (= 既存 doc 章追加 第 21-22 例)
+4. **v23 Codex impl monitor** (= 5/22 sprint kickoff / 47 deliverable / v18 Layer K + JJ + LL 最優先)
+5. **MEMORY.md consolidation 第 5 例 trigger** (= ~21 KB 突破 / 部 213 +2 entries)
+6. **UI verify [UI-VERIFY] backlog ~7 day overdue**
+
+### Lesson
+- **dev_cache cleanup の RAM cost** = +6.99 pt (= Python subprocess + interpreter heap + system other process accumulation)
+- **disk drift rate idle = ~14 MB/min** (= 部 212 → 213 -1.47 GB / 1.74h = bridge mitigation throughput < drift)
+- **structural mandatory compression** = 設計累積 38 layer でも不足 (= bridge mitigation 限界 第 3 例)
+- **3 sessions 連続 異なる failure mode** = bridge mitigation 多面的限界 (= 211-b 双方 catastrophic / 212 disk 吸収 / 213 RAM 逆効果)
+- **v23 5 layer JJ-NN ship = structural prevention 軸 完成** (= JJ hard gate / KK async budget / LL wrap-up gate / MM idle / NN advisory)
