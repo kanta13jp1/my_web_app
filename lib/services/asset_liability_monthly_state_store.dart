@@ -9,12 +9,14 @@ class AssetLiabilityMonthlyState {
   final Map<String, double> paymentOverrides;
   final Set<String> paidAccountNames;
   final Map<String, String> paymentSourceAccountIds;
+  final Map<String, String> cardBillingAccountIds;
   final List<AssetLiabilityIncomePlan> incomePlans;
 
   const AssetLiabilityMonthlyState({
     this.paymentOverrides = const <String, double>{},
     this.paidAccountNames = const <String>{},
     this.paymentSourceAccountIds = const <String, String>{},
+    this.cardBillingAccountIds = const <String, String>{},
     this.incomePlans = const <AssetLiabilityIncomePlan>[],
   });
 
@@ -22,6 +24,7 @@ class AssetLiabilityMonthlyState {
       paymentOverrides.isEmpty &&
       paidAccountNames.isEmpty &&
       paymentSourceAccountIds.isEmpty &&
+      cardBillingAccountIds.isEmpty &&
       incomePlans.isEmpty;
 }
 
@@ -31,6 +34,8 @@ class AssetLiabilityMonthlyStateStore {
   static const String paidPrefsKey = 'asset_liability_paid_accounts_v1';
   static const String paymentSourcePrefsKey =
       'asset_liability_payment_source_accounts_v1';
+  static const String cardBillingPrefsKey =
+      'asset_liability_card_billing_accounts_v1';
   static const String incomePrefsKey = 'asset_liability_income_plans_v1';
   static const String defaultPaymentSourcePrefsKey =
       'asset_liability_default_payment_source_accounts_v1';
@@ -55,6 +60,10 @@ class AssetLiabilityMonthlyStateStore {
       ),
       paymentSourceAccountIds: paymentSourceAccountsForMonth(
         prefs.getString(paymentSourcePrefsKey),
+        monthKey,
+      ),
+      cardBillingAccountIds: cardBillingAccountsForMonth(
+        prefs.getString(cardBillingPrefsKey),
         monthKey,
       ),
       incomePlans: incomePlansForMonth(
@@ -110,6 +119,21 @@ class AssetLiabilityMonthlyStateStore {
     await prefs.setString(
       paymentSourcePrefsKey,
       jsonEncode(allPaymentSources),
+    );
+
+    final allCardBillingAccounts = decodeCardBillingAccounts(
+      prefs.getString(cardBillingPrefsKey),
+    );
+    if (state.cardBillingAccountIds.isEmpty) {
+      allCardBillingAccounts.remove(monthKey);
+    } else {
+      allCardBillingAccounts[monthKey] = Map<String, String>.from(
+        state.cardBillingAccountIds,
+      );
+    }
+    await prefs.setString(
+      cardBillingPrefsKey,
+      jsonEncode(allCardBillingAccounts),
     );
 
     final allIncomePlans = decodeIncomePlans(
@@ -230,6 +254,9 @@ class AssetLiabilityMonthlyStateStore {
       ),
       paymentSourceAccountIds: Map<String, String>.from(
         previousState.paymentSourceAccountIds,
+      ),
+      cardBillingAccountIds: Map<String, String>.from(
+        previousState.cardBillingAccountIds,
       ),
       incomePlans: copiedIncomePlans,
     );
@@ -362,6 +389,12 @@ class AssetLiabilityMonthlyStateStore {
       }
       return MapEntry(monthKey, sources);
     });
+  }
+
+  static Map<String, Map<String, String>> decodeCardBillingAccounts(
+    String? raw,
+  ) {
+    return decodePaymentSourceAccounts(raw);
   }
 
   static Map<String, List<AssetLiabilityIncomePlan>> decodeIncomePlans(
@@ -565,6 +598,15 @@ class AssetLiabilityMonthlyStateStore {
     );
   }
 
+  static Map<String, String> cardBillingAccountsForMonth(
+    String? raw,
+    String monthKey,
+  ) {
+    return Map<String, String>.from(
+      decodeCardBillingAccounts(raw)[monthKey] ?? const <String, String>{},
+    );
+  }
+
   static List<AssetLiabilityIncomePlan> incomePlansForMonth(
     String? raw,
     String monthKey,
@@ -600,10 +642,18 @@ class AssetLiabilityMonthlyStateStore {
       migratedPaymentSources[liabilityId] = sourceId;
     }
 
+    final migratedCardBillingAccounts = <String, String>{};
+    for (final entry in state.cardBillingAccountIds.entries) {
+      final liabilityId = legacyKeyToAccountId[entry.key] ?? entry.key;
+      final cardId = legacyKeyToAccountId[entry.value] ?? entry.value;
+      migratedCardBillingAccounts[liabilityId] = cardId;
+    }
+
     return AssetLiabilityMonthlyState(
       paymentOverrides: migratedPayments,
       paidAccountNames: migratedPaidAccounts,
       paymentSourceAccountIds: migratedPaymentSources,
+      cardBillingAccountIds: migratedCardBillingAccounts,
       incomePlans: state.incomePlans,
     );
   }

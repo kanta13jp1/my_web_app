@@ -104,6 +104,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, double> _monthlyPaymentOverrides = <String, double>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
   Map<String, String> _paymentSourceAccountIds = <String, String>{};
+  Map<String, String> _cardBillingAccountIds = <String, String>{};
   Map<String, String> _defaultPaymentSourceAccountIds = <String, String>{};
   List<AssetLiabilityIncomePlan> _monthlyIncomePlans =
       <AssetLiabilityIncomePlan>[];
@@ -810,6 +811,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _paymentSourceAccountIds = Map<String, String>.from(
           state.paymentSourceAccountIds,
         );
+        _cardBillingAccountIds = Map<String, String>.from(
+          state.cardBillingAccountIds,
+        );
         _defaultPaymentSourceAccountIds = Map<String, String>.from(
           defaultSources,
         );
@@ -841,6 +845,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
           paymentSourceAccountIds: Map<String, String>.from(
             _paymentSourceAccountIds,
+          ),
+          cardBillingAccountIds: Map<String, String>.from(
+            _cardBillingAccountIds,
           ),
           incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
         ),
@@ -1030,6 +1037,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
         ),
+        cardBillingAccountIds: Map<String, String>.from(
+          _cardBillingAccountIds,
+        ),
         incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
       ),
       legacyKeyToAccountId: legacyKeyToAccountId,
@@ -1043,6 +1053,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _sameStringMap(
           _paymentSourceAccountIds,
           migrated.paymentSourceAccountIds,
+        ) &&
+        _sameStringMap(
+          _cardBillingAccountIds,
+          migrated.cardBillingAccountIds,
         ) &&
         _sameStringMap(
           _defaultPaymentSourceAccountIds,
@@ -1060,6 +1074,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaidAccountNames = Set<String>.from(migrated.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           migrated.paymentSourceAccountIds,
+        );
+        _cardBillingAccountIds = Map<String, String>.from(
+          migrated.cardBillingAccountIds,
         );
         _defaultPaymentSourceAccountIds = Map<String, String>.from(
           migratedDefaultSources,
@@ -1186,6 +1203,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
+  void _updateCardBillingAccount(
+    AssetLiabilityDebtRow row,
+    String? billingAccountId,
+  ) {
+    final selected =
+        billingAccountId ?? AssetLiabilityPlanningService.directPaymentMethodId;
+    setState(() {
+      if (selected == AssetLiabilityPlanningService.directPaymentMethodId) {
+        if (row.includedInBillingAccount ||
+            _cardBillingAccountIds.containsKey(row.id)) {
+          _cardBillingAccountIds[row.id] =
+              AssetLiabilityPlanningService.directPaymentMethodId;
+        } else {
+          _cardBillingAccountIds.remove(row.id);
+        }
+      } else {
+        _cardBillingAccountIds[row.id] = selected;
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
   Future<void> _saveDefaultPaymentSources() async {
     try {
       await _assetLiabilityRepository.saveDefaultPaymentSources(
@@ -1241,6 +1280,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _monthlyPaidAccountNames = <String>{};
       _paymentSourceAccountIds = Map<String, String>.from(
         copied.paymentSourceAccountIds,
+      );
+      _cardBillingAccountIds = Map<String, String>.from(
+        copied.cardBillingAccountIds,
       );
       _monthlyIncomePlans = incomePlansWithTemplates;
       _syncMonthlyPaymentControllers();
@@ -1633,6 +1675,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         )
         .toList()
       ..sort((a, b) => b.balance.compareTo(a.balance));
+  }
+
+  List<AssetLiabilityAccount> _cardBillingAccountOptions(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    return workbook.accounts
+        .where(
+            (account) => account.kind == AssetLiabilityAccountKind.creditCard)
+        .toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
   }
 
   List<Map<String, dynamic>> _liabilitiesFromSnapshot(
@@ -6361,6 +6413,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       paidAccountNames: _monthlyPaidAccountNames,
       paymentSourceAccountIds: _paymentSourceAccountIds,
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
+      cardBillingAccountIds: _cardBillingAccountIds,
       incomePlans: _monthlyIncomePlans,
       includeDefaultFixedPayments: true,
     );
@@ -6921,7 +6974,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '${AssetLiabilityPlanningService.auCardBillingNotice} $labels',
+              '${AssetLiabilityPlanningService.cardBillingNotice} $labels',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
@@ -8163,6 +8216,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             dataRowMinHeight: 60,
             dataRowMaxHeight: 76,
             columns: const [
+              DataColumn(label: Text('支払い方式')),
               DataColumn(label: Text('項目')),
               DataColumn(label: Text('種別')),
               DataColumn(label: Text('残高'), numeric: true),
@@ -8179,6 +8233,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               for (final row in rows)
                 DataRow(
                   cells: [
+                    DataCell(_buildPaymentMethodDropdown(row, workbook)),
                     DataCell(Text(row.name)),
                     DataCell(Text(_assetKindLabel(row.kind))),
                     DataCell(Text(_formatManagementYen(row.balance))),
@@ -8206,6 +8261,45 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPaymentMethodDropdown(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final cardOptions = _cardBillingAccountOptions(workbook)
+        .where((account) => account.id != row.id)
+        .toList(growable: false);
+    final configured = _cardBillingAccountIds[row.id];
+    final selected = configured ??
+        (row.paymentMethod == AssetLiabilityPaymentMethod.includedInCard
+            ? row.billingAccountId
+            : AssetLiabilityPlanningService.directPaymentMethodId);
+    final validSelected =
+        selected == AssetLiabilityPlanningService.directPaymentMethodId ||
+            cardOptions.any((account) => account.id == selected);
+
+    return SizedBox(
+      width: 220,
+      child: DropdownButton<String>(
+        value: validSelected
+            ? selected
+            : AssetLiabilityPlanningService.directPaymentMethodId,
+        isExpanded: true,
+        items: [
+          const DropdownMenuItem<String>(
+            value: AssetLiabilityPlanningService.directPaymentMethodId,
+            child: Text(AssetLiabilityPlanningService.directPaymentLabel),
+          ),
+          for (final account in cardOptions)
+            DropdownMenuItem<String>(
+              value: account.id,
+              child: Text('${account.name}請求に含む'),
+            ),
+        ],
+        onChanged: (value) => _updateCardBillingAccount(row, value),
+      ),
     );
   }
 

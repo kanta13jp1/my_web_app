@@ -26,6 +26,9 @@ void main() {
           paymentSourceAccountIds: const <String, String>{
             'mobit': 'smbc_otsuka',
           },
+          cardBillingAccountIds: const <String, String>{
+            'kddi_provider': 'paypay_card',
+          },
           incomePlans: <AssetLiabilityIncomePlan>[
             AssetLiabilityIncomePlan(
               id: 'salary',
@@ -46,6 +49,7 @@ void main() {
       expect(restored.paymentOverrides['kddi_provider'], 5764);
       expect(restored.paidAccountNames, contains('kddi_provider'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
+      expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
       expect(restored.incomePlans.single.name, 'Salary');
       expect(restored.incomePlans.single.received, isFalse);
     });
@@ -583,6 +587,9 @@ void main() {
         paymentOverrides: const <String, double>{'mobit': 70000},
         paidAccountNames: const <String>{'kddi_provider'},
         paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
+        cardBillingAccountIds: const <String, String>{
+          'kddi_provider': 'paypay_card',
+        },
         incomePlans: <AssetLiabilityIncomePlan>[
           AssetLiabilityIncomePlan(
             id: 'salary',
@@ -613,6 +620,7 @@ void main() {
       expect(restored.paymentOverrides['mobit'], 70000);
       expect(restored.paidAccountNames, contains('kddi_provider'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
+      expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
       expect(restored.incomePlans.single.received, isTrue);
     });
 
@@ -932,6 +940,9 @@ AssetLiabilityMonthlyState _sampleMonthlyState() {
     paymentOverrides: const <String, double>{'mobit': 70000},
     paidAccountNames: const <String>{'kddi_provider'},
     paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
+    cardBillingAccountIds: const <String, String>{
+      'kddi_provider': 'paypay_card',
+    },
     incomePlans: <AssetLiabilityIncomePlan>[
       AssetLiabilityIncomePlan(
         id: 'salary',

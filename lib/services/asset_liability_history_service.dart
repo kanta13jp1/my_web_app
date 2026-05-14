@@ -178,6 +178,7 @@ class AssetLiabilityHistoryService {
     final rows = workbook.cashflowRows.where((row) => row.isPayment).toList();
     return _csv([
       const <Object?>[
+        '請求先カード',
         '日付',
         '支払先',
         '支払原資口座',
@@ -192,6 +193,7 @@ class AssetLiabilityHistoryService {
       ],
       for (final row in rows)
         <Object?>[
+          row.billingAccountName ?? row.billingAccountId ?? '',
           DateFormat('yyyy-MM-dd').format(row.paymentDate),
           row.accountName,
           row.paymentSourceAccountName ?? '未設定',

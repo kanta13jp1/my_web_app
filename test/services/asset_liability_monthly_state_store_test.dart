@@ -24,6 +24,9 @@ void main() {
           paymentSourceAccountIds: const <String, String>{
             'mobit': 'custom_bank',
           },
+          cardBillingAccountIds: const <String, String>{
+            'au': 'aupay_card',
+          },
           incomePlans: <AssetLiabilityIncomePlan>[
             AssetLiabilityIncomePlan(
               id: 'income_salary',
@@ -44,10 +47,12 @@ void main() {
       expect(loadedMay.paymentOverrides['モビット'], 70000);
       expect(loadedMay.paidAccountNames, contains('auPayカード'));
       expect(loadedMay.paymentSourceAccountIds['mobit'], 'custom_bank');
+      expect(loadedMay.cardBillingAccountIds['au'], 'aupay_card');
       expect(loadedMay.incomePlans.single.name, 'Salary');
       expect(loadedJune.paymentOverrides, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
+      expect(loadedJune.cardBillingAccountIds, isEmpty);
       expect(loadedJune.incomePlans, isEmpty);
     });
 
@@ -74,6 +79,9 @@ void main() {
           paymentSourceAccountIds: <String, String>{
             'mobit': 'custom_bank',
           },
+          cardBillingAccountIds: <String, String>{
+            'au': 'aupay_card',
+          },
         ),
       );
       await store.saveMonth(
@@ -86,6 +94,7 @@ void main() {
       expect(loaded.paymentOverrides, isEmpty);
       expect(loaded.paidAccountNames, isEmpty);
       expect(loaded.paymentSourceAccountIds, isEmpty);
+      expect(loaded.cardBillingAccountIds, isEmpty);
       expect(loaded.incomePlans, isEmpty);
     });
 
@@ -116,6 +125,24 @@ void main() {
       });
     });
 
+    test('migrates card billing routing keys to stable account ids', () {
+      final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
+        state: const AssetLiabilityMonthlyState(
+          cardBillingAccountIds: <String, String>{
+            'Legacy utility': 'Legacy card',
+          },
+        ),
+        legacyKeyToAccountId: const <String, String>{
+          'Legacy utility': 'custom_utility',
+          'Legacy card': 'paypay_card',
+        },
+      );
+
+      expect(migrated.cardBillingAccountIds, <String, String>{
+        'custom_utility': 'paypay_card',
+      });
+    });
+
     test('copies previous month settings without paid or received state',
         () async {
       await store.saveMonth(
@@ -129,6 +156,9 @@ void main() {
           },
           paymentSourceAccountIds: const <String, String>{
             'mobit': 'custom_bank',
+          },
+          cardBillingAccountIds: const <String, String>{
+            'kddi_provider': 'paypay_card',
           },
           incomePlans: <AssetLiabilityIncomePlan>[
             AssetLiabilityIncomePlan(
@@ -153,10 +183,16 @@ void main() {
       expect(copied.paymentSourceAccountIds, <String, String>{
         'mobit': 'custom_bank',
       });
+      expect(copied.cardBillingAccountIds, <String, String>{
+        'kddi_provider': 'paypay_card',
+      });
       expect(copied.paidAccountNames, isEmpty);
       expect(copied.incomePlans.single.date, DateTime(2026, 6, 30));
       expect(copied.incomePlans.single.received, isFalse);
       expect(loaded.paidAccountNames, isEmpty);
+      expect(loaded.cardBillingAccountIds, <String, String>{
+        'kddi_provider': 'paypay_card',
+      });
       expect(loaded.incomePlans.single.received, isFalse);
     });
 

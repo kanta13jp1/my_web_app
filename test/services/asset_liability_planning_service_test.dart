@@ -256,6 +256,10 @@ void main() {
           au.billingAccountId,
           AssetLiabilityPlanningService.auPayCardAccountId,
         );
+        expect(
+          au.paymentMethod,
+          AssetLiabilityPaymentMethod.includedInCard,
+        );
         expect(au.includedInBillingAccount, isTrue);
         expect(au.isDirectCashflowTarget, isFalse);
         expect(auPay.isDirectCashflowTarget, isTrue);
@@ -274,6 +278,52 @@ void main() {
           auPay.scheduledPaymentAmount,
         );
         expect(workbook.cashAfterScheduledPayments, 40000);
+      },
+    );
+
+    test(
+      'allows arbitrary payment items to be included in card billing',
+      () {
+        final workbook = service.buildWorkbook(
+          latestSnapshot: <String, double>{
+            'cash': 50000,
+            'KDDI': -5764,
+            'PayPay': -20000,
+          },
+          baseDate: DateTime(2026, 5, 1),
+          monthlyPaymentOverrides: const <String, double>{
+            AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+            'paypay_card': 20000,
+          },
+          cardBillingAccountIds: const <String, String>{
+            AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+          },
+        );
+
+        final kddi = workbook.debtMasterRows.firstWhere(
+          (row) =>
+              row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+        );
+        final payPay = workbook.debtMasterRows.firstWhere(
+          (row) => row.id == 'paypay_card',
+        );
+        final kddiCashflow = workbook.cashflowRows.firstWhere(
+          (row) =>
+              row.accountId ==
+              AssetLiabilityPlanningService.kddiProviderAccountId,
+        );
+
+        expect(kddi.paymentMethod, AssetLiabilityPaymentMethod.includedInCard);
+        expect(kddi.billingAccountId, 'paypay_card');
+        expect(kddi.isDirectCashflowTarget, isFalse);
+        expect(payPay.isDirectCashflowTarget, isTrue);
+        expect(
+          workbook.paymentDayRisks.any((risk) => risk.paymentDay == 25),
+          isFalse,
+        );
+        expect(kddiCashflow.cashAfterPayment, kddiCashflow.cashBeforePayment);
+        expect(workbook.monthlyUnpaidPaymentTotal, 20000);
+        expect(workbook.cashAfterScheduledPayments, 30000);
       },
     );
 
@@ -579,6 +629,7 @@ void main() {
       expect(kddi.name, AssetLiabilityPlanningService.kddiProviderAccountName);
       expect(kddi.kind, AssetLiabilityAccountKind.utility);
       expect(kddi.paymentDay, 25);
+      expect(kddi.paymentMethod, AssetLiabilityPaymentMethod.direct);
       expect(kddi.manualPaymentAmount, 5764);
       expect(kddi.paymentAmountEstimated, isFalse);
       expect(
