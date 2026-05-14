@@ -186,6 +186,26 @@ void main() {
     );
   });
 
+  test('drag helpers snap to 15 minutes and preserve event duration', () {
+    final originalStart = DateTime(2026, 5, 14, 9);
+    final originalEnd = DateTime(2026, 5, 14, 10, 30);
+    final moved = rescheduleCalendarEventTimes(
+      {
+        'start_at': originalStart.toIso8601String(),
+        'end_at': originalEnd.toIso8601String(),
+        'all_day': false,
+      },
+      DateTime(2026, 5, 14, 13, 8),
+    );
+
+    expect(moved.startAt, DateTime(2026, 5, 14, 13, 15));
+    expect(moved.endAt, DateTime(2026, 5, 14, 14, 45));
+    expect(
+      snapCalendarEventStartToGrid(DateTime(2026, 5, 14, 23, 58)),
+      DateTime(2026, 5, 14, 23, 45),
+    );
+  });
+
   Widget testWidget() {
     return MaterialApp(
       home: CalendarEventsPage(supabaseClient: mockSupabaseClient),
@@ -214,6 +234,100 @@ void main() {
     expect(find.text('Day view'), findsOneWidget);
     expect(find.text('00:00'), findsOneWidget);
     expect(find.text('23:00'), findsOneWidget);
+  });
+
+  testWidgets('day timeline drag and drop moves event to snapped slot', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1000, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final today = DateTime.now();
+    final selectedDay = DateTime(today.year, today.month, today.day);
+    final startAt = DateTime(
+      selectedDay.year,
+      selectedDay.month,
+      selectedDay.day,
+      9,
+    );
+    final endAt = startAt.add(const Duration(hours: 1));
+    final movedStart = DateTime(
+      selectedDay.year,
+      selectedDay.month,
+      selectedDay.day,
+      10,
+      15,
+    );
+    final movedEnd = movedStart.add(const Duration(hours: 1));
+    final event = {
+      'event_id': 'event-drag',
+      'title': 'Move me',
+      'description': 'Drag this card',
+      'start_at': startAt.toIso8601String(),
+      'end_at': endAt.toIso8601String(),
+      'all_day': false,
+      'color': '#4285f4',
+    };
+    stubCalendarList([event]);
+    when(
+      mockFunctionsClient.invoke(
+        'app-hub',
+        body: {
+          'action': 'calendar.update',
+          'id': 'event-drag',
+          'title': 'Move me',
+          'description': 'Drag this card',
+          'start_at': movedStart.toIso8601String(),
+          'end_at': movedEnd.toIso8601String(),
+          'all_day': false,
+          'color': '#4285f4',
+          'reminder_min': null,
+          'calendar_id': 'default',
+          'rrule': null,
+        },
+      ),
+    ).thenAnswer((_) async => mockResponse({'success': true}));
+
+    await tester.pumpWidget(testWidget());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Day'));
+    await tester.pumpAndSettle();
+
+    final target = find.byKey(const Key('calendar_drop_slot_615'));
+    await tester.ensureVisible(target);
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('Move me')),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await gesture.moveTo(tester.getCenter(target));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    verify(
+      mockFunctionsClient.invoke(
+        'app-hub',
+        body: {
+          'action': 'calendar.update',
+          'id': 'event-drag',
+          'title': 'Move me',
+          'description': 'Drag this card',
+          'start_at': movedStart.toIso8601String(),
+          'end_at': movedEnd.toIso8601String(),
+          'all_day': false,
+          'color': '#4285f4',
+          'reminder_min': null,
+          'calendar_id': 'default',
+          'rrule': null,
+        },
+      ),
+    ).called(1);
   });
 
   testWidgets(
