@@ -3,21 +3,22 @@ import 'package:my_web_app/services/calendar_ics_service.dart';
 
 void main() {
   test('buildCalendarEventsIcs exports event metadata and RRULE', () {
-    final ics = buildCalendarEventsIcs([
-      {
-        'event_id': 'event-1',
-        'title': 'Budget review',
-        'description': 'Revise forecast, cash; debt',
-        'start_at': DateTime.utc(2026, 5, 14, 9).toIso8601String(),
-        'end_at': DateTime.utc(2026, 5, 14, 10).toIso8601String(),
-        'all_day': false,
-        'color': '#34a853',
-        'calendar_id': 'finance',
-        'calendar_name': 'Finance',
-        'reminder_min': 15,
-        'rrule': 'RRULE:FREQ=WEEKLY;COUNT=2',
-        'timezone': 'Asia/Tokyo',
-      },
+    final ics = buildCalendarEventsIcs(
+      [
+        {
+          'event_id': 'event-1',
+          'title': 'Budget review',
+          'description': 'Revise forecast, cash; debt',
+          'start_at': DateTime.utc(2026, 5, 14, 9).toIso8601String(),
+          'end_at': DateTime.utc(2026, 5, 14, 10).toIso8601String(),
+          'all_day': false,
+          'color': '#34a853',
+          'calendar_id': 'finance',
+          'calendar_name': 'Finance',
+          'reminder_min': 15,
+          'rrule': 'RRULE:FREQ=WEEKLY;COUNT=2',
+          'timezone': 'Asia/Tokyo',
+        },
       ],
       generatedAt: DateTime.utc(2026, 5, 14, 8),
     );
