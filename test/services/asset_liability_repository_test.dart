@@ -175,6 +175,183 @@ void main() {
     );
   });
 
+  group('FeatureFlaggedAssetLiabilityRepository', () {
+    test('factory keeps Supabase sync disabled by default', () {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+
+      final repository = AssetLiabilityRepositoryFactory.createDefault(
+        localRepository: local,
+        remoteStore: remote,
+      );
+
+      expect(AssetLiabilityRepositoryFactory.supabaseSyncEnabled, isFalse);
+      expect(repository, same(local));
+      expect(remote.calls, isEmpty);
+    });
+
+    test('does not call remote store when Supabase sync flag is off', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: false,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+
+      await repository.saveMonth(month: month, state: _sampleMonthlyState());
+      final restored = await repository.loadMonth(month);
+
+      expect(restored.paymentOverrides['mobit'], 70000);
+      expect(remote.calls, isEmpty);
+    });
+
+    test(
+      'saves monthly data and settings through remote store when on',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+        final snapshot = _sampleSnapshot('2026-05');
+
+        await repository.saveMonth(month: month, state: _sampleMonthlyState());
+        await repository.saveDefaultPaymentSources(const <String, String>{
+          'mobit': 'smbc_otsuka',
+        });
+        await repository.saveRecurringIncomeTemplates(
+          <AssetLiabilityRecurringIncomeTemplate>[
+            _sampleRecurringIncomeTemplate(),
+          ],
+        );
+        await repository.saveMonthlySnapshot(snapshot);
+
+        expect(remote.monthState('2026-05')?.paymentOverrides['mobit'], 70000);
+        expect(remote.defaultPaymentSources['mobit'], 'smbc_otsuka');
+        expect(remote.recurringIncomeTemplates.single.id, 'salary');
+        expect(remote.monthlySnapshots.single.monthKey, '2026-05');
+      },
+    );
+
+    test('keeps local save when remote save fails', () async {
+      final errors = <Object>[];
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()..failSaves = true;
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+        onSyncError: (error, _) => errors.add(error),
+      );
+      final month = DateTime(2026, 5);
+
+      await repository.saveMonth(month: month, state: _sampleMonthlyState());
+
+      final localState = await local.loadMonth(month);
+      expect(localState.paymentOverrides['mobit'], 70000);
+      expect(errors, isNotEmpty);
+      expect(remote.calls, contains('saveMonth:user-1:2026-05'));
+    });
+
+    test('uploads local monthly state when remote is empty', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+      await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+      final restored = await repository.loadMonth(month);
+
+      expect(restored.paymentOverrides['mobit'], 70000);
+      expect(remote.monthState('2026-05')?.paymentOverrides['mobit'], 70000);
+    });
+
+    test('restores remote monthly state when local is empty', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedMonth(DateTime(2026, 5), _sampleMonthlyState());
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+
+      final restored = await repository.loadMonth(month);
+      final localState = await local.loadMonth(month);
+
+      expect(restored.paymentOverrides['mobit'], 70000);
+      expect(localState.paymentOverrides['mobit'], 70000);
+    });
+
+    test('restores remote settings and snapshots when local is empty',
+        () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedDefaultPaymentSources(const <String, String>{
+          'mobit': 'smbc_otsuka',
+        })
+        ..seedRecurringIncomeTemplates(<AssetLiabilityRecurringIncomeTemplate>[
+          _sampleRecurringIncomeTemplate(),
+        ])
+        ..seedMonthlySnapshots(<AssetLiabilityMonthlySnapshot>[
+          _sampleSnapshot('2026-05'),
+        ]);
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+
+      final sources = await repository.loadDefaultPaymentSources();
+      final templates = await repository.loadRecurringIncomeTemplates();
+      final snapshots = await repository.loadMonthlySnapshots();
+
+      expect(sources['mobit'], 'smbc_otsuka');
+      expect(templates.single.id, 'salary');
+      expect(snapshots.single.monthKey, '2026-05');
+      expect((await local.loadDefaultPaymentSources())['mobit'], 'smbc_otsuka');
+      expect((await local.loadRecurringIncomeTemplates()).single.id, 'salary');
+      expect((await local.loadMonthlySnapshots()).single.monthKey, '2026-05');
+    });
+
+    test(
+      'keeps local repository usable when no Supabase user is available',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => null,
+        );
+        final month = DateTime(2026, 5);
+
+        await repository.saveMonth(month: month, state: _sampleMonthlyState());
+        final restored = await repository.loadMonth(month);
+
+        expect(restored.paymentOverrides['mobit'], 70000);
+        expect(remote.calls, isEmpty);
+      },
+    );
+  });
+
   group('Asset liability Supabase payloads', () {
     test('round-trips monthly state payload', () {
       final state = AssetLiabilityMonthlyState(
@@ -363,4 +540,209 @@ class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {
     _snapshots.add(snapshot);
     _snapshots.sort((a, b) => a.monthKey.compareTo(b.monthKey));
   }
+}
+
+class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
+  final List<String> calls = <String>[];
+  final Map<String, AssetLiabilityMonthlyState> _states =
+      <String, AssetLiabilityMonthlyState>{};
+  final Map<String, String> _defaultPaymentSources = <String, String>{};
+  final List<AssetLiabilityRecurringIncomeTemplate> _recurringIncomeTemplates =
+      <AssetLiabilityRecurringIncomeTemplate>[];
+  final List<AssetLiabilityMonthlySnapshot> _monthlySnapshots =
+      <AssetLiabilityMonthlySnapshot>[];
+
+  bool _hasDefaultPaymentSources = false;
+  bool _hasRecurringIncomeTemplates = false;
+  bool _hasMonthlySnapshots = false;
+  bool failSaves = false;
+
+  Map<String, String> get defaultPaymentSources =>
+      Map<String, String>.from(_defaultPaymentSources);
+
+  List<AssetLiabilityRecurringIncomeTemplate> get recurringIncomeTemplates =>
+      List<AssetLiabilityRecurringIncomeTemplate>.from(
+        _recurringIncomeTemplates,
+      );
+
+  List<AssetLiabilityMonthlySnapshot> get monthlySnapshots =>
+      List<AssetLiabilityMonthlySnapshot>.from(_monthlySnapshots);
+
+  AssetLiabilityMonthlyState? monthState(String monthKey) => _states[monthKey];
+
+  void seedMonth(DateTime month, AssetLiabilityMonthlyState state) {
+    _states[AssetLiabilityMonthlyStateStore.formatMonthKey(month)] = state;
+  }
+
+  void seedDefaultPaymentSources(Map<String, String> sources) {
+    _hasDefaultPaymentSources = true;
+    _defaultPaymentSources
+      ..clear()
+      ..addAll(sources);
+  }
+
+  void seedRecurringIncomeTemplates(
+    List<AssetLiabilityRecurringIncomeTemplate> templates,
+  ) {
+    _hasRecurringIncomeTemplates = true;
+    _recurringIncomeTemplates
+      ..clear()
+      ..addAll(templates);
+  }
+
+  void seedMonthlySnapshots(List<AssetLiabilityMonthlySnapshot> snapshots) {
+    _hasMonthlySnapshots = true;
+    _monthlySnapshots
+      ..clear()
+      ..addAll(snapshots)
+      ..sort((a, b) => a.monthKey.compareTo(b.monthKey));
+  }
+
+  @override
+  Future<AssetLiabilityMonthlyState?> loadMonth({
+    required String userId,
+    required DateTime month,
+  }) async {
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    calls.add('loadMonth:$userId:$monthKey');
+    return _states[monthKey];
+  }
+
+  @override
+  Future<void> saveMonth({
+    required String userId,
+    required DateTime month,
+    required AssetLiabilityMonthlyState state,
+  }) async {
+    final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(month);
+    calls.add('saveMonth:$userId:$monthKey');
+    _throwIfSavingFails();
+    _states[monthKey] = state;
+  }
+
+  @override
+  Future<Map<String, String>?> loadDefaultPaymentSources({
+    required String userId,
+  }) async {
+    calls.add('loadDefaultPaymentSources:$userId');
+    if (!_hasDefaultPaymentSources) {
+      return null;
+    }
+    return Map<String, String>.from(_defaultPaymentSources);
+  }
+
+  @override
+  Future<void> saveDefaultPaymentSources({
+    required String userId,
+    required Map<String, String> sources,
+  }) async {
+    calls.add('saveDefaultPaymentSources:$userId');
+    _throwIfSavingFails();
+    _hasDefaultPaymentSources = true;
+    _defaultPaymentSources
+      ..clear()
+      ..addAll(sources);
+  }
+
+  @override
+  Future<List<AssetLiabilityRecurringIncomeTemplate>?>
+      loadRecurringIncomeTemplates({required String userId}) async {
+    calls.add('loadRecurringIncomeTemplates:$userId');
+    if (!_hasRecurringIncomeTemplates) {
+      return null;
+    }
+    return List<AssetLiabilityRecurringIncomeTemplate>.from(
+      _recurringIncomeTemplates,
+    );
+  }
+
+  @override
+  Future<void> saveRecurringIncomeTemplates({
+    required String userId,
+    required List<AssetLiabilityRecurringIncomeTemplate> templates,
+  }) async {
+    calls.add('saveRecurringIncomeTemplates:$userId');
+    _throwIfSavingFails();
+    _hasRecurringIncomeTemplates = true;
+    _recurringIncomeTemplates
+      ..clear()
+      ..addAll(templates);
+  }
+
+  @override
+  Future<List<AssetLiabilityMonthlySnapshot>?> loadMonthlySnapshots({
+    required String userId,
+  }) async {
+    calls.add('loadMonthlySnapshots:$userId');
+    if (!_hasMonthlySnapshots) {
+      return null;
+    }
+    return List<AssetLiabilityMonthlySnapshot>.from(_monthlySnapshots);
+  }
+
+  @override
+  Future<void> saveMonthlySnapshot({
+    required String userId,
+    required AssetLiabilityMonthlySnapshot snapshot,
+  }) async {
+    calls.add('saveMonthlySnapshot:$userId:${snapshot.monthKey}');
+    _throwIfSavingFails();
+    _hasMonthlySnapshots = true;
+    _monthlySnapshots.removeWhere(
+      (current) => current.monthKey == snapshot.monthKey,
+    );
+    _monthlySnapshots.add(snapshot);
+    _monthlySnapshots.sort((a, b) => a.monthKey.compareTo(b.monthKey));
+  }
+
+  void _throwIfSavingFails() {
+    if (failSaves) {
+      throw StateError('remote save failed');
+    }
+  }
+}
+
+AssetLiabilityMonthlyState _sampleMonthlyState() {
+  return AssetLiabilityMonthlyState(
+    paymentOverrides: const <String, double>{'mobit': 70000},
+    paidAccountNames: const <String>{'kddi_provider'},
+    paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
+    incomePlans: <AssetLiabilityIncomePlan>[
+      AssetLiabilityIncomePlan(
+        id: 'salary',
+        date: DateTime(2026, 5, 25),
+        name: 'Salary',
+        amount: 250000,
+        destinationAccountId: 'smbc_otsuka',
+        destinationAccountName: 'SMBC Otsuka',
+        received: false,
+      ),
+    ],
+  );
+}
+
+AssetLiabilityRecurringIncomeTemplate _sampleRecurringIncomeTemplate() {
+  return const AssetLiabilityRecurringIncomeTemplate(
+    id: 'salary',
+    dayOfMonth: 25,
+    name: 'Salary',
+    amount: 250000,
+    destinationAccountId: 'smbc_otsuka',
+    destinationAccountName: 'SMBC Otsuka',
+  );
+}
+
+AssetLiabilityMonthlySnapshot _sampleSnapshot(String monthKey) {
+  return AssetLiabilityMonthlySnapshot(
+    monthKey: monthKey,
+    savedAt: DateTime.utc(2026, 5, 31, 12),
+    positiveAssetTotal: 120000,
+    liabilityTotal: -7200000,
+    netWorth: -7080000,
+    cashLikeTotal: 60000,
+    monthlyScheduledPaymentTotal: 180000,
+    monthlyPaidPaymentTotal: 100000,
+    monthlyUnpaidPaymentTotal: 80000,
+    overduePaymentCount: 1,
+  );
 }
