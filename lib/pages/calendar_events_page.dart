@@ -39,6 +39,7 @@ const String _defaultCalendarId = 'default';
 const String _defaultCalendarName = 'Default';
 const String _defaultCalendarColor = '#4285f4';
 const int _maxExpandedOccurrences = 732;
+const int _calendarDragSnapMinutes = 15;
 
 const Map<int, String> _weekdayLabels = {
   DateTime.monday: 'Mon',
@@ -298,6 +299,36 @@ bool _eventRangeOverlaps(
   final safeEnd =
       end.isAfter(start) ? end : start.add(const Duration(hours: 1));
   return safeEnd.isAfter(rangeStart) && start.isBefore(rangeEnd);
+}
+
+@visibleForTesting
+DateTime snapCalendarEventStartToGrid(
+  DateTime value, {
+  int granularityMinutes = _calendarDragSnapMinutes,
+}) {
+  final safeGranularity =
+      granularityMinutes <= 0 ? _calendarDragSnapMinutes : granularityMinutes;
+  final dayStart = DateTime(value.year, value.month, value.day);
+  final minutes = value.difference(dayStart).inMinutes;
+  final snappedMinutes = (minutes / safeGranularity).round() * safeGranularity;
+  final clampedMinutes = _clampInt(
+    snappedMinutes,
+    0,
+    24 * 60 - safeGranularity,
+  );
+  return dayStart.add(Duration(minutes: clampedMinutes));
+}
+
+@visibleForTesting
+({DateTime startAt, DateTime endAt}) rescheduleCalendarEventTimes(
+  Map<String, dynamic> event,
+  DateTime targetStart,
+) {
+  final snappedStart = snapCalendarEventStartToGrid(targetStart);
+  final currentStart = _eventDateTime(event, 'start_at') ?? snappedStart;
+  final currentEnd = _eventDateTime(event, 'end_at');
+  final duration = _eventDuration(event, currentStart, currentEnd);
+  return (startAt: snappedStart, endAt: snappedStart.add(duration));
 }
 
 _CalendarRecurrencePreset _recurrencePresetForRRule(String? rrule) {
@@ -1008,6 +1039,31 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     _fetchMonth(next);
   }
 
+  Future<void> _moveTimedEvent(
+    Map<String, dynamic> event,
+    DateTime targetStart,
+  ) async {
+    final eventId = calendarEventSeriesId(event);
+    if (eventId.isEmpty ||
+        _eventIsAllDay(event) ||
+        calendarEventIsRecurrenceOccurrence(event)) {
+      return;
+    }
+    final nextTimes = rescheduleCalendarEventTimes(event, targetStart);
+    await _updateEvent(
+      eventId: eventId,
+      title: _eventTitle(event),
+      description: event['description']?.toString() ?? '',
+      startAt: nextTimes.startAt,
+      endAt: nextTimes.endAt,
+      allDay: false,
+      color: _eventColorHex(event),
+      reminderMinutes: calendarEventReminderMinutes(event),
+      calendarId: calendarEventCalendarId(event),
+      rrule: calendarEventRRule(event),
+    );
+  }
+
   Future<void> _showEventSearch() async {
     final selectedEvent = await showSearch<Map<String, dynamic>?>(
       context: context,
@@ -1258,6 +1314,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final usesTimeline = _calendarView == _CalendarView.day ||
+        _calendarView == _CalendarView.week;
+
     return Scaffold(
       drawer: _CalendarFilterDrawer(
         calendars: _calendars,
@@ -1384,12 +1443,13 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
             ),
           ),
           Expanded(
-            child: _calendarView == _CalendarView.day
+            child: usesTimeline
                 ? _DayTimelineView(
                     selectedDay: _selectedDay,
                     events: _selectedDayEvents,
                     onTap: (event) => _showEventDetailsSheet(context, event),
                     onDelete: (event) => _confirmDeleteEvent(context, event),
+                    onMove: _moveTimedEvent,
                   )
                 : _selectedDayEvents.isEmpty
                     ? Center(
@@ -2410,16 +2470,19 @@ class _DayTimelineView extends StatelessWidget {
     required this.events,
     required this.onTap,
     required this.onDelete,
+    required this.onMove,
   });
 
   static const double _hourHeight = 64;
   static const double _timeGutterWidth = 56;
   static const double _eventGap = 6;
+  static const double _slotHeight = _hourHeight * _calendarDragSnapMinutes / 60;
 
   final DateTime selectedDay;
   final List<Map<String, dynamic>> events;
   final ValueChanged<Map<String, dynamic>> onTap;
   final ValueChanged<Map<String, dynamic>> onDelete;
+  final void Function(Map<String, dynamic> event, DateTime startAt) onMove;
 
   @override
   Widget build(BuildContext context) {
@@ -2472,6 +2535,21 @@ class _DayTimelineView extends StatelessWidget {
                       height: _hourHeight,
                       child: _HourSlot(hour: hour),
                     ),
+                  for (var minute = 0;
+                      minute < 24 * 60;
+                      minute += _calendarDragSnapMinutes)
+                    Positioned(
+                      top: (minute / 60) * _hourHeight,
+                      left: _timeGutterWidth,
+                      right: 0,
+                      height: _slotHeight,
+                      child: _TimelineDropSlot(
+                        key: Key('calendar_drop_slot_$minute'),
+                        selectedDay: selectedDay,
+                        minute: minute,
+                        onMove: onMove,
+                      ),
+                    ),
                   for (final entry in entries)
                     _buildPositionedEvent(entry, safeContentWidth),
                 ],
@@ -2504,8 +2582,15 @@ class _DayTimelineView extends StatelessWidget {
         color: _CalendarEventsPageState._eventColor(entry.event),
         onTap: () => onTap(entry.event),
         onDelete: () => onDelete(entry.event),
+        draggable: _canDragEvent(entry.event),
       ),
     );
+  }
+
+  static bool _canDragEvent(Map<String, dynamic> event) {
+    return !_eventIsAllDay(event) &&
+        !calendarEventIsRecurrenceOccurrence(event) &&
+        calendarEventSeriesId(event).isNotEmpty;
   }
 
   List<_TimelineEntry> _buildTimelineEntries(
@@ -2608,6 +2693,55 @@ class _DayTimelineView extends StatelessWidget {
   }
 }
 
+class _TimelineDropSlot extends StatelessWidget {
+  const _TimelineDropSlot({
+    super.key,
+    required this.selectedDay,
+    required this.minute,
+    required this.onMove,
+  });
+
+  final DateTime selectedDay;
+  final int minute;
+  final void Function(Map<String, dynamic> event, DateTime startAt) onMove;
+
+  DateTime get _startAt {
+    final dayStart = DateTime(
+      selectedDay.year,
+      selectedDay.month,
+      selectedDay.day,
+    );
+    return dayStart.add(Duration(minutes: minute));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DragTarget<Map<String, dynamic>>(
+      onWillAcceptWithDetails: (details) =>
+          _DayTimelineView._canDragEvent(details.data),
+      onAcceptWithDetails: (details) => onMove(details.data, _startAt),
+      builder: (context, candidateData, rejectedData) {
+        final active = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: active
+                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.45)
+                : Colors.transparent,
+            border: active
+                ? Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.55),
+                  )
+                : null,
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _HourSlot extends StatelessWidget {
   const _HourSlot({required this.hour});
 
@@ -2653,18 +2787,20 @@ class _DayTimelineEventTile extends StatelessWidget {
     required this.color,
     required this.onTap,
     required this.onDelete,
+    required this.draggable,
   });
 
   final Map<String, dynamic> event;
   final Color color;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final bool draggable;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final description = event['description']?.toString() ?? '';
-    return Material(
+    final tile = Material(
       color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
@@ -2720,6 +2856,71 @@ class _DayTimelineEventTile extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.delete_outline),
                   onPressed: onDelete,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (!draggable) return tile;
+
+    return LongPressDraggable<Map<String, dynamic>>(
+      data: event,
+      delay: const Duration(milliseconds: 350),
+      feedback: _TimelineDragPreview(event: event, color: color),
+      childWhenDragging: Opacity(opacity: 0.35, child: tile),
+      child: tile,
+    );
+  }
+}
+
+class _TimelineDragPreview extends StatelessWidget {
+  const _TimelineDragPreview({required this.event, required this.color});
+
+  final Map<String, dynamic> event;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(6),
+      color: theme.colorScheme.surface,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 240, minWidth: 180),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: color, width: 4)),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.open_with, size: 18, color: color),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _eventTitle(event),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge,
+                      ),
+                      Text(
+                        _eventTimeLabel(event),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
