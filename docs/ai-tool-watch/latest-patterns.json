@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-13T21:47:06Z",
+  "generated_at": "2026-05-14T21:42:52Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -17,18 +17,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-910709002c69",
+        "entry_id": "nf-764ca9db3a67",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.140 / May 12, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . \"Code Reviewer\" resolves to code-reviewer ) Updated agent color palette Fixed /goal silently hanging when disableAllHooks or allowManagedHooksOnly is set — now shows a clear...",
+        "text": "Claude Code changelog 2.1.141 / May 13, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.141 May 13, 2026 Added terminalSequence field to hook JSON output so hooks can emit desktop notifications, window titles, and bells without a controlling terminal Added...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "485fac98375467e852777bace477e8192d9dffafcbac5cf17f79e43f7d01f65f",
+          "hash": "3b79105ad74557fe5c8b0d29a25b479fc85211e96a209349fa41b694b0a1edff",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -72,7 +72,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.140 / May 12, 2026",
+          "latest_signal": "2.1.141 / May 13, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
           "previous_hash": "485fac98375467e852777bace477e8192d9dffafcbac5cf17f79e43f7d01f65f",
@@ -80,14 +80,14 @@
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "\"Code Reviewer\" resolves to code-reviewer ) Updated agent color palette Fixed /goal silently hanging when disableAllHooks or allowManagedHooksOnly is set — now shows a clear..."
+            "​ 2.1.141 May 13, 2026 Added terminalSequence field to hook JSON output so hooks can emit desktop notifications, window titles, and bells without a controlling terminal Added..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-910709002c69",
+        "entry_id": "nf-764ca9db3a67",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -113,10 +113,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "72ccfb4eb8054f1f3247d3b7213dfaa2d39c87c54ebb69b1936a3d06395d37bb",
+          "hash": "9d8642fe267e4b6ae6b1f33dbfce78a0e076980b11af3a6a0900fb3de0f6948d",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -189,10 +189,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "88ac3d90d9fc104944667bb367f99851c1b6857e2e483a82bf950665befdbee5",
+          "hash": "a27e5806bf82bc34fb597b1793e227fd4282ca4138184e63066acd1645f8fe0e",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -255,9 +255,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-20e0b904d8b6",
+        "entry_id": "nf-e85826314c18",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-05-11 / Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Also updated the Agent approvals & security and Sandbox docs so they explain more clearly how Auto-review relates to the sandbox boundary. April 2026 li+li]:mt-12\"> 2026-04-23 GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI’s newest frontier model for complex coding, computer use,...",
+        "text": "Codex changelog 2026-05-13 / Codex mobile documentation Added documentation for using Codex from the ChatGPT mobile app, Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... 2026-05-11 Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer lifecycle, trigger conditions, failure behavior, and local or managed... Also updated the Agent approvals & security and Sandbox docs so they explain more clearly how Auto-review relates to the sandbox boundary.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -266,7 +266,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "13f6c8aec833a86c613512055fa301e09bce34cbf79a9677371778c587977402",
+          "hash": "4af94c96d688014e70b8b461835179b86b59192dce9e84b64cf258d34c14c4f3",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -281,6 +281,8 @@
             "hooks": [
               "hook",
               "hooks",
+              "SessionStart",
+              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -292,7 +294,9 @@
               "IDE extension"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
+              "quota",
               "rate limit",
               "sandbox",
               "permission",
@@ -303,25 +307,26 @@
               "automation",
               "automations",
               "schedule",
+              "GitHub Actions",
               "workflow"
             ]
           },
-          "latest_signal": "2026-05-11 / Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer",
+          "latest_signal": "2026-05-13 / Codex mobile documentation Added documentation for using Codex from the ChatGPT mobile app,",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "3761d44f8b85f4e096195a68ff0859680c5c945ff80163b9642f113b69cc9ffd",
+          "previous_hash": "13f6c8aec833a86c613512055fa301e09bce34cbf79a9677371778c587977402",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "Also updated the Agent approvals & security and Sandbox docs so they explain more clearly how Auto-review relates to the sandbox boundary.",
-            "April 2026 li+li]:mt-12\"> 2026-04-23 GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI’s newest frontier model for complex coding, computer use,..."
+            "2026-05-11 Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer lifecycle, trigger conditions, failure behavior, and local or managed...",
+            "Also updated the Agent approvals & security and Sandbox docs so they explain more clearly how Auto-review relates to the sandbox boundary."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-20e0b904d8b6",
+        "entry_id": "nf-e85826314c18",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -350,7 +355,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "f48521848936ab808cc96219325d90967756fe3895c5358842269a8c7dd437cc",
+          "hash": "e43152c7f321582a2aaa58da1d710953e3f55b99346a7caf8fbb55bd74756479",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -389,7 +394,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "5cc99f23a08bfc37dcd05e3daea80af63fb4d80025ee45d5eca4397a616cefc0",
+          "previous_hash": "f48521848936ab808cc96219325d90967756fe3895c5358842269a8c7dd437cc",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -427,10 +432,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
+          "hash": "2d4c3710dd3bc3f8d0cd62da8ba39bee71b8211f056821d750224722c71b7bea",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -481,9 +486,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-4c09af0a449f",
+        "entry_id": "nf-1e5d3d0c0872",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.3 / May 7, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog... # Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces . # Environment configuration as code To make it easier to change, debug, and review environment definitions, we have improved Dockerfile-based configuration.",
+        "text": "Cursor changelog 3.3 / May 7, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog... # Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces . # Environment configuration as code To make it easier to change, debug, and review environment definitions, we have improved Dockerfile-based configuration.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -492,7 +497,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "8f7b19efb3ffd9b14d5ab5d709e4feab3decf0a457d6c7adf20326a903e40a77",
+          "hash": "75d10fd8fd06f066219cec35db5038e87c9aaa41ce5856c36264589befe24030",
           "keyword_groups": {
             "codex-runtime": [
               "subagents"
@@ -514,10 +519,10 @@
           "latest_signal": "3.3 / May 7, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "d7f95effa650dfbd567ae8eedd689e4ab52dce30197f5d5a3c29f7800877ea20",
+          "previous_hash": "8f7b19efb3ffd9b14d5ab5d709e4feab3decf0a457d6c7adf20326a903e40a77",
           "slug": "cursor-changelog",
           "snippets": [
-            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud ↗ Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
+            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
             "# Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces .",
             "# Environment configuration as code To make it easier to change, debug, and review environment definitions, we have improved Dockerfile-based configuration."
           ],
@@ -526,7 +531,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-4c09af0a449f",
+        "entry_id": "nf-1e5d3d0c0872",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -544,18 +549,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-72a569713aae",
+        "entry_id": "nf-39f7979adc34",
         "title": "Gemini Code Assist release notes",
-        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.81.0 / May 08, 2026 Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体... Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview). Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories.",
+        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.82.0 / May 14, 2026 Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体... Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview). Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories.",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ce89397bbd9e1b45c0b54521bc998720cbe938306ef07f503898b5c2f4c134d9",
+          "hash": "094937429b2b633f2dedcf4e45abfdc69e8202a2c14ead170898b56ef5a1fa59",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -576,7 +581,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "VS Code Gemini Code Assist 2.81.0 / May 08, 2026",
+          "latest_signal": "VS Code Gemini Code Assist 2.82.0 / May 14, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
           "previous_hash": "ce89397bbd9e1b45c0b54521bc998720cbe938306ef07f503898b5c2f4c134d9",
@@ -591,7 +596,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-72a569713aae",
+        "entry_id": "nf-39f7979adc34",
         "title": "Gemini Code Assist release notes",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
@@ -609,22 +614,25 @@
     },
     {
       "entry": {
-        "entry_id": "nf-5f0e9ce625fb",
+        "entry_id": "nf-4ae6aa1a1573",
         "title": "Devin release notes",
-        "text": "Devin release notes May 8, 2026 ​ May 8, 2026 Devin Review API You can now trigger Devin Review programmatically via the REST API. Use POST /v3/organizations/{org_id}/pr-reviews with a service user token or PAT to initiate reviews from CI pipelines, scripts, or custom integrations. Close PRs on Session Archive When archiving a Devin session, a dialog now appears where you can optionally close any linked GitHub pull requests, keeping your repository tidy...",
+        "text": "Devin release notes May 13, 2026 ​ May 13, 2026 Snapshot Build Delete You can now delete snapshot builds directly from the build history menu or detail page, with a confirmation dialog to prevent accidental... MCP Multiline Environment Variables When configuring MCP server connections in the marketplace, you can now enter multiline values for environment variables — such as PEM... Sub-Devin Sidebar Improvements Sub-Devin sessions spawned by automations can now be pinned and reordered independently in the sidebar, and they appear expanded by default so you...",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "425f19e77f97d6510f7c7b75cc1b5bf1e0b2b1eac7cfacc7e5053215889c0399",
+          "hash": "c401200ab6d8e345671fd126860c488632458ee2b8d845ef196c46992578739c",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
               "subagents"
+            ],
+            "hooks": [
+              "Stop"
             ],
             "integration": [
               "MCP",
@@ -647,22 +655,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "May 8, 2026",
+          "latest_signal": "May 13, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "425f19e77f97d6510f7c7b75cc1b5bf1e0b2b1eac7cfacc7e5053215889c0399",
           "slug": "devin-release-notes",
           "snippets": [
-            "​ May 8, 2026 Devin Review API You can now trigger Devin Review programmatically via the REST API.",
-            "Use POST /v3/organizations/{org_id}/pr-reviews with a service user token or PAT to initiate reviews from CI pipelines, scripts, or custom integrations.",
-            "Close PRs on Session Archive When archiving a Devin session, a dialog now appears where you can optionally close any linked GitHub pull requests, keeping your repository tidy..."
+            "​ May 13, 2026 Snapshot Build Delete You can now delete snapshot builds directly from the build history menu or detail page, with a confirmation dialog to prevent accidental...",
+            "MCP Multiline Environment Variables When configuring MCP server connections in the marketplace, you can now enter multiline values for environment variables — such as PEM...",
+            "Sub-Devin Sidebar Improvements Sub-Devin sessions spawned by automations can now be pinned and reordered independently in the sidebar, and they appear expanded by default so you..."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-5f0e9ce625fb",
+        "entry_id": "nf-4ae6aa1a1573",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
@@ -725,6 +733,20 @@
         "Codex overview"
       ],
       "recommended_action": "Review openai movement for competitor-monitoring follow-up."
+    },
+    {
+      "id": "np-4361a967e5c0",
+      "company": "multi-source",
+      "topic": "mcp-integration",
+      "entry_count": 2,
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "Codex use cases",
+        "Devin release notes"
+      ],
+      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     }
   ],
   "issue_candidates": [

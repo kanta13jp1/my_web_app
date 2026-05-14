@@ -1,9 +1,9 @@
 # News Pattern Detector Report
 
-- Generated at: `2026-05-13T21:47:06Z`
+- Generated at: `2026-05-14T21:42:52Z`
 - Sources: `docs/ai-tool-watch/latest-report.json`
 - Entries scanned: `9`
-- Patterns: `3`
+- Patterns: `4`
 - Issue candidates: `2`
 
 ## Patterns
@@ -21,6 +21,10 @@
   - Action: Review openai movement for competitor-monitoring follow-up.
   - Evidence: Codex changelog
   - Evidence: Codex overview
+- **multi-source / mcp-integration**: 2 entries, confidence=0.97, risk=normal
+  - Action: Review repeated signal for a scoped follow-up issue only if source confidence stays high.
+  - Evidence: Codex use cases
+  - Evidence: Devin release notes
 
 ## Filter Summary
 
