@@ -214,7 +214,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void initState() {
     super.initState();
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
-        const SharedPreferencesAssetLiabilityRepository();
+        AssetLiabilityRepositoryFactory.createDefault(
+          supabaseClient: _supabase,
+        );
     _loadDataFromSupabase();
     _loadAssetLiabilityMonthlyState();
     _loadWatchlistEntries();
