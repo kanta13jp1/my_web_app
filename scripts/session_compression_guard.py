@@ -5,6 +5,9 @@ This script implements the safe, dependency-free parts of the v23 structural
 session compression contract for Issue #1564:
 
 - Layer JJ: SessionStart hard-gate decision and optional cleanup fire.
+- Layer KK: PreToolUse compression budget snapshot and capped mid-session fire.
+- Layer LL: SessionEnd/wrap-up compression pass.
+- Layer MM: UserPromptSubmit idle-gap cleanup fire.
 - Layer NN: SessionStart/UserPromptSubmit KPI banner.
 
 It writes state under the user's home directory by default so committed repo
@@ -29,6 +32,8 @@ from typing import Any
 
 SESSION_START_PHASE = "session_start_forced_fire"
 USERPROMPT_PHASE = "idle_gap_pre"
+PRETOOLUSE_PHASE = "pretooluse_budget_snapshot"
+WRAP_UP_PHASE = "wrap_up_post"
 STATE_VERSION = 1
 
 
@@ -310,6 +315,27 @@ def decide_userprompt(
     return True, "idle gap exceeded"
 
 
+def decide_pretooluse(
+    *,
+    state: dict[str, Any],
+    c_free_gb: float,
+    interval: int,
+    aggressive_free_gb: float,
+    max_mid_fires: int,
+) -> tuple[bool, bool, str]:
+    tool_count = int(state.get("tool_use_count_session") or 0) + 1
+    mid_fires = int(state.get("mid_fire_count_session") or 0)
+    state["tool_use_count_session"] = tool_count
+
+    if tool_count % interval != 0:
+        return False, False, f"tool_use_count {tool_count} not on {interval}-tool boundary"
+    if c_free_gb >= aggressive_free_gb:
+        return True, False, f"budget snapshot at tool_use_count {tool_count}; c_free_gb {c_free_gb:.2f} >= {aggressive_free_gb:.2f}"
+    if mid_fires >= max_mid_fires:
+        return True, False, f"mid-fire cap reached {mid_fires}/{max_mid_fires}"
+    return True, True, f"c_free_gb {c_free_gb:.2f} < {aggressive_free_gb:.2f} at tool_use_count {tool_count}"
+
+
 def run_guard(args: argparse.Namespace) -> GuardResult:
     now = iso_now(args.sample_now)
     state = load_state(args.state_path)
@@ -328,6 +354,9 @@ def run_guard(args: argparse.Namespace) -> GuardResult:
         fatigue=fatigue,
     )
 
+    cleanup_required = False
+    state_dirty = False
+
     if args.mode == "session-start":
         phase = SESSION_START_PHASE
         should_fire, reason = decide_session_start(
@@ -336,7 +365,12 @@ def run_guard(args: argparse.Namespace) -> GuardResult:
             min_free_gb=args.min_free_gb,
             max_age_hours=args.max_age_hours,
         )
-    else:
+        state["session_started_at"] = now.isoformat()
+        state["tool_use_count_session"] = 0
+        state["mid_fire_count_session"] = 0
+        state_dirty = True
+        cleanup_required = should_fire
+    elif args.mode == "userprompt":
         phase = USERPROMPT_PHASE
         should_fire, reason = decide_userprompt(
             now=now,
@@ -344,11 +378,27 @@ def run_guard(args: argparse.Namespace) -> GuardResult:
             max_age_minutes=args.max_age_minutes,
             cooldown_minutes=args.cooldown_minutes,
         )
+        cleanup_required = should_fire
+    elif args.mode == "pretooluse":
+        phase = PRETOOLUSE_PHASE
+        should_fire, cleanup_required, reason = decide_pretooluse(
+            state=state,
+            c_free_gb=c_free_before,
+            interval=args.tool_budget_interval,
+            aggressive_free_gb=args.aggressive_free_gb,
+            max_mid_fires=args.max_mid_fires,
+        )
+        state_dirty = True
+    else:
+        phase = WRAP_UP_PHASE
+        should_fire = True
+        cleanup_required = True
+        reason = "wrap-up compression required"
 
     cleanup = CleanupResult(status="skipped")
     c_free_after: float | None = None
     ram_after: float | None = None
-    if args.apply and should_fire:
+    if args.apply and should_fire and cleanup_required:
         cleanup = run_dev_cache_cleanup(args)
         if args.sample_free_gb_after is not None:
             c_free_after = args.sample_free_gb_after
@@ -374,9 +424,24 @@ def run_guard(args: argparse.Namespace) -> GuardResult:
         state["last_fire_at"] = now.isoformat()
         if args.mode == "userprompt":
             state["last_userprompt_fire_at"] = now.isoformat()
+        if args.mode == "pretooluse":
+            state["mid_fire_count_session"] = int(state.get("mid_fire_count_session") or 0) + 1
+        state_dirty = True
+
+    if args.apply and should_fire and not cleanup_required:
+        cleanup = CleanupResult(status="snapshot_only")
+
+    if args.apply and state_dirty:
         write_state(args.state_path, state)
 
-    decision = "fire" if should_fire and args.apply else "due" if should_fire else "skip"
+    if should_fire and args.apply and cleanup_required:
+        decision = "fire"
+    elif should_fire and args.apply:
+        decision = "snapshot"
+    elif should_fire:
+        decision = "due"
+    else:
+        decision = "skip"
     result = GuardResult(
         mode=args.mode,
         phase=phase,
@@ -406,7 +471,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     home_log = Path.home() / ".claude" / "logs" / "session-delta.csv"
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("session-start", "userprompt"), default="session-start")
+    parser.add_argument(
+        "--mode",
+        choices=("session-start", "userprompt", "pretooluse", "wrap-up"),
+        default="session-start",
+    )
     parser.add_argument("--root", type=Path, default=repo_root)
     parser.add_argument("--drive", type=Path, default=default_drive_root())
     parser.add_argument("--state-path", type=Path, default=home_state)
@@ -416,12 +485,16 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--max-age-hours", type=float, default=4.0)
     parser.add_argument("--max-age-minutes", type=float, default=30.0)
     parser.add_argument("--cooldown-minutes", type=float, default=60.0)
+    parser.add_argument("--tool-budget-interval", type=int, default=10)
+    parser.add_argument("--aggressive-free-gb", type=float, default=22.0)
+    parser.add_argument("--max-mid-fires", type=int, default=5)
     parser.add_argument("--max-runtime-sec", type=int, default=120)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--tier18", action="store_true")
     parser.add_argument("--tier19", action="store_true")
     parser.add_argument("--enforce", action="store_true")
     parser.add_argument("--banner", action="store_true")
+    parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--log-dry-run", action="store_true")
     parser.add_argument("--sample-free-gb", type=float)
@@ -438,7 +511,7 @@ def main(argv: list[str]) -> int:
 
     if args.json:
         print(json.dumps(asdict(result), ensure_ascii=False, indent=2))
-    else:
+    elif not args.quiet or result.should_fire:
         if args.banner:
             print(result.banner)
         print(f"{result.mode}: {result.decision} ({result.reason})")

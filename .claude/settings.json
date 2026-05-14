@@ -56,6 +56,14 @@
     ],
     "PreToolUse": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/pretooluse-compression-budget.ps1"
+          }
+        ]
+      },
+      {
         "matcher": "mcp__plugin_github_github__create_or_update_file|mcp__github__push_files|mcp__plugin_github_github__push_files",
         "hooks": [
           {
@@ -71,6 +79,20 @@
           {
             "type": "command",
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/userprompt-kpi-banner.ps1"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/userprompt-idle-gap-fire.ps1"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/session-end-auto-compress.ps1"
           }
         ]
       }

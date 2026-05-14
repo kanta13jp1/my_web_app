@@ -4,9 +4,12 @@ on:
   pull_request:
     paths:
       - ".claude/hooks/pre-compact-backup.ps1"
+      - ".claude/hooks/pretooluse-compression-budget.ps1"
+      - ".claude/hooks/session-end-auto-compress.ps1"
       - ".claude/hooks/session-start-hard-gate.ps1"
       - ".claude/hooks/session-start-state-check.ps1"
       - ".claude/hooks/statusline.ps1"
+      - ".claude/hooks/userprompt-idle-gap-fire.ps1"
       - ".claude/hooks/userprompt-kpi-banner.ps1"
       - ".claude/settings.json"
       - ".github/workflows/session-state-hooks.yml"
