@@ -10,8 +10,78 @@ typedef AssetLiabilitySyncErrorHandler = void Function(
   StackTrace stackTrace,
 );
 
+enum AssetLiabilityManualSyncStatus {
+  notRun,
+  disabled,
+  success,
+  failure,
+  conflict,
+}
+
+class AssetLiabilityManualSyncResult {
+  final AssetLiabilityManualSyncStatus status;
+  final DateTime completedAt;
+  final String message;
+  final List<String> conflictTargets;
+
+  const AssetLiabilityManualSyncResult({
+    required this.status,
+    required this.completedAt,
+    required this.message,
+    this.conflictTargets = const <String>[],
+  });
+
+  factory AssetLiabilityManualSyncResult.disabled({DateTime? completedAt}) {
+    return AssetLiabilityManualSyncResult(
+      status: AssetLiabilityManualSyncStatus.disabled,
+      completedAt: completedAt ?? DateTime.now(),
+      message: 'Supabase同期は無効です',
+    );
+  }
+
+  factory AssetLiabilityManualSyncResult.success({
+    required String message,
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilityManualSyncResult(
+      status: AssetLiabilityManualSyncStatus.success,
+      completedAt: completedAt ?? DateTime.now(),
+      message: message,
+    );
+  }
+
+  factory AssetLiabilityManualSyncResult.failure({
+    required String message,
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilityManualSyncResult(
+      status: AssetLiabilityManualSyncStatus.failure,
+      completedAt: completedAt ?? DateTime.now(),
+      message: message,
+    );
+  }
+
+  factory AssetLiabilityManualSyncResult.conflict({
+    required List<String> targets,
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilityManualSyncResult(
+      status: AssetLiabilityManualSyncStatus.conflict,
+      completedAt: completedAt ?? DateTime.now(),
+      message: 'ローカルとSupabaseの両方にデータがあります',
+      conflictTargets: List<String>.unmodifiable(targets),
+    );
+  }
+
+  bool get isSuccess => status == AssetLiabilityManualSyncStatus.success;
+
+  bool get hasConflict => status == AssetLiabilityManualSyncStatus.conflict;
+}
+
 abstract class AssetLiabilityRepository {
   const AssetLiabilityRepository();
+
+  bool get supabaseSyncEnabled => false;
 
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month);
 
@@ -38,6 +108,10 @@ abstract class AssetLiabilityRepository {
   Future<List<AssetLiabilityMonthlySnapshot>> loadMonthlySnapshots();
 
   Future<void> saveMonthlySnapshot(AssetLiabilityMonthlySnapshot snapshot);
+
+  Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) async {
+    return AssetLiabilityManualSyncResult.disabled();
+  }
 
   Future<AssetLiabilityPersistenceSnapshot> loadPersistenceSnapshot(
     DateTime month,
@@ -137,6 +211,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     required this.userIdProvider,
     this.onSyncError,
   });
+
+  @override
+  bool get supabaseSyncEnabled => syncEnabled;
 
   @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
@@ -340,8 +417,113 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     );
   }
 
+  @override
+  Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) async {
+    final remote = _remoteOrNull();
+    final userId = _userIdOrNull();
+    if (remote == null) {
+      return AssetLiabilityManualSyncResult.disabled();
+    }
+    if (userId == null) {
+      return AssetLiabilityManualSyncResult.failure(
+        message: 'Supabaseユーザーが確認できません',
+      );
+    }
+
+    try {
+      final localMonth = await localRepository.loadMonth(month);
+      final localSources = await localRepository.loadDefaultPaymentSources();
+      final localTemplates =
+          await localRepository.loadRecurringIncomeTemplates();
+      final localSnapshots = await localRepository.loadMonthlySnapshots();
+
+      final remoteMonth = await remote.loadMonth(userId: userId, month: month);
+      final remoteSources = await remote.loadDefaultPaymentSources(
+        userId: userId,
+      );
+      final remoteTemplates =
+          await remote.loadRecurringIncomeTemplates(userId: userId);
+      final remoteSnapshots = await remote.loadMonthlySnapshots(userId: userId);
+
+      final conflicts = <String>[
+        if (!localMonth.isEmpty && !_remoteMonthIsEmpty(remoteMonth)) '月次状態',
+        if (localSources.isNotEmpty && (remoteSources?.isNotEmpty ?? false))
+          '支払原資口座設定',
+        if (localTemplates.isNotEmpty && (remoteTemplates?.isNotEmpty ?? false))
+          '定期収入テンプレート',
+        if (localSnapshots.isNotEmpty && (remoteSnapshots?.isNotEmpty ?? false))
+          '月次スナップショット',
+      ];
+      if (conflicts.isNotEmpty) {
+        return AssetLiabilityManualSyncResult.conflict(targets: conflicts);
+      }
+
+      var uploaded = 0;
+      var restored = 0;
+
+      if (!localMonth.isEmpty) {
+        await remote.saveMonth(userId: userId, month: month, state: localMonth);
+        uploaded++;
+      } else if (!_remoteMonthIsEmpty(remoteMonth)) {
+        await localRepository.saveMonth(month: month, state: remoteMonth!);
+        restored++;
+      }
+
+      if (localSources.isNotEmpty) {
+        await remote.saveDefaultPaymentSources(
+          userId: userId,
+          sources: localSources,
+        );
+        uploaded++;
+      } else if (remoteSources?.isNotEmpty ?? false) {
+        await localRepository.saveDefaultPaymentSources(remoteSources!);
+        restored++;
+      }
+
+      if (localTemplates.isNotEmpty) {
+        await remote.saveRecurringIncomeTemplates(
+          userId: userId,
+          templates: localTemplates,
+        );
+        uploaded++;
+      } else if (remoteTemplates?.isNotEmpty ?? false) {
+        await localRepository.saveRecurringIncomeTemplates(remoteTemplates!);
+        restored++;
+      }
+
+      if (localSnapshots.isNotEmpty) {
+        for (final snapshot in localSnapshots) {
+          await remote.saveMonthlySnapshot(userId: userId, snapshot: snapshot);
+        }
+        uploaded += localSnapshots.length;
+      } else if (remoteSnapshots?.isNotEmpty ?? false) {
+        for (final snapshot in remoteSnapshots!) {
+          await localRepository.saveMonthlySnapshot(snapshot);
+        }
+        restored += remoteSnapshots.length;
+      }
+
+      return AssetLiabilityManualSyncResult.success(
+        message: '同期完了（アップロード $uploaded 件 / 復元 $restored 件）',
+      );
+    } catch (error, stackTrace) {
+      if (onSyncError != null) {
+        onSyncError!(error, stackTrace);
+      } else {
+        debugPrint('Asset liability manual Supabase sync failed: $error');
+      }
+      return AssetLiabilityManualSyncResult.failure(
+        message: 'Supabase同期に失敗しました: $error',
+      );
+    }
+  }
+
   AssetLiabilityRemoteStore? _remoteOrNull() {
     return syncEnabled ? remoteStore : null;
+  }
+
+  bool _remoteMonthIsEmpty(AssetLiabilityMonthlyState? state) {
+    return state == null || state.isEmpty;
   }
 
   String? _userIdOrNull() {

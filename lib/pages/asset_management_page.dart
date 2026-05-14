@@ -113,6 +113,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <AssetLiabilityMonthlySnapshot>[];
   String? _loadedAssetLiabilityMonthKey;
   bool _isSavingAssetLiabilitySnapshot = false;
+  bool _isRunningAssetLiabilitySync = false;
+  AssetLiabilityManualSyncStatus _assetLiabilitySyncStatus =
+      AssetLiabilityManualSyncStatus.notRun;
+  DateTime? _lastAssetLiabilitySyncAt;
+  String? _assetLiabilitySyncMessage;
+  List<String> _assetLiabilitySyncConflicts = <String>[];
   final Map<String, TextEditingController> _monthlyPaymentControllers =
       <String, TextEditingController>{};
 
@@ -839,6 +845,61 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       debugPrint('Error saving asset liability monthly state: $e');
+    }
+  }
+
+  Future<void> _runAssetLiabilityManualSync() async {
+    if (!_assetLiabilityRepository.supabaseSyncEnabled) {
+      setState(() {
+        _assetLiabilitySyncStatus = AssetLiabilityManualSyncStatus.disabled;
+        _lastAssetLiabilitySyncAt = DateTime.now();
+        _assetLiabilitySyncMessage = 'Supabase同期は無効です';
+        _assetLiabilitySyncConflicts = <String>[];
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Supabase同期は無効です')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isRunningAssetLiabilitySync = true;
+    });
+    try {
+      final result = await _assetLiabilityRepository.syncMonth(_now);
+      if (!mounted) return;
+      setState(() {
+        _assetLiabilitySyncStatus = result.status;
+        _lastAssetLiabilitySyncAt = result.completedAt;
+        _assetLiabilitySyncMessage = result.message;
+        _assetLiabilitySyncConflicts =
+            List<String>.from(result.conflictTargets);
+      });
+      if (result.isSuccess) {
+        await _loadAssetLiabilityMonthlyState();
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+    } catch (e) {
+      debugPrint('Error running asset liability manual sync: $e');
+      if (!mounted) return;
+      setState(() {
+        _assetLiabilitySyncStatus = AssetLiabilityManualSyncStatus.failure;
+        _lastAssetLiabilitySyncAt = DateTime.now();
+        _assetLiabilitySyncMessage = 'Supabase同期に失敗しました: $e';
+        _assetLiabilitySyncConflicts = <String>[];
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Supabase同期に失敗しました: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRunningAssetLiabilitySync = false;
+        });
+      }
     }
   }
 
@@ -6293,6 +6354,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             const SizedBox(height: 12),
+            _buildAssetLiabilitySyncPanel(),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -6396,6 +6459,171 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildAssetLiabilitySyncPanel() {
+    final syncEnabled = _assetLiabilityRepository.supabaseSyncEnabled;
+    final statusColor =
+        _assetLiabilityManualSyncStatusColor(_assetLiabilitySyncStatus);
+    final lastSyncedAt = _lastAssetLiabilitySyncAt == null
+        ? '未実行'
+        : DateFormat('yyyy/MM/dd HH:mm').format(
+            _lastAssetLiabilitySyncAt!.toLocal(),
+          );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.sync_outlined, size: 18),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Supabase同期',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: syncEnabled && !_isRunningAssetLiabilitySync
+                    ? _runAssetLiabilityManualSync
+                    : null,
+                icon: _isRunningAssetLiabilitySync
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cloud_sync_outlined),
+                label: Text(syncEnabled ? '手動同期' : '同期OFF'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildAssetLiabilitySyncChip(
+                label: 'Supabase同期',
+                value: syncEnabled ? 'ON' : 'OFF',
+                color: syncEnabled
+                    ? const Color(0xFF0D9488)
+                    : Theme.of(context).colorScheme.outline,
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '最終同期',
+                value: lastSyncedAt,
+                color: const Color(0xFF2563EB),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '結果',
+                value: _assetLiabilityManualSyncStatusLabel(
+                  _assetLiabilitySyncStatus,
+                ),
+                color: statusColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _assetLiabilitySyncMessage ??
+                (syncEnabled
+                    ? '手動同期でSupabase保存状態を確認できます。'
+                    : 'Supabase同期は無効です。ローカル保存のみ使用しています。'),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          if (_assetLiabilitySyncConflicts.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final target in _assetLiabilitySyncConflicts)
+                  Chip(
+                    avatar: const Icon(Icons.warning_amber, size: 16),
+                    label: Text('競合: $target'),
+                    backgroundColor: const Color(0xFFFFF7ED),
+                    side: const BorderSide(color: Color(0xFFF97316)),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetLiabilitySyncChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.32)),
+      ),
+      child: Text(
+        '$label: $value',
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
+      ),
+    );
+  }
+
+  String _assetLiabilityManualSyncStatusLabel(
+    AssetLiabilityManualSyncStatus status,
+  ) {
+    switch (status) {
+      case AssetLiabilityManualSyncStatus.notRun:
+        return '未実行';
+      case AssetLiabilityManualSyncStatus.disabled:
+        return '無効';
+      case AssetLiabilityManualSyncStatus.success:
+        return '成功';
+      case AssetLiabilityManualSyncStatus.failure:
+        return '失敗';
+      case AssetLiabilityManualSyncStatus.conflict:
+        return '競合あり';
+    }
+  }
+
+  Color _assetLiabilityManualSyncStatusColor(
+    AssetLiabilityManualSyncStatus status,
+  ) {
+    switch (status) {
+      case AssetLiabilityManualSyncStatus.notRun:
+        return Theme.of(context).colorScheme.outline;
+      case AssetLiabilityManualSyncStatus.disabled:
+        return Theme.of(context).colorScheme.outline;
+      case AssetLiabilityManualSyncStatus.success:
+        return const Color(0xFF0D9488);
+      case AssetLiabilityManualSyncStatus.failure:
+        return const Color(0xFFB91C1C);
+      case AssetLiabilityManualSyncStatus.conflict:
+        return const Color(0xFFD97706);
+    }
   }
 
   Widget _buildAssetWorkbookEstimateNotice(AssetLiabilityWorkbook workbook) {
