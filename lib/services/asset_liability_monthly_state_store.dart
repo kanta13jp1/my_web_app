@@ -39,6 +39,8 @@ class AssetLiabilityMonthlyStateStore {
   static const String incomePrefsKey = 'asset_liability_income_plans_v1';
   static const String defaultPaymentSourcePrefsKey =
       'asset_liability_default_payment_source_accounts_v1';
+  static const String defaultCardBillingPrefsKey =
+      'asset_liability_default_card_billing_accounts_v1';
   static const String recurringIncomeTemplatePrefsKey =
       'asset_liability_recurring_income_templates_v1';
   static const String monthlySnapshotPrefsKey =
@@ -86,14 +88,10 @@ class AssetLiabilityMonthlyStateStore {
     if (state.paymentOverrides.isEmpty) {
       allPayments.remove(monthKey);
     } else {
-      allPayments[monthKey] = Map<String, double>.from(
-        state.paymentOverrides,
-      );
+      allPayments[monthKey] = Map<String, double>.from(state.paymentOverrides);
     }
 
-    final allPaidAccounts = decodePaidAccounts(
-      prefs.getString(paidPrefsKey),
-    );
+    final allPaidAccounts = decodePaidAccounts(prefs.getString(paidPrefsKey));
     if (state.paidAccountNames.isEmpty) {
       allPaidAccounts.remove(monthKey);
     } else {
@@ -116,10 +114,7 @@ class AssetLiabilityMonthlyStateStore {
         state.paymentSourceAccountIds,
       );
     }
-    await prefs.setString(
-      paymentSourcePrefsKey,
-      jsonEncode(allPaymentSources),
-    );
+    await prefs.setString(paymentSourcePrefsKey, jsonEncode(allPaymentSources));
 
     final allCardBillingAccounts = decodeCardBillingAccounts(
       prefs.getString(cardBillingPrefsKey),
@@ -136,9 +131,7 @@ class AssetLiabilityMonthlyStateStore {
       jsonEncode(allCardBillingAccounts),
     );
 
-    final allIncomePlans = decodeIncomePlans(
-      prefs.getString(incomePrefsKey),
-    );
+    final allIncomePlans = decodeIncomePlans(prefs.getString(incomePrefsKey));
     if (state.incomePlans.isEmpty) {
       allIncomePlans.remove(monthKey);
     } else {
@@ -157,13 +150,26 @@ class AssetLiabilityMonthlyStateStore {
     return decodeStringMap(prefs.getString(defaultPaymentSourcePrefsKey));
   }
 
-  Future<void> saveDefaultPaymentSources(
-    Map<String, String> sources,
-  ) async {
+  Future<void> saveDefaultPaymentSources(Map<String, String> sources) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       defaultPaymentSourcePrefsKey,
       jsonEncode(_cleanStringMap(sources)),
+    );
+  }
+
+  Future<Map<String, String>> loadDefaultCardBillingAccounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    return decodeStringMap(prefs.getString(defaultCardBillingPrefsKey));
+  }
+
+  Future<void> saveDefaultCardBillingAccounts(
+    Map<String, String> accounts,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      defaultCardBillingPrefsKey,
+      jsonEncode(_cleanStringMap(accounts)),
     );
   }
 
@@ -492,10 +498,12 @@ class AssetLiabilityMonthlyStateStore {
           dayOfMonth: day.clamp(1, 31).toInt(),
           name: name,
           amount: amount,
-          destinationAccountId:
-              _cleanNullableString(rawTemplate['destinationAccountId']),
-          destinationAccountName:
-              _cleanNullableString(rawTemplate['destinationAccountName']),
+          destinationAccountId: _cleanNullableString(
+            rawTemplate['destinationAccountId'],
+          ),
+          destinationAccountName: _cleanNullableString(
+            rawTemplate['destinationAccountName'],
+          ),
         ),
       );
     }
@@ -529,19 +537,24 @@ class AssetLiabilityMonthlyStateStore {
       final savedAtText = rawSnapshot['savedAt']?.toString();
       final savedAt =
           savedAtText == null ? null : DateTime.tryParse(savedAtText);
-      final positiveAssetTotal =
-          _parseNonNullDouble(rawSnapshot['positiveAssetTotal']);
+      final positiveAssetTotal = _parseNonNullDouble(
+        rawSnapshot['positiveAssetTotal'],
+      );
       final liabilityTotal = _parseNonNullDouble(rawSnapshot['liabilityTotal']);
       final netWorth = _parseNonNullDouble(rawSnapshot['netWorth']);
       final cashLikeTotal = _parseNonNullDouble(rawSnapshot['cashLikeTotal']);
-      final monthlyScheduledPaymentTotal =
-          _parseNonNullDouble(rawSnapshot['monthlyScheduledPaymentTotal']);
-      final monthlyPaidPaymentTotal =
-          _parseNonNullDouble(rawSnapshot['monthlyPaidPaymentTotal']);
-      final monthlyUnpaidPaymentTotal =
-          _parseNonNullDouble(rawSnapshot['monthlyUnpaidPaymentTotal']);
-      final overduePaymentCount =
-          _parseNonNullInt(rawSnapshot['overduePaymentCount']);
+      final monthlyScheduledPaymentTotal = _parseNonNullDouble(
+        rawSnapshot['monthlyScheduledPaymentTotal'],
+      );
+      final monthlyPaidPaymentTotal = _parseNonNullDouble(
+        rawSnapshot['monthlyPaidPaymentTotal'],
+      );
+      final monthlyUnpaidPaymentTotal = _parseNonNullDouble(
+        rawSnapshot['monthlyUnpaidPaymentTotal'],
+      );
+      final overduePaymentCount = _parseNonNullInt(
+        rawSnapshot['overduePaymentCount'],
+      );
       if (monthKey == null ||
           monthKey.isEmpty ||
           savedAt == null ||
@@ -719,21 +732,18 @@ class AssetLiabilityMonthlyStateStore {
     return source.map((month, plans) {
       final sorted = List<AssetLiabilityIncomePlan>.from(plans)
         ..sort((a, b) => a.date.compareTo(b.date));
-      return MapEntry(
-        month,
-        [
-          for (final plan in sorted)
-            <String, Object?>{
-              'id': plan.id,
-              'date': DateFormat('yyyy-MM-dd').format(plan.date),
-              'name': plan.name,
-              'amount': plan.amount,
-              'destinationAccountId': plan.destinationAccountId,
-              'destinationAccountName': plan.destinationAccountName,
-              'received': plan.received,
-            },
-        ],
-      );
+      return MapEntry(month, [
+        for (final plan in sorted)
+          <String, Object?>{
+            'id': plan.id,
+            'date': DateFormat('yyyy-MM-dd').format(plan.date),
+            'name': plan.name,
+            'amount': plan.amount,
+            'destinationAccountId': plan.destinationAccountId,
+            'destinationAccountName': plan.destinationAccountName,
+            'received': plan.received,
+          },
+      ]);
     });
   }
 

@@ -58,6 +58,7 @@ class AssetLiabilityPersistenceSnapshot {
   final String monthKey;
   final AssetLiabilityMonthlyState monthlyState;
   final Map<String, String> defaultPaymentSourceAccountIds;
+  final Map<String, String> defaultCardBillingAccountIds;
   final List<AssetLiabilityRecurringIncomeTemplate> recurringIncomeTemplates;
   final List<AssetLiabilityMonthlySnapshot> monthlySnapshots;
 
@@ -65,6 +66,7 @@ class AssetLiabilityPersistenceSnapshot {
     required this.monthKey,
     required this.monthlyState,
     required this.defaultPaymentSourceAccountIds,
+    required this.defaultCardBillingAccountIds,
     required this.recurringIncomeTemplates,
     required this.monthlySnapshots,
   });
@@ -167,10 +169,12 @@ class AssetLiabilityMonthlyStatePayload {
 
 class AssetLiabilityUserSettingsPayload {
   final Map<String, String> defaultPaymentSourceAccountIds;
+  final Map<String, String> defaultCardBillingAccountIds;
   final List<AssetLiabilityRecurringIncomeTemplate> recurringIncomeTemplates;
 
   const AssetLiabilityUserSettingsPayload({
     required this.defaultPaymentSourceAccountIds,
+    required this.defaultCardBillingAccountIds,
     required this.recurringIncomeTemplates,
   });
 
@@ -181,6 +185,10 @@ class AssetLiabilityUserSettingsPayload {
       defaultPaymentSourceAccountIds:
           _readStringMap(json, 'default_payment_source_account_ids') ??
               _readStringMap(json, 'defaultPaymentSourceAccountIds') ??
+              const <String, String>{},
+      defaultCardBillingAccountIds:
+          _readStringMap(json, 'default_card_billing_account_ids') ??
+              _readStringMap(json, 'defaultCardBillingAccountIds') ??
               const <String, String>{},
       recurringIncomeTemplates:
           _readRecurringIncomeTemplates(json, 'recurring_income_templates') ??
@@ -198,6 +206,9 @@ class AssetLiabilityUserSettingsPayload {
       'user_id': userId,
       'default_payment_source_account_ids': Map<String, String>.from(
         defaultPaymentSourceAccountIds,
+      ),
+      'default_card_billing_account_ids': Map<String, String>.from(
+        defaultCardBillingAccountIds,
       ),
       'recurring_income_templates': [
         for (final template in recurringIncomeTemplates)

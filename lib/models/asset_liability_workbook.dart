@@ -12,6 +12,12 @@ enum AssetLiabilityAccountKind {
 
 enum AssetLiabilityPaymentMethod { direct, includedInCard }
 
+enum AssetLiabilityPaymentMethodSettingSource {
+  builtInDefault,
+  defaultSetting,
+  monthlyOverride,
+}
+
 class AssetLiabilityAccount {
   final String id;
   final String name;
@@ -21,6 +27,7 @@ class AssetLiabilityAccount {
   final String? paymentSourceAccountName;
   final AssetLiabilityPaymentMethod paymentMethod;
   final String? paymentMethodLabel;
+  final AssetLiabilityPaymentMethodSettingSource paymentMethodSettingSource;
   final String? billingAccountId;
   final String? billingAccountName;
   final bool includedInBillingAccount;
@@ -38,6 +45,8 @@ class AssetLiabilityAccount {
     this.paymentSourceAccountName,
     this.paymentMethod = AssetLiabilityPaymentMethod.direct,
     this.paymentMethodLabel,
+    this.paymentMethodSettingSource =
+        AssetLiabilityPaymentMethodSettingSource.builtInDefault,
     this.billingAccountId,
     this.billingAccountName,
     this.includedInBillingAccount = false,
@@ -62,6 +71,7 @@ class AssetLiabilityDebtRow {
   final String? paymentSourceAccountName;
   final AssetLiabilityPaymentMethod paymentMethod;
   final String? paymentMethodLabel;
+  final AssetLiabilityPaymentMethodSettingSource paymentMethodSettingSource;
   final String? billingAccountId;
   final String? billingAccountName;
   final bool includedInBillingAccount;
@@ -87,6 +97,7 @@ class AssetLiabilityDebtRow {
     required this.paymentSourceAccountName,
     required this.paymentMethod,
     required this.paymentMethodLabel,
+    required this.paymentMethodSettingSource,
     required this.billingAccountId,
     required this.billingAccountName,
     required this.includedInBillingAccount,
@@ -196,6 +207,7 @@ class AssetLiabilityCashflowRow {
   final String? destinationAccountName;
   final AssetLiabilityPaymentMethod paymentMethod;
   final String? paymentMethodLabel;
+  final AssetLiabilityPaymentMethodSettingSource paymentMethodSettingSource;
   final String? billingAccountId;
   final String? billingAccountName;
   final bool includedInBillingAccount;
@@ -220,6 +232,7 @@ class AssetLiabilityCashflowRow {
     required this.destinationAccountName,
     required this.paymentMethod,
     required this.paymentMethodLabel,
+    required this.paymentMethodSettingSource,
     required this.billingAccountId,
     required this.billingAccountName,
     required this.includedInBillingAccount,

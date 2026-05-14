@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -15,18 +16,12 @@ void main() {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
         state: AssetLiabilityMonthlyState(
-          paymentOverrides: const <String, double>{
-            'モビット': 70000,
-          },
-          paidAccountNames: const <String>{
-            'auPayカード',
-          },
+          paymentOverrides: const <String, double>{'モビット': 70000},
+          paidAccountNames: const <String>{'auPayカード'},
           paymentSourceAccountIds: const <String, String>{
             'mobit': 'custom_bank',
           },
-          cardBillingAccountIds: const <String, String>{
-            'au': 'aupay_card',
-          },
+          cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
           incomePlans: <AssetLiabilityIncomePlan>[
             AssetLiabilityIncomePlan(
               id: 'income_salary',
@@ -68,48 +63,38 @@ void main() {
       expect(decoded['モビット'], 70000);
     });
 
-    test('falls back to estimated payment after manual amount is cleared',
-        () async {
-      await store.saveMonth(
-        month: DateTime(2026, 5, 13),
-        state: const AssetLiabilityMonthlyState(
-          paymentOverrides: <String, double>{
-            'モビット': 70000,
-          },
-          paymentSourceAccountIds: <String, String>{
-            'mobit': 'custom_bank',
-          },
-          cardBillingAccountIds: <String, String>{
-            'au': 'aupay_card',
-          },
-        ),
-      );
-      await store.saveMonth(
-        month: DateTime(2026, 5, 13),
-        state: const AssetLiabilityMonthlyState(),
-      );
+    test(
+      'falls back to estimated payment after manual amount is cleared',
+      () async {
+        await store.saveMonth(
+          month: DateTime(2026, 5, 13),
+          state: const AssetLiabilityMonthlyState(
+            paymentOverrides: <String, double>{'モビット': 70000},
+            paymentSourceAccountIds: <String, String>{'mobit': 'custom_bank'},
+            cardBillingAccountIds: <String, String>{'au': 'aupay_card'},
+          ),
+        );
+        await store.saveMonth(
+          month: DateTime(2026, 5, 13),
+          state: const AssetLiabilityMonthlyState(),
+        );
 
-      final loaded = await store.loadMonth(DateTime(2026, 5, 13));
+        final loaded = await store.loadMonth(DateTime(2026, 5, 13));
 
-      expect(loaded.paymentOverrides, isEmpty);
-      expect(loaded.paidAccountNames, isEmpty);
-      expect(loaded.paymentSourceAccountIds, isEmpty);
-      expect(loaded.cardBillingAccountIds, isEmpty);
-      expect(loaded.incomePlans, isEmpty);
-    });
+        expect(loaded.paymentOverrides, isEmpty);
+        expect(loaded.paidAccountNames, isEmpty);
+        expect(loaded.paymentSourceAccountIds, isEmpty);
+        expect(loaded.cardBillingAccountIds, isEmpty);
+        expect(loaded.incomePlans, isEmpty);
+      },
+    );
 
     test('migrates legacy display-name keys to stable account ids', () {
       final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
         state: const AssetLiabilityMonthlyState(
-          paymentOverrides: <String, double>{
-            'モビット': 70000,
-          },
-          paidAccountNames: <String>{
-            'auPayカード',
-          },
-          paymentSourceAccountIds: <String, String>{
-            'モビット': '銀行口座',
-          },
+          paymentOverrides: <String, double>{'モビット': 70000},
+          paidAccountNames: <String>{'auPayカード'},
+          paymentSourceAccountIds: <String, String>{'モビット': '銀行口座'},
         ),
         legacyKeyToAccountId: const <String, String>{
           'モビット': 'mobit',
@@ -143,58 +128,56 @@ void main() {
       });
     });
 
-    test('copies previous month settings without paid or received state',
-        () async {
-      await store.saveMonth(
-        month: DateTime(2026, 5, 13),
-        state: AssetLiabilityMonthlyState(
-          paymentOverrides: const <String, double>{
-            'mobit': 70000,
-          },
-          paidAccountNames: const <String>{
-            'mobit',
-          },
-          paymentSourceAccountIds: const <String, String>{
-            'mobit': 'custom_bank',
-          },
-          cardBillingAccountIds: const <String, String>{
-            'kddi_provider': 'paypay_card',
-          },
-          incomePlans: <AssetLiabilityIncomePlan>[
-            AssetLiabilityIncomePlan(
-              id: 'salary',
-              date: DateTime(2026, 5, 31),
-              name: 'Salary',
-              amount: 250000,
-              destinationAccountId: 'custom_bank',
-              destinationAccountName: 'Bank',
-              received: true,
-            ),
-          ],
-        ),
-      );
+    test(
+      'copies previous month settings without paid or received state',
+      () async {
+        await store.saveMonth(
+          month: DateTime(2026, 5, 13),
+          state: AssetLiabilityMonthlyState(
+            paymentOverrides: const <String, double>{'mobit': 70000},
+            paidAccountNames: const <String>{'mobit'},
+            paymentSourceAccountIds: const <String, String>{
+              'mobit': 'custom_bank',
+            },
+            cardBillingAccountIds: const <String, String>{
+              'kddi_provider': 'paypay_card',
+            },
+            incomePlans: <AssetLiabilityIncomePlan>[
+              AssetLiabilityIncomePlan(
+                id: 'salary',
+                date: DateTime(2026, 5, 31),
+                name: 'Salary',
+                amount: 250000,
+                destinationAccountId: 'custom_bank',
+                destinationAccountName: 'Bank',
+                received: true,
+              ),
+            ],
+          ),
+        );
 
-      final copied = await store.copyPreviousMonthToMonth(
-        DateTime(2026, 6, 10),
-      );
-      final loaded = await store.loadMonth(DateTime(2026, 6, 20));
+        final copied = await store.copyPreviousMonthToMonth(
+          DateTime(2026, 6, 10),
+        );
+        final loaded = await store.loadMonth(DateTime(2026, 6, 20));
 
-      expect(copied.paymentOverrides, <String, double>{'mobit': 70000});
-      expect(copied.paymentSourceAccountIds, <String, String>{
-        'mobit': 'custom_bank',
-      });
-      expect(copied.cardBillingAccountIds, <String, String>{
-        'kddi_provider': 'paypay_card',
-      });
-      expect(copied.paidAccountNames, isEmpty);
-      expect(copied.incomePlans.single.date, DateTime(2026, 6, 30));
-      expect(copied.incomePlans.single.received, isFalse);
-      expect(loaded.paidAccountNames, isEmpty);
-      expect(loaded.cardBillingAccountIds, <String, String>{
-        'kddi_provider': 'paypay_card',
-      });
-      expect(loaded.incomePlans.single.received, isFalse);
-    });
+        expect(copied.paymentOverrides, <String, double>{'mobit': 70000});
+        expect(copied.paymentSourceAccountIds, <String, String>{
+          'mobit': 'custom_bank',
+        });
+        expect(copied.cardBillingAccountIds, <String, String>{
+          'kddi_provider': 'paypay_card',
+        });
+        expect(copied.paidAccountNames, isEmpty);
+        expect(copied.incomePlans.single.date, DateTime(2026, 6, 30));
+        expect(copied.incomePlans.single.received, isFalse);
+        expect(loaded.paidAccountNames, isEmpty);
+        expect(loaded.cardBillingAccountIds, <String, String>{
+          'kddi_provider': 'paypay_card',
+        });
+        expect(loaded.incomePlans.single.received, isFalse);
+      },
+    );
 
     test('saves and restores default payment source accounts', () async {
       await store.saveDefaultPaymentSources(const <String, String>{
@@ -207,6 +190,20 @@ void main() {
       expect(loaded, <String, String>{
         'mobit': 'custom_bank',
         'acom_card_loan': 'wallet_cash',
+      });
+    });
+
+    test('saves and restores default card billing accounts', () async {
+      await store.saveDefaultCardBillingAccounts(const <String, String>{
+        'kddi_provider': 'paypay_card',
+        'au': AssetLiabilityPlanningService.auPayCardAccountId,
+      });
+
+      final loaded = await store.loadDefaultCardBillingAccounts();
+
+      expect(loaded, <String, String>{
+        'kddi_provider': 'paypay_card',
+        'au': AssetLiabilityPlanningService.auPayCardAccountId,
       });
     });
 
