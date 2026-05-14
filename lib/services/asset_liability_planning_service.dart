@@ -3,6 +3,13 @@ import 'dart:math';
 import '../models/asset_liability_workbook.dart';
 
 class AssetLiabilityPlanningService {
+  static const String auAccountId = 'au';
+  static const String auPayCardAccountId = 'aupay_card';
+  static const String auPayCardAccountName = 'auPayカード';
+  static const String auPayCardPaymentMethodLabel = 'auPayカード払い';
+  static const String cardBillingIncludedLabel = 'カード請求に含む';
+  static const String auCardBillingNotice =
+      'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
   static const String kddiProviderAccountName = 'KDDI';
   static const double kddiProviderMonthlyPaymentAmount = 5764;
@@ -91,8 +98,11 @@ class AssetLiabilityPlanningService {
       debtMasterRows,
     )..sort(_compareDebtPriority);
 
+    final directDebtRows = debtMasterRows
+        .where((row) => row.isDirectCashflowTarget)
+        .toList(growable: false);
     final paymentDayRisks = _buildPaymentDayRisks(
-      rows: debtMasterRows,
+      rows: directDebtRows,
       baseDate: baseDate,
     );
     final cashflowRows = _buildCashflowRows(
@@ -110,15 +120,15 @@ class AssetLiabilityPlanningService {
       cashflowRows: cashflowRows,
     );
 
-    final monthlyMinimumPaymentEstimateTotal = debtMasterRows.fold<double>(
+    final monthlyMinimumPaymentEstimateTotal = directDebtRows.fold<double>(
       0,
       (sum, row) => sum + row.minimumPaymentEstimate,
     );
-    final monthlyScheduledPaymentTotal = debtMasterRows.fold<double>(
+    final monthlyScheduledPaymentTotal = directDebtRows.fold<double>(
       0,
       (sum, row) => sum + row.scheduledPaymentAmount,
     );
-    final monthlyUnpaidPaymentTotal = debtMasterRows.fold<double>(
+    final monthlyUnpaidPaymentTotal = directDebtRows.fold<double>(
       0,
       (sum, row) => row.paid ? sum : sum + row.scheduledPaymentAmount,
     );
@@ -131,9 +141,9 @@ class AssetLiabilityPlanningService {
           (sum, row) => sum + row.balance.abs(),
         );
     final manualPaymentCount =
-        debtMasterRows.where((row) => !row.paymentAmountEstimated).length;
+        directDebtRows.where((row) => !row.paymentAmountEstimated).length;
     final estimatedPaymentCount =
-        debtMasterRows.where((row) => row.paymentAmountEstimated).length;
+        directDebtRows.where((row) => row.paymentAmountEstimated).length;
     final cashAfterScheduledPayments = cashLikeTotal -
         monthlyUnpaidPaymentTotal +
         monthlyUnreceivedIncomeTotal;
@@ -300,6 +310,10 @@ class AssetLiabilityPlanningService {
         balance: balance,
         kind: AssetLiabilityAccountKind.utility,
         paymentDay: 11,
+        paymentMethodLabel: auPayCardPaymentMethodLabel,
+        billingAccountId: auPayCardAccountId,
+        billingAccountName: auPayCardAccountName,
+        includedInBillingAccount: true,
         annualRate: 0,
         minimumPaymentRate: 1,
         minimumPaymentFloor: balance.abs(),
@@ -385,6 +399,10 @@ class AssetLiabilityPlanningService {
     required double minimumPaymentRate,
     required double minimumPaymentFloor,
     bool fullPaymentEstimate = false,
+    String? paymentMethodLabel,
+    String? billingAccountId,
+    String? billingAccountName,
+    bool includedInBillingAccount = false,
   }) =>
       AssetLiabilityAccount(
         id: _accountIdForName(name),
@@ -392,6 +410,10 @@ class AssetLiabilityPlanningService {
         kind: kind,
         balance: balance,
         paymentDay: paymentDay,
+        paymentMethodLabel: paymentMethodLabel,
+        billingAccountId: billingAccountId,
+        billingAccountName: billingAccountName,
+        includedInBillingAccount: includedInBillingAccount,
         annualRate: annualRate,
         minimumPaymentRate: minimumPaymentRate,
         minimumPaymentFloor: minimumPaymentFloor,
@@ -437,6 +459,10 @@ class AssetLiabilityPlanningService {
       paymentDay: account.paymentDay,
       paymentSourceAccountId: paymentSourceAccountId,
       paymentSourceAccountName: paymentSourceAccountName,
+      paymentMethodLabel: account.paymentMethodLabel,
+      billingAccountId: account.billingAccountId,
+      billingAccountName: account.billingAccountName,
+      includedInBillingAccount: account.includedInBillingAccount,
       annualRate: account.annualRate,
       minimumPaymentEstimate: minimumPayment,
       manualPaymentAmount: manualPayment,
@@ -539,6 +565,10 @@ class AssetLiabilityPlanningService {
           paymentSourceAccountName: null,
           destinationAccountId: plan.destinationAccountId,
           destinationAccountName: plan.destinationAccountName,
+          paymentMethodLabel: null,
+          billingAccountId: null,
+          billingAccountName: null,
+          includedInBillingAccount: false,
           paymentAmount: plan.amount,
           paymentAmountEstimated: false,
           paid: false,
@@ -559,7 +589,9 @@ class AssetLiabilityPlanningService {
         baseDate.month,
         resolvedDay,
       );
-      final overdue = !row.paid && !paymentDate.isAfter(_dateOnly(baseDate));
+      final overdue = row.isDirectCashflowTarget &&
+          !row.paid &&
+          !paymentDate.isAfter(_dateOnly(baseDate));
       result.add(
         AssetLiabilityCashflowRow(
           eventType: AssetLiabilityCashflowEventType.payment,
@@ -570,7 +602,13 @@ class AssetLiabilityPlanningService {
           paymentSourceAccountId: row.paymentSourceAccountId,
           paymentSourceAccountName: row.paymentSourceAccountName,
           destinationAccountId: null,
-          destinationAccountName: null,
+          destinationAccountName: row.includedInBillingAccount
+              ? (row.paymentMethodLabel ?? row.billingAccountName)
+              : null,
+          paymentMethodLabel: row.paymentMethodLabel,
+          billingAccountId: row.billingAccountId,
+          billingAccountName: row.billingAccountName,
+          includedInBillingAccount: row.includedInBillingAccount,
           paymentAmount: row.scheduledPaymentAmount,
           paymentAmountEstimated: row.paymentAmountEstimated,
           paid: row.paid,
@@ -601,7 +639,9 @@ class AssetLiabilityPlanningService {
           final before = runningCash;
           final delta = row.isIncome
               ? (row.received ? 0 : row.paymentAmount)
-              : (row.paid ? 0 : -row.paymentAmount);
+              : (!row.isDirectCashflowTarget || row.paid
+                  ? 0
+                  : -row.paymentAmount);
           final after = before + delta;
           runningCash = after;
           return AssetLiabilityCashflowRow(
@@ -614,6 +654,10 @@ class AssetLiabilityPlanningService {
             paymentSourceAccountName: row.paymentSourceAccountName,
             destinationAccountId: row.destinationAccountId,
             destinationAccountName: row.destinationAccountName,
+            paymentMethodLabel: row.paymentMethodLabel,
+            billingAccountId: row.billingAccountId,
+            billingAccountName: row.billingAccountName,
+            includedInBillingAccount: row.includedInBillingAccount,
             paymentAmount: row.paymentAmount,
             paymentAmountEstimated: row.paymentAmountEstimated,
             paid: row.paid,
@@ -678,6 +722,7 @@ class AssetLiabilityPlanningService {
           final payments = cashflowRows.fold<double>(
             0,
             (sum, row) => row.isPayment &&
+                    row.isDirectCashflowTarget &&
                     !row.paid &&
                     row.paymentSourceAccountId == account.id
                 ? sum + row.paymentAmount
@@ -764,6 +809,7 @@ class AssetLiabilityPlanningService {
   ) {
     for (final row in cashflowRows) {
       if (row.isPayment &&
+          row.isDirectCashflowTarget &&
           !row.paid &&
           row.paymentSourceAccountId == accountId) {
         return row.paymentDate;
