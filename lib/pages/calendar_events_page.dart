@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import 'package:my_web_app/services/calendar_ics_service.dart';
+import 'package:my_web_app/services/calendar_timezone_service.dart';
 import 'package:my_web_app/services/notification_service.dart';
 import 'package:my_web_app/utils/web_text_downloader.dart';
 
@@ -60,10 +61,16 @@ const Map<int, String> _weekdayLabels = {
 String _formatClock(DateTime d) =>
     '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
-DateTime? _eventDateTime(Map<String, dynamic> event, String key) {
-  final value = event[key]?.toString() ?? '';
-  if (value.isEmpty) return null;
-  return DateTime.tryParse(value)?.toLocal();
+DateTime? _eventDateTime(
+  Map<String, dynamic> event,
+  String key, {
+  bool showOriginalTimezone = false,
+}) {
+  return calendarEventDateTimeForDisplay(
+    event,
+    key,
+    showOriginalTimezone: showOriginalTimezone,
+  );
 }
 
 bool _eventIsAllDay(Map<String, dynamic> event) => event['all_day'] == true;
@@ -73,10 +80,21 @@ String _eventTitle(Map<String, dynamic> event) =>
         ? event['title'].toString()
         : 'Untitled';
 
-String _eventTimeLabel(Map<String, dynamic> event) {
+String _eventTimeLabel(
+  Map<String, dynamic> event, {
+  bool showOriginalTimezone = false,
+}) {
   if (_eventIsAllDay(event)) return 'All-day';
-  final start = _eventDateTime(event, 'start_at');
-  final end = _eventDateTime(event, 'end_at');
+  final start = _eventDateTime(
+    event,
+    'start_at',
+    showOriginalTimezone: showOriginalTimezone,
+  );
+  final end = _eventDateTime(
+    event,
+    'end_at',
+    showOriginalTimezone: showOriginalTimezone,
+  );
   if (start == null) return '';
   if (end == null) return _formatClock(start);
   return '${_formatClock(start)} - ${_formatClock(end)}';
@@ -87,9 +105,20 @@ String _formatDate(DateTime d) =>
 
 String _formatDateTime(DateTime d) => '${_formatDate(d)} ${_formatClock(d)}';
 
-String _eventDateTimeLabel(Map<String, dynamic> event) {
-  final start = _eventDateTime(event, 'start_at');
-  final end = _eventDateTime(event, 'end_at');
+String _eventDateTimeLabel(
+  Map<String, dynamic> event, {
+  bool showOriginalTimezone = false,
+}) {
+  final start = _eventDateTime(
+    event,
+    'start_at',
+    showOriginalTimezone: showOriginalTimezone,
+  );
+  final end = _eventDateTime(
+    event,
+    'end_at',
+    showOriginalTimezone: showOriginalTimezone,
+  );
   if (start == null) return 'No start time';
   if (_eventIsAllDay(event)) return '${_formatDate(start)} All-day';
   if (end == null) return _formatDateTime(start);
@@ -98,6 +127,11 @@ String _eventDateTimeLabel(Map<String, dynamic> event) {
           ? _formatClock(end)
           : _formatDateTime(end);
   return '${_formatDateTime(start)} - $endLabel';
+}
+
+String _eventTimezoneLabel(Map<String, dynamic> event) {
+  final timezone = calendarEventTimezone(event);
+  return '$timezone (${calendarTimezoneAbbreviation(timezone)})';
 }
 
 String _eventColorHex(Map<String, dynamic> event) {
@@ -565,6 +599,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   _CalendarView _calendarView = _CalendarView.month;
   bool _hasLoadedCalendars = false;
+  bool _showOriginalTimezone = false;
 
   // 選択日のイベントリスト
   List<Map<String, dynamic>> get _selectedDayEvents {
@@ -656,6 +691,12 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     _reminderTimers.remove(eventId)?.cancel();
   }
 
+  void _setOriginalTimezoneDisplay(bool value) {
+    if (_showOriginalTimezone == value) return;
+    setState(() => _showOriginalTimezone = value);
+    _fetchMonth(_focusedDay);
+  }
+
   Future<void> _syncDeviceReminder({
     required String eventId,
     required String title,
@@ -689,6 +730,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   @override
   void initState() {
     super.initState();
+    ensureCalendarTimeZonesInitialized();
     _fetchMonth(_focusedDay);
   }
 
@@ -796,7 +838,11 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       )) {
         final startAt = ev['start_at']?.toString() ?? '';
         if (startAt.isEmpty) continue;
-        final date = DateTime.tryParse(startAt);
+        final date = _eventDateTime(
+          ev,
+          'start_at',
+          showOriginalTimezone: _showOriginalTimezone,
+        );
         if (date == null) continue;
         final key = _dateKey(date);
         newMap.putIfAbsent(key, () => []).add(ev);
@@ -827,8 +873,10 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     int? reminderMinutes,
     String calendarId = _defaultCalendarId,
     String? rrule,
+    String? timezone,
   }) async {
     try {
+      final normalizedTimezone = normalizeCalendarTimezone(timezone);
       final end =
           allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
       final res = await _supabase.functions.invoke(
@@ -844,6 +892,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'reminder_min': reminderMinutes,
           'calendar_id': calendarId,
           'rrule': rrule,
+          'timezone': normalizedTimezone,
         },
       );
       final data = res.data;
@@ -861,6 +910,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'calendar_id': calendarId,
           'calendar_name': _calendarForId(calendarId).name,
           'rrule': rrule,
+          'timezone': normalizedTimezone,
         });
         await _syncDeviceReminder(
           eventId: eventId,
@@ -888,6 +938,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     int? reminderMinutes,
     String calendarId = _defaultCalendarId,
     String? rrule,
+    String? timezone,
     bool cancelReminderWhenNone = false,
   }) async {
     if (eventId.isEmpty) {
@@ -895,6 +946,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       return;
     }
     try {
+      final normalizedTimezone = normalizeCalendarTimezone(timezone);
       final end =
           allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
       await _supabase.functions.invoke(
@@ -911,6 +963,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'reminder_min': reminderMinutes,
           'calendar_id': calendarId,
           'rrule': rrule,
+          'timezone': normalizedTimezone,
         },
       );
       if (reminderMinutes == null) {
@@ -928,6 +981,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'calendar_id': calendarId,
           'calendar_name': _calendarForId(calendarId).name,
           'rrule': rrule,
+          'timezone': normalizedTimezone,
         });
       }
       await _syncDeviceReminder(
@@ -1180,6 +1234,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       reminderMinutes: calendarEventReminderMinutes(event),
       calendarId: calendarEventCalendarId(event),
       rrule: calendarEventRRule(event),
+      timezone: calendarEventTimezone(event),
     );
   }
 
@@ -1230,7 +1285,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   String _eventDetailsText(Map<String, dynamic> event) {
     final buffer = StringBuffer()
       ..writeln(_eventTitle(event))
-      ..writeln(_eventDateTimeLabel(event));
+      ..writeln(
+        _eventDateTimeLabel(event, showOriginalTimezone: _showOriginalTimezone),
+      );
     final description = event['description']?.toString().trim() ?? '';
     if (description.isNotEmpty) {
       buffer
@@ -1240,6 +1297,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     buffer
       ..writeln()
       ..writeln('Calendar: ${calendarEventCalendarName(event)}')
+      ..writeln('Timezone: ${_eventTimezoneLabel(event)}')
       ..writeln('Repeats: ${calendarEventRecurrenceLabel(event)}')
       ..writeln('Color: ${_eventColorHex(event)}');
     final eventId = event['event_id']?.toString() ?? '';
@@ -1323,7 +1381,10 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _eventDateTimeLabel(event),
+                            _eventDateTimeLabel(
+                              event,
+                              showOriginalTimezone: _showOriginalTimezone,
+                            ),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.outline,
                             ),
@@ -1344,6 +1405,11 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                               label: Text(calendarEventRecurrenceLabel(event)),
                               visualDensity: VisualDensity.compact,
                             ),
+                          Chip(
+                            avatar: const Icon(Icons.public, size: 18),
+                            label: Text(_eventTimezoneLabel(event)),
+                            visualDensity: VisualDensity.compact,
+                          ),
                         ],
                       ),
                     ),
@@ -1440,7 +1506,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       drawer: _CalendarFilterDrawer(
         calendars: _calendars,
         visibleCalendarIds: _visibleCalendarIds,
+        showOriginalTimezone: _showOriginalTimezone,
         onToggle: _toggleCalendarVisibility,
+        onToggleOriginalTimezone: _setOriginalTimezoneDisplay,
         onAddCalendar: () => _showAddCalendarDialog(context),
         onDeleteCalendar: _confirmDeleteCalendar,
       ),
@@ -1592,6 +1660,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                 ? _DayTimelineView(
                     selectedDay: _selectedDay,
                     events: _selectedDayEvents,
+                    showOriginalTimezone: _showOriginalTimezone,
                     onTap: (event) => _showEventDetailsSheet(context, event),
                     onDelete: (event) => _confirmDeleteEvent(context, event),
                     onMove: _moveTimedEvent,
@@ -1629,6 +1698,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                           return _EventCard(
                             event: event,
                             color: _eventColor(event),
+                            showOriginalTimezone: _showOriginalTimezone,
                             onTap: () => _showEventDetailsSheet(context, event),
                             onDelete: () {
                               final eventId = calendarEventSeriesId(event);
@@ -1803,7 +1873,12 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
               key: const Key('calendar_edit_scope_this'),
               leading: const Icon(Icons.event),
               title: const Text('This event only'),
-              subtitle: Text(_eventDateTimeLabel(event)),
+              subtitle: Text(
+                _eventDateTimeLabel(
+                  event,
+                  showOriginalTimezone: _showOriginalTimezone,
+                ),
+              ),
               onTap: () => Navigator.pop(ctx, _RecurrenceEditScope.thisEvent),
             ),
             ListTile(
@@ -1852,10 +1927,11 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     final eventId = editEvent == null ? '' : calendarEventSeriesId(editEvent);
     final initialStart = editEvent == null
         ? _selectedDay
-        : (_eventDateTime(editEvent, 'start_at') ?? _selectedDay);
+        : (_eventDateTime(editEvent, 'start_at', showOriginalTimezone: true) ??
+            _selectedDay);
     final initialEnd = editEvent == null
         ? initialStart.add(const Duration(hours: 1))
-        : (_eventDateTime(editEvent, 'end_at') ??
+        : (_eventDateTime(editEvent, 'end_at', showOriginalTimezone: true) ??
             initialStart.add(const Duration(hours: 1)));
     final titleCtrl = TextEditingController(
       text: editEvent?['title']?.toString() ?? '',
@@ -1881,6 +1957,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     if (_calendars.every((calendar) => calendar.id != selectedCalendarId)) {
       selectedCalendarId = _defaultCalendarId;
     }
+    var selectedTimezone = editEvent == null
+        ? calendarDefaultTimezone()
+        : calendarEventTimezone(editEvent);
     var selectedReminder = calendarEventReminderMinutes(editEvent ?? {}) ?? -1;
     final initialRRule = calendarEventRRule(editEvent ?? {});
     var selectedRecurrence = _recurrencePresetForRRule(initialRRule);
@@ -1976,6 +2055,29 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  key: const Key('calendar_timezone_dropdown'),
+                  initialValue: selectedTimezone,
+                  decoration: const InputDecoration(
+                    labelText: 'Timezone',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.public),
+                  ),
+                  items: [
+                    for (final timezone in calendarTimezoneDropdownOptions(
+                      selectedTimezone,
+                    ))
+                      DropdownMenuItem<String>(
+                        value: timezone,
+                        child: Text(timezone),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setDialogState(() => selectedTimezone = value);
+                  },
                 ),
                 Row(
                   children: [
@@ -2205,21 +2307,19 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                 Navigator.pop(ctx);
                 final startDateTime = allDay
                     ? DateTime(eventDate.year, eventDate.month, eventDate.day)
-                    : DateTime(
-                        eventDate.year,
-                        eventDate.month,
-                        eventDate.day,
-                        startTime.hour,
-                        startTime.minute,
+                    : calendarWallTimeToUtc(
+                        date: eventDate,
+                        hour: startTime.hour,
+                        minute: startTime.minute,
+                        timezone: selectedTimezone,
                       );
                 final endDateTime = allDay
                     ? null
-                    : DateTime(
-                        eventDate.year,
-                        eventDate.month,
-                        eventDate.day,
-                        endTime.hour,
-                        endTime.minute,
+                    : calendarWallTimeToUtc(
+                        date: eventDate,
+                        hour: endTime.hour,
+                        minute: endTime.minute,
+                        timezone: selectedTimezone,
                       );
                 final reminderMinutes =
                     selectedReminder < 0 ? null : selectedReminder;
@@ -2245,6 +2345,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     reminderMinutes: reminderMinutes,
                     calendarId: selectedCalendarId,
                     rrule: rrule,
+                    timezone: selectedTimezone,
                     cancelReminderWhenNone:
                         calendarEventReminderMinutes(editEvent ?? {}) != null,
                   );
@@ -2259,6 +2360,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     reminderMinutes: reminderMinutes,
                     calendarId: selectedCalendarId,
                     rrule: rrule,
+                    timezone: selectedTimezone,
                   );
                 }
               },
@@ -2438,14 +2540,18 @@ class _CalendarFilterDrawer extends StatelessWidget {
   const _CalendarFilterDrawer({
     required this.calendars,
     required this.visibleCalendarIds,
+    required this.showOriginalTimezone,
     required this.onToggle,
+    required this.onToggleOriginalTimezone,
     required this.onAddCalendar,
     required this.onDeleteCalendar,
   });
 
   final List<_CalendarListItem> calendars;
   final Set<String> visibleCalendarIds;
+  final bool showOriginalTimezone;
   final void Function(String calendarId, bool visible) onToggle;
+  final ValueChanged<bool> onToggleOriginalTimezone;
   final VoidCallback onAddCalendar;
   final ValueChanged<_CalendarListItem> onDeleteCalendar;
 
@@ -2466,6 +2572,18 @@ class _CalendarFilterDrawer extends StatelessWidget {
                 tooltip: 'Add calendar',
                 onPressed: onAddCalendar,
               ),
+            ),
+            SwitchListTile(
+              key: const Key('calendar_original_timezone_toggle'),
+              secondary: const Icon(Icons.public),
+              title: const Text('Original timezone'),
+              subtitle: Text(
+                showOriginalTimezone
+                    ? 'Show saved event timezone'
+                    : 'Show this device timezone',
+              ),
+              value: showOriginalTimezone,
+              onChanged: onToggleOriginalTimezone,
             ),
             const Divider(height: 1),
             Expanded(
@@ -2614,6 +2732,7 @@ class _DayTimelineView extends StatelessWidget {
   const _DayTimelineView({
     required this.selectedDay,
     required this.events,
+    required this.showOriginalTimezone,
     required this.onTap,
     required this.onDelete,
     required this.onMove,
@@ -2626,6 +2745,7 @@ class _DayTimelineView extends StatelessWidget {
 
   final DateTime selectedDay;
   final List<Map<String, dynamic>> events;
+  final bool showOriginalTimezone;
   final ValueChanged<Map<String, dynamic>> onTap;
   final ValueChanged<Map<String, dynamic>> onDelete;
   final void Function(Map<String, dynamic> event, DateTime startAt) onMove;
@@ -2633,7 +2753,11 @@ class _DayTimelineView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allDayEvents = events.where(_eventIsAllDay).toList();
-    final entries = _buildTimelineEntries(events, selectedDay);
+    final entries = _buildTimelineEntries(
+      events,
+      selectedDay,
+      showOriginalTimezone,
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
@@ -2726,6 +2850,7 @@ class _DayTimelineView extends StatelessWidget {
       child: _DayTimelineEventTile(
         event: entry.event,
         color: _CalendarEventsPageState._eventColor(entry.event),
+        showOriginalTimezone: showOriginalTimezone,
         onTap: () => onTap(entry.event),
         onDelete: () => onDelete(entry.event),
         draggable: _canDragEvent(entry.event),
@@ -2742,11 +2867,16 @@ class _DayTimelineView extends StatelessWidget {
   List<_TimelineEntry> _buildTimelineEntries(
     List<Map<String, dynamic>> rawEvents,
     DateTime day,
+    bool showOriginalTimezone,
   ) {
     final candidates = <_TimelineEntry>[];
     for (final event in rawEvents) {
       if (_eventIsAllDay(event)) continue;
-      final range = _timelineRange(event, day);
+      final range = _timelineRange(
+        event,
+        day,
+        showOriginalTimezone: showOriginalTimezone,
+      );
       if (range == null) continue;
       candidates.add(
         _TimelineEntry(
@@ -2809,11 +2939,23 @@ class _DayTimelineView extends StatelessWidget {
     return entries;
   }
 
-  _TimelineRange? _timelineRange(Map<String, dynamic> event, DateTime day) {
-    final start = _eventDateTime(event, 'start_at');
+  _TimelineRange? _timelineRange(
+    Map<String, dynamic> event,
+    DateTime day, {
+    required bool showOriginalTimezone,
+  }) {
+    final start = _eventDateTime(
+      event,
+      'start_at',
+      showOriginalTimezone: showOriginalTimezone,
+    );
     if (start == null) return null;
-    final end =
-        _eventDateTime(event, 'end_at') ?? start.add(const Duration(hours: 1));
+    final end = _eventDateTime(
+          event,
+          'end_at',
+          showOriginalTimezone: showOriginalTimezone,
+        ) ??
+        start.add(const Duration(hours: 1));
 
     final dayStart = DateTime(day.year, day.month, day.day);
     final dayEnd = dayStart.add(const Duration(days: 1));
@@ -2931,6 +3073,7 @@ class _DayTimelineEventTile extends StatelessWidget {
   const _DayTimelineEventTile({
     required this.event,
     required this.color,
+    required this.showOriginalTimezone,
     required this.onTap,
     required this.onDelete,
     required this.draggable,
@@ -2938,6 +3081,7 @@ class _DayTimelineEventTile extends StatelessWidget {
 
   final Map<String, dynamic> event;
   final Color color;
+  final bool showOriginalTimezone;
   final VoidCallback onTap;
   final VoidCallback onDelete;
   final bool draggable;
@@ -2974,7 +3118,10 @@ class _DayTimelineEventTile extends StatelessWidget {
                         style: theme.textTheme.labelLarge,
                       ),
                       Text(
-                        _eventTimeLabel(event),
+                        _eventTimeLabel(
+                          event,
+                          showOriginalTimezone: showOriginalTimezone,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -3014,7 +3161,11 @@ class _DayTimelineEventTile extends StatelessWidget {
     return LongPressDraggable<Map<String, dynamic>>(
       data: event,
       delay: const Duration(milliseconds: 350),
-      feedback: _TimelineDragPreview(event: event, color: color),
+      feedback: _TimelineDragPreview(
+        event: event,
+        color: color,
+        showOriginalTimezone: showOriginalTimezone,
+      ),
       childWhenDragging: Opacity(opacity: 0.35, child: tile),
       child: tile,
     );
@@ -3022,10 +3173,15 @@ class _DayTimelineEventTile extends StatelessWidget {
 }
 
 class _TimelineDragPreview extends StatelessWidget {
-  const _TimelineDragPreview({required this.event, required this.color});
+  const _TimelineDragPreview({
+    required this.event,
+    required this.color,
+    required this.showOriginalTimezone,
+  });
 
   final Map<String, dynamic> event;
   final Color color;
+  final bool showOriginalTimezone;
 
   @override
   Widget build(BuildContext context) {
@@ -3060,7 +3216,10 @@ class _TimelineDragPreview extends StatelessWidget {
                         style: theme.textTheme.labelLarge,
                       ),
                       Text(
-                        _eventTimeLabel(event),
+                        _eventTimeLabel(
+                          event,
+                          showOriginalTimezone: showOriginalTimezone,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall,
@@ -3114,12 +3273,14 @@ class _EventCard extends StatelessWidget {
   const _EventCard({
     required this.event,
     required this.color,
+    required this.showOriginalTimezone,
     required this.onTap,
     required this.onDelete,
   });
 
   final Map<String, dynamic> event;
   final Color color;
+  final bool showOriginalTimezone;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
@@ -3127,25 +3288,10 @@ class _EventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = event['title']?.toString() ?? 'タイトルなし';
     final description = event['description']?.toString() ?? '';
-    final startAt = event['start_at']?.toString() ?? '';
-    final endAt = event['end_at']?.toString() ?? '';
-    final allDay = event['all_day'] == true;
-
-    String fmt(DateTime d) =>
-        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-
-    String timeLabel = '';
-    if (allDay) {
-      timeLabel = '終日';
-    } else if (startAt.isNotEmpty) {
-      final start = DateTime.tryParse(startAt)?.toLocal();
-      final end = DateTime.tryParse(endAt)?.toLocal();
-      if (start != null && end != null) {
-        timeLabel = '${fmt(start)} - ${fmt(end)}';
-      } else if (start != null) {
-        timeLabel = fmt(start);
-      }
-    }
+    final timeLabel = _eventTimeLabel(
+      event,
+      showOriginalTimezone: showOriginalTimezone,
+    );
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -3160,6 +3306,12 @@ class _EventCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(timeLabel, style: const TextStyle(fontSize: 12, height: 1.5)),
+            Text(
+              _eventTimezoneLabel(event),
+              style: const TextStyle(fontSize: 11, height: 1.4),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             if (description.isNotEmpty)
               Text(
                 description,

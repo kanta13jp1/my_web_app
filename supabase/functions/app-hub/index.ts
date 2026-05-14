@@ -126,6 +126,7 @@ const CALENDAR_REMINDER_MINUTES = new Set([0, 5, 10, 15, 30, 60]);
 const DEFAULT_CALENDAR_ID = "default";
 const DEFAULT_CALENDAR_NAME = "Default";
 const DEFAULT_CALENDAR_COLOR = "#4285f4";
+const CALENDAR_TIMEZONE_PATTERN = /^(UTC|[A-Za-z_]+\/[A-Za-z0-9_+\-\/]+)$/;
 
 type CalendarListResponseItem = {
   calendar_id: string;
@@ -148,6 +149,11 @@ function normalizeCalendarRRule(value: unknown): string | null {
   return rrule.length === 0 || rrule === "null" || rrule === "undefined"
     ? null
     : rrule;
+}
+
+function normalizeCalendarTimezone(value: unknown): string | null {
+  const timezone = value?.toString().trim() ?? "";
+  return CALENDAR_TIMEZONE_PATTERN.test(timezone) ? timezone : null;
 }
 
 function normalizeCalendarId(value: unknown): string {
@@ -447,6 +453,7 @@ serve(async (req: Request) => {
           calendar_id: calendarId,
           calendar_name: calendarName,
           rrule: normalizeCalendarRRule(body.rrule),
+          timezone: normalizeCalendarTimezone(body.timezone),
           ...(icalUid ? { ical_uid: icalUid, uid: icalUid } : {}),
         });
         const meta = (item.metadata ?? {}) as Record<string, unknown>;
@@ -494,6 +501,7 @@ serve(async (req: Request) => {
             calendar_id: calendarId,
             calendar_name: calendarName,
             rrule: normalizeCalendarRRule(event.rrule),
+            timezone: normalizeCalendarTimezone(event.timezone),
             ical_uid: event.ical_uid,
             uid: event.ical_uid,
           });
@@ -535,6 +543,9 @@ serve(async (req: Request) => {
         }
         if (Object.hasOwn(body, "rrule")) {
           patch.rrule = normalizeCalendarRRule(body.rrule);
+        }
+        if (Object.hasOwn(body, "timezone")) {
+          patch.timezone = normalizeCalendarTimezone(body.timezone);
         }
         if (Object.hasOwn(body, "calendar_id")) {
           const calendarId = normalizeCalendarId(body.calendar_id);
