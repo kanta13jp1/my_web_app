@@ -107,10 +107,21 @@ Default behavior is safe for repo-managed hooks:
 
 - SessionStart applies `scripts/dev_cache_cleanup.py --apply` when C: free
   space is below 26 GB or the last cleanup fire is older than 4 hours.
+- PreToolUse runs `.claude/hooks/pretooluse-compression-budget.ps1`, increments
+  a local tool-use counter, records every 10th-tool KPI snapshot, and runs a
+  capped 30-second cleanup only when C: free space is below 22 GB. The per-session
+  mid-fire cap is 5.
+- UserPromptSubmit runs `.claude/hooks/userprompt-idle-gap-fire.ps1` after the KPI
+  banner. It applies a 30-minute idle-gap cleanup with a 60-minute cooldown.
+- Stop runs `.claude/hooks/session-end-auto-compress.ps1` as the repo-managed
+  SessionEnd/wrap-up compression primitive. It is advisory unless
+  `SESSION_COMPRESSION_WRAPUP_ENFORCE=1` is set.
 - It exits zero by default so an unavailable Python runtime or a missed 28 GB
   target does not trap a user in a broken local shell.
 - Set `SESSION_COMPRESSION_FAIL_CLOSED=1` to enforce the 28 GB target and return
   a non-zero exit when cleanup fails or the target is still missed.
+- Set `SESSION_COMPRESSION_WRAPUP_ENFORCE=1` to make the wrap-up compression
+  primitive fail closed when the 28 GB target is missed.
 - Set `SESSION_COMPRESSION_DRY_RUN=1` while validating hook wiring without
   pruning caches.
 
@@ -119,6 +130,16 @@ the same `[KPI] C:<gb> RAM:<pct> last_fire:<min> fatigue:<state>` advisory. It
 does not run cleanup unless `SESSION_COMPRESSION_USERPROMPT_APPLY=1` is set,
 which keeps ordinary prompt entry lightweight while preserving the v23 idle-gap
 escape hatch.
+
+Manual verification examples:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\pretooluse-compression-budget.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\userprompt-idle-gap-fire.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\session-end-auto-compress.ps1
+python scripts\session_compression_guard_test.py
+python scripts\check_session_state_hooks.py --scan-transcripts
+```
 
 ## StatusLine
 

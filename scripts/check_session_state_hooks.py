@@ -17,9 +17,12 @@ from pathlib import Path
 
 REQUIRED_FILES = [
     ".claude/hooks/pre-compact-backup.ps1",
+    ".claude/hooks/pretooluse-compression-budget.ps1",
+    ".claude/hooks/session-end-auto-compress.ps1",
     ".claude/hooks/session-start-hard-gate.ps1",
     ".claude/hooks/session-start-state-check.ps1",
     ".claude/hooks/statusline.ps1",
+    ".claude/hooks/userprompt-idle-gap-fire.ps1",
     ".claude/hooks/userprompt-kpi-banner.ps1",
     ".claude/settings.json",
     "docs/CLAUDE_CODE_SETUP_RUNBOOK.md",
@@ -86,6 +89,28 @@ def validate_settings(root: Path, errors: list[str]) -> None:
     ]
     if not any("userprompt-kpi-banner.ps1" in command for command in userprompt_commands):
         errors.append("UserPromptSubmit must run userprompt-kpi-banner.ps1")
+    if not any("userprompt-idle-gap-fire.ps1" in command for command in userprompt_commands):
+        errors.append("UserPromptSubmit must run userprompt-idle-gap-fire.ps1")
+
+    pretooluse_hooks = settings.get("hooks", {}).get("PreToolUse", [])
+    pretooluse_commands = [
+        str(hook.get("command", ""))
+        for group in pretooluse_hooks
+        for hook in group.get("hooks", [])
+        if isinstance(group, dict)
+    ]
+    if not any("pretooluse-compression-budget.ps1" in command for command in pretooluse_commands):
+        errors.append("PreToolUse must run pretooluse-compression-budget.ps1")
+
+    stop_hooks = settings.get("hooks", {}).get("Stop", [])
+    stop_commands = [
+        str(hook.get("command", ""))
+        for group in stop_hooks
+        for hook in group.get("hooks", [])
+        if isinstance(group, dict)
+    ]
+    if not any("session-end-auto-compress.ps1" in command for command in stop_commands):
+        errors.append("Stop must run session-end-auto-compress.ps1")
 
     precompact_hooks = settings.get("hooks", {}).get("PreCompact", [])
     precompact_commands = [
@@ -139,12 +164,27 @@ def validate_session_compression(root: Path, errors: list[str]) -> None:
     guard_label = "session_compression_guard.py"
     for needle in [
         "session_start_forced_fire",
+        "pretooluse_budget_snapshot",
+        "wrap_up_post",
         "session-delta.csv",
         "dev_cache_cleanup.py",
         "[KPI]",
         "SESSION_START_PHASE",
+        "PRETOOLUSE_PHASE",
+        "WRAP_UP_PHASE",
     ]:
         require_contains(errors, guard_text, needle, guard_label)
+
+    pretooluse_text = read_text(root, ".claude/hooks/pretooluse-compression-budget.ps1")
+    pretooluse_label = "pretooluse-compression-budget.ps1"
+    for needle in [
+        "--mode\", \"pretooluse",
+        "--tool-budget-interval\", \"10",
+        "--aggressive-free-gb\", \"22",
+        "--max-mid-fires\", \"5",
+        "session_compression_guard.py",
+    ]:
+        require_contains(errors, pretooluse_text, needle, pretooluse_label)
 
     hard_gate_text = read_text(root, ".claude/hooks/session-start-hard-gate.ps1")
     hard_gate_label = "session-start-hard-gate.ps1"
@@ -166,6 +206,26 @@ def validate_session_compression(root: Path, errors: list[str]) -> None:
         "session_compression_guard.py",
     ]:
         require_contains(errors, banner_text, needle, banner_label)
+
+    idle_gap_text = read_text(root, ".claude/hooks/userprompt-idle-gap-fire.ps1")
+    idle_gap_label = "userprompt-idle-gap-fire.ps1"
+    for needle in [
+        "--mode\", \"userprompt",
+        "--apply",
+        "--cooldown-minutes\", \"60",
+        "session_compression_guard.py",
+    ]:
+        require_contains(errors, idle_gap_text, needle, idle_gap_label)
+
+    wrap_up_text = read_text(root, ".claude/hooks/session-end-auto-compress.ps1")
+    wrap_up_label = "session-end-auto-compress.ps1"
+    for needle in [
+        "SESSION_COMPRESSION_WRAPUP_ENFORCE",
+        "--mode\", \"wrap-up",
+        "--target-free-gb\", \"28",
+        "session_compression_guard.py",
+    ]:
+        require_contains(errors, wrap_up_text, needle, wrap_up_label)
 
 
 def validate_statusline(root: Path, errors: list[str]) -> None:

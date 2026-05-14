@@ -101,6 +101,47 @@ class SessionCompressionGuardTest(unittest.TestCase):
         self.assertFalse(result["should_fire"])
         self.assertIn("userprompt cooldown", result["reason"])
 
+    def test_pretooluse_records_budget_snapshot_on_tenth_tool(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            state = tmp / "state.json"
+            state.write_text(
+                json.dumps({"tool_use_count_session": 9, "mid_fire_count_session": 0, "fires": []}),
+                encoding="utf-8",
+            )
+            result = self.run_guard(
+                tmp,
+                "--mode",
+                "pretooluse",
+                "--apply",
+                "--sample-free-gb",
+                "24.0",
+                "--sample-now",
+                "2026-05-14T01:15:00+00:00",
+            )
+
+        self.assertTrue(result["should_fire"])
+        self.assertEqual(result["decision"], "snapshot")
+        self.assertEqual(result["cleanup"]["status"], "snapshot_only")
+        self.assertEqual(result["phase"], "pretooluse_budget_snapshot")
+
+    def test_wrap_up_is_always_due(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            result = self.run_guard(
+                tmp,
+                "--mode",
+                "wrap-up",
+                "--sample-free-gb",
+                "27.0",
+                "--sample-now",
+                "2026-05-14T01:15:00+00:00",
+            )
+
+        self.assertTrue(result["should_fire"])
+        self.assertEqual(result["phase"], "wrap_up_post")
+        self.assertEqual(result["reason"], "wrap-up compression required")
+
     def test_fatigue_flag_uses_last_three_reclaim_values(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             tmp = Path(raw)
