@@ -24,8 +24,8 @@ class CalendarEventsPage extends StatefulWidget {
     super.key,
     SupabaseClient? supabaseClient,
     NotificationService? notificationService,
-  })  : _supabaseClient = supabaseClient,
-        _notificationService = notificationService;
+  }) : _supabaseClient = supabaseClient,
+       _notificationService = notificationService;
 
   final SupabaseClient? _supabaseClient;
   final NotificationService? _notificationService;
@@ -77,8 +77,8 @@ bool _eventIsAllDay(Map<String, dynamic> event) => event['all_day'] == true;
 
 String _eventTitle(Map<String, dynamic> event) =>
     event['title']?.toString().trim().isNotEmpty == true
-        ? event['title'].toString()
-        : 'Untitled';
+    ? event['title'].toString()
+    : 'Untitled';
 
 String _eventTimeLabel(
   Map<String, dynamic> event, {
@@ -124,8 +124,8 @@ String _eventDateTimeLabel(
   if (end == null) return _formatDateTime(start);
   final endLabel =
       start.year == end.year && start.month == end.month && start.day == end.day
-          ? _formatClock(end)
-          : _formatDateTime(end);
+      ? _formatClock(end)
+      : _formatDateTime(end);
   return '${_formatDateTime(start)} - $endLabel';
 }
 
@@ -215,7 +215,8 @@ String calendarEventRecurrenceLabel(Map<String, dynamic> event) {
       rrule,
       options: const RecurrenceRuleFromStringOptions.lenient(),
     );
-    final hasCustomParts = rule.count != null ||
+    final hasCustomParts =
+        rule.count != null ||
         rule.until != null ||
         rule.hasByWeekDays ||
         rule.hasByMonthDays ||
@@ -336,8 +337,9 @@ bool _eventRangeOverlaps(
   DateTime rangeStart,
   DateTime rangeEnd,
 ) {
-  final safeEnd =
-      end.isAfter(start) ? end : start.add(const Duration(hours: 1));
+  final safeEnd = end.isAfter(start)
+      ? end
+      : start.add(const Duration(hours: 1));
   return safeEnd.isAfter(rangeStart) && start.isBefore(rangeEnd);
 }
 
@@ -346,8 +348,9 @@ DateTime snapCalendarEventStartToGrid(
   DateTime value, {
   int granularityMinutes = _calendarDragSnapMinutes,
 }) {
-  final safeGranularity =
-      granularityMinutes <= 0 ? _calendarDragSnapMinutes : granularityMinutes;
+  final safeGranularity = granularityMinutes <= 0
+      ? _calendarDragSnapMinutes
+      : granularityMinutes;
   final dayStart = DateTime(value.year, value.month, value.day);
   final minutes = value.difference(dayStart).inMinutes;
   final snappedMinutes = (minutes / safeGranularity).round() * safeGranularity;
@@ -378,7 +381,8 @@ _CalendarRecurrencePreset _recurrencePresetForRRule(String? rrule) {
       rrule,
       options: const RecurrenceRuleFromStringOptions.lenient(),
     );
-    final hasCustomParts = rule.count != null ||
+    final hasCustomParts =
+        rule.count != null ||
         rule.until != null ||
         rule.hasByWeekDays ||
         rule.hasByMonthDays ||
@@ -477,8 +481,9 @@ String? _buildCalendarRRule({
     frequency: _frequencyForPreset(preset),
     until: normalizedUntil,
     count: normalizedCount,
-    byWeekDays:
-        preset == _CalendarRecurrencePreset.custom ? byWeekDays : const [],
+    byWeekDays: preset == _CalendarRecurrencePreset.custom
+        ? byWeekDays
+        : const [],
   );
   return rule.toString();
 }
@@ -574,6 +579,229 @@ class _CalendarListItem {
   final bool isDefault;
 }
 
+@visibleForTesting
+class CalendarQuickAddDraft {
+  const CalendarQuickAddDraft({
+    required this.title,
+    required this.date,
+    required this.timeOfDay,
+    this.durationMinutes = 60,
+  });
+
+  final String title;
+  final DateTime date;
+  final TimeOfDay? timeOfDay;
+  final int durationMinutes;
+
+  bool get allDay => timeOfDay == null;
+
+  DateTime get wallStartAt {
+    if (allDay) return DateTime(date.year, date.month, date.day);
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      timeOfDay!.hour,
+      timeOfDay!.minute,
+    );
+  }
+
+  DateTime get wallEndAt => allDay
+      ? wallStartAt
+      : wallStartAt.add(Duration(minutes: durationMinutes));
+
+  String get dateLabel => _formatDate(date);
+
+  String get timeLabel => allDay
+      ? 'All-day'
+      : '${_formatClock(wallStartAt)} - ${_formatClock(wallEndAt)}';
+
+  DateTime startAtForTimezone(String timezone) {
+    if (allDay) return DateTime(date.year, date.month, date.day);
+    return calendarWallTimeToUtc(
+      date: date,
+      hour: timeOfDay!.hour,
+      minute: timeOfDay!.minute,
+      timezone: timezone,
+    );
+  }
+
+  DateTime? endAtForTimezone(String timezone) {
+    if (allDay) return null;
+    final end = wallEndAt;
+    return calendarWallTimeToUtc(
+      date: DateTime(end.year, end.month, end.day),
+      hour: end.hour,
+      minute: end.minute,
+      timezone: timezone,
+    );
+  }
+}
+
+const Map<String, int> _quickAddWeekdayAliases = {
+  '月曜': DateTime.monday,
+  '月曜日': DateTime.monday,
+  '火曜': DateTime.tuesday,
+  '火曜日': DateTime.tuesday,
+  '水曜': DateTime.wednesday,
+  '水曜日': DateTime.wednesday,
+  '木曜': DateTime.thursday,
+  '木曜日': DateTime.thursday,
+  '金曜': DateTime.friday,
+  '金曜日': DateTime.friday,
+  '土曜': DateTime.saturday,
+  '土曜日': DateTime.saturday,
+  '日曜': DateTime.sunday,
+  '日曜日': DateTime.sunday,
+};
+
+@visibleForTesting
+CalendarQuickAddDraft? parseCalendarQuickAddText(
+  String input, {
+  DateTime? now,
+}) {
+  var working = input.trim();
+  if (working.isEmpty) return null;
+
+  final baseNow = now ?? DateTime.now();
+  final baseDate = DateTime(baseNow.year, baseNow.month, baseNow.day);
+  var date = baseDate;
+
+  void removeToken(String token) {
+    working = working.replaceFirst(token, ' ');
+  }
+
+  final slashDateMatch = RegExp(r'(\d{1,2})/(\d{1,2})').firstMatch(working);
+  final monthDayMatch = RegExp(r'(\d{1,2})月(\d{1,2})日?').firstMatch(working);
+  if (slashDateMatch != null || monthDayMatch != null) {
+    final match = slashDateMatch ?? monthDayMatch!;
+    final month = int.tryParse(match.group(1) ?? '');
+    final day = int.tryParse(match.group(2) ?? '');
+    final parsed = month == null || day == null
+        ? null
+        : _quickAddMonthDayDate(month, day, baseDate);
+    if (parsed == null) return null;
+    date = parsed;
+    removeToken(match.group(0)!);
+  } else {
+    final weekdayMatch = RegExp(
+      r'(来週)?(月曜日|月曜|火曜日|火曜|水曜日|水曜|木曜日|木曜|金曜日|金曜|土曜日|土曜|日曜日|日曜)',
+    ).firstMatch(working);
+    if (weekdayMatch != null) {
+      final weekday = _quickAddWeekdayAliases[weekdayMatch.group(2)]!;
+      date = _quickAddWeekdayDate(
+        baseDate,
+        weekday,
+        nextWeek: weekdayMatch.group(1) != null,
+      );
+      removeToken(weekdayMatch.group(0)!);
+    } else if (working.contains('明後日')) {
+      date = baseDate.add(const Duration(days: 2));
+      removeToken('明後日');
+    } else if (working.contains('明日')) {
+      date = baseDate.add(const Duration(days: 1));
+      removeToken('明日');
+    } else if (working.contains('今日')) {
+      removeToken('今日');
+    } else if (working.contains('本日')) {
+      removeToken('本日');
+    }
+  }
+
+  final timeOfDay = _parseQuickAddTime(working);
+  if (timeOfDay.token.isNotEmpty) removeToken(timeOfDay.token);
+
+  return CalendarQuickAddDraft(
+    title: _quickAddTitleFromRemainder(working),
+    date: date,
+    timeOfDay: timeOfDay.time,
+  );
+}
+
+DateTime? _quickAddMonthDayDate(int month, int day, DateTime baseDate) {
+  final candidate = DateTime(baseDate.year, month, day);
+  if (candidate.month != month || candidate.day != day) return null;
+  if (candidate.isBefore(baseDate)) {
+    return DateTime(baseDate.year + 1, month, day);
+  }
+  return candidate;
+}
+
+DateTime _quickAddWeekdayDate(
+  DateTime baseDate,
+  int weekday, {
+  required bool nextWeek,
+}) {
+  if (nextWeek) {
+    final currentWeekMonday = baseDate.subtract(
+      Duration(days: baseDate.weekday - DateTime.monday),
+    );
+    return currentWeekMonday
+        .add(const Duration(days: 7))
+        .add(Duration(days: weekday - DateTime.monday));
+  }
+  final delta = (weekday - baseDate.weekday) % DateTime.daysPerWeek;
+  return baseDate.add(Duration(days: delta));
+}
+
+({TimeOfDay? time, String token}) _parseQuickAddTime(String input) {
+  final clockMatch = RegExp(r'([01]?\d|2[0-3]):([0-5]\d)').firstMatch(input);
+  if (clockMatch != null) {
+    return (
+      time: TimeOfDay(
+        hour: int.parse(clockMatch.group(1)!),
+        minute: int.parse(clockMatch.group(2)!),
+      ),
+      token: clockMatch.group(0)!,
+    );
+  }
+
+  final japaneseTimeMatch = RegExp(
+    r'(午前|午後)?\s*(\d{1,2})時(?:(\d{1,2})分|半)?',
+  ).firstMatch(input);
+  if (japaneseTimeMatch != null) {
+    final ampm = japaneseTimeMatch.group(1);
+    var hour = int.parse(japaneseTimeMatch.group(2)!);
+    final minute = japaneseTimeMatch.group(0)!.contains('半')
+        ? 30
+        : int.tryParse(japaneseTimeMatch.group(3) ?? '') ?? 0;
+    if (ampm == '午後' && hour < 12) hour += 12;
+    if (ampm == '午前' && hour == 12) hour = 0;
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      return (
+        time: TimeOfDay(hour: hour, minute: minute),
+        token: japaneseTimeMatch.group(0)!,
+      );
+    }
+  }
+
+  const namedTimes = {
+    '朝': TimeOfDay(hour: 9, minute: 0),
+    '昼': TimeOfDay(hour: 12, minute: 0),
+    '正午': TimeOfDay(hour: 12, minute: 0),
+    '夕方': TimeOfDay(hour: 17, minute: 0),
+    '夜': TimeOfDay(hour: 19, minute: 0),
+  };
+  for (final entry in namedTimes.entries) {
+    if (input.contains(entry.key)) {
+      return (time: entry.value, token: entry.key);
+    }
+  }
+  return (time: null, token: '');
+}
+
+String _quickAddTitleFromRemainder(String input) {
+  var title = input
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .replaceAll(RegExp(r'^[\s,、。・:：]+|[\s,、。・:：]+$'), '')
+      .trim();
+  title = title
+      .replaceFirst(RegExp(r'^(に|で|から)\s*'), '')
+      .replaceFirst(RegExp(r'\s*(に|で|から|まで)$'), '')
+      .trim();
+  return title.isEmpty ? '予定' : title;
+}
+
 class _CalendarEventsPageState extends State<CalendarEventsPage> {
   late final SupabaseClient _supabase =
       widget._supabaseClient ?? Supabase.instance.client;
@@ -616,14 +844,14 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   }
 
   _CalendarListItem get _defaultCalendar => _calendars.firstWhere(
-        (calendar) => calendar.id == _defaultCalendarId,
-        orElse: () => const _CalendarListItem(
-          id: _defaultCalendarId,
-          name: _defaultCalendarName,
-          color: _defaultCalendarColor,
-          isDefault: true,
-        ),
-      );
+    (calendar) => calendar.id == _defaultCalendarId,
+    orElse: () => const _CalendarListItem(
+      id: _defaultCalendarId,
+      name: _defaultCalendarName,
+      color: _defaultCalendarColor,
+      isDefault: true,
+    ),
+  );
 
   _CalendarListItem _calendarForId(String id) {
     return _calendars.firstWhere(
@@ -751,8 +979,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     final data = res.data;
     final rawCalendars =
         data is Map<String, dynamic> && data['calendars'] is List
-            ? data['calendars'] as List
-            : <dynamic>[];
+        ? data['calendars'] as List
+        : <dynamic>[];
     final nextCalendars = <_CalendarListItem>[];
     for (final raw in rawCalendars) {
       if (raw is! Map) continue;
@@ -773,7 +1001,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     }
     final knownIds = nextCalendars.map((calendar) => calendar.id).toSet();
     setState(() {
-      final shouldSelectAll = !_hasLoadedCalendars ||
+      final shouldSelectAll =
+          !_hasLoadedCalendars ||
           (_visibleCalendarIds.length == _calendars.length &&
               _calendars.every(
                 (calendar) => _visibleCalendarIds.contains(calendar.id),
@@ -877,8 +1106,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   }) async {
     try {
       final normalizedTimezone = normalizeCalendarTimezone(timezone);
-      final end =
-          allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
+      final end = allDay
+          ? startAt
+          : (endAt ?? startAt.add(const Duration(hours: 1)));
       final res = await _supabase.functions.invoke(
         'app-hub',
         body: {
@@ -897,8 +1127,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       );
       final data = res.data;
       final savedEvent = data is Map ? data['event'] : null;
-      final eventId =
-          savedEvent is Map ? savedEvent['event_id']?.toString() ?? '' : '';
+      final eventId = savedEvent is Map
+          ? savedEvent['event_id']?.toString() ?? ''
+          : '';
       if (eventId.isNotEmpty && reminderMinutes != null) {
         _scheduleInAppReminderTimer({
           'event_id': eventId,
@@ -947,8 +1178,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     }
     try {
       final normalizedTimezone = normalizeCalendarTimezone(timezone);
-      final end =
-          allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
+      final end = allDay
+          ? startAt
+          : (endAt ?? startAt.add(const Duration(hours: 1)));
       await _supabase.functions.invoke(
         'app-hub',
         body: {
@@ -1149,8 +1381,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       );
       final data = res.data;
       final calendar = data is Map ? data['calendar'] : null;
-      final calendarId =
-          calendar is Map ? calendar['calendar_id']?.toString() ?? '' : '';
+      final calendarId = calendar is Map
+          ? calendar['calendar_id']?.toString() ?? ''
+          : '';
       if (calendarId.isNotEmpty) {
         _visibleCalendarIds.add(calendarId);
       }
@@ -1499,7 +1732,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final usesTimeline = _calendarView == _CalendarView.day ||
+    final usesTimeline =
+        _calendarView == _CalendarView.day ||
         _calendarView == _CalendarView.week;
 
     return Scaffold(
@@ -1515,6 +1749,12 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       appBar: AppBar(
         title: const Text('カレンダー'),
         actions: [
+          IconButton(
+            key: const Key('calendar_events_quick_add_button'),
+            icon: const Icon(Icons.flash_on),
+            tooltip: 'Quick add event',
+            onPressed: () => _showQuickAddDialog(context),
+          ),
           IconButton(
             key: const Key('calendar_events_search_button'),
             icon: const Icon(Icons.search),
@@ -1666,72 +1906,69 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     onMove: _moveTimedEvent,
                   )
                 : _selectedDayEvents.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.event_available,
-                              size: 48,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'この日のイベントはありません',
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .outlineVariant,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.event_available,
+                          size: 48,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: _selectedDayEvents.length,
-                        itemBuilder: (context, index) {
-                          final event = _selectedDayEvents[index];
-                          return _EventCard(
-                            event: event,
-                            color: _eventColor(event),
-                            showOriginalTimezone: _showOriginalTimezone,
-                            onTap: () => _showEventDetailsSheet(context, event),
-                            onDelete: () {
-                              final eventId = calendarEventSeriesId(event);
-                              if (eventId.isEmpty) return;
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('削除確認'),
-                                  content: Text('「${event['title']}」を削除しますか？'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(ctx),
-                                      child: const Text('キャンセル'),
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFFE53935),
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.pop(ctx);
-                                        _deleteEvent(eventId);
-                                      },
-                                      child: const Text('削除'),
-                                    ),
-                                  ],
+                        const SizedBox(height: 8),
+                        Text(
+                          'この日のイベントはありません',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: _selectedDayEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = _selectedDayEvents[index];
+                      return _EventCard(
+                        event: event,
+                        color: _eventColor(event),
+                        showOriginalTimezone: _showOriginalTimezone,
+                        onTap: () => _showEventDetailsSheet(context, event),
+                        onDelete: () {
+                          final eventId = calendarEventSeriesId(event);
+                          if (eventId.isEmpty) return;
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('削除確認'),
+                              content: Text('「${event['title']}」を削除しますか？'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('キャンセル'),
                                 ),
-                              );
-                            },
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFE53935),
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _deleteEvent(eventId);
+                                  },
+                                  child: const Text('削除'),
+                                ),
+                              ],
+                            ),
                           );
                         },
-                      ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -1745,6 +1982,131 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 
   void _showAddEventDialog(BuildContext context) {
     _showEventDialog(context);
+  }
+
+  void _showQuickAddDialog(BuildContext context) {
+    final textCtrl = TextEditingController();
+    String? errorText;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Quick add event'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                key: const Key('calendar_quick_add_field'),
+                controller: textCtrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Example: 明日 14:00 ミーティング',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.bolt),
+                ),
+                onSubmitted: (_) {
+                  final draft = parseCalendarQuickAddText(textCtrl.text);
+                  if (draft == null) {
+                    setDialogState(
+                      () => errorText = 'Enter an event title, date, or time.',
+                    );
+                    return;
+                  }
+                  Navigator.pop(ctx);
+                  _showQuickAddPreviewDialog(context, draft);
+                },
+              ),
+              if (errorText != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  errorText!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              key: const Key('calendar_quick_add_preview_button'),
+              icon: const Icon(Icons.visibility),
+              label: const Text('Preview'),
+              onPressed: () {
+                final draft = parseCalendarQuickAddText(textCtrl.text);
+                if (draft == null) {
+                  setDialogState(
+                    () => errorText = 'Enter an event title, date, or time.',
+                  );
+                  return;
+                }
+                Navigator.pop(ctx);
+                _showQuickAddPreviewDialog(context, draft);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showQuickAddPreviewDialog(
+    BuildContext context,
+    CalendarQuickAddDraft draft,
+  ) {
+    final timezone = calendarDefaultTimezone();
+    final calendar = _defaultCalendar;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Preview event'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(draft.title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            _EventMetadataRow(label: 'Date', value: draft.dateLabel),
+            _EventMetadataRow(label: 'Time', value: draft.timeLabel),
+            _EventMetadataRow(label: 'Calendar', value: calendar.name),
+            _EventMetadataRow(
+              label: 'Timezone',
+              value: '$timezone (${calendarTimezoneAbbreviation(timezone)})',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            key: const Key('calendar_quick_add_create_button'),
+            icon: const Icon(Icons.add),
+            label: const Text('Create'),
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _selectedDay = draft.date;
+                _focusedDay = draft.date;
+              });
+              _createEvent(
+                title: draft.title,
+                startAt: draft.startAtForTimezone(timezone),
+                endAt: draft.endAtForTimezone(timezone),
+                allDay: draft.allDay,
+                color: calendar.color,
+                calendarId: calendar.id,
+                timezone: timezone,
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   void _showAddCalendarDialog(BuildContext context) {
@@ -1922,17 +2284,18 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     _RecurrenceEditScope recurrenceScope = _RecurrenceEditScope.all,
   }) {
     final isEditing = event != null;
-    final editEvent =
-        event == null ? null : _eventForRecurrenceEdit(event, recurrenceScope);
+    final editEvent = event == null
+        ? null
+        : _eventForRecurrenceEdit(event, recurrenceScope);
     final eventId = editEvent == null ? '' : calendarEventSeriesId(editEvent);
     final initialStart = editEvent == null
         ? _selectedDay
         : (_eventDateTime(editEvent, 'start_at', showOriginalTimezone: true) ??
-            _selectedDay);
+              _selectedDay);
     final initialEnd = editEvent == null
         ? initialStart.add(const Duration(hours: 1))
         : (_eventDateTime(editEvent, 'end_at', showOriginalTimezone: true) ??
-            initialStart.add(const Duration(hours: 1)));
+              initialStart.add(const Duration(hours: 1)));
     final titleCtrl = TextEditingController(
       text: editEvent?['title']?.toString() ?? '',
     );
@@ -1948,8 +2311,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     var startTime = TimeOfDay.fromDateTime(initialStart);
     var endTime = TimeOfDay.fromDateTime(initialEnd);
     final colors = ['#4285f4', '#ea4335', '#34a853', '#fbbc05', '#9334e6'];
-    var selectedColor =
-        editEvent == null ? colors.first : _eventColorHex(editEvent);
+    var selectedColor = editEvent == null
+        ? colors.first
+        : _eventColorHex(editEvent);
     if (!colors.contains(selectedColor)) {
       selectedColor = colors.first;
     }
@@ -2321,8 +2685,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         minute: endTime.minute,
                         timezone: selectedTimezone,
                       );
-                final reminderMinutes =
-                    selectedReminder < 0 ? null : selectedReminder;
+                final reminderMinutes = selectedReminder < 0
+                    ? null
+                    : selectedReminder;
                 final recurrenceCount = int.tryParse(
                   recurrenceCountCtrl.text.trim(),
                 );
@@ -2376,7 +2741,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 class _CalendarEventSearchDelegate
     extends SearchDelegate<Map<String, dynamic>?> {
   _CalendarEventSearchDelegate({required this.events})
-      : super(searchFieldLabel: 'Search events');
+    : super(searchFieldLabel: 'Search events');
 
   final List<Map<String, dynamic>> events;
 
@@ -2805,9 +3170,11 @@ class _DayTimelineView extends StatelessWidget {
                       height: _hourHeight,
                       child: _HourSlot(hour: hour),
                     ),
-                  for (var minute = 0;
-                      minute < 24 * 60;
-                      minute += _calendarDragSnapMinutes)
+                  for (
+                    var minute = 0;
+                    minute < 24 * 60;
+                    minute += _calendarDragSnapMinutes
+                  )
                     Positioned(
                       top: (minute / 60) * _hourHeight,
                       left: _timeGutterWidth,
@@ -2832,7 +3199,8 @@ class _DayTimelineView extends StatelessWidget {
   }
 
   Widget _buildPositionedEvent(_TimelineEntry entry, double contentWidth) {
-    final columnWidth = (contentWidth - (entry.columnCount - 1) * _eventGap) /
+    final columnWidth =
+        (contentWidth - (entry.columnCount - 1) * _eventGap) /
         entry.columnCount;
     final safeColumnWidth = columnWidth < 48 ? 48.0 : columnWidth;
     final top = (entry.startMinute / 60) * _hourHeight + 2;
@@ -2842,7 +3210,8 @@ class _DayTimelineView extends StatelessWidget {
 
     return Positioned(
       top: top,
-      left: _timeGutterWidth +
+      left:
+          _timeGutterWidth +
           _eventGap +
           entry.column * (safeColumnWidth + _eventGap),
       width: safeColumnWidth,
@@ -2950,7 +3319,8 @@ class _DayTimelineView extends StatelessWidget {
       showOriginalTimezone: showOriginalTimezone,
     );
     if (start == null) return null;
-    final end = _eventDateTime(
+    final end =
+        _eventDateTime(
           event,
           'end_at',
           showOriginalTimezone: showOriginalTimezone,
@@ -2974,8 +3344,9 @@ class _DayTimelineView extends StatelessWidget {
       1440,
     );
     final minimumEndMinute = _clampInt(startMinute + 30, 1, 1440);
-    final endMinute =
-        rawEndMinute < minimumEndMinute ? minimumEndMinute : rawEndMinute;
+    final endMinute = rawEndMinute < minimumEndMinute
+        ? minimumEndMinute
+        : rawEndMinute;
 
     return _TimelineRange(startMinute, endMinute);
   }
