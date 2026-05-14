@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../models/asset_liability_workbook.dart';
+import 'asset_liability_planning_service.dart';
 
 class AssetLiabilityHistoryService {
   const AssetLiabilityHistoryService();
@@ -12,7 +13,9 @@ class AssetLiabilityHistoryService {
   }) {
     final paidPaymentTotal = workbook.debtMasterRows.fold<double>(
       0,
-      (sum, row) => row.paid ? sum + row.scheduledPaymentAmount : sum,
+      (sum, row) => row.isDirectCashflowTarget && row.paid
+          ? sum + row.scheduledPaymentAmount
+          : sum,
     );
     final overduePaymentCount = workbook.cashflowRows
         .where((row) => row.isPayment && row.overdue)
@@ -178,6 +181,9 @@ class AssetLiabilityHistoryService {
         '日付',
         '支払先',
         '支払原資口座',
+        '支払い方法',
+        '資金繰り上の扱い',
+        '直接差し引き対象',
         '支払予定額',
         '実額/推定',
         '支払済み',
@@ -189,9 +195,16 @@ class AssetLiabilityHistoryService {
           DateFormat('yyyy-MM-dd').format(row.paymentDate),
           row.accountName,
           row.paymentSourceAccountName ?? '未設定',
+          row.paymentMethodLabel ?? '',
+          row.includedInBillingAccount
+              ? AssetLiabilityPlanningService.cardBillingIncludedLabel
+              : '直接差し引き',
+          row.isDirectCashflowTarget ? '対象' : '対象外',
           row.paymentAmount,
           row.paymentAmountEstimated ? '推定' : '実額',
-          row.paid ? '済' : '未済',
+          row.includedInBillingAccount
+              ? AssetLiabilityPlanningService.cardBillingIncludedLabel
+              : (row.paid ? '済' : '未済'),
           row.overdue ? '期限超過' : '',
           row.cashAfterPayment,
         ],

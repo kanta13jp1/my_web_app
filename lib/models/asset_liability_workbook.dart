@@ -17,6 +17,10 @@ class AssetLiabilityAccount {
   final double balance;
   final int? paymentDay;
   final String? paymentSourceAccountName;
+  final String? paymentMethodLabel;
+  final String? billingAccountId;
+  final String? billingAccountName;
+  final bool includedInBillingAccount;
   final double annualRate;
   final double minimumPaymentRate;
   final double minimumPaymentFloor;
@@ -29,6 +33,10 @@ class AssetLiabilityAccount {
     required this.balance,
     this.paymentDay,
     this.paymentSourceAccountName,
+    this.paymentMethodLabel,
+    this.billingAccountId,
+    this.billingAccountName,
+    this.includedInBillingAccount = false,
     this.annualRate = 0,
     this.minimumPaymentRate = 0,
     this.minimumPaymentFloor = 0,
@@ -48,6 +56,10 @@ class AssetLiabilityDebtRow {
   final int? paymentDay;
   final String? paymentSourceAccountId;
   final String? paymentSourceAccountName;
+  final String? paymentMethodLabel;
+  final String? billingAccountId;
+  final String? billingAccountName;
+  final bool includedInBillingAccount;
   final double annualRate;
   final double minimumPaymentEstimate;
   final double? manualPaymentAmount;
@@ -68,6 +80,10 @@ class AssetLiabilityDebtRow {
     required this.paymentDay,
     required this.paymentSourceAccountId,
     required this.paymentSourceAccountName,
+    required this.paymentMethodLabel,
+    required this.billingAccountId,
+    required this.billingAccountName,
+    required this.includedInBillingAccount,
     required this.annualRate,
     required this.minimumPaymentEstimate,
     required this.manualPaymentAmount,
@@ -80,6 +96,8 @@ class AssetLiabilityDebtRow {
     required this.paymentAmountEstimated,
     required this.paid,
   });
+
+  bool get isDirectCashflowTarget => !includedInBillingAccount;
 }
 
 class AssetLiabilityPaymentDayRisk {
@@ -168,6 +186,10 @@ class AssetLiabilityCashflowRow {
   final String? paymentSourceAccountName;
   final String? destinationAccountId;
   final String? destinationAccountName;
+  final String? paymentMethodLabel;
+  final String? billingAccountId;
+  final String? billingAccountName;
+  final bool includedInBillingAccount;
   final double paymentAmount;
   final bool paymentAmountEstimated;
   final bool paid;
@@ -187,6 +209,10 @@ class AssetLiabilityCashflowRow {
     required this.paymentSourceAccountName,
     required this.destinationAccountId,
     required this.destinationAccountName,
+    required this.paymentMethodLabel,
+    required this.billingAccountId,
+    required this.billingAccountName,
+    required this.includedInBillingAccount,
     required this.paymentAmount,
     required this.paymentAmountEstimated,
     required this.paid,
@@ -199,6 +225,7 @@ class AssetLiabilityCashflowRow {
 
   bool get isPayment => eventType == AssetLiabilityCashflowEventType.payment;
   bool get isIncome => eventType == AssetLiabilityCashflowEventType.income;
+  bool get isDirectCashflowTarget => !includedInBillingAccount;
 }
 
 class AssetLiabilityAccountCashflowSummary {

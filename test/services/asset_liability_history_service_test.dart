@@ -205,6 +205,33 @@ void main() {
       expect(bundle.accountCashflowCsv, contains('口座,現在残高'));
       expect(bundle.accountCashflowCsv, contains('bank'));
     });
+
+    test('exports au card-billed payment metadata to payment CSV', () {
+      final workbook = planningService.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'au': -32152,
+          'auPayカード': -10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.auPayCardAccountId: 10000,
+        },
+      );
+
+      final csv = historyService.buildPaymentScheduleCsv(workbook);
+
+      expect(csv, contains('支払い方法'));
+      expect(
+        csv,
+        contains(AssetLiabilityPlanningService.auPayCardPaymentMethodLabel),
+      );
+      expect(
+        csv,
+        contains(AssetLiabilityPlanningService.cardBillingIncludedLabel),
+      );
+      expect(csv, contains('直接差し引き対象'));
+    });
   });
 }
 

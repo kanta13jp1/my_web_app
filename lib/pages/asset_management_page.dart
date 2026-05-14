@@ -6480,6 +6480,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 8),
             _buildAssetWorkbookEstimateNotice(workbook),
+            if (workbook.debtMasterRows
+                .any((row) => row.includedInBillingAccount)) ...[
+              const SizedBox(height: 8),
+              _buildAssetWorkbookCardBillingNotice(workbook),
+            ],
             if (workbook.hasOverduePayments) ...[
               const SizedBox(height: 8),
               _buildAssetWorkbookOverdueWarning(workbook),
@@ -6872,6 +6877,51 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Expanded(
             child: Text(
               '推定最低支払額は参考値です。実際の請求額とは異なる場合があります。請求確定後は手入力値を優先してください。$status',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetWorkbookCardBillingNotice(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final labels = workbook.debtMasterRows
+        .where((row) => row.includedInBillingAccount)
+        .map(
+          (row) =>
+              '${row.name}: ${row.paymentMethodLabel ?? AssetLiabilityPlanningService.cardBillingIncludedLabel}',
+        )
+        .join(' / ');
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.credit_card_outlined,
+            size: 20,
+            color: Color(0xFF2563EB),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${AssetLiabilityPlanningService.auCardBillingNotice} $labels',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
@@ -7284,7 +7334,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     DataCell(Text('${row.paymentDay}日')),
                     DataCell(Text(row.accountName)),
                     DataCell(
-                      row.isPayment
+                      row.isPayment && row.isDirectCashflowTarget
                           ? _buildPaymentSourceDropdown(row, workbook)
                           : Text(row.destinationAccountName ?? '未設定'),
                     ),
@@ -7379,6 +7429,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildPaymentProgressChip(AssetLiabilityCashflowRow row) {
+    if (row.includedInBillingAccount) {
+      return _buildTextStatusChip(
+        label: AssetLiabilityPlanningService.cardBillingIncludedLabel,
+        color: const Color(0xFF2563EB),
+      );
+    }
     final reflected = row.isIncome ? row.received : row.paid;
     final label = reflected
         ? '反映済み'
@@ -7409,6 +7465,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildCashflowStatusChip(AssetLiabilityCashflowRow row) {
+    if (row.includedInBillingAccount) {
+      return _buildTextStatusChip(
+        label: AssetLiabilityPlanningService.cardBillingIncludedLabel,
+        color: const Color(0xFF2563EB),
+      );
+    }
     if (row.overdue) {
       return _buildTextStatusChip(
         label: row.isIncome ? '入金遅れ' : '期限超過',
@@ -7419,6 +7481,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _cashflowKindLabel(AssetLiabilityCashflowRow row) {
+    if (row.includedInBillingAccount) {
+      return AssetLiabilityPlanningService.cardBillingIncludedLabel;
+    }
     if (row.isIncome) {
       return '入金';
     }
@@ -8170,6 +8235,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildPaymentAmountSourceChip(AssetLiabilityDebtRow row) {
+    if (row.includedInBillingAccount) {
+      return _buildTextStatusChip(
+        label: row.paymentMethodLabel ??
+            AssetLiabilityPlanningService.cardBillingIncludedLabel,
+        color: const Color(0xFF2563EB),
+      );
+    }
     final isEstimated = row.paymentAmountEstimated;
     final color =
         isEstimated ? const Color(0xFFD97706) : const Color(0xFF0D9488);
@@ -8192,6 +8264,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildPaidCheckbox(AssetLiabilityDebtRow row) {
+    if (row.includedInBillingAccount) {
+      return _buildTextStatusChip(
+        label: AssetLiabilityPlanningService.cardBillingIncludedLabel,
+        color: const Color(0xFF2563EB),
+      );
+    }
     return Checkbox(
       value: row.paid,
       onChanged: (value) => _toggleMonthlyPaymentPaid(row.id, value ?? false),

@@ -50,7 +50,7 @@ void main() {
 
       expect(riskByDay[8]?.balanceTotal.round(), -2933552);
       expect(riskByDay[10]?.balanceTotal.round(), -513770);
-      expect(riskByDay[11]?.balanceTotal.round(), -32152);
+      expect(riskByDay.containsKey(11), isFalse);
       expect(riskByDay[15]?.balanceTotal.round(), -2195978);
       expect(riskByDay[27]?.balanceTotal.round(), -1579266);
       expect(riskByDay[8]?.isPast, isTrue);
@@ -133,7 +133,12 @@ void main() {
         closeTo(auPay.minimumPaymentEstimate, 0.001),
       );
       expect(workbook.manualPaymentCount, 0);
-      expect(workbook.estimatedPaymentCount, workbook.debtMasterRows.length);
+      expect(
+        workbook.estimatedPaymentCount,
+        workbook.debtMasterRows
+            .where((row) => row.isDirectCashflowTarget)
+            .length,
+      );
     });
 
     test('treats zero yen as a valid manually entered payment', () {
@@ -213,6 +218,64 @@ void main() {
         workbook.monthlyScheduledPaymentTotal - auPay.scheduledPaymentAmount,
       );
     });
+
+    test(
+      'treats au as auPay card-billed detail without direct subtraction',
+      () {
+        final workbook = service.buildWorkbook(
+          latestSnapshot: <String, double>{
+            'cash': 50000,
+            'au': -32152,
+            'auPayカード': -10000,
+          },
+          baseDate: DateTime(2026, 5, 1),
+          monthlyPaymentOverrides: const <String, double>{
+            AssetLiabilityPlanningService.auPayCardAccountId: 10000,
+          },
+        );
+
+        final au = workbook.debtMasterRows.firstWhere(
+          (row) => row.id == AssetLiabilityPlanningService.auAccountId,
+        );
+        final auPay = workbook.debtMasterRows.firstWhere(
+          (row) => row.id == AssetLiabilityPlanningService.auPayCardAccountId,
+        );
+        final auCashflow = workbook.cashflowRows.firstWhere(
+          (row) => row.accountId == AssetLiabilityPlanningService.auAccountId,
+        );
+        final auPayCashflow = workbook.cashflowRows.firstWhere(
+          (row) =>
+              row.accountId == AssetLiabilityPlanningService.auPayCardAccountId,
+        );
+
+        expect(
+          au.paymentMethodLabel,
+          AssetLiabilityPlanningService.auPayCardPaymentMethodLabel,
+        );
+        expect(
+          au.billingAccountId,
+          AssetLiabilityPlanningService.auPayCardAccountId,
+        );
+        expect(au.includedInBillingAccount, isTrue);
+        expect(au.isDirectCashflowTarget, isFalse);
+        expect(auPay.isDirectCashflowTarget, isTrue);
+        expect(
+          workbook.paymentDayRisks.any((risk) => risk.paymentDay == 11),
+          isFalse,
+        );
+        expect(auCashflow.includedInBillingAccount, isTrue);
+        expect(auCashflow.cashAfterPayment, auCashflow.cashBeforePayment);
+        expect(
+          auPayCashflow.cashAfterPayment,
+          auPayCashflow.cashBeforePayment - auPayCashflow.paymentAmount,
+        );
+        expect(
+          workbook.monthlyUnpaidPaymentTotal,
+          auPay.scheduledPaymentAmount,
+        );
+        expect(workbook.cashAfterScheduledPayments, 40000);
+      },
+    );
 
     test('restores monthly state by stable id after display name changes', () {
       final workbook = service.buildWorkbook(
@@ -503,6 +566,16 @@ void main() {
 
       expect(au.name, 'au');
       expect(au.paymentDay, 11);
+      expect(
+        au.paymentMethodLabel,
+        AssetLiabilityPlanningService.auPayCardPaymentMethodLabel,
+      );
+      expect(
+        au.billingAccountId,
+        AssetLiabilityPlanningService.auPayCardAccountId,
+      );
+      expect(au.includedInBillingAccount, isTrue);
+      expect(au.isDirectCashflowTarget, isFalse);
       expect(kddi.name, AssetLiabilityPlanningService.kddiProviderAccountName);
       expect(kddi.kind, AssetLiabilityAccountKind.utility);
       expect(kddi.paymentDay, 25);
@@ -530,10 +603,7 @@ void main() {
       );
       expect(
         workbook.monthlyUnpaidPaymentTotal,
-        closeTo(
-          au.scheduledPaymentAmount + kddi.scheduledPaymentAmount,
-          0.001,
-        ),
+        closeTo(kddi.scheduledPaymentAmount, 0.001),
       );
     });
 
@@ -550,9 +620,7 @@ void main() {
         includeDefaultFixedPayments: true,
       );
 
-      final au = workbook.debtMasterRows.firstWhere(
-        (row) => row.id == 'au',
-      );
+      final au = workbook.debtMasterRows.firstWhere((row) => row.id == 'au');
       final kddi = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
       );
@@ -562,13 +630,11 @@ void main() {
             AssetLiabilityPlanningService.kddiProviderAccountId,
       );
 
+      expect(au.includedInBillingAccount, isTrue);
       expect(kddi.paid, isTrue);
       expect(kddiCashflow.paid, isTrue);
       expect(kddiCashflow.cashBeforePayment, kddiCashflow.cashAfterPayment);
-      expect(
-        workbook.monthlyUnpaidPaymentTotal,
-        closeTo(au.scheduledPaymentAmount, 0.001),
-      );
+      expect(workbook.monthlyUnpaidPaymentTotal, 0);
     });
   });
 }
