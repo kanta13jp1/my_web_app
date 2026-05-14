@@ -20,6 +20,12 @@ void ensureCalendarTimeZonesInitialized() {
   _timeZonesInitialized = true;
 }
 
+tz.Location _calendarLocation(String timezone) {
+  final normalized = normalizeCalendarTimezone(timezone);
+  if (normalized == 'UTC') return tz.UTC;
+  return tz.getLocation(normalized);
+}
+
 String calendarDefaultTimezone({DateTime? now, String? timeZoneName}) {
   ensureCalendarTimeZonesInitialized();
   final probe = now ?? DateTime.now();
@@ -85,6 +91,7 @@ String normalizeCalendarTimezone(Object? value) {
   if (raw.isEmpty || raw == 'null' || raw == 'undefined') {
     return calendarDefaultTimezone();
   }
+  if (raw.toUpperCase() == 'UTC') return 'UTC';
   try {
     return tz.getLocation(raw).name;
   } catch (_) {
@@ -108,7 +115,7 @@ DateTime calendarWallTimeToUtc({
   required String timezone,
 }) {
   ensureCalendarTimeZonesInitialized();
-  final location = tz.getLocation(normalizeCalendarTimezone(timezone));
+  final location = _calendarLocation(timezone);
   return tz.TZDateTime(
     location,
     date.year,
@@ -131,7 +138,7 @@ DateTime? calendarEventDateTimeForDisplay(
   if (!showOriginalTimezone) return parsed.toLocal();
 
   ensureCalendarTimeZonesInitialized();
-  final location = tz.getLocation(calendarEventTimezone(event));
+  final location = _calendarLocation(calendarEventTimezone(event));
   return tz.TZDateTime.from(parsed, location);
 }
 
@@ -141,6 +148,6 @@ String calendarEventTimezone(Map<String, dynamic> event) {
 
 String calendarTimezoneAbbreviation(String timezone, {DateTime? at}) {
   ensureCalendarTimeZonesInitialized();
-  final location = tz.getLocation(normalizeCalendarTimezone(timezone));
+  final location = _calendarLocation(timezone);
   return tz.TZDateTime.from(at ?? DateTime.now(), location).timeZoneName;
 }
