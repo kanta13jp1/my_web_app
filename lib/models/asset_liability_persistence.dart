@@ -75,6 +75,7 @@ class AssetLiabilityMonthlyStatePayload {
   final Map<String, double> paymentOverrides;
   final Set<String> paidAccountIds;
   final Map<String, String> paymentSourceAccountIds;
+  final Map<String, String> cardBillingAccountIds;
   final List<AssetLiabilityIncomePlan> incomePlans;
 
   const AssetLiabilityMonthlyStatePayload({
@@ -82,6 +83,7 @@ class AssetLiabilityMonthlyStatePayload {
     required this.paymentOverrides,
     required this.paidAccountIds,
     required this.paymentSourceAccountIds,
+    required this.cardBillingAccountIds,
     required this.incomePlans,
   });
 
@@ -95,6 +97,9 @@ class AssetLiabilityMonthlyStatePayload {
       paidAccountIds: Set<String>.from(state.paidAccountNames),
       paymentSourceAccountIds: Map<String, String>.from(
         state.paymentSourceAccountIds,
+      ),
+      cardBillingAccountIds: Map<String, String>.from(
+        state.cardBillingAccountIds,
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(state.incomePlans),
     );
@@ -117,6 +122,9 @@ class AssetLiabilityMonthlyStatePayload {
           _readStringMap(json, 'payment_source_account_ids') ??
               _readStringMap(json, 'paymentSourceAccountIds') ??
               const <String, String>{},
+      cardBillingAccountIds: _readStringMap(json, 'card_billing_account_ids') ??
+          _readStringMap(json, 'cardBillingAccountIds') ??
+          const <String, String>{},
       incomePlans: _readIncomePlans(json, 'income_plans') ??
           _readIncomePlans(json, 'incomePlans') ??
           const <AssetLiabilityIncomePlan>[],
@@ -130,6 +138,7 @@ class AssetLiabilityMonthlyStatePayload {
       paymentSourceAccountIds: Map<String, String>.from(
         paymentSourceAccountIds,
       ),
+      cardBillingAccountIds: Map<String, String>.from(cardBillingAccountIds),
       incomePlans: List<AssetLiabilityIncomePlan>.from(incomePlans),
     );
   }
@@ -146,6 +155,9 @@ class AssetLiabilityMonthlyStatePayload {
       'paid_account_ids': (paidAccountIds.toList()..sort()),
       'payment_source_account_ids': Map<String, String>.from(
         paymentSourceAccountIds,
+      ),
+      'card_billing_account_ids': Map<String, String>.from(
+        cardBillingAccountIds,
       ),
       'income_plans': [for (final plan in incomePlans) _encodeIncomePlan(plan)],
       if (timestamp != null) 'updated_at': timestamp,

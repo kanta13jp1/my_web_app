@@ -10,6 +10,8 @@ enum AssetLiabilityAccountKind {
   otherLiability,
 }
 
+enum AssetLiabilityPaymentMethod { direct, includedInCard }
+
 class AssetLiabilityAccount {
   final String id;
   final String name;
@@ -17,6 +19,7 @@ class AssetLiabilityAccount {
   final double balance;
   final int? paymentDay;
   final String? paymentSourceAccountName;
+  final AssetLiabilityPaymentMethod paymentMethod;
   final String? paymentMethodLabel;
   final String? billingAccountId;
   final String? billingAccountName;
@@ -33,6 +36,7 @@ class AssetLiabilityAccount {
     required this.balance,
     this.paymentDay,
     this.paymentSourceAccountName,
+    this.paymentMethod = AssetLiabilityPaymentMethod.direct,
     this.paymentMethodLabel,
     this.billingAccountId,
     this.billingAccountName,
@@ -56,6 +60,7 @@ class AssetLiabilityDebtRow {
   final int? paymentDay;
   final String? paymentSourceAccountId;
   final String? paymentSourceAccountName;
+  final AssetLiabilityPaymentMethod paymentMethod;
   final String? paymentMethodLabel;
   final String? billingAccountId;
   final String? billingAccountName;
@@ -80,6 +85,7 @@ class AssetLiabilityDebtRow {
     required this.paymentDay,
     required this.paymentSourceAccountId,
     required this.paymentSourceAccountName,
+    required this.paymentMethod,
     required this.paymentMethodLabel,
     required this.billingAccountId,
     required this.billingAccountName,
@@ -97,7 +103,9 @@ class AssetLiabilityDebtRow {
     required this.paid,
   });
 
-  bool get isDirectCashflowTarget => !includedInBillingAccount;
+  bool get isDirectCashflowTarget =>
+      !includedInBillingAccount &&
+      paymentMethod == AssetLiabilityPaymentMethod.direct;
 }
 
 class AssetLiabilityPaymentDayRisk {
@@ -186,6 +194,7 @@ class AssetLiabilityCashflowRow {
   final String? paymentSourceAccountName;
   final String? destinationAccountId;
   final String? destinationAccountName;
+  final AssetLiabilityPaymentMethod paymentMethod;
   final String? paymentMethodLabel;
   final String? billingAccountId;
   final String? billingAccountName;
@@ -209,6 +218,7 @@ class AssetLiabilityCashflowRow {
     required this.paymentSourceAccountName,
     required this.destinationAccountId,
     required this.destinationAccountName,
+    required this.paymentMethod,
     required this.paymentMethodLabel,
     required this.billingAccountId,
     required this.billingAccountName,
@@ -225,7 +235,9 @@ class AssetLiabilityCashflowRow {
 
   bool get isPayment => eventType == AssetLiabilityCashflowEventType.payment;
   bool get isIncome => eventType == AssetLiabilityCashflowEventType.income;
-  bool get isDirectCashflowTarget => !includedInBillingAccount;
+  bool get isDirectCashflowTarget =>
+      !includedInBillingAccount &&
+      paymentMethod == AssetLiabilityPaymentMethod.direct;
 }
 
 class AssetLiabilityAccountCashflowSummary {
