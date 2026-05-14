@@ -10,6 +10,11 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { AgentGpaActionError, handleAgentGpaAction } from "./agent_gpa.ts";
 import {
+  calendarIcsUidFromMetadata,
+  normalizeCalendarIcsUid,
+  prepareCalendarBulkCreateCandidates,
+} from "./calendar_bulk_create.ts";
+import {
   GaReadinessActionError,
   handleGaReadinessAction,
 } from "./ga_readiness.ts";
@@ -430,6 +435,7 @@ serve(async (req: Request) => {
       case "calendar.create": {
         const calendarId = normalizeCalendarId(body.calendar_id);
         const calendarName = await calendarNameById(admin, userId, calendarId);
+        const icalUid = normalizeCalendarIcsUid(body.ical_uid ?? body.uid);
         const item = await addItem(admin, "calendar_event", userId, {
           title: body.title,
           start_at: body.start_at,
@@ -441,11 +447,70 @@ serve(async (req: Request) => {
           calendar_id: calendarId,
           calendar_name: calendarName,
           rrule: normalizeCalendarRRule(body.rrule),
+          ...(icalUid ? { ical_uid: icalUid, uid: icalUid } : {}),
         });
         const meta = (item.metadata ?? {}) as Record<string, unknown>;
         return json({
           success: true,
           event: { ...meta, event_id: item.id, created_at: item.created_at },
+        });
+      }
+
+      case "calendar.bulk_create": {
+        const existingItems = await listItems(
+          admin,
+          "calendar_event",
+          userId,
+          1000,
+        );
+        const existingUids = new Set(
+          existingItems.map((item) =>
+            calendarIcsUidFromMetadata(
+              (item.metadata ?? {}) as Record<string, unknown>,
+            )
+          ).filter(Boolean),
+        );
+        const prepared = prepareCalendarBulkCreateCandidates(
+          body.events,
+          existingUids,
+        );
+        const created: Record<string, unknown>[] = [];
+
+        for (const event of prepared.candidates) {
+          const calendarId = normalizeCalendarId(event.calendar_id);
+          const calendarName = await calendarNameById(
+            admin,
+            userId,
+            calendarId,
+          );
+          const item = await addItem(admin, "calendar_event", userId, {
+            title: event.title ?? "Untitled",
+            start_at: event.start_at,
+            end_at: event.end_at ?? event.start_at,
+            description: event.description ?? "",
+            all_day: event.all_day ?? false,
+            color: event.color ?? "#4285f4",
+            reminder_min: normalizeCalendarReminderMinutes(event.reminder_min),
+            calendar_id: calendarId,
+            calendar_name: calendarName,
+            rrule: normalizeCalendarRRule(event.rrule),
+            ical_uid: event.ical_uid,
+            uid: event.ical_uid,
+          });
+          const meta = (item.metadata ?? {}) as Record<string, unknown>;
+          created.push({
+            ...meta,
+            event_id: item.id,
+            created_at: item.created_at,
+          });
+        }
+
+        return json({
+          success: true,
+          created_count: created.length,
+          skipped_duplicate_count: prepared.skippedDuplicates,
+          invalid_count: prepared.invalidCount,
+          events: created,
         });
       }
 

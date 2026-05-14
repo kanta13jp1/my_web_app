@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +11,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import 'package:my_web_app/services/calendar_ics_service.dart';
 import 'package:my_web_app/services/notification_service.dart';
+import 'package:my_web_app/utils/web_text_downloader.dart';
 
 /// カレンダーイベントページ
 /// calendar-events Edge Function と連携してイベントを管理
@@ -34,6 +38,8 @@ enum _CalendarView { month, week, day }
 enum _CalendarRecurrencePreset { none, daily, weekly, monthly, yearly, custom }
 
 enum _RecurrenceEditScope { thisEvent, following, all }
+
+enum _CalendarIcsAction { export, import }
 
 const String _defaultCalendarId = 'default';
 const String _defaultCalendarName = 'Default';
@@ -774,8 +780,10 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 
       final monthStart = DateTime(month.year, month.month);
       final visibleRangeStart = monthStart.subtract(const Duration(days: 7));
-      final visibleRangeEnd =
-          DateTime(month.year, month.month + 1).add(const Duration(days: 7));
+      final visibleRangeEnd = DateTime(
+        month.year,
+        month.month + 1,
+      ).add(const Duration(days: 7));
       final newMap = <String, List<Map<String, dynamic>>>{};
       final parsedEvents = <Map<String, dynamic>>[];
       for (final raw in rawEvents) {
@@ -955,6 +963,117 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'イベントの削除に失敗しました: $e');
+      }
+    }
+  }
+
+  Future<void> _handleIcsAction(_CalendarIcsAction action) async {
+    switch (action) {
+      case _CalendarIcsAction.export:
+        await _exportCalendarIcs();
+        break;
+      case _CalendarIcsAction.import:
+        await _importCalendarIcs();
+        break;
+    }
+  }
+
+  Future<void> _exportCalendarIcs() async {
+    final ics = buildCalendarEventsIcs(_allEvents);
+    if (!ics.contains('BEGIN:VEVENT')) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No events to export')));
+      return;
+    }
+
+    final stamp = DateTime.now().toIso8601String().substring(0, 10);
+    final fileName = 'calendar-events-$stamp.ics';
+    if (kIsWeb) {
+      downloadTextFile(ics, fileName, mimeType: 'text/calendar;charset=utf-8');
+    } else {
+      final bytes = Uint8List.fromList(utf8.encode(ics));
+      final file = XFile.fromData(
+        bytes,
+        name: fileName,
+        mimeType: 'text/calendar',
+      );
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [file],
+          fileNameOverrides: [fileName],
+          subject: fileName,
+          text: 'Calendar events export',
+        ),
+      );
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Exported $fileName')));
+  }
+
+  Future<void> _importCalendarIcs() async {
+    try {
+      final picked = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['ics', 'ical'],
+        withData: true,
+      );
+      if (picked == null || picked.files.isEmpty) return;
+      final bytes = picked.files.single.bytes;
+      if (bytes == null) {
+        throw StateError('Selected .ics file could not be read.');
+      }
+
+      final content = utf8.decode(bytes, allowMalformed: true);
+      final parsed = parseCalendarEventsIcs(
+        content,
+        existingUids: calendarIcsUidsFromEvents(_allEvents),
+      );
+      if (parsed.events.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              parsed.skippedDuplicateCount > 0
+                  ? 'All imported events were duplicates.'
+                  : 'No importable events found in the .ics file.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final res = await _supabase.functions.invoke(
+        'app-hub',
+        body: {'action': 'calendar.bulk_create', 'events': parsed.events},
+      );
+      final data = res.data;
+      final createdCount = data is Map
+          ? (data['created_count'] as num?)?.toInt() ?? parsed.events.length
+          : parsed.events.length;
+      final backendSkipped = data is Map
+          ? (data['skipped_duplicate_count'] as num?)?.toInt() ?? 0
+          : 0;
+      await _fetchMonth(_focusedDay);
+
+      if (!mounted) return;
+      final skipped = parsed.skippedDuplicateCount + backendSkipped;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            skipped > 0
+                ? 'Imported $createdCount events. Skipped $skipped duplicates.'
+                : 'Imported $createdCount events.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'Failed to import .ics file: $e');
       }
     }
   }
@@ -1333,6 +1452,32 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
             icon: const Icon(Icons.search),
             tooltip: 'Search events',
             onPressed: _showEventSearch,
+          ),
+          PopupMenuButton<_CalendarIcsAction>(
+            key: const Key('calendar_events_ics_menu'),
+            tooltip: 'Import or export iCal',
+            icon: const Icon(Icons.more_vert),
+            onSelected: _handleIcsAction,
+            itemBuilder: (context) => const [
+              PopupMenuItem<_CalendarIcsAction>(
+                key: Key('calendar_events_export_ics'),
+                value: _CalendarIcsAction.export,
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.file_download_outlined),
+                  title: Text('Export .ics'),
+                ),
+              ),
+              PopupMenuItem<_CalendarIcsAction>(
+                key: Key('calendar_events_import_ics'),
+                value: _CalendarIcsAction.import,
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.file_upload_outlined),
+                  title: Text('Import .ics'),
+                ),
+              ),
+            ],
           ),
           if (_isLoading)
             const Padding(
@@ -2078,8 +2223,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                       );
                 final reminderMinutes =
                     selectedReminder < 0 ? null : selectedReminder;
-                final recurrenceCount =
-                    int.tryParse(recurrenceCountCtrl.text.trim());
+                final recurrenceCount = int.tryParse(
+                  recurrenceCountCtrl.text.trim(),
+                );
                 final rrule = _buildCalendarRRule(
                   preset: selectedRecurrence,
                   eventDate: eventDate,

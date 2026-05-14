@@ -126,11 +126,7 @@ void main() {
           day.add(const Duration(hours: 9)),
         ),
         event('Dentist', 'Annual cleaning', day.add(const Duration(hours: 13))),
-        event(
-          'Planning',
-          'Weekly roadmap',
-          day.add(const Duration(hours: 10)),
-        ),
+        event('Planning', 'Weekly roadmap', day.add(const Duration(hours: 10))),
       ],
       'annual cleaning',
     );
@@ -211,6 +207,21 @@ void main() {
       home: CalendarEventsPage(supabaseClient: mockSupabaseClient),
     );
   }
+
+  testWidgets('CalendarEventsPage exposes iCal import export menu', (
+    tester,
+  ) async {
+    stubCalendarList(const []);
+
+    await tester.pumpWidget(testWidget());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('calendar_events_ics_menu')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Export .ics'), findsOneWidget);
+    expect(find.text('Import .ics'), findsOneWidget);
+  });
 
   testWidgets('CalendarEventsPage switches to day timeline grid', (
     tester,
@@ -516,10 +527,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final captured = verify(
-      mockFunctionsClient.invoke(
-        'app-hub',
-        body: captureAnyNamed('body'),
-      ),
+      mockFunctionsClient.invoke('app-hub', body: captureAnyNamed('body')),
     ).captured;
     expect(
       captured.whereType<Map<String, dynamic>>().any(
