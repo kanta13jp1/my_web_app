@@ -210,6 +210,127 @@ void main() {
       expect(remote.calls, isEmpty);
     });
 
+    test('sync preview stays disabled when feature flag is off', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: false,
+        userIdProvider: () => 'user-1',
+      );
+      await local.saveMonth(
+        month: DateTime(2026, 5),
+        state: _sampleMonthlyState(),
+      );
+
+      final result = await repository.previewSyncMonth(DateTime(2026, 5));
+
+      expect(result.status, AssetLiabilityManualSyncStatus.disabled);
+      expect(result.targetCount, 0);
+      expect(remote.calls, isEmpty);
+    });
+
+    test('sync preview reports upload candidates without saving', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+      await local.saveMonth(month: month, state: _sampleMonthlyState());
+      await local.saveDefaultPaymentSources(const <String, String>{
+        'mobit': 'smbc_otsuka',
+      });
+      await local.saveRecurringIncomeTemplates(
+        <AssetLiabilityRecurringIncomeTemplate>[
+          _sampleRecurringIncomeTemplate(),
+        ],
+      );
+      await local.saveMonthlySnapshot(_sampleSnapshot('2026-05'));
+
+      final result = await repository.previewSyncMonth(month);
+
+      expect(result.status, AssetLiabilityManualSyncStatus.success);
+      expect(result.targetCount, 4);
+      expect(result.localDataTargetCount, 4);
+      expect(result.remoteDataTargetCount, 0);
+      expect(result.uploadCandidateCount, 4);
+      expect(result.downloadCandidateCount, 0);
+      expect(result.conflictCount, 0);
+      expect(remote.monthState('2026-05'), isNull);
+      expect(
+        remote.calls,
+        isNot(contains('saveMonth:user-1:2026-05')),
+      );
+      expect(remote.defaultPaymentSources, isEmpty);
+      expect(remote.recurringIncomeTemplates, isEmpty);
+      expect(remote.monthlySnapshots, isEmpty);
+    });
+
+    test('sync preview reports download candidates without restoring',
+        () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedMonth(DateTime(2026, 5), _sampleMonthlyState());
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+
+      final result = await repository.previewSyncMonth(month);
+      final localState = await local.loadMonth(month);
+
+      expect(result.status, AssetLiabilityManualSyncStatus.success);
+      expect(result.localDataTargetCount, 0);
+      expect(result.remoteDataTargetCount, 1);
+      expect(result.uploadCandidateCount, 0);
+      expect(result.downloadCandidateCount, 1);
+      expect(result.conflictCount, 0);
+      expect(localState.isEmpty, isTrue);
+    });
+
+    test('sync preview reports conflicts without overwriting data', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedMonth(
+          DateTime(2026, 5),
+          const AssetLiabilityMonthlyState(
+            paymentOverrides: <String, double>{'remote_only': 1000},
+          ),
+        );
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+      await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+      final result = await repository.previewSyncMonth(month);
+      final localState = await local.loadMonth(month);
+
+      expect(result.status, AssetLiabilityManualSyncStatus.conflict);
+      expect(result.hasConflict, isTrue);
+      expect(result.conflictCount, 1);
+      expect(result.conflictTargets, contains('月次状態'));
+      expect(result.uploadCandidateCount, 0);
+      expect(result.downloadCandidateCount, 0);
+      expect(localState.paymentOverrides['mobit'], 70000);
+      expect(
+        remote.monthState('2026-05')?.paymentOverrides['remote_only'],
+        1000,
+      );
+      expect(remote.calls, isNot(contains('saveMonth:user-1:2026-05')));
+    });
+
     test('does not call remote store when Supabase sync flag is off', () async {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();

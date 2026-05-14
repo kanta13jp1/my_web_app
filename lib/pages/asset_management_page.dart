@@ -114,11 +114,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _loadedAssetLiabilityMonthKey;
   bool _isSavingAssetLiabilitySnapshot = false;
   bool _isRunningAssetLiabilitySync = false;
+  bool _isPreviewingAssetLiabilitySync = false;
   AssetLiabilityManualSyncStatus _assetLiabilitySyncStatus =
       AssetLiabilityManualSyncStatus.notRun;
   DateTime? _lastAssetLiabilitySyncAt;
   String? _assetLiabilitySyncMessage;
   List<String> _assetLiabilitySyncConflicts = <String>[];
+  AssetLiabilitySyncPreviewResult? _assetLiabilitySyncPreview;
   final Map<String, TextEditingController> _monthlyPaymentControllers =
       <String, TextEditingController>{};
 
@@ -898,6 +900,51 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (mounted) {
         setState(() {
           _isRunningAssetLiabilitySync = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _previewAssetLiabilitySync() async {
+    if (!_assetLiabilityRepository.supabaseSyncEnabled) {
+      final result = AssetLiabilitySyncPreviewResult.disabled();
+      setState(() {
+        _assetLiabilitySyncPreview = result;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+      return;
+    }
+
+    setState(() {
+      _isPreviewingAssetLiabilitySync = true;
+    });
+    try {
+      final result = await _assetLiabilityRepository.previewSyncMonth(_now);
+      if (!mounted) return;
+      setState(() {
+        _assetLiabilitySyncPreview = result;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+    } catch (e) {
+      debugPrint('Error previewing asset liability Supabase sync: $e');
+      if (!mounted) return;
+      final result = AssetLiabilitySyncPreviewResult.failure(
+        message: 'Supabase同期プレビューに失敗しました: $e',
+      );
+      setState(() {
+        _assetLiabilitySyncPreview = result;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPreviewingAssetLiabilitySync = false;
         });
       }
     }
@@ -6510,6 +6557,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
           const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: syncEnabled &&
+                      !_isRunningAssetLiabilitySync &&
+                      !_isPreviewingAssetLiabilitySync
+                  ? _previewAssetLiabilitySync
+                  : null,
+              icon: _isPreviewingAssetLiabilitySync
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.manage_search_outlined),
+              label: Text(syncEnabled ? '同期プレビュー' : 'プレビューOFF'),
+            ),
+          ),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -6547,6 +6613,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               height: 1.5,
             ),
           ),
+          if (_assetLiabilitySyncPreview != null) ...[
+            const SizedBox(height: 8),
+            _buildAssetLiabilitySyncPreviewDetails(
+              _assetLiabilitySyncPreview!,
+            ),
+          ],
           if (_assetLiabilitySyncConflicts.isNotEmpty) ...[
             const SizedBox(height: 8),
             Wrap(
@@ -6566,6 +6638,156 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildAssetLiabilitySyncPreviewDetails(
+    AssetLiabilitySyncPreviewResult preview,
+  ) {
+    final previewedAt = DateFormat(
+      'yyyy/MM/dd HH:mm',
+    ).format(preview.completedAt.toLocal());
+    final conflictColor =
+        preview.hasConflict ? const Color(0xFFD97706) : const Color(0xFF0D9488);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.fact_check_outlined, size: 16),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  '同期プレビュー',
+                  style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+                ),
+              ),
+              Text(
+                previewedAt,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildAssetLiabilitySyncChip(
+                label: '同期対象',
+                value: '${preview.targetCount}件',
+                color: const Color(0xFF2563EB),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: 'ローカルあり',
+                value: '${preview.localDataTargetCount}件',
+                color: const Color(0xFF475569),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: 'Supabaseあり',
+                value: '${preview.remoteDataTargetCount}件',
+                color: const Color(0xFF475569),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: 'アップロード候補',
+                value: '${preview.uploadCandidateCount}件',
+                color: const Color(0xFF2563EB),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: 'ダウンロード候補',
+                value: '${preview.downloadCandidateCount}件',
+                color: const Color(0xFF0D9488),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '競合',
+                value: '${preview.conflictCount}件',
+                color: conflictColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            preview.message,
+            style: TextStyle(
+              color: preview.hasConflict
+                  ? const Color(0xFFD97706)
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              fontWeight: preview.hasConflict ? FontWeight.w700 : null,
+              height: 1.5,
+            ),
+          ),
+          if (preview.items.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final item in preview.items)
+                  Chip(
+                    label: Text(
+                      '${item.targetName}: '
+                      '${_assetLiabilitySyncPreviewItemLabel(item)} '
+                      '(ローカル${item.localCount} / Supabase${item.remoteCount})',
+                    ),
+                    backgroundColor:
+                        _assetLiabilitySyncPreviewItemColor(item).withValues(
+                      alpha: 0.10,
+                    ),
+                    side: BorderSide(
+                      color: _assetLiabilitySyncPreviewItemColor(item)
+                          .withValues(alpha: 0.35),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _assetLiabilitySyncPreviewItemLabel(
+    AssetLiabilitySyncPreviewItem item,
+  ) {
+    if (item.conflict) {
+      return '競合';
+    }
+    if (item.uploadCandidate) {
+      return 'アップロード候補';
+    }
+    if (item.downloadCandidate) {
+      return 'ダウンロード候補';
+    }
+    return '差分なし';
+  }
+
+  Color _assetLiabilitySyncPreviewItemColor(
+    AssetLiabilitySyncPreviewItem item,
+  ) {
+    if (item.conflict) {
+      return const Color(0xFFD97706);
+    }
+    if (item.uploadCandidate) {
+      return const Color(0xFF2563EB);
+    }
+    if (item.downloadCandidate) {
+      return const Color(0xFF0D9488);
+    }
+    return Theme.of(context).colorScheme.outline;
   }
 
   Widget _buildAssetLiabilitySyncChip({

@@ -78,6 +78,94 @@ class AssetLiabilityManualSyncResult {
   bool get hasConflict => status == AssetLiabilityManualSyncStatus.conflict;
 }
 
+class AssetLiabilitySyncPreviewItem {
+  final String targetName;
+  final bool localHasData;
+  final bool remoteHasData;
+  final int localCount;
+  final int remoteCount;
+
+  const AssetLiabilitySyncPreviewItem({
+    required this.targetName,
+    required this.localHasData,
+    required this.remoteHasData,
+    required this.localCount,
+    required this.remoteCount,
+  });
+
+  bool get uploadCandidate => localHasData && !remoteHasData;
+  bool get downloadCandidate => !localHasData && remoteHasData;
+  bool get conflict => localHasData && remoteHasData;
+}
+
+class AssetLiabilitySyncPreviewResult {
+  final AssetLiabilityManualSyncStatus status;
+  final DateTime completedAt;
+  final String message;
+  final List<AssetLiabilitySyncPreviewItem> items;
+
+  const AssetLiabilitySyncPreviewResult({
+    required this.status,
+    required this.completedAt,
+    required this.message,
+    this.items = const <AssetLiabilitySyncPreviewItem>[],
+  });
+
+  factory AssetLiabilitySyncPreviewResult.disabled({DateTime? completedAt}) {
+    return AssetLiabilitySyncPreviewResult(
+      status: AssetLiabilityManualSyncStatus.disabled,
+      completedAt: completedAt ?? DateTime.now(),
+      message: 'Supabase同期は無効です',
+    );
+  }
+
+  factory AssetLiabilitySyncPreviewResult.failure({
+    required String message,
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilitySyncPreviewResult(
+      status: AssetLiabilityManualSyncStatus.failure,
+      completedAt: completedAt ?? DateTime.now(),
+      message: message,
+    );
+  }
+
+  factory AssetLiabilitySyncPreviewResult.ready({
+    required List<AssetLiabilitySyncPreviewItem> items,
+    DateTime? completedAt,
+  }) {
+    final conflicts =
+        items.where((item) => item.conflict).map((item) => item.targetName);
+    final hasConflict = conflicts.isNotEmpty;
+    return AssetLiabilitySyncPreviewResult(
+      status: hasConflict
+          ? AssetLiabilityManualSyncStatus.conflict
+          : AssetLiabilityManualSyncStatus.success,
+      completedAt: completedAt ?? DateTime.now(),
+      message: hasConflict ? '競合あり。自動上書きは行いません' : '同期プレビューを更新しました',
+      items: List<AssetLiabilitySyncPreviewItem>.unmodifiable(items),
+    );
+  }
+
+  int get targetCount => items.length;
+  int get localDataTargetCount =>
+      items.where((item) => item.localHasData).length;
+  int get remoteDataTargetCount =>
+      items.where((item) => item.remoteHasData).length;
+  int get uploadCandidateCount => items
+      .where((item) => item.uploadCandidate)
+      .fold<int>(0, (total, item) => total + item.localCount);
+  int get downloadCandidateCount => items
+      .where((item) => item.downloadCandidate)
+      .fold<int>(0, (total, item) => total + item.remoteCount);
+  int get conflictCount => items.where((item) => item.conflict).length;
+  bool get hasConflict => conflictCount > 0;
+  List<String> get conflictTargets => <String>[
+        for (final item in items)
+          if (item.conflict) item.targetName,
+      ];
+}
+
 abstract class AssetLiabilityRepository {
   const AssetLiabilityRepository();
 
@@ -111,6 +199,12 @@ abstract class AssetLiabilityRepository {
 
   Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) async {
     return AssetLiabilityManualSyncResult.disabled();
+  }
+
+  Future<AssetLiabilitySyncPreviewResult> previewSyncMonth(
+    DateTime month,
+  ) async {
+    return AssetLiabilitySyncPreviewResult.disabled();
   }
 
   Future<AssetLiabilityPersistenceSnapshot> loadPersistenceSnapshot(
@@ -431,76 +525,72 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
 
     try {
-      final localMonth = await localRepository.loadMonth(month);
-      final localSources = await localRepository.loadDefaultPaymentSources();
-      final localTemplates =
-          await localRepository.loadRecurringIncomeTemplates();
-      final localSnapshots = await localRepository.loadMonthlySnapshots();
-
-      final remoteMonth = await remote.loadMonth(userId: userId, month: month);
-      final remoteSources = await remote.loadDefaultPaymentSources(
+      final syncData = await _loadSyncData(
+        month: month,
+        remote: remote,
         userId: userId,
       );
-      final remoteTemplates =
-          await remote.loadRecurringIncomeTemplates(userId: userId);
-      final remoteSnapshots = await remote.loadMonthlySnapshots(userId: userId);
-
-      final conflicts = <String>[
-        if (!localMonth.isEmpty && !_remoteMonthIsEmpty(remoteMonth)) '月次状態',
-        if (localSources.isNotEmpty && (remoteSources?.isNotEmpty ?? false))
-          '支払原資口座設定',
-        if (localTemplates.isNotEmpty && (remoteTemplates?.isNotEmpty ?? false))
-          '定期収入テンプレート',
-        if (localSnapshots.isNotEmpty && (remoteSnapshots?.isNotEmpty ?? false))
-          '月次スナップショット',
-      ];
-      if (conflicts.isNotEmpty) {
-        return AssetLiabilityManualSyncResult.conflict(targets: conflicts);
+      final preview = _buildSyncPreview(syncData);
+      if (preview.hasConflict) {
+        return AssetLiabilityManualSyncResult.conflict(
+          targets: preview.conflictTargets,
+        );
       }
 
       var uploaded = 0;
       var restored = 0;
 
-      if (!localMonth.isEmpty) {
-        await remote.saveMonth(userId: userId, month: month, state: localMonth);
+      if (!syncData.localMonth.isEmpty) {
+        await remote.saveMonth(
+          userId: userId,
+          month: month,
+          state: syncData.localMonth,
+        );
         uploaded++;
-      } else if (!_remoteMonthIsEmpty(remoteMonth)) {
-        await localRepository.saveMonth(month: month, state: remoteMonth!);
+      } else if (!_remoteMonthIsEmpty(syncData.remoteMonth)) {
+        await localRepository.saveMonth(
+          month: month,
+          state: syncData.remoteMonth!,
+        );
         restored++;
       }
 
-      if (localSources.isNotEmpty) {
+      if (syncData.localSources.isNotEmpty) {
         await remote.saveDefaultPaymentSources(
           userId: userId,
-          sources: localSources,
+          sources: syncData.localSources,
         );
         uploaded++;
-      } else if (remoteSources?.isNotEmpty ?? false) {
-        await localRepository.saveDefaultPaymentSources(remoteSources!);
+      } else if (syncData.remoteSources?.isNotEmpty ?? false) {
+        await localRepository.saveDefaultPaymentSources(
+          syncData.remoteSources!,
+        );
         restored++;
       }
 
-      if (localTemplates.isNotEmpty) {
+      if (syncData.localTemplates.isNotEmpty) {
         await remote.saveRecurringIncomeTemplates(
           userId: userId,
-          templates: localTemplates,
+          templates: syncData.localTemplates,
         );
         uploaded++;
-      } else if (remoteTemplates?.isNotEmpty ?? false) {
-        await localRepository.saveRecurringIncomeTemplates(remoteTemplates!);
+      } else if (syncData.remoteTemplates?.isNotEmpty ?? false) {
+        await localRepository.saveRecurringIncomeTemplates(
+          syncData.remoteTemplates!,
+        );
         restored++;
       }
 
-      if (localSnapshots.isNotEmpty) {
-        for (final snapshot in localSnapshots) {
+      if (syncData.localSnapshots.isNotEmpty) {
+        for (final snapshot in syncData.localSnapshots) {
           await remote.saveMonthlySnapshot(userId: userId, snapshot: snapshot);
         }
-        uploaded += localSnapshots.length;
-      } else if (remoteSnapshots?.isNotEmpty ?? false) {
-        for (final snapshot in remoteSnapshots!) {
+        uploaded += syncData.localSnapshots.length;
+      } else if (syncData.remoteSnapshots?.isNotEmpty ?? false) {
+        for (final snapshot in syncData.remoteSnapshots!) {
           await localRepository.saveMonthlySnapshot(snapshot);
         }
-        restored += remoteSnapshots.length;
+        restored += syncData.remoteSnapshots!.length;
       }
 
       return AssetLiabilityManualSyncResult.success(
@@ -518,12 +608,101 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
   }
 
+  @override
+  Future<AssetLiabilitySyncPreviewResult> previewSyncMonth(
+    DateTime month,
+  ) async {
+    final remote = _remoteOrNull();
+    final userId = _userIdOrNull();
+    if (remote == null) {
+      return AssetLiabilitySyncPreviewResult.disabled();
+    }
+    if (userId == null) {
+      return AssetLiabilitySyncPreviewResult.failure(
+        message: 'Supabaseユーザーが確認できません',
+      );
+    }
+
+    try {
+      final syncData = await _loadSyncData(
+        month: month,
+        remote: remote,
+        userId: userId,
+      );
+      return _buildSyncPreview(syncData);
+    } catch (error, stackTrace) {
+      if (onSyncError != null) {
+        onSyncError!(error, stackTrace);
+      } else {
+        debugPrint('Asset liability Supabase sync preview failed: $error');
+      }
+      return AssetLiabilitySyncPreviewResult.failure(
+        message: 'Supabase同期プレビューに失敗しました: $error',
+      );
+    }
+  }
+
   AssetLiabilityRemoteStore? _remoteOrNull() {
     return syncEnabled ? remoteStore : null;
   }
 
   bool _remoteMonthIsEmpty(AssetLiabilityMonthlyState? state) {
     return state == null || state.isEmpty;
+  }
+
+  Future<_AssetLiabilitySyncData> _loadSyncData({
+    required DateTime month,
+    required AssetLiabilityRemoteStore remote,
+    required String userId,
+  }) async {
+    return _AssetLiabilitySyncData(
+      localMonth: await localRepository.loadMonth(month),
+      localSources: await localRepository.loadDefaultPaymentSources(),
+      localTemplates: await localRepository.loadRecurringIncomeTemplates(),
+      localSnapshots: await localRepository.loadMonthlySnapshots(),
+      remoteMonth: await remote.loadMonth(userId: userId, month: month),
+      remoteSources: await remote.loadDefaultPaymentSources(userId: userId),
+      remoteTemplates: await remote.loadRecurringIncomeTemplates(
+        userId: userId,
+      ),
+      remoteSnapshots: await remote.loadMonthlySnapshots(userId: userId),
+    );
+  }
+
+  AssetLiabilitySyncPreviewResult _buildSyncPreview(
+    _AssetLiabilitySyncData data,
+  ) {
+    final items = <AssetLiabilitySyncPreviewItem>[
+      AssetLiabilitySyncPreviewItem(
+        targetName: '月次状態',
+        localHasData: !data.localMonth.isEmpty,
+        remoteHasData: !_remoteMonthIsEmpty(data.remoteMonth),
+        localCount: data.localMonth.isEmpty ? 0 : 1,
+        remoteCount: _remoteMonthIsEmpty(data.remoteMonth) ? 0 : 1,
+      ),
+      AssetLiabilitySyncPreviewItem(
+        targetName: '支払原資口座設定',
+        localHasData: data.localSources.isNotEmpty,
+        remoteHasData: data.remoteSources?.isNotEmpty ?? false,
+        localCount: data.localSources.length,
+        remoteCount: data.remoteSources?.length ?? 0,
+      ),
+      AssetLiabilitySyncPreviewItem(
+        targetName: '定期収入テンプレート',
+        localHasData: data.localTemplates.isNotEmpty,
+        remoteHasData: data.remoteTemplates?.isNotEmpty ?? false,
+        localCount: data.localTemplates.length,
+        remoteCount: data.remoteTemplates?.length ?? 0,
+      ),
+      AssetLiabilitySyncPreviewItem(
+        targetName: '月次スナップショット',
+        localHasData: data.localSnapshots.isNotEmpty,
+        remoteHasData: data.remoteSnapshots?.isNotEmpty ?? false,
+        localCount: data.localSnapshots.length,
+        remoteCount: data.remoteSnapshots?.length ?? 0,
+      ),
+    ];
+    return AssetLiabilitySyncPreviewResult.ready(items: items);
   }
 
   String? _userIdOrNull() {
@@ -543,6 +722,28 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return null;
     }
   }
+}
+
+class _AssetLiabilitySyncData {
+  final AssetLiabilityMonthlyState localMonth;
+  final Map<String, String> localSources;
+  final List<AssetLiabilityRecurringIncomeTemplate> localTemplates;
+  final List<AssetLiabilityMonthlySnapshot> localSnapshots;
+  final AssetLiabilityMonthlyState? remoteMonth;
+  final Map<String, String>? remoteSources;
+  final List<AssetLiabilityRecurringIncomeTemplate>? remoteTemplates;
+  final List<AssetLiabilityMonthlySnapshot>? remoteSnapshots;
+
+  const _AssetLiabilitySyncData({
+    required this.localMonth,
+    required this.localSources,
+    required this.localTemplates,
+    required this.localSnapshots,
+    required this.remoteMonth,
+    required this.remoteSources,
+    required this.remoteTemplates,
+    required this.remoteSnapshots,
+  });
 }
 
 class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
