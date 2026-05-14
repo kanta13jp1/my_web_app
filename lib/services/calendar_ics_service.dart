@@ -51,7 +51,8 @@ String buildCalendarEventsIcs(
 
     final start = _eventDateTime(event, 'start_at');
     if (start == null) continue;
-    final end = _eventDateTime(event, 'end_at') ??
+    final end =
+        _eventDateTime(event, 'end_at') ??
         start.add(
           _eventIsAllDay(event)
               ? const Duration(days: 1)
@@ -65,6 +66,7 @@ String buildCalendarEventsIcs(
     final calendarName = _nonEmptyString(event['calendar_name']);
     final reminder = _nonEmptyString(event['reminder_min']);
     final rrule = _nonEmptyString(event['rrule']);
+    final timezone = _nonEmptyString(event['timezone']);
 
     _appendIcsLine(buffer, 'BEGIN:VEVENT');
     _appendIcsLine(buffer, 'UID:${_escapeIcsText(uid)}');
@@ -101,6 +103,9 @@ String buildCalendarEventsIcs(
         buffer,
         'X-MYWEBAPP-CALENDAR-NAME:${_escapeIcsText(calendarName)}',
       );
+    }
+    if (timezone.isNotEmpty) {
+      _appendIcsLine(buffer, 'X-MYWEBAPP-TIMEZONE:${_escapeIcsText(timezone)}');
     }
     if (reminder.isNotEmpty && reminder != 'null') {
       _appendIcsLine(buffer, 'X-MYWEBAPP-REMINDER-MIN:$reminder');
@@ -152,8 +157,13 @@ CalendarIcsParseResult parseCalendarEventsIcs(
     final parsedEnd = endProp == null
         ? null
         : _parseIcsDateTime(endProp.value, allDay: _isAllDayProperty(endProp));
-    final end = parsedEnd ??
+    final end =
+        parsedEnd ??
         start.add(allDay ? const Duration(days: 1) : const Duration(hours: 1));
+
+    final timezone = _unescapeIcsText(
+      _firstValue(fields, 'X-MYWEBAPP-TIMEZONE'),
+    ).trim();
 
     seenUids.add(uid);
     events.add({
@@ -173,6 +183,7 @@ CalendarIcsParseResult parseCalendarEventsIcs(
       'calendar_name': _unescapeIcsText(
         _firstValue(fields, 'X-MYWEBAPP-CALENDAR-NAME'),
       ).trim(),
+      if (timezone.isNotEmpty) 'timezone': timezone,
       'reminder_min': int.tryParse(
         _firstValue(fields, 'X-MYWEBAPP-REMINDER-MIN').trim(),
       ),
@@ -280,8 +291,9 @@ void _appendIcsLine(StringBuffer buffer, String line) {
   var first = true;
   while (remaining.isNotEmpty) {
     final take = first ? max : max - 1;
-    final part =
-        remaining.length <= take ? remaining : remaining.substring(0, take);
+    final part = remaining.length <= take
+        ? remaining
+        : remaining.substring(0, take);
     buffer.write(first ? part : ' $part');
     buffer.write('\r\n');
     remaining = remaining.length <= take ? '' : remaining.substring(take);
@@ -365,8 +377,9 @@ _IcsProperty? _parseIcsProperty(String line) {
   for (final part in parts.skip(1)) {
     final equals = part.indexOf('=');
     if (equals <= 0) continue;
-    params[part.substring(0, equals).trim().toUpperCase()] =
-        part.substring(equals + 1).trim();
+    params[part.substring(0, equals).trim().toUpperCase()] = part
+        .substring(equals + 1)
+        .trim();
   }
   return _IcsProperty(name: name, params: params, value: value);
 }

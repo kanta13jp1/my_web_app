@@ -3,21 +3,21 @@ import 'package:my_web_app/services/calendar_ics_service.dart';
 
 void main() {
   test('buildCalendarEventsIcs exports event metadata and RRULE', () {
-    final ics = buildCalendarEventsIcs(
-      [
-        {
-          'event_id': 'event-1',
-          'title': 'Budget review',
-          'description': 'Revise forecast, cash; debt',
-          'start_at': DateTime.utc(2026, 5, 14, 9).toIso8601String(),
-          'end_at': DateTime.utc(2026, 5, 14, 10).toIso8601String(),
-          'all_day': false,
-          'color': '#34a853',
-          'calendar_id': 'finance',
-          'calendar_name': 'Finance',
-          'reminder_min': 15,
-          'rrule': 'RRULE:FREQ=WEEKLY;COUNT=2',
-        },
+    final ics = buildCalendarEventsIcs([
+      {
+        'event_id': 'event-1',
+        'title': 'Budget review',
+        'description': 'Revise forecast, cash; debt',
+        'start_at': DateTime.utc(2026, 5, 14, 9).toIso8601String(),
+        'end_at': DateTime.utc(2026, 5, 14, 10).toIso8601String(),
+        'all_day': false,
+        'color': '#34a853',
+        'calendar_id': 'finance',
+        'calendar_name': 'Finance',
+        'reminder_min': 15,
+        'rrule': 'RRULE:FREQ=WEEKLY;COUNT=2',
+        'timezone': 'Asia/Tokyo',
+      },
       ],
       generatedAt: DateTime.utc(2026, 5, 14, 8),
     );
@@ -30,6 +30,7 @@ void main() {
     expect(ics, contains('RRULE:FREQ=WEEKLY;COUNT=2'));
     expect(ics, contains('X-MYWEBAPP-COLOR:#34a853'));
     expect(ics, contains('X-MYWEBAPP-CALENDAR-ID:finance'));
+    expect(ics, contains('X-MYWEBAPP-TIMEZONE:Asia/Tokyo'));
   });
 
   test('parseCalendarEventsIcs imports events and skips duplicate UID', () {
@@ -45,6 +46,7 @@ DESCRIPTION:Revise forecast\\, cash\\; debt
 X-MYWEBAPP-COLOR:#34A853
 X-MYWEBAPP-CALENDAR-ID:finance
 X-MYWEBAPP-CALENDAR-NAME:Finance
+X-MYWEBAPP-TIMEZONE:Asia/Tokyo
 X-MYWEBAPP-REMINDER-MIN:15
 END:VEVENT
 BEGIN:VEVENT
@@ -66,6 +68,7 @@ END:VCALENDAR
     expect(parsed.events.single['color'], '#34a853');
     expect(parsed.events.single['calendar_id'], 'finance');
     expect(parsed.events.single['calendar_name'], 'Finance');
+    expect(parsed.events.single['timezone'], 'Asia/Tokyo');
     expect(parsed.events.single['reminder_min'], 15);
   });
 

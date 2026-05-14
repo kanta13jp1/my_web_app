@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:my_web_app/pages/calendar_events_page.dart';
+import 'package:my_web_app/services/calendar_timezone_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -149,6 +150,33 @@ void main() {
       'work-calendar',
     );
     expect(calendarEventCalendarName({'calendar_name': 'Work'}), 'Work');
+  });
+
+  test('calendar timezone helpers convert original wall time', () {
+    expect(
+      calendarDefaultTimezone(timeZoneName: 'Tokyo Standard Time'),
+      'Asia/Tokyo',
+    );
+    final startUtc = calendarWallTimeToUtc(
+      date: DateTime(2026, 5, 15),
+      hour: 14,
+      minute: 30,
+      timezone: 'Asia/Tokyo',
+    );
+
+    expect(startUtc.isUtc, isTrue);
+    expect(startUtc, DateTime.utc(2026, 5, 15, 5, 30));
+    expect(calendarEventTimezone({'timezone': 'Asia/Tokyo'}), 'Asia/Tokyo');
+    final originalTime = calendarEventDateTimeForDisplay(
+      {'start_at': startUtc.toIso8601String(), 'timezone': 'Asia/Tokyo'},
+      'start_at',
+      showOriginalTimezone: true,
+    );
+    expect(originalTime?.year, 2026);
+    expect(originalTime?.month, 5);
+    expect(originalTime?.day, 15);
+    expect(originalTime?.hour, 14);
+    expect(originalTime?.minute, 30);
   });
 
   test('recurrence helpers normalize and expand weekly RRULE metadata', () {
@@ -299,6 +327,7 @@ void main() {
           'reminder_min': null,
           'calendar_id': 'default',
           'rrule': null,
+          'timezone': calendarDefaultTimezone(),
         },
       ),
     ).thenAnswer((_) async => mockResponse({'success': true}));
@@ -336,6 +365,7 @@ void main() {
           'reminder_min': null,
           'calendar_id': 'default',
           'rrule': null,
+          'timezone': calendarDefaultTimezone(),
         },
       ),
     ).called(1);
@@ -374,8 +404,9 @@ void main() {
           'title': 'Dentist',
           'description': 'Annual cleaning',
           'start_at': dentistStart.toIso8601String(),
-          'end_at':
-              dentistStart.add(const Duration(hours: 1)).toIso8601String(),
+          'end_at': dentistStart
+              .add(const Duration(hours: 1))
+              .toIso8601String(),
           'all_day': false,
           'color': '#34a853',
         },
@@ -407,6 +438,19 @@ void main() {
     final today = DateTime.now();
     final startAt = DateTime(today.year, today.month, today.day, 14);
     final endAt = DateTime(today.year, today.month, today.day, 15);
+    final timezone = calendarDefaultTimezone();
+    final updateStartAt = calendarWallTimeToUtc(
+      date: startAt,
+      hour: startAt.hour,
+      minute: startAt.minute,
+      timezone: timezone,
+    );
+    final updateEndAt = calendarWallTimeToUtc(
+      date: endAt,
+      hour: endAt.hour,
+      minute: endAt.minute,
+      timezone: timezone,
+    );
     final event = {
       'event_id': 'event-1',
       'title': 'Budget review',
@@ -425,13 +469,14 @@ void main() {
           'id': 'event-1',
           'title': 'Budget review v2',
           'description': 'Revise forecast',
-          'start_at': startAt.toIso8601String(),
-          'end_at': endAt.toIso8601String(),
+          'start_at': updateStartAt.toIso8601String(),
+          'end_at': updateEndAt.toIso8601String(),
           'all_day': false,
           'color': '#ea4335',
           'reminder_min': null,
           'calendar_id': 'default',
           'rrule': null,
+          'timezone': timezone,
         },
       ),
     ).thenAnswer((_) async => mockResponse({'success': true}));
@@ -467,13 +512,14 @@ void main() {
           'id': 'event-1',
           'title': 'Budget review v2',
           'description': 'Revise forecast',
-          'start_at': startAt.toIso8601String(),
-          'end_at': endAt.toIso8601String(),
+          'start_at': updateStartAt.toIso8601String(),
+          'end_at': updateEndAt.toIso8601String(),
           'all_day': false,
           'color': '#ea4335',
           'reminder_min': null,
           'calendar_id': 'default',
           'rrule': null,
+          'timezone': timezone,
         },
       ),
     ).called(1);
@@ -513,6 +559,7 @@ void main() {
 
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('calendar_timezone_dropdown')), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'Daily standup');
     final recurrenceDropdown = find.byKey(
       const Key('calendar_recurrence_dropdown'),
@@ -531,10 +578,11 @@ void main() {
     ).captured;
     expect(
       captured.whereType<Map<String, dynamic>>().any(
-            (body) =>
-                body['action'] == 'calendar.create' &&
-                body['rrule'] == 'RRULE:FREQ=DAILY',
-          ),
+        (body) =>
+            body['action'] == 'calendar.create' &&
+            body['rrule'] == 'RRULE:FREQ=DAILY' &&
+            body['timezone'] == calendarDefaultTimezone(),
+      ),
       isTrue,
     );
   });
@@ -638,6 +686,10 @@ void main() {
 
     await tester.tap(find.byTooltip('Open navigation menu'));
     await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('calendar_original_timezone_toggle')),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const Key('calendar_toggle_work')));
     await tester.pumpAndSettle();
     Navigator.of(tester.element(find.text('Calendars'))).pop();
