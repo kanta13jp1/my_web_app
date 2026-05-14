@@ -42,6 +42,8 @@ enum AssetManagementInitialFocus {
 
 enum AssetDebtPlannerMode { ask, code }
 
+enum _CardBillingSaveScope { defaultSetting, monthlyOverride }
+
 class AssetManagementPage extends StatefulWidget {
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
@@ -106,6 +108,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, String> _paymentSourceAccountIds = <String, String>{};
   Map<String, String> _cardBillingAccountIds = <String, String>{};
   Map<String, String> _defaultPaymentSourceAccountIds = <String, String>{};
+  Map<String, String> _defaultCardBillingAccountIds = <String, String>{};
+  final Map<String, _CardBillingSaveScope> _cardBillingSaveScopes =
+      <String, _CardBillingSaveScope>{};
   List<AssetLiabilityIncomePlan> _monthlyIncomePlans =
       <AssetLiabilityIncomePlan>[];
   List<AssetLiabilityRecurringIncomeTemplate> _recurringIncomeTemplates =
@@ -790,6 +795,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final state = await _assetLiabilityRepository.loadMonth(targetMonth);
       final defaultSources =
           await _assetLiabilityRepository.loadDefaultPaymentSources();
+      final defaultCardBillingAccounts =
+          await _assetLiabilityRepository.loadDefaultCardBillingAccounts();
       final templates =
           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
@@ -816,6 +823,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _defaultPaymentSourceAccountIds = Map<String, String>.from(
           defaultSources,
+        );
+        _defaultCardBillingAccountIds = Map<String, String>.from(
+          defaultCardBillingAccounts,
         );
         _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
           incomePlansWithTemplates,
@@ -865,9 +875,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _assetLiabilitySyncMessage = 'Supabase同期は無効です';
         _assetLiabilitySyncConflicts = <String>[];
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Supabase同期は無効です')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Supabase同期は無効です')));
       return;
     }
 
@@ -881,16 +891,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _assetLiabilitySyncStatus = result.status;
         _lastAssetLiabilitySyncAt = result.completedAt;
         _assetLiabilitySyncMessage = result.message;
-        _assetLiabilitySyncConflicts =
-            List<String>.from(result.conflictTargets);
+        _assetLiabilitySyncConflicts = List<String>.from(
+          result.conflictTargets,
+        );
       });
       if (result.isSuccess) {
         await _loadAssetLiabilityMonthlyState();
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
     } catch (e) {
       debugPrint('Error running asset liability manual sync: $e');
       if (!mounted) return;
@@ -900,9 +911,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _assetLiabilitySyncMessage = 'Supabase同期に失敗しました: $e';
         _assetLiabilitySyncConflicts = <String>[];
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Supabase同期に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Supabase同期に失敗しました: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -918,9 +929,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _assetLiabilitySyncPreview = result;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
       return;
     }
 
@@ -933,9 +944,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _assetLiabilitySyncPreview = result;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
     } catch (e) {
       debugPrint('Error previewing asset liability Supabase sync: $e');
       if (!mounted) return;
@@ -945,9 +956,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _assetLiabilitySyncPreview = result;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -1037,15 +1048,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
         ),
-        cardBillingAccountIds: Map<String, String>.from(
-          _cardBillingAccountIds,
-        ),
+        cardBillingAccountIds: Map<String, String>.from(_cardBillingAccountIds),
         incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
       ),
       legacyKeyToAccountId: legacyKeyToAccountId,
     );
     final migratedDefaultSources = _migrateStringMapKeysAndValues(
       _defaultPaymentSourceAccountIds,
+      legacyKeyToAccountId,
+    );
+    final migratedDefaultCardBillingAccounts = _migrateStringMapKeysAndValues(
+      _defaultCardBillingAccountIds,
       legacyKeyToAccountId,
     );
     if (_sameDoubleMap(_monthlyPaymentOverrides, migrated.paymentOverrides) &&
@@ -1061,6 +1074,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _sameStringMap(
           _defaultPaymentSourceAccountIds,
           migratedDefaultSources,
+        ) &&
+        _sameStringMap(
+          _defaultCardBillingAccountIds,
+          migratedDefaultCardBillingAccounts,
         )) {
       return;
     }
@@ -1081,10 +1098,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _defaultPaymentSourceAccountIds = Map<String, String>.from(
           migratedDefaultSources,
         );
+        _defaultCardBillingAccountIds = Map<String, String>.from(
+          migratedDefaultCardBillingAccounts,
+        );
         _syncMonthlyPaymentControllers();
       });
       unawaited(_saveAssetLiabilityMonthlyState());
       unawaited(_saveDefaultPaymentSources());
+      unawaited(_saveDefaultCardBillingAccounts());
     });
   }
 
@@ -1209,20 +1230,61 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     final selected =
         billingAccountId ?? AssetLiabilityPlanningService.directPaymentMethodId;
+    final scope = _cardBillingSaveScopeFor(row);
     setState(() {
-      if (selected == AssetLiabilityPlanningService.directPaymentMethodId) {
-        if (row.includedInBillingAccount ||
-            _cardBillingAccountIds.containsKey(row.id)) {
-          _cardBillingAccountIds[row.id] =
-              AssetLiabilityPlanningService.directPaymentMethodId;
-        } else {
-          _cardBillingAccountIds.remove(row.id);
-        }
+      if (scope == _CardBillingSaveScope.defaultSetting) {
+        _applyCardBillingSelection(
+          target: _defaultCardBillingAccountIds,
+          row: row,
+          selected: selected,
+        );
+        _cardBillingAccountIds.remove(row.id);
       } else {
-        _cardBillingAccountIds[row.id] = selected;
+        _applyCardBillingSelection(
+          target: _cardBillingAccountIds,
+          row: row,
+          selected: selected,
+        );
       }
     });
-    unawaited(_saveAssetLiabilityMonthlyState());
+    if (scope == _CardBillingSaveScope.defaultSetting) {
+      unawaited(_saveDefaultCardBillingAccounts());
+      unawaited(_saveAssetLiabilityMonthlyState());
+    } else {
+      unawaited(_saveAssetLiabilityMonthlyState());
+    }
+  }
+
+  void _applyCardBillingSelection({
+    required Map<String, String> target,
+    required AssetLiabilityDebtRow row,
+    required String selected,
+  }) {
+    if (selected == AssetLiabilityPlanningService.directPaymentMethodId) {
+      if (row.includedInBillingAccount || target.containsKey(row.id)) {
+        target[row.id] = AssetLiabilityPlanningService.directPaymentMethodId;
+      } else {
+        target.remove(row.id);
+      }
+    } else {
+      target[row.id] = selected;
+    }
+  }
+
+  _CardBillingSaveScope _cardBillingSaveScopeFor(AssetLiabilityDebtRow row) {
+    return _cardBillingSaveScopes[row.id] ??
+        (_cardBillingAccountIds.containsKey(row.id)
+            ? _CardBillingSaveScope.monthlyOverride
+            : _CardBillingSaveScope.defaultSetting);
+  }
+
+  void _updateCardBillingSaveScope(
+    String liabilityId,
+    _CardBillingSaveScope scope,
+  ) {
+    setState(() {
+      _cardBillingSaveScopes[liabilityId] = scope;
+    });
   }
 
   Future<void> _saveDefaultPaymentSources() async {
@@ -1232,6 +1294,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       debugPrint('Error saving asset liability default sources: $e');
+    }
+  }
+
+  Future<void> _saveDefaultCardBillingAccounts() async {
+    try {
+      await _assetLiabilityRepository.saveDefaultCardBillingAccounts(
+        Map<String, String>.from(_defaultCardBillingAccountIds),
+      );
+    } catch (e) {
+      debugPrint('Error saving asset liability default card billing: $e');
     }
   }
 
@@ -1682,7 +1754,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     return workbook.accounts
         .where(
-            (account) => account.kind == AssetLiabilityAccountKind.creditCard)
+          (account) => account.kind == AssetLiabilityAccountKind.creditCard,
+        )
         .toList()
       ..sort((a, b) => a.name.compareTo(b.name));
   }
@@ -6413,6 +6486,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       paidAccountNames: _monthlyPaidAccountNames,
       paymentSourceAccountIds: _paymentSourceAccountIds,
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
+      defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
       cardBillingAccountIds: _cardBillingAccountIds,
       incomePlans: _monthlyIncomePlans,
       includeDefaultFixedPayments: true,
@@ -6533,8 +6607,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 8),
             _buildAssetWorkbookEstimateNotice(workbook),
-            if (workbook.debtMasterRows
-                .any((row) => row.includedInBillingAccount)) ...[
+            if (workbook.debtMasterRows.any(
+              (row) => row.includedInBillingAccount,
+            )) ...[
               const SizedBox(height: 8),
               _buildAssetWorkbookCardBillingNotice(workbook),
             ],
@@ -6568,13 +6643,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetLiabilitySyncPanel() {
     final syncEnabled = _assetLiabilityRepository.supabaseSyncEnabled;
-    final statusColor =
-        _assetLiabilityManualSyncStatusColor(_assetLiabilitySyncStatus);
+    final statusColor = _assetLiabilityManualSyncStatusColor(
+      _assetLiabilitySyncStatus,
+    );
     final lastSyncedAt = _lastAssetLiabilitySyncAt == null
         ? '未実行'
-        : DateFormat('yyyy/MM/dd HH:mm').format(
-            _lastAssetLiabilitySyncAt!.toLocal(),
-          );
+        : DateFormat(
+            'yyyy/MM/dd HH:mm',
+          ).format(_lastAssetLiabilitySyncAt!.toLocal());
 
     return Container(
       width: double.infinity,
@@ -6582,9 +6658,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -6673,9 +6747,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           if (_assetLiabilitySyncPreview != null) ...[
             const SizedBox(height: 8),
-            _buildAssetLiabilitySyncPreviewDetails(
-              _assetLiabilitySyncPreview!,
-            ),
+            _buildAssetLiabilitySyncPreviewDetails(_assetLiabilitySyncPreview!),
           ],
           if (_assetLiabilitySyncConflicts.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -6713,9 +6785,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -6801,13 +6871,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       '${_assetLiabilitySyncPreviewItemLabel(item)} '
                       '(ローカル${item.localCount} / Supabase${item.remoteCount})',
                     ),
-                    backgroundColor:
-                        _assetLiabilitySyncPreviewItemColor(item).withValues(
-                      alpha: 0.10,
-                    ),
+                    backgroundColor: _assetLiabilitySyncPreviewItemColor(
+                      item,
+                    ).withValues(alpha: 0.10),
                     side: BorderSide(
-                      color: _assetLiabilitySyncPreviewItemColor(item)
-                          .withValues(alpha: 0.35),
+                      color: _assetLiabilitySyncPreviewItemColor(
+                        item,
+                      ).withValues(alpha: 0.35),
                     ),
                   ),
               ],
@@ -6942,9 +7012,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildAssetWorkbookCardBillingNotice(
-    AssetLiabilityWorkbook workbook,
-  ) {
+  Widget _buildAssetWorkbookCardBillingNotice(AssetLiabilityWorkbook workbook) {
     final labels = workbook.debtMasterRows
         .where((row) => row.includedInBillingAccount)
         .map(
@@ -8216,6 +8284,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             dataRowMinHeight: 60,
             dataRowMaxHeight: 76,
             columns: const [
+              DataColumn(label: Text('\u8a2d\u5b9a\u5143/\u4fdd\u5b58\u5148')),
               DataColumn(label: Text('支払い方式')),
               DataColumn(label: Text('項目')),
               DataColumn(label: Text('種別')),
@@ -8233,6 +8302,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               for (final row in rows)
                 DataRow(
                   cells: [
+                    DataCell(_buildPaymentMethodScopeControl(row)),
                     DataCell(_buildPaymentMethodDropdown(row, workbook)),
                     DataCell(Text(row.name)),
                     DataCell(Text(_assetKindLabel(row.kind))),
@@ -8268,9 +8338,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityDebtRow row,
     AssetLiabilityWorkbook workbook,
   ) {
-    final cardOptions = _cardBillingAccountOptions(workbook)
-        .where((account) => account.id != row.id)
-        .toList(growable: false);
+    final cardOptions = _cardBillingAccountOptions(
+      workbook,
+    ).where((account) => account.id != row.id).toList(growable: false);
     final configured = _cardBillingAccountIds[row.id];
     final selected = configured ??
         (row.paymentMethod == AssetLiabilityPaymentMethod.includedInCard
@@ -8299,6 +8369,56 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
         ],
         onChanged: (value) => _updateCardBillingAccount(row, value),
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodScopeControl(AssetLiabilityDebtRow row) {
+    final selectedScope = _cardBillingSaveScopeFor(row);
+    final sourceLabel =
+        AssetLiabilityPlanningService.paymentMethodSettingSourceLabel(
+      row.paymentMethodSettingSource,
+    );
+
+    return SizedBox(
+      width: 180,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTextStatusChip(
+            label: sourceLabel,
+            color: row.paymentMethodSettingSource ==
+                    AssetLiabilityPaymentMethodSettingSource.monthlyOverride
+                ? const Color(0xFF7C3AED)
+                : const Color(0xFF475569),
+          ),
+          const SizedBox(height: 4),
+          DropdownButton<_CardBillingSaveScope>(
+            value: selectedScope,
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem<_CardBillingSaveScope>(
+                value: _CardBillingSaveScope.defaultSetting,
+                child: Text(
+                  AssetLiabilityPlanningService.saveAsDefaultPaymentMethodLabel,
+                ),
+              ),
+              DropdownMenuItem<_CardBillingSaveScope>(
+                value: _CardBillingSaveScope.monthlyOverride,
+                child: Text(
+                  AssetLiabilityPlanningService.saveAsMonthlyPaymentMethodLabel,
+                ),
+              ),
+            ],
+            onChanged: (value) {
+              if (value == null) {
+                return;
+              }
+              _updateCardBillingSaveScope(row.id, value);
+            },
+          ),
+        ],
       ),
     );
   }

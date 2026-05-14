@@ -87,9 +87,7 @@ void main() {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
         baseDate: DateTime(2026, 5, 12),
-        monthlyPaymentOverrides: const <String, double>{
-          'モビット': 70000,
-        },
+        monthlyPaymentOverrides: const <String, double>{'モビット': 70000},
       );
       final mobit = workbook.debtMasterRows.firstWhere(
         (row) => row.name == 'モビット',
@@ -145,9 +143,7 @@ void main() {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
         baseDate: DateTime(2026, 5, 12),
-        monthlyPaymentOverrides: const <String, double>{
-          'PayPayカード': 0,
-        },
+        monthlyPaymentOverrides: const <String, double>{'PayPayカード': 0},
       );
 
       final payPay = workbook.debtMasterRows.firstWhere(
@@ -163,9 +159,7 @@ void main() {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
         baseDate: DateTime(2026, 5, 12),
-        monthlyPaymentOverrides: const <String, double>{
-          'モビット': 70000,
-        },
+        monthlyPaymentOverrides: const <String, double>{'モビット': 70000},
       );
 
       final risk15 = workbook.paymentDayRisks.firstWhere(
@@ -198,9 +192,7 @@ void main() {
           'モビット': -20000,
         },
         baseDate: DateTime(2026, 5, 1),
-        paidAccountNames: const <String>{
-          'auPayカード',
-        },
+        paidAccountNames: const <String>{'auPayカード'},
       );
 
       final auPay = workbook.debtMasterRows.firstWhere(
@@ -256,9 +248,10 @@ void main() {
           au.billingAccountId,
           AssetLiabilityPlanningService.auPayCardAccountId,
         );
+        expect(au.paymentMethod, AssetLiabilityPaymentMethod.includedInCard);
         expect(
-          au.paymentMethod,
-          AssetLiabilityPaymentMethod.includedInCard,
+          au.paymentMethodSettingSource,
+          AssetLiabilityPaymentMethodSettingSource.builtInDefault,
         );
         expect(au.includedInBillingAccount, isTrue);
         expect(au.isDirectCashflowTarget, isFalse);
@@ -281,65 +274,126 @@ void main() {
       },
     );
 
-    test(
-      'allows arbitrary payment items to be included in card billing',
-      () {
-        final workbook = service.buildWorkbook(
-          latestSnapshot: <String, double>{
-            'cash': 50000,
-            'KDDI': -5764,
-            'PayPay': -20000,
-          },
-          baseDate: DateTime(2026, 5, 1),
-          monthlyPaymentOverrides: const <String, double>{
-            AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
-            'paypay_card': 20000,
-          },
-          cardBillingAccountIds: const <String, String>{
-            AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
-          },
-        );
+    test('allows arbitrary payment items to be included in card billing', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
 
-        final kddi = workbook.debtMasterRows.firstWhere(
-          (row) =>
-              row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
-        );
-        final payPay = workbook.debtMasterRows.firstWhere(
-          (row) => row.id == 'paypay_card',
-        );
-        final kddiCashflow = workbook.cashflowRows.firstWhere(
-          (row) =>
-              row.accountId ==
-              AssetLiabilityPlanningService.kddiProviderAccountId,
-        );
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final payPay = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'paypay_card',
+      );
+      final kddiCashflow = workbook.cashflowRows.firstWhere(
+        (row) =>
+            row.accountId ==
+            AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
 
-        expect(kddi.paymentMethod, AssetLiabilityPaymentMethod.includedInCard);
-        expect(kddi.billingAccountId, 'paypay_card');
-        expect(kddi.isDirectCashflowTarget, isFalse);
-        expect(payPay.isDirectCashflowTarget, isTrue);
-        expect(
-          workbook.paymentDayRisks.any((risk) => risk.paymentDay == 25),
-          isFalse,
-        );
-        expect(kddiCashflow.cashAfterPayment, kddiCashflow.cashBeforePayment);
-        expect(workbook.monthlyUnpaidPaymentTotal, 20000);
-        expect(workbook.cashAfterScheduledPayments, 30000);
-      },
-    );
+      expect(kddi.paymentMethod, AssetLiabilityPaymentMethod.includedInCard);
+      expect(kddi.billingAccountId, 'paypay_card');
+      expect(
+        kddi.paymentMethodSettingSource,
+        AssetLiabilityPaymentMethodSettingSource.monthlyOverride,
+      );
+      expect(kddi.isDirectCashflowTarget, isFalse);
+      expect(payPay.isDirectCashflowTarget, isTrue);
+      expect(
+        workbook.paymentDayRisks.any((risk) => risk.paymentDay == 25),
+        isFalse,
+      );
+      expect(kddiCashflow.cashAfterPayment, kddiCashflow.cashBeforePayment);
+      expect(workbook.monthlyUnpaidPaymentTotal, 20000);
+      expect(workbook.cashAfterScheduledPayments, 30000);
+    });
+
+    test('applies default card billing settings before built-in defaults', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        defaultCardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
+
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+
+      expect(kddi.paymentMethod, AssetLiabilityPaymentMethod.includedInCard);
+      expect(kddi.billingAccountId, 'paypay_card');
+      expect(
+        kddi.paymentMethodSettingSource,
+        AssetLiabilityPaymentMethodSettingSource.defaultSetting,
+      );
+      expect(kddi.isDirectCashflowTarget, isFalse);
+      expect(workbook.monthlyUnpaidPaymentTotal, 20000);
+    });
+
+    test('monthly card billing overrides default card billing settings', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        defaultCardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId:
+              AssetLiabilityPlanningService.directPaymentMethodId,
+        },
+      );
+
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+
+      expect(kddi.paymentMethod, AssetLiabilityPaymentMethod.direct);
+      expect(kddi.billingAccountId, isNull);
+      expect(
+        kddi.paymentMethodSettingSource,
+        AssetLiabilityPaymentMethodSettingSource.monthlyOverride,
+      );
+      expect(kddi.isDirectCashflowTarget, isTrue);
+      expect(workbook.monthlyUnpaidPaymentTotal, 25764);
+    });
 
     test('restores monthly state by stable id after display name changes', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          '財布': 50000,
-          'SMBCカードローン': -100000,
-        },
+        latestSnapshot: <String, double>{'財布': 50000, 'SMBCカードローン': -100000},
         baseDate: DateTime(2026, 5, 1),
         monthlyPaymentOverrides: const <String, double>{
           'smbc_card_loan': 12345,
         },
-        paidAccountNames: const <String>{
-          'smbc_card_loan',
-        },
+        paidAccountNames: const <String>{'smbc_card_loan'},
       );
 
       final row = workbook.debtMasterRows.single;
@@ -396,10 +450,11 @@ void main() {
         },
       );
 
-      expect(
-        workbook.cashflowRows.map((row) => row.paymentDay).toList(),
-        <int>[8, 10, 15],
-      );
+      expect(workbook.cashflowRows.map((row) => row.paymentDay).toList(), <int>[
+        8,
+        10,
+        15,
+      ]);
       expect(workbook.cashflowRows[0].cashAfterPayment, 15000);
       expect(
         workbook.cashflowRows[0].riskLevel,
@@ -419,14 +474,9 @@ void main() {
 
     test('reflects unreceived income plans in chronological cashflow', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          'cash': 10000,
-          'mobit': -100000,
-        },
+        latestSnapshot: <String, double>{'cash': 10000, 'mobit': -100000},
         baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{
-          'mobit': 20000,
-        },
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
         incomePlans: <AssetLiabilityIncomePlan>[
           AssetLiabilityIncomePlan(
             id: 'income_salary',
@@ -455,14 +505,9 @@ void main() {
 
     test('does not double count received income plans', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          'cash': 10000,
-          'mobit': -100000,
-        },
+        latestSnapshot: <String, double>{'cash': 10000, 'mobit': -100000},
         baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{
-          'mobit': 20000,
-        },
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
         incomePlans: <AssetLiabilityIncomePlan>[
           AssetLiabilityIncomePlan(
             id: 'income_received',
@@ -490,12 +535,8 @@ void main() {
           'mobit': -100000,
         },
         baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{
-          'mobit': 20000,
-        },
-        paymentSourceAccountIds: const <String, String>{
-          'mobit': 'custom_bank',
-        },
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
         incomePlans: <AssetLiabilityIncomePlan>[
           AssetLiabilityIncomePlan(
             id: 'income_bank',
@@ -530,9 +571,7 @@ void main() {
           'mobit': -100000,
         },
         baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{
-          'mobit': 20000,
-        },
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
         defaultPaymentSourceAccountIds: const <String, String>{
           'mobit': 'custom_bank',
         },
@@ -553,14 +592,9 @@ void main() {
 
     test('keeps unassigned income out of account-level cashflow warnings', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          'cash': 10000,
-          'mobit': -100000,
-        },
+        latestSnapshot: <String, double>{'cash': 10000, 'mobit': -100000},
         baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{
-          'mobit': 20000,
-        },
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
         incomePlans: <AssetLiabilityIncomePlan>[
           AssetLiabilityIncomePlan(
             id: 'income_unassigned',
@@ -591,10 +625,7 @@ void main() {
 
     test('adds KDDI provider as a separate day 25 fixed payment', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          'cash': 50000,
-          'au': -32152,
-        },
+        latestSnapshot: <String, double>{'cash': 50000, 'au': -32152},
         baseDate: DateTime(2026, 5, 1),
         defaultPaymentSourceAccountIds: const <String, String>{
           AssetLiabilityPlanningService.kddiProviderAccountId: 'custom_cash',
@@ -602,9 +633,7 @@ void main() {
         includeDefaultFixedPayments: true,
       );
 
-      final au = workbook.debtMasterRows.firstWhere(
-        (row) => row.id == 'au',
-      );
+      final au = workbook.debtMasterRows.firstWhere((row) => row.id == 'au');
       final kddi = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
       );
@@ -660,10 +689,7 @@ void main() {
 
     test('treats paid KDDI provider payment as reflected in cashflow', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: <String, double>{
-          'cash': 50000,
-          'au': -32152,
-        },
+        latestSnapshot: <String, double>{'cash': 50000, 'au': -32152},
         baseDate: DateTime(2026, 5, 1),
         paidAccountNames: const <String>{
           AssetLiabilityPlanningService.kddiProviderAccountId,
