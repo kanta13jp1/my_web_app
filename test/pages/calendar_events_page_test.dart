@@ -342,8 +342,8 @@ void main() {
       mockFunctionsClient.invoke('app-hub', body: captureAnyNamed('body')),
     ).captured;
     final createBody = captured.whereType<Map<String, dynamic>>().lastWhere(
-      (body) => body['action'] == 'calendar.create',
-    );
+          (body) => body['action'] == 'calendar.create',
+        );
 
     expect(createBody['title'], '作戦会議');
     expect(createBody['all_day'], isFalse);
@@ -512,9 +512,8 @@ void main() {
           'title': 'Dentist',
           'description': 'Annual cleaning',
           'start_at': dentistStart.toIso8601String(),
-          'end_at': dentistStart
-              .add(const Duration(hours: 1))
-              .toIso8601String(),
+          'end_at':
+              dentistStart.add(const Duration(hours: 1)).toIso8601String(),
           'all_day': false,
           'color': '#34a853',
         },
@@ -686,11 +685,11 @@ void main() {
     ).captured;
     expect(
       captured.whereType<Map<String, dynamic>>().any(
-        (body) =>
-            body['action'] == 'calendar.create' &&
-            body['rrule'] == 'RRULE:FREQ=DAILY' &&
-            body['timezone'] == calendarDefaultTimezone(),
-      ),
+            (body) =>
+                body['action'] == 'calendar.create' &&
+                body['rrule'] == 'RRULE:FREQ=DAILY' &&
+                body['timezone'] == calendarDefaultTimezone(),
+          ),
       isTrue,
     );
   });

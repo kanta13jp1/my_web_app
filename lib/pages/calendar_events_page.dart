@@ -24,8 +24,8 @@ class CalendarEventsPage extends StatefulWidget {
     super.key,
     SupabaseClient? supabaseClient,
     NotificationService? notificationService,
-  }) : _supabaseClient = supabaseClient,
-       _notificationService = notificationService;
+  })  : _supabaseClient = supabaseClient,
+        _notificationService = notificationService;
 
   final SupabaseClient? _supabaseClient;
   final NotificationService? _notificationService;
@@ -77,8 +77,8 @@ bool _eventIsAllDay(Map<String, dynamic> event) => event['all_day'] == true;
 
 String _eventTitle(Map<String, dynamic> event) =>
     event['title']?.toString().trim().isNotEmpty == true
-    ? event['title'].toString()
-    : 'Untitled';
+        ? event['title'].toString()
+        : 'Untitled';
 
 String _eventTimeLabel(
   Map<String, dynamic> event, {
@@ -124,8 +124,8 @@ String _eventDateTimeLabel(
   if (end == null) return _formatDateTime(start);
   final endLabel =
       start.year == end.year && start.month == end.month && start.day == end.day
-      ? _formatClock(end)
-      : _formatDateTime(end);
+          ? _formatClock(end)
+          : _formatDateTime(end);
   return '${_formatDateTime(start)} - $endLabel';
 }
 
@@ -215,8 +215,7 @@ String calendarEventRecurrenceLabel(Map<String, dynamic> event) {
       rrule,
       options: const RecurrenceRuleFromStringOptions.lenient(),
     );
-    final hasCustomParts =
-        rule.count != null ||
+    final hasCustomParts = rule.count != null ||
         rule.until != null ||
         rule.hasByWeekDays ||
         rule.hasByMonthDays ||
@@ -337,9 +336,8 @@ bool _eventRangeOverlaps(
   DateTime rangeStart,
   DateTime rangeEnd,
 ) {
-  final safeEnd = end.isAfter(start)
-      ? end
-      : start.add(const Duration(hours: 1));
+  final safeEnd =
+      end.isAfter(start) ? end : start.add(const Duration(hours: 1));
   return safeEnd.isAfter(rangeStart) && start.isBefore(rangeEnd);
 }
 
@@ -348,9 +346,8 @@ DateTime snapCalendarEventStartToGrid(
   DateTime value, {
   int granularityMinutes = _calendarDragSnapMinutes,
 }) {
-  final safeGranularity = granularityMinutes <= 0
-      ? _calendarDragSnapMinutes
-      : granularityMinutes;
+  final safeGranularity =
+      granularityMinutes <= 0 ? _calendarDragSnapMinutes : granularityMinutes;
   final dayStart = DateTime(value.year, value.month, value.day);
   final minutes = value.difference(dayStart).inMinutes;
   final snappedMinutes = (minutes / safeGranularity).round() * safeGranularity;
@@ -381,8 +378,7 @@ _CalendarRecurrencePreset _recurrencePresetForRRule(String? rrule) {
       rrule,
       options: const RecurrenceRuleFromStringOptions.lenient(),
     );
-    final hasCustomParts =
-        rule.count != null ||
+    final hasCustomParts = rule.count != null ||
         rule.until != null ||
         rule.hasByWeekDays ||
         rule.hasByMonthDays ||
@@ -481,9 +477,8 @@ String? _buildCalendarRRule({
     frequency: _frequencyForPreset(preset),
     until: normalizedUntil,
     count: normalizedCount,
-    byWeekDays: preset == _CalendarRecurrencePreset.custom
-        ? byWeekDays
-        : const [],
+    byWeekDays:
+        preset == _CalendarRecurrencePreset.custom ? byWeekDays : const [],
   );
   return rule.toString();
 }
@@ -844,14 +839,14 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   }
 
   _CalendarListItem get _defaultCalendar => _calendars.firstWhere(
-    (calendar) => calendar.id == _defaultCalendarId,
-    orElse: () => const _CalendarListItem(
-      id: _defaultCalendarId,
-      name: _defaultCalendarName,
-      color: _defaultCalendarColor,
-      isDefault: true,
-    ),
-  );
+        (calendar) => calendar.id == _defaultCalendarId,
+        orElse: () => const _CalendarListItem(
+          id: _defaultCalendarId,
+          name: _defaultCalendarName,
+          color: _defaultCalendarColor,
+          isDefault: true,
+        ),
+      );
 
   _CalendarListItem _calendarForId(String id) {
     return _calendars.firstWhere(
@@ -979,8 +974,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     final data = res.data;
     final rawCalendars =
         data is Map<String, dynamic> && data['calendars'] is List
-        ? data['calendars'] as List
-        : <dynamic>[];
+            ? data['calendars'] as List
+            : <dynamic>[];
     final nextCalendars = <_CalendarListItem>[];
     for (final raw in rawCalendars) {
       if (raw is! Map) continue;
@@ -1001,8 +996,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     }
     final knownIds = nextCalendars.map((calendar) => calendar.id).toSet();
     setState(() {
-      final shouldSelectAll =
-          !_hasLoadedCalendars ||
+      final shouldSelectAll = !_hasLoadedCalendars ||
           (_visibleCalendarIds.length == _calendars.length &&
               _calendars.every(
                 (calendar) => _visibleCalendarIds.contains(calendar.id),
@@ -1106,9 +1100,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   }) async {
     try {
       final normalizedTimezone = normalizeCalendarTimezone(timezone);
-      final end = allDay
-          ? startAt
-          : (endAt ?? startAt.add(const Duration(hours: 1)));
+      final end =
+          allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
       final res = await _supabase.functions.invoke(
         'app-hub',
         body: {
@@ -1127,9 +1120,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       );
       final data = res.data;
       final savedEvent = data is Map ? data['event'] : null;
-      final eventId = savedEvent is Map
-          ? savedEvent['event_id']?.toString() ?? ''
-          : '';
+      final eventId =
+          savedEvent is Map ? savedEvent['event_id']?.toString() ?? '' : '';
       if (eventId.isNotEmpty && reminderMinutes != null) {
         _scheduleInAppReminderTimer({
           'event_id': eventId,
@@ -1178,9 +1170,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     }
     try {
       final normalizedTimezone = normalizeCalendarTimezone(timezone);
-      final end = allDay
-          ? startAt
-          : (endAt ?? startAt.add(const Duration(hours: 1)));
+      final end =
+          allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
       await _supabase.functions.invoke(
         'app-hub',
         body: {
@@ -1381,9 +1372,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       );
       final data = res.data;
       final calendar = data is Map ? data['calendar'] : null;
-      final calendarId = calendar is Map
-          ? calendar['calendar_id']?.toString() ?? ''
-          : '';
+      final calendarId =
+          calendar is Map ? calendar['calendar_id']?.toString() ?? '' : '';
       if (calendarId.isNotEmpty) {
         _visibleCalendarIds.add(calendarId);
       }
@@ -1732,8 +1722,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final usesTimeline =
-        _calendarView == _CalendarView.day ||
+    final usesTimeline = _calendarView == _CalendarView.day ||
         _calendarView == _CalendarView.week;
 
     return Scaffold(
@@ -1906,69 +1895,72 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     onMove: _moveTimedEvent,
                   )
                 : _selectedDayEvents.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.event_available,
-                          size: 48,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHighest,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'この日のイベントはありません',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: _selectedDayEvents.length,
-                    itemBuilder: (context, index) {
-                      final event = _selectedDayEvents[index];
-                      return _EventCard(
-                        event: event,
-                        color: _eventColor(event),
-                        showOriginalTimezone: _showOriginalTimezone,
-                        onTap: () => _showEventDetailsSheet(context, event),
-                        onDelete: () {
-                          final eventId = calendarEventSeriesId(event);
-                          if (eventId.isEmpty) return;
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('削除確認'),
-                              content: Text('「${event['title']}」を削除しますか？'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: const Text('キャンセル'),
-                                ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE53935),
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    _deleteEvent(eventId);
-                                  },
-                                  child: const Text('削除'),
-                                ),
-                              ],
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.event_available,
+                              size: 48,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                             ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'この日のイベントはありません',
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemCount: _selectedDayEvents.length,
+                        itemBuilder: (context, index) {
+                          final event = _selectedDayEvents[index];
+                          return _EventCard(
+                            event: event,
+                            color: _eventColor(event),
+                            showOriginalTimezone: _showOriginalTimezone,
+                            onTap: () => _showEventDetailsSheet(context, event),
+                            onDelete: () {
+                              final eventId = calendarEventSeriesId(event);
+                              if (eventId.isEmpty) return;
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('削除確認'),
+                                  content: Text('「${event['title']}」を削除しますか？'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: const Text('キャンセル'),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFFE53935),
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        _deleteEvent(eventId);
+                                      },
+                                      child: const Text('削除'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
           ),
         ],
       ),
@@ -2284,18 +2276,17 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     _RecurrenceEditScope recurrenceScope = _RecurrenceEditScope.all,
   }) {
     final isEditing = event != null;
-    final editEvent = event == null
-        ? null
-        : _eventForRecurrenceEdit(event, recurrenceScope);
+    final editEvent =
+        event == null ? null : _eventForRecurrenceEdit(event, recurrenceScope);
     final eventId = editEvent == null ? '' : calendarEventSeriesId(editEvent);
     final initialStart = editEvent == null
         ? _selectedDay
         : (_eventDateTime(editEvent, 'start_at', showOriginalTimezone: true) ??
-              _selectedDay);
+            _selectedDay);
     final initialEnd = editEvent == null
         ? initialStart.add(const Duration(hours: 1))
         : (_eventDateTime(editEvent, 'end_at', showOriginalTimezone: true) ??
-              initialStart.add(const Duration(hours: 1)));
+            initialStart.add(const Duration(hours: 1)));
     final titleCtrl = TextEditingController(
       text: editEvent?['title']?.toString() ?? '',
     );
@@ -2311,9 +2302,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     var startTime = TimeOfDay.fromDateTime(initialStart);
     var endTime = TimeOfDay.fromDateTime(initialEnd);
     final colors = ['#4285f4', '#ea4335', '#34a853', '#fbbc05', '#9334e6'];
-    var selectedColor = editEvent == null
-        ? colors.first
-        : _eventColorHex(editEvent);
+    var selectedColor =
+        editEvent == null ? colors.first : _eventColorHex(editEvent);
     if (!colors.contains(selectedColor)) {
       selectedColor = colors.first;
     }
@@ -2685,9 +2675,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         minute: endTime.minute,
                         timezone: selectedTimezone,
                       );
-                final reminderMinutes = selectedReminder < 0
-                    ? null
-                    : selectedReminder;
+                final reminderMinutes =
+                    selectedReminder < 0 ? null : selectedReminder;
                 final recurrenceCount = int.tryParse(
                   recurrenceCountCtrl.text.trim(),
                 );
@@ -2741,7 +2730,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 class _CalendarEventSearchDelegate
     extends SearchDelegate<Map<String, dynamic>?> {
   _CalendarEventSearchDelegate({required this.events})
-    : super(searchFieldLabel: 'Search events');
+      : super(searchFieldLabel: 'Search events');
 
   final List<Map<String, dynamic>> events;
 
@@ -3170,11 +3159,9 @@ class _DayTimelineView extends StatelessWidget {
                       height: _hourHeight,
                       child: _HourSlot(hour: hour),
                     ),
-                  for (
-                    var minute = 0;
-                    minute < 24 * 60;
-                    minute += _calendarDragSnapMinutes
-                  )
+                  for (var minute = 0;
+                      minute < 24 * 60;
+                      minute += _calendarDragSnapMinutes)
                     Positioned(
                       top: (minute / 60) * _hourHeight,
                       left: _timeGutterWidth,
@@ -3199,8 +3186,7 @@ class _DayTimelineView extends StatelessWidget {
   }
 
   Widget _buildPositionedEvent(_TimelineEntry entry, double contentWidth) {
-    final columnWidth =
-        (contentWidth - (entry.columnCount - 1) * _eventGap) /
+    final columnWidth = (contentWidth - (entry.columnCount - 1) * _eventGap) /
         entry.columnCount;
     final safeColumnWidth = columnWidth < 48 ? 48.0 : columnWidth;
     final top = (entry.startMinute / 60) * _hourHeight + 2;
@@ -3210,8 +3196,7 @@ class _DayTimelineView extends StatelessWidget {
 
     return Positioned(
       top: top,
-      left:
-          _timeGutterWidth +
+      left: _timeGutterWidth +
           _eventGap +
           entry.column * (safeColumnWidth + _eventGap),
       width: safeColumnWidth,
@@ -3319,8 +3304,7 @@ class _DayTimelineView extends StatelessWidget {
       showOriginalTimezone: showOriginalTimezone,
     );
     if (start == null) return null;
-    final end =
-        _eventDateTime(
+    final end = _eventDateTime(
           event,
           'end_at',
           showOriginalTimezone: showOriginalTimezone,
@@ -3344,9 +3328,8 @@ class _DayTimelineView extends StatelessWidget {
       1440,
     );
     final minimumEndMinute = _clampInt(startMinute + 30, 1, 1440);
-    final endMinute = rawEndMinute < minimumEndMinute
-        ? minimumEndMinute
-        : rawEndMinute;
+    final endMinute =
+        rawEndMinute < minimumEndMinute ? minimumEndMinute : rawEndMinute;
 
     return _TimelineRange(startMinute, endMinute);
   }
