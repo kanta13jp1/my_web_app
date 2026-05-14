@@ -182,6 +182,10 @@ abstract class AssetLiabilityRepository {
 
   Future<void> saveDefaultPaymentSources(Map<String, String> sources);
 
+  Future<Map<String, String>> loadDefaultCardBillingAccounts();
+
+  Future<void> saveDefaultCardBillingAccounts(Map<String, String> accounts);
+
   Future<List<AssetLiabilityRecurringIncomeTemplate>>
       loadRecurringIncomeTemplates();
 
@@ -214,6 +218,7 @@ abstract class AssetLiabilityRepository {
       monthKey: AssetLiabilityMonthlyStateStore.formatMonthKey(month),
       monthlyState: await loadMonth(month),
       defaultPaymentSourceAccountIds: await loadDefaultPaymentSources(),
+      defaultCardBillingAccountIds: await loadDefaultCardBillingAccounts(),
       recurringIncomeTemplates: await loadRecurringIncomeTemplates(),
       monthlySnapshots: await loadMonthlySnapshots(),
     );
@@ -241,6 +246,15 @@ abstract class AssetLiabilityRemoteStore {
   Future<void> saveDefaultPaymentSources({
     required String userId,
     required Map<String, String> sources,
+  });
+
+  Future<Map<String, String>?> loadDefaultCardBillingAccounts({
+    required String userId,
+  });
+
+  Future<void> saveDefaultCardBillingAccounts({
+    required String userId,
+    required Map<String, String> accounts,
   });
 
   Future<List<AssetLiabilityRecurringIncomeTemplate>?>
@@ -394,6 +408,56 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
     await _tryRemote(
       () => remote.saveDefaultPaymentSources(userId: userId, sources: sources),
+    );
+  }
+
+  @override
+  Future<Map<String, String>> loadDefaultCardBillingAccounts() async {
+    final local = await localRepository.loadDefaultCardBillingAccounts();
+    final remote = _remoteOrNull();
+    final userId = _userIdOrNull();
+    if (remote == null || userId == null) {
+      return local;
+    }
+
+    final remoteAccounts = await _tryRemote(
+      () => remote.loadDefaultCardBillingAccounts(userId: userId),
+    );
+    if (remoteAccounts == null || remoteAccounts.isEmpty) {
+      if (local.isNotEmpty) {
+        await _tryRemote(
+          () => remote.saveDefaultCardBillingAccounts(
+            userId: userId,
+            accounts: local,
+          ),
+        );
+      }
+      return local;
+    }
+
+    if (local.isEmpty) {
+      await localRepository.saveDefaultCardBillingAccounts(remoteAccounts);
+      return remoteAccounts;
+    }
+
+    return local;
+  }
+
+  @override
+  Future<void> saveDefaultCardBillingAccounts(
+    Map<String, String> accounts,
+  ) async {
+    await localRepository.saveDefaultCardBillingAccounts(accounts);
+    final remote = _remoteOrNull();
+    final userId = _userIdOrNull();
+    if (remote == null || userId == null) {
+      return;
+    }
+    await _tryRemote(
+      () => remote.saveDefaultCardBillingAccounts(
+        userId: userId,
+        accounts: accounts,
+      ),
     );
   }
 
@@ -568,6 +632,20 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         restored++;
       }
 
+      if (syncData.localDefaultCardBillingAccounts.isNotEmpty) {
+        await remote.saveDefaultCardBillingAccounts(
+          userId: userId,
+          accounts: syncData.localDefaultCardBillingAccounts,
+        );
+        uploaded++;
+      } else if (syncData.remoteDefaultCardBillingAccounts?.isNotEmpty ??
+          false) {
+        await localRepository.saveDefaultCardBillingAccounts(
+          syncData.remoteDefaultCardBillingAccounts!,
+        );
+        restored++;
+      }
+
       if (syncData.localTemplates.isNotEmpty) {
         await remote.saveRecurringIncomeTemplates(
           userId: userId,
@@ -658,10 +736,14 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     return _AssetLiabilitySyncData(
       localMonth: await localRepository.loadMonth(month),
       localSources: await localRepository.loadDefaultPaymentSources(),
+      localDefaultCardBillingAccounts:
+          await localRepository.loadDefaultCardBillingAccounts(),
       localTemplates: await localRepository.loadRecurringIncomeTemplates(),
       localSnapshots: await localRepository.loadMonthlySnapshots(),
       remoteMonth: await remote.loadMonth(userId: userId, month: month),
       remoteSources: await remote.loadDefaultPaymentSources(userId: userId),
+      remoteDefaultCardBillingAccounts:
+          await remote.loadDefaultCardBillingAccounts(userId: userId),
       remoteTemplates: await remote.loadRecurringIncomeTemplates(
         userId: userId,
       ),
@@ -686,6 +768,14 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         remoteHasData: data.remoteSources?.isNotEmpty ?? false,
         localCount: data.localSources.length,
         remoteCount: data.remoteSources?.length ?? 0,
+      ),
+      AssetLiabilitySyncPreviewItem(
+        targetName: 'card billing defaults',
+        localHasData: data.localDefaultCardBillingAccounts.isNotEmpty,
+        remoteHasData:
+            data.remoteDefaultCardBillingAccounts?.isNotEmpty ?? false,
+        localCount: data.localDefaultCardBillingAccounts.length,
+        remoteCount: data.remoteDefaultCardBillingAccounts?.length ?? 0,
       ),
       AssetLiabilitySyncPreviewItem(
         targetName: '定期収入テンプレート',
@@ -727,20 +817,24 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
 class _AssetLiabilitySyncData {
   final AssetLiabilityMonthlyState localMonth;
   final Map<String, String> localSources;
+  final Map<String, String> localDefaultCardBillingAccounts;
   final List<AssetLiabilityRecurringIncomeTemplate> localTemplates;
   final List<AssetLiabilityMonthlySnapshot> localSnapshots;
   final AssetLiabilityMonthlyState? remoteMonth;
   final Map<String, String>? remoteSources;
+  final Map<String, String>? remoteDefaultCardBillingAccounts;
   final List<AssetLiabilityRecurringIncomeTemplate>? remoteTemplates;
   final List<AssetLiabilityMonthlySnapshot>? remoteSnapshots;
 
   const _AssetLiabilitySyncData({
     required this.localMonth,
     required this.localSources,
+    required this.localDefaultCardBillingAccounts,
     required this.localTemplates,
     required this.localSnapshots,
     required this.remoteMonth,
     required this.remoteSources,
+    required this.remoteDefaultCardBillingAccounts,
     required this.remoteTemplates,
     required this.remoteSnapshots,
   });
@@ -801,6 +895,7 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
         'payment_overrides': row['payment_overrides'],
         'paid_account_ids': row['paid_account_ids'],
         'payment_source_account_ids': row['payment_source_account_ids'],
+        'card_billing_account_ids': row['card_billing_account_ids'],
       },
     );
     await _upsertPayloadRow(
@@ -835,15 +930,54 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
   }) async {
     final row = AssetLiabilityUserSettingsPayload(
       defaultPaymentSourceAccountIds: sources,
+      defaultCardBillingAccountIds: const <String, String>{},
       recurringIncomeTemplates: const <AssetLiabilityRecurringIncomeTemplate>[],
     ).toSupabaseJson(userId: userId);
-    await _upsertPayloadRow(
+    await _upsertMergedPayloadRow(
       AssetLiabilitySupabaseTablePlan.paymentSourceSettingsTable,
       userId: userId,
       monthKey: AssetLiabilitySupabaseTablePlan.globalMonthKey,
       payload: <String, Object?>{
         'default_payment_source_account_ids':
             row['default_payment_source_account_ids'],
+      },
+    );
+  }
+
+  @override
+  Future<Map<String, String>?> loadDefaultCardBillingAccounts({
+    required String userId,
+  }) async {
+    final payload = await _loadPayloadRow(
+      AssetLiabilitySupabaseTablePlan.paymentSourceSettingsTable,
+      userId: userId,
+      monthKey: AssetLiabilitySupabaseTablePlan.globalMonthKey,
+    );
+    if (payload == null) {
+      return null;
+    }
+    return AssetLiabilityUserSettingsPayload.fromSupabaseJson(
+      payload,
+    ).defaultCardBillingAccountIds;
+  }
+
+  @override
+  Future<void> saveDefaultCardBillingAccounts({
+    required String userId,
+    required Map<String, String> accounts,
+  }) async {
+    final row = AssetLiabilityUserSettingsPayload(
+      defaultPaymentSourceAccountIds: const <String, String>{},
+      defaultCardBillingAccountIds: accounts,
+      recurringIncomeTemplates: const <AssetLiabilityRecurringIncomeTemplate>[],
+    ).toSupabaseJson(userId: userId);
+    await _upsertMergedPayloadRow(
+      AssetLiabilitySupabaseTablePlan.paymentSourceSettingsTable,
+      userId: userId,
+      monthKey: AssetLiabilitySupabaseTablePlan.globalMonthKey,
+      payload: <String, Object?>{
+        'default_card_billing_account_ids':
+            row['default_card_billing_account_ids'],
       },
     );
   }
@@ -871,6 +1005,7 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
   }) async {
     final row = AssetLiabilityUserSettingsPayload(
       defaultPaymentSourceAccountIds: const <String, String>{},
+      defaultCardBillingAccountIds: const <String, String>{},
       recurringIncomeTemplates: templates,
     ).toSupabaseJson(userId: userId);
     await _upsertPayloadRow(
@@ -962,6 +1097,23 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
     );
   }
 
+  Future<void> _upsertMergedPayloadRow(
+    String table, {
+    required String userId,
+    required String monthKey,
+    required Map<String, Object?> payload,
+  }) async {
+    final current =
+        await _loadPayloadRow(table, userId: userId, monthKey: monthKey) ??
+            const <String, Object?>{};
+    await _upsertPayloadRow(
+      table,
+      userId: userId,
+      monthKey: monthKey,
+      payload: <String, Object?>{...current, ...payload},
+    );
+  }
+
   Map<String, Object?>? _payloadFromRow(Map<dynamic, dynamic> row) {
     final payload = row['payload'];
     if (payload is Map) {
@@ -1002,6 +1154,16 @@ class SharedPreferencesAssetLiabilityRepository
   @override
   Future<void> saveDefaultPaymentSources(Map<String, String> sources) {
     return store.saveDefaultPaymentSources(sources);
+  }
+
+  @override
+  Future<Map<String, String>> loadDefaultCardBillingAccounts() {
+    return store.loadDefaultCardBillingAccounts();
+  }
+
+  @override
+  Future<void> saveDefaultCardBillingAccounts(Map<String, String> accounts) {
+    return store.saveDefaultCardBillingAccounts(accounts);
   }
 
   @override

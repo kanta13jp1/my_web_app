@@ -226,13 +226,18 @@ void main() {
         csv,
         contains(AssetLiabilityPlanningService.auPayCardPaymentMethodLabel),
       );
-      expect(
-        csv,
-        contains(AssetLiabilityPlanningService.auPayCardAccountName),
-      );
+      expect(csv, contains(AssetLiabilityPlanningService.auPayCardAccountName));
       expect(
         csv,
         contains(AssetLiabilityPlanningService.cardBillingIncludedLabel),
+      );
+      expect(
+        csv,
+        contains(
+          AssetLiabilityPlanningService.paymentMethodSettingSourceLabel(
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+          ),
+        ),
       );
       expect(csv, contains('直接差し引き対象'));
     });

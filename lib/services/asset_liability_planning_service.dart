@@ -12,6 +12,15 @@ class AssetLiabilityPlanningService {
   static const String auPayCardAccountName = 'auPayカード';
   static const String auPayCardPaymentMethodLabel = 'auPayカード払い';
   static const String cardBillingIncludedLabel = 'カード請求に含む';
+  static const String builtInPaymentMethodSettingLabel = '\u65e2\u5b9a\u5024';
+  static const String defaultPaymentMethodSettingLabel =
+      '\u30c7\u30d5\u30a9\u30eb\u30c8';
+  static const String monthlyPaymentMethodSettingLabel =
+      '\u4eca\u6708\u3060\u3051\u4e0a\u66f8\u304d';
+  static const String saveAsDefaultPaymentMethodLabel =
+      '\u30c7\u30d5\u30a9\u30eb\u30c8\u3068\u3057\u3066\u4fdd\u5b58';
+  static const String saveAsMonthlyPaymentMethodLabel =
+      '\u4eca\u6708\u3060\u3051\u4e0a\u66f8\u304d';
   static const String auCardBillingNotice =
       'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
@@ -28,6 +37,7 @@ class AssetLiabilityPlanningService {
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
     Map<String, String> defaultPaymentSourceAccountIds =
         const <String, String>{},
+    Map<String, String> defaultCardBillingAccountIds = const <String, String>{},
     Map<String, String> cardBillingAccountIds = const <String, String>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
@@ -93,6 +103,7 @@ class AssetLiabilityPlanningService {
             monthlyPaymentOverrides: effectiveMonthlyPaymentOverrides,
             paidAccountNames: paidAccountNames,
             paymentSourceAccountIds: effectivePaymentSourceAccountIds,
+            defaultCardBillingAccountIds: defaultCardBillingAccountIds,
             cardBillingAccountIds: cardBillingAccountIds,
             accountsById: accountsById,
           ),
@@ -142,10 +153,9 @@ class AssetLiabilityPlanningService {
       0,
       (sum, plan) => plan.received ? sum : sum + plan.amount,
     );
-    final topFourDebtTotal = debtMasterRows.take(4).fold<double>(
-          0,
-          (sum, row) => sum + row.balance.abs(),
-        );
+    final topFourDebtTotal = debtMasterRows
+        .take(4)
+        .fold<double>(0, (sum, row) => sum + row.balance.abs());
     final manualPaymentCount =
         directDebtRows.where((row) => !row.paymentAmountEstimated).length;
     final estimatedPaymentCount =
@@ -236,67 +246,31 @@ class AssetLiabilityPlanningService {
       );
     }
     if (_containsAll(key, const <String>['アコム', 'ローン'])) {
-      return _consumerFinance(
-        name: name,
-        balance: balance,
-        paymentDay: 8,
-      );
+      return _consumerFinance(name: name, balance: balance, paymentDay: 8);
     }
     if (_containsAny(key, const <String>['モビット', 'mobit'])) {
-      return _consumerFinance(
-        name: name,
-        balance: balance,
-        paymentDay: 15,
-      );
+      return _consumerFinance(name: name, balance: balance, paymentDay: 15);
     }
     if (_containsAny(key, const <String>['じぶん', 'jibun'])) {
-      return _bankLoan(
-        name: name,
-        balance: balance,
-        paymentDay: 27,
-      );
+      return _bankLoan(name: name, balance: balance, paymentDay: 27);
     }
     if (_accountIdForName(name) == 'smbc_card_loan') {
-      return _bankLoan(
-        name: name,
-        balance: balance,
-        paymentDay: 15,
-      );
+      return _bankLoan(name: name, balance: balance, paymentDay: 15);
     }
     if (_containsAll(key, const <String>['三井住友', 'cl'])) {
-      return _bankLoan(
-        name: name,
-        balance: balance,
-        paymentDay: 15,
-      );
+      return _bankLoan(name: name, balance: balance, paymentDay: 15);
     }
     if (_containsAny(key, const <String>['横浜銀行'])) {
-      return _bankLoan(
-        name: name,
-        balance: balance,
-        paymentDay: 15,
-      );
+      return _bankLoan(name: name, balance: balance, paymentDay: 15);
     }
     if (_containsAny(key, const <String>['aupay', 'aupayカード'])) {
-      return _creditCard(
-        name: name,
-        balance: balance,
-        paymentDay: 10,
-      );
+      return _creditCard(name: name, balance: balance, paymentDay: 10);
     }
     if (_containsAny(key, const <String>['paypay'])) {
-      return _creditCard(
-        name: name,
-        balance: balance,
-        paymentDay: 27,
-      );
+      return _creditCard(name: name, balance: balance, paymentDay: 27);
     }
     if (_containsAny(key, const <String>['ファミペイ', 'famipay'])) {
-      return _creditCard(
-        name: name,
-        balance: balance,
-        paymentDay: 27,
-      );
+      return _creditCard(name: name, balance: balance, paymentDay: 27);
     }
     if (_accountIdForName(name) == kddiProviderAccountId) {
       return _liability(
@@ -328,18 +302,10 @@ class AssetLiabilityPlanningService {
       );
     }
     if (_containsAny(key, const <String>['カード', 'card', 'クレカ'])) {
-      return _creditCard(
-        name: name,
-        balance: balance,
-        paymentDay: null,
-      );
+      return _creditCard(name: name, balance: balance, paymentDay: null);
     }
     if (_containsAny(key, const <String>['ローン', 'loan', '銀行'])) {
-      return _bankLoan(
-        name: name,
-        balance: balance,
-        paymentDay: null,
-      );
+      return _bankLoan(name: name, balance: balance, paymentDay: null);
     }
 
     return _liability(
@@ -409,6 +375,8 @@ class AssetLiabilityPlanningService {
     AssetLiabilityPaymentMethod paymentMethod =
         AssetLiabilityPaymentMethod.direct,
     String? paymentMethodLabel,
+    AssetLiabilityPaymentMethodSettingSource paymentMethodSettingSource =
+        AssetLiabilityPaymentMethodSettingSource.builtInDefault,
     String? billingAccountId,
     String? billingAccountName,
     bool includedInBillingAccount = false,
@@ -424,6 +392,7 @@ class AssetLiabilityPlanningService {
       paymentDay: paymentDay,
       paymentMethod: resolvedPaymentMethod,
       paymentMethodLabel: paymentMethodLabel,
+      paymentMethodSettingSource: paymentMethodSettingSource,
       billingAccountId: billingAccountId,
       billingAccountName: billingAccountName,
       includedInBillingAccount:
@@ -441,6 +410,7 @@ class AssetLiabilityPlanningService {
     required Map<String, double> monthlyPaymentOverrides,
     required Set<String> paidAccountNames,
     required Map<String, String> paymentSourceAccountIds,
+    required Map<String, String> defaultCardBillingAccountIds,
     required Map<String, String> cardBillingAccountIds,
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
@@ -468,6 +438,7 @@ class AssetLiabilityPlanningService {
         : accountsById[paymentSourceAccountId]?.name;
     final paymentRouting = _paymentRoutingFor(
       account: account,
+      defaultCardBillingAccountIds: defaultCardBillingAccountIds,
       cardBillingAccountIds: cardBillingAccountIds,
       accountsById: accountsById,
     );
@@ -482,6 +453,7 @@ class AssetLiabilityPlanningService {
       paymentSourceAccountName: paymentSourceAccountName,
       paymentMethod: paymentRouting.paymentMethod,
       paymentMethodLabel: paymentRouting.paymentMethodLabel,
+      paymentMethodSettingSource: paymentRouting.paymentMethodSettingSource,
       billingAccountId: paymentRouting.billingAccountId,
       billingAccountName: paymentRouting.billingAccountName,
       includedInBillingAccount: paymentRouting.includedInBillingAccount,
@@ -504,16 +476,21 @@ class AssetLiabilityPlanningService {
 
   _AssetLiabilityPaymentRouting _paymentRoutingFor({
     required AssetLiabilityAccount account,
+    required Map<String, String> defaultCardBillingAccountIds,
     required Map<String, String> cardBillingAccountIds,
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
-    final configuredBillingAccountId = _configuredBillingAccountIdFor(
+    final configuredBillingAccount = _configuredBillingAccountFor(
       account: account,
+      defaultCardBillingAccountIds: defaultCardBillingAccountIds,
       cardBillingAccountIds: cardBillingAccountIds,
     );
+    final configuredBillingAccountId = configuredBillingAccount?.accountId;
     if (configuredBillingAccountId == directPaymentMethodId) {
-      return const _AssetLiabilityPaymentRouting(
+      return _AssetLiabilityPaymentRouting(
         paymentMethod: AssetLiabilityPaymentMethod.direct,
+        paymentMethodSettingSource: configuredBillingAccount?.source ??
+            AssetLiabilityPaymentMethodSettingSource.builtInDefault,
       );
     }
 
@@ -538,9 +515,41 @@ class AssetLiabilityPlanningService {
     return _AssetLiabilityPaymentRouting(
       paymentMethod: AssetLiabilityPaymentMethod.includedInCard,
       paymentMethodLabel: paymentMethodLabel,
+      paymentMethodSettingSource: configuredBillingAccount?.source ??
+          AssetLiabilityPaymentMethodSettingSource.builtInDefault,
       billingAccountId: billingAccountId,
       billingAccountName: billingAccountName,
     );
+  }
+
+  _ConfiguredCardBillingAccount? _configuredBillingAccountFor({
+    required AssetLiabilityAccount account,
+    required Map<String, String> defaultCardBillingAccountIds,
+    required Map<String, String> cardBillingAccountIds,
+  }) {
+    final monthlyAccountId = _configuredBillingAccountIdFor(
+      account: account,
+      cardBillingAccountIds: cardBillingAccountIds,
+    );
+    if (monthlyAccountId != null) {
+      return _ConfiguredCardBillingAccount(
+        accountId: monthlyAccountId,
+        source: AssetLiabilityPaymentMethodSettingSource.monthlyOverride,
+      );
+    }
+
+    final defaultAccountId = _configuredBillingAccountIdFor(
+      account: account,
+      cardBillingAccountIds: defaultCardBillingAccountIds,
+    );
+    if (defaultAccountId != null) {
+      return _ConfiguredCardBillingAccount(
+        accountId: defaultAccountId,
+        source: AssetLiabilityPaymentMethodSettingSource.defaultSetting,
+      );
+    }
+
+    return null;
   }
 
   String? _configuredBillingAccountIdFor({
@@ -554,6 +563,19 @@ class AssetLiabilityPlanningService {
       }
     }
     return null;
+  }
+
+  static String paymentMethodSettingSourceLabel(
+    AssetLiabilityPaymentMethodSettingSource source,
+  ) {
+    return switch (source) {
+      AssetLiabilityPaymentMethodSettingSource.builtInDefault =>
+        builtInPaymentMethodSettingLabel,
+      AssetLiabilityPaymentMethodSettingSource.defaultSetting =>
+        defaultPaymentMethodSettingLabel,
+      AssetLiabilityPaymentMethodSettingSource.monthlyOverride =>
+        monthlyPaymentMethodSettingLabel,
+    };
   }
 
   String? _billingAccountNameFor({
@@ -594,11 +616,7 @@ class AssetLiabilityPlanningService {
       final day = entry.key;
       final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
       final resolvedDay = day.clamp(1, lastDay).toInt();
-      final paymentDate = DateTime(
-        baseDate.year,
-        baseDate.month,
-        resolvedDay,
-      );
+      final paymentDate = DateTime(baseDate.year, baseDate.month, resolvedDay);
       final rowsForDay = entry.value
         ..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
       result.add(
@@ -663,6 +681,8 @@ class AssetLiabilityPlanningService {
           destinationAccountName: plan.destinationAccountName,
           paymentMethod: AssetLiabilityPaymentMethod.direct,
           paymentMethodLabel: null,
+          paymentMethodSettingSource:
+              AssetLiabilityPaymentMethodSettingSource.builtInDefault,
           billingAccountId: null,
           billingAccountName: null,
           includedInBillingAccount: false,
@@ -681,11 +701,7 @@ class AssetLiabilityPlanningService {
     for (final row in rows.where((row) => row.paymentDay != null)) {
       final paymentDay = row.paymentDay!;
       final resolvedDay = paymentDay.clamp(1, lastDay).toInt();
-      final paymentDate = DateTime(
-        baseDate.year,
-        baseDate.month,
-        resolvedDay,
-      );
+      final paymentDate = DateTime(baseDate.year, baseDate.month, resolvedDay);
       final overdue = row.isDirectCashflowTarget &&
           !row.paid &&
           !paymentDate.isAfter(_dateOnly(baseDate));
@@ -704,6 +720,7 @@ class AssetLiabilityPlanningService {
               : null,
           paymentMethod: row.paymentMethod,
           paymentMethodLabel: row.paymentMethodLabel,
+          paymentMethodSettingSource: row.paymentMethodSettingSource,
           billingAccountId: row.billingAccountId,
           billingAccountName: row.billingAccountName,
           includedInBillingAccount: row.includedInBillingAccount,
@@ -754,6 +771,7 @@ class AssetLiabilityPlanningService {
             destinationAccountName: row.destinationAccountName,
             paymentMethod: row.paymentMethod,
             paymentMethodLabel: row.paymentMethodLabel,
+            paymentMethodSettingSource: row.paymentMethodSettingSource,
             billingAccountId: row.billingAccountId,
             billingAccountName: row.billingAccountName,
             includedInBillingAccount: row.includedInBillingAccount,
@@ -917,20 +935,14 @@ class AssetLiabilityPlanningService {
     return null;
   }
 
-  int _compareAccounts(
-    AssetLiabilityAccount a,
-    AssetLiabilityAccount b,
-  ) {
+  int _compareAccounts(AssetLiabilityAccount a, AssetLiabilityAccount b) {
     if (a.isAsset != b.isAsset) {
       return a.isAsset ? -1 : 1;
     }
     return b.balance.abs().compareTo(a.balance.abs());
   }
 
-  int _compareDebtPriority(
-    AssetLiabilityDebtRow a,
-    AssetLiabilityDebtRow b,
-  ) {
+  int _compareDebtPriority(AssetLiabilityDebtRow a, AssetLiabilityDebtRow b) {
     final rate = b.annualRate.compareTo(a.annualRate);
     if (rate != 0) {
       return rate;
@@ -953,10 +965,11 @@ class AssetLiabilityPlanningService {
     if (_containsAny(key, const <String>['じぶん', 'jibun'])) {
       return 'jibun_bank_card_loan';
     }
-    if (_containsAny(
-          key,
-          const <String>['smbcカードローン', 'smbccardloan', 'smbccl'],
-        ) ||
+    if (_containsAny(key, const <String>[
+          'smbcカードローン',
+          'smbccardloan',
+          'smbccl',
+        ]) ||
         _containsAll(key, const <String>['三井住友', 'cl']) ||
         _containsAll(key, const <String>['三井住友', 'カードローン'])) {
       return 'smbc_card_loan';
@@ -1109,16 +1122,29 @@ class AssetLiabilityPlanningService {
 class _AssetLiabilityPaymentRouting {
   final AssetLiabilityPaymentMethod paymentMethod;
   final String? paymentMethodLabel;
+  final AssetLiabilityPaymentMethodSettingSource paymentMethodSettingSource;
   final String? billingAccountId;
   final String? billingAccountName;
 
   const _AssetLiabilityPaymentRouting({
     required this.paymentMethod,
     this.paymentMethodLabel,
+    this.paymentMethodSettingSource =
+        AssetLiabilityPaymentMethodSettingSource.builtInDefault,
     this.billingAccountId,
     this.billingAccountName,
   });
 
   bool get includedInBillingAccount =>
       paymentMethod == AssetLiabilityPaymentMethod.includedInCard;
+}
+
+class _ConfiguredCardBillingAccount {
+  final String accountId;
+  final AssetLiabilityPaymentMethodSettingSource source;
+
+  const _ConfiguredCardBillingAccount({
+    required this.accountId,
+    required this.source,
+  });
 }

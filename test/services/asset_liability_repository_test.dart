@@ -62,6 +62,9 @@ void main() {
         await repository.saveDefaultPaymentSources(const <String, String>{
           'kddi_provider': 'smbc_otsuka',
         });
+        await repository.saveDefaultCardBillingAccounts(const <String, String>{
+          'kddi_provider': 'paypay_card',
+        });
         await repository.saveRecurringIncomeTemplates(
           const <AssetLiabilityRecurringIncomeTemplate>[
             AssetLiabilityRecurringIncomeTemplate(
@@ -76,9 +79,11 @@ void main() {
         );
 
         final defaults = await repository.loadDefaultPaymentSources();
+        final cardDefaults = await repository.loadDefaultCardBillingAccounts();
         final templates = await repository.loadRecurringIncomeTemplates();
 
         expect(defaults, <String, String>{'kddi_provider': 'smbc_otsuka'});
+        expect(cardDefaults, <String, String>{'kddi_provider': 'paypay_card'});
         expect(templates.single.id, 'salary');
         expect(templates.single.destinationAccountId, 'smbc_otsuka');
       },
@@ -121,6 +126,9 @@ void main() {
       await repository.saveDefaultPaymentSources(const <String, String>{
         'mobit': 'smbc_otsuka',
       });
+      await repository.saveDefaultCardBillingAccounts(const <String, String>{
+        'kddi_provider': 'paypay_card',
+      });
       await repository.saveMonthlySnapshot(
         AssetLiabilityMonthlySnapshot(
           monthKey: '2026-05',
@@ -141,6 +149,10 @@ void main() {
       expect(snapshot.monthKey, '2026-05');
       expect(snapshot.monthlyState.paymentOverrides['mobit'], 70000);
       expect(snapshot.defaultPaymentSourceAccountIds['mobit'], 'smbc_otsuka');
+      expect(
+        snapshot.defaultCardBillingAccountIds['kddi_provider'],
+        'paypay_card',
+      );
       expect(snapshot.monthlySnapshots.single.netWorth, -7080000);
     });
 
@@ -259,46 +271,45 @@ void main() {
       final result = await repository.previewSyncMonth(month);
 
       expect(result.status, AssetLiabilityManualSyncStatus.success);
-      expect(result.targetCount, 4);
+      expect(result.targetCount, 5);
       expect(result.localDataTargetCount, 4);
       expect(result.remoteDataTargetCount, 0);
       expect(result.uploadCandidateCount, 4);
       expect(result.downloadCandidateCount, 0);
       expect(result.conflictCount, 0);
       expect(remote.monthState('2026-05'), isNull);
-      expect(
-        remote.calls,
-        isNot(contains('saveMonth:user-1:2026-05')),
-      );
+      expect(remote.calls, isNot(contains('saveMonth:user-1:2026-05')));
       expect(remote.defaultPaymentSources, isEmpty);
       expect(remote.recurringIncomeTemplates, isEmpty);
       expect(remote.monthlySnapshots, isEmpty);
     });
 
-    test('sync preview reports download candidates without restoring',
-        () async {
-      final local = _FakeAssetLiabilityRepository();
-      final remote = _RecordingAssetLiabilityRemoteStore()
-        ..seedMonth(DateTime(2026, 5), _sampleMonthlyState());
-      final repository = FeatureFlaggedAssetLiabilityRepository(
-        localRepository: local,
-        remoteStore: remote,
-        syncEnabled: true,
-        userIdProvider: () => 'user-1',
-      );
-      final month = DateTime(2026, 5);
+    test(
+      'sync preview reports download candidates without restoring',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedMonth(DateTime(2026, 5), _sampleMonthlyState());
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
 
-      final result = await repository.previewSyncMonth(month);
-      final localState = await local.loadMonth(month);
+        final result = await repository.previewSyncMonth(month);
+        final localState = await local.loadMonth(month);
 
-      expect(result.status, AssetLiabilityManualSyncStatus.success);
-      expect(result.localDataTargetCount, 0);
-      expect(result.remoteDataTargetCount, 1);
-      expect(result.uploadCandidateCount, 0);
-      expect(result.downloadCandidateCount, 1);
-      expect(result.conflictCount, 0);
-      expect(localState.isEmpty, isTrue);
-    });
+        expect(result.status, AssetLiabilityManualSyncStatus.success);
+        expect(result.localDataTargetCount, 0);
+        expect(result.remoteDataTargetCount, 1);
+        expect(result.uploadCandidateCount, 0);
+        expect(result.downloadCandidateCount, 1);
+        expect(result.conflictCount, 0);
+        expect(localState.isEmpty, isTrue);
+      },
+    );
 
     test('sync preview reports conflicts without overwriting data', () async {
       final local = _FakeAssetLiabilityRepository();
@@ -371,6 +382,9 @@ void main() {
         await repository.saveDefaultPaymentSources(const <String, String>{
           'mobit': 'smbc_otsuka',
         });
+        await repository.saveDefaultCardBillingAccounts(const <String, String>{
+          'kddi_provider': 'paypay_card',
+        });
         await repository.saveRecurringIncomeTemplates(
           <AssetLiabilityRecurringIncomeTemplate>[
             _sampleRecurringIncomeTemplate(),
@@ -380,6 +394,10 @@ void main() {
 
         expect(remote.monthState('2026-05')?.paymentOverrides['mobit'], 70000);
         expect(remote.defaultPaymentSources['mobit'], 'smbc_otsuka');
+        expect(
+          remote.defaultCardBillingAccounts['kddi_provider'],
+          'paypay_card',
+        );
         expect(remote.recurringIncomeTemplates.single.id, 'salary');
         expect(remote.monthlySnapshots.single.monthKey, '2026-05');
       },
@@ -420,6 +438,9 @@ void main() {
       await local.saveDefaultPaymentSources(const <String, String>{
         'mobit': 'smbc_otsuka',
       });
+      await local.saveDefaultCardBillingAccounts(const <String, String>{
+        'kddi_provider': 'paypay_card',
+      });
       await local.saveRecurringIncomeTemplates(
         <AssetLiabilityRecurringIncomeTemplate>[
           _sampleRecurringIncomeTemplate(),
@@ -433,6 +454,7 @@ void main() {
       expect(result.isSuccess, isTrue);
       expect(remote.monthState('2026-05')?.paymentOverrides['mobit'], 70000);
       expect(remote.defaultPaymentSources['mobit'], 'smbc_otsuka');
+      expect(remote.defaultCardBillingAccounts['kddi_provider'], 'paypay_card');
       expect(remote.recurringIncomeTemplates.single.id, 'salary');
       expect(remote.monthlySnapshots.single.monthKey, '2026-05');
     });
@@ -457,38 +479,40 @@ void main() {
       expect(remote.calls, contains('saveMonth:user-1:2026-05'));
     });
 
-    test('manual sync detects conflict without overwriting either side',
-        () async {
-      final local = _FakeAssetLiabilityRepository();
-      final remote = _RecordingAssetLiabilityRemoteStore()
-        ..seedMonth(
-          DateTime(2026, 5),
-          const AssetLiabilityMonthlyState(
-            paymentOverrides: <String, double>{'remote_only': 1000},
-          ),
+    test(
+      'manual sync detects conflict without overwriting either side',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedMonth(
+            DateTime(2026, 5),
+            const AssetLiabilityMonthlyState(
+              paymentOverrides: <String, double>{'remote_only': 1000},
+            ),
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
         );
-      final repository = FeatureFlaggedAssetLiabilityRepository(
-        localRepository: local,
-        remoteStore: remote,
-        syncEnabled: true,
-        userIdProvider: () => 'user-1',
-      );
-      final month = DateTime(2026, 5);
-      await local.saveMonth(month: month, state: _sampleMonthlyState());
+        final month = DateTime(2026, 5);
+        await local.saveMonth(month: month, state: _sampleMonthlyState());
 
-      final result = await repository.syncMonth(month);
-      final localState = await local.loadMonth(month);
+        final result = await repository.syncMonth(month);
+        final localState = await local.loadMonth(month);
 
-      expect(result.status, AssetLiabilityManualSyncStatus.conflict);
-      expect(result.hasConflict, isTrue);
-      expect(result.conflictTargets, contains('月次状態'));
-      expect(localState.paymentOverrides['mobit'], 70000);
-      expect(
-        remote.monthState('2026-05')?.paymentOverrides['remote_only'],
-        1000,
-      );
-      expect(remote.calls, isNot(contains('saveMonth:user-1:2026-05')));
-    });
+        expect(result.status, AssetLiabilityManualSyncStatus.conflict);
+        expect(result.hasConflict, isTrue);
+        expect(result.conflictTargets, contains('月次状態'));
+        expect(localState.paymentOverrides['mobit'], 70000);
+        expect(
+          remote.monthState('2026-05')?.paymentOverrides['remote_only'],
+          1000,
+        );
+        expect(remote.calls, isNot(contains('saveMonth:user-1:2026-05')));
+      },
+    );
 
     test('uploads local monthly state when remote is empty', () async {
       final local = _FakeAssetLiabilityRepository();
@@ -527,37 +551,47 @@ void main() {
       expect(localState.paymentOverrides['mobit'], 70000);
     });
 
-    test('restores remote settings and snapshots when local is empty',
-        () async {
-      final local = _FakeAssetLiabilityRepository();
-      final remote = _RecordingAssetLiabilityRemoteStore()
-        ..seedDefaultPaymentSources(const <String, String>{
-          'mobit': 'smbc_otsuka',
-        })
-        ..seedRecurringIncomeTemplates(<AssetLiabilityRecurringIncomeTemplate>[
-          _sampleRecurringIncomeTemplate(),
-        ])
-        ..seedMonthlySnapshots(<AssetLiabilityMonthlySnapshot>[
-          _sampleSnapshot('2026-05'),
-        ]);
-      final repository = FeatureFlaggedAssetLiabilityRepository(
-        localRepository: local,
-        remoteStore: remote,
-        syncEnabled: true,
-        userIdProvider: () => 'user-1',
-      );
+    test(
+      'restores remote settings and snapshots when local is empty',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedDefaultPaymentSources(const <String, String>{
+            'mobit': 'smbc_otsuka',
+          })
+          ..seedRecurringIncomeTemplates(
+            <AssetLiabilityRecurringIncomeTemplate>[
+              _sampleRecurringIncomeTemplate(),
+            ],
+          )
+          ..seedMonthlySnapshots(<AssetLiabilityMonthlySnapshot>[
+            _sampleSnapshot('2026-05'),
+          ]);
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
 
-      final sources = await repository.loadDefaultPaymentSources();
-      final templates = await repository.loadRecurringIncomeTemplates();
-      final snapshots = await repository.loadMonthlySnapshots();
+        final sources = await repository.loadDefaultPaymentSources();
+        final templates = await repository.loadRecurringIncomeTemplates();
+        final snapshots = await repository.loadMonthlySnapshots();
 
-      expect(sources['mobit'], 'smbc_otsuka');
-      expect(templates.single.id, 'salary');
-      expect(snapshots.single.monthKey, '2026-05');
-      expect((await local.loadDefaultPaymentSources())['mobit'], 'smbc_otsuka');
-      expect((await local.loadRecurringIncomeTemplates()).single.id, 'salary');
-      expect((await local.loadMonthlySnapshots()).single.monthKey, '2026-05');
-    });
+        expect(sources['mobit'], 'smbc_otsuka');
+        expect(templates.single.id, 'salary');
+        expect(snapshots.single.monthKey, '2026-05');
+        expect(
+          (await local.loadDefaultPaymentSources())['mobit'],
+          'smbc_otsuka',
+        );
+        expect(
+          (await local.loadRecurringIncomeTemplates()).single.id,
+          'salary',
+        );
+        expect((await local.loadMonthlySnapshots()).single.monthKey, '2026-05');
+      },
+    );
 
     test(
       'keeps local repository usable when no Supabase user is available',
@@ -629,6 +663,9 @@ void main() {
         defaultPaymentSourceAccountIds: <String, String>{
           'mobit': 'smbc_otsuka',
         },
+        defaultCardBillingAccountIds: <String, String>{
+          'kddi_provider': 'paypay_card',
+        },
         recurringIncomeTemplates: <AssetLiabilityRecurringIncomeTemplate>[
           AssetLiabilityRecurringIncomeTemplate(
             id: 'salary',
@@ -647,6 +684,10 @@ void main() {
       expect(
         restoredSettings.defaultPaymentSourceAccountIds['mobit'],
         'smbc_otsuka',
+      );
+      expect(
+        restoredSettings.defaultCardBillingAccountIds['kddi_provider'],
+        'paypay_card',
       );
       expect(restoredSettings.recurringIncomeTemplates.single.id, 'salary');
 
@@ -701,6 +742,7 @@ class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {
   final Map<String, AssetLiabilityMonthlyState> _states =
       <String, AssetLiabilityMonthlyState>{};
   final Map<String, String> _defaultSources = <String, String>{};
+  final Map<String, String> _defaultCardBilling = <String, String>{};
   final List<AssetLiabilityRecurringIncomeTemplate> _templates =
       <AssetLiabilityRecurringIncomeTemplate>[];
   final List<AssetLiabilityMonthlySnapshot> _snapshots =
@@ -730,6 +772,20 @@ class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {
     _defaultSources
       ..clear()
       ..addAll(sources);
+  }
+
+  @override
+  Future<Map<String, String>> loadDefaultCardBillingAccounts() async {
+    return Map<String, String>.from(_defaultCardBilling);
+  }
+
+  @override
+  Future<void> saveDefaultCardBillingAccounts(
+    Map<String, String> accounts,
+  ) async {
+    _defaultCardBilling
+      ..clear()
+      ..addAll(accounts);
   }
 
   @override
@@ -780,18 +836,23 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
   final Map<String, AssetLiabilityMonthlyState> _states =
       <String, AssetLiabilityMonthlyState>{};
   final Map<String, String> _defaultPaymentSources = <String, String>{};
+  final Map<String, String> _defaultCardBillingAccounts = <String, String>{};
   final List<AssetLiabilityRecurringIncomeTemplate> _recurringIncomeTemplates =
       <AssetLiabilityRecurringIncomeTemplate>[];
   final List<AssetLiabilityMonthlySnapshot> _monthlySnapshots =
       <AssetLiabilityMonthlySnapshot>[];
 
   bool _hasDefaultPaymentSources = false;
+  bool _hasDefaultCardBillingAccounts = false;
   bool _hasRecurringIncomeTemplates = false;
   bool _hasMonthlySnapshots = false;
   bool failSaves = false;
 
   Map<String, String> get defaultPaymentSources =>
       Map<String, String>.from(_defaultPaymentSources);
+
+  Map<String, String> get defaultCardBillingAccounts =>
+      Map<String, String>.from(_defaultCardBillingAccounts);
 
   List<AssetLiabilityRecurringIncomeTemplate> get recurringIncomeTemplates =>
       List<AssetLiabilityRecurringIncomeTemplate>.from(
@@ -812,6 +873,13 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
     _defaultPaymentSources
       ..clear()
       ..addAll(sources);
+  }
+
+  void seedDefaultCardBillingAccounts(Map<String, String> accounts) {
+    _hasDefaultCardBillingAccounts = true;
+    _defaultCardBillingAccounts
+      ..clear()
+      ..addAll(accounts);
   }
 
   void seedRecurringIncomeTemplates(
@@ -875,6 +943,30 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
     _defaultPaymentSources
       ..clear()
       ..addAll(sources);
+  }
+
+  @override
+  Future<Map<String, String>?> loadDefaultCardBillingAccounts({
+    required String userId,
+  }) async {
+    calls.add('loadDefaultCardBillingAccounts:$userId');
+    if (!_hasDefaultCardBillingAccounts) {
+      return null;
+    }
+    return Map<String, String>.from(_defaultCardBillingAccounts);
+  }
+
+  @override
+  Future<void> saveDefaultCardBillingAccounts({
+    required String userId,
+    required Map<String, String> accounts,
+  }) async {
+    calls.add('saveDefaultCardBillingAccounts:$userId');
+    _throwIfSavingFails();
+    _hasDefaultCardBillingAccounts = true;
+    _defaultCardBillingAccounts
+      ..clear()
+      ..addAll(accounts);
   }
 
   @override
