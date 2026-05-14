@@ -179,6 +179,39 @@ void main() {
     expect(originalTime?.minute, 30);
   });
 
+  test('quick add parser handles Japanese date and time patterns', () {
+    final tomorrow = parseCalendarQuickAddText(
+      '明日 14:00 ミーティング',
+      now: DateTime(2026, 5, 14, 8),
+    );
+
+    expect(tomorrow, isNotNull);
+    expect(tomorrow!.title, 'ミーティング');
+    expect(tomorrow.date, DateTime(2026, 5, 15));
+    expect(tomorrow.timeOfDay, const TimeOfDay(hour: 14, minute: 0));
+    expect(tomorrow.allDay, isFalse);
+
+    final nextMonday = parseCalendarQuickAddText(
+      '来週月曜 午後2時半 企画会議',
+      now: DateTime(2026, 5, 15, 8),
+    );
+
+    expect(nextMonday, isNotNull);
+    expect(nextMonday!.title, '企画会議');
+    expect(nextMonday.date, DateTime(2026, 5, 18));
+    expect(nextMonday.timeOfDay, const TimeOfDay(hour: 14, minute: 30));
+
+    final namedTime = parseCalendarQuickAddText(
+      '5/20 夕方 1on1',
+      now: DateTime(2026, 5, 14, 8),
+    );
+
+    expect(namedTime, isNotNull);
+    expect(namedTime!.title, '1on1');
+    expect(namedTime.date, DateTime(2026, 5, 20));
+    expect(namedTime.timeOfDay, const TimeOfDay(hour: 17, minute: 0));
+  });
+
   test('recurrence helpers normalize and expand weekly RRULE metadata', () {
     final rrule = normalizeCalendarEventRRule('FREQ=WEEKLY;COUNT=3');
     expect(rrule, 'RRULE:FREQ=WEEKLY;COUNT=3');
@@ -249,6 +282,81 @@ void main() {
 
     expect(find.text('Export .ics'), findsOneWidget);
     expect(find.text('Import .ics'), findsOneWidget);
+  });
+
+  testWidgets('CalendarEventsPage quick add previews and creates event', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    stubCalendarList(const []);
+    when(
+      mockFunctionsClient.invoke(
+        'app-hub',
+        body: argThat(
+          isA<Map<String, dynamic>>().having(
+            (body) => body['action'],
+            'action',
+            'calendar.create',
+          ),
+          named: 'body',
+        ),
+      ),
+    ).thenAnswer(
+      (_) async => mockResponse({
+        'success': true,
+        'event': {'event_id': 'quick-add-event'},
+      }),
+    );
+
+    const input = '12/31 14:00 作戦会議';
+    final expectedDraft = parseCalendarQuickAddText(input)!;
+    final timezone = calendarDefaultTimezone();
+
+    await tester.pumpWidget(testWidget());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('calendar_events_quick_add_button')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('calendar_quick_add_field')),
+      input,
+    );
+    await tester.tap(
+      find.byKey(const Key('calendar_quick_add_preview_button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Preview event'), findsOneWidget);
+    expect(find.text('作戦会議'), findsOneWidget);
+    expect(find.text(expectedDraft.dateLabel), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('calendar_quick_add_create_button')));
+    await tester.pumpAndSettle();
+
+    final captured = verify(
+      mockFunctionsClient.invoke('app-hub', body: captureAnyNamed('body')),
+    ).captured;
+    final createBody = captured.whereType<Map<String, dynamic>>().lastWhere(
+          (body) => body['action'] == 'calendar.create',
+        );
+
+    expect(createBody['title'], '作戦会議');
+    expect(createBody['all_day'], isFalse);
+    expect(createBody['calendar_id'], 'default');
+    expect(createBody['timezone'], timezone);
+    expect(
+      createBody['start_at'],
+      expectedDraft.startAtForTimezone(timezone).toIso8601String(),
+    );
+    expect(
+      createBody['end_at'],
+      expectedDraft.endAtForTimezone(timezone)!.toIso8601String(),
+    );
   });
 
   testWidgets('CalendarEventsPage switches to day timeline grid', (

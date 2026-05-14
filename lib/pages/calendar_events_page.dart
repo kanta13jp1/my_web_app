@@ -574,6 +574,229 @@ class _CalendarListItem {
   final bool isDefault;
 }
 
+@visibleForTesting
+class CalendarQuickAddDraft {
+  const CalendarQuickAddDraft({
+    required this.title,
+    required this.date,
+    required this.timeOfDay,
+    this.durationMinutes = 60,
+  });
+
+  final String title;
+  final DateTime date;
+  final TimeOfDay? timeOfDay;
+  final int durationMinutes;
+
+  bool get allDay => timeOfDay == null;
+
+  DateTime get wallStartAt {
+    if (allDay) return DateTime(date.year, date.month, date.day);
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      timeOfDay!.hour,
+      timeOfDay!.minute,
+    );
+  }
+
+  DateTime get wallEndAt => allDay
+      ? wallStartAt
+      : wallStartAt.add(Duration(minutes: durationMinutes));
+
+  String get dateLabel => _formatDate(date);
+
+  String get timeLabel => allDay
+      ? 'All-day'
+      : '${_formatClock(wallStartAt)} - ${_formatClock(wallEndAt)}';
+
+  DateTime startAtForTimezone(String timezone) {
+    if (allDay) return DateTime(date.year, date.month, date.day);
+    return calendarWallTimeToUtc(
+      date: date,
+      hour: timeOfDay!.hour,
+      minute: timeOfDay!.minute,
+      timezone: timezone,
+    );
+  }
+
+  DateTime? endAtForTimezone(String timezone) {
+    if (allDay) return null;
+    final end = wallEndAt;
+    return calendarWallTimeToUtc(
+      date: DateTime(end.year, end.month, end.day),
+      hour: end.hour,
+      minute: end.minute,
+      timezone: timezone,
+    );
+  }
+}
+
+const Map<String, int> _quickAddWeekdayAliases = {
+  '月曜': DateTime.monday,
+  '月曜日': DateTime.monday,
+  '火曜': DateTime.tuesday,
+  '火曜日': DateTime.tuesday,
+  '水曜': DateTime.wednesday,
+  '水曜日': DateTime.wednesday,
+  '木曜': DateTime.thursday,
+  '木曜日': DateTime.thursday,
+  '金曜': DateTime.friday,
+  '金曜日': DateTime.friday,
+  '土曜': DateTime.saturday,
+  '土曜日': DateTime.saturday,
+  '日曜': DateTime.sunday,
+  '日曜日': DateTime.sunday,
+};
+
+@visibleForTesting
+CalendarQuickAddDraft? parseCalendarQuickAddText(
+  String input, {
+  DateTime? now,
+}) {
+  var working = input.trim();
+  if (working.isEmpty) return null;
+
+  final baseNow = now ?? DateTime.now();
+  final baseDate = DateTime(baseNow.year, baseNow.month, baseNow.day);
+  var date = baseDate;
+
+  void removeToken(String token) {
+    working = working.replaceFirst(token, ' ');
+  }
+
+  final slashDateMatch = RegExp(r'(\d{1,2})/(\d{1,2})').firstMatch(working);
+  final monthDayMatch = RegExp(r'(\d{1,2})月(\d{1,2})日?').firstMatch(working);
+  if (slashDateMatch != null || monthDayMatch != null) {
+    final match = slashDateMatch ?? monthDayMatch!;
+    final month = int.tryParse(match.group(1) ?? '');
+    final day = int.tryParse(match.group(2) ?? '');
+    final parsed = month == null || day == null
+        ? null
+        : _quickAddMonthDayDate(month, day, baseDate);
+    if (parsed == null) return null;
+    date = parsed;
+    removeToken(match.group(0)!);
+  } else {
+    final weekdayMatch = RegExp(
+      r'(来週)?(月曜日|月曜|火曜日|火曜|水曜日|水曜|木曜日|木曜|金曜日|金曜|土曜日|土曜|日曜日|日曜)',
+    ).firstMatch(working);
+    if (weekdayMatch != null) {
+      final weekday = _quickAddWeekdayAliases[weekdayMatch.group(2)]!;
+      date = _quickAddWeekdayDate(
+        baseDate,
+        weekday,
+        nextWeek: weekdayMatch.group(1) != null,
+      );
+      removeToken(weekdayMatch.group(0)!);
+    } else if (working.contains('明後日')) {
+      date = baseDate.add(const Duration(days: 2));
+      removeToken('明後日');
+    } else if (working.contains('明日')) {
+      date = baseDate.add(const Duration(days: 1));
+      removeToken('明日');
+    } else if (working.contains('今日')) {
+      removeToken('今日');
+    } else if (working.contains('本日')) {
+      removeToken('本日');
+    }
+  }
+
+  final timeOfDay = _parseQuickAddTime(working);
+  if (timeOfDay.token.isNotEmpty) removeToken(timeOfDay.token);
+
+  return CalendarQuickAddDraft(
+    title: _quickAddTitleFromRemainder(working),
+    date: date,
+    timeOfDay: timeOfDay.time,
+  );
+}
+
+DateTime? _quickAddMonthDayDate(int month, int day, DateTime baseDate) {
+  final candidate = DateTime(baseDate.year, month, day);
+  if (candidate.month != month || candidate.day != day) return null;
+  if (candidate.isBefore(baseDate)) {
+    return DateTime(baseDate.year + 1, month, day);
+  }
+  return candidate;
+}
+
+DateTime _quickAddWeekdayDate(
+  DateTime baseDate,
+  int weekday, {
+  required bool nextWeek,
+}) {
+  if (nextWeek) {
+    final currentWeekMonday = baseDate.subtract(
+      Duration(days: baseDate.weekday - DateTime.monday),
+    );
+    return currentWeekMonday
+        .add(const Duration(days: 7))
+        .add(Duration(days: weekday - DateTime.monday));
+  }
+  final delta = (weekday - baseDate.weekday) % DateTime.daysPerWeek;
+  return baseDate.add(Duration(days: delta));
+}
+
+({TimeOfDay? time, String token}) _parseQuickAddTime(String input) {
+  final clockMatch = RegExp(r'([01]?\d|2[0-3]):([0-5]\d)').firstMatch(input);
+  if (clockMatch != null) {
+    return (
+      time: TimeOfDay(
+        hour: int.parse(clockMatch.group(1)!),
+        minute: int.parse(clockMatch.group(2)!),
+      ),
+      token: clockMatch.group(0)!,
+    );
+  }
+
+  final japaneseTimeMatch = RegExp(
+    r'(午前|午後)?\s*(\d{1,2})時(?:(\d{1,2})分|半)?',
+  ).firstMatch(input);
+  if (japaneseTimeMatch != null) {
+    final ampm = japaneseTimeMatch.group(1);
+    var hour = int.parse(japaneseTimeMatch.group(2)!);
+    final minute = japaneseTimeMatch.group(0)!.contains('半')
+        ? 30
+        : int.tryParse(japaneseTimeMatch.group(3) ?? '') ?? 0;
+    if (ampm == '午後' && hour < 12) hour += 12;
+    if (ampm == '午前' && hour == 12) hour = 0;
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      return (
+        time: TimeOfDay(hour: hour, minute: minute),
+        token: japaneseTimeMatch.group(0)!,
+      );
+    }
+  }
+
+  const namedTimes = {
+    '朝': TimeOfDay(hour: 9, minute: 0),
+    '昼': TimeOfDay(hour: 12, minute: 0),
+    '正午': TimeOfDay(hour: 12, minute: 0),
+    '夕方': TimeOfDay(hour: 17, minute: 0),
+    '夜': TimeOfDay(hour: 19, minute: 0),
+  };
+  for (final entry in namedTimes.entries) {
+    if (input.contains(entry.key)) {
+      return (time: entry.value, token: entry.key);
+    }
+  }
+  return (time: null, token: '');
+}
+
+String _quickAddTitleFromRemainder(String input) {
+  var title = input
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .replaceAll(RegExp(r'^[\s,、。・:：]+|[\s,、。・:：]+$'), '')
+      .trim();
+  title = title
+      .replaceFirst(RegExp(r'^(に|で|から)\s*'), '')
+      .replaceFirst(RegExp(r'\s*(に|で|から|まで)$'), '')
+      .trim();
+  return title.isEmpty ? '予定' : title;
+}
+
 class _CalendarEventsPageState extends State<CalendarEventsPage> {
   late final SupabaseClient _supabase =
       widget._supabaseClient ?? Supabase.instance.client;
@@ -1516,6 +1739,12 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
         title: const Text('カレンダー'),
         actions: [
           IconButton(
+            key: const Key('calendar_events_quick_add_button'),
+            icon: const Icon(Icons.flash_on),
+            tooltip: 'Quick add event',
+            onPressed: () => _showQuickAddDialog(context),
+          ),
+          IconButton(
             key: const Key('calendar_events_search_button'),
             icon: const Icon(Icons.search),
             tooltip: 'Search events',
@@ -1745,6 +1974,131 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 
   void _showAddEventDialog(BuildContext context) {
     _showEventDialog(context);
+  }
+
+  void _showQuickAddDialog(BuildContext context) {
+    final textCtrl = TextEditingController();
+    String? errorText;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Quick add event'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                key: const Key('calendar_quick_add_field'),
+                controller: textCtrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Example: 明日 14:00 ミーティング',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.bolt),
+                ),
+                onSubmitted: (_) {
+                  final draft = parseCalendarQuickAddText(textCtrl.text);
+                  if (draft == null) {
+                    setDialogState(
+                      () => errorText = 'Enter an event title, date, or time.',
+                    );
+                    return;
+                  }
+                  Navigator.pop(ctx);
+                  _showQuickAddPreviewDialog(context, draft);
+                },
+              ),
+              if (errorText != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  errorText!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              key: const Key('calendar_quick_add_preview_button'),
+              icon: const Icon(Icons.visibility),
+              label: const Text('Preview'),
+              onPressed: () {
+                final draft = parseCalendarQuickAddText(textCtrl.text);
+                if (draft == null) {
+                  setDialogState(
+                    () => errorText = 'Enter an event title, date, or time.',
+                  );
+                  return;
+                }
+                Navigator.pop(ctx);
+                _showQuickAddPreviewDialog(context, draft);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showQuickAddPreviewDialog(
+    BuildContext context,
+    CalendarQuickAddDraft draft,
+  ) {
+    final timezone = calendarDefaultTimezone();
+    final calendar = _defaultCalendar;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Preview event'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(draft.title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            _EventMetadataRow(label: 'Date', value: draft.dateLabel),
+            _EventMetadataRow(label: 'Time', value: draft.timeLabel),
+            _EventMetadataRow(label: 'Calendar', value: calendar.name),
+            _EventMetadataRow(
+              label: 'Timezone',
+              value: '$timezone (${calendarTimezoneAbbreviation(timezone)})',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            key: const Key('calendar_quick_add_create_button'),
+            icon: const Icon(Icons.add),
+            label: const Text('Create'),
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _selectedDay = draft.date;
+                _focusedDay = draft.date;
+              });
+              _createEvent(
+                title: draft.title,
+                startAt: draft.startAtForTimezone(timezone),
+                endAt: draft.endAtForTimezone(timezone),
+                allDay: draft.allDay,
+                color: calendar.color,
+                calendarId: calendar.id,
+                timezone: timezone,
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   void _showAddCalendarDialog(BuildContext context) {
