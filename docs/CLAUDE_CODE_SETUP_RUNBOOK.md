@@ -107,6 +107,9 @@ Default behavior is safe for repo-managed hooks:
 
 - SessionStart applies `scripts/dev_cache_cleanup.py --apply` when C: free
   space is below 26 GB or the last cleanup fire is older than 4 hours.
+- SessionStart now passes `--always-fire --min-reclaim-mb 512` for the v27
+  Layer DDD contract. It still exits zero by default, but the per-fire quota
+  result is written to `~/.claude/logs/session-delta.csv`.
 - PreToolUse runs `.claude/hooks/pretooluse-compression-budget.ps1`, increments
   a local tool-use counter, records every 10th-tool KPI snapshot, and runs a
   capped 30-second cleanup only when C: free space is below 22 GB. The per-session
@@ -116,6 +119,14 @@ Default behavior is safe for repo-managed hooks:
 - Stop runs `.claude/hooks/session-end-auto-compress.ps1` as the repo-managed
   SessionEnd/wrap-up compression primitive. It is advisory unless
   `SESSION_COMPRESSION_WRAPUP_ENFORCE=1` is set.
+- Stop also records the v27 DDD 512 MB reclaim quota. Set
+  `SESSION_COMPRESSION_WRAPUP_ENFORCE=1` only after confirming local cleanup can
+  meet the quota without trapping the host shell.
+- SessionStart runs `.claude/hooks/smartcleanup-monthlydeep-guard.ps1` as the
+  v27 Layer GGG guard. It detects `SmartCleanup_MonthlyDeep` missing/stuck
+  states, including `LastTaskResult=267011` and 1999-era `LastRunTime` sentinel
+  values. It reports by default; set `SMARTCLEANUP_MONTHLYDEEP_FIX=1` to start
+  the task on demand, and `SMARTCLEANUP_MONTHLYDEEP_ENFORCE=1` to fail closed.
 - It exits zero by default so an unavailable Python runtime or a missed 28 GB
   target does not trap a user in a broken local shell.
 - Set `SESSION_COMPRESSION_FAIL_CLOSED=1` to enforce the 28 GB target and return
@@ -135,9 +146,11 @@ Manual verification examples:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\pretooluse-compression-budget.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\smartcleanup-monthlydeep-guard.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\userprompt-idle-gap-fire.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\session-end-auto-compress.ps1
 python scripts\session_compression_guard_test.py
+python scripts\smartcleanup_task_guard_test.py
 python scripts\check_session_state_hooks.py --scan-transcripts
 ```
 

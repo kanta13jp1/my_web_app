@@ -9,6 +9,7 @@ session compression contract for Issue #1564:
 - Layer LL: SessionEnd/wrap-up compression pass.
 - Layer MM: UserPromptSubmit idle-gap cleanup fire.
 - Layer NN: SessionStart/UserPromptSubmit KPI banner.
+- Layer DDD: Always-fire per-session disk quota contract.
 
 It writes state under the user's home directory by default so committed repo
 files stay clean. Tests can override every measured value and output path.
@@ -47,6 +48,14 @@ class CleanupResult:
 
 
 @dataclass
+class QuotaResult:
+    min_reclaim_mb: float = 0.0
+    actual_reclaim_mb: float = 0.0
+    passed: bool = True
+    reason: str = "disabled"
+
+
+@dataclass
 class GuardResult:
     mode: str
     phase: str
@@ -61,6 +70,7 @@ class GuardResult:
     fatigue: str
     banner: str
     cleanup: CleanupResult
+    quota: QuotaResult
     log_path: str
     state_path: str
 
@@ -181,6 +191,13 @@ def build_banner(
 
 
 def run_dev_cache_cleanup(args: argparse.Namespace) -> CleanupResult:
+    if args.sample_cleanup_reclaim_mb is not None:
+        return CleanupResult(
+            status="sampled",
+            returncode=0,
+            actual_reclaim_mb=round(max(0.0, args.sample_cleanup_reclaim_mb), 1),
+        )
+
     script = args.root / "scripts" / "dev_cache_cleanup.py"
     if not script.exists():
         return CleanupResult(status="missing_dev_cache_cleanup", stderr_tail=str(script))
@@ -256,6 +273,9 @@ def append_session_delta(path: Path, result: GuardResult) -> None:
                 "last_fire_age_min",
                 "fatigue",
                 "cleanup_status",
+                "quota_min_reclaim_mb",
+                "quota_pass",
+                "quota_reason",
             ],
         )
         if not exists:
@@ -274,8 +294,38 @@ def append_session_delta(path: Path, result: GuardResult) -> None:
                 "last_fire_age_min": result.last_fire_age_min,
                 "fatigue": result.fatigue,
                 "cleanup_status": result.cleanup.status,
+                "quota_min_reclaim_mb": result.quota.min_reclaim_mb,
+                "quota_pass": result.quota.passed,
+                "quota_reason": result.quota.reason,
             }
         )
+
+
+def build_quota_result(args: argparse.Namespace, cleanup: CleanupResult) -> QuotaResult:
+    min_reclaim = round(max(0.0, args.min_reclaim_mb), 1)
+    actual = round(max(0.0, cleanup.actual_reclaim_mb), 1)
+    if min_reclaim <= 0:
+        return QuotaResult(actual_reclaim_mb=actual)
+    if cleanup.status == "skipped":
+        return QuotaResult(
+            min_reclaim_mb=min_reclaim,
+            actual_reclaim_mb=actual,
+            passed=False,
+            reason="cleanup did not run",
+        )
+    if actual >= min_reclaim:
+        return QuotaResult(
+            min_reclaim_mb=min_reclaim,
+            actual_reclaim_mb=actual,
+            passed=True,
+            reason=f"reclaim {actual:.1f} MB >= {min_reclaim:.1f} MB",
+        )
+    return QuotaResult(
+        min_reclaim_mb=min_reclaim,
+        actual_reclaim_mb=actual,
+        passed=False,
+        reason=f"reclaim {actual:.1f} MB < {min_reclaim:.1f} MB",
+    )
 
 
 def decide_session_start(
@@ -359,12 +409,16 @@ def run_guard(args: argparse.Namespace) -> GuardResult:
 
     if args.mode == "session-start":
         phase = SESSION_START_PHASE
-        should_fire, reason = decide_session_start(
-            c_free_gb=c_free_before,
-            last_fire_age_min=last_fire_age_min,
-            min_free_gb=args.min_free_gb,
-            max_age_hours=args.max_age_hours,
-        )
+        if args.always_fire:
+            should_fire = True
+            reason = "always-fire disk quota contract"
+        else:
+            should_fire, reason = decide_session_start(
+                c_free_gb=c_free_before,
+                last_fire_age_min=last_fire_age_min,
+                min_free_gb=args.min_free_gb,
+                max_age_hours=args.max_age_hours,
+            )
         state["session_started_at"] = now.isoformat()
         state["tool_use_count_session"] = 0
         state["mid_fire_count_session"] = 0
@@ -431,6 +485,8 @@ def run_guard(args: argparse.Namespace) -> GuardResult:
     if args.apply and should_fire and not cleanup_required:
         cleanup = CleanupResult(status="snapshot_only")
 
+    quota = build_quota_result(args, cleanup)
+
     if args.apply and state_dirty:
         write_state(args.state_path, state)
 
@@ -456,6 +512,7 @@ def run_guard(args: argparse.Namespace) -> GuardResult:
         fatigue=fatigue,
         banner=banner,
         cleanup=cleanup,
+        quota=quota,
         log_path=str(args.log_path),
         state_path=str(args.state_path),
     )
@@ -482,6 +539,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--log-path", type=Path, default=home_log)
     parser.add_argument("--min-free-gb", type=float, default=26.0)
     parser.add_argument("--target-free-gb", type=float, default=28.0)
+    parser.add_argument("--min-reclaim-mb", type=float, default=0.0)
     parser.add_argument("--max-age-hours", type=float, default=4.0)
     parser.add_argument("--max-age-minutes", type=float, default=30.0)
     parser.add_argument("--cooldown-minutes", type=float, default=60.0)
@@ -490,6 +548,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--max-mid-fires", type=int, default=5)
     parser.add_argument("--max-runtime-sec", type=int, default=120)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--always-fire", action="store_true")
     parser.add_argument("--tier18", action="store_true")
     parser.add_argument("--tier19", action="store_true")
     parser.add_argument("--enforce", action="store_true")
@@ -499,6 +558,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--log-dry-run", action="store_true")
     parser.add_argument("--sample-free-gb", type=float)
     parser.add_argument("--sample-free-gb-after", type=float)
+    parser.add_argument("--sample-cleanup-reclaim-mb", type=float)
     parser.add_argument("--sample-ram-pct", type=float)
     parser.add_argument("--sample-ram-pct-after", type=float)
     parser.add_argument("--sample-now")
@@ -524,6 +584,8 @@ def main(argv: list[str]) -> int:
         effective_free = result.c_free_gb_after if result.c_free_gb_after is not None else result.c_free_gb_before
         if effective_free < args.target_free_gb:
             return 2
+        if not result.quota.passed:
+            return 3
     return 0
 
 
