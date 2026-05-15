@@ -21,6 +21,7 @@ import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
@@ -181,6 +182,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityPlanningService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
       const AssetLiabilityHistoryService();
+  final AssetManagementInsightService _assetManagementInsightService =
+      const AssetManagementInsightService();
   final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
@@ -6492,6 +6495,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       includeDefaultFixedPayments: true,
     );
     _scheduleAssetLiabilityStateIdMigration(workbook);
+    final insightReport = _assetManagementInsightService.buildReport(
+      workbook: workbook,
+    );
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
         : const Color(0xFF0D9488);
@@ -6529,6 +6535,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 12),
             _buildAssetLiabilitySyncPanel(),
+            const SizedBox(height: 12),
+            _buildAssetManagementAiAssistantSection(insightReport),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -6942,6 +6950,392 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildAssetManagementAiAssistantSection(
+    AssetManagementInsightReport report,
+  ) {
+    final criticalCount = report.criticalActions.length;
+    final statusColor =
+        criticalCount > 0 ? const Color(0xFFB91C1C) : const Color(0xFF0D9488);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: statusColor.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome_outlined, color: statusColor, size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'AI資産管理アシスタント',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '要対応',
+                value: '${report.actionItems.length}件',
+                color: statusColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '金額は資産/負債ボードの計算結果を使い、外部AI APIは呼び出さずに安全なルールベースで確認しています。',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildAssetManagementAvailableCard(report.todayAvailable),
+              _buildAssetManagementAvailableCard(report.weekAvailable),
+              _buildAssetManagementAvailableCard(report.monthAvailable),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildAssetManagementAssistantActionList(report.actionItems),
+          if (report.movementSuggestions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildAssetManagementMovementSuggestionList(
+              report.movementSuggestions,
+            ),
+          ],
+          const SizedBox(height: 12),
+          _buildAssetManagementDeveloperRequestList(report.developerRequests),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetManagementAvailableCard(
+    AssetManagementAvailableMoneyInsight insight,
+  ) {
+    final color = insight.availableAmount < 0
+        ? const Color(0xFFB91C1C)
+        : const Color(0xFF0D9488);
+    final subtitle =
+        '支払 ${_formatManagementYen(insight.unpaidPaymentTotal)} / 入金 ${_formatManagementYen(insight.unreceivedIncomeTotal)} / 安全残高 ${_formatManagementYen(insight.minimumSafetyBalance)}';
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 210, maxWidth: 320),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _assetManagementInsightWindowLabel(insight.window),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            _formatManagementYen(insight.availableAmount),
+            style: TextStyle(
+              color: color,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetManagementAssistantActionList(
+    List<AssetManagementInsightActionItem> actionItems,
+  ) {
+    if (actionItems.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFECFDF5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFF0D9488).withValues(alpha: 0.24),
+          ),
+        ),
+        child: const Text(
+          '今日すぐ確認すべき資金繰りアクションはありません。',
+          style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'アクションアイテム',
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        ),
+        const SizedBox(height: 6),
+        for (final item in actionItems.take(8))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _buildAssetManagementAssistantActionTile(item),
+          ),
+        if (actionItems.length > 8)
+          Text(
+            'ほか ${actionItems.length - 8}件',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAssetManagementAssistantActionTile(
+    AssetManagementInsightActionItem item,
+  ) {
+    final color = _assetManagementInsightSeverityColor(item.severity);
+    final dueLabel = item.dueDate == null
+        ? (item.paymentDay == null ? null : '${item.paymentDay}日')
+        : DateFormat('M/d').format(item.dueDate!);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            _assetManagementInsightActionIcon(item.type),
+            color: color,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
+                    ),
+                    _buildAssetLiabilitySyncChip(
+                      label: '重要度',
+                      value: _assetManagementInsightSeverityLabel(
+                        item.severity,
+                      ),
+                      color: color,
+                    ),
+                    if (dueLabel != null)
+                      _buildAssetLiabilitySyncChip(
+                        label: '期日',
+                        value: dueLabel,
+                        color: const Color(0xFF475569),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.description,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.suggestedAction,
+                  style: const TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetManagementMovementSuggestionList(
+    List<AssetManagementMovementSuggestion> suggestions,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '口座移動/出金提案',
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final suggestion in suggestions)
+              Chip(
+                avatar: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: 16,
+                ),
+                label: Text(
+                  '${suggestion.fromAccountName}から ${_formatManagementYen(suggestion.amount)}'
+                  '${suggestion.toAccountName == null ? ' 出金/移動' : ' → ${suggestion.toAccountName}'}',
+                ),
+                backgroundColor: const Color(0xFFFFF7ED),
+                side: const BorderSide(color: Color(0xFFF97316)),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAssetManagementDeveloperRequestList(
+    List<AssetManagementDeveloperRequest> requests,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '開発者向け改善提案',
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        ),
+        const SizedBox(height: 6),
+        for (final request in requests.take(4))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    request.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    request.description,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _assetManagementInsightWindowLabel(
+    AssetManagementInsightWindow window,
+  ) {
+    return switch (window) {
+      AssetManagementInsightWindow.today => '本日使用可能額',
+      AssetManagementInsightWindow.week => '今週使用可能額',
+      AssetManagementInsightWindow.month => '今月使用可能額',
+    };
+  }
+
+  String _assetManagementInsightSeverityLabel(
+    AssetManagementInsightSeverity severity,
+  ) {
+    return switch (severity) {
+      AssetManagementInsightSeverity.info => '確認',
+      AssetManagementInsightSeverity.warning => '警戒',
+      AssetManagementInsightSeverity.critical => '至急',
+    };
+  }
+
+  Color _assetManagementInsightSeverityColor(
+    AssetManagementInsightSeverity severity,
+  ) {
+    return switch (severity) {
+      AssetManagementInsightSeverity.info => const Color(0xFF2563EB),
+      AssetManagementInsightSeverity.warning => const Color(0xFFD97706),
+      AssetManagementInsightSeverity.critical => const Color(0xFFB91C1C),
+    };
+  }
+
+  IconData _assetManagementInsightActionIcon(
+    AssetManagementInsightActionType type,
+  ) {
+    return switch (type) {
+      AssetManagementInsightActionType.missingInput => Icons.edit_note_outlined,
+      AssetManagementInsightActionType.missingPaymentDay =>
+        Icons.event_busy_outlined,
+      AssetManagementInsightActionType.missingAnnualRate =>
+        Icons.percent_outlined,
+      AssetManagementInsightActionType.missingPaymentSource =>
+        Icons.account_balance_outlined,
+      AssetManagementInsightActionType.overduePayment =>
+        Icons.priority_high_rounded,
+      AssetManagementInsightActionType.upcomingPayment =>
+        Icons.event_available_outlined,
+      AssetManagementInsightActionType.cashShortageRisk =>
+        Icons.warning_amber_rounded,
+      AssetManagementInsightActionType.cardBillingConfiguration =>
+        Icons.credit_card_off_outlined,
+      AssetManagementInsightActionType.doubleCountingRisk =>
+        Icons.difference_outlined,
+    };
   }
 
   String _assetLiabilityManualSyncStatusLabel(
