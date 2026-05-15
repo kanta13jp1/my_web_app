@@ -74,6 +74,29 @@ class SessionCompressionGuardTest(unittest.TestCase):
         self.assertFalse(result["should_fire"])
         self.assertEqual(result["decision"], "skip")
 
+    def test_session_start_always_fire_overrides_recent_capacity(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            state = tmp / "state.json"
+            state.write_text(
+                json.dumps({"last_fire_at": "2026-05-14T00:00:00+00:00", "fires": []}),
+                encoding="utf-8",
+            )
+            result = self.run_guard(
+                tmp,
+                "--mode",
+                "session-start",
+                "--always-fire",
+                "--sample-free-gb",
+                "29.0",
+                "--sample-now",
+                "2026-05-14T00:30:00+00:00",
+            )
+
+        self.assertTrue(result["should_fire"])
+        self.assertEqual(result["decision"], "due")
+        self.assertEqual(result["reason"], "always-fire disk quota contract")
+
     def test_userprompt_respects_hourly_cooldown(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             tmp = Path(raw)
@@ -141,6 +164,53 @@ class SessionCompressionGuardTest(unittest.TestCase):
         self.assertTrue(result["should_fire"])
         self.assertEqual(result["phase"], "wrap_up_post")
         self.assertEqual(result["reason"], "wrap-up compression required")
+
+    def test_min_reclaim_quota_records_pass(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            result = self.run_guard(
+                tmp,
+                "--mode",
+                "wrap-up",
+                "--apply",
+                "--sample-free-gb",
+                "12.0",
+                "--sample-free-gb-after",
+                "12.7",
+                "--sample-cleanup-reclaim-mb",
+                "700",
+                "--min-reclaim-mb",
+                "512",
+                "--sample-now",
+                "2026-05-14T01:15:00+00:00",
+            )
+
+        self.assertEqual(result["cleanup"]["status"], "sampled")
+        self.assertTrue(result["quota"]["passed"])
+        self.assertIn(">= 512.0 MB", result["quota"]["reason"])
+
+    def test_min_reclaim_quota_records_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            tmp = Path(raw)
+            result = self.run_guard(
+                tmp,
+                "--mode",
+                "wrap-up",
+                "--apply",
+                "--sample-free-gb",
+                "12.0",
+                "--sample-free-gb-after",
+                "12.1",
+                "--sample-cleanup-reclaim-mb",
+                "100",
+                "--min-reclaim-mb",
+                "512",
+                "--sample-now",
+                "2026-05-14T01:15:00+00:00",
+            )
+
+        self.assertFalse(result["quota"]["passed"])
+        self.assertIn("< 512.0 MB", result["quota"]["reason"])
 
     def test_fatigue_flag_uses_last_three_reclaim_values(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

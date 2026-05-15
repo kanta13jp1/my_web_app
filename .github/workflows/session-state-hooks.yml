@@ -8,6 +8,7 @@ on:
       - ".claude/hooks/session-end-auto-compress.ps1"
       - ".claude/hooks/session-start-hard-gate.ps1"
       - ".claude/hooks/session-start-state-check.ps1"
+      - ".claude/hooks/smartcleanup-monthlydeep-guard.ps1"
       - ".claude/hooks/statusline.ps1"
       - ".claude/hooks/userprompt-idle-gap-fire.ps1"
       - ".claude/hooks/userprompt-kpi-banner.ps1"
@@ -19,6 +20,8 @@ on:
       - "scripts/codex_session_check.py"
       - "scripts/session_compression_guard.py"
       - "scripts/session_compression_guard_test.py"
+      - "scripts/smartcleanup_task_guard.py"
+      - "scripts/smartcleanup_task_guard_test.py"
   workflow_dispatch:
 
 permissions:
@@ -42,6 +45,9 @@ jobs:
 
       - name: Session compression guard unit tests
         run: python scripts/session_compression_guard_test.py
+
+      - name: SmartCleanup task guard unit tests
+        run: python scripts/smartcleanup_task_guard_test.py
 
       - name: Codex session check JSON smoke
         run: python scripts/codex_session_check.py --json > /tmp/codex-session-check.json

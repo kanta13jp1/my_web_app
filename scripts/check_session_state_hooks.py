@@ -21,6 +21,7 @@ REQUIRED_FILES = [
     ".claude/hooks/session-end-auto-compress.ps1",
     ".claude/hooks/session-start-hard-gate.ps1",
     ".claude/hooks/session-start-state-check.ps1",
+    ".claude/hooks/smartcleanup-monthlydeep-guard.ps1",
     ".claude/hooks/statusline.ps1",
     ".claude/hooks/userprompt-idle-gap-fire.ps1",
     ".claude/hooks/userprompt-kpi-banner.ps1",
@@ -31,6 +32,7 @@ REQUIRED_FILES = [
     "memory/transcripts/.gitignore",
     "memory/transcripts/.gitkeep",
     "scripts/session_compression_guard.py",
+    "scripts/smartcleanup_task_guard.py",
 ]
 
 SECRET_PATTERNS = [
@@ -77,6 +79,8 @@ def validate_settings(root: Path, errors: list[str]) -> None:
         errors.append("SessionStart must keep session-start-sync-rules.ps1")
     if not any("session-start-hard-gate.ps1" in command for command in commands):
         errors.append("SessionStart must run session-start-hard-gate.ps1")
+    if not any("smartcleanup-monthlydeep-guard.ps1" in command for command in commands):
+        errors.append("SessionStart must run smartcleanup-monthlydeep-guard.ps1")
     if not any("session-start-state-check.ps1" in command for command in commands):
         errors.append("SessionStart must run session-start-state-check.ps1")
 
@@ -172,6 +176,9 @@ def validate_session_compression(root: Path, errors: list[str]) -> None:
         "SESSION_START_PHASE",
         "PRETOOLUSE_PHASE",
         "WRAP_UP_PHASE",
+        "QuotaResult",
+        "always-fire disk quota contract",
+        "min_reclaim_mb",
     ]:
         require_contains(errors, guard_text, needle, guard_label)
 
@@ -193,6 +200,8 @@ def validate_session_compression(root: Path, errors: list[str]) -> None:
         "SESSION_COMPRESSION_DRY_RUN",
         "--mode\", \"session-start",
         "--apply",
+        "--always-fire",
+        "--min-reclaim-mb\", \"512",
         "session_compression_guard.py",
     ]:
         require_contains(errors, hard_gate_text, needle, hard_gate_label)
@@ -223,9 +232,32 @@ def validate_session_compression(root: Path, errors: list[str]) -> None:
         "SESSION_COMPRESSION_WRAPUP_ENFORCE",
         "--mode\", \"wrap-up",
         "--target-free-gb\", \"28",
+        "--min-reclaim-mb\", \"512",
         "session_compression_guard.py",
     ]:
         require_contains(errors, wrap_up_text, needle, wrap_up_label)
+
+    smartcleanup_text = read_text(root, ".claude/hooks/smartcleanup-monthlydeep-guard.ps1")
+    smartcleanup_label = "smartcleanup-monthlydeep-guard.ps1"
+    for needle in [
+        "SmartCleanup_MonthlyDeep",
+        "SMARTCLEANUP_MONTHLYDEEP_FIX",
+        "SMARTCLEANUP_MONTHLYDEEP_ENFORCE",
+        "smartcleanup_task_guard.py",
+    ]:
+        require_contains(errors, smartcleanup_text, needle, smartcleanup_label)
+
+    smartcleanup_guard = read_text(root, "scripts/smartcleanup_task_guard.py")
+    smartcleanup_guard_label = "smartcleanup_task_guard.py"
+    for needle in [
+        "TASK_NEVER_RAN_CODE = 267011",
+        "last_run_time sentinel year <= 1999",
+        "principal_user_id missing DOMAIN prefix",
+        "Set-ScheduledTask",
+        "Start-ScheduledTask",
+        "SmartCleanup_MonthlyDeep",
+    ]:
+        require_contains(errors, smartcleanup_guard, needle, smartcleanup_guard_label)
 
 
 def validate_statusline(root: Path, errors: list[str]) -> None:

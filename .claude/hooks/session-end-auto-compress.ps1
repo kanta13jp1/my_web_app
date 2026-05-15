@@ -1,4 +1,5 @@
-# Issue #1564: v23 Layer LL SessionEnd/wrap-up auto-compress.
+# Issue #1564: v23 Layer LL SessionEnd/wrap-up auto-compress + v27
+# Layer DDD per-session disk quota contract.
 # Runs a deterministic wrap-up compression pass. It is advisory by default and
 # only fails closed when SESSION_COMPRESSION_WRAPUP_ENFORCE=1 is set.
 
@@ -42,6 +43,7 @@ $arguments = @(
     "--apply",
     "--banner",
     "--target-free-gb", "28",
+    "--min-reclaim-mb", "512",
     "--max-runtime-sec", "120"
 )
 

@@ -1,4 +1,5 @@
-# Issue #1564: v23 Layer JJ SessionStart compression gate.
+# Issue #1564: v23 Layer JJ SessionStart compression gate + v27 Layer DDD
+# always-fire per-session disk quota contract.
 # Runs the repo-managed session compression guard and optionally enforces the
 # target when SESSION_COMPRESSION_FAIL_CLOSED=1 is set in the host environment.
 
@@ -40,9 +41,11 @@ $arguments = @(
     "--mode", "session-start",
     "--root", $projectDir,
     "--banner",
+    "--always-fire",
     "--max-runtime-sec", "120",
     "--min-free-gb", "26",
-    "--target-free-gb", "28"
+    "--target-free-gb", "28",
+    "--min-reclaim-mb", "512"
 )
 
 if ($env:SESSION_COMPRESSION_DRY_RUN -ne "1") {

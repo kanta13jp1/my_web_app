@@ -132,6 +132,10 @@
           },
           {
             "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/smartcleanup-monthlydeep-guard.ps1"
+          },
+          {
+            "type": "command",
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/session-start-state-check.ps1"
           }
         ]
