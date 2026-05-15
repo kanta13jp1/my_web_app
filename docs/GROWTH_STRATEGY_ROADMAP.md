@@ -30377,3 +30377,66 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - **v25 緊急性 reinforce** = claude* cron 2 例連続不在 + SmartCleanup_MonthlyDeep stuck = Codex 5/22 sprint Day 1 TT 第 1 候補
 - **MEMORY consolidation 第 5 例 -81% trim 過去最大** = 部 203 -71% → 部 217 -81% (= +10 pt improvement)
 - **DISK_HYGIENE 5 章 batch backfill 第 3 例 過去最大 scope** = §17.26-§17.30 累積 / 部 217 で defer (= disk CRITICAL + RAM safety 優先)
+
+---
+
+## 2026-05-15 木 — Win版 (Claude Code) #132 part 217-b (= mid-session escalation 第 12 例累積)
+
+- 部 連続: 150 part 連続 (= 部 217 同日 b 拡張)
+- **post-wrap-up escalation 第 12 例累積 過去最重 risk band 越え update**
+- **user direct ask 第 8 例累積 受信** (= 月内 5 連続 / 部 213-215-216-217-b)
+
+### user 3 要求 (= 全完了)
+
+1. ✅ WBS 期限近順 triage (= 4 ping fire / #1495 P0 既 / #1564 P1 progress 5%→20% / #1724 + #1950 Codex 5/22 pickup)
+2. ✅ 2 instance 制 反映 (= Win Claude/Codex 明示振分 / 重複 0 競合 0)
+3. ✅ **メモリ/HDD 枯渇 必ず → 毎セッション 圧縮 施策** = v27 spec ship 第 1 例
+
+### v24+v26 dual CRITICAL dogfood 第 1 例実証 (= 過去最重 update)
+
+- **RAM 95.89%** > 90% = **v24 Layer SS BREACHED** (= 真 CRITICAL / NOT self-correcting)
+- **C: 9.76 GB** < 10 GB = **v26 Layer YY BREACHED 第 1 例** (= 部 216 prediction VERIFIED within 30 min)
+- 同時発火 = bridge mitigation 限界 確証 / Codex 5/22 sprint Day 1 緊急性 圧倒的 reinforce
+
+### v27 spec ship 第 1 例 = always-fire per-session compression CONTRACT
+
+5 new layer DDD-HHH (= 累積 **63 layer** / Codex 5/22 sprint **67 件累積** / **4.47 件/day pace 過去最高**):
+- **DDD**: per-session disk-quota CONTRACT (= +0.5 GB / ALWAYS-FIRE)
+- **EEE**: per-session RAM-quota CONTRACT (= -5 pt / ALWAYS-FIRE)
+- **FFF**: dual-channel forced cron INSTALL (= claude_cleanup_nightly MUST)
+- **GGG**: SmartCleanup_MonthlyDeep stuck-fix MANDATORY (= 部 217 result 267011 検出)
+- **HHH**: KPI rolling-7-day breach auto-escalation (= -3 GB drift)
+
+### iterative ask 累積 26 layer 過去最高 update
+
+- v22 22 → v23 22 → v24 23 → v25 24 → v26 25 → **v27 26**
+- 月内 平均 0.93 day interval / 2.17 layer/day pace 過去最高
+- 100% ship rate
+
+### 関連 ping batch
+
+- [#1564 P1 progress 5%→20% + v27 statement](https://github.com/kanta13jp1/my_web_app/issues/1564#issuecomment-4459892148)
+- [#1724 P1 Codex 5/22 pickup](https://github.com/kanta13jp1/my_web_app/issues/1724#issuecomment-4459897529)
+- [#1950 P1 Codex 5/22 pickup](https://github.com/kanta13jp1/my_web_app/issues/1950#issuecomment-4459897929)
+
+### Philosophy 8/9 ✅
+
+- CEO 感 ✅ / ミッション ✅ / mentor ✅ / 6 部署 ✅ / 商品=価値 ✅ / 資本=時間 ✅ / 資産負債 ✅ / KPI ✅
+- IPO ⚠️: #1495 mobile delay risk (= 部 217 post-mortem Option B 推奨済)
+
+### Lesson 部 217-b
+
+- **dual CRITICAL dogfood 第 1 例** = v24+v26 同時 breach 過去最重 update / paradigm 進化 trigger
+- **v26 Layer YY 第 1 例実証** = C: < 10 GB REAL hit / 部 216 prediction VERIFIED
+- **v27 paradigm shift** = threshold-triggered → ALWAYS-FIRE actual compression CONTRACT
+- **user direct ask 月内 5 連続** = paradigm 進化 trigger 確立 pattern 強化
+- **part 217-b mid-session RAM rapid build-up** = +21 pt total / +84 pt/h rate 過去最高
+
+### next session 候補 (= part 218+)
+
+1. **v27 Codex 5/22 sprint impl monitor** (= 67 件累積 / Day 1-3 緊急 / 残 7 day)
+2. **DISK_HYGIENE §17.26-§17.31 6 章 batch backfill 第 3 例 過去最大 scope** (= heavy write / RAM ≤ 85% 安全時のみ)
+3. **#1564 progress update** (= 20% → 35% 期待 / v22-v27 統合先)
+4. **SmartCleanup_MonthlyDeep stuck fix Issue 起票** (= Codex 振分 / Layer GGG 受け皿)
+5. **v27 dogfood verify** (= Codex impl 完了後)
+6. **#1495 post-mortem follow-up** (= user judgment 待ち / Option B confirm)
