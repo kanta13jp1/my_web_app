@@ -1,0 +1,274 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/asset_management_insight_service.dart';
+
+void main() {
+  group('AssetManagementInsightService', () {
+    const service = AssetManagementInsightService();
+    const planner = AssetLiabilityPlanningService();
+
+    test('marks missing payment day as an action item', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'Custom Card': -10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type == AssetManagementInsightActionType.missingPaymentDay,
+        ),
+        true,
+      );
+    });
+
+    test('marks missing annual rate as an action item', () {
+      final workbook = _workbook(
+        debtRows: <AssetLiabilityDebtRow>[
+          _debtRow(annualRate: 0, kind: AssetLiabilityAccountKind.cardLoan),
+        ],
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type == AssetManagementInsightActionType.missingAnnualRate,
+        ),
+        true,
+      );
+    });
+
+    test('marks missing payment source as an action item', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+              AssetManagementInsightActionType.missingPaymentSource,
+        ),
+        true,
+      );
+    });
+
+    test('marks overdue payments as critical', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'auPayカード': -10000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.auPayCardAccountId: 10000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.auPayCardAccountId: 'bank',
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final overdue = report.actionItems.where(
+        (item) => item.type == AssetManagementInsightActionType.overduePayment,
+      );
+      expect(overdue.isNotEmpty, true);
+      expect(overdue.first.severity, AssetManagementInsightSeverity.critical);
+    });
+
+    test('calculates today, week, and month available amounts', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
+        paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary',
+            date: DateTime(2026, 5, 2),
+            name: 'salary',
+            amount: 5000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: false,
+          ),
+        ],
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+
+      expect(report.todayAvailable.availableAmount, 40000);
+      expect(report.weekAvailable.availableAmount, 45000);
+      expect(report.monthAvailable.availableAmount, 25000);
+    });
+
+    test('generates movement suggestions from accounts with surplus', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -45000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 45000},
+        paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+
+      expect(report.monthAvailable.availableAmount, -5000);
+      expect(report.movementSuggestions.isNotEmpty, true);
+      expect(report.movementSuggestions.first.fromAccountId, 'custom_bank');
+      expect(report.movementSuggestions.first.amount, 5000);
+    });
+
+    test('generates developer improvement requests', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(report.developerRequests.isNotEmpty, true);
+      expect(report.developerRequests.first.description.contains('現状では'), true);
+    });
+
+    test('detects card billing configuration action items', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'KDDI': -5764},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'missing_card',
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+              AssetManagementInsightActionType.cardBillingConfiguration,
+        ),
+        true,
+      );
+    });
+
+    test('builds prompt with deterministic calculated values', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'Custom Card': -10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+      final report = service.buildReport(workbook: workbook);
+
+      final prompt = const AssetManagementInsightPromptBuilder().buildPrompt(
+        report,
+      );
+
+      expect(prompt.contains('Dart側で計算済み'), true);
+      expect(prompt.contains('本日'), true);
+      expect(prompt.contains('アクションアイテム'), true);
+      expect(prompt.contains(report.actionItems.first.title), true);
+    });
+  });
+}
+
+AssetLiabilityWorkbook _workbook({
+  required List<AssetLiabilityDebtRow> debtRows,
+}) {
+  return AssetLiabilityWorkbook(
+    baseDate: DateTime(2026, 5, 1),
+    accounts: const <AssetLiabilityAccount>[
+      AssetLiabilityAccount(
+        id: 'bank',
+        name: 'bank',
+        kind: AssetLiabilityAccountKind.deposit,
+        balance: 50000,
+      ),
+    ],
+    debtMasterRows: debtRows,
+    repaymentPriorityRows: debtRows,
+    paymentDayRisks: const <AssetLiabilityPaymentDayRisk>[],
+    cashflowRows: const <AssetLiabilityCashflowRow>[],
+    incomePlans: const <AssetLiabilityIncomePlan>[],
+    accountCashflowSummaries: const <AssetLiabilityAccountCashflowSummary>[],
+    transferSuggestions: const <AssetLiabilityTransferSuggestion>[],
+    cardBillingReview: const AssetLiabilityCardBillingReviewData(
+      directPaymentItems: <AssetLiabilityCardBillingReviewItem>[],
+      cardBillingGroups: <AssetLiabilityCardBillingGroup>[],
+      missingBillingAccountItems: <AssetLiabilityCardBillingReviewItem>[],
+      needsReviewItems: <AssetLiabilityCardBillingReviewItem>[],
+      doubleCountingRiskItems: <AssetLiabilityCardBillingReviewItem>[],
+    ),
+    cashLikeTotal: 50000,
+    securitiesTotal: 0,
+    positiveAssetTotal: 50000,
+    liabilityTotal: -10000,
+    netWorth: 40000,
+    monthlyMinimumPaymentEstimateTotal: 10000,
+    monthlyScheduledPaymentTotal: 10000,
+    monthlyUnpaidPaymentTotal: 10000,
+    monthlyUnreceivedIncomeTotal: 0,
+    cashAfterMinimumPayments: 40000,
+    cashAfterScheduledPayments: 40000,
+    debtToAssetRatio: 0.2,
+    topFourDebtShare: 1,
+    manualPaymentCount: 1,
+    estimatedPaymentCount: 0,
+  );
+}
+
+AssetLiabilityDebtRow _debtRow({
+  required double annualRate,
+  required AssetLiabilityAccountKind kind,
+}) {
+  return AssetLiabilityDebtRow(
+    id: 'loan',
+    name: 'loan',
+    kind: kind,
+    balance: -10000,
+    paymentDay: 15,
+    paymentSourceAccountId: 'bank',
+    paymentSourceAccountName: 'bank',
+    paymentMethod: AssetLiabilityPaymentMethod.direct,
+    paymentMethodLabel: '直接支払い',
+    paymentMethodSettingSource:
+        AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+    billingAccountId: null,
+    billingAccountName: null,
+    includedInBillingAccount: false,
+    annualRate: annualRate,
+    minimumPaymentEstimate: 10000,
+    manualPaymentAmount: 10000,
+    scheduledPaymentAmount: 10000,
+    monthlyInterestEstimate: 0,
+    principalPaymentEstimate: 10000,
+    balanceAfterPaymentEstimate: 0,
+    liabilityShare: 1,
+    priorityLabel: 'test',
+    paymentAmountEstimated: false,
+    paid: false,
+  );
+}
