@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-05-14",
+    "date": "2026-05-15",
     "users": {
       "total": 37
     },
@@ -34,6 +34,14 @@
     },
     "recentAchievements": [
       {
+        "title": "Codex #1: video pipeline secret readiness gate (#1724)",
+        "completed_at": "2026-05-16T00:00:00+00:00"
+      },
+      {
+        "title": "Codex #1: realistic WBS schedule rebalance for asset-management roadmap",
+        "completed_at": "2026-05-15T23:24:57.221727+00:00"
+      },
+      {
         "title": "Scheduled Daily S4: v21 5-layer structural prevention spec (Z-DD) + same-day natural recovery 第 1 例",
         "completed_at": "2026-05-13T00:00:00+00:00"
       },
@@ -44,17 +52,9 @@
       {
         "title": "Codex #1: AI Tool Watch route-to-issue bridge (#1559)",
         "completed_at": "2026-05-12T00:00:00+00:00"
-      },
-      {
-        "title": "Codex #1: blog/news production smoke (#1950)",
-        "completed_at": "2026-05-12T00:00:00+00:00"
-      },
-      {
-        "title": "Codex #1: mobile distribution readiness gate (#1495)",
-        "completed_at": "2026-05-12T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-05-15T07:50:01+09:00",
-  "report_date": "2026-05-15"
+  "fetched_at": "2026-05-16T08:39:15+09:00",
+  "report_date": "2026-05-16"
 }
