@@ -21,6 +21,7 @@ import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
@@ -184,6 +185,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityHistoryService();
   final AssetManagementInsightService _assetManagementInsightService =
       const AssetManagementInsightService();
+  final AssetManagementAiSummaryService _assetManagementAiSummaryService =
+      AssetManagementAiSummaryService();
   final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
@@ -201,6 +204,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   double? _debtLockdownLoadedForDebt;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
   String? _wasteTrainingAiReviewKey;
+  bool _isGeneratingAssetManagementAiSummary = false;
+  AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
 
   final List<Color> _colors = [
     const Color(0xFF6366F1),
@@ -6997,6 +7002,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
           const SizedBox(height: 10),
+          _buildAssetManagementAiSummaryPanel(report),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -7019,6 +7026,126 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildAssetManagementAiSummaryPanel(
+    AssetManagementInsightReport report,
+  ) {
+    final result = _assetManagementAiSummaryResult ??
+        _assetManagementAiSummaryService.buildDisabledResult(report);
+    final enabled = _assetManagementAiSummaryService.aiEnabled;
+    final color = switch (result.status) {
+      AssetManagementAiSummaryStatus.aiGenerated => const Color(0xFF0D9488),
+      AssetManagementAiSummaryStatus.fallback => const Color(0xFFD97706),
+      AssetManagementAiSummaryStatus.disabled => const Color(0xFF475569),
+    };
+    final statusLabel = switch (result.status) {
+      AssetManagementAiSummaryStatus.aiGenerated => 'AI summary',
+      AssetManagementAiSummaryStatus.fallback => 'Fallback',
+      AssetManagementAiSummaryStatus.disabled => 'Feature flag OFF',
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.psychology_alt_outlined, color: color, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  result.text,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (result.errorMessage != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              result.errorMessage!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 11,
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _buildAssetLiabilitySyncChip(
+                label: 'AI',
+                value: statusLabel,
+                color: color,
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: 'source',
+                value: result.source,
+                color: color,
+              ),
+              OutlinedButton.icon(
+                onPressed: enabled && !_isGeneratingAssetManagementAiSummary
+                    ? () => _generateAssetManagementAiSummary(report)
+                    : null,
+                icon: _isGeneratingAssetManagementAiSummary
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome_outlined, size: 16),
+                label: Text(
+                  enabled
+                      ? 'AI summary'
+                      : 'AI summary disabled by feature flag',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'AI receives only calculated insight payloads. Amount calculation stays in Dart.',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generateAssetManagementAiSummary(
+    AssetManagementInsightReport report,
+  ) async {
+    setState(() => _isGeneratingAssetManagementAiSummary = true);
+    final result = await _assetManagementAiSummaryService.generateSummary(
+      report: report,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _assetManagementAiSummaryResult = result;
+      _isGeneratingAssetManagementAiSummary = false;
+    });
   }
 
   Widget _buildAssetManagementAvailableCard(
