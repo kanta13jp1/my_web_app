@@ -273,6 +273,12 @@ D-ID の事例 = 顔認識「**防御**」技術から AI アバター「**生�
 - [#1724](https://github.com/kanta13jp1/my_web_app/issues/1724) (= P1 / 5 secrets 設定): F6 publish 公開化の前提
 - [#1788](https://github.com/kanta13jp1/my_web_app/issues/1788) (= P3 / D-ID + Hedra アバター): Phase 3 リアルタイム presence への bridge
 
+2026-05-16 Codex #1 readiness update:
+
+- `video-pipeline-secret-readiness.yml` can be run manually before dispatching the heavy NotebookLM pipeline.
+- `notebooklm-video-pipeline.yml` performs an early boolean-only secret preflight for `GITHUB_PAT`, `NOTEBOOKLM_STORAGE_STATE_JSON`, `ELEVENLABS_API_KEY`, `YOUTUBE_CLIENT_SECRET_JSON`, and `YOUTUBE_TOKEN_JSON`.
+- The preflight is side-effect free: no secret values are printed, no NotebookLM download starts, and no YouTube quota is consumed when a required secret is missing.
+
 ### Philosophy / Principle Alignment
 
 - **PHILOSOPHY-22** = 9/9 ✅ (= 商品=価値 / 資本=時間 / KPI=昨日の自分 で月次本数 KPI 化)
