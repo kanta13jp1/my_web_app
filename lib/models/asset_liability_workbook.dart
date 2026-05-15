@@ -383,6 +383,84 @@ class AssetLiabilityMonthlyChartData {
   bool get hasEnoughData => monthKeys.length >= 2;
 }
 
+class AssetLiabilityCardBillingReviewItem {
+  final String accountId;
+  final String accountName;
+  final double amount;
+  final int? paymentDay;
+  final AssetLiabilityPaymentMethod paymentMethod;
+  final String paymentMethodLabel;
+  final AssetLiabilityPaymentMethodSettingSource paymentMethodSettingSource;
+  final String? billingAccountId;
+  final String? billingAccountName;
+  final bool includedInBillingAccount;
+  final bool directCashflowTarget;
+  final List<String> alerts;
+
+  const AssetLiabilityCardBillingReviewItem({
+    required this.accountId,
+    required this.accountName,
+    required this.amount,
+    required this.paymentDay,
+    required this.paymentMethod,
+    required this.paymentMethodLabel,
+    required this.paymentMethodSettingSource,
+    required this.billingAccountId,
+    required this.billingAccountName,
+    required this.includedInBillingAccount,
+    required this.directCashflowTarget,
+    this.alerts = const <String>[],
+  });
+
+  bool get needsReview => alerts.isNotEmpty;
+  bool get hasMissingBillingAccount =>
+      includedInBillingAccount &&
+      (billingAccountId == null || billingAccountId!.trim().isEmpty);
+  bool get excludedFromDirectCashflow => includedInBillingAccount;
+}
+
+class AssetLiabilityCardBillingGroup {
+  final String billingAccountId;
+  final String billingAccountName;
+  final List<AssetLiabilityCardBillingReviewItem> items;
+
+  const AssetLiabilityCardBillingGroup({
+    required this.billingAccountId,
+    required this.billingAccountName,
+    required this.items,
+  });
+
+  double get totalAmount {
+    return items.fold<double>(0, (sum, item) => sum + item.amount);
+  }
+}
+
+class AssetLiabilityCardBillingReviewData {
+  final List<AssetLiabilityCardBillingReviewItem> directPaymentItems;
+  final List<AssetLiabilityCardBillingGroup> cardBillingGroups;
+  final List<AssetLiabilityCardBillingReviewItem> missingBillingAccountItems;
+  final List<AssetLiabilityCardBillingReviewItem> needsReviewItems;
+  final List<AssetLiabilityCardBillingReviewItem> doubleCountingRiskItems;
+
+  const AssetLiabilityCardBillingReviewData({
+    required this.directPaymentItems,
+    required this.cardBillingGroups,
+    required this.missingBillingAccountItems,
+    required this.needsReviewItems,
+    required this.doubleCountingRiskItems,
+  });
+
+  bool get hasDoubleCountingRisk => doubleCountingRiskItems.isNotEmpty;
+  bool get hasNeedsReviewItems => needsReviewItems.isNotEmpty;
+  bool get hasMissingBillingAccounts => missingBillingAccountItems.isNotEmpty;
+  int get cardBilledItemCount {
+    return cardBillingGroups.fold<int>(
+      0,
+      (sum, group) => sum + group.items.length,
+    );
+  }
+}
+
 class AssetLiabilityCsvExportBundle {
   final String monthlyHistoryCsv;
   final String paymentScheduleCsv;
@@ -407,6 +485,7 @@ class AssetLiabilityWorkbook {
   final List<AssetLiabilityIncomePlan> incomePlans;
   final List<AssetLiabilityAccountCashflowSummary> accountCashflowSummaries;
   final List<AssetLiabilityTransferSuggestion> transferSuggestions;
+  final AssetLiabilityCardBillingReviewData cardBillingReview;
   final double cashLikeTotal;
   final double securitiesTotal;
   final double positiveAssetTotal;
@@ -433,6 +512,7 @@ class AssetLiabilityWorkbook {
     required this.incomePlans,
     required this.accountCashflowSummaries,
     required this.transferSuggestions,
+    required this.cardBillingReview,
     required this.cashLikeTotal,
     required this.securitiesTotal,
     required this.positiveAssetTotal,

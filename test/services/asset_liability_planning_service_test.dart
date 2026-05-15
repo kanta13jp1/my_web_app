@@ -386,6 +386,150 @@ void main() {
       expect(workbook.monthlyUnpaidPaymentTotal, 25764);
     });
 
+    test('builds monthly card billing review direct payment group', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+      );
+
+      final review = workbook.cardBillingReview;
+      final directIds =
+          review.directPaymentItems.map((item) => item.accountId).toSet();
+
+      expect(
+        directIds,
+        contains(AssetLiabilityPlanningService.kddiProviderAccountId),
+      );
+      expect(directIds, contains('paypay_card'));
+      expect(review.hasDoubleCountingRisk, isFalse);
+      expect(workbook.monthlyUnpaidPaymentTotal, 25764);
+    });
+
+    test('groups card-billed review items by billing card', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+          'au': -32152,
+          'auPayカード': -10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+          AssetLiabilityPlanningService.auPayCardAccountId: 10000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
+
+      final review = workbook.cardBillingReview;
+      final auPayGroup = review.cardBillingGroups.firstWhere(
+        (group) =>
+            group.billingAccountId ==
+            AssetLiabilityPlanningService.auPayCardAccountId,
+      );
+      final payPayGroup = review.cardBillingGroups.firstWhere(
+        (group) => group.billingAccountId == 'paypay_card',
+      );
+
+      expect(
+        auPayGroup.items.map((item) => item.accountId),
+        contains(AssetLiabilityPlanningService.auAccountId),
+      );
+      expect(
+        payPayGroup.items.map((item) => item.accountId),
+        contains(AssetLiabilityPlanningService.kddiProviderAccountId),
+      );
+      expect(review.hasDoubleCountingRisk, isFalse);
+    });
+
+    test(
+      'marks monthly and default setting sources in card billing review',
+      () {
+        final workbook = service.buildWorkbook(
+          latestSnapshot: <String, double>{
+            'cash': 50000,
+            'KDDI': -5764,
+            'PayPay': -20000,
+            'ファミペイカード': -3000,
+          },
+          baseDate: DateTime(2026, 5, 1),
+          monthlyPaymentOverrides: const <String, double>{
+            AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+            'paypay_card': 20000,
+            'famipay_card': 3000,
+          },
+          defaultCardBillingAccountIds: const <String, String>{
+            AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+          },
+          cardBillingAccountIds: const <String, String>{
+            'paypay_card': 'famipay_card',
+          },
+        );
+
+        final items = [
+          for (final group in workbook.cardBillingReview.cardBillingGroups)
+            ...group.items,
+        ];
+        final kddi = items.firstWhere(
+          (item) =>
+              item.accountId ==
+              AssetLiabilityPlanningService.kddiProviderAccountId,
+        );
+        final payPay = items.firstWhere(
+          (item) => item.accountId == 'paypay_card',
+        );
+
+        expect(
+          kddi.paymentMethodSettingSource,
+          AssetLiabilityPaymentMethodSettingSource.defaultSetting,
+        );
+        expect(
+          payPay.paymentMethodSettingSource,
+          AssetLiabilityPaymentMethodSettingSource.monthlyOverride,
+        );
+      },
+    );
+
+    test('alerts when card billing target card is missing', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{'cash': 50000, 'KDDI': -5764},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'missing_card',
+        },
+      );
+
+      final item = workbook.cardBillingReview.needsReviewItems.firstWhere(
+        (item) =>
+            item.accountId ==
+            AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+
+      expect(
+        item.alerts,
+        contains(
+          AssetLiabilityPlanningService
+              .cardBillingReviewRemovedBillingAccountAlert,
+        ),
+      );
+      expect(workbook.cardBillingReview.hasDoubleCountingRisk, isFalse);
+    });
+
     test('restores monthly state by stable id after display name changes', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{'財布': 50000, 'SMBCカードローン': -100000},

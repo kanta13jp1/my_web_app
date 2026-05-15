@@ -6613,6 +6613,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 8),
               _buildAssetWorkbookCardBillingNotice(workbook),
             ],
+            const SizedBox(height: 16),
+            _buildCardBillingReviewSection(workbook),
             if (workbook.hasOverduePayments) ...[
               const SizedBox(height: 8),
               _buildAssetWorkbookOverdueWarning(workbook),
@@ -7052,6 +7054,305 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCardBillingReviewSection(AssetLiabilityWorkbook workbook) {
+    final review = workbook.cardBillingReview;
+    if (workbook.debtMasterRows.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.fact_check_outlined, color: Color(0xFF2563EB)),
+              SizedBox(width: 8),
+              Text(
+                'カード請求内訳レビュー',
+                style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '今月の支払い方式を、直接支払い・カード請求内訳・設定確認が必要な項目に分けて確認します。',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildTextStatusChip(
+                label: '直接支払い ${review.directPaymentItems.length}件',
+                color: const Color(0xFF0D9488),
+              ),
+              _buildTextStatusChip(
+                label: 'カード請求内訳 ${review.cardBilledItemCount}件',
+                color: const Color(0xFF2563EB),
+              ),
+              _buildTextStatusChip(
+                label: '請求先未設定 ${review.missingBillingAccountItems.length}件',
+                color: review.hasMissingBillingAccounts
+                    ? const Color(0xFFB91C1C)
+                    : const Color(0xFF475569),
+              ),
+              _buildTextStatusChip(
+                label: '設定確認 ${review.needsReviewItems.length}件',
+                color: review.hasNeedsReviewItems
+                    ? const Color(0xFFD97706)
+                    : const Color(0xFF475569),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildCardBillingReviewRiskNotice(review),
+          if (review.hasNeedsReviewItems) ...[
+            const SizedBox(height: 8),
+            _buildCardBillingReviewAlertList(review.needsReviewItems),
+          ],
+          const SizedBox(height: 12),
+          _buildCardBillingReviewDirectPayments(review.directPaymentItems),
+          const SizedBox(height: 12),
+          _buildCardBillingReviewGroups(review.cardBillingGroups),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardBillingReviewRiskNotice(
+    AssetLiabilityCardBillingReviewData review,
+  ) {
+    final hasRisk = review.hasDoubleCountingRisk;
+    final color = hasRisk ? const Color(0xFFB91C1C) : const Color(0xFF0D9488);
+    final message = hasRisk
+        ? '${AssetLiabilityPlanningService.cardBillingReviewDoubleCountRiskLabel}: '
+            '${review.doubleCountingRiskItems.map((item) => item.accountName).join(' / ')}'
+        : AssetLiabilityPlanningService.cardBillingReviewNoDoubleCountRiskLabel;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            hasRisk ? Icons.warning_amber_outlined : Icons.verified_outlined,
+            color: color,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: color, fontSize: 12, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardBillingReviewAlertList(
+    List<AssetLiabilityCardBillingReviewItem> items,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFD97706).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '設定確認が必要な項目',
+            style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+          ),
+          const SizedBox(height: 6),
+          for (final item in items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                '${item.accountName}: ${item.alerts.join(' / ')}',
+                style: const TextStyle(fontSize: 12, height: 1.5),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardBillingReviewDirectPayments(
+    List<AssetLiabilityCardBillingReviewItem> items,
+  ) {
+    return _buildCardBillingReviewItemTable(
+      title: '直接支払い',
+      items: items,
+      emptyMessage: '直接支払いの項目はありません',
+    );
+  }
+
+  Widget _buildCardBillingReviewGroups(
+    List<AssetLiabilityCardBillingGroup> groups,
+  ) {
+    if (groups.isEmpty) {
+      return _buildCardBillingReviewItemTable(
+        title: 'カード請求に含める項目',
+        items: const <AssetLiabilityCardBillingReviewItem>[],
+        emptyMessage: 'カード請求に含める項目はありません',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'カード請求に含める項目',
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        ),
+        const SizedBox(height: 8),
+        for (final group in groups) ...[
+          Row(
+            children: [
+              const Icon(Icons.credit_card_outlined, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                '${group.billingAccountName} '
+                '(${group.items.length}件 / ${_formatManagementYen(group.totalAmount)})',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _buildCardBillingReviewItemTable(
+            title: null,
+            items: group.items,
+            emptyMessage: '',
+          ),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCardBillingReviewItemTable({
+    required String? title,
+    required List<AssetLiabilityCardBillingReviewItem> items,
+    required String emptyMessage,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (title != null) ...[
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+          ),
+          const SizedBox(height: 6),
+        ],
+        if (items.isEmpty)
+          Text(
+            emptyMessage,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          )
+        else
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowHeight: 34,
+              dataRowMinHeight: 46,
+              dataRowMaxHeight: 58,
+              columns: const [
+                DataColumn(label: Text('支払い項目')),
+                DataColumn(label: Text('金額'), numeric: true),
+                DataColumn(label: Text('支払日'), numeric: true),
+                DataColumn(label: Text('支払い方式')),
+                DataColumn(label: Text('請求先カード')),
+                DataColumn(label: Text('設定元')),
+                DataColumn(label: Text('資金繰り')),
+                DataColumn(label: Text('確認事項')),
+              ],
+              rows: [
+                for (final item in items)
+                  DataRow(
+                    cells: [
+                      DataCell(Text(item.accountName)),
+                      DataCell(Text(_formatManagementYen(item.amount))),
+                      DataCell(
+                        Text(
+                          item.paymentDay == null
+                              ? '未設定'
+                              : '${item.paymentDay}日',
+                        ),
+                      ),
+                      DataCell(Text(item.paymentMethodLabel)),
+                      DataCell(
+                        Text(
+                          item.billingAccountName ??
+                              item.billingAccountId ??
+                              'なし',
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          AssetLiabilityPlanningService
+                              .paymentMethodSettingSourceLabel(
+                            item.paymentMethodSettingSource,
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        _buildTextStatusChip(
+                          label: item.excludedFromDirectCashflow
+                              ? AssetLiabilityPlanningService
+                                  .cardBillingReviewExcludedFromDirectCashflowLabel
+                              : AssetLiabilityPlanningService
+                                  .cardBillingReviewDirectCashflowTargetLabel,
+                          color: item.excludedFromDirectCashflow
+                              ? const Color(0xFF2563EB)
+                              : const Color(0xFF0D9488),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          item.alerts.isEmpty
+                              ? '問題なし'
+                              : item.alerts.join(' / '),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 

@@ -21,6 +21,21 @@ class AssetLiabilityPlanningService {
       '\u30c7\u30d5\u30a9\u30eb\u30c8\u3068\u3057\u3066\u4fdd\u5b58';
   static const String saveAsMonthlyPaymentMethodLabel =
       '\u4eca\u6708\u3060\u3051\u4e0a\u66f8\u304d';
+  static const String cardBillingReviewDirectLabel = '直接支払い';
+  static const String cardBillingReviewIncludedLabel = 'カード請求に含める';
+  static const String cardBillingReviewUnsetLabel = '請求先カード未設定';
+  static const String cardBillingReviewNeedsReviewLabel = '設定確認が必要';
+  static const String cardBillingReviewNoDoubleCountRiskLabel =
+      '二重計上リスクは検出されていません';
+  static const String cardBillingReviewDoubleCountRiskLabel = '二重計上リスクあり';
+  static const String cardBillingReviewExcludedFromDirectCashflowLabel =
+      '二重計上対象外';
+  static const String cardBillingReviewDirectCashflowTargetLabel = '直接差し引き対象';
+  static const String cardBillingReviewMissingBillingAccountAlert =
+      '請求先カードが未設定です';
+  static const String cardBillingReviewRemovedBillingAccountAlert =
+      '請求先カードが見つかりません';
+  static const String cardBillingReviewZeroAmountAlert = '金額が0円のため確認してください';
   static const String auCardBillingNotice =
       'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
@@ -136,6 +151,10 @@ class AssetLiabilityPlanningService {
       summaries: accountCashflowSummaries,
       cashflowRows: cashflowRows,
     );
+    final cardBillingReview = _buildCardBillingReview(
+      rows: debtMasterRows,
+      accountsById: accountsById,
+    );
 
     final monthlyMinimumPaymentEstimateTotal = directDebtRows.fold<double>(
       0,
@@ -174,6 +193,7 @@ class AssetLiabilityPlanningService {
       incomePlans: resolvedIncomePlans,
       accountCashflowSummaries: accountCashflowSummaries,
       transferSuggestions: transferSuggestions,
+      cardBillingReview: cardBillingReview,
       cashLikeTotal: cashLikeTotal,
       securitiesTotal: securitiesTotal,
       positiveAssetTotal: positiveAssetTotal,
@@ -596,6 +616,145 @@ class AssetLiabilityPlanningService {
       'famipay_card' => 'ファミペイカード',
       _ => null,
     };
+  }
+
+  AssetLiabilityCardBillingReviewData _buildCardBillingReview({
+    required List<AssetLiabilityDebtRow> rows,
+    required Map<String, AssetLiabilityAccount> accountsById,
+  }) {
+    final creditCardAccountIds = accountsById.values
+        .where(
+          (account) => account.kind == AssetLiabilityAccountKind.creditCard,
+        )
+        .map((account) => account.id)
+        .toSet();
+    final items = [
+      for (final row in rows)
+        _cardBillingReviewItemFor(
+          row: row,
+          creditCardAccountIds: creditCardAccountIds,
+        ),
+    ]..sort(_compareCardBillingReviewItems);
+
+    final directPaymentItems = items
+        .where((item) => item.directCashflowTarget)
+        .toList(growable: false);
+    final missingBillingAccountItems = items
+        .where((item) => item.hasMissingBillingAccount)
+        .toList(growable: false);
+    final needsReviewItems =
+        items.where((item) => item.needsReview).toList(growable: false);
+    final cardBillingGroups = _cardBillingReviewGroups(items);
+    final doubleCountingRiskItems = _doubleCountingRiskItems(items);
+
+    return AssetLiabilityCardBillingReviewData(
+      directPaymentItems: directPaymentItems,
+      cardBillingGroups: cardBillingGroups,
+      missingBillingAccountItems: missingBillingAccountItems,
+      needsReviewItems: needsReviewItems,
+      doubleCountingRiskItems: doubleCountingRiskItems,
+    );
+  }
+
+  AssetLiabilityCardBillingReviewItem _cardBillingReviewItemFor({
+    required AssetLiabilityDebtRow row,
+    required Set<String> creditCardAccountIds,
+  }) {
+    final alerts = <String>[];
+    if (row.includedInBillingAccount) {
+      final billingAccountId = row.billingAccountId?.trim();
+      if (billingAccountId == null || billingAccountId.isEmpty) {
+        alerts.add(cardBillingReviewMissingBillingAccountAlert);
+      } else if (!creditCardAccountIds.contains(billingAccountId)) {
+        alerts.add(cardBillingReviewRemovedBillingAccountAlert);
+      }
+    }
+    if (row.scheduledPaymentAmount <= 0) {
+      alerts.add(cardBillingReviewZeroAmountAlert);
+    }
+
+    return AssetLiabilityCardBillingReviewItem(
+      accountId: row.id,
+      accountName: row.name,
+      amount: row.scheduledPaymentAmount,
+      paymentDay: row.paymentDay,
+      paymentMethod: row.paymentMethod,
+      paymentMethodLabel: row.includedInBillingAccount
+          ? (row.paymentMethodLabel ?? cardBillingReviewIncludedLabel)
+          : directPaymentLabel,
+      paymentMethodSettingSource: row.paymentMethodSettingSource,
+      billingAccountId: row.billingAccountId,
+      billingAccountName: row.billingAccountName,
+      includedInBillingAccount: row.includedInBillingAccount,
+      directCashflowTarget: row.isDirectCashflowTarget,
+      alerts: alerts,
+    );
+  }
+
+  List<AssetLiabilityCardBillingGroup> _cardBillingReviewGroups(
+    List<AssetLiabilityCardBillingReviewItem> items,
+  ) {
+    final grouped = <String, List<AssetLiabilityCardBillingReviewItem>>{};
+    for (final item in items.where((item) => item.includedInBillingAccount)) {
+      final key = item.billingAccountId?.trim().isNotEmpty ?? false
+          ? item.billingAccountId!.trim()
+          : cardBillingReviewUnsetLabel;
+      grouped
+          .putIfAbsent(key, () => <AssetLiabilityCardBillingReviewItem>[])
+          .add(item);
+    }
+
+    final groups = [
+      for (final entry in grouped.entries)
+        AssetLiabilityCardBillingGroup(
+          billingAccountId:
+              entry.key == cardBillingReviewUnsetLabel ? '' : entry.key,
+          billingAccountName: entry.value.first.billingAccountName ??
+              cardBillingReviewUnsetLabel,
+          items: entry.value..sort(_compareCardBillingReviewItems),
+        ),
+    ];
+    groups.sort((a, b) => a.billingAccountName.compareTo(b.billingAccountName));
+    return groups;
+  }
+
+  List<AssetLiabilityCardBillingReviewItem> _doubleCountingRiskItems(
+    List<AssetLiabilityCardBillingReviewItem> items,
+  ) {
+    final itemsByAccountId =
+        <String, List<AssetLiabilityCardBillingReviewItem>>{};
+    for (final item in items) {
+      itemsByAccountId
+          .putIfAbsent(
+            item.accountId,
+            () => <AssetLiabilityCardBillingReviewItem>[],
+          )
+          .add(item);
+    }
+
+    final result = <AssetLiabilityCardBillingReviewItem>[];
+    for (final accountItems in itemsByAccountId.values) {
+      final hasDirect = accountItems.any((item) => item.directCashflowTarget);
+      final hasCardBilled = accountItems.any(
+        (item) => item.includedInBillingAccount,
+      );
+      if (hasDirect && hasCardBilled) {
+        result.addAll(accountItems);
+      }
+    }
+    result.sort(_compareCardBillingReviewItems);
+    return result;
+  }
+
+  int _compareCardBillingReviewItems(
+    AssetLiabilityCardBillingReviewItem a,
+    AssetLiabilityCardBillingReviewItem b,
+  ) {
+    final day = (a.paymentDay ?? 99).compareTo(b.paymentDay ?? 99);
+    if (day != 0) {
+      return day;
+    }
+    return b.amount.compareTo(a.amount);
   }
 
   List<AssetLiabilityPaymentDayRisk> _buildPaymentDayRisks({

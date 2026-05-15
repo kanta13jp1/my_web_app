@@ -221,6 +221,21 @@ void main() {
 
       final csv = historyService.buildPaymentScheduleCsv(workbook);
 
+      expect(csv, contains('レビュー区分'));
+      expect(csv, contains('確認事項'));
+      expect(csv, contains('二重計上対象外'));
+      expect(
+        csv,
+        contains(AssetLiabilityPlanningService.cardBillingReviewIncludedLabel),
+      );
+      expect(
+        csv,
+        contains(
+          AssetLiabilityPlanningService
+              .cardBillingReviewExcludedFromDirectCashflowLabel,
+        ),
+      );
+
       expect(csv, contains('支払い方法'));
       expect(
         csv,
