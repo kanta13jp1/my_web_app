@@ -58,6 +58,13 @@
       "category": "skip",
       "reason": "Cooldown (= 2026-05-10 GitHub Copilot 採択 / 4 day 経過 / cooldown 残 3 day)。次回 5/17 以降 採択候補は Lovable 第 1 (= 4/28 mobile launch 4 サイクル連続継続)。本日は existing 18 社 WebSearch のみ実施 + AI dev tool 6 強 全社 5 月重大リリース確認 (= Cursor 3.3 / Claude Code redesign / Devin Review REST API / Replit Agent 4 Design Canvas / GitHub Copilot 5/12-5/13 連続 / OpenAI Codex remote-control + MultiAgentV2) を report に集約。",
       "skipped_candidates": ["Lovable (= 第 1 候補 4 サイクル連続継続 / 5/17 以降 採択推奨)", "Bolt.new (= Lovable 類似軸)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)"]
+    },
+    {
+      "date": "2026-05-15",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-05-10 GitHub Copilot 採択 / 5 day 経過 / cooldown 残 2 day)。次回 5/17 以降 採択候補は Lovable 第 1 (= 4/28 mobile launch 5 サイクル連続継続)。本日 5/13-5/15 新規 4 連続シグナル深掘り = (1) GitHub Copilot App technical preview 5/14 (= GitHub-native desktop / fleet workflow 正面競合 🔴) / (2) Notion 3.5 Developer Platform 5/13 (= Workers + Database sync + external agent bring-in Claude/Codex/Decagon 🔴) / (3) GitHub Copilot Team-Level Metrics API 5/14 🟡 / (4) GitHub Copilot Individual plan tightening 5/14 🟠 機会 / 加えて MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf 継続監視。",
+      "skipped_candidates": ["Lovable (= 第 1 候補 5 サイクル連続継続 / 5/17 以降 採択推奨)", "Bolt.new (= Lovable 類似軸)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)"]
     }
   ],
   "_schema_notes": {
