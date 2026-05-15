@@ -120,6 +120,13 @@ f9c7fd37... Seed 投資家リスト    → axis F (= future)
 
 ### 5.2 登録手順 (= user 1 step)
 
+Codex #1 deterministic readiness layer (2026-05-16):
+
+- `video-pipeline-secret-readiness.yml` reports boolean-only presence for the five required secrets.
+- `notebooklm-video-pipeline.yml` runs `check_video_pipeline_secret_readiness.py --require-secrets` before any NotebookLM download, ElevenLabs transcription, YouTube upload, or quota-consuming work.
+- The checker never prints secret values; it records only `present: true/false` and uploads `video-pipeline-secret-readiness-report`.
+- This does not replace the user-owned secret registration step. It changes the old opaque `Input required and not supplied: token` failure into a deterministic readiness report.
+
 ```bash
 # secret 5 件登録 (= user local PC 上)
 gh secret set GITHUB_PAT --body "ghp_..."
