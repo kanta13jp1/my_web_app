@@ -65,6 +65,13 @@
       "category": "skip",
       "reason": "Cooldown (= 2026-05-10 GitHub Copilot 採択 / 5 day 経過 / cooldown 残 2 day)。次回 5/17 以降 採択候補は Lovable 第 1 (= 4/28 mobile launch 5 サイクル連続継続)。本日 5/13-5/15 新規 4 連続シグナル深掘り = (1) GitHub Copilot App technical preview 5/14 (= GitHub-native desktop / fleet workflow 正面競合 🔴) / (2) Notion 3.5 Developer Platform 5/13 (= Workers + Database sync + external agent bring-in Claude/Codex/Decagon 🔴) / (3) GitHub Copilot Team-Level Metrics API 5/14 🟡 / (4) GitHub Copilot Individual plan tightening 5/14 🟠 機会 / 加えて MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf 継続監視。",
       "skipped_candidates": ["Lovable (= 第 1 候補 5 サイクル連続継続 / 5/17 以降 採択推奨)", "Bolt.new (= Lovable 類似軸)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)"]
+    },
+    {
+      "date": "2026-05-16",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-05-10 GitHub Copilot 採択 / 6 day 経過 / cooldown 残 1 day / 5/17 解禁)。次回 5/17 即採択推奨 = Lovable 第 1 (= 4/28 mobile launch 6 サイクル連続継続 / これ以上の delay は監視 lag)。本日 5/15-5/16 新規 2 micro-signal = (1) GitHub Copilot CLI v1.0.3 5/15 (= multi-account hostname flag patch 🟡) / (2) Claude Code v2.1.142 5/15-5/16 (= 2.1.141 fix-then-regress フォローアップ patch / 自社 Win Claude #132 fleet 中核 upgrade 候補 🟡 dogfood 機会) + 継続観察 2 件 = MoneyForward AI Cowork 7月 GA + Replit Private Publishing Core/Starter 拡張。3 連続 skip (5/14 / 5/15 / 5/16) で 5/17 Lovable 採択は最優先。",
+      "skipped_candidates": ["Lovable (= 第 1 候補 6 サイクル連続継続 / 5/17 即採択推奨 / これ以上 delay は監視 lag)", "Bolt.new (= Lovable 類似軸)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)"]
     }
   ],
   "_schema_notes": {
