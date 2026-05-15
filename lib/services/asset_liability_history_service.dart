@@ -176,8 +176,17 @@ class AssetLiabilityHistoryService {
 
   String buildPaymentScheduleCsv(AssetLiabilityWorkbook workbook) {
     final rows = workbook.cashflowRows.where((row) => row.isPayment).toList();
+    final reviewItemsById = <String, AssetLiabilityCardBillingReviewItem>{
+      for (final item in workbook.cardBillingReview.directPaymentItems)
+        item.accountId: item,
+      for (final group in workbook.cardBillingReview.cardBillingGroups)
+        for (final item in group.items) item.accountId: item,
+    };
     return _csv([
       const <Object?>[
+        'レビュー区分',
+        '確認事項',
+        '二重計上対象外',
         '\u8a2d\u5b9a\u5143',
         '請求先カード',
         '日付',
@@ -194,6 +203,13 @@ class AssetLiabilityHistoryService {
       ],
       for (final row in rows)
         <Object?>[
+          _paymentReviewCategoryLabel(reviewItemsById[row.accountId]),
+          _paymentReviewAlertLabel(reviewItemsById[row.accountId]),
+          row.includedInBillingAccount
+              ? AssetLiabilityPlanningService
+                  .cardBillingReviewExcludedFromDirectCashflowLabel
+              : AssetLiabilityPlanningService
+                  .cardBillingReviewDirectCashflowTargetLabel,
           AssetLiabilityPlanningService.paymentMethodSettingSourceLabel(
             row.paymentMethodSettingSource,
           ),
@@ -215,6 +231,24 @@ class AssetLiabilityHistoryService {
           row.cashAfterPayment,
         ],
     ]);
+  }
+
+  String _paymentReviewCategoryLabel(
+    AssetLiabilityCardBillingReviewItem? item,
+  ) {
+    if (item == null) {
+      return '';
+    }
+    return item.includedInBillingAccount
+        ? AssetLiabilityPlanningService.cardBillingReviewIncludedLabel
+        : AssetLiabilityPlanningService.cardBillingReviewDirectLabel;
+  }
+
+  String _paymentReviewAlertLabel(AssetLiabilityCardBillingReviewItem? item) {
+    if (item == null) {
+      return '';
+    }
+    return item.alerts.isEmpty ? '問題なし' : item.alerts.join(' / ');
   }
 
   String buildIncomePlansCsv(AssetLiabilityWorkbook workbook) {
