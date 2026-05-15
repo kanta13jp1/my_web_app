@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class UserManualPage extends StatelessWidget {
   const UserManualPage({super.key});
@@ -83,7 +83,7 @@ class UserManualPage extends StatelessWidget {
             'バージョンをタップ →「このバージョンに復元」で以前の内容に戻せます。\n\n'
             '【公開メモへの変換】\n'
             'エディタ右上の「🌐（公開）」アイコンボタンをタップ → 確認ダイアログが表示されます。\n'
-            '「公開する」をタップすると公開リンク（/public-memo?id=XXX）が生成されます。\n'
+            '「公開する」をタップすると公開リンク（例: /public-memo?id=abc12345）が生成されます。\n'
             'X(Twitter)などで共有するとタイトルと要約がカードで表示されます（OGP対応）。\n'
             '※ タイトルを入力した状態でないと公開できません。\n\n'
             '【カンバンボード】\n'
