@@ -1428,6 +1428,10 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           local.cardBillingAccountIds,
           remote.cardBillingAccountIds,
         ) &&
+        _cardStatementLinesEqual(
+          local.cardStatementLines,
+          remote.cardStatementLines,
+        ) &&
         _incomePlansEqual(local.incomePlans, remote.incomePlans);
   }
 
@@ -1483,6 +1487,32 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.destinationAccountId != right.destinationAccountId ||
           left.destinationAccountName != right.destinationAccountName ||
           left.received != right.received) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _cardStatementLinesEqual(
+    List<AssetLiabilityCardStatementLine> a,
+    List<AssetLiabilityCardStatementLine> b,
+  ) {
+    final first = List<AssetLiabilityCardStatementLine>.from(a)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    final second = List<AssetLiabilityCardStatementLine>.from(b)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    if (first.length != second.length) {
+      return false;
+    }
+    for (var i = 0; i < first.length; i++) {
+      final left = first[i];
+      final right = second[i];
+      if (left.id != right.id ||
+          left.billingAccountId != right.billingAccountId ||
+          left.billingAccountName != right.billingAccountName ||
+          left.postedAt != right.postedAt ||
+          left.description != right.description ||
+          left.amount != right.amount) {
         return false;
       }
     }
@@ -1650,6 +1680,7 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
         'paid_account_ids': row['paid_account_ids'],
         'payment_source_account_ids': row['payment_source_account_ids'],
         'card_billing_account_ids': row['card_billing_account_ids'],
+        'card_statement_lines': row['card_statement_lines'],
       },
     );
     await _upsertPayloadRow(

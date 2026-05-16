@@ -14,6 +14,7 @@ class AssetLiabilityMonthlyState {
   final Set<String> paidAccountNames;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
+  final List<AssetLiabilityCardStatementLine> cardStatementLines;
   final List<AssetLiabilityIncomePlan> incomePlans;
 
   const AssetLiabilityMonthlyState({
@@ -24,6 +25,7 @@ class AssetLiabilityMonthlyState {
     this.paidAccountNames = const <String>{},
     this.paymentSourceAccountIds = const <String, String>{},
     this.cardBillingAccountIds = const <String, String>{},
+    this.cardStatementLines = const <AssetLiabilityCardStatementLine>[],
     this.incomePlans = const <AssetLiabilityIncomePlan>[],
   });
 
@@ -35,6 +37,7 @@ class AssetLiabilityMonthlyState {
       paidAccountNames.isEmpty &&
       paymentSourceAccountIds.isEmpty &&
       cardBillingAccountIds.isEmpty &&
+      cardStatementLines.isEmpty &&
       incomePlans.isEmpty;
 }
 
@@ -52,6 +55,8 @@ class AssetLiabilityMonthlyStateStore {
       'asset_liability_payment_source_accounts_v1';
   static const String cardBillingPrefsKey =
       'asset_liability_card_billing_accounts_v1';
+  static const String cardStatementPrefsKey =
+      'asset_liability_card_statement_lines_v1';
   static const String incomePrefsKey = 'asset_liability_income_plans_v1';
   static const String defaultPaymentSourcePrefsKey =
       'asset_liability_default_payment_source_accounts_v1';
@@ -97,6 +102,10 @@ class AssetLiabilityMonthlyStateStore {
       ),
       cardBillingAccountIds: cardBillingAccountsForMonth(
         prefs.getString(cardBillingPrefsKey),
+        monthKey,
+      ),
+      cardStatementLines: cardStatementLinesForMonth(
+        prefs.getString(cardStatementPrefsKey),
         monthKey,
       ),
       incomePlans: incomePlansForMonth(
@@ -200,6 +209,20 @@ class AssetLiabilityMonthlyStateStore {
     await prefs.setString(
       cardBillingPrefsKey,
       jsonEncode(allCardBillingAccounts),
+    );
+
+    final allCardStatementLines = decodeCardStatementLines(
+      prefs.getString(cardStatementPrefsKey),
+    );
+    if (state.cardStatementLines.isEmpty) {
+      allCardStatementLines.remove(monthKey);
+    } else {
+      allCardStatementLines[monthKey] =
+          List<AssetLiabilityCardStatementLine>.from(state.cardStatementLines);
+    }
+    await prefs.setString(
+      cardStatementPrefsKey,
+      jsonEncode(_encodeCardStatementLines(allCardStatementLines)),
     );
 
     final allIncomePlans = decodeIncomePlans(prefs.getString(incomePrefsKey));
@@ -525,6 +548,66 @@ class AssetLiabilityMonthlyStateStore {
     return decodePaymentSourceAccounts(raw);
   }
 
+  static Map<String, List<AssetLiabilityCardStatementLine>>
+      decodeCardStatementLines(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return <String, List<AssetLiabilityCardStatementLine>>{};
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      return <String, List<AssetLiabilityCardStatementLine>>{};
+    }
+
+    return decoded.map<String, List<AssetLiabilityCardStatementLine>>((
+      month,
+      values,
+    ) {
+      final monthKey = month.toString();
+      final lines = <AssetLiabilityCardStatementLine>[];
+      if (values is Iterable) {
+        for (final rawLine in values) {
+          if (rawLine is! Map) {
+            continue;
+          }
+          final id = rawLine['id']?.toString().trim();
+          final billingAccountId =
+              rawLine['billingAccountId']?.toString().trim() ??
+                  rawLine['billing_account_id']?.toString().trim();
+          final description = rawLine['description']?.toString().trim();
+          final amount = _parseNonNullDouble(rawLine['amount']);
+          final postedAtText = rawLine['postedAt']?.toString() ??
+              rawLine['posted_at']?.toString();
+          final postedAt =
+              postedAtText == null ? null : DateTime.tryParse(postedAtText);
+          if (id == null ||
+              id.isEmpty ||
+              billingAccountId == null ||
+              billingAccountId.isEmpty ||
+              description == null ||
+              description.isEmpty ||
+              amount == null) {
+            continue;
+          }
+          lines.add(
+            AssetLiabilityCardStatementLine(
+              id: id,
+              billingAccountId: billingAccountId,
+              billingAccountName: _cleanNullableString(
+                rawLine['billingAccountName'] ??
+                    rawLine['billing_account_name'],
+              ),
+              postedAt: postedAt,
+              description: description,
+              amount: amount,
+            ),
+          );
+        }
+      }
+      lines.sort(_compareCardStatementLines);
+      return MapEntry(monthKey, lines);
+    });
+  }
+
   static Map<String, List<AssetLiabilityIncomePlan>> decodeIncomePlans(
     String? raw,
   ) {
@@ -804,6 +887,16 @@ class AssetLiabilityMonthlyStateStore {
     );
   }
 
+  static List<AssetLiabilityCardStatementLine> cardStatementLinesForMonth(
+    String? raw,
+    String monthKey,
+  ) {
+    return List<AssetLiabilityCardStatementLine>.from(
+      decodeCardStatementLines(raw)[monthKey] ??
+          const <AssetLiabilityCardStatementLine>[],
+    );
+  }
+
   static List<AssetLiabilityIncomePlan> incomePlansForMonth(
     String? raw,
     String monthKey,
@@ -872,6 +965,18 @@ class AssetLiabilityMonthlyStateStore {
       migratedCardBillingAccounts[liabilityId] = cardId;
     }
 
+    final migratedCardStatementLines = <AssetLiabilityCardStatementLine>[
+      for (final line in state.cardStatementLines)
+        line.copyWith(
+          billingAccountId: legacyKeyToAccountId[line.billingAccountId] ??
+              line.billingAccountId,
+          billingAccountName:
+              legacyKeyToAccountId.containsKey(line.billingAccountId)
+                  ? null
+                  : line.billingAccountName,
+        ),
+    ];
+
     return AssetLiabilityMonthlyState(
       paymentOverrides: migratedPayments,
       actualPaymentAmounts: migratedActualPayments,
@@ -880,6 +985,7 @@ class AssetLiabilityMonthlyStateStore {
       paidAccountNames: migratedPaidAccounts,
       paymentSourceAccountIds: migratedPaymentSources,
       cardBillingAccountIds: migratedCardBillingAccounts,
+      cardStatementLines: migratedCardStatementLines,
       incomePlans: state.incomePlans,
     );
   }
@@ -969,6 +1075,49 @@ class AssetLiabilityMonthlyStateStore {
           },
       ]);
     });
+  }
+
+  static Map<String, List<Map<String, Object?>>> _encodeCardStatementLines(
+    Map<String, List<AssetLiabilityCardStatementLine>> source,
+  ) {
+    return source.map((month, lines) {
+      final sorted = List<AssetLiabilityCardStatementLine>.from(lines)
+        ..sort(_compareCardStatementLines);
+      return MapEntry(month, [
+        for (final line in sorted)
+          <String, Object?>{
+            'id': line.id,
+            'billingAccountId': line.billingAccountId,
+            'billingAccountName': line.billingAccountName,
+            'postedAt': line.postedAt?.toIso8601String(),
+            'description': line.description,
+            'amount': line.amount,
+          },
+      ]);
+    });
+  }
+
+  static int _compareCardStatementLines(
+    AssetLiabilityCardStatementLine a,
+    AssetLiabilityCardStatementLine b,
+  ) {
+    final billing = a.billingAccountId.compareTo(b.billingAccountId);
+    if (billing != 0) {
+      return billing;
+    }
+    final dateA = a.postedAt;
+    final dateB = b.postedAt;
+    if (dateA != null && dateB != null) {
+      final date = dateA.compareTo(dateB);
+      if (date != 0) {
+        return date;
+      }
+    } else if (dateA != null) {
+      return -1;
+    } else if (dateB != null) {
+      return 1;
+    }
+    return a.description.compareTo(b.description);
   }
 
   static Map<String, String> _cleanStringMap(Map<String, String> source) {

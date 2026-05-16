@@ -36,6 +36,16 @@ class AssetLiabilityPlanningService {
   static const String cardBillingReviewRemovedBillingAccountAlert =
       '請求先カードが見つかりません';
   static const String cardBillingReviewZeroAmountAlert = '金額が0円のため確認してください';
+  static const String cardStatementMissingImportAlert =
+      'card statement detail import is missing';
+  static const String cardStatementBillingAccountMissingAlert =
+      'billing card account is missing';
+  static const String cardStatementAmountMismatchAlert =
+      'card statement total does not match billed amount';
+  static const String cardStatementConfiguredMismatchAlert =
+      'configured card-billed detail total does not match billed amount';
+  static const String cardStatementImportedConfiguredMismatchAlert =
+      'imported statement total does not match configured detail total';
   static const String auCardBillingNotice =
       'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
@@ -59,6 +69,8 @@ class AssetLiabilityPlanningService {
     Map<String, String> cardBillingAccountIds = const <String, String>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
+    List<AssetLiabilityCardStatementLine> cardStatementLines =
+        const <AssetLiabilityCardStatementLine>[],
     bool includeDefaultFixedPayments = false,
   }) {
     final shouldIncludeDefaultKddiProvider =
@@ -161,6 +173,12 @@ class AssetLiabilityPlanningService {
       rows: debtMasterRows,
       accountsById: accountsById,
     );
+    final cardStatementReconciliation = _buildCardStatementReconciliation(
+      rows: debtMasterRows,
+      cardBillingGroups: cardBillingReview.cardBillingGroups,
+      cardStatementLines: cardStatementLines,
+      accountsById: accountsById,
+    );
 
     final monthlyMinimumPaymentEstimateTotal = directDebtRows.fold<double>(
       0,
@@ -208,6 +226,7 @@ class AssetLiabilityPlanningService {
       accountCashflowSummaries: accountCashflowSummaries,
       transferSuggestions: transferSuggestions,
       cardBillingReview: cardBillingReview,
+      cardStatementReconciliation: cardStatementReconciliation,
       cashLikeTotal: cashLikeTotal,
       securitiesTotal: securitiesTotal,
       positiveAssetTotal: positiveAssetTotal,
@@ -796,6 +815,136 @@ class AssetLiabilityPlanningService {
     }
     result.sort(_compareCardBillingReviewItems);
     return result;
+  }
+
+  AssetLiabilityCardStatementReconciliationData
+      _buildCardStatementReconciliation({
+    required List<AssetLiabilityDebtRow> rows,
+    required List<AssetLiabilityCardBillingGroup> cardBillingGroups,
+    required List<AssetLiabilityCardStatementLine> cardStatementLines,
+    required Map<String, AssetLiabilityAccount> accountsById,
+  }) {
+    final rowsById = <String, AssetLiabilityDebtRow>{
+      for (final row in rows) row.id: row,
+    };
+    final groupsByBillingId = <String, AssetLiabilityCardBillingGroup>{
+      for (final group in cardBillingGroups)
+        if (group.billingAccountId.trim().isNotEmpty)
+          group.billingAccountId: group,
+    };
+    final linesByBillingId = <String, List<AssetLiabilityCardStatementLine>>{};
+    final unmatchedLines = <AssetLiabilityCardStatementLine>[];
+
+    for (final line in cardStatementLines) {
+      final billingAccountId = line.billingAccountId.trim();
+      if (billingAccountId.isEmpty) {
+        unmatchedLines.add(line);
+        continue;
+      }
+      final billingAccountName = line.billingAccountName ??
+          rowsById[billingAccountId]?.name ??
+          accountsById[billingAccountId]?.name;
+      final resolvedLine = line.copyWith(
+        billingAccountId: billingAccountId,
+        billingAccountName: billingAccountName,
+      );
+      linesByBillingId
+          .putIfAbsent(
+            billingAccountId,
+            () => <AssetLiabilityCardStatementLine>[],
+          )
+          .add(resolvedLine);
+    }
+
+    final billingAccountIds =
+        <String>{...groupsByBillingId.keys, ...linesByBillingId.keys}.toList()
+          ..sort((a, b) {
+            final nameA = rowsById[a]?.name ?? accountsById[a]?.name ?? a;
+            final nameB = rowsById[b]?.name ?? accountsById[b]?.name ?? b;
+            return nameA.compareTo(nameB);
+          });
+
+    final reconciliationGroups =
+        <AssetLiabilityCardStatementReconciliationGroup>[];
+    for (final billingAccountId in billingAccountIds) {
+      final billingRow = rowsById[billingAccountId];
+      final billingAccountName = billingRow?.name ??
+          accountsById[billingAccountId]?.name ??
+          groupsByBillingId[billingAccountId]?.billingAccountName ??
+          billingAccountId;
+      final group = groupsByBillingId[billingAccountId];
+      final lines = List<AssetLiabilityCardStatementLine>.from(
+        linesByBillingId[billingAccountId] ??
+            const <AssetLiabilityCardStatementLine>[],
+      )..sort(_compareCardStatementLines);
+      final billedAmount = billingRow?.scheduledPaymentAmount ?? 0;
+      final configuredDetailTotal = group?.totalAmount ?? 0;
+      final statementLineTotal = lines.fold<double>(
+        0,
+        (sum, line) => sum + line.amount,
+      );
+      final alerts = <String>[];
+
+      if (billingRow == null) {
+        alerts.add(cardStatementBillingAccountMissingAlert);
+      }
+      if (lines.isEmpty && group != null) {
+        alerts.add(cardStatementMissingImportAlert);
+      }
+      if (lines.isNotEmpty && _moneyDiffers(statementLineTotal, billedAmount)) {
+        alerts.add(cardStatementAmountMismatchAlert);
+      }
+      if (group != null &&
+          billingRow != null &&
+          _moneyDiffers(configuredDetailTotal, billedAmount)) {
+        alerts.add(cardStatementConfiguredMismatchAlert);
+      }
+      if (lines.isNotEmpty &&
+          group != null &&
+          _moneyDiffers(statementLineTotal, configuredDetailTotal)) {
+        alerts.add(cardStatementImportedConfiguredMismatchAlert);
+      }
+
+      reconciliationGroups.add(
+        AssetLiabilityCardStatementReconciliationGroup(
+          billingAccountId: billingAccountId,
+          billingAccountName: billingAccountName,
+          billedAmount: billedAmount,
+          configuredDetailTotal: configuredDetailTotal,
+          statementLineTotal: statementLineTotal,
+          configuredItems:
+              group?.items ?? const <AssetLiabilityCardBillingReviewItem>[],
+          statementLines: lines,
+          alerts: alerts,
+        ),
+      );
+    }
+
+    return AssetLiabilityCardStatementReconciliationData(
+      groups: reconciliationGroups,
+      unmatchedStatementLines: unmatchedLines,
+    );
+  }
+
+  bool _moneyDiffers(double a, double b) => (a - b).abs() >= 0.5;
+
+  int _compareCardStatementLines(
+    AssetLiabilityCardStatementLine a,
+    AssetLiabilityCardStatementLine b,
+  ) {
+    final dateA = a.postedAt;
+    final dateB = b.postedAt;
+    if (dateA != null && dateB != null) {
+      final date = dateA.compareTo(dateB);
+      if (date != 0) {
+        return date;
+      }
+    } else if (dateA != null) {
+      return -1;
+    } else if (dateB != null) {
+      return 1;
+    }
+    return a.description.compareTo(b.description);
   }
 
   int _compareCardBillingReviewItems(

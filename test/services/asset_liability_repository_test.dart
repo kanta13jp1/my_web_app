@@ -23,9 +23,7 @@ void main() {
             'mobit': 70000,
             'kddi_provider': 5764,
           },
-          actualPaymentAmounts: const <String, double>{
-            'kddi_provider': 5764,
-          },
+          actualPaymentAmounts: const <String, double>{'kddi_provider': 5764},
           paymentDifferenceReasons: const <String, String>{
             'kddi_provider': 'confirmed bill',
           },
@@ -36,6 +34,16 @@ void main() {
           cardBillingAccountIds: const <String, String>{
             'kddi_provider': 'paypay_card',
           },
+          cardStatementLines: <AssetLiabilityCardStatementLine>[
+            AssetLiabilityCardStatementLine(
+              id: 'line_1',
+              billingAccountId: 'paypay_card',
+              billingAccountName: 'PayPay card',
+              postedAt: DateTime(2026, 5, 12),
+              description: 'KDDI',
+              amount: 5764,
+            ),
+          ],
           incomePlans: <AssetLiabilityIncomePlan>[
             AssetLiabilityIncomePlan(
               id: 'salary',
@@ -62,6 +70,11 @@ void main() {
       expect(restored.paidAccountNames, contains('kddi_provider'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
       expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
+      expect(
+        restored.cardStatementLines.single.billingAccountId,
+        'paypay_card',
+      );
+      expect(restored.cardStatementLines.single.amount, 5764);
       expect(restored.incomePlans.single.name, 'Salary');
       expect(restored.incomePlans.single.received, isFalse);
     });
@@ -1128,6 +1141,16 @@ void main() {
         cardBillingAccountIds: const <String, String>{
           'kddi_provider': 'paypay_card',
         },
+        cardStatementLines: <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_1',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPay card',
+            postedAt: DateTime(2026, 5, 12),
+            description: 'KDDI',
+            amount: 5764,
+          ),
+        ],
         incomePlans: <AssetLiabilityIncomePlan>[
           AssetLiabilityIncomePlan(
             id: 'salary',
@@ -1162,6 +1185,8 @@ void main() {
       expect(restored.paidAccountNames, contains('kddi_provider'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
       expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
+      expect(restored.cardStatementLines.single.description, 'KDDI');
+      expect(restored.cardStatementLines.single.amount, 5764);
       expect(restored.incomePlans.single.received, isTrue);
     });
 
@@ -1551,6 +1576,16 @@ AssetLiabilityMonthlyState _sampleMonthlyState() {
     cardBillingAccountIds: const <String, String>{
       'kddi_provider': 'paypay_card',
     },
+    cardStatementLines: <AssetLiabilityCardStatementLine>[
+      AssetLiabilityCardStatementLine(
+        id: 'line_1',
+        billingAccountId: 'paypay_card',
+        billingAccountName: 'PayPay card',
+        postedAt: DateTime(2026, 5, 12),
+        description: 'KDDI',
+        amount: 5764,
+      ),
+    ],
     incomePlans: <AssetLiabilityIncomePlan>[
       AssetLiabilityIncomePlan(
         id: 'salary',

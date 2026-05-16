@@ -27,6 +27,16 @@ void main() {
             'mobit': 'custom_bank',
           },
           cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
+          cardStatementLines: <AssetLiabilityCardStatementLine>[
+            AssetLiabilityCardStatementLine(
+              id: 'line_1',
+              billingAccountId: 'aupay_card',
+              billingAccountName: 'auPay card',
+              postedAt: DateTime(2026, 5, 10),
+              description: 'mobile',
+              amount: 6200,
+            ),
+          ],
           incomePlans: <AssetLiabilityIncomePlan>[
             AssetLiabilityIncomePlan(
               id: 'income_salary',
@@ -51,6 +61,8 @@ void main() {
       expect(loadedMay.annualRateOverrides['mobit'], 0.175);
       expect(loadedMay.paymentSourceAccountIds['mobit'], 'custom_bank');
       expect(loadedMay.cardBillingAccountIds['au'], 'aupay_card');
+      expect(loadedMay.cardStatementLines.single.amount, 6200);
+      expect(loadedMay.cardStatementLines.single.description, 'mobile');
       expect(loadedMay.incomePlans.single.name, 'Salary');
       expect(loadedJune.paymentOverrides, isEmpty);
       expect(loadedJune.actualPaymentAmounts, isEmpty);
@@ -59,6 +71,7 @@ void main() {
       expect(loadedJune.paidAccountNames, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
+      expect(loadedJune.cardStatementLines, isEmpty);
       expect(loadedJune.incomePlans, isEmpty);
     });
 
@@ -244,9 +257,7 @@ void main() {
         state: const AssetLiabilityMonthlyState(
           paymentOverrides: <String, double>{'mobit': 70000},
           actualPaymentAmounts: <String, double>{'mobit': 71000},
-          paymentDifferenceReasons: <String, String>{
-            'mobit': 'fee adjustment',
-          },
+          paymentDifferenceReasons: <String, String>{'mobit': 'fee adjustment'},
           paidAccountNames: <String>{'mobit'},
         ),
       );

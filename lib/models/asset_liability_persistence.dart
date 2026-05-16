@@ -83,6 +83,7 @@ class AssetLiabilityMonthlyStatePayload {
   final Set<String> paidAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
+  final List<AssetLiabilityCardStatementLine> cardStatementLines;
   final List<AssetLiabilityIncomePlan> incomePlans;
 
   const AssetLiabilityMonthlyStatePayload({
@@ -94,6 +95,7 @@ class AssetLiabilityMonthlyStatePayload {
     required this.paidAccountIds,
     required this.paymentSourceAccountIds,
     required this.cardBillingAccountIds,
+    required this.cardStatementLines,
     required this.incomePlans,
   });
 
@@ -119,6 +121,9 @@ class AssetLiabilityMonthlyStatePayload {
       ),
       cardBillingAccountIds: Map<String, String>.from(
         state.cardBillingAccountIds,
+      ),
+      cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
+        state.cardStatementLines,
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(state.incomePlans),
     );
@@ -154,6 +159,10 @@ class AssetLiabilityMonthlyStatePayload {
       cardBillingAccountIds: _readStringMap(json, 'card_billing_account_ids') ??
           _readStringMap(json, 'cardBillingAccountIds') ??
           const <String, String>{},
+      cardStatementLines:
+          _readCardStatementLines(json, 'card_statement_lines') ??
+              _readCardStatementLines(json, 'cardStatementLines') ??
+              const <AssetLiabilityCardStatementLine>[],
       incomePlans: _readIncomePlans(json, 'income_plans') ??
           _readIncomePlans(json, 'incomePlans') ??
           const <AssetLiabilityIncomePlan>[],
@@ -173,6 +182,9 @@ class AssetLiabilityMonthlyStatePayload {
         paymentSourceAccountIds,
       ),
       cardBillingAccountIds: Map<String, String>.from(cardBillingAccountIds),
+      cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
+        cardStatementLines,
+      ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(incomePlans),
     );
   }
@@ -186,9 +198,7 @@ class AssetLiabilityMonthlyStatePayload {
       'user_id': userId,
       'month_key': monthKey,
       'payment_overrides': Map<String, double>.from(paymentOverrides),
-      'actual_payment_amounts': Map<String, double>.from(
-        actualPaymentAmounts,
-      ),
+      'actual_payment_amounts': Map<String, double>.from(actualPaymentAmounts),
       'payment_difference_reasons': Map<String, String>.from(
         paymentDifferenceReasons,
       ),
@@ -200,6 +210,9 @@ class AssetLiabilityMonthlyStatePayload {
       'card_billing_account_ids': Map<String, String>.from(
         cardBillingAccountIds,
       ),
+      'card_statement_lines': [
+        for (final line in cardStatementLines) _encodeCardStatementLine(line),
+      ],
       'income_plans': [for (final plan in incomePlans) _encodeIncomePlan(plan)],
       if (timestamp != null) 'updated_at': timestamp,
     };
@@ -366,6 +379,19 @@ Map<String, Object?> _encodeRecurringIncomeTemplate(
   };
 }
 
+Map<String, Object?> _encodeCardStatementLine(
+  AssetLiabilityCardStatementLine line,
+) {
+  return <String, Object?>{
+    'id': line.id,
+    'billingAccountId': line.billingAccountId,
+    'billingAccountName': line.billingAccountName,
+    'postedAt': line.postedAt == null ? null : _dateOnly(line.postedAt!),
+    'description': line.description,
+    'amount': line.amount,
+  };
+}
+
 AssetLiabilityIncomePlan? _decodeIncomePlan(Object? source) {
   if (source is! Map) {
     return null;
@@ -420,6 +446,36 @@ AssetLiabilityRecurringIncomeTemplate? _decodeRecurringIncomeTemplate(
   );
 }
 
+AssetLiabilityCardStatementLine? _decodeCardStatementLine(Object? source) {
+  if (source is! Map) {
+    return null;
+  }
+  final id = _cleanString(source['id']);
+  final billingAccountId = _cleanString(source['billingAccountId']) ??
+      _cleanString(source['billing_account_id']);
+  final description = _cleanString(source['description']);
+  final amount = _parseDouble(source['amount']);
+  final postedAtText =
+      _cleanString(source['postedAt']) ?? _cleanString(source['posted_at']);
+  final postedAt =
+      postedAtText == null ? null : DateTime.tryParse(postedAtText);
+  if (id == null ||
+      billingAccountId == null ||
+      description == null ||
+      amount == null) {
+    return null;
+  }
+  return AssetLiabilityCardStatementLine(
+    id: id,
+    billingAccountId: billingAccountId,
+    billingAccountName: _cleanString(source['billingAccountName']) ??
+        _cleanString(source['billing_account_name']),
+    postedAt: postedAt,
+    description: description,
+    amount: amount,
+  );
+}
+
 List<AssetLiabilityIncomePlan>? _readIncomePlans(
   Map<String, Object?> json,
   String key,
@@ -462,6 +518,43 @@ List<AssetLiabilityRecurringIncomeTemplate>? _readRecurringIncomeTemplates(
     return a.name.compareTo(b.name);
   });
   return templates;
+}
+
+List<AssetLiabilityCardStatementLine>? _readCardStatementLines(
+  Map<String, Object?> json,
+  String key,
+) {
+  final source = json[key];
+  if (source is! Iterable) {
+    return null;
+  }
+  final lines = <AssetLiabilityCardStatementLine>[];
+  for (final value in source) {
+    final line = _decodeCardStatementLine(value);
+    if (line != null) {
+      lines.add(line);
+    }
+  }
+  lines.sort((a, b) {
+    final billing = a.billingAccountId.compareTo(b.billingAccountId);
+    if (billing != 0) {
+      return billing;
+    }
+    final dateA = a.postedAt;
+    final dateB = b.postedAt;
+    if (dateA != null && dateB != null) {
+      final date = dateA.compareTo(dateB);
+      if (date != 0) {
+        return date;
+      }
+    } else if (dateA != null) {
+      return -1;
+    } else if (dateB != null) {
+      return 1;
+    }
+    return a.description.compareTo(b.description);
+  });
+  return lines;
 }
 
 Map<String, double>? _readDoubleMap(Map<String, Object?> json, String key) {

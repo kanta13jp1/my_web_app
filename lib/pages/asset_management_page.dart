@@ -18,6 +18,7 @@ import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
+import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
 import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
@@ -115,6 +116,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Set<String> _monthlyPaidAccountNames = <String>{};
   Map<String, String> _paymentSourceAccountIds = <String, String>{};
   Map<String, String> _cardBillingAccountIds = <String, String>{};
+  List<AssetLiabilityCardStatementLine> _cardStatementLines =
+      <AssetLiabilityCardStatementLine>[];
   Map<String, String> _defaultPaymentSourceAccountIds = <String, String>{};
   Map<String, String> _defaultCardBillingAccountIds = <String, String>{};
   final Map<String, _CardBillingSaveScope> _cardBillingSaveScopes =
@@ -146,6 +149,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <String, TextEditingController>{};
   final Map<String, TextEditingController> _annualRateControllers =
       <String, TextEditingController>{};
+  final TextEditingController _cardStatementImportController =
+      TextEditingController();
+  String? _selectedCardStatementBillingAccountId;
+  String? _cardStatementImportMessage;
 
   // --- グラフデータ ---
   List<LineChartBarData> _lineChartBars = [];
@@ -196,6 +203,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   late final AssetLiabilityRepository _assetLiabilityRepository;
   final AssetLiabilityPlanningService _assetLiabilityPlanner =
       const AssetLiabilityPlanningService();
+  final AssetLiabilityCardStatementImportService _cardStatementImportService =
+      const AssetLiabilityCardStatementImportService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
       const AssetLiabilityHistoryService();
   final AssetManagementInsightService _assetManagementInsightService =
@@ -291,6 +300,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _paymentDifferenceReasonControllers.forEach(
       (_, controller) => controller.dispose(),
     );
+    _annualRateControllers.forEach((_, controller) => controller.dispose());
+    _cardStatementImportController.dispose();
     _annualRateControllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
     _flowAmountController.dispose();
@@ -862,6 +873,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _cardBillingAccountIds = Map<String, String>.from(
           state.cardBillingAccountIds,
         );
+        _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
+          state.cardStatementLines,
+        );
         _defaultPaymentSourceAccountIds = Map<String, String>.from(
           defaultSources,
         );
@@ -919,6 +933,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _paymentSourceAccountIds,
         ),
         cardBillingAccountIds: Map<String, String>.from(_cardBillingAccountIds),
+        cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
+          _cardStatementLines,
+        ),
         incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
       ),
     );
@@ -1203,6 +1220,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'asset_liability_payment_schedule_${monthKey}_$stamp.csv',
     );
     downloadCsvFile(
+      bundle.cardStatementCsv,
+      'asset_liability_card_statement_${monthKey}_$stamp.csv',
+    );
+    downloadCsvFile(
       bundle.incomePlansCsv,
       'asset_liability_income_plans_${monthKey}_$stamp.csv',
     );
@@ -1212,7 +1233,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('資産/負債ボードのCSV 4種類を出力しました')));
+    ).showSnackBar(
+      const SnackBar(
+        content: Text('Asset liability CSV bundle exported (5 files)'),
+      ),
+    );
   }
 
   void _scheduleAssetLiabilityStateIdMigration(
@@ -1236,6 +1261,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _paymentSourceAccountIds,
         ),
         cardBillingAccountIds: Map<String, String>.from(_cardBillingAccountIds),
+        cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
+          _cardStatementLines,
+        ),
         incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
       ),
       legacyKeyToAccountId: legacyKeyToAccountId,
@@ -1271,6 +1299,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _sameStringMap(
           _defaultCardBillingAccountIds,
           migratedDefaultCardBillingAccounts,
+        ) &&
+        _sameCardStatementLines(
+          _cardStatementLines,
+          migrated.cardStatementLines,
         )) {
       return;
     }
@@ -1296,6 +1328,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _cardBillingAccountIds = Map<String, String>.from(
           migrated.cardBillingAccountIds,
+        );
+        _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
+          migrated.cardStatementLines,
         );
         _defaultPaymentSourceAccountIds = Map<String, String>.from(
           migratedDefaultSources,
@@ -1349,6 +1384,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     for (final entry in a.entries) {
       if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _sameCardStatementLines(
+    List<AssetLiabilityCardStatementLine> a,
+    List<AssetLiabilityCardStatementLine> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (var i = 0; i < a.length; i++) {
+      final left = a[i];
+      final right = b[i];
+      if (left.id != right.id ||
+          left.billingAccountId != right.billingAccountId ||
+          left.billingAccountName != right.billingAccountName ||
+          left.postedAt?.toIso8601String() !=
+              right.postedAt?.toIso8601String() ||
+          left.description != right.description ||
+          left.amount != right.amount) {
         return false;
       }
     }
@@ -1418,9 +1476,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  TextEditingController _actualPaymentControllerFor(
-    AssetLiabilityDebtRow row,
-  ) {
+  TextEditingController _actualPaymentControllerFor(AssetLiabilityDebtRow row) {
     return _actualPaymentControllers.putIfAbsent(
       row.id,
       () => TextEditingController(
@@ -1640,6 +1696,62 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
   }
 
+  void _importCardStatementLines(
+    AssetLiabilityWorkbook workbook,
+    String? selectedBillingAccountId,
+  ) {
+    final billingAccountId = selectedBillingAccountId?.trim();
+    if (billingAccountId == null || billingAccountId.isEmpty) {
+      setState(() {
+        _cardStatementImportMessage = 'Select a billing card before import.';
+      });
+      return;
+    }
+    var billingAccountName = billingAccountId;
+    for (final account in workbook.accounts) {
+      if (account.id == billingAccountId) {
+        billingAccountName = account.name;
+        break;
+      }
+    }
+    final result = _cardStatementImportService.parse(
+      rawText: _cardStatementImportController.text,
+      defaultBillingAccountId: billingAccountId,
+      defaultBillingAccountName: billingAccountName,
+    );
+    if (!result.hasAcceptedRows) {
+      setState(() {
+        _cardStatementImportMessage = result.hasRejectedRows
+            ? 'No rows imported. First error: ${result.rejectedRows.first.reason}'
+            : 'No rows imported.';
+      });
+      return;
+    }
+
+    final merged = <String, AssetLiabilityCardStatementLine>{
+      for (final line in _cardStatementLines) line.id: line,
+      for (final line in result.lines) line.id: line,
+    };
+    setState(() {
+      _selectedCardStatementBillingAccountId = billingAccountId;
+      _cardStatementLines = merged.values.toList(growable: false);
+      _cardStatementImportController.clear();
+      _cardStatementImportMessage = 'Imported ${result.lines.length} rows'
+          '${result.rejectedRows.isEmpty ? '' : ', rejected ${result.rejectedRows.length}'}.';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _clearCardStatementLines(String billingAccountId) {
+    setState(() {
+      _cardStatementLines = _cardStatementLines
+          .where((line) => line.billingAccountId != billingAccountId)
+          .toList(growable: false);
+      _cardStatementImportMessage = 'Cleared imported lines for this card.';
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
   Future<void> _saveDefaultPaymentSources() async {
     try {
       await _assetLiabilityRepository.saveDefaultPaymentSources(
@@ -1711,6 +1823,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _cardBillingAccountIds = Map<String, String>.from(
         copied.cardBillingAccountIds,
       );
+      _cardStatementLines = <AssetLiabilityCardStatementLine>[];
       _monthlyIncomePlans = incomePlansWithTemplates;
       _syncPaymentStateControllers();
     });
@@ -6847,6 +6960,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
       cardBillingAccountIds: _cardBillingAccountIds,
       incomePlans: _monthlyIncomePlans,
+      cardStatementLines: _cardStatementLines,
       includeDefaultFixedPayments: true,
     );
     _scheduleAssetLiabilityStateIdMigration(workbook);
@@ -8430,6 +8544,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _buildCardBillingReviewDirectPayments(review.directPaymentItems),
           const SizedBox(height: 12),
           _buildCardBillingReviewGroups(review.cardBillingGroups),
+          const SizedBox(height: 12),
+          _buildCardStatementReconciliationPanel(workbook),
         ],
       ),
     );
@@ -8653,6 +8769,191 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildCardStatementReconciliationPanel(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final reconciliation = workbook.cardStatementReconciliation;
+    final cardOptions = _cardBillingAccountOptions(workbook);
+    final selected = _selectedCardStatementBillingAccountId;
+    final validSelected = selected != null &&
+        cardOptions.any((account) => account.id == selected);
+    final selectedValue = validSelected
+        ? selected
+        : (cardOptions.isEmpty ? null : cardOptions.first.id);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                reconciliation.hasNeedsReview
+                    ? Icons.warning_amber_outlined
+                    : Icons.receipt_long_outlined,
+                color: reconciliation.hasNeedsReview
+                    ? const Color(0xFFD97706)
+                    : const Color(0xFF0D9488),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Card statement import and reconciliation',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+              _buildTextStatusChip(
+                label: '${reconciliation.importedLineCount} lines',
+                color: const Color(0xFF2563EB),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Paste CSV rows as description,amount,date or billing_account_id,description,amount,date. Imported totals are checked against card billing.',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: 260,
+                child: DropdownButton<String>(
+                  value: selectedValue,
+                  isExpanded: true,
+                  hint: const Text('Billing card'),
+                  items: [
+                    for (final account in cardOptions)
+                      DropdownMenuItem<String>(
+                        value: account.id,
+                        child: Text(account.name),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCardStatementBillingAccountId = value;
+                    });
+                  },
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: cardOptions.isEmpty
+                    ? null
+                    : () => _importCardStatementLines(workbook, selectedValue),
+                icon: const Icon(Icons.upload_file_outlined),
+                label: const Text('Import lines'),
+              ),
+              OutlinedButton.icon(
+                onPressed: selectedValue == null
+                    ? null
+                    : () => _clearCardStatementLines(selectedValue),
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Clear card lines'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _cardStatementImportController,
+            minLines: 2,
+            maxLines: 5,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+              hintText: 'Netflix,1980,2026-05-10\nMobile plan,5764,2026-05-12',
+            ),
+          ),
+          if (_cardStatementImportMessage != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              _cardStatementImportMessage!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          _buildCardStatementReconciliationTable(reconciliation),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardStatementReconciliationTable(
+    AssetLiabilityCardStatementReconciliationData reconciliation,
+  ) {
+    if (reconciliation.groups.isEmpty) {
+      return Text(
+        'No card-billed details or statement lines to reconcile.',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontSize: 12,
+          height: 1.5,
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        headingRowHeight: 34,
+        dataRowMinHeight: 46,
+        dataRowMaxHeight: 64,
+        columns: const [
+          DataColumn(label: Text('billing card')),
+          DataColumn(label: Text('billed amount'), numeric: true),
+          DataColumn(label: Text('statement total'), numeric: true),
+          DataColumn(label: Text('configured total'), numeric: true),
+          DataColumn(label: Text('difference'), numeric: true),
+          DataColumn(label: Text('alerts')),
+        ],
+        rows: [
+          for (final group in reconciliation.groups)
+            DataRow(
+              cells: [
+                DataCell(Text(group.billingAccountName)),
+                DataCell(Text(_formatManagementYen(group.billedAmount))),
+                DataCell(Text(_formatManagementYen(group.statementLineTotal))),
+                DataCell(
+                  Text(_formatManagementYen(group.configuredDetailTotal)),
+                ),
+                DataCell(
+                  Text(
+                    _formatManagementYen(group.statementDifference),
+                    style: TextStyle(
+                      color: group.needsReview
+                          ? const Color(0xFFD97706)
+                          : const Color(0xFF0D9488),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Text(group.alerts.isEmpty ? 'OK' : group.alerts.join(' / ')),
+                ),
+              ],
+            ),
+        ],
+      ),
     );
   }
 
@@ -10159,11 +10460,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final prefix = difference > 0 ? '+' : '';
     return Text(
       '$prefix${_formatManagementYen(difference)}',
-      style: TextStyle(
-        color: color,
-        fontWeight: FontWeight.bold,
-        fontSize: 12,
-      ),
+      style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
     );
   }
 
@@ -10178,10 +10475,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         controller: controller,
         enabled: row.paid,
         onChanged: (value) => _updatePaymentDifferenceReason(row.id, value),
-        decoration: const InputDecoration(
-          isDense: true,
-          hintText: 'reason',
-        ),
+        decoration: const InputDecoration(isDense: true, hintText: 'reason'),
       ),
     );
   }
