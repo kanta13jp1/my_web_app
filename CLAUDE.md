@@ -27,7 +27,8 @@
 - [`docs/SCHEDULE_TASKS.md`](docs/SCHEDULE_TASKS.md) — Schedule cron 自動化
 - [`docs/CODEX_MEMORY_AUTOMATIONS.md`](docs/CODEX_MEMORY_AUTOMATIONS.md) — 25 task ownership
 - [`docs/OPERATIONS_CHARTER.md`](docs/OPERATIONS_CHARTER.md) — 運用憲章 (5 正本 + 6 AI 役割)
-- [`docs/AGENT_COORDINATION_PATTERNS.md`](docs/AGENT_COORDINATION_PATTERNS.md) — 5 協調パターン
+- [`docs/AGENT_COORDINATION_PATTERNS.md`](docs/AGENT_COORDINATION_PATTERNS.md) — 5 協調パターン (= 通信規約軸)
+- [`docs/AGENT_ORCHESTRATION_PATTERNS.md`](docs/AGENT_ORCHESTRATION_PATTERNS.md) — 5 編成パターン (= sub-agent 解禁 / 部 221u ship / ① Sub-Agent ② Outcomes Loop ③ Architect-Implementer ④ Memory+Dreaming ⑤ Phased Preamble)
 - [`docs/NOTEBOOKLM_GUIDE.md`](docs/NOTEBOOKLM_GUIDE.md) — NotebookLM + DBS + Master Brain
 - [`docs/DESIGN.md`](docs/DESIGN.md) — UI design tokens
 - [`docs/DIRECTORY_STRUCTURE.md`](docs/DIRECTORY_STRUCTURE.md) — リポジトリ ディレクトリ
