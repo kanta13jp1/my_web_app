@@ -2,6 +2,8 @@
 
 このディレクトリには、CI/CDパイプラインを構成するGitHub Actionsワークフローが含まれています。
 
+2026-05-07 #1706: AI-tool workflow changes must cite official sources, stay in the Claude Code #1 + Codex #1 two-instance flow, and avoid starting persistent local dev server / node / dart processes.
+
 ## 📋 ワークフロー一覧
 
 | ワークフロー | ファイル | トリガー | 用途 |
@@ -10,15 +12,21 @@
 | **Deploy to Development** | `deploy-dev.yml` | `develop` へのpush | 開発環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Staging** | `deploy-staging.yml` | `staging` へのpush | ステージング環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Production** | `deploy-prod.yml` | `main` へのpush | 本番環境デプロイ + バージョニング (concurrency制御・timeout付き) |
+| **Release Readiness Gate** | `release-readiness.yml` | deploy-prod success / daily 06:40 JST / manual | #1556 alpha gate: migration + EF import + Deno lint + readiness hub Deno check + Flutter build + production route + tools-hub/schedule-hub + Notion + Slack + WBS update |
+| **Blog News Production Smoke** | `blog-news-prod-smoke.yml` | deploy-prod success / manual | #1950 blog/news E2E guard: `/blog`, `/blog/compose`, `/news-rss`, optional `/blog/post?id=<postId>`, RSS Edge Function, and read-only `blog_posts` queue state |
+| **Mobile Distribution Readiness** | `mobile-distribution-readiness.yml` | mobile release PR / mobile-release-build success / manual | #1495 iOS/Android distribution gate: metadata, signing placeholders, docs, workflow wiring, and boolean-only signing/store secret presence report |
+| **Video Pipeline Secret Readiness** | `video-pipeline-secret-readiness.yml` | video pipeline PR / manual | #1724 NotebookLM video-pipeline gate: boolean-only presence report for `GITHUB_PAT`, `NOTEBOOKLM_STORAGE_STATE_JSON`, `ELEVENLABS_API_KEY`, `YOUTUBE_CLIENT_SECRET_JSON`, and `YOUTUBE_TOKEN_JSON` |
 | **Daily Report** | `daily-report.yml` | 毎日 07:30 JST / 手動 | 日次レポート生成 + X投稿 + 競合モニタリング + schedule_task_runs記録 + Job Summary |
 | **CS Check** | `cs-check.yml` | 毎時 07分 / 手動 | CS自動対応 + PR自動レビュー + schedule_task_runs記録 + Job Summary |
 | **Edge Function Audit** | `edge-function-audit.yml` | 毎時 47分 / 手動 | EF UI導線カバレッジチェック + schedule_task_runs記録 + Job Summary |
 | **Infra Health Check** | `infra-health-check.yml` | 毎時 37分 / 手動 | Firebase + 重要EF 6件監視 + schedule_task_runs記録 + Job Summary |
+| **tools-hub MCP Smoke** | `tools-hub-mcp-smoke.yml` | 6時間毎 / 手動 | tools-hub MCP facade の metadata / tools/list / auth gate / optional AuthKit token smoke + schedule_task_runs記録 |
+| **NotebookLM Intake Gate** | `notebooklm-intake-gate.yml` | Daily 06:45 JST / manual | Normalize `notebooklm list --json`, deduplicate against Issues/docs, and update `docs/notebooklm-intake` for #1606 |
 | **Scheduled Analysis Batch** | `cron-batch.yml` | 毎日 00:00 UTC / 手動 | Python分析バッチ (Gemini連携) + schedule_task_runs記録 |
 | **Dependency Audit** | `dependency-audit.yml` | 毎週月曜 08:00 JST / 手動 | Flutter pub outdated + Deno import バージョン監査 + schedule_task_runs記録 + Job Summary |
 | **Claude Agent PR Review** | `claude-agent-review.yml` | PR (main/staging/develop) / 手動 | **Claude Managed Agents** — PR即時AIレビュー (ルール違反・EF上限・アーキテクチャ観点) |
 | **User Feedback Resolved** | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-request` EF でリリース通知メール |
-| **Workflow Failure Handler** | `workflow-failure-handler.yml` | workflow_run: [completed] | ワークフロー失敗時に GitHub Issue 自動生成 (重複スキップ) |
+| **Workflow Failure Handler** | `workflow-failure-handler.yml` | workflow_run: [completed] | workflow-failure Issue clustering by root-cause key, duplicate comments, and recovery auto-close |
 | **YouTube Analysis** | `youtube-analysis.yml` | 毎日 11:00 JST / 手動 | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` PR自動マージ |
 | **CI Auto-Fix** | `ci-auto-fix.yml` | workflow_run: CI失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | **Blog Publish** | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力。投稿後 frontmatter `published:true` 更新 |

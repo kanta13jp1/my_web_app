@@ -64,10 +64,8 @@ class TomeDeckStudioService {
   const TomeDeckStudioService();
 
   static const tomeProviderId = 'tome_app';
-  static const sourceHintTome =
-      'Tome: AI deck/page builder with web publishing and rich blocks';
-  static const sourceHintAirtable =
-      'Airtable: structured source data for live tables or automation runs';
+  static const sourceHintTome = 'Tome: Web 公開とリッチブロックを備えた AI デッキ / ページビルダー';
+  static const sourceHintAirtable = 'Airtable: ライブテーブルや自動化実行のための構造化ソースデータ';
 
   TomeDeckPlan buildPlan({
     required TomeDeckScenario scenario,
@@ -108,7 +106,7 @@ class TomeDeckStudioService {
     final buffer = StringBuffer()
       ..writeln('# ${plan.title}')
       ..writeln()
-      ..writeln('Audience: ${plan.audience}')
+      ..writeln('対象読者: ${plan.audience}')
       ..writeln('KGI: ${plan.kgi}')
       ..writeln()
       ..writeln('## CSF')
@@ -121,29 +119,29 @@ class TomeDeckStudioService {
             .join('\n'),
       )
       ..writeln()
-      ..writeln('## Tome Prompt')
+      ..writeln('## Tome プロンプト')
       ..writeln(plan.tomePrompt)
       ..writeln();
 
     for (var i = 0; i < plan.pages.length; i++) {
       final page = plan.pages[i];
       buffer
-        ..writeln('## Page ${i + 1}: ${page.title}')
+        ..writeln('## ページ ${i + 1}: ${page.title}')
         ..writeln(page.narrative)
         ..writeln()
-        ..writeln('Visual: ${page.visualDirection}')
+        ..writeln('ビジュアル: ${page.visualDirection}')
         ..writeln()
         ..writeln(page.blocks.map((block) => '- $block').join('\n'))
         ..writeln()
-        ..writeln('Speaker note: ${page.speakerNote}')
+        ..writeln('スピーカーノート: ${page.speakerNote}')
         ..writeln();
     }
 
     buffer
-      ..writeln('## Automation Notes')
+      ..writeln('## 自動化メモ')
       ..writeln(plan.automationNotes.map((item) => '- $item').join('\n'))
       ..writeln()
-      ..writeln('## Source Hints')
+      ..writeln('## ソースヒント')
       ..writeln(plan.sourceHints.map((item) => '- $item').join('\n'));
     return buffer.toString().trim();
   }
@@ -155,92 +153,86 @@ class TomeDeckStudioService {
   ) {
     final pages = [
       TomePageSpec(
-        title: 'Executive thesis',
-        narrative:
-            '$topic is positioned as a life-management operating system.',
-        visualDirection:
-            'Hero product screenshot with one bold outcome metric.',
+        title: 'エグゼクティブテーゼ',
+        narrative: '$topic はライフマネジメント OS として位置付けられる。',
+        visualDirection: '1 つの強いアウトカム指標を伴うヒーロー製品スクリーンショット。',
         blocks: const [
-          'One-line promise',
-          'Current traction snapshot',
-          'Why now',
+          'ワンライン約束',
+          '現在のトラクションスナップショット',
+          'なぜ今なのか',
         ],
-        speakerNote: 'Start with urgency, not feature count.',
+        speakerNote: '機能数ではなく緊急性から始める。',
       ),
       const TomePageSpec(
-        title: 'Problem',
-        narrative:
-            'Users lose time, money, health, stamina, intelligence, and focus through unmeasured leakage.',
-        visualDirection: 'Six-leakage funnel with red-to-green conversion.',
+        title: '課題',
+        narrative: 'ユーザーは時間・お金・健康・体力・知能・集中力を未計測の漏れで失っている。',
+        visualDirection: '6 つの漏れファネル(赤→緑コンバージョン)。',
         blocks: [
-          'Time waste',
-          'Money waste',
-          'Health and stamina waste',
-          'Focus and decision waste',
+          '時間の無駄',
+          'お金の無駄',
+          '健康・体力の無駄',
+          '集中・判断の無駄',
         ],
-        speakerNote: 'Make the waste tangible and measurable.',
+        speakerNote: '無駄を具体的かつ計測可能にする。',
       ),
       const TomePageSpec(
-        title: 'Solution',
-        narrative:
-            'The system turns raw behavior into KGI, CSF, KPI, monitoring, and action.',
-        visualDirection: 'Before/after operating loop diagram.',
+        title: '解決策',
+        narrative: '本システムは生の行動を KGI / CSF / KPI / モニタリング / アクションへ変換する。',
+        visualDirection: 'Before / After のオペレーティングループ図。',
         blocks: [
-          'Analyze current state',
-          'Set KGI/CSF/KPI',
-          'Monitor regularly',
-          'Improve by WBS',
+          '現状分析',
+          'KGI/CSF/KPI 設定',
+          '定常モニタリング',
+          'WBS による改善',
         ],
-        speakerNote: 'Connect AI output to concrete operations.',
+        speakerNote: 'AI 出力を具体的なオペレーションに接続する。',
       ),
       TomePageSpec(
-        title: 'Product surface',
+        title: '製品概要',
         narrative: sourceSummary,
-        visualDirection:
-            'Four-card product map: Home, AI University, WBS, Life OS.',
+        visualDirection: '4 カード製品マップ: ホーム / AI 大学 / WBS / Life OS。',
         blocks: const [
-          'AI University',
-          'Project WBS',
-          'Life waste elimination',
-          'Share and growth loops',
+          'AI 大学',
+          'プロジェクト WBS',
+          'ライフ無駄削減',
+          'シェア & 成長ループ',
         ],
-        speakerNote: 'Show the product as a system, not a collection of tools.',
+        speakerNote: 'ツールの集合ではなくシステムとして示す。',
       ),
       const TomePageSpec(
-        title: 'Business model',
-        narrative: 'Personal OS first, team and enterprise workflows second.',
-        visualDirection: 'Layered revenue ladder.',
+        title: 'ビジネスモデル',
+        narrative: 'まずパーソナル OS、次にチーム / エンタープライズ workflow へ拡張。',
+        visualDirection: '段階的レベニューラダー。',
         blocks: [
-          'Individual productivity',
-          'Team operating dashboard',
-          'Enterprise automation',
+          '個人向け生産性',
+          'チームオペレーティングダッシュボード',
+          'エンタープライズ自動化',
         ],
-        speakerNote: 'Explain expansion paths without overclaiming.',
+        speakerNote: '誇張せず拡張パスを説明する。',
       ),
       const TomePageSpec(
-        title: 'Ask',
-        narrative: 'The next milestone is a repeatable habit-to-business loop.',
-        visualDirection: 'Roadmap with 30/60/90 day milestones.',
+        title: 'アスク',
+        narrative: '次のマイルストーンは再現可能な「習慣→事業」ループ。',
+        visualDirection: '30/60/90 日マイルストーンのロードマップ。',
         blocks: [
-          'Funding or partnership ask',
-          'Near-term product milestone',
-          'Key validation metric',
+          '資金調達 / パートナーシップアスク',
+          '短期プロダクトマイルストーン',
+          'キー検証指標',
         ],
-        speakerNote: 'Close with one decision and one next action.',
+        speakerNote: '1 つの判断と 1 つの次アクションで締める。',
       ),
     ];
 
     return TomeDeckPlan(
       scenario: TomeDeckScenario.investorDeck,
       issueNumber: 756,
-      title: 'Tome investor / internal report deck',
+      title: 'Tome 投資家 / 社内レポートデッキ',
       audience: audience,
-      kgi:
-          'Create a decision-ready Tome deck for investors or internal reporting.',
+      kgi: '投資家または社内レポート用の判断準備済 Tome デッキを作成する。',
       csf: const [
-        'Lead with measurable waste reduction and user value',
-        'Show the product as an operating loop',
-        'Close with a concrete ask and next milestone',
+        '計測可能な無駄削減とユーザー価値で先導する',
+        '製品をオペレーティングループとして示す',
+        '具体的なアスクと次マイルストーンで締める',
       ],
       kpi: const {
         'pages': 6,
@@ -249,11 +241,11 @@ class TomeDeckStudioService {
       },
       pages: pages,
       tomePrompt:
-          'Create a concise investor-grade Tome deck about "$topic" for $audience. Use bold section titles, data cards, product screenshots, and one clear ask.',
+          '"$topic" について $audience 向けの投資家グレード Tome デッキを簡潔に作成。太字セクション見出し / データカード / 製品スクリーンショット / 1 つの明確なアスクを使用。',
       automationNotes: const [
-        'Paste the generated markdown into Tome as the narrative source.',
-        'Use Tome AI narration for the executive thesis and ask pages.',
-        'Reuse the structure for internal weekly reporting by replacing traction and ask blocks.',
+        '生成されたマークダウンを Tome の narrative source として貼り付け。',
+        'エグゼクティブテーゼとアスクページに Tome AI ナレーションを使用。',
+        'トラクションとアスクのブロックを差し替えて社内週次レポートに再利用。',
       ],
       sourceHints: const [sourceHintTome],
       liveIntegrationReady: true,
@@ -267,77 +259,71 @@ class TomeDeckStudioService {
   ) {
     final pages = [
       const TomePageSpec(
-        title: 'Learning map',
-        narrative:
-            'AI University turns scattered provider knowledge into a structured curriculum.',
-        visualDirection: 'Network map grouped by provider capability.',
-        blocks: ['Providers', 'Genres', 'Quizzes', 'RLHF feedback'],
-        speakerNote: 'Open with the learning system, not one provider.',
+        title: '学習マップ',
+        narrative: 'AI 大学は分散した provider 知識を構造化されたカリキュラムへ転換する。',
+        visualDirection: 'provider 能力でグルーピングしたネットワークマップ。',
+        blocks: ['プロバイダー', 'ジャンル', 'クイズ', 'RLHF フィードバック'],
+        speakerNote: '単一 provider ではなく学習システムから始める。',
       ),
       TomePageSpec(
-        title: 'Provider spotlight',
+        title: 'プロバイダースポットライト',
         narrative: sourceSummary,
-        visualDirection:
-            'Infographic card with logo placeholder and capability radar.',
+        visualDirection: 'ロゴプレースホルダと能力レーダーを伴うインフォグラフィックカード。',
         blocks: const [
-          'Core use case',
-          'Strength',
-          'Weakness',
-          'Best workflow',
+          'コアユースケース',
+          '強み',
+          '弱み',
+          'ベスト workflow',
         ],
-        speakerNote: 'Make the provider memorable in one page.',
+        speakerNote: 'プロバイダーを 1 ページで記憶に残す。',
       ),
       const TomePageSpec(
-        title: 'Comparison',
-        narrative:
-            'Learners understand a tool faster when it is compared with nearby alternatives.',
-        visualDirection: 'Three-column comparison table with color-coded fit.',
+        title: '比較',
+        narrative: '学習者は近い代替案と比較されるとツールを早く理解する。',
+        visualDirection: '色分け適合度を伴う 3 列比較テーブル。',
         blocks: [
-          'Tome-like output',
-          'Video/audio support',
-          'Automation fit',
+          'Tome ライクな出力',
+          'ビデオ / 音声対応',
+          '自動化適合度',
         ],
-        speakerNote: 'Use comparison to reduce ambiguity.',
+        speakerNote: '比較で曖昧さを減らす。',
       ),
       const TomePageSpec(
-        title: 'Practice loop',
-        narrative: 'Quiz results and feedback become a learning data flywheel.',
-        visualDirection: 'Loop diagram: learn, quiz, feedback, regenerate.',
+        title: '実践ループ',
+        narrative: 'クイズ結果とフィードバックが学習データフライホイールになる。',
+        visualDirection: 'ループ図: 学習 → クイズ → フィードバック → 再生成。',
         blocks: [
-          'Question',
-          'Answer',
-          'Feedback signal',
-          'Content improvement',
+          '問題',
+          '解答',
+          'フィードバック信号',
+          'コンテンツ改善',
         ],
-        speakerNote: 'Connect education to data quality.',
+        speakerNote: '教育とデータ品質を接続する。',
       ),
       const TomePageSpec(
-        title: 'Infographic export',
-        narrative:
-            'Each lesson can become a shareable Tome page or visual briefing.',
-        visualDirection:
-            'Portrait infographic with headline, 3 facts, and CTA.',
+        title: 'インフォグラフィック書き出し',
+        narrative: '各レッスンは共有可能な Tome ページまたはビジュアルブリーフィングになる。',
+        visualDirection: '見出し / 3 ファクト / CTA を伴う縦向きインフォグラフィック。',
         blocks: [
-          'Headline',
-          'Three data points',
-          'Action prompt',
-          'Share link',
+          '見出し',
+          '3 つのデータポイント',
+          'アクションプロンプト',
+          '共有リンク',
         ],
-        speakerNote: 'Make it reusable for social distribution.',
+        speakerNote: 'ソーシャル配信に再利用可能にする。',
       ),
     ];
 
     return TomeDeckPlan(
       scenario: TomeDeckScenario.aiUniversityInfographic,
       issueNumber: 757,
-      title: 'Tome AI University infographic page',
+      title: 'Tome AI 大学 インフォグラフィックページ',
       audience: audience,
-      kgi:
-          'Transform AI University content into a visual Tome page that teaches one concept quickly.',
+      kgi: 'AI 大学コンテンツを 1 つのコンセプトを素早く教えるビジュアル Tome ページへ転換する。',
       csf: const [
-        'Compress each lesson into one visual mental model',
-        'Use comparison and examples instead of long prose',
-        'Feed quiz and RLHF signals back into the next revision',
+        '各レッスンを 1 つのビジュアル mental model に圧縮',
+        '長文の代わりに比較と例示を使用',
+        'クイズと RLHF 信号を次回改訂にフィードバック',
       ],
       kpi: const {
         'pages': 5,
@@ -346,11 +332,11 @@ class TomeDeckStudioService {
       },
       pages: pages,
       tomePrompt:
-          'Create a visual Tome page from this AI University topic: "$topic". Turn it into infographic blocks, comparison cards, and a learner action prompt for $audience.',
+          'AI 大学トピック "$topic" からビジュアル Tome ページを作成。インフォグラフィックブロック / 比較カード / $audience 向け学習者アクションプロンプトに変換する。',
       automationNotes: const [
-        'Use the AI University provider page as the source text.',
-        'Generate one Tome page per provider or one short deck per genre.',
-        'Use quiz failures and RLHF negative signals as rewrite targets.',
+        'AI 大学 provider ページをソーステキストとして使用。',
+        '1 provider あたり 1 Tome ページ、または 1 ジャンルあたり 1 ショートデッキを生成。',
+        'クイズ失敗と RLHF ネガティブ信号を書換ターゲットとして使用。',
       ],
       sourceHints: const [sourceHintTome],
       liveIntegrationReady: true,
@@ -368,77 +354,70 @@ class TomeDeckStudioService {
         .where((value) => value.trim().isNotEmpty)
         .join(', ');
     final summary = competitorNames.isEmpty
-        ? 'Use Airtable records as the live source for competitor claims.'
-        : 'Current Airtable rows cover: $competitorNames.';
+        ? '競合主張のライブソースとして Airtable レコードを使用する。'
+        : '現在の Airtable 行は次をカバー: $competitorNames。';
 
     final pages = [
       TomePageSpec(
-        title: 'Market map',
+        title: 'マーケットマップ',
         narrative: summary,
-        visualDirection:
-            '2x2 matrix of competitors by automation depth and user value.',
+        visualDirection: '自動化深度 × ユーザー価値の 2x2 競合マトリクス。',
         blocks: const [
-          'Competitor segment',
-          'Primary threat',
-          'Differentiation angle',
+          '競合セグメント',
+          '主要脅威',
+          '差別化角度',
         ],
-        speakerNote: 'Start with the shape of the market.',
+        speakerNote: 'マーケットの形状から始める。',
       ),
       const TomePageSpec(
-        title: 'Comparison table',
-        narrative:
-            'The comparison page should be updated from Airtable before each review.',
-        visualDirection:
-            'Live table embed or pasted table with highlighted gaps.',
-        blocks: ['Product', 'Feature', 'Price', 'Risk', 'Countermove'],
-        speakerNote: 'Keep this page factual and source-backed.',
+        title: '比較テーブル',
+        narrative: '比較ページはレビュー前に Airtable から更新する必要がある。',
+        visualDirection: 'ライブテーブル埋込みまたは強調 gap 付き貼り付けテーブル。',
+        blocks: ['プロダクト', '機能', '価格', 'リスク', '対抗策'],
+        speakerNote: 'このページは事実 + ソース裏付けを維持。',
       ),
       const TomePageSpec(
-        title: 'Threat ranking',
-        narrative:
-            'Prioritize competitors by impact, urgency, and product overlap.',
-        visualDirection: 'Ranked threat bars with red/yellow/green status.',
-        blocks: ['Critical', 'High', 'Watch', 'Ignore for now'],
-        speakerNote: 'Defend prioritization choices.',
+        title: '脅威ランキング',
+        narrative: '影響度・緊急度・プロダクト重複で競合を優先順位付け。',
+        visualDirection: '赤 / 黄 / 緑ステータス付きランク脅威バー。',
+        blocks: ['緊急', '高', '監視', '当面無視'],
+        speakerNote: '優先順位の判断を弁護できるようにする。',
       ),
       const TomePageSpec(
-        title: 'Counter strategy',
-        narrative:
-            'Each competitor should map to one feature, one message, and one WBS task.',
-        visualDirection: 'Three-lane action board.',
+        title: 'カウンター戦略',
+        narrative: '各競合は 1 機能 / 1 メッセージ / 1 WBS タスクへマッピング。',
+        visualDirection: '3 レーンアクションボード。',
         blocks: [
-          'Feature response',
-          'Message response',
-          'Monitoring owner',
+          '機能レスポンス',
+          'メッセージレスポンス',
+          'モニタリングオーナー',
         ],
-        speakerNote: 'Convert research into action.',
+        speakerNote: 'リサーチをアクションへ転換する。',
       ),
       const TomePageSpec(
-        title: 'Automation cadence',
-        narrative:
-            'Refresh Airtable, regenerate summary, then update Tome before weekly review.',
-        visualDirection: 'Airtable to Tome automation flow.',
+        title: '自動化ケイデンス',
+        narrative: 'Airtable リフレッシュ → サマリ再生成 → 週次レビュー前に Tome 更新。',
+        visualDirection: 'Airtable → Tome 自動化フロー。',
         blocks: [
-          'Airtable source',
-          'AI summary',
-          'Tome update',
-          'WBS task',
+          'Airtable ソース',
+          'AI サマリ',
+          'Tome 更新',
+          'WBS タスク',
         ],
-        speakerNote: 'Make the update rhythm explicit.',
+        speakerNote: '更新リズムを明示する。',
       ),
     ];
 
     return TomeDeckPlan(
       scenario: TomeDeckScenario.competitorAirtable,
       issueNumber: 758,
-      title: 'Tome competitor comparison deck',
+      title: 'Tome 競合比較デッキ',
       audience: audience,
-      kgi:
-          'Keep competitor comparison materials fresh enough to guide weekly product decisions.',
+      kgi: '週次プロダクト判断を導けるよう競合比較資料の鮮度を維持する。',
       csf: const [
-        'Use Airtable as the structured source of competitor facts',
-        'Separate factual comparison from strategic interpretation',
-        'Convert every high-risk finding into a WBS action',
+        'Airtable を競合事実の構造化ソースとして使用',
+        '事実比較と戦略解釈を分離',
+        'ハイリスクの発見をすべて WBS アクションへ転換',
       ],
       kpi: {
         'pages': 5,
@@ -447,11 +426,11 @@ class TomeDeckStudioService {
       },
       pages: pages,
       tomePrompt:
-          'Create a Tome competitor comparison deck about "$topic" for $audience. Use Airtable-style records as source data, show a comparison table, rank threats, and end with WBS actions.',
+          '"$topic" について $audience 向けの Tome 競合比較デッキを作成。Airtable スタイルレコードをソースデータに、比較テーブル表示・脅威ランキング・WBS アクションで締める。',
       automationNotes: const [
-        'Paste Airtable CSV/TSV into this studio for an immediate deck draft.',
-        'Embed the Airtable view in Tome when live data is needed.',
-        'Remaining live automation requires an Airtable token/base/table mapping.',
+        '即時デッキドラフト用に Airtable CSV/TSV を本スタジオへ貼り付け。',
+        'ライブデータが必要な時は Airtable ビューを Tome に埋め込み。',
+        '残るライブ自動化には Airtable token / base / table マッピングが必要。',
       ],
       sourceHints: const [sourceHintTome, sourceHintAirtable],
       liveIntegrationReady: false,
@@ -461,22 +440,22 @@ class TomeDeckStudioService {
   static String _defaultTopic(TomeDeckScenario scenario) {
     switch (scenario) {
       case TomeDeckScenario.investorDeck:
-        return 'Life Management AI OS';
+        return 'ライフマネジメント AI OS';
       case TomeDeckScenario.aiUniversityInfographic:
-        return 'AI University provider lesson';
+        return 'AI 大学プロバイダーレッスン';
       case TomeDeckScenario.competitorAirtable:
-        return 'Competitor comparison and weekly product decision';
+        return '競合比較と週次プロダクト判断';
     }
   }
 
   static String _defaultAudience(TomeDeckScenario scenario) {
     switch (scenario) {
       case TomeDeckScenario.investorDeck:
-        return 'Investors / internal executive meeting';
+        return '投資家 / 経営会議';
       case TomeDeckScenario.aiUniversityInfographic:
-        return 'AI University learners';
+        return 'AI 大学学習者';
       case TomeDeckScenario.competitorAirtable:
-        return 'Product and marketing team';
+        return 'プロダクト / マーケティングチーム';
     }
   }
 

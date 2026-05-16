@@ -7,6 +7,26 @@
 
 ---
 
+## #1787 Current Two-Instance Routing Update (2026-05-13)
+
+Live owners: Claude Code #1 and Codex #1 only. Do not start old Codex #2/#3,
+PowerShell lane instances, or extra subagents for normal WBS execution. Historical
+tables below are retained as migration context, but this section is the current
+override when a row mentions dormant lanes.
+
+| Surface | Current owner | Notes |
+| --- | --- | --- |
+| AI tool release adoption and risk decision | Claude Code #1 | Verify official release notes before adopting Claude Code, Codex CLI, Copilot, Gemini, Cursor, or Devin signals. |
+| Scoped implementation, CI, PR, merge follow-up, and cleanup | Codex #1 | Codex #1 absorbs the old Codex #2 implementation lane for CI, sync, GitHub Actions, Edge Functions, and docs/script PRs. |
+| GitHub Copilot Custom Agents | Advisory only | Use `.github/agents/README.md` as the design registry. Copilot agents must not merge, deploy, or run side-effecting automation. |
+| Gemini Code Assist / Cursor / Devin signals | Candidate fallback or review input | Use only after local availability and official source verification; never as an extra autonomous project instance. |
+
+For monthly AI-tool updates, start from
+`docs/ai-tool-changelog/2026-05.md` and
+`docs/cross-instance-prs/drafts/ai-tool-update/2026-05_ai_tool_update_cross_instance_drafts.md`.
+Claude Code #1 decides adopt/defer/ignore; Codex #1 implements the approved
+scoped slice and records memory/disk hygiene before wrap-up.
+
 ## 1. 強制 Task Routing Matrix
 
 **このルールに従って AI を選択する。Claude Code は「設計判断・大きめ実装・既存設計に沿った機能追加・並列ワーカー・統合・memory管理」を担う。**
@@ -20,9 +40,9 @@
 | 行レベル補完 (< 10行) | GitHub Copilot | — | — | **不使用** |
 | 5分以内の修正 | Copilot Inline Chat | — | — | **不使用** |
 | 500行超リファクタリング | Gemini Code Assist | Copilot | Claude Code | 事前レビューのみ |
-| 横断調査 / 修正PR / レビュー補助 | **Codex#1** | Codex#2 | Claude Code | 仕様確認のみ |
-| CI / 同期 / 運用まわり | **Codex#2** | Codex#1 | Claude Code PS#1 | 完了判定のみ |
-| SQL / アルゴリズム最適化 | OpenAI Codex (`codex1`/`codex2`) | Copilot | Claude Code | 仕様確認のみ |
+| 横断調査 / 修正PR / レビュー補助 | **Codex #1** | Claude Code #1 | Copilot advisory | 仕様確認のみ |
+| CI / 同期 / 運用まわり | **Codex #1** | Claude Code #1 | gh CLI / Python | 完了判定のみ |
+| SQL / アルゴリズム最適化 | **Codex #1** | Copilot | Claude Code #1 | 仕様確認のみ |
 | Migration (DDL + seed SQL) | **Codex#1** (template ベース) | Copilot | Claude Code | 命名則チェック |
 | AI大学 provider 追加 (seed SQL) | **Codex#1** (既存 SQL コピー改変) | — | Claude Code | routing 判断のみ |
 | ブログ・競合リサーチ | Claude Code WEB版 (WebSearch) | NotebookLM | Gemini Search | — |
@@ -31,8 +51,8 @@
 | ブラウザ操作 / 外部SaaS確認 / 長手順実行 | Manus AI | Claude Code | — | 結果確認のみ |
 | アーキテクチャ判断 | **Claude Code** | NotebookLM + Copilot Chat | — | **専任** |
 | Dart バグ修正 (< 50行) | Copilot Inline Chat | Claude Code PS#5 | — | 必要時のみ |
-| EF バグ修正 (Deno) | **Codex#2** / Copilot | Claude Code PS#5 | — | deny-by-default確認 |
-| GHA Workflow 作成・修正 | **Codex#2** / Claude Code PS#1 | Copilot | gh CLI スクリプト | WF health 専任 |
+| EF バグ修正 (Deno) | **Codex #1** / Copilot | Claude Code #1 | — | deny-by-default確認 |
+| GHA Workflow 作成・修正 | **Codex #1** / Claude Code #1 | Copilot | gh CLI スクリプト | WF health 専任 |
 | PR review (自動) | claude-agent-review.yml | GitHub Copilot PR review | — | — |
 | quota監視・アラート | quota-monitor.yml (Python) | — | — | **不使用** |
 
@@ -73,8 +93,8 @@ curl -s -o /dev/null -w "%{http_code}" \
 | **PS#5** | on-call バグ修正 | GitHub Copilot + GitHub MCP |
 | **PS#6** | horse_racing / バッチ | cron-batch.yml (Claude不要) ✅ |
 | **WEB版** | Issue起票 | GitHub MCP のみ (元々Claude不要) ✅ |
-| **Codex#1** | 横断調査 / 修正PR / SQL・migrationレビュー補助 | `.claude/worktrees/instance-codex1` で継続 ✅ |
-| **Codex#2** | CI / 同期 / 運用 / EF・GHA補助 | `.claude/worktrees/instance-codex2` で継続 ✅ |
+| **Codex #1** | 横断調査 / 修正PR / SQL・migrationレビュー補助 / CI / 同期 / 運用 / EF・GHA補助 | Codex Windows app worktree で継続 ✅ |
+| **Codex #2** | historical only | 2026-05 two-instance policy: do not start; work is absorbed by Codex #1 |
 
 **✅ = Claude quota枯渇でも自動継続**
 
@@ -495,6 +515,7 @@ case 'notion.sync_wbs': {
 - `docs/MULTI_INSTANCE_FLEET.md` — 10 Claude + 2 Codex の canonical roster
 - `docs/CODEX_WORKFLOW.md` — Codex#1/#2 の起動・push・handoff 手順
 - `docs/AI_FALLBACK_RUNBOOK.md` (PS#6 S26) — 開発ワークフロー別 fallback 手順
+- `docs/PROMPT_CACHING_OPUS47_COST_GUIDE.md` (Win版#132 part 177) — Prompt Caching × Opus 4.7 88% コスト削減戦略
 - `supabase/migrations/20260424210000_create_ai_circuit_breaker.sql` (PS#1 S26) — quota 状態集約テーブル
 | AI | 用途 | セットアップ状態 | アクセス方法 |
 |----|------|----------------|------------|

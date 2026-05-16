@@ -22,6 +22,28 @@ export interface XTweetResult {
   raw: Record<string, unknown>;
 }
 
+export interface XApiErrorPayload {
+  code: string;
+  status: number;
+  reason: string | null;
+  title: string | null;
+  detail: string | null;
+  requiredEnrollment: string | null;
+  registrationUrl: string | null;
+  actionRequired: string;
+  raw: Record<string, unknown> | string;
+}
+
+export class XApiError extends Error {
+  readonly payload: XApiErrorPayload;
+
+  constructor(payload: XApiErrorPayload) {
+    super(buildXApiErrorMessage(payload));
+    this.name = "XApiError";
+    this.payload = payload;
+  }
+}
+
 export function getXAccountHandle(): string {
   return X_ACCOUNT_HANDLE;
 }
@@ -41,6 +63,10 @@ export function assertXConfigured() {
       "X API credentials not configured. Set X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET in Supabase secrets.",
     );
   }
+}
+
+export function isXApiError(error: unknown): error is XApiError {
+  return error instanceof XApiError;
 }
 
 export async function uploadMediaFromUrl(
@@ -385,11 +411,69 @@ async function parseXResponse(
   const text = await response.text();
   const parsed = safeJsonParse(text);
   if (!response.ok) {
-    throw new Error(
-      `X API error ${response.status}: ${text || JSON.stringify(parsed)}`,
-    );
+    throw new XApiError(buildXApiErrorPayload(response.status, parsed, text));
   }
   return parsed;
+}
+
+export function buildXApiErrorPayload(
+  status: number,
+  parsed: Record<string, unknown>,
+  rawText: string,
+): XApiErrorPayload {
+  const reason = asString(parsed.reason) || null;
+  const title = asString(parsed.title) || null;
+  const detail = asString(parsed.detail) || null;
+  const registrationUrl = asString(parsed.registration_url) || null;
+  const requiredEnrollment = asString(parsed.required_enrollment) || null;
+  const code = reason === "client-not-enrolled"
+    ? "x_client_not_enrolled"
+    : status === 403
+    ? "x_forbidden"
+    : `x_api_${status}`;
+  return {
+    code,
+    status,
+    reason,
+    title,
+    detail,
+    requiredEnrollment,
+    registrationUrl,
+    actionRequired: buildXActionRequired(code, requiredEnrollment),
+    raw: Object.keys(parsed).length > 0 ? parsed : rawText,
+  };
+}
+
+function buildXActionRequired(
+  code: string,
+  requiredEnrollment: string | null,
+): string {
+  if (code === "x_client_not_enrolled") {
+    return [
+      "Open the X Developer Portal, create or select a Project, attach the App",
+      "that owns X_API_KEY/X_API_SECRET to that Project, confirm API access",
+      requiredEnrollment ? `(${requiredEnrollment})` : "",
+      "and regenerate the OAuth 1.0a access token/secret with Read and write permissions.",
+    ].filter((part) => part !== "").join(" ");
+  }
+  if (code === "x_forbidden") {
+    return "Check the X Developer App permissions, API access tier, and OAuth user-context access token.";
+  }
+  return "Check the X API response, credentials, and endpoint permissions.";
+}
+
+function buildXApiErrorMessage(payload: XApiErrorPayload): string {
+  if (payload.code === "x_client_not_enrolled") {
+    return [
+      "X API app is not enrolled for v2 posting.",
+      payload.detail ||
+      "Use keys and tokens from an X Developer App attached to a Project.",
+      payload.actionRequired,
+    ].join(" ");
+  }
+  return `X API error ${payload.status}: ${
+    payload.detail || payload.title || JSON.stringify(payload.raw)
+  }`;
 }
 
 function safeJsonParse(value: string): Record<string, unknown> {

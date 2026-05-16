@@ -18,7 +18,10 @@
     { "name": "Slack", "url": "https://slack.com", "category": "business chat", "added": "seed", "added_date": "2026-04-30" },
     { "name": "ジョブカン", "url": "https://jobcan.ne.jp", "category": "HR / attendance", "added": "seed", "added_date": "2026-04-30" },
     { "name": "Amazon", "url": "https://amazon.co.jp", "category": "ecommerce / API", "added": "seed", "added_date": "2026-04-30" },
-    { "name": "Cursor", "url": "https://cursor.com", "category": "AI IDE / agentic dev tool", "added": "discovery", "added_date": "2026-05-01" }
+    { "name": "Cursor", "url": "https://cursor.com", "category": "AI IDE / agentic dev tool", "added": "discovery", "added_date": "2026-05-01" },
+    { "name": "Devin", "url": "https://cognition.ai", "category": "AI autonomous SWE / multi-agent orchestration", "added": "discovery", "added_date": "2026-05-02" },
+    { "name": "Replit", "url": "https://replit.com", "category": "AI app builder / vibe coding / Design Canvas", "added": "discovery", "added_date": "2026-05-03" },
+    { "name": "GitHub Copilot", "url": "https://github.com/features/copilot", "category": "AI dev tool / CLI agent / cross-instance-pr peer", "added": "discovery", "added_date": "2026-05-10" }
   ],
   "discovery_history": [
     {
@@ -27,6 +30,48 @@
       "category": "AI IDE / agentic dev tool",
       "reason": "AI dev tool 4 強 (Claude Code / OpenAI Codex / Claude Cowork / OpenClaw) のうち seed に Cursor が抜けていた。1月 Cursor CLI 公開 + 4月 Cursor Automations + Bugbot Autofix で過去 30 日内に重大リリース複数。multi-agent workflows + Cursor Automations が自社 12 fleet 戦略の正面競合軸。https://www.builder.io/blog/cursor-vs-claude-code",
       "skipped_candidates": ["Salesforce Agentforce (Slack 経由で間接監視済)", "Devin (採用事例更新薄)", "Lovable / Bolt.new (Flutter Web と別軸)", "Replit Agent (Cursor 類似 / shareclass 小)", "Manus AI (自社協調軸として組込済)"]
+    },
+    {
+      "date": "2026-05-02",
+      "name": "Devin",
+      "category": "AI autonomous SWE / multi-agent orchestration",
+      "reason": "5/1 で skip した Devin を 5/2 で再評価 → 採択。新機能『managed Devins (= 1 main Devin が複数 sub-Devin を独立 VM で並列 orchestrate)』が自社 12 fleet (Claude × 10 + Codex × 2) と『1 product 内 multi-agent fleet』軸で正面競合。v3 API が beta → GA 化 + RBAC + session attribution = enterprise 化加速。$20/月の低価格 (Devin 2.0) + GitHub/Linear/Slack/Jira ネイティブ統合で IndieDev 層侵食リスク。基準: a (差別化軸直接競合) + c (v3 API GA = 過去 30 日重大リリース)。https://docs.devin.ai/release-notes/2026",
+      "skipped_candidates": ["Replit Agent 4 (= 候補強い / $400M Series D / Agent 4 リリース / 次回 5/3 候補)", "Lovable (= 4/28 mobile app launch / vibe coding 軸 / 次々回候補)", "Bolt.new (= Opus 4.6 + Figma import / Lovable と類似軸)", "Salesforce Agentforce (= Slack 経由間接監視継続)", "Manus AI (= 1.6 Max + My Computer 機能で更に強化したが 依然 自社 routing matrix で協調軸 / 競合追加せず)"]
+    },
+    {
+      "date": "2026-05-03",
+      "name": "Replit",
+      "category": "AI app builder / vibe coding / Design Canvas",
+      "reason": "5/2 で skipped 第 1 候補として記録済 → 5/3 採択。Agent 4 で 4 軸同時進化: (1) Design Canvas = 無限ボード上で全 artifact 生成 + ライブプレビュー + mobile/tablet/desktop 並列比較 + 直接編集が即コードベースへ反映 (= 自社 design-skills + Figma MCP の統合 UX に対する正面競合) / (2) plan-while-building = 段階待ちなしの並列 plan-execute (= 自社 12 fleet handoff の対抗軸) / (3) shared project + agent-assisted merging = fork-merge 廃止 (= 自社 worktree-isolation 12 fleet と異なる単一 product 統合 UX) / (4) mobile/web app + landing page + decks + videos を同一 project で生成 (= 自社 LP + 動画パイプライン + AI 大学 の統合戦略と直接競合)。$9B 評価 + Series D $400M で IndieDev 層浸透加速。基準 a (差別化軸直接競合 = Cursor multi-agent + Devin managed Devins + Replit Agent 4 の 3 強で 「1 product 内 multi-agent + design 統合」軸へ完全収斂) + c (4/30 前後 Agent 4 + Series D = 過去 30 日重大リリース)。https://blog.replit.com/whats-changed-agent3-to-agent4",
+      "skipped_candidates": ["Lovable (= 4/28 mobile launch / 次回 5/4 候補)", "Bolt.new (= Lovable と類似軸 / Opus 4.6 + Figma import)", "Salesforce Agentforce (= Slack 経由間接監視継続)", "Codeium / Sourcegraph Cody (= AI dev tool だが Cursor / Devin と類似軸)", "Manus AI (= My Computer 拡張継続も依然協調軸組込済)"]
+    },
+    {
+      "date": "2026-05-10",
+      "name": "GitHub Copilot",
+      "category": "AI dev tool / CLI agent / cross-instance-pr peer",
+      "reason": "5/3 Replit 採択以降 7 日 cooldown 明け → 5/10 採択。5/8 までは間接監視継続だったが、(1) **5/6 v1.0.43 rubber-duck Claude critic for GPT sessions** + (2) **5/7 Rubber Duck cross-family review GA (= GPT 中心 session に Claude を critic として dispatch + Claude 中心 session の GPT critic upgrade)** + (3) **5/8 Cloud Agent more flexible secrets and variables** + (4) **5/9 Remote Session Monitoring (= github.com / mobile から long-running session 観測 + 操舵)** の **4 連続更新** で 30 日内重大リリース最頻クラス。自社差別化軸 a 直接競合 = (a) **Win Claude (Anthropic) + Win Codex (OpenAI) の cross-vendor peer review** を 自社は cross-instance-pr md doc + git log audit trail で実装中 / Copilot は **single tool 内 multi-vendor critic dispatch を 1-click で実装** = friction 圧倒的低 / (b) GHA cron 30+ workflow + Schedule cron に対し **github.com / mobile UI からの remote monitor 1-click** = 自社 [SCHEDULE-WAKEUP] rule + JSON log 手動確認に対し UX 大幅優位 / (c) Cloud Agent flexible secrets = 自社 GHA secret + Supabase secret rotate runbook の対抗軸。AI dev tool 6 強化 (= Cursor / OpenAI Codex / Devin / Replit / Claude Code + GitHub Copilot) で 自社 fleet 戦略 + AI 振り分け matrix のカバレッジ網羅。基準 a (= 差別化軸直接競合 / cross-vendor peer review + remote ops UX) + 基準 c (= 5/6+5/7+5/8+5/9 連続 4 release = 過去 30 日重大リリース最頻)。https://github.blog/changelog/2026-05-07-rubber-duck-in-github-copilot-cli-now-supports-more-models/",
+      "skipped_candidates": ["Lovable (= 4/28 mobile launch / 第 1 候補継続だが IndieDev 流入軸で純粋追加 / AI dev tool 6 強化 完了後の 5/17 以降 候補)", "Salesforce Agentforce (= TDX 2026 30 機能群 / enterprise 境界 / Slack 経由間接監視継続)", "Bolt.new (= 5月純増薄 / Lovable と類似軸)", "ServiceNow Build Agent (= 5/10 newsroom GA / Cursor/Windsurf/Claude Code/Copilot 全対応 / emerging routing matrix axis / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform launch / 14 model fine-tuning / 自社 LLM 横断戦略と類似軸 / 動向観察 1 月)", "Manus AI (= 1.6 Max + mobile dev + Design View + Connector Recommendations / 依然 自社 routing matrix 協調軸組込)"]
+    },
+    {
+      "date": "2026-05-14",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-05-10 GitHub Copilot 採択 / 4 day 経過 / cooldown 残 3 day)。次回 5/17 以降 採択候補は Lovable 第 1 (= 4/28 mobile launch 4 サイクル連続継続)。本日は existing 18 社 WebSearch のみ実施 + AI dev tool 6 強 全社 5 月重大リリース確認 (= Cursor 3.3 / Claude Code redesign / Devin Review REST API / Replit Agent 4 Design Canvas / GitHub Copilot 5/12-5/13 連続 / OpenAI Codex remote-control + MultiAgentV2) を report に集約。",
+      "skipped_candidates": ["Lovable (= 第 1 候補 4 サイクル連続継続 / 5/17 以降 採択推奨)", "Bolt.new (= Lovable 類似軸)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)"]
+    },
+    {
+      "date": "2026-05-15",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-05-10 GitHub Copilot 採択 / 5 day 経過 / cooldown 残 2 day)。次回 5/17 以降 採択候補は Lovable 第 1 (= 4/28 mobile launch 5 サイクル連続継続)。本日 5/13-5/15 新規 4 連続シグナル深掘り = (1) GitHub Copilot App technical preview 5/14 (= GitHub-native desktop / fleet workflow 正面競合 🔴) / (2) Notion 3.5 Developer Platform 5/13 (= Workers + Database sync + external agent bring-in Claude/Codex/Decagon 🔴) / (3) GitHub Copilot Team-Level Metrics API 5/14 🟡 / (4) GitHub Copilot Individual plan tightening 5/14 🟠 機会 / 加えて MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf 継続監視。",
+      "skipped_candidates": ["Lovable (= 第 1 候補 5 サイクル連続継続 / 5/17 以降 採択推奨)", "Bolt.new (= Lovable 類似軸)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)"]
+    },
+    {
+      "date": "2026-05-16",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-05-10 GitHub Copilot 採択 / 6 day 経過 / cooldown 残 1 day / 5/17 解禁)。次回 5/17 即採択推奨 = Lovable 第 1 (= 4/28 mobile launch 6 サイクル連続継続 / これ以上の delay は監視 lag)。本日 5/15-5/16 新規 2 micro-signal = (1) GitHub Copilot CLI v1.0.3 5/15 (= multi-account hostname flag patch 🟡) / (2) Claude Code v2.1.142 5/15-5/16 (= 2.1.141 fix-then-regress フォローアップ patch / 自社 Win Claude #132 fleet 中核 upgrade 候補 🟡 dogfood 機会) + 継続観察 2 件 = MoneyForward AI Cowork 7月 GA + Replit Private Publishing Core/Starter 拡張。3 連続 skip (5/14 / 5/15 / 5/16) で 5/17 Lovable 採択は最優先。",
+      "skipped_candidates": ["Lovable (= 第 1 候補 6 サイクル連続継続 / 5/17 即採択推奨 / これ以上 delay は監視 lag)", "Bolt.new (= Lovable 類似軸)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)"]
     }
   ],
   "_schema_notes": {

@@ -48,6 +48,11 @@ on:
         description: 'Output filename slug (e.g. gemini-organizing-tips)'
         required: true
         type: string
+      generate_shorts_package:
+        description: 'Also build 9:16 Shorts package metadata after transcription'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -65,12 +70,33 @@ jobs:
       ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
       YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
       YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+      HAS_GITHUB_PAT: ${{ secrets.GITHUB_PAT != '' }}
+      HAS_NOTEBOOKLM_STORAGE_STATE_JSON: ${{ secrets.NOTEBOOKLM_STORAGE_STATE_JSON != '' }}
+      HAS_ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY != '' }}
+      HAS_YOUTUBE_CLIENT_SECRET_JSON: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON != '' }}
+      HAS_YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          token: ${{ secrets.GITHUB_PAT }}
+          token: ${{ secrets.GITHUB_PAT || github.token }}
           fetch-depth: 100  # Step 0 dedup needs ≥1h of history (default depth=1 hides past bot commits)
+
+      - name: Check required video pipeline secrets
+        run: |
+          mkdir -p tmp/video-pipeline-secret-readiness
+          python scripts/check_video_pipeline_secret_readiness.py \
+            --require-secrets \
+            --report tmp/video-pipeline-secret-readiness/report.json
+
+      - name: Upload video pipeline secret readiness report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: video-pipeline-secret-readiness-report
+          path: tmp/video-pipeline-secret-readiness/report.json
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v6
@@ -168,6 +194,17 @@ jobs:
           python scripts/video/build_srt.py \
             videos/edit/transcripts/${{ inputs.slug }}.json \
             videos/master.srt
+
+      - name: Step 3b - Build Shorts package manifest (optional)
+        if: ${{ inputs.generate_shorts_package }}
+        run: |
+          python scripts/video/build_shorts_package.py \
+            videos/edit/transcripts/${{ inputs.slug }}.json \
+            --source-video videos/${{ inputs.slug }}.mp4 \
+            --source-url "notebooklm://${{ inputs.notebook_id }}/${{ inputs.artifact_id }}" \
+            --title "${{ inputs.title }}" \
+            --output-dir videos/shorts \
+            --count 3
 
       - name: Step 4 — Generate intro/outro cards
         env:

@@ -12,17 +12,22 @@ on:
   pull_request:
     paths:
       - 'scripts/video/**'
+      - 'scripts/check_video_pipeline_secret_readiness.py'
       - 'scripts/embed_video_in_philosophy.py'
       - '.github/workflows/notebooklm-video-pipeline.yml'
+      - '.github/workflows/video-pipeline-secret-readiness.yml'
       - '.github/workflows/video-pipeline-test.yml'
+      - 'test/scripts/test_video_pipeline_secret_readiness.py'
   push:
     branches:
       - staging
       - develop
     paths:
       - 'scripts/video/**'
+      - 'scripts/check_video_pipeline_secret_readiness.py'
       - 'scripts/embed_video_in_philosophy.py'
       - '.github/workflows/notebooklm-video-pipeline.yml'
+      - '.github/workflows/video-pipeline-secret-readiness.yml'
   workflow_dispatch:
 
 concurrency:
@@ -56,3 +61,8 @@ jobs:
         env:
           PYTHONUTF8: '1'
         run: python scripts/video/_smoke_test.py
+
+      - name: Run video pipeline secret readiness tests
+        env:
+          PYTHONUTF8: '1'
+        run: python -m unittest discover -s test/scripts -p "test_video_pipeline_secret_readiness.py"

@@ -5,6 +5,17 @@
 * **プロジェクト名**: 自分株式会社 (Me Inc.)
 * **コンセプト**: ユーザーはCEO。実務は全てAI（CXO）が担当する経営シミュレーション型生産性アプリ。
 * **技術スタック**: Flutter (Web), Supabase (Auth, DB, Edge Functions), AI (Gemini/OpenAI/Anthropic).
+* **AI tool update gate (2026-05-07 #1706)**: Claude/Codex/Gemini/Copilot changes must be verified against official sources, then routed through the two-instance flow in `docs/AI_FALLBACK_RUNBOOK.md`.
+
+## Windows 開発環境セットアップ
+
+新規 Windows 11 環境では、初期セットアップとプロキシ解除手順を
+[docs/setup/windows-dev-setup.md](docs/setup/windows-dev-setup.md) にまとめています。
+一括インストールは以下を使用します。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/setup_windows_dev.ps1
+```
 
 ## 2. 組織構造 (AI Agents) & 機能マップ
 

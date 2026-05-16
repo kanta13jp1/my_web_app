@@ -1,0 +1,124 @@
+name: Minimal E2E Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+      - ready_for_review
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Base URL to smoke test
+        required: false
+        default: https://my-web-app-b67f4.web.app
+      repeat_each:
+        description: Number of repeated smoke passes for stability
+        required: false
+        default: "3"
+
+concurrency:
+  group: minimal-e2e-gate-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  pr-e2e-declaration:
+    name: PR minimal E2E declaration
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Collect changed files
+        run: |
+          mkdir -p .ci-logs
+          git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            > .ci-logs/changed-files.txt
+
+      - name: Check hook bypass markers
+        run: >
+          python scripts/check_no_verify_bypass.py
+          --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
+      - name: Check minimal E2E PR contract
+        run: >
+          python scripts/check_minimal_e2e_gate.py
+          --event "$GITHUB_EVENT_PATH"
+          --changed-files .ci-logs/changed-files.txt
+
+  public-e2e-stability:
+    name: Public E2E stability smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run repeated public smoke tests
+        run: >
+          npm run e2e:smoke --
+          --project=chromium
+          --workers=1
+          --repeat-each="${REPEAT_EACH}"
+        env:
+          E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
+          REPEAT_EACH: ${{ github.event.inputs.repeat_each || '3' }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
+
+      - name: Run desktop and mobile visual evidence tests
+        run: >
+          npm run e2e:visual --
+          --project=chromium
+          --project=mobile-chrome
+          --workers=1
+        env:
+          E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
+
+      - name: Summarize Playwright evidence
+        if: always()
+        run: |
+          node scripts/summarize_playwright_results.mjs \
+            playwright-report/public-smoke-results.json \
+            playwright-report/visual-evidence-results.json \
+            --out playwright-report/issue-summary.md
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: minimal-e2e-playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

@@ -33,6 +33,11 @@ class _AiUniversityDepartmentSelectPageState
       {'department_code': 'agent', 'name_ja': 'エージェント学科', 'emoji': '🤖'},
       {'department_code': 'embedding', 'name_ja': '埋め込み・検索学科', 'emoji': '🔍'},
       {'department_code': 'framework', 'name_ja': 'フレームワーク学科', 'emoji': '🛠️'},
+      {
+        'department_code': 'fintech_trading_ai',
+        'name_ja': 'FinTech disruption / Trading x AI',
+        'emoji': 'FX',
+      },
     ],
     'cloud': [
       {'department_code': 'aws', 'name_ja': 'AWS 学科', 'emoji': '🟠'},

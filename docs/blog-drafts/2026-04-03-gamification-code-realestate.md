@@ -6,7 +6,7 @@ topics: [flutter, supabase, dart, gamification]
 published: true
 ---
 
-# はじめに
+# はじめに — 2026-04-03-gamification-code-realestate
 
 自分株式会社（Notion・Evernote・MoneyForward・Slack・GitHub など21社の機能を1つに統合するAI生産性プラットフォーム）の日次開発として、本日は3つの新機能を実装しました。
 

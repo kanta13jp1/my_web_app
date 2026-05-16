@@ -207,28 +207,50 @@ class ErrorReporter {
         hasReleaseInkStack && (details == null || library.contains('widgets'));
   }
 
+  @visibleForTesting
+  bool isIgnorableFlutterWebFocusTraversalLayoutErrorForTesting(
+    String message,
+    StackTrace? stackTrace,
+  ) {
+    return _isIgnorableFlutterWebFocusTraversalLayoutError(
+      message,
+      stackTrace,
+      isWebOverride: true,
+    );
+  }
+
   // Flutter Web can trigger focus traversal before every candidate RenderBox
   // has completed layout. The framework path is minified in release builds, so
   // match the traversal shape instead of one exact symbol suffix.
   bool _isIgnorableFlutterWebFocusTraversalLayoutError(
     String message,
-    StackTrace? stackTrace,
-  ) {
-    if (!kIsWeb) return false;
+    StackTrace? stackTrace, {
+    bool? isWebOverride,
+  }) {
+    if (!(isWebOverride ?? kIsWeb)) return false;
     if (!message.contains('RenderBox was not laid out')) return false;
 
     final stack = stackTrace?.toString() ?? '';
     final hasDebugFocusTraversalStack =
         stack.contains('FocusTraversalPolicy') ||
             stack.contains('FocusTraversalGroup');
-    final hasReleaseFocusTraversalStack = stack.contains('.gN') &&
+    final hasReleaseFocusTraversalStackV1 = stack.contains('.gN') &&
         stack.contains('.gn') &&
         stack.contains('.ge') &&
         stack.contains('Object.e') &&
         stack.contains('Object.dy') &&
         stack.contains('.ak');
+    final hasReleaseFocusTraversalStackV2 = stack.contains('.gn') &&
+        stack.contains('.ge') &&
+        stack.contains('Object.e') &&
+        stack.contains('Object.d') &&
+        (stack.contains('.aF') || stack.contains('.aG')) &&
+        (stack.contains('.aU') || stack.contains('.aV')) &&
+        stack.contains('.at');
 
-    return hasDebugFocusTraversalStack || hasReleaseFocusTraversalStack;
+    return hasDebugFocusTraversalStack ||
+        hasReleaseFocusTraversalStackV1 ||
+        hasReleaseFocusTraversalStackV2;
   }
 
   /// AppLogger.error から呼ばれる (caught errors)

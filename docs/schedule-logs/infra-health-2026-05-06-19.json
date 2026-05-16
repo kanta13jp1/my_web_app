@@ -1,0 +1,22 @@
+{
+  "task": "infra-health-check",
+  "run_at_jst": "2026-05-06T19:33+09:00",
+  "run_at_utc": "2026-05-06T10:33:52Z",
+  "supabase": {
+    "http_code": 200,
+    "status": "healthy",
+    "db_latency_ms": 793,
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "status": "loading_application_rendered_static_ok",
+    "note": "Flutter Web SPA pre-hydration shell rendered; no errors"
+  },
+  "anomaly": false,
+  "commit_pushed": false
+}

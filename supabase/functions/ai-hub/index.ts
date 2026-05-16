@@ -1,4 +1,4 @@
-﻿// ai-hub — AI・エージェント・AI大学統合EF
+// ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
 //   ai-summarizer, agent-hub, virtual-organization, my-ai-agent,
 //   generate-daily-challenges, trigger-analysis, analyze-reality,
@@ -7,17 +7,34 @@
 // NOTE: ai-assistant stays standalone (1079 lines, complex multi-provider logic)
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
-  createClient,
-  SupabaseClient,
-} from "npm:@supabase/supabase-js@2";
-import { AI_CHARACTER_PREAMBLE, prependCharacter } from "../_shared/ai_character_preamble.ts";
+  AI_CHARACTER_PREAMBLE,
+  prependCharacter,
+} from "../_shared/ai_character_preamble.ts";
+import {
+  type AgentToolApproval,
+  type AgentToolPolicyDecision,
+  evaluateAgentToolPolicy,
+} from "../_shared/agent_tool_policy.ts";
 import { selectEffort } from "../_shared/effort_router.ts";
 import {
   calculateApiCost,
   checkBudget,
   recordSpend,
 } from "../_shared/task_budget.ts";
+import {
+  buildOfflineBlockedResponseBody,
+  parseOfflineSecureModePolicy,
+  shouldBlockExternalProviderCall,
+} from "../_shared/offline_secure_mode_guard.ts";
+import {
+  getUniversityContentByFaculty,
+  getUniversityDepartmentList,
+  getUniversityFacultyList,
+  getUniversityProviderByDepartment,
+  UniversityActionError,
+} from "./university_faculty_actions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -572,6 +589,25 @@ async function callSingleProvider(
 
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => asStringArray(item))
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value.split(/[,\s]+/).map((item) => item.trim()).filter(Boolean);
+  }
+  return [];
 }
 
 function asNumber(value: unknown, fallback = 0): number {
@@ -1819,6 +1855,163 @@ async function addItem(
   return data;
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type AgentToolGateResult = {
+  decision: AgentToolPolicyDecision;
+  actorRole: string | null;
+  actorAgentId: string | null;
+  requestedScopes: string[];
+  allowedScopes: string[] | null;
+  approval: AgentToolApproval | null;
+  sideEffects: string | null;
+  auditLogged: boolean;
+};
+
+function nullableUuid(value: unknown): string | null {
+  const candidate = asString(value);
+  return UUID_PATTERN.test(candidate) ? candidate : null;
+}
+
+function parseAgentToolApproval(
+  body: Record<string, unknown>,
+): AgentToolApproval | null {
+  const approval = asRecord(body.approval);
+  const decision = asString(
+    approval?.decision ?? body.approval_decision ?? body.approvalDecision,
+  ).toLowerCase();
+  if (!["approved", "pending", "rejected"].includes(decision)) return null;
+  return {
+    decision: decision as AgentToolApproval["decision"],
+    approvedBy: asString(
+      approval?.approved_by ?? approval?.approvedBy ?? body.approved_by ??
+        body.approvedBy,
+    ) || null,
+    approvedAt: asString(
+      approval?.approved_at ?? approval?.approvedAt ?? body.approved_at ??
+        body.approvedAt,
+    ) || null,
+  };
+}
+
+function normalizeActorRole(value: unknown): string | null {
+  const raw = asString(value).toLowerCase();
+  if (!raw) return null;
+  if (raw === "ceo" || raw.includes("chief executive")) return "ceo";
+  if (raw === "cfo" || raw.includes("financial")) return "cfo";
+  if (raw === "cmo" || raw.includes("marketing")) return "cmo";
+  if (raw === "cho" || raw.includes("health")) return "cho";
+  if (raw === "chro" || raw.includes("people") || raw.includes("hr")) {
+    return "chro";
+  }
+  if (raw.includes("legal")) return "legal";
+  return raw;
+}
+
+async function loadAgentRole(
+  admin: SupabaseClient,
+  userId: string,
+  actorAgentId: string | null,
+): Promise<string | null> {
+  if (!actorAgentId) return null;
+  const { data, error } = await admin
+    .from("agents")
+    .select("slug,role_title,department")
+    .eq("id", actorAgentId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return normalizeActorRole(data.slug) ?? normalizeActorRole(data.role_title) ??
+    normalizeActorRole(data.department);
+}
+
+function publicPolicyDecision(decision: AgentToolPolicyDecision) {
+  return {
+    allowed: decision.allowed,
+    requires_approval: decision.requiresApproval,
+    missing_scopes: decision.missingScopes,
+    high_risk_scopes: decision.highRiskScopes,
+    blocked_reason: decision.blockedReason,
+  };
+}
+
+async function logAgentToolPolicyDecision(
+  admin: SupabaseClient,
+  userId: string,
+  input: AgentToolGateResult,
+): Promise<boolean> {
+  const payload = {
+    ...input.decision.auditPayload,
+    side_effects: input.sideEffects,
+    policy_source: "ai-hub:agent.tool_policy",
+  };
+  const { error } = await admin.from("agent_tool_execution_logs").insert({
+    user_id: userId,
+    actor_agent_id: input.actorAgentId,
+    actor_role: input.actorRole,
+    tool_name: String(input.decision.auditPayload.tool_name ?? "unknown"),
+    allowed: input.decision.allowed,
+    blocked_reason: input.decision.blockedReason,
+    requested_scopes: input.requestedScopes,
+    allowed_scopes: input.allowedScopes,
+    high_risk_scopes: input.decision.highRiskScopes,
+    requires_approval: input.decision.requiresApproval,
+    approval_decision: input.approval?.decision ?? null,
+    approved_by: input.approval?.approvedBy ?? null,
+    approved_at: input.approval?.approvedAt ?? null,
+    side_effects: input.sideEffects,
+    payload,
+  });
+  if (!error) return true;
+  console.warn("agent.tool_policy audit insert failed", error.message);
+  return false;
+}
+
+async function evaluateAgentToolGate(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<AgentToolGateResult> {
+  const actorAgentId = nullableUuid(
+    body.actor_agent_id ?? body.actorAgentId ?? body.agent_id ?? body.agentId,
+  );
+  const actorRole = normalizeActorRole(body.actor_role ?? body.actorRole) ??
+    await loadAgentRole(admin, userId, actorAgentId);
+  const requestedScopes = asStringArray(
+    body.requested_scopes ?? body.requestedScopes ?? body.scopes,
+  );
+  const allowedScopesRaw = body.allowed_scopes ?? body.allowedScopes;
+  const allowedScopes =
+    allowedScopesRaw === undefined || allowedScopesRaw === null
+      ? null
+      : asStringArray(allowedScopesRaw);
+  const approval = parseAgentToolApproval(body);
+  const sideEffects = asString(body.side_effects ?? body.sideEffects) || null;
+  const toolName =
+    asString(body.tool_name ?? body.toolName ?? body.target_tool) ||
+    "agent.run";
+  const decision = evaluateAgentToolPolicy({
+    actorRole,
+    toolName,
+    requestedScopes,
+    allowedScopes,
+    approval,
+  });
+  const result: AgentToolGateResult = {
+    decision,
+    actorRole,
+    actorAgentId,
+    requestedScopes,
+    allowedScopes,
+    approval,
+    sideEffects,
+    auditLogged: false,
+  };
+  result.auditLogged = await logAgentToolPolicyDecision(admin, userId, result);
+  return result;
+}
+
 const AI_UNIVERSITY_RLHF_SOURCE = "ai_university_rlhf_signal";
 const DAILY_JUDGMENT_QUALITY_SOURCE = "daily_judgment_quality_evaluation";
 
@@ -1996,7 +2189,8 @@ function buildUserDataFineTuneReadiness(
       approved_judgments: approvedJudgments,
       review_judgments: reviewJudgments,
     },
-    kgi: "Use first-party product data to improve AI answer quality without unsafe raw-data fine-tuning.",
+    kgi:
+      "Use first-party product data to improve AI answer quality without unsafe raw-data fine-tuning.",
     csf: [
       "Consent-aware first-party signal collection",
       "De-identification before export",
@@ -2049,7 +2243,11 @@ function clampPercent(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function textLengthScore(text: string, minGood: number, maxGood: number): number {
+function textLengthScore(
+  text: string,
+  minGood: number,
+  maxGood: number,
+): number {
   const length = text.trim().length;
   if (length <= 0) return 20;
   if (length >= minGood && length <= maxGood) return 100;
@@ -2060,10 +2258,12 @@ function textLengthScore(text: string, minGood: number, maxGood: number): number
 
 function keywordScore(text: string, keywords: string[], base = 45): number {
   const normalized = text.toLowerCase();
-  const hits = keywords.filter((keyword) =>
-    normalized.includes(keyword.toLowerCase())
-  ).length;
-  return clampPercent(base + hits * Math.floor((100 - base) / Math.max(1, keywords.length)));
+  const hits =
+    keywords.filter((keyword) => normalized.includes(keyword.toLowerCase()))
+      .length;
+  return clampPercent(
+    base + hits * Math.floor((100 - base) / Math.max(1, keywords.length)),
+  );
 }
 
 function normalizeDailyJudgmentPayload(
@@ -2149,7 +2349,7 @@ function buildDailyJudgmentQualityEvaluation(
         (focusArea ? 25 : 0) +
           (asNumber(judgment.score, -1) >= 0 ? 25 : 0) +
           (advice.length > 0 ? 20 : 0) +
-          (kgiText || csfText !== "\"\"" || kpiText !== "\"\"" ? 30 : 0),
+          (kgiText || csfText !== '""' || kpiText !== '""' ? 30 : 0),
       ),
       weight: 25,
       reason: "Checks whether score, focus, and decision context are present.",
@@ -2550,6 +2750,7 @@ serve(async (req: Request) => {
       "agent.list",
       "agent.create",
       "agent.run",
+      "agent.tool_policy.evaluate",
       "org.get",
       "my_agent.chat",
       "my_agent.history",
@@ -2569,6 +2770,7 @@ serve(async (req: Request) => {
       "learner.update_profile",
       "quiz.evaluate",
       "quiz.explain",
+      "kpi.monthly_summary",
       "voice.tts",
       "voice.stt",
     ];
@@ -2630,6 +2832,99 @@ serve(async (req: Request) => {
           });
         } catch {
           return json({ success: true, text });
+        }
+      }
+
+      case "kpi.monthly_summary": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const ledger = body.ledger && typeof body.ledger === "object"
+          ? body.ledger as Record<string, unknown>
+          : {};
+        const goals = Array.isArray(body.goals)
+          ? body.goals
+            .filter((item): item is Record<string, unknown> =>
+              item !== null && typeof item === "object"
+            )
+            .slice(0, 12)
+          : [];
+        const averageProgress = asNumber(ledger.average_progress, 0);
+        const monthOverMonthDelta = asNumber(ledger.month_over_month_delta, 0);
+        const goalCount = asNumber(ledger.goal_count, goals.length);
+        const completedCount = asNumber(ledger.completed_count, 0);
+        const lowProgressGoal = goals.find((goal) =>
+          asNumber(goal.progress, 0) < 80
+        );
+        const fallbackActions = [
+          averageProgress < 40
+            ? "平均進捗が低いです。今月は最重要 LifeGoal を 1 件に絞り、毎日 15 分の実行枠を固定してください。"
+            : averageProgress < 70
+            ? "平均進捗は中盤です。50% 未満の目標を 1 件選び、次回レビューまでに +10pt だけ進めてください。"
+            : "平均進捗は良好です。完了目前の目標を締め切り、翌月 KPI の準備に 1 手だけ着手してください。",
+          monthOverMonthDelta < 0
+            ? "前月比が落ちています。新規 KPI を増やすより、既存目標のレビュー頻度を週 2 回に戻してください。"
+            : "前月比は改善傾向です。今月の勝ちパターンを 1 行メモに残し、来月の再現性を上げてください。",
+          lowProgressGoal
+            ? `優先フォロー: ${
+              asString(lowProgressGoal.title)
+            } を今日の最初の 1 手にしてください。`
+            : `今月は ${completedCount}/${goalCount} 件完了です。完了済み KPI の維持条件を 1 つだけ決めてください。`,
+        ];
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: true,
+            source: "heuristic",
+            advice: fallbackActions.join("\n"),
+            actions: fallbackActions,
+          });
+        }
+
+        const prompt = prependCharacter([
+          "あなたは自分株式会社のCFOです。LifeGoals から作った月次 KPI 台帳を見て、今月の達成確率を上げる助言を日本語で返してください。",
+          "必ず JSON のみで返してください。",
+          'Schema: {"advice":"短い総評","actions":["今日やる1手","今週やる1手","来月に残す判断"]}',
+          `Ledger: ${JSON.stringify(ledger)}`,
+          `Goals: ${
+            JSON.stringify(goals.map((goal) => ({
+              title: asString(goal.title),
+              level: asString(goal.level),
+              progress: asNumber(goal.progress, 0),
+              current_month_delta: asNumber(goal.current_month_delta, 0),
+              month_over_month_delta: asNumber(
+                goal.month_over_month_delta,
+                0,
+              ),
+              target_date: asString(goal.target_date),
+            })))
+          }`,
+        ].join("\n"));
+
+        try {
+          const text = await callGemini(prompt, geminiKey);
+          const parsed = extractJsonObject(text);
+          const actions = Array.isArray(parsed?.actions)
+            ? parsed.actions
+              .map((item) => asString(item))
+              .filter((item) => item.length > 0)
+              .slice(0, 4)
+            : [];
+          const advice = asString(parsed?.advice) || actions.join("\n") ||
+            text.trim();
+          return json({
+            success: true,
+            source: "gemini",
+            advice,
+            actions: actions.length > 0 ? actions : fallbackActions,
+            raw_text: text,
+          });
+        } catch (error) {
+          return json({
+            success: true,
+            source: "heuristic_fallback",
+            advice: fallbackActions.join("\n"),
+            actions: fallbackActions,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       }
 
@@ -2814,11 +3109,55 @@ serve(async (req: Request) => {
         return json({ success: true, agent: item });
       }
 
+      case "agent.tool_policy.evaluate": {
+        const gate = await evaluateAgentToolGate(admin, userId!, body);
+        return json({
+          success: gate.decision.allowed,
+          decision: publicPolicyDecision(gate.decision),
+          actor_role: gate.actorRole,
+          actor_agent_id: gate.actorAgentId,
+          requested_scopes: gate.requestedScopes,
+          allowed_scopes: gate.allowedScopes,
+          approval: gate.approval,
+          side_effects: gate.sideEffects,
+          audit_logged: gate.auditLogged,
+        }, gate.decision.allowed ? 200 : 403);
+      }
+
       case "agent.run": {
+        const shouldEvaluateToolPolicy = body.tool_name !== undefined ||
+          body.toolName !== undefined ||
+          body.requested_scopes !== undefined ||
+          body.requestedScopes !== undefined ||
+          body.scopes !== undefined;
+        const gate = shouldEvaluateToolPolicy
+          ? await evaluateAgentToolGate(admin, userId!, body)
+          : null;
+        if (gate && !gate.decision.allowed) {
+          return json({
+            success: false,
+            error: "agent_tool_policy_denied",
+            decision: publicPolicyDecision(gate.decision),
+            actor_role: gate.actorRole,
+            audit_logged: gate.auditLogged,
+          }, 403);
+        }
         const item = await addItem(admin, "agent_run_log", userId!, {
           agent_id: body.agent_id,
           task: body.task,
           status: "queued",
+          tool_policy: gate
+            ? {
+              decision: publicPolicyDecision(gate.decision),
+              actor_role: gate.actorRole,
+              actor_agent_id: gate.actorAgentId,
+              requested_scopes: gate.requestedScopes,
+              allowed_scopes: gate.allowedScopes,
+              approval: gate.approval,
+              side_effects: gate.sideEffects,
+              audit_logged: gate.auditLogged,
+            }
+            : null,
         });
         return json({ success: true, run: item });
       }
@@ -3181,11 +3520,70 @@ serve(async (req: Request) => {
 
       case "university.content_all": {
         const limit = Math.min(Number(body.limit ?? 200), 500);
-        const { data } = await admin.from("ai_university_content")
+        const facultyCode = asString(body.faculty_code);
+        const departmentCode = asString(body.department_code);
+        let query = admin.from("ai_university_content")
           .select("*")
+          .eq("is_active", true);
+
+        if (departmentCode) {
+          let departmentQuery = admin.from("university_departments")
+            .select("id, university_faculties!inner(faculty_code)")
+            .eq("department_code", departmentCode);
+          if (facultyCode) {
+            departmentQuery = departmentQuery.eq(
+              "university_faculties.faculty_code",
+              facultyCode,
+            );
+          }
+          const { data: departments, error: departmentError } =
+            await departmentQuery.limit(1);
+          if (departmentError) throw new Error(departmentError.message);
+          const departmentId = Array.isArray(departments) &&
+              departments.length > 0
+            ? asString((departments[0] as { id?: unknown }).id)
+            : "";
+          if (!departmentId) return json({ success: true, items: [] });
+          query = query.eq("department_id", departmentId);
+        } else if (facultyCode) {
+          const { data: faculties, error: facultyError } = await admin
+            .from("university_faculties")
+            .select("id")
+            .eq("faculty_code", facultyCode)
+            .limit(1);
+          if (facultyError) throw new Error(facultyError.message);
+          const facultyId = Array.isArray(faculties) && faculties.length > 0
+            ? asString((faculties[0] as { id?: unknown }).id)
+            : "";
+          if (!facultyId) return json({ success: true, items: [] });
+          query = query.eq("faculty_id", facultyId);
+        }
+
+        const { data, error } = await query
           .order("published_at", { ascending: false })
           .limit(limit);
+        if (error) throw new Error(error.message);
         return json({ success: true, items: data ?? [] });
+      }
+
+      case "university.faculty_list": {
+        const result = await getUniversityFacultyList(admin);
+        return json({ success: true, ...result });
+      }
+
+      case "university.department_list": {
+        const result = await getUniversityDepartmentList(admin, body);
+        return json({ success: true, ...result });
+      }
+
+      case "university.provider_by_department": {
+        const result = await getUniversityProviderByDepartment(admin, body);
+        return json({ success: true, ...result });
+      }
+
+      case "university.content_by_faculty": {
+        const result = await getUniversityContentByFaculty(admin, body);
+        return json({ success: true, ...result });
       }
 
       case "university.upsert": {
@@ -3482,11 +3880,17 @@ serve(async (req: Request) => {
         if (error) return json({ error: error.message }, 500);
         const cards = (data ?? []) as Array<Record<string, unknown>>;
         const totalCards = cards.length;
-        const dueToday = cards.filter((c) => String(c.due_date ?? "") <= todayIso).length;
+        const dueToday = cards.filter((c) =>
+          String(c.due_date ?? "") <= todayIso
+        ).length;
         const totalReps = cards.reduce((s, c) => s + (Number(c.reps) || 0), 0);
-        const totalLapses = cards.reduce((s, c) => s + (Number(c.lapses) || 0), 0);
+        const totalLapses = cards.reduce(
+          (s, c) => s + (Number(c.lapses) || 0),
+          0,
+        );
         const avgStability = totalCards > 0
-          ? cards.reduce((s, c) => s + (Number(c.stability) || 1), 0) / totalCards
+          ? cards.reduce((s, c) => s + (Number(c.stability) || 1), 0) /
+            totalCards
           : 0;
         const retentionRate = totalReps > 0
           ? Math.round((1 - totalLapses / totalReps) * 100)
@@ -3664,11 +4068,21 @@ serve(async (req: Request) => {
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
         //       + 独自API 3社 (mistral/perplexity/cohere) + anthropic/google (MAGI互換)
         const providerId = String(body.provider ?? "");
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
         const messages = Array.isArray(body.messages) ? body.messages : null;
         const userMsg = String(body.message ?? "");
         if (!providerId) return json({ error: "provider required" }, 400);
         if (!messages && !userMsg) {
           return json({ error: "messages or message required" }, 400);
+        }
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "provider.chat",
+              provider: providerId,
+            }),
+            409,
+          );
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
 
@@ -3777,6 +4191,21 @@ serve(async (req: Request) => {
 
       case "provider.chat_auto": {
         const effortSelection = await selectEffort("provider.chat_auto", body);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        const requestedTier = body.tier as Tier | undefined;
+        const messages = Array.isArray(body.messages) ? body.messages : null;
+        const userMsg = String(body.message ?? "");
+        if (!messages && !userMsg) {
+          return json({ error: "messages or message required" }, 400);
+        }
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "provider.chat_auto",
+            }),
+            409,
+          );
+        }
         const budget = await checkBudget("ef", "ai-hub");
         if (!budget.ok) {
           return json({
@@ -3787,15 +4216,9 @@ serve(async (req: Request) => {
             exceeded_scope_id: budget.exceeded_scope_id,
           }, 429);
         }
-
-        const requestedTier = body.tier as Tier | undefined;
-        const messages = Array.isArray(body.messages) ? body.messages : null;
-        const userMsg = String(body.message ?? "");
-        if (!messages && !userMsg) {
-          return json({ error: "messages or message required" }, 400);
-        }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
-        const routedTier = requestedTier ?? effortToTier(effortSelection.effort);
+        const routedTier = requestedTier ??
+          effortToTier(effortSelection.effort);
         const startTierIndex = TIER_ORDER.indexOf(routedTier);
         if (startTierIndex === -1) return json({ error: "invalid tier" }, 400);
 
@@ -3905,6 +4328,25 @@ serve(async (req: Request) => {
 
       case "edge_llm.invoke": {
         const effortSelection = await selectEffort("edge_llm.invoke", body);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        const requestedTier = body.tier as Tier | undefined;
+        const providerId = asString(body.provider) || undefined;
+        const systemPrompt = asString(body.system_prompt);
+        const userPrompt = asString(body.user_prompt) ||
+          asString(body.prompt) ||
+          asString(body.message);
+        if (!userPrompt) {
+          return json({ error: "user_prompt required" }, 400);
+        }
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "edge_llm.invoke",
+              provider: providerId,
+            }),
+            409,
+          );
+        }
         const budget = await checkBudget("ef", "ai-hub");
         if (!budget.ok) {
           return json({
@@ -3914,16 +4356,6 @@ serve(async (req: Request) => {
             exceeded_scope: budget.exceeded_scope,
             exceeded_scope_id: budget.exceeded_scope_id,
           }, 429);
-        }
-
-        const requestedTier = body.tier as Tier | undefined;
-        const providerId = asString(body.provider) || undefined;
-        const systemPrompt = asString(body.system_prompt);
-        const userPrompt = asString(body.user_prompt) ||
-          asString(body.prompt) ||
-          asString(body.message);
-        if (!userPrompt) {
-          return json({ error: "user_prompt required" }, 400);
         }
 
         const responseFormat = asString(body.response_format) === "json"
@@ -4030,14 +4462,16 @@ serve(async (req: Request) => {
               }
             }
             if (!resultText) {
-              failureDetail =
-                `${result.error ?? "quota exceeded"} (all fallbacks failed)`;
+              failureDetail = `${
+                result.error ?? "quota exceeded"
+              } (all fallbacks failed)`;
             }
           } else {
             failureDetail = result.error ?? "provider failed";
           }
         } else {
-          const routedTier = requestedTier ?? effortToTier(effortSelection.effort);
+          const routedTier = requestedTier ??
+            effortToTier(effortSelection.effort);
           const startTierIndex = TIER_ORDER.indexOf(routedTier);
           if (startTierIndex === -1) {
             return json({ error: "invalid tier" }, 400);
@@ -4293,13 +4727,13 @@ serve(async (req: Request) => {
         const userId = String(body.user_id ?? "");
         if (!userId) return json({ error: "user_id required" }, 400);
         const { data: usage } = await admin.from("user_feature_usage")
-          .select("feature_id, last_used_at, use_count")
+          .select("feature_route, tapped_at")
           .eq("user_id", userId)
-          .order("last_used_at", { ascending: false })
+          .order("tapped_at", { ascending: false })
           .limit(30);
         const recent = new Set(
           (usage ?? []).map((r: Record<string, unknown>) =>
-            String(r.feature_id)
+            String(r.feature_route)
           ),
         );
         const recommendations: Array<Record<string, unknown>> = [];
@@ -4345,6 +4779,50 @@ serve(async (req: Request) => {
           if (recommendations.length >= 5) break;
         }
         return json({ success: true, recommendations });
+      }
+
+      case "home.popular": {
+        const limit = Math.min(Math.max(Number(body.limit ?? 8), 1), 20);
+        const windowDays = Math.min(
+          Math.max(Number(body.window_days ?? 30), 1),
+          365,
+        );
+        const since = new Date(
+          Date.now() - windowDays * 24 * 60 * 60 * 1000,
+        ).toISOString();
+        const { data, error } = await admin.from("user_feature_usage")
+          .select("feature_route, feature_label, tapped_at")
+          .gte("tapped_at", since)
+          .limit(2000);
+        if (error) return json({ error: error.message }, 400);
+
+        const byRoute = new Map<
+          string,
+          { feature_route: string; feature_label: string; use_count: number }
+        >();
+        for (const row of data ?? []) {
+          const rawRoute = String(row.feature_route ?? "").trim();
+          if (!rawRoute) continue;
+          const route = rawRoute.startsWith("/") ? rawRoute : `/${rawRoute}`;
+          const current = byRoute.get(route) ?? {
+            feature_route: route,
+            feature_label: String(row.feature_label ?? route),
+            use_count: 0,
+          };
+          current.use_count += 1;
+          if (!current.feature_label || current.feature_label === route) {
+            current.feature_label = String(row.feature_label ?? route);
+          }
+          byRoute.set(route, current);
+        }
+
+        const features = [...byRoute.values()]
+          .sort((a, b) =>
+            b.use_count - a.use_count ||
+            a.feature_label.localeCompare(b.feature_label)
+          )
+          .slice(0, limit);
+        return json({ success: true, features });
       }
 
       // ── Observability (Win版#131 part 4 / NotebookLM f56cc07c) ────────────────
@@ -4505,6 +4983,9 @@ serve(async (req: Request) => {
         return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (err) {
+    if (err instanceof UniversityActionError) {
+      return json({ error: err.message }, err.status);
+    }
     const message = err instanceof Error ? err.message : String(err);
     return json({ error: message }, 500);
   }

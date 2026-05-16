@@ -11,10 +11,29 @@ pushes, and `workflow_call` deploy preflights:
 - `deno lint --config supabase/functions/deno.json supabase/functions/`
 - `dart format --output=none --set-exit-if-changed .`
 - VM tests, web import smoke tests, security checks, and production web build
+- `scripts/check_no_verify_bypass.py` through the Minimal E2E Gate workflow,
+  which fails PRs that carry local hook-bypass markers
 
 `analysis_options.yaml` defines Dart analyzer errors and lints. Formatting is now
 a hard gate instead of a warning so CI blocks merges when generated or manual
 Dart edits skip `dart format`.
+
+## Local Lefthook Mirror
+
+Local commits should install the same fast gate through Lefthook:
+
+```powershell
+npm ci
+npm run hooks:install
+npm run quality:fast
+```
+
+The local hook flow is documented in
+[`docs/automation/local-quality-gates.md`](local-quality-gates.md). In short,
+`pre-commit` runs the fast gate, `prepare-commit-msg` blocks
+`git commit --no-verify` by requiring a fresh pre-commit stamp, and `pre-push`
+runs the fuller local CI mirror. Browser smoke remains in GitHub Actions by
+default and can be included locally with `CODEX_INCLUDE_BROWSER_SMOKE=1`.
 
 ## Auto-Fix Path
 
@@ -31,9 +50,10 @@ analysis errors still fail visibly for manual correction.
 
 ## Agent Handoff
 
-- Codex #2 owns deterministic CI, formatting, and workflow automation changes.
-- Claude Code should run `claude ultrareview [target]` or `/ultrareview` for
-  high-risk architecture, auth, database, or production deploy changes.
+- Claude Code #1 owns high-risk architecture, auth, database, production deploy,
+  hook-scope, and exception-policy review.
+- Codex #1 owns deterministic CI, formatting, workflow automation, and scoped
+  implementation changes under the current two-instance development flow.
 - Codex in-app browser checks remain the default for UI-facing changes after a
   local dev server is available.
 - Automatic approval reviews are suitable for low-risk workflow or docs changes

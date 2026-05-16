@@ -21,6 +21,26 @@ CONSTRAINTS_FILE = os.path.join(REPO_ROOT, "docs", "instance-constraints.md")
 TODAY = date.today().isoformat()
 WEB_MODE = "--web" in sys.argv
 AUTO_UPDATE = "--update" in sys.argv
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+OFFICIAL_TOOL_SOURCES = {
+    "Claude Code settings": "https://docs.anthropic.com/en/docs/claude-code/settings",
+    "Claude Code memory": "https://docs.anthropic.com/en/docs/claude-code/memory",
+    "Gemini Code Assist release notes": "https://developers.google.com/gemini-code-assist/resources/release-notes",
+    "Gemini 3 Code Assist": "https://docs.cloud.google.com/gemini/docs/codeassist/gemini-3",
+    "GitHub Copilot changelog": "https://github.blog/changelog/",
+    "OpenAI Codex docs": "https://developers.openai.com/codex/cloud",
+    "OpenAI Docs MCP": "https://developers.openai.com/learn/docs-mcp",
+}
+
+CODEX_MEMORY_POINTERS = [
+    ("repo AGENTS.md", os.path.join(REPO_ROOT, "AGENTS.md")),
+    ("home AGENTS.md", os.path.expanduser("~/.codex/AGENTS.md")),
+    ("home config.toml", os.path.expanduser("~/.codex/config.toml")),
+]
 
 # ──────────────────────────────────────────────
 # 現在バージョン収集
@@ -35,6 +55,11 @@ def run(cmd: list[str]) -> str:
 
 def get_claude_code_version() -> str:
     out = run(["claude", "--version"])
+    m = re.search(r"(\d+\.\d+\.\d+)", out)
+    return m.group(1) if m else "unknown"
+
+def get_codex_cli_version() -> str:
+    out = run(["codex", "--version"])
     m = re.search(r"(\d+\.\d+\.\d+)", out)
     return m.group(1) if m else "unknown"
 
@@ -57,9 +82,28 @@ def get_flutter_version() -> str:
     m = re.search(r"Flutter\s+(\d+\.\d+\.\d+)", out)
     return m.group(1) if m else "unknown"
 
+def semver_tuple(value: str) -> tuple[int, int, int]:
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", value)
+    if not m:
+        return (0, 0, 0)
+    return tuple(int(part) for part in m.groups())
+
+def version_at_least(value: str, minimum: str) -> bool:
+    return semver_tuple(value) >= semver_tuple(minimum)
+
+def detect_codex_memory_pointers() -> list[str]:
+    pointers: list[str] = []
+    for label, path in CODEX_MEMORY_POINTERS:
+        if os.path.exists(path):
+            pointers.append(f"{label}: {path}")
+    return pointers
+
 # ──────────────────────────────────────────────
 # 既知バージョン読み込み
 # ──────────────────────────────────────────────
+
+def normalize_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
 
 def load_known_versions() -> dict[str, str]:
     known: dict[str, str] = {}
@@ -67,10 +111,22 @@ def load_known_versions() -> dict[str, str]:
         with open(VERSIONS_FILE, "r", encoding="utf-8") as f:
             for line in f:
                 # Match table rows like: | **Claude Code** (CLI) | `2.1.110` | ...
-                m = re.search(r"\|\s*\*\*(.+?)\*\*.*?\|\s*`([^`]+)`\s*\|", line)
+                m = re.search(
+                    r"\|\s*\*\*(.+?)\*\*(?:\s*\(([^)]*)\))?\s*\|\s*`([^`]+)`\s*\|",
+                    line,
+                )
                 if m:
-                    key = m.group(1).lower().replace(" ", "_")
-                    known[key] = m.group(2)
+                    base_key = normalize_key(m.group(1))
+                    qualifier_key = normalize_key(m.group(2) or "")
+                    version = m.group(3)
+                    if qualifier_key:
+                        known[f"{base_key}_{qualifier_key}"] = version
+                        if base_key.endswith(f"_{qualifier_key}"):
+                            known[base_key] = version
+                        else:
+                            known.setdefault(base_key, version)
+                    else:
+                        known[base_key] = version
     except FileNotFoundError:
         pass
     return known
@@ -83,10 +139,8 @@ def main() -> int:
     if WEB_MODE:
         print("=== WEB版モード: CLIコマンドは実行されません ===")
         print("以下のURLでリリースを手動確認してください:")
-        print("  Claude Code  : https://github.com/anthropics/claude-code/releases")
-        print("  Gemini       : https://marketplace.visualstudio.com/items?itemName=google.geminicodeassist")
-        print("  Copilot      : https://marketplace.visualstudio.com/items?itemName=github.copilot")
-        print("  OpenAI models: https://platform.openai.com/docs/models")
+        for name, url in OFFICIAL_TOOL_SOURCES.items():
+            print(f"  {name:<32}: {url}")
         print("更新があれば docs/tool-versions.md を GitHub MCP 経由で更新してください。")
         return 0
 
@@ -96,10 +150,24 @@ def main() -> int:
     # Claude Code CLI
     cc_ver = get_claude_code_version()
     known = load_known_versions()
-    old_cc = known.get("claude_code", "unknown")
+    old_cc = known.get("claude_code_cli", known.get("claude_code", "unknown"))
     print(f"Claude Code CLI : {cc_ver} (既知: {old_cc})")
     if cc_ver != "unknown" and cc_ver != old_cc:
         updates.append(("Claude Code CLI", old_cc, cc_ver))
+
+    # OpenAI Codex CLI + instruction/memory pointers
+    codex_ver = get_codex_cli_version()
+    old_codex = known.get("openai_codex_cli", known.get("codex_cli", "unknown"))
+    print(f"OpenAI Codex CLI: {codex_ver} (known: {old_codex})")
+    if codex_ver != "unknown" and codex_ver != old_codex:
+        updates.append(("OpenAI Codex CLI", old_codex, codex_ver))
+    codex_pointers = detect_codex_memory_pointers()
+    if codex_pointers:
+        print("Codex instruction/memory pointers:")
+        for pointer in codex_pointers:
+            print(f"  - {pointer}")
+    else:
+        print("Codex instruction/memory pointers: not found (check AGENTS.md / ~/.codex/config.toml)")
 
     # VSCode 拡張
     if not WEB_MODE:
@@ -113,13 +181,22 @@ def main() -> int:
         for ext_id, (name, key) in ext_map.items():
             ver = exts.get(ext_id, "not installed")
             old = known.get(key, "unknown")
+            if name == "Gemini Code Assist" and ver not in ("not installed", "unknown"):
+                if version_at_least(ver, "2.77.1"):
+                    print("  Gemini agent-mode log attribution: OK (2.77.1+)")
+                else:
+                    print("  Gemini agent-mode log attribution: update to 2.77.1+")
             print(f"{name:<30}: {ver} (既知: {old})")
             if ver not in ("not installed", "unknown") and ver != old:
                 updates.append((name, old, ver))
+        print("Gemini 3.1 Pro / 3.0 Flash availability is license and release-channel gated; verify in Google Code Assist before routing production fallback.")
 
     # Flutter
     fl_ver = get_flutter_version()
-    old_fl = known.get("dart/flutter", "unknown")
+    old_fl = known.get(
+        "dart_flutter_sdk",
+        known.get("dart_flutter", known.get("dart/flutter", "unknown")),
+    )
     print(f"Flutter/Dart SDK               : {fl_ver} (既知: {old_fl})")
     if fl_ver != "unknown" and fl_ver != old_fl:
         updates.append(("Flutter/Dart SDK", old_fl, fl_ver))
@@ -190,6 +267,7 @@ def _update_versions_file(updates: list[tuple[str, str, str]]) -> None:
 
     tool_to_row_key = {
         "Claude Code CLI": "Claude Code** (CLI)",
+        "OpenAI Codex CLI": "OpenAI Codex CLI** (CLI)",
         "Claude Code VSCode ext": "Claude Code** (VSCode ext)",
         "Gemini Code Assist": "Gemini Code Assist** (VSCode ext)",
         "GitHub Copilot": "GitHub Copilot** (VSCode ext)",

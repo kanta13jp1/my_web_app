@@ -1,0 +1,21 @@
+{
+  "run_at_jst": "2026-05-09T19:35+09:00",
+  "supabase_health_check": {
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "ok (121ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-09T10:35:08.202Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "status": "ok",
+    "note": "Flutter web bootstrap loading message normal"
+  },
+  "anomaly": false,
+  "action": "log only (no commit per task policy)"
+}

@@ -1,0 +1,124 @@
+name: WBS Role Harness
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Optional single Issue number to classify"
+        required: false
+        type: string
+      query:
+        description: "Issue search query used when issue_number is empty"
+        required: true
+        default: "label:priority:high label:wbs"
+        type: string
+      max_issues:
+        description: "Open Issues to inspect in queue mode"
+        required: true
+        default: "10"
+        type: string
+      comment_on_issue:
+        description: "Comment the report on the single Issue"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  pull_request:
+    paths:
+      - ".github/workflows/wbs-role-harness.yml"
+      - "docs/WBS_2_INSTANCE_ROUTING.md"
+      - "docs/automation/wbs-role-harness.md"
+      - "scripts/wbs_role_harness.py"
+      - "scripts/wbs_role_harness_test.py"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: wbs-role-harness-${{ inputs.issue_number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE_NUMBER: ${{ inputs.issue_number || '' }}
+      QUERY: ${{ inputs.query || 'label:priority:high label:wbs' }}
+      MAX_ISSUES: ${{ inputs.max_issues || '10' }}
+      COMMENT_ON_ISSUE: ${{ inputs.comment_on_issue || 'false' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${ISSUE_NUMBER:-}" ] && ! [[ "$ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::issue_number must be numeric when provided"
+            exit 1
+          fi
+          if ! [[ "$MAX_ISSUES" =~ ^[0-9]+$ ]]; then
+            echo "::error::max_issues must be numeric"
+            exit 1
+          fi
+          if [ -z "${ISSUE_NUMBER:-}" ] && [ -z "${QUERY:-}" ]; then
+            echo "::error::query is required when issue_number is empty"
+            exit 1
+          fi
+
+      - name: Run harness unit tests
+        run: python scripts/wbs_role_harness_test.py
+
+      - name: Generate role harness report
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tmp
+          args=(
+            --repo "$GITHUB_REPOSITORY"
+            --output-md tmp/wbs-role-harness.md
+            --output-json tmp/wbs-role-harness.json
+          )
+          if [ -n "${ISSUE_NUMBER:-}" ]; then
+            args+=(--issue-number "$ISSUE_NUMBER")
+          else
+            args+=(--query "$QUERY" --max-issues "$MAX_ISSUES")
+          fi
+          python scripts/wbs_role_harness.py "${args[@]}"
+
+      - name: Write job summary
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -f tmp/wbs-role-harness.md ]; then
+            cat tmp/wbs-role-harness.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "WBS role harness did not produce a report." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload role harness artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: wbs-role-harness-${{ github.run_id }}
+          path: |
+            tmp/wbs-role-harness.md
+            tmp/wbs-role-harness.json
+          if-no-files-found: ignore
+
+      - name: Comment on single Issue
+        if: success() && env.ISSUE_NUMBER != '' && env.COMMENT_ON_ISSUE == 'true'
+        run: gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file tmp/wbs-role-harness.md

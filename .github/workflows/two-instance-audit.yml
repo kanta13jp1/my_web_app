@@ -1,0 +1,24 @@
+name: Two-Instance Routing Audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/COMPRESSED_PROMPT_V3.md"
+      - ".github/workflows/**"
+      - "docs/**"
+      - "scripts/two_instance_audit.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Check canonical 2-instance routing markers
+        run: python scripts/two_instance_audit.py --fail-on-active

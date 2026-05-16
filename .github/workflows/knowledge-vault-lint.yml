@@ -1,12 +1,8 @@
-name: Knowledge Vault Lint (memory + docs 健康診断)
-
-# Win版#132 part 105 / 2026-05-01
-# Issues #976 + #1173 dogfood / SECOND_BRAIN #4 + INDIE #1
-# 週次で memory/ + docs/ の orphan / broken link / dup title / missing index 検出
+name: Knowledge Vault Lint (memory + docs health)
 
 on:
   schedule:
-    - cron: "0 2 * * 1"  # weekly / 月曜 02:00 UTC (= 11:00 JST)
+    - cron: "0 2 * * 1" # weekly Monday 02:00 UTC (= 11:00 JST)
   workflow_dispatch: {}
 
 concurrency:
@@ -15,6 +11,7 @@ concurrency:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   lint:
@@ -23,7 +20,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Checkout (full history)
+      - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 1
@@ -32,25 +29,30 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Compute date tag
         id: tag
         run: |
           DATE=$(TZ=UTC date +'%Y-%m-%d')
-          echo "date=$DATE" >> $GITHUB_OUTPUT
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
 
       - name: Run lint
+        id: lint
         run: |
-          # GHA 環境では memory/ は repo 内の memory/ を使う (= local override)
+          set +e
           python scripts/knowledge_vault_lint.py \
             --memory-dir memory \
-            --output "docs/knowledge-vault-lint/${{ steps.tag.outputs.date }}.md"
-        continue-on-error: true  # health < 90 でも commit は実施
+            --output "docs/knowledge-vault-lint/${{ steps.tag.outputs.date }}.md" \
+            --json-out "$RUNNER_TEMP/knowledge-vault-lint.json"
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          echo "json_path=$RUNNER_TEMP/knowledge-vault-lint.json" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Commit lint report
         run: |
-          git config user.name  "knowledge-vault-lint[bot]"
+          git config user.name "knowledge-vault-lint[bot]"
           git config user.email "knowledge-vault-lint@users.noreply.github.com"
           git add docs/knowledge-vault-lint/ || true
           if git diff --staged --quiet; then
@@ -59,3 +61,37 @@ jobs:
             git commit -m "docs(lint): knowledge vault lint ${{ steps.tag.outputs.date }}"
             git push origin HEAD:main || git push --force-with-lease origin HEAD:main
           fi
+
+      - name: Open warning Issue when lint health is below target
+        if: steps.lint.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE="${{ steps.tag.outputs.date }}"
+          REPORT="docs/knowledge-vault-lint/${DATE}.md"
+          TITLE="[automation][P1] knowledge vault lint warning ${DATE}"
+          EXISTING=$(gh issue list --search "$TITLE in:title is:open" --json number --jq 'length')
+          if [ "$EXISTING" != "0" ]; then
+            echo "Skip: same-title open Issue already exists ($EXISTING)"
+            exit 0
+          fi
+
+          BODY="$RUNNER_TEMP/knowledge-vault-lint-issue.md"
+          {
+            echo "Knowledge Vault Lint reported health below the target threshold."
+            echo ""
+            echo "- Report: \`$REPORT\`"
+            echo "- Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "- Exit code: \`${{ steps.lint.outputs.exit_code }}\`"
+            echo ""
+            echo "The report excerpt below includes the top repair candidates for orphan files, broken links, duplicate titles, and missing index entries."
+            echo ""
+            sed -n '1,220p' "$REPORT"
+            echo ""
+            echo "(auto-opened by knowledge-vault-lint.yml)"
+          } > "$BODY"
+
+          gh issue create \
+            --title "$TITLE" \
+            --label "automation,enhancement,priority:high" \
+            --body-file "$BODY"

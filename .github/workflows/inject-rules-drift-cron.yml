@@ -1,0 +1,168 @@
+name: Inject Rules Drift Detection
+
+# Win版#132 part 135 (2026-05-05) — fleet 横断 inject-rules.txt 同期 mechanism
+# .claude/inject-rules.txt (= repo canonical) の integrity を weekly check.
+# - 行数 ≤ 80 (Karpathy KPI 維持)
+# - rule ID 数 = 37 (= 既知の 37 rule 揃ってるか)
+# - 各 critical rule 存在
+# - docs/RULES_INDEX.md との整合 (= 全 rule ID が docs に expand されてるか)
+#
+# 違反時 → Issue 自動作成.
+
+on:
+  schedule:
+    - cron: "0 18 * * 0"  # weekly 月曜 03:00 JST (= 18:00 UTC 日曜)
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "drift 検出時に exit 1 (default false)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: inject-rules-drift-cron
+  cancel-in-progress: false
+
+jobs:
+  drift-check:
+    name: Verify .claude/inject-rules.txt integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run sync_inject_rules --verify (canonical only)
+        id: verify
+        run: |
+          # GHA runner には ~/.claude/hooks/inject-rules.txt が無いため canonical だけ verify.
+          # 出力 JSON を parse して KPI 確認.
+          PYTHONUTF8=1 python scripts/sync_inject_rules.py --verify --json > verify.json 2>&1 || true
+          cat verify.json
+          KPI_PASS=$(python -c "import json; d=json.load(open('verify.json')); print(d['canonical']['kpi_pass'])")
+          LINES=$(python -c "import json; d=json.load(open('verify.json')); print(d['canonical']['lines'])")
+          RULES=$(python -c "import json; d=json.load(open('verify.json')); print(d['canonical']['rule_count'])")
+          MISSING=$(python -c "import json; d=json.load(open('verify.json')); print(','.join(d['canonical']['missing_critical_rules']))")
+          echo "kpi_pass=$KPI_PASS" >> $GITHUB_OUTPUT
+          echo "lines=$LINES"       >> $GITHUB_OUTPUT
+          echo "rules=$RULES"       >> $GITHUB_OUTPUT
+          echo "missing=$MISSING"   >> $GITHUB_OUTPUT
+
+      - name: Verify docs/RULES_INDEX.md mentions all 37 rules
+        id: docs_match
+        run: |
+          DOCS_RULE_COUNT=$(grep -cE "^### \`\[" docs/RULES_INDEX.md || echo 0)
+          DOCS_TABLE_COUNT=$(grep -cE "^\| \`\[" docs/RULES_INDEX.md || echo 0)
+          # Section A (= ### form) + Section B (= table form) + Section C (= ### form) で 37 entry あるはず
+          TOTAL=$((DOCS_RULE_COUNT + DOCS_TABLE_COUNT))
+          echo "docs_rule_section=$DOCS_RULE_COUNT" >> $GITHUB_OUTPUT
+          echo "docs_rule_table=$DOCS_TABLE_COUNT" >> $GITHUB_OUTPUT
+          echo "docs_total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "docs/RULES_INDEX.md: section ### count=$DOCS_RULE_COUNT, table | count=$DOCS_TABLE_COUNT, total=$TOTAL"
+
+      - name: Open Issue if drift detected
+        if: steps.verify.outputs.kpi_pass != 'True'
+        run: |
+          TODAY=$(date -u '+%Y-%m-%d')
+          TITLE="[automation][P1] inject-rules.txt drift detected $TODAY"
+          EXISTING=$(gh issue list --search "$TITLE in:title is:open" --json number --jq 'length')
+          if [ "$EXISTING" != "0" ]; then
+            echo "Skip: same-title open Issue already exists ($EXISTING)"
+            exit 0
+          fi
+          {
+            echo "## Inject Rules Drift Detection — $TODAY ($(date -u '+%H:%M UTC'))"
+            echo ""
+            echo "weekly cron が \`.claude/inject-rules.txt\` の integrity 違反を検出."
+            echo ""
+            echo "### Verify result"
+            echo ""
+            echo '```json'
+            cat verify.json
+            echo '```'
+            echo ""
+            echo "### KPI 詳細"
+            echo "- 行数: ${{ steps.verify.outputs.lines }} (= 80 行上限)"
+            echo "- rule ID 数: ${{ steps.verify.outputs.rules }} (= 37 期待)"
+            echo "- 不足 critical rule: ${{ steps.verify.outputs.missing }}"
+            echo ""
+            echo "### 修復手順"
+            echo ""
+            echo "1. 直近の repo \`.claude/inject-rules.txt\` を確認"
+            echo "2. drift 内容を特定 (= rule 削除 / 行数超過 / critical rule 欠落)"
+            echo "3. 必要なら \`scripts/sync_inject_rules.py --reverse\` で home file から再 sync"
+            echo "4. PR 作成 + main merge"
+            echo ""
+            echo "### 関連"
+            echo ""
+            echo "- script: \`scripts/sync_inject_rules.py\` (Win版#132 part 135)"
+            echo "- workflow: \`.github/workflows/inject-rules-drift-cron.yml\`"
+            echo "- 詳細展開: \`docs/RULES_INDEX.md\` (Win版#132 part 134)"
+            echo "- canonical: \`.claude/inject-rules.txt\`"
+            echo ""
+            echo "(auto-opened by inject-rules-drift-cron.yml)"
+          } > issue_body.md
+          gh issue create --title "$TITLE" --label "automation,enhancement,priority:high" --body-file issue_body.md
+
+      - name: Detect canonical update + comment to tracking Issue (Tier 3)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Win版#132 part 136 — Tier 3: canonical 更新検出 → tracking Issue へ「local sync 推奨」コメント
+          # 直近の commit (= origin/main HEAD) と origin/main HEAD~1 の .claude/inject-rules.txt 差分比較
+          PREV_HASH=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+          CURR_HASH=$(git rev-parse HEAD)
+          if [ -z "$PREV_HASH" ]; then
+            echo "No previous commit — skip diff"
+            exit 0
+          fi
+          DIFF_OUTPUT=$(git diff "$PREV_HASH" "$CURR_HASH" -- .claude/inject-rules.txt 2>/dev/null || echo "")
+          if [ -z "$DIFF_OUTPUT" ]; then
+            echo "canonical not updated since last commit — no notification"
+            exit 0
+          fi
+          echo "canonical updated detected (diff $(echo "$DIFF_OUTPUT" | wc -l) lines)"
+          TODAY=$(date -u '+%Y-%m-%d')
+          {
+            echo "📡 inject-rules.txt canonical updated ($TODAY $(date -u '+%H:%M UTC'))"
+            echo ""
+            echo "\`HEAD~1\` ($PREV_HASH) → \`HEAD\` ($CURR_HASH) で \`.claude/inject-rules.txt\` 更新検出."
+            echo ""
+            echo "**各 instance の手元 sync 推奨**:"
+            echo ""
+            echo '```bash'
+            echo "git pull origin main"
+            echo "PYTHONUTF8=1 python scripts/sync_inject_rules.py --apply"
+            echo '```'
+            echo ""
+            echo "auto-sync 設定済 instance は次セッション開始時に SessionStart hook (Tier 1) で自動修復される."
+            echo "Codex CLI / 長時間 idle instance は Windows Task Scheduler (Tier 2) で daily 03:30 JST に自動修復."
+            echo ""
+            echo "詳細: \`docs/INJECT_RULES_AUTO_SYNC.md\` (= Tier 1-3 defense in depth / Win版#132 part 136)"
+          } > update_comment.md
+          gh issue comment 1647 --body-file update_comment.md || true
+          echo "✅ canonical update notified to #1647"
+
+      - name: Strict mode exit
+        if: steps.verify.outputs.kpi_pass != 'True' && inputs.strict == 'true'
+        run: exit 1

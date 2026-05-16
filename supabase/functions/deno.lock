@@ -123,6 +123,7 @@
     "https://deno.land/std@0.224.0/internal/diff.ts": "6234a4b493ebe65dc67a18a0eb97ef683626a1166a1906232ce186ae9f65f4e6",
     "https://deno.land/std@0.224.0/internal/format.ts": "0a98ee226fd3d43450245b1844b47003419d34d210fa989900861c79820d21c2",
     "https://deno.land/std@0.224.0/internal/mod.ts": "534125398c8e7426183e12dc255bb635d94e06d0f93c60a297723abe69d3b22e",
+    "https://esm.sh/@supabase/supabase-js@2.90.1": "fcf5e194d637ff365df76d1806e7c2f239905c4b08e83e5d95690a2b22e21a1d",
     "https://deno.land/x/jose@v5.9.6/index.ts": "e6e894e8c2b3a11c4071ee1008eb7d85a373ff68b5fbe5d7791d7384cfdee523",
     "https://deno.land/x/jose@v5.9.6/jwe/compact/decrypt.ts": "43c80cb2dd0545df1b0aed37b710e0c02cd58781236eb0426fa2dd65bf250d8f",
     "https://deno.land/x/jose@v5.9.6/jwe/compact/encrypt.ts": "b3be13ddddea2ea638cf188cbe1c1572085edd84f7d657cdd488dbba7c2a86c7",

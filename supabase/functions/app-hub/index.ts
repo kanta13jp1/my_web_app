@@ -1,4 +1,4 @@
-﻿// app-hub — コアアプリ機能統合EF
+// app-hub — コアアプリ機能統合EF
 // Merges (17 EFs): subscription-management, subscription-billing,
 //   email-service, gamification-engine, calendar-events, kanban-board,
 //   chat-messaging, team-task-manager, team-collaboration-sync,
@@ -8,33 +8,64 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { AgentGpaActionError, handleAgentGpaAction } from "./agent_gpa.ts";
+import {
+  calendarIcsUidFromMetadata,
+  normalizeCalendarIcsUid,
+  prepareCalendarBulkCreateCandidates,
+} from "./calendar_bulk_create.ts";
+import {
+  GaReadinessActionError,
+  handleGaReadinessAction,
+} from "./ga_readiness.ts";
 
-const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 async function getUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return null;
-  const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: auth } } });
+  const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: auth } },
+  });
   const { data: { user } } = await c.auth.getUser();
   return user?.id ?? null;
 }
 
-async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("hub_data").select("id, metadata, created_at")
+async function listItems(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  limit = 50,
+) {
+  const { data, error } = await admin.from("hub_data").select(
+    "id, metadata, created_at",
+  )
     .eq("source", source).filter("metadata->>user_id", "eq", userId)
     .order("created_at", { ascending: false }).limit(limit);
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
-async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
+async function addItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  meta: Record<string, unknown>,
+) {
   const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
@@ -42,19 +73,165 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
   return data;
 }
 
-async function deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
+async function deleteItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  id: string,
+) {
   const { error } = await admin.from("hub_data")
-    .delete().eq("id", id).eq("source", source).filter("metadata->>user_id", "eq", userId);
+    .delete().eq("id", id).eq("source", source).filter(
+      "metadata->>user_id",
+      "eq",
+      userId,
+    );
   if (error) throw new Error(error.message);
 }
 
+async function updateItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  id: string,
+  patch: Record<string, unknown>,
+) {
+  const { data: existing, error: readError } = await admin.from("hub_data")
+    .select("metadata")
+    .eq("id", id)
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .maybeSingle();
+  if (readError) throw new Error(readError.message);
+  if (!existing) return null;
+
+  const previous = (existing.metadata ?? {}) as Record<string, unknown>;
+  const next = {
+    ...previous,
+    ...patch,
+    user_id: userId,
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await admin.from("hub_data")
+    .update({ metadata: next })
+    .eq("id", id)
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .select("id, metadata, created_at")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+const CALENDAR_REMINDER_MINUTES = new Set([0, 5, 10, 15, 30, 60]);
+const DEFAULT_CALENDAR_ID = "default";
+const DEFAULT_CALENDAR_NAME = "Default";
+const DEFAULT_CALENDAR_COLOR = "#4285f4";
+const CALENDAR_TIMEZONE_PATTERN = /^(UTC|[A-Za-z_]+\/[A-Za-z0-9_+\-\/]+)$/;
+
+type CalendarListResponseItem = {
+  calendar_id: string;
+  calendar_name: string;
+  color: string;
+  is_default: boolean;
+  id?: string;
+  created_at?: string;
+};
+
+function normalizeCalendarReminderMinutes(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const minutes = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(minutes)) return null;
+  return CALENDAR_REMINDER_MINUTES.has(minutes) ? minutes : null;
+}
+
+function normalizeCalendarRRule(value: unknown): string | null {
+  const rrule = value?.toString().trim() ?? "";
+  return rrule.length === 0 || rrule === "null" || rrule === "undefined"
+    ? null
+    : rrule;
+}
+
+function normalizeCalendarTimezone(value: unknown): string | null {
+  const timezone = value?.toString().trim() ?? "";
+  return CALENDAR_TIMEZONE_PATTERN.test(timezone) ? timezone : null;
+}
+
+function normalizeCalendarId(value: unknown): string {
+  const id = value?.toString().trim() ?? "";
+  return id.length === 0 || id === "null" || id === "undefined"
+    ? DEFAULT_CALENDAR_ID
+    : id;
+}
+
+function normalizeCalendarName(
+  value: unknown,
+  fallback = DEFAULT_CALENDAR_NAME,
+): string {
+  const name = value?.toString().trim() ?? "";
+  return name || fallback;
+}
+
+function normalizeCalendarColor(value: unknown): string {
+  const raw = value?.toString().trim() ?? "";
+  const normalized = raw.startsWith("#") ? raw : `#${raw}`;
+  return /^#[0-9a-fA-F]{6}$/.test(normalized)
+    ? normalized.toLowerCase()
+    : DEFAULT_CALENDAR_COLOR;
+}
+
+async function listCalendars(admin: SupabaseClient, userId: string) {
+  const items = await listItems(admin, "calendar_calendar", userId, 100);
+  const seen = new Set([DEFAULT_CALENDAR_ID]);
+  const calendars: CalendarListResponseItem[] = [
+    {
+      calendar_id: DEFAULT_CALENDAR_ID,
+      calendar_name: DEFAULT_CALENDAR_NAME,
+      color: DEFAULT_CALENDAR_COLOR,
+      is_default: true,
+    },
+  ];
+
+  for (const item of items.reverse()) {
+    const meta = (item.metadata ?? {}) as Record<string, unknown>;
+    const calendarId = normalizeCalendarId(meta.calendar_id ?? item.id);
+    if (calendarId === DEFAULT_CALENDAR_ID || seen.has(calendarId)) continue;
+    seen.add(calendarId);
+    calendars.push({
+      calendar_id: calendarId,
+      calendar_name: normalizeCalendarName(meta.calendar_name ?? meta.name),
+      color: normalizeCalendarColor(meta.color),
+      is_default: false,
+      id: item.id,
+      created_at: item.created_at,
+    });
+  }
+  return calendars;
+}
+
+async function calendarNameById(
+  admin: SupabaseClient,
+  userId: string,
+  calendarId: string,
+) {
+  if (calendarId === DEFAULT_CALENDAR_ID) return DEFAULT_CALENDAR_NAME;
+  const calendars = await listCalendars(admin, userId);
+  return calendars.find((calendar) => calendar.calendar_id === calendarId)
+    ?.calendar_name ?? DEFAULT_CALENDAR_NAME;
+}
+
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    const body = req.method === "POST" ? await req.json() as Record<string, unknown> : {};
-    const action = String(body.action ?? new URL(req.url).searchParams.get("action") ?? "");
+    const body = req.method === "POST"
+      ? await req.json() as Record<string, unknown>
+      : {};
+    const action = String(
+      body.action ?? new URL(req.url).searchParams.get("action") ?? "",
+    );
     const userId = await getUserId(req);
 
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -77,7 +254,13 @@ serve(async (req: Request) => {
 
       case "subscription.cancel": {
         const { error } = await admin.from("hub_data")
-          .update({ metadata: { user_id: userId, status: "cancelled", cancelled_at: new Date().toISOString() } })
+          .update({
+            metadata: {
+              user_id: userId,
+              status: "cancelled",
+              cancelled_at: new Date().toISOString(),
+            },
+          })
           .eq("id", String(body.id))
           .eq("source", "subscription");
         if (error) throw new Error(error.message);
@@ -100,8 +283,10 @@ serve(async (req: Request) => {
       }
       case "billing.create_invoice": {
         const item = await addItem(admin, "invoice", userId, {
-          client_name: body.client_name, amount: body.amount ?? 0,
-          description: body.description ?? "", status: "draft",
+          client_name: body.client_name,
+          amount: body.amount ?? 0,
+          description: body.description ?? "",
+          status: "draft",
         });
         return json({ success: true, invoice: item });
       }
@@ -109,10 +294,15 @@ serve(async (req: Request) => {
       // --- Email ---
       case "email.send": {
         const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
-        if (!resendKey) return json({ error: "RESEND_API_KEY not configured" }, 503);
+        if (!resendKey) {
+          return json({ error: "RESEND_API_KEY not configured" }, 503);
+        }
         const r = await fetch("https://api.resend.com/emails", {
           method: "POST",
-          headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             from: body.from ?? "noreply@jibun.app",
             to: body.to,
@@ -125,9 +315,23 @@ serve(async (req: Request) => {
 
       // --- Gamification ---
       case "gamification.status": {
-        const points = await listItems(admin, "gamification_event", userId, 100);
-        const total = points.reduce((sum, p) => sum + (Number((p.metadata as Record<string, unknown>)?.points ?? 0)), 0);
-        return json({ success: true, total_points: total, events: points.slice(0, 10) });
+        const points = await listItems(
+          admin,
+          "gamification_event",
+          userId,
+          100,
+        );
+        const total = points.reduce(
+          (sum, p) =>
+            sum +
+            (Number((p.metadata as Record<string, unknown>)?.points ?? 0)),
+          0,
+        );
+        return json({
+          success: true,
+          total_points: total,
+          events: points.slice(0, 10),
+        });
       }
 
       case "gamification.award": {
@@ -140,20 +344,231 @@ serve(async (req: Request) => {
       }
 
       // --- Calendar ---
+      case "calendar.list_calendars": {
+        const calendars = await listCalendars(admin, userId);
+        return json({ success: true, calendars });
+      }
+
+      case "calendar.create_calendar": {
+        const calendarId = crypto.randomUUID();
+        const calendarName = normalizeCalendarName(body.calendar_name);
+        const color = normalizeCalendarColor(body.color);
+        const item = await addItem(admin, "calendar_calendar", userId, {
+          calendar_id: calendarId,
+          calendar_name: calendarName,
+          color,
+        });
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          calendar: {
+            ...meta,
+            id: item.id,
+            created_at: item.created_at,
+            is_default: false,
+          },
+        });
+      }
+
+      case "calendar.delete_calendar": {
+        const calendarId = normalizeCalendarId(body.calendar_id ?? body.id);
+        if (calendarId === DEFAULT_CALENDAR_ID) {
+          return json({ error: "Default calendar cannot be deleted" }, 400);
+        }
+
+        const calendars = await listItems(
+          admin,
+          "calendar_calendar",
+          userId,
+          100,
+        );
+        const calendar = calendars.find((item) => {
+          const meta = (item.metadata ?? {}) as Record<string, unknown>;
+          return normalizeCalendarId(meta.calendar_id ?? item.id) ===
+            calendarId;
+        });
+        if (!calendar) return json({ error: "Calendar not found" }, 404);
+
+        await deleteItem(
+          admin,
+          "calendar_calendar",
+          userId,
+          String(calendar.id),
+        );
+
+        const events = await listItems(admin, "calendar_event", userId, 500);
+        for (const event of events) {
+          const meta = (event.metadata ?? {}) as Record<string, unknown>;
+          if (normalizeCalendarId(meta.calendar_id) !== calendarId) continue;
+          await updateItem(admin, "calendar_event", userId, String(event.id), {
+            calendar_id: DEFAULT_CALENDAR_ID,
+            calendar_name: DEFAULT_CALENDAR_NAME,
+          });
+        }
+        return json({ success: true });
+      }
+
       case "calendar.list": {
+        const requestedIds = Array.isArray(body.calendar_ids)
+          ? new Set(body.calendar_ids.map(normalizeCalendarId))
+          : null;
+        const calendars = await listCalendars(admin, userId);
+        const names = new Map(
+          calendars.map((calendar) => [
+            calendar.calendar_id,
+            calendar.calendar_name,
+          ]),
+        );
         const items = await listItems(admin, "calendar_event", userId);
-        return json({ success: true, events: items });
+        const events = items.flatMap((it) => {
+          const meta = (it.metadata ?? {}) as Record<string, unknown>;
+          const calendarId = normalizeCalendarId(meta.calendar_id);
+          if (requestedIds && !requestedIds.has(calendarId)) return [];
+          return [{
+            ...meta,
+            calendar_id: calendarId,
+            calendar_name: normalizeCalendarName(
+              meta.calendar_name,
+              names.get(calendarId) ?? DEFAULT_CALENDAR_NAME,
+            ),
+            event_id: it.id,
+            created_at: it.created_at,
+          }];
+        });
+        return json({ success: true, events });
       }
 
       case "calendar.create": {
+        const calendarId = normalizeCalendarId(body.calendar_id);
+        const calendarName = await calendarNameById(admin, userId, calendarId);
+        const icalUid = normalizeCalendarIcsUid(body.ical_uid ?? body.uid);
         const item = await addItem(admin, "calendar_event", userId, {
           title: body.title,
           start_at: body.start_at,
           end_at: body.end_at,
           description: body.description ?? "",
           all_day: body.all_day ?? false,
+          color: body.color ?? "#4285f4",
+          reminder_min: normalizeCalendarReminderMinutes(body.reminder_min),
+          calendar_id: calendarId,
+          calendar_name: calendarName,
+          rrule: normalizeCalendarRRule(body.rrule),
+          timezone: normalizeCalendarTimezone(body.timezone),
+          ...(icalUid ? { ical_uid: icalUid, uid: icalUid } : {}),
         });
-        return json({ success: true, event: item });
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          event: { ...meta, event_id: item.id, created_at: item.created_at },
+        });
+      }
+
+      case "calendar.bulk_create": {
+        const existingItems = await listItems(
+          admin,
+          "calendar_event",
+          userId,
+          1000,
+        );
+        const existingUids = new Set(
+          existingItems.map((item) =>
+            calendarIcsUidFromMetadata(
+              (item.metadata ?? {}) as Record<string, unknown>,
+            )
+          ).filter(Boolean),
+        );
+        const prepared = prepareCalendarBulkCreateCandidates(
+          body.events,
+          existingUids,
+        );
+        const created: Record<string, unknown>[] = [];
+
+        for (const event of prepared.candidates) {
+          const calendarId = normalizeCalendarId(event.calendar_id);
+          const calendarName = await calendarNameById(
+            admin,
+            userId,
+            calendarId,
+          );
+          const item = await addItem(admin, "calendar_event", userId, {
+            title: event.title ?? "Untitled",
+            start_at: event.start_at,
+            end_at: event.end_at ?? event.start_at,
+            description: event.description ?? "",
+            all_day: event.all_day ?? false,
+            color: event.color ?? "#4285f4",
+            reminder_min: normalizeCalendarReminderMinutes(event.reminder_min),
+            calendar_id: calendarId,
+            calendar_name: calendarName,
+            rrule: normalizeCalendarRRule(event.rrule),
+            timezone: normalizeCalendarTimezone(event.timezone),
+            ical_uid: event.ical_uid,
+            uid: event.ical_uid,
+          });
+          const meta = (item.metadata ?? {}) as Record<string, unknown>;
+          created.push({
+            ...meta,
+            event_id: item.id,
+            created_at: item.created_at,
+          });
+        }
+
+        return json({
+          success: true,
+          created_count: created.length,
+          skipped_duplicate_count: prepared.skippedDuplicates,
+          invalid_count: prepared.invalidCount,
+          events: created,
+        });
+      }
+
+      case "calendar.update": {
+        const id = String(body.id ?? "");
+        if (!id) return json({ error: "id is required" }, 400);
+        const patch: Record<string, unknown> = {};
+        if (Object.hasOwn(body, "title")) patch.title = body.title;
+        if (Object.hasOwn(body, "start_at")) patch.start_at = body.start_at;
+        if (Object.hasOwn(body, "end_at")) patch.end_at = body.end_at;
+        if (Object.hasOwn(body, "description")) {
+          patch.description = body.description ?? "";
+        }
+        if (Object.hasOwn(body, "all_day")) {
+          patch.all_day = body.all_day ?? false;
+        }
+        if (Object.hasOwn(body, "color")) patch.color = body.color ?? "#4285f4";
+        if (Object.hasOwn(body, "reminder_min")) {
+          patch.reminder_min = normalizeCalendarReminderMinutes(
+            body.reminder_min,
+          );
+        }
+        if (Object.hasOwn(body, "rrule")) {
+          patch.rrule = normalizeCalendarRRule(body.rrule);
+        }
+        if (Object.hasOwn(body, "timezone")) {
+          patch.timezone = normalizeCalendarTimezone(body.timezone);
+        }
+        if (Object.hasOwn(body, "calendar_id")) {
+          const calendarId = normalizeCalendarId(body.calendar_id);
+          patch.calendar_id = calendarId;
+          patch.calendar_name = await calendarNameById(
+            admin,
+            userId,
+            calendarId,
+          );
+        }
+        const item = await updateItem(
+          admin,
+          "calendar_event",
+          userId,
+          id,
+          patch,
+        );
+        if (!item) return json({ error: "Event not found" }, 404);
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          event: { ...meta, event_id: item.id, created_at: item.created_at },
+        });
       }
 
       case "calendar.delete": {
@@ -193,7 +608,8 @@ serve(async (req: Request) => {
           column: body.column ?? "Todo",
           created_at: new Date().toISOString(),
         });
-        await admin.from("hub_data").update({ metadata: { ...meta, cards } }).eq("id", board.id);
+        await admin.from("hub_data").update({ metadata: { ...meta, cards } })
+          .eq("id", board.id);
         return json({ success: true, card_count: cards.length });
       }
 
@@ -227,7 +643,9 @@ serve(async (req: Request) => {
 
       case "chat.get_messages": {
         const channelId = String(body.channel_id ?? "");
-        if (!channelId) return json({ success: false, error: "channel_id required" }, 400);
+        if (!channelId) {
+          return json({ success: false, error: "channel_id required" }, 400);
+        }
         const limit = Number(body.limit ?? 50);
         const { data, error: merr } = await admin.from("hub_data")
           .select("id, metadata, created_at")
@@ -252,7 +670,9 @@ serve(async (req: Request) => {
       case "chat.send": {
         const channelId = String(body.channel_id ?? body.room_id ?? "general");
         const content = String(body.content ?? body.text ?? "").trim();
-        if (!content) return json({ success: false, error: "content required" }, 400);
+        if (!content) {
+          return json({ success: false, error: "content required" }, 400);
+        }
         const message = await addItem(admin, "chat_message", userId, {
           channel_id: channelId,
           content,
@@ -345,13 +765,19 @@ serve(async (req: Request) => {
 
       case "expense.stats": {
         const expenses = await listItems(admin, "expense", userId, 200);
-        const total = expenses.reduce((s, e) => s + Number((e.metadata as Record<string, unknown>)?.amount ?? 0), 0);
+        const total = expenses.reduce(
+          (s, e) =>
+            s + Number((e.metadata as Record<string, unknown>)?.amount ?? 0),
+          0,
+        );
         return json({ success: true, total, count: expenses.length });
       }
 
       // --- Time Tracker ---
       case "time.list": {
-        const view = String(body.view ?? new URL(req.url).searchParams.get("view") ?? "today");
+        const view = String(
+          body.view ?? new URL(req.url).searchParams.get("view") ?? "today",
+        );
         const now = new Date();
         let since: Date;
         if (view === "week") {
@@ -373,7 +799,9 @@ serve(async (req: Request) => {
         const rows = data ?? [];
         let totalHours = 0;
         for (const e of rows) {
-          totalHours += Number((e.metadata as Record<string, unknown>)?.hours ?? 0);
+          totalHours += Number(
+            (e.metadata as Record<string, unknown>)?.hours ?? 0,
+          );
         }
         const entries = rows.map((e) => ({
           ...(e.metadata as Record<string, unknown>),
@@ -399,7 +827,10 @@ serve(async (req: Request) => {
           projectHours.set(proj, (projectHours.get(proj) ?? 0) + hours);
         }
         const projects = [...projectHours.entries()]
-          .map(([name, hours]) => ({ name, hours: Math.round(hours * 100) / 100 }))
+          .map(([name, hours]) => ({
+            name,
+            hours: Math.round(hours * 100) / 100,
+          }))
           .sort((a, b) => b.hours - a.hours);
         return json({ success: true, projects });
       }
@@ -416,7 +847,9 @@ serve(async (req: Request) => {
 
       case "time.log_hours": {
         const hours = Number(body.hours ?? 0);
-        if (hours <= 0) return json({ success: false, error: "hours required" }, 400);
+        if (hours <= 0) {
+          return json({ success: false, error: "hours required" }, 400);
+        }
         const entry = await addItem(admin, "time_entry", userId, {
           type: "manual",
           project: body.project ?? "未分類",
@@ -438,7 +871,13 @@ serve(async (req: Request) => {
 
       case "time.stop": {
         const { error: ste } = await admin.from("hub_data")
-          .update({ metadata: { user_id: userId, status: "done", stopped_at: new Date().toISOString() } })
+          .update({
+            metadata: {
+              user_id: userId,
+              status: "done",
+              stopped_at: new Date().toISOString(),
+            },
+          })
           .eq("id", String(body.id))
           .eq("source", "time_entry");
         if (ste) throw new Error(ste.message);
@@ -523,8 +962,17 @@ serve(async (req: Request) => {
           .filter("metadata->>user_id", "eq", userId)
           .gte("created_at", since);
         const count = hits?.length ?? 0;
-        if (count < limit) await addItem(admin, "rate_hit", userId, { key: body.key ?? "default" });
-        return json({ allowed: count < limit, count, limit, remaining: Math.max(0, limit - count) });
+        if (count < limit) {
+          await addItem(admin, "rate_hit", userId, {
+            key: body.key ?? "default",
+          });
+        }
+        return json({
+          allowed: count < limit,
+          count,
+          limit,
+          remaining: Math.max(0, limit - count),
+        });
       }
 
       // --- Music Collaboration ---
@@ -558,11 +1006,30 @@ serve(async (req: Request) => {
       }
       case "changelog.create": {
         const entry = await addItem(admin, "changelog_entry", userId, {
-          title: body.title, type: body.type ?? "feature",
+          title: body.title,
+          type: body.type ?? "feature",
           description: body.description ?? "",
           created_at: new Date().toISOString(),
         });
         return json({ success: true, entry });
+      }
+
+      // --- Agent GPA Evaluations (#1124 Phase 1) ---
+      case "agent.evaluate_gpa":
+      case "agent.list_gpa_recent": {
+        const result = await handleAgentGpaAction({
+          action,
+          admin,
+          body,
+          userId,
+        });
+        return json({ success: true, ...result });
+      }
+
+      // --- GA Launch Readiness Gate (#1640) ---
+      case "agent.list_ga_axes": {
+        const gaReadiness = handleGaReadinessAction(action);
+        return json({ success: true, ga_readiness: gaReadiness });
       }
 
       default:
@@ -570,6 +1037,10 @@ serve(async (req: Request) => {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return json({ error: message }, 500);
+    const status = err instanceof AgentGpaActionError ||
+        err instanceof GaReadinessActionError
+      ? err.status
+      : 500;
+    return json({ error: message }, status);
   }
 });

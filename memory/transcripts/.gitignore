@@ -1,0 +1,4 @@
+compact-*.md
+compact-log.txt
+!.gitignore
+!.gitkeep

@@ -1,0 +1,54 @@
+name: Schedule Resilience Watch
+
+on:
+  schedule:
+    - cron: "22 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Inspect schedules without retrying runs or writing issues"
+        required: false
+        default: "false"
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: schedule-resilience-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    name: Watch scheduled workflow resilience
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Watch scheduled workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p tmp/schedule-resilience
+          DRY_RUN_ARG=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_ARG="--dry-run"
+          fi
+          python scripts/schedule_resilience_watch.py \
+            --repo "$GITHUB_REPOSITORY" \
+            --max-attempts 2 \
+            --output tmp/schedule-resilience/report.json \
+            --github-step-summary "$GITHUB_STEP_SUMMARY" \
+            $DRY_RUN_ARG
+
+      - name: Upload resilience report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: schedule-resilience-report
+          path: tmp/schedule-resilience/
+          if-no-files-found: warn

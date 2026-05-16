@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-05-15T23:39:46.234991+00:00",
+  "tracked_count": 200,
+  "open_count": 1,
+  "closed_count": 199,
+  "recovered_count": 199,
+  "avg_recovery_hours": 6.89,
+  "categories": {
+    "deno-lint": 19,
+    "generic-ci": 1,
+    "migration-collision": 1,
+    "notion-sync": 2,
+    "unclassified": 177
+  }
+}

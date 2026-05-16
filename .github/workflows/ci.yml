@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload Deno lint log
         if: always() && hashFiles('.ci-logs/deno-lint.log') != ''
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: deno-lint-log
           path: .ci-logs/deno-lint.log

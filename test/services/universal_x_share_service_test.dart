@@ -73,60 +73,135 @@ void main() {
     expect(capturedBody?['mediaUrl'], 'https://example.com/share.png');
   });
 
-  test('generateVideo uses My Finance mobile UX template for finance pages',
-      () async {
+  test('postToX surfaces X developer project guidance', () async {
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        return {
+          'success': false,
+          'posted': false,
+          'error': 'X API app is not enrolled for v2 posting.',
+          'code': 'x_client_not_enrolled',
+          'actionRequired': 'Attach the App to an X Developer Project.',
+          'registrationUrl': 'https://developer.x.com/en/portal/projects',
+        };
+      },
+    );
+
+    expect(
+      () => service.postToX(context: page, text: '繝・せ繝域兜遞ｿ\n${page.url}'),
+      throwsA(
+        isA<Exception>()
+            .having(
+              (error) => error.toString(),
+              'message',
+              contains('Attach the App to an X Developer Project.'),
+            )
+            .having(
+              (error) => error.toString(),
+              'registration url',
+              contains('https://developer.x.com/en/portal/projects'),
+            ),
+      ),
+    );
+  });
+
+  test('postToX omits embedded data URL media', () async {
     Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'posted': true};
+      },
+    );
+
+    await service.postToX(
+      context: page,
+      text: 'Share text ${page.url}',
+      mediaUrl: 'data:image/png;base64,${'a' * 3000}',
+    );
+
+    expect(capturedBody?['mediaUrl'], isNull);
+  });
+
+  test(
+    'generateVideo uses My Finance mobile UX template for finance pages',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      String? capturedFunction;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedFunction = functionName;
+          capturedBody = body;
+          return {'success': true, 'status': 'fallback_text'};
+        },
+      );
+      const financePage = UniversalSharePageContext(
+        routePath: '/asset-management',
+        title: 'Asset Management',
+        url: 'https://my-web-app-b67f4.web.app/asset-management',
+      );
+      final draft = UniversalXShareService.buildFallbackDraft(financePage);
+
+      await service.generateVideo(
+        context: financePage,
+        draft: draft,
+        imageUrl: 'https://example.com/share.png',
+      );
+
+      expect(capturedFunction, 'viral-video-ad-generator');
+      expect(capturedBody?['template'], 'mobile_ux_validation');
+      expect(capturedBody?['title'], 'マイファイナンス');
+      expect(capturedBody?['preferredModel'], 'seedance-2.0');
+      expect(capturedBody?['imageUrl'], 'https://example.com/share.png');
+      expect(capturedBody?['creativePipeline'], const [
+        'gpt-image-2',
+        'gpt-5.5',
+        'seedance-2.0',
+      ]);
+      expect(
+        capturedBody?['customPrompt'],
+        contains('Moving smartphone app UX validation video'),
+      );
+    },
+  );
+
+  test(
+    'generateVideo can poll an existing Hedra generation and use download URL',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {
+            'success': true,
+            'videoStatus': 'complete',
+            'generatedDownloadUrl': 'https://example.com/video.mp4',
+          };
+        },
+      );
+
+      final draft = UniversalXShareService.buildFallbackDraft(page);
+      final result = await service.generateVideo(
+        context: page,
+        draft: draft,
+        hedraGenerationId: '123e4567-e89b-12d3-a456-426614174000',
+      );
+
+      expect(result.url, 'https://example.com/video.mp4');
+      expect(result.status, 'complete');
+      expect(
+        capturedBody?['hedraGenerationId'],
+        '123e4567-e89b-12d3-a456-426614174000',
+      );
+    },
+  );
+
+  test('generateVideo does not forward embedded data URLs to Hedra', () async {
     String? capturedFunction;
     final service = UniversalXShareService(
       functionInvoker: (functionName, body) async {
         capturedFunction = functionName;
-        capturedBody = body;
-        return {
-          'success': true,
-          'status': 'fallback_text',
-        };
-      },
-    );
-    const financePage = UniversalSharePageContext(
-      routePath: '/asset-management',
-      title: 'Asset Management',
-      url: 'https://my-web-app-b67f4.web.app/asset-management',
-    );
-    final draft = UniversalXShareService.buildFallbackDraft(financePage);
-
-    await service.generateVideo(
-      context: financePage,
-      draft: draft,
-      imageUrl: 'https://example.com/share.png',
-    );
-
-    expect(capturedFunction, 'viral-video-ad-generator');
-    expect(capturedBody?['template'], 'mobile_ux_validation');
-    expect(capturedBody?['title'], 'マイファイナンス');
-    expect(capturedBody?['preferredModel'], 'seedance-2.0');
-    expect(capturedBody?['imageUrl'], 'https://example.com/share.png');
-    expect(
-      capturedBody?['creativePipeline'],
-      const ['gpt-image-2', 'gpt-5.5', 'seedance-2.0'],
-    );
-    expect(
-      capturedBody?['customPrompt'],
-      contains('Moving smartphone app UX validation video'),
-    );
-  });
-
-  test(
-      'generateVideo can poll an existing Hedra generation and use download URL',
-      () async {
-    Map<String, dynamic>? capturedBody;
-    final service = UniversalXShareService(
-      functionInvoker: (functionName, body) async {
-        capturedBody = body;
-        return {
-          'success': true,
-          'videoStatus': 'complete',
-          'generatedDownloadUrl': 'https://example.com/video.mp4',
-        };
+        return {'success': true, 'status': 'unexpected'};
       },
     );
 
@@ -134,14 +209,22 @@ void main() {
     final result = await service.generateVideo(
       context: page,
       draft: draft,
-      hedraGenerationId: '123e4567-e89b-12d3-a456-426614174000',
+      imageUrl: 'data:image/png;base64,${'a' * 3000}',
     );
 
-    expect(result.url, 'https://example.com/video.mp4');
-    expect(result.status, 'complete');
+    expect(capturedFunction, isNull);
+    expect(result.status, 'fallback_text');
+    expect(result.raw['videoReason'], contains('public URL'));
+  });
+
+  test('isEmbeddedDataUrl detects generated inline images', () {
     expect(
-      capturedBody?['hedraGenerationId'],
-      '123e4567-e89b-12d3-a456-426614174000',
+      UniversalXShareService.isEmbeddedDataUrl('data:image/png;base64,abc'),
+      isTrue,
+    );
+    expect(
+      UniversalXShareService.isEmbeddedDataUrl('https://example.com/a.png'),
+      isFalse,
     );
   });
 }

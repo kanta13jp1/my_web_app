@@ -1405,10 +1405,16 @@ $inviteUrl
 
 class GrowthPresenceNavigatorObserver extends NavigatorObserver
     with WidgetsBindingObserver {
+  static const Duration _immediatePresenceCooldown = Duration(seconds: 45);
+
   final GrowthMissionService _service;
   final GrowthAcquisitionService _acquisitionService;
   Timer? _heartbeatTimer;
   Timer? _metricsTimer;
+  Future<void>? _immediatePresenceSyncInFlight;
+  String? _immediatePresenceSyncInFlightPagePath;
+  DateTime? _lastImmediatePresenceSyncAt;
+  String? _lastImmediatePresenceSyncPagePath;
   String _currentPagePath = '/';
 
   GrowthPresenceNavigatorObserver({
@@ -1441,10 +1447,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
     _heartbeatTimer?.cancel();
     _metricsTimer?.cancel();
     if (!_service.isPresenceTrackingAvailable) return;
-    _runSafely(
-      _service.syncPresence(pagePath: _currentPagePath),
-      'syncPresence',
-    );
+    _syncPresenceImmediately();
     _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
       _runSafely(
         _service.syncPresence(pagePath: _currentPagePath),
@@ -1499,6 +1502,38 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       'applyPendingReferralIfPossible',
     );
     _restartTimers();
+  }
+
+  void _syncPresenceImmediately() {
+    final pagePath = _currentPagePath;
+    final inFlight = _immediatePresenceSyncInFlight;
+    if (inFlight != null &&
+        _immediatePresenceSyncInFlightPagePath == pagePath) {
+      return;
+    }
+
+    final lastSyncedAt = _lastImmediatePresenceSyncAt;
+    if (_lastImmediatePresenceSyncPagePath == pagePath &&
+        lastSyncedAt != null &&
+        DateTime.now().difference(lastSyncedAt) < _immediatePresenceCooldown) {
+      return;
+    }
+
+    final syncFuture = _service.syncPresence(pagePath: pagePath);
+    _immediatePresenceSyncInFlight = syncFuture;
+    _immediatePresenceSyncInFlightPagePath = pagePath;
+    _lastImmediatePresenceSyncAt = DateTime.now();
+    _lastImmediatePresenceSyncPagePath = pagePath;
+
+    _runSafely(
+      syncFuture.whenComplete(() {
+        if (identical(_immediatePresenceSyncInFlight, syncFuture)) {
+          _immediatePresenceSyncInFlight = null;
+          _immediatePresenceSyncInFlightPagePath = null;
+        }
+      }),
+      'syncPresence',
+    );
   }
 
   void _runSafely(Future<void> future, String label) {

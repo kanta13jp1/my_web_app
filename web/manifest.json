@@ -32,5 +32,20 @@
             "type": "image/png",
             "purpose": "maskable"
         }
+    ],
+    "shortcuts": [
+        {
+            "name": "Self Touch Tracker",
+            "short_name": "Track",
+            "description": "Record self contact now",
+            "url": "/self-touch-tracker?action=quick_log",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        }
     ]
 }

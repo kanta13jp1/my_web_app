@@ -1,0 +1,58 @@
+name: MCP Container Isolation Smoke
+
+on:
+  pull_request:
+    paths:
+      - "config/mcp-container-isolation.json"
+      - "docs/MCP_CONTAINER_ISOLATION_RUNBOOK.md"
+      - "docs/AGENT_TOOL_POLICY.md"
+      - "docs/automation/managed-mcp-access-control.md"
+      - "scripts/check_mcp_container_isolation.py"
+      - "scripts/check_mcp_container_isolation_test.py"
+      - "tools/mcp-container-isolation/**"
+      - ".github/workflows/mcp-container-isolation-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-container-isolation-smoke-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Validate and launch low-risk MCP PoC
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate isolation contract
+        run: python scripts/check_mcp_container_isolation.py
+
+      - name: Run isolation unit tests
+        run: python scripts/check_mcp_container_isolation_test.py
+
+      - name: Launch low-risk MCP container PoC
+        run: python scripts/check_mcp_container_isolation.py --run-docker --require-docker
+
+      - name: Job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## MCP Container Isolation Smoke"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Contract | \`config/mcp-container-isolation.json\` |"
+            echo "| PoC | \`tools/mcp-container-isolation\` |"
+            echo "| High-risk gate | \`docs/AGENT_TOOL_POLICY.md\` |"
+            echo "| Docker launch | \`python scripts/check_mcp_container_isolation.py --run-docker --require-docker\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

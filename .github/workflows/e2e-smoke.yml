@@ -42,11 +42,28 @@ jobs:
         run: npm run e2e:smoke -- --project=chromium --workers=1
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
+
+      - name: Run visual evidence smoke tests
+        run: npm run e2e:visual -- --project=chromium --project=mobile-chrome --workers=1
+        env:
+          E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
+
+      - name: Summarize Playwright evidence
+        if: always()
+        run: |
+          node scripts/summarize_playwright_results.mjs \
+            playwright-report/public-smoke-results.json \
+            playwright-report/visual-evidence-results.json \
+            --out playwright-report/issue-summary.md
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: playwright-report/
+          path: |
+            playwright-report/
+            test-results/
           if-no-files-found: ignore

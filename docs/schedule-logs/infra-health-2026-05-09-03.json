@@ -1,0 +1,17 @@
+{
+  "timestamp_jst": "2026-05-09T03:35+09:00",
+  "ef_health": {
+    "status": "healthy",
+    "http": 200,
+    "db_latency_ms": 2041,
+    "checks_ok": ["env", "db_connectivity", "wbs_tasks", "ai_circuit_breaker"]
+  },
+  "firebase_hosting": {
+    "reachable": true,
+    "http": 200,
+    "ttfb_total_s": 0.226
+  },
+  "action_taken": "none",
+  "anomaly": false,
+  "note": "db_latency 2041ms — elevated vs prior hour 314ms (~6.5x), but EF still reports healthy. Watch next hour; if sustained >2s consider issue."
+}

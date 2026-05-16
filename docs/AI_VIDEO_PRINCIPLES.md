@@ -175,6 +175,7 @@ D-ID の事例 = 顔認識「**防御**」技術から AI アバター「**生�
 | --- | --- | --- | --- | --- |
 | 2026-04-28 | Win版#132 part 64 | 軸確立 (docs + Rule [AI-VIDEO-29]) | — | 1.5/6 (#1+#3 部分のみ) |
 | 2026-04-28 | Win版#132 part 65 | `scripts/video/add_provenance.py` 新規 + `notebooklm-video-pipeline.yml` Step 6c 追加 (ウォーターマーク + メタデータ 2 層) | #5 (UI バッジ層は未) | 2.0/6 |
+| 2026-05-08 | Win版#132 part 178 | Faceless Channel 運用パターン章追加 (= NotebookLM `bc91fac9` 蒸留 / Issue #1750 + #1757) | — (= 6 原則の応用例 / 新原則ではない) | 2.0/6 維持 |
 
 **次回ターゲット**:
 - #5 UI バッジ層 (`lib/pages/philosophy_page.dart` 動画 embed 欄に「AI 生成」バッジ) → VSCode版 cross-instance-pr 候補
@@ -183,4 +184,109 @@ D-ID の事例 = 顔認識「**防御**」技術から AI アバター「**生�
 
 ---
 
-*Win版#132 / 2026-04-28 起票 / NotebookLM da2a95d1 (D-ID) ソース蒸留 / Rule [AI-VIDEO-29] / 7 番目の設計軸*
+## Faceless Channel 運用パターン (= 6 原則の応用例)
+
+> **ソース**: NotebookLM Notebook [The Blueprint for Faceless AI YouTube Automation (`bc91fac9-ee55-4e19-9d90-3dfdf9145370`)](https://notebooklm.google.com/notebook/bc91fac9-ee55-4e19-9d90-3dfdf9145370)
+> **追加日**: 2026-05-08 / Win版#132 part 178 / Issue [#1750](https://github.com/kanta13jp1/my_web_app/issues/1750) + [#1757](https://github.com/kanta13jp1/my_web_app/issues/1757) (`bc91fac9` 同源 dup-merge 候補)
+> **位置づけ**: 既存 6 原則の **置換ではなく応用例**. AI 大学シリーズ (D variant pipeline / 既 4 本) を **無人 channel 化** する観点で再設計.
+
+### なぜ Faceless Channel か
+
+自分株式会社の動画資産は philosophy_page.dart 埋め込み 8 本 + AI 大学シリーズ 4 本. 顔出しなし・人手編集なしで **月次 X 本ペースの publish + 収益化** を狙える Faceless YouTube パターンは, 既に持つ 8-step pipeline (`notebooklm-video-pipeline.yml`) を **チャネル運用に拡張** するだけで成立する.
+
+**比較**:
+
+| 軸 | 顔出し YouTuber | Faceless AI Channel (= 自分株式会社想定) |
+| --- | --- | --- |
+| 1 本制作工数 | 5-15 hour (= 撮影+編集+サムネ) | 30-60 min (= GHA 自動 / 既 D variant 拡張) |
+| 月次 publish 上限 | 4-8 本 (= human bandwidth) | 20-30 本 (= GHA cron 並列) |
+| collaborator 依存 | 編集者・撮影者必須 | ゼロ (= AI 大学 #1-4 で実証済) |
+| 倫理リスク | 低 (= 本人) | 高 (= 原則 5 Ethical Provenance 必須) |
+| 収益化条件 | 1000 subs + 4000h 視聴 | 同上 + AI 生成明示 (YouTube 2024 規約) |
+
+### 既存 D variant pipeline 拡張点 (= 7 工程)
+
+```
+[既存 8-step (notebooklm-video-pipeline.yml)]
+   1. notebooklm download video
+   2. ElevenLabs Scribe transcribe
+   3. build_srt.py (SRT 分割)
+   4. make_cards.py (intro/outro PNG)
+   5. ffmpeg intro/outro mp4
+   6. ffmpeg concat+grade+afade (+ Step 6c provenance)
+   7. upload_youtube.py (privacy=unlisted)
+   8. philosophy_page.dart embed commit
+
+[Faceless Channel 拡張 (= 7 追加工程 / 段階導入)]
+   F1. ideation: scripts/video/faceless_ideation.py (= 新規 / NotebookLM jibun-master-brain → 候補 5 本/週)
+   F2. script: notebooklm 「ノート要約 → 動画 script」 (= 既存 audio overview 流用)
+   F3. TTS: ElevenLabs voice_id 固定 (= channel persona 一貫性)
+   F4. visuals: stock B-roll (Pexels API) + 既存 make_cards.py
+   F5. assembly: 既 Step 5-6 流用 (= ffmpeg concat / provenance)
+   F6. publish: upload_youtube.py --privacy public (= unlisted から昇格)
+   F7. analytics: scripts/video/faceless_kpi.py (= 新規 / YouTube Analytics API → docs/CHANNEL_KPI.md 自動更新)
+```
+
+### 月次運用 KPI (= Q2 stub)
+
+| 指標 | Phase 0 (= 現状 part 178) | Phase 1 (= 2026-Q3 / 公開) | Phase 2 (= 2026-Q4 / 収益化) |
+| --- | --- | --- | --- |
+| publish 本数 / 月 | 1-2 本 (= AI 大学拡張) | 8-12 本 | 20-30 本 |
+| total subs | < 100 | 1000 (= YouTube monetization gate) | 5000+ |
+| watch hour 累計 | 微小 | 4000h (= YouTube monetization gate) | 16000h+ |
+| 1 本平均工数 | 60 min | 30 min | 15 min (= GHA full auto) |
+| 月次 GHA cost | 数百円 | < 3000 円 | < 8000 円 (= EF + YouTube API) |
+
+### D-ID 6 原則との接続 (= 1 行ずつ)
+
+| 原則 | Faceless Channel への適用 |
+| --- | --- |
+| #1 Dynamic Avatar Embodiment | F3 TTS + F1 ideation で「コンテンツ更新 → 自動再生成」を月次サイクル化 |
+| #2 Defensive→Generative Pivot | F4 visuals = stock B-roll に限定 (= 任意 URL 画像許可せず deepfake 化を物理的に防ぐ) |
+| #3 Seamless Workflow Integration | 既 8-step + 拡張 7 工程を **GHA 1 workflow** に統合 (= 別ツール開かずゼロタッチ) |
+| #4 DID Verification | F6 publish 時に動画メタデータへ `did:web:my-web-app-b67f4.web.app:agents:faceless-channel` 署名 |
+| #5 Ethical Provenance | F5 assembly で既 `add_provenance.py` 必須 + 動画概要欄に「AI で生成」明示 |
+| #6 Interactive Real-time Presence | Phase 3 (= 2027 H1 想定) で channel から philosophy_page.dart リアルタイム対話 UI へ誘導 |
+
+### 受入条件 (= Issue #1750 + #1757 close 基準)
+
+- [x] `docs/AI_VIDEO_PRINCIPLES.md` Faceless Channel 運用パターン章追加 (= 本 commit / part 178)
+- [ ] `scripts/video/faceless_ideation.py` 新規 (= F1 工程 / Codex hand-off 候補)
+- [ ] `scripts/video/faceless_kpi.py` 新規 (= F7 工程 / Codex hand-off 候補)
+- [ ] `notebooklm-video-pipeline.yml` の F-prefix workflow 拡張 (= Codex hand-off 候補)
+- [ ] `docs/CHANNEL_KPI.md` 新規 (= F7 出力先 / Win Claude or Codex)
+
+### Codex hand-off 想定 task (= 期限 2026-05-22 / Phase 1 stub)
+
+| task | role | 工数 | 備考 |
+| --- | --- | --- | --- |
+| `scripts/video/faceless_ideation.py` 新規 | Codex (= 実装) | 2h | NotebookLM CLI 経由 / 候補 5 本/週 JSON 出力 |
+| `scripts/video/faceless_kpi.py` 新規 | Codex (= 実装) | 2h | YouTube Analytics API v2 / `docs/CHANNEL_KPI.md` 自動更新 |
+| `notebooklm-video-pipeline.yml` Step F1-F7 統合 | Codex (= GHA) | 3h | matrix or sequential 設計 / `concurrency` で 1 本/時 cap |
+| `docs/CHANNEL_KPI.md` template | Win Claude (= docs) | 1h | F7 出力 schema 定義 + 月次 markdown 表 |
+| Issue #1724 secrets 設定 (= 関連) | user (= secret) | 30min | YOUTUBE_TOKEN_JSON 等 5 secrets / Win Claude/Codex 触れない |
+
+### 関連 Issue
+
+- [#1750](https://github.com/kanta13jp1/my_web_app/issues/1750) (= 親 / 2 本蒸留): 本章で Faceless 半分着地. Design-Agent 半分は `STRATEGIC_INTELLIGENCE_2026Q2.md` 参照
+- [#1757](https://github.com/kanta13jp1/my_web_app/issues/1757) (= 子 / 同 notebook `bc91fac9` 単独調査): 本章で内容吸収済 → close 候補
+- [#1724](https://github.com/kanta13jp1/my_web_app/issues/1724) (= P1 / 5 secrets 設定): F6 publish 公開化の前提
+- [#1788](https://github.com/kanta13jp1/my_web_app/issues/1788) (= P3 / D-ID + Hedra アバター): Phase 3 リアルタイム presence への bridge
+
+2026-05-16 Codex #1 readiness update:
+
+- `video-pipeline-secret-readiness.yml` can be run manually before dispatching the heavy NotebookLM pipeline.
+- `notebooklm-video-pipeline.yml` performs an early boolean-only secret preflight for `GITHUB_PAT`, `NOTEBOOKLM_STORAGE_STATE_JSON`, `ELEVENLABS_API_KEY`, `YOUTUBE_CLIENT_SECRET_JSON`, and `YOUTUBE_TOKEN_JSON`.
+- The preflight is side-effect free: no secret values are printed, no NotebookLM download starts, and no YouTube quota is consumed when a required secret is missing.
+
+### Philosophy / Principle Alignment
+
+- **PHILOSOPHY-22** = 9/9 ✅ (= 商品=価値 / 資本=時間 / KPI=昨日の自分 で月次本数 KPI 化)
+- **AI-DEV-23** = 7/7 ✅ (= GHA quality-gate + memory 永続 + DLQ 設計済)
+- **AI-VIDEO-29** = 6/6 必須維持 (= 本章は応用例 / 原則変更なし)
+- **VIBE-30** = 7/7 ✅ (= AI 生成明示 + ウォーターマーク + 段階展開)
+- **PLATFORM-31** = 7/7 ✅ (= channel = platform 拡張 / lock-in 回避は YouTube + Vimeo dual upload で将来対応)
+
+---
+
+*Win版#132 / 2026-04-28 起票 / NotebookLM da2a95d1 (D-ID) ソース蒸留 / Rule [AI-VIDEO-29] / 7 番目の設計軸 / 2026-05-08 part 178 で Faceless Channel 章追加 (= NotebookLM bc91fac9 / Issue #1750 + #1757)*

@@ -1,0 +1,1310 @@
+{
+  "generated_at": "2026-05-11T22:25:14Z",
+  "source_files": [
+    "docs/competitor-reports/2026-05-12.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 41,
+  "filter_summary": {
+    "total": 41,
+    "by_verdict": {
+      "pass": 0,
+      "review": 40,
+      "drop": 1
+    },
+    "risk_flags": {
+      "missing_source_url": 41,
+      "sensational_language": 10
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-e59e07bdc43e",
+        "title": "エグゼクティブサマリー (前回 2026-05-09 比 — 新シグナルのみ)",
+        "text": "エグゼクティブサマリー (前回 2026-05-09 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (前回 2026-05-09 比 — 新シグナルのみ)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e59e07bdc43e",
+        "title": "エグゼクティブサマリー (前回 2026-05-09 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fe8ce5a81a87",
+        "title": "社",
+        "text": "社 社 5/12 新シグナル (= 5/9 から純増) 自社への影響軸",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "社",
+          "url": "",
+          "status": "",
+          "summary": "社 5/12 新シグナル (= 5/9 から純増) 自社への影響軸"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fe8ce5a81a87",
+        "title": "社",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f880646a00e4",
+        "title": "**GitHub Copilot**",
+        "text": "**GitHub Copilot** **GitHub Copilot** **5/8 Agents 専用 secrets/variables** = `Actions / Codespaces / Dependabot` と並ぶ **第 4 種別** として `Agents` 追加 + **org-level 初対応** (= repository 横断共有) + repo-level も `Agents` 専用 section に分離 + 対象 repo 個別選択 **自社 [MCP-AUTH-27] 10 原則 (= deny-by-default) + [AI-DEV-23] 7 原則 (= Auth) 直接競合** = 自社 GHA secret + Supabase secret rotate runbook + Edge Function service_role 2 層分離に対し **Copilot 1 設定で org 全 repo 適用** = enterprise scaling UX 圧倒的優位 / 自社優位: **異 vendor 並列 + audit trail md doc**。取込候補: 自社 secret rotation cadence 月 1 → **agent-only secret 群を分離 namespace 化** spec 起票",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**GitHub Copilot**",
+          "url": "",
+          "status": "",
+          "summary": "**GitHub Copilot** **5/8 Agents 専用 secrets/variables** = `Actions / Codespaces / Dependabot` と並ぶ **第 4 種別** として `Agents` 追加 + **org-level 初対応** (= repository 横断共有) + repo-level も `Agents` 専用 section に分離 + 対象 repo 個別選択 **自社 [MCP-AUTH-27] 10 原則 (= deny-by-default) + [AI-DEV-23] 7 原則 (= Auth) 直接競合** = 自社 GHA secret + Supabase secret rotate runbook + Edge Function service_role 2 層分離に対し **Copilot 1 設定で org 全 repo 適用** = enterprise scaling UX 圧倒的優位 / 自社優位: **異 vendor 並列 + audit trail md doc**。取込候補: 自社 secret rotation cadence 月 1 → **agent-only secret 群を分離 namespace 化** spec 起票"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f880646a00e4",
+        "title": "**GitHub Copilot**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: secret",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d8b98bee3680",
+        "title": "**Devin**",
+        "text": "**Devin** **Devin** **5/8 Devin Review API (REST)** = `POST /reviews` で外部 trigger / Review UI から **PR close + draft 変換** 直接実行 / inline session rename / smart table content-aware width / sidebar 高速 render + **Datadog Remote MCP Server (OAuth)** = dashboard + metrics query 直接実行 + **ACP Summarizer** session summary 自動生成 **自社 cross-instance-pr 直接競合** = 自社 Win Codex に Review 依頼 = md doc 起票 manual / Devin は **API 1 call で外部 CI/CD から trigger 可能** = friction 比較劣位 / Datadog MCP = 自社 GHA cron + JSON log + Schedule cron に対し **可観測性 SaaS 統合 UX** で先行。取込候補: `notebooklm` CLI 経由 ACP Summarizer 類似 session summary skill 拡張",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Devin**",
+          "url": "",
+          "status": "",
+          "summary": "**Devin** **5/8 Devin Review API (REST)** = `POST /reviews` で外部 trigger / Review UI から **PR close + draft 変換** 直接実行 / inline session rename / smart table content-aware width / sidebar 高速 render + **Datadog Remote MCP Server (OAuth)** = dashboard + metrics query 直接実行 + **ACP Summarizer** session summary 自動生成 **自社 cross-instance-pr 直接競合** = 自社 Win Codex に Review 依頼 = md doc 起票 manual / Devin は **API 1 call で外部 CI/CD から trigger 可能** = friction 比較劣位 / Datadog MCP = 自社 GHA cron + JSON log + Schedule cron に対し **可観測性 SaaS 統合 UX** で先行。取込候補: `notebooklm` CLI 経由 ACP Summarizer 類似 session summary skill 拡張"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d8b98bee3680",
+        "title": "**Devin**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c8a95a534231",
+        "title": "**Replit**",
+        "text": "**Replit** **Replit** **5/7 Security Center 強化** = 全 published project の active critical vulnerability を **bulk 数秒 remediation** + posture dashboard **自社 [VIBE-30] 7 原則 (= 監査 / 改竄防止) + [AI-DEV-23] 7 原則 (= quality-gate) 整合軸** = 自社 dependabot + Snyk + GHA `npm audit` 段階運用に対し **vibe coding 産物の critical vuln auto-fix UX** で IndieDev 層浸食 / 取込候補: Flutter Web 依存 `pubspec.lock` + Deno EF deps の critical vuln cron 化検討",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Replit**",
+          "url": "",
+          "status": "",
+          "summary": "**Replit** **5/7 Security Center 強化** = 全 published project の active critical vulnerability を **bulk 数秒 remediation** + posture dashboard **自社 [VIBE-30] 7 原則 (= 監査 / 改竄防止) + [AI-DEV-23] 7 原則 (= quality-gate) 整合軸** = 自社 dependabot + Snyk + GHA `npm audit` 段階運用に対し **vibe coding 産物の critical vuln auto-fix UX** で IndieDev 層浸食 / 取込候補: Flutter Web 依存 `pubspec.lock` + Deno EF deps の critical vuln cron 化検討"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c8a95a534231",
+        "title": "**Replit**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7a11445d7932",
+        "title": "**Claude Code**",
+        "text": "**Claude Code** **Claude Code** **広範 update**: `/model` を gateway `/v1/models` から動的列挙 (= `ANTHROPIC_BASE_URL` 指定時) + `claude project purge [path]` (= state 全削除 / `--dry-run` `--all` 対応) + `ANTHROPIC_BEDROCK_SERVICE_TIER` (default/flex/priority) + `/mcp` で claude.ai connector 重複 URL 可視化 + `/tui` flicker-free fullscreen + **push notification** (= Remote Control + \"Push when Claude decides\" enable 時) **自社 [INSTANCE] (= 2 instance 制) + memory cleanup 直接 dogfood 候補** = `claude project purge --dry-run` は **dormant instance 12 部屋の state 一括退役** に直接適用候補 / push notification = 自社 [SCHEDULE-WAKEUP] rule (= 深夜 02:00-06:00 wakeup 禁止) と統合検討 (= dispatch_automation_hub 経由 mobile alert) / `/tui` は part 203 v17 mandatory compression KPI log 表示と相性良",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Claude Code**",
+          "url": "",
+          "status": "",
+          "summary": "**Claude Code** **広範 update**: `/model` を gateway `/v1/models` から動的列挙 (= `ANTHROPIC_BASE_URL` 指定時) + `claude project purge [path]` (= state 全削除 / `--dry-run` `--all` 対応) + `ANTHROPIC_BEDROCK_SERVICE_TIER` (default/flex/priority) + `/mcp` で claude.ai connector 重複 URL 可視化 + `/tui` flicker-free fullscreen + **push notification** (= Remote Control + \"Push when Claude decides\" enable 時) **自社 [INSTANCE] (= 2 instance 制) + memory cleanup 直接 dogfood 候補** = `claude project purge --dry-run` は **dormant instance 12 部屋の state 一括退役** に直接適用候補 / push notification = 自社 [SCHEDULE-WAKEUP] rule (= 深夜 02:00-06:00 wakeup 禁止) と統合検討 (= dispatch_automation_hub 経由 mobile alert) / `/tui` は part 203 v17 mandatory compression KPI log 表示と相性良"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7a11445d7932",
+        "title": "**Claude Code**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-96fa913a468c",
+        "title": "**OpenAI Codex**",
+        "text": "**OpenAI Codex** **OpenAI Codex** `codex remote-control` (= headless app-server 起動の **simpler entrypoint**) + plugin sharing **link metadata + discoverability controls** + plugin details に bundled hooks 表示 + thread pagination (= unloaded / summary / full turn 3 view) + Bedrock auth が **AWS login profile** 利用可 + multi-env session で `view_image` がファイル resolve **Win Codex 直接 dogfood 候補** = `codex remote-control` headless = 自社 GHA cron 上 Codex 動作の **standardized entrypoint** に転用候補 / plugin sharing discoverability = 自社 `.claude/plugins/` ecosystem (= caveman / claude-mem / context7) と直接対比 / 取込: thread pagination の summary view は自社 `/wrap-up` skill output に類似",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**OpenAI Codex**",
+          "url": "",
+          "status": "",
+          "summary": "**OpenAI Codex** `codex remote-control` (= headless app-server 起動の **simpler entrypoint**) + plugin sharing **link metadata + discoverability controls** + plugin details に bundled hooks 表示 + thread pagination (= unloaded / summary / full turn 3 view) + Bedrock auth が **AWS login profile** 利用可 + multi-env session で `view_image` がファイル resolve **Win Codex 直接 dogfood 候補** = `codex remote-control` headless = 自社 GHA cron 上 Codex 動作の **standardized entrypoint** に転用候補 / plugin sharing discoverability = 自社 `.claude/plugins/` ecosystem (= caveman / claude-mem / context7) と直接対比 / 取込: thread pagination の summary view は自社 `/wrap-up` skill output に類似"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-96fa913a468c",
+        "title": "**OpenAI Codex**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-46ea38f45868",
+        "title": "**Notion AI**",
+        "text": "**Notion AI** **Notion AI** 5/9 既報 Custom Agent admin/spending controls の整理継続 (= per-agent credit 上限 + workspace-level enterprise 上限 + 監視 dashboard + 自動 safeguard + Private Slack reply) 5/9 既報継続 / 自社 [AI-DEV-23] circuit-breaker + quality-gate 整合 / IndieDev は **scaling pain 100 万 Custom Agent 突破事例** から学習機会",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Notion AI**",
+          "url": "",
+          "status": "",
+          "summary": "**Notion AI** 5/9 既報 Custom Agent admin/spending controls の整理継続 (= per-agent credit 上限 + workspace-level enterprise 上限 + 監視 dashboard + 自動 safeguard + Private Slack reply) 5/9 既報継続 / 自社 [AI-DEV-23] circuit-breaker + quality-gate 整合 / IndieDev は **scaling pain 100 万 Custom Agent 突破事例** から学習機会"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-46ea38f45868",
+        "title": "**Notion AI**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4ca01dbe6aef",
+        "title": "**MoneyForward**",
+        "text": "**MoneyForward** **MoneyForward** **AI Cowork (7 月 launch)** = autonomous back-office AI service / **AKASHI 統合 Attendance Plus** = 4 月 rollout 完了 → 5 月本格展開 / 税務 review tool が **one-click fix 提案** (= 一部会計事務所先行) **自社 6 部署 + B/S 軸 直接競合** = AI Cowork = autonomous back-office = **自社 mentor + 6 部署 + AI 振り分け matrix と直接重なる方向性** / 取込: 自社 [PHILOSOPHY-22] 9 原則 (= 商品=価値 / KPI) で autonomous 度 KPI 化検討 / one-click fix 提案 UX は IMBUE 7 パターン (= AI 体験設計) 比較対象",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**MoneyForward**",
+          "url": "",
+          "status": "",
+          "summary": "**MoneyForward** **AI Cowork (7 月 launch)** = autonomous back-office AI service / **AKASHI 統合 Attendance Plus** = 4 月 rollout 完了 → 5 月本格展開 / 税務 review tool が **one-click fix 提案** (= 一部会計事務所先行) **自社 6 部署 + B/S 軸 直接競合** = AI Cowork = autonomous back-office = **自社 mentor + 6 部署 + AI 振り分け matrix と直接重なる方向性** / 取込: 自社 [PHILOSOPHY-22] 9 原則 (= 商品=価値 / KPI) で autonomous 度 KPI 化検討 / one-click fix 提案 UX は IMBUE 7 パターン (= AI 体験設計) 比較対象"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4ca01dbe6aef",
+        "title": "**MoneyForward**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-253719d80e30",
+        "title": "**Cursor**",
+        "text": "**Cursor** **Cursor** 5/9 既報 3.3 (Build in Parallel + PR Splitting + Skills) の細部追加 = Explore subagent 専用 model 選択 + `model: opus` 等 general 名対応 + **context usage breakdown** (= agent context 内訳可視化 / diagnose 用途) minor / 5/9 既報継続 / context breakdown は part 203-b v17 KPI log 表示と類似軸 / 観察継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Cursor**",
+          "url": "",
+          "status": "",
+          "summary": "**Cursor** 5/9 既報 3.3 (Build in Parallel + PR Splitting + Skills) の細部追加 = Explore subagent 専用 model 選択 + `model: opus` 等 general 名対応 + **context usage breakdown** (= agent context 内訳可視化 / diagnose 用途) minor / 5/9 既報継続 / context breakdown は part 203-b v17 KPI log 表示と類似軸 / 観察継続"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-253719d80e30",
+        "title": "**Cursor**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "text": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (重大シグナルのみ深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3bdb578df4bb",
+        "title": "詳細セクション (重大シグナルのみ深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b0e821a434c6",
+        "title": "自社対比**: 自社 secret 管理は **GHA repository secrets + Supabase Edge Function secret + Firebase config** の **3 層分散**。rotation ",
+        "text": "自社対比**: 自社 secret 管理は **GHA repository secrets + Supabase Edge Function secret + Firebase config** の **3 層分散**。rotation runbook は month-1 cadence で **手動 PR ベース**。Copilot は **org admin 1 設定で全 repo 適用** = scaling UX 圧倒的優位。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社対比**: 自社 secret 管理は **GHA repository secrets + Supabase Edge Function secret + Firebase config** の **3 層分散**。rotation runbook は month-1 cadence で **手動 PR ベース**。Copilot は **org admin 1 設定で全 repo 適用** = scaling UX 圧倒的優位。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b0e821a434c6",
+        "title": "自社対比**: 自社 secret 管理は **GHA repository secrets + Supabase Edge Function secret + Firebase config** の **3 層分散**。rotation ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: secret",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-dbf9bf0623e2",
+        "title": "自社優位**: 自社 [MCP-AUTH-27] 10 原則 (= deny-by-default + 監査) は **vendor 横断 (= Win Claude + Win Codex + Copilot 将来)** で実装 = 単一",
+        "text": "自社優位**: 自社 [MCP-AUTH-27] 10 原則 (= deny-by-default + 監査) は **vendor 横断 (= Win Claude + Win Codex + Copilot 将来)** で実装 = 単一 vendor lock-in 回避。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社優位**: 自社 [MCP-AUTH-27] 10 原則 (= deny-by-default + 監査) は **vendor 横断 (= Win Claude + Win Codex + Copilot 将来)** で実装 = 単一 vendor lock-in 回避。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-dbf9bf0623e2",
+        "title": "自社優位**: 自社 [MCP-AUTH-27] 10 原則 (= deny-by-default + 監査) は **vendor 横断 (= Win Claude + Win Codex + Copilot 将来)** で実装 = 単一",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f405f4703360",
+        "title": "取込候補 (= mid 期 / 設計 spec)**: 自社 secret 群を `actions-only` / `agents-only` / `bot-only` の **3 namespace 化** + Win Codex 用 t",
+        "text": "取込候補 (= mid 期 / 設計 spec)**: 自社 secret 群を `actions-only` / `agents-only` / `bot-only` の **3 namespace 化** + Win Codex 用 token と GHA cron 用 token を **separate scope** に分離 + rotation cadence を月 1 → **secret 種別ごと differentiated cadence** (= agent-only は week-2 / actions は month-1)。担当 = Win Codex (実装) / 期限 5/22 目安 / `docs/cross-instance-prs/20260512_agent_secret_namespace.md` で起票候補。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "取込候補 (= mid 期 / 設計 spec)**: 自社 secret 群を `actions-only` / `agents-only` / `bot-only` の **3 namespace 化** + Win Codex 用 token と GHA cron 用 token を **separate scope** に分離 + rotation cadence を月 1 → **secret 種別ごと differentiated cadence** (= agent-only は week-2 / actions は month-1)。担当 = Win Codex (実装) / 期限 5/22 目安 / `docs/cross-instance-prs/20260512_agent_secret_namespace.md` で起票候補。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f405f4703360",
+        "title": "取込候補 (= mid 期 / 設計 spec)**: 自社 secret 群を `actions-only` / `agents-only` / `bot-only` の **3 namespace 化** + Win Codex 用 t",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: secret",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d013e8d4b115",
+        "title": "自社対比**: 自社 cross-instance-pr は **md doc 起票 + git log + WBS sync** の **3 軸 manual workflow**。Devin は **REST API 1 call** ",
+        "text": "自社対比**: 自社 cross-instance-pr は **md doc 起票 + git log + WBS sync** の **3 軸 manual workflow**。Devin は **REST API 1 call** で外部 CI/CD (= GHA / Jenkins / CircleCI) から trigger 可能。可観測性は自社 GHA cron + JSON log + Schedule cron の **filesystem-based audit**。Devin は **Datadog SaaS native** で **metric/log/trace 統合 UX** 完成形提示。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社対比**: 自社 cross-instance-pr は **md doc 起票 + git log + WBS sync** の **3 軸 manual workflow**。Devin は **REST API 1 call** で外部 CI/CD (= GHA / Jenkins / CircleCI) から trigger 可能。可観測性は自社 GHA cron + JSON log + Schedule cron の **filesystem-based audit**。Devin は **Datadog SaaS native** で **metric/log/trace 統合 UX** 完成形提示。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d013e8d4b115",
+        "title": "自社対比**: 自社 cross-instance-pr は **md doc 起票 + git log + WBS sync** の **3 軸 manual workflow**。Devin は **REST API 1 call** ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f8297966bc9e",
+        "title": "取込候補 (= short 期 / dogfood)**: 自社 `notebooklm` CLI 経由で ACP Summarizer 類似の **session summary skill 自動化** (= 既存 `/wrap-up` ",
+        "text": "取込候補 (= short 期 / dogfood)**: 自社 `notebooklm` CLI 経由で ACP Summarizer 類似の **session summary skill 自動化** (= 既存 `/wrap-up` skill の output を NotebookLM へ post)。Datadog MCP は自社 OPEX 観点で導入見送り → **GHA workflow_run + jq 集計の dashboard 自動化** で代替候補。担当 = Win Claude (設計) / 期限 5/19 目安。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "取込候補 (= short 期 / dogfood)**: 自社 `notebooklm` CLI 経由で ACP Summarizer 類似の **session summary skill 自動化** (= 既存 `/wrap-up` skill の output を NotebookLM へ post)。Datadog MCP は自社 OPEX 観点で導入見送り → **GHA workflow_run + jq 集計の dashboard 自動化** で代替候補。担当 = Win Claude (設計) / 期限 5/19 目安。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f8297966bc9e",
+        "title": "取込候補 (= short 期 / dogfood)**: 自社 `notebooklm` CLI 経由で ACP Summarizer 類似の **session summary skill 自動化** (= 既存 `/wrap-up` ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-32210c39081e",
+        "title": "自社対比**: 自社 critical vuln 対応は GitHub Dependabot + Snyk (= 月 1 review) + GHA `npm audit` (= PR trigger)。Flutter `pub` 依存 +",
+        "text": "自社対比**: 自社 critical vuln 対応は GitHub Dependabot + Snyk (= 月 1 review) + GHA `npm audit` (= PR trigger)。Flutter `pub` 依存 + Deno EF deps の critical vuln 専用 cron は **未実装**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社対比**: 自社 critical vuln 対応は GitHub Dependabot + Snyk (= 月 1 review) + GHA `npm audit` (= PR trigger)。Flutter `pub` 依存 + Deno EF deps の critical vuln 専用 cron は **未実装**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-32210c39081e",
+        "title": "自社対比**: 自社 critical vuln 対応は GitHub Dependabot + Snyk (= 月 1 review) + GHA `npm audit` (= PR trigger)。Flutter `pub` 依存 +",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c934a9c94189",
+        "title": "取込候補 (= mid 期 / GHA cron 追加)**: `pubspec.lock` + Deno EF `import_map.json` の critical vuln 検知を **daily cron 化** + Win Co",
+        "text": "取込候補 (= mid 期 / GHA cron 追加)**: `pubspec.lock` + Deno EF `import_map.json` の critical vuln 検知を **daily cron 化** + Win Codex 自動 fix-PR 起票 spec。担当 = Win Codex (実装) / 期限 5/26 目安。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "取込候補 (= mid 期 / GHA cron 追加)**: `pubspec.lock` + Deno EF `import_map.json` の critical vuln 検知を **daily cron 化** + Win Codex 自動 fix-PR 起票 spec。担当 = Win Codex (実装) / 期限 5/26 目安。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c934a9c94189",
+        "title": "取込候補 (= mid 期 / GHA cron 追加)**: `pubspec.lock` + Deno EF `import_map.json` の critical vuln 検知を **daily cron 化** + Win Co",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c6e7909322c7",
+        "title": "dogfood 直接候補**: 自社 [INSTANCE] = 旧 12 instance dormant 状態 (= PS#1-6 + VSCode版 + WEB版 + スマホ版 + Codex#1-2)。`claude project ",
+        "text": "dogfood 直接候補**: 自社 [INSTANCE] = 旧 12 instance dormant 状態 (= PS#1-6 + VSCode版 + WEB版 + スマホ版 + Codex#1-2)。`claude project purge --dry-run` で **state 一括退役 候補一覧化** + 確認後 `--yes` で実行 = `.claude/worktrees/` + `.claude/projects/` の dormant entry 整理。担当 = Win Claude / 期限 5/19 / part 203-b session 末尾 candidate に追加可能。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "dogfood 直接候補**: 自社 [INSTANCE] = 旧 12 instance dormant 状態 (= PS#1-6 + VSCode版 + WEB版 + スマホ版 + Codex#1-2)。`claude project purge --dry-run` で **state 一括退役 候補一覧化** + 確認後 `--yes` で実行 = `.claude/worktrees/` + `.claude/projects/` の dormant entry 整理。担当 = Win Claude / 期限 5/19 / part 203-b session 末尾 candidate に追加可能。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c6e7909322c7",
+        "title": "dogfood 直接候補**: 自社 [INSTANCE] = 旧 12 instance dormant 状態 (= PS#1-6 + VSCode版 + WEB版 + スマホ版 + Codex#1-2)。`claude project ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6bf30066b448",
+        "title": "push notification**: 自社 [SCHEDULE-WAKEUP] (= 深夜 02:00-06:00 禁止) と統合 = dispatch_automation_hub mobile alert に並列追加候補。",
+        "text": "push notification**: 自社 [SCHEDULE-WAKEUP] (= 深夜 02:00-06:00 禁止) と統合 = dispatch_automation_hub mobile alert に並列追加候補。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "push notification**: 自社 [SCHEDULE-WAKEUP] (= 深夜 02:00-06:00 禁止) と統合 = dispatch_automation_hub mobile alert に並列追加候補。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6bf30066b448",
+        "title": "push notification**: 自社 [SCHEDULE-WAKEUP] (= 深夜 02:00-06:00 禁止) と統合 = dispatch_automation_hub mobile alert に並列追加候補。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-663d0698b505",
+        "title": "dogfood**: GHA cron 上 Codex 動作の **standardized entrypoint** に `codex remote-control` 転用候補。plugin discoverability は自社 `.c",
+        "text": "dogfood**: GHA cron 上 Codex 動作の **standardized entrypoint** に `codex remote-control` 転用候補。plugin discoverability は自社 `.claude/plugins/` (= caveman / claude-mem / context7 / claude-design-handoff) と直接対比 = `docs/PLUGINS_CATALOG.md` 自動 generate 候補 (= part 203-b candidate 追加可能)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "dogfood**: GHA cron 上 Codex 動作の **standardized entrypoint** に `codex remote-control` 転用候補。plugin discoverability は自社 `.claude/plugins/` (= caveman / claude-mem / context7 / claude-design-handoff) と直接対比 = `docs/PLUGINS_CATALOG.md` 自動 generate 候補 (= part 203-b candidate 追加可能)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-663d0698b505",
+        "title": "dogfood**: GHA cron 上 Codex 動作の **standardized entrypoint** に `codex remote-control` 転用候補。plugin discoverability は自社 `.c",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f1ee6a71b7bf",
+        "title": "直接競合軸**: 自社 [PHILOSOPHY-22] 9 原則 (= 6 部署 / 商品=価値 / KPI) は **mentor + 6 部署 + AI 振り分け matrix** で実装。MoneyForward AI Cowork ",
+        "text": "直接競合軸**: 自社 [PHILOSOPHY-22] 9 原則 (= 6 部署 / 商品=価値 / KPI) は **mentor + 6 部署 + AI 振り分け matrix** で実装。MoneyForward AI Cowork は **autonomous back-office** = **同方向性 + 既存 SaaS user base 100 万超** で IndieDev / SMB 層 浸食リスク。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "直接競合軸**: 自社 [PHILOSOPHY-22] 9 原則 (= 6 部署 / 商品=価値 / KPI) は **mentor + 6 部署 + AI 振り分け matrix** で実装。MoneyForward AI Cowork は **autonomous back-office** = **同方向性 + 既存 SaaS user base 100 万超** で IndieDev / SMB 層 浸食リスク。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f1ee6a71b7bf",
+        "title": "直接競合軸**: 自社 [PHILOSOPHY-22] 9 原則 (= 6 部署 / 商品=価値 / KPI) は **mentor + 6 部署 + AI 振り分け matrix** で実装。MoneyForward AI Cowork ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-640d032894f2",
+        "title": "取込候補 (= mid 期 / 設計)**: 自社 [PHILOSOPHY-22] の autonomous 度を **KPI 化** (= 自走率 % / 人間介入 % / 1 task あたり指示数) + one-click fix U",
+        "text": "取込候補 (= mid 期 / 設計)**: 自社 [PHILOSOPHY-22] の autonomous 度を **KPI 化** (= 自走率 % / 人間介入 % / 1 task あたり指示数) + one-click fix UX を [IMBUE-25] 7 パターンと cross-reference + AI Cowork launch (7 月) に向け **自社差別化 narrative 整理** (= 「6 部署 + mentor + B/S 統合 + indie-friendly 価格帯」)。担当 = Win Claude (narrative 設計) / 期限 6/15 目安。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "取込候補 (= mid 期 / 設計)**: 自社 [PHILOSOPHY-22] の autonomous 度を **KPI 化** (= 自走率 % / 人間介入 % / 1 task あたり指示数) + one-click fix UX を [IMBUE-25] 7 パターンと cross-reference + AI Cowork launch (7 月) に向け **自社差別化 narrative 整理** (= 「6 部署 + mentor + B/S 統合 + indie-friendly 価格帯」)。担当 = Win Claude (narrative 設計) / 期限 6/15 目安。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-640d032894f2",
+        "title": "取込候補 (= mid 期 / 設計)**: 自社 [PHILOSOPHY-22] の autonomous 度を **KPI 化** (= 自走率 % / 人間介入 % / 1 task あたり指示数) + one-click fix U",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2fc9d7d6bd73",
+        "title": "#",
+        "text": "# # アクション 担当 期限 Philosophy 紐付",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "#",
+          "url": "",
+          "status": "",
+          "summary": "# アクション 担当 期限 Philosophy 紐付"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2fc9d7d6bd73",
+        "title": "#",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c5141c90ca2f",
+        "title": "1",
+        "text": "1 1 secret namespace 3 分離 + 種別別 rotation cadence Win Codex 5/22 [MCP-AUTH-27] + [AI-DEV-23]",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "1",
+          "url": "",
+          "status": "",
+          "summary": "1 secret namespace 3 分離 + 種別別 rotation cadence Win Codex 5/22 [MCP-AUTH-27] + [AI-DEV-23]"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c5141c90ca2f",
+        "title": "1",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: secret",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c39e90b007cd",
+        "title": "2",
+        "text": "2 2 NotebookLM 経由 session summary skill 自動化 Win Claude 5/19 [BRAIN-32]",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "2",
+          "url": "",
+          "status": "",
+          "summary": "2 NotebookLM 経由 session summary skill 自動化 Win Claude 5/19 [BRAIN-32]"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c39e90b007cd",
+        "title": "2",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.33,
+        "verdict": "drop",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c228bee5df2d",
+        "title": "3",
+        "text": "3 3 Flutter pub + Deno EF deps critical vuln daily cron Win Codex 5/26 [VIBE-30] + [AI-DEV-23]",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "3",
+          "url": "",
+          "status": "",
+          "summary": "3 Flutter pub + Deno EF deps critical vuln daily cron Win Codex 5/26 [VIBE-30] + [AI-DEV-23]"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c228bee5df2d",
+        "title": "3",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-78d808ab9e5e",
+        "title": "4",
+        "text": "4 4 `claude project purge --dry-run` で dormant 12 instance state 一括整理 Win Claude 5/19 [INSTANCE]",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "4",
+          "url": "",
+          "status": "",
+          "summary": "4 `claude project purge --dry-run` で dormant 12 instance state 一括整理 Win Claude 5/19 [INSTANCE]"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-78d808ab9e5e",
+        "title": "4",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-53838527febc",
+        "title": "5",
+        "text": "5 5 `docs/PLUGINS_CATALOG.md` 自動 generate spec Win Claude → Win Codex 5/29 [SYNERGY-30]",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5",
+          "url": "",
+          "status": "",
+          "summary": "5 `docs/PLUGINS_CATALOG.md` 自動 generate spec Win Claude → Win Codex 5/29 [SYNERGY-30]"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-53838527febc",
+        "title": "5",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ea8d0c06f1b5",
+        "title": "6",
+        "text": "6 6 MoneyForward AI Cowork (7 月) 向け 自社差別化 narrative 整理 Win Claude 6/15 [PHILOSOPHY-22] + [PLATFORM-31]",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "6",
+          "url": "",
+          "status": "",
+          "summary": "6 MoneyForward AI Cowork (7 月) 向け 自社差別化 narrative 整理 Win Claude 6/15 [PHILOSOPHY-22] + [PLATFORM-31]"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ea8d0c06f1b5",
+        "title": "6",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b4cbb939776d",
+        "title": "Discovery セクション (= skip)",
+        "text": "Discovery セクション (= skip)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Discovery セクション (= skip)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b4cbb939776d",
+        "title": "Discovery セクション (= skip)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fca93a2a5d86",
+        "title": "[Cursor changelog](https://cursor.com/changelog)",
+        "text": "[Cursor changelog](https://cursor.com/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Cursor changelog](https://cursor.com/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fca93a2a5d86",
+        "title": "[Cursor changelog](https://cursor.com/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-405783dc4b97",
+        "title": "[Devin Release Notes 2026](https://docs.devin.ai/release-notes/2026)",
+        "text": "[Devin Release Notes 2026](https://docs.devin.ai/release-notes/2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Devin Release Notes 2026](https://docs.devin.ai/release-notes/2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-405783dc4b97",
+        "title": "[Devin Release Notes 2026](https://docs.devin.ai/release-notes/2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-233791196513",
+        "title": "[Replit Agent 4 What's Changed](https://blog.replit.com/whats-changed-agent3-to-agent4)",
+        "text": "[Replit Agent 4 What's Changed](https://blog.replit.com/whats-changed-agent3-to-agent4)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Replit Agent 4 What's Changed](https://blog.replit.com/whats-changed-agent3-to-agent4)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-233791196513",
+        "title": "[Replit Agent 4 What's Changed](https://blog.replit.com/whats-changed-agent3-to-agent4)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f2109ca178a2",
+        "title": "[GitHub Copilot Agents secrets/variables 5/8](https://github.blog/changelog/2026-05-08-more-flexible-secrets-and-variabl",
+        "text": "[GitHub Copilot Agents secrets/variables 5/8](https://github.blog/changelog/2026-05-08-more-flexible-secrets-and-variables-for-copilot-cloud-agent/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[GitHub Copilot Agents secrets/variables 5/8](https://github.blog/changelog/2026-05-08-more-flexible-secrets-and-variables-for-copilot-cloud-agent/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f2109ca178a2",
+        "title": "[GitHub Copilot Agents secrets/variables 5/8](https://github.blog/changelog/2026-05-08-more-flexible-secrets-and-variabl",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: secret",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-196676bb2759",
+        "title": "[Claude Code Changelog](https://code.claude.com/docs/en/changelog)",
+        "text": "[Claude Code Changelog](https://code.claude.com/docs/en/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Code Changelog](https://code.claude.com/docs/en/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-196676bb2759",
+        "title": "[Claude Code Changelog](https://code.claude.com/docs/en/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8c4a3cf46bea",
+        "title": "[Notion Releases 5/5 Custom Agent admin](https://www.notion.com/releases/2026-05-05)",
+        "text": "[Notion Releases 5/5 Custom Agent admin](https://www.notion.com/releases/2026-05-05)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Notion Releases 5/5 Custom Agent admin](https://www.notion.com/releases/2026-05-05)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8c4a3cf46bea",
+        "title": "[Notion Releases 5/5 Custom Agent admin](https://www.notion.com/releases/2026-05-05)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1d77e493f896",
+        "title": "[OpenAI Codex Changelog](https://developers.openai.com/codex/changelog)",
+        "text": "[OpenAI Codex Changelog](https://developers.openai.com/codex/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenAI Codex Changelog](https://developers.openai.com/codex/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1d77e493f896",
+        "title": "[OpenAI Codex Changelog](https://developers.openai.com/codex/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-908300a6309f",
+        "title": "[Money Forward 2026 AI strategy](https://www.fintechobserver.com/money-forward-charges-into-2026-with-strategic-acquisit",
+        "text": "[Money Forward 2026 AI strategy](https://www.fintechobserver.com/money-forward-charges-into-2026-with-strategic-acquisitions-and-aggressive-ai-deployment/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Money Forward 2026 AI strategy](https://www.fintechobserver.com/money-forward-charges-into-2026-with-strategic-acquisitions-and-aggressive-ai-deployment/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-908300a6309f",
+        "title": "[Money Forward 2026 AI strategy](https://www.fintechobserver.com/money-forward-charges-into-2026-with-strategic-acquisit",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

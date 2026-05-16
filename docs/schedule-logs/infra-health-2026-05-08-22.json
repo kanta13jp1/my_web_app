@@ -1,0 +1,22 @@
+{
+  "run_at": "2026-05-08T13:33:09.399Z",
+  "run_at_jst": "2026-05-08 22:33 JST",
+  "edge_function": {
+    "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/health-check",
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+      "db_connectivity": { "ok": true, "latency_ms": 167, "detail": "profiles reachable in 167ms" },
+      "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+      "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "time_total_sec": 0.131
+  },
+  "verdict": "healthy",
+  "action_taken": "log only (no commit per task: 異常時のみコミット)"
+}

@@ -1,0 +1,23 @@
+{
+  "ts_jst": "2026-05-09T15:33:00+09:00",
+  "ts_utc": "2026-05-09T06:33:00Z",
+  "supabase_health": {
+    "status": "healthy",
+    "http": 200,
+    "checks": {
+      "env": "ok",
+      "db_connectivity": { "ok": true, "latencyMs": 189 },
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-09T06:32:58.009Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http": 200,
+    "time_sec": 0.316,
+    "size_bytes": 105828
+  },
+  "action": "none",
+  "note": "all healthy; no remediation required"
+}

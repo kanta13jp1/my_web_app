@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AiUniversityContentPage extends StatefulWidget {
@@ -47,7 +48,9 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
     });
     try {
       final body = <String, dynamic>{
-        'action': 'university.content_all',
+        'action': _hasFacultyFilter
+            ? 'university.content_by_faculty'
+            : 'university.content_all',
         'limit': 500,
       };
       if (_hasDeptFilter) body['department_code'] = widget.departmentCode;
@@ -183,6 +186,8 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                                   _filtered[i] as Map<String, dynamic>? ?? {};
                               return ListTile(
                                 dense: true,
+                                onTap: () =>
+                                    _showContentDetail(item, colorScheme),
                                 leading: Container(
                                   width: 36,
                                   height: 36,
@@ -273,6 +278,108 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
               ),
           ];
         }).toList(),
+      ),
+    );
+  }
+
+  void _showContentDetail(Map<String, dynamic> item, ColorScheme colorScheme) {
+    final title = item['title']?.toString() ?? '';
+    final provider = item['provider']?.toString() ?? '';
+    final category = item['category']?.toString() ?? '';
+    final publishedValue = item['published_at']?.toString() ?? '';
+    final publishedAt = publishedValue.length >= 10
+        ? publishedValue.substring(0, 10)
+        : publishedValue;
+    final content = item['content']?.toString() ?? '';
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.86,
+          minChildSize: 0.5,
+          maxChildSize: 0.96,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        height: 1.35,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _MetaChip(label: provider),
+                    _MetaChip(label: category),
+                    if (publishedAt.isNotEmpty) _MetaChip(label: publishedAt),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                MarkdownBody(
+                  data: content,
+                  styleSheet: MarkdownStyleSheet.fromTheme(
+                    Theme.of(context),
+                  ).copyWith(
+                    p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          height: 1.65,
+                        ),
+                    h2: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          height: 1.4,
+                        ),
+                    codeblockDecoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.75,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(
+                          alpha: 0.7,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
       ),
     );
   }

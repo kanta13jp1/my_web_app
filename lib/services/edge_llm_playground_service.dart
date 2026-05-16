@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/ai_hub_chat_service.dart';
+import 'local_rag_runtime_service.dart';
+import 'offline_secure_mode_settings_service.dart';
 
 typedef EdgeLlmPlaygroundInvoker = AiHubChatInvoker;
 
@@ -25,6 +27,7 @@ class EdgeLlmPlaygroundResponse {
   final Map<String, dynamic>? parsedJson;
   final String? parseError;
   final AiHubChatObservability? observability;
+  final List<LocalRagCitation> citations;
 
   const EdgeLlmPlaygroundResponse({
     required this.text,
@@ -36,18 +39,27 @@ class EdgeLlmPlaygroundResponse {
     this.parsedJson,
     this.parseError,
     this.observability,
+    this.citations = const <LocalRagCitation>[],
   });
 }
 
 class EdgeLlmPlaygroundService {
   final SupabaseClient? _supabase;
   final EdgeLlmPlaygroundInvoker? _invoker;
+  final OfflineSecureModeSettingsService _offlineSettingsService;
+  final LocalRagRuntimeService _localRagRuntimeService;
 
   const EdgeLlmPlaygroundService({
     SupabaseClient? supabase,
     EdgeLlmPlaygroundInvoker? invoker,
+    OfflineSecureModeSettingsService offlineSettingsService =
+        const OfflineSecureModeSettingsService(),
+    LocalRagRuntimeService localRagRuntimeService =
+        const LocalRagRuntimeService(),
   })  : _supabase = supabase,
-        _invoker = invoker;
+        _invoker = invoker,
+        _offlineSettingsService = offlineSettingsService,
+        _localRagRuntimeService = localRagRuntimeService;
 
   Future<EdgeLlmPlaygroundResponse> invoke({
     required String userPrompt,
@@ -74,6 +86,7 @@ class EdgeLlmPlaygroundService {
       'action': 'edge_llm.invoke',
       'user_prompt': normalizedPrompt,
       'response_format': normalizedFormat,
+      'temperature': 0,
       if (systemPrompt.trim().isNotEmpty) 'system_prompt': systemPrompt.trim(),
       if (normalizedProvider != 'auto') 'provider': normalizedProvider,
       if (normalizedProvider == 'auto' &&
@@ -91,7 +104,42 @@ class EdgeLlmPlaygroundService {
       body['context_data'] = _parseContextDraft(normalizedContextDraft);
     }
 
-    final data = await _invoke(body);
+    final offlineSettings =
+        await _offlineSettingsService.loadSettingsOrDefaults();
+    if (offlineSettings.externalApiBlocked &&
+        offlineSettings.localRuntimeConfigured) {
+      final local = await _localRagRuntimeService.query(
+        query: normalizedPrompt,
+        settings: offlineSettings,
+        systemPrompt: systemPrompt,
+        contextData: body['context_data'],
+        sessionId: sessionId,
+        traceId: traceId,
+      );
+      return EdgeLlmPlaygroundResponse(
+        text: local.text,
+        source: 'local-rag runtime / ${local.engine}',
+        provider: 'local-rag',
+        tier: 'offline',
+        model: local.model,
+        responseFormat: normalizedFormat,
+        parsedJson: <String, dynamic>{
+          'citations': local.citations.map((item) => item.toJson()).toList(),
+          'offline_runtime': local.toJson(),
+        },
+        citations: local.citations,
+        observability: AiHubChatObservability.fromResponseMap(
+          <String, dynamic>{
+            'provider': 'local-rag',
+            'model': local.model,
+            'action': 'edge_llm.invoke',
+          },
+          fallbackProvider: 'local-rag',
+        ),
+      );
+    }
+
+    final data = await _invoke(_withOfflinePolicy(body, offlineSettings));
     if (data['success'] != true) {
       final detail =
           (data['message'] ?? data['detail'] ?? 'LLM invocation failed')
@@ -116,6 +164,7 @@ class EdgeLlmPlaygroundService {
     final model = data['model']?.toString().trim();
     final parseError = data['parse_error']?.toString().trim();
     final parsedJson = _toStringMap(data['parsed_json']);
+    final citations = _extractCitations(parsedJson, data);
     final source = providerUsed.isEmpty
         ? 'ai-hub edge_llm.invoke'
         : 'ai-hub edge_llm.invoke / $providerUsed';
@@ -129,6 +178,7 @@ class EdgeLlmPlaygroundService {
       responseFormat: normalizedFormat,
       parsedJson: parsedJson,
       parseError: _emptyToNull(parseError),
+      citations: citations,
       observability: AiHubChatObservability.fromResponseMap(
         data,
         fallbackProvider:
@@ -157,6 +207,16 @@ class EdgeLlmPlaygroundService {
     };
   }
 
+  Map<String, dynamic> _withOfflinePolicy(
+    Map<String, dynamic> body,
+    OfflineSecureModeSettings settings,
+  ) {
+    return <String, dynamic>{
+      ...body,
+      ...settings.toAiHubPolicyPayload(),
+    };
+  }
+
   Object _parseContextDraft(String draft) {
     try {
       final decoded = jsonDecode(draft);
@@ -174,6 +234,32 @@ class EdgeLlmPlaygroundService {
       );
     }
     return null;
+  }
+
+  List<LocalRagCitation> _extractCitations(
+    Map<String, dynamic>? parsedJson,
+    Map<String, dynamic> response,
+  ) {
+    final candidates = <Object?>[
+      parsedJson?['citations'],
+      parsedJson?['sources'],
+      response['citations'],
+      response['sources'],
+    ];
+    for (final candidate in candidates) {
+      if (candidate is List) {
+        return candidate
+            .whereType<Map>()
+            .map(
+              (item) => LocalRagCitation.fromMap(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .where((item) => item.sourceId.isNotEmpty)
+            .toList(growable: false);
+      }
+    }
+    return const <LocalRagCitation>[];
   }
 }
 

@@ -1,5 +1,86 @@
 # AI Fallback Runbook — 自分株式会社
 
+## #1787 2026-05 AI Tool Routing Update
+
+This update folds the May 2026 AI-tool signals into the current two-instance
+operating model:
+
+- Claude Code #1 reviews adoption risk and decides adopt/defer/ignore for
+  Claude Code, Codex CLI, Copilot, Gemini Code Assist, Cursor, and Devin release
+  signals.
+- Codex #1 owns scoped implementation, CI, merge follow-up, WBS sync
+  verification, branch/worktree cleanup, and session memory/disk hygiene.
+- Codex #2 and Codex #3 stay historical. Do not start dormant Codex lanes,
+  PowerShell lane instances, or extra subagents to process WBS tasks.
+- Use `docs/ai-tool-changelog/2026-05.md` as the local source summary and verify
+  any release claim against the official source before promoting it into a
+  production fallback path.
+- Copilot Custom Agents are design-only until explicitly activated. The current
+  registry lives in `.github/agents/README.md`; agents are advisory and must not
+  merge, deploy, write production data, or run side-effecting automation.
+
+Adoption notes for this cycle:
+
+- Claude Code v2.1.121 MCP `alwaysLoad` and `claude plugin prune` can reduce
+  tool-search friction, but Claude Code #1 must approve any managed-setting or
+  plugin-store change.
+- Claude Code v2.1.116 `/resume` speed and MCP startup improvements support
+  long-session recovery, but they do not change the two-instance cap.
+- Claude Code v2.1.122 Bedrock service-tier selection and v2.1.108 prompt-cache
+  flags are provider-configuration candidates, not default environment changes.
+- OpenAI Codex CLI rust-v0.128.0 persisted `/goal` workflows are a future
+  Codex #1 planning aid; normal WBS work still uses scoped branches and PRs.
+- Cursor context-usage breakdown, Gemini Code Assist release notes, and Devin
+  CI-aware auto-fix are advisory signals unless a local verified workflow is
+  explicitly routed.
+
+## 2026-05-07 Official AI Tool Update Gate (#1706)
+
+This runbook now treats AI-tool release claims as "verify before routing". Use
+these official sources before promoting a tool into the production fallback
+path:
+
+- Claude Code: official settings and memory docs confirm managed settings,
+  notification channels, hooks, and CLAUDE.md memory hierarchy. Do not require
+  unverified slash commands such as `/tui` or `/resume <PR URL>` unless a
+  current Claude Code release note confirms them.
+- OpenAI Codex: use the official Codex docs and OpenAI Docs MCP. Codex work is
+  routed through the Windows Codex #1 worktree and must keep AGENTS.md /
+  `~/.codex/config.toml` as pointer-based instruction memory, not a giant prompt.
+- Gemini Code Assist: agent mode is available in VS Code and IntelliJ, but
+  remains preview-gated. Gemini 3.1 Pro / 3.0 Flash availability depends on
+  license, waitlist, or release-channel status, so it is a candidate fallback
+  only after local availability is verified.
+- GitHub Copilot: official changelog confirms Copilot coding agent startup
+  improvements and Claude/Codex partner-agent availability. Treat performance
+  claims as changelog-scoped; this runbook records the official 50% startup
+  improvement, not the older unverified 20% figure.
+
+Official source pointers:
+
+- https://docs.anthropic.com/en/docs/claude-code/settings
+- https://docs.anthropic.com/en/docs/claude-code/memory
+- https://developers.openai.com/codex/cloud
+- https://developers.openai.com/learn/docs-mcp
+- https://developers.google.com/gemini-code-assist/resources/release-notes
+- https://docs.cloud.google.com/gemini/docs/codeassist/gemini-3
+- https://github.blog/changelog/2026-02-26-claude-and-codex-now-available-for-copilot-business-pro-users/
+- https://github.blog/changelog/2026-03-19-copilot-coding-agent-now-starts-work-50-faster/
+
+Related ai-tool-update Issues: #1644, #1645, #1646, #1647, #1706.
+
+#1646 UI/browser QA and generated-image provenance are defined in
+`docs/CODEX_UI_QA_PLAYBOOK.md`. For UI PRs, Codex #1 must record route,
+viewport, screenshot/Playwright evidence, console/page/request review, and
+generated-image rights/provenance before marking the work review-ready.
+
+#1644 dynamic context injection is defined in
+`docs/DYNAMIC_CONTEXT_INJECTION.md` and `config/context-injection-map.json`.
+At session start, Codex #1 should run `python scripts/context_injection_check.py`
+or `python scripts/codex_session_check.py` to see keyword-matched docs, skills,
+NotebookLM query candidates, target Issue links, and unapplied NotebookLM intake
+counts before implementation begins.
+
 > 作成: 2026-04-24 (PS#6 S26)  
 > 目的: Claude Code quota 制限時に開発・自動化が完全停止しないための手順書
 
@@ -56,11 +137,10 @@ codex "supabase/functions/tools-hub/index.ts に action=habit.list を追加"
 
 | インスタンス | Claude quota 超過時の代替 |
 |------------|------------------------|
-| VSCode版 | Copilot + Gemini Code Assist (ローカル環境) |
-| Win版 | Copilot + Codex CLI + NotebookLM |
-| PS版 | Codex CLI (スクリプト実行) |
-| WEB版 | claude.ai web ブラウザ (同一プラン内の別セッション枠) |
-| スマホ版 | GitHub Copilot Mobile + Copilot in GitHub Web |
+| **Win版 (Claude Code)** | Copilot + Gemini Code Assist Agent Mode (Gemini 3.1 Pro) + NotebookLM + claude.ai WEB版 |
+| **Win版 (Codex CLI)** | Codex CLI (Memory GA / 主担当) + Copilot + Gemini Code Assist |
+
+> 旧 12 instance (PS版#1-6 / VSCode版 / WEB版 / スマホ版 / Codex#1 / Codex#2) は 2026-05-04 dormant 化 (= [`docs/MULTI_INSTANCE_FLEET.md`](MULTI_INSTANCE_FLEET.md)). reactivation 時のみ各 fallback 適用.
 
 ---
 
@@ -225,3 +305,128 @@ GitHub Copilot (補完のみ)
 - [ ] Codex CLI が使える状態か確認 (`codex --version`)
 - [ ] GHA 自動ワークフローは継続稼働中か確認 (影響なし)
 - [ ] claude.ai WEB版の残量を確認 (CLI と別枠の可能性あり)
+
+---
+
+## 2026-05 Update: AI tool fleet 進化を反映 (Win版#132 part 115)
+
+> 詳細 Issue: [#1706 fleet 全 instance 反映](https://github.com/kanta13jp1/my_web_app/issues/1706) / [#1707 Cloud Agent CI 統合](https://github.com/kanta13jp1/my_web_app/issues/1707)
+
+### Codex CLI Memory (= 2026-05 GA)
+
+Codex CLI が **Memory** を持つようになり、past task の preference / project convention / corrections を future thread に持続できる. fleet 視点での影響:
+
+- **Codex#1 / #2 が CLAUDE.md を毎回 re-load 不要** — Memory に project convention を一度書けば多 session で活用
+- 自分株式会社の **migration 命名則 / EF deny-by-default / Rule [WORKDIR-ISOLATION]** を Codex Memory に登録推奨
+- ただし **Memory が古くなった場合の reset コマンド** を運用フローに組み込む必要あり (= claude-mem decay と同種の問題)
+
+### Gemini Code Assist Agent Mode GA + Gemini 3.1 Pro
+
+- **Agent Mode が VS Code + IntelliJ で GA** (= 2026-04〜05 wave) — multi-step task plan + execute が Claude Code と同等水準に
+- **Gemini 3.1 Pro / 3.0 Flash** が agent mode + chat + code generation で利用可能
+- → **Claude quota 超過時の primary fallback** を従来 Codex CLI から **Gemini Code Assist Agent Mode (Gemini 3.1 Pro)** に格上げ可能性
+- VS Code Gemini Code Assist 拡張は **2.77.1 以上** に update 推奨 (= agent mode log が正しく Gemini Code Assist に attribute される)
+
+### GitHub Copilot Cloud Agent +20% startup + Claude/Codex model selection
+
+- Cloud agent **+20% startup** (Actions custom image) — `ci-auto-fix.yml` 高速化候補
+- **Model selection for Claude / Codex agents on github.com** — Copilot から Claude / Codex 直接呼出 (= fleet 連携の bridge)
+- Copilot **code review が Actions minutes 消費開始** (2026-06-01〜) — quota 影響を `quota-monitor.yml` に反映必要
+
+### Claude Code 2026-05 (`/tui` + push notification + project purge + /resume PR URL)
+
+- `/tui` fullscreen — flicker-free 画面 (= 12 instance 並列で見やすさ向上)
+- **Push notification tool** — Remote Control + "Push when Claude decides" でスマホ通知 (= スマホ版 instance 連携)
+- `claude project purge [path]` — project state 完全削除 (= worktree clean 自動化)
+- `/resume <PR URL>` — PR を作成した session に復帰 (= context 連続性向上)
+
+### Claude Code v2.1.113–v2.1.126 追加機能 (PS#5 S118 2026-05-03)
+
+**セキュリティ / 権限**
+- `sandbox.network.deniedDomains` — 特定ドメインのネットワークアクセスをブロック (= WEB版 sandbox でのリクエスト制御)
+- `allowManagedDomainsOnly` / `allowManagedReadPathsOnly` が正しく機能するよう修正 (= Issue #1751 の権限ロックダウン基盤強化)
+
+**Hook 進化 (v2.1.118) → Issue #1765**
+- Hooks が MCP ツールを直接呼べるように: `type: "mcp_tool"` — inject-rules.txt フックから Supabase/GitHub MCP を呼べる (= PostToolUse で自動コミットや Slack 通知が可能)
+
+**開発体験 (v2.1.118-v2.1.119)**
+- Vim visual mode (`v` / `V`) — TUI 操作効率向上
+- `/cost` + `/stats` → `/usage` 統合
+- `/theme` command + `~/.claude/themes/*.json` — カスタムテーマ作成 (= テーマ切り替えUIとの連携)
+- `--from-pr` が GitLab / Bitbucket / GitHub Enterprise URL を受け付け
+
+**CI / 認証 (v2.1.126) → Issue #1767**
+- `claude auth login` — WSL2/SSH/コンテナ環境で OAuth code をターミナルにペースト可能
+- `/model` picker が `ANTHROPIC_BASE_URL` の gateway `/v1/models` から動的にモデル一覧取得
+- `claude ultrareview [target]` — CI/スクリプトから非インタラクティブに `/ultrareview` 実行 (= GHA に組み込み可能)
+- `/recap` — セッション再開時に前回の context をサマリー提示 (= 12 instance fleet での session 引き継ぎ向上)
+
+**MCP 安定性改善 (v2.1.126) → Issue #1831**
+- MCP auto-retry: サーバー起動時の transient error を自動リトライ
+- SSE/HTTP transport で mid-response に connection drop した場合の hang 修正
+- 429 (rate limit) retry: exponential backoff を最低値として適用 (= 13秒で全試行消費するバグ修正)
+- API retry countdown が正確に表示されるよう修正
+- **fleet適用**: `MCP_TIMEOUT=60000` (S119で設定済み) と組み合わせて MCP 安定性が大幅向上
+
+**session /recap (v2.1.126)**
+- `CLAUDE_CODE_ENABLE_AWAY_SUMMARY=0` または `/config` でオプトアウト可能
+- **fleet活用**: 12 instance で session 引き継ぎ時に `/recap` で前回 context 即把握
+
+**project purge (v2.1.126)**
+- `claude project purge [path]` — project の全 state (transcript・session) を削除
+- **fleet活用**: worktree cleanup スクリプトに追加でゾンビ session を掃除できる
+
+**Windows (v2.1.126)**
+- Git for Windows (Git Bash) が不要に — PowerShell を primary shell として使用 (= Win版 fleet の環境要件簡素化)
+
+### GitHub Copilot 2026-05: GPT-5.3-Codex 昇格
+
+- GPT-5.3-Codex が Copilot Business / Enterprise の base model に (2026-05-17〜) — agentic coding +25% 高速化
+- Copilot CLI: streaming 改善 / MCP + OAuth サポート強化 / session 管理改善
+
+### 平常時 fallback 順序 (改訂)
+
+```text
+1. Claude Code CLI (= 設計 / 編集 main) ← 不変
+2. Gemini Code Assist Agent Mode (Gemini 3.1 Pro)  ← 昇格
+3. Codex CLI (with Memory)  ← 昇格
+4. GitHub Copilot (補完 + Cloud Agent)  ← 不変
+5. NotebookLM (リサーチ / Master Brain)  ← 不変
+6. GHA (= Claude 非依存)  ← 不変
+```
+
+### 関連 ai-tool-update Issue
+
+- [#1644](https://github.com/kanta13jp1/my_web_app/issues/1644) Skill Activation Hook + NotebookLM Master Brain
+- [#1645](https://github.com/kanta13jp1/my_web_app/issues/1645) Docker MCP Toolkit
+- [#1646](https://github.com/kanta13jp1/my_web_app/issues/1646) Codex 内蔵ブラウザ + 画像生成
+- [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) Codex Memory + Thread Automations
+
+---
+
+## Copilot Code Review 課金変更 (2026-06-01〜) 対応
+
+### 変更内容
+- **2026-06-01** から GitHub Copilot Code Review が **Actions minutes を消費**開始
+- 従来: Copilot Code Review は無料 (Copilot Business/Enterprise プランで無制限)
+- 変更後: PR ごとに Actions minutes が加算される (精確な単価は GitHub 公式要確認)
+
+### fleet への影響
+- `claude-agent-review.yml` (Claude/Gemini PR review) + Copilot Code Review が**同時に動く**と Actions 二重消費
+- `ci-auto-fix.yml` も自動 Copilot review がトリガーされると minutes 増大
+
+### 対処方針
+1. **Copilot Code Review** は `on.pull_request` でデフォルト有効化しない (手動 `/review` コマンドのみ)
+2. `claude-agent-review.yml` で Claude/Gemini レビューを主軸として継続 (Actions minutes 内で完結)
+3. `quota-monitor.yml` に Copilot review minutes gauge 追加 (Issue #1707 フォローアップ)
+4. 月次 Actions budget チェック: Settings → Billing → Actions で実費確認
+
+### ci-auto-fix.yml 高速化
+- GitHub Copilot Cloud Agent の **Actions custom image** 採用で +20% 高速化可能
+  - `container: ghcr.io/...` で pre-warmed image 指定
+  - 参考: [GitHub Changelog 2026-04-27](https://github.blog/changelog/2026-04-27-copilot-cloud-agent-starts-20-faster-with-actions-custom-images/)
+  - 適用タイミング: Copilot Integration 本格採用時 (現在は Claude/Gemini 主軸のため延期)
+
+### 参照
+- Issue [#1707](https://github.com/kanta13jp1/my_web_app/issues/1707): Copilot Cloud Agent CI/PR フロー統合
+- `docs/AI_FLEET_SYNERGY_PLAYBOOK.md` 原則 6 (Deterministic Guardrails) — Budget cap rule 追記済

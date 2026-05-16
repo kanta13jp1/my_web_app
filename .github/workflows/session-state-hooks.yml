@@ -1,0 +1,59 @@
+name: Session State Hooks
+
+on:
+  pull_request:
+    paths:
+      - ".claude/hooks/pre-compact-backup.ps1"
+      - ".claude/hooks/pretooluse-compression-budget.ps1"
+      - ".claude/hooks/session-end-auto-compress.ps1"
+      - ".claude/hooks/session-start-hard-gate.ps1"
+      - ".claude/hooks/session-start-state-check.ps1"
+      - ".claude/hooks/smartcleanup-monthlydeep-guard.ps1"
+      - ".claude/hooks/statusline.ps1"
+      - ".claude/hooks/userprompt-idle-gap-fire.ps1"
+      - ".claude/hooks/userprompt-kpi-banner.ps1"
+      - ".claude/settings.json"
+      - ".github/workflows/session-state-hooks.yml"
+      - ".github/workflows/claude-session-hygiene-cron.yml"
+      - "docs/CLAUDE_CODE_SETUP_RUNBOOK.md"
+      - "memory/transcripts/**"
+      - "scripts/check_session_state_hooks.py"
+      - "scripts/codex_session_check.py"
+      - "scripts/session_compression_guard.py"
+      - "scripts/session_compression_guard_test.py"
+      - "scripts/session_hygiene_check.py"
+      - "scripts/session_hygiene_check_test.py"
+      - "scripts/smartcleanup_task_guard.py"
+      - "scripts/smartcleanup_task_guard_test.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate hooks and transcript secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate repo-managed session hooks
+        run: python scripts/check_session_state_hooks.py --scan-transcripts
+
+      - name: Session compression guard unit tests
+        run: python scripts/session_compression_guard_test.py
+
+      - name: Session hygiene check unit tests
+        run: python scripts/session_hygiene_check_test.py
+
+      - name: SmartCleanup task guard unit tests
+        run: python scripts/smartcleanup_task_guard_test.py
+
+      - name: Codex session check JSON smoke
+        run: python scripts/codex_session_check.py --json > /tmp/codex-session-check.json

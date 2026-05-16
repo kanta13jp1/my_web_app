@@ -1,0 +1,444 @@
+{
+  "current": {
+    "build": "1",
+    "category": "release",
+    "date": "2026-05-13",
+    "links": [
+      {
+        "title": "GitHub Release v1.0.0",
+        "type": "release",
+        "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.0"
+      }
+    ],
+    "summary": "Release 1.0.0",
+    "version": "1.0.0"
+  },
+  "generatedAt": "2026-05-13T00:00:00Z",
+  "schemaVersion": 1,
+  "source": {
+    "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
+    "pubspec": "pubspec.yaml",
+    "repo": "kanta13jp1/my_web_app"
+  },
+  "versions": [
+    {
+      "build": "1",
+      "category": "release",
+      "changeCategories": [
+        "automation",
+        "docs",
+        "feature",
+        "fix"
+      ],
+      "changes": [
+        {
+          "category": "feature",
+          "id": "pr-2399",
+          "links": [
+            {
+              "title": "PR #2399",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2399"
+            }
+          ],
+          "mergedAt": "2026-05-13T09:09:54Z",
+          "summary": "#2399 [codex] Add asset liability monthly history and CSV backup"
+        },
+        {
+          "category": "docs",
+          "id": "pr-2402",
+          "links": [
+            {
+              "title": "PR #2402",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2402"
+            }
+          ],
+          "mergedAt": "2026-05-13T08:05:11Z",
+          "summary": "#2402 docs: ship v22 compression effectiveness measurement + auto-tuning (= 5 layer EE-II / 累積 38 / Win#132 part 211-b)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2396",
+          "links": [
+            {
+              "title": "PR #2396",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2396"
+            }
+          ],
+          "mergedAt": "2026-05-13T01:37:13Z",
+          "summary": "#2396 feat(calendar): add multiple calendars (#2210)"
+        },
+        {
+          "category": "docs",
+          "id": "pr-2398",
+          "links": [
+            {
+              "title": "PR #2398",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2398"
+            }
+          ],
+          "mergedAt": "2026-05-13T01:23:12Z",
+          "summary": "#2398 docs: ROADMAP append Win#132 part 211 (= same-day +11 min minimum session 第 4 例 過去最短 update)"
+        },
+        {
+          "category": "docs",
+          "id": "pr-2394",
+          "links": [
+            {
+              "title": "PR #2394",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2394"
+            }
+          ],
+          "mergedAt": "2026-05-13T01:16:56Z",
+          "summary": "#2394 docs: ship v21 structural prevention + per-session guarantee (Win#132 part 210)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2392",
+          "links": [
+            {
+              "title": "PR #2392",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2392"
+            }
+          ],
+          "mergedAt": "2026-05-12T17:07:50Z",
+          "summary": "#2392 feat(calendar): add event reminders (#2208)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2390",
+          "links": [
+            {
+              "title": "PR #2390",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2390"
+            }
+          ],
+          "mergedAt": "2026-05-12T15:02:00Z",
+          "summary": "#2390 feat(calendar): add event search (#2209)"
+        },
+        {
+          "category": "docs",
+          "id": "pr-2389",
+          "links": [
+            {
+              "title": "PR #2389",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2389"
+            }
+          ],
+          "mergedAt": "2026-05-12T14:09:43Z",
+          "summary": "#2389 docs: add Windows dev setup guide (#1356)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2387",
+          "links": [
+            {
+              "title": "PR #2387",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2387"
+            }
+          ],
+          "mergedAt": "2026-05-12T13:27:00Z",
+          "summary": "#2387 ci: issue knowledge vault lint warnings (#1978)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2386",
+          "links": [
+            {
+              "title": "PR #2386",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2386"
+            }
+          ],
+          "mergedAt": "2026-05-12T12:49:30Z",
+          "summary": "#2386 ci: add config size monitor (#1849)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2385",
+          "links": [
+            {
+              "title": "PR #2385",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2385"
+            }
+          ],
+          "mergedAt": "2026-05-12T12:26:02Z",
+          "summary": "#2385 ci: add mobile distribution readiness gate (#1495)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2384",
+          "links": [
+            {
+              "title": "PR #2384",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2384"
+            }
+          ],
+          "mergedAt": "2026-05-12T12:05:10Z",
+          "summary": "#2384 fix: resolve Windows cache cleanup command shims"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2381",
+          "links": [
+            {
+              "title": "PR #2381",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2381"
+            }
+          ],
+          "mergedAt": "2026-05-12T11:34:19Z",
+          "summary": "#2381 fix: add legacy meal log hub actions"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2383",
+          "links": [
+            {
+              "title": "PR #2383",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2383"
+            }
+          ],
+          "mergedAt": "2026-05-12T10:09:27Z",
+          "summary": "#2383 docs(cross-instance-pr): part 204-b v18 disk hygiene cascade + WBS Top 5 緊急 escalate"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2375",
+          "links": [
+            {
+              "title": "PR #2375",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2375"
+            }
+          ],
+          "mergedAt": "2026-05-12T03:49:04Z",
+          "summary": "#2375 ci: add blog news production smoke (#1950)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2372",
+          "links": [
+            {
+              "title": "PR #2372",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2372"
+            }
+          ],
+          "mergedAt": "2026-05-12T01:12:04Z",
+          "summary": "#2372 ci: route AI tool watch findings (#1559)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2368",
+          "links": [
+            {
+              "title": "PR #2368",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2368"
+            }
+          ],
+          "mergedAt": "2026-05-11T22:04:23Z",
+          "summary": "#2368 feat(ai-university): seed FinTech trading AI (#1964)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2367",
+          "links": [
+            {
+              "title": "PR #2367",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2367"
+            }
+          ],
+          "mergedAt": "2026-05-11T20:30:34Z",
+          "summary": "#2367 docs(v17): part 203-b mandatory per-session compression spec + WBS Top 5 triage"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2366",
+          "links": [
+            {
+              "title": "PR #2366",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2366"
+            }
+          ],
+          "mergedAt": "2026-05-11T18:20:34Z",
+          "summary": "#2366 ci: reduce WBS sync batch timeout risk (#2360)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2365",
+          "links": [
+            {
+              "title": "PR #2365",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2365"
+            }
+          ],
+          "mergedAt": "2026-05-11T17:43:38Z",
+          "summary": "#2365 fix: skip unrecovered WBS sync conflicts (#2360)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2364",
+          "links": [
+            {
+              "title": "PR #2364",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2364"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:41:56Z",
+          "summary": "#2364 fix: preflight WBS issue-instance duplicates (#2360)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2363",
+          "links": [
+            {
+              "title": "PR #2363",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2363"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:10:58Z",
+          "summary": "#2363 docs(roadmap+hygiene): part 203 batch backfill 9 entry + DISK_HYGIENE §17.16-§17.19 v11/v14/v15/v16"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2358",
+          "links": [
+            {
+              "title": "PR #2358",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2358"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:00:10Z",
+          "summary": "#2358 docs(cross-instance-pr): part 202-b v16 proactive enforcement protocol"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2352",
+          "links": [
+            {
+              "title": "PR #2352",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2352"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:00:05Z",
+          "summary": "#2352 docs(cross-instance-pr): part 201-b v15 guaranteed compression protocol + WBS Top 5"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2362",
+          "links": [
+            {
+              "title": "PR #2362",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2362"
+            }
+          ],
+          "mergedAt": "2026-05-11T15:56:53Z",
+          "summary": "#2362 fix: handle WBS issue-instance sync conflicts (#2360)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2360",
+          "links": [
+            {
+              "title": "PR #2360",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2360"
+            }
+          ],
+          "mergedAt": "2026-05-11T15:07:17Z",
+          "summary": "#2360 feat: add GA readiness gate (#1640)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2359",
+          "links": [
+            {
+              "title": "PR #2359",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2359"
+            }
+          ],
+          "mergedAt": "2026-05-11T14:49:37Z",
+          "summary": "#2359 [codex] prioritize issue-linked WBS schedules"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2357",
+          "links": [
+            {
+              "title": "PR #2357",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2357"
+            }
+          ],
+          "mergedAt": "2026-05-11T12:57:03Z",
+          "summary": "#2357 fix(wbs): enforce active issue dedup (#2171)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2355",
+          "links": [
+            {
+              "title": "PR #2355",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2355"
+            }
+          ],
+          "mergedAt": "2026-05-11T10:44:55Z",
+          "summary": "#2355 fix: align additional request migration achievement insert"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2350",
+          "links": [
+            {
+              "title": "PR #2350",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2350"
+            }
+          ],
+          "mergedAt": "2026-05-11T10:05:31Z",
+          "summary": "#2350 [codex] prioritize additional request WBS schedule"
+        }
+      ],
+      "date": "2026-05-13",
+      "extensions": {
+        "aiToolWatch": {
+          "changedSourceCount": 5,
+          "signalCount": 0,
+          "source": "docs/ai-tool-watch/latest-report.json"
+        }
+      },
+      "links": [
+        {
+          "title": "GitHub Release v1.0.0",
+          "type": "release",
+          "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.0"
+        }
+      ],
+      "summary": "Release 1.0.0",
+      "version": "1.0.0"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-05-07T08:33:17.143Z",
+  "supabase_health": {
+    "status": "healthy",
+    "http_status": 200,
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (119ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "flutter_shell": "loading (normal SPA bootstrap)"
+  },
+  "anomalies": [],
+  "action": "none (all healthy)"
+}
