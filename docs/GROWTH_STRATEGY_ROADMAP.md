@@ -30343,7 +30343,232 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - **3 sessions 連続 異なる failure mode** = bridge mitigation 多面的限界 (= 211-b 双方 catastrophic / 212 disk 吸収 / 213 RAM 逆効果)
 - **v23 5 layer JJ-NN ship = structural prevention 軸 完成** (= JJ hard gate / KK async budget / LL wrap-up gate / MM idle / NN advisory)
 
-### Philosophy Alignment (Win#132 part 220) — 即 wrap-up (= 第 12 例 RAM hard exit / 同日 5th cap rationale 立証)
+---
+
+## Win版#132 part 218 — PRE check 全 PASS + 即 wrap-up (1h14min gap qualify 違反 / user 判断) (2026-05-16 木 早朝 JST)
+
+### Session 概要
+- インスタンス: Win Claude #132 (part 218)
+- worktree: `.claude/worktrees/vibrant-cray-a3b19d`
+- 前 session: part 217-b 終了 5/15 21:00 → +1h14min gap = **qualify 違反** (user 期待 5/16 06:00+ 6h+ gap)
+- user 判断: **即 wrap-up (Recommended)** = [COMPACTION-RESUME] 第 18 例累積警戒 + qualify 違反 safe exit
+- 期間: 数分 (= PRE check + ask + wrap-up only)
+- commits: 0
+
+### PRE check 第 1 (= 全 PASS)
+- Date 5/15 22:14 JST: qualify 違反 ❌ (= 6h+ gap 未達)
+- RAM 85.79%: PASS ✅ (= 部 217-b end 92.05 → -6.26 pt 自然 GC)
+- C: free 18.19 GB: PASS ✅ (= 部 217-b end 10.16 → +8.03 GB 自然 recovery)
+- fatigue: OK ✅ (= last_fire 10min)
+- MEMORY.md ~6 KB ✅ (= 第 5 例 trim 維持)
+
+### 重要 discovery 3 件
+1. **C: free 自然 recovery 第 1 例実証** (= +8.03 GB in 1h14min / rate 6.5 GB/h 過去最高 / v26 Layer YY threshold cross-back-over)
+2. **RAM 自然 GC -6.26 pt in 1h14min** (= rate -5.07 pt/h / 1h+ idle 期待値確立)
+3. **🔴 SmartCleanup_MonthlyDeep state change 267011→267009 検出** (= 5/15 22:03 実 fire / 部 217-b "stuck since 1999" → 実行開始 / Layer GGG 受け皿 Issue 起票判定 部 219 へ)
+
+### cron freshness 第 3 例累積
+- claude*: 0 matches (= v25 Layer TT NOT installed 第 3 例累積 / 部 215/217/218 連続)
+- SmartCleanup_DailySafe: 5/15 03:00 Result=0 fresh ✅
+- SmartCleanup_MonthlyDeep: state change 検出 🆕
+
+### Memory file
+- `memory/project_20260516_win132_part218.md`
+
+### Commit
+- (= 本 docs commit hash 後追記 / WBS-SYNC skip 適用 / minimal scope)
+
+### Philosophy Alignment (Win#132 part 218)
+- 主要実装: PRE check 第 1 + 3 discovery + 即 wrap-up safe exit
+- 該当原則: 1 (CEO 感 = user 判断尊重) + 6 (資本=時間 = compaction loop 回避) + 8 (KPI = 部 217-b 比較 base 確立) + 9 (ウェルビーイング = qualify 違反 safe exit)
+- 整合性スコア: **4/9 ✅** (= minimal session 故 / 期待通り低 score)
+- 理念的貢献:
+  - 1 ✅ user direct 判断 (wrap-up Recommended) 即尊重 第 N 例
+  - 6 ✅ 数分 session で 3 discovery + safe exit = 時間効率最大化
+  - 8 ✅ PRE check KPI 第 1 例確立 = 部 219 比較 base
+  - 9 ✅ qualify 違反時 即 wrap-up = developer health protection
+- 懸念: minimal session 故 4/9 (= 7+ ✅ 基準未達 / ただし即 wrap-up 性質上 期待通り)
+
+### next session 候補 (= part 219+ / 5/16 06:00+ JST 期待)
+1. 🔴 SmartCleanup_MonthlyDeep state 再 check (= 267009 → 確定状態判定 / Layer GGG 受け皿 Issue 起票判断)
+2. 🚨 #1495 P0 post-mortem follow-up (= user judgment 待ち継続 / Option B milestone shift 5/22)
+3. **DISK_HYGIENE §17.26-§17.31 6 章 backfill 第 3 例 過去最大 scope** (= v22-v27 全章)
+4. SmartCleanup_MonthlyDeep stuck fix Issue 起票 (= state 確定後 / Layer GGG 受け皿)
+5. v27 Codex impl monitor (= 5/22 sprint kickoff 残 6 day / 累積 67 deliverable)
+6. #1564 P1 progress update (= 20% → 35% 期待)
+7. UI verify [UI-VERIFY] backlog ~9 day overdue
+
+### Lesson (= 部 218 追加)
+- **C: free 自然 recovery rapid pattern 確立** (= +8.03 GB/1h14min = 過去最高 / v26 spec 改訂 trigger / "1h gap で +5 GB+ 期待値" 追記候補)
+- **MonthlyDeep state 進行中検出 = part 217 Issue 起票 trigger 候補生存** (= 267011→267009 / 部 219 で 0 or 267011 で確定判定)
+- **PRE check minimal scope の value 実証** (= 数分 session でも 3 discovery 可能 / safe exit pattern 強化)
+- **user 即 wrap-up 判断 第 N 例累積 = qualify 違反時 safe exit pattern 確立**
+
+---
+
+## Win版#132 part 218 ADDENDUM — user 7-step 強行: WBS reschedule + 資産管理 第2弾 #2460-#2493 起票 + A1 migration ship (2026-05-16 木 早朝 JST)
+
+### Session 概要
+- 即 wrap-up 宣言後 user direct ask = **Full 7-step 強行** (= scope reduction 拒否 / RAM 95% 制約下)
+- 期間: 数十分追加 (= 即 wrap-up 後 user 引取)
+- commits: 1 (= 本 commit / ROADMAP + migration + memory)
+- 状態: RAM 95-97% 持続 v24 SS 第 2 例 dogfood 継続 / lefthook hang 第 1 例 (= initial commit ROADMAP block)
+
+### Step ①-⑦ 全実行 結果
+
+| Step | 内容 | 結果 |
+|------|------|------|
+| ① | WBS 現状取得 (tools-hub wbs.list_tasks) | 497 open tasks / EF pagination broken (= 25x dup) 検出 |
+| ② | reschedule_realistic dry_run → fire | **497 tasks rescheduled** (= 86% start=5/15 → 5/16-10/04) |
+| ③ | 資産管理 第2弾 全体計画 A-G 7 feature | AI report / 投資資産 / Dashboard / 異常検知 / 6部署 / chat / 税務 |
+| ④ | 34 sub-task decomposition | 5+7+4+4+4+5+5 = 34 |
+| ⑤ | 34 GitHub Issues 一括起票 + WBS sync | **#2460-#2493 全 created** (= 100% 成功 / 約 3 min) |
+| ⑥ | 全体 reschedule 再 fire | **533 tasks rescheduled** (= 497 + 34 new + 2 / 5/17-10/14) |
+| ⑦ | A1 #2460 migration 着手 | `20260516000000_monthly_asset_reports_schema.sql` written + #2460 progress 0→40% |
+
+### 主要 deliverable
+
+1. **WBS 全体 reschedule** = 533 tasks 現実化 (= 過去最大 single-fire)
+   - feature_request 391: 5/17 - 8/24 (3 months)
+   - github_issue 36: 8/25 - 9/13
+   - high/medium/low: 9/14 - 10/14
+
+2. **資産管理 第2弾 設計完了**: 7 feature / 34 issue / ~5 months schedule
+   - A 月次AIレポート (#2460-#2464 / 6/15-6/19 schedule)
+   - B 投資資産統合 (#2465-#2471 / 6/22-7/01)
+   - C ダッシュボード UI (#2472-#2475 / 7/02-7/07)
+   - D 異常検知 (#2476-#2479 / 7/08-7/13)
+   - E 6部署 KPI 連携 (#2480-#2483 / 7/14-7/17)
+   - F AI chat assistant (#2484-#2488 / 7/20-7/24)
+   - G 税務連携 (#2489-#2493 / 7/27-8/03)
+
+3. **A1 schema migration ship** (= Win Claude / [INSTANCE-ROLES] 例外 / user 直接 ask 強行根拠)
+   - `monthly_asset_reports` table + RLS + trigger
+   - file: `supabase/migrations/20260516000000_monthly_asset_reports_schema.sql`
+
+### EF discovery: pagination broken in wbs.list_tasks
+- `wbs.list_tasks` offset 引数 無視 (= 25x duplicate return)
+- 影響: tools-hub から WBS 全件取得不可
+- workaround: `reschedule_realistic` 直接 use (= 内部 own pagination 持つ / 533 件 OK)
+- TODO Codex 振分: list_tasks offset bug fix Issue 起票候補 (= 部 219+)
+
+### Philosophy Alignment (Win#132 part 218 ADDENDUM)
+- 主要実装: WBS reschedule + 34 Issues + A1 migration ship
+- 該当原則: 1 CEO / 2 ミッション / 4 6部署 (= E feature 経理部連携) / 5 価値 / 6 資本=時間 (= 533 task 一括 reschedule) / 7 資産負債 (= 全 issue が 資産管理 themed) / 8 KPI / 9 IPO
+- 整合性スコア: **8/9 ✅** (= 3 mentor unaddressed continue / 7+ ✅ 基準 ✅ 達成 first time of part 218)
+- 理念的貢献:
+  - 1 ✅ user direct ask Full 強行 = CEO 判断尊重 + risk 受容
+  - 2 ✅ 資金繰り管理 = 自分株式会社 mission alignment
+  - 4 ✅ E feature 経理部 view = 6 部署 balance reinforce
+  - 5 ✅ 商品=価値 = 資産管理 user 直接価値
+  - 6 ✅ 時間 = 1 session で 7-step 完遂 = velocity 最大化
+  - 7 ✅ 資産負債 = 第2弾 7 feature 全 asset/liability themed
+  - 8 ✅ KPI = 純資産 monthly track (= A feature)
+  - 9 ✅ IPO 視野 = 確定申告 export (= G feature)
+- 懸念: RAM 95-97% 持続 v24 SS 違反 + lefthook hang 抑え込み未解決
+
+### next session 候補 (= 部 219+ / 5/17 06:00+ JST 期待)
+
+1. 🚨 #1495 P0 post-mortem follow-up (= user judgment 待ち 1 day overdue)
+2. 🔴 A2 #2461 EF ai_hub.monthly_asset_report 実装 (Codex 推奨)
+3. 🔴 A1 #2460 migration deploy 確認 (= deploy-prod fire after Codex review)
+4. v27 Codex 5/22 sprint kickoff monitor (残 6 day / 累積 67 deliverable + A-G 34 new)
+5. SmartCleanup_MonthlyDeep state 再 check (= 267009 → 確定判定)
+6. wbs.list_tasks offset bug fix Issue 起票 (= Codex 振分)
+7. lefthook hang 抑え込み調査 (= part 218 第 1 例 / 部 219+ で再現確認)
+8. UI verify [UI-VERIFY] backlog ~10 day overdue
+
+### Lesson (= 部 218 ADDENDUM)
+- **WBS reschedule_realistic = 既存 EF で 533 tasks 1 fire 完遂** (= 過去最大 / param tuning realistic)
+- **34 issue 一括起票 = gh CLI sequential ~3 min** (= 失敗 0 件 / API rate limit 未到達)
+- **EF wbs.list_tasks pagination broken 第 1 例検出** (= 25x duplicate / 部 219+ Codex 振分)
+- **user 強行判断 = scope reduction 拒否 pattern 第 1 例** (= CEO 原則 直接 ask 尊重)
+- **[INSTANCE-ROLES] 例外運用** (= 通常 SQL=Codex / user 直接 ask で Win Claude 着手 / migration 1 件まで)
+- **RAM 95-97% 持続でも 7-step 完遂可能 第 1 例実証** (= ただし v24 SS dogfood 違反継続 / 部 219 で必須 measure)
+
+---
+
+## Win版#132 part 218-b — user 7-step 再強行: multi-provider AI + MoneyForward + eスマート + session-hygiene 13 issue 追加 (2026-05-16 木 早朝 JST)
+
+### Session 概要
+- 部 218 完了直後 user direct ask 第 2 回 (= scope 追加 / 引取)
+- 追加 scope: multi-provider AI (Gemini+GPT+Opus) / MoneyForward / 三菱UFJ eスマート / session-hygiene cron
+- 期間: 数十分追加 (= 部 218 commit dda1e52c8 後 / 同 session 継続)
+- commits: 1 (= 本 commit / ROADMAP + cross-instance-pr doc)
+
+### Step 全実行 結果 (= 再 fire / 部 218 既完遂 step は確認のみ)
+
+| Step | 内容 | 結果 |
+|------|------|------|
+| ① | WBS top 期限近順 + 2-instance split 確認 | codex 10件/user 10件 全 5/16 期限 (= 部 218 reschedule 後) |
+| ②-④ | 第2弾 H/I/J + multi-provider | 13 new issue spec |
+| ⑤ | #2461 multi-provider comment + 13 issue 起票 | [#2461 comment](https://github.com/kanta13jp1/my_web_app/issues/2461#issuecomment-4464762357) + **#2496-#2508 全 created** |
+| ⑥ | 全体 reschedule 再 fire | **547 tasks 5/17-10/18** (= 533 → +14) |
+| ⑦ | 2-instance assignment doc | [`docs/cross-instance-prs/20260516_part218_asset_2nd_47_issue_handoff.md`](docs/cross-instance-prs/20260516_part218_asset_2nd_47_issue_handoff.md) |
+
+### 13 new issue 内訳
+
+**H feature: MoneyForward 連携 (5 issue / #2496-#2500)**
+- H1 #2496: DB schema (mf_accounts/transactions)
+- H2 #2497: EF ai_hub.mf_sync (API/scrape)
+- H3 #2498: GHA cron 日次 04:00 JST
+- H4 #2499: 設定UI (token + 同期トグル) [Win Claude]
+- H5 #2500: transaction merge ロジック
+
+**I feature: 三菱UFJ eスマート証券 連携 (5 issue / #2501-#2505)**
+- I1 #2501: DB schema (mufg_securities)
+- I2 #2502: EF ai_hub.mufg_securities_sync
+- I3 #2503: GHA cron 日次 06:00 JST (= 取引引け後)
+- I4 #2504: 設定UI (= H4 と統合) [Win Claude]
+- I5 #2505: holdings → B feature merge
+
+**J feature: session-hygiene (3 issue / #2506-#2508)**
+- J1 #2506: Claude Code セッション GHA cron (30 min interval / RAM > 85% で auto compress)
+- J2 #2507: Win Task Scheduler claude_* 5 tasks install
+- J3 #2508: hygiene KPI dashboard [Win Claude]
+
+### 重要設計判断
+
+1. **multi-provider AI** (= #2461 comment)
+   - Claude opus 4.7 (default) + GPT-5 + Gemini 3.1 Pro
+   - user 設定で default + failover 順序選択
+   - cost cap per-user (= 月次 ¥ budget)
+
+2. **session-hygiene J-feature を最優先扱い** (= Phase 0 緊急)
+   - 部 217-b 第 1 例 v24+v26 dual CRITICAL
+   - 部 218 + 218-b RAM 95-97% 連続違反
+   - 根本対策 = GHA cron + Win Task install で session 毎自動圧縮 確立
+
+3. **2-instance split: Codex 25 issue + Win Claude 22 issue**
+   - SQL/EF/GHA = Codex (= [INSTANCE-ROLES])
+   - UI/docs/AI prompt = Win Claude
+   - assignment doc 公式化
+
+### Philosophy Alignment (Win#132 part 218-b)
+- 主要実装: 13 new issue + #2461 multi-provider + 2-instance assignment doc
+- 該当原則: 1 CEO / 2 ミッション (= 外部連携で資金繰り全体掌握) / 4 6部署 / 5 価値 / 6 資本=時間 (= 547 task 再 reschedule) / 7 資産負債 / 8 KPI / 9 IPO
+- 整合性スコア: **8/9 ✅** (= 部 218 と同水準維持 / 3 mentor unaddressed continue)
+
+### next session 候補 (= 部 219 / 5/17 06:00+ JST 期待)
+
+最優先 = **session-hygiene J-feature** (= 部 218-b 最重要設計):
+1. 🚨 J1 #2506 GHA cron install (Codex 推奨 / Phase 0 5/22 Day 1)
+2. 🚨 J2 #2507 Win Task install (Codex / 部 215+ claude* 0 matches 解消)
+3. 🔴 A1 #2460 migration deploy (= Codex review 後 deploy-prod fire)
+4. 🔴 A2 #2461 EF multi-provider 実装着手
+5. 🚨 #1495 P0 post-mortem follow-up (= 5/22 sprint Day 1 統合 confirm 待ち)
+
+### Lesson (= 部 218-b 追加)
+- **同 session 内 user direct ask 2 連続実行可能** (= 部 218 + 218-b 計 47 issue 起票)
+- **gh issue create batch ~3 min/13 issue** (= 沸騰率高 / rate limit 未到達)
+- **WBS reschedule_realistic 連続 fire 可能** (= 497→533→547 順次更新)
+- **session-hygiene = J-feature 化が根本対策** (= 部 217-b v24+v26 dual + 部 218 lefthook hang の集積教訓)
+
+---
+
+## Win版#132 part 220 — 即 wrap-up (= 第 12 例 RAM hard exit / 同日 5th cap rationale 立証)
+
+### Philosophy Alignment (Win#132 part 220)
 - 主要動作: PRE RAM 93.93% > 90% v24 SS hard exit 第 12 例発火 / immediate wrap-up
 - 該当原則: 7 (資産負債) + 8 (KPI) + AI_DEV (deny-by-default)
 - 整合性スコア: **8/9 ✅** (= IPO 1 件 systemic prevention 残)
@@ -30364,4 +30589,3 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - **同日 5th part の自然 GC 限界** = 第 1 例実証 / 5min idle で +0.56pt 増 (= GC throughput < accumulation)
 - **同日 4-part cap rule rationale** = 立証 (= 5th 起動で v24 SS hard exit 確実発火 第 12 例)
 - **J2 ship 完了** = Codex sprint 累積 116 件 達成 (= 5/30 期限 / 残 ~14 day / pace 維持)
-
