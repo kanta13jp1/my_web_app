@@ -33,6 +33,11 @@ import {
   type McpMyWebAppToolName,
   mcpRequestedScopes,
 } from "../_shared/mcp_my_web_app_tools.ts";
+import {
+  dedupeWbsTasksById,
+  normalizeWbsListPagination,
+  paginateWbsTasks,
+} from "./wbs_list_tasks.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6204,11 +6209,11 @@ serve(async (req) => {
           // body: { instance?: 'all'|'claude'|'codex'|'user'|'automation' (legacy lanes are still accepted),
           //        status?: 'pending'|'in_progress'|'completed'|'blocked',
           //        updated_since?: 'YYYY-MM-DDTHH:MM:SSZ' (ISO-8601),
-          //        limit?: 50 }
+          //        limit?: 50, offset?: 0 }
           const inst = body.instance as string | undefined;
           const status = body.status as string | undefined;
           const updatedSince = body.updated_since as string | undefined;
-          const limit = Math.min(Number(body.limit ?? 50), 200);
+          const pagination = normalizeWbsListPagination(body);
           const taskSelect =
             "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
           const pageSize = 1000;
@@ -6227,24 +6232,27 @@ serve(async (req) => {
             allTasks.push(...rows);
             if (rows.length < pageSize) break;
           }
-          const filteredTasks = allTasks.filter((task) =>
+          const dedupedTasks = dedupeWbsTasksById(allTasks);
+          const filteredTasks = dedupedTasks.tasks.filter((task) =>
             wbsTaskMatchesInstanceFilter(
               task,
               inst ?? "all",
             )
           );
-          const sortedTasks = filteredTasks.sort(compareWbsTasks).slice(
-            0,
-            limit,
-          );
+          const sortedTasks = filteredTasks.sort(compareWbsTasks);
+          const pagedTasks = paginateWbsTasks(sortedTasks, pagination);
           // milestone 情報も同時取得
           const { data: milestones } = await admin.from("wbs_milestones")
             .select("code, name, target_date, goal_users, color");
           return json({
             success: true,
-            tasks: sortedTasks,
+            tasks: pagedTasks,
             milestones: milestones ?? [],
             total: filteredTasks.length,
+            limit: pagination.limit,
+            offset: pagination.offset,
+            returned: pagedTasks.length,
+            duplicate_rows_removed: dedupedTasks.duplicateRowsRemoved,
           });
         }
         case "wbs.update_progress": {
