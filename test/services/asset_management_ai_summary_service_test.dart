@@ -100,15 +100,34 @@ void main() {
       final available = payload['available_money'] as Map<String, dynamic>;
       final today = available['today'] as Map<String, dynamic>;
       final guardrails = payload['guardrails'] as Map<String, dynamic>;
+      final emergencyAdvices = payload['emergency_advices'] as List<dynamic>;
 
       expect(payload.containsKey('workbook'), false);
       expect(today['available_amount'], report.todayAvailable.availableAmount);
       expect(payload['action_items'] is List<dynamic>, true);
       expect(payload['movement_suggestions'] is List<dynamic>, true);
+      expect(emergencyAdvices.length, report.emergencyAdvices.length);
       expect(payload['developer_requests'] is List<dynamic>, true);
       expect(guardrails['calculation_owner'], 'dart_service');
       expect(guardrails['external_ai_may_summarize_only'], true);
       expect(guardrails['external_ai_may_recalculate_amounts'], false);
+      expect(guardrails['must_not_recommend_starvation_or_water_only'], true);
+    });
+
+    test('deterministic fallback gives concrete emergency living advice', () {
+      final report = _emergencyReport();
+      final service = AssetManagementAiSummaryService(
+        now: () => DateTime(2026, 5, 28, 12),
+      );
+
+      final text = service.buildDeterministicSummary(report);
+      final payload = service.buildPayload(report);
+
+      expect(text.contains('今日の食費'), true);
+      expect(text.contains('支払い'), true);
+      expect(text.contains('Amounts are calculated by Dart rules'), true);
+      expect(payload['emergency_advices'] is List<dynamic>, true);
+      expect((payload['emergency_advices'] as List<dynamic>).isNotEmpty, true);
     });
   });
 }
@@ -120,6 +139,18 @@ AssetManagementInsightReport _report() {
     latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
     baseDate: DateTime(2026, 5, 1),
     monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
+    paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
+  );
+  return insight.buildReport(workbook: workbook, minimumSafetyBalance: 10000);
+}
+
+AssetManagementInsightReport _emergencyReport() {
+  const planner = AssetLiabilityPlanningService();
+  const insight = AssetManagementInsightService();
+  final workbook = planner.buildWorkbook(
+    latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -200000},
+    baseDate: DateTime(2026, 5, 28),
+    monthlyPaymentOverrides: const <String, double>{'paypay_card': 200000},
     paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
   );
   return insight.buildReport(workbook: workbook, minimumSafetyBalance: 10000);
