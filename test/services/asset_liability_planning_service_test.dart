@@ -114,6 +114,25 @@ void main() {
       );
     });
 
+    test('uses annual rate overrides for interest and priority signals', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        annualRateOverrides: const <String, double>{'mobit': 0.12},
+      );
+
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.annualRate, 0.12);
+      expect(
+        mobit.monthlyInterestEstimate,
+        closeTo(mobit.balance.abs() * 0.12 / 12, 0.001),
+      );
+      expect(mobit.priorityLabel, isNotEmpty);
+    });
+
     test('uses the estimated minimum payment when manual input is absent', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,

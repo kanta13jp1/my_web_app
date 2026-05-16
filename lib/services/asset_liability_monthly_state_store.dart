@@ -10,6 +10,7 @@ class AssetLiabilityMonthlyState {
   final Map<String, double> paymentOverrides;
   final Map<String, double> actualPaymentAmounts;
   final Map<String, String> paymentDifferenceReasons;
+  final Map<String, double> annualRateOverrides;
   final Set<String> paidAccountNames;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
@@ -19,6 +20,7 @@ class AssetLiabilityMonthlyState {
     this.paymentOverrides = const <String, double>{},
     this.actualPaymentAmounts = const <String, double>{},
     this.paymentDifferenceReasons = const <String, String>{},
+    this.annualRateOverrides = const <String, double>{},
     this.paidAccountNames = const <String>{},
     this.paymentSourceAccountIds = const <String, String>{},
     this.cardBillingAccountIds = const <String, String>{},
@@ -29,6 +31,7 @@ class AssetLiabilityMonthlyState {
       paymentOverrides.isEmpty &&
       actualPaymentAmounts.isEmpty &&
       paymentDifferenceReasons.isEmpty &&
+      annualRateOverrides.isEmpty &&
       paidAccountNames.isEmpty &&
       paymentSourceAccountIds.isEmpty &&
       cardBillingAccountIds.isEmpty &&
@@ -42,6 +45,8 @@ class AssetLiabilityMonthlyStateStore {
       'asset_liability_monthly_actual_payments_v1';
   static const String paymentDifferenceReasonPrefsKey =
       'asset_liability_monthly_payment_difference_reasons_v1';
+  static const String annualRatePrefsKey =
+      'asset_liability_monthly_annual_rate_overrides_v1';
   static const String paidPrefsKey = 'asset_liability_paid_accounts_v1';
   static const String paymentSourcePrefsKey =
       'asset_liability_payment_source_accounts_v1';
@@ -76,6 +81,10 @@ class AssetLiabilityMonthlyStateStore {
       ),
       paymentDifferenceReasons: paymentDifferenceReasonsForMonth(
         prefs.getString(paymentDifferenceReasonPrefsKey),
+        monthKey,
+      ),
+      annualRateOverrides: annualRateOverridesForMonth(
+        prefs.getString(annualRatePrefsKey),
         monthKey,
       ),
       paidAccountNames: paidAccountsForMonth(
@@ -148,6 +157,19 @@ class AssetLiabilityMonthlyStateStore {
       paymentDifferenceReasonPrefsKey,
       jsonEncode(allPaymentDifferenceReasons),
     );
+
+    final allAnnualRates = decodePaymentOverrides(
+      prefs.getString(annualRatePrefsKey),
+    );
+    if (state.annualRateOverrides.isEmpty) {
+      allAnnualRates.remove(monthKey);
+    } else {
+      allAnnualRates[monthKey] = Map<String, double>.from(
+        state.annualRateOverrides,
+      );
+    }
+    await prefs.setString(annualRatePrefsKey, jsonEncode(allAnnualRates));
+
     await prefs.setString(
       paidPrefsKey,
       jsonEncode(_encodePaid(allPaidAccounts)),
@@ -328,6 +350,9 @@ class AssetLiabilityMonthlyStateStore {
     return AssetLiabilityMonthlyState(
       paymentOverrides: Map<String, double>.from(
         previousState.paymentOverrides,
+      ),
+      annualRateOverrides: Map<String, double>.from(
+        previousState.annualRateOverrides,
       ),
       paymentSourceAccountIds: Map<String, String>.from(
         previousState.paymentSourceAccountIds,
@@ -737,6 +762,15 @@ class AssetLiabilityMonthlyStateStore {
     );
   }
 
+  static Map<String, double> annualRateOverridesForMonth(
+    String? raw,
+    String monthKey,
+  ) {
+    return Map<String, double>.from(
+      decodePaymentOverrides(raw)[monthKey] ?? const <String, double>{},
+    );
+  }
+
   static Map<String, String> paymentDifferenceReasonsForMonth(
     String? raw,
     String monthKey,
@@ -809,6 +843,16 @@ class AssetLiabilityMonthlyStateStore {
       migratedDifferenceReasons[migratedKey] = entry.value;
     }
 
+    final migratedAnnualRates = <String, double>{};
+    for (final entry in state.annualRateOverrides.entries) {
+      final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
+      if (legacyKeyToAccountId.containsKey(entry.key)) {
+        migratedAnnualRates.putIfAbsent(migratedKey, () => entry.value);
+      } else {
+        migratedAnnualRates[migratedKey] = entry.value;
+      }
+    }
+
     final migratedPaidAccounts = <String>{};
     for (final accountKey in state.paidAccountNames) {
       migratedPaidAccounts.add(legacyKeyToAccountId[accountKey] ?? accountKey);
@@ -832,6 +876,7 @@ class AssetLiabilityMonthlyStateStore {
       paymentOverrides: migratedPayments,
       actualPaymentAmounts: migratedActualPayments,
       paymentDifferenceReasons: migratedDifferenceReasons,
+      annualRateOverrides: migratedAnnualRates,
       paidAccountNames: migratedPaidAccounts,
       paymentSourceAccountIds: migratedPaymentSources,
       cardBillingAccountIds: migratedCardBillingAccounts,

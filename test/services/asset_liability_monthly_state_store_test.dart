@@ -22,6 +22,7 @@ void main() {
           paymentDifferenceReasons: const <String, String>{
             'aupay_card': 'late fee',
           },
+          annualRateOverrides: const <String, double>{'mobit': 0.175},
           paymentSourceAccountIds: const <String, String>{
             'mobit': 'custom_bank',
           },
@@ -47,12 +48,14 @@ void main() {
       expect(loadedMay.paidAccountNames, contains('auPayカード'));
       expect(loadedMay.actualPaymentAmounts['aupay_card'], 6200);
       expect(loadedMay.paymentDifferenceReasons['aupay_card'], 'late fee');
+      expect(loadedMay.annualRateOverrides['mobit'], 0.175);
       expect(loadedMay.paymentSourceAccountIds['mobit'], 'custom_bank');
       expect(loadedMay.cardBillingAccountIds['au'], 'aupay_card');
       expect(loadedMay.incomePlans.single.name, 'Salary');
       expect(loadedJune.paymentOverrides, isEmpty);
       expect(loadedJune.actualPaymentAmounts, isEmpty);
       expect(loadedJune.paymentDifferenceReasons, isEmpty);
+      expect(loadedJune.annualRateOverrides, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
@@ -163,6 +166,7 @@ void main() {
           paymentDifferenceReasons: <String, String>{
             'Legacy card': 'late fee',
           },
+          annualRateOverrides: <String, double>{'Legacy card': 0.145},
         ),
         legacyKeyToAccountId: const <String, String>{
           'Legacy card': 'aupay_card',
@@ -175,6 +179,9 @@ void main() {
       expect(migrated.paymentDifferenceReasons, <String, String>{
         'aupay_card': 'late fee',
       });
+      expect(migrated.annualRateOverrides, <String, double>{
+        'aupay_card': 0.145,
+      });
     });
 
     test(
@@ -184,6 +191,7 @@ void main() {
           month: DateTime(2026, 5, 13),
           state: AssetLiabilityMonthlyState(
             paymentOverrides: const <String, double>{'mobit': 70000},
+            annualRateOverrides: const <String, double>{'mobit': 0.175},
             paidAccountNames: const <String>{'mobit'},
             paymentSourceAccountIds: const <String, String>{
               'mobit': 'custom_bank',
@@ -211,6 +219,7 @@ void main() {
         final loaded = await store.loadMonth(DateTime(2026, 6, 20));
 
         expect(copied.paymentOverrides, <String, double>{'mobit': 70000});
+        expect(copied.annualRateOverrides, <String, double>{'mobit': 0.175});
         expect(copied.paymentSourceAccountIds, <String, String>{
           'mobit': 'custom_bank',
         });
@@ -221,6 +230,7 @@ void main() {
         expect(copied.incomePlans.single.date, DateTime(2026, 6, 30));
         expect(copied.incomePlans.single.received, isFalse);
         expect(loaded.paidAccountNames, isEmpty);
+        expect(loaded.annualRateOverrides, <String, double>{'mobit': 0.175});
         expect(loaded.cardBillingAccountIds, <String, String>{
           'kddi_provider': 'paypay_card',
         });

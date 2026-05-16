@@ -79,6 +79,7 @@ class AssetLiabilityMonthlyStatePayload {
   final Map<String, double> paymentOverrides;
   final Map<String, double> actualPaymentAmounts;
   final Map<String, String> paymentDifferenceReasons;
+  final Map<String, double> annualRateOverrides;
   final Set<String> paidAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
@@ -89,6 +90,7 @@ class AssetLiabilityMonthlyStatePayload {
     required this.paymentOverrides,
     required this.actualPaymentAmounts,
     required this.paymentDifferenceReasons,
+    required this.annualRateOverrides,
     required this.paidAccountIds,
     required this.paymentSourceAccountIds,
     required this.cardBillingAccountIds,
@@ -107,6 +109,9 @@ class AssetLiabilityMonthlyStatePayload {
       ),
       paymentDifferenceReasons: Map<String, String>.from(
         state.paymentDifferenceReasons,
+      ),
+      annualRateOverrides: Map<String, double>.from(
+        state.annualRateOverrides,
       ),
       paidAccountIds: Set<String>.from(state.paidAccountNames),
       paymentSourceAccountIds: Map<String, String>.from(
@@ -136,6 +141,9 @@ class AssetLiabilityMonthlyStatePayload {
           _readStringMap(json, 'payment_difference_reasons') ??
               _readStringMap(json, 'paymentDifferenceReasons') ??
               const <String, String>{},
+      annualRateOverrides: _readDoubleMap(json, 'annual_rate_overrides') ??
+          _readDoubleMap(json, 'annualRateOverrides') ??
+          const <String, double>{},
       paidAccountIds: _readStringSet(json, 'paid_account_ids') ??
           _readStringSet(json, 'paidAccountIds') ??
           const <String>{},
@@ -159,6 +167,7 @@ class AssetLiabilityMonthlyStatePayload {
       paymentDifferenceReasons: Map<String, String>.from(
         paymentDifferenceReasons,
       ),
+      annualRateOverrides: Map<String, double>.from(annualRateOverrides),
       paidAccountNames: Set<String>.from(paidAccountIds),
       paymentSourceAccountIds: Map<String, String>.from(
         paymentSourceAccountIds,
@@ -183,6 +192,7 @@ class AssetLiabilityMonthlyStatePayload {
       'payment_difference_reasons': Map<String, String>.from(
         paymentDifferenceReasons,
       ),
+      'annual_rate_overrides': Map<String, double>.from(annualRateOverrides),
       'paid_account_ids': (paidAccountIds.toList()..sort()),
       'payment_source_account_ids': Map<String, String>.from(
         paymentSourceAccountIds,

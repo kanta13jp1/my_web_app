@@ -111,6 +111,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, double> _monthlyPaymentOverrides = <String, double>{};
   Map<String, double> _actualPaymentAmounts = <String, double>{};
   Map<String, String> _paymentDifferenceReasons = <String, String>{};
+  Map<String, double> _annualRateOverrides = <String, double>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
   Map<String, String> _paymentSourceAccountIds = <String, String>{};
   Map<String, String> _cardBillingAccountIds = <String, String>{};
@@ -142,6 +143,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final Map<String, TextEditingController> _actualPaymentControllers =
       <String, TextEditingController>{};
   final Map<String, TextEditingController> _paymentDifferenceReasonControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _annualRateControllers =
       <String, TextEditingController>{};
 
   // --- グラフデータ ---
@@ -288,6 +291,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _paymentDifferenceReasonControllers.forEach(
       (_, controller) => controller.dispose(),
     );
+    _annualRateControllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
@@ -848,6 +852,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _paymentDifferenceReasons = Map<String, String>.from(
           state.paymentDifferenceReasons,
         );
+        _annualRateOverrides = Map<String, double>.from(
+          state.annualRateOverrides,
+        );
         _monthlyPaidAccountNames = Set<String>.from(state.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           state.paymentSourceAccountIds,
@@ -906,6 +913,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         paymentDifferenceReasons: Map<String, String>.from(
           _paymentDifferenceReasons,
         ),
+        annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
         paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
@@ -1222,6 +1230,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         paymentDifferenceReasons: Map<String, String>.from(
           _paymentDifferenceReasons,
         ),
+        annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
         paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
@@ -1245,6 +1254,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _paymentDifferenceReasons,
           migrated.paymentDifferenceReasons,
         ) &&
+        _sameDoubleMap(_annualRateOverrides, migrated.annualRateOverrides) &&
         _sameStringSet(_monthlyPaidAccountNames, migrated.paidAccountNames) &&
         _sameStringMap(
           _paymentSourceAccountIds,
@@ -1276,6 +1286,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _paymentDifferenceReasons = Map<String, String>.from(
           migrated.paymentDifferenceReasons,
+        );
+        _annualRateOverrides = Map<String, double>.from(
+          migrated.annualRateOverrides,
         );
         _monthlyPaidAccountNames = Set<String>.from(migrated.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
@@ -1346,6 +1359,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _syncMonthlyPaymentControllers();
     _syncActualPaymentControllers();
     _syncPaymentDifferenceReasonControllers();
+    _syncAnnualRateControllers();
   }
 
   void _syncMonthlyPaymentControllers() {
@@ -1374,6 +1388,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void _syncPaymentDifferenceReasonControllers() {
     for (final entry in _paymentDifferenceReasonControllers.entries) {
       final text = _paymentDifferenceReasons[entry.key] ?? '';
+      if (entry.value.text != text) {
+        entry.value.text = text;
+      }
+    }
+  }
+
+  void _syncAnnualRateControllers() {
+    for (final entry in _annualRateControllers.entries) {
+      final hasOverride = _annualRateOverrides.containsKey(entry.key);
+      final rate = _annualRateOverrides[entry.key];
+      final text = hasOverride && rate != null ? _formatRateInput(rate) : '';
       if (entry.value.text != text) {
         entry.value.text = text;
       }
@@ -1413,6 +1438,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       row.id,
       () => TextEditingController(text: row.paymentDifferenceReason ?? ''),
     );
+  }
+
+  TextEditingController _annualRateControllerFor(AssetLiabilityDebtRow row) {
+    return _annualRateControllers.putIfAbsent(
+      row.id,
+      () => TextEditingController(
+        text: _annualRateOverrides.containsKey(row.id)
+            ? _formatRateInput(_annualRateOverrides[row.id]!)
+            : '',
+      ),
+    );
+  }
+
+  String _formatRateInput(double rate) {
+    final percent = rate * 100;
+    if (percent == percent.roundToDouble()) {
+      return percent.round().toString();
+    }
+    return percent.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
   }
 
   void _updateMonthlyPaymentOverride(String accountId, String rawValue) {
@@ -1457,6 +1501,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       } else {
         _paymentDifferenceReasons[accountId] = reason;
       }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _updateAnnualRateOverride(String accountId, String rawValue) {
+    final normalized = rawValue.replaceAll('%', '').replaceAll(',', '').trim();
+    final parsed = normalized.isEmpty ? null : double.tryParse(normalized);
+    setState(() {
+      if (parsed == null || parsed < 0) {
+        _annualRateOverrides.remove(accountId);
+      } else {
+        _annualRateOverrides[accountId] = parsed > 1 ? parsed / 100 : parsed;
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _clearAnnualRateOverride(String accountId) {
+    _annualRateControllers[accountId]?.clear();
+    setState(() {
+      _annualRateOverrides.remove(accountId);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
@@ -6775,6 +6840,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       monthlyPaymentOverrides: _monthlyPaymentOverrides,
       actualPaymentAmounts: _actualPaymentAmounts,
       paymentDifferenceReasons: _paymentDifferenceReasons,
+      annualRateOverrides: _annualRateOverrides,
       paidAccountNames: _monthlyPaidAccountNames,
       paymentSourceAccountIds: _paymentSourceAccountIds,
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
@@ -9819,7 +9885,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
-    final rows = workbook.debtMasterRows.take(10).toList();
+    final rows = List<AssetLiabilityDebtRow>.from(
+      workbook.debtMasterRows,
+    )..sort(_compareDebtRowsByPaymentDay);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -9828,6 +9896,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 8),
+        const Text(
+          '支払日順で表示しています。',
+          style: TextStyle(fontSize: 12, height: 1.4),
+        ),
+        const SizedBox(height: 4),
         Text(
           '画面に収まらない場合は、表を横にスクロールして支払済み・年利・月利息まで確認できます。支払済みチェックは当月の状態として保存されます。',
           style: TextStyle(
@@ -9890,7 +9963,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       DataCell(_buildMonthlyPaymentInput(row)),
                       DataCell(_buildPaymentAmountSourceChip(row)),
                       DataCell(_buildPaidCheckbox(row)),
-                      DataCell(Text(_formatManagementPercent(row.annualRate))),
+                      DataCell(_buildAnnualRateInput(row)),
                       DataCell(
                         Text(_formatManagementYen(row.monthlyInterestEstimate)),
                       ),
@@ -9905,6 +9978,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ],
     );
+  }
+
+  int _compareDebtRowsByPaymentDay(
+    AssetLiabilityDebtRow a,
+    AssetLiabilityDebtRow b,
+  ) {
+    final dayA = a.paymentDay ?? 99;
+    final dayB = b.paymentDay ?? 99;
+    final day = dayA.compareTo(dayB);
+    if (day != 0) {
+      return day;
+    }
+    final balance = b.balance.abs().compareTo(a.balance.abs());
+    if (balance != 0) {
+      return balance;
+    }
+    return a.name.compareTo(b.name);
   }
 
   Widget _buildPaymentMethodDropdown(
@@ -10137,6 +10227,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       onChanged: (value) {
         unawaited(_toggleMonthlyPaymentPaid(row, value ?? false));
       },
+    );
+  }
+
+  Widget _buildAnnualRateInput(AssetLiabilityDebtRow row) {
+    final controller = _annualRateControllerFor(row);
+    final hasOverride = _annualRateOverrides.containsKey(row.id);
+    return SizedBox(
+      width: 120,
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,%]')),
+        ],
+        onChanged: (value) => _updateAnnualRateOverride(row.id, value),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: _formatRateInput(row.annualRate),
+          helperText: hasOverride ? '保存済み' : '未入力時は既定',
+          suffixText: '%',
+          suffixIcon: hasOverride
+              ? IconButton(
+                  tooltip: '年利上書きをクリア',
+                  icon: const Icon(Icons.clear, size: 16),
+                  onPressed: () => _clearAnnualRateOverride(row.id),
+                )
+              : null,
+        ),
+      ),
     );
   }
 

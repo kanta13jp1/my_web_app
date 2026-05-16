@@ -50,6 +50,7 @@ class AssetLiabilityPlanningService {
     Map<String, double> monthlyPaymentOverrides = const <String, double>{},
     Map<String, double> actualPaymentAmounts = const <String, double>{},
     Map<String, String> paymentDifferenceReasons = const <String, String>{},
+    Map<String, double> annualRateOverrides = const <String, double>{},
     Set<String> paidAccountNames = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
     Map<String, String> defaultPaymentSourceAccountIds =
@@ -120,6 +121,7 @@ class AssetLiabilityPlanningService {
             monthlyPaymentOverrides: effectiveMonthlyPaymentOverrides,
             actualPaymentAmounts: actualPaymentAmounts,
             paymentDifferenceReasons: paymentDifferenceReasons,
+            annualRateOverrides: annualRateOverrides,
             paidAccountNames: paidAccountNames,
             paymentSourceAccountIds: effectivePaymentSourceAccountIds,
             defaultCardBillingAccountIds: defaultCardBillingAccountIds,
@@ -444,6 +446,7 @@ class AssetLiabilityPlanningService {
     required Map<String, double> monthlyPaymentOverrides,
     required Map<String, double> actualPaymentAmounts,
     required Map<String, String> paymentDifferenceReasons,
+    required Map<String, double> annualRateOverrides,
     required Set<String> paidAccountNames,
     required Map<String, String> paymentSourceAccountIds,
     required Map<String, String> defaultCardBillingAccountIds,
@@ -451,7 +454,11 @@ class AssetLiabilityPlanningService {
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
     final principal = account.liabilityBalance;
-    final interest = principal * account.annualRate / 12;
+    final annualRate = _annualRateFor(
+      account: account,
+      annualRateOverrides: annualRateOverrides,
+    );
+    final interest = principal * annualRate / 12;
     final minimumPayment = account.fullPaymentEstimate
         ? principal + interest
         : min(
@@ -501,7 +508,7 @@ class AssetLiabilityPlanningService {
       billingAccountId: paymentRouting.billingAccountId,
       billingAccountName: paymentRouting.billingAccountName,
       includedInBillingAccount: paymentRouting.includedInBillingAccount,
-      annualRate: account.annualRate,
+      annualRate: annualRate,
       minimumPaymentEstimate: minimumPayment,
       manualPaymentAmount: manualPayment,
       scheduledPaymentAmount: scheduledPayment,
@@ -512,12 +519,31 @@ class AssetLiabilityPlanningService {
       balanceAfterPaymentEstimate: afterPayment,
       liabilityShare:
           liabilityTotal == 0 ? 0 : principal / liabilityTotal.abs(),
-      priorityLabel: _priorityLabel(account.annualRate),
+      priorityLabel: _priorityLabel(annualRate),
       paymentAmountEstimated: manualPayment == null,
       paid: paidAccountNames.contains(account.id) ||
           paidAccountNames.contains(account.name.trim()) ||
           paidAccountNames.contains(account.name),
     );
+  }
+
+  double _annualRateFor({
+    required AssetLiabilityAccount account,
+    required Map<String, double> annualRateOverrides,
+  }) {
+    final byId = annualRateOverrides[account.id];
+    if (byId != null && byId >= 0) {
+      return byId;
+    }
+    final byTrimmedName = annualRateOverrides[account.name.trim()];
+    if (byTrimmedName != null && byTrimmedName >= 0) {
+      return byTrimmedName;
+    }
+    final byName = annualRateOverrides[account.name];
+    if (byName != null && byName >= 0) {
+      return byName;
+    }
+    return account.annualRate;
   }
 
   _AssetLiabilityPaymentRouting _paymentRoutingFor({

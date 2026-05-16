@@ -1122,6 +1122,7 @@ void main() {
         paymentDifferenceReasons: const <String, String>{
           'mobit': 'fee adjustment',
         },
+        annualRateOverrides: const <String, double>{'mobit': 0.175},
         paidAccountNames: const <String>{'kddi_provider'},
         paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
         cardBillingAccountIds: const <String, String>{
@@ -1157,6 +1158,7 @@ void main() {
       expect(restored.paymentOverrides['mobit'], 70000);
       expect(restored.actualPaymentAmounts['mobit'], 71000);
       expect(restored.paymentDifferenceReasons['mobit'], 'fee adjustment');
+      expect(restored.annualRateOverrides['mobit'], 0.175);
       expect(restored.paidAccountNames, contains('kddi_provider'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
       expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
@@ -1543,6 +1545,7 @@ AssetLiabilityMonthlyState _sampleMonthlyState() {
     paymentDifferenceReasons: const <String, String>{
       'kddi_provider': 'confirmed bill',
     },
+    annualRateOverrides: const <String, double>{'mobit': 0.175},
     paidAccountNames: const <String>{'kddi_provider'},
     paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
     cardBillingAccountIds: const <String, String>{

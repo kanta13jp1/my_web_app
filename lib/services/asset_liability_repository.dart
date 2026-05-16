@@ -1407,6 +1407,18 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     AssetLiabilityMonthlyState remote,
   ) {
     return _doubleMapEquals(local.paymentOverrides, remote.paymentOverrides) &&
+        _doubleMapEquals(
+          local.actualPaymentAmounts,
+          remote.actualPaymentAmounts,
+        ) &&
+        _stringMapEquals(
+          local.paymentDifferenceReasons,
+          remote.paymentDifferenceReasons,
+        ) &&
+        _doubleMapEquals(
+          local.annualRateOverrides,
+          remote.annualRateOverrides,
+        ) &&
         _stringSetEquals(local.paidAccountNames, remote.paidAccountNames) &&
         _stringMapEquals(
           local.paymentSourceAccountIds,
@@ -1632,6 +1644,9 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
       monthKey: monthKey,
       payload: <String, Object?>{
         'payment_overrides': row['payment_overrides'],
+        'actual_payment_amounts': row['actual_payment_amounts'],
+        'payment_difference_reasons': row['payment_difference_reasons'],
+        'annual_rate_overrides': row['annual_rate_overrides'],
         'paid_account_ids': row['paid_account_ids'],
         'payment_source_account_ids': row['payment_source_account_ids'],
         'card_billing_account_ids': row['card_billing_account_ids'],
