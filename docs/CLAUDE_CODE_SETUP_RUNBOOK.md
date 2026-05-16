@@ -35,6 +35,10 @@ setup.
    `memory/next-quality-gate.txt` contains the next command to run.
 7. Validate the worktree before edits.
    `git status --short --branch`
+8. On Windows desktop hosts, inspect local Claude hygiene Scheduled Tasks.
+   `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install_claude_hygiene_tasks.ps1 -Status`
+   Install them only after confirming the intended repo path.
+   `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install_claude_hygiene_tasks.ps1 -Install -RepoPath C:\Users\kanta\GitHub\my_web_app`
 
 ## `--maintenance` Recurring Maintenance
 
@@ -145,10 +149,13 @@ escape hatch.
 Manual verification examples:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install_claude_hygiene_tasks.ps1 -Status
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install_claude_hygiene_tasks.ps1 -Verify
 powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\pretooluse-compression-budget.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\smartcleanup-monthlydeep-guard.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\userprompt-idle-gap-fire.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .claude\hooks\session-end-auto-compress.ps1
+python scripts\install_claude_hygiene_tasks_test.py
 python scripts\session_compression_guard_test.py
 python scripts\smartcleanup_task_guard_test.py
 python scripts\check_session_state_hooks.py --scan-transcripts
