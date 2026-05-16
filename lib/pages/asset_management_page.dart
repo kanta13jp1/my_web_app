@@ -124,6 +124,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isSavingAssetLiabilitySnapshot = false;
   bool _isRunningAssetLiabilitySync = false;
   bool _isPreviewingAssetLiabilitySync = false;
+  bool _isResolvingAssetLiabilityConflict = false;
   AssetLiabilityManualSyncStatus _assetLiabilitySyncStatus =
       AssetLiabilityManualSyncStatus.notRun;
   DateTime? _lastAssetLiabilitySyncAt;
@@ -1002,6 +1003,115 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (mounted) {
         setState(() {
           _isPreviewingAssetLiabilitySync = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refreshAssetLiabilitySyncPreviewSilently() async {
+    if (!_assetLiabilityRepository.supabaseSyncEnabled) {
+      return;
+    }
+    try {
+      final result = await _assetLiabilityRepository.previewSyncMonth(_now);
+      if (!mounted) return;
+      setState(() {
+        _assetLiabilitySyncPreview = result;
+        _assetLiabilitySyncConflicts = List<String>.from(
+          result.conflictTargets,
+        );
+      });
+      await _refreshAssetLiabilitySyncAuditLogs();
+    } catch (e) {
+      debugPrint('Error refreshing asset liability sync preview: $e');
+      await _refreshAssetLiabilitySyncAuditLogs();
+    }
+  }
+
+  Future<void> _resolveAssetLiabilitySyncConflict({
+    required AssetLiabilitySyncPreviewItem item,
+    required AssetLiabilityConflictResolutionChoice choice,
+  }) async {
+    if (!_assetLiabilityRepository.supabaseSyncEnabled) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Supabase同期は無効です')));
+      return;
+    }
+
+    if (choice == AssetLiabilityConflictResolutionChoice.supabaseWins) {
+      final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Supabase側の値で上書きしますか？'),
+              content: Text(
+                '${item.targetName} のローカル保存をSupabase側の値で置き換えます。'
+                'この操作は明示確認後のみ実行します。',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('キャンセル'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Supabase優先で解決'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setState(() {
+      _isResolvingAssetLiabilityConflict = true;
+    });
+    try {
+      final result = await _assetLiabilityRepository.resolveSyncConflicts(
+        month: _now,
+        resolutions: <AssetLiabilityConflictResolution>[
+          AssetLiabilityConflictResolution(target: item.target, choice: choice),
+        ],
+      );
+      if (!mounted) return;
+      setState(() {
+        _assetLiabilitySyncStatus = result.isSuccess
+            ? (result.resolvedTargets.isEmpty &&
+                    result.skippedTargets.isNotEmpty
+                ? AssetLiabilityManualSyncStatus.conflict
+                : AssetLiabilityManualSyncStatus.success)
+            : AssetLiabilityManualSyncStatus.failure;
+        _lastAssetLiabilitySyncAt = result.completedAt;
+        _assetLiabilitySyncMessage = result.message;
+      });
+      if (result.isSuccess) {
+        await _loadAssetLiabilityMonthlyState();
+      }
+      await _refreshAssetLiabilitySyncPreviewSilently();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+    } catch (e) {
+      debugPrint('Error resolving asset liability sync conflict: $e');
+      if (!mounted) return;
+      setState(() {
+        _assetLiabilitySyncStatus = AssetLiabilityManualSyncStatus.failure;
+        _lastAssetLiabilitySyncAt = DateTime.now();
+        _assetLiabilitySyncMessage = '競合解決に失敗しました: $e';
+      });
+      await _refreshAssetLiabilitySyncAuditLogs();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('競合解決に失敗しました: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResolvingAssetLiabilityConflict = false;
         });
       }
     }
@@ -6794,6 +6904,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (_assetLiabilitySyncPreview != null) ...[
             const SizedBox(height: 8),
             _buildAssetLiabilitySyncPreviewDetails(_assetLiabilitySyncPreview!),
+            if (_assetLiabilitySyncPreview!.hasConflict) ...[
+              const SizedBox(height: 8),
+              _buildAssetLiabilityConflictResolutionSection(
+                _assetLiabilitySyncPreview!,
+              ),
+            ],
           ],
           const SizedBox(height: 8),
           _buildAssetLiabilitySyncAuditLogSection(syncEnabled),
@@ -6963,6 +7079,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return 'download';
       case AssetLiabilitySyncAuditType.conflictDetected:
         return 'conflict';
+      case AssetLiabilitySyncAuditType.conflictResolved:
+        return 'resolved';
       case AssetLiabilitySyncAuditType.failed:
         return 'failed';
       case AssetLiabilitySyncAuditType.success:
@@ -6976,6 +7094,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     if (log.isConflict) {
       return const Color(0xFFD97706);
+    }
+    if (log.type == AssetLiabilitySyncAuditType.conflictResolved) {
+      return const Color(0xFF0D9488);
     }
     if (log.type == AssetLiabilitySyncAuditType.success) {
       return const Color(0xFF0D9488);
@@ -7107,6 +7228,152 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _buildAssetLiabilityConflictResolutionSection(
+    AssetLiabilitySyncPreviewResult preview,
+  ) {
+    final conflictItems =
+        preview.items.where((item) => item.conflict).toList(growable: false);
+    if (conflictItems.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.rule_folder_outlined,
+                size: 16,
+                color: Color(0xFFD97706),
+              ),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  '同期競合の解決',
+                  style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+                ),
+              ),
+              if (_isResolvingAssetLiabilityConflict)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'ローカルとSupabaseの両方にデータがある項目は自動上書きしません。'
+            'どちらを優先するか明示的に選んだ項目だけRepository経由で反映します。',
+            style: TextStyle(fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          for (final item in conflictItems) ...[
+            _buildAssetLiabilityConflictResolutionTile(item),
+            if (item != conflictItems.last) const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetLiabilityConflictResolutionTile(
+    AssetLiabilitySyncPreviewItem item,
+  ) {
+    final disabled = _isResolvingAssetLiabilityConflict ||
+        _isRunningAssetLiabilitySync ||
+        _isPreviewingAssetLiabilitySync;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.28),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _buildAssetLiabilitySyncChip(
+                label: '対象',
+                value: item.targetName,
+                color: const Color(0xFFD97706),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: 'ローカル',
+                value: '${item.localCount}件',
+                color: const Color(0xFF475569),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: 'Supabase',
+                value: '${item.remoteCount}件',
+                color: const Color(0xFF475569),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: disabled
+                    ? null
+                    : () => _resolveAssetLiabilitySyncConflict(
+                          item: item,
+                          choice:
+                              AssetLiabilityConflictResolutionChoice.localWins,
+                        ),
+                icon: const Icon(Icons.upload_file_outlined),
+                label: const Text('ローカル優先'),
+              ),
+              OutlinedButton.icon(
+                onPressed: disabled
+                    ? null
+                    : () => _resolveAssetLiabilitySyncConflict(
+                          item: item,
+                          choice: AssetLiabilityConflictResolutionChoice
+                              .supabaseWins,
+                        ),
+                icon: const Icon(Icons.cloud_download_outlined),
+                label: const Text('Supabase優先'),
+              ),
+              TextButton.icon(
+                onPressed: disabled
+                    ? null
+                    : () => _resolveAssetLiabilitySyncConflict(
+                          item: item,
+                          choice: AssetLiabilityConflictResolutionChoice.skip,
+                        ),
+                icon: const Icon(Icons.block_outlined),
+                label: const Text('今回はスキップ'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   String _assetLiabilitySyncPreviewItemLabel(
     AssetLiabilitySyncPreviewItem item,
   ) {
@@ -7218,6 +7485,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
           const SizedBox(height: 12),
+          if (report.emergencyAdvices.isNotEmpty) ...[
+            _buildAssetManagementEmergencyAdviceList(report.emergencyAdvices),
+            const SizedBox(height: 12),
+          ],
           _buildAssetManagementAssistantActionList(report.actionItems),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -7400,6 +7671,99 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               height: 1.4,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetManagementEmergencyAdviceList(
+    List<AssetManagementEmergencyAdvice> advices,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFB91C1C).withValues(alpha: 0.28),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.health_and_safety_outlined,
+                color: Color(0xFFB91C1C),
+                size: 18,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '緊急生活防衛アドバイス',
+                  style: TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '水だけで耐えるなど、健康を削る判断はしないでください。支払いより先に、食費・移動費・医療など最低限の生活費を守ります。',
+            style: TextStyle(fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          for (final advice in advices.take(5))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _assetManagementInsightSeverityColor(
+                      advice.severity,
+                    ).withValues(alpha: 0.22),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      advice.title,
+                      style: TextStyle(
+                        color: _assetManagementInsightSeverityColor(
+                          advice.severity,
+                        ),
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      advice.description,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      advice.suggestedAction,
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -7662,6 +8026,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.event_available_outlined,
       AssetManagementInsightActionType.cashShortageRisk =>
         Icons.warning_amber_rounded,
+      AssetManagementInsightActionType.emergencyLivingExpense =>
+        Icons.health_and_safety_outlined,
       AssetManagementInsightActionType.cardBillingConfiguration =>
         Icons.credit_card_off_outlined,
       AssetManagementInsightActionType.doubleCountingRisk =>

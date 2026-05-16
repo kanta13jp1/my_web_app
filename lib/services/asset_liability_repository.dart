@@ -19,6 +19,111 @@ enum AssetLiabilityManualSyncStatus {
   conflict,
 }
 
+enum AssetLiabilitySyncTarget {
+  monthlyState('monthly_state', '月次状態'),
+  paymentSourceSettings('payment_source_settings', '支払原資口座設定'),
+  cardBillingDefaults('card_billing_defaults', 'カード請求デフォルト'),
+  recurringIncomeTemplates('recurring_income_templates', '定期収入テンプレート'),
+  monthlySnapshots('monthly_snapshots', '月次スナップショット');
+
+  final String storageKey;
+  final String label;
+
+  const AssetLiabilitySyncTarget(this.storageKey, this.label);
+
+  static AssetLiabilitySyncTarget? fromStorageKey(String value) {
+    final normalized = value.trim();
+    for (final target in values) {
+      if (target.storageKey == normalized) {
+        return target;
+      }
+    }
+    return null;
+  }
+}
+
+enum AssetLiabilityConflictResolutionChoice {
+  localWins('local_wins', 'ローカル優先'),
+  supabaseWins('supabase_wins', 'Supabase優先'),
+  skip('skip', 'スキップ');
+
+  final String storageKey;
+  final String label;
+
+  const AssetLiabilityConflictResolutionChoice(this.storageKey, this.label);
+}
+
+enum AssetLiabilityConflictResolutionStatus { disabled, success, failure }
+
+class AssetLiabilityConflictResolution {
+  final AssetLiabilitySyncTarget target;
+  final AssetLiabilityConflictResolutionChoice choice;
+
+  const AssetLiabilityConflictResolution({
+    required this.target,
+    required this.choice,
+  });
+}
+
+class AssetLiabilityConflictResolutionResult {
+  final AssetLiabilityConflictResolutionStatus status;
+  final DateTime completedAt;
+  final String message;
+  final List<AssetLiabilitySyncTarget> resolvedTargets;
+  final List<AssetLiabilitySyncTarget> skippedTargets;
+
+  const AssetLiabilityConflictResolutionResult({
+    required this.status,
+    required this.completedAt,
+    required this.message,
+    this.resolvedTargets = const <AssetLiabilitySyncTarget>[],
+    this.skippedTargets = const <AssetLiabilitySyncTarget>[],
+  });
+
+  factory AssetLiabilityConflictResolutionResult.disabled({
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilityConflictResolutionResult(
+      status: AssetLiabilityConflictResolutionStatus.disabled,
+      completedAt: completedAt ?? DateTime.now(),
+      message: 'Supabase同期は無効です',
+    );
+  }
+
+  factory AssetLiabilityConflictResolutionResult.success({
+    required String message,
+    required List<AssetLiabilitySyncTarget> resolvedTargets,
+    required List<AssetLiabilitySyncTarget> skippedTargets,
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilityConflictResolutionResult(
+      status: AssetLiabilityConflictResolutionStatus.success,
+      completedAt: completedAt ?? DateTime.now(),
+      message: message,
+      resolvedTargets: List<AssetLiabilitySyncTarget>.unmodifiable(
+        resolvedTargets,
+      ),
+      skippedTargets: List<AssetLiabilitySyncTarget>.unmodifiable(
+        skippedTargets,
+      ),
+    );
+  }
+
+  factory AssetLiabilityConflictResolutionResult.failure({
+    required String message,
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilityConflictResolutionResult(
+      status: AssetLiabilityConflictResolutionStatus.failure,
+      completedAt: completedAt ?? DateTime.now(),
+      message: message,
+    );
+  }
+
+  bool get isSuccess =>
+      status == AssetLiabilityConflictResolutionStatus.success;
+}
+
 class AssetLiabilityManualSyncResult {
   final AssetLiabilityManualSyncStatus status;
   final DateTime completedAt;
@@ -80,23 +185,27 @@ class AssetLiabilityManualSyncResult {
 }
 
 class AssetLiabilitySyncPreviewItem {
-  final String targetName;
+  final AssetLiabilitySyncTarget target;
   final bool localHasData;
   final bool remoteHasData;
   final int localCount;
   final int remoteCount;
+  final bool dataMatches;
 
   const AssetLiabilitySyncPreviewItem({
-    required this.targetName,
+    required this.target,
     required this.localHasData,
     required this.remoteHasData,
     required this.localCount,
     required this.remoteCount,
+    this.dataMatches = false,
   });
 
+  String get targetName => target.label;
+  String get targetDataType => target.storageKey;
   bool get uploadCandidate => localHasData && !remoteHasData;
   bool get downloadCandidate => !localHasData && remoteHasData;
-  bool get conflict => localHasData && remoteHasData;
+  bool get conflict => localHasData && remoteHasData && !dataMatches;
 }
 
 class AssetLiabilitySyncPreviewResult {
@@ -165,6 +274,11 @@ class AssetLiabilitySyncPreviewResult {
         for (final item in items)
           if (item.conflict) item.targetName,
       ];
+  List<AssetLiabilitySyncTarget> get conflictTargetTypes =>
+      <AssetLiabilitySyncTarget>[
+        for (final item in items)
+          if (item.conflict) item.target,
+      ];
 }
 
 abstract class AssetLiabilityRepository {
@@ -218,6 +332,13 @@ abstract class AssetLiabilityRepository {
     DateTime month,
   ) async {
     return AssetLiabilitySyncPreviewResult.disabled();
+  }
+
+  Future<AssetLiabilityConflictResolutionResult> resolveSyncConflicts({
+    required DateTime month,
+    required List<AssetLiabilityConflictResolution> resolutions,
+  }) async {
+    return AssetLiabilityConflictResolutionResult.disabled();
   }
 
   Future<AssetLiabilityPersistenceSnapshot> loadPersistenceSnapshot(
@@ -633,7 +754,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         await _recordAuditLog(
           month: month,
           type: AssetLiabilitySyncAuditType.conflictDetected,
-          targetDataType: preview.conflictTargets.join(','),
+          targetDataType: preview.conflictTargetTypes
+              .map((target) => target.storageKey)
+              .join(','),
           count: preview.conflictCount,
           result: 'conflict_non_destructive_stop',
           errorMessage: 'Both local and Supabase data exist; no overwrite.',
@@ -804,6 +927,233 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
   }
 
+  @override
+  Future<AssetLiabilityConflictResolutionResult> resolveSyncConflicts({
+    required DateTime month,
+    required List<AssetLiabilityConflictResolution> resolutions,
+  }) async {
+    final remote = _remoteOrNull();
+    final userId = _userIdOrNull();
+    if (remote == null) {
+      return AssetLiabilityConflictResolutionResult.disabled();
+    }
+    if (userId == null) {
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.failed,
+        targetDataType: 'conflict_resolution',
+        count: 0,
+        result: 'missing_supabase_user',
+        errorMessage: 'Supabase user is not available.',
+      );
+      return AssetLiabilityConflictResolutionResult.failure(
+        message: 'Supabaseユーザーが確認できません',
+      );
+    }
+    if (resolutions.isEmpty) {
+      return AssetLiabilityConflictResolutionResult.success(
+        message: '競合解決の対象がありません',
+        resolvedTargets: const <AssetLiabilitySyncTarget>[],
+        skippedTargets: const <AssetLiabilitySyncTarget>[],
+      );
+    }
+
+    try {
+      final syncData = await _loadSyncData(
+        month: month,
+        remote: remote,
+        userId: userId,
+      );
+      final preview = _buildSyncPreview(syncData);
+      final conflictTargets = preview.conflictTargetTypes.toSet();
+      final resolved = <AssetLiabilitySyncTarget>[];
+      final skipped = <AssetLiabilitySyncTarget>[];
+      var affectedCount = 0;
+
+      for (final resolution in resolutions) {
+        if (!conflictTargets.contains(resolution.target)) {
+          skipped.add(resolution.target);
+          continue;
+        }
+        switch (resolution.choice) {
+          case AssetLiabilityConflictResolutionChoice.localWins:
+            final count = await _uploadLocalTarget(
+              target: resolution.target,
+              data: syncData,
+              remote: remote,
+              userId: userId,
+              month: month,
+            );
+            affectedCount += count;
+            if (count > 0) {
+              resolved.add(resolution.target);
+            } else {
+              skipped.add(resolution.target);
+            }
+          case AssetLiabilityConflictResolutionChoice.supabaseWins:
+            final count = await _restoreRemoteTarget(
+              target: resolution.target,
+              data: syncData,
+              month: month,
+            );
+            affectedCount += count;
+            if (count > 0) {
+              resolved.add(resolution.target);
+            } else {
+              skipped.add(resolution.target);
+            }
+          case AssetLiabilityConflictResolutionChoice.skip:
+            skipped.add(resolution.target);
+        }
+      }
+
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.conflictResolved,
+        targetDataType: resolutions
+            .map(
+              (resolution) =>
+                  '${resolution.target.storageKey}:${resolution.choice.storageKey}',
+            )
+            .join(','),
+        count: affectedCount,
+        result: resolved.isEmpty ? 'skipped' : 'resolved_explicitly',
+      );
+
+      final resolvedLabel = resolved.map((target) => target.label).join('、');
+      final skippedLabel = skipped.map((target) => target.label).join('、');
+      final message = resolved.isNotEmpty
+          ? '競合を解決しました: $resolvedLabel'
+          : skipped.isNotEmpty
+              ? '競合解決をスキップしました: $skippedLabel'
+              : '競合解決の対象がありません';
+
+      return AssetLiabilityConflictResolutionResult.success(
+        message: message,
+        resolvedTargets: resolved,
+        skippedTargets: skipped,
+      );
+    } catch (error, stackTrace) {
+      if (onSyncError != null) {
+        onSyncError!(error, stackTrace);
+      } else {
+        debugPrint('Asset liability conflict resolution failed: $error');
+      }
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.failed,
+        targetDataType: 'conflict_resolution',
+        count: 0,
+        result: 'failed',
+        errorMessage: error.toString(),
+      );
+      return AssetLiabilityConflictResolutionResult.failure(
+        message: '競合解決に失敗しました: $error',
+      );
+    }
+  }
+
+  Future<int> _uploadLocalTarget({
+    required AssetLiabilitySyncTarget target,
+    required _AssetLiabilitySyncData data,
+    required AssetLiabilityRemoteStore remote,
+    required String userId,
+    required DateTime month,
+  }) async {
+    switch (target) {
+      case AssetLiabilitySyncTarget.monthlyState:
+        if (data.localMonth.isEmpty) {
+          return 0;
+        }
+        await remote.saveMonth(
+          userId: userId,
+          month: month,
+          state: data.localMonth,
+        );
+        return 1;
+      case AssetLiabilitySyncTarget.paymentSourceSettings:
+        if (data.localSources.isEmpty) {
+          return 0;
+        }
+        await remote.saveDefaultPaymentSources(
+          userId: userId,
+          sources: data.localSources,
+        );
+        return data.localSources.length;
+      case AssetLiabilitySyncTarget.cardBillingDefaults:
+        if (data.localDefaultCardBillingAccounts.isEmpty) {
+          return 0;
+        }
+        await remote.saveDefaultCardBillingAccounts(
+          userId: userId,
+          accounts: data.localDefaultCardBillingAccounts,
+        );
+        return data.localDefaultCardBillingAccounts.length;
+      case AssetLiabilitySyncTarget.recurringIncomeTemplates:
+        if (data.localTemplates.isEmpty) {
+          return 0;
+        }
+        await remote.saveRecurringIncomeTemplates(
+          userId: userId,
+          templates: data.localTemplates,
+        );
+        return data.localTemplates.length;
+      case AssetLiabilitySyncTarget.monthlySnapshots:
+        if (data.localSnapshots.isEmpty) {
+          return 0;
+        }
+        for (final snapshot in data.localSnapshots) {
+          await remote.saveMonthlySnapshot(userId: userId, snapshot: snapshot);
+        }
+        return data.localSnapshots.length;
+    }
+  }
+
+  Future<int> _restoreRemoteTarget({
+    required AssetLiabilitySyncTarget target,
+    required _AssetLiabilitySyncData data,
+    required DateTime month,
+  }) async {
+    switch (target) {
+      case AssetLiabilitySyncTarget.monthlyState:
+        if (_remoteMonthIsEmpty(data.remoteMonth)) {
+          return 0;
+        }
+        await localRepository.saveMonth(month: month, state: data.remoteMonth!);
+        return 1;
+      case AssetLiabilitySyncTarget.paymentSourceSettings:
+        if (data.remoteSources?.isNotEmpty != true) {
+          return 0;
+        }
+        await localRepository.saveDefaultPaymentSources(data.remoteSources!);
+        return data.remoteSources!.length;
+      case AssetLiabilitySyncTarget.cardBillingDefaults:
+        if (data.remoteDefaultCardBillingAccounts?.isNotEmpty != true) {
+          return 0;
+        }
+        await localRepository.saveDefaultCardBillingAccounts(
+          data.remoteDefaultCardBillingAccounts!,
+        );
+        return data.remoteDefaultCardBillingAccounts!.length;
+      case AssetLiabilitySyncTarget.recurringIncomeTemplates:
+        if (data.remoteTemplates?.isNotEmpty != true) {
+          return 0;
+        }
+        await localRepository.saveRecurringIncomeTemplates(
+          data.remoteTemplates!,
+        );
+        return data.remoteTemplates!.length;
+      case AssetLiabilitySyncTarget.monthlySnapshots:
+        if (data.remoteSnapshots?.isNotEmpty != true) {
+          return 0;
+        }
+        for (final snapshot in data.remoteSnapshots!) {
+          await localRepository.saveMonthlySnapshot(snapshot);
+        }
+        return data.remoteSnapshots!.length;
+    }
+  }
+
   Future<void> _recordPreviewAuditLogs({
     required DateTime month,
     required AssetLiabilitySyncPreviewResult preview,
@@ -837,7 +1187,9 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       await _recordAuditLog(
         month: month,
         type: AssetLiabilitySyncAuditType.conflictDetected,
-        targetDataType: preview.conflictTargets.join(','),
+        targetDataType: preview.conflictTargetTypes
+            .map((target) => target.storageKey)
+            .join(','),
         count: preview.conflictCount,
         result: 'conflict_non_destructive_stop',
         errorMessage: 'Both local and Supabase data exist; no overwrite.',
@@ -905,43 +1257,196 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   ) {
     final items = <AssetLiabilitySyncPreviewItem>[
       AssetLiabilitySyncPreviewItem(
-        targetName: '月次状態',
+        target: AssetLiabilitySyncTarget.monthlyState,
         localHasData: !data.localMonth.isEmpty,
         remoteHasData: !_remoteMonthIsEmpty(data.remoteMonth),
         localCount: data.localMonth.isEmpty ? 0 : 1,
         remoteCount: _remoteMonthIsEmpty(data.remoteMonth) ? 0 : 1,
+        dataMatches: !data.localMonth.isEmpty &&
+            !_remoteMonthIsEmpty(data.remoteMonth) &&
+            _monthlyStatesEqual(data.localMonth, data.remoteMonth!),
       ),
       AssetLiabilitySyncPreviewItem(
-        targetName: '支払原資口座設定',
+        target: AssetLiabilitySyncTarget.paymentSourceSettings,
         localHasData: data.localSources.isNotEmpty,
         remoteHasData: data.remoteSources?.isNotEmpty ?? false,
         localCount: data.localSources.length,
         remoteCount: data.remoteSources?.length ?? 0,
+        dataMatches: data.localSources.isNotEmpty &&
+            (data.remoteSources?.isNotEmpty ?? false) &&
+            _stringMapEquals(data.localSources, data.remoteSources!),
       ),
       AssetLiabilitySyncPreviewItem(
-        targetName: 'card billing defaults',
+        target: AssetLiabilitySyncTarget.cardBillingDefaults,
         localHasData: data.localDefaultCardBillingAccounts.isNotEmpty,
         remoteHasData:
             data.remoteDefaultCardBillingAccounts?.isNotEmpty ?? false,
         localCount: data.localDefaultCardBillingAccounts.length,
         remoteCount: data.remoteDefaultCardBillingAccounts?.length ?? 0,
+        dataMatches: data.localDefaultCardBillingAccounts.isNotEmpty &&
+            (data.remoteDefaultCardBillingAccounts?.isNotEmpty ?? false) &&
+            _stringMapEquals(
+              data.localDefaultCardBillingAccounts,
+              data.remoteDefaultCardBillingAccounts!,
+            ),
       ),
       AssetLiabilitySyncPreviewItem(
-        targetName: '定期収入テンプレート',
+        target: AssetLiabilitySyncTarget.recurringIncomeTemplates,
         localHasData: data.localTemplates.isNotEmpty,
         remoteHasData: data.remoteTemplates?.isNotEmpty ?? false,
         localCount: data.localTemplates.length,
         remoteCount: data.remoteTemplates?.length ?? 0,
+        dataMatches: data.localTemplates.isNotEmpty &&
+            (data.remoteTemplates?.isNotEmpty ?? false) &&
+            _recurringTemplatesEqual(
+              data.localTemplates,
+              data.remoteTemplates!,
+            ),
       ),
       AssetLiabilitySyncPreviewItem(
-        targetName: '月次スナップショット',
+        target: AssetLiabilitySyncTarget.monthlySnapshots,
         localHasData: data.localSnapshots.isNotEmpty,
         remoteHasData: data.remoteSnapshots?.isNotEmpty ?? false,
         localCount: data.localSnapshots.length,
         remoteCount: data.remoteSnapshots?.length ?? 0,
+        dataMatches: data.localSnapshots.isNotEmpty &&
+            (data.remoteSnapshots?.isNotEmpty ?? false) &&
+            _monthlySnapshotsEqual(data.localSnapshots, data.remoteSnapshots!),
       ),
     ];
     return AssetLiabilitySyncPreviewResult.ready(items: items);
+  }
+
+  bool _monthlyStatesEqual(
+    AssetLiabilityMonthlyState local,
+    AssetLiabilityMonthlyState remote,
+  ) {
+    return _doubleMapEquals(local.paymentOverrides, remote.paymentOverrides) &&
+        _stringSetEquals(local.paidAccountNames, remote.paidAccountNames) &&
+        _stringMapEquals(
+          local.paymentSourceAccountIds,
+          remote.paymentSourceAccountIds,
+        ) &&
+        _stringMapEquals(
+          local.cardBillingAccountIds,
+          remote.cardBillingAccountIds,
+        ) &&
+        _incomePlansEqual(local.incomePlans, remote.incomePlans);
+  }
+
+  bool _doubleMapEquals(Map<String, double> a, Map<String, double> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _stringMapEquals(Map<String, String> a, Map<String, String> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _stringSetEquals(Set<String> a, Set<String> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    return a.every(b.contains);
+  }
+
+  bool _incomePlansEqual(
+    List<AssetLiabilityIncomePlan> a,
+    List<AssetLiabilityIncomePlan> b,
+  ) {
+    final first = List<AssetLiabilityIncomePlan>.from(a)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    final second = List<AssetLiabilityIncomePlan>.from(b)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    if (first.length != second.length) {
+      return false;
+    }
+    for (var i = 0; i < first.length; i++) {
+      final left = first[i];
+      final right = second[i];
+      if (left.id != right.id ||
+          left.date != right.date ||
+          left.name != right.name ||
+          left.amount != right.amount ||
+          left.destinationAccountId != right.destinationAccountId ||
+          left.destinationAccountName != right.destinationAccountName ||
+          left.received != right.received) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _recurringTemplatesEqual(
+    List<AssetLiabilityRecurringIncomeTemplate> a,
+    List<AssetLiabilityRecurringIncomeTemplate> b,
+  ) {
+    final first = List<AssetLiabilityRecurringIncomeTemplate>.from(a)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    final second = List<AssetLiabilityRecurringIncomeTemplate>.from(b)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    if (first.length != second.length) {
+      return false;
+    }
+    for (var i = 0; i < first.length; i++) {
+      final left = first[i];
+      final right = second[i];
+      if (left.id != right.id ||
+          left.dayOfMonth != right.dayOfMonth ||
+          left.name != right.name ||
+          left.amount != right.amount ||
+          left.destinationAccountId != right.destinationAccountId ||
+          left.destinationAccountName != right.destinationAccountName) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _monthlySnapshotsEqual(
+    List<AssetLiabilityMonthlySnapshot> a,
+    List<AssetLiabilityMonthlySnapshot> b,
+  ) {
+    final first = List<AssetLiabilityMonthlySnapshot>.from(a)
+      ..sort((left, right) => left.monthKey.compareTo(right.monthKey));
+    final second = List<AssetLiabilityMonthlySnapshot>.from(b)
+      ..sort((left, right) => left.monthKey.compareTo(right.monthKey));
+    if (first.length != second.length) {
+      return false;
+    }
+    for (var i = 0; i < first.length; i++) {
+      final left = first[i];
+      final right = second[i];
+      if (left.monthKey != right.monthKey ||
+          left.savedAt != right.savedAt ||
+          left.positiveAssetTotal != right.positiveAssetTotal ||
+          left.liabilityTotal != right.liabilityTotal ||
+          left.netWorth != right.netWorth ||
+          left.cashLikeTotal != right.cashLikeTotal ||
+          left.monthlyScheduledPaymentTotal !=
+              right.monthlyScheduledPaymentTotal ||
+          left.monthlyPaidPaymentTotal != right.monthlyPaidPaymentTotal ||
+          left.monthlyUnpaidPaymentTotal != right.monthlyUnpaidPaymentTotal ||
+          left.overduePaymentCount != right.overduePaymentCount) {
+        return false;
+      }
+    }
+    return true;
   }
 
   String? _userIdOrNull() {

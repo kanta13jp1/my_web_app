@@ -8,6 +8,7 @@ enum AssetManagementInsightActionType {
   overduePayment,
   upcomingPayment,
   cashShortageRisk,
+  emergencyLivingExpense,
   cardBillingConfiguration,
   doubleCountingRisk,
 }
@@ -94,12 +95,29 @@ class AssetManagementDeveloperRequest {
   });
 }
 
+class AssetManagementEmergencyAdvice {
+  final AssetManagementInsightSeverity severity;
+  final String title;
+  final String description;
+  final String suggestedAction;
+  final double? amount;
+
+  const AssetManagementEmergencyAdvice({
+    required this.severity,
+    required this.title,
+    required this.description,
+    required this.suggestedAction,
+    required this.amount,
+  });
+}
+
 class AssetManagementInsightReport {
   final List<AssetManagementInsightActionItem> actionItems;
   final AssetManagementAvailableMoneyInsight todayAvailable;
   final AssetManagementAvailableMoneyInsight weekAvailable;
   final AssetManagementAvailableMoneyInsight monthAvailable;
   final List<AssetManagementMovementSuggestion> movementSuggestions;
+  final List<AssetManagementEmergencyAdvice> emergencyAdvices;
   final List<AssetManagementDeveloperRequest> developerRequests;
 
   const AssetManagementInsightReport({
@@ -108,6 +126,7 @@ class AssetManagementInsightReport {
     required this.weekAvailable,
     required this.monthAvailable,
     required this.movementSuggestions,
+    required this.emergencyAdvices,
     required this.developerRequests,
   });
 
@@ -140,6 +159,7 @@ class AssetManagementInsightService {
     final actions = _buildActionItems(
       workbook: workbook,
       upcomingPaymentWarningDays: upcomingPaymentWarningDays,
+      minimumSafetyBalance: minimumSafetyBalance,
     )..sort(_compareActionItems);
     final today = _buildAvailableMoneyInsight(
       workbook: workbook,
@@ -167,6 +187,13 @@ class AssetManagementInsightService {
       windows: <AssetManagementAvailableMoneyInsight>[today, week, month],
       minimumSafetyBalance: minimumSafetyBalance,
     );
+    final emergencyAdvices = _buildEmergencyAdvices(
+      workbook: workbook,
+      today: today,
+      week: week,
+      month: month,
+      movementSuggestions: movementSuggestions,
+    );
     final developerRequests = _buildDeveloperRequests(
       workbook: workbook,
       actions: actions,
@@ -179,6 +206,7 @@ class AssetManagementInsightService {
       weekAvailable: week,
       monthAvailable: month,
       movementSuggestions: movementSuggestions,
+      emergencyAdvices: emergencyAdvices,
       developerRequests: developerRequests,
     );
   }
@@ -186,6 +214,7 @@ class AssetManagementInsightService {
   List<AssetManagementInsightActionItem> _buildActionItems({
     required AssetLiabilityWorkbook workbook,
     required int upcomingPaymentWarningDays,
+    required double minimumSafetyBalance,
   }) {
     final actions = <AssetManagementInsightActionItem>[];
     final today = _dateOnly(workbook.baseDate);
@@ -299,6 +328,30 @@ class AssetManagementInsightService {
           ),
         );
       }
+    }
+
+    final todayInsight = _buildAvailableMoneyInsight(
+      workbook: workbook,
+      window: AssetManagementInsightWindow.today,
+      startDate: today,
+      endDate: today,
+      minimumSafetyBalance: minimumSafetyBalance,
+    );
+    if (todayInsight.availableAmount < 0) {
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.emergencyLivingExpense,
+          severity: AssetManagementInsightSeverity.critical,
+          title: '本日の生活費が不足しています',
+          description:
+              '本日使用可能額が${_formatYen(todayInsight.availableAmount)}です。水だけで過ごすなど、健康を削る判断はしないでください。',
+          relatedAccountId: null,
+          dueDate: today,
+          paymentDay: today.day,
+          suggestedAction:
+              '支払いを実行する前に、今日の食費・移動費・医療など最低限の生活費を先に確保し、払えない支払いは支払先へ猶予または分割相談をしてください。',
+        ),
+      );
     }
 
     for (final item in workbook.cardBillingReview.needsReviewItems) {
@@ -435,6 +488,122 @@ class AssetManagementInsightService {
     }
 
     return _dedupeSuggestions(suggestions);
+  }
+
+  List<AssetManagementEmergencyAdvice> _buildEmergencyAdvices({
+    required AssetLiabilityWorkbook workbook,
+    required AssetManagementAvailableMoneyInsight today,
+    required AssetManagementAvailableMoneyInsight week,
+    required AssetManagementAvailableMoneyInsight month,
+    required List<AssetManagementMovementSuggestion> movementSuggestions,
+  }) {
+    final windows = <AssetManagementAvailableMoneyInsight>[today, week, month]
+      ..sort((a, b) => a.availableAmount.compareTo(b.availableAmount));
+    final worst = windows.first;
+    final hasShortage = windows.any((window) => window.availableAmount < 0);
+    if (!hasShortage) {
+      return const <AssetManagementEmergencyAdvice>[];
+    }
+
+    final nextIncome = _nextIncomePlan(workbook);
+    final shortfall =
+        worst.availableAmount < 0 ? worst.availableAmount.abs() : 0.0;
+    final advices = <AssetManagementEmergencyAdvice>[];
+
+    if (today.availableAmount < 0) {
+      advices.add(
+        AssetManagementEmergencyAdvice(
+          severity: AssetManagementInsightSeverity.critical,
+          title: '今日の食費を先に確保してください',
+          description:
+              '本日使用可能額が${_formatYen(today.availableAmount)}です。給料日まで水だけで耐える方針は危険です。支払いより先に、今日食べるためのお金を隔離してください。',
+          suggestedAction:
+              '財布または引落口座とは別の口座に、最低でも今日の食費1,000〜1,500円と移動費を残してください。残せない場合は、家族・知人・自治体窓口・フードバンクへ今日中に相談してください。',
+          amount: today.availableAmount.abs(),
+        ),
+      );
+    }
+
+    if (shortfall > 0) {
+      advices.add(
+        AssetManagementEmergencyAdvice(
+          severity: AssetManagementInsightSeverity.critical,
+          title: '払う順番を一度止めて組み替えてください',
+          description:
+              '${_windowLabel(worst.window)}の不足額は${_formatYen(shortfall)}です。全支払いを予定通り払う前提だと生活費が残りません。',
+          suggestedAction:
+              '優先順位は「食費・通勤・住居/公共料金の継続」→「期限超過の連絡」→「カード/ローンの猶予・分割相談」です。支払先へ、今日中に支払日変更・最低額変更・一時猶予を相談してください。',
+          amount: shortfall,
+        ),
+      );
+    }
+
+    if (movementSuggestions.isNotEmpty) {
+      final suggestion = movementSuggestions.first;
+      advices.add(
+        AssetManagementEmergencyAdvice(
+          severity: AssetManagementInsightSeverity.warning,
+          title: '口座移動または出金を先に実行してください',
+          description:
+              '${suggestion.fromAccountName}から${_formatYen(suggestion.amount)}を動かす候補があります。',
+          suggestedAction:
+              '支払い前にこの移動を実行し、生活費用の残高を確認してください。移動後も不足する場合は、その支払いは払う前に支払先へ連絡してください。',
+          amount: suggestion.amount,
+        ),
+      );
+    }
+
+    if (nextIncome == null) {
+      advices.add(
+        const AssetManagementEmergencyAdvice(
+          severity: AssetManagementInsightSeverity.warning,
+          title: '次の入金予定を登録してください',
+          description: '給料日や入金予定が未登録のため、何日分の生活費を守るべきか判断しにくい状態です。',
+          suggestedAction:
+              '給料日・金額・入金先口座を収入予定に入れてください。登録後、AIアシスタントが給料日までの不足額を再計算します。',
+          amount: null,
+        ),
+      );
+    } else {
+      advices.add(
+        AssetManagementEmergencyAdvice(
+          severity: AssetManagementInsightSeverity.info,
+          title: '次の入金日までの生活費を分けてください',
+          description:
+              '次の入金予定は${_formatDate(nextIncome.date)}の${nextIncome.name} ${_formatYen(nextIncome.amount)}です。',
+          suggestedAction:
+              'この入金日までに必要な食費を先に確保し、残額だけを支払いに回してください。入金前に資金が尽きる場合は支払い猶予の相談を優先してください。',
+          amount: nextIncome.amount,
+        ),
+      );
+    }
+
+    advices.add(
+      const AssetManagementEmergencyAdvice(
+        severity: AssetManagementInsightSeverity.info,
+        title: '公的・地域の緊急支援も候補に入れてください',
+        description: '食費が確保できない場合は、アプリ内の節約だけではなく外部支援を使う局面です。',
+        suggestedAction:
+            '自治体の生活困窮者自立支援窓口、社会福祉協議会、フードバンク、緊急小口資金の相談先を今日確認してください。',
+        amount: null,
+      ),
+    );
+
+    return advices;
+  }
+
+  AssetLiabilityIncomePlan? _nextIncomePlan(AssetLiabilityWorkbook workbook) {
+    final today = _dateOnly(workbook.baseDate);
+    final plans = workbook.incomePlans
+        .where(
+          (plan) =>
+              !plan.received &&
+              plan.amount > 0 &&
+              !_dateOnly(plan.date).isBefore(today),
+        )
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    return plans.isEmpty ? null : plans.first;
   }
 
   List<AssetManagementDeveloperRequest> _buildDeveloperRequests({
@@ -636,6 +805,10 @@ class AssetManagementInsightService {
     }
     return '$sign$buffer円';
   }
+
+  String _formatDate(DateTime value) {
+    return '${value.month}/${value.day}';
+  }
 }
 
 class AssetManagementInsightPromptBuilder {
@@ -658,6 +831,18 @@ class AssetManagementInsightPromptBuilder {
       for (final item in report.actionItems.take(12)) {
         buffer.writeln(
           '- [${item.severity.name}] ${item.title}: ${item.suggestedAction}',
+        );
+      }
+    }
+    buffer
+      ..writeln()
+      ..writeln('## 緊急生活防衛アドバイス');
+    if (report.emergencyAdvices.isEmpty) {
+      buffer.writeln('- 緊急の生活費不足アドバイスはありません。');
+    } else {
+      for (final advice in report.emergencyAdvices.take(6)) {
+        buffer.writeln(
+          '- [${advice.severity.name}] ${advice.title}: ${advice.suggestedAction}',
         );
       }
     }

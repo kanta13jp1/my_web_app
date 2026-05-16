@@ -33,6 +33,15 @@ import {
   type McpMyWebAppToolName,
   mcpRequestedScopes,
 } from "../_shared/mcp_my_web_app_tools.ts";
+import {
+  dedupeWbsTasksById,
+  normalizeWbsListPagination,
+  paginateWbsTasks,
+} from "./wbs_list_tasks.ts";
+import {
+  ASSET_MANAGEMENT_PINNED_ISSUE_SCHEDULE,
+  buildWbsReschedulePlan,
+} from "./wbs_reschedule_realistic.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6204,11 +6213,11 @@ serve(async (req) => {
           // body: { instance?: 'all'|'claude'|'codex'|'user'|'automation' (legacy lanes are still accepted),
           //        status?: 'pending'|'in_progress'|'completed'|'blocked',
           //        updated_since?: 'YYYY-MM-DDTHH:MM:SSZ' (ISO-8601),
-          //        limit?: 50 }
+          //        limit?: 50, offset?: 0 }
           const inst = body.instance as string | undefined;
           const status = body.status as string | undefined;
           const updatedSince = body.updated_since as string | undefined;
-          const limit = Math.min(Number(body.limit ?? 50), 200);
+          const pagination = normalizeWbsListPagination(body);
           const taskSelect =
             "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
           const pageSize = 1000;
@@ -6227,24 +6236,27 @@ serve(async (req) => {
             allTasks.push(...rows);
             if (rows.length < pageSize) break;
           }
-          const filteredTasks = allTasks.filter((task) =>
+          const dedupedTasks = dedupeWbsTasksById(allTasks);
+          const filteredTasks = dedupedTasks.tasks.filter((task) =>
             wbsTaskMatchesInstanceFilter(
               task,
               inst ?? "all",
             )
           );
-          const sortedTasks = filteredTasks.sort(compareWbsTasks).slice(
-            0,
-            limit,
-          );
+          const sortedTasks = filteredTasks.sort(compareWbsTasks);
+          const pagedTasks = paginateWbsTasks(sortedTasks, pagination);
           // milestone 情報も同時取得
           const { data: milestones } = await admin.from("wbs_milestones")
             .select("code, name, target_date, goal_users, color");
           return json({
             success: true,
-            tasks: sortedTasks,
+            tasks: pagedTasks,
             milestones: milestones ?? [],
             total: filteredTasks.length,
+            limit: pagination.limit,
+            offset: pagination.offset,
+            returned: pagedTasks.length,
+            duplicate_rows_removed: dedupedTasks.duplicateRowsRemoved,
           });
         }
         case "wbs.update_progress": {
@@ -6663,74 +6675,6 @@ serve(async (req) => {
           // 対象: status != 'completed' AND github_issue_state != 'CLOSED'
           // skip: 上記完了系
           const dryRun = body.dry_run !== false; // default true
-          const offsetIn =
-            (body.priority_offset_days as Record<string, number>) ?? {};
-          const durIn = (body.duration_days as Record<string, number>) ?? {};
-          const parIn = (body.parallel_capacity as Record<string, number>) ??
-            {};
-          const featureRequestOffsetDays = Math.max(
-            0,
-            Number(body.feature_request_offset_days ?? 0),
-          );
-          const featureRequestDurationDays = Math.max(
-            0,
-            Number(body.feature_request_duration_days ?? 0),
-          );
-          const featureRequestParallelCapacity = Math.max(
-            1,
-            Number(body.feature_request_parallel_capacity ?? 1000),
-          );
-          const githubIssueOffsetDays = Math.max(
-            0,
-            Number(body.github_issue_offset_days ?? 0),
-          );
-          const githubIssueDurationDays = Math.max(
-            0,
-            Number(body.github_issue_duration_days ?? 3),
-          );
-          const githubIssueParallelCapacity = Math.max(
-            1,
-            Number(body.github_issue_parallel_capacity ?? 1000),
-          );
-          const offset = {
-            high: Number(offsetIn.high ?? 7),
-            medium: Number(offsetIn.medium ?? 30),
-            low: Number(offsetIn.low ?? 90),
-          };
-          const duration = {
-            high: Number(durIn.high ?? 3),
-            medium: Number(durIn.medium ?? 7),
-            low: Number(durIn.low ?? 14),
-          };
-          const parallel = {
-            high: Math.max(1, Number(parIn.high ?? 4)),
-            medium: Math.max(1, Number(parIn.medium ?? 8)),
-            low: Math.max(1, Number(parIn.low ?? 12)),
-          };
-          const rescheduleParams = {
-            offset,
-            duration,
-            parallel,
-            feature_request: {
-              offset_days: featureRequestOffsetDays,
-              duration_days: featureRequestDurationDays,
-              parallel_capacity: featureRequestParallelCapacity,
-            },
-            github_issue: {
-              offset_days: githubIssueOffsetDays,
-              duration_days: githubIssueDurationDays,
-              parallel_capacity: githubIssueParallelCapacity,
-            },
-          };
-
-          const today = new Date();
-          today.setUTCHours(0, 0, 0, 0);
-          const fmt = (d: Date) => d.toISOString().slice(0, 10);
-          const addDays = (base: Date, days: number) => {
-            const d = new Date(base);
-            d.setUTCDate(d.getUTCDate() + days);
-            return d;
-          };
 
           // 全 open タスクを取得 (完了系 skip / Supabase 1000 row cap 回避にページネーション)
           const selectCols =
@@ -6772,167 +6716,24 @@ serve(async (req) => {
               );
             }
           }
-          const open = all.filter(
-            (r) => String(r.github_issue_state ?? "") !== "CLOSED",
+          const plan = buildWbsReschedulePlan(
+            all,
+            body as Record<string, unknown>,
+            new Date(),
           );
-          const featureRequestTasks = open.filter(isFeatureRequestTask);
-          const githubIssueTasks = open.filter((task) =>
-            !isFeatureRequestTask(task) && isGithubIssueLinkedTask(task)
-          );
-          const regularTasks = open.filter((task) =>
-            !isFeatureRequestTask(task) && !isGithubIssueLinkedTask(task)
-          );
-
-          // priority bucket 別 queue index を category_order, id で安定 sort
-          const buckets: Record<string, Array<Record<string, unknown>>> = {
-            high: [],
-            medium: [],
-            low: [],
-          };
-          for (const r of regularTasks) {
-            const p = String(r.priority ?? "medium").toLowerCase();
-            const tier = p === "high" || p === "urgent"
-              ? "high"
-              : p === "low"
-              ? "low"
-              : "medium";
-            buckets[tier].push(r);
-          }
-          for (const tier of Object.keys(buckets)) {
-            buckets[tier].sort((a, b) => {
-              const oa = Number(a.category_order ?? 999);
-              const ob = Number(b.category_order ?? 999);
-              if (oa !== ob) return oa - ob;
-              return String(a.id).localeCompare(String(b.id));
-            });
-          }
-          featureRequestTasks.sort((a, b) =>
-            wbsPriorityRank(b.priority) - wbsPriorityRank(a.priority) ||
-            Number(a.category_order ?? 999) - Number(b.category_order ?? 999) ||
-            String(a.id).localeCompare(String(b.id))
-          );
-          githubIssueTasks.sort((a, b) =>
-            wbsPriorityRank(b.priority) - wbsPriorityRank(a.priority) ||
-            Number(a.category_order ?? 999) - Number(b.category_order ?? 999) ||
-            String(a.id).localeCompare(String(b.id))
-          );
-          const featureRequestWindowDays = featureRequestTasks.length === 0
-            ? 0
-            : featureRequestOffsetDays +
-              Math.floor(
-                (featureRequestTasks.length - 1) /
-                  featureRequestParallelCapacity,
-              ) +
-              featureRequestDurationDays +
-              1;
-          const githubIssueStartOffsetDays = Math.max(
-            githubIssueOffsetDays,
-            featureRequestWindowDays,
-          );
-          const githubIssueWindowDays = githubIssueTasks.length === 0
-            ? featureRequestWindowDays
-            : githubIssueStartOffsetDays +
-              Math.floor(
-                (githubIssueTasks.length - 1) /
-                  githubIssueParallelCapacity,
-              ) +
-              githubIssueDurationDays +
-              1;
-
-          // queue index に基づき stagger 配置
-          const updates: Array<{
-            id: string;
-            start_date: string;
-            end_date: string;
-            tier:
-              | "feature_request"
-              | "github_issue"
-              | "high"
-              | "medium"
-              | "low";
-            stagger_days: number;
-          }> = [];
-          for (let i = 0; i < featureRequestTasks.length; i++) {
-            const t = featureRequestTasks[i];
-            const stagger = Math.floor(i / featureRequestParallelCapacity);
-            const start = addDays(
-              today,
-              featureRequestOffsetDays + stagger,
-            );
-            const end = addDays(start, featureRequestDurationDays);
-            updates.push({
-              id: String(t.id),
-              start_date: fmt(start),
-              end_date: fmt(end),
-              tier: "feature_request",
-              stagger_days: stagger,
-            });
-          }
-          for (let i = 0; i < githubIssueTasks.length; i++) {
-            const t = githubIssueTasks[i];
-            const stagger = Math.floor(i / githubIssueParallelCapacity);
-            const start = addDays(
-              today,
-              githubIssueStartOffsetDays + stagger,
-            );
-            const end = addDays(start, githubIssueDurationDays);
-            updates.push({
-              id: String(t.id),
-              start_date: fmt(start),
-              end_date: fmt(end),
-              tier: "github_issue",
-              stagger_days: stagger,
-            });
-          }
-          for (const tier of ["high", "medium", "low"] as const) {
-            const tasks = buckets[tier];
-            const offDays = Math.max(offset[tier], githubIssueWindowDays);
-            const durDays = duration[tier];
-            const par = parallel[tier];
-            for (let i = 0; i < tasks.length; i++) {
-              const t = tasks[i];
-              const stagger = Math.floor(i / par); // par 件並列、par 超で 1 日ずらす
-              const start = addDays(today, offDays + stagger);
-              const end = addDays(start, durDays);
-              updates.push({
-                id: String(t.id),
-                start_date: fmt(start),
-                end_date: fmt(end),
-                tier,
-                stagger_days: stagger,
-              });
-            }
-          }
-
-          // by_priority サマリ + sample 構築
-          const byPrio: Record<
-            string,
-            { count: number; first_start: string; last_end: string }
-          > = {};
-          for (const u of updates) {
-            const cur = byPrio[u.tier] ?? {
-              count: 0,
-              first_start: u.start_date,
-              last_end: u.end_date,
-            };
-            cur.count += 1;
-            if (u.start_date < cur.first_start) cur.first_start = u.start_date;
-            if (u.end_date > cur.last_end) cur.last_end = u.end_date;
-            byPrio[u.tier] = cur;
-          }
-          const sample = updates.slice(0, 10);
+          const updates = plan.updates;
 
           if (dryRun) {
             return json({
               success: true,
               dry_run: true,
-              total_open: open.length,
-              total_skipped_completed: all.length - open.length,
+              total_open: plan.totalOpen,
+              total_skipped_completed: plan.totalSkippedCompleted,
               would_update: updates.length,
-              by_priority: byPrio,
-              sample,
-              today: fmt(today),
-              params: rescheduleParams,
+              by_priority: plan.byPriority,
+              sample: plan.sample,
+              today: plan.today,
+              params: plan.params,
             });
           }
 
@@ -6970,12 +6771,12 @@ serve(async (req) => {
               event_type: "wbs.reschedule_realistic",
               severity: errors.length > 0 ? "warning" : "info",
               metadata: {
-                total_open: open.length,
+                total_open: plan.totalOpen,
                 updated,
                 errors: errors.length,
-                by_priority: byPrio,
-                params: rescheduleParams,
-                today: fmt(today),
+                by_priority: plan.byPriority,
+                params: plan.params,
+                today: plan.today,
               },
             });
           } catch (_) {
@@ -6985,14 +6786,14 @@ serve(async (req) => {
           return json({
             success: errors.length === 0,
             dry_run: false,
-            total_open: open.length,
+            total_open: plan.totalOpen,
             updated,
             errors_count: errors.length,
             errors: errors.slice(0, 10),
-            by_priority: byPrio,
-            sample,
-            today: fmt(today),
-            params: rescheduleParams,
+            by_priority: plan.byPriority,
+            sample: plan.sample,
+            today: plan.today,
+            params: plan.params,
           });
         }
         case "wbs.bulk_update": {
@@ -7455,6 +7256,12 @@ serve(async (req) => {
                 ? additionalRequestStartDate(now)
                 : githubIssueStartDate(now);
               const syncedEndDate = githubIssueDueDate(labels, now, issueTitle);
+              const pinnedSchedule =
+                ASSET_MANAGEMENT_PINNED_ISSUE_SCHEDULE[issueNumber];
+              const issueScheduleStartDate = pinnedSchedule?.start_date ??
+                syncedStartDate;
+              const issueScheduleEndDate = pinnedSchedule?.end_date ??
+                syncedEndDate;
               const payload: Record<string, unknown> = {
                 category: githubIssueCategory(labels),
                 category_icon: githubIssueCategoryIcon(labels),
@@ -7467,17 +7274,17 @@ serve(async (req) => {
                 progress: nextProgress,
                 priority: githubIssuePriority(labels),
                 start_date: prioritizeIssueSchedule
-                  ? syncedStartDate
+                  ? issueScheduleStartDate
                   : keeper?.start_date ?? syncedStartDate,
                 end_date: prioritizeIssueSchedule
-                  ? syncedEndDate
+                  ? issueScheduleEndDate
                   : keeper?.end_date ?? syncedEndDate,
                 planned_start_date: prioritizeIssueSchedule
-                  ? syncedStartDate
+                  ? issueScheduleStartDate
                   : keeper?.planned_start_date ?? keeper?.start_date ??
                     syncedStartDate,
                 planned_end_date: prioritizeIssueSchedule
-                  ? syncedEndDate
+                  ? issueScheduleEndDate
                   : keeper?.planned_end_date ?? keeper?.end_date ??
                     syncedEndDate,
                 remaining_work: isClosed
