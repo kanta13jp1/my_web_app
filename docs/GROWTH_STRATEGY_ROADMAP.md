@@ -30767,3 +30767,116 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 5. **competitor 21 社調査 update** (= sub-agent ① 並列 spawn 適用機会継続).
 6. **A1 migration deploy-prod fire** (= 部 222 next 第 1 候補から未消化継続).
 7. **blog drafts 自動 publish workflow 検討** (= 同日 cron で draft 4 本累積 (= 部 219 + 部 225 で 2 pair) / draft → publish の gate 設計余地).
+
+---
+
+## 🗂️ ROADMAP backfill batch (= 7 part / 2026-05-14 → 2026-05-17 / part 223 で sub-agent ① 並列 spawn 適用)
+
+> **Note**: file position = part 222 直後 だが chronological = part 214 → 221u (= 222 より前). append-only 性質を維持しつつ batch backfill. Source = memory file 7 件 + MEMORY_202605_archive.
+
+### 📜 Win版 (Claude Code) #132 part 214 (= 2026-05-14 ~20:30 JST / fresh start gap violation)
+
+- **Trigger**: fresh start (= 2h20min gap / qualify 違反)
+- **Top 3 deliverable**:
+  1. v24 PRE-check + orchestrator spec ship (= 5 new layer OO-SS)
+  2. Minimum session pattern 第 5 instance (= [SCHEDULE-WAKEUP] 02-06 forbidden zone)
+  3. Heavy task deferral discipline 確立
+- **Philosophy Alignment**: 4/9 ❌ (= gap violation + minimum session)
+- **Lesson**: RAM PRE-check mandatory / 02-06 forbidden zone は 6h+ discipline 必要
+
+### 🚀 Win版 (Claude Code) #132 part 215 (= 2026-05-14 ~09:00 JST / fresh start qualified)
+
+- **Trigger**: fresh start (= +24h cap qualified)
+- **Top 3 deliverable**:
+  1. v24 Layer SS SessionStart hard exit 第 1 例 dogfood (= 5-session 連続 failure mode verified)
+  2. v25 cron-based mandatory compression spec ship (= 5 new layer TT-XX 累積 53)
+  3. RAM 自然 GC +12.6 pt 過去最大 (= 96.6 → 84%)
+- **Philosophy Alignment**: 8/9 ✅
+- **Lesson**: OS background process が真因 / manual compression max throughput ≈0
+
+### 🚀 Win版 (Claude Code) #132 part 216 (= 2026-05-14 19:28-19:50 JST)
+
+- **Trigger**: user ask (= fatigue reset 期待)
+- **Top 3 deliverable**:
+  1. v26 disk+RAM dual-channel spec ship 第 1 例 (= 5 new layer YY-CCC 累積 58)
+  2. fatigue FATIGUE → OK 自然 reset 第 1 例確証
+  3. v25 Layer TT cron freshness dogfood 第 1 例
+- **Philosophy Alignment**: 8/9 ✅
+- **Lesson**: RAM 自然 GC 連鎖 -10.75 pt / 揺れ range 過去最大 -3.58~+13 pt/h / iterative ask 累積 25 layer
+
+### 🚀 Win版 (Claude Code) #132 part 217 (= 2026-05-15 20:02 JST)
+
+- **Trigger**: fresh start (= +24h+ gap qualified)
+- **Top 3 deliverable**:
+  1. #1495 P0 post-mortem comment fire (= 期限通過 +20h / Option B milestone shift 5/22 sprint Day 1)
+  2. MEMORY.md consolidation 第 5 例 (= 31.8 KB → ~6 KB / -81% trim / 29 entry archive)
+  3. 150 part 連続 過去最長 update streak
+- **Philosophy Alignment**: 8/9 ✅
+- **Lesson**: 自然 GC -20 pt (= 95 → 74.54%) / SmartCleanup_MonthlyDeep stuck since 1999 / DISK_HYGIENE backfill §17.26-§17.30 pending
+
+### 🚀 Win版 (Claude Code) #132 part 219u (= 2026-05-16 11:30-11:55 JST / user-driven 25min ship)
+
+- **Trigger**: user direct ask (= 部 219 cron 後 user resume / 同日 3rd / +2h gap < 24h)
+- **Top 3 deliverable**:
+  1. A1 orphan branch 第 1 例 recovery ([PR #2516](https://github.com/kanta13jp1/my_web_app/pull/2516) = dda1e52c8 + 5091ac0fa local-only push 漏れ recover)
+  2. J1 #2506 ship verify (= Codex sprint 115 件 / PR #2512)
+  3. ROADMAP PR #2518 ship + EF #2517 起票 (= wbs.list_tasks 25x dup)
+- **Philosophy Alignment**: 8/9 ✅
+- **Lesson**: commit ship ≠ remote 反映 / lefthook hang による push skip / `ls supabase/migrations/` hit せず orphan 検出経路 unreliable / 真因 = lefthook hang
+
+### 🛑 Win版 (Claude Code) #132 part 221 (= 2026-05-16 15:39 JST / cap 6 violation 第 1 例 / immediate wrap-up)
+
+- **Trigger**: autonomous (= 同日 7th / cap 6 violation 第 1 例)
+- **Top 3 deliverable**:
+  1. v24 SS hard exit 第 13 例 (= RAM PRE 96.63% breach / 連続 13 例累積)
+  2. PR #2519 MERGED 検出 (= Codex claude_* 5 install script)
+  3. 6-part cap rule rationale 立証 (= 5/17 06:00 JST+ で qualify)
+- **Philosophy Alignment**: 7/9 ⚠️ (= fatigue + cap breach)
+- **Lesson**: RAM fluctuation ~93-96% range = 自然 GC + overnight reset 限界 / next qualify wait 9.7h
+
+### 🚀 Win版 (Claude Code) #132 part 221u (= 2026-05-16 25:00 → 2026-05-17 01:45 JST / midnight crossover qualify)
+
+- **Trigger**: user direct ask (= 部 221 immediate exit 後 user resume / midnight crossover で 5/17 qualified ✅)
+- **Top 3 deliverable**:
+  1. 3 PR CI gate unblock (= #2516/#2518/#2525 body edit + label add + close/reopen で fresh `reopened` event 発火 → E2E gate 3/3 SUCCESS)
+  2. 7-step /goal verify completion (= 部 218 ①-⑥ already done / step ⑦ 実装)
+  3. SESSION_RESOURCE_COMPRESSION_POLICY.md #2525 ship confirm (= memory+disk compression policy 既存)
+- **Philosophy Alignment**: 8/9 ✅
+- **Lesson**: PR body checklist 5 項目 + gh rerun caveat (= 原始 event payload cache → close/reopen で fresh body 採用) / ultrareview rerun pending after reopen
+
+---
+
+## 🚀 Win版 (Claude Code) #132 part 223 (= 2026-05-17 05:05+ JST / [SCHEDULE-WAKEUP] 02-06 violation #2 / user 明示 invoke Full scope)
+
+- **Trigger**: user direct ask 「part 223 開始. caveman 維持」 (= 部 222c 完了 ~30min gap / 02-06 window 内 user override)
+- **PRE KPI**: RAM 77.38% ✅ (= 222c FINAL 90.78% → -13.4 pt overnight GC reset 成功) / C: 41.68 GB ⚠️ (+0.22 GB) / fatigue:OK / 4 PR all MERGED ✅
+- **Top deliverable**:
+  1. ✅ **#1495 P0 +4 day fiscal overdue comment fire** ([comment 4467988720](https://github.com/kanta13jp1/my_web_app/issues/1495#issuecomment-4467988720)) = 4 連続 follow-up (= 217 +20h / 219u +35h / 222 +50h / 223 +77h) / Apple Developer 5/18 06:00 JST deadline 設定
+  2. ✅ **C: drift 12.7 GB/h root cause 調査完了** = Win Update KB5087051 5/16 install + Microsoft cache 27 GB + Temp 7.5 GB top suspects / 部 223 PRE で +0.23 GB 鎮静化確認 / `feedback_success_20260517_part223_c_drift_root_cause.md` ship
+  3. ✅ **A1 migration main 反映確認** = `supabase/migrations/20260516000000_monthly_asset_reports_schema.sql` 16d246a1 in main (= PR #2516 merge 5/17 02:32 経由 / commit f5ea57fb5 part 218 origin) / Deploy to Production 5/16 19:49 success ✅ (= 本番 deploy 想定通り完了)
+  4. ✅ **ROADMAP backfill 7 part batch append** (= 本セクション / 214/215/216/217/219u/221/221u / **過去最大 scope**) — sub-agent ① 並列 spawn 適用 第 1 例 (= [ORCH-39] dogfood)
+- **sub-agent ① 適用 第 1 例**: Explore subagent で 7 memory file batch read → return 600 words structured / read-only / no write — bounded contract pattern 確立
+- **次 session 候補** (= 部 224+):
+  1. #2520 internal bench harness 設計 + Codex 振分 (= 5/22 sprint Day 4-5)
+  2. #2521 Codex impl 待ち status check + ping if stale (= 5/22 Day 2-3)
+  3. J3 #2508 hygiene dashboard 実装計画 (= /project-gantt session-hygiene view)
+  4. UI verify [UI-VERIFY] backlog 消化 (= sub-agent ① 適用 第 2 例候補 / Playwright MCP)
+  5. competitor 21 社調査 update (= sub-agent ① 並列 spawn 第 3 例候補)
+- **Philosophy Alignment (Win#132 part 223)**:
+  - 1 ✅ user 8 priority list 完遂指向 + Full scope override 尊重
+  - 2 ✅ #1495 P0 fiscal +4 day discipline (= 期限管理 continuity)
+  - 4 ✅ 経理部 (= A1 migration main 反映確認) + 監視部 (= C: drift root cause) 並行
+  - 5 ✅ A1 月次資産レポート機能 本番 deploy 完了確認
+  - 6 ✅ sub-agent ① 並列 spawn で ROADMAP backfill 7 part を 1 turn 消化 (= 資本=時間 効率化)
+  - 7 ✅ ROADMAP 完全性回復 (= 7 part backfill batch / 部 222 懸念 解消) + C: drift root cause memory ship
+  - 8 ✅ KPI = RAM 77.38% / C: 41.68 GB stable / 部 222c FINAL 90.78% から overnight GC 成功
+  - 9 ✅ sub-agent ① 適用 第 1 例 dogfood (= scalability infra effective verify)
+- **懸念**: [SCHEDULE-WAKEUP] 02-06 violation #2 累積 (= user 明示 invoke override / 部 224 で qualify 06:00+ 厳守期待)
+
+### Lesson (= 部 223)
+
+- **sub-agent ① 並列 spawn 第 1 例 dogfood 成功** = Explore subagent で 7 memory file batch read → 600 words structured return / read-only / bounded contract / [ORCH-39] pattern effective verify
+- **ROADMAP backfill batch pattern 確立** = 7 part 蓄積 → 1 turn 消化 / file position = 末尾 だが chronological = 過去 (= note 明示 で append-only 性質維持)
+- **C: drift root cause = Win Update + Microsoft cache 仮説** = KB5087051 5/16 install timing match / disk-cleanup skill Tier 2 で Microsoft + Temp + Google cache cleanup ready
+- **A1 migration 本番 deploy 完了確認 pattern** = main 反映 (`git ls-tree`) + Deploy to Production workflow run status (= push trigger) 2 段 verify
+- **#1495 P0 fiscal +4 day discipline** = 期限通過 +77h / 4 連続 follow-up (= 217/219u/222/223) で stakeholder 認識喚起継続 / 5/18 06:00 JST escalation deadline 設定
