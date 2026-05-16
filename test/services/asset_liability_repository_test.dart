@@ -652,6 +652,154 @@ void main() {
     });
 
     test(
+      'resolves a monthly state conflict with explicit local wins',
+      () async {
+        const local = SharedPreferencesAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedMonth(
+            DateTime(2026, 5),
+            const AssetLiabilityMonthlyState(
+              paymentOverrides: <String, double>{'remote_only': 1000},
+            ),
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+        await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+        final before = await repository.previewSyncMonth(month);
+        final result = await repository.resolveSyncConflicts(
+          month: month,
+          resolutions: const <AssetLiabilityConflictResolution>[
+            AssetLiabilityConflictResolution(
+              target: AssetLiabilitySyncTarget.monthlyState,
+              choice: AssetLiabilityConflictResolutionChoice.localWins,
+            ),
+          ],
+        );
+        final after = await repository.previewSyncMonth(month);
+        final logs = await repository.loadSyncAuditLogs();
+
+        expect(before.conflictCount, 1);
+        expect(result.isSuccess, isTrue);
+        expect(
+          result.resolvedTargets,
+          contains(AssetLiabilitySyncTarget.monthlyState),
+        );
+        expect(remote.monthState('2026-05')?.paymentOverrides['mobit'], 70000);
+        expect((await local.loadMonth(month)).paymentOverrides['mobit'], 70000);
+        expect(after.conflictCount, 0);
+        expect(
+          logs.map((log) => log.type),
+          contains(AssetLiabilitySyncAuditType.conflictResolved),
+        );
+      },
+    );
+
+    test(
+      'resolves a monthly state conflict with explicit Supabase wins',
+      () async {
+        const local = SharedPreferencesAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedMonth(
+            DateTime(2026, 5),
+            const AssetLiabilityMonthlyState(
+              paymentOverrides: <String, double>{'remote_only': 1000},
+            ),
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+        await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+        final result = await repository.resolveSyncConflicts(
+          month: month,
+          resolutions: const <AssetLiabilityConflictResolution>[
+            AssetLiabilityConflictResolution(
+              target: AssetLiabilitySyncTarget.monthlyState,
+              choice: AssetLiabilityConflictResolutionChoice.supabaseWins,
+            ),
+          ],
+        );
+        final restored = await local.loadMonth(month);
+        final after = await repository.previewSyncMonth(month);
+
+        expect(result.isSuccess, isTrue);
+        expect(restored.paymentOverrides['remote_only'], 1000);
+        expect(restored.paymentOverrides.containsKey('mobit'), isFalse);
+        expect(
+          remote.monthState('2026-05')?.paymentOverrides['remote_only'],
+          1000,
+        );
+        expect(after.conflictCount, 0);
+      },
+    );
+
+    test(
+      'skips a conflict without overwriting either side and records the choice',
+      () async {
+        const local = SharedPreferencesAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedMonth(
+            DateTime(2026, 5),
+            const AssetLiabilityMonthlyState(
+              paymentOverrides: <String, double>{'remote_only': 1000},
+            ),
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+        await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+        final result = await repository.resolveSyncConflicts(
+          month: month,
+          resolutions: const <AssetLiabilityConflictResolution>[
+            AssetLiabilityConflictResolution(
+              target: AssetLiabilitySyncTarget.monthlyState,
+              choice: AssetLiabilityConflictResolutionChoice.skip,
+            ),
+          ],
+        );
+        final after = await repository.previewSyncMonth(month);
+        final logs = await repository.loadSyncAuditLogs();
+
+        expect(result.isSuccess, isTrue);
+        expect(result.resolvedTargets, isEmpty);
+        expect(
+          result.skippedTargets,
+          contains(AssetLiabilitySyncTarget.monthlyState),
+        );
+        expect((await local.loadMonth(month)).paymentOverrides['mobit'], 70000);
+        expect(
+          remote.monthState('2026-05')?.paymentOverrides['remote_only'],
+          1000,
+        );
+        expect(after.conflictCount, 1);
+        expect(
+          logs
+              .firstWhere(
+                (log) =>
+                    log.type == AssetLiabilitySyncAuditType.conflictResolved,
+              )
+              .result,
+          'skipped',
+        );
+      },
+    );
+
+    test(
       'feature flag off does not call Supabase or create audit logs',
       () async {
         const local = SharedPreferencesAssetLiabilityRepository();

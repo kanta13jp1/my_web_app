@@ -4,6 +4,7 @@ enum AssetLiabilitySyncAuditType {
   uploadCandidate('upload_candidate'),
   downloadCandidate('download_candidate'),
   conflictDetected('conflict_detected'),
+  conflictResolved('conflict_resolved'),
   failed('failed'),
   success('success');
 
