@@ -21,7 +21,8 @@
     { "name": "Cursor", "url": "https://cursor.com", "category": "AI IDE / agentic dev tool", "added": "discovery", "added_date": "2026-05-01" },
     { "name": "Devin", "url": "https://cognition.ai", "category": "AI autonomous SWE / multi-agent orchestration", "added": "discovery", "added_date": "2026-05-02" },
     { "name": "Replit", "url": "https://replit.com", "category": "AI app builder / vibe coding / Design Canvas", "added": "discovery", "added_date": "2026-05-03" },
-    { "name": "GitHub Copilot", "url": "https://github.com/features/copilot", "category": "AI dev tool / CLI agent / cross-instance-pr peer", "added": "discovery", "added_date": "2026-05-10" }
+    { "name": "GitHub Copilot", "url": "https://github.com/features/copilot", "category": "AI dev tool / CLI agent / cross-instance-pr peer", "added": "discovery", "added_date": "2026-05-10" },
+    { "name": "Lovable", "url": "https://lovable.dev", "category": "AI app builder / vibe coding / mobile-first IndieDev", "added": "discovery", "added_date": "2026-05-17" }
   ],
   "discovery_history": [
     {
@@ -72,6 +73,13 @@
       "category": "skip",
       "reason": "Cooldown (= 2026-05-10 GitHub Copilot 採択 / 6 day 経過 / cooldown 残 1 day / 5/17 解禁)。次回 5/17 即採択推奨 = Lovable 第 1 (= 4/28 mobile launch 6 サイクル連続継続 / これ以上の delay は監視 lag)。本日 5/15-5/16 新規 2 micro-signal = (1) GitHub Copilot CLI v1.0.3 5/15 (= multi-account hostname flag patch 🟡) / (2) Claude Code v2.1.142 5/15-5/16 (= 2.1.141 fix-then-regress フォローアップ patch / 自社 Win Claude #132 fleet 中核 upgrade 候補 🟡 dogfood 機会) + 継続観察 2 件 = MoneyForward AI Cowork 7月 GA + Replit Private Publishing Core/Starter 拡張。3 連続 skip (5/14 / 5/15 / 5/16) で 5/17 Lovable 採択は最優先。",
       "skipped_candidates": ["Lovable (= 第 1 候補 6 サイクル連続継続 / 5/17 即採択推奨 / これ以上 delay は監視 lag)", "Bolt.new (= Lovable 類似軸)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)"]
+    },
+    {
+      "date": "2026-05-17",
+      "name": "Lovable",
+      "category": "AI app builder / vibe coding / mobile-first IndieDev",
+      "reason": "7 サイクル連続 第 1 候補継続 (5/10→5/17 = 7 day cooldown 明け / 解禁日初日採択 / これ以上の delay は監視 lag rule 違反)。採択理由 = (1) **4/28 iOS+Android launch** = vibe-coding 初の mobile-native AI app builder. 自社 Flutter Web + Firebase Hosting + AI 大学戦略に対し『mobile-first vibe coding』軸で正面 disrupt potential。voice/text prompt → autonomous agent run + cross-device seamless transfer = ユーザー手元 friction zero (= 自社 home/AI 大学/LP デスクトップ前提 UX に対し threat)。(2) **Plan Mode (2月) + Voice Mode + 透明背景 (3月)** = Notion 3.5 Plan Mode / Replit Agent 4 Design Canvas / Cursor multi-agent と並ぶ『建設前計画提示』軸 (= 自社 design-skills + Figma MCP との重複)。(3) **Slack 'Add to Slack' 5月末 integration** (Slack 公式 announce) = enterprise distribution 加速 / 自社 cross-instance-pr md doc + Slack 5 正本 governance との competitive overlap。(4) **Replit Agent 4 5/15 import promotion** で Lovable→Replit migration funnel 構築中 = vibe coding 4 強 (Lovable / Replit / Bolt.new / Cursor) で『Lovable は最大の競合磁場』。基準 a (= mobile-native vibe coding 正面競合) + 基準 c (= 4/28 mobile launch + 5月 Slack integration = 過去 30 日連続重大リリース)。https://lovable.dev/blog/mobile-app + https://techcrunch.com/2026/04/28/lovable-launches-its-vibe-coding-app-on-ios-and-android/",
+      "skipped_candidates": ["Bolt.new (= Lovable 類似軸 / 5月純増薄 / 次回候補)", "Salesforce Agentforce (= enterprise 境界 / Slack 経由間接監視継続)", "ServiceNow Build Agent (= 5/10 GA / routing matrix 横断 / 動向観察 1 月)", "Prime Intellect Lab (= 5/10 RL agent platform / 動向観察 1 月)", "Manus AI (= 協調軸組込継続)", "Mistral Le Chat Work agentic mode (= 5月新規 / EU 軸 / 動向観察)", "Microsoft Agent 365 (= 5月 GA / Slack 経由間接監視継続)"]
     }
   ],
   "_schema_notes": {
