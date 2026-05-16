@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:my_web_app/models/asset_liability_persistence.dart';
+import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -200,6 +201,14 @@ abstract class AssetLiabilityRepository {
   Future<List<AssetLiabilityMonthlySnapshot>> loadMonthlySnapshots();
 
   Future<void> saveMonthlySnapshot(AssetLiabilityMonthlySnapshot snapshot);
+
+  Future<List<AssetLiabilitySyncAuditLog>> loadSyncAuditLogs({
+    int limit = 20,
+  }) async {
+    return const <AssetLiabilitySyncAuditLog>[];
+  }
+
+  Future<void> saveSyncAuditLog(AssetLiabilitySyncAuditLog log) async {}
 
   Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) async {
     return AssetLiabilityManualSyncResult.disabled();
@@ -576,6 +585,16 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   }
 
   @override
+  Future<List<AssetLiabilitySyncAuditLog>> loadSyncAuditLogs({int limit = 20}) {
+    return localRepository.loadSyncAuditLogs(limit: limit);
+  }
+
+  @override
+  Future<void> saveSyncAuditLog(AssetLiabilitySyncAuditLog log) {
+    return localRepository.saveSyncAuditLog(log);
+  }
+
+  @override
   Future<AssetLiabilityManualSyncResult> syncMonth(DateTime month) async {
     final remote = _remoteOrNull();
     final userId = _userIdOrNull();
@@ -583,6 +602,14 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return AssetLiabilityManualSyncResult.disabled();
     }
     if (userId == null) {
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.failed,
+        targetDataType: 'all_targets',
+        count: 0,
+        result: 'missing_supabase_user',
+        errorMessage: 'Supabase user is not available.',
+      );
       return AssetLiabilityManualSyncResult.failure(
         message: 'Supabaseユーザーが確認できません',
       );
@@ -596,6 +623,21 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       );
       final preview = _buildSyncPreview(syncData);
       if (preview.hasConflict) {
+        await _recordAuditLog(
+          month: month,
+          type: AssetLiabilitySyncAuditType.manualSync,
+          targetDataType: 'all_targets',
+          count: preview.targetCount,
+          result: 'conflict',
+        );
+        await _recordAuditLog(
+          month: month,
+          type: AssetLiabilitySyncAuditType.conflictDetected,
+          targetDataType: preview.conflictTargets.join(','),
+          count: preview.conflictCount,
+          result: 'conflict_non_destructive_stop',
+          errorMessage: 'Both local and Supabase data exist; no overwrite.',
+        );
         return AssetLiabilityManualSyncResult.conflict(
           targets: preview.conflictTargets,
         );
@@ -671,6 +713,22 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         restored += syncData.remoteSnapshots!.length;
       }
 
+      final syncedCount = uploaded + restored;
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.manualSync,
+        targetDataType: 'all_targets',
+        count: syncedCount,
+        result: 'success',
+      );
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.success,
+        targetDataType: 'all_targets',
+        count: syncedCount,
+        result: 'success',
+      );
+
       return AssetLiabilityManualSyncResult.success(
         message: '同期完了（アップロード $uploaded 件 / 復元 $restored 件）',
       );
@@ -680,6 +738,14 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       } else {
         debugPrint('Asset liability manual Supabase sync failed: $error');
       }
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.failed,
+        targetDataType: 'all_targets',
+        count: 0,
+        result: 'failed',
+        errorMessage: error.toString(),
+      );
       return AssetLiabilityManualSyncResult.failure(
         message: 'Supabase同期に失敗しました: $error',
       );
@@ -696,6 +762,14 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return AssetLiabilitySyncPreviewResult.disabled();
     }
     if (userId == null) {
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.failed,
+        targetDataType: 'preview',
+        count: 0,
+        result: 'missing_supabase_user',
+        errorMessage: 'Supabase user is not available.',
+      );
       return AssetLiabilitySyncPreviewResult.failure(
         message: 'Supabaseユーザーが確認できません',
       );
@@ -707,16 +781,91 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         remote: remote,
         userId: userId,
       );
-      return _buildSyncPreview(syncData);
+      final preview = _buildSyncPreview(syncData);
+      await _recordPreviewAuditLogs(month: month, preview: preview);
+      return preview;
     } catch (error, stackTrace) {
       if (onSyncError != null) {
         onSyncError!(error, stackTrace);
       } else {
         debugPrint('Asset liability Supabase sync preview failed: $error');
       }
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.failed,
+        targetDataType: 'preview',
+        count: 0,
+        result: 'failed',
+        errorMessage: error.toString(),
+      );
       return AssetLiabilitySyncPreviewResult.failure(
         message: 'Supabase同期プレビューに失敗しました: $error',
       );
+    }
+  }
+
+  Future<void> _recordPreviewAuditLogs({
+    required DateTime month,
+    required AssetLiabilitySyncPreviewResult preview,
+  }) async {
+    await _recordAuditLog(
+      month: month,
+      type: AssetLiabilitySyncAuditType.preview,
+      targetDataType: 'all_targets',
+      count: preview.targetCount,
+      result: preview.hasConflict ? 'conflict' : 'success',
+    );
+    if (preview.uploadCandidateCount > 0) {
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.uploadCandidate,
+        targetDataType: 'upload_candidates',
+        count: preview.uploadCandidateCount,
+        result: 'detected',
+      );
+    }
+    if (preview.downloadCandidateCount > 0) {
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.downloadCandidate,
+        targetDataType: 'download_candidates',
+        count: preview.downloadCandidateCount,
+        result: 'detected',
+      );
+    }
+    if (preview.conflictCount > 0) {
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.conflictDetected,
+        targetDataType: preview.conflictTargets.join(','),
+        count: preview.conflictCount,
+        result: 'conflict_non_destructive_stop',
+        errorMessage: 'Both local and Supabase data exist; no overwrite.',
+      );
+    }
+  }
+
+  Future<void> _recordAuditLog({
+    required DateTime month,
+    required AssetLiabilitySyncAuditType type,
+    required String targetDataType,
+    required int count,
+    required String result,
+    String? errorMessage,
+  }) async {
+    try {
+      await localRepository.saveSyncAuditLog(
+        AssetLiabilitySyncAuditLog.create(
+          type: type,
+          monthKey: AssetLiabilityMonthlyStateStore.formatMonthKey(month),
+          targetDataType: targetDataType,
+          count: count,
+          result: result,
+          errorMessage: errorMessage,
+        ),
+      );
+    } catch (error) {
+      debugPrint('Asset liability sync audit log skipped: $error');
     }
   }
 
@@ -1194,5 +1343,15 @@ class SharedPreferencesAssetLiabilityRepository
   @override
   Future<void> saveMonthlySnapshot(AssetLiabilityMonthlySnapshot snapshot) {
     return store.saveMonthlySnapshot(snapshot);
+  }
+
+  @override
+  Future<List<AssetLiabilitySyncAuditLog>> loadSyncAuditLogs({int limit = 20}) {
+    return store.loadSyncAuditLogs(limit: limit);
+  }
+
+  @override
+  Future<void> saveSyncAuditLog(AssetLiabilitySyncAuditLog log) {
+    return store.saveSyncAuditLog(log);
   }
 }
