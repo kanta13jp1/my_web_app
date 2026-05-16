@@ -21,12 +21,12 @@ class _GanttDragScrollBehavior extends MaterialScrollBehavior {
 
   @override
   Set<PointerDeviceKind> get dragDevices => const {
-    PointerDeviceKind.touch,
-    PointerDeviceKind.mouse,
-    PointerDeviceKind.stylus,
-    PointerDeviceKind.invertedStylus,
-    PointerDeviceKind.unknown,
-  };
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.invertedStylus,
+        PointerDeviceKind.unknown,
+      };
 }
 
 int? _extractIssueNumber(String title) {
@@ -84,16 +84,16 @@ class WbsMilestone {
   });
 
   factory WbsMilestone.fromMap(Map<String, dynamic> m) => WbsMilestone(
-    code: m['code'] as String,
-    name: m['name'] as String,
-    targetDate: DateTime.parse(m['target_date'] as String),
-    goalUsers: (m['goal_users'] as int?) ?? 0,
-    description: m['description'] as String? ?? '',
-    color: _hexColor(m['color'] as String? ?? '#FF6B35'),
-    achievedAt: m['achieved_at'] != null
-        ? DateTime.tryParse(m['achieved_at'] as String)
-        : null,
-  );
+        code: m['code'] as String,
+        name: m['name'] as String,
+        targetDate: DateTime.parse(m['target_date'] as String),
+        goalUsers: (m['goal_users'] as int?) ?? 0,
+        description: m['description'] as String? ?? '',
+        color: _hexColor(m['color'] as String? ?? '#FF6B35'),
+        achievedAt: m['achieved_at'] != null
+            ? DateTime.tryParse(m['achieved_at'] as String)
+            : null,
+      );
 
   bool get achieved => achievedAt != null;
   int daysLeft(DateTime now) => targetDate.difference(now).inDays;
@@ -180,46 +180,46 @@ class WbsTask {
   }
 
   factory WbsTask.fromMap(Map<String, dynamic> m) => WbsTask(
-    id: m['id'] as String,
-    category: m['category'] as String,
-    categoryIcon: m['category_icon'] as String? ?? '📋',
-    categoryOrder: (m['category_order'] as int?) ?? 0,
-    title: m['title'] as String,
-    description: m['description'] as String? ?? '',
-    instance: m['instance'] as String? ?? 'codex',
-    status: m['status'] as String? ?? 'pending',
-    progress: (m['progress'] as int?) ?? 0,
-    startDate: m['start_date'] != null
-        ? DateTime.tryParse(m['start_date'] as String)
-        : null,
-    endDate: m['end_date'] != null
-        ? DateTime.tryParse(m['end_date'] as String)
-        : null,
-    plannedStartDate: m['planned_start_date'] != null
-        ? DateTime.tryParse(m['planned_start_date'] as String)
-        : null,
-    plannedEndDate: m['planned_end_date'] != null
-        ? DateTime.tryParse(m['planned_end_date'] as String)
-        : null,
-    milestoneCode: m['milestone_code'] as String?,
-    priority: m['priority'] as String? ?? 'medium',
-    ownerInstance:
-        m['owner_instance'] as String? ?? (m['instance'] as String? ?? 'codex'),
-    recoveryPlan: (m['recovery_plan'] as String?) ?? '',
-    rescheduledCount: (m['rescheduled_count'] as int?) ?? 0,
-    remainingWork: (m['remaining_work'] as String?) ?? '',
-    dependsOnTitles:
-        (m['depends_on_titles'] as List?)?.cast<String>() ?? const [],
-    githubIssueNumber: _parseIssueNumberValue(m['github_issue_number']),
-    githubIssueUrl: (m['github_issue_url'] as String?) ?? '',
-    createdAt: m['created_at'] != null
-        ? DateTime.tryParse(m['created_at'] as String)
-        : null,
-    updatedAt: m['updated_at'] != null
-        ? DateTime.tryParse(m['updated_at'] as String)
-        : null,
-    githubIssueState: (m['github_issue_state'] as String?) ?? '',
-  );
+        id: m['id'] as String,
+        category: m['category'] as String,
+        categoryIcon: m['category_icon'] as String? ?? '📋',
+        categoryOrder: (m['category_order'] as int?) ?? 0,
+        title: m['title'] as String,
+        description: m['description'] as String? ?? '',
+        instance: m['instance'] as String? ?? 'codex',
+        status: m['status'] as String? ?? 'pending',
+        progress: (m['progress'] as int?) ?? 0,
+        startDate: m['start_date'] != null
+            ? DateTime.tryParse(m['start_date'] as String)
+            : null,
+        endDate: m['end_date'] != null
+            ? DateTime.tryParse(m['end_date'] as String)
+            : null,
+        plannedStartDate: m['planned_start_date'] != null
+            ? DateTime.tryParse(m['planned_start_date'] as String)
+            : null,
+        plannedEndDate: m['planned_end_date'] != null
+            ? DateTime.tryParse(m['planned_end_date'] as String)
+            : null,
+        milestoneCode: m['milestone_code'] as String?,
+        priority: m['priority'] as String? ?? 'medium',
+        ownerInstance: m['owner_instance'] as String? ??
+            (m['instance'] as String? ?? 'codex'),
+        recoveryPlan: (m['recovery_plan'] as String?) ?? '',
+        rescheduledCount: (m['rescheduled_count'] as int?) ?? 0,
+        remainingWork: (m['remaining_work'] as String?) ?? '',
+        dependsOnTitles:
+            (m['depends_on_titles'] as List?)?.cast<String>() ?? const [],
+        githubIssueNumber: _parseIssueNumberValue(m['github_issue_number']),
+        githubIssueUrl: (m['github_issue_url'] as String?) ?? '',
+        createdAt: m['created_at'] != null
+            ? DateTime.tryParse(m['created_at'] as String)
+            : null,
+        updatedAt: m['updated_at'] != null
+            ? DateTime.tryParse(m['updated_at'] as String)
+            : null,
+        githubIssueState: (m['github_issue_state'] as String?) ?? '',
+      );
 
   DateTime? get rawScheduleStartDate => plannedStartDate ?? startDate;
   DateTime? get rawScheduleEndDate => plannedEndDate ?? endDate;
@@ -260,120 +260,120 @@ class WbsTask {
   bool get isDelayedNoPlan => delayDays > 0 && recoveryPlan.trim().isEmpty;
 
   Color get statusColor => switch (status) {
-    'completed' => const Color(0xFF4CAF50),
-    'in_progress' => const Color(0xFFFF6B35),
-    'blocked' => const Color(0xFFE53935),
-    _ => const Color(0xFF707070),
-  };
+        'completed' => const Color(0xFF4CAF50),
+        'in_progress' => const Color(0xFFFF6B35),
+        'blocked' => const Color(0xFFE53935),
+        _ => const Color(0xFF707070),
+      };
 
   String get statusLabel => switch (status) {
-    'completed' => '完了',
-    'in_progress' => '進行中',
-    'blocked' => 'ブロック',
-    _ => '未着手',
-  };
+        'completed' => '完了',
+        'in_progress' => '進行中',
+        'blocked' => 'ブロック',
+        _ => '未着手',
+      };
 
   String get instanceLabel => switch (instance) {
-    'claude' => 'Claude Code',
-    'codex' => 'Codex',
-    'automation' => 'Automation',
-    'gemini' => 'Gemini',
-    'co-pilot' => 'Co-pilot',
-    'copilot' => 'Co-pilot',
-    'user' => 'User',
-    'vscode' => 'VSCode版',
-    'win' => 'Win版',
-    'windows' => 'Win版',
-    'ps1' => 'PS版#1',
-    'ps2' => 'PS版#2',
-    'ps3' => 'PS版#3',
-    'ps4' => 'PS版#4',
-    'ps5' => 'PS版#5',
-    'ps6' => 'PS版#6',
-    'ps' => 'PS版',
-    'web' => 'WEB版',
-    'mobile' => '📱スマホ版',
-    // Win版#131 part 13
-    'schedule' => '⏰ Schedule',
-    'gha' => '🔧 GHA',
-    _ => '未割当',
-  };
+        'claude' => 'Claude Code',
+        'codex' => 'Codex',
+        'automation' => 'Automation',
+        'gemini' => 'Gemini',
+        'co-pilot' => 'Co-pilot',
+        'copilot' => 'Co-pilot',
+        'user' => 'User',
+        'vscode' => 'VSCode版',
+        'win' => 'Win版',
+        'windows' => 'Win版',
+        'ps1' => 'PS版#1',
+        'ps2' => 'PS版#2',
+        'ps3' => 'PS版#3',
+        'ps4' => 'PS版#4',
+        'ps5' => 'PS版#5',
+        'ps6' => 'PS版#6',
+        'ps' => 'PS版',
+        'web' => 'WEB版',
+        'mobile' => '📱スマホ版',
+        // Win版#131 part 13
+        'schedule' => '⏰ Schedule',
+        'gha' => '🔧 GHA',
+        _ => '未割当',
+      };
 
   Color get instanceColor => switch (instance) {
-    'claude' => const Color(0xFF2563EB),
-    'codex' => const Color(0xFF10B981),
-    'automation' => const Color(0xFFEAB308),
-    'gemini' => const Color(0xFF4285F4),
-    'co-pilot' => const Color(0xFF111827),
-    'copilot' => const Color(0xFF111827),
-    'user' => const Color(0xFFEF4444),
-    'vscode' => const Color(0xFF007ACC),
-    'win' => const Color(0xFF00BCF2),
-    'windows' => const Color(0xFF00BCF2),
-    'ps1' => const Color(0xFF4B0082),
-    'ps2' => const Color(0xFF6A0DAD),
-    'ps3' => const Color(0xFF8B5CF6),
-    'ps4' => const Color(0xFFA855F7),
-    'ps5' => const Color(0xFFC084FC),
-    'ps6' => const Color(0xFFDAB6FC),
-    'ps' => const Color(0xFF4B0082),
-    'web' => const Color(0xFF22C55E),
-    'mobile' => const Color(0xFFF97316),
-    // Win版#131 part 13
-    'schedule' => const Color(0xFFEAB308),
-    'gha' => const Color(0xFF6B7280),
-    _ => const Color(0xFF64748B),
-  };
+        'claude' => const Color(0xFF2563EB),
+        'codex' => const Color(0xFF10B981),
+        'automation' => const Color(0xFFEAB308),
+        'gemini' => const Color(0xFF4285F4),
+        'co-pilot' => const Color(0xFF111827),
+        'copilot' => const Color(0xFF111827),
+        'user' => const Color(0xFFEF4444),
+        'vscode' => const Color(0xFF007ACC),
+        'win' => const Color(0xFF00BCF2),
+        'windows' => const Color(0xFF00BCF2),
+        'ps1' => const Color(0xFF4B0082),
+        'ps2' => const Color(0xFF6A0DAD),
+        'ps3' => const Color(0xFF8B5CF6),
+        'ps4' => const Color(0xFFA855F7),
+        'ps5' => const Color(0xFFC084FC),
+        'ps6' => const Color(0xFFDAB6FC),
+        'ps' => const Color(0xFF4B0082),
+        'web' => const Color(0xFF22C55E),
+        'mobile' => const Color(0xFFF97316),
+        // Win版#131 part 13
+        'schedule' => const Color(0xFFEAB308),
+        'gha' => const Color(0xFF6B7280),
+        _ => const Color(0xFF64748B),
+      };
 
   String get ownerLabel => switch (ownerInstance) {
-    'claude' => 'Claude Code',
-    'codex' => 'Codex',
-    'automation' => 'Automation',
-    'gemini' => 'Gemini',
-    'co-pilot' => 'Co-pilot',
-    'copilot' => 'Co-pilot',
-    'user' => 'User',
-    'vscode' => 'VSCode版',
-    'win' => 'Win版',
-    'windows' => 'Win版',
-    'ps1' => 'PS版#1',
-    'ps2' => 'PS版#2',
-    'ps3' => 'PS版#3',
-    'ps4' => 'PS版#4',
-    'ps5' => 'PS版#5',
-    'ps6' => 'PS版#6',
-    'ps' => 'PS版',
-    'web' => 'WEB版',
-    'mobile' => '📱スマホ版',
-    'schedule' => '⏰ Schedule',
-    'gha' => '🔧 GHA',
-    _ => '未割当',
-  };
+        'claude' => 'Claude Code',
+        'codex' => 'Codex',
+        'automation' => 'Automation',
+        'gemini' => 'Gemini',
+        'co-pilot' => 'Co-pilot',
+        'copilot' => 'Co-pilot',
+        'user' => 'User',
+        'vscode' => 'VSCode版',
+        'win' => 'Win版',
+        'windows' => 'Win版',
+        'ps1' => 'PS版#1',
+        'ps2' => 'PS版#2',
+        'ps3' => 'PS版#3',
+        'ps4' => 'PS版#4',
+        'ps5' => 'PS版#5',
+        'ps6' => 'PS版#6',
+        'ps' => 'PS版',
+        'web' => 'WEB版',
+        'mobile' => '📱スマホ版',
+        'schedule' => '⏰ Schedule',
+        'gha' => '🔧 GHA',
+        _ => '未割当',
+      };
 
   Color get ownerColor => switch (ownerInstance) {
-    'claude' => const Color(0xFF2563EB),
-    'codex' => const Color(0xFF10B981),
-    'automation' => const Color(0xFFEAB308),
-    'gemini' => const Color(0xFF4285F4),
-    'co-pilot' => const Color(0xFF111827),
-    'copilot' => const Color(0xFF111827),
-    'user' => const Color(0xFFEF4444),
-    'vscode' => const Color(0xFF007ACC),
-    'win' => const Color(0xFF00BCF2),
-    'windows' => const Color(0xFF00BCF2),
-    'ps1' => const Color(0xFF4B0082),
-    'ps2' => const Color(0xFF6A0DAD),
-    'ps3' => const Color(0xFF8B5CF6),
-    'ps4' => const Color(0xFFA855F7),
-    'ps5' => const Color(0xFFC084FC),
-    'ps6' => const Color(0xFFDAB6FC),
-    'ps' => const Color(0xFF4B0082),
-    'web' => const Color(0xFF22C55E),
-    'mobile' => const Color(0xFFF97316),
-    'schedule' => const Color(0xFFEAB308),
-    'gha' => const Color(0xFF6B7280),
-    _ => const Color(0xFF707070),
-  };
+        'claude' => const Color(0xFF2563EB),
+        'codex' => const Color(0xFF10B981),
+        'automation' => const Color(0xFFEAB308),
+        'gemini' => const Color(0xFF4285F4),
+        'co-pilot' => const Color(0xFF111827),
+        'copilot' => const Color(0xFF111827),
+        'user' => const Color(0xFFEF4444),
+        'vscode' => const Color(0xFF007ACC),
+        'win' => const Color(0xFF00BCF2),
+        'windows' => const Color(0xFF00BCF2),
+        'ps1' => const Color(0xFF4B0082),
+        'ps2' => const Color(0xFF6A0DAD),
+        'ps3' => const Color(0xFF8B5CF6),
+        'ps4' => const Color(0xFFA855F7),
+        'ps5' => const Color(0xFFC084FC),
+        'ps6' => const Color(0xFFDAB6FC),
+        'ps' => const Color(0xFF4B0082),
+        'web' => const Color(0xFF22C55E),
+        'mobile' => const Color(0xFFF97316),
+        'schedule' => const Color(0xFFEAB308),
+        'gha' => const Color(0xFF6B7280),
+        _ => const Color(0xFF707070),
+      };
 
   String get activeInstanceKey => _activeWbsInstanceKey(instance);
   String get activeOwnerKey =>
@@ -394,11 +394,11 @@ class WbsTask {
   bool get isGithubIssueLinkedTask => linkedGithubIssueNumber != null;
 
   int get priorityRank => switch (priority) {
-    'high' => 3,
-    'medium' => 2,
-    'low' => 1,
-    _ => 0,
-  };
+        'high' => 3,
+        'medium' => 2,
+        'low' => 1,
+        _ => 0,
+      };
 }
 
 int _wbsTaskSortBucket(WbsTask task) {
@@ -552,25 +552,25 @@ String _activeWbsInstanceKey(String raw) {
 }
 
 String _activeWbsInstanceLabel(String key) => switch (key) {
-  'codex' => 'Codex',
-  'user' => 'User',
-  'automation' => 'Automation',
-  _ => 'Claude Code',
-};
+      'codex' => 'Codex',
+      'user' => 'User',
+      'automation' => 'Automation',
+      _ => 'Claude Code',
+    };
 
 String _activeWbsShortInstance(String key) => switch (key) {
-  'codex' => 'CX',
-  'user' => 'USR',
-  'automation' => 'AUTO',
-  _ => 'CC',
-};
+      'codex' => 'CX',
+      'user' => 'USR',
+      'automation' => 'AUTO',
+      _ => 'CC',
+    };
 
 Color _activeWbsInstanceColor(String key) => switch (key) {
-  'codex' => const Color(0xFF10B981),
-  'user' => const Color(0xFFEF4444),
-  'automation' => const Color(0xFFEAB308),
-  _ => const Color(0xFF2563EB),
-};
+      'codex' => const Color(0xFF10B981),
+      'user' => const Color(0xFFEF4444),
+      'automation' => const Color(0xFFEAB308),
+      _ => const Color(0xFF2563EB),
+    };
 
 // ── ページ本体 ────────────────────────────────────────────────────────────────
 
@@ -634,10 +634,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   Future<void> _loadWbs() async {
     setState(() => _loadingWbs = true);
     try {
-      final mData = await _supabase
-          .from('wbs_milestones')
-          .select()
-          .order('target_date');
+      final mData =
+          await _supabase.from('wbs_milestones').select().order('target_date');
       final tData = await _supabase
           .from('wbs_tasks')
           .select()
@@ -736,9 +734,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
         title: Text(
           '開発ロードマップ & WBS',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -920,18 +918,18 @@ class _WbsTab extends StatelessWidget {
   });
 
   List<WbsTask> get _filtered => tasks.where((t) {
-    if (filterInstance != null &&
-        !t.matchesActiveInstanceFilter(filterInstance!)) {
-      return false;
-    }
-    if (filterMilestone != null && t.milestoneCode != filterMilestone) {
-      return false;
-    }
-    if (hideCompleted && t.isEffectivelyCompleted) {
-      return false;
-    }
-    return true;
-  }).toList();
+        if (filterInstance != null &&
+            !t.matchesActiveInstanceFilter(filterInstance!)) {
+          return false;
+        }
+        if (filterMilestone != null && t.milestoneCode != filterMilestone) {
+          return false;
+        }
+        if (hideCompleted && t.isEffectivelyCompleted) {
+          return false;
+        }
+        return true;
+      }).toList();
 
   Map<String, List<WbsTask>> get _grouped {
     final result = <String, List<WbsTask>>{};
@@ -1098,19 +1096,19 @@ class _OverallProgressCard extends StatelessWidget {
                   children: [
                     Text(
                       '自分株式会社 開発WBS',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                     Text(
                       showFilteredBadge && totalCount > taskCount
                           ? '$taskCount 件 未完了 / $totalCount 件 全体'
                           : '$taskCount タスク',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF707070),
-                      ),
+                            color: const Color(0xFF707070),
+                          ),
                     ),
                   ],
                 ),
@@ -1180,12 +1178,10 @@ class _MilestoneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final days = milestone.daysLeft(now);
-    final milestoneTasks = tasks
-        .where((t) => t.milestoneCode == milestone.code)
-        .toList();
-    final completedCount = milestoneTasks
-        .where((t) => t.status == 'completed')
-        .length;
+    final milestoneTasks =
+        tasks.where((t) => t.milestoneCode == milestone.code).toList();
+    final completedCount =
+        milestoneTasks.where((t) => t.status == 'completed').length;
     final totalCount = milestoneTasks.length;
     final taskProgress = totalCount > 0 ? completedCount / totalCount : 0.0;
 
@@ -1226,14 +1222,14 @@ class _MilestoneCard extends StatelessWidget {
             milestone.achieved
                 ? '🎉 達成済み'
                 : days > 0
-                ? 'あと $days 日'
-                : '⚠️ 期限超過',
+                    ? 'あと $days 日'
+                    : '⚠️ 期限超過',
             style: TextStyle(
               color: milestone.achieved
                   ? const Color(0xFF4CAF50)
                   : days < 14
-                  ? const Color(0xFFE53935)
-                  : const Color(0xFFB0B0B0),
+                      ? const Color(0xFFE53935)
+                      : const Color(0xFFB0B0B0),
               fontSize: 12,
               fontWeight: FontWeight.w600,
               height: 1.5,
@@ -1518,8 +1514,7 @@ class _FilterRow extends StatelessWidget {
     Color color,
   ) {
     final isInstanceFilter = identical(onTap, onFilterInstance);
-    final isVisibleInstanceChip =
-        value == null ||
+    final isVisibleInstanceChip = value == null ||
         _activeWbsInstanceFilters.any((filter) => filter.value == value);
     if (isInstanceFilter && !isVisibleInstanceChip) {
       return const SizedBox.shrink();
@@ -1531,9 +1526,8 @@ class _FilterRow extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.2)
-              : const Color(0xFF1E1E1E),
+          color:
+              selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: selected ? color : const Color(0xFF333333)),
         ),
@@ -1799,9 +1793,8 @@ class _TaskRow extends StatelessWidget {
                         ? const Color(0xFFEF4444)
                         : const Color(0xFF505050),
                     fontSize: 10,
-                    fontWeight: task.delayDays > 0
-                        ? FontWeight.w700
-                        : FontWeight.w400,
+                    fontWeight:
+                        task.delayDays > 0 ? FontWeight.w700 : FontWeight.w400,
                     height: 1.5,
                   ),
                 ),
@@ -1952,86 +1945,86 @@ class _MyProjectsTab extends StatelessWidget {
                     child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
                   )
                 : projects.isEmpty
-                ? const Center(
-                    child: Text(
-                      'プロジェクトはまだありません',
-                      style: TextStyle(color: Colors.white38, height: 1.5),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: projects.length,
-                    itemBuilder: (_, i) {
-                      final p = projects[i];
-                      final s = p['status'] as String? ?? '進行中';
-                      final c = statusColors[s] ?? const Color(0xFFFF6B35);
-                      return Card(
-                        color: const Color(0xFF1E1E1E),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: c.withValues(alpha: 0.2),
-                            child: Icon(
-                              Icons.folder_outlined,
-                              color: c,
-                              size: 20,
-                            ),
-                          ),
-                          title: Text(
-                            p['name'] as String? ?? '',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              height: 1.5,
-                            ),
-                          ),
-                          subtitle: Text(
-                            p['description'] as String? ?? '',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 12,
-                              height: 1.5,
-                            ),
-                          ),
-                          trailing: PopupMenuButton<String>(
+                    ? const Center(
+                        child: Text(
+                          'プロジェクトはまだありません',
+                          style: TextStyle(color: Colors.white38, height: 1.5),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: projects.length,
+                        itemBuilder: (_, i) {
+                          final p = projects[i];
+                          final s = p['status'] as String? ?? '進行中';
+                          final c = statusColors[s] ?? const Color(0xFFFF6B35);
+                          return Card(
                             color: const Color(0xFF1E1E1E),
-                            icon: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: c.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                s,
-                                style: TextStyle(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: c.withValues(alpha: 0.2),
+                                child: Icon(
+                                  Icons.folder_outlined,
                                   color: c,
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                p['name'] as String? ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  height: 1.5,
+                                ),
+                              ),
+                              subtitle: Text(
+                                p['description'] as String? ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white54,
                                   fontSize: 12,
                                   height: 1.5,
                                 ),
                               ),
-                            ),
-                            itemBuilder: (_) => statuses
-                                .map(
-                                  (st) => PopupMenuItem(
-                                    value: st,
-                                    child: Text(
-                                      st,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        height: 1.5,
-                                      ),
+                              trailing: PopupMenuButton<String>(
+                                color: const Color(0xFF1E1E1E),
+                                icon: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: c.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    s,
+                                    style: TextStyle(
+                                      color: c,
+                                      fontSize: 12,
+                                      height: 1.5,
                                     ),
                                   ),
-                                )
-                                .toList(),
-                            onSelected: (st) =>
-                                onUpdateStatus(p['id'].toString(), st),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                                ),
+                                itemBuilder: (_) => statuses
+                                    .map(
+                                      (st) => PopupMenuItem(
+                                        value: st,
+                                        child: Text(
+                                          st,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onSelected: (st) =>
+                                    onUpdateStatus(p['id'].toString(), st),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),
@@ -2039,21 +2032,21 @@ class _MyProjectsTab extends StatelessWidget {
   }
 
   InputDecoration _inputDec(String hint) => InputDecoration(
-    hintText: hint,
-    hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: Color(0xFF333333)),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: Color(0xFF333333)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: Color(0xFFFF6B35)),
-    ),
-  );
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF333333)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF333333)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+        ),
+      );
 }
 
 // ── MS Project 風ガントチャートタイムライン ─────────────────────────────────
@@ -2261,20 +2254,20 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       '#' => _compareWbsTasks(a, b),
       'task' => _compareText(a.title, b.title),
       'startDate' => _compareOptionalDate(
-        a.scheduleStartDate,
-        b.scheduleStartDate,
-      ),
+          a.scheduleStartDate,
+          b.scheduleStartDate,
+        ),
       'endDate' => _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate),
       'instance' => _compareText(
-        _instanceBadgeLabel(a),
-        _instanceBadgeLabel(b),
-      ),
+          _instanceBadgeLabel(a),
+          _instanceBadgeLabel(b),
+        ),
       'progress' => a.progress.compareTo(b.progress),
       'remaining' => _compareText(a.remainingWork, b.remainingWork),
       'depends' => _compareText(
-        a.dependsOnTitles.join(' '),
-        b.dependsOnTitles.join(' '),
-      ),
+          a.dependsOnTitles.join(' '),
+          b.dependsOnTitles.join(' '),
+        ),
       'recovery' => _compareText(a.recoveryPlan, b.recoveryPlan),
       'flags' => a.delayDays.compareTo(b.delayDays),
       _ => _compareWbsTasks(a, b),
@@ -2531,9 +2524,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                                                 itemExtent: _rowHeight,
                                                 itemBuilder: (_, i) =>
                                                     _buildTimelineRow(
-                                                      i,
-                                                      tasks[i],
-                                                    ),
+                                                  i,
+                                                  tasks[i],
+                                                ),
                                               ),
                                               // Win版#131 part 10: イナズマ線 (lightning line)
                                               // 今日時点での進捗実態を zigzag で可視化
@@ -2543,23 +2536,22 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                                                     animation: _rightScroll,
                                                     builder: (context, _) =>
                                                         CustomPaint(
-                                                          painter: _LightningLinePainter(
-                                                            tasks: tasks,
-                                                            dayWidth: _dayWidth,
-                                                            rowHeight:
-                                                                _rowHeight,
-                                                            timelineStart:
-                                                                _timelineStart,
-                                                            today:
-                                                                DateTime.now(),
-                                                            verticalOffset:
-                                                                _rightScroll
+                                                      painter:
+                                                          _LightningLinePainter(
+                                                        tasks: tasks,
+                                                        dayWidth: _dayWidth,
+                                                        rowHeight: _rowHeight,
+                                                        timelineStart:
+                                                            _timelineStart,
+                                                        today: DateTime.now(),
+                                                        verticalOffset:
+                                                            _rightScroll
                                                                     .hasClients
                                                                 ? _rightScroll
-                                                                      .offset
+                                                                    .offset
                                                                 : 0,
-                                                          ),
-                                                        ),
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -2675,18 +2667,16 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     final tasks = _orderedTasks;
     final open = tasks.where((t) => !t.isEffectivelyCompleted).toList();
     final delayed = open.where((t) => t.delayDays > 0).toList();
-    final noNext = open
-        .where((t) => _cleanDisplayText(t.remainingWork) == null)
-        .length;
-    final noAction = open
-        .where((t) => _cleanDisplayText(t.recoveryPlan) == null)
-        .length;
+    final noNext =
+        open.where((t) => _cleanDisplayText(t.remainingWork) == null).length;
+    final noAction =
+        open.where((t) => _cleanDisplayText(t.recoveryPlan) == null).length;
     final blockers = open.where((t) => _visibleBlockers(t).isNotEmpty).length;
     final inverted = open.where((t) => t.hasInvertedSchedule).length;
     final avgProgress = tasks.isEmpty
         ? 0
         : (tasks.fold<int>(0, (sum, t) => sum + t.progress) / tasks.length)
-              .round();
+            .round();
     final dueSoon = open.where((t) {
       final end = t.scheduleEndDate;
       if (end == null) return false;
@@ -2700,8 +2690,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     }
     final ownerSummary = byOwner.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final urgent = [...open]
-      ..sort((a, b) {
+    final urgent = [...open]..sort((a, b) {
         final delay = b.delayDays.compareTo(a.delayDays);
         if (delay != 0) return delay;
         return _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate);
@@ -2937,9 +2926,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     }
     setState(() => _repairLoading = true);
     try {
-      final blockerCount = _orderedTasks
-          .where((t) => _visibleBlockers(t).isNotEmpty)
-          .length;
+      final blockerCount =
+          _orderedTasks.where((t) => _visibleBlockers(t).isNotEmpty).length;
       final resp = await Supabase.instance.client.functions.invoke(
         'tools-hub',
         body: {'action': 'wbs.auto_repair_dependencies'},
@@ -2956,8 +2944,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           content: Text(
             repairs.isEmpty
                 ? blockerCount == 0
-                      ? '✅ ブロック要因はありません。修復不要です'
-                      : '✅ 依存関係は整合済です (修復対象 0 件)'
+                    ? '✅ ブロック要因はありません。修復不要です'
+                    : '✅ 依存関係は整合済です (修復対象 0 件)'
                 : '🔧 ${repairs.length}件を修復し、WBSを再読み込みしました',
           ),
           backgroundColor: const Color(0xFF22C55E),
@@ -3119,12 +3107,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   Widget _buildHeader(int taskCount, int totalCount) {
     final filtered = widget.hideCompleted && totalCount > taskCount;
-    final countLabel = filtered
-        ? '未完了 $taskCount / 全体 $totalCount 件'
-        : '$taskCount タスク';
-    final invertedCount = widget.tasks
-        .where((t) => t.hasInvertedSchedule)
-        .length;
+    final countLabel =
+        filtered ? '未完了 $taskCount / 全体 $totalCount 件' : '$taskCount タスク';
+    final invertedCount =
+        widget.tasks.where((t) => t.hasInvertedSchedule).length;
     return Container(
       color: _panelColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -3149,9 +3135,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           Text(
             countLabel,
             style: TextStyle(
-              color: filtered
-                  ? const Color(0xFFFF6B35)
-                  : const Color(0xFF808090),
+              color:
+                  filtered ? const Color(0xFFFF6B35) : const Color(0xFF808090),
               fontSize: 12,
               fontWeight: filtered ? FontWeight.w600 : FontWeight.normal,
               height: 1.5,
@@ -3578,8 +3563,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           left: isDelayedNoPlan
               ? const BorderSide(color: Color(0xFFEF4444), width: 3)
               : isDelayed
-              ? const BorderSide(color: Color(0xFFF97316), width: 3)
-              : BorderSide.none,
+                  ? const BorderSide(color: Color(0xFFF97316), width: 3)
+                  : BorderSide.none,
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -3746,8 +3731,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               message: task.hasInvertedSchedule
                   ? '完了予定: ${_formatDate(task.scheduleEndDate)}\n元データは開始 ${_formatDate(task.rawScheduleStartDate)} > 完了 ${_formatDate(task.rawScheduleEndDate)} のため補正表示'
                   : task.delayDays > 0
-                  ? '完了予定: ${_formatDate(task.scheduleEndDate)} (${task.delayDays}日遅延)'
-                  : '完了予定: ${_formatDate(task.scheduleEndDate)}',
+                      ? '完了予定: ${_formatDate(task.scheduleEndDate)} (${task.delayDays}日遅延)'
+                      : '完了予定: ${_formatDate(task.scheduleEndDate)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['endDate'] ?? 80,
@@ -3757,8 +3742,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                     color: task.hasInvertedSchedule
                         ? const Color(0xFFFBBF24)
                         : task.delayDays > 0
-                        ? const Color(0xFFEF4444)
-                        : const Color(0xFFB0B0C0),
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFFB0B0C0),
                     fontSize: 11,
                     fontWeight: task.hasInvertedSchedule || task.delayDays > 0
                         ? FontWeight.w700
@@ -3790,8 +3775,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                     color: task.progress >= 100
                         ? const Color(0xFF22C55E)
                         : task.progress >= 50
-                        ? const Color(0xFFF97316)
-                        : const Color(0xFFCBD5E1),
+                            ? const Color(0xFFF97316)
+                            : const Color(0xFFCBD5E1),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     height: 1.5,
@@ -3842,8 +3827,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 child: _readableStatusCell(
                   label: _statusActionLabel(task),
                   color: _statusActionColor(task),
-                  onTap:
-                      _cleanDisplayText(task.recoveryPlan) == null &&
+                  onTap: _cleanDisplayText(task.recoveryPlan) == null &&
                           !task.isEffectivelyCompleted
                       ? () => _sendInstructionToInstance(task, 'recovery_plan')
                       : null,
@@ -4113,9 +4097,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
     return Container(
       decoration: BoxDecoration(
-        color: index % 2 == 0
-            ? const Color(0xFF14141C)
-            : const Color(0xFF1A1A24),
+        color:
+            index % 2 == 0 ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
       ),
       child: Stack(
         children: [
@@ -4429,20 +4412,20 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    children: [
-      Icon(icon, color: const Color(0xFFFF6B35), size: 18),
-      const SizedBox(width: 8),
-      Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
-          height: 1.5,
-        ),
-      ),
-    ],
-  );
+        children: [
+          Icon(icon, color: const Color(0xFFFF6B35), size: 18),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              height: 1.5,
+            ),
+          ),
+        ],
+      );
 }
 
 class _EmptyCard extends StatelessWidget {
@@ -4451,23 +4434,23 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
-    margin: const EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      color: const Color(0xFF1A1A1A),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFF2A2A2A)),
-    ),
-    child: Text(
-      message,
-      style: const TextStyle(
-        color: Color(0xFF707070),
-        fontSize: 13,
-        height: 1.5,
-      ),
-      textAlign: TextAlign.center,
-    ),
-  );
+        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF2A2A2A)),
+        ),
+        child: Text(
+          message,
+          style: const TextStyle(
+            color: Color(0xFF707070),
+            fontSize: 13,
+            height: 1.5,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
 }
 
 /// Win版#131 part 10: イナズマ線 (Lightning Line / 進捗実態線)
@@ -4534,13 +4517,10 @@ class _LightningLinePainter extends CustomPainter {
         final barWidth = endX - startX;
         if (barWidth > 0) {
           // 期待進捗
-          final totalDays = t.scheduleEndDate!
-              .difference(t.scheduleStartDate!)
-              .inDays;
-          final passedDays = today
-              .difference(t.scheduleStartDate!)
-              .inDays
-              .clamp(0, totalDays);
+          final totalDays =
+              t.scheduleEndDate!.difference(t.scheduleStartDate!).inDays;
+          final passedDays =
+              today.difference(t.scheduleStartDate!).inDays.clamp(0, totalDays);
           final expected = totalDays > 0 ? passedDays / totalDays : 0.0;
           final actual = t.progress / 100.0;
 
