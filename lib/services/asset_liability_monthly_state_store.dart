@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AssetLiabilityMonthlyState {
   final Map<String, double> paymentOverrides;
+  final Map<String, double> annualRateOverrides;
   final Set<String> paidAccountNames;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
@@ -15,6 +16,7 @@ class AssetLiabilityMonthlyState {
 
   const AssetLiabilityMonthlyState({
     this.paymentOverrides = const <String, double>{},
+    this.annualRateOverrides = const <String, double>{},
     this.paidAccountNames = const <String>{},
     this.paymentSourceAccountIds = const <String, String>{},
     this.cardBillingAccountIds = const <String, String>{},
@@ -23,6 +25,7 @@ class AssetLiabilityMonthlyState {
 
   bool get isEmpty =>
       paymentOverrides.isEmpty &&
+      annualRateOverrides.isEmpty &&
       paidAccountNames.isEmpty &&
       paymentSourceAccountIds.isEmpty &&
       cardBillingAccountIds.isEmpty &&
@@ -32,6 +35,8 @@ class AssetLiabilityMonthlyState {
 class AssetLiabilityMonthlyStateStore {
   static const String paymentPrefsKey =
       'asset_liability_monthly_payment_overrides_v1';
+  static const String annualRatePrefsKey =
+      'asset_liability_monthly_annual_rate_overrides_v1';
   static const String paidPrefsKey = 'asset_liability_paid_accounts_v1';
   static const String paymentSourcePrefsKey =
       'asset_liability_payment_source_accounts_v1';
@@ -58,6 +63,10 @@ class AssetLiabilityMonthlyStateStore {
     return AssetLiabilityMonthlyState(
       paymentOverrides: paymentOverridesForMonth(
         prefs.getString(paymentPrefsKey),
+        monthKey,
+      ),
+      annualRateOverrides: annualRateOverridesForMonth(
+        prefs.getString(annualRatePrefsKey),
         monthKey,
       ),
       paidAccountNames: paidAccountsForMonth(
@@ -103,6 +112,18 @@ class AssetLiabilityMonthlyStateStore {
     }
 
     await prefs.setString(paymentPrefsKey, jsonEncode(allPayments));
+
+    final allAnnualRates = decodePaymentOverrides(
+      prefs.getString(annualRatePrefsKey),
+    );
+    if (state.annualRateOverrides.isEmpty) {
+      allAnnualRates.remove(monthKey);
+    } else {
+      allAnnualRates[monthKey] = Map<String, double>.from(
+        state.annualRateOverrides,
+      );
+    }
+    await prefs.setString(annualRatePrefsKey, jsonEncode(allAnnualRates));
     await prefs.setString(
       paidPrefsKey,
       jsonEncode(_encodePaid(allPaidAccounts)),
@@ -283,6 +304,9 @@ class AssetLiabilityMonthlyStateStore {
     return AssetLiabilityMonthlyState(
       paymentOverrides: Map<String, double>.from(
         previousState.paymentOverrides,
+      ),
+      annualRateOverrides: Map<String, double>.from(
+        previousState.annualRateOverrides,
       ),
       paymentSourceAccountIds: Map<String, String>.from(
         previousState.paymentSourceAccountIds,
@@ -648,6 +672,15 @@ class AssetLiabilityMonthlyStateStore {
     );
   }
 
+  static Map<String, double> annualRateOverridesForMonth(
+    String? raw,
+    String monthKey,
+  ) {
+    return Map<String, double>.from(
+      decodePaymentOverrides(raw)[monthKey] ?? const <String, double>{},
+    );
+  }
+
   static Set<String> paidAccountsForMonth(String? raw, String monthKey) {
     return Set<String>.from(
       decodePaidAccounts(raw)[monthKey] ?? const <String>{},
@@ -695,6 +728,16 @@ class AssetLiabilityMonthlyStateStore {
       }
     }
 
+    final migratedAnnualRates = <String, double>{};
+    for (final entry in state.annualRateOverrides.entries) {
+      final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
+      if (legacyKeyToAccountId.containsKey(entry.key)) {
+        migratedAnnualRates.putIfAbsent(migratedKey, () => entry.value);
+      } else {
+        migratedAnnualRates[migratedKey] = entry.value;
+      }
+    }
+
     final migratedPaidAccounts = <String>{};
     for (final accountKey in state.paidAccountNames) {
       migratedPaidAccounts.add(legacyKeyToAccountId[accountKey] ?? accountKey);
@@ -716,6 +759,7 @@ class AssetLiabilityMonthlyStateStore {
 
     return AssetLiabilityMonthlyState(
       paymentOverrides: migratedPayments,
+      annualRateOverrides: migratedAnnualRates,
       paidAccountNames: migratedPaidAccounts,
       paymentSourceAccountIds: migratedPaymentSources,
       cardBillingAccountIds: migratedCardBillingAccounts,

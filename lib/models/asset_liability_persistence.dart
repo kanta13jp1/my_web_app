@@ -75,6 +75,7 @@ class AssetLiabilityPersistenceSnapshot {
 class AssetLiabilityMonthlyStatePayload {
   final String monthKey;
   final Map<String, double> paymentOverrides;
+  final Map<String, double> annualRateOverrides;
   final Set<String> paidAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
@@ -83,6 +84,7 @@ class AssetLiabilityMonthlyStatePayload {
   const AssetLiabilityMonthlyStatePayload({
     required this.monthKey,
     required this.paymentOverrides,
+    required this.annualRateOverrides,
     required this.paidAccountIds,
     required this.paymentSourceAccountIds,
     required this.cardBillingAccountIds,
@@ -96,6 +98,7 @@ class AssetLiabilityMonthlyStatePayload {
     return AssetLiabilityMonthlyStatePayload(
       monthKey: monthKey,
       paymentOverrides: Map<String, double>.from(state.paymentOverrides),
+      annualRateOverrides: Map<String, double>.from(state.annualRateOverrides),
       paidAccountIds: Set<String>.from(state.paidAccountNames),
       paymentSourceAccountIds: Map<String, String>.from(
         state.paymentSourceAccountIds,
@@ -117,6 +120,9 @@ class AssetLiabilityMonthlyStatePayload {
       paymentOverrides: _readDoubleMap(json, 'payment_overrides') ??
           _readDoubleMap(json, 'paymentOverrides') ??
           const <String, double>{},
+      annualRateOverrides: _readDoubleMap(json, 'annual_rate_overrides') ??
+          _readDoubleMap(json, 'annualRateOverrides') ??
+          const <String, double>{},
       paidAccountIds: _readStringSet(json, 'paid_account_ids') ??
           _readStringSet(json, 'paidAccountIds') ??
           const <String>{},
@@ -136,6 +142,7 @@ class AssetLiabilityMonthlyStatePayload {
   AssetLiabilityMonthlyState toState() {
     return AssetLiabilityMonthlyState(
       paymentOverrides: Map<String, double>.from(paymentOverrides),
+      annualRateOverrides: Map<String, double>.from(annualRateOverrides),
       paidAccountNames: Set<String>.from(paidAccountIds),
       paymentSourceAccountIds: Map<String, String>.from(
         paymentSourceAccountIds,
@@ -154,6 +161,7 @@ class AssetLiabilityMonthlyStatePayload {
       'user_id': userId,
       'month_key': monthKey,
       'payment_overrides': Map<String, double>.from(paymentOverrides),
+      'annual_rate_overrides': Map<String, double>.from(annualRateOverrides),
       'paid_account_ids': (paidAccountIds.toList()..sort()),
       'payment_source_account_ids': Map<String, String>.from(
         paymentSourceAccountIds,

@@ -107,6 +107,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, AssetWatchlistEntry> _watchlistByType = {};
   final Map<String, GlobalKey> _assetRowKeys = <String, GlobalKey>{};
   Map<String, double> _monthlyPaymentOverrides = <String, double>{};
+  Map<String, double> _annualRateOverrides = <String, double>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
   Map<String, String> _paymentSourceAccountIds = <String, String>{};
   Map<String, String> _cardBillingAccountIds = <String, String>{};
@@ -134,6 +135,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetLiabilitySyncAuditLog> _assetLiabilitySyncAuditLogs =
       <AssetLiabilitySyncAuditLog>[];
   final Map<String, TextEditingController> _monthlyPaymentControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _annualRateControllers =
       <String, TextEditingController>{};
 
   // --- グラフデータ ---
@@ -276,6 +279,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void dispose() {
     _controllers.forEach((_, controller) => controller.dispose());
     _monthlyPaymentControllers.forEach((_, controller) => controller.dispose());
+    _annualRateControllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
@@ -829,6 +833,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaymentOverrides = Map<String, double>.from(
           state.paymentOverrides,
         );
+        _annualRateOverrides = Map<String, double>.from(
+          state.annualRateOverrides,
+        );
         _monthlyPaidAccountNames = Set<String>.from(state.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           state.paymentSourceAccountIds,
@@ -855,6 +862,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _loadedAssetLiabilityMonthKey = monthKey;
         _syncMonthlyPaymentControllers();
+        _syncAnnualRateControllers();
       });
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
@@ -884,6 +892,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         month: _now,
         state: AssetLiabilityMonthlyState(
           paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+          annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
           paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
           paymentSourceAccountIds: Map<String, String>.from(
             _paymentSourceAccountIds,
@@ -1193,6 +1202,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
       state: AssetLiabilityMonthlyState(
         paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+        annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
         paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
@@ -1237,6 +1247,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaymentOverrides = Map<String, double>.from(
           migrated.paymentOverrides,
         );
+        _annualRateOverrides = Map<String, double>.from(
+          migrated.annualRateOverrides,
+        );
         _monthlyPaidAccountNames = Set<String>.from(migrated.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           migrated.paymentSourceAccountIds,
@@ -1251,6 +1264,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           migratedDefaultCardBillingAccounts,
         );
         _syncMonthlyPaymentControllers();
+        _syncAnnualRateControllers();
       });
       unawaited(_saveAssetLiabilityMonthlyState());
       unawaited(_saveDefaultPaymentSources());
@@ -1314,6 +1328,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  void _syncAnnualRateControllers() {
+    for (final entry in _annualRateControllers.entries) {
+      final hasOverride = _annualRateOverrides.containsKey(entry.key);
+      final rate = _annualRateOverrides[entry.key];
+      final text = hasOverride && rate != null ? (rate * 100).toString() : '';
+      if (entry.value.text != text) {
+        entry.value.text = text;
+      }
+    }
+  }
+
   TextEditingController _monthlyPaymentControllerFor(
     AssetLiabilityDebtRow row,
   ) {
@@ -1323,6 +1348,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         text: row.manualPaymentAmount == null
             ? ''
             : row.manualPaymentAmount!.round().toString(),
+      ),
+    );
+  }
+
+  TextEditingController _annualRateControllerFor(AssetLiabilityDebtRow row) {
+    return _annualRateControllers.putIfAbsent(
+      row.id,
+      () => TextEditingController(
+        text: _annualRateOverrides[row.id] == null
+            ? ''
+            : (_annualRateOverrides[row.id]! * 100).toString(),
       ),
     );
   }
@@ -1340,10 +1376,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
+  void _updateAnnualRateOverride(String accountId, String rawValue) {
+    final normalized = rawValue.trim();
+    final percent = normalized.isEmpty ? null : double.tryParse(normalized);
+    setState(() {
+      if (percent == null || percent < 0) {
+        _annualRateOverrides.remove(accountId);
+      } else {
+        _annualRateOverrides[accountId] = percent / 100;
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
   void _clearMonthlyPaymentOverride(String accountId) {
     _monthlyPaymentControllers[accountId]?.clear();
     setState(() {
       _monthlyPaymentOverrides.remove(accountId);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _clearAnnualRateOverride(String accountId) {
+    _annualRateControllers[accountId]?.clear();
+    setState(() {
+      _annualRateOverrides.remove(accountId);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
@@ -1498,6 +1555,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _monthlyPaymentOverrides = Map<String, double>.from(
         copied.paymentOverrides,
       );
+      _annualRateOverrides = Map<String, double>.from(
+        copied.annualRateOverrides,
+      );
       _monthlyPaidAccountNames = <String>{};
       _paymentSourceAccountIds = Map<String, String>.from(
         copied.paymentSourceAccountIds,
@@ -1507,6 +1567,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
       _monthlyIncomePlans = incomePlansWithTemplates;
       _syncMonthlyPaymentControllers();
+      _syncAnnualRateControllers();
     });
     unawaited(_saveAssetLiabilityMonthlyState());
     ScaffoldMessenger.of(context).showSnackBar(
@@ -6632,6 +6693,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       latestSnapshot: latestSnapshot,
       baseDate: _now,
       monthlyPaymentOverrides: _monthlyPaymentOverrides,
+      annualRateOverrides: _annualRateOverrides,
       paidAccountNames: _monthlyPaidAccountNames,
       paymentSourceAccountIds: _paymentSourceAccountIds,
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
@@ -9710,7 +9772,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     DataCell(_buildMonthlyPaymentInput(row)),
                     DataCell(_buildPaymentAmountSourceChip(row)),
                     DataCell(_buildPaidCheckbox(row)),
-                    DataCell(Text(_formatManagementPercent(row.annualRate))),
+                    DataCell(_buildAnnualRateInput(row)),
                     DataCell(
                       Text(_formatManagementYen(row.monthlyInterestEstimate)),
                     ),
@@ -9835,6 +9897,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   icon: const Icon(Icons.clear, size: 16),
                   onPressed: () => _clearMonthlyPaymentOverride(row.id),
                 ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnnualRateInput(AssetLiabilityDebtRow row) {
+    final controller = _annualRateControllerFor(row);
+    return SizedBox(
+      width: 120,
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+        ],
+        onChanged: (value) => _updateAnnualRateOverride(row.id, value),
+        decoration: InputDecoration(
+          isDense: true,
+          suffixText: '%',
+          helperText:
+              _annualRateOverrides.containsKey(row.id) ? '手入力を優先' : '推定',
+          suffixIcon: _annualRateOverrides.containsKey(row.id)
+              ? IconButton(
+                  tooltip: '手入力値をクリア',
+                  icon: const Icon(Icons.clear, size: 16),
+                  onPressed: () => _clearAnnualRateOverride(row.id),
+                )
+              : null,
         ),
       ),
     );

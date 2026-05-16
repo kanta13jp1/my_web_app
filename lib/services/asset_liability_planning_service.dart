@@ -48,6 +48,7 @@ class AssetLiabilityPlanningService {
     required Map<String, double> latestSnapshot,
     required DateTime baseDate,
     Map<String, double> monthlyPaymentOverrides = const <String, double>{},
+    Map<String, double> annualRateOverrides = const <String, double>{},
     Set<String> paidAccountNames = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
     Map<String, String> defaultPaymentSourceAccountIds =
@@ -73,6 +74,12 @@ class AssetLiabilityPlanningService {
           (entry) => _classifyAccount(
             name: entry.key.trim(),
             balance: entry.value,
+          ),
+        )
+        .map(
+          (account) => _withAnnualRateOverride(
+            account: account,
+            annualRateOverrides: annualRateOverrides,
           ),
         )
         .toList()
@@ -212,6 +219,34 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : topFourDebtTotal / liabilityTotal.abs(),
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
+    );
+  }
+
+  AssetLiabilityAccount _withAnnualRateOverride({
+    required AssetLiabilityAccount account,
+    required Map<String, double> annualRateOverrides,
+  }) {
+    final overriddenRate = annualRateOverrides[account.id];
+    if (overriddenRate == null || overriddenRate < 0) {
+      return account;
+    }
+    return AssetLiabilityAccount(
+      id: account.id,
+      name: account.name,
+      kind: account.kind,
+      balance: account.balance,
+      paymentDay: account.paymentDay,
+      paymentSourceAccountName: account.paymentSourceAccountName,
+      paymentMethod: account.paymentMethod,
+      paymentMethodLabel: account.paymentMethodLabel,
+      paymentMethodSettingSource: account.paymentMethodSettingSource,
+      billingAccountId: account.billingAccountId,
+      billingAccountName: account.billingAccountName,
+      includedInBillingAccount: account.includedInBillingAccount,
+      annualRate: overriddenRate,
+      minimumPaymentRate: account.minimumPaymentRate,
+      minimumPaymentFloor: account.minimumPaymentFloor,
+      fullPaymentEstimate: account.fullPaymentEstimate,
     );
   }
 
