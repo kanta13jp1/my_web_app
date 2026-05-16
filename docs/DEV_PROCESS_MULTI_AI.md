@@ -7,17 +7,21 @@
 
 ---
 
-## #1787 Current Two-Instance Routing Update (2026-05-13)
+## #2535 Guarded Subagent Routing Update (2026-05-17)
 
-Live owners: Claude Code #1 and Codex #1 only. Do not start old Codex #2/#3,
-PowerShell lane instances, or extra subagents for normal WBS execution. Historical
-tables below are retained as migration context, but this section is the current
-override when a row mentions dormant lanes.
+Live top-level owners: Claude Code #1 and Codex #1 only. Do not start old Codex
+#2/#3 or PowerShell lane instances for normal WBS execution. Guarded child
+subagents are allowed under Claude Code #1 or Codex #1 when they follow
+`docs/SUBAGENT_ORCHESTRATION_POLICY.md`: bounded scope, explicit return
+contract, deterministic validation, resource hygiene, and no independent WBS
+ownership. Historical tables below are retained as migration context, but this
+section is the current override when a row mentions dormant lanes.
 
 | Surface | Current owner | Notes |
 | --- | --- | --- |
 | AI tool release adoption and risk decision | Claude Code #1 | Verify official release notes before adopting Claude Code, Codex CLI, Copilot, Gemini, Cursor, or Devin signals. |
 | Scoped implementation, CI, PR, merge follow-up, and cleanup | Codex #1 | Codex #1 absorbs the old Codex #2 implementation lane for CI, sync, GitHub Actions, Edge Functions, and docs/script PRs. |
+| Guarded subagent orchestration | Lead instance that spawned the worker | Use for isolated research, rubric critique, large-output inspection, memory review, or disjoint scoped implementation. Record subagent evidence in PR/Issue/wrap-up. |
 | GitHub Copilot Custom Agents | Advisory only | Use `.github/agents/README.md` as the design registry. Copilot agents must not merge, deploy, or run side-effecting automation. |
 | Gemini Code Assist / Cursor / Devin signals | Candidate fallback or review input | Use only after local availability and official source verification; never as an extra autonomous project instance. |
 

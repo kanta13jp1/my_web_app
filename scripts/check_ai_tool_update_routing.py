@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check #1787 AI-tool routing docs for the two-instance policy."""
+"""Check #1787/#2535 AI-tool routing docs for owner and subagent policy."""
 
 from __future__ import annotations
 
@@ -18,10 +18,12 @@ REQUIRED_MARKERS: dict[str, tuple[str, ...]] = {
         ".github/agents/README.md",
     ),
     "docs/DEV_PROCESS_MULTI_AI.md": (
-        "#1787 Current Two-Instance Routing Update",
-        "Live owners: Claude Code #1 and Codex #1 only.",
+        "#2535 Guarded Subagent Routing Update",
+        "Live top-level owners: Claude Code #1 and Codex #1 only.",
         "Codex #1 absorbs the old Codex #2 implementation lane",
-        "Do not start old Codex #2/#3",
+        "Do not start old Codex",
+        "subagents are allowed under Claude Code #1 or Codex #1",
+        "docs/SUBAGENT_ORCHESTRATION_POLICY.md",
     ),
     ".github/agents/README.md": (
         "# Copilot Custom Agents Design",
@@ -29,6 +31,13 @@ REQUIRED_MARKERS: dict[str, tuple[str, ...]] = {
         "Claude Code #1 owns adoption decisions",
         "Codex #1 owns scoped implementation PRs",
         "must not merge, deploy, write production data",
+    ),
+    "docs/SUBAGENT_ORCHESTRATION_POLICY.md": (
+        "Guarded Subagent Orchestration Policy",
+        "Claude Code #1 and Codex #1 remain the only",
+        "Subagents are child workers owned by one of",
+        "Do not use subagents when",
+        "Subagent evidence:",
     ),
 }
 
@@ -53,7 +62,7 @@ def main() -> int:
         for item in missing:
             print(item)
         return 1
-    print("#1787 AI-tool routing docs: OK")
+    print("#1787/#2535 AI-tool routing docs: OK")
     return 0
 
 

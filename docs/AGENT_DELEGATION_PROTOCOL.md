@@ -2,12 +2,21 @@
 
 Status: canonical operating protocol / 2026-05-07 / Issue #1568
 
-This project now runs development with exactly two human-operated instances:
+This project runs development with exactly two top-level human-operated
+instances:
 
 - Claude Code #1 (Windows app): planning, architecture, research, product judgment, UX triage, WBS design, review boundaries, and wrap-up.
 - Codex #1 (Windows app): scoped implementation, CI, GitHub PRs, Edge Functions, workflows, branch cleanup, and deterministic verification.
 
-Historical lanes such as PS#1-6, WEB, mobile, Gemini, Copilot, Codex #2, and ad-hoc sub-fleet labels are dormant mappings only. They must not be started as additional live instances unless the user explicitly reactivates them.
+Historical lanes such as PS#1-6, WEB, mobile, Gemini, Copilot, Codex #2, and
+ad-hoc sub-fleet labels are dormant mappings only. They must not be started as
+additional top-level live instances unless the user explicitly reactivates them.
+
+Guarded subagents are permitted as child workers under Claude Code #1 or Codex
+#1. They are not independent project owners. Use them only for bounded,
+task-scoped work such as isolated research, rubric critique, large-output
+inspection, or disjoint implementation. The full policy is
+`docs/SUBAGENT_ORCHESTRATION_POLICY.md`.
 
 ## Routing Rule
 
@@ -28,6 +37,7 @@ Use this decision gate before changing files:
 | Is it implementation, CI, GitHub Actions, Edge Function, SQL, or deterministic UI repair? | Codex owns the PR. | Continue. |
 | Does it touch payments, security, permissions, production data, or user-visible irreversible behavior? | Claude Code approves before Codex ships. | Continue. |
 | Is the task obsolete under the two-instance flow? | Close or supersede the Issue with a comment. | Implement normally. |
+| Would a subagent reduce context noise, run an independent critique, or own a disjoint side task? | Launch a guarded child worker and record the evidence. | Keep the work in the lead session. |
 
 ## Delegation Packet
 
@@ -48,6 +58,7 @@ Every delegated task must include this packet. If any field is unknown, write `T
 - Expected output:
 - Risk triggers that must return to Claude Code:
 - Memory/disk hygiene action for this session:
+- Subagent plan: none / roles, scope, budget, return contract
 
 ## Result Contract
 
@@ -56,6 +67,7 @@ Every delegated task must include this packet. If any field is unknown, write `T
 - PR / Issue links:
 - Remaining risk:
 - Next owner:
+- Subagent evidence:
 ```
 
 ## Write Boundary
@@ -121,3 +133,5 @@ Never clean:
 - Result completeness: enforced by the `Result Contract`.
 - High-risk routing: enforced by the routing gate and risk triggers.
 - Two-instance constraint: canonical roles reduce live human agents to Claude Code #1 and Codex #1.
+- Guarded orchestration: subagents may be child workers under those two leads,
+  with bounded scope, evidence, and cleanup requirements.

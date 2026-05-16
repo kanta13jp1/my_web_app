@@ -21,6 +21,7 @@
 ## 運用 docs
 
 - [`docs/MULTI_INSTANCE_FLEET.md`](docs/MULTI_INSTANCE_FLEET.md) — 2 instance fleet (Win Claude + Win Codex / 旧 12 dormant)
+- [`docs/SUBAGENT_ORCHESTRATION_POLICY.md`](docs/SUBAGENT_ORCHESTRATION_POLICY.md) — guarded child subagents under Claude Code #1 / Codex #1
 - [`docs/AI_FALLBACK_RUNBOOK.md`](docs/AI_FALLBACK_RUNBOOK.md) — quota 超過時 fallback
 - [`docs/DEV_PROCESS_MULTI_AI.md`](docs/DEV_PROCESS_MULTI_AI.md) — AI 振り分け matrix
 - [`docs/SCHEDULE_TASKS.md`](docs/SCHEDULE_TASKS.md) — Schedule cron 自動化

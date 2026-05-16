@@ -30,6 +30,21 @@
 
 **推奨スタート**: ほとんどのユースケースは **Orchestrator-Subagent** から始める. 行き詰まった箇所を観察してから他パターンに進化させる.
 
+## 2026-05-17 Guarded Subagent Update (#2535)
+
+`Orchestrator-Subagent` is now the approved first pattern for short, scoped
+parallel work when it follows `docs/SUBAGENT_ORCHESTRATION_POLICY.md`.
+
+- Claude Code #1 or Codex #1 remains the lead and owns the final decision.
+- Subagents are execution helpers, not persistent project instances or WBS
+  owners.
+- Prefer read-only explorer/reviewer workers before worker subagents that edit
+  files.
+- `Agent Teams` means durable workflows or explicitly reactivated top-level
+  lanes, not ad-hoc spawning of old dormant instances.
+- Record role, scope, validation impact, and cleanup impact in PR/Issue/wrap-up
+  whenever a subagent materially changes the outcome.
+
 ## 関連
 
 - [`docs/AI_FLEET_SYNERGY_PLAYBOOK.md`](AI_FLEET_SYNERGY_PLAYBOOK.md) — fleet 7 原則

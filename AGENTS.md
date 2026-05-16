@@ -53,9 +53,14 @@ same notebook.
 - Codex #1 owns scoped implementation, cross-cutting investigation,
   SQL/migration review, CI, synchronization, operations, Edge Functions,
   GitHub Actions, deterministic automation, branch cleanup, and fix PRs.
-- Historical extra Codex lanes and older PS/WEB/mobile/Gemini/Copilot lanes are
-  dormant labels only. Codex #1 absorbs their implementation and CI duties under
-  the current two-instance flow unless the user explicitly reactivates them.
+- Top-level live instances remain Claude Code #1 and Codex #1. Historical extra
+  Codex lanes and older PS/WEB/mobile/Gemini/Copilot lanes are dormant labels
+  only unless the user explicitly reactivates them as top-level instances.
+- Guarded subagents are now allowed as child workers owned by Claude Code #1 or
+  Codex #1 when they provide isolated context, bounded parallel research,
+  rubric-based critique, or disjoint scoped implementation. Follow
+  `docs/SUBAGENT_ORCHESTRATION_POLICY.md` before launching or accepting their
+  output.
 - Use `docs/AGENT_DELEGATION_PROTOCOL.md` as the current handoff and review
   contract for WBS tasks.
 
@@ -76,6 +81,9 @@ same notebook.
 - Codex #1 should also absorb historical extra-Codex work: red CI, deploy
   unblockers, workflow drift, Edge Function failures, and GitHub/Notion/Slack
   synchronization issues.
+- When using subagents, record their role, scope, result summary, validation
+  impact, and cleanup impact in the PR, Issue comment, or wrap-up. Subagents do
+  not replace deterministic checks or WBS due-date order.
 - If local `SUPABASE_SERVICE_ROLE_KEY` is unavailable, use GitHub Actions
   `WBS Progress Update (manual)` (`wbs-progress-update.yml`) to dispatch one
   `wbs.update_progress` call with task id, progress, status, Issue/PR reference,

@@ -6,6 +6,12 @@
 
 **AI tool update gate (2026-05-07 #1706)**: Claude/Codex/Gemini/Copilot capability claims are verified through official sources and the Claude Code #1 + Codex #1 two-instance flow before adoption.
 
+**Guarded subagent orchestration (2026-05-17 #2535)**: Claude Code #1 and Codex
+#1 remain the only top-level local owners, but bounded child subagents are
+allowed for isolated research, critique, memory review, and disjoint scoped
+implementation. See
+[`SUBAGENT_ORCHESTRATION_POLICY.md`](./SUBAGENT_ORCHESTRATION_POLICY.md).
+
 ---
 
 ## 📌 常時参照ドキュメント

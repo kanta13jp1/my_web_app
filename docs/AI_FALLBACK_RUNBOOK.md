@@ -10,8 +10,12 @@ operating model:
   signals.
 - Codex #1 owns scoped implementation, CI, merge follow-up, WBS sync
   verification, branch/worktree cleanup, and session memory/disk hygiene.
-- Codex #2 and Codex #3 stay historical. Do not start dormant Codex lanes,
-  PowerShell lane instances, or extra subagents to process WBS tasks.
+- Codex #2 and Codex #3 stay historical. Do not start dormant Codex lanes or
+  PowerShell lane instances to process WBS tasks.
+- Guarded subagents are allowed as child workers under Claude Code #1 or Codex
+  #1 when `docs/SUBAGENT_ORCHESTRATION_POLICY.md` permits the pattern. They
+  must not become new WBS owners, bypass approval gates, or leave long-running
+  processes behind.
 - Use `docs/ai-tool-changelog/2026-05.md` as the local source summary and verify
   any release claim against the official source before promoting it into a
   production fallback path.
@@ -25,7 +29,7 @@ Adoption notes for this cycle:
   tool-search friction, but Claude Code #1 must approve any managed-setting or
   plugin-store change.
 - Claude Code v2.1.116 `/resume` speed and MCP startup improvements support
-  long-session recovery, but they do not change the two-instance cap.
+  long-session recovery, but they do not change the top-level two-instance cap.
 - Claude Code v2.1.122 Bedrock service-tier selection and v2.1.108 prompt-cache
   flags are provider-configuration candidates, not default environment changes.
 - OpenAI Codex CLI rust-v0.128.0 persisted `/goal` workflows are a future
