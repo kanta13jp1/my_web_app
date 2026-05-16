@@ -48,6 +48,8 @@ class AssetLiabilityPlanningService {
     required Map<String, double> latestSnapshot,
     required DateTime baseDate,
     Map<String, double> monthlyPaymentOverrides = const <String, double>{},
+    Map<String, double> actualPaymentAmounts = const <String, double>{},
+    Map<String, String> paymentDifferenceReasons = const <String, String>{},
     Set<String> paidAccountNames = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
     Map<String, String> defaultPaymentSourceAccountIds =
@@ -116,6 +118,8 @@ class AssetLiabilityPlanningService {
             account: account,
             liabilityTotal: liabilityTotal,
             monthlyPaymentOverrides: effectiveMonthlyPaymentOverrides,
+            actualPaymentAmounts: actualPaymentAmounts,
+            paymentDifferenceReasons: paymentDifferenceReasons,
             paidAccountNames: paidAccountNames,
             paymentSourceAccountIds: effectivePaymentSourceAccountIds,
             defaultCardBillingAccountIds: defaultCardBillingAccountIds,
@@ -168,6 +172,14 @@ class AssetLiabilityPlanningService {
       0,
       (sum, row) => row.paid ? sum : sum + row.scheduledPaymentAmount,
     );
+    final monthlyActualPaymentTotal = directDebtRows.fold<double>(
+      0,
+      (sum, row) => sum + row.effectivePaidPaymentAmount,
+    );
+    final monthlyPaymentDifferenceTotal = directDebtRows.fold<double>(
+      0,
+      (sum, row) => sum + (row.paymentDifferenceAmount ?? 0),
+    );
     final monthlyUnreceivedIncomeTotal = resolvedIncomePlans.fold<double>(
       0,
       (sum, plan) => plan.received ? sum : sum + plan.amount,
@@ -202,6 +214,8 @@ class AssetLiabilityPlanningService {
       monthlyMinimumPaymentEstimateTotal: monthlyMinimumPaymentEstimateTotal,
       monthlyScheduledPaymentTotal: monthlyScheduledPaymentTotal,
       monthlyUnpaidPaymentTotal: monthlyUnpaidPaymentTotal,
+      monthlyActualPaymentTotal: monthlyActualPaymentTotal,
+      monthlyPaymentDifferenceTotal: monthlyPaymentDifferenceTotal,
       monthlyUnreceivedIncomeTotal: monthlyUnreceivedIncomeTotal,
       cashAfterMinimumPayments: cashAfterScheduledPayments,
       cashAfterScheduledPayments: cashAfterScheduledPayments,
@@ -428,6 +442,8 @@ class AssetLiabilityPlanningService {
     required AssetLiabilityAccount account,
     required double liabilityTotal,
     required Map<String, double> monthlyPaymentOverrides,
+    required Map<String, double> actualPaymentAmounts,
+    required Map<String, String> paymentDifferenceReasons,
     required Set<String> paidAccountNames,
     required Map<String, String> paymentSourceAccountIds,
     required Map<String, String> defaultCardBillingAccountIds,
@@ -450,6 +466,14 @@ class AssetLiabilityPlanningService {
       monthlyPaymentOverrides: monthlyPaymentOverrides,
     );
     final scheduledPayment = manualPayment ?? minimumPayment;
+    final actualPayment = _actualPaymentAmountFor(
+      account: account,
+      actualPaymentAmounts: actualPaymentAmounts,
+    );
+    final paymentDifferenceReason = _paymentDifferenceReasonFor(
+      account: account,
+      paymentDifferenceReasons: paymentDifferenceReasons,
+    );
     final principalPayment = max(0.0, scheduledPayment - interest);
     final afterPayment = -max(0.0, principal + interest - scheduledPayment);
     final paymentSourceAccountId = paymentSourceAccountIds[account.id];
@@ -481,6 +505,8 @@ class AssetLiabilityPlanningService {
       minimumPaymentEstimate: minimumPayment,
       manualPaymentAmount: manualPayment,
       scheduledPaymentAmount: scheduledPayment,
+      actualPaymentAmount: actualPayment,
+      paymentDifferenceReason: paymentDifferenceReason,
       monthlyInterestEstimate: interest,
       principalPaymentEstimate: principalPayment,
       balanceAfterPaymentEstimate: afterPayment,
@@ -846,6 +872,9 @@ class AssetLiabilityPlanningService {
           billingAccountName: null,
           includedInBillingAccount: false,
           paymentAmount: plan.amount,
+          actualPaymentAmount: null,
+          paymentDifferenceAmount: null,
+          paymentDifferenceReason: null,
           paymentAmountEstimated: false,
           paid: false,
           received: plan.received,
@@ -884,6 +913,9 @@ class AssetLiabilityPlanningService {
           billingAccountName: row.billingAccountName,
           includedInBillingAccount: row.includedInBillingAccount,
           paymentAmount: row.scheduledPaymentAmount,
+          actualPaymentAmount: row.actualPaymentAmount,
+          paymentDifferenceAmount: row.paymentDifferenceAmount,
+          paymentDifferenceReason: row.paymentDifferenceReason,
           paymentAmountEstimated: row.paymentAmountEstimated,
           paid: row.paid,
           received: false,
@@ -935,6 +967,9 @@ class AssetLiabilityPlanningService {
             billingAccountName: row.billingAccountName,
             includedInBillingAccount: row.includedInBillingAccount,
             paymentAmount: row.paymentAmount,
+            actualPaymentAmount: row.actualPaymentAmount,
+            paymentDifferenceAmount: row.paymentDifferenceAmount,
+            paymentDifferenceReason: row.paymentDifferenceReason,
             paymentAmountEstimated: row.paymentAmountEstimated,
             paid: row.paid,
             received: row.received,
@@ -1233,6 +1268,32 @@ class AssetLiabilityPlanningService {
       return null;
     }
     return amount;
+  }
+
+  double? _actualPaymentAmountFor({
+    required AssetLiabilityAccount account,
+    required Map<String, double> actualPaymentAmounts,
+  }) {
+    final trimmedName = account.name.trim();
+    final amount = actualPaymentAmounts[account.id] ??
+        actualPaymentAmounts[trimmedName] ??
+        actualPaymentAmounts[account.name];
+    if (amount == null || amount < 0) {
+      return null;
+    }
+    return amount;
+  }
+
+  String? _paymentDifferenceReasonFor({
+    required AssetLiabilityAccount account,
+    required Map<String, String> paymentDifferenceReasons,
+  }) {
+    final trimmedName = account.name.trim();
+    final reason = paymentDifferenceReasons[account.id] ??
+        paymentDifferenceReasons[trimmedName] ??
+        paymentDifferenceReasons[account.name];
+    final trimmed = reason?.trim();
+    return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 
   String _priorityLabel(double annualRate) {

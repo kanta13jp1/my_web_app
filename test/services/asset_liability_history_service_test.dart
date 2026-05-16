@@ -20,6 +20,7 @@ void main() {
           'mobit': 10000,
           'aupay_card': 5000,
         },
+        actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
         paidAccountNames: const <String>{'aupay_card'},
       );
 
@@ -31,7 +32,9 @@ void main() {
 
       expect(snapshot.monthKey, '2026-05');
       expect(snapshot.monthlyScheduledPaymentTotal, 15000);
-      expect(snapshot.monthlyPaidPaymentTotal, 5000);
+      expect(snapshot.monthlyPaidPaymentTotal, 6200);
+      expect(snapshot.monthlyActualPaymentTotal, 6200);
+      expect(snapshot.monthlyPaymentDifferenceTotal, 1200);
       expect(snapshot.monthlyUnpaidPaymentTotal, 10000);
       expect(snapshot.overduePaymentCount, 1);
     });
@@ -189,6 +192,8 @@ void main() {
             monthlyScheduledPaymentTotal: 20000,
             monthlyPaidPaymentTotal: 0,
             monthlyUnpaidPaymentTotal: 20000,
+            monthlyActualPaymentTotal: 21000,
+            monthlyPaymentDifferenceTotal: 1000,
             overduePaymentCount: 0,
           ),
         ],
@@ -197,6 +202,9 @@ void main() {
 
       expect(bundle.monthlyHistoryCsv, contains('対象月,保存日時,資産合計'));
       expect(bundle.monthlyHistoryCsv, contains('2026-05'));
+      expect(bundle.monthlyHistoryCsv, contains('actual_paid_payment_total'));
+      expect(bundle.monthlyHistoryCsv, contains('payment_difference_total'));
+      expect(bundle.monthlyHistoryCsv, contains('21000'));
       expect(bundle.paymentScheduleCsv, contains('支払先'));
       expect(bundle.paymentScheduleCsv, contains('モビット'));
       expect(bundle.paymentScheduleCsv, contains('KDDI'));
@@ -204,6 +212,31 @@ void main() {
       expect(bundle.incomePlansCsv, contains('"Bonus, side income"'));
       expect(bundle.accountCashflowCsv, contains('口座,現在残高'));
       expect(bundle.accountCashflowCsv, contains('bank'));
+    });
+
+    test('exports actual payment difference metadata to payment CSV', () {
+      final workbook = planningService.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'aupay': -10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'aupay_card': 5000},
+        actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
+        paymentDifferenceReasons: const <String, String>{
+          'aupay_card': 'late fee',
+        },
+        paidAccountNames: const <String>{'aupay_card'},
+      );
+
+      final csv = historyService.buildPaymentScheduleCsv(workbook);
+
+      expect(csv, contains('actual_payment_amount'));
+      expect(csv, contains('payment_difference_amount'));
+      expect(csv, contains('payment_difference_reason'));
+      expect(csv, contains('6200'));
+      expect(csv, contains('1200'));
+      expect(csv, contains('late fee'));
     });
 
     test('exports au card-billed payment metadata to payment CSV', () {

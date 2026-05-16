@@ -271,6 +271,8 @@ AssetLiabilityWorkbook _workbook({
     netWorth: 40000,
     monthlyMinimumPaymentEstimateTotal: 10000,
     monthlyScheduledPaymentTotal: 10000,
+    monthlyActualPaymentTotal: 0,
+    monthlyPaymentDifferenceTotal: 0,
     monthlyUnpaidPaymentTotal: 10000,
     monthlyUnreceivedIncomeTotal: 0,
     cashAfterMinimumPayments: 40000,

@@ -23,6 +23,12 @@ void main() {
             'mobit': 70000,
             'kddi_provider': 5764,
           },
+          actualPaymentAmounts: const <String, double>{
+            'kddi_provider': 5764,
+          },
+          paymentDifferenceReasons: const <String, String>{
+            'kddi_provider': 'confirmed bill',
+          },
           paidAccountNames: const <String>{'kddi_provider'},
           paymentSourceAccountIds: const <String, String>{
             'mobit': 'smbc_otsuka',
@@ -48,6 +54,11 @@ void main() {
 
       expect(restored.paymentOverrides['mobit'], 70000);
       expect(restored.paymentOverrides['kddi_provider'], 5764);
+      expect(restored.actualPaymentAmounts['kddi_provider'], 5764);
+      expect(
+        restored.paymentDifferenceReasons['kddi_provider'],
+        'confirmed bill',
+      );
       expect(restored.paidAccountNames, contains('kddi_provider'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
       expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
@@ -102,6 +113,8 @@ void main() {
         monthlyScheduledPaymentTotal: 180000,
         monthlyPaidPaymentTotal: 100000,
         monthlyUnpaidPaymentTotal: 80000,
+        monthlyActualPaymentTotal: 102000,
+        monthlyPaymentDifferenceTotal: 2000,
         overduePaymentCount: 1,
       );
 
@@ -1105,6 +1118,10 @@ void main() {
     test('round-trips monthly state payload', () {
       final state = AssetLiabilityMonthlyState(
         paymentOverrides: const <String, double>{'mobit': 70000},
+        actualPaymentAmounts: const <String, double>{'mobit': 71000},
+        paymentDifferenceReasons: const <String, String>{
+          'mobit': 'fee adjustment',
+        },
         paidAccountNames: const <String>{'kddi_provider'},
         paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
         cardBillingAccountIds: const <String, String>{
@@ -1138,6 +1155,8 @@ void main() {
       expect(row['user_id'], 'user-1');
       expect(row['month_key'], '2026-05');
       expect(restored.paymentOverrides['mobit'], 70000);
+      expect(restored.actualPaymentAmounts['mobit'], 71000);
+      expect(restored.paymentDifferenceReasons['mobit'], 'fee adjustment');
       expect(restored.paidAccountNames, contains('kddi_provider'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
       expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
@@ -1187,6 +1206,8 @@ void main() {
         monthlyScheduledPaymentTotal: 180000,
         monthlyPaidPaymentTotal: 100000,
         monthlyUnpaidPaymentTotal: 80000,
+        monthlyActualPaymentTotal: 102000,
+        monthlyPaymentDifferenceTotal: 2000,
         overduePaymentCount: 1,
       );
       final snapshotRow = AssetLiabilityMonthlySnapshotPayload(
@@ -1200,6 +1221,8 @@ void main() {
       expect(snapshotRow['user_id'], 'user-1');
       expect(restoredSnapshot.monthKey, '2026-05');
       expect(restoredSnapshot.netWorth, -7080000);
+      expect(restoredSnapshot.monthlyActualPaymentTotal, 102000);
+      expect(restoredSnapshot.monthlyPaymentDifferenceTotal, 2000);
       expect(restoredSnapshot.overduePaymentCount, 1);
     });
 
@@ -1516,6 +1539,10 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
 AssetLiabilityMonthlyState _sampleMonthlyState() {
   return AssetLiabilityMonthlyState(
     paymentOverrides: const <String, double>{'mobit': 70000},
+    actualPaymentAmounts: const <String, double>{'kddi_provider': 5764},
+    paymentDifferenceReasons: const <String, String>{
+      'kddi_provider': 'confirmed bill',
+    },
     paidAccountNames: const <String>{'kddi_provider'},
     paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
     cardBillingAccountIds: const <String, String>{

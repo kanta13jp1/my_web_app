@@ -18,6 +18,10 @@ void main() {
         state: AssetLiabilityMonthlyState(
           paymentOverrides: const <String, double>{'モビット': 70000},
           paidAccountNames: const <String>{'auPayカード'},
+          actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
+          paymentDifferenceReasons: const <String, String>{
+            'aupay_card': 'late fee',
+          },
           paymentSourceAccountIds: const <String, String>{
             'mobit': 'custom_bank',
           },
@@ -41,10 +45,14 @@ void main() {
 
       expect(loadedMay.paymentOverrides['モビット'], 70000);
       expect(loadedMay.paidAccountNames, contains('auPayカード'));
+      expect(loadedMay.actualPaymentAmounts['aupay_card'], 6200);
+      expect(loadedMay.paymentDifferenceReasons['aupay_card'], 'late fee');
       expect(loadedMay.paymentSourceAccountIds['mobit'], 'custom_bank');
       expect(loadedMay.cardBillingAccountIds['au'], 'aupay_card');
       expect(loadedMay.incomePlans.single.name, 'Salary');
       expect(loadedJune.paymentOverrides, isEmpty);
+      expect(loadedJune.actualPaymentAmounts, isEmpty);
+      expect(loadedJune.paymentDifferenceReasons, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
@@ -148,6 +156,27 @@ void main() {
       });
     });
 
+    test('migrates actual payment difference keys to stable account ids', () {
+      final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
+        state: const AssetLiabilityMonthlyState(
+          actualPaymentAmounts: <String, double>{'Legacy card': 6200},
+          paymentDifferenceReasons: <String, String>{
+            'Legacy card': 'late fee',
+          },
+        ),
+        legacyKeyToAccountId: const <String, String>{
+          'Legacy card': 'aupay_card',
+        },
+      );
+
+      expect(migrated.actualPaymentAmounts, <String, double>{
+        'aupay_card': 6200,
+      });
+      expect(migrated.paymentDifferenceReasons, <String, String>{
+        'aupay_card': 'late fee',
+      });
+    });
+
     test(
       'copies previous month settings without paid or received state',
       () async {
@@ -198,6 +227,33 @@ void main() {
         expect(loaded.incomePlans.single.received, isFalse);
       },
     );
+
+    test('does not copy actual payments or difference reasons', () async {
+      await store.saveMonth(
+        month: DateTime(2026, 5, 13),
+        state: const AssetLiabilityMonthlyState(
+          paymentOverrides: <String, double>{'mobit': 70000},
+          actualPaymentAmounts: <String, double>{'mobit': 71000},
+          paymentDifferenceReasons: <String, String>{
+            'mobit': 'fee adjustment',
+          },
+          paidAccountNames: <String>{'mobit'},
+        ),
+      );
+
+      final copied = await store.copyPreviousMonthToMonth(
+        DateTime(2026, 6, 10),
+      );
+      final loaded = await store.loadMonth(DateTime(2026, 6, 20));
+
+      expect(copied.paymentOverrides, <String, double>{'mobit': 70000});
+      expect(copied.actualPaymentAmounts, isEmpty);
+      expect(copied.paymentDifferenceReasons, isEmpty);
+      expect(copied.paidAccountNames, isEmpty);
+      expect(loaded.actualPaymentAmounts, isEmpty);
+      expect(loaded.paymentDifferenceReasons, isEmpty);
+      expect(loaded.paidAccountNames, isEmpty);
+    });
 
     test('saves and restores default payment source accounts', () async {
       await store.saveDefaultPaymentSources(const <String, String>{

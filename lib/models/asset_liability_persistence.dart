@@ -77,6 +77,8 @@ class AssetLiabilityPersistenceSnapshot {
 class AssetLiabilityMonthlyStatePayload {
   final String monthKey;
   final Map<String, double> paymentOverrides;
+  final Map<String, double> actualPaymentAmounts;
+  final Map<String, String> paymentDifferenceReasons;
   final Set<String> paidAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
@@ -85,6 +87,8 @@ class AssetLiabilityMonthlyStatePayload {
   const AssetLiabilityMonthlyStatePayload({
     required this.monthKey,
     required this.paymentOverrides,
+    required this.actualPaymentAmounts,
+    required this.paymentDifferenceReasons,
     required this.paidAccountIds,
     required this.paymentSourceAccountIds,
     required this.cardBillingAccountIds,
@@ -98,6 +102,12 @@ class AssetLiabilityMonthlyStatePayload {
     return AssetLiabilityMonthlyStatePayload(
       monthKey: monthKey,
       paymentOverrides: Map<String, double>.from(state.paymentOverrides),
+      actualPaymentAmounts: Map<String, double>.from(
+        state.actualPaymentAmounts,
+      ),
+      paymentDifferenceReasons: Map<String, String>.from(
+        state.paymentDifferenceReasons,
+      ),
       paidAccountIds: Set<String>.from(state.paidAccountNames),
       paymentSourceAccountIds: Map<String, String>.from(
         state.paymentSourceAccountIds,
@@ -119,6 +129,13 @@ class AssetLiabilityMonthlyStatePayload {
       paymentOverrides: _readDoubleMap(json, 'payment_overrides') ??
           _readDoubleMap(json, 'paymentOverrides') ??
           const <String, double>{},
+      actualPaymentAmounts: _readDoubleMap(json, 'actual_payment_amounts') ??
+          _readDoubleMap(json, 'actualPaymentAmounts') ??
+          const <String, double>{},
+      paymentDifferenceReasons:
+          _readStringMap(json, 'payment_difference_reasons') ??
+              _readStringMap(json, 'paymentDifferenceReasons') ??
+              const <String, String>{},
       paidAccountIds: _readStringSet(json, 'paid_account_ids') ??
           _readStringSet(json, 'paidAccountIds') ??
           const <String>{},
@@ -138,6 +155,10 @@ class AssetLiabilityMonthlyStatePayload {
   AssetLiabilityMonthlyState toState() {
     return AssetLiabilityMonthlyState(
       paymentOverrides: Map<String, double>.from(paymentOverrides),
+      actualPaymentAmounts: Map<String, double>.from(actualPaymentAmounts),
+      paymentDifferenceReasons: Map<String, String>.from(
+        paymentDifferenceReasons,
+      ),
       paidAccountNames: Set<String>.from(paidAccountIds),
       paymentSourceAccountIds: Map<String, String>.from(
         paymentSourceAccountIds,
@@ -156,6 +177,12 @@ class AssetLiabilityMonthlyStatePayload {
       'user_id': userId,
       'month_key': monthKey,
       'payment_overrides': Map<String, double>.from(paymentOverrides),
+      'actual_payment_amounts': Map<String, double>.from(
+        actualPaymentAmounts,
+      ),
+      'payment_difference_reasons': Map<String, String>.from(
+        paymentDifferenceReasons,
+      ),
       'paid_account_ids': (paidAccountIds.toList()..sort()),
       'payment_source_account_ids': Map<String, String>.from(
         paymentSourceAccountIds,
@@ -262,6 +289,16 @@ class AssetLiabilityMonthlySnapshotPayload {
             _readDouble(json, 'monthly_unpaid_payment_total') ??
                 _readDouble(json, 'monthlyUnpaidPaymentTotal') ??
                 0,
+        monthlyActualPaymentTotal:
+            _readDouble(json, 'monthly_actual_payment_total') ??
+                _readDouble(json, 'monthlyActualPaymentTotal') ??
+                _readDouble(json, 'monthly_paid_payment_total') ??
+                _readDouble(json, 'monthlyPaidPaymentTotal') ??
+                0,
+        monthlyPaymentDifferenceTotal:
+            _readDouble(json, 'monthly_payment_difference_total') ??
+                _readDouble(json, 'monthlyPaymentDifferenceTotal') ??
+                0,
         overduePaymentCount: _readInt(json, 'overdue_payment_count') ??
             _readInt(json, 'overduePaymentCount') ??
             0,
@@ -285,6 +322,9 @@ class AssetLiabilityMonthlySnapshotPayload {
       'monthly_scheduled_payment_total': snapshot.monthlyScheduledPaymentTotal,
       'monthly_paid_payment_total': snapshot.monthlyPaidPaymentTotal,
       'monthly_unpaid_payment_total': snapshot.monthlyUnpaidPaymentTotal,
+      'monthly_actual_payment_total': snapshot.monthlyActualPaymentTotal,
+      'monthly_payment_difference_total':
+          snapshot.monthlyPaymentDifferenceTotal,
       'overdue_payment_count': snapshot.overduePaymentCount,
       if (timestamp != null) 'updated_at': timestamp,
     };
