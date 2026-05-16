@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-05-15",
+    "date": "2026-05-16",
     "users": {
       "total": 37
     },
@@ -34,6 +34,10 @@
     },
     "recentAchievements": [
       {
+        "title": "Codex #1: asset-management WBS rebalance with AI model benchmark plan",
+        "completed_at": "2026-05-16T05:39:38.410901+00:00"
+      },
+      {
         "title": "Codex #1: video pipeline secret readiness gate (#1724)",
         "completed_at": "2026-05-16T00:00:00+00:00"
       },
@@ -48,13 +52,9 @@
       {
         "title": "Codex #1: Issue #1964 FinTech disruption / Trading x AI seed",
         "completed_at": "2026-05-12T00:00:00+00:00"
-      },
-      {
-        "title": "Codex #1: AI Tool Watch route-to-issue bridge (#1559)",
-        "completed_at": "2026-05-12T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-05-16T08:39:15+09:00",
-  "report_date": "2026-05-16"
+  "fetched_at": "2026-05-17T07:48:09+09:00",
+  "report_date": "2026-05-17"
 }
