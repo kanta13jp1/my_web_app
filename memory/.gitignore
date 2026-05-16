@@ -1,0 +1,3 @@
+# Local Claude/Codex session hygiene logs
+/session_hygiene_log.csv
+/claude-hygiene-tasks/
