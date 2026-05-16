@@ -19,9 +19,11 @@ import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 ///   - updated_at timestamptz not null default now()
 ///
 /// Runtime note:
-/// SharedPreferences remains the primary store until a later repository adapter
-/// enables Supabase reads/writes. UI code should continue to depend on
-/// AssetLiabilityRepository rather than calling Supabase directly.
+/// SharedPreferences remains the primary store while Supabase sync is rolled
+/// out behind feature flags. Supabase reads and production writes are enabled
+/// separately so staging can inspect/restore data before allowing remote
+/// mutation. UI code should continue to depend on AssetLiabilityRepository
+/// rather than calling Supabase directly.
 class AssetLiabilitySupabaseTablePlan {
   static const String monthlyStatesTable = 'asset_liability_monthly_states';
   static const String incomePlansTable = 'asset_liability_income_plans';
