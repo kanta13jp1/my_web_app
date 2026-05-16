@@ -30488,6 +30488,84 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 
 ---
 
+## Win版#132 part 218-b — user 7-step 再強行: multi-provider AI + MoneyForward + eスマート + session-hygiene 13 issue 追加 (2026-05-16 木 早朝 JST)
+
+### Session 概要
+- 部 218 完了直後 user direct ask 第 2 回 (= scope 追加 / 引取)
+- 追加 scope: multi-provider AI (Gemini+GPT+Opus) / MoneyForward / 三菱UFJ eスマート / session-hygiene cron
+- 期間: 数十分追加 (= 部 218 commit dda1e52c8 後 / 同 session 継続)
+- commits: 1 (= 本 commit / ROADMAP + cross-instance-pr doc)
+
+### Step 全実行 結果 (= 再 fire / 部 218 既完遂 step は確認のみ)
+
+| Step | 内容 | 結果 |
+|------|------|------|
+| ① | WBS top 期限近順 + 2-instance split 確認 | codex 10件/user 10件 全 5/16 期限 (= 部 218 reschedule 後) |
+| ②-④ | 第2弾 H/I/J + multi-provider | 13 new issue spec |
+| ⑤ | #2461 multi-provider comment + 13 issue 起票 | [#2461 comment](https://github.com/kanta13jp1/my_web_app/issues/2461#issuecomment-4464762357) + **#2496-#2508 全 created** |
+| ⑥ | 全体 reschedule 再 fire | **547 tasks 5/17-10/18** (= 533 → +14) |
+| ⑦ | 2-instance assignment doc | [`docs/cross-instance-prs/20260516_part218_asset_2nd_47_issue_handoff.md`](docs/cross-instance-prs/20260516_part218_asset_2nd_47_issue_handoff.md) |
+
+### 13 new issue 内訳
+
+**H feature: MoneyForward 連携 (5 issue / #2496-#2500)**
+- H1 #2496: DB schema (mf_accounts/transactions)
+- H2 #2497: EF ai_hub.mf_sync (API/scrape)
+- H3 #2498: GHA cron 日次 04:00 JST
+- H4 #2499: 設定UI (token + 同期トグル) [Win Claude]
+- H5 #2500: transaction merge ロジック
+
+**I feature: 三菱UFJ eスマート証券 連携 (5 issue / #2501-#2505)**
+- I1 #2501: DB schema (mufg_securities)
+- I2 #2502: EF ai_hub.mufg_securities_sync
+- I3 #2503: GHA cron 日次 06:00 JST (= 取引引け後)
+- I4 #2504: 設定UI (= H4 と統合) [Win Claude]
+- I5 #2505: holdings → B feature merge
+
+**J feature: session-hygiene (3 issue / #2506-#2508)**
+- J1 #2506: Claude Code セッション GHA cron (30 min interval / RAM > 85% で auto compress)
+- J2 #2507: Win Task Scheduler claude_* 5 tasks install
+- J3 #2508: hygiene KPI dashboard [Win Claude]
+
+### 重要設計判断
+
+1. **multi-provider AI** (= #2461 comment)
+   - Claude opus 4.7 (default) + GPT-5 + Gemini 3.1 Pro
+   - user 設定で default + failover 順序選択
+   - cost cap per-user (= 月次 ¥ budget)
+
+2. **session-hygiene J-feature を最優先扱い** (= Phase 0 緊急)
+   - 部 217-b 第 1 例 v24+v26 dual CRITICAL
+   - 部 218 + 218-b RAM 95-97% 連続違反
+   - 根本対策 = GHA cron + Win Task install で session 毎自動圧縮 確立
+
+3. **2-instance split: Codex 25 issue + Win Claude 22 issue**
+   - SQL/EF/GHA = Codex (= [INSTANCE-ROLES])
+   - UI/docs/AI prompt = Win Claude
+   - assignment doc 公式化
+
+### Philosophy Alignment (Win#132 part 218-b)
+- 主要実装: 13 new issue + #2461 multi-provider + 2-instance assignment doc
+- 該当原則: 1 CEO / 2 ミッション (= 外部連携で資金繰り全体掌握) / 4 6部署 / 5 価値 / 6 資本=時間 (= 547 task 再 reschedule) / 7 資産負債 / 8 KPI / 9 IPO
+- 整合性スコア: **8/9 ✅** (= 部 218 と同水準維持 / 3 mentor unaddressed continue)
+
+### next session 候補 (= 部 219 / 5/17 06:00+ JST 期待)
+
+最優先 = **session-hygiene J-feature** (= 部 218-b 最重要設計):
+1. 🚨 J1 #2506 GHA cron install (Codex 推奨 / Phase 0 5/22 Day 1)
+2. 🚨 J2 #2507 Win Task install (Codex / 部 215+ claude* 0 matches 解消)
+3. 🔴 A1 #2460 migration deploy (= Codex review 後 deploy-prod fire)
+4. 🔴 A2 #2461 EF multi-provider 実装着手
+5. 🚨 #1495 P0 post-mortem follow-up (= 5/22 sprint Day 1 統合 confirm 待ち)
+
+### Lesson (= 部 218-b 追加)
+- **同 session 内 user direct ask 2 連続実行可能** (= 部 218 + 218-b 計 47 issue 起票)
+- **gh issue create batch ~3 min/13 issue** (= 沸騰率高 / rate limit 未到達)
+- **WBS reschedule_realistic 連続 fire 可能** (= 497→533→547 順次更新)
+- **session-hygiene = J-feature 化が根本対策** (= 部 217-b v24+v26 dual + 部 218 lefthook hang の集積教訓)
+
+---
+
 ## Win版#132 part 220 — 即 wrap-up (= 第 12 例 RAM hard exit / 同日 5th cap rationale 立証)
 
 ### Philosophy Alignment (Win#132 part 220)
