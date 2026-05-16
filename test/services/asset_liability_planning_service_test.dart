@@ -211,6 +211,52 @@ void main() {
       );
     });
 
+    test('uses actual paid amount for paid rows and keeps unpaid planned', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'aupay': -10000,
+          'paypay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'aupay_card': 5000,
+          'paypay_card': 8000,
+        },
+        actualPaymentAmounts: const <String, double>{
+          'aupay_card': 6200,
+          'paypay_card': 9000,
+        },
+        paymentDifferenceReasons: const <String, String>{
+          'aupay_card': 'late fee',
+        },
+        paidAccountNames: const <String>{'aupay_card'},
+      );
+
+      final auPay = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'aupay_card',
+      );
+      final payPay = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'paypay_card',
+      );
+      final auPayCashflow = workbook.cashflowRows.firstWhere(
+        (row) => row.accountId == 'aupay_card',
+      );
+
+      expect(auPay.scheduledPaymentAmount, 5000);
+      expect(auPay.actualPaymentAmount, 6200);
+      expect(auPay.effectivePaidPaymentAmount, 6200);
+      expect(auPay.paymentDifferenceAmount, 1200);
+      expect(auPay.paymentDifferenceReason, 'late fee');
+      expect(auPayCashflow.actualPaymentAmount, 6200);
+      expect(auPayCashflow.paymentDifferenceAmount, 1200);
+      expect(payPay.paid, isFalse);
+      expect(payPay.paymentDifferenceAmount, isNull);
+      expect(workbook.monthlyActualPaymentTotal, 6200);
+      expect(workbook.monthlyPaymentDifferenceTotal, 1200);
+      expect(workbook.monthlyUnpaidPaymentTotal, 8000);
+    });
+
     test(
       'treats au as auPay card-billed detail without direct subtraction',
       () {

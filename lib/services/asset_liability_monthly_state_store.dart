@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AssetLiabilityMonthlyState {
   final Map<String, double> paymentOverrides;
+  final Map<String, double> actualPaymentAmounts;
+  final Map<String, String> paymentDifferenceReasons;
   final Set<String> paidAccountNames;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
@@ -15,6 +17,8 @@ class AssetLiabilityMonthlyState {
 
   const AssetLiabilityMonthlyState({
     this.paymentOverrides = const <String, double>{},
+    this.actualPaymentAmounts = const <String, double>{},
+    this.paymentDifferenceReasons = const <String, String>{},
     this.paidAccountNames = const <String>{},
     this.paymentSourceAccountIds = const <String, String>{},
     this.cardBillingAccountIds = const <String, String>{},
@@ -23,6 +27,8 @@ class AssetLiabilityMonthlyState {
 
   bool get isEmpty =>
       paymentOverrides.isEmpty &&
+      actualPaymentAmounts.isEmpty &&
+      paymentDifferenceReasons.isEmpty &&
       paidAccountNames.isEmpty &&
       paymentSourceAccountIds.isEmpty &&
       cardBillingAccountIds.isEmpty &&
@@ -32,6 +38,10 @@ class AssetLiabilityMonthlyState {
 class AssetLiabilityMonthlyStateStore {
   static const String paymentPrefsKey =
       'asset_liability_monthly_payment_overrides_v1';
+  static const String actualPaymentPrefsKey =
+      'asset_liability_monthly_actual_payments_v1';
+  static const String paymentDifferenceReasonPrefsKey =
+      'asset_liability_monthly_payment_difference_reasons_v1';
   static const String paidPrefsKey = 'asset_liability_paid_accounts_v1';
   static const String paymentSourcePrefsKey =
       'asset_liability_payment_source_accounts_v1';
@@ -58,6 +68,14 @@ class AssetLiabilityMonthlyStateStore {
     return AssetLiabilityMonthlyState(
       paymentOverrides: paymentOverridesForMonth(
         prefs.getString(paymentPrefsKey),
+        monthKey,
+      ),
+      actualPaymentAmounts: actualPaymentAmountsForMonth(
+        prefs.getString(actualPaymentPrefsKey),
+        monthKey,
+      ),
+      paymentDifferenceReasons: paymentDifferenceReasonsForMonth(
+        prefs.getString(paymentDifferenceReasonPrefsKey),
         monthKey,
       ),
       paidAccountNames: paidAccountsForMonth(
@@ -95,6 +113,28 @@ class AssetLiabilityMonthlyStateStore {
       allPayments[monthKey] = Map<String, double>.from(state.paymentOverrides);
     }
 
+    final allActualPayments = decodePaymentOverrides(
+      prefs.getString(actualPaymentPrefsKey),
+    );
+    if (state.actualPaymentAmounts.isEmpty) {
+      allActualPayments.remove(monthKey);
+    } else {
+      allActualPayments[monthKey] = Map<String, double>.from(
+        state.actualPaymentAmounts,
+      );
+    }
+
+    final allPaymentDifferenceReasons = decodePaymentDifferenceReasons(
+      prefs.getString(paymentDifferenceReasonPrefsKey),
+    );
+    if (state.paymentDifferenceReasons.isEmpty) {
+      allPaymentDifferenceReasons.remove(monthKey);
+    } else {
+      allPaymentDifferenceReasons[monthKey] = Map<String, String>.from(
+        state.paymentDifferenceReasons,
+      );
+    }
+
     final allPaidAccounts = decodePaidAccounts(prefs.getString(paidPrefsKey));
     if (state.paidAccountNames.isEmpty) {
       allPaidAccounts.remove(monthKey);
@@ -103,6 +143,11 @@ class AssetLiabilityMonthlyStateStore {
     }
 
     await prefs.setString(paymentPrefsKey, jsonEncode(allPayments));
+    await prefs.setString(actualPaymentPrefsKey, jsonEncode(allActualPayments));
+    await prefs.setString(
+      paymentDifferenceReasonPrefsKey,
+      jsonEncode(allPaymentDifferenceReasons),
+    );
     await prefs.setString(
       paidPrefsKey,
       jsonEncode(_encodePaid(allPaidAccounts)),
@@ -373,6 +418,32 @@ class AssetLiabilityMonthlyStateStore {
     });
   }
 
+  static Map<String, Map<String, String>> decodePaymentDifferenceReasons(
+    String? raw,
+  ) {
+    if (raw == null || raw.trim().isEmpty) {
+      return <String, Map<String, String>>{};
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      return <String, Map<String, String>>{};
+    }
+
+    return decoded.map<String, Map<String, String>>((month, values) {
+      final monthKey = month.toString();
+      final reasons = <String, String>{};
+      if (values is Map) {
+        for (final entry in values.entries) {
+          final reason = entry.value.toString().trim();
+          if (reason.isNotEmpty) {
+            reasons[entry.key.toString()] = reason;
+          }
+        }
+      }
+      return MapEntry(monthKey, reasons);
+    });
+  }
+
   static Map<String, Set<String>> decodePaidAccounts(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
       return <String, Set<String>>{};
@@ -578,6 +649,12 @@ class AssetLiabilityMonthlyStateStore {
       final monthlyUnpaidPaymentTotal = _parseNonNullDouble(
         rawSnapshot['monthlyUnpaidPaymentTotal'],
       );
+      final monthlyActualPaymentTotal = _parseNonNullDouble(
+        rawSnapshot['monthlyActualPaymentTotal'],
+      );
+      final monthlyPaymentDifferenceTotal = _parseNonNullDouble(
+        rawSnapshot['monthlyPaymentDifferenceTotal'],
+      );
       final overduePaymentCount = _parseNonNullInt(
         rawSnapshot['overduePaymentCount'],
       );
@@ -605,6 +682,9 @@ class AssetLiabilityMonthlyStateStore {
           monthlyScheduledPaymentTotal: monthlyScheduledPaymentTotal,
           monthlyPaidPaymentTotal: monthlyPaidPaymentTotal,
           monthlyUnpaidPaymentTotal: monthlyUnpaidPaymentTotal,
+          monthlyActualPaymentTotal:
+              monthlyActualPaymentTotal ?? monthlyPaidPaymentTotal,
+          monthlyPaymentDifferenceTotal: monthlyPaymentDifferenceTotal ?? 0,
           overduePaymentCount: overduePaymentCount,
         ),
       );
@@ -645,6 +725,24 @@ class AssetLiabilityMonthlyStateStore {
   ) {
     return Map<String, double>.from(
       decodePaymentOverrides(raw)[monthKey] ?? const <String, double>{},
+    );
+  }
+
+  static Map<String, double> actualPaymentAmountsForMonth(
+    String? raw,
+    String monthKey,
+  ) {
+    return Map<String, double>.from(
+      decodePaymentOverrides(raw)[monthKey] ?? const <String, double>{},
+    );
+  }
+
+  static Map<String, String> paymentDifferenceReasonsForMonth(
+    String? raw,
+    String monthKey,
+  ) {
+    return Map<String, String>.from(
+      decodePaymentDifferenceReasons(raw)[monthKey] ?? const <String, String>{},
     );
   }
 
@@ -695,6 +793,22 @@ class AssetLiabilityMonthlyStateStore {
       }
     }
 
+    final migratedActualPayments = <String, double>{};
+    for (final entry in state.actualPaymentAmounts.entries) {
+      final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
+      if (legacyKeyToAccountId.containsKey(entry.key)) {
+        migratedActualPayments.putIfAbsent(migratedKey, () => entry.value);
+      } else {
+        migratedActualPayments[migratedKey] = entry.value;
+      }
+    }
+
+    final migratedDifferenceReasons = <String, String>{};
+    for (final entry in state.paymentDifferenceReasons.entries) {
+      final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
+      migratedDifferenceReasons[migratedKey] = entry.value;
+    }
+
     final migratedPaidAccounts = <String>{};
     for (final accountKey in state.paidAccountNames) {
       migratedPaidAccounts.add(legacyKeyToAccountId[accountKey] ?? accountKey);
@@ -716,6 +830,8 @@ class AssetLiabilityMonthlyStateStore {
 
     return AssetLiabilityMonthlyState(
       paymentOverrides: migratedPayments,
+      actualPaymentAmounts: migratedActualPayments,
+      paymentDifferenceReasons: migratedDifferenceReasons,
       paidAccountNames: migratedPaidAccounts,
       paymentSourceAccountIds: migratedPaymentSources,
       cardBillingAccountIds: migratedCardBillingAccounts,
@@ -773,6 +889,9 @@ class AssetLiabilityMonthlyStateStore {
           'monthlyScheduledPaymentTotal': snapshot.monthlyScheduledPaymentTotal,
           'monthlyPaidPaymentTotal': snapshot.monthlyPaidPaymentTotal,
           'monthlyUnpaidPaymentTotal': snapshot.monthlyUnpaidPaymentTotal,
+          'monthlyActualPaymentTotal': snapshot.monthlyActualPaymentTotal,
+          'monthlyPaymentDifferenceTotal':
+              snapshot.monthlyPaymentDifferenceTotal,
           'overduePaymentCount': snapshot.overduePaymentCount,
         },
     ];

@@ -109,6 +109,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, AssetWatchlistEntry> _watchlistByType = {};
   final Map<String, GlobalKey> _assetRowKeys = <String, GlobalKey>{};
   Map<String, double> _monthlyPaymentOverrides = <String, double>{};
+  Map<String, double> _actualPaymentAmounts = <String, double>{};
+  Map<String, String> _paymentDifferenceReasons = <String, String>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
   Map<String, String> _paymentSourceAccountIds = <String, String>{};
   Map<String, String> _cardBillingAccountIds = <String, String>{};
@@ -136,6 +138,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetLiabilitySyncAuditLog> _assetLiabilitySyncAuditLogs =
       <AssetLiabilitySyncAuditLog>[];
   final Map<String, TextEditingController> _monthlyPaymentControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _actualPaymentControllers =
+      <String, TextEditingController>{};
+  final Map<String, TextEditingController> _paymentDifferenceReasonControllers =
       <String, TextEditingController>{};
 
   // --- グラフデータ ---
@@ -278,6 +284,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   void dispose() {
     _controllers.forEach((_, controller) => controller.dispose());
     _monthlyPaymentControllers.forEach((_, controller) => controller.dispose());
+    _actualPaymentControllers.forEach((_, controller) => controller.dispose());
+    _paymentDifferenceReasonControllers.forEach(
+      (_, controller) => controller.dispose(),
+    );
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
@@ -832,6 +842,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaymentOverrides = Map<String, double>.from(
           state.paymentOverrides,
         );
+        _actualPaymentAmounts = Map<String, double>.from(
+          state.actualPaymentAmounts,
+        );
+        _paymentDifferenceReasons = Map<String, String>.from(
+          state.paymentDifferenceReasons,
+        );
         _monthlyPaidAccountNames = Set<String>.from(state.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           state.paymentSourceAccountIds,
@@ -857,7 +873,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           syncAuditLogs,
         );
         _loadedAssetLiabilityMonthKey = monthKey;
-        _syncMonthlyPaymentControllers();
+        _syncPaymentStateControllers();
       });
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
@@ -886,6 +902,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       month: _now,
       state: AssetLiabilityMonthlyState(
         paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+        actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
+        paymentDifferenceReasons: Map<String, String>.from(
+          _paymentDifferenceReasons,
+        ),
         paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
@@ -1198,6 +1218,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
       state: AssetLiabilityMonthlyState(
         paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+        actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
+        paymentDifferenceReasons: Map<String, String>.from(
+          _paymentDifferenceReasons,
+        ),
         paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
@@ -1216,6 +1240,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       legacyKeyToAccountId,
     );
     if (_sameDoubleMap(_monthlyPaymentOverrides, migrated.paymentOverrides) &&
+        _sameDoubleMap(_actualPaymentAmounts, migrated.actualPaymentAmounts) &&
+        _sameStringMap(
+          _paymentDifferenceReasons,
+          migrated.paymentDifferenceReasons,
+        ) &&
         _sameStringSet(_monthlyPaidAccountNames, migrated.paidAccountNames) &&
         _sameStringMap(
           _paymentSourceAccountIds,
@@ -1242,6 +1271,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaymentOverrides = Map<String, double>.from(
           migrated.paymentOverrides,
         );
+        _actualPaymentAmounts = Map<String, double>.from(
+          migrated.actualPaymentAmounts,
+        );
+        _paymentDifferenceReasons = Map<String, String>.from(
+          migrated.paymentDifferenceReasons,
+        );
         _monthlyPaidAccountNames = Set<String>.from(migrated.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           migrated.paymentSourceAccountIds,
@@ -1255,7 +1290,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _defaultCardBillingAccountIds = Map<String, String>.from(
           migratedDefaultCardBillingAccounts,
         );
-        _syncMonthlyPaymentControllers();
+        _syncPaymentStateControllers();
       });
       unawaited(_saveAssetLiabilityMonthlyState());
       unawaited(_saveDefaultPaymentSources());
@@ -1307,12 +1342,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return true;
   }
 
+  void _syncPaymentStateControllers() {
+    _syncMonthlyPaymentControllers();
+    _syncActualPaymentControllers();
+    _syncPaymentDifferenceReasonControllers();
+  }
+
   void _syncMonthlyPaymentControllers() {
     for (final entry in _monthlyPaymentControllers.entries) {
       final hasOverride = _monthlyPaymentOverrides.containsKey(entry.key);
       final amount = _monthlyPaymentOverrides[entry.key];
       final text =
           hasOverride && amount != null ? amount.round().toString() : '';
+      if (entry.value.text != text) {
+        entry.value.text = text;
+      }
+    }
+  }
+
+  void _syncActualPaymentControllers() {
+    for (final entry in _actualPaymentControllers.entries) {
+      final hasAmount = _actualPaymentAmounts.containsKey(entry.key);
+      final amount = _actualPaymentAmounts[entry.key];
+      final text = hasAmount && amount != null ? amount.round().toString() : '';
+      if (entry.value.text != text) {
+        entry.value.text = text;
+      }
+    }
+  }
+
+  void _syncPaymentDifferenceReasonControllers() {
+    for (final entry in _paymentDifferenceReasonControllers.entries) {
+      final text = _paymentDifferenceReasons[entry.key] ?? '';
       if (entry.value.text != text) {
         entry.value.text = text;
       }
@@ -1329,6 +1390,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ? ''
             : row.manualPaymentAmount!.round().toString(),
       ),
+    );
+  }
+
+  TextEditingController _actualPaymentControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _actualPaymentControllers.putIfAbsent(
+      row.id,
+      () => TextEditingController(
+        text: row.actualPaymentAmount == null
+            ? ''
+            : row.actualPaymentAmount!.round().toString(),
+      ),
+    );
+  }
+
+  TextEditingController _paymentDifferenceReasonControllerFor(
+    AssetLiabilityDebtRow row,
+  ) {
+    return _paymentDifferenceReasonControllers.putIfAbsent(
+      row.id,
+      () => TextEditingController(text: row.paymentDifferenceReason ?? ''),
     );
   }
 
@@ -1353,13 +1436,50 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
-  Future<void> _toggleMonthlyPaymentPaid(String accountId, bool paid) async {
+  void _updateActualPaymentAmount(String accountId, String rawValue) {
+    final normalized = rawValue.replaceAll(',', '').trim();
+    final amount = normalized.isEmpty ? null : double.tryParse(normalized);
+    setState(() {
+      if (amount == null || amount < 0) {
+        _actualPaymentAmounts.remove(accountId);
+      } else {
+        _actualPaymentAmounts[accountId] = amount;
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _updatePaymentDifferenceReason(String accountId, String rawValue) {
+    final reason = rawValue.trim();
+    setState(() {
+      if (reason.isEmpty) {
+        _paymentDifferenceReasons.remove(accountId);
+      } else {
+        _paymentDifferenceReasons[accountId] = reason;
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  Future<void> _toggleMonthlyPaymentPaid(
+    AssetLiabilityDebtRow row,
+    bool paid,
+  ) async {
     final previousPaidAccountNames = Set<String>.from(_monthlyPaidAccountNames);
+    final previousActualPaymentAmounts = Map<String, double>.from(
+      _actualPaymentAmounts,
+    );
     setState(() {
       if (paid) {
-        _monthlyPaidAccountNames.add(accountId);
+        _monthlyPaidAccountNames.add(row.id);
+        _actualPaymentAmounts.putIfAbsent(
+          row.id,
+          () => row.scheduledPaymentAmount,
+        );
+        _actualPaymentControllers[row.id]?.text =
+            _actualPaymentAmounts[row.id]!.round().toString();
       } else {
-        _monthlyPaidAccountNames.remove(accountId);
+        _monthlyPaidAccountNames.remove(row.id);
       }
     });
     try {
@@ -1369,6 +1489,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return;
       setState(() {
         _monthlyPaidAccountNames = previousPaidAccountNames;
+        _actualPaymentAmounts = previousActualPaymentAmounts;
+        _syncActualPaymentControllers();
       });
       ScaffoldMessenger.of(
         context,
@@ -1515,6 +1637,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _monthlyPaymentOverrides = Map<String, double>.from(
         copied.paymentOverrides,
       );
+      _actualPaymentAmounts = <String, double>{};
+      _paymentDifferenceReasons = <String, String>{};
       _monthlyPaidAccountNames = <String>{};
       _paymentSourceAccountIds = Map<String, String>.from(
         copied.paymentSourceAccountIds,
@@ -1523,7 +1647,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         copied.cardBillingAccountIds,
       );
       _monthlyIncomePlans = incomePlansWithTemplates;
-      _syncMonthlyPaymentControllers();
+      _syncPaymentStateControllers();
     });
     unawaited(_saveAssetLiabilityMonthlyState());
     ScaffoldMessenger.of(context).showSnackBar(
@@ -6649,6 +6773,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       latestSnapshot: latestSnapshot,
       baseDate: _now,
       monthlyPaymentOverrides: _monthlyPaymentOverrides,
+      actualPaymentAmounts: _actualPaymentAmounts,
+      paymentDifferenceReasons: _paymentDifferenceReasons,
       paidAccountNames: _monthlyPaidAccountNames,
       paymentSourceAccountIds: _paymentSourceAccountIds,
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
@@ -9537,6 +9663,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   DataColumn(label: Text('実支払済み'), numeric: true),
                   DataColumn(label: Text('未払い'), numeric: true),
                   DataColumn(label: Text('期限超過'), numeric: true),
+                  DataColumn(label: Text('actual paid'), numeric: true),
+                  DataColumn(label: Text('planned/actual diff'), numeric: true),
                 ],
                 rows: [
                   for (final comparison in comparisons)
@@ -9611,6 +9739,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Text(
                             _formatManagementYen(
                               comparison.snapshot.monthlyUnpaidPaymentTotal,
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            _formatManagementYen(
+                              comparison.snapshot.monthlyActualPaymentTotal,
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            _formatManagementYen(
+                              comparison.snapshot.monthlyPaymentDifferenceTotal,
                             ),
                           ),
                         ),
@@ -9706,6 +9848,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               dataRowMinHeight: 60,
               dataRowMaxHeight: 76,
               columns: const [
+                DataColumn(label: Text('actual payment'), numeric: true),
+                DataColumn(label: Text('difference'), numeric: true),
+                DataColumn(label: Text('difference reason')),
                 DataColumn(
                   label: Text('\u8a2d\u5b9a\u5143/\u4fdd\u5b58\u5148'),
                 ),
@@ -9726,6 +9871,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 for (final row in rows)
                   DataRow(
                     cells: [
+                      DataCell(_buildActualPaymentInput(row)),
+                      DataCell(_buildPaymentDifferenceCell(row)),
+                      DataCell(_buildPaymentDifferenceReasonInput(row)),
                       DataCell(_buildPaymentMethodScopeControl(row)),
                       DataCell(_buildPaymentMethodDropdown(row, workbook)),
                       DataCell(Text(row.name)),
@@ -9873,6 +10021,81 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _buildActualPaymentInput(AssetLiabilityDebtRow row) {
+    if (row.includedInBillingAccount) {
+      return _buildTextStatusChip(
+        label: AssetLiabilityPlanningService.cardBillingIncludedLabel,
+        color: const Color(0xFF2563EB),
+      );
+    }
+    final controller = _actualPaymentControllerFor(row);
+    return SizedBox(
+      width: 140,
+      child: TextField(
+        controller: controller,
+        enabled: row.paid,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9,]'))],
+        onChanged: (value) => _updateActualPaymentAmount(row.id, value),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: row.paid
+              ? _formatManagementYen(row.scheduledPaymentAmount)
+              : 'paid only',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentDifferenceCell(AssetLiabilityDebtRow row) {
+    if (row.includedInBillingAccount) {
+      return const Text('-');
+    }
+    final difference = row.paymentDifferenceAmount;
+    if (difference == null) {
+      return Text(
+        row.paid ? _formatManagementYen(0) : '-',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontSize: 12,
+        ),
+      );
+    }
+    final color = difference == 0
+        ? const Color(0xFF64748B)
+        : difference > 0
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF0D9488);
+    final prefix = difference > 0 ? '+' : '';
+    return Text(
+      '$prefix${_formatManagementYen(difference)}',
+      style: TextStyle(
+        color: color,
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+      ),
+    );
+  }
+
+  Widget _buildPaymentDifferenceReasonInput(AssetLiabilityDebtRow row) {
+    if (row.includedInBillingAccount) {
+      return const Text('-');
+    }
+    final controller = _paymentDifferenceReasonControllerFor(row);
+    return SizedBox(
+      width: 190,
+      child: TextField(
+        controller: controller,
+        enabled: row.paid,
+        onChanged: (value) => _updatePaymentDifferenceReason(row.id, value),
+        decoration: const InputDecoration(
+          isDense: true,
+          hintText: 'reason',
+        ),
+      ),
+    );
+  }
+
   Widget _buildPaymentAmountSourceChip(AssetLiabilityDebtRow row) {
     if (row.includedInBillingAccount) {
       return _buildTextStatusChip(
@@ -9912,7 +10135,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Checkbox(
       value: row.paid,
       onChanged: (value) {
-        unawaited(_toggleMonthlyPaymentPaid(row.id, value ?? false));
+        unawaited(_toggleMonthlyPaymentPaid(row, value ?? false));
       },
     );
   }

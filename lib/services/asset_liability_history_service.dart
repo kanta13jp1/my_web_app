@@ -14,7 +14,13 @@ class AssetLiabilityHistoryService {
     final paidPaymentTotal = workbook.debtMasterRows.fold<double>(
       0,
       (sum, row) => row.isDirectCashflowTarget && row.paid
-          ? sum + row.scheduledPaymentAmount
+          ? sum + row.effectivePaidPaymentAmount
+          : sum,
+    );
+    final paymentDifferenceTotal = workbook.debtMasterRows.fold<double>(
+      0,
+      (sum, row) => row.isDirectCashflowTarget
+          ? sum + (row.paymentDifferenceAmount ?? 0)
           : sum,
     );
     final overduePaymentCount = workbook.cashflowRows
@@ -31,6 +37,8 @@ class AssetLiabilityHistoryService {
       monthlyScheduledPaymentTotal: workbook.monthlyScheduledPaymentTotal,
       monthlyPaidPaymentTotal: paidPaymentTotal,
       monthlyUnpaidPaymentTotal: workbook.monthlyUnpaidPaymentTotal,
+      monthlyActualPaymentTotal: workbook.monthlyActualPaymentTotal,
+      monthlyPaymentDifferenceTotal: paymentDifferenceTotal,
       overduePaymentCount: overduePaymentCount,
     );
   }
@@ -157,6 +165,8 @@ class AssetLiabilityHistoryService {
         '実支払済み総額',
         '未払い総額',
         '期限超過件数',
+        'actual_paid_payment_total',
+        'payment_difference_total',
       ],
       for (final snapshot in sorted)
         <Object?>[
@@ -170,6 +180,8 @@ class AssetLiabilityHistoryService {
           snapshot.monthlyPaidPaymentTotal,
           snapshot.monthlyUnpaidPaymentTotal,
           snapshot.overduePaymentCount,
+          snapshot.monthlyActualPaymentTotal,
+          snapshot.monthlyPaymentDifferenceTotal,
         ],
     ]);
   }
@@ -200,6 +212,9 @@ class AssetLiabilityHistoryService {
         '支払済み',
         '期限超過',
         '支払後手元資金',
+        'actual_payment_amount',
+        'payment_difference_amount',
+        'payment_difference_reason',
       ],
       for (final row in rows)
         <Object?>[
@@ -229,6 +244,9 @@ class AssetLiabilityHistoryService {
               : (row.paid ? '済' : '未済'),
           row.overdue ? '期限超過' : '',
           row.cashAfterPayment,
+          row.actualPaymentAmount ?? '',
+          row.paymentDifferenceAmount ?? '',
+          row.paymentDifferenceReason ?? '',
         ],
     ]);
   }

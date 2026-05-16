@@ -79,6 +79,8 @@ class AssetLiabilityDebtRow {
   final double minimumPaymentEstimate;
   final double? manualPaymentAmount;
   final double scheduledPaymentAmount;
+  final double? actualPaymentAmount;
+  final String? paymentDifferenceReason;
   final double monthlyInterestEstimate;
   final double principalPaymentEstimate;
   final double balanceAfterPaymentEstimate;
@@ -105,6 +107,8 @@ class AssetLiabilityDebtRow {
     required this.minimumPaymentEstimate,
     required this.manualPaymentAmount,
     required this.scheduledPaymentAmount,
+    this.actualPaymentAmount,
+    this.paymentDifferenceReason,
     required this.monthlyInterestEstimate,
     required this.principalPaymentEstimate,
     required this.balanceAfterPaymentEstimate,
@@ -117,6 +121,16 @@ class AssetLiabilityDebtRow {
   bool get isDirectCashflowTarget =>
       !includedInBillingAccount &&
       paymentMethod == AssetLiabilityPaymentMethod.direct;
+
+  double get effectivePaidPaymentAmount =>
+      paid ? actualPaymentAmount ?? scheduledPaymentAmount : 0;
+
+  double? get paymentDifferenceAmount {
+    if (!paid || actualPaymentAmount == null) {
+      return null;
+    }
+    return actualPaymentAmount! - scheduledPaymentAmount;
+  }
 }
 
 class AssetLiabilityPaymentDayRisk {
@@ -212,6 +226,9 @@ class AssetLiabilityCashflowRow {
   final String? billingAccountName;
   final bool includedInBillingAccount;
   final double paymentAmount;
+  final double? actualPaymentAmount;
+  final double? paymentDifferenceAmount;
+  final String? paymentDifferenceReason;
   final bool paymentAmountEstimated;
   final bool paid;
   final bool received;
@@ -237,6 +254,9 @@ class AssetLiabilityCashflowRow {
     required this.billingAccountName,
     required this.includedInBillingAccount,
     required this.paymentAmount,
+    this.actualPaymentAmount,
+    this.paymentDifferenceAmount,
+    this.paymentDifferenceReason,
     required this.paymentAmountEstimated,
     required this.paid,
     required this.received,
@@ -304,6 +324,8 @@ class AssetLiabilityMonthlySnapshot {
   final double monthlyScheduledPaymentTotal;
   final double monthlyPaidPaymentTotal;
   final double monthlyUnpaidPaymentTotal;
+  final double monthlyActualPaymentTotal;
+  final double monthlyPaymentDifferenceTotal;
   final int overduePaymentCount;
 
   const AssetLiabilityMonthlySnapshot({
@@ -316,6 +338,8 @@ class AssetLiabilityMonthlySnapshot {
     required this.monthlyScheduledPaymentTotal,
     required this.monthlyPaidPaymentTotal,
     required this.monthlyUnpaidPaymentTotal,
+    this.monthlyActualPaymentTotal = 0,
+    this.monthlyPaymentDifferenceTotal = 0,
     required this.overduePaymentCount,
   });
 }
@@ -493,6 +517,8 @@ class AssetLiabilityWorkbook {
   final double netWorth;
   final double monthlyMinimumPaymentEstimateTotal;
   final double monthlyScheduledPaymentTotal;
+  final double monthlyActualPaymentTotal;
+  final double monthlyPaymentDifferenceTotal;
   final double monthlyUnpaidPaymentTotal;
   final double monthlyUnreceivedIncomeTotal;
   final double cashAfterMinimumPayments;
@@ -520,6 +546,8 @@ class AssetLiabilityWorkbook {
     required this.netWorth,
     required this.monthlyMinimumPaymentEstimateTotal,
     required this.monthlyScheduledPaymentTotal,
+    required this.monthlyActualPaymentTotal,
+    required this.monthlyPaymentDifferenceTotal,
     required this.monthlyUnpaidPaymentTotal,
     required this.monthlyUnreceivedIncomeTotal,
     required this.cashAfterMinimumPayments,
