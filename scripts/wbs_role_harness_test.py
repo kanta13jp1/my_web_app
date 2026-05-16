@@ -34,6 +34,12 @@ class WbsRoleHarnessTest(unittest.TestCase):
         self.assertIn("Codex #1", rendered_roles)
         self.assertNotIn("Codex #2", rendered_roles)
         self.assertIn("record C drive free space", " ".join(plan["resource_hygiene"]))
+        self.assertEqual(
+            plan["subagent_orchestration"]["policy"],
+            "docs/SUBAGENT_ORCHESTRATION_POLICY.md",
+        )
+        self.assertIn("read-only explorer", " ".join(plan["subagent_orchestration"]["allowed_patterns"]))
+        self.assertIn("subagent plan when used", plan["handoff_packet_fields"])
 
     def test_security_or_migration_routes_to_claude_first(self) -> None:
         plan = build_plan(
@@ -102,6 +108,10 @@ class WbsRoleHarnessTest(unittest.TestCase):
 
             self.assertEqual(exit_code, 0)
             self.assertIn("WBS Role Harness Report", output_md.read_text(encoding="utf-8"))
+            self.assertIn(
+                "Guarded Subagent Plan",
+                output_md.read_text(encoding="utf-8"),
+            )
             report = json.loads(output_json.read_text(encoding="utf-8"))
             self.assertEqual(report["plans"][0]["issue"], 10)
 

@@ -20,6 +20,8 @@ RULES (毎ターン inject / pointer hub / 詳細展開 = docs/RULES_INDEX.md):
 
 [AI-TOOL-VERIFY] (2026-05-07 #1706) Claude fullscreen/TUI-style rendering, remote/push notifications, Codex memory, Gemini fallback models, and Copilot agent claims are verify-first. Check official sources via scripts/check_versions.py --web before fleet adoption. 2-instance flow stays Claude Code #1 (policy/review) + Codex #1 (scoped PR/CI/cleanup). 詳細: docs/AI_FALLBACK_RUNBOOK.md
 
+[SUBAGENT-GUARD] (2026-05-17 #2535) Guarded child subagents are allowed under Claude Code #1 or Codex #1 only. They need bounded role/scope/budget/return contract, default no dev server/no secrets/no production writes, and evidence in PR/Issue/wrap-up. Old Codex #2/#3/PS/WEB/mobile lanes stay dormant. Details: docs/SUBAGENT_ORCHESTRATION_POLICY.md
+
 [CONCURRENCY] (Win#109) deploy-prod/dev/staging cancel-in-progress: false. 並行 push でも全 commit 順次 deploy. 後発 push 最大 11min × 並行数 待機.
 
 [AUTO-REPLY] 任意 auto-reply (Qiita/dev.to/Slack/Discord) は author == 自分 で必ず skip + MAX_REPLIES_PER_ARTICLE/RUN cap 併設. comment_id ベースは bot 自己ループ検出不能.

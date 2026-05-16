@@ -25,7 +25,8 @@ $constraints = @"
 4. [MIGRATION] SQLファイル命名: YYYYMMDDXXXXXX_descriptive_name.sql (timestamp重複禁止)
 5. [NO-SCOPE-CREEP] 明示依頼のない機能追加禁止
 6. [EF-FIRST] 複雑ロジックはEdge Function優先 (フロントに置かない)
-Instance: PS#5 (CI/automation/hooks territory)
+7. [SUBAGENT-GUARD] Child worker only: current Claude Code #1 / Codex #1 lead owns the result. No secrets, no production writes, no long-lived dev server, no dormant lane reactivation. Return role/scope/validation/risks/cleanup summary.
+Owner: guarded child subagent under the current Claude Code #1 / Codex #1 lead.
 "@
 
 $ctx = $constraints -replace '"', "'" -replace "`n", " | "

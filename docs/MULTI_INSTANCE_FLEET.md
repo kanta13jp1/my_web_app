@@ -15,6 +15,17 @@
 - Smartphone/push handoff is an escalation channel, not a third active instance. It may notify the human owner or surface UAT context, but implementation still returns to Claude Code #1 + Codex #1.
 - `scripts/check_versions.py --web` is the lightweight session-start evidence command for this overlay. It prints official URLs and detects Codex instruction/memory pointers without starting dev servers or large local processes.
 
+## 2026-05-17 Guarded Subagent Overlay (#2535)
+
+- The two local app instances remain the only top-level owners.
+- Child subagents are permitted when spawned and supervised by Claude Code #1 or
+  Codex #1 under [`SUBAGENT_ORCHESTRATION_POLICY.md`](./SUBAGENT_ORCHESTRATION_POLICY.md).
+- Subagents are for bounded research, critique, large-output inspection, memory
+  review, or disjoint scoped implementation. They are not new fleet members and
+  do not reactivate Codex #2/#3, PS, WEB, mobile, Gemini, or Copilot lanes.
+- Any materially used subagent result must be summarized in the PR, Issue
+  comment, or wrap-up with scope, validation impact, and cleanup impact.
+
 ---
 
 ## 現行 2 instance (= active)

@@ -1,15 +1,13 @@
-# bc58b50b #1781: SubagentStop hook — output quality gate
-# Fires when a subagent finishes (v2.1.126+)
-# Checks for dummy data, migration timestamp format issues, critical rule violations
+# bc58b50b #1781 / #2535: SubagentStop hook - output quality gate
+# Fires when a subagent finishes and returns compact corrective context.
 
 param()
 
-$agentType   = $env:CLAUDE_SUBAGENT_TYPE
+$agentType = $env:CLAUDE_SUBAGENT_TYPE
 if (-not $agentType) { $agentType = $env:CLAUDE_AGENT_TYPE }
 $lastMessage = $env:CLAUDE_LAST_ASSISTANT_MESSAGE
-$timestamp   = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-# Log subagent stop
 $logFile = Join-Path (Split-Path $PSScriptRoot -Parent) "hooks\subagent-log.txt"
 try {
     $preview = if ($lastMessage) { $lastMessage.Substring(0, [Math]::Min(80, $lastMessage.Length)) } else { "(empty)" }
@@ -21,35 +19,49 @@ if (-not $lastMessage) { exit 0 }
 try {
     $issues = @()
 
-    # Check 1: dummy data patterns
-    $dummyPatterns = @('lorem ipsum', 'fake.*data', 'dummy data', 'test.*placeholder', '// TODO:.*実装')
+    $dummyPatterns = @(
+        'lorem ipsum',
+        'fake.*data',
+        'dummy data',
+        'test.*placeholder',
+        '// TODO:'
+    )
     foreach ($pattern in $dummyPatterns) {
         if ($lastMessage -imatch $pattern) {
-            $issues += "ダミーデータ検出 (pattern: $pattern)"
+            $issues += "Dummy/test placeholder pattern detected: $pattern"
         }
     }
 
-    # Check 2: migration timestamp format — warn if wrong format seen
     $migrationRefs = [regex]::Matches($lastMessage, '\d{8}\d{2,6}_\w+\.sql')
     foreach ($m in $migrationRefs) {
         $fn = $m.Value
         if ($fn -notmatch '^\d{14}_') {
-            $issues += "Migration timestamp 形式不正: $fn (正: YYYYMMDDXXXXXX_name.sql)"
+            $issues += "Migration timestamp format issue: $fn (expected YYYYMMDDXXXXXX_name.sql)"
         }
     }
 
-    # Check 3: --no-verify in git commit
     if ($lastMessage -imatch 'git commit.*--no-verify|git push.*--force') {
-        $issues += "危険なgitコマンド検出: --no-verify or --force"
+        $issues += "Dangerous git command detected: --no-verify or --force"
+    }
+
+    $contractTerms = @('role', 'scope', 'validation', 'risk', 'cleanup')
+    foreach ($term in $contractTerms) {
+        if ($lastMessage -inotmatch $term) {
+            $issues += "Subagent return contract missing: $term"
+        }
+    }
+
+    if ($lastMessage -imatch 'production write|secret|service_role|long-lived dev server|reactivate.*Codex #2|reactivate.*Codex #3') {
+        $issues += "Subagent guardrail risk: production/secrets/long-lived process/dormant lane language detected"
     }
 
     if ($issues.Count -gt 0) {
         $issueList = ($issues -join ' / ') -replace '"', "'"
-        $ctx = "SubagentStop quality gate: ${issueList}. 問題を修正してから完了としてください。"
+        $ctx = "SubagentStop quality gate: ${issueList}. Fix the issue before treating the subagent result as complete."
         $output = "{`"hookSpecificOutput`":{`"additionalContext`":`"$ctx`"}}"
         Write-Output $output
     }
 } catch {
-    # Never block on hook error
+    # Never block on hook error.
 }
 exit 0
