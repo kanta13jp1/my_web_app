@@ -1,16 +1,13 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-15T21:38:10Z`
-- Previous check: `2026-05-14T21:42:48Z`
-- Changed/new official sources: `5`
+- Checked at: `2026-05-16T21:34:14Z`
+- Previous check: `2026-05-15T21:38:10Z`
+- Changed/new official sources: `2`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.142 / May 14, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `changed` Codex changelog: 2026-05-13 / Codex mobile documentation Added documentation for using Codex from the ChatGPT mobile app,
-- `changed` Codex overview: No title detected
-- `changed` Cursor changelog: 3.4 / May 13, 2026
+- `changed` Claude Code changelog: 2.1.143 / May 15, 2026
+- `changed` Codex changelog: 2026-05-14 / Work with Codex from anywhere You can now use Codex from the ChatGPT mobile app by connecti
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -22,7 +19,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.142 / May 14, 2026
+  - Latest signal: 2.1.143 / May 15, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -40,10 +37,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-13 / Codex mobile documentation Added documentation for using Codex from the ChatGPT mobile app,
+  - Latest signal: 2026-05-14 / Work with Codex from anywhere You can now use Codex from the ChatGPT mobile app by connecti
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: 2026-05-11 Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer lifecycle, trigger conditions, failure behavior, and local or managed...
+  - Short signal: This launch also includes Hooks general availability, Codex access tokens for trusted automation, and Enterprise admin setup guidance.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint

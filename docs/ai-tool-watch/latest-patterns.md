@@ -1,6 +1,6 @@
 # News Pattern Detector Report
 
-- Generated at: `2026-05-15T21:38:12Z`
+- Generated at: `2026-05-16T21:34:17Z`
 - Sources: `docs/ai-tool-watch/latest-report.json`
 - Entries scanned: `9`
 - Patterns: `4`
