@@ -137,6 +137,48 @@ void main() {
       expect(report.movementSuggestions.first.amount, 5000);
     });
 
+    test('generates emergency living advice for negative today cashflow', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPay': -200000,
+        },
+        baseDate: DateTime(2026, 5, 28),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 200000},
+        paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary',
+            date: DateTime(2026, 5, 31),
+            name: 'salary',
+            amount: 250000,
+            destinationAccountId: 'bank',
+            destinationAccountName: 'bank',
+            received: false,
+          ),
+        ],
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+
+      expect(report.todayAvailable.availableAmount, -160000);
+      expect(report.emergencyAdvices.isNotEmpty, true);
+      expect(report.emergencyAdvices.first.title, contains('今日の食費'));
+      expect(report.emergencyAdvices.first.description, contains('水だけ'));
+      expect(report.emergencyAdvices.first.description, contains('危険'));
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+              AssetManagementInsightActionType.emergencyLivingExpense,
+        ),
+        true,
+      );
+    });
+
     test('generates developer improvement requests', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
