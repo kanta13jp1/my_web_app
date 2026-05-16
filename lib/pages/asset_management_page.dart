@@ -7485,6 +7485,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
           const SizedBox(height: 12),
+          if (report.emergencyAdvices.isNotEmpty) ...[
+            _buildAssetManagementEmergencyAdviceList(report.emergencyAdvices),
+            const SizedBox(height: 12),
+          ],
           _buildAssetManagementAssistantActionList(report.actionItems),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -7667,6 +7671,99 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               height: 1.4,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetManagementEmergencyAdviceList(
+    List<AssetManagementEmergencyAdvice> advices,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFB91C1C).withValues(alpha: 0.28),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.health_and_safety_outlined,
+                color: Color(0xFFB91C1C),
+                size: 18,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '緊急生活防衛アドバイス',
+                  style: TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '水だけで耐えるなど、健康を削る判断はしないでください。支払いより先に、食費・移動費・医療など最低限の生活費を守ります。',
+            style: TextStyle(fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          for (final advice in advices.take(5))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _assetManagementInsightSeverityColor(
+                      advice.severity,
+                    ).withValues(alpha: 0.22),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      advice.title,
+                      style: TextStyle(
+                        color: _assetManagementInsightSeverityColor(
+                          advice.severity,
+                        ),
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      advice.description,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      advice.suggestedAction,
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -7929,6 +8026,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.event_available_outlined,
       AssetManagementInsightActionType.cashShortageRisk =>
         Icons.warning_amber_rounded,
+      AssetManagementInsightActionType.emergencyLivingExpense =>
+        Icons.health_and_safety_outlined,
       AssetManagementInsightActionType.cardBillingConfiguration =>
         Icons.credit_card_off_outlined,
       AssetManagementInsightActionType.doubleCountingRisk =>
