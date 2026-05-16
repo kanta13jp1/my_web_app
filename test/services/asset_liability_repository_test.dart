@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_persistence.dart';
+import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -113,6 +114,28 @@ void main() {
       expect(snapshots.single.monthlyUnpaidPaymentTotal, 80000);
     });
 
+    test('saves and restores sync audit logs through repository', () async {
+      const repository = SharedPreferencesAssetLiabilityRepository();
+
+      await repository.saveSyncAuditLog(
+        AssetLiabilitySyncAuditLog.create(
+          type: AssetLiabilitySyncAuditType.preview,
+          monthKey: '2026-05',
+          targetDataType: 'all_targets',
+          count: 5,
+          result: 'success',
+          executedAt: DateTime.utc(2026, 5, 14, 12),
+        ),
+      );
+
+      final logs = await repository.loadSyncAuditLogs();
+
+      expect(logs, hasLength(1));
+      expect(logs.single.type, AssetLiabilitySyncAuditType.preview);
+      expect(logs.single.monthKey, '2026-05');
+      expect(logs.single.count, 5);
+    });
+
     test('builds a full local persistence snapshot', () async {
       const repository = SharedPreferencesAssetLiabilityRepository();
       final month = DateTime(2026, 5, 1);
@@ -192,6 +215,10 @@ void main() {
   });
 
   group('FeatureFlaggedAssetLiabilityRepository', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+    });
+
     test('factory keeps Supabase sync disabled by default', () {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
@@ -283,6 +310,35 @@ void main() {
       expect(remote.recurringIncomeTemplates, isEmpty);
       expect(remote.monthlySnapshots, isEmpty);
     });
+
+    test(
+      'sync preview records preview and upload candidate audit logs',
+      () async {
+        const local = SharedPreferencesAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+        await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+        final result = await repository.previewSyncMonth(month);
+        final logs = await repository.loadSyncAuditLogs();
+
+        expect(result.status, AssetLiabilityManualSyncStatus.success);
+        expect(
+          logs.map((log) => log.type),
+          containsAll(<AssetLiabilitySyncAuditType>[
+            AssetLiabilitySyncAuditType.preview,
+            AssetLiabilitySyncAuditType.uploadCandidate,
+          ]),
+        );
+        expect(remote.calls, isNot(contains('saveMonth:user-1:2026-05')));
+      },
+    );
 
     test(
       'sync preview reports download candidates without restoring',
@@ -459,6 +515,28 @@ void main() {
       expect(remote.monthlySnapshots.single.monthKey, '2026-05');
     });
 
+    test('manual sync success records success audit log', () async {
+      const local = SharedPreferencesAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+      await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+      final result = await repository.syncMonth(month);
+      final logs = await repository.loadSyncAuditLogs();
+
+      expect(result.status, AssetLiabilityManualSyncStatus.success);
+      expect(
+        logs.map((log) => log.type),
+        contains(AssetLiabilitySyncAuditType.success),
+      );
+    });
+
     test('manual sync failure keeps local data intact', () async {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore()..failSaves = true;
@@ -477,6 +555,29 @@ void main() {
       expect(result.status, AssetLiabilityManualSyncStatus.failure);
       expect(restored.paymentOverrides['mobit'], 70000);
       expect(remote.calls, contains('saveMonth:user-1:2026-05'));
+    });
+
+    test('manual sync failure records failed audit log', () async {
+      const local = SharedPreferencesAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()..failSaves = true;
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+      await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+      final result = await repository.syncMonth(month);
+      final logs = await repository.loadSyncAuditLogs();
+
+      expect(result.status, AssetLiabilityManualSyncStatus.failure);
+      expect(
+        logs.map((log) => log.type),
+        contains(AssetLiabilitySyncAuditType.failed),
+      );
+      expect((await local.loadMonth(month)).paymentOverrides['mobit'], 70000);
     });
 
     test(
@@ -511,6 +612,67 @@ void main() {
           1000,
         );
         expect(remote.calls, isNot(contains('saveMonth:user-1:2026-05')));
+      },
+    );
+
+    test('manual sync conflict records conflict audit log', () async {
+      const local = SharedPreferencesAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedMonth(
+          DateTime(2026, 5),
+          const AssetLiabilityMonthlyState(
+            paymentOverrides: <String, double>{'remote_only': 1000},
+          ),
+        );
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+      await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+      final result = await repository.syncMonth(month);
+      final logs = await repository.loadSyncAuditLogs();
+
+      expect(result.status, AssetLiabilityManualSyncStatus.conflict);
+      expect(
+        logs.map((log) => log.type),
+        contains(AssetLiabilitySyncAuditType.conflictDetected),
+      );
+      expect(
+        logs
+            .firstWhere(
+              (log) => log.type == AssetLiabilitySyncAuditType.conflictDetected,
+            )
+            .result,
+        'conflict_non_destructive_stop',
+      );
+    });
+
+    test(
+      'feature flag off does not call Supabase or create audit logs',
+      () async {
+        const local = SharedPreferencesAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: false,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+        await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+        final result = await repository.previewSyncMonth(month);
+        final syncResult = await repository.syncMonth(month);
+        final logs = await repository.loadSyncAuditLogs();
+
+        expect(result.status, AssetLiabilityManualSyncStatus.disabled);
+        expect(syncResult.status, AssetLiabilityManualSyncStatus.disabled);
+        expect(remote.calls, isEmpty);
+        expect(logs, isEmpty);
       },
     );
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:intl/intl.dart';
+import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,6 +46,9 @@ class AssetLiabilityMonthlyStateStore {
       'asset_liability_recurring_income_templates_v1';
   static const String monthlySnapshotPrefsKey =
       'asset_liability_monthly_snapshots_v1';
+  static const String syncAuditLogPrefsKey =
+      'asset_liability_sync_audit_logs_v1';
+  static const int maxSyncAuditLogCount = 50;
 
   const AssetLiabilityMonthlyStateStore();
 
@@ -224,6 +228,28 @@ class AssetLiabilityMonthlyStateStore {
     await prefs.setString(
       monthlySnapshotPrefsKey,
       jsonEncode(_encodeMonthlySnapshots(nextSnapshots)),
+    );
+  }
+
+  Future<List<AssetLiabilitySyncAuditLog>> loadSyncAuditLogs({
+    int limit = 20,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final logs = decodeSyncAuditLogs(prefs.getString(syncAuditLogPrefsKey));
+    return logs.take(limit < 0 ? 0 : limit).toList(growable: false);
+  }
+
+  Future<void> saveSyncAuditLog(AssetLiabilitySyncAuditLog log) async {
+    final prefs = await SharedPreferences.getInstance();
+    final logs = decodeSyncAuditLogs(prefs.getString(syncAuditLogPrefsKey));
+    final nextLogs = <AssetLiabilitySyncAuditLog>[
+      log,
+      for (final current in logs)
+        if (current.id != log.id) current,
+    ].take(maxSyncAuditLogCount).toList(growable: false);
+    await prefs.setString(
+      syncAuditLogPrefsKey,
+      jsonEncode(_encodeSyncAuditLogs(nextLogs)),
     );
   }
 
@@ -587,6 +613,32 @@ class AssetLiabilityMonthlyStateStore {
     return snapshots;
   }
 
+  static List<AssetLiabilitySyncAuditLog> decodeSyncAuditLogs(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return <AssetLiabilitySyncAuditLog>[];
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Iterable) {
+      return <AssetLiabilitySyncAuditLog>[];
+    }
+
+    final logs = <AssetLiabilitySyncAuditLog>[];
+    for (final rawLog in decoded) {
+      if (rawLog is! Map) {
+        continue;
+      }
+      logs.add(
+        AssetLiabilitySyncAuditLog.fromJson(
+          rawLog.map<String, Object?>(
+            (key, value) => MapEntry(key.toString(), value),
+          ),
+        ),
+      );
+    }
+    logs.sort((a, b) => b.executedAt.compareTo(a.executedAt));
+    return logs;
+  }
+
   static Map<String, double> paymentOverridesForMonth(
     String? raw,
     String monthKey,
@@ -724,6 +776,14 @@ class AssetLiabilityMonthlyStateStore {
           'overduePaymentCount': snapshot.overduePaymentCount,
         },
     ];
+  }
+
+  static List<Map<String, Object?>> _encodeSyncAuditLogs(
+    List<AssetLiabilitySyncAuditLog> logs,
+  ) {
+    final sorted = List<AssetLiabilitySyncAuditLog>.from(logs)
+      ..sort((a, b) => b.executedAt.compareTo(a.executedAt));
+    return [for (final log in sorted) log.toJson()];
   }
 
   static Map<String, List<Map<String, Object?>>> _encodeIncomePlans(

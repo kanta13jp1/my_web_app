@@ -14,6 +14,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
@@ -129,6 +130,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _assetLiabilitySyncMessage;
   List<String> _assetLiabilitySyncConflicts = <String>[];
   AssetLiabilitySyncPreviewResult? _assetLiabilitySyncPreview;
+  List<AssetLiabilitySyncAuditLog> _assetLiabilitySyncAuditLogs =
+      <AssetLiabilitySyncAuditLog>[];
   final Map<String, TextEditingController> _monthlyPaymentControllers =
       <String, TextEditingController>{};
 
@@ -809,6 +812,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
           await _assetLiabilityRepository.loadMonthlySnapshots();
+      final syncAuditLogs = await _assetLiabilityRepository.loadSyncAuditLogs(
+        limit: 12,
+      );
       final incomePlansWithTemplates =
           AssetLiabilityMonthlyStateStore.applyRecurringIncomeTemplates(
         month: targetMonth,
@@ -843,6 +849,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlySnapshots = List<AssetLiabilityMonthlySnapshot>.from(
           monthlySnapshots,
         );
+        _assetLiabilitySyncAuditLogs = List<AssetLiabilitySyncAuditLog>.from(
+          syncAuditLogs,
+        );
         _loadedAssetLiabilityMonthKey = monthKey;
         _syncMonthlyPaymentControllers();
       });
@@ -851,6 +860,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
     } catch (e) {
       debugPrint('Error loading asset liability monthly state: $e');
+    }
+  }
+
+  Future<void> _refreshAssetLiabilitySyncAuditLogs() async {
+    try {
+      final logs = await _assetLiabilityRepository.loadSyncAuditLogs(limit: 12);
+      if (!mounted) return;
+      setState(() {
+        _assetLiabilitySyncAuditLogs = List<AssetLiabilitySyncAuditLog>.from(
+          logs,
+        );
+      });
+    } catch (e) {
+      debugPrint('Error loading asset liability sync audit logs: $e');
     }
   }
 
@@ -905,6 +928,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       if (result.isSuccess) {
         await _loadAssetLiabilityMonthlyState();
+      } else {
+        await _refreshAssetLiabilitySyncAuditLogs();
       }
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -919,6 +944,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _assetLiabilitySyncMessage = 'Supabase同期に失敗しました: $e';
         _assetLiabilitySyncConflicts = <String>[];
       });
+      await _refreshAssetLiabilitySyncAuditLogs();
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Supabase同期に失敗しました: $e')));
@@ -937,6 +964,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _assetLiabilitySyncPreview = result;
       });
+      await _refreshAssetLiabilitySyncAuditLogs();
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(result.message)));
@@ -952,6 +981,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _assetLiabilitySyncPreview = result;
       });
+      await _refreshAssetLiabilitySyncAuditLogs();
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(result.message)));
@@ -6764,6 +6795,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 8),
             _buildAssetLiabilitySyncPreviewDetails(_assetLiabilitySyncPreview!),
           ],
+          const SizedBox(height: 8),
+          _buildAssetLiabilitySyncAuditLogSection(syncEnabled),
           if (_assetLiabilitySyncConflicts.isNotEmpty) ...[
             const SizedBox(height: 8),
             Wrap(
@@ -6783,6 +6816,177 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildAssetLiabilitySyncAuditLogSection(bool syncEnabled) {
+    final logs = _assetLiabilitySyncAuditLogs.take(8).toList(growable: false);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.receipt_long_outlined, size: 16),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  'Supabase同期監査ログ',
+                  style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+                ),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: 'ログ',
+                value: syncEnabled ? '${logs.length}件' : 'OFF',
+                color: syncEnabled
+                    ? const Color(0xFF2563EB)
+                    : Theme.of(context).colorScheme.outline,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            syncEnabled
+                ? '同期プレビュー・手動同期・競合検出・失敗をローカルに記録します。'
+                : 'Supabase同期がOFFのため、同期検証ログは記録しません。',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          if (syncEnabled && logs.isEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'まだ同期検証ログはありません。',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
+          ],
+          if (syncEnabled && logs.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            for (final log in logs) _buildAssetLiabilitySyncAuditLogTile(log),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetLiabilitySyncAuditLogTile(AssetLiabilitySyncAuditLog log) {
+    final color = _assetLiabilitySyncAuditLogColor(log);
+    final executedAt = DateFormat(
+      'MM/dd HH:mm',
+    ).format(log.executedAt.toLocal());
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.26)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _buildAssetLiabilitySyncChip(
+                  label: '時刻',
+                  value: executedAt,
+                  color: color,
+                ),
+                _buildAssetLiabilitySyncChip(
+                  label: '種別',
+                  value: _assetLiabilitySyncAuditTypeLabel(log.type),
+                  color: color,
+                ),
+                _buildAssetLiabilitySyncChip(
+                  label: '対象月',
+                  value: log.monthKey,
+                  color: const Color(0xFF475569),
+                ),
+                _buildAssetLiabilitySyncChip(
+                  label: '件数',
+                  value: '${log.count}件',
+                  color: const Color(0xFF475569),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${log.targetDataType} / ${log.result}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+            if (log.errorMessage != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                log.errorMessage!,
+                style: const TextStyle(
+                  color: Color(0xFFB91C1C),
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _assetLiabilitySyncAuditTypeLabel(AssetLiabilitySyncAuditType type) {
+    switch (type) {
+      case AssetLiabilitySyncAuditType.preview:
+        return 'preview';
+      case AssetLiabilitySyncAuditType.manualSync:
+        return 'manual_sync';
+      case AssetLiabilitySyncAuditType.uploadCandidate:
+        return 'upload';
+      case AssetLiabilitySyncAuditType.downloadCandidate:
+        return 'download';
+      case AssetLiabilitySyncAuditType.conflictDetected:
+        return 'conflict';
+      case AssetLiabilitySyncAuditType.failed:
+        return 'failed';
+      case AssetLiabilitySyncAuditType.success:
+        return 'success';
+    }
+  }
+
+  Color _assetLiabilitySyncAuditLogColor(AssetLiabilitySyncAuditLog log) {
+    if (log.isFailure) {
+      return const Color(0xFFB91C1C);
+    }
+    if (log.isConflict) {
+      return const Color(0xFFD97706);
+    }
+    if (log.type == AssetLiabilitySyncAuditType.success) {
+      return const Color(0xFF0D9488);
+    }
+    if (log.type == AssetLiabilitySyncAuditType.downloadCandidate) {
+      return const Color(0xFF0D9488);
+    }
+    if (log.type == AssetLiabilitySyncAuditType.uploadCandidate) {
+      return const Color(0xFF2563EB);
+    }
+    return const Color(0xFF475569);
   }
 
   Widget _buildAssetLiabilitySyncPreviewDetails(
