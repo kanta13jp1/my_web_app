@@ -198,9 +198,7 @@ class AssetManagementAiSummaryService {
                   '${advice.suggestedAction}',
             )
             .join(' ');
-    final status = critical > 0
-        ? '緊急の資金繰り項目があります。'
-        : '緊急度の高い資金繰り項目は検出されていません。';
+    final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     return [
       status,
       '要対応: $actionCount件、緊急: $critical件。',
