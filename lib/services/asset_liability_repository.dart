@@ -286,6 +286,8 @@ abstract class AssetLiabilityRepository {
 
   bool get supabaseSyncEnabled => false;
 
+  bool get supabaseWritesEnabled => false;
+
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month);
 
   Future<void> saveMonth({
@@ -407,7 +409,10 @@ abstract class AssetLiabilityRemoteStore {
 
 class AssetLiabilityRepositoryFactory {
   static const String syncFlagName = 'ASSET_LIABILITY_SUPABASE_SYNC_ENABLED';
+  static const String writeFlagName =
+      'ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED';
   static const bool supabaseSyncEnabled = bool.fromEnvironment(syncFlagName);
+  static const bool supabaseWritesEnabled = bool.fromEnvironment(writeFlagName);
 
   const AssetLiabilityRepositoryFactory._();
 
@@ -416,6 +421,7 @@ class AssetLiabilityRepositoryFactory {
     AssetLiabilityRepository localRepository =
         const SharedPreferencesAssetLiabilityRepository(),
     bool syncEnabled = supabaseSyncEnabled,
+    bool remoteWritesEnabled = supabaseWritesEnabled,
     AssetLiabilityRemoteStore? remoteStore,
     AssetLiabilityUserIdProvider? userIdProvider,
     AssetLiabilitySyncErrorHandler? onSyncError,
@@ -424,12 +430,16 @@ class AssetLiabilityRepositoryFactory {
       return localRepository;
     }
 
-    final client = supabaseClient ?? Supabase.instance.client;
+    final client = supabaseClient ??
+        (remoteStore == null || userIdProvider == null
+            ? Supabase.instance.client
+            : null);
     return FeatureFlaggedAssetLiabilityRepository(
       localRepository: localRepository,
-      remoteStore: remoteStore ?? AssetLiabilitySupabaseRemoteStore(client),
+      remoteStore: remoteStore ?? AssetLiabilitySupabaseRemoteStore(client!),
       syncEnabled: syncEnabled,
-      userIdProvider: userIdProvider ?? () => client.auth.currentUser?.id,
+      remoteWritesEnabled: remoteWritesEnabled,
+      userIdProvider: userIdProvider ?? () => client!.auth.currentUser?.id,
       onSyncError: onSyncError,
     );
   }
@@ -439,6 +449,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
   final AssetLiabilityRepository localRepository;
   final AssetLiabilityRemoteStore? remoteStore;
   final bool syncEnabled;
+  final bool remoteWritesEnabled;
   final AssetLiabilityUserIdProvider userIdProvider;
   final AssetLiabilitySyncErrorHandler? onSyncError;
 
@@ -446,12 +457,16 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     required this.localRepository,
     required this.remoteStore,
     required this.syncEnabled,
+    this.remoteWritesEnabled = false,
     required this.userIdProvider,
     this.onSyncError,
   });
 
   @override
   bool get supabaseSyncEnabled => syncEnabled;
+
+  @override
+  bool get supabaseWritesEnabled => syncEnabled && remoteWritesEnabled;
 
   @override
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
@@ -466,7 +481,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       () => remote.loadMonth(userId: userId, month: month),
     );
     if (remoteState == null || remoteState.isEmpty) {
-      if (!local.isEmpty) {
+      if (!local.isEmpty && supabaseWritesEnabled) {
         await _tryRemote(
           () => remote.saveMonth(userId: userId, month: month, state: local),
         );
@@ -493,9 +508,11 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     if (remote == null || userId == null) {
       return;
     }
-    await _tryRemote(
-      () => remote.saveMonth(userId: userId, month: month, state: state),
-    );
+    if (supabaseWritesEnabled) {
+      await _tryRemote(
+        () => remote.saveMonth(userId: userId, month: month, state: state),
+      );
+    }
   }
 
   @override
@@ -511,7 +528,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       () => remote.loadDefaultPaymentSources(userId: userId),
     );
     if (remoteSources == null || remoteSources.isEmpty) {
-      if (local.isNotEmpty) {
+      if (local.isNotEmpty && supabaseWritesEnabled) {
         await _tryRemote(
           () =>
               remote.saveDefaultPaymentSources(userId: userId, sources: local),
@@ -536,9 +553,12 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     if (remote == null || userId == null) {
       return;
     }
-    await _tryRemote(
-      () => remote.saveDefaultPaymentSources(userId: userId, sources: sources),
-    );
+    if (supabaseWritesEnabled) {
+      await _tryRemote(
+        () =>
+            remote.saveDefaultPaymentSources(userId: userId, sources: sources),
+      );
+    }
   }
 
   @override
@@ -554,7 +574,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       () => remote.loadDefaultCardBillingAccounts(userId: userId),
     );
     if (remoteAccounts == null || remoteAccounts.isEmpty) {
-      if (local.isNotEmpty) {
+      if (local.isNotEmpty && supabaseWritesEnabled) {
         await _tryRemote(
           () => remote.saveDefaultCardBillingAccounts(
             userId: userId,
@@ -583,12 +603,14 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     if (remote == null || userId == null) {
       return;
     }
-    await _tryRemote(
-      () => remote.saveDefaultCardBillingAccounts(
-        userId: userId,
-        accounts: accounts,
-      ),
-    );
+    if (supabaseWritesEnabled) {
+      await _tryRemote(
+        () => remote.saveDefaultCardBillingAccounts(
+          userId: userId,
+          accounts: accounts,
+        ),
+      );
+    }
   }
 
   @override
@@ -605,7 +627,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       () => remote.loadRecurringIncomeTemplates(userId: userId),
     );
     if (remoteTemplates == null || remoteTemplates.isEmpty) {
-      if (local.isNotEmpty) {
+      if (local.isNotEmpty && supabaseWritesEnabled) {
         await _tryRemote(
           () => remote.saveRecurringIncomeTemplates(
             userId: userId,
@@ -634,12 +656,14 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     if (remote == null || userId == null) {
       return;
     }
-    await _tryRemote(
-      () => remote.saveRecurringIncomeTemplates(
-        userId: userId,
-        templates: templates,
-      ),
-    );
+    if (supabaseWritesEnabled) {
+      await _tryRemote(
+        () => remote.saveRecurringIncomeTemplates(
+          userId: userId,
+          templates: templates,
+        ),
+      );
+    }
   }
 
   @override
@@ -669,7 +693,7 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       () => remote.loadMonthlySnapshots(userId: userId),
     );
     if (remoteSnapshots == null || remoteSnapshots.isEmpty) {
-      if (local.isNotEmpty) {
+      if (local.isNotEmpty && supabaseWritesEnabled) {
         for (final snapshot in local) {
           await _tryRemote(
             () =>
@@ -700,9 +724,11 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     if (remote == null || userId == null) {
       return;
     }
-    await _tryRemote(
-      () => remote.saveMonthlySnapshot(userId: userId, snapshot: snapshot),
-    );
+    if (supabaseWritesEnabled) {
+      await _tryRemote(
+        () => remote.saveMonthlySnapshot(userId: userId, snapshot: snapshot),
+      );
+    }
   }
 
   @override
@@ -766,16 +792,22 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         );
       }
 
+      final writesEnabled = supabaseWritesEnabled;
       var uploaded = 0;
       var restored = 0;
+      var skippedRemoteWrites = 0;
 
       if (!syncData.localMonth.isEmpty) {
-        await remote.saveMonth(
-          userId: userId,
-          month: month,
-          state: syncData.localMonth,
-        );
-        uploaded++;
+        if (writesEnabled) {
+          await remote.saveMonth(
+            userId: userId,
+            month: month,
+            state: syncData.localMonth,
+          );
+          uploaded++;
+        } else {
+          skippedRemoteWrites++;
+        }
       } else if (!_remoteMonthIsEmpty(syncData.remoteMonth)) {
         await localRepository.saveMonth(
           month: month,
@@ -785,11 +817,15 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       }
 
       if (syncData.localSources.isNotEmpty) {
-        await remote.saveDefaultPaymentSources(
-          userId: userId,
-          sources: syncData.localSources,
-        );
-        uploaded++;
+        if (writesEnabled) {
+          await remote.saveDefaultPaymentSources(
+            userId: userId,
+            sources: syncData.localSources,
+          );
+          uploaded++;
+        } else {
+          skippedRemoteWrites += syncData.localSources.length;
+        }
       } else if (syncData.remoteSources?.isNotEmpty ?? false) {
         await localRepository.saveDefaultPaymentSources(
           syncData.remoteSources!,
@@ -798,11 +834,16 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       }
 
       if (syncData.localDefaultCardBillingAccounts.isNotEmpty) {
-        await remote.saveDefaultCardBillingAccounts(
-          userId: userId,
-          accounts: syncData.localDefaultCardBillingAccounts,
-        );
-        uploaded++;
+        if (writesEnabled) {
+          await remote.saveDefaultCardBillingAccounts(
+            userId: userId,
+            accounts: syncData.localDefaultCardBillingAccounts,
+          );
+          uploaded++;
+        } else {
+          skippedRemoteWrites +=
+              syncData.localDefaultCardBillingAccounts.length;
+        }
       } else if (syncData.remoteDefaultCardBillingAccounts?.isNotEmpty ??
           false) {
         await localRepository.saveDefaultCardBillingAccounts(
@@ -812,11 +853,15 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       }
 
       if (syncData.localTemplates.isNotEmpty) {
-        await remote.saveRecurringIncomeTemplates(
-          userId: userId,
-          templates: syncData.localTemplates,
-        );
-        uploaded++;
+        if (writesEnabled) {
+          await remote.saveRecurringIncomeTemplates(
+            userId: userId,
+            templates: syncData.localTemplates,
+          );
+          uploaded++;
+        } else {
+          skippedRemoteWrites += syncData.localTemplates.length;
+        }
       } else if (syncData.remoteTemplates?.isNotEmpty ?? false) {
         await localRepository.saveRecurringIncomeTemplates(
           syncData.remoteTemplates!,
@@ -825,10 +870,17 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       }
 
       if (syncData.localSnapshots.isNotEmpty) {
-        for (final snapshot in syncData.localSnapshots) {
-          await remote.saveMonthlySnapshot(userId: userId, snapshot: snapshot);
+        if (writesEnabled) {
+          for (final snapshot in syncData.localSnapshots) {
+            await remote.saveMonthlySnapshot(
+              userId: userId,
+              snapshot: snapshot,
+            );
+          }
+          uploaded += syncData.localSnapshots.length;
+        } else {
+          skippedRemoteWrites += syncData.localSnapshots.length;
         }
-        uploaded += syncData.localSnapshots.length;
       } else if (syncData.remoteSnapshots?.isNotEmpty ?? false) {
         for (final snapshot in syncData.remoteSnapshots!) {
           await localRepository.saveMonthlySnapshot(snapshot);
@@ -837,20 +889,35 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       }
 
       final syncedCount = uploaded + restored;
+      final auditCount = syncedCount + skippedRemoteWrites;
+      final syncResult =
+          skippedRemoteWrites > 0 ? 'success_remote_write_disabled' : 'success';
+      final syncMessage = skippedRemoteWrites > 0
+          ? 'Remote writes are disabled; upload candidates were skipped.'
+          : null;
       await _recordAuditLog(
         month: month,
         type: AssetLiabilitySyncAuditType.manualSync,
         targetDataType: 'all_targets',
-        count: syncedCount,
-        result: 'success',
+        count: auditCount,
+        result: syncResult,
+        errorMessage: syncMessage,
       );
       await _recordAuditLog(
         month: month,
         type: AssetLiabilitySyncAuditType.success,
         targetDataType: 'all_targets',
-        count: syncedCount,
-        result: 'success',
+        count: auditCount,
+        result: syncResult,
+        errorMessage: syncMessage,
       );
+
+      if (skippedRemoteWrites > 0) {
+        return AssetLiabilityManualSyncResult.success(
+          message:
+              'Supabase remote writes are disabled. Uploaded $uploaded item(s), restored $restored item(s), skipped $skippedRemoteWrites upload candidate(s).',
+        );
+      }
 
       return AssetLiabilityManualSyncResult.success(
         message: '同期完了（アップロード $uploaded 件 / 復元 $restored 件）',
@@ -955,6 +1022,24 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         message: '競合解決の対象がありません',
         resolvedTargets: const <AssetLiabilitySyncTarget>[],
         skippedTargets: const <AssetLiabilitySyncTarget>[],
+      );
+    }
+    if (!supabaseWritesEnabled &&
+        resolutions.any(
+          (resolution) =>
+              resolution.choice ==
+              AssetLiabilityConflictResolutionChoice.localWins,
+        )) {
+      await _recordAuditLog(
+        month: month,
+        type: AssetLiabilitySyncAuditType.failed,
+        targetDataType: 'conflict_resolution',
+        count: 0,
+        result: 'production_writes_disabled',
+        errorMessage: 'Supabase production writes are disabled.',
+      );
+      return AssetLiabilityConflictResolutionResult.failure(
+        message: 'Supabase production writes are disabled.',
       );
     }
 

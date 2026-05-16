@@ -229,7 +229,24 @@ void main() {
       );
 
       expect(AssetLiabilityRepositoryFactory.supabaseSyncEnabled, isFalse);
+      expect(AssetLiabilityRepositoryFactory.supabaseWritesEnabled, isFalse);
       expect(repository, same(local));
+      expect(remote.calls, isEmpty);
+    });
+
+    test('factory enables sync without production writes by default', () {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+
+      final repository = AssetLiabilityRepositoryFactory.createDefault(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+
+      expect(repository.supabaseSyncEnabled, isTrue);
+      expect(repository.supabaseWritesEnabled, isFalse);
       expect(remote.calls, isEmpty);
     });
 
@@ -281,6 +298,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -320,6 +338,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => 'user-1',
         );
         final month = DateTime(2026, 5);
@@ -350,6 +369,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => 'user-1',
         );
         final month = DateTime(2026, 5);
@@ -380,6 +400,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -391,7 +412,10 @@ void main() {
       expect(result.status, AssetLiabilityManualSyncStatus.conflict);
       expect(result.hasConflict, isTrue);
       expect(result.conflictCount, 1);
-      expect(result.conflictTargets, contains('月次状態'));
+      expect(
+        result.conflictTargets,
+        contains(AssetLiabilitySyncTarget.monthlyState.label),
+      );
       expect(result.uploadCandidateCount, 0);
       expect(result.downloadCandidateCount, 0);
       expect(localState.paymentOverrides['mobit'], 70000);
@@ -421,6 +445,140 @@ void main() {
     });
 
     test(
+      'sync on keeps production writes disabled unless write flag is enabled',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+
+        await repository.saveMonth(month: month, state: _sampleMonthlyState());
+        await repository.saveDefaultPaymentSources(const <String, String>{
+          'mobit': 'smbc_otsuka',
+        });
+        await repository.saveMonthlySnapshot(_sampleSnapshot('2026-05'));
+        final restored = await repository.loadMonth(month);
+
+        expect(repository.supabaseSyncEnabled, isTrue);
+        expect(repository.supabaseWritesEnabled, isFalse);
+        expect(restored.paymentOverrides['mobit'], 70000);
+        expect(remote.monthState('2026-05'), isNull);
+        expect(remote.defaultPaymentSources, isEmpty);
+        expect(remote.monthlySnapshots, isEmpty);
+        expect(remote.calls, contains('loadMonth:user-1:2026-05'));
+        expect(remote.calls.where((call) => call.startsWith('save')), isEmpty);
+      },
+    );
+
+    test(
+      'sync preview can inspect Supabase while production writes are disabled',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore()
+          ..seedMonth(
+            DateTime(2026, 5),
+            const AssetLiabilityMonthlyState(
+              paymentOverrides: <String, double>{'remote_only': 1000},
+            ),
+          );
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+        await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+        final result = await repository.previewSyncMonth(month);
+
+        expect(result.status, AssetLiabilityManualSyncStatus.conflict);
+        expect(result.conflictCount, 1);
+        expect(remote.calls, contains('loadMonth:user-1:2026-05'));
+        expect(remote.calls.where((call) => call.startsWith('save')), isEmpty);
+        expect(
+          remote.monthState('2026-05')?.paymentOverrides['remote_only'],
+          1000,
+        );
+      },
+    );
+
+    test(
+      'manual sync skips upload candidates when production writes are disabled',
+      () async {
+        const local = SharedPreferencesAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+        await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+        final result = await repository.syncMonth(month);
+        final logs = await repository.loadSyncAuditLogs();
+
+        expect(result.status, AssetLiabilityManualSyncStatus.success);
+        expect(remote.monthState('2026-05'), isNull);
+        expect(remote.calls.where((call) => call.startsWith('save')), isEmpty);
+        expect(
+          logs
+              .where(
+                (log) => log.type == AssetLiabilitySyncAuditType.manualSync,
+              )
+              .first
+              .result,
+          'success_remote_write_disabled',
+        );
+      },
+    );
+
+    test('local-wins conflict resolution requires production writes', () async {
+      const local = SharedPreferencesAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedMonth(
+          DateTime(2026, 5),
+          const AssetLiabilityMonthlyState(
+            paymentOverrides: <String, double>{'remote_only': 1000},
+          ),
+        );
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+      await local.saveMonth(month: month, state: _sampleMonthlyState());
+
+      final result = await repository.resolveSyncConflicts(
+        month: month,
+        resolutions: const <AssetLiabilityConflictResolution>[
+          AssetLiabilityConflictResolution(
+            target: AssetLiabilitySyncTarget.monthlyState,
+            choice: AssetLiabilityConflictResolutionChoice.localWins,
+          ),
+        ],
+      );
+      final logs = await repository.loadSyncAuditLogs();
+
+      expect(result.status, AssetLiabilityConflictResolutionStatus.failure);
+      expect(
+        remote.monthState('2026-05')?.paymentOverrides['remote_only'],
+        1000,
+      );
+      expect(remote.calls.where((call) => call.startsWith('save')), isEmpty);
+      expect(logs.single.result, 'production_writes_disabled');
+    });
+
+    test(
       'saves monthly data and settings through remote store when on',
       () async {
         final local = _FakeAssetLiabilityRepository();
@@ -429,6 +587,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => 'user-1',
         );
         final month = DateTime(2026, 5);
@@ -467,6 +626,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
         onSyncError: (error, _) => errors.add(error),
       );
@@ -487,6 +647,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -522,6 +683,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -544,6 +706,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -564,6 +727,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -595,6 +759,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => 'user-1',
         );
         final month = DateTime(2026, 5);
@@ -605,7 +770,10 @@ void main() {
 
         expect(result.status, AssetLiabilityManualSyncStatus.conflict);
         expect(result.hasConflict, isTrue);
-        expect(result.conflictTargets, contains('月次状態'));
+        expect(
+          result.conflictTargets,
+          contains(AssetLiabilitySyncTarget.monthlyState.label),
+        );
         expect(localState.paymentOverrides['mobit'], 70000);
         expect(
           remote.monthState('2026-05')?.paymentOverrides['remote_only'],
@@ -628,6 +796,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -666,6 +835,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => 'user-1',
         );
         final month = DateTime(2026, 5);
@@ -715,6 +885,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => 'user-1',
         );
         final month = DateTime(2026, 5);
@@ -758,6 +929,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => 'user-1',
         );
         final month = DateTime(2026, 5);
@@ -831,6 +1003,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -850,6 +1023,7 @@ void main() {
         localRepository: local,
         remoteStore: remote,
         syncEnabled: true,
+        remoteWritesEnabled: true,
         userIdProvider: () => 'user-1',
       );
       final month = DateTime(2026, 5);
@@ -881,6 +1055,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => 'user-1',
         );
 
@@ -912,6 +1087,7 @@ void main() {
           localRepository: local,
           remoteStore: remote,
           syncEnabled: true,
+          remoteWritesEnabled: true,
           userIdProvider: () => null,
         );
         final month = DateTime(2026, 5);
