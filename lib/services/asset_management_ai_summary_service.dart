@@ -150,6 +150,17 @@ class AssetManagementAiSummaryService {
             },
           )
           .toList(growable: false),
+      'emergency_advices': report.emergencyAdvices
+          .map(
+            (advice) => <String, dynamic>{
+              'severity': advice.severity.name,
+              'title': advice.title,
+              'description': advice.description,
+              'suggested_action': advice.suggestedAction,
+              'amount': advice.amount,
+            },
+          )
+          .toList(growable: false),
       'developer_requests': report.developerRequests
           .map(
             (request) => <String, dynamic>{
@@ -163,6 +174,8 @@ class AssetManagementAiSummaryService {
         'calculation_owner': 'dart_service',
         'external_ai_may_summarize_only': true,
         'external_ai_may_recalculate_amounts': false,
+        'must_not_recommend_starvation_or_water_only': true,
+        'must_prioritize_food_shelter_health_and_contacting_creditors': true,
       },
     };
   }
@@ -174,17 +187,25 @@ class AssetManagementAiSummaryService {
     final week = _formatYen(report.weekAvailable.availableAmount);
     final month = _formatYen(report.monthAvailable.availableAmount);
     final movement = report.movementSuggestions.isEmpty
-        ? 'No account movement suggestion is currently required.'
-        : 'Review ${report.movementSuggestions.length} account movement suggestion(s).';
-    final status = critical > 0
-        ? 'Critical cashflow items need attention.'
-        : 'No critical cashflow item was detected.';
+        ? '現時点で口座移動・出金提案はありません。'
+        : '口座移動・出金提案を${report.movementSuggestions.length}件確認してください。';
+    final emergency = report.emergencyAdvices.isEmpty
+        ? '緊急の生活費防衛アドバイスはありません。'
+        : report.emergencyAdvices
+            .take(3)
+            .map(
+              (advice) => '${advice.title}: ${advice.description} '
+                  '${advice.suggestedAction}',
+            )
+            .join(' ');
+    final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     return [
       status,
-      'Action items: $actionCount, critical: $critical.',
-      'Available money: today $today, week $week, month $month.',
+      '要対応: $actionCount件、緊急: $critical件。',
+      '使用可能額: 本日 $today、今週 $week、今月 $month。',
+      emergency,
       movement,
-      'Amounts are calculated by Dart rules; AI summary is optional.',
+      '金額はDartルールで計算済みです。Amounts are calculated by Dart rules; AI summary is optional.',
     ].join(' ');
   }
 
@@ -198,7 +219,7 @@ class AssetManagementAiSummaryService {
       '## Computed insight payload',
       jsonEncode(payload),
       '',
-      'Rules: summarize only. Do not recalculate amounts. Do not provide legal, investment, or credit advice. Keep the response concise and action-oriented.',
+      'Rules: summarize only. Do not recalculate amounts. Do not provide legal, investment, or credit advice. Never recommend starvation, water-only survival, or skipping meals as a solution. Prioritize food, shelter, health, contacting creditors, and emergency public/community support. Keep the response concise and action-oriented.',
     ].join('\n');
   }
 
