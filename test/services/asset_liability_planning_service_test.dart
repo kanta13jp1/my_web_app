@@ -519,6 +519,102 @@ void main() {
       expect(review.hasDoubleCountingRisk, isFalse);
     });
 
+    test('reconciles imported card statement totals with billed amount', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'Subscription': -14236,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'subscription': 14236,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+          'subscription': 'paypay_card',
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_kddi',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPay',
+            postedAt: null,
+            description: 'KDDI',
+            amount: 5764,
+          ),
+          AssetLiabilityCardStatementLine(
+            id: 'line_subscription',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPay',
+            postedAt: null,
+            description: 'Subscription',
+            amount: 14236,
+          ),
+        ],
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'paypay_card',
+      );
+
+      expect(group.statementLineTotal, 20000);
+      expect(group.billedAmount, 20000);
+      expect(group.statementDifference, 0);
+      expect(group.hasStatementLines, isTrue);
+      expect(
+        group.alerts,
+        isNot(
+          contains(
+            AssetLiabilityPlanningService.cardStatementAmountMismatchAlert,
+          ),
+        ),
+      );
+    });
+
+    test('alerts when imported card statement total differs', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_kddi',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPay',
+            postedAt: null,
+            description: 'KDDI',
+            amount: 5764,
+          ),
+        ],
+      );
+
+      final group = workbook.cardStatementReconciliation.needsReviewGroups
+          .singleWhere((group) => group.billingAccountId == 'paypay_card');
+
+      expect(group.statementDifference, -14236);
+      expect(
+        group.alerts,
+        contains(
+          AssetLiabilityPlanningService.cardStatementAmountMismatchAlert,
+        ),
+      );
+      expect(workbook.cardBillingReview.hasDoubleCountingRisk, isFalse);
+    });
+
     test(
       'marks monthly and default setting sources in card billing review',
       () {

@@ -264,6 +264,11 @@ AssetLiabilityWorkbook _workbook({
       needsReviewItems: <AssetLiabilityCardBillingReviewItem>[],
       doubleCountingRiskItems: <AssetLiabilityCardBillingReviewItem>[],
     ),
+    cardStatementReconciliation:
+        const AssetLiabilityCardStatementReconciliationData(
+      groups: <AssetLiabilityCardStatementReconciliationGroup>[],
+      unmatchedStatementLines: <AssetLiabilityCardStatementLine>[],
+    ),
     cashLikeTotal: 50000,
     securitiesTotal: 0,
     positiveAssetTotal: 50000,

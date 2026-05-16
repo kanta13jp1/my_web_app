@@ -216,10 +216,7 @@ void main() {
 
     test('exports actual payment difference metadata to payment CSV', () {
       final workbook = planningService.buildWorkbook(
-        latestSnapshot: <String, double>{
-          'cash': 50000,
-          'aupay': -10000,
-        },
+        latestSnapshot: <String, double>{'cash': 50000, 'aupay': -10000},
         baseDate: DateTime(2026, 5, 1),
         monthlyPaymentOverrides: const <String, double>{'aupay_card': 5000},
         actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
@@ -288,6 +285,47 @@ void main() {
         ),
       );
       expect(csv, contains('直接差し引き対象'));
+    });
+
+    test('exports card statement reconciliation CSV', () {
+      final workbook = planningService.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+        cardStatementLines: <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_kddi',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPay',
+            postedAt: DateTime(2026, 5, 12),
+            description: 'KDDI',
+            amount: 5764,
+          ),
+        ],
+      );
+
+      final csv = historyService.buildCardStatementCsv(workbook);
+
+      expect(csv, contains('billing_account_id'));
+      expect(csv, contains('paypay_card'));
+      expect(csv, contains('KDDI'));
+      expect(csv, contains('statement_difference'));
+      expect(
+        csv,
+        contains(
+          AssetLiabilityPlanningService.cardStatementAmountMismatchAlert,
+        ),
+      );
     });
   });
 }

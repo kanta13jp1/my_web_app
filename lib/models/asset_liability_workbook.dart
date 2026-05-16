@@ -459,6 +459,129 @@ class AssetLiabilityCardBillingGroup {
   }
 }
 
+class AssetLiabilityCardStatementLine {
+  final String id;
+  final String billingAccountId;
+  final String? billingAccountName;
+  final DateTime? postedAt;
+  final String description;
+  final double amount;
+
+  const AssetLiabilityCardStatementLine({
+    required this.id,
+    required this.billingAccountId,
+    required this.billingAccountName,
+    required this.postedAt,
+    required this.description,
+    required this.amount,
+  });
+
+  AssetLiabilityCardStatementLine copyWith({
+    String? id,
+    String? billingAccountId,
+    String? billingAccountName,
+    DateTime? postedAt,
+    String? description,
+    double? amount,
+  }) {
+    return AssetLiabilityCardStatementLine(
+      id: id ?? this.id,
+      billingAccountId: billingAccountId ?? this.billingAccountId,
+      billingAccountName: billingAccountName ?? this.billingAccountName,
+      postedAt: postedAt ?? this.postedAt,
+      description: description ?? this.description,
+      amount: amount ?? this.amount,
+    );
+  }
+}
+
+class AssetLiabilityCardStatementRejectedRow {
+  final int rowNumber;
+  final String rawText;
+  final String reason;
+
+  const AssetLiabilityCardStatementRejectedRow({
+    required this.rowNumber,
+    required this.rawText,
+    required this.reason,
+  });
+}
+
+class AssetLiabilityCardStatementImportResult {
+  final List<AssetLiabilityCardStatementLine> lines;
+  final List<AssetLiabilityCardStatementRejectedRow> rejectedRows;
+
+  const AssetLiabilityCardStatementImportResult({
+    required this.lines,
+    required this.rejectedRows,
+  });
+
+  bool get hasAcceptedRows => lines.isNotEmpty;
+  bool get hasRejectedRows => rejectedRows.isNotEmpty;
+}
+
+class AssetLiabilityCardStatementReconciliationGroup {
+  final String billingAccountId;
+  final String billingAccountName;
+  final double billedAmount;
+  final double configuredDetailTotal;
+  final double statementLineTotal;
+  final List<AssetLiabilityCardBillingReviewItem> configuredItems;
+  final List<AssetLiabilityCardStatementLine> statementLines;
+  final List<String> alerts;
+
+  const AssetLiabilityCardStatementReconciliationGroup({
+    required this.billingAccountId,
+    required this.billingAccountName,
+    required this.billedAmount,
+    required this.configuredDetailTotal,
+    required this.statementLineTotal,
+    required this.configuredItems,
+    required this.statementLines,
+    required this.alerts,
+  });
+
+  double get statementDifference => statementLineTotal - billedAmount;
+  double get configuredDifference => configuredDetailTotal - billedAmount;
+  bool get hasStatementLines => statementLines.isNotEmpty;
+  bool get needsReview => alerts.isNotEmpty;
+}
+
+class AssetLiabilityCardStatementReconciliationData {
+  final List<AssetLiabilityCardStatementReconciliationGroup> groups;
+  final List<AssetLiabilityCardStatementLine> unmatchedStatementLines;
+
+  const AssetLiabilityCardStatementReconciliationData({
+    required this.groups,
+    required this.unmatchedStatementLines,
+  });
+
+  int get importedLineCount {
+    return groups.fold<int>(
+          0,
+          (sum, group) => sum + group.statementLines.length,
+        ) +
+        unmatchedStatementLines.length;
+  }
+
+  double get importedLineTotal {
+    return groups.fold<double>(
+          0,
+          (sum, group) => sum + group.statementLineTotal,
+        ) +
+        unmatchedStatementLines.fold<double>(
+          0,
+          (sum, line) => sum + line.amount,
+        );
+  }
+
+  List<AssetLiabilityCardStatementReconciliationGroup> get needsReviewGroups {
+    return groups.where((group) => group.needsReview).toList(growable: false);
+  }
+
+  bool get hasNeedsReview => needsReviewGroups.isNotEmpty;
+}
+
 class AssetLiabilityCardBillingReviewData {
   final List<AssetLiabilityCardBillingReviewItem> directPaymentItems;
   final List<AssetLiabilityCardBillingGroup> cardBillingGroups;
@@ -488,12 +611,14 @@ class AssetLiabilityCardBillingReviewData {
 class AssetLiabilityCsvExportBundle {
   final String monthlyHistoryCsv;
   final String paymentScheduleCsv;
+  final String cardStatementCsv;
   final String incomePlansCsv;
   final String accountCashflowCsv;
 
   const AssetLiabilityCsvExportBundle({
     required this.monthlyHistoryCsv,
     required this.paymentScheduleCsv,
+    required this.cardStatementCsv,
     required this.incomePlansCsv,
     required this.accountCashflowCsv,
   });
@@ -510,6 +635,8 @@ class AssetLiabilityWorkbook {
   final List<AssetLiabilityAccountCashflowSummary> accountCashflowSummaries;
   final List<AssetLiabilityTransferSuggestion> transferSuggestions;
   final AssetLiabilityCardBillingReviewData cardBillingReview;
+  final AssetLiabilityCardStatementReconciliationData
+      cardStatementReconciliation;
   final double cashLikeTotal;
   final double securitiesTotal;
   final double positiveAssetTotal;
@@ -539,6 +666,7 @@ class AssetLiabilityWorkbook {
     required this.accountCashflowSummaries,
     required this.transferSuggestions,
     required this.cardBillingReview,
+    required this.cardStatementReconciliation,
     required this.cashLikeTotal,
     required this.securitiesTotal,
     required this.positiveAssetTotal,

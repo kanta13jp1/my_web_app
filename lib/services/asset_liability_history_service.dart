@@ -145,6 +145,7 @@ class AssetLiabilityHistoryService {
     return AssetLiabilityCsvExportBundle(
       monthlyHistoryCsv: buildMonthlyHistoryCsv(monthlySnapshots),
       paymentScheduleCsv: buildPaymentScheduleCsv(workbook),
+      cardStatementCsv: buildCardStatementCsv(workbook),
       incomePlansCsv: buildIncomePlansCsv(workbook),
       accountCashflowCsv: buildAccountCashflowCsv(workbook),
     );
@@ -279,6 +280,58 @@ class AssetLiabilityHistoryService {
           plan.amount,
           plan.destinationAccountName ?? '未設定',
           plan.received ? '済' : '未済',
+        ],
+    ]);
+  }
+
+  String buildCardStatementCsv(AssetLiabilityWorkbook workbook) {
+    return _csv([
+      const <Object?>[
+        'billing_account_id',
+        'billing_account_name',
+        'posted_at',
+        'description',
+        'amount',
+        'billed_amount',
+        'statement_line_total',
+        'configured_detail_total',
+        'statement_difference',
+        'configured_difference',
+        'review_alerts',
+      ],
+      for (final group in workbook.cardStatementReconciliation.groups)
+        for (final line in group.statementLines)
+          <Object?>[
+            group.billingAccountId,
+            group.billingAccountName,
+            line.postedAt == null
+                ? ''
+                : DateFormat('yyyy-MM-dd').format(line.postedAt!),
+            line.description,
+            line.amount,
+            group.billedAmount,
+            group.statementLineTotal,
+            group.configuredDetailTotal,
+            group.statementDifference,
+            group.configuredDifference,
+            group.alerts.join(' / '),
+          ],
+      for (final line
+          in workbook.cardStatementReconciliation.unmatchedStatementLines)
+        <Object?>[
+          line.billingAccountId,
+          line.billingAccountName ?? '',
+          line.postedAt == null
+              ? ''
+              : DateFormat('yyyy-MM-dd').format(line.postedAt!),
+          line.description,
+          line.amount,
+          '',
+          '',
+          '',
+          '',
+          '',
+          'billing account id is required',
         ],
     ]);
   }
