@@ -1,0 +1,2821 @@
+{
+  "generated_at": "2026-05-16T22:18:19Z",
+  "source_files": [
+    "docs/competitor-reports/2026-05-17.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 92,
+  "filter_summary": {
+    "total": 92,
+    "by_verdict": {
+      "pass": 0,
+      "review": 92,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 92,
+      "sensational_language": 2
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-b383f0af2544",
+        "title": "エグゼクティブサマリー (= 5/16-5/17 新シグナル)",
+        "text": "エグゼクティブサマリー (= 5/16-5/17 新シグナル)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (= 5/16-5/17 新シグナル)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b383f0af2544",
+        "title": "エグゼクティブサマリー (= 5/16-5/17 新シグナル)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9bb14c341a12",
+        "title": "競合",
+        "text": "競合 競合 5/16-5/17 リリース 自社差別化軸への影響 脅威度",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "競合",
+          "url": "",
+          "status": "",
+          "summary": "競合 5/16-5/17 リリース 自社差別化軸への影響 脅威度"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9bb14c341a12",
+        "title": "競合",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-09de48e2025e",
+        "title": "**Replit Agent 4 mobile (iOS) + Lovable import promotion** (5/15)",
+        "text": "**Replit Agent 4 mobile (iOS) + Lovable import promotion** (5/15) **Replit Agent 4 mobile (iOS) + Lovable import promotion** (5/15) Apple 紛争解決後 4 ヶ月ぶり iOS update. Lovable / Base44 / V0 から project import → Replit Agent mobile app 化 promotion. 自社 IndieDev migration funnel に対し threat. mobile-native vibe coding 競合磁場収斂 加速. 🔴",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Replit Agent 4 mobile (iOS) + Lovable import promotion** (5/15)",
+          "url": "",
+          "status": "",
+          "summary": "**Replit Agent 4 mobile (iOS) + Lovable import promotion** (5/15) Apple 紛争解決後 4 ヶ月ぶり iOS update. Lovable / Base44 / V0 から project import → Replit Agent mobile app 化 promotion. 自社 IndieDev migration funnel に対し threat. mobile-native vibe coding 競合磁場収斂 加速. 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-09de48e2025e",
+        "title": "**Replit Agent 4 mobile (iOS) + Lovable import promotion** (5/15)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2c853ac2dd3c",
+        "title": "**Claude Code v2.1.143** (5/15)",
+        "text": "**Claude Code v2.1.143** (5/15) **Claude Code v2.1.143** (5/15) plugin dependency 強制 / 投影 context cost / `worktree.bgIsolation: \"none\"` / PowerShell `-ExecutionPolicy Bypass` / background session model 保持. 自社 Win Claude #132 fleet 中核. **bgIsolation: \"none\" は [WORKDIR-ISOLATION] rule との緊張軸** (= main repo 直接編集 opt-in 機能). 自社では既存 worktree-isolation 維持推奨. 🟠 (= dogfood 機会 / 設定 lock-in 必要)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Claude Code v2.1.143** (5/15)",
+          "url": "",
+          "status": "",
+          "summary": "**Claude Code v2.1.143** (5/15) plugin dependency 強制 / 投影 context cost / `worktree.bgIsolation: \"none\"` / PowerShell `-ExecutionPolicy Bypass` / background session model 保持. 自社 Win Claude #132 fleet 中核. **bgIsolation: \"none\" は [WORKDIR-ISOLATION] rule との緊張軸** (= main repo 直接編集 opt-in 機能). 自社では既存 worktree-isolation 維持推奨. 🟠 (= dogfood 機会 / 設定 lock-in 必要)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2c853ac2dd3c",
+        "title": "**Claude Code v2.1.143** (5/15)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-de70e4399522",
+        "title": "**GitHub Copilot JetBrains CLI agent unified sessions** (5/13) + **Cloud Agent REST API** + **Agents secrets/variables** + **`.agent.md` global custom agents**",
+        "text": "**GitHub Copilot JetBrains CLI agent unified sessions** (5/13) + **Cloud Agent REST API** + **Agents secrets/variables** + **`.agent.md` global custom agents** **GitHub Copilot JetBrains CLI agent unified sessions** (5/13) + **Cloud Agent REST API** + **Agents secrets/variables** + **`.agent.md` global custom agents** Copilot CLI agent を JetBrains に統合 + worktree isolation mode + `~/.copilot/agents/.agent.md` global custom agent. 自社 cross-instance-pr md doc + Win Claude/Codex 2-instance fleet に対し **single-tool 内 multi-vendor + multi-environment 統合** 軸で friction 圧倒的低. 🔴",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**GitHub Copilot JetBrains CLI agent unified sessions** (5/13) + **Cloud Agent REST API** + **Agents secrets/variables** + **`.agent.md` global custom agents**",
+          "url": "",
+          "status": "",
+          "summary": "**GitHub Copilot JetBrains CLI agent unified sessions** (5/13) + **Cloud Agent REST API** + **Agents secrets/variables** + **`.agent.md` global custom agents** Copilot CLI agent を JetBrains に統合 + worktree isolation mode + `~/.copilot/agents/.agent.md` global custom agent. 自社 cross-instance-pr md doc + Win Claude/Codex 2-instance fleet に対し **single-tool 内 multi-vendor + multi-environment 統合** 軸で friction 圧倒的低. 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-de70e4399522",
+        "title": "**GitHub Copilot JetBrains CLI agent unified sessions** (5/13) + **Cloud Agent REST API** + **Agents secrets/variables** + **`.agent.md` global custom agents**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: secret",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-53f0a2cfb64d",
+        "title": "**OpenAI Codex CLI 0.130.0 + Chrome extension + GPT-5.5** (5月)",
+        "text": "**OpenAI Codex CLI 0.130.0 + Chrome extension + GPT-5.5** (5月) **OpenAI Codex CLI 0.130.0 + Chrome extension + GPT-5.5** (5月) Vim modal editing / resume-fork picker / Chrome 拡張 per-site approvals / GPT-5.5 frontier model in Codex. 自社 Win Codex #1 中核 tool. GPT-5.5 routing update + Chrome 拡張で browser task 自動化軸が拡張. 🟠 (= Win Codex upgrade 候補)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**OpenAI Codex CLI 0.130.0 + Chrome extension + GPT-5.5** (5月)",
+          "url": "",
+          "status": "",
+          "summary": "**OpenAI Codex CLI 0.130.0 + Chrome extension + GPT-5.5** (5月) Vim modal editing / resume-fork picker / Chrome 拡張 per-site approvals / GPT-5.5 frontier model in Codex. 自社 Win Codex #1 中核 tool. GPT-5.5 routing update + Chrome 拡張で browser task 自動化軸が拡張. 🟠 (= Win Codex upgrade 候補)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-53f0a2cfb64d",
+        "title": "**OpenAI Codex CLI 0.130.0 + Chrome extension + GPT-5.5** (5月)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-48b6035492ee",
+        "title": "競合",
+        "text": "競合 競合 観察項目 timing",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "競合",
+          "url": "",
+          "status": "",
+          "summary": "競合 観察項目 timing"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-48b6035492ee",
+        "title": "競合",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e39369c6821e",
+        "title": "**Notion 3.5 Plan Mode + Custom Agent Directory + Admin Controls**",
+        "text": "**Notion 3.5 Plan Mode + Custom Agent Directory + Admin Controls** **Notion 3.5 Plan Mode + Custom Agent Directory + Admin Controls** 5/13 Developer Platform に続く Plan Mode + Custom Agent Directory + spending visibility. 5/22 sprint Day 1-3 PoC 候補.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Notion 3.5 Plan Mode + Custom Agent Directory + Admin Controls**",
+          "url": "",
+          "status": "",
+          "summary": "**Notion 3.5 Plan Mode + Custom Agent Directory + Admin Controls** 5/13 Developer Platform に続く Plan Mode + Custom Agent Directory + spending visibility. 5/22 sprint Day 1-3 PoC 候補."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e39369c6821e",
+        "title": "**Notion 3.5 Plan Mode + Custom Agent Directory + Admin Controls**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8173cc7f7bbc",
+        "title": "**Slack Vercel + Lovable 'Add to Slack' (5月末 launch)**",
+        "text": "**Slack Vercel + Lovable 'Add to Slack' (5月末 launch)** **Slack Vercel + Lovable 'Add to Slack' (5月末 launch)** Lovable / Vercel が Slack へ 1-click integration. 自社 cross-instance-pr workflow との overlap 軸. 5/末 launch monitor.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Slack Vercel + Lovable 'Add to Slack' (5月末 launch)**",
+          "url": "",
+          "status": "",
+          "summary": "**Slack Vercel + Lovable 'Add to Slack' (5月末 launch)** Lovable / Vercel が Slack へ 1-click integration. 自社 cross-instance-pr workflow との overlap 軸. 5/末 launch monitor."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8173cc7f7bbc",
+        "title": "**Slack Vercel + Lovable 'Add to Slack' (5月末 launch)**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-61ed4a6f8ab4",
+        "title": "**MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf**",
+        "text": "**MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf** **MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf** 経理/労務/法務 自律 AI suite. 5/25-26 conf で深掘り.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf**",
+          "url": "",
+          "status": "",
+          "summary": "**MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf** 経理/労務/法務 自律 AI suite. 5/25-26 conf で深掘り."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-61ed4a6f8ab4",
+        "title": "**MoneyForward AI Cowork 7月 GA + 5/25-26 CONNECT with AI conf**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c0bf4215f9fb",
+        "title": "詳細セクション (= 自社直撃 2 件深掘り)",
+        "text": "詳細セクション (= 自社直撃 2 件深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (= 自社直撃 2 件深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c0bf4215f9fb",
+        "title": "詳細セクション (= 自社直撃 2 件深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b9e85a97c6d6",
+        "title": "Replit CEO Amjad Masad: 「Apple と話がついた」→ iOS app **4 ヶ月ぶり update**.",
+        "text": "Replit CEO Amjad Masad: 「Apple と話がついた」→ iOS app **4 ヶ月ぶり update**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Replit CEO Amjad Masad: 「Apple と話がついた」→ iOS app **4 ヶ月ぶり update**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b9e85a97c6d6",
+        "title": "Replit CEO Amjad Masad: 「Apple と話がついた」→ iOS app **4 ヶ月ぶり update**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c17090689291",
+        "title": "update 内容: Agent 4 mobile + parallel agents + team merge flow + project cross-workspace 表示.",
+        "text": "update 内容: Agent 4 mobile + parallel agents + team merge flow + project cross-workspace 表示.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "update 内容: Agent 4 mobile + parallel agents + team merge flow + project cross-workspace 表示."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c17090689291",
+        "title": "update 内容: Agent 4 mobile + parallel agents + team merge flow + project cross-workspace 表示.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-179c99aaa9df",
+        "title": "Promotion**: Lovable / Base44 / V0 project import → Replit Agent で mobile app 化.",
+        "text": "Promotion**: Lovable / Base44 / V0 project import → Replit Agent で mobile app 化.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Promotion**: Lovable / Base44 / V0 project import → Replit Agent で mobile app 化."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-179c99aaa9df",
+        "title": "Promotion**: Lovable / Base44 / V0 project import → Replit Agent で mobile app 化.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a666b6c8eccf",
+        "title": "自社 Flutter Web (= my-web-app-b67f4.web.app) は **mobile browser 表示** 軸. **mobile-native app** ではない. Lovable iOS+Android +",
+        "text": "自社 Flutter Web (= my-web-app-b67f4.web.app) は **mobile browser 表示** 軸. **mobile-native app** ではない. Lovable iOS+Android + Replit Agent iOS update で『vibe coding 4 強 mobile-native 軸』が完成.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社 Flutter Web (= my-web-app-b67f4.web.app) は **mobile browser 表示** 軸. **mobile-native app** ではない. Lovable iOS+Android + Replit Agent iOS update で『vibe coding 4 強 mobile-native 軸』が完成."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a666b6c8eccf",
+        "title": "自社 Flutter Web (= my-web-app-b67f4.web.app) は **mobile browser 表示** 軸. **mobile-native app** ではない. Lovable iOS+Android +",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-dde12d9632d3",
+        "title": "自社 6 部署 + 21 競合機能統合 narrative の **mobile-first competitor** が確立 = Lovable / Replit / (Bolt.new / Cursor mobile) の 4 強.",
+        "text": "自社 6 部署 + 21 競合機能統合 narrative の **mobile-first competitor** が確立 = Lovable / Replit / (Bolt.new / Cursor mobile) の 4 強.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社 6 部署 + 21 競合機能統合 narrative の **mobile-first competitor** が確立 = Lovable / Replit / (Bolt.new / Cursor mobile) の 4 強."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-dde12d9632d3",
+        "title": "自社 6 部署 + 21 競合機能統合 narrative の **mobile-first competitor** が確立 = Lovable / Replit / (Bolt.new / Cursor mobile) の 4 強.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9c42cb121900",
+        "title": "一方 Apple 紛争解決経緯は『AI 生成 app の App Store 審査』shift signal. 自社が将来 mobile app 化検討時に Apple review が緩和されている前提条件.",
+        "text": "一方 Apple 紛争解決経緯は『AI 生成 app の App Store 審査』shift signal. 自社が将来 mobile app 化検討時に Apple review が緩和されている前提条件.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "一方 Apple 紛争解決経緯は『AI 生成 app の App Store 審査』shift signal. 自社が将来 mobile app 化検討時に Apple review が緩和されている前提条件."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9c42cb121900",
+        "title": "一方 Apple 紛争解決経緯は『AI 生成 app の App Store 審査』shift signal. 自社が将来 mobile app 化検討時に Apple review が緩和されている前提条件.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8312b6a6a383",
+        "title": "[narrative / P2]** AI 大学に Replit / Lovable mobile launch / Apple App Store AI-app 審査 shift を **「vibe coding mobile-nativ",
+        "text": "[narrative / P2]** AI 大学に Replit / Lovable mobile launch / Apple App Store AI-app 審査 shift を **「vibe coding mobile-native 時代」題材** として追加 (= Codex T-1 dispatch backlog).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[narrative / P2]** AI 大学に Replit / Lovable mobile launch / Apple App Store AI-app 審査 shift を **「vibe coding mobile-native 時代」題材** として追加 (= Codex T-1 dispatch backlog)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8312b6a6a383",
+        "title": "[narrative / P2]** AI 大学に Replit / Lovable mobile launch / Apple App Store AI-app 審査 shift を **「vibe coding mobile-nativ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2a4ff7ca9212",
+        "title": "[戦略 / P3]** 自社が将来 mobile app 化を検討する場合の **Apple AI-app 審査 risk** が下がっている前提を 6/1 戦略レビューに織り込む.",
+        "text": "[戦略 / P3]** 自社が将来 mobile app 化を検討する場合の **Apple AI-app 審査 risk** が下がっている前提を 6/1 戦略レビューに織り込む.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[戦略 / P3]** 自社が将来 mobile app 化を検討する場合の **Apple AI-app 審査 risk** が下がっている前提を 6/1 戦略レビューに織り込む."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2a4ff7ca9212",
+        "title": "[戦略 / P3]** 自社が将来 mobile app 化を検討する場合の **Apple AI-app 審査 risk** が下がっている前提を 6/1 戦略レビューに織り込む.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-eb72697f45cb",
+        "title": "[継続]** Slack 'Add to Slack' (5月末 Lovable+Vercel 公式) と Replit 'Lovable import' の **distribution funnel** 動向監視.",
+        "text": "[継続]** Slack 'Add to Slack' (5月末 Lovable+Vercel 公式) と Replit 'Lovable import' の **distribution funnel** 動向監視.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[継続]** Slack 'Add to Slack' (5月末 Lovable+Vercel 公式) と Replit 'Lovable import' の **distribution funnel** 動向監視."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-eb72697f45cb",
+        "title": "[継続]** Slack 'Add to Slack' (5月末 Lovable+Vercel 公式) と Replit 'Lovable import' の **distribution funnel** 動向監視.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-336c85645f3b",
+        "title": "plugin dependency 強制**: `claude plugin disable` が依存 plugin 検出時拒否 + disable-chain hint 表示 / `enable` で transitive deps 強制",
+        "text": "plugin dependency 強制**: `claude plugin disable` が依存 plugin 検出時拒否 + disable-chain hint 表示 / `enable` で transitive deps 強制 enable.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "plugin dependency 強制**: `claude plugin disable` が依存 plugin 検出時拒否 + disable-chain hint 表示 / `enable` で transitive deps 強制 enable."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-336c85645f3b",
+        "title": "plugin dependency 強制**: `claude plugin disable` が依存 plugin 検出時拒否 + disable-chain hint 表示 / `enable` で transitive deps 強制",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1854f7cc91f9",
+        "title": "投影 context cost**: `/plugin marketplace browse` で per-turn / per-invocation token estimate.",
+        "text": "投影 context cost**: `/plugin marketplace browse` で per-turn / per-invocation token estimate.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "投影 context cost**: `/plugin marketplace browse` で per-turn / per-invocation token estimate."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1854f7cc91f9",
+        "title": "投影 context cost**: `/plugin marketplace browse` で per-turn / per-invocation token estimate.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8d869c77163f",
+        "title": "`worktree.bgIsolation: \"none\"`**: background session が **EnterWorktree なしで working copy 直接編集** opt-in.",
+        "text": "`worktree.bgIsolation: \"none\"`**: background session が **EnterWorktree なしで working copy 直接編集** opt-in.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "`worktree.bgIsolation: \"none\"`**: background session が **EnterWorktree なしで working copy 直接編集** opt-in."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8d869c77163f",
+        "title": "`worktree.bgIsolation: \"none\"`**: background session が **EnterWorktree なしで working copy 直接編集** opt-in.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-267557a4705b",
+        "title": "PowerShell `-ExecutionPolicy Bypass`** 既定 (opt-out `CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY=1`).",
+        "text": "PowerShell `-ExecutionPolicy Bypass`** 既定 (opt-out `CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY=1`).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "PowerShell `-ExecutionPolicy Bypass`** 既定 (opt-out `CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY=1`)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-267557a4705b",
+        "title": "PowerShell `-ExecutionPolicy Bypass`** 既定 (opt-out `CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY=1`).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f45060441170",
+        "title": "background session 起床後 model/effort 保持**.",
+        "text": "background session 起床後 model/effort 保持**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "background session 起床後 model/effort 保持**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f45060441170",
+        "title": "background session 起床後 model/effort 保持**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-33f54dfb9f74",
+        "title": "Shift+Tab 巡回に auto mode 追加**.",
+        "text": "Shift+Tab 巡回に auto mode 追加**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Shift+Tab 巡回に auto mode 追加**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-33f54dfb9f74",
+        "title": "Shift+Tab 巡回に auto mode 追加**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-56e3a64842ca",
+        "title": "`.credentials.json` 非 array scopes hang fix**.",
+        "text": "`.credentials.json` 非 array scopes hang fix**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "`.credentials.json` 非 array scopes hang fix**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-56e3a64842ca",
+        "title": "`.credentials.json` 非 array scopes hang fix**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-082585a20363",
+        "title": "🔴 [WORKDIR-ISOLATION] rule 緊張軸**: `worktree.bgIsolation: \"none\"` opt-in は自社 main repo 直接編集禁止 rule と真正面で衝突. **自社では opt-ou",
+        "text": "🔴 [WORKDIR-ISOLATION] rule 緊張軸**: `worktree.bgIsolation: \"none\"` opt-in は自社 main repo 直接編集禁止 rule と真正面で衝突. **自社では opt-out 維持必須** (= settings で `worktree.bgIsolation` 未設定 / Claude Code 既定動作維持).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🔴 [WORKDIR-ISOLATION] rule 緊張軸**: `worktree.bgIsolation: \"none\"` opt-in は自社 main repo 直接編集禁止 rule と真正面で衝突. **自社では opt-out 維持必須** (= settings で `worktree.bgIsolation` 未設定 / Claude Code 既定動作維持)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-082585a20363",
+        "title": "🔴 [WORKDIR-ISOLATION] rule 緊張軸**: `worktree.bgIsolation: \"none\"` opt-in は自社 main repo 直接編集禁止 rule と真正面で衝突. **自社では opt-ou",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-06adf58108b0",
+        "title": "🟠 PowerShell `-ExecutionPolicy Bypass`**: 自社 Win Claude PowerShell tool で `-ExecutionPolicy Bypass` が **自動付与** = lefthoo",
+        "text": "🟠 PowerShell `-ExecutionPolicy Bypass`**: 自社 Win Claude PowerShell tool で `-ExecutionPolicy Bypass` が **自動付与** = lefthook hang 含む既存 hang 系問題への寄与 potential. ただし 自社 [DART-FORMAT] rule で絶対パス + pipe なし 推奨済 → 影響最小.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟠 PowerShell `-ExecutionPolicy Bypass`**: 自社 Win Claude PowerShell tool で `-ExecutionPolicy Bypass` が **自動付与** = lefthook hang 含む既存 hang 系問題への寄与 potential. ただし 自社 [DART-FORMAT] rule で絶対パス + pipe なし 推奨済 → 影響最小."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-06adf58108b0",
+        "title": "🟠 PowerShell `-ExecutionPolicy Bypass`**: 自社 Win Claude PowerShell tool で `-ExecutionPolicy Bypass` が **自動付与** = lefthoo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-60ad0210969a",
+        "title": "🟢 background session model 保持**: 自社 [SCHEDULE-WAKEUP] rule 下で background fire 後の model downgrade 問題が緩和. 部 222 v24 SS har",
+        "text": "🟢 background session model 保持**: 自社 [SCHEDULE-WAKEUP] rule 下で background fire 後の model downgrade 問題が緩和. 部 222 v24 SS hard exit streak 14 連続終了に対し positive.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟢 background session model 保持**: 自社 [SCHEDULE-WAKEUP] rule 下で background fire 後の model downgrade 問題が緩和. 部 222 v24 SS hard exit streak 14 連続終了に対し positive."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-60ad0210969a",
+        "title": "🟢 background session model 保持**: 自社 [SCHEDULE-WAKEUP] rule 下で background fire 後の model downgrade 問題が緩和. 部 222 v24 SS har",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-255ac8ad2288",
+        "title": "🟢 plugin dependency 強制**: 自社で plugin 利用なし → 影響なし.",
+        "text": "🟢 plugin dependency 強制**: 自社で plugin 利用なし → 影響なし.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟢 plugin dependency 強制**: 自社で plugin 利用なし → 影響なし."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-255ac8ad2288",
+        "title": "🟢 plugin dependency 強制**: 自社で plugin 利用なし → 影響なし.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8cd378cbdaf4",
+        "title": "[即時 / P1]** Win Claude TUI v2.1.143 upgrade 検討. **`worktree.bgIsolation` 設定確認** (= 未設定 = 既定 isolation 維持 / opt-in 禁止 dec",
+        "text": "[即時 / P1]** Win Claude TUI v2.1.143 upgrade 検討. **`worktree.bgIsolation` 設定確認** (= 未設定 = 既定 isolation 維持 / opt-in 禁止 declarative comment を `.claude/settings.local.json` に追加候補).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[即時 / P1]** Win Claude TUI v2.1.143 upgrade 検討. **`worktree.bgIsolation` 設定確認** (= 未設定 = 既定 isolation 維持 / opt-in 禁止 declarative comment を `.claude/settings.local.json` に追加候補)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8cd378cbdaf4",
+        "title": "[即時 / P1]** Win Claude TUI v2.1.143 upgrade 検討. **`worktree.bgIsolation` 設定確認** (= 未設定 = 既定 isolation 維持 / opt-in 禁止 dec",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-073a033a2f55",
+        "title": "[narrative / P3]** v2.1.140-2.1.143 連続 patch を **「LLM tool fix-then-regress 4 連発」** 題材として AI 大学に追加 (= Codex T-1 dispatch",
+        "text": "[narrative / P3]** v2.1.140-2.1.143 連続 patch を **「LLM tool fix-then-regress 4 連発」** 題材として AI 大学に追加 (= Codex T-1 dispatch backlog / 5/16 report § 1 と統合).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[narrative / P3]** v2.1.140-2.1.143 連続 patch を **「LLM tool fix-then-regress 4 連発」** 題材として AI 大学に追加 (= Codex T-1 dispatch backlog / 5/16 report § 1 と統合)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-073a033a2f55",
+        "title": "[narrative / P3]** v2.1.140-2.1.143 連続 patch を **「LLM tool fix-then-regress 4 連発」** 題材として AI 大学に追加 (= Codex T-1 dispatch",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-98e93c6e5f7b",
+        "title": "JetBrains IDEs Copilot CLI agent + unified sessions view** = JetBrains から Copilot CLI agent に delegate + 走行 session 一覧 +",
+        "text": "JetBrains IDEs Copilot CLI agent + unified sessions view** = JetBrains から Copilot CLI agent に delegate + 走行 session 一覧 + worktree isolation mode 内蔵.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "JetBrains IDEs Copilot CLI agent + unified sessions view** = JetBrains から Copilot CLI agent に delegate + 走行 session 一覧 + worktree isolation mode 内蔵."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-98e93c6e5f7b",
+        "title": "JetBrains IDEs Copilot CLI agent + unified sessions view** = JetBrains から Copilot CLI agent に delegate + 走行 session 一覧 +",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f176d9ce96b4",
+        "title": "Cloud Agent REST API**: Business/Enterprise が programmatically Copilot cloud agent task 起動可 (public preview).",
+        "text": "Cloud Agent REST API**: Business/Enterprise が programmatically Copilot cloud agent task 起動可 (public preview).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Cloud Agent REST API**: Business/Enterprise が programmatically Copilot cloud agent task 起動可 (public preview)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f176d9ce96b4",
+        "title": "Cloud Agent REST API**: Business/Enterprise が programmatically Copilot cloud agent task 起動可 (public preview).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-de336ee0c1ef",
+        "title": "Agent Mode Ask Question tool**: agent が clarifying question を返す.",
+        "text": "Agent Mode Ask Question tool**: agent が clarifying question を返す.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Agent Mode Ask Question tool**: agent が clarifying question を返す."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-de336ee0c1ef",
+        "title": "Agent Mode Ask Question tool**: agent が clarifying question を返す.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7baf74b53541",
+        "title": "`~/.copilot/agents/.agent.md`**: workspace 横断 global custom agent.",
+        "text": "`~/.copilot/agents/.agent.md`**: workspace 横断 global custom agent.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "`~/.copilot/agents/.agent.md`**: workspace 横断 global custom agent."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7baf74b53541",
+        "title": "`~/.copilot/agents/.agent.md`**: workspace 横断 global custom agent.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-faf25e2814d9",
+        "title": "Agents secrets/variables**: Copilot cloud agent 用 org-level shared config + Agents section UI.",
+        "text": "Agents secrets/variables**: Copilot cloud agent 用 org-level shared config + Agents section UI.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Agents secrets/variables**: Copilot cloud agent 用 org-level shared config + Agents section UI."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-faf25e2814d9",
+        "title": "Agents secrets/variables**: Copilot cloud agent 用 org-level shared config + Agents section UI.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: secret",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f7b64b7a03e3",
+        "title": "🔴 single-tool 内 multi-environment 統合**: 自社 cross-instance-pr md doc + 2-instance fleet (Win Claude + Win Codex / 12 dorm",
+        "text": "🔴 single-tool 内 multi-environment 統合**: 自社 cross-instance-pr md doc + 2-instance fleet (Win Claude + Win Codex / 12 dormant) は **複数 tool 跨ぎ手動 protocol**. Copilot は **JetBrains + CLI + Cloud + REST API + global agent** を single-tool で統合. friction 桁違いに低.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🔴 single-tool 内 multi-environment 統合**: 自社 cross-instance-pr md doc + 2-instance fleet (Win Claude + Win Codex / 12 dormant) は **複数 tool 跨ぎ手動 protocol**. Copilot は **JetBrains + CLI + Cloud + REST API + global agent** を single-tool で統合. friction 桁違いに低."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f7b64b7a03e3",
+        "title": "🔴 single-tool 内 multi-environment 統合**: 自社 cross-instance-pr md doc + 2-instance fleet (Win Claude + Win Codex / 12 dorm",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a5b0fb582d80",
+        "title": "🔴 worktree isolation mode 内蔵**: 自社 [WORKDIR-ISOLATION] rule + `.claude/worktrees/<part>/` 手動運用に対し、Copilot は **default + ",
+        "text": "🔴 worktree isolation mode 内蔵**: 自社 [WORKDIR-ISOLATION] rule + `.claude/worktrees/<part>/` 手動運用に対し、Copilot は **default + 1-click worktree** = 自社 12→2 instance 移行の意義が薄れる threat.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🔴 worktree isolation mode 内蔵**: 自社 [WORKDIR-ISOLATION] rule + `.claude/worktrees/<part>/` 手動運用に対し、Copilot は **default + 1-click worktree** = 自社 12→2 instance 移行の意義が薄れる threat."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a5b0fb582d80",
+        "title": "🔴 worktree isolation mode 内蔵**: 自社 [WORKDIR-ISOLATION] rule + `.claude/worktrees/<part>/` 手動運用に対し、Copilot は **default + ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e80eb3712b2e",
+        "title": "🟠 `.agent.md` global**: 自社 `~/.claude/hooks/inject-rules.txt` (= 毎ターン inject) と概念類似. Copilot は global `.agent.md` で **wo",
+        "text": "🟠 `.agent.md` global**: 自社 `~/.claude/hooks/inject-rules.txt` (= 毎ターン inject) と概念類似. Copilot は global `.agent.md` で **workspace 跨ぎ rule 統一** = 自社 inject-rules.txt + Codex equivalent 二重管理に対し優位.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟠 `.agent.md` global**: 自社 `~/.claude/hooks/inject-rules.txt` (= 毎ターン inject) と概念類似. Copilot は global `.agent.md` で **workspace 跨ぎ rule 統一** = 自社 inject-rules.txt + Codex equivalent 二重管理に対し優位."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e80eb3712b2e",
+        "title": "🟠 `.agent.md` global**: 自社 `~/.claude/hooks/inject-rules.txt` (= 毎ターン inject) と概念類似. Copilot は global `.agent.md` で **wo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-820cd553f421",
+        "title": "[narrative / P2]** AI 大学 「AI dev tool 6 強 比較」 セクションに Copilot single-tool 統合軸を **counter-narrative 題材** として追加 (= 自社 2-ins",
+        "text": "[narrative / P2]** AI 大学 「AI dev tool 6 強 比較」 セクションに Copilot single-tool 統合軸を **counter-narrative 題材** として追加 (= 自社 2-instance + cross-instance-pr の audit-trail 軸を differentiator として強調) — Codex T-1 dispatch backlog.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[narrative / P2]** AI 大学 「AI dev tool 6 強 比較」 セクションに Copilot single-tool 統合軸を **counter-narrative 題材** として追加 (= 自社 2-instance + cross-instance-pr の audit-trail 軸を differentiator として強調) — Codex T-1 dispatch backlog."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-820cd553f421",
+        "title": "[narrative / P2]** AI 大学 「AI dev tool 6 強 比較」 セクションに Copilot single-tool 統合軸を **counter-narrative 題材** として追加 (= 自社 2-ins",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2831c0366115",
+        "title": "[戦略 / P3]** 自社 5 正本 governance (= Issues/PR / WBS+Notion / NotebookLM / Slack / worktree+branch) の **friction 高さ = secur",
+        "text": "[戦略 / P3]** 自社 5 正本 governance (= Issues/PR / WBS+Notion / NotebookLM / Slack / worktree+branch) の **friction 高さ = security/audit 軸の代償** narrative を 6/1 戦略レビューに織り込む.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[戦略 / P3]** 自社 5 正本 governance (= Issues/PR / WBS+Notion / NotebookLM / Slack / worktree+branch) の **friction 高さ = security/audit 軸の代償** narrative を 6/1 戦略レビューに織り込む."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2831c0366115",
+        "title": "[戦略 / P3]** 自社 5 正本 governance (= Issues/PR / WBS+Notion / NotebookLM / Slack / worktree+branch) の **friction 高さ = secur",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-81c76193d8ff",
+        "title": "Codex CLI 0.130.0 + 0.129.0**: TUI Vim modal editing (`/vim` + default-mode + Vim keymap) / resume-fork picker / raw scr",
+        "text": "Codex CLI 0.130.0 + 0.129.0**: TUI Vim modal editing (`/vim` + default-mode + Vim keymap) / resume-fork picker / raw scrollback / `/ide` context injection / workspace-aware `/diff`.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Codex CLI 0.130.0 + 0.129.0**: TUI Vim modal editing (`/vim` + default-mode + Vim keymap) / resume-fork picker / raw scrollback / `/ide` context injection / workspace-aware `/diff`."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-81c76193d8ff",
+        "title": "Codex CLI 0.130.0 + 0.129.0**: TUI Vim modal editing (`/vim` + default-mode + Vim keymap) / resume-fork picker / raw scr",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c962dfff0d5a",
+        "title": "Codex Chrome 拡張**: 既存 Chrome session 利用 + per-site approval + allowlist/blocklist.",
+        "text": "Codex Chrome 拡張**: 既存 Chrome session 利用 + per-site approval + allowlist/blocklist.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Codex Chrome 拡張**: 既存 Chrome session 利用 + per-site approval + allowlist/blocklist."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c962dfff0d5a",
+        "title": "Codex Chrome 拡張**: 既存 Chrome session 利用 + per-site approval + allowlist/blocklist.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3aa90830d2a5",
+        "title": "GPT-5.5**: Codex model picker に登場. 複雑 coding / computer use / knowledge work / research の推奨 model.",
+        "text": "GPT-5.5**: Codex model picker に登場. 複雑 coding / computer use / knowledge work / research の推奨 model.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "GPT-5.5**: Codex model picker に登場. 複雑 coding / computer use / knowledge work / research の推奨 model."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3aa90830d2a5",
+        "title": "GPT-5.5**: Codex model picker に登場. 複雑 coding / computer use / knowledge work / research の推奨 model.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3b68ec328a20",
+        "title": "plugin sharing / hook details / 簡略 remote-control startup / thread pagination / Bedrock AWS auth**.",
+        "text": "plugin sharing / hook details / 簡略 remote-control startup / thread pagination / Bedrock AWS auth**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "plugin sharing / hook details / 簡略 remote-control startup / thread pagination / Bedrock AWS auth**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3b68ec328a20",
+        "title": "plugin sharing / hook details / 簡略 remote-control startup / thread pagination / Bedrock AWS auth**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-68c2381c2d2e",
+        "title": "🟢 Win Codex #1 upgrade 候補**: 0.130.0 で TUI 安定性向上 + GPT-5.5 routing.",
+        "text": "🟢 Win Codex #1 upgrade 候補**: 0.130.0 で TUI 安定性向上 + GPT-5.5 routing.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟢 Win Codex #1 upgrade 候補**: 0.130.0 で TUI 安定性向上 + GPT-5.5 routing."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-68c2381c2d2e",
+        "title": "🟢 Win Codex #1 upgrade 候補**: 0.130.0 で TUI 安定性向上 + GPT-5.5 routing.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-461fee97d636",
+        "title": "🟠 Chrome 拡張**: 自社 Playwright MCP / Claude in Chrome MCP + Codex Chrome 拡張で **browser-based task** 軸が更に 3-tool 化. 自社 rout",
+        "text": "🟠 Chrome 拡張**: 自社 Playwright MCP / Claude in Chrome MCP + Codex Chrome 拡張で **browser-based task** 軸が更に 3-tool 化. 自社 routing matrix で **Web UAT** = Win Claude (Playwright/Claude in Chrome) / **agent automation** = Win Codex (Chrome 拡張) 棲み分け推奨.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟠 Chrome 拡張**: 自社 Playwright MCP / Claude in Chrome MCP + Codex Chrome 拡張で **browser-based task** 軸が更に 3-tool 化. 自社 routing matrix で **Web UAT** = Win Claude (Playwright/Claude in Chrome) / **agent automation** = Win Codex (Chrome 拡張) 棲み分け推奨."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-461fee97d636",
+        "title": "🟠 Chrome 拡張**: 自社 Playwright MCP / Claude in Chrome MCP + Codex Chrome 拡張で **browser-based task** 軸が更に 3-tool 化. 自社 rout",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-685f25c93ea5",
+        "title": "🟢 GPT-5.5**: Codex 振り分け matrix (= docs/CODEX_WORKFLOW.md §6) で **複雑 coding/refactor/test** 域は Win Codex 推奨 維持 (= Win Cla",
+        "text": "🟢 GPT-5.5**: Codex 振り分け matrix (= docs/CODEX_WORKFLOW.md §6) で **複雑 coding/refactor/test** 域は Win Codex 推奨 維持 (= Win Claude Opus 4.7 vs Win Codex GPT-5.5 比較は 6/1 戦略レビュー候補).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟢 GPT-5.5**: Codex 振り分け matrix (= docs/CODEX_WORKFLOW.md §6) で **複雑 coding/refactor/test** 域は Win Codex 推奨 維持 (= Win Claude Opus 4.7 vs Win Codex GPT-5.5 比較は 6/1 戦略レビュー候補)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-685f25c93ea5",
+        "title": "🟢 GPT-5.5**: Codex 振り分け matrix (= docs/CODEX_WORKFLOW.md §6) で **複雑 coding/refactor/test** 域は Win Codex 推奨 維持 (= Win Cla",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-44faab1a6edf",
+        "title": "[即時 / P2]** Win Codex CLI 0.130.0 upgrade. user 手動 (= Codex install script 経由).",
+        "text": "[即時 / P2]** Win Codex CLI 0.130.0 upgrade. user 手動 (= Codex install script 経由).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[即時 / P2]** Win Codex CLI 0.130.0 upgrade. user 手動 (= Codex install script 経由)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-44faab1a6edf",
+        "title": "[即時 / P2]** Win Codex CLI 0.130.0 upgrade. user 手動 (= Codex install script 経由).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-98e470d0f9fa",
+        "title": "[narrative / P3]** Codex GPT-5.5 vs Claude Opus 4.7 比較記事 candidate (= AI 大学 / Codex T-1 dispatch backlog).",
+        "text": "[narrative / P3]** Codex GPT-5.5 vs Claude Opus 4.7 比較記事 candidate (= AI 大学 / Codex T-1 dispatch backlog).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[narrative / P3]** Codex GPT-5.5 vs Claude Opus 4.7 比較記事 candidate (= AI 大学 / Codex T-1 dispatch backlog)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-98e470d0f9fa",
+        "title": "[narrative / P3]** Codex GPT-5.5 vs Claude Opus 4.7 比較記事 candidate (= AI 大学 / Codex T-1 dispatch backlog).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b691f48cbbb0",
+        "title": "Discovery セクション (= 採択 1 件 / Lovable)",
+        "text": "Discovery セクション (= 採択 1 件 / Lovable)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Discovery セクション (= 採択 1 件 / Lovable)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b691f48cbbb0",
+        "title": "Discovery セクション (= 採択 1 件 / Lovable)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-30d6f6a910ba",
+        "title": "基準",
+        "text": "基準 基準 該当 内容",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "基準",
+          "url": "",
+          "status": "",
+          "summary": "基準 該当 内容"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-30d6f6a910ba",
+        "title": "基準",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ec0dd4a12dc0",
+        "title": "**a. 差別化軸正面競合**",
+        "text": "**a. 差別化軸正面競合** **a. 差別化軸正面競合** ✅ **mobile-first vibe coding** 軸が自社 Flutter Web デスクトップ前提 UX に正面 threat. voice/text prompt → autonomous agent → cross-device seamless = ユーザー手元 friction zero.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**a. 差別化軸正面競合**",
+          "url": "",
+          "status": "",
+          "summary": "**a. 差別化軸正面競合** ✅ **mobile-first vibe coding** 軸が自社 Flutter Web デスクトップ前提 UX に正面 threat. voice/text prompt → autonomous agent → cross-device seamless = ユーザー手元 friction zero."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ec0dd4a12dc0",
+        "title": "**a. 差別化軸正面競合**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4c76b25fda98",
+        "title": "**b. 未カバー領域**",
+        "text": "**b. 未カバー領域** **b. 未カバー領域** ✅ 既存 18 社の中で **mobile-native AI app builder** は Lovable のみ (= Replit Agent 4 mobile も 5/15 update で再参入 / Bolt.new は web 中心).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**b. 未カバー領域**",
+          "url": "",
+          "status": "",
+          "summary": "**b. 未カバー領域** ✅ 既存 18 社の中で **mobile-native AI app builder** は Lovable のみ (= Replit Agent 4 mobile も 5/15 update で再参入 / Bolt.new は web 中心)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4c76b25fda98",
+        "title": "**b. 未カバー領域**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9f8936174ca3",
+        "title": "18 社 → 19 社 (= cap 50 / 残 31 枠).",
+        "text": "18 社 → 19 社 (= cap 50 / 残 31 枠).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "18 社 → 19 社 (= cap 50 / 残 31 枠)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9f8936174ca3",
+        "title": "18 社 → 19 社 (= cap 50 / 残 31 枠).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-aad65b617c1a",
+        "title": "AI dev tool 7 強化** (= Cursor / OpenAI Codex / Devin / Replit / Claude Code / GitHub Copilot / **Lovable**) で自社 fleet 戦略 ",
+        "text": "AI dev tool 7 強化** (= Cursor / OpenAI Codex / Devin / Replit / Claude Code / GitHub Copilot / **Lovable**) で自社 fleet 戦略 + AI 振り分け matrix のカバレッジ完成.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "AI dev tool 7 強化** (= Cursor / OpenAI Codex / Devin / Replit / Claude Code / GitHub Copilot / **Lovable**) で自社 fleet 戦略 + AI 振り分け matrix のカバレッジ完成."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-aad65b617c1a",
+        "title": "AI dev tool 7 強化** (= Cursor / OpenAI Codex / Devin / Replit / Claude Code / GitHub Copilot / **Lovable**) で自社 fleet 戦略 ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b159fe01ab24",
+        "title": "vibe coding 4 強** (= Lovable / Replit / Bolt.new / Cursor) で『建設前計画 + autonomous agent + mobile-native』軸の収斂状況を 6/1 戦略レビュー",
+        "text": "vibe coding 4 強** (= Lovable / Replit / Bolt.new / Cursor) で『建設前計画 + autonomous agent + mobile-native』軸の収斂状況を 6/1 戦略レビューで確認推奨.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "vibe coding 4 強** (= Lovable / Replit / Bolt.new / Cursor) で『建設前計画 + autonomous agent + mobile-native』軸の収斂状況を 6/1 戦略レビューで確認推奨."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b159fe01ab24",
+        "title": "vibe coding 4 強** (= Lovable / Replit / Bolt.new / Cursor) で『建設前計画 + autonomous agent + mobile-native』軸の収斂状況を 6/1 戦略レビュー",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1e68d2ab41c6",
+        "title": "候補",
+        "text": "候補 候補 除外理由",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "候補",
+          "url": "",
+          "status": "",
+          "summary": "候補 除外理由"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1e68d2ab41c6",
+        "title": "候補",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7cc826a8d11e",
+        "title": "Bolt.new",
+        "text": "Bolt.new Bolt.new Lovable 類似軸 / 5月純増薄 / 次回 5/24 候補",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Bolt.new",
+          "url": "",
+          "status": "",
+          "summary": "Bolt.new Lovable 類似軸 / 5月純増薄 / 次回 5/24 候補"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7cc826a8d11e",
+        "title": "Bolt.new",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ce781fc86d69",
+        "title": "Salesforce Agentforce",
+        "text": "Salesforce Agentforce Salesforce Agentforce enterprise 境界 / Slack 経由間接監視継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Salesforce Agentforce",
+          "url": "",
+          "status": "",
+          "summary": "Salesforce Agentforce enterprise 境界 / Slack 経由間接監視継続"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ce781fc86d69",
+        "title": "Salesforce Agentforce",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-96c1b6e95337",
+        "title": "ServiceNow Build Agent (5/10 GA)",
+        "text": "ServiceNow Build Agent (5/10 GA) ServiceNow Build Agent (5/10 GA) routing matrix 横断 / 動向観察 1 月 (= 5/10→6/10)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "ServiceNow Build Agent (5/10 GA)",
+          "url": "",
+          "status": "",
+          "summary": "ServiceNow Build Agent (5/10 GA) routing matrix 横断 / 動向観察 1 月 (= 5/10→6/10)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-96c1b6e95337",
+        "title": "ServiceNow Build Agent (5/10 GA)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2fdfa5acf1ce",
+        "title": "Prime Intellect Lab (5/10 RL agent platform)",
+        "text": "Prime Intellect Lab (5/10 RL agent platform) Prime Intellect Lab (5/10 RL agent platform) LLM 横断 fine-tuning / 動向観察 1 月",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Prime Intellect Lab (5/10 RL agent platform)",
+          "url": "",
+          "status": "",
+          "summary": "Prime Intellect Lab (5/10 RL agent platform) LLM 横断 fine-tuning / 動向観察 1 月"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2fdfa5acf1ce",
+        "title": "Prime Intellect Lab (5/10 RL agent platform)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4f1d673f12b3",
+        "title": "Manus AI",
+        "text": "Manus AI Manus AI 自社 routing matrix 協調軸組込継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Manus AI",
+          "url": "",
+          "status": "",
+          "summary": "Manus AI 自社 routing matrix 協調軸組込継続"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4f1d673f12b3",
+        "title": "Manus AI",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ab703c753032",
+        "title": "Mistral Le Chat Work agentic mode (5月新規 128B + async cloud coding)",
+        "text": "Mistral Le Chat Work agentic mode (5月新規 128B + async cloud coding) Mistral Le Chat Work agentic mode (5月新規 128B + async cloud coding) EU 軸 / 動向観察",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Mistral Le Chat Work agentic mode (5月新規 128B + async cloud coding)",
+          "url": "",
+          "status": "",
+          "summary": "Mistral Le Chat Work agentic mode (5月新規 128B + async cloud coding) EU 軸 / 動向観察"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ab703c753032",
+        "title": "Mistral Le Chat Work agentic mode (5月新規 128B + async cloud coding)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-05c7383ddf52",
+        "title": "Microsoft Agent 365 (5月 GA)",
+        "text": "Microsoft Agent 365 (5月 GA) Microsoft Agent 365 (5月 GA) enterprise / Slack 経由間接監視継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Microsoft Agent 365 (5月 GA)",
+          "url": "",
+          "status": "",
+          "summary": "Microsoft Agent 365 (5月 GA) enterprise / Slack 経由間接監視継続"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-05c7383ddf52",
+        "title": "Microsoft Agent 365 (5月 GA)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1a1b0afb1a61",
+        "title": "[Lovable mobile app launch](https://lovable.dev/blog/mobile-app)",
+        "text": "[Lovable mobile app launch](https://lovable.dev/blog/mobile-app)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Lovable mobile app launch](https://lovable.dev/blog/mobile-app)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1a1b0afb1a61",
+        "title": "[Lovable mobile app launch](https://lovable.dev/blog/mobile-app)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-12ba1b0770cf",
+        "title": "[Lovable launches vibe-coding app on iOS and Android (TechCrunch)](https://techcrunch.com/2026/04/28/lovable-launches-it",
+        "text": "[Lovable launches vibe-coding app on iOS and Android (TechCrunch)](https://techcrunch.com/2026/04/28/lovable-launches-its-vibe-coding-app-on-ios-and-android/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Lovable launches vibe-coding app on iOS and Android (TechCrunch)](https://techcrunch.com/2026/04/28/lovable-launches-its-vibe-coding-app-on-ios-and-android/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-12ba1b0770cf",
+        "title": "[Lovable launches vibe-coding app on iOS and Android (TechCrunch)](https://techcrunch.com/2026/04/28/lovable-launches-it",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d25181bba36e",
+        "title": "[Lovable Mobile App Development Trends 2026 guide](https://lovable.dev/guides/mobile-app-development-trends-2026)",
+        "text": "[Lovable Mobile App Development Trends 2026 guide](https://lovable.dev/guides/mobile-app-development-trends-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Lovable Mobile App Development Trends 2026 guide](https://lovable.dev/guides/mobile-app-development-trends-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d25181bba36e",
+        "title": "[Lovable Mobile App Development Trends 2026 guide](https://lovable.dev/guides/mobile-app-development-trends-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-adcbbc04dfa1",
+        "title": "[Claude Code Changelog (v2.1.143)](https://code.claude.com/docs/en/changelog)",
+        "text": "[Claude Code Changelog (v2.1.143)](https://code.claude.com/docs/en/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Claude Code Changelog (v2.1.143)](https://code.claude.com/docs/en/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-adcbbc04dfa1",
+        "title": "[Claude Code Changelog (v2.1.143)](https://code.claude.com/docs/en/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-83b6eef9235a",
+        "title": "[Anthropic Claude Code GitHub releases](https://github.com/anthropics/claude-code/releases)",
+        "text": "[Anthropic Claude Code GitHub releases](https://github.com/anthropics/claude-code/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Anthropic Claude Code GitHub releases](https://github.com/anthropics/claude-code/releases)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-83b6eef9235a",
+        "title": "[Anthropic Claude Code GitHub releases](https://github.com/anthropics/claude-code/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6056085ee22d",
+        "title": "[GitHub Copilot Changelog (label:copilot)](https://github.blog/changelog/label/copilot/)",
+        "text": "[GitHub Copilot Changelog (label:copilot)](https://github.blog/changelog/label/copilot/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[GitHub Copilot Changelog (label:copilot)](https://github.blog/changelog/label/copilot/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6056085ee22d",
+        "title": "[GitHub Copilot Changelog (label:copilot)](https://github.blog/changelog/label/copilot/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-eb78c3ef48ce",
+        "title": "[GitHub Copilot JetBrains CLI agent unified sessions (5/13)](https://github.blog/changelog/2026-05-13-introducing-copilo",
+        "text": "[GitHub Copilot JetBrains CLI agent unified sessions (5/13)](https://github.blog/changelog/2026-05-13-introducing-copilot-cli-agent-and-unified-sessions-view-in-github-copilot-for-jetbrains-ides/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[GitHub Copilot JetBrains CLI agent unified sessions (5/13)](https://github.blog/changelog/2026-05-13-introducing-copilot-cli-agent-and-unified-sessions-view-in-github-copilot-for-jetbrains-ides/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-eb78c3ef48ce",
+        "title": "[GitHub Copilot JetBrains CLI agent unified sessions (5/13)](https://github.blog/changelog/2026-05-13-introducing-copilo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-beb3f80f8295",
+        "title": "[GitHub Copilot Cloud Agent REST API (5/13)](https://github.blog/changelog/2026-05-13-start-copilot-cloud-agent-tasks-vi",
+        "text": "[GitHub Copilot Cloud Agent REST API (5/13)](https://github.blog/changelog/2026-05-13-start-copilot-cloud-agent-tasks-via-the-rest-api/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[GitHub Copilot Cloud Agent REST API (5/13)](https://github.blog/changelog/2026-05-13-start-copilot-cloud-agent-tasks-via-the-rest-api/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-beb3f80f8295",
+        "title": "[GitHub Copilot Cloud Agent REST API (5/13)](https://github.blog/changelog/2026-05-13-start-copilot-cloud-agent-tasks-vi",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8d973ffcef8a",
+        "title": "[OpenAI Codex CLI Changelog](https://developers.openai.com/codex/changelog)",
+        "text": "[OpenAI Codex CLI Changelog](https://developers.openai.com/codex/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenAI Codex CLI Changelog](https://developers.openai.com/codex/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8d973ffcef8a",
+        "title": "[OpenAI Codex CLI Changelog](https://developers.openai.com/codex/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4a14a40dece0",
+        "title": "[OpenAI Codex May 2026 updates (CLI 0.130.0 + Chrome)](https://authorityaitools.com/blog/openai-codex-may-2026-chrome-ex",
+        "text": "[OpenAI Codex May 2026 updates (CLI 0.130.0 + Chrome)](https://authorityaitools.com/blog/openai-codex-may-2026-chrome-extension-cli-0129)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[OpenAI Codex May 2026 updates (CLI 0.130.0 + Chrome)](https://authorityaitools.com/blog/openai-codex-may-2026-chrome-extension-cli-0129)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4a14a40dece0",
+        "title": "[OpenAI Codex May 2026 updates (CLI 0.130.0 + Chrome)](https://authorityaitools.com/blog/openai-codex-may-2026-chrome-ex",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f9a6ffe384b1",
+        "title": "[Cursor Changelog (v3.3 5/7)](https://cursor.com/changelog)",
+        "text": "[Cursor Changelog (v3.3 5/7)](https://cursor.com/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Cursor Changelog (v3.3 5/7)](https://cursor.com/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f9a6ffe384b1",
+        "title": "[Cursor Changelog (v3.3 5/7)](https://cursor.com/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-405783dc4b97",
+        "title": "[Devin Release Notes 2026](https://docs.devin.ai/release-notes/2026)",
+        "text": "[Devin Release Notes 2026](https://docs.devin.ai/release-notes/2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Devin Release Notes 2026](https://docs.devin.ai/release-notes/2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-405783dc4b97",
+        "title": "[Devin Release Notes 2026](https://docs.devin.ai/release-notes/2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1021035ca52b",
+        "title": "[Replit Agent 4 mobile launch (Apple Insider 5/15)](https://appleinsider.com/articles/26/05/15/apples-treatment-of-ai-co",
+        "text": "[Replit Agent 4 mobile launch (Apple Insider 5/15)](https://appleinsider.com/articles/26/05/15/apples-treatment-of-ai-coding-apps-could-be-shifting-with-replit-update)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Replit Agent 4 mobile launch (Apple Insider 5/15)](https://appleinsider.com/articles/26/05/15/apples-treatment-of-ai-coding-apps-could-be-shifting-with-replit-update)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1021035ca52b",
+        "title": "[Replit Agent 4 mobile launch (Apple Insider 5/15)](https://appleinsider.com/articles/26/05/15/apples-treatment-of-ai-co",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-650460d8c2b0",
+        "title": "[Replit Agent 4 base](https://blog.replit.com/introducing-agent-4-built-for-creativity)",
+        "text": "[Replit Agent 4 base](https://blog.replit.com/introducing-agent-4-built-for-creativity)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Replit Agent 4 base](https://blog.replit.com/introducing-agent-4-built-for-creativity)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-650460d8c2b0",
+        "title": "[Replit Agent 4 base](https://blog.replit.com/introducing-agent-4-built-for-creativity)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3a78aa3d6b1b",
+        "title": "[Notion Releases (Plan Mode / Custom Agent Directory)](https://www.notion.com/releases)",
+        "text": "[Notion Releases (Plan Mode / Custom Agent Directory)](https://www.notion.com/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Notion Releases (Plan Mode / Custom Agent Directory)](https://www.notion.com/releases)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3a78aa3d6b1b",
+        "title": "[Notion Releases (Plan Mode / Custom Agent Directory)](https://www.notion.com/releases)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7c8853add232",
+        "title": "[Notion AI Agent Platform 詳細解説](https://almcorp.com/blog/notion-ai-agent-platform-workers-external-agents-enterprise-sea",
+        "text": "[Notion AI Agent Platform 詳細解説](https://almcorp.com/blog/notion-ai-agent-platform-workers-external-agents-enterprise-search/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Notion AI Agent Platform 詳細解説](https://almcorp.com/blog/notion-ai-agent-platform-workers-external-agents-enterprise-search/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7c8853add232",
+        "title": "[Notion AI Agent Platform 詳細解説](https://almcorp.com/blog/notion-ai-agent-platform-workers-external-agents-enterprise-sea",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-24799ffd770a",
+        "title": "[Slack agents and AI innovations (Vercel+Lovable Add to Slack)](https://slack.com/blog/news/ai-innovations-in-slack)",
+        "text": "[Slack agents and AI innovations (Vercel+Lovable Add to Slack)](https://slack.com/blog/news/ai-innovations-in-slack)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Slack agents and AI innovations (Vercel+Lovable Add to Slack)](https://slack.com/blog/news/ai-innovations-in-slack)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-24799ffd770a",
+        "title": "[Slack agents and AI innovations (Vercel+Lovable Add to Slack)](https://slack.com/blog/news/ai-innovations-in-slack)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b48bdbacc378",
+        "title": "[Slack AI Update 2026 30+ features](https://www.eweek.com/news/slack-ai-update-salesforce-slackbot-2026/)",
+        "text": "[Slack AI Update 2026 30+ features](https://www.eweek.com/news/slack-ai-update-salesforce-slackbot-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Slack AI Update 2026 30+ features](https://www.eweek.com/news/slack-ai-update-salesforce-slackbot-2026/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b48bdbacc378",
+        "title": "[Slack AI Update 2026 30+ features](https://www.eweek.com/news/slack-ai-update-salesforce-slackbot-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b6a3eac1bbf1",
+        "title": "[MoneyForward AI Cowork press](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "text": "[MoneyForward AI Cowork press](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[MoneyForward AI Cowork press](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b6a3eac1bbf1",
+        "title": "[MoneyForward AI Cowork press](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7013b72319fb",
+        "title": "[MoneyForward CONNECT with AI 5/25-26 press](https://corp.moneyforward.com/news/release/service/20260416-mf-press-1/)",
+        "text": "[MoneyForward CONNECT with AI 5/25-26 press](https://corp.moneyforward.com/news/release/service/20260416-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[MoneyForward CONNECT with AI 5/25-26 press](https://corp.moneyforward.com/news/release/service/20260416-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7013b72319fb",
+        "title": "[MoneyForward CONNECT with AI 5/25-26 press](https://corp.moneyforward.com/news/release/service/20260416-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8e38aab42408",
+        "title": "[Evernote AI Assistant help](https://help.evernote.com/hc/en-us/articles/46319409880211-AI-Assistant)",
+        "text": "[Evernote AI Assistant help](https://help.evernote.com/hc/en-us/articles/46319409880211-AI-Assistant)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Evernote AI Assistant help](https://help.evernote.com/hc/en-us/articles/46319409880211-AI-Assistant)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8e38aab42408",
+        "title": "[Evernote AI Assistant help](https://help.evernote.com/hc/en-us/articles/46319409880211-AI-Assistant)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d14f7480e9a3",
+        "title": "[ジョブカン経費精算 AI-OCR 機能](https://prtimes.jp/main/html/rd/p/000001870.000004237.html)",
+        "text": "[ジョブカン経費精算 AI-OCR 機能](https://prtimes.jp/main/html/rd/p/000001870.000004237.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[ジョブカン経費精算 AI-OCR 機能](https://prtimes.jp/main/html/rd/p/000001870.000004237.html)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d14f7480e9a3",
+        "title": "[ジョブカン経費精算 AI-OCR 機能](https://prtimes.jp/main/html/rd/p/000001870.000004237.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d4301bb54b72",
+        "title": "[ジョブカン証憑管理 AI 仕訳機能](https://www.donuts.ne.jp/news/2026/0413_jobcan_ai_journalizing/)",
+        "text": "[ジョブカン証憑管理 AI 仕訳機能](https://www.donuts.ne.jp/news/2026/0413_jobcan_ai_journalizing/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[ジョブカン証憑管理 AI 仕訳機能](https://www.donuts.ne.jp/news/2026/0413_jobcan_ai_journalizing/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d4301bb54b72",
+        "title": "[ジョブカン証憑管理 AI 仕訳機能](https://www.donuts.ne.jp/news/2026/0413_jobcan_ai_journalizing/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}
