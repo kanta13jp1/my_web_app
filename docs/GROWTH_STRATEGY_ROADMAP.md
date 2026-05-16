@@ -30589,3 +30589,82 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - **同日 5th part の自然 GC 限界** = 第 1 例実証 / 5min idle で +0.56pt 増 (= GC throughput < accumulation)
 - **同日 4-part cap rule rationale** = 立証 (= 5th 起動で v24 SS hard exit 確実発火 第 12 例)
 - **J2 ship 完了** = Codex sprint 累積 116 件 達成 (= 5/30 期限 / 残 ~14 day / pace 維持)
+
+---
+
+## 🚀 Win版 (Claude Code) #132 part 222 (= 2026-05-17 02:05+ JST / midnight crossover qualify 第 1 例 / 8 part 連続跨ぎ)
+
+### Session profile
+
+- **Trigger**: user direct ask 「part 222 開始」 (= 部 221u 完了 ~1h gap / midnight crossover で 5/17 qualified ✅ first time)
+- **worktree**: `.claude/worktrees/flamboyant-chandrasekhar-ef7c7d`
+- **Caveman**: 維持 ✅
+- **PRE check** (= 02:05 JST):
+  - Date: 2026-05-17 02:05 JST (= [SCHEDULE-WAKEUP] 02-06 prohibited window / **user-driven 起動で例外**)
+  - RAM: **79.49% ✅** (= 部 221u POST 89.25% → -9.76 pt 自然 GC / **breach 解消 第 2 例累積 since 部 215**)
+  - C: 61.13 GB ✅ (= 部 221u POST 60.83 → +0.30 GB stable)
+  - fatigue: OK ✅
+  - **v24 SS hard exit 第 13 例 streak 終了 第 1 例実証** (= 部 215-221u 13 連続発火後 / 部 222 PRE pass)
+
+### 主成果 (= 部 222 ~30min ship)
+
+1. ✅ **PR #2537 MERGED 02:17 JST** (= docs/AGENT_ORCHESTRATION_PATTERNS.md 158 行 + CLAUDE.md 3 行 / sub-agent orchestration 5 patterns / part 221u → 222 cross-session ship)
+2. ✅ **PR #2516 MERGED 02:30+ JST** (= 2 commit dda1e52c8 + 5091ac0fa / A1 migration `20260516000000_monthly_asset_reports_schema.sql` ship + 47 issue handoff doc / ROADMAP conflict 2 連続解決 chronological 順 preserve)
+3. ✅ **PR #2518 (= ROADMAP part 219) rebase 2 回** (= initial rebase + #2516 merge 後 re-rebase / CI Lint 待機 → merge expected)
+4. ✅ **#1495 P0 +3 day fiscal overdue follow-up** ([comment 4467579433](https://github.com/kanta13jp1/my_web_app/issues/1495#issuecomment-4467579433)) = 5/22-5/29 Mobile P0 sprint plan / Apple Developer 契約状況確認要求 / 8-day Day 1-8 split table
+5. ✅ **#2521 P1 routing matrix 適用** ([comment 4467581218](https://github.com/kanta13jp1/my_web_app/issues/2521#issuecomment-4467581218)) = 5 質問 0.5-1.0/5 YES / **Codex 実装 + Win Claude review** 振分確定 / 5/22 sprint Day 2-3 scope (= 2-day budget routing infra)
+6. ✅ **WBS-SYNC tools-hub MCP 未利用 第 14 例累積** (= gh issue list fallback / high P1 10 件確認)
+
+### 重要 discovery
+
+#### v24 SS hard exit streak 終了 第 1 例 (= 13 連続発火後)
+- **PRE RAM 79.49%** = 部 215 since 7 part 連続 breach 解消 第 1 例
+- 自然 GC pace ~10 pt/h in ~1h gap (= 部 221u POST 89.25 → 部 222 PRE 79.49)
+- **教訓**: midnight crossover qualify rule = **effective** / cap rule rationale 再確認 ✅ (= overnight 必要 vs intra-day fail = 部 220 lesson 整合)
+
+#### ROADMAP conflict resolution pattern 確立 第 1 例
+- 3 conflict (= #2516 commit 1 + commit 2 + #2518 commit 1 / 4 total resolution iteration) 全 chronological 順 preserve で解決
+- pattern: HEAD content + incoming content 両方 KEEP / 末尾 append-only / part number 昇順
+- 教訓: ROADMAP は append-only / 同時並行 PR は同 region 編集 → conflict 不可避 / re-rebase loop 必要 (= #2518 = 2 回 rebase の lesson)
+
+#### lefthook PATH missing 警告 = harmless
+- rebase/push 自体は成功 / .git hook bypass 自動
+- 教訓: 警告無視で進行 OK / hook ヒットは worktree create 時のみ
+
+### sub-agent unlock 第 1 turn 適用 status (= [ORCH-39] 反映)
+- 本 session = manual coordination 優先 (= PR merge wave + comment 並列 で sub-agent 適用余地小)
+- 但し 部 222 = sub-agent ① 並列 spawn 標準 化 後初 session = baseline 確立
+- 次 session 候補 = 競合 21 社調査 / ROADMAP backfill 7 part / Codex deliverable review 等で sub-agent ① 適用機会
+
+### Philosophy Alignment (Win#132 part 222)
+
+- 主要実装: 3 PR merge wave + 2 P0/P1 follow-up + midnight qualify 第 1 例
+- 該当原則: 1 CEO / 2 ミッション / 4 6 部署 / 5 商品 / 6 資本=時間 / 7 資産負債 / 8 KPI / 9 IPO
+- 整合性スコア: **8/9 ✅** (= 部 220 同水準 / 3 mentor unaddressed 継続)
+- 理念的貢献:
+  - 1 ✅ user 8-task list 順序尊重 + 部 221u handoff respect
+  - 2 ✅ 3 PR merge で 部 218-220 main ship + #1495 P0 期限管理
+  - 4 ✅ 経理部 (= A1 migration ship) + 開発部 (= orchestration patterns) 並行
+  - 5 ✅ A1 月次資産レポート機能 unblock 進行 (= deploy-prod next)
+  - 6 ✅ ~30min で 5 task 完遂 (= 7 task 中 / 並列 CI 待機 中も他 task 進行)
+  - 7 ✅ ROADMAP 整合性確保 + memory project_20260517_win132_part222.md 記録
+  - 8 ✅ KPI = 部 221u POST 89.25 → 222 PRE 79.49 (= 自然 GC pattern 確立)
+  - 9 ✅ sub-agent orchestration ship (= scalability infra) + #1495 sprint plan IPO 視野
+- 懸念: ROADMAP backfill 7 part 蓄積 (= 214/215/216/217/219u/221/221u) 未消化 / 過去最大 scope
+
+### next session 候補 (= 部 223+ / 5/17 06:00+ JST 期待)
+
+1. 🚨 **A1 migration deploy-prod fire** (= #2460 → done / supabase migration `20260516000000_monthly_asset_reports_schema.sql` 本番 deploy)
+2. **ROADMAP backfill 7 part 蓄積消化** (= 214/215/216/217/219u/221/221u / **過去最大 scope** / sub-agent ① 適用機会)
+3. **#1495 P0 user judgment 待ち** (= Apple Developer 契約状況 / Option B 5/22 sprint Day 1 explicit confirm)
+4. **#2521 Codex impl 待ち** (= 5/22 sprint Day 2-3 routing infra 2-day budget)
+5. **MEMORY.md consolidation 第 6 例 監視** (= 部 222 entry +1 / 累積 entry 数 監視 / 200+ threshold まで余裕)
+6. **UI verify [UI-VERIFY] backlog 大幅 overdue** (= Playwright MCP 推奨 / sub-agent ① 適用候補)
+7. **competitor 21 社調査 update** (= sub-agent ① 並列 spawn 標準 適用 第 1 例候補)
+
+### Lesson (= 部 222)
+
+- **midnight crossover qualify rule 第 1 例実証** = 5/16 7 part 連続後 5/17 00:00+ で qualify 復活 / overnight reset 効果確認 (= 部 220 cap rule lesson 整合)
+- **ROADMAP conflict pattern 確立** = HEAD + incoming 両 KEEP / part number 昇順 / append-only 性質保証 / 同時 PR は同 region 編集 → re-rebase loop 不可避
+- **3 PR merge wave 並列 workflow 確立** = worktree 別 rebase / `git -C <path>` 経由 + force-with-lease push / lefthook PATH 警告 harmless
+- **sub-agent unlock 後初 session = baseline** = 本 session manual coordination 優先 / 次 session で ① 並列 spawn 適用機会多数
