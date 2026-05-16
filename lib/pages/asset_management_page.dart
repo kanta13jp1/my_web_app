@@ -79,6 +79,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- 今日18:00締切のためのチェックリスト ---
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _debtMasterHorizontalScrollController =
+      ScrollController();
   final _keyStock = GlobalKey();
   final _keyFlow = GlobalKey();
   final _keySubs = GlobalKey();
@@ -280,6 +282,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
     _scrollController.dispose();
+    _debtMasterHorizontalScrollController.dispose();
     super.dispose();
   }
 
@@ -878,22 +881,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  Future<void> _persistAssetLiabilityMonthlyState() async {
+    await _assetLiabilityRepository.saveMonth(
+      month: _now,
+      state: AssetLiabilityMonthlyState(
+        paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+        paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
+        paymentSourceAccountIds: Map<String, String>.from(
+          _paymentSourceAccountIds,
+        ),
+        cardBillingAccountIds: Map<String, String>.from(_cardBillingAccountIds),
+        incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
+      ),
+    );
+  }
+
   Future<void> _saveAssetLiabilityMonthlyState() async {
     try {
-      await _assetLiabilityRepository.saveMonth(
-        month: _now,
-        state: AssetLiabilityMonthlyState(
-          paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
-          paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
-          paymentSourceAccountIds: Map<String, String>.from(
-            _paymentSourceAccountIds,
-          ),
-          cardBillingAccountIds: Map<String, String>.from(
-            _cardBillingAccountIds,
-          ),
-          incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
-        ),
-      );
+      await _persistAssetLiabilityMonthlyState();
     } catch (e) {
       debugPrint('Error saving asset liability monthly state: $e');
     }
@@ -1348,7 +1353,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
-  void _toggleMonthlyPaymentPaid(String accountId, bool paid) {
+  Future<void> _toggleMonthlyPaymentPaid(String accountId, bool paid) async {
+    final previousPaidAccountNames = Set<String>.from(_monthlyPaidAccountNames);
     setState(() {
       if (paid) {
         _monthlyPaidAccountNames.add(accountId);
@@ -1356,7 +1362,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyPaidAccountNames.remove(accountId);
       }
     });
-    unawaited(_saveAssetLiabilityMonthlyState());
+    try {
+      await _persistAssetLiabilityMonthlyState();
+    } catch (e) {
+      debugPrint('Error saving paid status: $e');
+      if (!mounted) return;
+      setState(() {
+        _monthlyPaidAccountNames = previousPaidAccountNames;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('支払済み状態を保存できませんでした。')));
+    }
   }
 
   void _updatePaymentSourceAccount(
@@ -9669,57 +9686,73 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowHeight: 36,
-            dataRowMinHeight: 60,
-            dataRowMaxHeight: 76,
-            columns: const [
-              DataColumn(label: Text('\u8a2d\u5b9a\u5143/\u4fdd\u5b58\u5148')),
-              DataColumn(label: Text('支払い方式')),
-              DataColumn(label: Text('項目')),
-              DataColumn(label: Text('種別')),
-              DataColumn(label: Text('残高'), numeric: true),
-              DataColumn(label: Text('支払日'), numeric: true),
-              DataColumn(label: Text('推定最低支払額'), numeric: true),
-              DataColumn(label: Text('今月支払予定額'), numeric: true),
-              DataColumn(label: Text('区分')),
-              DataColumn(label: Text('支払済み')),
-              DataColumn(label: Text('年利'), numeric: true),
-              DataColumn(label: Text('月利息'), numeric: true),
-              DataColumn(label: Text('負債割合'), numeric: true),
-            ],
-            rows: [
-              for (final row in rows)
-                DataRow(
-                  cells: [
-                    DataCell(_buildPaymentMethodScopeControl(row)),
-                    DataCell(_buildPaymentMethodDropdown(row, workbook)),
-                    DataCell(Text(row.name)),
-                    DataCell(Text(_assetKindLabel(row.kind))),
-                    DataCell(Text(_formatManagementYen(row.balance))),
-                    DataCell(
-                      Text(
-                        row.paymentDay == null ? '未設定' : '${row.paymentDay}日',
-                      ),
-                    ),
-                    DataCell(
-                      Text(_formatManagementYen(row.minimumPaymentEstimate)),
-                    ),
-                    DataCell(_buildMonthlyPaymentInput(row)),
-                    DataCell(_buildPaymentAmountSourceChip(row)),
-                    DataCell(_buildPaidCheckbox(row)),
-                    DataCell(Text(_formatManagementPercent(row.annualRate))),
-                    DataCell(
-                      Text(_formatManagementYen(row.monthlyInterestEstimate)),
-                    ),
-                    DataCell(
-                      Text(_formatManagementPercent(row.liabilityShare)),
-                    ),
-                  ],
+        Text(
+          '画面に収まらない場合は、表を横にスクロールして支払済み・年利・月利息まで確認できます。支払済みチェックは当月の状態として保存されます。',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Scrollbar(
+          controller: _debtMasterHorizontalScrollController,
+          thumbVisibility: true,
+          child: SingleChildScrollView(
+            controller: _debtMasterHorizontalScrollController,
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowHeight: 36,
+              dataRowMinHeight: 60,
+              dataRowMaxHeight: 76,
+              columns: const [
+                DataColumn(
+                  label: Text('\u8a2d\u5b9a\u5143/\u4fdd\u5b58\u5148'),
                 ),
-            ],
+                DataColumn(label: Text('支払い方式')),
+                DataColumn(label: Text('項目')),
+                DataColumn(label: Text('種別')),
+                DataColumn(label: Text('残高'), numeric: true),
+                DataColumn(label: Text('支払日'), numeric: true),
+                DataColumn(label: Text('推定最低支払額'), numeric: true),
+                DataColumn(label: Text('今月支払予定額'), numeric: true),
+                DataColumn(label: Text('区分')),
+                DataColumn(label: Text('支払済み')),
+                DataColumn(label: Text('年利'), numeric: true),
+                DataColumn(label: Text('月利息'), numeric: true),
+                DataColumn(label: Text('負債割合'), numeric: true),
+              ],
+              rows: [
+                for (final row in rows)
+                  DataRow(
+                    cells: [
+                      DataCell(_buildPaymentMethodScopeControl(row)),
+                      DataCell(_buildPaymentMethodDropdown(row, workbook)),
+                      DataCell(Text(row.name)),
+                      DataCell(Text(_assetKindLabel(row.kind))),
+                      DataCell(Text(_formatManagementYen(row.balance))),
+                      DataCell(
+                        Text(
+                          row.paymentDay == null ? '未設定' : '${row.paymentDay}日',
+                        ),
+                      ),
+                      DataCell(
+                        Text(_formatManagementYen(row.minimumPaymentEstimate)),
+                      ),
+                      DataCell(_buildMonthlyPaymentInput(row)),
+                      DataCell(_buildPaymentAmountSourceChip(row)),
+                      DataCell(_buildPaidCheckbox(row)),
+                      DataCell(Text(_formatManagementPercent(row.annualRate))),
+                      DataCell(
+                        Text(_formatManagementYen(row.monthlyInterestEstimate)),
+                      ),
+                      DataCell(
+                        Text(_formatManagementPercent(row.liabilityShare)),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ],
@@ -9878,7 +9911,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     return Checkbox(
       value: row.paid,
-      onChanged: (value) => _toggleMonthlyPaymentPaid(row.id, value ?? false),
+      onChanged: (value) {
+        unawaited(_toggleMonthlyPaymentPaid(row.id, value ?? false));
+      },
     );
   }
 

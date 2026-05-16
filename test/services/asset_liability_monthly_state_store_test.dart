@@ -51,6 +51,26 @@ void main() {
       expect(loadedJune.incomePlans, isEmpty);
     });
 
+    test('clears monthly paid status after unchecked state is saved', () async {
+      await store.saveMonth(
+        month: DateTime(2026, 5, 13),
+        state: const AssetLiabilityMonthlyState(
+          paidAccountNames: <String>{'acom_card_loan'},
+        ),
+      );
+
+      final checked = await store.loadMonth(DateTime(2026, 5, 13));
+      expect(checked.paidAccountNames, contains('acom_card_loan'));
+
+      await store.saveMonth(
+        month: DateTime(2026, 5, 13),
+        state: const AssetLiabilityMonthlyState(),
+      );
+
+      final unchecked = await store.loadMonth(DateTime(2026, 5, 13));
+      expect(unchecked.paidAccountNames, isEmpty);
+    });
+
     test('keeps zero yen as a valid manual payment amount', () {
       const raw = '{"2026-05":{"PayPayカード":0,"モビット":"70,000"}}';
 
