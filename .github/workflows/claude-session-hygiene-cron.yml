@@ -1,0 +1,133 @@
+name: Claude Session Hygiene Cron
+
+on:
+  schedule:
+    # Every 30 minutes from 06:00 JST through 02:30 JST next day.
+    - cron: "*/30 21-23,0-17 * * *"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Allow auto cleanup when thresholds are crossed"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: claude-session-hygiene-cron
+  cancel-in-progress: false
+
+jobs:
+  hygiene:
+    name: Session PRE-check + threshold cleanup
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    env:
+      ISSUE_NUMBER: "2506"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run session hygiene check
+        id: hygiene
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path memory | Out-Null
+          $applyArg = @()
+          if ("${{ github.event_name }}" -eq "schedule" -or "${{ inputs.apply }}" -eq "true") {
+            $applyArg = @("--apply")
+          }
+
+          python scripts/session_hygiene_check.py `
+            --root "$PWD" `
+            --mode gha-cron `
+            --log-path memory/session_hygiene_log.csv `
+            --json-out session-hygiene-report.json `
+            --max-runtime-sec 120 `
+            @applyArg
+
+          $report = Get-Content -Raw -LiteralPath session-hygiene-report.json | ConvertFrom-Json
+          "severity=$($report.severity)" >> $env:GITHUB_OUTPUT
+          "applied=$($report.applied)" >> $env:GITHUB_OUTPUT
+          "reclaim_mb=$($report.actual_reclaim_mb)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload hygiene report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: claude-session-hygiene-report
+          path: |
+            session-hygiene-report.json
+            session-hygiene-report.dev-cache.json
+            memory/session_hygiene_log.csv
+          if-no-files-found: ignore
+
+      - name: Write run summary
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path session-hygiene-report.json) {
+            $report = Get-Content -Raw -LiteralPath session-hygiene-report.json | ConvertFrom-Json
+            @"
+          ## Claude Session Hygiene Cron
+
+          | metric | value |
+          | --- | --- |
+          | severity | $($report.severity) |
+          | C free GB | $($report.c_free_gb) |
+          | RAM percent | $($report.ram_pct) |
+          | should auto apply | $($report.should_auto_apply) |
+          | applied | $($report.applied) |
+          | reclaim MB | $($report.actual_reclaim_mb) |
+          | SmartCleanup | $($report.smartcleanup.status) |
+          | git gc | $($report.git_gc.status) |
+          | cache cleanup | $($report.cache_cleanup.status) |
+          | reasons | $($report.reasons -join '; ') |
+          "@ >> $env:GITHUB_STEP_SUMMARY
+          }
+
+      - name: Comment warning report to Issue
+        if: always() && (github.event_name == 'workflow_dispatch' || steps.hygiene.outputs.severity != 'ok')
+        shell: pwsh
+        run: |
+          if (-not (Test-Path session-hygiene-report.json)) {
+            exit 0
+          }
+          $report = Get-Content -Raw -LiteralPath session-hygiene-report.json | ConvertFrom-Json
+          $body = @"
+          ## Claude Session Hygiene Cron
+
+          | metric | value |
+          | --- | --- |
+          | severity | $($report.severity) |
+          | C free GB | $($report.c_free_gb) |
+          | RAM percent | $($report.ram_pct) |
+          | should auto apply | $($report.should_auto_apply) |
+          | applied | $($report.applied) |
+          | reclaim MB | $($report.actual_reclaim_mb) |
+          | SmartCleanup | $($report.smartcleanup.status) |
+          | git gc | $($report.git_gc.status) |
+          | cache cleanup | $($report.cache_cleanup.status) |
+          | reasons | $($report.reasons -join '; ') |
+          | run | $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID |
+
+          The workflow validates the repo-managed SessionStart hygiene entrypoint. It can reclaim the hosted Windows runner only; local Windows C: cleanup still runs from Claude/Codex hooks or scheduled tasks using the same script.
+          "@
+          Set-Content -LiteralPath session-hygiene-comment.md -Value $body -Encoding utf8
+          gh issue comment $env:ISSUE_NUMBER --repo $env:GITHUB_REPOSITORY --body-file session-hygiene-comment.md

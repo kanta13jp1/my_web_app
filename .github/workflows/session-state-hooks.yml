@@ -14,12 +14,15 @@ on:
       - ".claude/hooks/userprompt-kpi-banner.ps1"
       - ".claude/settings.json"
       - ".github/workflows/session-state-hooks.yml"
+      - ".github/workflows/claude-session-hygiene-cron.yml"
       - "docs/CLAUDE_CODE_SETUP_RUNBOOK.md"
       - "memory/transcripts/**"
       - "scripts/check_session_state_hooks.py"
       - "scripts/codex_session_check.py"
       - "scripts/session_compression_guard.py"
       - "scripts/session_compression_guard_test.py"
+      - "scripts/session_hygiene_check.py"
+      - "scripts/session_hygiene_check_test.py"
       - "scripts/smartcleanup_task_guard.py"
       - "scripts/smartcleanup_task_guard_test.py"
   workflow_dispatch:
@@ -45,6 +48,9 @@ jobs:
 
       - name: Session compression guard unit tests
         run: python scripts/session_compression_guard_test.py
+
+      - name: Session hygiene check unit tests
+        run: python scripts/session_hygiene_check_test.py
 
       - name: SmartCleanup task guard unit tests
         run: python scripts/smartcleanup_task_guard_test.py
