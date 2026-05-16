@@ -1,0 +1,7 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-16T14:11:25Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件 (GHAキャッシュ http_code=200) / Issue修正: 0件 / workflow-failure VSCode版担当スキップ / Schedule健全性: 正常"
+}
