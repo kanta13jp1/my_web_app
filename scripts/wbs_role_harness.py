@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a two-instance execution plan for WBS/GitHub Issue tasks."""
+"""Generate a guarded orchestration plan for WBS/GitHub Issue tasks."""
 
 from __future__ import annotations
 
@@ -67,6 +67,23 @@ ROLE_TEMPLATES = [
         ],
     },
 ]
+
+SUBAGENT_GUIDANCE = {
+    "policy": "docs/SUBAGENT_ORCHESTRATION_POLICY.md",
+    "default": "none unless the lead can name a bounded role, scope, budget, and return contract",
+    "allowed_patterns": [
+        "read-only explorer for independent source, log, or code search",
+        "reviewer/evaluator for rubric scoring and repair instructions",
+        "memory reviewer for recurring failure-pattern extraction",
+        "worker for a disjoint write set when parallel implementation is safe",
+    ],
+    "prohibited_patterns": [
+        "reactivating Codex #2/#3 or other dormant lanes as top-level owners",
+        "starting long-lived dev servers without explicit resource approval",
+        "touching secrets, production data, payments, legal, tax, or banking decisions without approval",
+        "editing overlapping dirty worktrees or reverting unrelated user changes",
+    ],
+}
 
 CLAUDE_KEYWORDS = (
     r"\barchitecture\b",
@@ -288,11 +305,12 @@ def build_plan(issue: dict[str, Any]) -> dict[str, Any]:
         "next_owner": next_owner_for(kind),
         "split": split_recommendation(kind),
         "active_flow": "Claude Code #1 + Codex #1 + GitHub Actions evidence",
+        "subagent_orchestration": SUBAGENT_GUIDANCE,
         "retired_legacy_lanes": [
             "Codex #2",
             "Codex #3/#4",
             "VSCode/Win/PS lane expansion",
-            "agent-in-agent execution",
+            "unbounded agent-in-agent execution",
         ],
         "roles": ROLE_TEMPLATES,
         "write_set": write_set_for(kind),
@@ -332,6 +350,7 @@ def build_plan(issue: dict[str, Any]) -> dict[str, Any]:
             "validation command",
             "unresolved risk",
             "next owner",
+            "subagent plan when used",
         ],
         "handoff_to_claude_when": [
             "risk is data_or_security or claude_first",
@@ -345,6 +364,7 @@ def build_plan(issue: dict[str, Any]) -> dict[str, Any]:
             "avoid long-lived dev server, dart, node, and git leftovers",
             "remove task node_modules/cache outputs through worktree cleanup",
             "run git worktree prune and git gc --auto after merge cleanup",
+            "record subagent cleanup impact when any child worker was used",
         ],
         "latest_issue_comment": latest,
     }
@@ -421,7 +441,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         f"- Repository: `{report['repo']}`",
         f"- Generated: `{report['generated_at']}`",
-        "- Active development lanes: Claude Code #1, Codex #1, GitHub Actions evidence, User/Automation decisions.",
+        "- Active top-level lanes: Claude Code #1, Codex #1, GitHub Actions evidence, User/Automation decisions.",
+        "- Guarded child subagents are allowed only under the lead instance and must follow `docs/SUBAGENT_ORCHESTRATION_POLICY.md`.",
         "- Legacy multi-agent lanes are treated as historical context, not current execution owners.",
         "",
     ]
@@ -454,6 +475,14 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.extend(f"- {item}" for item in plan["prohibited_write_set"])
         lines.extend(["", "### Conflict Rules", ""])
         lines.extend(f"- {item}" for item in plan["conflict_rules"])
+        lines.extend(["", "### Guarded Subagent Plan", ""])
+        subagents = plan["subagent_orchestration"]
+        lines.append(f"- Policy: `{subagents['policy']}`")
+        lines.append(f"- Default: {subagents['default']}")
+        lines.append("- Allowed patterns:")
+        lines.extend(f"  - {item}" for item in subagents["allowed_patterns"])
+        lines.append("- Prohibited patterns:")
+        lines.extend(f"  - {item}" for item in subagents["prohibited_patterns"])
         lines.extend(["", "### Validation", ""])
         lines.extend(f"- `{item}`" for item in plan["validation"])
         lines.extend(["", "### Evidence Targets", ""])

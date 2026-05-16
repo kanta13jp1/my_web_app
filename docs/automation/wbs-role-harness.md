@@ -3,8 +3,15 @@
 Issue: #1636
 
 This harness turns a WBS/GitHub Issue into a fixed two-instance execution
-packet. It does not add more local agents. Historical mentions of Codex #2,
-Codex #3/#4, VSCode, Win, or PS lanes are treated as routing context only.
+packet. Claude Code #1 and Codex #1 remain the only top-level local agents.
+Historical mentions of Codex #2, Codex #3/#4, VSCode, Win, or PS lanes are
+treated as routing context only.
+
+Guarded child subagents are allowed when they fit
+`docs/SUBAGENT_ORCHESTRATION_POLICY.md`: isolated research, rubric critique,
+large-output inspection, memory review, or disjoint scoped implementation. They
+must not become WBS owners and must return a compact result contract to the
+lead instance.
 
 Active execution lanes:
 
@@ -46,6 +53,7 @@ Every packet must include:
 - validation command
 - unresolved risk
 - next owner
+- subagent plan when used: role, scope, budget, return contract
 
 The packet returns to Claude Code #1 when the task touches security, auth,
 payments, legal/tax decisions, migrations, RLS, `service_role`, Supabase Edge
@@ -59,6 +67,8 @@ Functions, unclear ownership, or High conflict risk.
 - Use `scripts/instance_conflict_predictor.py` when shared workflows,
   migrations, or cross-instance docs are involved.
 - Stop and hand off to Claude Code #1 on High conflict risk.
+- Subagent workers that edit files must have disjoint write sets. Read-only
+  explorer/reviewer workers are preferred when there is any overlap risk.
 
 ## Evidence Targets
 
