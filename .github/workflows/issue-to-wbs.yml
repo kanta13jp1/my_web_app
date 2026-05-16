@@ -6,6 +6,12 @@ on:
   schedule:
     - cron: "25 * * * *"
   workflow_dispatch:
+    inputs:
+      recent_only:
+        description: "Sync only recently updated GitHub issues"
+        required: false
+        default: "false"
+        type: boolean
 
 concurrency:
   group: wbs-sync
@@ -31,6 +37,7 @@ jobs:
           import os
           import sys
           import time
+          from datetime import datetime, timedelta, timezone
           import urllib.error
           import urllib.parse
           import urllib.request
@@ -45,6 +52,24 @@ jobs:
               "sort": "updated",
               "direction": "desc",
           }
+          recent_only = os.environ.get("WBS_SYNC_RECENT_ONLY", "false").strip().lower() in {
+              "1",
+              "true",
+              "yes",
+              "on",
+          }
+          recent_hours = max(1, int(os.environ.get("WBS_SYNC_RECENT_HOURS", "12")))
+          max_recent_pages = max(1, int(os.environ.get("WBS_SYNC_RECENT_MAX_PAGES", "5")))
+          if recent_only:
+              since = (
+                  datetime.now(timezone.utc) - timedelta(hours=recent_hours)
+              ).isoformat(timespec="seconds").replace("+00:00", "Z")
+              fields["since"] = since
+              print(
+                  f"Recent-only GitHub issue fetch enabled: since={since}, "
+                  f"max_pages={max_recent_pages}",
+                  flush=True,
+              )
           headers = {
               "Accept": "application/vnd.github+json",
               "Authorization": f"Bearer {token}",
@@ -100,6 +125,13 @@ jobs:
               )
               if len(items) < 100:
                   break
+              if recent_only and page >= max_recent_pages:
+                  print(
+                      f"::warning::Recent-only GitHub issue fetch stopped at "
+                      f"page {page}; increase WBS_SYNC_RECENT_MAX_PAGES if needed",
+                      flush=True,
+                  )
+                  break
               page += 1
 
           with open(output_path, "w", encoding="utf-8") as fh:
@@ -111,6 +143,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          WBS_SYNC_RECENT_ONLY: ${{ github.event_name == 'issues' || github.event.inputs.recent_only == 'true' }}
+          WBS_SYNC_RECENT_HOURS: "12"
+          WBS_SYNC_RECENT_MAX_PAGES: "5"
         run: |
           python3 /tmp/fetch-github-issues.py /tmp/issues.json
 
@@ -165,6 +200,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          WBS_SYNC_RECENT_ONLY: ${{ github.event_name == 'issues' || github.event.inputs.recent_only == 'true' }}
+          WBS_SYNC_RECENT_HOURS: "12"
+          WBS_SYNC_RECENT_MAX_PAGES: "5"
         run: |
           python3 /tmp/fetch-github-issues.py /tmp/issues.json
 
