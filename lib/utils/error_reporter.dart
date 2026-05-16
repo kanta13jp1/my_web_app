@@ -191,7 +191,13 @@ class ErrorReporter {
             stack.contains('.cgd')) ||
         (stack.contains('.avQ') &&
             stack.contains('.v_') &&
-            stack.contains('.chZ'));
+            stack.contains('.chZ')) ||
+        (stack.contains('.gO') &&
+            stack.contains('.gnc') &&
+            stack.contains('.ge2') &&
+            stack.contains('.aEM') &&
+            stack.contains('.aTV') &&
+            stack.contains('.asE'));
 
     return stack.contains('_InkResponseState') ||
         stack.contains('InkResponse') ||
