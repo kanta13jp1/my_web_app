@@ -32,6 +32,7 @@ import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
+import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -155,6 +156,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final Map<String, TextEditingController> _annualRateControllers =
       <String, TextEditingController>{};
   final Set<String> _verifyingAnnualRateEvidenceAccountIds = <String>{};
+  NoteImagePasteRegistration? _annualRateEvidencePasteRegistration;
+  AssetLiabilityDebtRow? _annualRateEvidencePasteTargetRow;
   final TextEditingController _cardStatementImportController =
       TextEditingController();
   String? _selectedCardStatementBillingAccountId;
@@ -295,6 +298,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     _fetchTodayClosing();
     _loadSourceOptionsFromDb();
+    _annualRateEvidencePasteRegistration = registerNoteImagePasteListener(
+      isEnabled: () =>
+          mounted &&
+          _annualRateEvidencePasteTargetRow != null &&
+          !_verifyingAnnualRateEvidenceAccountIds.contains(
+            _annualRateEvidencePasteTargetRow!.id,
+          ),
+      onImagePasted: _handleAnnualRateEvidencePasted,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _scrollToInitialFocus();
@@ -315,6 +327,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
+    _annualRateEvidencePasteRegistration?.dispose();
     _scrollController.dispose();
     _debtMasterHorizontalScrollController.dispose();
     super.dispose();
@@ -1688,9 +1701,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final controller = _annualRateControllerFor(row);
     final rate = _parseAnnualRateInput(controller.text);
     if (rate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('年利を入力してから証跡画像を提出してください')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('年利を入力してから証跡画像を提出してください')));
       return;
     }
     final result = await FilePicker.pickFiles(
@@ -1703,22 +1716,91 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final mimeType = _mimeTypeForAnnualRateEvidence(file);
+    await _verifyAnnualRateEvidenceBytes(
+      row: row,
+      rate: rate,
+      bytes: bytes,
+      mimeType: mimeType,
+      fileName: file.name,
+    );
+  }
+
+  void _startAnnualRateEvidencePaste(AssetLiabilityDebtRow row) {
+    final rate = _parseAnnualRateInput(_annualRateControllerFor(row).text);
+    if (rate == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('年利を入力してから証跡画像を貼り付けてください')));
+      return;
+    }
+    setState(() => _annualRateEvidencePasteTargetRow = row);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${row.name}の年利証跡を貼り付け待ちです。画面キャプチャをコピーして Ctrl+V してください。'),
+      ),
+    );
+  }
+
+  Future<void> _handleAnnualRateEvidencePasted(
+    Uint8List bytes,
+    String fileName,
+    String mimeType,
+  ) async {
+    final row = _annualRateEvidencePasteTargetRow;
+    if (row == null) {
+      return;
+    }
+    final rate = _parseAnnualRateInput(_annualRateControllerFor(row).text);
+    if (rate == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('年利を入力してから証跡画像を貼り付けてください')));
+      return;
+    }
+    if (bytes.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('貼り付けた画像を読み取れませんでした')));
+      return;
+    }
+    final normalizedFileName = fileName.trim().isEmpty
+        ? 'annual-rate-evidence-paste.png'
+        : fileName.trim();
+    await _verifyAnnualRateEvidenceBytes(
+      row: row,
+      rate: rate,
+      bytes: bytes,
+      mimeType: mimeType.trim().isEmpty ? 'image/png' : mimeType.trim(),
+      fileName: normalizedFileName,
+    );
+  }
+
+  Future<void> _verifyAnnualRateEvidenceBytes({
+    required AssetLiabilityDebtRow row,
+    required double rate,
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileName,
+  }) async {
     setState(() {
       _verifyingAnnualRateEvidenceAccountIds.add(row.id);
     });
-    final evidence = await _annualRateEvidenceService.verifyEvidence(
+    final evidence = await _annualRateEvidenceService.verifyEvidenceBytes(
       accountId: row.id,
       accountName: row.name,
       annualRate: rate,
-      imageBase64: base64Encode(bytes),
+      imageBytes: bytes,
       mimeType: mimeType,
-      fileName: file.name,
+      fileName: fileName,
     );
     if (!mounted) {
       return;
     }
     setState(() {
       _verifyingAnnualRateEvidenceAccountIds.remove(row.id);
+      if (_annualRateEvidencePasteTargetRow?.id == row.id) {
+        _annualRateEvidencePasteTargetRow = null;
+      }
       _annualRateEvidences[row.id] = evidence;
       if (evidence.matchesAnnualRate(rate)) {
         _annualRateOverrides[row.id] = rate;
@@ -10970,6 +11052,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAnnualRateEvidenceCell(AssetLiabilityDebtRow row) {
     final evidence = _annualRateEvidences[row.id];
     final isVerifying = _verifyingAnnualRateEvidenceAccountIds.contains(row.id);
+    final isPasteTarget = _annualRateEvidencePasteTargetRow?.id == row.id;
     final requestedRate =
         _parseAnnualRateInput(_annualRateControllerFor(row).text) ??
             row.annualRate;
@@ -11005,6 +11088,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             visualDensity: VisualDensity.compact,
           ),
         ),
+        OutlinedButton.icon(
+          onPressed:
+              isVerifying ? null : () => _startAnnualRateEvidencePaste(row),
+          icon: const Icon(Icons.content_paste, size: 14),
+          label: const Text('貼付'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: isPasteTarget ? const Color(0xFF2563EB) : color,
+            side: BorderSide(
+              color: (isPasteTarget ? const Color(0xFF2563EB) : color)
+                  .withValues(alpha: 0.5),
+            ),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        if (isPasteTarget)
+          _buildTextStatusChip(
+            label: 'Ctrl+V待ち',
+            color: const Color(0xFF2563EB),
+          ),
         if (evidence != null)
           Tooltip(
             message: evidence.summary.isEmpty

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 
 import 'ai_hub_chat_service.dart';
@@ -11,6 +14,24 @@ class AssetLiabilityAnnualRateEvidenceService {
     DateTime Function()? now,
   })  : _chatService = chatService,
         _now = now ?? DateTime.now;
+
+  Future<AssetLiabilityAnnualRateEvidence> verifyEvidenceBytes({
+    required String accountId,
+    required String accountName,
+    required double annualRate,
+    required Uint8List imageBytes,
+    required String mimeType,
+    required String fileName,
+  }) {
+    return verifyEvidence(
+      accountId: accountId,
+      accountName: accountName,
+      annualRate: annualRate,
+      imageBase64: base64Encode(imageBytes),
+      mimeType: mimeType,
+      fileName: fileName,
+    );
+  }
 
   Future<AssetLiabilityAnnualRateEvidence> verifyEvidence({
     required String accountId,
@@ -51,7 +72,7 @@ class AssetLiabilityAnnualRateEvidenceService {
         submittedAnnualRate: annualRate,
         detectedAnnualRate: null,
         status: AssetLiabilityAnnualRateEvidenceStatus.failed,
-        summary: 'AI could not verify the annual rate evidence.',
+        summary: 'AIが年利証跡を確認できませんでした。',
         source: 'ai-hub asset_liability.verify_annual_rate_evidence',
         errorMessage: error.toString(),
       );
