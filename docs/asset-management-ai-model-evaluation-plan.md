@@ -60,6 +60,10 @@ The executable bench foundation lives in:
 
 - GPT / Claude / Gemini can be used for production-facing summarization only
   through feature flags and existing provider boundaries.
+- #2521 foundation routing is represented in code as a feature-flagged
+  `Claude Opus 4.7 -> GPT-5 -> Gemini 3.1 Pro -> local deterministic`
+  fallback chain for summary, risk explanation, developer suggestion, and
+  reconciliation-help use cases.
 - Kimi / DeepSeek / Grok are candidates until local benchmark results justify
   integration.
 - Image/video models are not part of money calculation. They can support docs,
@@ -69,6 +73,9 @@ The executable bench foundation lives in:
   developer tasks.
 - #2521 routing defaults must cite a `scripts/internal_ai_bench.py` report or
   stay behind feature flags.
+- Asset-management AI prompts must use redacted categories and bands. Exact
+  balances, account identifiers, and user IDs stay inside deterministic
+  Dart/Supabase code and are not sent to external model providers.
 
 ## Linked Issues
 

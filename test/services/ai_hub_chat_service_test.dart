@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
+    AiHubChatQuotaGuard.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
@@ -13,7 +14,10 @@ void main() {
       invoker: (body) async {
         expect(body['action'], 'provider.chat');
         expect(body['provider'], 'deepinfra');
+        expect(body['model'], 'deepinfra/test-model');
         expect(body['message'], 'hello');
+        expect(body['provider_choice_reason'], 'asset:summary; test route');
+        expect(body['routing_use_case'], 'summary');
         return {
           'success': true,
           'text': 'world',
@@ -26,12 +30,19 @@ void main() {
             'input_chars': 5,
             'output_chars': 5,
             'status_code': 200,
+            'provider_choice_reason': 'asset:summary; test route',
+            'routing_use_case': 'summary',
           },
         };
       },
     );
 
-    final response = await service.sendProviderChat(message: 'hello');
+    final response = await service.sendProviderChat(
+      message: 'hello',
+      model: 'deepinfra/test-model',
+      providerChoiceReason: 'asset:summary; test route',
+      routingUseCase: 'summary',
+    );
 
     expect(response.text, 'world');
     expect(response.source, 'ai-hub provider.chat / deepinfra');
@@ -39,6 +50,11 @@ void main() {
     expect(response.observability?.model, 'deepinfra/test-model');
     expect(response.observability?.latencyMs, 321);
     expect(response.observability?.shortTraceId, 'trace-12');
+    expect(
+      response.observability?.providerChoiceReason,
+      'asset:summary; test route',
+    );
+    expect(response.observability?.routingUseCase, 'summary');
   });
 
   test('sendProviderChat throws when provider response is empty', () async {
@@ -52,12 +68,36 @@ void main() {
     );
   });
 
+  test('sendAutoChat surfaces paid provider errors from ai-hub', () async {
+    final service = AiHubChatService(
+      invoker: (_) async => {
+        'success': false,
+        'status': 'paidPlanRequired',
+        'provider': 'deepinfra',
+        'message': 'DeepInfra needs positive balance',
+        'detail': 'You need positive balance to do inference.',
+      },
+    );
+
+    expect(
+      () => service.sendAutoChat(message: 'hello'),
+      throwsA(
+        isA<AiHubChatException>()
+            .having((e) => e.message, 'message', contains('paidPlanRequired'))
+            .having((e) => e.message, 'provider', contains('deepinfra'))
+            .having((e) => e.message, 'detail', contains('positive balance')),
+      ),
+    );
+  });
+
   test('sendAutoChat returns auto-routed provider metadata', () async {
     final service = AiHubChatService(
       invoker: (body) async {
         expect(body['action'], 'provider.chat_auto');
         expect(body['message'], 'hello');
         expect(body['session_id'], 'session-123');
+        expect(body['provider_choice_reason'], 'asset:summary; auto route');
+        expect(body['routing_use_case'], 'summary');
         return {
           'success': true,
           'text': 'auto-world',
@@ -74,6 +114,8 @@ void main() {
     final response = await service.sendAutoChat(
       message: 'hello',
       sessionId: 'session-123',
+      providerChoiceReason: 'asset:summary; auto route',
+      routingUseCase: 'summary',
     );
 
     expect(response.text, 'auto-world');
@@ -115,10 +157,7 @@ void main() {
   test('verifyAnnualRateEvidence calls ai-hub vision verifier', () async {
     final service = AiHubChatService(
       invoker: (body) async {
-        expect(
-          body['action'],
-          'asset_liability.verify_annual_rate_evidence',
-        );
+        expect(body['action'], 'asset_liability.verify_annual_rate_evidence');
         expect(body['accountName'], 'Mobit');
         expect(body['submittedAnnualRate'], 0.18);
         expect(body['imageBase64'], 'abc123');

@@ -521,6 +521,22 @@ function estimateTokensFromChars(chars: number): number {
   return Math.max(1, Math.ceil(Math.max(0, chars) / 4));
 }
 
+function isProviderPaymentRequired(
+  status: number,
+  responseText: string,
+): boolean {
+  const text = responseText.toLowerCase();
+  return status === 402 ||
+    text.includes("paid_plan_required") ||
+    text.includes("payment_required") ||
+    text.includes("insufficient_quota") ||
+    text.includes("positive balance") ||
+    text.includes("add balance") ||
+    text.includes("top-up") ||
+    text.includes("billing") ||
+    text.includes("credit");
+}
+
 async function callSingleProvider(
   providerId: string,
   messages: { role: string; content: string }[],
@@ -560,11 +576,19 @@ async function callSingleProvider(
       },
       body: JSON.stringify(cfg.buildBody(messages, model ?? cfg.defaultModel)),
     });
-    if (!resp.ok) {
-      const isRetriable = resp.status === 429 || resp.status >= 500;
-      return { ok: false, error: `HTTP ${resp.status}`, isRetriable };
-    }
     const respText = await resp.text();
+    if (!resp.ok) {
+      const paymentRequired = isProviderPaymentRequired(resp.status, respText);
+      const isRetriable = paymentRequired || resp.status === 429 ||
+        resp.status >= 500;
+      return {
+        ok: false,
+        error: paymentRequired
+          ? `paidPlanRequired: ${providerId}: ${respText.slice(0, 240)}`
+          : `HTTP ${resp.status}: ${respText.slice(0, 240)}`,
+        isRetriable,
+      };
+    }
     let data: unknown;
     try {
       data = JSON.parse(respText);
@@ -589,6 +613,40 @@ async function callSingleProvider(
 
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function sanitizeProviderChoiceLogText(
+  value: unknown,
+  maxLength = 320,
+): string | null {
+  const raw = asString(value);
+  if (!raw) return null;
+  return raw
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
+    .replace(/\b\d{5,}\b/g, "[number]")
+    .slice(0, maxLength);
+}
+
+function normalizeProviderTier(value: unknown): Tier | undefined {
+  const raw = asString(value).toLowerCase();
+  if (!raw) return undefined;
+  switch (raw) {
+    case "free":
+    case "low":
+      return "free";
+    case "cheap":
+    case "budget":
+    case "medium":
+      return "budget";
+    case "performance":
+    case "high":
+      return "performance";
+    case "premium":
+    case "xhigh":
+      return "premium";
+    default:
+      return undefined;
+  }
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -4169,6 +4227,21 @@ serve(async (req: Request) => {
           );
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
+        const requestStartedAt = performance.now();
+        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const sessionId = body.session_id != null
+          ? String(body.session_id)
+          : null;
+        const providerChoiceReason = sanitizeProviderChoiceLogText(
+          body.provider_choice_reason,
+        );
+        const routingUseCase = sanitizeProviderChoiceLogText(
+          body.routing_use_case,
+          80,
+        );
+        const inputChars = finalMessages
+          .map((m) => typeof m.content === "string" ? m.content.length : 0)
+          .reduce((a, b) => a + b, 0);
 
         const cfg = PROVIDER_CONFIGS[providerId];
         if (!cfg) {
@@ -4203,6 +4276,40 @@ serve(async (req: Request) => {
             authHeaders = {};
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
+          const requestedModel = String(body.model ?? cfg.defaultModel);
+          const logProviderChat = async (
+            params: {
+              success: boolean;
+              statusCode: number;
+              model?: string | null;
+              outputChars?: number | null;
+              estimatedCostUsd?: number | null;
+              errorMessage?: string | null;
+            },
+          ) => {
+            try {
+              const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+              await admin.from("ai_hub_chat_logs").insert({
+                provider: providerId,
+                tier: providerTier(providerId) ?? "direct",
+                success: params.success,
+                estimated_cost_usd: params.estimatedCostUsd ?? null,
+                model: params.model ?? requestedModel,
+                latency_ms: Math.round(performance.now() - requestStartedAt),
+                trace_id: traceId,
+                session_id: sessionId,
+                input_chars: inputChars,
+                output_chars: params.outputChars ?? null,
+                error_message: params.errorMessage ?? null,
+                action: "provider.chat",
+                status_code: params.statusCode,
+                provider_choice_reason: providerChoiceReason,
+                routing_use_case: routingUseCase,
+              });
+            } catch {
+              // ignore logging errors
+            }
+          };
           const resp = await fetch(fetchUrl, {
             method: "POST",
             headers: {
@@ -4210,22 +4317,17 @@ serve(async (req: Request) => {
               "Content-Type": "application/json",
               ...(cfg.extraHeaders ?? {}),
             },
-            body: JSON.stringify(
-              cfg.buildBody(
-                finalMessages,
-                String(body.model ?? cfg.defaultModel),
-              ),
-            ),
+            body: JSON.stringify(cfg.buildBody(finalMessages, requestedModel)),
           });
           const respText = await resp.text();
           if (!resp.ok) {
             // Free tier / 課金制限検知
-            if (
-              respText.includes("paid_plan_required") ||
-              respText.includes("payment_required") ||
-              resp.status === 402 || respText.includes("insufficient_quota") ||
-              respText.includes("billing") || respText.includes("credit")
-            ) {
+            if (isProviderPaymentRequired(resp.status, respText)) {
+              await logProviderChat({
+                success: false,
+                statusCode: resp.status,
+                errorMessage: respText.slice(0, 500),
+              });
               return json({
                 success: false,
                 status: "paidPlanRequired",
@@ -4235,6 +4337,11 @@ serve(async (req: Request) => {
                 detail: respText.slice(0, 300),
               });
             }
+            await logProviderChat({
+              success: false,
+              statusCode: resp.status,
+              errorMessage: respText.slice(0, 500),
+            });
             return json({
               success: false,
               status: "error",
@@ -4247,21 +4354,76 @@ serve(async (req: Request) => {
           try {
             data = JSON.parse(respText);
           } catch {
+            const outputChars = respText.slice(0, 2000).length;
+            const estimatedCost = calculateApiCost(
+              requestedModel,
+              estimateTokensFromChars(inputChars),
+              estimateTokensFromChars(outputChars),
+            );
+            await logProviderChat({
+              success: true,
+              statusCode: 200,
+              model: requestedModel,
+              outputChars,
+              estimatedCostUsd: estimatedCost,
+            });
+            await recordSpend("ef", "ai-hub", estimatedCost);
             return json({
               success: true,
               provider: providerId,
               status: "implemented",
               text: respText.slice(0, 2000),
+              observability: {
+                provider: providerId,
+                model: requestedModel,
+                estimated_cost_usd: estimatedCost,
+                trace_id: traceId,
+                session_id: sessionId,
+                input_chars: inputChars,
+                output_chars: outputChars,
+                action: "provider.chat",
+                status_code: 200,
+                provider_choice_reason: providerChoiceReason,
+                routing_use_case: routingUseCase,
+              },
             });
           }
           const content = cfg.parseResponse(data);
           const modelUsed = pick(data, "model");
+          const outputChars = content.length;
+          const usedModel = String(modelUsed ?? requestedModel);
+          const estimatedCost = calculateApiCost(
+            usedModel,
+            estimateTokensFromChars(inputChars),
+            estimateTokensFromChars(outputChars),
+          );
+          await logProviderChat({
+            success: true,
+            statusCode: 200,
+            model: usedModel,
+            outputChars,
+            estimatedCostUsd: estimatedCost,
+          });
+          await recordSpend("ef", "ai-hub", estimatedCost);
           return json({
             success: true,
             provider: providerId,
             status: "implemented",
             text: content,
-            model: modelUsed ?? cfg.defaultModel,
+            model: usedModel,
+            observability: {
+              provider: providerId,
+              model: usedModel,
+              estimated_cost_usd: estimatedCost,
+              trace_id: traceId,
+              session_id: sessionId,
+              input_chars: inputChars,
+              output_chars: outputChars,
+              action: "provider.chat",
+              status_code: 200,
+              provider_choice_reason: providerChoiceReason,
+              routing_use_case: routingUseCase,
+            },
           });
         } catch (e) {
           return json({
@@ -4276,7 +4438,7 @@ serve(async (req: Request) => {
       case "provider.chat_auto": {
         const effortSelection = await selectEffort("provider.chat_auto", body);
         const offlinePolicy = parseOfflineSecureModePolicy(body);
-        const requestedTier = body.tier as Tier | undefined;
+        const requestedTier = normalizeProviderTier(body.tier);
         const messages = Array.isArray(body.messages) ? body.messages : null;
         const userMsg = String(body.message ?? "");
         if (!messages && !userMsg) {
@@ -4312,6 +4474,13 @@ serve(async (req: Request) => {
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
+        const providerChoiceReason = sanitizeProviderChoiceLogText(
+          body.provider_choice_reason,
+        );
+        const routingUseCase = sanitizeProviderChoiceLogText(
+          body.routing_use_case,
+          80,
+        );
 
         let resultText: string | undefined;
         let usedProvider: string | undefined;
@@ -4358,6 +4527,8 @@ serve(async (req: Request) => {
               error_message: "all tiers exhausted",
               action: "provider.chat_auto",
               status_code: 502,
+              provider_choice_reason: providerChoiceReason,
+              routing_use_case: routingUseCase,
             });
           } catch { /* ignore */ }
           return json({
@@ -4394,6 +4565,8 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             action: "provider.chat_auto",
             status_code: 200,
+            provider_choice_reason: providerChoiceReason,
+            routing_use_case: routingUseCase,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
         } catch { /* ignore logging errors */ }
@@ -4407,13 +4580,15 @@ serve(async (req: Request) => {
           effort_source: effortSelection.source,
           status: "implemented",
           text: resultText,
+          provider_choice_reason: providerChoiceReason,
+          routing_use_case: routingUseCase,
         });
       }
 
       case "edge_llm.invoke": {
         const effortSelection = await selectEffort("edge_llm.invoke", body);
         const offlinePolicy = parseOfflineSecureModePolicy(body);
-        const requestedTier = body.tier as Tier | undefined;
+        const requestedTier = normalizeProviderTier(body.tier);
         const providerId = asString(body.provider) || undefined;
         const systemPrompt = asString(body.system_prompt);
         const userPrompt = asString(body.user_prompt) ||
