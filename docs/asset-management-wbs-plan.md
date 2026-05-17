@@ -138,3 +138,5 @@ from the nearest due WBS task.
   source of truth for balances, due dates, or available cash.
 - Supabase sync stays feature-flagged until conflict resolution and rollback
   paths are proven.
+- QA and monthly operations for the current asset-management surface are tracked
+  in [`ASSET_MANAGEMENT_QA_OPERATIONS_RUNBOOK.md`](ASSET_MANAGEMENT_QA_OPERATIONS_RUNBOOK.md).
