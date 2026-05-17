@@ -166,9 +166,7 @@ class AssetManagementAiSummaryService {
     );
   }
 
-  Map<String, dynamic> buildAiSafePayload(
-    AssetManagementInsightReport report,
-  ) {
+  Map<String, dynamic> buildAiSafePayload(AssetManagementInsightReport report) {
     return <String, dynamic>{
       'available_money_bands': <String, dynamic>{
         'today': _availableToAiSafeJson(report.todayAvailable),
@@ -213,6 +211,9 @@ class AssetManagementAiSummaryService {
       },
       'guardrails': const <String, dynamic>{
         'calculation_owner': 'dart_service',
+        'response_language': 'ja-JP',
+        'must_respond_in_japanese': true,
+        'must_not_use_english_headings': true,
         'external_ai_may_summarize_only': true,
         'external_ai_may_recalculate_amounts': false,
         'external_ai_payload_redacts_exact_money_values': true,
@@ -312,7 +313,7 @@ class AssetManagementAiSummaryService {
       '使用可能額: 本日 $today、今週 $week、今月 $month。',
       emergency,
       movement,
-      '金額はDartルールで計算済みです。Amounts are calculated by Dart rules; AI summary is optional.',
+      '金額はDartルールで計算済みです。AIは要約のみを行います。',
     ].join(' ');
   }
 
@@ -323,10 +324,10 @@ class AssetManagementAiSummaryService {
     return [
       _promptBuilder.buildRedactedPrompt(report),
       '',
-      '## Redacted computed insight payload',
+      '## 計算済みインサイトの安全化ペイロード',
       jsonEncode(payload),
       '',
-      'Rules: summarize only from redacted categories. Do not recalculate amounts. Do not ask for exact balances. Do not provide legal, investment, or credit advice. Never recommend starvation, water-only survival, or skipping meals as a solution. Prioritize food, shelter, health, contacting creditors, and emergency public/community support. Keep the response concise and action-oriented.',
+      '出力ルール: 必ず自然な日本語だけで回答してください。Markdownの見出し、箇条書き、ラベルも日本語にしてください。英語の見出しや英語ラベルは使わないでください。安全化されたカテゴリだけを要約し、金額を再計算しないでください。正確な残高の追加開示を求めないでください。法的助言、投資助言、信用判断の断定はしないでください。飢える、水だけで耐える、食事を抜くといった健康を害する提案は絶対にしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。短く、今日実行できる行動に寄せてください。',
     ].join('\n');
   }
 
@@ -381,9 +382,7 @@ class AssetManagementAiSummaryService {
       'date_window_days':
           insight.endDate.difference(insight.startDate).inDays + 1,
       'cash_like_status': _amountPressureBand(insight.cashLikeTotal),
-      'unpaid_payment_status': _amountPressureBand(
-        insight.unpaidPaymentTotal,
-      ),
+      'unpaid_payment_status': _amountPressureBand(insight.unpaidPaymentTotal),
       'unreceived_income_status': _amountPressureBand(
         insight.unreceivedIncomeTotal,
       ),

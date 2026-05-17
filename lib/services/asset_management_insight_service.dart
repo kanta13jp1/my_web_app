@@ -881,44 +881,40 @@ class AssetManagementInsightPromptBuilder {
       report.developerRequests.map((item) => item.severity.name),
     );
     final buffer = StringBuffer()
-      ..writeln('Asset-management AI assistant.')
+      ..writeln('あなたは資産管理AIアシスタントです。')
       ..writeln(
-        'Money calculations are already completed by Dart. Use only the '
-        'redacted categories below; do not infer, recalculate, or ask for '
-        'exact balances.',
+        '重要: 金額計算はDart側で完了しています。下記の安全化された分類だけを使い、'
+        '推測・再計算・正確な残高の追加要求はしないでください。',
       )
+      ..writeln('出力は必ず日本語だけにしてください。見出し、ラベル、箇条書きも日本語にしてください。')
       ..writeln()
-      ..writeln('## Redacted availability bands')
-      ..writeln('- today: ${_availabilityBand(report.todayAvailable)}')
-      ..writeln('- week: ${_availabilityBand(report.weekAvailable)}')
-      ..writeln('- month: ${_availabilityBand(report.monthAvailable)}')
+      ..writeln('## 安全化された使用可能額の状態')
+      ..writeln('- 本日: ${_availabilityBand(report.todayAvailable)}')
+      ..writeln('- 今週: ${_availabilityBand(report.weekAvailable)}')
+      ..writeln('- 今月: ${_availabilityBand(report.monthAvailable)}')
       ..writeln()
-      ..writeln('## Action inventory')
-      ..writeln('- total_actions: ${report.actionItems.length}')
-      ..writeln('- by_severity: ${_formatCounts(severityCounts)}')
-      ..writeln('- by_type: ${_formatCounts(typeCounts)}')
+      ..writeln('## アクション件数')
+      ..writeln('- 合計: ${report.actionItems.length}')
+      ..writeln('- 重要度別: ${_formatCounts(severityCounts)}')
+      ..writeln('- 種別: ${_formatCounts(typeCounts)}')
       ..writeln()
-      ..writeln('## Movement and emergency inventory')
-      ..writeln(
-        '- movement_suggestion_count: ${report.movementSuggestions.length}',
-      )
-      ..writeln('- emergency_advice_count: ${report.emergencyAdvices.length}')
-      ..writeln('- emergency_by_severity: ${_formatCounts(emergencyCounts)}')
+      ..writeln('## 口座移動と緊急アドバイス')
+      ..writeln('- 口座移動・出金提案件数: ${report.movementSuggestions.length}')
+      ..writeln('- 緊急生活防衛アドバイス件数: ${report.emergencyAdvices.length}')
+      ..writeln('- 緊急アドバイス重要度別: ${_formatCounts(emergencyCounts)}')
       ..writeln()
-      ..writeln('## Developer request inventory')
-      ..writeln(
-        '- developer_request_count: ${report.developerRequests.length}',
-      )
-      ..writeln('- developer_by_severity: ${_formatCounts(developerCounts)}');
+      ..writeln('## 開発者向け改善提案件数')
+      ..writeln('- 合計: ${report.developerRequests.length}')
+      ..writeln('- 重要度別: ${_formatCounts(developerCounts)}');
     return buffer.toString();
   }
 
   String _availabilityBand(AssetManagementAvailableMoneyInsight insight) {
     final amount = insight.availableAmount;
-    if (amount < 0) return 'shortage';
-    if (amount < insight.minimumSafetyBalance) return 'below_safety_balance';
-    if (amount < insight.minimumSafetyBalance * 2) return 'near_safety_buffer';
-    return 'buffer_available';
+    if (amount < 0) return '不足';
+    if (amount < insight.minimumSafetyBalance) return '安全残高未満';
+    if (amount < insight.minimumSafetyBalance * 2) return '安全余力が薄い';
+    return '余力あり';
   }
 
   Map<String, int> _countBy(Iterable<String> values) {
