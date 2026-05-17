@@ -85,7 +85,12 @@ jobs:
 
       # Build Flutter Web
       - name: Build Flutter Web (Staging)
-        run: flutter build web --release --pwa-strategy=none --no-tree-shake-icons --dart-define=ENVIRONMENT=staging
+        run: >
+          flutter build web --release --pwa-strategy=none --no-tree-shake-icons
+          --dart-define=ENVIRONMENT=staging
+          --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true
+          --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true
+          --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true
         env:
           # 修正: シークレット名を _STAGING に変更
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}

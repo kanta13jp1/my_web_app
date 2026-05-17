@@ -114,6 +114,25 @@ void main() {
       expect(guardrails['must_not_recommend_starvation_or_water_only'], true);
     });
 
+    test(
+      'waiting result keeps deterministic text before external AI returns',
+      () {
+        final service = AssetManagementAiSummaryService(
+          now: () => DateTime(2026, 5, 1, 12),
+        );
+
+        final result = service.buildWaitingForAiResult(_report());
+
+        expect(result.status, AssetManagementAiSummaryStatus.fallback);
+        expect(result.usedExternalAi, false);
+        expect(result.source, 'deterministic fallback / waiting for ai-hub');
+        expect(
+          result.text.contains('Amounts are calculated by Dart rules'),
+          true,
+        );
+      },
+    );
+
     test('deterministic fallback gives concrete emergency living advice', () {
       final report = _emergencyReport();
       final service = AssetManagementAiSummaryService(

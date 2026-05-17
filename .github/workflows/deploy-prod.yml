@@ -649,8 +649,9 @@ jobs:
             --dart-define=ENVIRONMENT=production \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
             --dart-define=BUILD_NUMBER=${{ github.run_number }} \
-            --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=false \
-            --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=false \
+            --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
+            --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
+            --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}

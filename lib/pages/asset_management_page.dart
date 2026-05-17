@@ -232,6 +232,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _wasteTrainingAiReviewKey;
   bool _isGeneratingAssetManagementAiSummary = false;
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
+  String? _assetManagementAiSummaryRequestKey;
 
   final List<Color> _colors = [
     const Color(0xFF6366F1),
@@ -7967,9 +7968,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetManagementAiSummaryPanel(
     AssetManagementInsightReport report,
   ) {
-    final result = _assetManagementAiSummaryResult ??
-        _assetManagementAiSummaryService.buildDisabledResult(report);
     final enabled = _assetManagementAiSummaryService.aiEnabled;
+    if (enabled) {
+      _requestAssetManagementAiSummaryIfNeeded(report);
+    }
+    final result = _assetManagementAiSummaryResult ??
+        (enabled
+            ? _assetManagementAiSummaryService.buildWaitingForAiResult(report)
+            : _assetManagementAiSummaryService.buildDisabledResult(report));
     final color = switch (result.status) {
       AssetManagementAiSummaryStatus.aiGenerated => const Color(0xFF0D9488),
       AssetManagementAiSummaryStatus.fallback => const Color(0xFFD97706),
@@ -8069,9 +8075,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _generateAssetManagementAiSummary(
-    AssetManagementInsightReport report,
-  ) async {
-    setState(() => _isGeneratingAssetManagementAiSummary = true);
+    AssetManagementInsightReport report, {
+    String? requestKey,
+  }) async {
+    final key = requestKey ?? _assetManagementAiSummaryKey(report);
+    setState(() {
+      _isGeneratingAssetManagementAiSummary = true;
+      _assetManagementAiSummaryRequestKey = key;
+    });
     final result = await _assetManagementAiSummaryService.generateSummary(
       report: report,
     );
@@ -8081,7 +8092,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       _assetManagementAiSummaryResult = result;
       _isGeneratingAssetManagementAiSummary = false;
+      _assetManagementAiSummaryRequestKey = key;
     });
+  }
+
+  void _requestAssetManagementAiSummaryIfNeeded(
+    AssetManagementInsightReport report,
+  ) {
+    if (!_assetManagementAiSummaryService.aiEnabled ||
+        _isGeneratingAssetManagementAiSummary) {
+      return;
+    }
+    final key = _assetManagementAiSummaryKey(report);
+    if (_assetManagementAiSummaryRequestKey == key) {
+      return;
+    }
+    _assetManagementAiSummaryRequestKey = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          !_assetManagementAiSummaryService.aiEnabled ||
+          _isGeneratingAssetManagementAiSummary ||
+          _assetManagementAiSummaryRequestKey != key) {
+        return;
+      }
+      unawaited(_generateAssetManagementAiSummary(report, requestKey: key));
+    });
+  }
+
+  String _assetManagementAiSummaryKey(AssetManagementInsightReport report) {
+    return jsonEncode(_assetManagementAiSummaryService.buildPayload(report));
   }
 
   Widget _buildAssetManagementAvailableCard(
