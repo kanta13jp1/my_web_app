@@ -1,13 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-16T21:34:14Z`
-- Previous check: `2026-05-15T21:38:10Z`
-- Changed/new official sources: `2`
+- Checked at: `2026-05-17T21:36:13Z`
+- Previous check: `2026-05-16T21:34:14Z`
+- Changed/new official sources: `0`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.143 / May 15, 2026
-- `changed` Codex changelog: 2026-05-14 / Work with Codex from anywhere You can now use Codex from the ChatGPT mobile app by connecti
+- No official source hash changed since the previous check.
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
