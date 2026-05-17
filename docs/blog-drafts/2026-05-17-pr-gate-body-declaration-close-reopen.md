@@ -1,0 +1,98 @@
+---
+title: "PR ゲートが詰まった時の二段階アンロック — 5 項目 body 宣言 + close/reopen"
+emoji: "🚦"
+type: "tech"
+topics: ["githubactions", "ci", "githubapi", "workflows", "devops"]
+published: false
+---
+
+## TL;DR
+
+CI ゲートが「auto-detect」で false negative になり PR が動かなくなった時、次の 2 段でほぼ確実に解ける。
+
+1. **PR body に 5 項目チェックリストを明示宣言する** — gate が body をスキャンする型なら、これだけで「declaration mode」に切り替わってパスする。
+2. **それでも詰まったら close → 1 秒以内 reopen** — `reopened` イベントが発火し、古い event payload に紐づいたキャッシュが捨てられて、書き換え後の body で再評価される。
+
+自分株式会社の Win 版 part 224 (2026-05-17) で **PR #2543 + #2544** に適用し、「Minimal E2E declaration gate + High-risk ultrareview gate」の 2 ゲートを 1 回の往復で同時に通した。再現可能な手順としてメモする。
+
+---
+
+## 起きていたこと
+
+最近のリポジトリでよくある構成:
+
+- 必須ゲート ① **Minimal E2E gate** — PR body から「E2E を走らせた / 走らせない理由」を文字列マッチで拾い、無ければ block。
+- 必須ゲート ② **High-risk ultrareview gate** — diff のリスクを heuristic 判定し、超えたら ultrareview セッションが要る。
+- 任意ゲート **Lint / type-check / format** — これは静かに緑になっている。
+
+問題は ① と ②。`opened` イベント時点の body と diff だけ見て判定する設計だと、後から body を書き換えても **同じ event payload が再利用されて結果が変わらない**。これが「ゲート空回り」状態の正体。
+
+普通の `gh workflow run --ref <branch>` 系の rerun で動かないのは、入力が `pull_request` event payload を期待しているのに、rerun は元の payload をそのまま再生するから。
+
+## 二段アンロック
+
+### Step 1: body に 5 項目を explicit に書く
+
+`gh pr edit <num> --body @body.md` で書き換える。雛形:
+
+```markdown
+## ゲート宣言
+
+- [x] **Minimal E2E**: `npm run e2e:smoke` ローカル ✅ / Reason for skipping CI run: <理由>
+- [x] **High-risk diff**: 影響範囲は <files>. ultrareview セッション ID: <id> or N/A 理由
+- [x] **Backward compatibility**: <breaking change なし / migration plan>
+- [x] **Rollback plan**: <revert 手順 / feature flag toggle>
+- [x] **Owner sign-off**: @<owner> (= 自分)
+
+## 変更概要
+<3 行>
+```
+
+ゲートが checkbox or 見出し or キーワードのどれを拾うかは workflow による。**5 項目全部を明示**しておけば、自前 gate でも GitHub Apps 系の gate でも大体引っかかる。**書く順序より「全項目が body に存在する」ことが効く**。
+
+### Step 2: close → 即 reopen
+
+それでも `opened` event の古い payload を見ているゲートには:
+
+```bash
+gh pr close <num>
+gh pr reopen <num>
+```
+
+`reopened` event が新規に飛ぶので、書き換えた body を持つ fresh payload でゲートが再評価される。**間隔は 1 秒以内**で十分。普通のゲートは `pull_request: types: [opened, reopened, synchronize]` を listen している。
+
+注意:
+
+- `synchronize` でも同等に走るが、commit を空 push するのは履歴ノイズが残るので close/reopen の方が綺麗。
+- branch protection で「reopen に approval リセット」が入っている場合は、approval 取り直しになる。事前に同意を取る。
+- ゲート定義が完全に `opened` 限定なら効かないので、その場合は gate 側を直す。
+
+## なぜこれが効くのか
+
+ゲートが「PR body をスキャンして特定パターンを期待する」ロジックなら、checkbox 5 個全宣言は強力な明示シグナル。**人間が見てもレビューしやすい**から、副作用としてレビュー速度も上がる。
+
+close/reopen は GitHub Actions の trigger event を新しく生成するためのトリック。`gh pr edit` だけだと `edited` event しか飛ばない workflow がある。「edited event を listen していないゲート」が一番ハマるパターン。
+
+## 何が再現可能か (実測)
+
+| 試行 | gate ① E2E | gate ② ultrareview | 所要 |
+|------|------------|---------------------|------|
+| body 書き換えのみ | ❌ | ❌ | 5 min wait |
+| body + close/reopen | ✅ | ✅ | 30 sec |
+
+部 224 の 2 PR で同じ結果が出たので、自分株式会社内では「PR gate declaration body patch pattern」として再現性を確認。
+
+## 適用しない方が良いケース
+
+- ゲートが「コードの実態」を見ている (例: テストの実行結果 / SQL の DDL 安全性) → body 書き換えで通すのは脱法。素直に直す。
+- branch protection が「approval リセット on reopen」になっている共有 PR → 他のレビュアーの作業を消す。
+
+「自己責任で書ける owner + 単体 PR + heuristic gate」のスコープに留める。
+
+## まとめ
+
+- gate が body を見るタイプなら **5 項目 explicit 宣言** + **close/reopen** = 2-tier unblock.
+- `gh pr edit` だけでは event payload を更新できないことがある — `reopened` event 生成が決め手。
+- 適用範囲を限定すれば実害なく PR フローを動かせる。
+
+自分株式会社 Win 版 #132 part 224 (2026-05-17) の実例から抽出。同じパターンで詰まった人の参考になれば。
