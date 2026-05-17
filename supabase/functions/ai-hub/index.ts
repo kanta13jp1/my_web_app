@@ -4063,6 +4063,90 @@ serve(async (req: Request) => {
       }
 
       // ── AI大学 v2: Voice ─────────────────────────────────────────────────
+      case "asset_liability.verify_annual_rate_evidence": {
+        const parsedImage = parseInlineImage(body);
+        if (parsedImage.error) {
+          return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        }
+        const image = parsedImage.image;
+        if (!image) {
+          return json({ error: "imageBase64 required" }, 400);
+        }
+        const accountName = asString(body.accountName) || "unknown account";
+        const submittedAnnualRate = asNumber(
+          body.submittedAnnualRate,
+          Number.NaN,
+        );
+        if (!Number.isFinite(submittedAnnualRate) || submittedAnnualRate < 0) {
+          return json({ error: "submittedAnnualRate required" }, 400);
+        }
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "asset_liability.verify_annual_rate_evidence",
+              provider: "google",
+            }),
+            409,
+          );
+        }
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: false,
+            status: "apiKeyRequired",
+            secret_needed: "GEMINI_API_KEY",
+            message: "Supabase Secret GEMINI_API_KEY is required.",
+          });
+        }
+
+        const submittedPercent = submittedAnnualRate * 100;
+        const prompt = [
+          "You are verifying annual interest rate evidence for a personal finance board.",
+          "Inspect the attached screenshot. It must visibly contain the annual interest rate/APR for the named account.",
+          `Account name: ${accountName}`,
+          `User-entered annual rate: ${submittedPercent.toFixed(4)}%`,
+          "Return JSON only with keys: verified, detected_annual_rate_percent, confidence, summary, reason.",
+          "Set verified=true only when the screenshot clearly shows the same annual rate for this account. Do not infer missing rates.",
+          "If the screenshot is unreadable, unrelated, or the rate differs, set verified=false.",
+        ].join("\n");
+        const raw = await callGemini(prompt, geminiKey, image);
+        let parsed: Record<string, unknown> = {};
+        try {
+          parsed = JSON.parse(stripMarkdownCodeFence(raw)) as Record<
+            string,
+            unknown
+          >;
+        } catch {
+          parsed = { summary: raw, verified: false };
+        }
+        const detectedPercent = asNumber(
+          parsed.detected_annual_rate_percent,
+          Number.NaN,
+        );
+        const detectedAnnualRate = Number.isFinite(detectedPercent)
+          ? detectedPercent / 100
+          : null;
+        const rateMatches = detectedAnnualRate !== null &&
+          Math.abs(detectedAnnualRate - submittedAnnualRate) <= 0.001;
+        const verified = parsed.verified === true && rateMatches;
+        const summary = asString(parsed.summary) ||
+          asString(parsed.reason) ||
+          (verified
+            ? "Annual rate evidence matches the entered value."
+            : "Annual rate evidence could not be verified.");
+        return json({
+          success: true,
+          provider: "google",
+          status: verified ? "verified" : "needs_review",
+          verified,
+          detected_annual_rate: detectedAnnualRate,
+          detected_annual_rate_percent: detectedPercent,
+          summary,
+          confidence: asNumber(parsed.confidence, 0),
+        });
+      }
+
       case "provider.chat": {
         // 汎用プロバイダー呼び出し (AI大学150社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)

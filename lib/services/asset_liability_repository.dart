@@ -1419,6 +1419,10 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           local.annualRateOverrides,
           remote.annualRateOverrides,
         ) &&
+        _annualRateEvidencesEqual(
+          local.annualRateEvidences,
+          remote.annualRateEvidences,
+        ) &&
         _stringSetEquals(local.paidAccountNames, remote.paidAccountNames) &&
         _stringMapEquals(
           local.paymentSourceAccountIds,
@@ -1454,6 +1458,33 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
     for (final entry in a.entries) {
       if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _annualRateEvidencesEqual(
+    Map<String, AssetLiabilityAnnualRateEvidence> a,
+    Map<String, AssetLiabilityAnnualRateEvidence> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      final other = b[entry.key];
+      final current = entry.value;
+      if (other == null ||
+          other.accountId != current.accountId ||
+          other.fileName != current.fileName ||
+          other.mimeType != current.mimeType ||
+          other.submittedAt.toUtc() != current.submittedAt.toUtc() ||
+          other.submittedAnnualRate != current.submittedAnnualRate ||
+          other.detectedAnnualRate != current.detectedAnnualRate ||
+          other.status != current.status ||
+          other.summary != current.summary ||
+          other.source != current.source ||
+          other.errorMessage != current.errorMessage) {
         return false;
       }
     }
@@ -1707,6 +1738,7 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
         'actual_payment_amounts': row['actual_payment_amounts'],
         'payment_difference_reasons': row['payment_difference_reasons'],
         'annual_rate_overrides': row['annual_rate_overrides'],
+        'annual_rate_evidences': row['annual_rate_evidences'],
         'paid_account_ids': row['paid_account_ids'],
         'payment_source_account_ids': row['payment_source_account_ids'],
         'card_billing_account_ids': row['card_billing_account_ids'],

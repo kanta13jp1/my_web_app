@@ -51,6 +51,9 @@ class AssetLiabilityPlanningService {
   static const String kddiProviderAccountId = 'kddi_provider';
   static const String kddiProviderAccountName = 'KDDI';
   static const double kddiProviderMonthlyPaymentAmount = 5764;
+  static const String rentAccountId = 'rent';
+  static const String rentAccountName = '\u5bb6\u8cc3';
+  static const double rentMonthlyPaymentAmount = 63000;
 
   const AssetLiabilityPlanningService();
 
@@ -77,12 +80,20 @@ class AssetLiabilityPlanningService {
   }) {
     final shouldIncludeDefaultKddiProvider =
         includeDefaultFixedPayments && !_hasKddiProvider(latestSnapshot);
-    final effectiveSnapshot = shouldIncludeDefaultKddiProvider
-        ? _withDefaultFixedPayments(latestSnapshot)
-        : latestSnapshot;
+    final shouldIncludeDefaultRent =
+        includeDefaultFixedPayments && !_hasRent(latestSnapshot);
+    final effectiveSnapshot =
+        shouldIncludeDefaultKddiProvider || shouldIncludeDefaultRent
+            ? _withDefaultFixedPayments(
+                latestSnapshot,
+                includeKddiProvider: shouldIncludeDefaultKddiProvider,
+                includeRent: shouldIncludeDefaultRent,
+              )
+            : latestSnapshot;
     final effectiveMonthlyPaymentOverrides = _withDefaultFixedPaymentOverrides(
       monthlyPaymentOverrides: monthlyPaymentOverrides,
       includeDefaultKddiProvider: shouldIncludeDefaultKddiProvider,
+      includeDefaultRent: shouldIncludeDefaultRent,
     );
     final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
@@ -340,6 +351,18 @@ class AssetLiabilityPlanningService {
         name: name,
         balance: balance,
         kind: AssetLiabilityAccountKind.utility,
+        paymentDay: 25,
+        annualRate: 0,
+        minimumPaymentRate: 1,
+        minimumPaymentFloor: balance.abs(),
+        fullPaymentEstimate: true,
+      );
+    }
+    if (_accountIdForName(name) == rentAccountId) {
+      return _liability(
+        name: name,
+        balance: balance,
+        kind: AssetLiabilityAccountKind.otherLiability,
         paymentDay: 25,
         annualRate: 0,
         minimumPaymentRate: 1,
@@ -1432,6 +1455,9 @@ class AssetLiabilityPlanningService {
     if (_containsAny(key, const <String>['kddi'])) {
       return kddiProviderAccountId;
     }
+    if (key == 'rent' || _containsAny(key, const <String>['家賃'])) {
+      return rentAccountId;
+    }
     if (key == 'au' || _containsAny(key, const <String>['通信', '携帯'])) {
       return 'au';
     }
@@ -1452,11 +1478,16 @@ class AssetLiabilityPlanningService {
   }
 
   Map<String, double> _withDefaultFixedPayments(
-    Map<String, double> latestSnapshot,
-  ) {
+    Map<String, double> latestSnapshot, {
+    required bool includeKddiProvider,
+    required bool includeRent,
+  }) {
     final result = Map<String, double>.from(latestSnapshot);
-    if (!_hasKddiProvider(result)) {
+    if (includeKddiProvider && !_hasKddiProvider(result)) {
       result[kddiProviderAccountName] = -kddiProviderMonthlyPaymentAmount;
+    }
+    if (includeRent && !_hasRent(result)) {
+      result[rentAccountName] = -rentMonthlyPaymentAmount;
     }
     return result;
   }
@@ -1464,22 +1495,33 @@ class AssetLiabilityPlanningService {
   Map<String, double> _withDefaultFixedPaymentOverrides({
     required Map<String, double> monthlyPaymentOverrides,
     required bool includeDefaultKddiProvider,
+    required bool includeDefaultRent,
   }) {
-    if (!includeDefaultKddiProvider ||
-        monthlyPaymentOverrides.containsKey(kddiProviderAccountId) ||
-        monthlyPaymentOverrides.containsKey(kddiProviderAccountName)) {
-      return monthlyPaymentOverrides;
-    }
-    return <String, double>{
-      kddiProviderAccountId: kddiProviderMonthlyPaymentAmount,
+    final result = <String, double>{
       ...monthlyPaymentOverrides,
     };
+    if (includeDefaultKddiProvider &&
+        !result.containsKey(kddiProviderAccountId) &&
+        !result.containsKey(kddiProviderAccountName)) {
+      result[kddiProviderAccountId] = kddiProviderMonthlyPaymentAmount;
+    }
+    if (includeDefaultRent &&
+        !result.containsKey(rentAccountId) &&
+        !result.containsKey(rentAccountName)) {
+      result[rentAccountId] = rentMonthlyPaymentAmount;
+    }
+    return result;
   }
 
   bool _hasKddiProvider(Map<String, double> snapshot) {
     return snapshot.keys.any(
       (name) => _accountIdForName(name) == kddiProviderAccountId,
     );
+  }
+
+  bool _hasRent(Map<String, double> snapshot) {
+    return snapshot.keys
+        .any((name) => _accountIdForName(name) == rentAccountId);
   }
 
   String _fallbackAccountId(String name) {

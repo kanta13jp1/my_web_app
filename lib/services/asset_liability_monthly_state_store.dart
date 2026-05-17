@@ -11,6 +11,7 @@ class AssetLiabilityMonthlyState {
   final Map<String, double> actualPaymentAmounts;
   final Map<String, String> paymentDifferenceReasons;
   final Map<String, double> annualRateOverrides;
+  final Map<String, AssetLiabilityAnnualRateEvidence> annualRateEvidences;
   final Set<String> paidAccountNames;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
@@ -23,6 +24,8 @@ class AssetLiabilityMonthlyState {
     this.actualPaymentAmounts = const <String, double>{},
     this.paymentDifferenceReasons = const <String, String>{},
     this.annualRateOverrides = const <String, double>{},
+    this.annualRateEvidences =
+        const <String, AssetLiabilityAnnualRateEvidence>{},
     this.paidAccountNames = const <String>{},
     this.paymentSourceAccountIds = const <String, String>{},
     this.cardBillingAccountIds = const <String, String>{},
@@ -36,6 +39,7 @@ class AssetLiabilityMonthlyState {
       actualPaymentAmounts.isEmpty &&
       paymentDifferenceReasons.isEmpty &&
       annualRateOverrides.isEmpty &&
+      annualRateEvidences.isEmpty &&
       paidAccountNames.isEmpty &&
       paymentSourceAccountIds.isEmpty &&
       cardBillingAccountIds.isEmpty &&
@@ -53,6 +57,8 @@ class AssetLiabilityMonthlyStateStore {
       'asset_liability_monthly_payment_difference_reasons_v1';
   static const String annualRatePrefsKey =
       'asset_liability_monthly_annual_rate_overrides_v1';
+  static const String annualRateEvidencePrefsKey =
+      'asset_liability_monthly_annual_rate_evidences_v1';
   static const String paidPrefsKey = 'asset_liability_paid_accounts_v1';
   static const String paymentSourcePrefsKey =
       'asset_liability_payment_source_accounts_v1';
@@ -95,6 +101,10 @@ class AssetLiabilityMonthlyStateStore {
       ),
       annualRateOverrides: annualRateOverridesForMonth(
         prefs.getString(annualRatePrefsKey),
+        monthKey,
+      ),
+      annualRateEvidences: annualRateEvidencesForMonth(
+        prefs.getString(annualRateEvidencePrefsKey),
         monthKey,
       ),
       paidAccountNames: paidAccountsForMonth(
@@ -187,6 +197,22 @@ class AssetLiabilityMonthlyStateStore {
       );
     }
     await prefs.setString(annualRatePrefsKey, jsonEncode(allAnnualRates));
+
+    final allAnnualRateEvidences = decodeAnnualRateEvidences(
+      prefs.getString(annualRateEvidencePrefsKey),
+    );
+    if (state.annualRateEvidences.isEmpty) {
+      allAnnualRateEvidences.remove(monthKey);
+    } else {
+      allAnnualRateEvidences[monthKey] =
+          Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        state.annualRateEvidences,
+      );
+    }
+    await prefs.setString(
+      annualRateEvidencePrefsKey,
+      jsonEncode(_encodeAnnualRateEvidences(allAnnualRateEvidences)),
+    );
 
     await prefs.setString(
       paidPrefsKey,
@@ -401,6 +427,9 @@ class AssetLiabilityMonthlyStateStore {
       annualRateOverrides: Map<String, double>.from(
         previousState.annualRateOverrides,
       ),
+      annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        previousState.annualRateEvidences,
+      ),
       paymentSourceAccountIds: Map<String, String>.from(
         previousState.paymentSourceAccountIds,
       ),
@@ -487,6 +516,44 @@ class AssetLiabilityMonthlyStateStore {
         }
       }
       return MapEntry(monthKey, payments);
+    });
+  }
+
+  static Map<String, Map<String, AssetLiabilityAnnualRateEvidence>>
+      decodeAnnualRateEvidences(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return <String, Map<String, AssetLiabilityAnnualRateEvidence>>{};
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      return <String, Map<String, AssetLiabilityAnnualRateEvidence>>{};
+    }
+
+    return decoded.map<String, Map<String, AssetLiabilityAnnualRateEvidence>>((
+      month,
+      values,
+    ) {
+      final monthKey = month.toString();
+      final evidences = <String, AssetLiabilityAnnualRateEvidence>{};
+      if (values is Map) {
+        for (final entry in values.entries) {
+          if (entry.value is! Map) {
+            continue;
+          }
+          final rawEvidence = Map<String, Object?>.from(
+            (entry.value as Map).map(
+              (key, value) => MapEntry(key.toString(), value),
+            ),
+          );
+          final evidence = AssetLiabilityAnnualRateEvidence.fromJson(
+            rawEvidence,
+          );
+          if (evidence != null) {
+            evidences[entry.key.toString()] = evidence;
+          }
+        }
+      }
+      return MapEntry(monthKey, evidences);
     });
   }
 
@@ -952,6 +1019,17 @@ class AssetLiabilityMonthlyStateStore {
     );
   }
 
+  static Map<String, AssetLiabilityAnnualRateEvidence>
+      annualRateEvidencesForMonth(
+    String? raw,
+    String monthKey,
+  ) {
+    return Map<String, AssetLiabilityAnnualRateEvidence>.from(
+      decodeAnnualRateEvidences(raw)[monthKey] ??
+          const <String, AssetLiabilityAnnualRateEvidence>{},
+    );
+  }
+
   static Map<String, String> paymentDifferenceReasonsForMonth(
     String? raw,
     String monthKey,
@@ -1054,6 +1132,14 @@ class AssetLiabilityMonthlyStateStore {
       }
     }
 
+    final migratedAnnualRateEvidences =
+        <String, AssetLiabilityAnnualRateEvidence>{};
+    for (final entry in state.annualRateEvidences.entries) {
+      final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
+      migratedAnnualRateEvidences[migratedKey] =
+          entry.value.copyWith(accountId: migratedKey);
+    }
+
     final migratedPaidAccounts = <String>{};
     for (final accountKey in state.paidAccountNames) {
       migratedPaidAccounts.add(legacyKeyToAccountId[accountKey] ?? accountKey);
@@ -1111,6 +1197,7 @@ class AssetLiabilityMonthlyStateStore {
       actualPaymentAmounts: migratedActualPayments,
       paymentDifferenceReasons: migratedDifferenceReasons,
       annualRateOverrides: migratedAnnualRates,
+      annualRateEvidences: migratedAnnualRateEvidences,
       paidAccountNames: migratedPaidAccounts,
       paymentSourceAccountIds: migratedPaymentSources,
       cardBillingAccountIds: migratedCardBillingAccounts,
@@ -1126,6 +1213,17 @@ class AssetLiabilityMonthlyStateStore {
     return source.map((month, accounts) {
       final sorted = accounts.toList()..sort();
       return MapEntry(month, sorted);
+    });
+  }
+
+  static Map<String, Map<String, Object?>> _encodeAnnualRateEvidences(
+    Map<String, Map<String, AssetLiabilityAnnualRateEvidence>> source,
+  ) {
+    return source.map((month, evidences) {
+      final sortedKeys = evidences.keys.toList()..sort();
+      return MapEntry(month, <String, Object?>{
+        for (final key in sortedKeys) key: evidences[key]!.toJson(),
+      });
     });
   }
 
