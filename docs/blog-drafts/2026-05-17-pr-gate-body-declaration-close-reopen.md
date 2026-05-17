@@ -96,3 +96,40 @@ close/reopen は GitHub Actions の trigger event を新しく生成するため
 - 適用範囲を限定すれば実害なく PR フローを動かせる。
 
 自分株式会社 Win 版 #132 part 224 (2026-05-17) の実例から抽出。同じパターンで詰まった人の参考になれば。
+
+---
+
+## 追記 — 同日 dogfood 校正 (= 部 225 / 2026-05-17 12:00 UTC)
+
+この記事を公開した PR #2552 自体で同パターンを試した。**body 5 項目宣言 + close/reopen を実行 → 両ゲートとも依然 FAILURE**。当初の主張は**過度の一般化**だった。
+
+実態を gate スクリプト (`scripts/check_minimal_e2e_gate.py`) を読んで確認:
+
+1. **gate は「checkbox 5 項目」ではなく「3 つの正規表現パターン」を body から探す**:
+   - implementation-detail independent な E2E であることの宣言
+   - 「minimal 3 ケース程度」の宣言
+   - `integration_test` / Playwright 等の mechanism 言及
+   汎用の checkbox 文言ではマッチしない。**exact phrase 必須**.
+2. **本来の正解は label 付与**: `docs-only` または `no-e2e-needed` label が付いていれば gate は `Skipped by explicit PR label.` で即 pass.
+3. **`gh pr edit` で label 追加 → close/reopen** が docs-only PR の正準 unblock 経路 (= PR #2552 で動作確認 / 部 225 第 2 例).
+
+つまり**部 224 の成功は「コード変更 PR に正しいキーワードを書いた」ケース**で、5-item checkbox は**たまたま必要 phrase を内包していた**だけだった可能性が高い。
+
+修正後の手順:
+
+| PR 種別 | 正準 unblock |
+|---------|-------------|
+| docs-only | `gh pr edit --add-label docs-only` + close/reopen |
+| code change | gate スクリプトを読んで required phrase を body に inject + close/reopen |
+| 不明 | gate 失敗ログから required string を抽出 |
+
+**教訓**: ゲート挙動を「reverse-engineer」してから body を書く. 汎用 template に頼らない. close/reopen 自体は fresh event payload 生成手段として有効 (= 部 224 + 部 225 で 2 例累積) だが、**body の中身が正しいか**は別問題.
+
+このセクションこそが「公開してから 30 分後に reality に殴られた素直な修正」なので、結論を 1 行で更新:
+
+> ✅ close/reopen = fresh event 生成手段として再現可能 (= 部 224 + 225 第 2 例)
+> ❌ 「5 項目 generic checkbox」だけでは body-scan gate を pass できない (= 部 225 で反証)
+> ✅ docs-only PR は label bypass が canonical
+> ✅ code change PR は gate script を読んで exact phrase を inject
+
+技術記事は「公開した時点で校正されるもの」だと改めて感じた一日でした。
