@@ -48,6 +48,17 @@ void main() {
               received: false,
             ),
           ],
+          transferTasks: <AssetLiabilityTransferTask>[
+            AssetLiabilityTransferTask(
+              id: 'transfer_bank_topup',
+              fromAccountId: 'custom_cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'custom_bank',
+              toAccountName: 'Bank',
+              amount: 10000,
+              dueDate: DateTime(2026, 5, 18),
+            ),
+          ],
         ),
       );
 
@@ -64,6 +75,8 @@ void main() {
       expect(loadedMay.cardStatementLines.single.amount, 6200);
       expect(loadedMay.cardStatementLines.single.description, 'mobile');
       expect(loadedMay.incomePlans.single.name, 'Salary');
+      expect(loadedMay.transferTasks.single.id, 'transfer_bank_topup');
+      expect(loadedMay.transferTasks.single.amount, 10000);
       expect(loadedJune.paymentOverrides, isEmpty);
       expect(loadedJune.actualPaymentAmounts, isEmpty);
       expect(loadedJune.paymentDifferenceReasons, isEmpty);
@@ -73,6 +86,7 @@ void main() {
       expect(loadedJune.cardBillingAccountIds, isEmpty);
       expect(loadedJune.cardStatementLines, isEmpty);
       expect(loadedJune.incomePlans, isEmpty);
+      expect(loadedJune.transferTasks, isEmpty);
     });
 
     test('clears monthly paid status after unchecked state is saved', () async {
@@ -176,9 +190,7 @@ void main() {
       final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
         state: const AssetLiabilityMonthlyState(
           actualPaymentAmounts: <String, double>{'Legacy card': 6200},
-          paymentDifferenceReasons: <String, String>{
-            'Legacy card': 'late fee',
-          },
+          paymentDifferenceReasons: <String, String>{'Legacy card': 'late fee'},
           annualRateOverrides: <String, double>{'Legacy card': 0.145},
         ),
         legacyKeyToAccountId: const <String, String>{
@@ -223,6 +235,17 @@ void main() {
                 received: true,
               ),
             ],
+            transferTasks: <AssetLiabilityTransferTask>[
+              AssetLiabilityTransferTask(
+                id: 'transfer_may',
+                fromAccountId: 'custom_cash',
+                fromAccountName: 'Cash',
+                toAccountId: 'custom_bank',
+                toAccountName: 'Bank',
+                amount: 10000,
+                dueDate: DateTime(2026, 5, 20),
+              ),
+            ],
           ),
         );
 
@@ -240,6 +263,7 @@ void main() {
           'kddi_provider': 'paypay_card',
         });
         expect(copied.paidAccountNames, isEmpty);
+        expect(copied.transferTasks, isEmpty);
         expect(copied.incomePlans.single.date, DateTime(2026, 6, 30));
         expect(copied.incomePlans.single.received, isFalse);
         expect(loaded.paidAccountNames, isEmpty);
@@ -248,6 +272,7 @@ void main() {
           'kddi_provider': 'paypay_card',
         });
         expect(loaded.incomePlans.single.received, isFalse);
+        expect(loaded.transferTasks, isEmpty);
       },
     );
 

@@ -69,6 +69,8 @@ class AssetLiabilityPlanningService {
     Map<String, String> cardBillingAccountIds = const <String, String>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
+    List<AssetLiabilityTransferTask> transferTasks =
+        const <AssetLiabilityTransferTask>[],
     List<AssetLiabilityCardStatementLine> cardStatementLines =
         const <AssetLiabilityCardStatementLine>[],
     bool includeDefaultFixedPayments = false,
@@ -97,6 +99,10 @@ class AssetLiabilityPlanningService {
     };
     final resolvedIncomePlans = _resolveIncomePlans(
       incomePlans: incomePlans,
+      accountsById: accountsById,
+    );
+    final resolvedTransferTasks = _resolveTransferTasks(
+      transferTasks: transferTasks,
       accountsById: accountsById,
     );
     final effectivePaymentSourceAccountIds = <String, String>{
@@ -164,6 +170,7 @@ class AssetLiabilityPlanningService {
     final accountCashflowSummaries = _buildAccountCashflowSummaries(
       accounts: accounts,
       cashflowRows: cashflowRows,
+      transferTasks: resolvedTransferTasks,
     );
     final transferSuggestions = _buildTransferSuggestions(
       summaries: accountCashflowSummaries,
@@ -223,6 +230,7 @@ class AssetLiabilityPlanningService {
       paymentDayRisks: paymentDayRisks,
       cashflowRows: cashflowRows,
       incomePlans: resolvedIncomePlans,
+      transferTasks: resolvedTransferTasks,
       accountCashflowSummaries: accountCashflowSummaries,
       transferSuggestions: transferSuggestions,
       cardBillingReview: cardBillingReview,
@@ -1196,9 +1204,57 @@ class AssetLiabilityPlanningService {
     return result;
   }
 
+  List<AssetLiabilityTransferTask> _resolveTransferTasks({
+    required List<AssetLiabilityTransferTask> transferTasks,
+    required Map<String, AssetLiabilityAccount> accountsById,
+  }) {
+    final result = <AssetLiabilityTransferTask>[];
+    for (final task in transferTasks) {
+      if (task.id.trim().isEmpty ||
+          task.fromAccountId.trim().isEmpty ||
+          task.toAccountId.trim().isEmpty ||
+          task.fromAccountId == task.toAccountId ||
+          task.amount <= 0) {
+        continue;
+      }
+      final fromAccount = accountsById[task.fromAccountId];
+      final toAccount = accountsById[task.toAccountId];
+      result.add(
+        AssetLiabilityTransferTask(
+          id: task.id,
+          fromAccountId: task.fromAccountId,
+          fromAccountName: fromAccount?.name ?? task.fromAccountName,
+          toAccountId: task.toAccountId,
+          toAccountName: toAccount?.name ?? task.toAccountName,
+          amount: task.amount,
+          dueDate: task.dueDate == null ? null : _dateOnly(task.dueDate!),
+          completed: task.completed,
+          completedAt: task.completedAt,
+        ),
+      );
+    }
+    result.sort((a, b) {
+      final aDate = a.dueDate;
+      final bDate = b.dueDate;
+      if (aDate != null && bDate != null) {
+        final date = aDate.compareTo(bDate);
+        if (date != 0) {
+          return date;
+        }
+      } else if (aDate != null) {
+        return -1;
+      } else if (bDate != null) {
+        return 1;
+      }
+      return a.id.compareTo(b.id);
+    });
+    return result;
+  }
+
   List<AssetLiabilityAccountCashflowSummary> _buildAccountCashflowSummaries({
     required List<AssetLiabilityAccount> accounts,
     required List<AssetLiabilityCashflowRow> cashflowRows,
+    required List<AssetLiabilityTransferTask> transferTasks,
   }) {
     final cashLikeAccounts = accounts.where(_isCashLike).toList()
       ..sort((a, b) => b.balance.compareTo(a.balance));
@@ -1222,13 +1278,31 @@ class AssetLiabilityPlanningService {
                 ? sum + row.paymentAmount
                 : sum,
           );
-          final projected = account.balance - payments + income;
+          final pendingTransferIn = transferTasks.fold<double>(
+            0,
+            (sum, task) => !task.completed && task.toAccountId == account.id
+                ? sum + task.amount
+                : sum,
+          );
+          final pendingTransferOut = transferTasks.fold<double>(
+            0,
+            (sum, task) => !task.completed && task.fromAccountId == account.id
+                ? sum + task.amount
+                : sum,
+          );
+          final projected = account.balance -
+              payments +
+              income +
+              pendingTransferIn -
+              pendingTransferOut;
           return AssetLiabilityAccountCashflowSummary(
             accountId: account.id,
             accountName: account.name,
             currentBalance: account.balance,
             upcomingPayments: payments,
             upcomingIncome: income,
+            pendingTransferIn: pendingTransferIn,
+            pendingTransferOut: pendingTransferOut,
             projectedBalance: projected,
             riskLevel: _cashRiskLevel(projected),
           );

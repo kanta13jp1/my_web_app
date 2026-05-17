@@ -1432,7 +1432,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           local.cardStatementLines,
           remote.cardStatementLines,
         ) &&
-        _incomePlansEqual(local.incomePlans, remote.incomePlans);
+        _incomePlansEqual(local.incomePlans, remote.incomePlans) &&
+        _transferTasksEqual(local.transferTasks, remote.transferTasks);
   }
 
   bool _doubleMapEquals(Map<String, double> a, Map<String, double> b) {
@@ -1513,6 +1514,35 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.postedAt != right.postedAt ||
           left.description != right.description ||
           left.amount != right.amount) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _transferTasksEqual(
+    List<AssetLiabilityTransferTask> a,
+    List<AssetLiabilityTransferTask> b,
+  ) {
+    final first = List<AssetLiabilityTransferTask>.from(a)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    final second = List<AssetLiabilityTransferTask>.from(b)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    if (first.length != second.length) {
+      return false;
+    }
+    for (var i = 0; i < first.length; i++) {
+      final left = first[i];
+      final right = second[i];
+      if (left.id != right.id ||
+          left.fromAccountId != right.fromAccountId ||
+          left.fromAccountName != right.fromAccountName ||
+          left.toAccountId != right.toAccountId ||
+          left.toAccountName != right.toAccountName ||
+          left.amount != right.amount ||
+          left.dueDate != right.dueDate ||
+          left.completed != right.completed ||
+          left.completedAt != right.completedAt) {
         return false;
       }
     }

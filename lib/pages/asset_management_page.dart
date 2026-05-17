@@ -124,6 +124,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <String, _CardBillingSaveScope>{};
   List<AssetLiabilityIncomePlan> _monthlyIncomePlans =
       <AssetLiabilityIncomePlan>[];
+  List<AssetLiabilityTransferTask> _transferTasks =
+      <AssetLiabilityTransferTask>[];
   List<AssetLiabilityRecurringIncomeTemplate> _recurringIncomeTemplates =
       <AssetLiabilityRecurringIncomeTemplate>[];
   List<AssetLiabilityMonthlySnapshot> _monthlySnapshots =
@@ -885,6 +887,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
           incomePlansWithTemplates,
         );
+        _transferTasks = List<AssetLiabilityTransferTask>.from(
+          state.transferTasks,
+        );
         _recurringIncomeTemplates =
             List<AssetLiabilityRecurringIncomeTemplate>.from(templates);
         _monthlySnapshots = List<AssetLiabilityMonthlySnapshot>.from(
@@ -937,6 +942,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _cardStatementLines,
         ),
         incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
+        transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
       ),
     );
   }
@@ -1231,9 +1237,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       bundle.accountCashflowCsv,
       'asset_liability_account_cashflow_${monthKey}_$stamp.csv',
     );
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Asset liability CSV bundle exported (5 files)'),
       ),
@@ -1265,6 +1269,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _cardStatementLines,
         ),
         incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
+        transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
       ),
       legacyKeyToAccountId: legacyKeyToAccountId,
     );
@@ -1303,7 +1308,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _sameCardStatementLines(
           _cardStatementLines,
           migrated.cardStatementLines,
-        )) {
+        ) &&
+        _sameTransferTasks(_transferTasks, migrated.transferTasks)) {
       return;
     }
 
@@ -1331,6 +1337,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
           migrated.cardStatementLines,
+        );
+        _transferTasks = List<AssetLiabilityTransferTask>.from(
+          migrated.transferTasks,
         );
         _defaultPaymentSourceAccountIds = Map<String, String>.from(
           migratedDefaultSources,
@@ -1407,6 +1416,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               right.postedAt?.toIso8601String() ||
           left.description != right.description ||
           left.amount != right.amount) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _sameTransferTasks(
+    List<AssetLiabilityTransferTask> a,
+    List<AssetLiabilityTransferTask> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (var i = 0; i < a.length; i++) {
+      final left = a[i];
+      final right = b[i];
+      if (left.id != right.id ||
+          left.fromAccountId != right.fromAccountId ||
+          left.fromAccountName != right.fromAccountName ||
+          left.toAccountId != right.toAccountId ||
+          left.toAccountName != right.toAccountName ||
+          left.amount != right.amount ||
+          left.dueDate?.toIso8601String() != right.dueDate?.toIso8601String() ||
+          left.completed != right.completed ||
+          left.completedAt?.toIso8601String() !=
+              right.completedAt?.toIso8601String()) {
         return false;
       }
     }
@@ -1825,6 +1860,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
       _cardStatementLines = <AssetLiabilityCardStatementLine>[];
       _monthlyIncomePlans = incomePlansWithTemplates;
+      _transferTasks = <AssetLiabilityTransferTask>[];
       _syncPaymentStateControllers();
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -1885,6 +1921,107 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       _monthlyIncomePlans = _monthlyIncomePlans
           .where((plan) => plan.id != incomeId)
+          .toList(growable: false);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  int _compareTransferTasksByDueDate(
+    AssetLiabilityTransferTask a,
+    AssetLiabilityTransferTask b,
+  ) {
+    final aDue = a.dueDate;
+    final bDue = b.dueDate;
+    if (aDue != null && bDue != null) {
+      final date = aDue.compareTo(bDue);
+      if (date != 0) {
+        return date;
+      }
+    } else if (aDue != null) {
+      return -1;
+    } else if (bDue != null) {
+      return 1;
+    }
+    return a.id.compareTo(b.id);
+  }
+
+  void _createTransferTaskFromSuggestion(
+    AssetLiabilityTransferSuggestion suggestion,
+  ) {
+    final dueDate = suggestion.neededBy == null
+        ? null
+        : DateTime(
+            suggestion.neededBy!.year,
+            suggestion.neededBy!.month,
+            suggestion.neededBy!.day,
+          );
+    final duplicate = _transferTasks.any(
+      (task) =>
+          !task.completed &&
+          task.fromAccountId == suggestion.fromAccountId &&
+          task.toAccountId == suggestion.toAccountId &&
+          task.amount == suggestion.amount &&
+          task.dueDate?.toIso8601String() == dueDate?.toIso8601String(),
+    );
+    if (duplicate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transfer task already exists.')),
+      );
+      return;
+    }
+
+    final now = DateTime.now();
+    final nextTasks = List<AssetLiabilityTransferTask>.from(_transferTasks)
+      ..add(
+        AssetLiabilityTransferTask(
+          id: 'transfer_${now.microsecondsSinceEpoch}',
+          fromAccountId: suggestion.fromAccountId,
+          fromAccountName: suggestion.fromAccountName,
+          toAccountId: suggestion.toAccountId,
+          toAccountName: suggestion.toAccountName,
+          amount: suggestion.amount,
+          dueDate: dueDate,
+        ),
+      )
+      ..sort(_compareTransferTasksByDueDate);
+    setState(() {
+      _transferTasks = nextTasks;
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Transfer task created.')));
+  }
+
+  void _toggleTransferTaskCompleted(
+    AssetLiabilityTransferTask task,
+    bool completed,
+  ) {
+    setState(() {
+      _transferTasks = [
+        for (final current in _transferTasks)
+          current.id == task.id
+              ? AssetLiabilityTransferTask(
+                  id: current.id,
+                  fromAccountId: current.fromAccountId,
+                  fromAccountName: current.fromAccountName,
+                  toAccountId: current.toAccountId,
+                  toAccountName: current.toAccountName,
+                  amount: current.amount,
+                  dueDate: current.dueDate,
+                  completed: completed,
+                  completedAt: completed ? DateTime.now() : null,
+                )
+              : current,
+      ]..sort(_compareTransferTasksByDueDate);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _deleteTransferTask(String taskId) {
+    setState(() {
+      _transferTasks = _transferTasks
+          .where((task) => task.id != taskId)
           .toList(growable: false);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -6961,6 +7098,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cardBillingAccountIds: _cardBillingAccountIds,
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
+      transferTasks: _transferTasks,
       includeDefaultFixedPayments: true,
     );
     _scheduleAssetLiabilityStateIdMigration(workbook);
@@ -10137,8 +10275,56 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildTransferSuggestionSection(AssetLiabilityWorkbook workbook) {
-    if (workbook.transferSuggestions.isEmpty) {
+    if (workbook.transferSuggestions.isEmpty && _transferTasks.isEmpty) {
       return const SizedBox.shrink();
+    }
+
+    final activeTasks = _transferTasks
+        .where((task) => !task.completed)
+        .toList(growable: false)
+      ..sort(_compareTransferTasksByDueDate);
+    final completedTasks = _transferTasks
+        .where((task) => task.completed)
+        .toList(growable: false)
+      ..sort(_compareTransferTasksByDueDate);
+
+    Widget buildTaskRow(AssetLiabilityTransferTask task) {
+      final dueLabel = task.dueDate == null
+          ? 'No due date'
+          : DateFormat('M/d').format(task.dueDate!);
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Checkbox(
+              value: task.completed,
+              onChanged: (value) =>
+                  _toggleTransferTaskCompleted(task, value ?? false),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(
+                  '${task.fromAccountName} -> ${task.toAccountName} / '
+                  '${_formatManagementYen(task.amount)} / $dueLabel',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    decoration:
+                        task.completed ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Delete transfer task',
+              icon: const Icon(Icons.delete_outline, size: 18),
+              onPressed: () => _deleteTransferTask(task.id),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(
@@ -10168,6 +10354,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
           const SizedBox(height: 8),
+          Text(
+            'Pending transfer tasks are included in account-level projected '
+            'balances. Completed tasks are treated as already reflected in '
+            'the current balance, so they are not counted twice.',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          if (activeTasks.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Open transfer tasks',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+            for (final task in activeTasks) buildTaskRow(task),
+          ],
+          if (completedTasks.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Completed transfer tasks',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+            for (final task in completedTasks) buildTaskRow(task),
+          ],
+          if (workbook.transferSuggestions.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Suggestions',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+          ],
+          for (final suggestion in workbook.transferSuggestions)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                icon: const Icon(Icons.add_task, size: 16),
+                label: Text(
+                  'Create task: ${suggestion.fromAccountName} -> '
+                  '${suggestion.toAccountName}',
+                ),
+                onPressed: () => _createTransferTaskFromSuggestion(suggestion),
+              ),
+            ),
           for (final suggestion in workbook.transferSuggestions)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -10186,9 +10420,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
-    final rows = List<AssetLiabilityDebtRow>.from(
-      workbook.debtMasterRows,
-    )..sort(_compareDebtRowsByPaymentDay);
+    final rows = List<AssetLiabilityDebtRow>.from(workbook.debtMasterRows)
+      ..sort(_compareDebtRowsByPaymentDay);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

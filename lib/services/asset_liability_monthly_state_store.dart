@@ -16,6 +16,7 @@ class AssetLiabilityMonthlyState {
   final Map<String, String> cardBillingAccountIds;
   final List<AssetLiabilityCardStatementLine> cardStatementLines;
   final List<AssetLiabilityIncomePlan> incomePlans;
+  final List<AssetLiabilityTransferTask> transferTasks;
 
   const AssetLiabilityMonthlyState({
     this.paymentOverrides = const <String, double>{},
@@ -27,6 +28,7 @@ class AssetLiabilityMonthlyState {
     this.cardBillingAccountIds = const <String, String>{},
     this.cardStatementLines = const <AssetLiabilityCardStatementLine>[],
     this.incomePlans = const <AssetLiabilityIncomePlan>[],
+    this.transferTasks = const <AssetLiabilityTransferTask>[],
   });
 
   bool get isEmpty =>
@@ -38,7 +40,8 @@ class AssetLiabilityMonthlyState {
       paymentSourceAccountIds.isEmpty &&
       cardBillingAccountIds.isEmpty &&
       cardStatementLines.isEmpty &&
-      incomePlans.isEmpty;
+      incomePlans.isEmpty &&
+      transferTasks.isEmpty;
 }
 
 class AssetLiabilityMonthlyStateStore {
@@ -58,6 +61,8 @@ class AssetLiabilityMonthlyStateStore {
   static const String cardStatementPrefsKey =
       'asset_liability_card_statement_lines_v1';
   static const String incomePrefsKey = 'asset_liability_income_plans_v1';
+  static const String transferTaskPrefsKey =
+      'asset_liability_transfer_tasks_v1';
   static const String defaultPaymentSourcePrefsKey =
       'asset_liability_default_payment_source_accounts_v1';
   static const String defaultCardBillingPrefsKey =
@@ -110,6 +115,10 @@ class AssetLiabilityMonthlyStateStore {
       ),
       incomePlans: incomePlansForMonth(
         prefs.getString(incomePrefsKey),
+        monthKey,
+      ),
+      transferTasks: transferTasksForMonth(
+        prefs.getString(transferTaskPrefsKey),
         monthKey,
       ),
     );
@@ -236,6 +245,21 @@ class AssetLiabilityMonthlyStateStore {
     await prefs.setString(
       incomePrefsKey,
       jsonEncode(_encodeIncomePlans(allIncomePlans)),
+    );
+
+    final allTransferTasks = decodeTransferTasks(
+      prefs.getString(transferTaskPrefsKey),
+    );
+    if (state.transferTasks.isEmpty) {
+      allTransferTasks.remove(monthKey);
+    } else {
+      allTransferTasks[monthKey] = List<AssetLiabilityTransferTask>.from(
+        state.transferTasks,
+      );
+    }
+    await prefs.setString(
+      transferTaskPrefsKey,
+      jsonEncode(_encodeTransferTasks(allTransferTasks)),
     );
   }
 
@@ -664,6 +688,80 @@ class AssetLiabilityMonthlyStateStore {
     });
   }
 
+  static Map<String, List<AssetLiabilityTransferTask>> decodeTransferTasks(
+    String? raw,
+  ) {
+    if (raw == null || raw.trim().isEmpty) {
+      return <String, List<AssetLiabilityTransferTask>>{};
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      return <String, List<AssetLiabilityTransferTask>>{};
+    }
+
+    return decoded.map<String, List<AssetLiabilityTransferTask>>((
+      month,
+      values,
+    ) {
+      final monthKey = month.toString();
+      final tasks = <AssetLiabilityTransferTask>[];
+      if (values is Iterable) {
+        for (final rawTask in values) {
+          if (rawTask is! Map) {
+            continue;
+          }
+          final id = rawTask['id']?.toString().trim();
+          final fromAccountId = rawTask['fromAccountId']?.toString().trim() ??
+              rawTask['from_account_id']?.toString().trim();
+          final toAccountId = rawTask['toAccountId']?.toString().trim() ??
+              rawTask['to_account_id']?.toString().trim();
+          final amount = _parseNonNullDouble(rawTask['amount']);
+          final dueDateText =
+              rawTask['dueDate']?.toString() ?? rawTask['due_date']?.toString();
+          final completedAtText = rawTask['completedAt']?.toString() ??
+              rawTask['completed_at']?.toString();
+          final dueDate =
+              dueDateText == null ? null : DateTime.tryParse(dueDateText);
+          final completedAt = completedAtText == null
+              ? null
+              : DateTime.tryParse(completedAtText);
+          if (id == null ||
+              id.isEmpty ||
+              fromAccountId == null ||
+              fromAccountId.isEmpty ||
+              toAccountId == null ||
+              toAccountId.isEmpty ||
+              fromAccountId == toAccountId ||
+              amount == null ||
+              amount <= 0) {
+            continue;
+          }
+          tasks.add(
+            AssetLiabilityTransferTask(
+              id: id,
+              fromAccountId: fromAccountId,
+              fromAccountName: _cleanNullableString(
+                    rawTask['fromAccountName'] ?? rawTask['from_account_name'],
+                  ) ??
+                  fromAccountId,
+              toAccountId: toAccountId,
+              toAccountName: _cleanNullableString(
+                    rawTask['toAccountName'] ?? rawTask['to_account_name'],
+                  ) ??
+                  toAccountId,
+              amount: amount,
+              dueDate: dueDate,
+              completed: rawTask['completed'] == true,
+              completedAt: completedAt,
+            ),
+          );
+        }
+      }
+      tasks.sort(_compareTransferTasks);
+      return MapEntry(monthKey, tasks);
+    });
+  }
+
   static List<AssetLiabilityRecurringIncomeTemplate>
       decodeRecurringIncomeTemplates(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
@@ -906,6 +1004,16 @@ class AssetLiabilityMonthlyStateStore {
     );
   }
 
+  static List<AssetLiabilityTransferTask> transferTasksForMonth(
+    String? raw,
+    String monthKey,
+  ) {
+    return List<AssetLiabilityTransferTask>.from(
+      decodeTransferTasks(raw)[monthKey] ??
+          const <AssetLiabilityTransferTask>[],
+    );
+  }
+
   static AssetLiabilityMonthlyState migrateLegacyKeys({
     required AssetLiabilityMonthlyState state,
     required Map<String, String> legacyKeyToAccountId,
@@ -977,6 +1085,27 @@ class AssetLiabilityMonthlyStateStore {
         ),
     ];
 
+    final migratedTransferTasks = <AssetLiabilityTransferTask>[
+      for (final task in state.transferTasks)
+        AssetLiabilityTransferTask(
+          id: task.id,
+          fromAccountId:
+              legacyKeyToAccountId[task.fromAccountId] ?? task.fromAccountId,
+          fromAccountName: legacyKeyToAccountId.containsKey(task.fromAccountId)
+              ? task.fromAccountId
+              : task.fromAccountName,
+          toAccountId:
+              legacyKeyToAccountId[task.toAccountId] ?? task.toAccountId,
+          toAccountName: legacyKeyToAccountId.containsKey(task.toAccountId)
+              ? task.toAccountId
+              : task.toAccountName,
+          amount: task.amount,
+          dueDate: task.dueDate,
+          completed: task.completed,
+          completedAt: task.completedAt,
+        ),
+    ];
+
     return AssetLiabilityMonthlyState(
       paymentOverrides: migratedPayments,
       actualPaymentAmounts: migratedActualPayments,
@@ -987,6 +1116,7 @@ class AssetLiabilityMonthlyStateStore {
       cardBillingAccountIds: migratedCardBillingAccounts,
       cardStatementLines: migratedCardStatementLines,
       incomePlans: state.incomePlans,
+      transferTasks: migratedTransferTasks,
     );
   }
 
@@ -1077,6 +1207,31 @@ class AssetLiabilityMonthlyStateStore {
     });
   }
 
+  static Map<String, List<Map<String, Object?>>> _encodeTransferTasks(
+    Map<String, List<AssetLiabilityTransferTask>> source,
+  ) {
+    return source.map((month, tasks) {
+      final sorted = List<AssetLiabilityTransferTask>.from(tasks)
+        ..sort(_compareTransferTasks);
+      return MapEntry(month, [
+        for (final task in sorted)
+          <String, Object?>{
+            'id': task.id,
+            'fromAccountId': task.fromAccountId,
+            'fromAccountName': task.fromAccountName,
+            'toAccountId': task.toAccountId,
+            'toAccountName': task.toAccountName,
+            'amount': task.amount,
+            'dueDate': task.dueDate == null
+                ? null
+                : DateFormat('yyyy-MM-dd').format(task.dueDate!),
+            'completed': task.completed,
+            'completedAt': task.completedAt?.toIso8601String(),
+          },
+      ]);
+    });
+  }
+
   static Map<String, List<Map<String, Object?>>> _encodeCardStatementLines(
     Map<String, List<AssetLiabilityCardStatementLine>> source,
   ) {
@@ -1118,6 +1273,25 @@ class AssetLiabilityMonthlyStateStore {
       return 1;
     }
     return a.description.compareTo(b.description);
+  }
+
+  static int _compareTransferTasks(
+    AssetLiabilityTransferTask a,
+    AssetLiabilityTransferTask b,
+  ) {
+    final aDue = a.dueDate;
+    final bDue = b.dueDate;
+    if (aDue != null && bDue != null) {
+      final date = aDue.compareTo(bDue);
+      if (date != 0) {
+        return date;
+      }
+    } else if (aDue != null) {
+      return -1;
+    } else if (bDue != null) {
+      return 1;
+    }
+    return a.id.compareTo(b.id);
   }
 
   static Map<String, String> _cleanStringMap(Map<String, String> source) {

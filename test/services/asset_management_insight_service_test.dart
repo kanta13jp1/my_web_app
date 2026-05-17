@@ -255,6 +255,7 @@ AssetLiabilityWorkbook _workbook({
     paymentDayRisks: const <AssetLiabilityPaymentDayRisk>[],
     cashflowRows: const <AssetLiabilityCashflowRow>[],
     incomePlans: const <AssetLiabilityIncomePlan>[],
+    transferTasks: const <AssetLiabilityTransferTask>[],
     accountCashflowSummaries: const <AssetLiabilityAccountCashflowSummary>[],
     transferSuggestions: const <AssetLiabilityTransferSuggestion>[],
     cardBillingReview: const AssetLiabilityCardBillingReviewData(
