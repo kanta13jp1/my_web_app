@@ -76,6 +76,9 @@ The executable bench foundation lives in:
 - Asset-management AI prompts must use redacted categories and bands. Exact
   balances, account identifiers, and user IDs stay inside deterministic
   Dart/Supabase code and are not sent to external model providers.
+- Provider routing changes that touch `ai-hub` or migrations require PR-level
+  security, rollback, migration, prod-smoke, and observability evidence before
+  merge.
 
 ## Linked Issues
 
