@@ -279,6 +279,8 @@ class AssetLiabilityAccountCashflowSummary {
   final double currentBalance;
   final double upcomingPayments;
   final double upcomingIncome;
+  final double pendingTransferIn;
+  final double pendingTransferOut;
   final double projectedBalance;
   final AssetLiabilityCashRiskLevel riskLevel;
 
@@ -288,6 +290,8 @@ class AssetLiabilityAccountCashflowSummary {
     required this.currentBalance,
     required this.upcomingPayments,
     required this.upcomingIncome,
+    this.pendingTransferIn = 0,
+    this.pendingTransferOut = 0,
     required this.projectedBalance,
     required this.riskLevel,
   });
@@ -312,6 +316,54 @@ class AssetLiabilityTransferSuggestion {
     required this.amount,
     required this.neededBy,
   });
+}
+
+class AssetLiabilityTransferTask {
+  final String id;
+  final String fromAccountId;
+  final String fromAccountName;
+  final String toAccountId;
+  final String toAccountName;
+  final double amount;
+  final DateTime? dueDate;
+  final bool completed;
+  final DateTime? completedAt;
+
+  const AssetLiabilityTransferTask({
+    required this.id,
+    required this.fromAccountId,
+    required this.fromAccountName,
+    required this.toAccountId,
+    required this.toAccountName,
+    required this.amount,
+    required this.dueDate,
+    this.completed = false,
+    this.completedAt,
+  });
+
+  AssetLiabilityTransferTask copyWith({
+    String? id,
+    String? fromAccountId,
+    String? fromAccountName,
+    String? toAccountId,
+    String? toAccountName,
+    double? amount,
+    DateTime? dueDate,
+    bool? completed,
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilityTransferTask(
+      id: id ?? this.id,
+      fromAccountId: fromAccountId ?? this.fromAccountId,
+      fromAccountName: fromAccountName ?? this.fromAccountName,
+      toAccountId: toAccountId ?? this.toAccountId,
+      toAccountName: toAccountName ?? this.toAccountName,
+      amount: amount ?? this.amount,
+      dueDate: dueDate ?? this.dueDate,
+      completed: completed ?? this.completed,
+      completedAt: completedAt ?? this.completedAt,
+    );
+  }
 }
 
 class AssetLiabilityMonthlySnapshot {
@@ -632,6 +684,7 @@ class AssetLiabilityWorkbook {
   final List<AssetLiabilityPaymentDayRisk> paymentDayRisks;
   final List<AssetLiabilityCashflowRow> cashflowRows;
   final List<AssetLiabilityIncomePlan> incomePlans;
+  final List<AssetLiabilityTransferTask> transferTasks;
   final List<AssetLiabilityAccountCashflowSummary> accountCashflowSummaries;
   final List<AssetLiabilityTransferSuggestion> transferSuggestions;
   final AssetLiabilityCardBillingReviewData cardBillingReview;
@@ -663,6 +716,7 @@ class AssetLiabilityWorkbook {
     required this.paymentDayRisks,
     required this.cashflowRows,
     required this.incomePlans,
+    required this.transferTasks,
     required this.accountCashflowSummaries,
     required this.transferSuggestions,
     required this.cardBillingReview,

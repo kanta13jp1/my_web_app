@@ -1162,6 +1162,17 @@ void main() {
             received: true,
           ),
         ],
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_bank_topup',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'Cash',
+            toAccountId: 'smbc_otsuka',
+            toAccountName: 'SMBC Otsuka',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 18),
+          ),
+        ],
       );
 
       final payload = AssetLiabilityMonthlyStatePayload.fromState(
@@ -1188,6 +1199,9 @@ void main() {
       expect(restored.cardStatementLines.single.description, 'KDDI');
       expect(restored.cardStatementLines.single.amount, 5764);
       expect(restored.incomePlans.single.received, isTrue);
+      expect(row['transfer_tasks'], isA<List<Object?>>());
+      expect(restored.transferTasks.single.toAccountId, 'smbc_otsuka');
+      expect(restored.transferTasks.single.amount, 10000);
     });
 
     test('round-trips settings and snapshot payloads', () {
@@ -1595,6 +1609,17 @@ AssetLiabilityMonthlyState _sampleMonthlyState() {
         destinationAccountId: 'smbc_otsuka',
         destinationAccountName: 'SMBC Otsuka',
         received: false,
+      ),
+    ],
+    transferTasks: <AssetLiabilityTransferTask>[
+      AssetLiabilityTransferTask(
+        id: 'transfer_bank_topup',
+        fromAccountId: 'custom_cash',
+        fromAccountName: 'Cash',
+        toAccountId: 'smbc_otsuka',
+        toAccountName: 'SMBC Otsuka',
+        amount: 10000,
+        dueDate: DateTime(2026, 5, 18),
       ),
     ],
   );

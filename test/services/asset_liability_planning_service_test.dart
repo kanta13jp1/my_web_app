@@ -868,6 +868,77 @@ void main() {
       expect(workbook.transferSuggestions.single.toAccountId, 'custom_bank');
     });
 
+    test('applies pending transfer tasks to account-level cashflow', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_bank_topup',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'cash',
+            toAccountId: 'custom_bank',
+            toAccountName: 'bank',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 8),
+          ),
+        ],
+      );
+
+      final cashSummary = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_cash',
+      );
+      final bankSummary = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_bank',
+      );
+
+      expect(cashSummary.pendingTransferOut, 10000);
+      expect(cashSummary.projectedBalance, 40000);
+      expect(bankSummary.pendingTransferIn, 10000);
+      expect(bankSummary.projectedBalance, 0);
+      expect(workbook.transferSuggestions, isEmpty);
+    });
+
+    test('does not double count completed transfer tasks', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_done',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'cash',
+            toAccountId: 'custom_bank',
+            toAccountName: 'bank',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 8),
+            completed: true,
+            completedAt: DateTime(2026, 5, 8, 9),
+          ),
+        ],
+      );
+
+      final bankSummary = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_bank',
+      );
+
+      expect(bankSummary.pendingTransferIn, 0);
+      expect(bankSummary.projectedBalance, -10000);
+      expect(workbook.transferSuggestions.single.amount, 10000);
+    });
+
     test('applies default payment source to unset monthly items', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{

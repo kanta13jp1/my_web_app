@@ -85,6 +85,7 @@ class AssetLiabilityMonthlyStatePayload {
   final Map<String, String> cardBillingAccountIds;
   final List<AssetLiabilityCardStatementLine> cardStatementLines;
   final List<AssetLiabilityIncomePlan> incomePlans;
+  final List<AssetLiabilityTransferTask> transferTasks;
 
   const AssetLiabilityMonthlyStatePayload({
     required this.monthKey,
@@ -97,6 +98,7 @@ class AssetLiabilityMonthlyStatePayload {
     required this.cardBillingAccountIds,
     required this.cardStatementLines,
     required this.incomePlans,
+    required this.transferTasks,
   });
 
   factory AssetLiabilityMonthlyStatePayload.fromState({
@@ -112,9 +114,7 @@ class AssetLiabilityMonthlyStatePayload {
       paymentDifferenceReasons: Map<String, String>.from(
         state.paymentDifferenceReasons,
       ),
-      annualRateOverrides: Map<String, double>.from(
-        state.annualRateOverrides,
-      ),
+      annualRateOverrides: Map<String, double>.from(state.annualRateOverrides),
       paidAccountIds: Set<String>.from(state.paidAccountNames),
       paymentSourceAccountIds: Map<String, String>.from(
         state.paymentSourceAccountIds,
@@ -126,6 +126,7 @@ class AssetLiabilityMonthlyStatePayload {
         state.cardStatementLines,
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(state.incomePlans),
+      transferTasks: List<AssetLiabilityTransferTask>.from(state.transferTasks),
     );
   }
 
@@ -166,6 +167,9 @@ class AssetLiabilityMonthlyStatePayload {
       incomePlans: _readIncomePlans(json, 'income_plans') ??
           _readIncomePlans(json, 'incomePlans') ??
           const <AssetLiabilityIncomePlan>[],
+      transferTasks: _readTransferTasks(json, 'transfer_tasks') ??
+          _readTransferTasks(json, 'transferTasks') ??
+          const <AssetLiabilityTransferTask>[],
     );
   }
 
@@ -186,6 +190,7 @@ class AssetLiabilityMonthlyStatePayload {
         cardStatementLines,
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(incomePlans),
+      transferTasks: List<AssetLiabilityTransferTask>.from(transferTasks),
     );
   }
 
@@ -214,6 +219,9 @@ class AssetLiabilityMonthlyStatePayload {
         for (final line in cardStatementLines) _encodeCardStatementLine(line),
       ],
       'income_plans': [for (final plan in incomePlans) _encodeIncomePlan(plan)],
+      'transfer_tasks': [
+        for (final task in transferTasks) _encodeTransferTask(task),
+      ],
       if (timestamp != null) 'updated_at': timestamp,
     };
   }
@@ -392,6 +400,20 @@ Map<String, Object?> _encodeCardStatementLine(
   };
 }
 
+Map<String, Object?> _encodeTransferTask(AssetLiabilityTransferTask task) {
+  return <String, Object?>{
+    'id': task.id,
+    'fromAccountId': task.fromAccountId,
+    'fromAccountName': task.fromAccountName,
+    'toAccountId': task.toAccountId,
+    'toAccountName': task.toAccountName,
+    'amount': task.amount,
+    'dueDate': task.dueDate == null ? null : _dateOnly(task.dueDate!),
+    'completed': task.completed,
+    'completedAt': task.completedAt?.toUtc().toIso8601String(),
+  };
+}
+
 AssetLiabilityIncomePlan? _decodeIncomePlan(Object? source) {
   if (source is! Map) {
     return null;
@@ -476,6 +498,48 @@ AssetLiabilityCardStatementLine? _decodeCardStatementLine(Object? source) {
   );
 }
 
+AssetLiabilityTransferTask? _decodeTransferTask(Object? source) {
+  if (source is! Map) {
+    return null;
+  }
+  final id = _cleanString(source['id']);
+  final fromAccountId = _cleanString(source['fromAccountId']) ??
+      _cleanString(source['from_account_id']);
+  final toAccountId = _cleanString(source['toAccountId']) ??
+      _cleanString(source['to_account_id']);
+  final amount = _parseDouble(source['amount']);
+  final dueDateText =
+      _cleanString(source['dueDate']) ?? _cleanString(source['due_date']);
+  final completedAtText = _cleanString(source['completedAt']) ??
+      _cleanString(source['completed_at']);
+  final dueDate = dueDateText == null ? null : DateTime.tryParse(dueDateText);
+  final completedAt =
+      completedAtText == null ? null : DateTime.tryParse(completedAtText);
+  if (id == null ||
+      fromAccountId == null ||
+      toAccountId == null ||
+      fromAccountId == toAccountId ||
+      amount == null ||
+      amount <= 0) {
+    return null;
+  }
+  return AssetLiabilityTransferTask(
+    id: id,
+    fromAccountId: fromAccountId,
+    fromAccountName: _cleanString(source['fromAccountName']) ??
+        _cleanString(source['from_account_name']) ??
+        fromAccountId,
+    toAccountId: toAccountId,
+    toAccountName: _cleanString(source['toAccountName']) ??
+        _cleanString(source['to_account_name']) ??
+        toAccountId,
+    amount: amount,
+    dueDate: dueDate,
+    completed: source['completed'] == true,
+    completedAt: completedAt,
+  );
+}
+
 List<AssetLiabilityIncomePlan>? _readIncomePlans(
   Map<String, Object?> json,
   String key,
@@ -555,6 +619,39 @@ List<AssetLiabilityCardStatementLine>? _readCardStatementLines(
     return a.description.compareTo(b.description);
   });
   return lines;
+}
+
+List<AssetLiabilityTransferTask>? _readTransferTasks(
+  Map<String, Object?> json,
+  String key,
+) {
+  final source = json[key];
+  if (source is! Iterable) {
+    return null;
+  }
+  final tasks = <AssetLiabilityTransferTask>[];
+  for (final value in source) {
+    final task = _decodeTransferTask(value);
+    if (task != null) {
+      tasks.add(task);
+    }
+  }
+  tasks.sort((a, b) {
+    final aDue = a.dueDate;
+    final bDue = b.dueDate;
+    if (aDue != null && bDue != null) {
+      final date = aDue.compareTo(bDue);
+      if (date != 0) {
+        return date;
+      }
+    } else if (aDue != null) {
+      return -1;
+    } else if (bDue != null) {
+      return 1;
+    }
+    return a.id.compareTo(b.id);
+  });
+  return tasks;
 }
 
 Map<String, double>? _readDoubleMap(Map<String, Object?> json, String key) {
