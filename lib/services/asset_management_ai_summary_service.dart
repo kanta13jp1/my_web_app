@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'ai_hub_chat_service.dart';
+import 'asset_management_ai_provider_router.dart';
 import 'asset_management_insight_service.dart';
 
 class AssetManagementAiSummaryFeatureFlag {
@@ -23,6 +24,8 @@ class AssetManagementAiSummaryResult {
   final String? errorMessage;
   final DateTime generatedAt;
   final Map<String, dynamic> payload;
+  final Map<String, dynamic>? providerRoute;
+  final String? providerChoiceReason;
 
   const AssetManagementAiSummaryResult({
     required this.status,
@@ -31,6 +34,8 @@ class AssetManagementAiSummaryResult {
     required this.errorMessage,
     required this.generatedAt,
     required this.payload,
+    this.providerRoute,
+    this.providerChoiceReason,
   });
 
   bool get usedExternalAi =>
@@ -41,6 +46,8 @@ class AssetManagementAiSummaryService {
   final bool _aiEnabled;
   final AiHubChatService _chatService;
   final AssetManagementInsightPromptBuilder _promptBuilder;
+  final AssetManagementAiProviderRouter _providerRouter;
+  final AssetManagementAiProviderUseCase _useCase;
   final DateTime Function() _now;
   final String? _provider;
 
@@ -49,11 +56,17 @@ class AssetManagementAiSummaryService {
     AiHubChatService chatService = const AiHubChatService(),
     AssetManagementInsightPromptBuilder promptBuilder =
         const AssetManagementInsightPromptBuilder(),
+    AssetManagementAiProviderRouter providerRouter =
+        const AssetManagementAiProviderRouter(),
+    AssetManagementAiProviderUseCase useCase =
+        AssetManagementAiProviderUseCase.summary,
     DateTime Function()? now,
     String? provider,
   })  : _aiEnabled = aiEnabled,
         _chatService = chatService,
         _promptBuilder = promptBuilder,
+        _providerRouter = providerRouter,
+        _useCase = useCase,
         _now = now ?? DateTime.now,
         _provider = provider;
 
@@ -63,6 +76,10 @@ class AssetManagementAiSummaryService {
     required AssetManagementInsightReport report,
   }) async {
     final payload = buildPayload(report);
+    final route = _providerRouter.routeFor(
+      useCase: _useCase,
+      explicitProvider: _provider,
+    );
     final fallback = buildDeterministicSummary(report);
     if (!_aiEnabled) {
       return AssetManagementAiSummaryResult(
@@ -72,22 +89,31 @@ class AssetManagementAiSummaryService {
         errorMessage: null,
         generatedAt: _now(),
         payload: payload,
+        providerRoute: route.toLogPayload(),
+        providerChoiceReason: route.providerChoiceReason,
       );
     }
 
     try {
-      final prompt = _buildPrompt(report: report, payload: payload);
-      final response = _provider == null || _provider == 'auto'
-          ? await _chatService.sendAutoChat(
-              message: prompt,
-              tier: 'cheap',
-              traceId: 'asset-management-ai-summary',
-            )
-          : await _chatService.sendProviderChat(
-              message: prompt,
-              provider: _provider,
-              traceId: 'asset-management-ai-summary',
-            );
+      final aiSafePayload = buildAiSafePayload(report);
+      final prompt = _buildPrompt(report: report, payload: aiSafePayload);
+      final response = route.routingEnabled
+          ? await _sendRoutedSummary(prompt: prompt, route: route)
+          : _provider == null || _provider == 'auto'
+              ? await _chatService.sendAutoChat(
+                  message: prompt,
+                  tier: 'performance',
+                  traceId: 'asset-management-ai-summary',
+                  providerChoiceReason: route.providerChoiceReason,
+                  routingUseCase: route.useCase.id,
+                )
+              : await _chatService.sendProviderChat(
+                  message: prompt,
+                  provider: _provider,
+                  traceId: 'asset-management-ai-summary',
+                  providerChoiceReason: route.providerChoiceReason,
+                  routingUseCase: route.useCase.id,
+                );
       return AssetManagementAiSummaryResult(
         status: AssetManagementAiSummaryStatus.aiGenerated,
         text: response.text,
@@ -95,6 +121,8 @@ class AssetManagementAiSummaryService {
         errorMessage: null,
         generatedAt: _now(),
         payload: payload,
+        providerRoute: route.toLogPayload(),
+        providerChoiceReason: route.providerChoiceReason,
       );
     } catch (error) {
       return AssetManagementAiSummaryResult(
@@ -104,6 +132,8 @@ class AssetManagementAiSummaryService {
         errorMessage: error.toString(),
         generatedAt: _now(),
         payload: payload,
+        providerRoute: route.toLogPayload(),
+        providerChoiceReason: route.providerChoiceReason,
       );
     }
   }
@@ -134,6 +164,63 @@ class AssetManagementAiSummaryService {
       generatedAt: _now(),
       payload: payload,
     );
+  }
+
+  Map<String, dynamic> buildAiSafePayload(
+    AssetManagementInsightReport report,
+  ) {
+    return <String, dynamic>{
+      'available_money_bands': <String, dynamic>{
+        'today': _availableToAiSafeJson(report.todayAvailable),
+        'week': _availableToAiSafeJson(report.weekAvailable),
+        'month': _availableToAiSafeJson(report.monthAvailable),
+      },
+      'action_inventory': <String, dynamic>{
+        'total': report.actionItems.length,
+        'by_type': _countBy(report.actionItems.map((item) => item.type.name)),
+        'by_severity': _countBy(
+          report.actionItems.map((item) => item.severity.name),
+        ),
+        'has_due_dates': report.actionItems.any((item) => item.dueDate != null),
+        'has_payment_day_metadata': report.actionItems.any(
+          (item) => item.paymentDay != null,
+        ),
+      },
+      'movement_suggestions': <String, dynamic>{
+        'count': report.movementSuggestions.length,
+        'amount_pressure_bands': _countBy(
+          report.movementSuggestions.map(
+            (suggestion) => _amountPressureBand(suggestion.amount),
+          ),
+        ),
+      },
+      'emergency_advices': <String, dynamic>{
+        'count': report.emergencyAdvices.length,
+        'by_severity': _countBy(
+          report.emergencyAdvices.map((advice) => advice.severity.name),
+        ),
+        'amount_pressure_bands': _countBy(
+          report.emergencyAdvices.map(
+            (advice) => _amountPressureBand(advice.amount),
+          ),
+        ),
+      },
+      'developer_requests': <String, dynamic>{
+        'count': report.developerRequests.length,
+        'by_severity': _countBy(
+          report.developerRequests.map((request) => request.severity.name),
+        ),
+      },
+      'guardrails': const <String, dynamic>{
+        'calculation_owner': 'dart_service',
+        'external_ai_may_summarize_only': true,
+        'external_ai_may_recalculate_amounts': false,
+        'external_ai_payload_redacts_exact_money_values': true,
+        'external_ai_payload_redacts_account_identifiers': true,
+        'must_not_recommend_starvation_or_water_only': true,
+        'must_prioritize_food_shelter_health_and_contacting_creditors': true,
+      },
+    };
   }
 
   Map<String, dynamic> buildPayload(AssetManagementInsightReport report) {
@@ -234,13 +321,39 @@ class AssetManagementAiSummaryService {
     required Map<String, dynamic> payload,
   }) {
     return [
-      _promptBuilder.buildPrompt(report),
+      _promptBuilder.buildRedactedPrompt(report),
       '',
-      '## Computed insight payload',
+      '## Redacted computed insight payload',
       jsonEncode(payload),
       '',
-      'Rules: summarize only. Do not recalculate amounts. Do not provide legal, investment, or credit advice. Never recommend starvation, water-only survival, or skipping meals as a solution. Prioritize food, shelter, health, contacting creditors, and emergency public/community support. Keep the response concise and action-oriented.',
+      'Rules: summarize only from redacted categories. Do not recalculate amounts. Do not ask for exact balances. Do not provide legal, investment, or credit advice. Never recommend starvation, water-only survival, or skipping meals as a solution. Prioritize food, shelter, health, contacting creditors, and emergency public/community support. Keep the response concise and action-oriented.',
     ].join('\n');
+  }
+
+  Future<AiHubChatResponse> _sendRoutedSummary({
+    required String prompt,
+    required AssetManagementAiProviderRouteDecision route,
+  }) async {
+    Object? lastError;
+    for (final candidate in route.candidates) {
+      try {
+        return await _chatService.sendProviderChat(
+          message: prompt,
+          provider: candidate.providerId,
+          model: candidate.modelId,
+          traceId: 'asset-management-ai-summary',
+          providerChoiceReason: route.providerChoiceReason,
+          routingUseCase: route.useCase.id,
+        );
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw AiHubChatException(
+      lastError == null
+          ? route.localFallbackReason
+          : '${route.localFallbackReason}: $lastError',
+    );
   }
 
   Map<String, dynamic> _availableToJson(
@@ -257,6 +370,50 @@ class AssetManagementAiSummaryService {
       'available_amount': insight.availableAmount,
       'summary': insight.summary,
     };
+  }
+
+  Map<String, dynamic> _availableToAiSafeJson(
+    AssetManagementAvailableMoneyInsight insight,
+  ) {
+    return <String, dynamic>{
+      'window': insight.window.name,
+      'risk_band': _availableRiskBand(insight),
+      'date_window_days':
+          insight.endDate.difference(insight.startDate).inDays + 1,
+      'cash_like_status': _amountPressureBand(insight.cashLikeTotal),
+      'unpaid_payment_status': _amountPressureBand(
+        insight.unpaidPaymentTotal,
+      ),
+      'unreceived_income_status': _amountPressureBand(
+        insight.unreceivedIncomeTotal,
+      ),
+      'minimum_safety_balance_policy': 'configured_in_dart',
+    };
+  }
+
+  Map<String, int> _countBy(Iterable<String> values) {
+    final counts = <String, int>{};
+    for (final value in values) {
+      counts[value] = (counts[value] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  String _availableRiskBand(AssetManagementAvailableMoneyInsight insight) {
+    final amount = insight.availableAmount;
+    if (amount < 0) return 'shortage';
+    if (amount < insight.minimumSafetyBalance) return 'below_safety_balance';
+    if (amount < insight.minimumSafetyBalance * 2) return 'near_safety_buffer';
+    return 'buffer_available';
+  }
+
+  String _amountPressureBand(double? amount) {
+    if (amount == null) return 'not_applicable';
+    final absolute = amount.abs();
+    if (absolute == 0) return 'none';
+    if (absolute < 10000) return 'low';
+    if (absolute < 100000) return 'medium';
+    return 'high';
   }
 
   String _formatYen(double amount) {

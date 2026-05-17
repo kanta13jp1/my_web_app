@@ -867,6 +867,74 @@ class AssetManagementInsightPromptBuilder {
     return buffer.toString();
   }
 
+  String buildRedactedPrompt(AssetManagementInsightReport report) {
+    final severityCounts = _countBy(
+      report.actionItems.map((item) => item.severity.name),
+    );
+    final typeCounts = _countBy(
+      report.actionItems.map((item) => item.type.name),
+    );
+    final emergencyCounts = _countBy(
+      report.emergencyAdvices.map((item) => item.severity.name),
+    );
+    final developerCounts = _countBy(
+      report.developerRequests.map((item) => item.severity.name),
+    );
+    final buffer = StringBuffer()
+      ..writeln('Asset-management AI assistant.')
+      ..writeln(
+        'Money calculations are already completed by Dart. Use only the '
+        'redacted categories below; do not infer, recalculate, or ask for '
+        'exact balances.',
+      )
+      ..writeln()
+      ..writeln('## Redacted availability bands')
+      ..writeln('- today: ${_availabilityBand(report.todayAvailable)}')
+      ..writeln('- week: ${_availabilityBand(report.weekAvailable)}')
+      ..writeln('- month: ${_availabilityBand(report.monthAvailable)}')
+      ..writeln()
+      ..writeln('## Action inventory')
+      ..writeln('- total_actions: ${report.actionItems.length}')
+      ..writeln('- by_severity: ${_formatCounts(severityCounts)}')
+      ..writeln('- by_type: ${_formatCounts(typeCounts)}')
+      ..writeln()
+      ..writeln('## Movement and emergency inventory')
+      ..writeln(
+        '- movement_suggestion_count: ${report.movementSuggestions.length}',
+      )
+      ..writeln('- emergency_advice_count: ${report.emergencyAdvices.length}')
+      ..writeln('- emergency_by_severity: ${_formatCounts(emergencyCounts)}')
+      ..writeln()
+      ..writeln('## Developer request inventory')
+      ..writeln(
+        '- developer_request_count: ${report.developerRequests.length}',
+      )
+      ..writeln('- developer_by_severity: ${_formatCounts(developerCounts)}');
+    return buffer.toString();
+  }
+
+  String _availabilityBand(AssetManagementAvailableMoneyInsight insight) {
+    final amount = insight.availableAmount;
+    if (amount < 0) return 'shortage';
+    if (amount < insight.minimumSafetyBalance) return 'below_safety_balance';
+    if (amount < insight.minimumSafetyBalance * 2) return 'near_safety_buffer';
+    return 'buffer_available';
+  }
+
+  Map<String, int> _countBy(Iterable<String> values) {
+    final counts = <String, int>{};
+    for (final value in values) {
+      counts[value] = (counts[value] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  String _formatCounts(Map<String, int> counts) {
+    if (counts.isEmpty) return 'none';
+    final keys = counts.keys.toList(growable: false)..sort();
+    return keys.map((key) => '$key=${counts[key]}').join(', ');
+  }
+
   String _formatAmount(double amount) {
     final sign = amount < 0 ? '-' : '';
     final digits = amount.abs().round().toString();
