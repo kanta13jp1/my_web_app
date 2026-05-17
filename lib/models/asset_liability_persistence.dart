@@ -80,6 +80,7 @@ class AssetLiabilityMonthlyStatePayload {
   final Map<String, double> actualPaymentAmounts;
   final Map<String, String> paymentDifferenceReasons;
   final Map<String, double> annualRateOverrides;
+  final Map<String, AssetLiabilityAnnualRateEvidence> annualRateEvidences;
   final Set<String> paidAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
@@ -93,6 +94,7 @@ class AssetLiabilityMonthlyStatePayload {
     required this.actualPaymentAmounts,
     required this.paymentDifferenceReasons,
     required this.annualRateOverrides,
+    required this.annualRateEvidences,
     required this.paidAccountIds,
     required this.paymentSourceAccountIds,
     required this.cardBillingAccountIds,
@@ -115,6 +117,9 @@ class AssetLiabilityMonthlyStatePayload {
         state.paymentDifferenceReasons,
       ),
       annualRateOverrides: Map<String, double>.from(state.annualRateOverrides),
+      annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        state.annualRateEvidences,
+      ),
       paidAccountIds: Set<String>.from(state.paidAccountNames),
       paymentSourceAccountIds: Map<String, String>.from(
         state.paymentSourceAccountIds,
@@ -150,6 +155,10 @@ class AssetLiabilityMonthlyStatePayload {
       annualRateOverrides: _readDoubleMap(json, 'annual_rate_overrides') ??
           _readDoubleMap(json, 'annualRateOverrides') ??
           const <String, double>{},
+      annualRateEvidences:
+          _readAnnualRateEvidences(json, 'annual_rate_evidences') ??
+              _readAnnualRateEvidences(json, 'annualRateEvidences') ??
+              const <String, AssetLiabilityAnnualRateEvidence>{},
       paidAccountIds: _readStringSet(json, 'paid_account_ids') ??
           _readStringSet(json, 'paidAccountIds') ??
           const <String>{},
@@ -181,6 +190,9 @@ class AssetLiabilityMonthlyStatePayload {
         paymentDifferenceReasons,
       ),
       annualRateOverrides: Map<String, double>.from(annualRateOverrides),
+      annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        annualRateEvidences,
+      ),
       paidAccountNames: Set<String>.from(paidAccountIds),
       paymentSourceAccountIds: Map<String, String>.from(
         paymentSourceAccountIds,
@@ -208,6 +220,10 @@ class AssetLiabilityMonthlyStatePayload {
         paymentDifferenceReasons,
       ),
       'annual_rate_overrides': Map<String, double>.from(annualRateOverrides),
+      'annual_rate_evidences': {
+        for (final entry in annualRateEvidences.entries)
+          entry.key: entry.value.toJson(),
+      },
       'paid_account_ids': (paidAccountIds.toList()..sort()),
       'payment_source_account_ids': Map<String, String>.from(
         paymentSourceAccountIds,
@@ -652,6 +668,33 @@ List<AssetLiabilityTransferTask>? _readTransferTasks(
     return a.id.compareTo(b.id);
   });
   return tasks;
+}
+
+Map<String, AssetLiabilityAnnualRateEvidence>? _readAnnualRateEvidences(
+  Map<String, Object?> json,
+  String key,
+) {
+  final source = json[key];
+  if (source is! Map) {
+    return null;
+  }
+  final result = <String, AssetLiabilityAnnualRateEvidence>{};
+  for (final entry in source.entries) {
+    if (entry.value is! Map) {
+      continue;
+    }
+    final evidence = AssetLiabilityAnnualRateEvidence.fromJson(
+      Map<String, Object?>.from(
+        (entry.value as Map).map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      ),
+    );
+    if (evidence != null) {
+      result[entry.key.toString()] = evidence;
+    }
+  }
+  return result;
 }
 
 Map<String, double>? _readDoubleMap(Map<String, Object?> json, String key) {

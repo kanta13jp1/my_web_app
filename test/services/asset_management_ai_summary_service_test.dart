@@ -31,7 +31,7 @@ void main() {
       );
     });
 
-    test('calls ai-hub provider.chat when feature flag is on', () async {
+    test('calls ai-hub auto chat when feature flag is on', () async {
       Map<String, dynamic>? capturedBody;
       final service = AssetManagementAiSummaryService(
         aiEnabled: true,
@@ -41,7 +41,7 @@ void main() {
             return <String, dynamic>{
               'success': true,
               'text': 'AI generated summary',
-              'provider': 'deepinfra',
+              'provider': 'groq',
             };
           },
         ),
@@ -53,8 +53,8 @@ void main() {
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(result.usedExternalAi, true);
       expect(result.text, 'AI generated summary');
-      expect(capturedBody?['action'], 'provider.chat');
-      expect(capturedBody?['provider'], 'deepinfra');
+      expect(capturedBody?['action'], 'provider.chat_auto');
+      expect(capturedBody?['tier'], 'cheap');
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
         capturedBody?['message'].toString().contains(

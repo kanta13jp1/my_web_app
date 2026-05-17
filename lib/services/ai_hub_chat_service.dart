@@ -107,6 +107,22 @@ class AiHubChatResponse {
   });
 }
 
+class AiHubAnnualRateEvidenceResponse {
+  final bool verified;
+  final String status;
+  final double? detectedAnnualRate;
+  final String summary;
+  final String source;
+
+  const AiHubAnnualRateEvidenceResponse({
+    required this.verified,
+    required this.status,
+    required this.detectedAnnualRate,
+    required this.summary,
+    required this.source,
+  });
+}
+
 class AiHubChatException implements Exception {
   final String message;
 
@@ -219,6 +235,58 @@ class AiHubChatService {
         );
       }
       throw const AiHubChatException('AI response was empty');
+    } catch (error) {
+      final message = error.toString();
+      if (RegExp(r'429|quota|rate.?limit', caseSensitive: false)
+          .hasMatch(message)) {
+        AiHubChatQuotaGuard.markQuotaExceeded();
+      }
+      if (error is AiHubChatException) {
+        rethrow;
+      }
+      throw AiHubChatException(message);
+    }
+  }
+
+  Future<AiHubAnnualRateEvidenceResponse> verifyAnnualRateEvidence({
+    required String accountName,
+    required double submittedAnnualRate,
+    required String imageBase64,
+    required String mimeType,
+    String? imageName,
+    String? traceId,
+  }) async {
+    if (AiHubChatQuotaGuard.isCoolingDown) {
+      throw const AiHubChatException('AI quota cooldown');
+    }
+
+    try {
+      final data = await _invoke(
+        await _withOfflinePolicy({
+          'action': 'asset_liability.verify_annual_rate_evidence',
+          'accountName': accountName,
+          'submittedAnnualRate': submittedAnnualRate,
+          'imageBase64': imageBase64,
+          'mimeType': mimeType,
+          if (imageName != null && imageName.trim().isNotEmpty)
+            'imageName': imageName.trim(),
+          if (traceId != null && traceId.trim().isNotEmpty)
+            'trace_id': traceId.trim(),
+        }),
+      );
+      if (data['success'] == true) {
+        return AiHubAnnualRateEvidenceResponse(
+          verified: data['verified'] == true,
+          status: data['status']?.toString() ?? 'unknown',
+          detectedAnnualRate: _asDouble(data['detected_annual_rate']),
+          summary: (data['summary'] ?? data['message'] ?? '').toString(),
+          source: 'ai-hub asset_liability.verify_annual_rate_evidence',
+        );
+      }
+      throw AiHubChatException(
+        (data['message'] ?? data['error'] ?? 'AI evidence check failed')
+            .toString(),
+      );
     } catch (error) {
       final message = error.toString();
       if (RegExp(r'429|quota|rate.?limit', caseSensitive: false)

@@ -42,7 +42,7 @@ class AssetManagementAiSummaryService {
   final AiHubChatService _chatService;
   final AssetManagementInsightPromptBuilder _promptBuilder;
   final DateTime Function() _now;
-  final String _provider;
+  final String? _provider;
 
   AssetManagementAiSummaryService({
     bool aiEnabled = AssetManagementAiSummaryFeatureFlag.enabled,
@@ -50,7 +50,7 @@ class AssetManagementAiSummaryService {
     AssetManagementInsightPromptBuilder promptBuilder =
         const AssetManagementInsightPromptBuilder(),
     DateTime Function()? now,
-    String provider = 'deepinfra',
+    String? provider,
   })  : _aiEnabled = aiEnabled,
         _chatService = chatService,
         _promptBuilder = promptBuilder,
@@ -77,11 +77,17 @@ class AssetManagementAiSummaryService {
 
     try {
       final prompt = _buildPrompt(report: report, payload: payload);
-      final response = await _chatService.sendProviderChat(
-        message: prompt,
-        provider: _provider,
-        traceId: 'asset-management-ai-summary',
-      );
+      final response = _provider == null || _provider == 'auto'
+          ? await _chatService.sendAutoChat(
+              message: prompt,
+              tier: 'cheap',
+              traceId: 'asset-management-ai-summary',
+            )
+          : await _chatService.sendProviderChat(
+              message: prompt,
+              provider: _provider,
+              traceId: 'asset-management-ai-summary',
+            );
       return AssetManagementAiSummaryResult(
         status: AssetManagementAiSummaryStatus.aiGenerated,
         text: response.text,

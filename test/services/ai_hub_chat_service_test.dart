@@ -111,4 +111,39 @@ void main() {
 
     expect(response.text, 'blocked before provider fetch in ai-hub');
   });
+
+  test('verifyAnnualRateEvidence calls ai-hub vision verifier', () async {
+    final service = AiHubChatService(
+      invoker: (body) async {
+        expect(
+          body['action'],
+          'asset_liability.verify_annual_rate_evidence',
+        );
+        expect(body['accountName'], 'Mobit');
+        expect(body['submittedAnnualRate'], 0.18);
+        expect(body['imageBase64'], 'abc123');
+        expect(body['mimeType'], 'image/png');
+        expect(body['imageName'], 'apr.png');
+        return <String, dynamic>{
+          'success': true,
+          'verified': true,
+          'status': 'verified',
+          'detected_annual_rate': 0.18,
+          'summary': '18.0% APR is visible.',
+        };
+      },
+    );
+
+    final response = await service.verifyAnnualRateEvidence(
+      accountName: 'Mobit',
+      submittedAnnualRate: 0.18,
+      imageBase64: 'abc123',
+      mimeType: 'image/png',
+      imageName: 'apr.png',
+    );
+
+    expect(response.verified, isTrue);
+    expect(response.detectedAnnualRate, 0.18);
+    expect(response.summary, contains('18.0%'));
+  });
 }

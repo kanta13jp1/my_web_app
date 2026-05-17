@@ -999,7 +999,7 @@ void main() {
       expect(workbook.cashAfterScheduledPayments, 5000);
     });
 
-    test('adds KDDI provider as a separate day 25 fixed payment', () {
+    test('adds KDDI provider and rent as separate fixed payments', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{'cash': 50000, 'au': -32152},
         baseDate: DateTime(2026, 5, 1),
@@ -1012,6 +1012,9 @@ void main() {
       final au = workbook.debtMasterRows.firstWhere((row) => row.id == 'au');
       final kddi = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
       );
       final kddiCashflow = workbook.cashflowRows.firstWhere(
         (row) =>
@@ -1049,6 +1052,10 @@ void main() {
         AssetLiabilityPlanningService.kddiProviderMonthlyPaymentAmount,
       );
       expect(kddiCashflow.paid, isFalse);
+      expect(rent.name, AssetLiabilityPlanningService.rentAccountName);
+      expect(rent.paymentDay, 25);
+      expect(rent.scheduledPaymentAmount, 63000);
+      expect(rent.isDirectCashflowTarget, isTrue);
       expect(
         kddiCashflow.cashAfterPayment,
         closeTo(
@@ -1059,7 +1066,10 @@ void main() {
       );
       expect(
         workbook.monthlyUnpaidPaymentTotal,
-        closeTo(kddi.scheduledPaymentAmount, 0.001),
+        closeTo(
+          kddi.scheduledPaymentAmount + rent.scheduledPaymentAmount,
+          0.001,
+        ),
       );
     });
 
@@ -1077,6 +1087,9 @@ void main() {
       final kddi = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
       );
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+      );
       final kddiCashflow = workbook.cashflowRows.firstWhere(
         (row) =>
             row.accountId ==
@@ -1087,7 +1100,7 @@ void main() {
       expect(kddi.paid, isTrue);
       expect(kddiCashflow.paid, isTrue);
       expect(kddiCashflow.cashBeforePayment, kddiCashflow.cashAfterPayment);
-      expect(workbook.monthlyUnpaidPaymentTotal, 0);
+      expect(workbook.monthlyUnpaidPaymentTotal, rent.scheduledPaymentAmount);
     });
   });
 }

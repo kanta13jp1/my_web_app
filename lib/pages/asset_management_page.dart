@@ -18,6 +18,7 @@ import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
+import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
 import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
@@ -113,6 +114,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, double> _actualPaymentAmounts = <String, double>{};
   Map<String, String> _paymentDifferenceReasons = <String, String>{};
   Map<String, double> _annualRateOverrides = <String, double>{};
+  Map<String, AssetLiabilityAnnualRateEvidence> _annualRateEvidences =
+      <String, AssetLiabilityAnnualRateEvidence>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
   Map<String, String> _paymentSourceAccountIds = <String, String>{};
   Map<String, String> _cardBillingAccountIds = <String, String>{};
@@ -151,6 +154,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <String, TextEditingController>{};
   final Map<String, TextEditingController> _annualRateControllers =
       <String, TextEditingController>{};
+  final Set<String> _verifyingAnnualRateEvidenceAccountIds = <String>{};
   final TextEditingController _cardStatementImportController =
       TextEditingController();
   String? _selectedCardStatementBillingAccountId;
@@ -207,6 +211,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityPlanningService();
   final AssetLiabilityCardStatementImportService _cardStatementImportService =
       const AssetLiabilityCardStatementImportService();
+  final AssetLiabilityAnnualRateEvidenceService _annualRateEvidenceService =
+      AssetLiabilityAnnualRateEvidenceService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
       const AssetLiabilityHistoryService();
   final AssetManagementInsightService _assetManagementInsightService =
@@ -869,6 +875,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _annualRateOverrides = Map<String, double>.from(
           state.annualRateOverrides,
         );
+        _annualRateEvidences =
+            Map<String, AssetLiabilityAnnualRateEvidence>.from(
+          state.annualRateEvidences,
+        );
         _monthlyPaidAccountNames = Set<String>.from(state.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           state.paymentSourceAccountIds,
@@ -934,6 +944,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _paymentDifferenceReasons,
         ),
         annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
+        annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+          _annualRateEvidences,
+        ),
         paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
@@ -1261,6 +1274,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _paymentDifferenceReasons,
         ),
         annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
+        annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+          _annualRateEvidences,
+        ),
         paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
@@ -1289,6 +1305,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           migrated.paymentDifferenceReasons,
         ) &&
         _sameDoubleMap(_annualRateOverrides, migrated.annualRateOverrides) &&
+        _sameAnnualRateEvidences(
+          _annualRateEvidences,
+          migrated.annualRateEvidences,
+        ) &&
         _sameStringSet(_monthlyPaidAccountNames, migrated.paidAccountNames) &&
         _sameStringMap(
           _paymentSourceAccountIds,
@@ -1328,6 +1348,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _annualRateOverrides = Map<String, double>.from(
           migrated.annualRateOverrides,
+        );
+        _annualRateEvidences =
+            Map<String, AssetLiabilityAnnualRateEvidence>.from(
+          migrated.annualRateEvidences,
         );
         _monthlyPaidAccountNames = Set<String>.from(migrated.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
@@ -1394,6 +1418,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     for (final entry in a.entries) {
       if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _sameAnnualRateEvidences(
+    Map<String, AssetLiabilityAnnualRateEvidence> a,
+    Map<String, AssetLiabilityAnnualRateEvidence> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      final other = b[entry.key];
+      final current = entry.value;
+      if (other == null ||
+          other.accountId != current.accountId ||
+          other.fileName != current.fileName ||
+          other.mimeType != current.mimeType ||
+          other.submittedAt.toIso8601String() !=
+              current.submittedAt.toIso8601String() ||
+          other.submittedAnnualRate != current.submittedAnnualRate ||
+          other.detectedAnnualRate != current.detectedAnnualRate ||
+          other.status != current.status ||
+          other.summary != current.summary ||
+          other.source != current.source ||
+          other.errorMessage != current.errorMessage) {
         return false;
       }
     }
@@ -1598,24 +1650,103 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   void _updateAnnualRateOverride(String accountId, String rawValue) {
-    final normalized = rawValue.replaceAll('%', '').replaceAll(',', '').trim();
-    final parsed = normalized.isEmpty ? null : double.tryParse(normalized);
+    final parsed = _parseAnnualRateInput(rawValue);
     setState(() {
-      if (parsed == null || parsed < 0) {
+      if (parsed == null) {
         _annualRateOverrides.remove(accountId);
+        _annualRateEvidences.remove(accountId);
       } else {
-        _annualRateOverrides[accountId] = parsed > 1 ? parsed / 100 : parsed;
+        final currentEvidence = _annualRateEvidences[accountId];
+        if (currentEvidence == null ||
+            !currentEvidence.matchesAnnualRate(parsed)) {
+          _annualRateOverrides.remove(accountId);
+        }
       }
     });
     unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  double? _parseAnnualRateInput(String rawValue) {
+    final normalized = rawValue.replaceAll('%', '').replaceAll(',', '').trim();
+    final parsed = normalized.isEmpty ? null : double.tryParse(normalized);
+    if (parsed == null || parsed < 0) {
+      return null;
+    }
+    return parsed > 1 ? parsed / 100 : parsed;
   }
 
   void _clearAnnualRateOverride(String accountId) {
     _annualRateControllers[accountId]?.clear();
     setState(() {
       _annualRateOverrides.remove(accountId);
+      _annualRateEvidences.remove(accountId);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  Future<void> _submitAnnualRateEvidence(AssetLiabilityDebtRow row) async {
+    final controller = _annualRateControllerFor(row);
+    final rate = _parseAnnualRateInput(controller.text);
+    if (rate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('年利を入力してから証跡画像を提出してください')),
+      );
+      return;
+    }
+    final result = await FilePicker.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    final file = result?.files.single;
+    final bytes = file?.bytes;
+    if (file == null || bytes == null || bytes.isEmpty) {
+      return;
+    }
+    final mimeType = _mimeTypeForAnnualRateEvidence(file);
+    setState(() {
+      _verifyingAnnualRateEvidenceAccountIds.add(row.id);
+    });
+    final evidence = await _annualRateEvidenceService.verifyEvidence(
+      accountId: row.id,
+      accountName: row.name,
+      annualRate: rate,
+      imageBase64: base64Encode(bytes),
+      mimeType: mimeType,
+      fileName: file.name,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _verifyingAnnualRateEvidenceAccountIds.remove(row.id);
+      _annualRateEvidences[row.id] = evidence;
+      if (evidence.matchesAnnualRate(rate)) {
+        _annualRateOverrides[row.id] = rate;
+      } else {
+        _annualRateOverrides.remove(row.id);
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          evidence.verified
+              ? 'AIが年利証跡を確認しました'
+              : 'AIが年利証跡を確認できませんでした。画面キャプチャを確認してください',
+        ),
+      ),
+    );
+  }
+
+  String _mimeTypeForAnnualRateEvidence(PlatformFile file) {
+    final extension = (file.extension ?? '').toLowerCase();
+    return switch (extension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'gif' => 'image/gif',
+      'jpg' || 'jpeg' => 'image/jpeg',
+      _ => 'image/jpeg',
+    };
   }
 
   Future<void> _toggleMonthlyPaymentPaid(
@@ -10491,8 +10622,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             scrollDirection: Axis.horizontal,
             child: DataTable(
               headingRowHeight: 36,
-              dataRowMinHeight: 60,
-              dataRowMaxHeight: 76,
+              dataRowMinHeight: 64,
+              dataRowMaxHeight: 96,
               columns: const [
                 DataColumn(label: Text('actual payment'), numeric: true),
                 DataColumn(label: Text('difference'), numeric: true),
@@ -10536,7 +10667,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       DataCell(_buildMonthlyPaymentInput(row)),
                       DataCell(_buildPaymentAmountSourceChip(row)),
                       DataCell(_buildPaidCheckbox(row)),
-                      DataCell(_buildAnnualRateInput(row)),
+                      DataCell(_buildAnnualRateInputWithEvidence(row)),
                       DataCell(
                         Text(_formatManagementYen(row.monthlyInterestEstimate)),
                       ),
@@ -10796,32 +10927,95 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildAnnualRateInput(AssetLiabilityDebtRow row) {
+  Widget _buildAnnualRateInputWithEvidence(AssetLiabilityDebtRow row) {
     final controller = _annualRateControllerFor(row);
     final hasOverride = _annualRateOverrides.containsKey(row.id);
+    final evidence = _annualRateEvidences[row.id];
+    final verified = evidence?.matchesAnnualRate(row.annualRate) ?? false;
     return SizedBox(
-      width: 120,
-      child: TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,%]')),
+      width: 220,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,%]')),
+            ],
+            onChanged: (value) => _updateAnnualRateOverride(row.id, value),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: _formatRateInput(row.annualRate),
+              helperText:
+                  hasOverride ? (verified ? 'AI確認済み' : '証跡確認が必要') : '年利変更は証跡必須',
+              suffixText: '%',
+              suffixIcon: hasOverride
+                  ? IconButton(
+                      tooltip: '年利上書きをクリア',
+                      icon: const Icon(Icons.clear, size: 16),
+                      onPressed: () => _clearAnnualRateOverride(row.id),
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 4),
+          _buildAnnualRateEvidenceCell(row),
         ],
-        onChanged: (value) => _updateAnnualRateOverride(row.id, value),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: _formatRateInput(row.annualRate),
-          helperText: hasOverride ? '保存済み' : '未入力時は既定',
-          suffixText: '%',
-          suffixIcon: hasOverride
-              ? IconButton(
-                  tooltip: '年利上書きをクリア',
-                  icon: const Icon(Icons.clear, size: 16),
-                  onPressed: () => _clearAnnualRateOverride(row.id),
-                )
-              : null,
-        ),
       ),
+    );
+  }
+
+  Widget _buildAnnualRateEvidenceCell(AssetLiabilityDebtRow row) {
+    final evidence = _annualRateEvidences[row.id];
+    final isVerifying = _verifyingAnnualRateEvidenceAccountIds.contains(row.id);
+    final requestedRate =
+        _parseAnnualRateInput(_annualRateControllerFor(row).text) ??
+            row.annualRate;
+    final verified = evidence?.matchesAnnualRate(requestedRate) ?? false;
+    final color = verified
+        ? const Color(0xFF0D9488)
+        : evidence == null
+            ? const Color(0xFFDC2626)
+            : const Color(0xFFD97706);
+    final label = verified
+        ? 'AI証跡OK'
+        : evidence == null
+            ? '証跡提出'
+            : '再提出';
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        OutlinedButton.icon(
+          onPressed: isVerifying ? null : () => _submitAnnualRateEvidence(row),
+          icon: isVerifying
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.upload_file, size: 14),
+          label: Text(label),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: color,
+            side: BorderSide(color: color.withValues(alpha: 0.5)),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        if (evidence != null)
+          Tooltip(
+            message: evidence.summary.isEmpty
+                ? evidence.fileName
+                : '${evidence.fileName}\n${evidence.summary}',
+            child: _buildTextStatusChip(
+              label: verified ? '確認済' : '要確認',
+              color: color,
+            ),
+          ),
+      ],
     );
   }
 
