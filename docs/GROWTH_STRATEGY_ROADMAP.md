@@ -30880,3 +30880,49 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - **C: drift root cause = Win Update + Microsoft cache 仮説** = KB5087051 5/16 install timing match / disk-cleanup skill Tier 2 で Microsoft + Temp + Google cache cleanup ready
 - **A1 migration 本番 deploy 完了確認 pattern** = main 反映 (`git ls-tree`) + Deploy to Production workflow run status (= push trigger) 2 段 verify
 - **#1495 P0 fiscal +4 day discipline** = 期限通過 +77h / 4 連続 follow-up (= 217/219u/222/223) で stakeholder 認識喚起継続 / 5/18 06:00 JST escalation deadline 設定
+
+---
+
+## Win版#132 part 224 — J3 #2508 hygiene tab skeleton ship + PR gate declaration patch 第 1 例 + RAM 91.65% override 第 1 例 (2026-05-17 土 06:13 JST)
+
+### KPI snapshot
+
+- PRE: RAM 91.65% ❌ (= v24 SS 第 14 例候補 / user Full scope override 採用)
+- PRE: C: 32.61 GB ✅ (= 25 GB threshold +7.61 GB / 部 223 FINAL 40.92 → -8.31 GB overnight drift 復活)
+- PRE: date 5/17 06:13 JST ✅ ([SCHEDULE-WAKEUP] 02-06 cap clear / 06:00+ qualify)
+- PRE: fatigue:FATIGUE ❌ (= overnight 解消 fail)
+- 開始時刻: 5/17 06:13 JST / 終了時刻: 6:40 頃 (= ~27min session)
+
+### 部 224 deliverable
+
+1. ✅ **J3 #2508 dashboard widget skeleton ship** ([PR #2544](https://github.com/kanta13jp1/my_web_app/pull/2544))
+   - `/project-gantt` 4th tab 'セッション衛生' 追加
+   - `_SessionHygieneTab` + `_HygieneKpiPlaceholder` 4 件 (RAM / C: drift / lefthook / v24 SS+v26 YY)
+   - [REAL-DATA] 適合: empty state + 'TBD' tag のみ / dummy data 0
+   - dart format ✅ / flutter analyze ✅ No issues
+2. ✅ **PR #2543 gate declaration body patch 第 1 例** = E2E declaration (= implementation-detail independent + 3 I/O case) + ultrareview 4 項目契約 (review owner Claude Code #1 + security / rollback / prod smoke / observability evidence + 0 finding) 全 5 項目追加 → close/reopen 2nd round fresh event
+3. ✅ **PR #2544 同 pattern 適用 第 2 例** = E2E declaration only (= ultrareview low-risk skip) + close/reopen fresh event
+4. ✅ **#1495 P0 +5 day fiscal status check** = user 5/17 00:00 UTC 以降 0 comment / 5/18 06:00 JST escalation deadline +24h 待ち / 部 223 +4 day comment 1h 経過のみで再 ping 不要判断
+5. ✅ **#2520 Codex 5/22 sprint Day 2-3 monitor** = 5/17 00:00+ activity 0 件 / sprint kickoff 5/22 待機正常 (not stale)
+6. ✅ **ROADMAP part 224 entry append** (= 本 entry / append-only pattern 維持)
+
+### Philosophy Alignment (= 8/9 = 高)
+
+1 ✅ J3 user-facing dashboard ship (= CEO 感) / 2 ✅ #1495 fiscal discipline 継続 / 3 ✅ Mentor (= Architect-Implementer ③ pattern 部 223 設計 → 部 224 impl 着地 第 2 例) / 4 ✅ 開発+監視部 並行 / 5 ✅ skeleton + 拡張余地 (商品=価値) / 6 ✅ 時間=資本 (= ~27min で 6 deliverable) / 7 ✅ [REAL-DATA] 整合 + ROADMAP 完全性 / 8 ✅ KPI 可視化 (= J3 自体が KPI dashboard) / 9 部分 (= scalability infra 拡張余地のみ)
+
+### 教訓 (= 部 224)
+
+- **PR gate declaration body patch pattern 確立 第 1 例** = close/reopen 単独で不十分な場合 = body に gate 要件 explicit 宣言 + close/reopen 2nd round. 部 221u close/reopen 単独 pattern + 部 224 body declaration extension で 2-tier unblock 完成
+- **E2E + ultrareview gate full declaration template** = (1) implementation-detail independent (2) plan minimal ~3 I/O case (3) Claude Code #1 review owner (4) security/rollback/prod smoke/observability evidence (5) unresolved findings 0/none
+- **RAM 91.65% Full scope override 第 1 例** = v24 SS rule 14th 候補だが user 明示 Full scope 採用 → 27min で 6 deliverable / 自然 GC 観測待ち (= 部 215 96.6→84.0% 前例信頼)
+- **[REAL-DATA] 制約下 skeleton 着地 pattern** = dummy data 禁止 → empty state + 'TBD' tag + 'データソース実装待ち' note. EF/table 未実装でも UI placeholder ship 可能
+
+### next session 候補 (= 部 225+ / 5/17 daytime+ JST)
+
+1. **PR #2543 + PR #2544 merge 監視** (= body declaration 後の 2nd CI run pass 確認 / merge 着地)
+2. 🚨 **#1495 P0 +5-6 day fiscal escalation** (= 5/18 06:00 JST deadline / user 6 連続未応答ならば Option C 公開鈍化 escalation)
+3. **#2520 Codex 5/22 sprint Day 2-3 monitor** (= 5/22 sprint kickoff 5 日前 / Codex impl 待機正常)
+4. **J3 backend layer impl** (= `session_hygiene_log` table migration + ef `ai_hub.session_hygiene_kpi` design / 部 224 skeleton 後続)
+5. **MEMORY.md consolidation 第 6 例** (= part 215 + 217 entry archive / 200+ threshold 余裕継続)
+6. **UI verify [UI-VERIFY] sub-agent ① 第 3 例 dogfood** (= competitor 21 社調査 + Playwright MCP)
+7. **A1 #2461 EF impl status** (= Codex 担当 / monthly_asset_report EF / Day 1 sprint 着地確認)

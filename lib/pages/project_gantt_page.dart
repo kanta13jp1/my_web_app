@@ -433,24 +433,29 @@ int _compareWbsTasks(WbsTask a, WbsTask b) {
   final endDateCmp = _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate);
   if (endDateCmp != 0) return endDateCmp;
 
-  final startDateCmp =
-      _compareOptionalDate(a.scheduleStartDate, b.scheduleStartDate);
+  final startDateCmp = _compareOptionalDate(
+    a.scheduleStartDate,
+    b.scheduleStartDate,
+  );
   if (startDateCmp != 0) return startDateCmp;
 
   return a.title.compareTo(b.title);
 }
 
 int _compareWbsTaskDisplayKeeper(WbsTask a, WbsTask b) {
-  final duplicateCmp = (a.isDuplicateGithubIssueMirror ? 1 : 0)
-      .compareTo(b.isDuplicateGithubIssueMirror ? 1 : 0);
+  final duplicateCmp = (a.isDuplicateGithubIssueMirror ? 1 : 0).compareTo(
+    b.isDuplicateGithubIssueMirror ? 1 : 0,
+  );
   if (duplicateCmp != 0) return duplicateCmp;
 
-  final explicitIssueCmp = (a.githubIssueNumber == null ? 1 : 0)
-      .compareTo(b.githubIssueNumber == null ? 1 : 0);
+  final explicitIssueCmp = (a.githubIssueNumber == null ? 1 : 0).compareTo(
+    b.githubIssueNumber == null ? 1 : 0,
+  );
   if (explicitIssueCmp != 0) return explicitIssueCmp;
 
-  final completedCmp = (a.isEffectivelyCompleted ? 1 : 0)
-      .compareTo(b.isEffectivelyCompleted ? 1 : 0);
+  final completedCmp = (a.isEffectivelyCompleted ? 1 : 0).compareTo(
+    b.isEffectivelyCompleted ? 1 : 0,
+  );
   if (completedCmp != 0) return completedCmp;
 
   final progressCmp = b.progress.compareTo(a.progress);
@@ -505,11 +510,7 @@ Color _hexColor(String hex) {
   return Color(int.parse('FF$s', radix: 16));
 }
 
-typedef _WbsInstanceFilter = ({
-  String label,
-  String? value,
-  Color color,
-});
+typedef _WbsInstanceFilter = ({String label, String? value, Color color});
 
 const List<_WbsInstanceFilter> _activeWbsInstanceFilters = [
   (label: '全て', value: null, color: Color(0xFFFF6B35)),
@@ -617,7 +618,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 4, vsync: this);
     _loadWbs();
     _loadProjects();
   }
@@ -646,8 +647,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
               .map((e) => WbsMilestone.fromMap(e as Map<String, dynamic>))
               .toList();
           _tasks = dedupeWbsTasksForDisplay(
-            (tData as List)
-                .map((e) => WbsTask.fromMap(e as Map<String, dynamic>)),
+            (tData as List).map(
+              (e) => WbsTask.fromMap(e as Map<String, dynamic>),
+            ),
           )..sort(_compareWbsTasks);
         });
       }
@@ -709,8 +711,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
       await _loadProjects();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('保存失敗: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失敗: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -760,6 +763,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
             Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
             Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
+            Tab(icon: Icon(Icons.health_and_safety_outlined), text: 'セッション衛生'),
           ],
         ),
       ),
@@ -803,7 +807,86 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             onSave: _saveProject,
             onUpdateStatus: _updateProjectStatus,
           ),
+          const _SessionHygieneTab(),
         ],
+      ),
+    );
+  }
+}
+
+// ── セッション衛生 タブ (= #2508 J3 skeleton / part 224) ───────────────────
+//
+// データソース実装待ち: session_hygiene_log table + ef ai_hub.session_hygiene_kpi
+// 実 KPI 追加までは empty state のみ表示 ([REAL-DATA] 適合).
+
+class _SessionHygieneTab extends StatelessWidget {
+  const _SessionHygieneTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        _HygieneKpiPlaceholder(
+          icon: Icons.memory,
+          title: 'RAM peak / min / avg per session',
+          subtitle: 'v24 SS hard exit 14+ 例 / 90% breach 監視',
+        ),
+        SizedBox(height: 12),
+        _HygieneKpiPlaceholder(
+          icon: Icons.sd_storage_outlined,
+          title: 'C: free drift trend',
+          subtitle: '25 GB threshold + 12.7 GB/h idle drift 観測',
+        ),
+        SizedBox(height: 12),
+        _HygieneKpiPlaceholder(
+          icon: Icons.timer_outlined,
+          title: 'lefthook hang count',
+          subtitle: '部 217-b 集積教訓 / push skip 検出',
+        ),
+        SizedBox(height: 12),
+        _HygieneKpiPlaceholder(
+          icon: Icons.history,
+          title: 'v24 SS / v26 YY hit history',
+          subtitle: 'cron-based mandatory compression layer 履歴',
+        ),
+        SizedBox(height: 24),
+        Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'データソース実装待ち: session_hygiene_log table + ef ai_hub.session_hygiene_kpi',
+              style: TextStyle(color: Color(0xFF707070)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HygieneKpiPlaceholder extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _HygieneKpiPlaceholder({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFFFF6B35)),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Text(
+          'TBD',
+          style: TextStyle(color: Color(0xFF707070), fontSize: 12),
+        ),
       ),
     );
   }
@@ -941,16 +1024,16 @@ class _WbsTab extends StatelessWidget {
             ),
             Text(
               '未完了のみ',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF9CA3AF),
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(width: 16),
             Text(
               '表示: ${_filtered.length} / ${tasks.length} 件',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF707070),
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: const Color(0xFF707070)),
             ),
           ],
         ),
@@ -1005,13 +1088,7 @@ class _OverallProgressCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text(
-                '🚀',
-                style: TextStyle(
-                  fontSize: 24,
-                  height: 1.5,
-                ),
-              ),
+              const Text('🚀', style: TextStyle(fontSize: 24, height: 1.5)),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -1037,8 +1114,10 @@ class _OverallProgressCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B35).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -1064,8 +1143,9 @@ class _OverallProgressCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress / 100,
               backgroundColor: const Color(0xFF2A2A2A),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFFFF6B35),
+              ),
               minHeight: 8,
             ),
           ),
@@ -1399,10 +1479,7 @@ class _FilterRow extends StatelessWidget {
           const SizedBox(width: 12),
           const Text(
             '│',
-            style: TextStyle(
-              color: Color(0xFF333333),
-              height: 1.5,
-            ),
+            style: TextStyle(color: Color(0xFF333333), height: 1.5),
           ),
           const SizedBox(width: 12),
           _chip(
@@ -1501,10 +1578,7 @@ class _CategorySection extends StatelessWidget {
             children: [
               Text(
                 categoryIcon,
-                style: const TextStyle(
-                  fontSize: 18,
-                  height: 1.5,
-                ),
+                style: const TextStyle(fontSize: 18, height: 1.5),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -1526,8 +1600,9 @@ class _CategorySection extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: avg / 100,
                     backgroundColor: const Color(0xFF2A2A2A),
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFFFF6B35),
+                    ),
                     minHeight: 6,
                   ),
                 ),
@@ -1594,9 +1669,8 @@ class _TaskRow extends StatelessWidget {
                   message:
                       'GitHub Issue #${_extractIssueNumber(task.title)} を開く',
                   child: InkWell(
-                    onTap: () => _openGithubIssue(
-                      _extractIssueNumber(task.title)!,
-                    ),
+                    onTap: () =>
+                        _openGithubIssue(_extractIssueNumber(task.title)!),
                     borderRadius: BorderRadius.circular(4),
                     child: const Padding(
                       padding: EdgeInsets.all(4),
@@ -1629,8 +1703,10 @@ class _TaskRow extends StatelessWidget {
               if (task.ownerInstance != task.instance) ...[
                 const SizedBox(width: 4),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: task.activeOwnerColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
@@ -1675,8 +1751,9 @@ class _TaskRow extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: task.progress / 100,
                       backgroundColor: const Color(0xFF2A2A2A),
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(task.statusColor),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        task.statusColor,
+                      ),
                       minHeight: 4,
                     ),
                   ),
@@ -1797,19 +1874,13 @@ class _MyProjectsTab extends StatelessWidget {
                   const SizedBox(height: 8),
                   TextField(
                     controller: nameCtrl,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      height: 1.5,
-                    ),
+                    style: const TextStyle(color: Colors.white, height: 1.5),
                     decoration: _inputDec('プロジェクト名'),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: descCtrl,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      height: 1.5,
-                    ),
+                    style: const TextStyle(color: Colors.white, height: 1.5),
                     decoration: _inputDec('説明 (任意)'),
                   ),
                   const SizedBox(height: 8),
@@ -1877,10 +1948,7 @@ class _MyProjectsTab extends StatelessWidget {
                     ? const Center(
                         child: Text(
                           'プロジェクトはまだありません',
-                          style: TextStyle(
-                            color: Colors.white38,
-                            height: 1.5,
-                          ),
+                          style: TextStyle(color: Colors.white38, height: 1.5),
                         ),
                       )
                     : ListView.builder(
@@ -1965,10 +2033,7 @@ class _MyProjectsTab extends StatelessWidget {
 
   InputDecoration _inputDec(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-          color: Colors.white38,
-          height: 1.5,
-        ),
+        hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0xFF333333)),
@@ -2188,8 +2253,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     final result = switch (_sortColumnKey) {
       '#' => _compareWbsTasks(a, b),
       'task' => _compareText(a.title, b.title),
-      'startDate' =>
-        _compareOptionalDate(a.scheduleStartDate, b.scheduleStartDate),
+      'startDate' => _compareOptionalDate(
+          a.scheduleStartDate,
+          b.scheduleStartDate,
+        ),
       'endDate' => _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate),
       'instance' => _compareText(
           _instanceBadgeLabel(a),
@@ -2278,8 +2345,11 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   DateTime get _timelineStart {
     // 今日の 30日前を基準に、表示中タスクの最古日も必ず含める。
     final now = DateTime.now();
-    final fallback =
-        DateTime(now.year, now.month, 1).subtract(const Duration(days: 30));
+    final fallback = DateTime(
+      now.year,
+      now.month,
+      1,
+    ).subtract(const Duration(days: 30));
     final taskDates = widget.tasks
         .expand((t) => [t.scheduleStartDate, t.scheduleEndDate])
         .whereType<DateTime>();
@@ -2486,8 +2556,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                                                 ),
                                               ),
                                               // マイルストーンの縦線 + 菱形
-                                              ...widget.milestones
-                                                  .map(_buildMilestoneMark),
+                                              ...widget.milestones.map(
+                                                _buildMilestoneMark,
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -2542,9 +2613,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _riskWarnings.map(_riskChip).toList(),
-              ),
+              child: Row(children: _riskWarnings.map(_riskChip).toList()),
             ),
           ),
         ],
@@ -2756,8 +2825,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child:
-                const Text('閉じる', style: TextStyle(color: Color(0xFFA855F7))),
+            child: const Text(
+              '閉じる',
+              style: TextStyle(color: Color(0xFFA855F7)),
+            ),
           ),
         ],
       ),
@@ -2848,9 +2919,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   Future<void> _autoRepairDependencies() async {
     if (_repairLoading) return;
     if (Supabase.instance.client.auth.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('依存修復にはログインが必要です')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('依存修復にはログインが必要です')));
       return;
     }
     setState(() => _repairLoading = true);
@@ -2882,9 +2953,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('自動修復エラー: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('自動修復エラー: $e')));
     } finally {
       if (mounted) setState(() => _repairLoading = false);
     }
@@ -2972,9 +3043,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                       widget.onFilterInstance(on ? null : filter.value),
                   selectedColor: filter.color,
                   backgroundColor: filter.color.withValues(alpha: 0.08),
-                  side: BorderSide(
-                    color: filter.color.withValues(alpha: 0.4),
-                  ),
+                  side: BorderSide(color: filter.color.withValues(alpha: 0.4)),
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -3001,8 +3070,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ('🔧', 'gha', const Color(0xFF6B7280)),
             ].where((_) => false).map((t) {
               if (t.$2 != null &&
-                  !_activeWbsInstanceFilters
-                      .any((filter) => filter.value == t.$2)) {
+                  !_activeWbsInstanceFilters.any(
+                    (filter) => filter.value == t.$2,
+                  )) {
                 return const SizedBox.shrink();
               }
               final on = widget.filterInstance == t.$2;
@@ -3160,8 +3230,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFA855F7),
-                  disabledForegroundColor:
-                      const Color(0xFFA855F7).withValues(alpha: 0.45),
+                  disabledForegroundColor: const Color(
+                    0xFFA855F7,
+                  ).withValues(alpha: 0.45),
                   side: const BorderSide(color: Color(0xFFA855F7)),
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
@@ -3188,8 +3259,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF22C55E),
-                  disabledForegroundColor:
-                      const Color(0xFF22C55E).withValues(alpha: 0.45),
+                  disabledForegroundColor: const Color(
+                    0xFF22C55E,
+                  ).withValues(alpha: 0.45),
                   side: const BorderSide(color: Color(0xFF22C55E)),
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
@@ -3214,11 +3286,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ),
           ),
           const SizedBox(width: 16),
-          Container(
-            width: 10,
-            height: 10,
-            color: _todayColor,
-          ),
+          Container(width: 10, height: 10, color: _todayColor),
           const SizedBox(width: 6),
           const Text(
             '今日',
@@ -3335,12 +3403,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     }) {
       if (!(_colVisible[key] ?? true)) return const SizedBox.shrink();
       final w = width ?? _colWidths[key] ?? 80;
-      final t = _buildSortableHeaderLabel(
-        key,
-        label,
-        labelStyle,
-        align: align,
-      );
+      final t = _buildSortableHeaderLabel(key, label, labelStyle, align: align);
       // Win版#132 part 86: expanded 引数を ignore (= 全列 fixed-width 化 / タスク名列も resize 対応)
       // ignore: unused_local_variable_for_now (= expanded は API 互換性のため残置)
       // if (expanded) return Expanded(child: t);  // = 旧動作: タスク名列が flex で resize 不可だった
@@ -3348,7 +3411,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(width: w, child: align == null ? t : Center(child: t)),
+          SizedBox(
+            width: w,
+            child: align == null ? t : Center(child: t),
+          ),
           _buildResizeHandle(key),
         ],
       );
@@ -3913,8 +3979,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child:
-                const Text('キャンセル', style: TextStyle(color: Color(0xFF808090))),
+            child: const Text(
+              'キャンセル',
+              style: TextStyle(color: Color(0xFF808090)),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -3957,9 +4025,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('送信エラー: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('送信エラー: $e')));
     }
   }
 
@@ -4139,24 +4207,13 @@ class _GanttGridPainter extends CustomPainter {
     while (day.isBefore(end)) {
       // 週末ハイライト
       if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
-        canvas.drawRect(
-          Rect.fromLTWH(x, 0, dayWidth, size.height),
-          weekend,
-        );
+        canvas.drawRect(Rect.fromLTWH(x, 0, dayWidth, size.height), weekend);
       }
       // 月の切り替わりで太線
       if (day.day == 1) {
-        canvas.drawLine(
-          Offset(x, 0),
-          Offset(x, size.height),
-          monthLine,
-        );
+        canvas.drawLine(Offset(x, 0), Offset(x, size.height), monthLine);
       } else if (day.weekday == DateTime.monday) {
-        canvas.drawLine(
-          Offset(x, 0),
-          Offset(x, size.height),
-          weekLine,
-        );
+        canvas.drawLine(Offset(x, 0), Offset(x, size.height), weekLine);
       }
       day = day.add(const Duration(days: 1));
       x += dayWidth;
@@ -4166,20 +4223,12 @@ class _GanttGridPainter extends CustomPainter {
     final todayGlow = Paint()
       ..color = const Color(0xFFFF6B35).withValues(alpha: 0.18)
       ..strokeWidth = 8;
-    canvas.drawLine(
-      Offset(todayX, 0),
-      Offset(todayX, size.height),
-      todayGlow,
-    );
+    canvas.drawLine(Offset(todayX, 0), Offset(todayX, size.height), todayGlow);
     // 2) main line
     final todayPaint = Paint()
       ..color = const Color(0xFFFF6B35)
       ..strokeWidth = 2.5;
-    canvas.drawLine(
-      Offset(todayX, 0),
-      Offset(todayX, size.height),
-      todayPaint,
-    );
+    canvas.drawLine(Offset(todayX, 0), Offset(todayX, size.height), todayPaint);
   }
 
   @override
@@ -4244,11 +4293,7 @@ class _MonthHeaderPainter extends CustomPainter {
       }
 
       // 月境界線
-      canvas.drawLine(
-        Offset(xEnd, 0),
-        Offset(xEnd, size.height),
-        line,
-      );
+      canvas.drawLine(Offset(xEnd, 0), Offset(xEnd, size.height), line);
 
       monthCursor = nextMonth;
     }
@@ -4304,11 +4349,7 @@ class _MonthHeaderPainter extends CustomPainter {
     );
     // 月/日セクション境界
     final midLinePaint = Paint()..color = const Color(0xFF2A2A36);
-    canvas.drawLine(
-      const Offset(0, 34),
-      Offset(size.width, 34),
-      midLinePaint,
-    );
+    canvas.drawLine(const Offset(0, 34), Offset(size.width, 34), midLinePaint);
 
     // Win版#131 part 23: 今日マーカー (label + 上端三角形)
     final todayDay = DateTime(today.year, today.month, today.day);
@@ -4352,10 +4393,7 @@ class _MonthHeaderPainter extends CustomPainter {
       final rrect = RRect.fromRectAndRadius(boxRect, const Radius.circular(3));
       canvas.drawRRect(rrect, boxPaint);
       canvas.drawRRect(rrect, boxBorder);
-      todayLabel.paint(
-        canvas,
-        Offset(todayX - todayLabel.width / 2, 9),
-      );
+      todayLabel.paint(canvas, Offset(todayX - todayLabel.width / 2, 9));
     }
   }
 
