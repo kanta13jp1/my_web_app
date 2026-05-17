@@ -86,3 +86,18 @@ python scripts/internal_ai_bench.py `
 
 The Markdown report must be attached to `#2520` or a follow-up issue before any
 `#2521` routing default changes are made.
+
+Prepare provider execution without making live API calls:
+
+```powershell
+python scripts/internal_ai_bench_provider_manifest.py `
+  --input docs/ai-bench/results/template.json `
+  --output-json docs/ai-bench/results/provider_manifest.json `
+  --output-md docs/ai-bench/results/provider_manifest.md `
+  --strict
+```
+
+The provider manifest is a dry-run runbook only. It records eligible verified
+model slots, official sources, required environment variable names, and
+synthetic-input rules. Live provider calls remain gated by explicit operator
+approval, current official source rechecks, and a scored bench report.
