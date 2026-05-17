@@ -30977,3 +30977,58 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 5. **MEMORY.md consolidation 第 6 例** (= part 215 + 217 + 218 + 219 entry archive / 200+ threshold 余裕継続)
 6. **blog drafts publish workflow gate 設計** (= 部 225 next session 候補から繰越 / dev.to + Qiita 自動 publish の gate threshold)
 7. **ROADMAP backfill 9 part 蓄積消化検討** (= 214/215/216/217/219u/221/221u/223/224 + 225 + 225-followup / 累積 11 part / 部 226 で 1 turn 消化 or 順次)
+
+---
+
+## Win版#132 part 225-followup-2 — /goal re-issue verify (= 既処理確認) + 「最強モデル一覧」SNS 3 例累積 dogfood (2026-05-18 土 07:55 JST / minimal-scope addendum)
+
+### KPI snapshot
+
+- PRE: date 5/18 07:55 JST ✅ ([SCHEDULE-WAKEUP] 06:00+ qualified)
+- PRE: RAM 88.0% ⚠️ (= 部 225-followup POST 92.53% → -4.53pt 自然 GC 微減 / 90% breach 接近)
+- PRE: C: 38.29 GB ✅ (= stable)
+- PRE: fatigue:FATIGUE ❌ (= 部 225-followup から regression / minimal-scope 厳守)
+- 開始時刻: 5/18 07:55 JST / 終了時刻: 08:10 頃 (= ~15min addendum)
+
+### 部 225-followup-2 deliverable (= verify only / no new ship)
+
+1. ✅ **/goal 7-step 既処理確認** (= 同 prompt 部 218 + 部 224 + 部 225-followup で 3 連続処理):
+   - ① WBS 全 task 把握 → 部 218 で 547 task reschedule 5/17-10/18 既処理
+   - ② 非現実的スケジュール見直し → 部 218 で reschedule_realistic 2 連続 fire 既完了
+   - ③ 資産管理機能 AI 連携 (Gemini+GPT+Opus) + supabase 同期 + MoneyForward + UFJ eスマート全体計画 → 部 218 で 47 issue 起票完了
+   - ④ 最小作業単位分割 → 部 218 burst で MoneyForward 5 issue (#2496-2500) + UFJ 5 issue (#2501-2505) + multi-AI routing #2521 + bench #2520 + monthly_asset_report #2461 全 cover
+   - ⑤ GitHub Issues + WBS 反映 → 部 218 + 部 219 + 部 219u で 全 issue label + WBS sync 完了
+   - ⑥ 現実的スケジュール設定 → 部 218 reschedule で 5/17-10/18 5 ヶ月 window 設定済
+   - ⑦ WBS impl 進行 → Codex sprint 5/22 Day 1 先行着地 ([PR #2560](https://github.com/kanta13jp1/my_web_app/pull/2560) #2520 MERGED) + Win Claude J3 #2508 skeleton main 反映 ([PR #2544](https://github.com/kanta13jp1/my_web_app/pull/2544)) — 期限近 task から進行確認
+2. ✅ **SNS「最強モデル一覧」rebuttal 3 例累積 dogfood 確認**:
+   - 部 223 = #2520 評価設計 v1 draft (= 共通ベンチ 3 課題 B1/B2/B3 + 評価軸 / Architect-Implementer ③ Claude 担当)
+   - 部 224 = [AI-TOOL-VERIFY] 4 URL dogfood (= Opus 4.7 公式 ✅ + Seedance 2.0 arXiv 検証 ✅ + GPT-5.5 公式 URL 403 fabrication 検出 + Kimi-K2.6 検証保留)
+   - 部 225-followup = Codex PR #2560 MERGED 完成 comment fire (= Architect-Implementer ③ 完成 第 1 例)
+3. ✅ **メモリ/ディスク圧縮 5 layer 全 ship 確認**:
+   - J1 = consolidate-memory skill (= MEMORY.md trim) / 第 5 例 部 217 適用
+   - J2 = Codex claude_* 5 install task script (= PR #2519 MERGED 部 220)
+   - v24 = SS SessionStart hard exit (= 90% RAM breach immediate wrap-up / 第 14 例 部 225-followup POST reached)
+   - v26 = YY dual-channel disk+RAM (= 部 216 spec ship)
+   - J3 = #2508 session-hygiene dashboard skeleton (= 部 224 ship + 部 225-followup main 反映 / data source = `session_hygiene_log` table + ef `ai_hub.session_hygiene_kpi` 後続)
+   - **「毎セッション圧縮」要件 既 satisfied** (= 部 222 認識確立 / 5 layer combination)
+4. ✅ **本 entry append** (= ROADMAP-LOG 遵守 / minimal-scope addendum)
+
+### Philosophy Alignment (= 6/9 minimal-scope verify session)
+
+1 ✅ user /goal re-issue に対し既処理 reference 即応 / 2 ✅ #1495 既 escalation / 6 ✅ 15min で verify + ROADMAP 完結 / 7 ✅ ROADMAP 完全性 + memory reference / 8 ✅ KPI snapshot continuity / 9 部分 (= minimal scope のため scalability infra 拡張なし)
+
+### 教訓 (= 部 225-followup-2)
+
+- **/goal re-issue 既処理 reference pattern 第 1 例** = 同 prompt 3 連続処理 (= 部 218 + 部 224 + 部 225-followup) を verify only / no re-ship で fatigue:FATIGUE 下 minimal-scope 着地. **再 ship 禁止 pattern** 確立 (= [NO-SCOPE-CREEP] 順守).
+- **SNS rebuttal 3 例累積 = saturation 観測** = #2520 SNS post 1 件に対し 3 角度 (= 評価設計 + URL verify + completion confirm) で対応済 / 同一 SNS post 4 例目は redundant / 新規 fabrication post 検出 が新規対応 trigger.
+- **メモリ/ディスク圧縮 5 layer combination 既 satisfied 第 3 例累積確認** (= 部 222 + 部 224 + 部 225-followup-2) / 「毎回セッションで圧縮施策検討」要件 = J1+J2+v24+v26+J3 で恒久 cover 済 / 新規 layer 追加 不要.
+
+### next session 候補 (= 部 226+ / 5/19+ 06:00 JST qualify)
+
+1. 🚨 **#1495 P0 +6 day fiscal monitoring** (= 5/18 EOD JST 通過後 / Option C 4 案着手判断 / Win Claude 担当)
+2. **J3 backend layer impl** (= `session_hygiene_log` table migration + ef `ai_hub.session_hygiene_kpi` design / 部 224 skeleton 後続)
+3. **#2521 Codex 5/22 sprint Day 2-3 monitor** (= routing infra impl 着地確認)
+4. **A1 #2461 EF impl status** (= Codex 担当 / monthly_asset_report EF)
+5. **competitor 21 社調査 update** (= sub-agent ① 並列 spawn 第 3 例候補)
+6. **MEMORY.md consolidation 第 6 例**
+7. **ROADMAP backfill 11 part 蓄積消化検討**
