@@ -116,6 +116,20 @@ class AssetManagementAiSummaryService {
     );
   }
 
+  AssetManagementAiSummaryResult buildWaitingForAiResult(
+    AssetManagementInsightReport report,
+  ) {
+    final payload = buildPayload(report);
+    return AssetManagementAiSummaryResult(
+      status: AssetManagementAiSummaryStatus.fallback,
+      text: buildDeterministicSummary(report),
+      source: 'deterministic fallback / waiting for ai-hub',
+      errorMessage: null,
+      generatedAt: _now(),
+      payload: payload,
+    );
+  }
+
   Map<String, dynamic> buildPayload(AssetManagementInsightReport report) {
     return <String, dynamic>{
       'available_money': <String, dynamic>{
