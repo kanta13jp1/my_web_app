@@ -70,4 +70,4 @@ RULES (毎ターン inject / pointer hub / 詳細展開 = docs/RULES_INDEX.md):
 
 [FLEET-OPS] 5 正本 (Issues/PR / WBS+Notion / NotebookLM / Slack / worktree+branch). 作業開始時: 担当重複 / file・schema・EF・workflow 競合 / 5 正本不一致 / 通知形骸化 / 他 AI 活用余地を確認.
 
-> 詳細展開 (= 全 38 rule の full body / 違反例 / 関連 docs link): docs/RULES_INDEX.md (= part 134 で新規)
+> 詳細展開 (= 全 39 rule の full body / 違反例 / 関連 docs link): docs/RULES_INDEX.md (= part 134 で新規)
