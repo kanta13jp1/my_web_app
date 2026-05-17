@@ -27,6 +27,7 @@ class AiToolUpdateRoutingTest(unittest.TestCase):
                 "docs/AI_FALLBACK_RUNBOOK.md",
                 "docs/DEV_PROCESS_MULTI_AI.md",
                 ".github/agents/README.md",
+                "docs/SUBAGENT_ORCHESTRATION_POLICY.md",
             },
         )
 
