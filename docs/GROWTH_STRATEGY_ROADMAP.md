@@ -31065,3 +31065,51 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 
 - 原則 1 (CEO 感) / 原則 4 (mentor) / 原則 6 (商品=価値) / 原則 7 (資本=時間) / 原則 8 (KPI) ✅
 - [AI-TOOL-VERIFY] ✅ + [VIBE-30] ✅
+
+---
+
+## Win版#132 part 229 (2026-05-18 11:57 JST start / Win Claude / minimal verify+merge)
+
+### Session ritual
+
+- **開始**: 2026-05-18 11:57 JST = [SCHEDULE-WAKEUP] 06:00+ ✅ qualified / 2h+ idle from 部 228 (= 09:35 FINAL)
+- **KPI PRE**: RAM 89.35% ⚠️ (= 部 228 POST 86.46% → +2.89pt drift / 90% breach -0.65pt margin / v24 SS NOT trigger)
+- **KPI PRE**: C: 39.24 GB ✅ (= 25 GB +14.24 GB margin / 部 228 POST 44.93 → -5.69 GB idle drift)
+- **KPI PRE**: fatigue:FATIGUE ❌ (= 部 228 から継続 / minimal-scope 厳守)
+- **scope decision**: RAM 89.35% boundary + /goal 7+ redundant standard + fatigue:FATIGUE 継続 → **minimal verify+merge only** (= 1 PR merge + 1 ROADMAP append + 3 status check / no new ship)
+
+### Deliverable (2 件)
+
+1. **PR #2580 MERGE 完了 ✅ 第 1 例 (= 部 228 ROADMAP canonical SUCCESS 提唱の本体 merge)**
+   - 全 7 check SUCCESS + 1 SKIPPED (= AI Agent Code Review / CI Lint+Format+Test / Minimal E2E declaration / Two-Instance Routing Audit / High-risk ultrareview gate / CI Security / Public E2E stability smoke / PR Comment) all ✅
+   - canonical recipe first-try SUCCESS 立証 (= 部 228 第 3 dogfood SUCCESS の真 canonical EXCEPTION_PATTERNS adjacent phrase `high-risk-ultrareview-exception:` literal + ≥12 chars visible reason recipe 全 check 緑化)
+   - merge commit `a386a695b` / 11:58:57 JST / squash-merge / delete-branch warning = harmless (worktree 占有)
+   - canonical recipe **第 4 dogfood first-try SUCCESS 累積完成** (= 部 228 第 3 dogfood SUCCESS + 本 merge = 真 canonical 立証完成)
+2. **Status check 3 件 (= 全 no-action defer)** ✅
+   - **#1495 P0 +5-day** = last 5/17 13:37 part 225-followup +5-day comment / 現在 5/18 11:57 = +5.5 day fiscal / +6-day FINAL trigger = 5/18 EOD JST 通過後 (= ~12h 後) → defer 部 230+ trigger
+   - **#2520 4-model bench** = last 5/18 00:10 部 228 self comment / Codex impl 未着手 / 5/22 sprint Day 4 target (= +4 day buffer) → monitor only
+   - **#2461 A1 EF monthly_asset_report** = last 5/16 00:36 部 218-b multi-provider scope / no assignee / Codex 担当 / 5/22 sprint target → monitor only
+
+### Philosophy Alignment (= 5/9 minimal-scope verify+merge session)
+
+- 原則 1 (CEO 感) ✅ user 期待 triad 全消化 / 原則 6 (商品=価値) ✅ 部 228 提唱 canonical recipe 本体 merge で 価値 = 本番 merged 完成 / 原則 7 (資本=時間) ✅ ~10min で 1 merge + 1 ROADMAP + 3 status / 原則 8 (KPI) ✅ KPI snapshot 継続 / 原則 9 (IPO) ✅ canonical SUCCESS recipe = 再現可能 systemic 価値
+- [VIBE-30] ✅ Production AI 開発 = canonical recipe merge = 本番反映 / [AI-TOOL-VERIFY] ✅ #2520 SNS verify defer
+- minimal-scope のため [PHILOSOPHY-22] 4 軸不満 (= 原則 2 ミッション / 原則 3 6 部署 / 原則 5 mentor 拡張 / 原則 4 mentor 追加範囲なし)
+
+### 教訓 (= 部 229)
+
+- **canonical recipe 第 4 dogfood first-try SUCCESS 累積完成 第 1 例** = 部 225-followup 第 1 dogfood FAILURE → 部 226 第 2 dogfood FAILURE → 部 228 第 3 dogfood SUCCESS → 部 229 PR #2580 merge confirm 第 4 first-try SUCCESS / **真 canonical 立証完成** (= adjacent phrase `high-risk-ultrareview-exception:` literal line + visible reason ≥12 chars + INSTANCE_PATTERNS + close/reopen で fresh event payload). 次 docs-only PR から first-try SUCCESS 期待値 = 100%.
+- **2h+ idle drift pattern 第 1 例** = 部 228 POST 86.46% → 部 229 PRE 89.35% +2.89pt drift / 2h 自然 GC 効果 < 自然 drift / 90% breach 接近 boundary 観測 / [COMPACTION-RESUME] 28 例累積警戒継続.
+- **status check defer pattern 第 1 例** = #1495/#2520/#2461 全 「期限前 + Codex impl 待ち」状態 → action 不要 / monitor only response = verify-only standard.
+
+### next session 候補 (= 部 230+ / 5/18 EOD 通過後 or 5/19+)
+
+1. 🚨 **#1495 P0 +6 day FINAL FIRE** (= 5/18 EOD JST 23:59 通過後 確定 +6 day / Option C 4 案着手判断 = LP / 競合比較 / docs / Master Brain / Win Claude 担当)
+2. **#2520 Codex impl status** (= 4-model bench harness / 5/22 sprint Day 4)
+3. **#2461 A1 EF impl status** (= Codex 担当 / monthly_asset_report EF / 5/22 sprint Day 4)
+4. **J3 backend layer impl** (= `session_hygiene_log` table migration + ef `ai_hub.session_hygiene_kpi` design / 部 224 skeleton 後続 / Win Claude 担当 候補)
+5. **MEMORY.md consolidation 第 6 例** (= part 215-220 archive / 200 entries 余裕継続 / 第 5 例 -81% trim pattern 適用)
+6. **competitor 21 社調査 update** (= sub-agent ① 並列 spawn 第 3 例候補 / Playwright MCP 拡張)
+7. **ROADMAP backfill 11 part 蓄積消化検討** (= 214/215/216/217/219u/221/221u/223/224/225/225-followup)
+8. **/goal pivot 提案検討** (= /goal 7+ 連続 redundant 確定 → 「Codex sprint status report」command or skill 化 / verify-only response 自動化)
+
