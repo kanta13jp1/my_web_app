@@ -50,8 +50,11 @@ Latest source-only evidence snapshot:
 4. Run B1/B2/B3/R1 against synthetic repository fixtures only.
 5. Normalize results with `scripts/internal_ai_bench.py` and attach the Markdown
    report to `#2520`.
+6. Attach a monthly telemetry report from `scripts/ai_model_telemetry_report.py`
+   to `#2522` before changing provider routing thresholds.
 
 ## Interim Verdict
 
 Keep the existing asset-management AI routing conservative. Evidence collection
-is ready, but live scoring and production routing changes are not complete.
+is ready, but live scoring, cost/quality telemetry review, and production
+routing changes are not complete.
