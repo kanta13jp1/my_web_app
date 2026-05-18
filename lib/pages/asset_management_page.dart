@@ -24,6 +24,7 @@ import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_payment_reminder_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
@@ -161,6 +162,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetLiabilityDebtRow? _annualRateEvidencePasteTargetRow;
   final TextEditingController _cardStatementImportController =
       TextEditingController();
+  final TextEditingController _repaymentSimulationExtraPaymentController =
+      TextEditingController(text: '0');
   String? _selectedCardStatementBillingAccountId;
   String? _cardStatementImportMessage;
 
@@ -215,6 +218,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityPlanningService();
   final AssetLiabilityPaymentReminderService _assetLiabilityReminderService =
       const AssetLiabilityPaymentReminderService();
+  final AssetLiabilityRepaymentSimulationService
+      _assetLiabilityRepaymentSimulationService =
+      const AssetLiabilityRepaymentSimulationService();
   final AssetLiabilityCardStatementImportService _cardStatementImportService =
       const AssetLiabilityCardStatementImportService();
   final AssetLiabilityAnnualRateEvidenceService _annualRateEvidenceService =
@@ -236,6 +242,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   DebtExecutionPlan? _debtExecutionPlan;
   AssetDebtPlannerMode _debtPlannerMode = AssetDebtPlannerMode.ask;
   Set<String> _selectedDebtExecutionTaskIds = <String>{};
+  AssetLiabilityRepaymentSimulationStrategy _repaymentSimulationStrategy =
+      AssetLiabilityRepaymentSimulationStrategy.interestRate;
   bool _isApplyingDebtExecutionTasks = false;
   DebtLockdownSnapshot? _debtLockdownSnapshot;
   bool _isLoadingDebtLockdown = false;
@@ -329,6 +337,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     _annualRateControllers.forEach((_, controller) => controller.dispose());
     _cardStatementImportController.dispose();
+    _repaymentSimulationExtraPaymentController.dispose();
     _annualRateControllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
     _flowAmountController.dispose();
@@ -7474,6 +7483,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetWorkbookDebtTable(workbook),
             const SizedBox(height: 16),
             _buildAssetWorkbookPriorityList(workbook),
+            const SizedBox(height: 16),
+            _buildAssetRepaymentSimulationPanel(workbook),
           ],
         ),
       ),
@@ -11518,6 +11529,249 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildAssetRepaymentSimulationPanel(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final extraMonthlyPayment = _parseRepaymentSimulationExtraPayment();
+    final simulation =
+        _assetLiabilityRepaymentSimulationService.buildComparison(
+      workbook: workbook,
+      extraMonthlyPayment: extraMonthlyPayment,
+    );
+    if (!simulation.hasEligibleDebt || simulation.plans.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final selectedPlan = simulation.planFor(_repaymentSimulationStrategy) ??
+        simulation.plans.first;
+    final baselinePlan =
+        simulation.baselinePlanFor(_repaymentSimulationStrategy);
+    final firstMonth = selectedPlan.monthSnapshots.isEmpty
+        ? null
+        : selectedPlan.monthSnapshots.first;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.calculate_outlined, color: Color(0xFF2563EB)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Repayment simulator',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Compare payoff timing by interest rate, smallest balance, or payment day. Uses direct unpaid liabilities only, so card-billed detail rows are not double counted.',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: 190,
+                child: TextField(
+                  controller: _repaymentSimulationExtraPaymentController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Extra / month',
+                    prefixText: '¥',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              for (final strategy
+                  in AssetLiabilityRepaymentSimulationStrategy.values)
+                ChoiceChip(
+                  selected: _repaymentSimulationStrategy == strategy,
+                  label: Text(_repaymentSimulationStrategyLabel(strategy)),
+                  onSelected: (_) {
+                    setState(() {
+                      _repaymentSimulationStrategy = strategy;
+                    });
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildRepaymentSimulationMetric(
+                label: 'Monthly budget',
+                value: _formatManagementYen(selectedPlan.monthlyPaymentBudget),
+              ),
+              _buildRepaymentSimulationMetric(
+                label: 'Payoff timing',
+                value: _formatRepaymentSimulationMonths(
+                  selectedPlan.estimatedPayoffMonths,
+                ),
+              ),
+              _buildRepaymentSimulationMetric(
+                label: 'Change vs base',
+                value: _formatRepaymentSimulationDelta(
+                  selectedPlan: selectedPlan,
+                  baselinePlan: baselinePlan,
+                ),
+              ),
+              _buildRepaymentSimulationMetric(
+                label: 'Interest estimate',
+                value:
+                    _formatManagementYen(selectedPlan.estimatedInterestTotal),
+              ),
+            ],
+          ),
+          if (firstMonth != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Month 1 focus: ${firstMonth.focusDebtName ?? '-'} / payment ${_formatManagementYen(firstMonth.paymentTotal)} / interest ${_formatManagementYen(firstMonth.interestTotal)} / remaining ${_formatManagementYen(firstMonth.remainingDebt)}',
+              style: const TextStyle(fontSize: 12, height: 1.5),
+            ),
+          ],
+          const SizedBox(height: 10),
+          for (final entry
+              in selectedPlan.priorityRows.take(4).toList().asMap().entries)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${entry.key + 1}.',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${entry.value.name} / ${_formatManagementYen(entry.value.balance)} / APR ${_formatManagementPercent(entry.value.annualRate)} / day ${entry.value.paymentDay ?? '-'} / monthly ${_formatManagementYen(entry.value.monthlyPayment)}',
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (selectedPlan.warnings.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              selectedPlan.warnings.join(' / '),
+              style: const TextStyle(
+                color: Color(0xFFB91C1C),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRepaymentSimulationMetric({
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      width: 170,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, height: 1.3),
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _parseRepaymentSimulationExtraPayment() {
+    final normalized = _repaymentSimulationExtraPaymentController.text
+        .replaceAll(',', '')
+        .trim();
+    return max(0.0, double.tryParse(normalized) ?? 0);
+  }
+
+  String _repaymentSimulationStrategyLabel(
+    AssetLiabilityRepaymentSimulationStrategy strategy,
+  ) {
+    switch (strategy) {
+      case AssetLiabilityRepaymentSimulationStrategy.interestRate:
+        return 'APR';
+      case AssetLiabilityRepaymentSimulationStrategy.smallestBalance:
+        return 'Smallest';
+      case AssetLiabilityRepaymentSimulationStrategy.paymentDay:
+        return 'Payment day';
+    }
+  }
+
+  String _formatRepaymentSimulationMonths(int? months) {
+    if (months == null) return 'over 360 mo';
+    if (months == 0) return '0 mo';
+    return '$months mo';
+  }
+
+  String _formatRepaymentSimulationDelta({
+    required AssetLiabilityRepaymentSimulationPlan selectedPlan,
+    required AssetLiabilityRepaymentSimulationPlan? baselinePlan,
+  }) {
+    final current = selectedPlan.estimatedPayoffMonths;
+    final baseline = baselinePlan?.estimatedPayoffMonths;
+    if (current == null && baseline == null) return 'no payoff';
+    if (current == null) return 'worse';
+    if (baseline == null) return 'now payable';
+    final delta = current - baseline;
+    if (delta == 0) return 'same';
+    if (delta < 0) return '$delta mo';
+    return '+$delta mo';
   }
 
   String _paymentRiskStatusLabel(AssetLiabilityPaymentDayRisk risk) {
