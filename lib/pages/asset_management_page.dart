@@ -20,6 +20,7 @@ import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
+import 'package:my_web_app/services/asset_liability_csv_restore_service.dart';
 import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_payment_reminder_service.dart';
@@ -162,10 +163,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetLiabilityDebtRow? _annualRateEvidencePasteTargetRow;
   final TextEditingController _cardStatementImportController =
       TextEditingController();
+  final TextEditingController _assetCsvRestoreController =
+      TextEditingController();
   final TextEditingController _repaymentSimulationExtraPaymentController =
       TextEditingController(text: '0');
   String? _selectedCardStatementBillingAccountId;
   String? _cardStatementImportMessage;
+  AssetLiabilityCsvRestorePreview? _assetCsvRestorePreview;
+  String? _assetCsvRestoreMessage;
+  bool _isApplyingAssetCsvRestore = false;
 
   // --- グラフデータ ---
   List<LineChartBarData> _lineChartBars = [];
@@ -223,6 +229,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetLiabilityRepaymentSimulationService();
   final AssetLiabilityCardStatementImportService _cardStatementImportService =
       const AssetLiabilityCardStatementImportService();
+  final AssetLiabilityCsvRestoreService _assetLiabilityCsvRestoreService =
+      const AssetLiabilityCsvRestoreService();
   final AssetLiabilityAnnualRateEvidenceService _annualRateEvidenceService =
       AssetLiabilityAnnualRateEvidenceService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
@@ -337,6 +345,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     _annualRateControllers.forEach((_, controller) => controller.dispose());
     _cardStatementImportController.dispose();
+    _assetCsvRestoreController.dispose();
     _repaymentSimulationExtraPaymentController.dispose();
     _annualRateControllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
@@ -965,27 +974,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _persistAssetLiabilityMonthlyState() async {
     await _assetLiabilityRepository.saveMonth(
       month: _now,
-      state: AssetLiabilityMonthlyState(
-        paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
-        actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
-        paymentDifferenceReasons: Map<String, String>.from(
-          _paymentDifferenceReasons,
-        ),
-        annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
-        annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
-          _annualRateEvidences,
-        ),
-        paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
-        paymentSourceAccountIds: Map<String, String>.from(
-          _paymentSourceAccountIds,
-        ),
-        cardBillingAccountIds: Map<String, String>.from(_cardBillingAccountIds),
-        cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
-          _cardStatementLines,
-        ),
-        incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
-        transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
+      state: _currentAssetLiabilityMonthlyState(),
+    );
+  }
+
+  AssetLiabilityMonthlyState _currentAssetLiabilityMonthlyState() {
+    return AssetLiabilityMonthlyState(
+      paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+      actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
+      paymentDifferenceReasons: Map<String, String>.from(
+        _paymentDifferenceReasons,
       ),
+      annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
+      annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        _annualRateEvidences,
+      ),
+      paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
+      paymentSourceAccountIds: Map<String, String>.from(
+        _paymentSourceAccountIds,
+      ),
+      cardBillingAccountIds: Map<String, String>.from(_cardBillingAccountIds),
+      cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
+        _cardStatementLines,
+      ),
+      incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
+      transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
     );
   }
 
@@ -994,6 +1007,185 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _persistAssetLiabilityMonthlyState();
     } catch (e) {
       debugPrint('Error saving asset liability monthly state: $e');
+    }
+  }
+
+  DateTime? _parseAssetLiabilityMonthKey(String monthKey) {
+    final parts = monthKey.split('-');
+    if (parts.length != 2) return null;
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    if (year == null || month == null || month < 1 || month > 12) {
+      return null;
+    }
+    return DateTime(year, month);
+  }
+
+  String _assetCsvRestoreSectionLabel(AssetLiabilityCsvRestoreSection section) {
+    switch (section) {
+      case AssetLiabilityCsvRestoreSection.monthlyHistory:
+        return 'monthly history';
+      case AssetLiabilityCsvRestoreSection.paymentSchedule:
+        return 'payment schedule';
+      case AssetLiabilityCsvRestoreSection.cardStatement:
+        return 'card statement';
+      case AssetLiabilityCsvRestoreSection.incomePlans:
+        return 'income plans';
+      case AssetLiabilityCsvRestoreSection.accountCashflow:
+        return 'account cashflow';
+      case AssetLiabilityCsvRestoreSection.unknown:
+        return 'unknown';
+    }
+  }
+
+  String _assetCsvRestorePreviewMessage(
+    AssetLiabilityCsvRestorePreview preview,
+  ) {
+    final sections =
+        preview.detectedSections.map(_assetCsvRestoreSectionLabel).join(', ');
+    final monthText = preview.affectedMonthKeys.isEmpty
+        ? '0 months'
+        : preview.affectedMonthKeys.join(', ');
+    return [
+      'Preview: ${sections.isEmpty ? 'unknown' : sections}',
+      'months: $monthText',
+      'payments: ${preview.restoredPaymentCount}',
+      'cards: ${preview.restoredCardStatementLineCount}',
+      'income: ${preview.restoredIncomeCount}',
+      'snapshots: ${preview.monthlySnapshots.length}',
+      'rejected: ${preview.rejectedRows.length}',
+    ].join(' / ');
+  }
+
+  void _previewAssetLiabilityCsvRestore() {
+    final rawText = _assetCsvRestoreController.text.trim();
+    if (rawText.isEmpty) {
+      setState(() {
+        _assetCsvRestorePreview = null;
+        _assetCsvRestoreMessage = 'Paste an exported CSV before preview.';
+      });
+      return;
+    }
+    final preview = _assetLiabilityCsvRestoreService.previewCsvText(rawText);
+    setState(() {
+      _assetCsvRestorePreview = preview;
+      _assetCsvRestoreMessage = _assetCsvRestorePreviewMessage(preview);
+    });
+  }
+
+  Future<void> _applyAssetLiabilityCsvRestore() async {
+    final preview = _assetCsvRestorePreview;
+    if (preview == null || !preview.hasRestorableRows) {
+      setState(() {
+        _assetCsvRestoreMessage = 'Preview a restorable CSV before apply.';
+      });
+      return;
+    }
+    setState(() {
+      _isApplyingAssetCsvRestore = true;
+      _assetCsvRestoreMessage = 'Applying append-only restore...';
+    });
+    try {
+      final existingStates = <String, AssetLiabilityMonthlyState>{};
+      final currentMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        _now,
+      );
+      for (final monthKey in preview.monthlyStates.keys) {
+        if (monthKey == currentMonthKey) {
+          existingStates[monthKey] = _currentAssetLiabilityMonthlyState();
+          continue;
+        }
+        final month = _parseAssetLiabilityMonthKey(monthKey);
+        if (month == null) continue;
+        existingStates[monthKey] = await _assetLiabilityRepository.loadMonth(
+          month,
+        );
+      }
+
+      final mergeResult = _assetLiabilityCsvRestoreService.mergePreview(
+        preview: preview,
+        existingStates: existingStates,
+        existingSnapshots: _monthlySnapshots,
+        policy: AssetLiabilityCsvRestoreApplyPolicy.appendOnly,
+      );
+
+      for (final monthKey in preview.monthlyStates.keys) {
+        final month = _parseAssetLiabilityMonthKey(monthKey);
+        final state = mergeResult.monthlyStates[monthKey];
+        if (month == null || state == null) continue;
+        await _assetLiabilityRepository.saveMonth(month: month, state: state);
+      }
+
+      final importedSnapshotKeys =
+          preview.monthlySnapshots.map((snapshot) => snapshot.monthKey).toSet();
+      for (final snapshot in mergeResult.monthlySnapshots) {
+        if (!importedSnapshotKeys.contains(snapshot.monthKey)) continue;
+        await _assetLiabilityRepository.saveMonthlySnapshot(snapshot);
+      }
+
+      final refreshedSnapshots =
+          await _assetLiabilityRepository.loadMonthlySnapshots();
+      if (!mounted) return;
+      final currentState = mergeResult.monthlyStates[currentMonthKey];
+      setState(() {
+        if (currentState != null) {
+          _monthlyPaymentOverrides = Map<String, double>.from(
+            currentState.paymentOverrides,
+          );
+          _actualPaymentAmounts = Map<String, double>.from(
+            currentState.actualPaymentAmounts,
+          );
+          _paymentDifferenceReasons = Map<String, String>.from(
+            currentState.paymentDifferenceReasons,
+          );
+          _annualRateOverrides = Map<String, double>.from(
+            currentState.annualRateOverrides,
+          );
+          _annualRateEvidences =
+              Map<String, AssetLiabilityAnnualRateEvidence>.from(
+            currentState.annualRateEvidences,
+          );
+          _monthlyPaidAccountNames = Set<String>.from(
+            currentState.paidAccountNames,
+          );
+          _paymentSourceAccountIds = Map<String, String>.from(
+            currentState.paymentSourceAccountIds,
+          );
+          _cardBillingAccountIds = Map<String, String>.from(
+            currentState.cardBillingAccountIds,
+          );
+          _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
+            currentState.cardStatementLines,
+          );
+          _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
+            currentState.incomePlans,
+          );
+          _transferTasks = List<AssetLiabilityTransferTask>.from(
+            currentState.transferTasks,
+          );
+          _syncPaymentStateControllers();
+        }
+        _monthlySnapshots = List<AssetLiabilityMonthlySnapshot>.from(
+          refreshedSnapshots,
+        );
+        final warningText = mergeResult.warnings.isEmpty
+            ? ''
+            : ' Warnings: ${mergeResult.warnings.take(3).join(' ')}';
+        _assetCsvRestoreMessage =
+            'Applied append-only restore for ${preview.affectedMonthKeys.length} month(s).$warningText';
+      });
+    } catch (e) {
+      debugPrint('Error applying asset CSV restore: $e');
+      if (!mounted) return;
+      setState(() {
+        _assetCsvRestoreMessage = 'CSV restore failed: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isApplyingAssetCsvRestore = false;
+        });
+      }
     }
   }
 
@@ -10676,6 +10868,96 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  Widget _buildAssetCsvRestorePanel() {
+    final preview = _assetCsvRestorePreview;
+    final theme = Theme.of(context);
+    final message = _assetCsvRestoreMessage;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 20),
+        const Text(
+          'CSV restore',
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _assetCsvRestoreController,
+          minLines: 3,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Exported CSV',
+            hintText: 'month_key,...',
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            OutlinedButton.icon(
+              onPressed: _previewAssetLiabilityCsvRestore,
+              icon: const Icon(Icons.visibility_outlined),
+              label: const Text('Preview'),
+            ),
+            FilledButton.icon(
+              onPressed: preview != null &&
+                      preview.hasRestorableRows &&
+                      !_isApplyingAssetCsvRestore
+                  ? _applyAssetLiabilityCsvRestore
+                  : null,
+              icon: _isApplyingAssetCsvRestore
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.restore_outlined),
+              label: const Text('Apply append-only'),
+            ),
+            if (message != null)
+              Text(
+                message,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+          ],
+        ),
+        if (preview != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _assetCsvRestorePreviewMessage(preview),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          if (preview.rejectedRows.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              preview.rejectedRows
+                  .take(3)
+                  .map((row) => 'row ${row.rowNumber}: ${row.reason}')
+                  .join('\n'),
+              style: TextStyle(
+                color: theme.colorScheme.error,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
   Widget _buildMonthlySnapshotSection(AssetLiabilityWorkbook workbook) {
     final comparisons = _assetLiabilityHistoryService.compareSnapshots(
       _monthlySnapshots,
@@ -10739,6 +11021,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
           const SizedBox(height: 8),
+          _buildAssetCsvRestorePanel(),
+          const SizedBox(height: 12),
           _buildMonthlySnapshotChart(chartData),
           const SizedBox(height: 12),
           if (comparisons.isEmpty)
