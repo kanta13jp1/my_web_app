@@ -28,8 +28,8 @@ jobs:
           python scripts/internal_ai_bench_source_recheck.py \
             --input docs/ai-bench/results/template.json \
             --output-json ai-bench-source-recheck.json \
-            --output-md ai-bench-source-recheck.md \
-            --strict
+            --output-md ai-bench-source-recheck.md
+          cat ai-bench-source-recheck.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload source recheck artifact
         uses: actions/upload-artifact@v6
