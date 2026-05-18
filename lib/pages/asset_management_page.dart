@@ -22,6 +22,7 @@ import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
 import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_liability_payment_reminder_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
@@ -212,6 +213,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   late final AssetLiabilityRepository _assetLiabilityRepository;
   final AssetLiabilityPlanningService _assetLiabilityPlanner =
       const AssetLiabilityPlanningService();
+  final AssetLiabilityPaymentReminderService _assetLiabilityReminderService =
+      const AssetLiabilityPaymentReminderService();
   final AssetLiabilityCardStatementImportService _cardStatementImportService =
       const AssetLiabilityCardStatementImportService();
   final AssetLiabilityAnnualRateEvidenceService _annualRateEvidenceService =
@@ -7454,6 +7457,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 12),
             _buildAssetWorkbookWarning(workbook),
             const SizedBox(height: 16),
+            _buildAssetPaymentReminderPanel(workbook),
+            const SizedBox(height: 16),
             _buildAssetWorkbookPaymentList(workbook),
             const SizedBox(height: 16),
             _buildIncomePlanSection(workbook),
@@ -9628,6 +9633,151 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildAssetPaymentReminderPanel(AssetLiabilityWorkbook workbook) {
+    final reminders = _assetLiabilityReminderService.buildCandidates(
+      workbook: workbook,
+      now: _now,
+    );
+    if (reminders.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.32),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.notifications_active_outlined,
+                color: Color(0xFFD97706),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '支払日前リマインダー候補',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '通知基盤が未設定でも、支払日順資金繰りに沿って前日・当日・期限超過の未払いを確認できます。',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...reminders.map(_buildAssetPaymentReminderRow),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetPaymentReminderRow(
+    AssetLiabilityPaymentReminderCandidate reminder,
+  ) {
+    final row = reminder.cashflowRow;
+    final color = _paymentReminderStatusColor(reminder);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 72,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  DateFormat('M/d').format(row.paymentDate),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                ),
+                Text(
+                  _paymentReminderStatusLabel(reminder),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reminder.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+                Text(
+                  '${reminder.detail} / 支払予定 ${_formatManagementYen(row.paymentAmount)} / 支払後手元 ${_formatManagementYen(row.cashAfterPayment)}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _paymentReminderStatusColor(
+    AssetLiabilityPaymentReminderCandidate reminder,
+  ) {
+    if (reminder.hasShortageRisk ||
+        reminder.status == AssetLiabilityPaymentReminderStatus.overdue) {
+      return const Color(0xFFB91C1C);
+    }
+    if (reminder.status == AssetLiabilityPaymentReminderStatus.dueToday) {
+      return const Color(0xFFD97706);
+    }
+    return const Color(0xFF2563EB);
+  }
+
+  String _paymentReminderStatusLabel(
+    AssetLiabilityPaymentReminderCandidate reminder,
+  ) {
+    return switch (reminder.status) {
+      AssetLiabilityPaymentReminderStatus.overdue => '超過',
+      AssetLiabilityPaymentReminderStatus.dueToday => '今日',
+      AssetLiabilityPaymentReminderStatus.dueTomorrow => '明日',
+    };
   }
 
   Widget _buildAssetWorkbookPaymentList(AssetLiabilityWorkbook workbook) {
