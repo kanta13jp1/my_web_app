@@ -1,7 +1,7 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-05-17T21:36:13Z",
+      "checked_at": "2026-05-18T21:43:40Z",
       "hash": "e60a10db424c11ec2586a0226dd097e78030903e39a9ace570672f764a90654d",
       "keyword_groups": {
         "codex-runtime": [
@@ -52,7 +52,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-05-17T21:36:13Z",
+      "checked_at": "2026-05-18T21:43:40Z",
       "hash": "a27e5806bf82bc34fb597b1793e227fd4282ca4138184e63066acd1645f8fe0e",
       "keyword_groups": {
         "codex-runtime": [
@@ -89,7 +89,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-05-17T21:36:13Z",
+      "checked_at": "2026-05-18T21:43:40Z",
       "hash": "2c377ae8c14e19e4f0ddd7636e3b77709788ff53844b4e90417547cc8f4b660b",
       "keyword_groups": {
         "codex-runtime": [
@@ -129,8 +129,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-05-17T21:36:13Z",
-      "hash": "4a3702c3be45424964c00ea96fd72c632b171ae465c205614bebe361bbdfb9d8",
+      "checked_at": "2026-05-18T21:43:40Z",
+      "hash": "557926109b5f667d4948f66a8f5ee4a7a64392e0e86314cbd838fb7dd7e6ff1c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -175,13 +175,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-14 / Work with Codex from anywhere You can now use Codex from the ChatGPT mobile app by connecti",
+      "latest_signal": "2026-05-18 / Codex CLI 0.131.0 pre",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-05-17T21:36:13Z",
+      "checked_at": "2026-05-18T21:43:40Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -190,7 +190,7 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-05-17T21:36:13Z",
+      "checked_at": "2026-05-18T21:43:40Z",
       "hash": "e43152c7f321582a2aaa58da1d710953e3f55b99346a7caf8fbb55bd74756479",
       "keyword_groups": {
         "codex-runtime": [
@@ -233,8 +233,8 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-05-17T21:36:13Z",
-      "hash": "641000c7870fba34d91f75e41f5c27ad519e9703643a24a8eb9a04bf16ef6204",
+      "checked_at": "2026-05-18T21:43:40Z",
+      "hash": "38b4806b2ff3e5c516ab0c11bfd1591fbf373c60c19ad670cb36fcb3cd319df4",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -259,8 +259,8 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-05-17T21:36:13Z",
-      "hash": "c401200ab6d8e345671fd126860c488632458ee2b8d845ef196c46992578739c",
+      "checked_at": "2026-05-18T21:43:40Z",
+      "hash": "1b66e00e044234619f3f8c895cd3b0f728c984a1f7bbc491acc93cfd6938b63b",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -290,13 +290,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "May 13, 2026",
+      "latest_signal": "May 17, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-05-17T21:36:13Z",
+      "checked_at": "2026-05-18T21:43:40Z",
       "hash": "094937429b2b633f2dedcf4e45abfdc69e8202a2c14ead170898b56ef5a1fa59",
       "keyword_groups": {
         "hooks": [
@@ -324,5 +324,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-05-17T21:36:13Z"
+  "updated_at": "2026-05-18T21:43:40Z"
 }
