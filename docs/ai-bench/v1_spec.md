@@ -81,7 +81,9 @@ python scripts/internal_ai_bench_source_recheck.py `
 
 The source recheck is also available as the `AI Bench Source Recheck` workflow.
 It performs public HTTP reads only; it does not call paid model APIs and does
-not change routing defaults.
+not change routing defaults. The workflow is report-only because some official
+sites may serve different content or bot-block GitHub hosted runners; use the
+CLI `--strict` flag for operator-gated live-run readiness checks.
 
 Create a template:
 

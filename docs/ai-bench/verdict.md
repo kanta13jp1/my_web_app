@@ -32,7 +32,8 @@ Latest source-only evidence snapshot:
    ```
 
    This step is also available as the `AI Bench Source Recheck` workflow. It is
-   source-only and does not use provider API keys.
+   source-only and does not use provider API keys. The workflow is report-only;
+   use the CLI `--strict` mode before approving any live provider execution.
 
 2. Generate a dry-run provider manifest:
 
