@@ -49,7 +49,7 @@ jobs:
 
       - name: Upload smoke report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: blog-news-prod-smoke-report
           path: tmp/blog-news-prod-smoke/report.json
