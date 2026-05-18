@@ -242,6 +242,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isGeneratingAssetManagementAiSummary = false;
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
+  final Set<String> _developerRequestIssueSubmissionKeys = <String>{};
+  final Map<String, Map<String, dynamic>> _developerRequestIssueResults =
+      <String, Map<String, dynamic>>{};
 
   final List<Color> _colors = [
     const Color(0xFF6366F1),
@@ -8336,6 +8339,130 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return jsonEncode(_assetManagementAiSummaryService.buildPayload(report));
   }
 
+  Future<void> _submitAssetManagementDeveloperIssue(
+    AssetManagementDeveloperRequest request,
+  ) async {
+    if (_supabase.auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('GitHub Issueの発行にはログインが必要です')),
+      );
+      return;
+    }
+
+    final issueKey = _developerRequestIssueKey(request);
+    if (_developerRequestIssueSubmissionKeys.contains(issueKey)) {
+      return;
+    }
+
+    setState(() {
+      _developerRequestIssueSubmissionKeys.add(issueKey);
+    });
+
+    try {
+      final severityLabel = _assetManagementInsightSeverityLabel(
+        request.severity,
+      );
+      final response = await _supabase.functions.invoke(
+        'core-hub',
+        body: {
+          'action': 'feature_request.submit',
+          'title': '[資産管理] ${request.title}',
+          'description': [
+            request.description,
+            '',
+            '発行元: 資産管理画面 > 開発者向け改善提案',
+            '重要度: $severityLabel',
+            '画面: /asset-management',
+          ].join('\n'),
+          'expected_outcome':
+              '資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。',
+          'category': 'UX改善',
+          'priority': _developerRequestIssuePriority(request.severity),
+          'source': 'asset_management_developer_request',
+        },
+      );
+
+      final rawData = response.data;
+      if (rawData is! Map) {
+        throw const FormatException('Invalid feature request response');
+      }
+
+      final data = Map<String, dynamic>.from(rawData);
+      final success = data['success'] == true;
+      final partialSuccess = data['partialSuccess'] == true;
+      if (!success && !partialSuccess) {
+        throw Exception(data['error'] ?? 'GitHub Issueの発行に失敗しました');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _developerRequestIssueResults[issueKey] = data;
+      });
+
+      final githubIssue = _assetManagementDynamicMap(data['githubIssue']);
+      final wbsTask = _assetManagementDynamicMap(data['wbsTask']);
+      final issueUrl = githubIssue['html_url']?.toString() ?? '';
+      final issueNumber = githubIssue['number']?.toString() ?? '';
+      final wbsCreated = wbsTask.isNotEmpty && !wbsTask.containsKey('error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            issueUrl.isEmpty
+                ? 'WBSに登録しました。GitHub Issue連携は設定確認が必要です'
+                : wbsCreated
+                    ? 'GitHub Issue #$issueNumber を発行してWBSに登録しました'
+                    : 'GitHub Issue #$issueNumber を発行しました。'
+                        'WBS連携は設定確認が必要です',
+          ),
+          action: issueUrl.isEmpty
+              ? null
+              : SnackBarAction(
+                  label: '開く',
+                  onPressed: () => web.window.open(issueUrl, '_blank'),
+                ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('GitHub Issueの発行に失敗しました: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _developerRequestIssueSubmissionKeys.remove(issueKey);
+        });
+      }
+    }
+  }
+
+  String _developerRequestIssueKey(AssetManagementDeveloperRequest request) {
+    return '${request.title}\n${request.description}\n${request.severity.name}';
+  }
+
+  String _developerRequestIssuePriority(
+    AssetManagementInsightSeverity severity,
+  ) {
+    return switch (severity) {
+      AssetManagementInsightSeverity.critical => 'high',
+      AssetManagementInsightSeverity.warning => 'medium',
+      AssetManagementInsightSeverity.info => 'low',
+    };
+  }
+
+  Map<String, dynamic> _assetManagementDynamicMap(Object? value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return const <String, dynamic>{};
+  }
+
   Widget _buildAssetManagementAvailableCard(
     AssetManagementAvailableMoneyInsight insight,
   ) {
@@ -8684,9 +8811,71 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       height: 1.5,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  _buildAssetManagementDeveloperIssueControls(request),
                 ],
               ),
             ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAssetManagementDeveloperIssueControls(
+    AssetManagementDeveloperRequest request,
+  ) {
+    final issueKey = _developerRequestIssueKey(request);
+    final isSubmitting = _developerRequestIssueSubmissionKeys.contains(
+      issueKey,
+    );
+    final result = _developerRequestIssueResults[issueKey];
+    final githubIssue = _assetManagementDynamicMap(result?['githubIssue']);
+    final wbsTask = _assetManagementDynamicMap(result?['wbsTask']);
+    final issueUrl = githubIssue['html_url']?.toString() ?? '';
+    final issueNumber = githubIssue['number']?.toString() ?? '';
+    final hasIssue = issueUrl.isNotEmpty;
+    final hasWbsTask = wbsTask.isNotEmpty && !wbsTask.containsKey('error');
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        FilledButton.icon(
+          onPressed: isSubmitting || hasIssue
+              ? null
+              : () => _submitAssetManagementDeveloperIssue(request),
+          icon: isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  hasIssue ? Icons.check_circle_outline : Icons.add_task,
+                  size: 18,
+                ),
+          label: Text(
+            isSubmitting
+                ? 'Issue発行中'
+                : hasIssue
+                    ? 'Issue発行済み'
+                    : result == null
+                        ? 'GitHub Issue化'
+                        : 'Issue再試行',
+          ),
+        ),
+        if (hasIssue)
+          TextButton.icon(
+            onPressed: () => web.window.open(issueUrl, '_blank'),
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: Text('#$issueNumberを開く'),
+          )
+        else if (hasWbsTask)
+          const Chip(
+            avatar: Icon(Icons.playlist_add_check_circle, size: 16),
+            label: Text('WBS登録済み'),
+            visualDensity: VisualDensity.compact,
           ),
       ],
     );
