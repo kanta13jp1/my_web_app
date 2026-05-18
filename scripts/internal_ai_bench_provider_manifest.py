@@ -201,6 +201,7 @@ def build_manifest(
             "rank_only_verified_models": True,
             "fixed_strongest_model": "forbidden",
             "input_policy": SYNTHETIC_INPUT_POLICY,
+            "source_recheck_required": "Run scripts/internal_ai_bench_source_recheck.py immediately before live execution.",
             "routing_default_rule": (
                 "#2521 routing defaults must cite scored bench results or remain feature-flagged."
             ),

@@ -1,0 +1,329 @@
+{
+  "bench_id": "template",
+  "generated_at": "2026-05-18T11:01:28+00:00",
+  "issue": "#2520",
+  "live_provider_calls": false,
+  "mode": "official_source_recheck",
+  "models": [
+    {
+      "declared_verification_status": "verified",
+      "label": "openai/gpt-5.5",
+      "model": "gpt-5.5",
+      "notes": "Verified by official announcement and API model docs on 2026-05-17.",
+      "provider": "openai",
+      "rankable_after_recheck": true,
+      "source_checks": [
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": true,
+              "term": "GPT-5.5"
+            },
+            {
+              "present": true,
+              "term": "GPT‑5.5"
+            },
+            {
+              "present": true,
+              "term": "API"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "Introducing GPT"
+            },
+            {
+              "present": true,
+              "term": "GPT"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://openai.com/index/introducing-gpt-5-5/"
+        },
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": false,
+              "term": "1,050,000 context window"
+            },
+            {
+              "present": true,
+              "term": "Responses"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "GPT-5.5"
+            },
+            {
+              "present": true,
+              "term": "Pricing"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.5"
+        }
+      ],
+      "source_ok": true
+    },
+    {
+      "declared_verification_status": "verified",
+      "label": "anthropic/claude-opus-4-7",
+      "model": "claude-opus-4-7",
+      "notes": "Official model label has no SNS-only Fast suffix.",
+      "provider": "anthropic",
+      "rankable_after_recheck": true,
+      "source_checks": [
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": true,
+              "term": "claude-opus-4-7"
+            },
+            {
+              "present": true,
+              "term": "Opus 4.6"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "Claude Opus 4.7"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://www.anthropic.com/news/claude-opus-4-7"
+        }
+      ],
+      "source_ok": true
+    },
+    {
+      "declared_verification_status": "verified",
+      "label": "google/gemini-3.1-pro-preview",
+      "model": "gemini-3.1-pro-preview",
+      "notes": "Use exact live API model string from Google docs at run time.",
+      "provider": "google",
+      "rankable_after_recheck": true,
+      "source_checks": [
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": true,
+              "term": "Gemini 3 Pro Preview"
+            },
+            {
+              "present": true,
+              "term": "deprecated"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "Gemini 3.1 Pro Preview"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://ai.google.dev/gemini-api/docs/models"
+        }
+      ],
+      "source_ok": true
+    },
+    {
+      "declared_verification_status": "verified",
+      "label": "moonshot/kimi-k2.6",
+      "model": "kimi-k2.6",
+      "notes": "Official Kimi API model list candidate.",
+      "provider": "moonshot",
+      "rankable_after_recheck": true,
+      "source_checks": [
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": true,
+              "term": "Kimi K2.6"
+            },
+            {
+              "present": true,
+              "term": "Context 256k"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "kimi-k2.6"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://platform.kimi.ai/docs/models"
+        }
+      ],
+      "source_ok": true
+    },
+    {
+      "declared_verification_status": "verified",
+      "label": "deepseek/deepseek-v4-flash",
+      "model": "deepseek-v4-flash",
+      "notes": "Official DeepSeek API docs candidate; compare price and safety separately.",
+      "provider": "deepseek",
+      "rankable_after_recheck": true,
+      "source_checks": [
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": true,
+              "term": "V4-Flash"
+            },
+            {
+              "present": true,
+              "term": "Anthropic interface"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "DeepSeek-V4"
+            },
+            {
+              "present": true,
+              "term": "deepseek-v4-flash"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://api-docs.deepseek.com/updates/"
+        },
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": true,
+              "term": "pricing"
+            },
+            {
+              "present": true,
+              "term": "v4"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "deepseek"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://api-docs.deepseek.com/quick_start/pricing/"
+        }
+      ],
+      "source_ok": true
+    },
+    {
+      "declared_verification_status": "verified",
+      "label": "xai/grok-4.3",
+      "model": "grok-4.3",
+      "notes": "Official xAI docs candidate for research-heavy tasks.",
+      "provider": "xai",
+      "rankable_after_recheck": true,
+      "source_checks": [
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": true,
+              "term": "Which model should I choose?"
+            },
+            {
+              "present": true,
+              "term": "pricing"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "grok-4.3"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://docs.x.ai/developers/models"
+        }
+      ],
+      "source_ok": true
+    },
+    {
+      "declared_verification_status": "partial",
+      "label": "bytedance/seedance-2.0",
+      "model": "seedance-2.0",
+      "notes": "Primary paper verified; video ranking claims require separate evidence.",
+      "provider": "bytedance",
+      "rankable_after_recheck": false,
+      "source_checks": [
+        {
+          "error": "",
+          "ok": true,
+          "optional_terms": [
+            {
+              "present": true,
+              "term": "2.0"
+            },
+            {
+              "present": true,
+              "term": "video"
+            }
+          ],
+          "required_terms": [
+            {
+              "present": true,
+              "term": "Seedance"
+            }
+          ],
+          "status_code": 200,
+          "url": "https://arxiv.org/abs/2604.14148"
+        }
+      ],
+      "source_ok": true
+    },
+    {
+      "declared_verification_status": "unverified",
+      "label": "mimo/mimo-v2.5-pro",
+      "model": "mimo-v2.5-pro",
+      "notes": "SNS-only claim until an official provider source is added.",
+      "provider": "mimo",
+      "rankable_after_recheck": false,
+      "source_checks": [],
+      "source_ok": false
+    }
+  ],
+  "operator_approval_required_for_live": true,
+  "policy": {
+    "fixed_strongest_model": "forbidden",
+    "paid_api_calls": "forbidden_in_this_script",
+    "rank_only_verified_models_after_source_recheck": true,
+    "routing_default_rule": "#2521 routing defaults require scored bench evidence or a feature flag."
+  },
+  "rejected_sns_claims": [
+    {
+      "claim": "anthropic/opus-4.7-fast",
+      "reason": "Official Anthropic source names Claude Opus 4.7; no Fast suffix is treated as a model slot."
+    },
+    {
+      "claim": "mimo/mimo-v2.5-pro",
+      "reason": "No official source URL is attached in the bench template."
+    }
+  ],
+  "schema_version": 1,
+  "warnings": []
+}

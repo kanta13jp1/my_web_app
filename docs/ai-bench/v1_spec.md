@@ -69,6 +69,20 @@ Each axis is scored from 0 to 3. Weighted totals are normalized to 100 by
 
 ## Usage
 
+Recheck official sources before preparing any live run:
+
+```powershell
+python scripts/internal_ai_bench_source_recheck.py `
+  --input docs/ai-bench/results/template.json `
+  --output-json docs/ai-bench/results/source_recheck.json `
+  --output-md docs/ai-bench/results/source_recheck.md `
+  --strict
+```
+
+The source recheck is also available as the `AI Bench Source Recheck` workflow.
+It performs public HTTP reads only; it does not call paid model APIs and does
+not change routing defaults.
+
 Create a template:
 
 ```powershell
