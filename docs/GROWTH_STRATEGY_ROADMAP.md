@@ -31032,3 +31032,36 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 5. **competitor 21 社調査 update** (= sub-agent ① 並列 spawn 第 3 例候補)
 6. **MEMORY.md consolidation 第 6 例**
 7. **ROADMAP backfill 11 part 蓄積消化検討**
+
+---
+
+## Win版#132 part 228 (2026-05-18 09:04 JST start / Win Claude)
+
+### Session ritual
+
+- **開始**: 2026-05-18 09:04 JST = [SCHEDULE-WAKEUP] 06:00+ ✅ qualified
+- **KPI PRE**: RAM 91.49% **BREACH > 90%** (= v24 SS 第 15 例 trigger zone) / C: 44.97 GB ✅ +19.97 GB margin
+- **scope decision**: v24 SS breach + /goal 第 7 連続 saturation → **minimal verify-only** (= 既 satisfied verify + 1 canonical fix + 1 comment merge)
+
+### Deliverable (3 件)
+
+1. **#2567 canonical fix 第 3 dogfood SUCCESS 第 1 例** ✅
+   - 部 225-followup 第 1 dogfood + 部 226 第 2 dogfood (= FAILURE) を経て **第 3 dogfood SUCCESS** 確証
+   - 真因: 部 226 body は `## High-risk Ultrareview` header + `Exception declared:` だが **EXCEPTION_PATTERNS regex は `high-risk-ultrareview-exception` OR `ultrareview-exception` の adjacent phrase が必須** = 単独 word + separated phrase は hit せず
+   - 修正: `high-risk-ultrareview-exception:` literal line 追加 + visible reason ≥12 chars (= `docs-only ROADMAP append zero implementation surface no migration risk no security change no rollback path no production smoke target no observability impact data-migration nil.`)
+   - belt-and-suspenders: perspectives line も追加 (= security/rollback/data-migration/production smoke/observability all nil 明記)
+   - 結果: gate FAILURE → SUCCESS / close+reopen で fresh event payload → 第 3 dogfood **canonical fix pattern 立証完成**
+2. **#2520 4-model in-house bench scope comment** ✅
+   - SNS 9 model claim (= 部 227-b 受信) を `[AI-TOOL-VERIFY]` で処理
+   - 既存 PR #2560 (= official AI model bench harness / Codex 5/17 MERGED) 上に **4-model 直接 compare task** ([GPT-5.5 / Opus-4.7 / Kimi / DeepSeek]) 拡張 scope を comment merge ([comment 4472944724](https://github.com/kanta13jp1/my_web_app/issues/2520#issuecomment-4472944724))
+   - [ISSUE-PRECHECK] 適用 = 新 issue 起票せず既存 #2520 へ comment merge
+   - Win Codex 5/22 sprint Day 4 着地 target / EF +1 (< 50)
+3. **/goal 第 7 連続 saturation pattern 立証完成 第 1 例**
+   - 部 226 (5 連続第 1) + 部 227-b (6 連続第 2) + 部 228 (7 連続第 3) = pattern tripled
+   - **7+ 連続 = redundant 確定** (= 部 218 で 47 issues + WBS 547 reschedule + Codex 5/17 着地 = 全 既 satisfied)
+   - verify-only response standard 確立
+
+### Philosophy Alignment (= 6/9)
+
+- 原則 1 (CEO 感) / 原則 4 (mentor) / 原則 6 (商品=価値) / 原則 7 (資本=時間) / 原則 8 (KPI) ✅
+- [AI-TOOL-VERIFY] ✅ + [VIBE-30] ✅
