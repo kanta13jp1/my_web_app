@@ -1,6 +1,6 @@
 # Internal AI Model Bench v1
 
-Last updated: 2026-05-17
+Last updated: 2026-05-18
 
 ## Purpose
 
@@ -117,3 +117,17 @@ The provider manifest is a dry-run runbook only. It records eligible verified
 model slots, official sources, required environment variable names, and
 synthetic-input rules. Live provider calls remain gated by explicit operator
 approval, current official source rechecks, and a scored bench report.
+
+Generate model usage telemetry for #2522 monthly review:
+
+```powershell
+python scripts/ai_model_telemetry_report.py `
+  --input docs/ai-bench/results/model_usage_events.sample.jsonl `
+  --output-json docs/ai-bench/results/model_telemetry_summary.json `
+  --output-md docs/ai-bench/results/model_telemetry_summary.md `
+  --strict
+```
+
+Telemetry is not a ranking by itself. It records provider/model/task cost,
+failure rate, latency, quality, and thinking-token signals so #2521 routing
+changes can cite both #2520 bench scores and #2522 operating evidence.
