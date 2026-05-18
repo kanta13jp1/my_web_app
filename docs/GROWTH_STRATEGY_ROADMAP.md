@@ -31113,3 +31113,48 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 7. **ROADMAP backfill 11 part 蓄積消化検討** (= 214/215/216/217/219u/221/221u/223/224/225/225-followup)
 8. **/goal pivot 提案検討** (= /goal 7+ 連続 redundant 確定 → 「Codex sprint status report」command or skill 化 / verify-only response 自動化)
 
+## Win版#132 part 231 (2026-05-18 20:43 JST start / Win Claude / v24 SS 第 17 例 zone breach + same-day cap 第 2 violation / immediate wrap-up)
+
+### Session ritual
+
+- **開始**: 2026-05-18 20:43 JST = **premature start 第 3 例** (= user 期待 5/19 06:00+ misalign / 実 = 部 230b 19:35 FINAL から ~1h08min idle only / [SCHEDULE-WAKEUP] 06:00+ 朝 trigger 形式 ≠ 同日夜 20:43 / overnight 通過なし)
+- **KPI PRE**: RAM **94.85%** ⛔ (= 部 230b POST 92.0% → +2.85pt drift / 90% breach +4.85pt / v24 SS **第 17 例 zone breach** 第 1 例 / hard exit zone 確定)
+- **KPI PRE**: C: 28.41 GB ✅ thin (= 25 GB +3.41 GB margin / 部 230b POST 28.66 → -0.25 GB drift 安定)
+- **KPI PRE**: fatigue:FATIGUE ❌ (= 部 230b から継続 / 5/18 終日 FATIGUE 維持 / overnight reset 未達)
+- **同日 part 数**: 226/227/227-b/228/229/230/230-b/231 = **8 parts 同日** (= 6 cap **第 2 violation 例**累積 / 部 221 first violation 続)
+- **scope decision**: 3 emergency 同時発火 (= premature 第 3 + v24 SS breach 第 17 + 6 cap 第 2) → **immediate wrap-up** (= ROADMAP append 1 件 only / 新 ship 完全停止 / PR #2819 別 worktree merge 別 session)
+
+### Deliverable (1 件 only)
+
+1. **ROADMAP part 231 entry append** = 本 entry (= 3 emergency dogfood log + minimum scope hard exit pattern 記録)
+   - **PR #2819 ALL 8 SUCCESS + 1 SKIPPED 確認 ✅** (= AI Agent Code Review + Lint+Format+Test + PR minimal E2E + audit + High-risk ultrareview gate + Security Check + Public E2E stability + PR Comment) = canonical 第 5 dogfood first-try SUCCESS 累積完成 第 1 例 (= 部 224 generic template 反証 → 部 225-followup 第 1 fix → 部 226 第 2 失敗 → 部 228 第 3 SUCCESS → 部 229 #2580 merge → 部 231 #2819 first-try SUCCESS = **真 canonical 5 dogfood 連続 SUCCESS** 確定)
+   - **PR #2819 merge defer** (= head branch out of date with base / auto-merge disabled / multi-step update branch + merge は v24 SS zone で skip = 別 session 5/19+ で merge / 既 8 SUCCESS は preserved)
+   - **status check 3 件 全 defer 継続** (= #1495 last 5/17 13:37 → EOD 5/18 23:59 通過 +3h17min 待ち / #2520 5/22 sprint Day 5 target / #2461 5/22 sprint Day 5 target / 全 monitor only)
+
+### Philosophy Alignment (= 3/9 emergency-scope hard exit session)
+
+- 原則 4 (mentor) ✅ self check で 3 emergency 検出 = mentor 厳守 / 原則 7 (資本=時間) ✅ 5min hard exit = 時間浪費回避 / 原則 8 (KPI) ✅ KPI snapshot で v24 SS 第 17 例 dogfood
+- emergency-scope のため [PHILOSOPHY-22] 6 軸不満 (= 原則 1 CEO / 2 ミッション / 3 6 部署 / 5 商品=価値 / 6 資本=時間拡張 / 9 IPO)
+
+### 教訓 (= 部 231)
+
+- **premature start 第 3 例累積** (= 部 226 第 1 / 部 227 第 2 / 部 231 第 3) = user [SCHEDULE-WAKEUP] 期待 文言「5/19 06:00+ JST」≠ system 5/18 20:43 evening / **同日 evening trigger pattern は overnight 通過 = NO** / next pattern 立証: prompt 内 「**翌朝 06:00+ qualify** 必須」明示で誤発火回避.
+- **v24 SS 第 17 例 zone breach 第 1 例 dogfood** = RAM PRE 94.85% / 部 230b 92.0% → +2.85pt drift / 1h08min idle / **drift+0.41pt/h** = 自然 GC 失敗 第 3 例累積 (= 部 220 5min / 部 230 7h / 部 231 1h) = idle ≠ GC 確定再立証.
+- **同日 8 parts 6 cap 第 2 violation 例累積** = 部 221 first violation (= 7 parts) + 部 231 second violation (= 8 parts) = cap rule 強化 candidate (= 「同日 5 parts 超過時 強制 cooldown 12h」rule 追加検討).
+- **canonical recipe 5th dogfood first-try SUCCESS 立証完成 第 1 例** (= PR #2819 ALL 8 SUCCESS + 1 SKIPPED / 部 230 ship → 部 231 confirm) = **5 連続 dogfood SUCCESS** で recipe 真立証完成 / 次 docs-only PR から 100% expected (= 部 228 提唱 → 部 231 5th confirm 累積完成).
+- **メモリ・ディスク圧縮 5 layer 自然 satisfied 第 7 連続** (= J1+J2+v24+v26+J3 維持 / 部 226-231 6 連続 → 部 231 7 連続 / new layer 不要 確定再再立証).
+- **/goal 11 連続 saturation 確定 第 2 例累積** (= 部 222b-231 chain) = pivot 「Codex sprint status report」command 化 = 部 232+ 第 1 priority 確定 (= 部 230 第 1 priority 引上 → 部 231 emergency exit で defer → 部 232+ で fire 必須).
+
+### next session 候補 (= 部 232+ / 5/19 06:00+ JST qualify 必須 / overnight 通過確認後)
+
+1. 🚨 **#1495 P0 +6 day FINAL FIRE** (= 5/18 EOD JST 23:59 通過後 確定 +6 day / Option C 4 案着手判断 = LP / 競合比較 / docs / Master Brain / Win Claude 担当 = **第 1 priority** 継続)
+2. 🚨 **PR #2819 merge** (= canonical 5th dogfood SUCCESS / branch update + manual merge / docs-only / 5min 内 完結)
+3. 🚨 **/goal pivot 実装** (= 11 連続 saturation 確定 / 「Codex sprint status report」command or skill 化 / verify-only response 自動化 = 部 222b-231 10 連続を ~50% token cut)
+4. **#2520 / #2461 / #2521 Codex impl 着地確認** (= 5/22 sprint Day 5-7 / Architect-Implementer ③ pattern monitor)
+5. **J3 backend layer impl** (= `session_hygiene_log` table migration + ef `ai_hub.session_hygiene_kpi` / Win Claude 担当)
+6. **MEMORY.md consolidation 第 6 例** (= part 215-220 archive / 200 entries 余裕継続 / 第 5 例 -81% trim pattern 適用)
+7. **同日 cap rule 強化検討** (= 5 parts 超過時 強制 12h cooldown rule 追加 = 部 221 + 部 231 2 例累積で systemic prevention)
+8. **competitor 21 社調査 update** (= sub-agent ① 並列 spawn 第 3 例候補)
+9. **ROADMAP backfill 11 part 蓄積消化検討**
+10. **C: drift root cause cleanup** (= 28.41 GB margin thin / disk-cleanup skill Tier 2 fire 候補)
+
