@@ -1104,6 +1104,44 @@ void main() {
       },
     );
 
+    test('loads generated monthly reports from remote store', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedMonthlyReports(<AssetLiabilityMonthlyReport>[
+          AssetLiabilityMonthlyReport(
+            monthKey: '2026-06',
+            generatedAt: DateTime.utc(2026, 7, 1),
+            totalAssets: 160000,
+            totalLiabilities: -6800000,
+            netWorth: -6640000,
+            aiSummary: 'June summary',
+            aiModel: 'deterministic-fallback',
+          ),
+          AssetLiabilityMonthlyReport(
+            monthKey: '2026-05',
+            generatedAt: DateTime.utc(2026, 6, 1),
+            totalAssets: 120000,
+            totalLiabilities: -7000000,
+            netWorth: -6880000,
+            aiSummary: 'May summary',
+            aiModel: 'claude-opus-4-7',
+          ),
+        ]);
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+
+      final reports = await repository.loadMonthlyReports(limit: 1);
+
+      expect(reports, hasLength(1));
+      expect(reports.single.monthKey, '2026-06');
+      expect(reports.single.aiSummary, 'June summary');
+      expect(remote.calls, contains('loadMonthlyReports:user-1:1'));
+    });
+
     test(
       'keeps local repository usable when no Supabase user is available',
       () async {
@@ -1406,11 +1444,14 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
       <AssetLiabilityRecurringIncomeTemplate>[];
   final List<AssetLiabilityMonthlySnapshot> _monthlySnapshots =
       <AssetLiabilityMonthlySnapshot>[];
+  final List<AssetLiabilityMonthlyReport> _monthlyReports =
+      <AssetLiabilityMonthlyReport>[];
 
   bool _hasDefaultPaymentSources = false;
   bool _hasDefaultCardBillingAccounts = false;
   bool _hasRecurringIncomeTemplates = false;
   bool _hasMonthlySnapshots = false;
+  bool _hasMonthlyReports = false;
   bool failSaves = false;
 
   Map<String, String> get defaultPaymentSources =>
@@ -1426,6 +1467,9 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
 
   List<AssetLiabilityMonthlySnapshot> get monthlySnapshots =>
       List<AssetLiabilityMonthlySnapshot>.from(_monthlySnapshots);
+
+  List<AssetLiabilityMonthlyReport> get monthlyReports =>
+      List<AssetLiabilityMonthlyReport>.from(_monthlyReports);
 
   AssetLiabilityMonthlyState? monthState(String monthKey) => _states[monthKey];
 
@@ -1462,6 +1506,14 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
       ..clear()
       ..addAll(snapshots)
       ..sort((a, b) => a.monthKey.compareTo(b.monthKey));
+  }
+
+  void seedMonthlyReports(List<AssetLiabilityMonthlyReport> reports) {
+    _hasMonthlyReports = true;
+    _monthlyReports
+      ..clear()
+      ..addAll(reports)
+      ..sort((a, b) => b.monthKey.compareTo(a.monthKey));
   }
 
   @override
@@ -1583,6 +1635,20 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
     );
     _monthlySnapshots.add(snapshot);
     _monthlySnapshots.sort((a, b) => a.monthKey.compareTo(b.monthKey));
+  }
+
+  @override
+  Future<List<AssetLiabilityMonthlyReport>?> loadMonthlyReports({
+    required String userId,
+    int limit = 24,
+  }) async {
+    calls.add('loadMonthlyReports:$userId:$limit');
+    if (!_hasMonthlyReports) {
+      return null;
+    }
+    return List<AssetLiabilityMonthlyReport>.from(
+      _monthlyReports.take(limit < 0 ? 0 : limit),
+    );
   }
 
   void _throwIfSavingFails() {

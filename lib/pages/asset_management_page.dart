@@ -22,6 +22,7 @@ import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
 import 'package:my_web_app/services/asset_liability_csv_restore_service.dart';
 import 'package:my_web_app/services/asset_liability_history_service.dart';
+import 'package:my_web_app/services/asset_liability_monthly_report_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_payment_reminder_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
@@ -137,6 +138,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <AssetLiabilityRecurringIncomeTemplate>[];
   List<AssetLiabilityMonthlySnapshot> _monthlySnapshots =
       <AssetLiabilityMonthlySnapshot>[];
+  List<AssetLiabilityMonthlyReport> _monthlyReports =
+      <AssetLiabilityMonthlyReport>[];
+  String? _selectedMonthlyReportMonthKey;
+  bool _isRefreshingMonthlyReports = false;
+  String? _monthlyReportMessage;
   String? _loadedAssetLiabilityMonthKey;
   bool _isSavingAssetLiabilitySnapshot = false;
   bool _isRunningAssetLiabilitySync = false;
@@ -235,6 +241,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetLiabilityAnnualRateEvidenceService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
       const AssetLiabilityHistoryService();
+  final AssetLiabilityMonthlyReportService _assetLiabilityMonthlyReportService =
+      const AssetLiabilityMonthlyReportService();
   final AssetManagementInsightService _assetManagementInsightService =
       const AssetManagementInsightService();
   final AssetManagementAiSummaryService _assetManagementAiSummaryService =
@@ -887,6 +895,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
           await _assetLiabilityRepository.loadMonthlySnapshots();
+      final monthlyReports = await _assetLiabilityRepository.loadMonthlyReports(
+        limit: 24,
+      );
       final syncAuditLogs = await _assetLiabilityRepository.loadSyncAuditLogs(
         limit: 12,
       );
@@ -943,6 +954,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _monthlySnapshots = List<AssetLiabilityMonthlySnapshot>.from(
           monthlySnapshots,
         );
+        _monthlyReports = List<AssetLiabilityMonthlyReport>.from(
+          monthlyReports,
+        );
+        _monthlyReportMessage = null;
         _assetLiabilitySyncAuditLogs = List<AssetLiabilitySyncAuditLog>.from(
           syncAuditLogs,
         );
@@ -968,6 +983,37 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
     } catch (e) {
       debugPrint('Error loading asset liability sync audit logs: $e');
+    }
+  }
+
+  Future<void> _refreshMonthlyAssetReports() async {
+    setState(() {
+      _isRefreshingMonthlyReports = true;
+      _monthlyReportMessage = null;
+    });
+    try {
+      final reports = await _assetLiabilityRepository.loadMonthlyReports(
+        limit: 24,
+      );
+      if (!mounted) return;
+      setState(() {
+        _monthlyReports = List<AssetLiabilityMonthlyReport>.from(reports);
+        _monthlyReportMessage = reports.isEmpty
+            ? 'No generated monthly AI reports were found. Local snapshots remain available.'
+            : 'Monthly reports refreshed.';
+      });
+    } catch (e) {
+      debugPrint('Error loading monthly asset reports: $e');
+      if (!mounted) return;
+      setState(() {
+        _monthlyReportMessage = 'Monthly report refresh failed: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshingMonthlyReports = false;
+        });
+      }
     }
   }
 
@@ -7670,6 +7716,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 16),
             _buildMonthlySnapshotSection(workbook),
             const SizedBox(height: 16),
+            _buildMonthlyReportSection(),
+            const SizedBox(height: 16),
             _buildTransferSuggestionSection(workbook),
             const SizedBox(height: 16),
             _buildAssetWorkbookDebtTable(workbook),
@@ -11160,6 +11208,407 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _buildMonthlyReportSection() {
+    final theme = Theme.of(context);
+    final reportViews = _assetLiabilityMonthlyReportService.buildReportViews(
+      snapshots: _monthlySnapshots,
+      reports: _monthlyReports,
+    );
+    AssetLiabilityMonthlyReportView? selectedReport;
+    for (final view in reportViews) {
+      if (view.monthKey == _selectedMonthlyReportMonthKey) {
+        selectedReport = view;
+        break;
+      }
+    }
+    selectedReport ??= reportViews.isEmpty ? null : reportViews.first;
+    final selectedIndex = selectedReport == null
+        ? -1
+        : reportViews.indexWhere(
+            (view) => view.monthKey == selectedReport!.monthKey,
+          );
+
+    return Container(
+      key: const Key('asset_monthly_report_section'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.summarize_outlined, size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Monthly asset reports',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Refresh monthly reports',
+                onPressed: _isRefreshingMonthlyReports
+                    ? null
+                    : _refreshMonthlyAssetReports,
+                icon: _isRefreshingMonthlyReports
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'AI summaries are read-only; KPI values come from deterministic monthly snapshots.',
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          if (_monthlyReportMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _monthlyReportMessage!,
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          if (reportViews.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: theme.colorScheme.outlineVariant),
+              ),
+              child: Text(
+                'No monthly reports yet. Save a monthly snapshot or run the month-end report job first.',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow = _isCompact || constraints.maxWidth < 760;
+                final monthList = Column(
+                  key: const Key('asset_monthly_report_list'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final view in reportViews)
+                      _buildMonthlyReportMonthTile(
+                        view: view,
+                        selected: view.monthKey == selectedReport!.monthKey,
+                      ),
+                  ],
+                );
+                final detail = _buildMonthlyReportDetail(
+                  selectedReport!,
+                  selectedIndex: selectedIndex,
+                  reportViews: reportViews,
+                );
+                if (narrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [monthList, const SizedBox(height: 12), detail],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 220, child: monthList),
+                    const SizedBox(width: 12),
+                    Expanded(child: detail),
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyReportMonthTile({
+    required AssetLiabilityMonthlyReportView view,
+    required bool selected,
+  }) {
+    final theme = Theme.of(context);
+    final color =
+        selected ? const Color(0xFF0D9488) : theme.colorScheme.outlineVariant;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        key: Key('asset_monthly_report_item_${view.monthKey}'),
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          setState(() {
+            _selectedMonthlyReportMonthKey = view.monthKey;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color:
+                selected ? const Color(0xFFECFDF5) : theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                view.monthKey,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? const Color(0xFF0F766E) : null,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                view.hasAiReport ? 'AI summary' : 'Local snapshot',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyReportDetail(
+    AssetLiabilityMonthlyReportView report, {
+    required int selectedIndex,
+    required List<AssetLiabilityMonthlyReportView> reportViews,
+  }) {
+    final theme = Theme.of(context);
+    final canSelectNewer = selectedIndex > 0;
+    final canSelectOlder =
+        selectedIndex >= 0 && selectedIndex < reportViews.length - 1;
+    return Container(
+      key: const Key('asset_monthly_report_detail'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  report.monthKey,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Newer month',
+                onPressed: canSelectNewer
+                    ? () => _selectMonthlyReportAt(
+                          reportViews[selectedIndex - 1].monthKey,
+                        )
+                    : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                tooltip: 'Older month',
+                onPressed: canSelectOlder
+                    ? () => _selectMonthlyReportAt(
+                          reportViews[selectedIndex + 1].monthKey,
+                        )
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildMonthlyReportStatTile(
+                label: 'Assets',
+                value: _formatManagementYen(report.totalAssets),
+                color: const Color(0xFF0D9488),
+              ),
+              _buildMonthlyReportStatTile(
+                label: 'Liabilities',
+                value: _formatManagementYen(report.totalLiabilities),
+                color: const Color(0xFFB91C1C),
+              ),
+              _buildMonthlyReportStatTile(
+                label: 'Net worth',
+                value: _formatManagementYen(report.netWorth),
+                color: report.netWorth < 0
+                    ? const Color(0xFFB91C1C)
+                    : const Color(0xFF0D9488),
+              ),
+              _buildMonthlyReportStatTile(
+                label: 'MoM net worth',
+                value: _formatManagementDeltaYen(report.netWorthDelta),
+                color: const Color(0xFF4F46E5),
+              ),
+              _buildMonthlyReportStatTile(
+                label: 'Cash-like',
+                value: _formatManagementYen(report.cashLikeTotal),
+                color: const Color(0xFF0891B2),
+              ),
+              _buildMonthlyReportStatTile(
+                label: 'Planned payments',
+                value: _formatManagementYen(
+                  report.monthlyScheduledPaymentTotal,
+                ),
+                color: const Color(0xFF7C3AED),
+              ),
+              _buildMonthlyReportStatTile(
+                label: 'Actual paid',
+                value: _formatManagementYen(report.monthlyActualPaymentTotal),
+                color: const Color(0xFF2563EB),
+              ),
+              _buildMonthlyReportStatTile(
+                label: 'Planned/actual diff',
+                value: _formatManagementYen(
+                  report.monthlyPaymentDifferenceTotal,
+                ),
+                color: const Color(0xFFD97706),
+              ),
+              _buildMonthlyReportStatTile(
+                label: 'Overdue',
+                value: '${report.overduePaymentCount}',
+                color: const Color(0xFFB91C1C),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: report.hasAiReport
+                  ? const Color(0xFFEEF2FF)
+                  : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: report.hasAiReport
+                    ? const Color(0xFFC7D2FE)
+                    : theme.colorScheme.outlineVariant,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  report.hasAiReport ? 'AI summary' : 'Deterministic summary',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  report.summary,
+                  style: const TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${report.aiModel} / ${_formatMonthlyReportGeneratedAt(report.generatedAt)}',
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyReportStatTile({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 132),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _selectMonthlyReportAt(String monthKey) {
+    setState(() {
+      _selectedMonthlyReportMonthKey = monthKey;
+    });
+  }
+
+  String _formatMonthlyReportGeneratedAt(DateTime? value) {
+    if (value == null) {
+      return 'not generated';
+    }
+    return DateFormat('yyyy/MM/dd HH:mm').format(value.toLocal());
+  }
+
   Widget _buildTransferSuggestionSection(AssetLiabilityWorkbook workbook) {
     if (workbook.transferSuggestions.isEmpty && _transferTasks.isEmpty) {
       return const SizedBox.shrink();
@@ -11815,9 +12264,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  Widget _buildAssetRepaymentSimulationPanel(
-    AssetLiabilityWorkbook workbook,
-  ) {
+  Widget _buildAssetRepaymentSimulationPanel(AssetLiabilityWorkbook workbook) {
     final extraMonthlyPayment = _parseRepaymentSimulationExtraPayment();
     final simulation =
         _assetLiabilityRepaymentSimulationService.buildComparison(
@@ -11830,8 +12277,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final selectedPlan = simulation.planFor(_repaymentSimulationStrategy) ??
         simulation.plans.first;
-    final baselinePlan =
-        simulation.baselinePlanFor(_repaymentSimulationStrategy);
+    final baselinePlan = simulation.baselinePlanFor(
+      _repaymentSimulationStrategy,
+    );
     final firstMonth = selectedPlan.monthSnapshots.isEmpty
         ? null
         : selectedPlan.monthSnapshots.first;
@@ -11930,8 +12378,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               _buildRepaymentSimulationMetric(
                 label: 'Interest estimate',
-                value:
-                    _formatManagementYen(selectedPlan.estimatedInterestTotal),
+                value: _formatManagementYen(
+                  selectedPlan.estimatedInterestTotal,
+                ),
               ),
             ],
           ),
