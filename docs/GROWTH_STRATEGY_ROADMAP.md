@@ -31159,3 +31159,58 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 6. **J3 backend layer impl** (= 部 224 skeleton 後続 / Win Claude 担当 候補)
 7. **/goal pivot 提案検討** (= 8+ 連続 redundant 強化 → 「Codex sprint status report」command or skill 化)
 8. **disk-cleanup Tier 2** (= C: 28.39 GB → 部 230 で 25 GB breach 接近 / cleanup-skill manual fire)
+
+## part 230 + 230b + 231 + 232 — ID correction + backfill stubs (= part 233 / 2026-05-19 21:15 JST)
+
+> ⚠️ **Session numbering collision 検出 第 1 例** (= 部 232 真値 5/19 07:59 が PR #2942 merged title 「part 230 — #1495 P0 +6 day FINAL fire」と誤名 / canonical = MEMORY.md table sequencing). 真 sequence:
+>
+> - **part 230 真値** (5/18 19:28 JST) — v24 SS 第 16 例 zone breach + premature start 第 2 例 + /goal 9 連続 saturation / commit `ea0e55db7` / [PR #2819](https://github.com/kanta13jp1/my_web_app/pull/2819) (CONFLICTING → closed superseded by part 233)
+> - **part 230b 真値** (5/18 19:35 JST) — /goal 10 連続 saturation 確定 第 1 例 + SNS critique 第 3 例 re-issue + 圧縮 5 layer 第 6 連続 / commit `6a60d4740` / 同 PR #2819
+> - **part 231 真値** (5/18 20:43 JST) — 3 emergency 同時 fire (= premature 第 3 + v24 SS 第 17 zone + 6 cap 第 2 violation 同日 8 parts) + PR #2819 ALL 8 SUCCESS confirm / commit `af9e69e7a` / [PR #2823](https://github.com/kanta13jp1/my_web_app/pull/2823) (CONFLICTING → closed superseded by part 233)
+> - **part 232 真値** (5/19 07:59 JST) — #1495 P0 +6 day FINAL fire + canonical 5th dogfood SUCCESS 真完成 3-tier (body+docs-only label+close/reopen) / [PR #2942](https://github.com/kanta13jp1/my_web_app/pull/2942) (MERGED 5/18 23:17 / 誤名 title「part 230」)
+>
+> Backfill stub policy: PR #2819 + #2823 = ROADMAP-only diff → 7day+ stale rebase 不経済 → backfill stub + close superseded. Full content 保存先 = commit hash (= immutable git history) + memory file [[project_20260518_win132_part230]] + [[project_20260518_win132_part231]]. 旧 PR #2393 (= part 208 / 7day stale / DISK_HYGIENE 3 files) も close superseded (= v22+ ship 後 conflict 確実).
+
+## part 233 — Win版#132 (2026-05-19 21:15 JST) — dangling PR resolve 第 1 例 + session numbering correction + canonical 第 6 dogfood
+
+### Session ritual
+
+- **開始**: 2026-05-19 21:15 JST = [SCHEDULE-WAKEUP] 02-06 zone clear ✅ (= evening trigger / 部 232 FINAL 08:30 JST から 12h45min idle)
+- **KPI PRE**: RAM **92.88%** ⛔ breach 90% = v24 SS **第 18 例 zone** 第 1 例 (= 部 232 POST 94.51% → -1.63 pt 自然 GC / breach +2.88pt)
+- **KPI PRE**: C: 27.33 GB ✅ marginal (= 25 GB +2.33 GB margin / 部 232 POST 28.22 → -0.89 GB drift / disk-cleanup Tier 2 候補化 継続)
+- **KPI PRE**: fatigue:FATIGUE ❌ (= 部 232 OK reset から再 FATIGUE drift / 5/19 hook 観測)
+- **scope decision**: v24 SS breach 第 18 例 zone → **minimal scope** (= dangling 3 PR resolve + ROADMAP append + close superseded only / Option D pre-warning escalate skip / competitor 21 社 skip)
+
+### Deliverable (3 件 / dangling resolve focus)
+
+1. **Dangling PR #2819 + #2823 + #2393 全 close superseded** ✅
+   - **#2819 (part 230+230b ROADMAP)** = CONFLICTING / ROADMAP-only 2 commits / backfill stub に縮約 + close superseded by part 233
+   - **#2823 (part 231 ROADMAP)** = CONFLICTING / ROADMAP-only 1 commit / backfill stub に縮約 + close superseded by part 233
+   - **#2393 (part 208 ROADMAP + DISK_HYGIENE + cross-instance-pr)** = 7day stale / v22+ DISK_HYGIENE ship 後 conflict 確実 / close superseded (= 内容は memory archive 既保存)
+2. **ROADMAP part 233 + ID correction annotation + 3 backfill stubs append** = 本 entry (= [ROADMAP-LOG] 厳守 / session numbering collision 解消)
+3. **#1495 P0 +24h elapsed check** = 自 fire 5/18 23:04 → 5/19 21:15 = +22h11min (= 24h 未通過 +1h49min / Option D unilateral trigger skip / 部 234+ で +24h+ 確認後 判断)
+
+### Philosophy Alignment (= 5/9 minimal-scope / dangling cleanup session)
+
+- 原則 1 (CEO 感) ✅ session numbering collision 自律検出 + correction 自走 / 原則 4 (mentor) ✅ user 指示「Option B+C combo」を rebase 不経済判断で Hybrid Option C pivot / 原則 6 (商品=価値) ✅ ROADMAP integrity preservation = canonical source / 原則 7 (資本=時間) ✅ ~15min minimal exit / 原則 8 (KPI) ✅ v24 SS 第 18 例 dogfood
+- [PHILOSOPHY-22] 4 軸 不満 (= 原則 2 ミッション / 3 6 部署 / 5 商品=価値拡張 / 9 IPO / minimal scope の必然)
+
+### 教訓 (= 部 233)
+
+- **Session numbering collision 検出 第 1 例 + 解消 pattern 第 1 例** = PR merged title ≠ session sequence (= MEMORY.md table canonical / dangling PR 3 件累積発生で systemic risk 認識). 再発防止 = (a) ROADMAP append PR title format「part {真値} — {summary}」固定 / (b) dangling PR は **24h ルール** = open 24h+ で close superseded 自動判断検討 / (c) MEMORY.md table top vs PR title 不一致 = session start emergency check 11th 候補
+- **Dangling PR cleanup pattern 第 1 例** = ROADMAP-only conflicting PR は **rebase 不経済** (= 7day+ stale で conflict resolution 時間 > 内容価値) → **Hybrid Option C (= backfill stub + close superseded)** が rational. 内容は commit hash 保持 = git history immutable + memory file 既保存 = 永久 retrievable.
+- **v24 SS 第 18 例 zone breach 第 1 例 dogfood** = RAM 92.88% / 部 232 POST 94.51% → -1.63 pt 自然 GC over 12h45min (= 0.13 pt/h slow GC / 部 230 1h08min +0.18 pt drift と対比 = long idle で minor GC 確認 / 14h+ idle = ~2-3 pt GC 期待)
+- **canonical 第 6 dogfood opportunity (= 本 PR)** = body 3-tier + docs-only label + close+reopen で gate SUCCESS 期待 / 第 5 真完成 (= 部 232 #2942) 後の連続 SUCCESS 立証 cycle 開始
+- **#1495 P0 +24h gate 未通過 (= +22h11min)** = Option D unilateral trigger 自重 / 部 234+ で確認 (= mentor 原則 = user 承認なしの公開 messaging 変更回避)
+
+### next session 候補 (= 部 234+)
+
+1. 🚨 **#1495 P0 +24h+ Option D trigger 判断** (= 部 233 fire 後 +24h+ user no-reply なら Option D 候補 → 5/20 早朝 09:00+ JST qualify)
+2. 🚨 **/goal pivot 実装** (= 9 連続 saturation → 「Codex sprint status report」command or skill 化 = 部 222b-232 既 10 連続 redundant 確定)
+3. **#2520 Codex 4-model bench impl 着地確認** (= 5/22 sprint Day 5 / +3 day buffer)
+4. **#2461 ✅ CLOSED 確認済** (= Codex PR #2950 merged 5/19 02:11 / Architect-Implementer ③ 第 2 例 / monitor 不要)
+5. **J3 backend layer impl** (= session_hygiene_log table + ef ai_hub.session_hygiene_kpi / Win Claude 担当)
+6. **MEMORY.md consolidation 第 6 例** (= part 215-220 archive / 第 5 例 -81% trim pattern 適用)
+7. **competitor 21 社調査 update** (= sub-agent ① 並列 spawn 第 3 例候補 / Playwright MCP 拡張)
+8. **disk-cleanup Tier 2** (= C: 27.33 GB → 25 GB breach +2.33 GB margin / Tier 2 fire 候補)
+9. **Dangling PR 24h auto-close rule 設計** (= 部 233 教訓 / open 24h+ ROADMAP-only PR 自動 backfill stub 化 検討)
