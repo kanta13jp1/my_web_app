@@ -20,9 +20,12 @@ import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
+import 'package:my_web_app/services/asset_liability_csv_restore_service.dart';
 import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
+import 'package:my_web_app/services/asset_liability_payment_reminder_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
+import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
@@ -160,8 +163,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetLiabilityDebtRow? _annualRateEvidencePasteTargetRow;
   final TextEditingController _cardStatementImportController =
       TextEditingController();
+  final TextEditingController _assetCsvRestoreController =
+      TextEditingController();
+  final TextEditingController _repaymentSimulationExtraPaymentController =
+      TextEditingController(text: '0');
   String? _selectedCardStatementBillingAccountId;
   String? _cardStatementImportMessage;
+  AssetLiabilityCsvRestorePreview? _assetCsvRestorePreview;
+  String? _assetCsvRestoreMessage;
+  bool _isApplyingAssetCsvRestore = false;
 
   // --- グラフデータ ---
   List<LineChartBarData> _lineChartBars = [];
@@ -212,8 +222,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   late final AssetLiabilityRepository _assetLiabilityRepository;
   final AssetLiabilityPlanningService _assetLiabilityPlanner =
       const AssetLiabilityPlanningService();
+  final AssetLiabilityPaymentReminderService _assetLiabilityReminderService =
+      const AssetLiabilityPaymentReminderService();
+  final AssetLiabilityRepaymentSimulationService
+      _assetLiabilityRepaymentSimulationService =
+      const AssetLiabilityRepaymentSimulationService();
   final AssetLiabilityCardStatementImportService _cardStatementImportService =
       const AssetLiabilityCardStatementImportService();
+  final AssetLiabilityCsvRestoreService _assetLiabilityCsvRestoreService =
+      const AssetLiabilityCsvRestoreService();
   final AssetLiabilityAnnualRateEvidenceService _annualRateEvidenceService =
       AssetLiabilityAnnualRateEvidenceService();
   final AssetLiabilityHistoryService _assetLiabilityHistoryService =
@@ -233,6 +250,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   DebtExecutionPlan? _debtExecutionPlan;
   AssetDebtPlannerMode _debtPlannerMode = AssetDebtPlannerMode.ask;
   Set<String> _selectedDebtExecutionTaskIds = <String>{};
+  AssetLiabilityRepaymentSimulationStrategy _repaymentSimulationStrategy =
+      AssetLiabilityRepaymentSimulationStrategy.interestRate;
   bool _isApplyingDebtExecutionTasks = false;
   DebtLockdownSnapshot? _debtLockdownSnapshot;
   bool _isLoadingDebtLockdown = false;
@@ -242,6 +261,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isGeneratingAssetManagementAiSummary = false;
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
+  final Set<String> _developerRequestIssueSubmissionKeys = <String>{};
+  final Map<String, Map<String, dynamic>> _developerRequestIssueResults =
+      <String, Map<String, dynamic>>{};
 
   final List<Color> _colors = [
     const Color(0xFF6366F1),
@@ -323,6 +345,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     _annualRateControllers.forEach((_, controller) => controller.dispose());
     _cardStatementImportController.dispose();
+    _assetCsvRestoreController.dispose();
+    _repaymentSimulationExtraPaymentController.dispose();
     _annualRateControllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
     _flowAmountController.dispose();
@@ -950,27 +974,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _persistAssetLiabilityMonthlyState() async {
     await _assetLiabilityRepository.saveMonth(
       month: _now,
-      state: AssetLiabilityMonthlyState(
-        paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
-        actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
-        paymentDifferenceReasons: Map<String, String>.from(
-          _paymentDifferenceReasons,
-        ),
-        annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
-        annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
-          _annualRateEvidences,
-        ),
-        paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
-        paymentSourceAccountIds: Map<String, String>.from(
-          _paymentSourceAccountIds,
-        ),
-        cardBillingAccountIds: Map<String, String>.from(_cardBillingAccountIds),
-        cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
-          _cardStatementLines,
-        ),
-        incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
-        transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
+      state: _currentAssetLiabilityMonthlyState(),
+    );
+  }
+
+  AssetLiabilityMonthlyState _currentAssetLiabilityMonthlyState() {
+    return AssetLiabilityMonthlyState(
+      paymentOverrides: Map<String, double>.from(_monthlyPaymentOverrides),
+      actualPaymentAmounts: Map<String, double>.from(_actualPaymentAmounts),
+      paymentDifferenceReasons: Map<String, String>.from(
+        _paymentDifferenceReasons,
       ),
+      annualRateOverrides: Map<String, double>.from(_annualRateOverrides),
+      annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        _annualRateEvidences,
+      ),
+      paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
+      paymentSourceAccountIds: Map<String, String>.from(
+        _paymentSourceAccountIds,
+      ),
+      cardBillingAccountIds: Map<String, String>.from(_cardBillingAccountIds),
+      cardStatementLines: List<AssetLiabilityCardStatementLine>.from(
+        _cardStatementLines,
+      ),
+      incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
+      transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
     );
   }
 
@@ -979,6 +1007,185 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _persistAssetLiabilityMonthlyState();
     } catch (e) {
       debugPrint('Error saving asset liability monthly state: $e');
+    }
+  }
+
+  DateTime? _parseAssetLiabilityMonthKey(String monthKey) {
+    final parts = monthKey.split('-');
+    if (parts.length != 2) return null;
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    if (year == null || month == null || month < 1 || month > 12) {
+      return null;
+    }
+    return DateTime(year, month);
+  }
+
+  String _assetCsvRestoreSectionLabel(AssetLiabilityCsvRestoreSection section) {
+    switch (section) {
+      case AssetLiabilityCsvRestoreSection.monthlyHistory:
+        return 'monthly history';
+      case AssetLiabilityCsvRestoreSection.paymentSchedule:
+        return 'payment schedule';
+      case AssetLiabilityCsvRestoreSection.cardStatement:
+        return 'card statement';
+      case AssetLiabilityCsvRestoreSection.incomePlans:
+        return 'income plans';
+      case AssetLiabilityCsvRestoreSection.accountCashflow:
+        return 'account cashflow';
+      case AssetLiabilityCsvRestoreSection.unknown:
+        return 'unknown';
+    }
+  }
+
+  String _assetCsvRestorePreviewMessage(
+    AssetLiabilityCsvRestorePreview preview,
+  ) {
+    final sections =
+        preview.detectedSections.map(_assetCsvRestoreSectionLabel).join(', ');
+    final monthText = preview.affectedMonthKeys.isEmpty
+        ? '0 months'
+        : preview.affectedMonthKeys.join(', ');
+    return [
+      'Preview: ${sections.isEmpty ? 'unknown' : sections}',
+      'months: $monthText',
+      'payments: ${preview.restoredPaymentCount}',
+      'cards: ${preview.restoredCardStatementLineCount}',
+      'income: ${preview.restoredIncomeCount}',
+      'snapshots: ${preview.monthlySnapshots.length}',
+      'rejected: ${preview.rejectedRows.length}',
+    ].join(' / ');
+  }
+
+  void _previewAssetLiabilityCsvRestore() {
+    final rawText = _assetCsvRestoreController.text.trim();
+    if (rawText.isEmpty) {
+      setState(() {
+        _assetCsvRestorePreview = null;
+        _assetCsvRestoreMessage = 'Paste an exported CSV before preview.';
+      });
+      return;
+    }
+    final preview = _assetLiabilityCsvRestoreService.previewCsvText(rawText);
+    setState(() {
+      _assetCsvRestorePreview = preview;
+      _assetCsvRestoreMessage = _assetCsvRestorePreviewMessage(preview);
+    });
+  }
+
+  Future<void> _applyAssetLiabilityCsvRestore() async {
+    final preview = _assetCsvRestorePreview;
+    if (preview == null || !preview.hasRestorableRows) {
+      setState(() {
+        _assetCsvRestoreMessage = 'Preview a restorable CSV before apply.';
+      });
+      return;
+    }
+    setState(() {
+      _isApplyingAssetCsvRestore = true;
+      _assetCsvRestoreMessage = 'Applying append-only restore...';
+    });
+    try {
+      final existingStates = <String, AssetLiabilityMonthlyState>{};
+      final currentMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
+        _now,
+      );
+      for (final monthKey in preview.monthlyStates.keys) {
+        if (monthKey == currentMonthKey) {
+          existingStates[monthKey] = _currentAssetLiabilityMonthlyState();
+          continue;
+        }
+        final month = _parseAssetLiabilityMonthKey(monthKey);
+        if (month == null) continue;
+        existingStates[monthKey] = await _assetLiabilityRepository.loadMonth(
+          month,
+        );
+      }
+
+      final mergeResult = _assetLiabilityCsvRestoreService.mergePreview(
+        preview: preview,
+        existingStates: existingStates,
+        existingSnapshots: _monthlySnapshots,
+        policy: AssetLiabilityCsvRestoreApplyPolicy.appendOnly,
+      );
+
+      for (final monthKey in preview.monthlyStates.keys) {
+        final month = _parseAssetLiabilityMonthKey(monthKey);
+        final state = mergeResult.monthlyStates[monthKey];
+        if (month == null || state == null) continue;
+        await _assetLiabilityRepository.saveMonth(month: month, state: state);
+      }
+
+      final importedSnapshotKeys =
+          preview.monthlySnapshots.map((snapshot) => snapshot.monthKey).toSet();
+      for (final snapshot in mergeResult.monthlySnapshots) {
+        if (!importedSnapshotKeys.contains(snapshot.monthKey)) continue;
+        await _assetLiabilityRepository.saveMonthlySnapshot(snapshot);
+      }
+
+      final refreshedSnapshots =
+          await _assetLiabilityRepository.loadMonthlySnapshots();
+      if (!mounted) return;
+      final currentState = mergeResult.monthlyStates[currentMonthKey];
+      setState(() {
+        if (currentState != null) {
+          _monthlyPaymentOverrides = Map<String, double>.from(
+            currentState.paymentOverrides,
+          );
+          _actualPaymentAmounts = Map<String, double>.from(
+            currentState.actualPaymentAmounts,
+          );
+          _paymentDifferenceReasons = Map<String, String>.from(
+            currentState.paymentDifferenceReasons,
+          );
+          _annualRateOverrides = Map<String, double>.from(
+            currentState.annualRateOverrides,
+          );
+          _annualRateEvidences =
+              Map<String, AssetLiabilityAnnualRateEvidence>.from(
+            currentState.annualRateEvidences,
+          );
+          _monthlyPaidAccountNames = Set<String>.from(
+            currentState.paidAccountNames,
+          );
+          _paymentSourceAccountIds = Map<String, String>.from(
+            currentState.paymentSourceAccountIds,
+          );
+          _cardBillingAccountIds = Map<String, String>.from(
+            currentState.cardBillingAccountIds,
+          );
+          _cardStatementLines = List<AssetLiabilityCardStatementLine>.from(
+            currentState.cardStatementLines,
+          );
+          _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
+            currentState.incomePlans,
+          );
+          _transferTasks = List<AssetLiabilityTransferTask>.from(
+            currentState.transferTasks,
+          );
+          _syncPaymentStateControllers();
+        }
+        _monthlySnapshots = List<AssetLiabilityMonthlySnapshot>.from(
+          refreshedSnapshots,
+        );
+        final warningText = mergeResult.warnings.isEmpty
+            ? ''
+            : ' Warnings: ${mergeResult.warnings.take(3).join(' ')}';
+        _assetCsvRestoreMessage =
+            'Applied append-only restore for ${preview.affectedMonthKeys.length} month(s).$warningText';
+      });
+    } catch (e) {
+      debugPrint('Error applying asset CSV restore: $e');
+      if (!mounted) return;
+      setState(() {
+        _assetCsvRestoreMessage = 'CSV restore failed: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isApplyingAssetCsvRestore = false;
+        });
+      }
     }
   }
 
@@ -7451,6 +7658,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 12),
             _buildAssetWorkbookWarning(workbook),
             const SizedBox(height: 16),
+            _buildAssetPaymentReminderPanel(workbook),
+            const SizedBox(height: 16),
             _buildAssetWorkbookPaymentList(workbook),
             const SizedBox(height: 16),
             _buildIncomePlanSection(workbook),
@@ -7466,6 +7675,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetWorkbookDebtTable(workbook),
             const SizedBox(height: 16),
             _buildAssetWorkbookPriorityList(workbook),
+            const SizedBox(height: 16),
+            _buildAssetRepaymentSimulationPanel(workbook),
           ],
         ),
       ),
@@ -8336,6 +8547,130 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return jsonEncode(_assetManagementAiSummaryService.buildPayload(report));
   }
 
+  Future<void> _submitAssetManagementDeveloperIssue(
+    AssetManagementDeveloperRequest request,
+  ) async {
+    if (_supabase.auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('GitHub Issueの発行にはログインが必要です')),
+      );
+      return;
+    }
+
+    final issueKey = _developerRequestIssueKey(request);
+    if (_developerRequestIssueSubmissionKeys.contains(issueKey)) {
+      return;
+    }
+
+    setState(() {
+      _developerRequestIssueSubmissionKeys.add(issueKey);
+    });
+
+    try {
+      final severityLabel = _assetManagementInsightSeverityLabel(
+        request.severity,
+      );
+      final response = await _supabase.functions.invoke(
+        'core-hub',
+        body: {
+          'action': 'feature_request.submit',
+          'title': '[資産管理] ${request.title}',
+          'description': [
+            request.description,
+            '',
+            '発行元: 資産管理画面 > 開発者向け改善提案',
+            '重要度: $severityLabel',
+            '画面: /asset-management',
+          ].join('\n'),
+          'expected_outcome':
+              '資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。',
+          'category': 'UX改善',
+          'priority': _developerRequestIssuePriority(request.severity),
+          'source': 'asset_management_developer_request',
+        },
+      );
+
+      final rawData = response.data;
+      if (rawData is! Map) {
+        throw const FormatException('Invalid feature request response');
+      }
+
+      final data = Map<String, dynamic>.from(rawData);
+      final success = data['success'] == true;
+      final partialSuccess = data['partialSuccess'] == true;
+      if (!success && !partialSuccess) {
+        throw Exception(data['error'] ?? 'GitHub Issueの発行に失敗しました');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _developerRequestIssueResults[issueKey] = data;
+      });
+
+      final githubIssue = _assetManagementDynamicMap(data['githubIssue']);
+      final wbsTask = _assetManagementDynamicMap(data['wbsTask']);
+      final issueUrl = githubIssue['html_url']?.toString() ?? '';
+      final issueNumber = githubIssue['number']?.toString() ?? '';
+      final wbsCreated = wbsTask.isNotEmpty && !wbsTask.containsKey('error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            issueUrl.isEmpty
+                ? 'WBSに登録しました。GitHub Issue連携は設定確認が必要です'
+                : wbsCreated
+                    ? 'GitHub Issue #$issueNumber を発行してWBSに登録しました'
+                    : 'GitHub Issue #$issueNumber を発行しました。'
+                        'WBS連携は設定確認が必要です',
+          ),
+          action: issueUrl.isEmpty
+              ? null
+              : SnackBarAction(
+                  label: '開く',
+                  onPressed: () => web.window.open(issueUrl, '_blank'),
+                ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('GitHub Issueの発行に失敗しました: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _developerRequestIssueSubmissionKeys.remove(issueKey);
+        });
+      }
+    }
+  }
+
+  String _developerRequestIssueKey(AssetManagementDeveloperRequest request) {
+    return '${request.title}\n${request.description}\n${request.severity.name}';
+  }
+
+  String _developerRequestIssuePriority(
+    AssetManagementInsightSeverity severity,
+  ) {
+    return switch (severity) {
+      AssetManagementInsightSeverity.critical => 'high',
+      AssetManagementInsightSeverity.warning => 'medium',
+      AssetManagementInsightSeverity.info => 'low',
+    };
+  }
+
+  Map<String, dynamic> _assetManagementDynamicMap(Object? value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return const <String, dynamic>{};
+  }
+
   Widget _buildAssetManagementAvailableCard(
     AssetManagementAvailableMoneyInsight insight,
   ) {
@@ -8684,9 +9019,71 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       height: 1.5,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  _buildAssetManagementDeveloperIssueControls(request),
                 ],
               ),
             ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAssetManagementDeveloperIssueControls(
+    AssetManagementDeveloperRequest request,
+  ) {
+    final issueKey = _developerRequestIssueKey(request);
+    final isSubmitting = _developerRequestIssueSubmissionKeys.contains(
+      issueKey,
+    );
+    final result = _developerRequestIssueResults[issueKey];
+    final githubIssue = _assetManagementDynamicMap(result?['githubIssue']);
+    final wbsTask = _assetManagementDynamicMap(result?['wbsTask']);
+    final issueUrl = githubIssue['html_url']?.toString() ?? '';
+    final issueNumber = githubIssue['number']?.toString() ?? '';
+    final hasIssue = issueUrl.isNotEmpty;
+    final hasWbsTask = wbsTask.isNotEmpty && !wbsTask.containsKey('error');
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        FilledButton.icon(
+          onPressed: isSubmitting || hasIssue
+              ? null
+              : () => _submitAssetManagementDeveloperIssue(request),
+          icon: isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  hasIssue ? Icons.check_circle_outline : Icons.add_task,
+                  size: 18,
+                ),
+          label: Text(
+            isSubmitting
+                ? 'Issue発行中'
+                : hasIssue
+                    ? 'Issue発行済み'
+                    : result == null
+                        ? 'GitHub Issue化'
+                        : 'Issue再試行',
+          ),
+        ),
+        if (hasIssue)
+          TextButton.icon(
+            onPressed: () => web.window.open(issueUrl, '_blank'),
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: Text('#$issueNumberを開く'),
+          )
+        else if (hasWbsTask)
+          const Chip(
+            avatar: Icon(Icons.playlist_add_check_circle, size: 16),
+            label: Text('WBS登録済み'),
+            visualDensity: VisualDensity.compact,
           ),
       ],
     );
@@ -9439,6 +9836,151 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildAssetPaymentReminderPanel(AssetLiabilityWorkbook workbook) {
+    final reminders = _assetLiabilityReminderService.buildCandidates(
+      workbook: workbook,
+      now: _now,
+    );
+    if (reminders.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.32),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.notifications_active_outlined,
+                color: Color(0xFFD97706),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '支払日前リマインダー候補',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '通知基盤が未設定でも、支払日順資金繰りに沿って前日・当日・期限超過の未払いを確認できます。',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...reminders.map(_buildAssetPaymentReminderRow),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetPaymentReminderRow(
+    AssetLiabilityPaymentReminderCandidate reminder,
+  ) {
+    final row = reminder.cashflowRow;
+    final color = _paymentReminderStatusColor(reminder);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 72,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  DateFormat('M/d').format(row.paymentDate),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                ),
+                Text(
+                  _paymentReminderStatusLabel(reminder),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reminder.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+                Text(
+                  '${reminder.detail} / 支払予定 ${_formatManagementYen(row.paymentAmount)} / 支払後手元 ${_formatManagementYen(row.cashAfterPayment)}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _paymentReminderStatusColor(
+    AssetLiabilityPaymentReminderCandidate reminder,
+  ) {
+    if (reminder.hasShortageRisk ||
+        reminder.status == AssetLiabilityPaymentReminderStatus.overdue) {
+      return const Color(0xFFB91C1C);
+    }
+    if (reminder.status == AssetLiabilityPaymentReminderStatus.dueToday) {
+      return const Color(0xFFD97706);
+    }
+    return const Color(0xFF2563EB);
+  }
+
+  String _paymentReminderStatusLabel(
+    AssetLiabilityPaymentReminderCandidate reminder,
+  ) {
+    return switch (reminder.status) {
+      AssetLiabilityPaymentReminderStatus.overdue => '超過',
+      AssetLiabilityPaymentReminderStatus.dueToday => '今日',
+      AssetLiabilityPaymentReminderStatus.dueTomorrow => '明日',
+    };
   }
 
   Widget _buildAssetWorkbookPaymentList(AssetLiabilityWorkbook workbook) {
@@ -10326,6 +10868,96 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  Widget _buildAssetCsvRestorePanel() {
+    final preview = _assetCsvRestorePreview;
+    final theme = Theme.of(context);
+    final message = _assetCsvRestoreMessage;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 20),
+        const Text(
+          'CSV restore',
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _assetCsvRestoreController,
+          minLines: 3,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Exported CSV',
+            hintText: 'month_key,...',
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            OutlinedButton.icon(
+              onPressed: _previewAssetLiabilityCsvRestore,
+              icon: const Icon(Icons.visibility_outlined),
+              label: const Text('Preview'),
+            ),
+            FilledButton.icon(
+              onPressed: preview != null &&
+                      preview.hasRestorableRows &&
+                      !_isApplyingAssetCsvRestore
+                  ? _applyAssetLiabilityCsvRestore
+                  : null,
+              icon: _isApplyingAssetCsvRestore
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.restore_outlined),
+              label: const Text('Apply append-only'),
+            ),
+            if (message != null)
+              Text(
+                message,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+          ],
+        ),
+        if (preview != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _assetCsvRestorePreviewMessage(preview),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          if (preview.rejectedRows.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              preview.rejectedRows
+                  .take(3)
+                  .map((row) => 'row ${row.rowNumber}: ${row.reason}')
+                  .join('\n'),
+              style: TextStyle(
+                color: theme.colorScheme.error,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
   Widget _buildMonthlySnapshotSection(AssetLiabilityWorkbook workbook) {
     final comparisons = _assetLiabilityHistoryService.compareSnapshots(
       _monthlySnapshots,
@@ -10389,6 +11021,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
           const SizedBox(height: 8),
+          _buildAssetCsvRestorePanel(),
+          const SizedBox(height: 12),
           _buildMonthlySnapshotChart(chartData),
           const SizedBox(height: 12),
           if (comparisons.isEmpty)
@@ -11179,6 +11813,249 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildAssetRepaymentSimulationPanel(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final extraMonthlyPayment = _parseRepaymentSimulationExtraPayment();
+    final simulation =
+        _assetLiabilityRepaymentSimulationService.buildComparison(
+      workbook: workbook,
+      extraMonthlyPayment: extraMonthlyPayment,
+    );
+    if (!simulation.hasEligibleDebt || simulation.plans.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final selectedPlan = simulation.planFor(_repaymentSimulationStrategy) ??
+        simulation.plans.first;
+    final baselinePlan =
+        simulation.baselinePlanFor(_repaymentSimulationStrategy);
+    final firstMonth = selectedPlan.monthSnapshots.isEmpty
+        ? null
+        : selectedPlan.monthSnapshots.first;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.calculate_outlined, color: Color(0xFF2563EB)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Repayment simulator',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Compare payoff timing by interest rate, smallest balance, or payment day. Uses direct unpaid liabilities only, so card-billed detail rows are not double counted.',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: 190,
+                child: TextField(
+                  controller: _repaymentSimulationExtraPaymentController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Extra / month',
+                    prefixText: '¥',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              for (final strategy
+                  in AssetLiabilityRepaymentSimulationStrategy.values)
+                ChoiceChip(
+                  selected: _repaymentSimulationStrategy == strategy,
+                  label: Text(_repaymentSimulationStrategyLabel(strategy)),
+                  onSelected: (_) {
+                    setState(() {
+                      _repaymentSimulationStrategy = strategy;
+                    });
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildRepaymentSimulationMetric(
+                label: 'Monthly budget',
+                value: _formatManagementYen(selectedPlan.monthlyPaymentBudget),
+              ),
+              _buildRepaymentSimulationMetric(
+                label: 'Payoff timing',
+                value: _formatRepaymentSimulationMonths(
+                  selectedPlan.estimatedPayoffMonths,
+                ),
+              ),
+              _buildRepaymentSimulationMetric(
+                label: 'Change vs base',
+                value: _formatRepaymentSimulationDelta(
+                  selectedPlan: selectedPlan,
+                  baselinePlan: baselinePlan,
+                ),
+              ),
+              _buildRepaymentSimulationMetric(
+                label: 'Interest estimate',
+                value:
+                    _formatManagementYen(selectedPlan.estimatedInterestTotal),
+              ),
+            ],
+          ),
+          if (firstMonth != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Month 1 focus: ${firstMonth.focusDebtName ?? '-'} / payment ${_formatManagementYen(firstMonth.paymentTotal)} / interest ${_formatManagementYen(firstMonth.interestTotal)} / remaining ${_formatManagementYen(firstMonth.remainingDebt)}',
+              style: const TextStyle(fontSize: 12, height: 1.5),
+            ),
+          ],
+          const SizedBox(height: 10),
+          for (final entry
+              in selectedPlan.priorityRows.take(4).toList().asMap().entries)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${entry.key + 1}.',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${entry.value.name} / ${_formatManagementYen(entry.value.balance)} / APR ${_formatManagementPercent(entry.value.annualRate)} / day ${entry.value.paymentDay ?? '-'} / monthly ${_formatManagementYen(entry.value.monthlyPayment)}',
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (selectedPlan.warnings.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              selectedPlan.warnings.join(' / '),
+              style: const TextStyle(
+                color: Color(0xFFB91C1C),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRepaymentSimulationMetric({
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      width: 170,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, height: 1.3),
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _parseRepaymentSimulationExtraPayment() {
+    final normalized = _repaymentSimulationExtraPaymentController.text
+        .replaceAll(',', '')
+        .trim();
+    return max(0.0, double.tryParse(normalized) ?? 0);
+  }
+
+  String _repaymentSimulationStrategyLabel(
+    AssetLiabilityRepaymentSimulationStrategy strategy,
+  ) {
+    switch (strategy) {
+      case AssetLiabilityRepaymentSimulationStrategy.interestRate:
+        return 'APR';
+      case AssetLiabilityRepaymentSimulationStrategy.smallestBalance:
+        return 'Smallest';
+      case AssetLiabilityRepaymentSimulationStrategy.paymentDay:
+        return 'Payment day';
+    }
+  }
+
+  String _formatRepaymentSimulationMonths(int? months) {
+    if (months == null) return 'over 360 mo';
+    if (months == 0) return '0 mo';
+    return '$months mo';
+  }
+
+  String _formatRepaymentSimulationDelta({
+    required AssetLiabilityRepaymentSimulationPlan selectedPlan,
+    required AssetLiabilityRepaymentSimulationPlan? baselinePlan,
+  }) {
+    final current = selectedPlan.estimatedPayoffMonths;
+    final baseline = baselinePlan?.estimatedPayoffMonths;
+    if (current == null && baseline == null) return 'no payoff';
+    if (current == null) return 'worse';
+    if (baseline == null) return 'now payable';
+    final delta = current - baseline;
+    if (delta == 0) return 'same';
+    if (delta < 0) return '$delta mo';
+    return '+$delta mo';
   }
 
   String _paymentRiskStatusLabel(AssetLiabilityPaymentDayRisk risk) {

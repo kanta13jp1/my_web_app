@@ -1,0 +1,98 @@
+name: Monthly Asset Report
+
+on:
+  schedule:
+    # Month-end 24:00 JST is 15:00 UTC. The script gates daily runs to
+    # the JST month rollover because GitHub cron has no last-day syntax.
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+    inputs:
+      year_month:
+        description: "Optional target month (YYYY-MM). Defaults to the previous JST month."
+        required: false
+        default: ""
+      force:
+        description: "Run even when today is not the JST month rollover."
+        required: false
+        default: "false"
+      dry_run:
+        description: "Call the EF with dry_run=true."
+        required: false
+        default: "true"
+      enable_ai_summary:
+        description: "Enable LLM summary generation. Default keeps #2461 AI flag off."
+        required: false
+        default: "false"
+      provider:
+        description: "Provider preference for AI summary when enabled."
+        required: false
+        default: "google"
+      strict_secrets:
+        description: "Fail instead of skip when required auth secrets are missing."
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monthly-asset-report
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Generate month-end asset report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD || secrets.SUPABASE_ANON_KEY }}
+      ASSET_MONTHLY_REPORT_USER_JWT: ${{ secrets.ASSET_MONTHLY_REPORT_USER_JWT }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      CRON_ENABLED: ${{ github.event_name == 'workflow_dispatch' && 'true' || vars.ASSET_MONTHLY_REPORT_CRON_ENABLED || 'false' }}
+      YEAR_MONTH: ${{ github.event_name == 'workflow_dispatch' && inputs.year_month || '' }}
+      FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force || 'false' }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || vars.ASSET_MONTHLY_REPORT_DRY_RUN || 'false' }}
+      ENABLE_AI_SUMMARY: ${{ github.event_name == 'workflow_dispatch' && inputs.enable_ai_summary || 'false' }}
+      PROVIDER: ${{ github.event_name == 'workflow_dispatch' && inputs.provider || vars.ASSET_MONTHLY_REPORT_PROVIDER || 'google' }}
+      STRICT_SECRETS: ${{ github.event_name == 'workflow_dispatch' && inputs.strict_secrets || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Call monthly asset report EF
+        run: |
+          mkdir -p tmp/monthly-asset-report
+          python scripts/monthly_asset_report_cron.py \
+            --supabase-url "$SUPABASE_URL" \
+            --anon-key "$SUPABASE_ANON_KEY" \
+            --user-jwt "$ASSET_MONTHLY_REPORT_USER_JWT" \
+            --cron-enabled "$CRON_ENABLED" \
+            --manual-run "${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}" \
+            --force "$FORCE" \
+            --dry-run "$DRY_RUN" \
+            --enable-ai-summary "$ENABLE_AI_SUMMARY" \
+            --strict-secrets "$STRICT_SECRETS" \
+            --year-month "$YEAR_MONTH" \
+            --provider "$PROVIDER" \
+            --slack-webhook-url "$SLACK_WEBHOOK_URL" \
+            --discord-webhook-url "$DISCORD_WEBHOOK_URL" \
+            --report tmp/monthly-asset-report/report.json \
+            --summary-md tmp/monthly-asset-report/summary.md
+          cat tmp/monthly-asset-report/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload monthly asset report artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: monthly-asset-report
+          path: tmp/monthly-asset-report
+          if-no-files-found: ignore
