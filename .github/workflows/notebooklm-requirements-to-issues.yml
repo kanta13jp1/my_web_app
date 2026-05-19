@@ -1,0 +1,133 @@
+name: NotebookLM Requirements to Issues
+
+on:
+  schedule:
+    - cron: "15 22 * * *" # daily 07:15 JST
+  workflow_dispatch:
+    inputs:
+      start_index:
+        description: "1-based notebook list index to start from"
+        required: false
+        default: "1"
+        type: string
+      limit:
+        description: "Max notebooks to process; 0 means all"
+        required: false
+        default: "0"
+        type: string
+      create_issues:
+        description: "Create GitHub Issues instead of report-only dry run"
+        required: false
+        default: true
+        type: boolean
+      max_created_issues:
+        description: "Safety cap for new Issues in this run; 0 means no cap"
+        required: false
+        default: "9"
+        type: string
+      requirements_per_notebook:
+        description: "Additional request count to extract from each NotebookLM notebook"
+        required: false
+        default: "3"
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: notebooklm-requirements-to-issues
+  cancel-in-progress: false
+
+jobs:
+  extract-and-issue:
+    name: Extract NotebookLM requirements and open Issues
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    env:
+      GH_TOKEN: ${{ secrets.BYPASS_RULES || github.token }}
+      NOTEBOOKLM_STORAGE_STATE: ${{ secrets.NOTEBOOKLM_STORAGE_STATE_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 20
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install NotebookLM CLI
+        run: pip install --quiet notebooklm-py
+
+      - name: Restore NotebookLM auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.notebooklm
+          if [ -z "${NOTEBOOKLM_STORAGE_STATE}" ]; then
+            echo "::error::NOTEBOOKLM_STORAGE_STATE_JSON secret is required for NotebookLM ask automation."
+            exit 1
+          fi
+          printf '%s' "${NOTEBOOKLM_STORAGE_STATE}" > ~/.notebooklm/storage_state.json
+          chmod 600 ~/.notebooklm/storage_state.json
+
+      - name: Capture NotebookLM list
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/notebooklm-requirements
+          notebooklm list --json > docs/notebooklm-requirements/notebooklm-list.json
+
+      - name: Extract requirements and create Issues
+        shell: bash
+        run: |
+          set -euo pipefail
+          CREATE_ISSUES="true"
+          START_INDEX="${{ inputs.start_index || '1' }}"
+          LIMIT="${{ inputs.limit || '0' }}"
+          MAX_CREATED_ISSUES="${{ inputs.max_created_issues || '9' }}"
+          REQUIREMENTS_PER_NOTEBOOK="${{ inputs.requirements_per_notebook || '3' }}"
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            CREATE_ISSUES="${{ inputs.create_issues }}"
+          fi
+          CREATE_ARGS=()
+          if [ "${CREATE_ISSUES}" = "true" ]; then
+            CREATE_ARGS+=(--create-issues)
+          fi
+          PYTHONUTF8=1 python scripts/notebooklm_requirements_to_issues.py \
+            --input-json docs/notebooklm-requirements/notebooklm-list.json \
+            --repo "${{ github.repository }}" \
+            --start-index "${START_INDEX}" \
+            --limit "${LIMIT}" \
+            --requirements-per-notebook "${REQUIREMENTS_PER_NOTEBOOK}" \
+            --max-created-issues "${MAX_CREATED_ISSUES}" \
+            --sleep-seconds 0.2 \
+            "${CREATE_ARGS[@]}"
+
+      - name: Commit requirement report
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/notebooklm-requirements; then
+            echo "No NotebookLM requirement report changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/notebooklm-requirements
+          git commit -m "chore: update NotebookLM requirement issue report"
+          git push
+
+      - name: Upload requirement reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: notebooklm-requirements-report
+          path: docs/notebooklm-requirements
+          if-no-files-found: ignore

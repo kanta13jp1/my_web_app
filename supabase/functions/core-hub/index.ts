@@ -1075,6 +1075,8 @@ serve(async (req: Request) => {
         );
         const category = textValue(body.category, 80) || "機能追加";
         const priority = normalizePriority(body.priority);
+        const source = textValue(body.source, 80) ||
+          "home_feature_request_form";
         const attachmentFileName = textValue(
           body.attachment_file_name ?? body.attachmentFileName,
           240,
@@ -1194,7 +1196,7 @@ serve(async (req: Request) => {
           category,
           priority,
           status: "open",
-          source: "home_feature_request_form",
+          source,
           created_at: createdAt,
           github_issue: githubIssue,
           wbs_task: wbsTask,
