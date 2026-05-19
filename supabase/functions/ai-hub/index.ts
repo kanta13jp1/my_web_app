@@ -35,6 +35,13 @@ import {
   getUniversityProviderByDepartment,
   UniversityActionError,
 } from "./university_faculty_actions.ts";
+import {
+  handleMonthlyAssetReportAction,
+  isMonthlyAssetReportAiSummaryEnabled,
+  MonthlyAssetReportActionError,
+  type MonthlyAssetReportDb,
+  normalizeMonthlyAssetReportProvider,
+} from "./monthly_asset_report.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2829,6 +2836,8 @@ serve(async (req: Request) => {
       "quiz.evaluate",
       "quiz.explain",
       "kpi.monthly_summary",
+      "asset.monthly_report.generate",
+      "asset_liability.monthly_report.generate",
       "voice.tts",
       "voice.stt",
     ];
@@ -4205,6 +4214,98 @@ serve(async (req: Request) => {
         });
       }
 
+      case "asset.monthly_report.generate":
+      case "asset_liability.monthly_report.generate": {
+        const aiSummaryEnabled = isMonthlyAssetReportAiSummaryEnabled(body);
+        const requestedProvider = normalizeMonthlyAssetReportProvider(
+          body.provider_preference ?? body.provider,
+        );
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (
+          aiSummaryEnabled && shouldBlockExternalProviderCall(offlinePolicy)
+        ) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action,
+              provider: requestedProvider,
+            }),
+            409,
+          );
+        }
+        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const sessionId = body.session_id != null
+          ? String(body.session_id)
+          : null;
+        const providerChoiceReason =
+          sanitizeProviderChoiceLogText(body.provider_choice_reason) ??
+            "asset monthly report provider preference";
+        const routingUseCase =
+          sanitizeProviderChoiceLogText(body.routing_use_case, 80) ??
+            "asset_monthly_report";
+        const result = await handleMonthlyAssetReportAction({
+          db: admin as unknown as MonthlyAssetReportDb,
+          body,
+          userId: userId ?? "",
+          aiSummaryEnabled,
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            const requestStartedAt = performance.now();
+            const providerResult = await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+            try {
+              const inputChars = request.messages
+                .map((message) =>
+                  typeof message.content === "string"
+                    ? message.content.length
+                    : 0
+                )
+                .reduce((sum, count) => sum + count, 0);
+              const outputChars = providerResult.text?.length ?? 0;
+              const estimatedCost = providerResult.ok
+                ? calculateApiCost(
+                  providerResult.modelUsed ?? request.model ?? request.provider,
+                  estimateTokensFromChars(inputChars),
+                  estimateTokensFromChars(outputChars),
+                )
+                : 0;
+              await admin.from("ai_hub_chat_logs").insert({
+                provider: request.provider,
+                success: providerResult.ok,
+                estimated_cost_usd: estimatedCost,
+                model: providerResult.modelUsed ?? request.model ?? null,
+                latency_ms: Math.round(performance.now() - requestStartedAt),
+                trace_id: traceId,
+                session_id: sessionId,
+                input_chars: inputChars,
+                output_chars: outputChars,
+                action,
+                status_code: providerResult.ok ? 200 : 502,
+                error_message: providerResult.ok
+                  ? null
+                  : providerResult.error ?? "monthly report provider failed",
+                provider_choice_reason: providerChoiceReason,
+                routing_use_case: routingUseCase,
+              });
+              if (providerResult.ok && estimatedCost > 0) {
+                await recordSpend("ef", "ai-hub", estimatedCost);
+              }
+            } catch { /* ignore observability failures */ }
+            return providerResult;
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
       case "provider.chat": {
         // 汎用プロバイダー呼び出し (AI大学150社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
@@ -5243,6 +5344,9 @@ serve(async (req: Request) => {
     }
   } catch (err) {
     if (err instanceof UniversityActionError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof MonthlyAssetReportActionError) {
       return json({ error: err.message }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
