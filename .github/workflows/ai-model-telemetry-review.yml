@@ -1,0 +1,42 @@
+name: AI Model Telemetry Monthly Review
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 21 1 * *"
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry-review:
+    name: Build model telemetry summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build telemetry summary
+        run: |
+          python scripts/ai_model_telemetry_report.py \
+            --input docs/ai-bench/results/model_usage_events.sample.jsonl \
+            --output-json ai-model-telemetry-summary.json \
+            --output-md ai-model-telemetry-summary.md \
+            --strict
+          cat ai-model-telemetry-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload telemetry artifact
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ai-model-telemetry-summary
+          path: |
+            ai-model-telemetry-summary.json
+            ai-model-telemetry-summary.md

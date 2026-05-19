@@ -6,8 +6,154 @@
     "quality-cost",
     "schedule"
   ],
-  "changed_sources": [],
-  "checked_at": "2026-05-17T21:36:13Z",
+  "changed_sources": [
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "557926109b5f667d4948f66a8f5ee4a7a64392e0e86314cbd838fb7dd7e6ff1c",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "model picker",
+          "in-app browser",
+          "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "PostToolUse",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-05-18 / Codex CLI 0.131.0 pre",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "4a3702c3be45424964c00ea96fd72c632b171ae465c205614bebe361bbdfb9d8",
+      "slug": "codex-changelog",
+      "snippets": [
+        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "( #19068 , #22375 ) Plugin workflows gained marketplace CLI commands, version-aware sharing, share checkout, clearer shared-workspace buckets, and default-enabled plugin hooks.",
+        "( #21396 , #22397 , #22425 , #22435 , #22549 ) Remote workflows now support daemon-managed codex remote-control , runtime enable/disable APIs, status reads, and registry-..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "38b4806b2ff3e5c516ab0c11bfd1591fbf373c60c19ad670cb36fcb3cd319df4",
+      "keyword_groups": {
+        "codex-runtime": [
+          "subagents"
+        ],
+        "integration": [
+          "MCP"
+        ],
+        "quality-cost": [
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "workflow"
+        ]
+      },
+      "latest_signal": "3.4 / May 13, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "641000c7870fba34d91f75e41f5c27ad519e9703643a24a8eb9a04bf16ef6204",
+      "slug": "cursor-changelog",
+      "snippets": [
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
+        "3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup...",
+        "# Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces ."
+      ],
+      "status": 200,
+      "url": "https://cursor.com/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "1b66e00e044234619f3f8c895cd3b0f728c984a1f7bbc491acc93cfd6938b63b",
+      "keyword_groups": {
+        "codex-runtime": [
+          "computer use",
+          "subagents"
+        ],
+        "hooks": [
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "Slack",
+          "Linear",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "workflow"
+        ]
+      },
+      "latest_signal": "May 17, 2026",
+      "name": "Devin release notes",
+      "owner": "Devin",
+      "previous_hash": "c401200ab6d8e345671fd126860c488632458ee2b8d845ef196c46992578739c",
+      "slug": "devin-release-notes",
+      "snippets": [
+        "Default Member Roles Enterprise admins can now configure default roles that are automatically assigned to new organization members on join, with badge display in the members...",
+        "GHES App Registration Restriction GitHub Enterprise Server app registration is now restricted to one app per account and host combination, preventing duplicate registrations...",
+        "Admin-Enforced Settings Lock Icon Settings that have been locked by an admin now display a lock icon with an explanatory tooltip, replacing the previous banner-style callout for..."
+      ],
+      "status": 200,
+      "url": "https://docs.devin.ai/release-notes"
+    }
+  ],
+  "checked_at": "2026-05-18T21:43:40Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -59,7 +205,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-16T21:34:14Z",
+  "previous_checked_at": "2026-05-17T21:36:13Z",
   "sources": [
     {
       "changed": false,
@@ -220,10 +366,10 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "4a3702c3be45424964c00ea96fd72c632b171ae465c205614bebe361bbdfb9d8",
+      "hash": "557926109b5f667d4948f66a8f5ee4a7a64392e0e86314cbd838fb7dd7e6ff1c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -268,15 +414,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-14 / Work with Codex from anywhere You can now use Codex from the ChatGPT mobile app by connecti",
+      "latest_signal": "2026-05-18 / Codex CLI 0.131.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
       "previous_hash": "4a3702c3be45424964c00ea96fd72c632b171ae465c205614bebe361bbdfb9d8",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "This launch also includes Hooks general availability, Codex access tokens for trusted automation, and Enterprise admin setup guidance.",
-        "2026-05-11 Expanded Auto-review documentation Added a dedicated Auto-review page covering the reviewer lifecycle, trigger conditions, failure behavior, and local or managed..."
+        "( #19068 , #22375 ) Plugin workflows gained marketplace CLI commands, version-aware sharing, share checkout, clearer shared-workspace buckets, and default-enabled plugin hooks.",
+        "( #21396 , #22397 , #22425 , #22435 , #22549 ) Remote workflows now support daemon-managed codex remote-control , runtime enable/disable APIs, status reads, and registry-..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -350,10 +496,10 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "641000c7870fba34d91f75e41f5c27ad519e9703643a24a8eb9a04bf16ef6204",
+      "hash": "38b4806b2ff3e5c516ab0c11bfd1591fbf373c60c19ad670cb36fcb3cd319df4",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
@@ -379,8 +525,8 @@
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
-        "# Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces .",
-        "# Environment configuration as code To make it easier to change, debug, and review environment definitions, we have improved Dockerfile-based configuration."
+        "3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup...",
+        "# Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces ."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
@@ -424,10 +570,10 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "c401200ab6d8e345671fd126860c488632458ee2b8d845ef196c46992578739c",
+      "hash": "1b66e00e044234619f3f8c895cd3b0f728c984a1f7bbc491acc93cfd6938b63b",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -457,15 +603,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "May 13, 2026",
+      "latest_signal": "May 17, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
       "previous_hash": "c401200ab6d8e345671fd126860c488632458ee2b8d845ef196c46992578739c",
       "slug": "devin-release-notes",
       "snippets": [
-        "​ May 13, 2026 Snapshot Build Delete You can now delete snapshot builds directly from the build history menu or detail page, with a confirmation dialog to prevent accidental...",
-        "MCP Multiline Environment Variables When configuring MCP server connections in the marketplace, you can now enter multiline values for environment variables — such as PEM...",
-        "Sub-Devin Sidebar Improvements Sub-Devin sessions spawned by automations can now be pinned and reordered independently in the sidebar, and they appear expanded by default so you..."
+        "Default Member Roles Enterprise admins can now configure default roles that are automatically assigned to new organization members on join, with badge display in the members...",
+        "GHES App Registration Restriction GitHub Enterprise Server app registration is now restricted to one app per account and host combination, preventing duplicate registrations...",
+        "Admin-Enforced Settings Lock Icon Settings that have been locked by an admin now display a lock icon with an explanatory tooltip, replacing the previous banner-style callout for..."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
