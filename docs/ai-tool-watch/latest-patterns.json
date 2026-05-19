@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T21:43:44Z",
+  "generated_at": "2026-05-19T21:48:09Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,18 +19,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-8ce847cef86e",
+        "entry_id": "nf-1a79914cb925",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.143 / May 15, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.143 May 15, 2026 Added plugin dependency enforcement: claude plugin disable now refuses when another enabled plugin depends on the target (with a copy-pasteable disable-...",
+        "text": "Claude Code changelog 2.1.145 / May 19, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.145 May 19, 2026 Added claude agents --json to list live Claude sessions as JSON for scripting (tmux-resurrect, status bars, session pickers) Added agent_id and...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "e60a10db424c11ec2586a0226dd097e78030903e39a9ace570672f764a90654d",
+          "hash": "1ac4affcbb223f9cc18aac32cbef96a15f20fd44e3ceba48e64cbb84860421b5",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,7 +74,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.143 / May 15, 2026",
+          "latest_signal": "2.1.145 / May 19, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
           "previous_hash": "e60a10db424c11ec2586a0226dd097e78030903e39a9ace570672f764a90654d",
@@ -82,14 +82,14 @@
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.143 May 15, 2026 Added plugin dependency enforcement: claude plugin disable now refuses when another enabled plugin depends on the target (with a copy-pasteable disable-..."
+            "​ 2.1.145 May 19, 2026 Added claude agents --json to list live Claude sessions as JSON for scripting (tmux-resurrect, status bars, session pickers) Added agent_id and..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-8ce847cef86e",
+        "entry_id": "nf-1a79914cb925",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,10 +115,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "2c377ae8c14e19e4f0ddd7636e3b77709788ff53844b4e90417547cc8f4b660b",
+          "hash": "a291649d038bb13016858d672806cb8d56f20618163a99863bd3a37f263536b4",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -192,10 +192,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a27e5806bf82bc34fb597b1793e227fd4282ca4138184e63066acd1645f8fe0e",
+          "hash": "cdac2cc4329d2a25207508041b7a569f247fa861e50c7e6a11a80f214462a692",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -269,7 +269,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "557926109b5f667d4948f66a8f5ee4a7a64392e0e86314cbd838fb7dd7e6ff1c",
+          "hash": "16c38b04b442454e1d31b53726e454ba8a12cdb27a5ce5be50f76f8eefd54c17",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -317,7 +317,7 @@
           "latest_signal": "2026-05-18 / Codex CLI 0.131.0 pre",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "4a3702c3be45424964c00ea96fd72c632b171ae465c205614bebe361bbdfb9d8",
+          "previous_hash": "557926109b5f667d4948f66a8f5ee4a7a64392e0e86314cbd838fb7dd7e6ff1c",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -347,18 +347,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-3c48b6fe71f1",
+        "entry_id": "nf-e4d10b03a48e",
         "title": "Codex use cases",
-        "text": "Codex use cases Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex... Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews. Featured Start with the most common Codex workflows.",
+        "text": "Codex use cases Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex... Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac. Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work.",
         "url": "https://developers.openai.com/codex/use-cases/",
         "source": "Codex",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "e43152c7f321582a2aaa58da1d710953e3f55b99346a7caf8fbb55bd74756479",
+          "hash": "a74bff1b2a30e636020673907f19f624ab2b9e8ee6f35d9952cdc6c152d6b723",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -401,15 +401,15 @@
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-            "Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.",
-            "Featured Start with the most common Codex workflows."
+            "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
+            "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/use-cases/"
         }
       },
       "filter": {
-        "entry_id": "nf-3c48b6fe71f1",
+        "entry_id": "nf-e4d10b03a48e",
         "title": "Codex use cases",
         "url": "https://developers.openai.com/codex/use-cases/",
         "source": "Codex",
@@ -470,9 +470,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-02e02bc6f3ae",
+        "entry_id": "nf-c9fdd7f70679",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.4 / May 13, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog... 3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup... # Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces .",
+        "text": "Cursor changelog 3.4 / May 13, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog... You need Cursor admin access and Jira Commercial Cloud with Rovo enabled. 3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup...",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -481,14 +481,8 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "38b4806b2ff3e5c516ab0c11bfd1591fbf373c60c19ad670cb36fcb3cd319df4",
+          "hash": "30b16f5d50f4a981b500fd7f14a0b9865ffd8ec13c823a8001f1f000538ce0dc",
           "keyword_groups": {
-            "codex-runtime": [
-              "subagents"
-            ],
-            "integration": [
-              "MCP"
-            ],
             "quality-cost": [
               "permission",
               "review",
@@ -496,26 +490,25 @@
             ],
             "schedule": [
               "automation",
-              "automations",
-              "workflow"
+              "automations"
             ]
           },
           "latest_signal": "3.4 / May 13, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "641000c7870fba34d91f75e41f5c27ad519e9703643a24a8eb9a04bf16ef6204",
+          "previous_hash": "38b4806b2ff3e5c516ab0c11bfd1591fbf373c60c19ad670cb36fcb3cd319df4",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
-            "3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup...",
-            "# Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces ."
+            "You need Cursor admin access and Jira Commercial Cloud with Rovo enabled.",
+            "3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup..."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-02e02bc6f3ae",
+        "entry_id": "nf-c9fdd7f70679",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -541,10 +534,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "094937429b2b633f2dedcf4e45abfdc69e8202a2c14ead170898b56ef5a1fa59",
+          "hash": "dc44991b04c930d112113135d848a3cffb1049de9316a72d1ba7d679bfc1f220",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -552,6 +545,7 @@
             "integration": [
               "MCP",
               "GitHub",
+              "IDE extension",
               "VSCode"
             ],
             "quality-cost": [
@@ -606,7 +600,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "1b66e00e044234619f3f8c895cd3b0f728c984a1f7bbc491acc93cfd6938b63b",
@@ -642,7 +636,7 @@
           "latest_signal": "May 17, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "c401200ab6d8e345671fd126860c488632458ee2b8d845ef196c46992578739c",
+          "previous_hash": "1b66e00e044234619f3f8c895cd3b0f728c984a1f7bbc491acc93cfd6938b63b",
           "slug": "devin-release-notes",
           "snippets": [
             "Default Member Roles Enterprise admins can now configure default roles that are automatically assigned to new organization members on join, with badge display in the members...",
@@ -673,10 +667,10 @@
   ],
   "patterns": [
     {
-      "id": "np-54a82173ad3e",
+      "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 5,
+      "entry_count": 6,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -684,28 +678,10 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Cursor changelog",
-        "Gemini Code Assist release notes"
+        "Codex use cases",
+        "Cursor changelog"
       ],
       "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
-    },
-    {
-      "id": "np-fedda1c5301a",
-      "company": "multi-source",
-      "topic": "mcp-integration",
-      "entry_count": 4,
-      "average_confidence": 0.91,
-      "risk_level": "review",
-      "risk_flags": [
-        "source_http_problem"
-      ],
-      "evidence_titles": [
-        "Codex changelog",
-        "Codex use cases",
-        "Codex overview",
-        "Devin release notes"
-      ],
-      "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
     {
       "id": "np-30487c423ada",
@@ -723,8 +699,8 @@
       "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
     },
     {
-      "id": "np-18c8421689f5",
-      "company": "openai",
+      "id": "np-5704207fd35a",
+      "company": "multi-source",
       "topic": "mcp-integration",
       "entry_count": 3,
       "average_confidence": 0.89,
@@ -734,7 +710,23 @@
       ],
       "evidence_titles": [
         "Codex changelog",
-        "Codex use cases",
+        "Codex overview",
+        "Devin release notes"
+      ],
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
+    },
+    {
+      "id": "np-633b3c99949c",
+      "company": "openai",
+      "topic": "mcp-integration",
+      "entry_count": 2,
+      "average_confidence": 0.85,
+      "risk_level": "review",
+      "risk_flags": [
+        "source_http_problem"
+      ],
+      "evidence_titles": [
+        "Codex changelog",
         "Codex overview"
       ],
       "recommended_action": "Hold for human review before creating issues or blog drafts."
@@ -742,10 +734,10 @@
   ],
   "issue_candidates": [
     {
-      "id": "np-54a82173ad3e",
+      "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 5,
+      "entry_count": 6,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -753,8 +745,8 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Cursor changelog",
-        "Gemini Code Assist release notes"
+        "Codex use cases",
+        "Cursor changelog"
       ],
       "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },

@@ -1,14 +1,18 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-18T21:43:40Z`
-- Previous check: `2026-05-17T21:36:13Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-05-19T21:48:05Z`
+- Previous check: `2026-05-18T21:43:40Z`
+- Changed/new official sources: `7`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
+- `changed` Claude Code changelog: 2.1.145 / May 19, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa
 - `changed` Codex changelog: 2026-05-18 / Codex CLI 0.131.0 pre
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
 - `changed` Cursor changelog: 3.4 / May 13, 2026
-- `changed` Devin release notes: May 17, 2026
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.82.0 / May 14, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -20,7 +24,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.143 / May 15, 2026
+  - Latest signal: 2.1.145 / May 19, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -47,7 +51,7 @@
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...
-  - Short signal: Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.
+  - Short signal: Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.
 - **Codex overview** (HTTP 403)
   - URL: https://openai.com/codex/
   - Latest signal: No title detected
@@ -55,9 +59,9 @@
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
   - Latest signal: 3.4 / May 13, 2026
-  - Keyword groups: schedule, codex-runtime, integration, quality-cost
+  - Keyword groups: schedule, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...
-  - Short signal: 3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup...
+  - Short signal: You need Cursor admin access and Jira Commercial Cloud with Rovo enabled.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.82.0 / May 14, 2026

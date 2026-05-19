@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-05-18T21:43:40Z",
-      "hash": "e60a10db424c11ec2586a0226dd097e78030903e39a9ace570672f764a90654d",
+      "checked_at": "2026-05-19T21:48:05Z",
+      "hash": "1ac4affcbb223f9cc18aac32cbef96a15f20fd44e3ceba48e64cbb84860421b5",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,14 +46,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.143 / May 15, 2026",
+      "latest_signal": "2.1.145 / May 19, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-05-18T21:43:40Z",
-      "hash": "a27e5806bf82bc34fb597b1793e227fd4282ca4138184e63066acd1645f8fe0e",
+      "checked_at": "2026-05-19T21:48:05Z",
+      "hash": "cdac2cc4329d2a25207508041b7a569f247fa861e50c7e6a11a80f214462a692",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -89,8 +89,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-05-18T21:43:40Z",
-      "hash": "2c377ae8c14e19e4f0ddd7636e3b77709788ff53844b4e90417547cc8f4b660b",
+      "checked_at": "2026-05-19T21:48:05Z",
+      "hash": "a291649d038bb13016858d672806cb8d56f20618163a99863bd3a37f263536b4",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -129,8 +129,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-05-18T21:43:40Z",
-      "hash": "557926109b5f667d4948f66a8f5ee4a7a64392e0e86314cbd838fb7dd7e6ff1c",
+      "checked_at": "2026-05-19T21:48:05Z",
+      "hash": "16c38b04b442454e1d31b53726e454ba8a12cdb27a5ce5be50f76f8eefd54c17",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -181,7 +181,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-05-18T21:43:40Z",
+      "checked_at": "2026-05-19T21:48:05Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -190,8 +190,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-05-18T21:43:40Z",
-      "hash": "e43152c7f321582a2aaa58da1d710953e3f55b99346a7caf8fbb55bd74756479",
+      "checked_at": "2026-05-19T21:48:05Z",
+      "hash": "a74bff1b2a30e636020673907f19f624ab2b9e8ee6f35d9952cdc6c152d6b723",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -233,15 +233,9 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-05-18T21:43:40Z",
-      "hash": "38b4806b2ff3e5c516ab0c11bfd1591fbf373c60c19ad670cb36fcb3cd319df4",
+      "checked_at": "2026-05-19T21:48:05Z",
+      "hash": "30b16f5d50f4a981b500fd7f14a0b9865ffd8ec13c823a8001f1f000538ce0dc",
       "keyword_groups": {
-        "codex-runtime": [
-          "subagents"
-        ],
-        "integration": [
-          "MCP"
-        ],
         "quality-cost": [
           "permission",
           "review",
@@ -249,8 +243,7 @@
         ],
         "schedule": [
           "automation",
-          "automations",
-          "workflow"
+          "automations"
         ]
       },
       "latest_signal": "3.4 / May 13, 2026",
@@ -259,7 +252,7 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-05-18T21:43:40Z",
+      "checked_at": "2026-05-19T21:48:05Z",
       "hash": "1b66e00e044234619f3f8c895cd3b0f728c984a1f7bbc491acc93cfd6938b63b",
       "keyword_groups": {
         "codex-runtime": [
@@ -296,8 +289,8 @@
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-05-18T21:43:40Z",
-      "hash": "094937429b2b633f2dedcf4e45abfdc69e8202a2c14ead170898b56ef5a1fa59",
+      "checked_at": "2026-05-19T21:48:05Z",
+      "hash": "dc44991b04c930d112113135d848a3cffb1049de9316a72d1ba7d679bfc1f220",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -305,6 +298,7 @@
         "integration": [
           "MCP",
           "GitHub",
+          "IDE extension",
           "VSCode"
         ],
         "quality-cost": [
@@ -324,5 +318,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-05-18T21:43:40Z"
+  "updated_at": "2026-05-19T21:48:05Z"
 }
