@@ -3,7 +3,7 @@ title: "Two-Tier PR Gate Unblock — 5-Item Body Declaration + Close/Reopen"
 emoji: "🚦"
 type: "tech"
 topics: ["githubactions", "ci", "githubapi", "workflows", "devops"]
-published: false
+published: true
 ---
 
 ## TL;DR

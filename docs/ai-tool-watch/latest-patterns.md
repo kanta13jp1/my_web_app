@@ -1,29 +1,30 @@
 # News Pattern Detector Report
 
-- Generated at: `2026-05-17T21:36:15Z`
+- Generated at: `2026-05-18T21:43:44Z`
 - Sources: `docs/ai-tool-watch/latest-report.json`
 - Entries scanned: `9`
 - Patterns: `4`
 - Issue candidates: `2`
 
 ## Patterns
-- **multi-source / agentic-workflows**: 6 entries, confidence=0.97, risk=normal
+- **multi-source / agentic-workflows**: 5 entries, confidence=0.97, risk=normal
   - Action: Review repeated signal for a scoped follow-up issue only if source confidence stays high.
   - Evidence: Claude Code changelog
   - Evidence: Claude Code hooks reference
   - Evidence: Claude Code GitHub Actions
+- **multi-source / mcp-integration**: 4 entries, confidence=0.91, risk=review
+  - Action: Hold for human review before creating issues or blog drafts.
+  - Evidence: Codex changelog
+  - Evidence: Codex use cases
+  - Evidence: Codex overview
 - **anthropic / agentic-workflows**: 3 entries, confidence=0.97, risk=normal
   - Action: Review anthropic movement for competitor-monitoring follow-up.
   - Evidence: Claude Code changelog
   - Evidence: Claude Code hooks reference
   - Evidence: Claude Code GitHub Actions
-- **multi-source / mcp-integration**: 3 entries, confidence=0.89, risk=review
+- **openai / mcp-integration**: 3 entries, confidence=0.89, risk=review
   - Action: Hold for human review before creating issues or blog drafts.
-  - Evidence: Codex use cases
-  - Evidence: Codex overview
-  - Evidence: Devin release notes
-- **openai / mcp-integration**: 2 entries, confidence=0.85, risk=review
-  - Action: Hold for human review before creating issues or blog drafts.
+  - Evidence: Codex changelog
   - Evidence: Codex use cases
   - Evidence: Codex overview
 

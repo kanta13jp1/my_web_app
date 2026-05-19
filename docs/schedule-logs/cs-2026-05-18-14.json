@@ -1,0 +1,7 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-18T14:00:00Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22登録済) / チケット: 0件 / PR review: 5件(全draft-auto-fix) / Issue修正: 0件 (auto-review 0 / workflow-failure 外部依存・他インスタンス) / Schedule健全性: 正常"
+}
