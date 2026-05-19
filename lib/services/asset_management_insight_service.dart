@@ -867,6 +867,70 @@ class AssetManagementInsightPromptBuilder {
     return buffer.toString();
   }
 
+  String buildRedactedPrompt(AssetManagementInsightReport report) {
+    final severityCounts = _countBy(
+      report.actionItems.map((item) => item.severity.name),
+    );
+    final typeCounts = _countBy(
+      report.actionItems.map((item) => item.type.name),
+    );
+    final emergencyCounts = _countBy(
+      report.emergencyAdvices.map((item) => item.severity.name),
+    );
+    final developerCounts = _countBy(
+      report.developerRequests.map((item) => item.severity.name),
+    );
+    final buffer = StringBuffer()
+      ..writeln('あなたは資産管理AIアシスタントです。')
+      ..writeln(
+        '重要: 金額計算はDart側で完了しています。下記の安全化された分類だけを使い、'
+        '推測・再計算・正確な残高の追加要求はしないでください。',
+      )
+      ..writeln('出力は必ず日本語だけにしてください。見出し、ラベル、箇条書きも日本語にしてください。')
+      ..writeln()
+      ..writeln('## 安全化された使用可能額の状態')
+      ..writeln('- 本日: ${_availabilityBand(report.todayAvailable)}')
+      ..writeln('- 今週: ${_availabilityBand(report.weekAvailable)}')
+      ..writeln('- 今月: ${_availabilityBand(report.monthAvailable)}')
+      ..writeln()
+      ..writeln('## アクション件数')
+      ..writeln('- 合計: ${report.actionItems.length}')
+      ..writeln('- 重要度別: ${_formatCounts(severityCounts)}')
+      ..writeln('- 種別: ${_formatCounts(typeCounts)}')
+      ..writeln()
+      ..writeln('## 口座移動と緊急アドバイス')
+      ..writeln('- 口座移動・出金提案件数: ${report.movementSuggestions.length}')
+      ..writeln('- 緊急生活防衛アドバイス件数: ${report.emergencyAdvices.length}')
+      ..writeln('- 緊急アドバイス重要度別: ${_formatCounts(emergencyCounts)}')
+      ..writeln()
+      ..writeln('## 開発者向け改善提案件数')
+      ..writeln('- 合計: ${report.developerRequests.length}')
+      ..writeln('- 重要度別: ${_formatCounts(developerCounts)}');
+    return buffer.toString();
+  }
+
+  String _availabilityBand(AssetManagementAvailableMoneyInsight insight) {
+    final amount = insight.availableAmount;
+    if (amount < 0) return '不足';
+    if (amount < insight.minimumSafetyBalance) return '安全残高未満';
+    if (amount < insight.minimumSafetyBalance * 2) return '安全余力が薄い';
+    return '余力あり';
+  }
+
+  Map<String, int> _countBy(Iterable<String> values) {
+    final counts = <String, int>{};
+    for (final value in values) {
+      counts[value] = (counts[value] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  String _formatCounts(Map<String, int> counts) {
+    if (counts.isEmpty) return 'none';
+    final keys = counts.keys.toList(growable: false)..sort();
+    return keys.map((key) => '$key=${counts[key]}').join(', ');
+  }
+
   String _formatAmount(double amount) {
     final sign = amount < 0 ? '-' : '';
     final digits = amount.abs().round().toString();

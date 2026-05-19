@@ -50,6 +50,7 @@ CRITICAL_RULES = [
     "[WBS-SYNC]",
     "[INSTANCE-ROLES]",
     "[AI-TOOL-VERIFY]",
+    "[SUBAGENT-GUARD]",
     "[CONCURRENCY]",
     "[AUTO-REPLY]",
     "[PHILOSOPHY-22]",
@@ -81,7 +82,7 @@ CRITICAL_RULES = [
     "[FLEET-OPS]",
 ]
 
-EXPECTED_RULE_COUNT = 38
+EXPECTED_RULE_COUNT = 39
 
 
 def read_text(path: Path) -> str | None:
@@ -143,6 +144,8 @@ def verify(text: str) -> dict:
     return {
         "lines": lines,
         "rule_count": rule_count,
+        "expected_rule_count": EXPECTED_RULE_COUNT,
+        "line_kpi": LINE_KPI,
         "missing_critical_rules": missing,
         "kpi_pass": len(issues) == 0,
         "issues": issues,

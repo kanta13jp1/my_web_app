@@ -1,7 +1,7 @@
 {
   "task_id": "cs-check",
   "status": "success",
-  "executed_at": "2026-05-17T08:30:00Z",
+  "executed_at": "2026-05-17T17:09:52Z",
   "environment": "web-version",
-  "summary": "Edge Function UI追加: 0件 (全22関数登録済み) / チケット: 0件 / PR確認: 15件 / Issue修正: 0件 / workflow-failure修復: 0件 (ツール不在スキップ) / Schedule健全性: GHA bot正常 / Supabase: 200 OK"
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件 (http_code=200) / PR確認: 5件 / Issue修正: 0件 / workflow-failure修復: 0件 (他instance担当) / Schedule健全性: 正常 (#2401監視継続)"
 }

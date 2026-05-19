@@ -23,6 +23,19 @@ void main() {
             'aupay_card': 'late fee',
           },
           annualRateOverrides: const <String, double>{'mobit': 0.175},
+          annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+            'mobit': AssetLiabilityAnnualRateEvidence(
+              accountId: 'mobit',
+              fileName: 'mobit_apr.png',
+              mimeType: 'image/png',
+              submittedAt: DateTime(2026, 5, 13, 9),
+              submittedAnnualRate: 0.175,
+              detectedAnnualRate: 0.175,
+              status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+              summary: '17.5% is visible.',
+              source: 'ai-hub',
+            ),
+          },
           paymentSourceAccountIds: const <String, String>{
             'mobit': 'custom_bank',
           },
@@ -48,6 +61,17 @@ void main() {
               received: false,
             ),
           ],
+          transferTasks: <AssetLiabilityTransferTask>[
+            AssetLiabilityTransferTask(
+              id: 'transfer_bank_topup',
+              fromAccountId: 'custom_cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'custom_bank',
+              toAccountName: 'Bank',
+              amount: 10000,
+              dueDate: DateTime(2026, 5, 18),
+            ),
+          ],
         ),
       );
 
@@ -59,20 +83,26 @@ void main() {
       expect(loadedMay.actualPaymentAmounts['aupay_card'], 6200);
       expect(loadedMay.paymentDifferenceReasons['aupay_card'], 'late fee');
       expect(loadedMay.annualRateOverrides['mobit'], 0.175);
+      expect(loadedMay.annualRateEvidences['mobit']?.verified, isTrue);
+      expect(loadedMay.annualRateEvidences['mobit']?.fileName, 'mobit_apr.png');
       expect(loadedMay.paymentSourceAccountIds['mobit'], 'custom_bank');
       expect(loadedMay.cardBillingAccountIds['au'], 'aupay_card');
       expect(loadedMay.cardStatementLines.single.amount, 6200);
       expect(loadedMay.cardStatementLines.single.description, 'mobile');
       expect(loadedMay.incomePlans.single.name, 'Salary');
+      expect(loadedMay.transferTasks.single.id, 'transfer_bank_topup');
+      expect(loadedMay.transferTasks.single.amount, 10000);
       expect(loadedJune.paymentOverrides, isEmpty);
       expect(loadedJune.actualPaymentAmounts, isEmpty);
       expect(loadedJune.paymentDifferenceReasons, isEmpty);
       expect(loadedJune.annualRateOverrides, isEmpty);
+      expect(loadedJune.annualRateEvidences, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
       expect(loadedJune.cardStatementLines, isEmpty);
       expect(loadedJune.incomePlans, isEmpty);
+      expect(loadedJune.transferTasks, isEmpty);
     });
 
     test('clears monthly paid status after unchecked state is saved', () async {
@@ -174,12 +204,25 @@ void main() {
 
     test('migrates actual payment difference keys to stable account ids', () {
       final migrated = AssetLiabilityMonthlyStateStore.migrateLegacyKeys(
-        state: const AssetLiabilityMonthlyState(
+        state: AssetLiabilityMonthlyState(
           actualPaymentAmounts: <String, double>{'Legacy card': 6200},
-          paymentDifferenceReasons: <String, String>{
+          paymentDifferenceReasons: const <String, String>{
             'Legacy card': 'late fee',
           },
-          annualRateOverrides: <String, double>{'Legacy card': 0.145},
+          annualRateOverrides: const <String, double>{'Legacy card': 0.145},
+          annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+            'Legacy card': AssetLiabilityAnnualRateEvidence(
+              accountId: 'Legacy card',
+              fileName: 'apr.png',
+              mimeType: 'image/png',
+              submittedAt: DateTime(2026, 5, 13),
+              submittedAnnualRate: 0.145,
+              detectedAnnualRate: 0.145,
+              status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+              summary: '14.5%',
+              source: 'ai-hub',
+            ),
+          },
         ),
         legacyKeyToAccountId: const <String, String>{
           'Legacy card': 'aupay_card',
@@ -195,6 +238,10 @@ void main() {
       expect(migrated.annualRateOverrides, <String, double>{
         'aupay_card': 0.145,
       });
+      expect(
+        migrated.annualRateEvidences['aupay_card']?.accountId,
+        'aupay_card',
+      );
     });
 
     test(
@@ -223,6 +270,17 @@ void main() {
                 received: true,
               ),
             ],
+            transferTasks: <AssetLiabilityTransferTask>[
+              AssetLiabilityTransferTask(
+                id: 'transfer_may',
+                fromAccountId: 'custom_cash',
+                fromAccountName: 'Cash',
+                toAccountId: 'custom_bank',
+                toAccountName: 'Bank',
+                amount: 10000,
+                dueDate: DateTime(2026, 5, 20),
+              ),
+            ],
           ),
         );
 
@@ -240,6 +298,7 @@ void main() {
           'kddi_provider': 'paypay_card',
         });
         expect(copied.paidAccountNames, isEmpty);
+        expect(copied.transferTasks, isEmpty);
         expect(copied.incomePlans.single.date, DateTime(2026, 6, 30));
         expect(copied.incomePlans.single.received, isFalse);
         expect(loaded.paidAccountNames, isEmpty);
@@ -248,6 +307,7 @@ void main() {
           'kddi_provider': 'paypay_card',
         });
         expect(loaded.incomePlans.single.received, isFalse);
+        expect(loaded.transferTasks, isEmpty);
       },
     );
 

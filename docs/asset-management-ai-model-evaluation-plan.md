@@ -1,6 +1,6 @@
 # Asset Management AI Model Evaluation Plan
 
-Last updated: 2026-05-16
+Last updated: 2026-05-17
 
 ## Purpose
 
@@ -28,6 +28,12 @@ Use official or primary sources first:
 Model claims that cannot be verified from official docs or a reproducible
 benchmark should be treated as hypotheses.
 
+The executable bench foundation lives in:
+
+- `docs/ai-bench/v1_spec.md`
+- `docs/ai-bench/results/template.json`
+- `scripts/internal_ai_bench.py`
+
 ## Evaluation Tasks
 
 | Track | Task | Expected Proof |
@@ -48,11 +54,16 @@ benchmark should be treated as hypotheses.
 | Latency | Wall-clock time for the task. |
 | Cost | Estimated API/runtime cost. |
 | Safety | No PII leaks, no direct money calculation by AI, no unsafe production write. |
+| Thinking budget | Reasoning-effort continuity, token usage, and cost discipline. |
 
 ## Routing Policy
 
 - GPT / Claude / Gemini can be used for production-facing summarization only
   through feature flags and existing provider boundaries.
+- #2521 foundation routing is represented in code as a feature-flagged
+  `Claude Opus 4.7 -> GPT-5 -> Gemini 3.1 Pro -> local deterministic`
+  fallback chain for summary, risk explanation, developer suggestion, and
+  reconciliation-help use cases.
 - Kimi / DeepSeek / Grok are candidates until local benchmark results justify
   integration.
 - Image/video models are not part of money calculation. They can support docs,
@@ -60,6 +71,14 @@ benchmark should be treated as hypotheses.
 - Money calculations remain deterministic Dart/SQL logic.
 - AI can explain already-calculated values, generate checklists, or propose
   developer tasks.
+- #2521 routing defaults must cite a `scripts/internal_ai_bench.py` report or
+  stay behind feature flags.
+- Asset-management AI prompts must use redacted categories and bands. Exact
+  balances, account identifiers, and user IDs stay inside deterministic
+  Dart/Supabase code and are not sent to external model providers.
+- Provider routing changes that touch `ai-hub` or migrations require PR-level
+  security, rollback, migration, prod-smoke, and observability evidence before
+  merge.
 
 ## Linked Issues
 

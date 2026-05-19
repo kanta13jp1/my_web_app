@@ -35,6 +35,13 @@ import {
   getUniversityProviderByDepartment,
   UniversityActionError,
 } from "./university_faculty_actions.ts";
+import {
+  handleMonthlyAssetReportAction,
+  isMonthlyAssetReportAiSummaryEnabled,
+  MonthlyAssetReportActionError,
+  type MonthlyAssetReportDb,
+  normalizeMonthlyAssetReportProvider,
+} from "./monthly_asset_report.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -521,6 +528,22 @@ function estimateTokensFromChars(chars: number): number {
   return Math.max(1, Math.ceil(Math.max(0, chars) / 4));
 }
 
+function isProviderPaymentRequired(
+  status: number,
+  responseText: string,
+): boolean {
+  const text = responseText.toLowerCase();
+  return status === 402 ||
+    text.includes("paid_plan_required") ||
+    text.includes("payment_required") ||
+    text.includes("insufficient_quota") ||
+    text.includes("positive balance") ||
+    text.includes("add balance") ||
+    text.includes("top-up") ||
+    text.includes("billing") ||
+    text.includes("credit");
+}
+
 async function callSingleProvider(
   providerId: string,
   messages: { role: string; content: string }[],
@@ -560,11 +583,19 @@ async function callSingleProvider(
       },
       body: JSON.stringify(cfg.buildBody(messages, model ?? cfg.defaultModel)),
     });
-    if (!resp.ok) {
-      const isRetriable = resp.status === 429 || resp.status >= 500;
-      return { ok: false, error: `HTTP ${resp.status}`, isRetriable };
-    }
     const respText = await resp.text();
+    if (!resp.ok) {
+      const paymentRequired = isProviderPaymentRequired(resp.status, respText);
+      const isRetriable = paymentRequired || resp.status === 429 ||
+        resp.status >= 500;
+      return {
+        ok: false,
+        error: paymentRequired
+          ? `paidPlanRequired: ${providerId}: ${respText.slice(0, 240)}`
+          : `HTTP ${resp.status}: ${respText.slice(0, 240)}`,
+        isRetriable,
+      };
+    }
     let data: unknown;
     try {
       data = JSON.parse(respText);
@@ -589,6 +620,40 @@ async function callSingleProvider(
 
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function sanitizeProviderChoiceLogText(
+  value: unknown,
+  maxLength = 320,
+): string | null {
+  const raw = asString(value);
+  if (!raw) return null;
+  return raw
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
+    .replace(/\b\d{5,}\b/g, "[number]")
+    .slice(0, maxLength);
+}
+
+function normalizeProviderTier(value: unknown): Tier | undefined {
+  const raw = asString(value).toLowerCase();
+  if (!raw) return undefined;
+  switch (raw) {
+    case "free":
+    case "low":
+      return "free";
+    case "cheap":
+    case "budget":
+    case "medium":
+      return "budget";
+    case "performance":
+    case "high":
+      return "performance";
+    case "premium":
+    case "xhigh":
+      return "premium";
+    default:
+      return undefined;
+  }
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -2771,6 +2836,8 @@ serve(async (req: Request) => {
       "quiz.evaluate",
       "quiz.explain",
       "kpi.monthly_summary",
+      "asset.monthly_report.generate",
+      "asset_liability.monthly_report.generate",
       "voice.tts",
       "voice.stt",
     ];
@@ -4063,6 +4130,182 @@ serve(async (req: Request) => {
       }
 
       // ── AI大学 v2: Voice ─────────────────────────────────────────────────
+      case "asset_liability.verify_annual_rate_evidence": {
+        const parsedImage = parseInlineImage(body);
+        if (parsedImage.error) {
+          return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        }
+        const image = parsedImage.image;
+        if (!image) {
+          return json({ error: "imageBase64 required" }, 400);
+        }
+        const accountName = asString(body.accountName) || "unknown account";
+        const submittedAnnualRate = asNumber(
+          body.submittedAnnualRate,
+          Number.NaN,
+        );
+        if (!Number.isFinite(submittedAnnualRate) || submittedAnnualRate < 0) {
+          return json({ error: "submittedAnnualRate required" }, 400);
+        }
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "asset_liability.verify_annual_rate_evidence",
+              provider: "google",
+            }),
+            409,
+          );
+        }
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: false,
+            status: "apiKeyRequired",
+            secret_needed: "GEMINI_API_KEY",
+            message: "Supabase Secret GEMINI_API_KEY is required.",
+          });
+        }
+
+        const submittedPercent = submittedAnnualRate * 100;
+        const prompt = [
+          "You are verifying annual interest rate evidence for a personal finance board.",
+          "Inspect the attached screenshot. It must visibly contain the annual interest rate/APR for the named account.",
+          `Account name: ${accountName}`,
+          `User-entered annual rate: ${submittedPercent.toFixed(4)}%`,
+          "Return JSON only with keys: verified, detected_annual_rate_percent, confidence, summary, reason.",
+          "Set verified=true only when the screenshot clearly shows the same annual rate for this account. Do not infer missing rates.",
+          "If the screenshot is unreadable, unrelated, or the rate differs, set verified=false.",
+        ].join("\n");
+        const raw = await callGemini(prompt, geminiKey, image);
+        let parsed: Record<string, unknown> = {};
+        try {
+          parsed = JSON.parse(stripMarkdownCodeFence(raw)) as Record<
+            string,
+            unknown
+          >;
+        } catch {
+          parsed = { summary: raw, verified: false };
+        }
+        const detectedPercent = asNumber(
+          parsed.detected_annual_rate_percent,
+          Number.NaN,
+        );
+        const detectedAnnualRate = Number.isFinite(detectedPercent)
+          ? detectedPercent / 100
+          : null;
+        const rateMatches = detectedAnnualRate !== null &&
+          Math.abs(detectedAnnualRate - submittedAnnualRate) <= 0.001;
+        const verified = parsed.verified === true && rateMatches;
+        const summary = asString(parsed.summary) ||
+          asString(parsed.reason) ||
+          (verified
+            ? "Annual rate evidence matches the entered value."
+            : "Annual rate evidence could not be verified.");
+        return json({
+          success: true,
+          provider: "google",
+          status: verified ? "verified" : "needs_review",
+          verified,
+          detected_annual_rate: detectedAnnualRate,
+          detected_annual_rate_percent: detectedPercent,
+          summary,
+          confidence: asNumber(parsed.confidence, 0),
+        });
+      }
+
+      case "asset.monthly_report.generate":
+      case "asset_liability.monthly_report.generate": {
+        const aiSummaryEnabled = isMonthlyAssetReportAiSummaryEnabled(body);
+        const requestedProvider = normalizeMonthlyAssetReportProvider(
+          body.provider_preference ?? body.provider,
+        );
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        if (
+          aiSummaryEnabled && shouldBlockExternalProviderCall(offlinePolicy)
+        ) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action,
+              provider: requestedProvider,
+            }),
+            409,
+          );
+        }
+        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const sessionId = body.session_id != null
+          ? String(body.session_id)
+          : null;
+        const providerChoiceReason =
+          sanitizeProviderChoiceLogText(body.provider_choice_reason) ??
+            "asset monthly report provider preference";
+        const routingUseCase =
+          sanitizeProviderChoiceLogText(body.routing_use_case, 80) ??
+            "asset_monthly_report";
+        const result = await handleMonthlyAssetReportAction({
+          db: admin as unknown as MonthlyAssetReportDb,
+          body,
+          userId: userId ?? "",
+          aiSummaryEnabled,
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            const requestStartedAt = performance.now();
+            const providerResult = await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+            try {
+              const inputChars = request.messages
+                .map((message) =>
+                  typeof message.content === "string"
+                    ? message.content.length
+                    : 0
+                )
+                .reduce((sum, count) => sum + count, 0);
+              const outputChars = providerResult.text?.length ?? 0;
+              const estimatedCost = providerResult.ok
+                ? calculateApiCost(
+                  providerResult.modelUsed ?? request.model ?? request.provider,
+                  estimateTokensFromChars(inputChars),
+                  estimateTokensFromChars(outputChars),
+                )
+                : 0;
+              await admin.from("ai_hub_chat_logs").insert({
+                provider: request.provider,
+                success: providerResult.ok,
+                estimated_cost_usd: estimatedCost,
+                model: providerResult.modelUsed ?? request.model ?? null,
+                latency_ms: Math.round(performance.now() - requestStartedAt),
+                trace_id: traceId,
+                session_id: sessionId,
+                input_chars: inputChars,
+                output_chars: outputChars,
+                action,
+                status_code: providerResult.ok ? 200 : 502,
+                error_message: providerResult.ok
+                  ? null
+                  : providerResult.error ?? "monthly report provider failed",
+                provider_choice_reason: providerChoiceReason,
+                routing_use_case: routingUseCase,
+              });
+              if (providerResult.ok && estimatedCost > 0) {
+                await recordSpend("ef", "ai-hub", estimatedCost);
+              }
+            } catch { /* ignore observability failures */ }
+            return providerResult;
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
       case "provider.chat": {
         // 汎用プロバイダー呼び出し (AI大学150社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
@@ -4085,6 +4328,21 @@ serve(async (req: Request) => {
           );
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
+        const requestStartedAt = performance.now();
+        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const sessionId = body.session_id != null
+          ? String(body.session_id)
+          : null;
+        const providerChoiceReason = sanitizeProviderChoiceLogText(
+          body.provider_choice_reason,
+        );
+        const routingUseCase = sanitizeProviderChoiceLogText(
+          body.routing_use_case,
+          80,
+        );
+        const inputChars = finalMessages
+          .map((m) => typeof m.content === "string" ? m.content.length : 0)
+          .reduce((a, b) => a + b, 0);
 
         const cfg = PROVIDER_CONFIGS[providerId];
         if (!cfg) {
@@ -4119,6 +4377,40 @@ serve(async (req: Request) => {
             authHeaders = {};
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
+          const requestedModel = String(body.model ?? cfg.defaultModel);
+          const logProviderChat = async (
+            params: {
+              success: boolean;
+              statusCode: number;
+              model?: string | null;
+              outputChars?: number | null;
+              estimatedCostUsd?: number | null;
+              errorMessage?: string | null;
+            },
+          ) => {
+            try {
+              const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+              await admin.from("ai_hub_chat_logs").insert({
+                provider: providerId,
+                tier: providerTier(providerId) ?? "direct",
+                success: params.success,
+                estimated_cost_usd: params.estimatedCostUsd ?? null,
+                model: params.model ?? requestedModel,
+                latency_ms: Math.round(performance.now() - requestStartedAt),
+                trace_id: traceId,
+                session_id: sessionId,
+                input_chars: inputChars,
+                output_chars: params.outputChars ?? null,
+                error_message: params.errorMessage ?? null,
+                action: "provider.chat",
+                status_code: params.statusCode,
+                provider_choice_reason: providerChoiceReason,
+                routing_use_case: routingUseCase,
+              });
+            } catch {
+              // ignore logging errors
+            }
+          };
           const resp = await fetch(fetchUrl, {
             method: "POST",
             headers: {
@@ -4126,22 +4418,17 @@ serve(async (req: Request) => {
               "Content-Type": "application/json",
               ...(cfg.extraHeaders ?? {}),
             },
-            body: JSON.stringify(
-              cfg.buildBody(
-                finalMessages,
-                String(body.model ?? cfg.defaultModel),
-              ),
-            ),
+            body: JSON.stringify(cfg.buildBody(finalMessages, requestedModel)),
           });
           const respText = await resp.text();
           if (!resp.ok) {
             // Free tier / 課金制限検知
-            if (
-              respText.includes("paid_plan_required") ||
-              respText.includes("payment_required") ||
-              resp.status === 402 || respText.includes("insufficient_quota") ||
-              respText.includes("billing") || respText.includes("credit")
-            ) {
+            if (isProviderPaymentRequired(resp.status, respText)) {
+              await logProviderChat({
+                success: false,
+                statusCode: resp.status,
+                errorMessage: respText.slice(0, 500),
+              });
               return json({
                 success: false,
                 status: "paidPlanRequired",
@@ -4151,6 +4438,11 @@ serve(async (req: Request) => {
                 detail: respText.slice(0, 300),
               });
             }
+            await logProviderChat({
+              success: false,
+              statusCode: resp.status,
+              errorMessage: respText.slice(0, 500),
+            });
             return json({
               success: false,
               status: "error",
@@ -4163,21 +4455,76 @@ serve(async (req: Request) => {
           try {
             data = JSON.parse(respText);
           } catch {
+            const outputChars = respText.slice(0, 2000).length;
+            const estimatedCost = calculateApiCost(
+              requestedModel,
+              estimateTokensFromChars(inputChars),
+              estimateTokensFromChars(outputChars),
+            );
+            await logProviderChat({
+              success: true,
+              statusCode: 200,
+              model: requestedModel,
+              outputChars,
+              estimatedCostUsd: estimatedCost,
+            });
+            await recordSpend("ef", "ai-hub", estimatedCost);
             return json({
               success: true,
               provider: providerId,
               status: "implemented",
               text: respText.slice(0, 2000),
+              observability: {
+                provider: providerId,
+                model: requestedModel,
+                estimated_cost_usd: estimatedCost,
+                trace_id: traceId,
+                session_id: sessionId,
+                input_chars: inputChars,
+                output_chars: outputChars,
+                action: "provider.chat",
+                status_code: 200,
+                provider_choice_reason: providerChoiceReason,
+                routing_use_case: routingUseCase,
+              },
             });
           }
           const content = cfg.parseResponse(data);
           const modelUsed = pick(data, "model");
+          const outputChars = content.length;
+          const usedModel = String(modelUsed ?? requestedModel);
+          const estimatedCost = calculateApiCost(
+            usedModel,
+            estimateTokensFromChars(inputChars),
+            estimateTokensFromChars(outputChars),
+          );
+          await logProviderChat({
+            success: true,
+            statusCode: 200,
+            model: usedModel,
+            outputChars,
+            estimatedCostUsd: estimatedCost,
+          });
+          await recordSpend("ef", "ai-hub", estimatedCost);
           return json({
             success: true,
             provider: providerId,
             status: "implemented",
             text: content,
-            model: modelUsed ?? cfg.defaultModel,
+            model: usedModel,
+            observability: {
+              provider: providerId,
+              model: usedModel,
+              estimated_cost_usd: estimatedCost,
+              trace_id: traceId,
+              session_id: sessionId,
+              input_chars: inputChars,
+              output_chars: outputChars,
+              action: "provider.chat",
+              status_code: 200,
+              provider_choice_reason: providerChoiceReason,
+              routing_use_case: routingUseCase,
+            },
           });
         } catch (e) {
           return json({
@@ -4192,7 +4539,7 @@ serve(async (req: Request) => {
       case "provider.chat_auto": {
         const effortSelection = await selectEffort("provider.chat_auto", body);
         const offlinePolicy = parseOfflineSecureModePolicy(body);
-        const requestedTier = body.tier as Tier | undefined;
+        const requestedTier = normalizeProviderTier(body.tier);
         const messages = Array.isArray(body.messages) ? body.messages : null;
         const userMsg = String(body.message ?? "");
         if (!messages && !userMsg) {
@@ -4228,6 +4575,13 @@ serve(async (req: Request) => {
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
+        const providerChoiceReason = sanitizeProviderChoiceLogText(
+          body.provider_choice_reason,
+        );
+        const routingUseCase = sanitizeProviderChoiceLogText(
+          body.routing_use_case,
+          80,
+        );
 
         let resultText: string | undefined;
         let usedProvider: string | undefined;
@@ -4274,6 +4628,8 @@ serve(async (req: Request) => {
               error_message: "all tiers exhausted",
               action: "provider.chat_auto",
               status_code: 502,
+              provider_choice_reason: providerChoiceReason,
+              routing_use_case: routingUseCase,
             });
           } catch { /* ignore */ }
           return json({
@@ -4310,6 +4666,8 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             action: "provider.chat_auto",
             status_code: 200,
+            provider_choice_reason: providerChoiceReason,
+            routing_use_case: routingUseCase,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
         } catch { /* ignore logging errors */ }
@@ -4323,13 +4681,15 @@ serve(async (req: Request) => {
           effort_source: effortSelection.source,
           status: "implemented",
           text: resultText,
+          provider_choice_reason: providerChoiceReason,
+          routing_use_case: routingUseCase,
         });
       }
 
       case "edge_llm.invoke": {
         const effortSelection = await selectEffort("edge_llm.invoke", body);
         const offlinePolicy = parseOfflineSecureModePolicy(body);
-        const requestedTier = body.tier as Tier | undefined;
+        const requestedTier = normalizeProviderTier(body.tier);
         const providerId = asString(body.provider) || undefined;
         const systemPrompt = asString(body.system_prompt);
         const userPrompt = asString(body.user_prompt) ||
@@ -4984,6 +5344,9 @@ serve(async (req: Request) => {
     }
   } catch (err) {
     if (err instanceof UniversityActionError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof MonthlyAssetReportActionError) {
       return json({ error: err.message }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);

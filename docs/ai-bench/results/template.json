@@ -1,0 +1,238 @@
+{
+  "axes": {
+    "accuracy": {
+      "description": "Spec and acceptance criteria satisfaction.",
+      "weight": 3
+    },
+    "ci_signal": {
+      "description": "First-pass green rate and recovery discipline.",
+      "weight": 2
+    },
+    "cost": {
+      "description": "Estimated token/runtime cost for the same task.",
+      "weight": 1
+    },
+    "diff_discipline": {
+      "description": "Small, repo-patterned diff with low unrelated churn.",
+      "weight": 2
+    },
+    "latency": {
+      "description": "Human-observed or API-measured turnaround.",
+      "weight": 1
+    },
+    "safety": {
+      "description": "PII, secret, prompt-injection, and money-boundary safety.",
+      "weight": 1
+    },
+    "test_quality": {
+      "description": "Useful unit, integration, or CI evidence.",
+      "weight": 2
+    },
+    "thinking_budget": {
+      "description": "Reasoning-effort continuity, token budget, and billing discipline.",
+      "weight": 1
+    }
+  },
+  "bench_id": "template",
+  "issue": "#2520",
+  "models": [
+    {
+      "cost_usd": null,
+      "latency_ms": null,
+      "model": "gpt-5.5",
+      "notes": "Verified by official announcement and API model docs on 2026-05-17.",
+      "official_sources": [
+        "https://openai.com/index/introducing-gpt-5-5/",
+        "https://developers.openai.com/api/docs/models/gpt-5.5"
+      ],
+      "provider": "openai",
+      "scores": {
+        "accuracy": null,
+        "ci_signal": null,
+        "cost": null,
+        "diff_discipline": null,
+        "latency": null,
+        "safety": null,
+        "test_quality": null,
+        "thinking_budget": null
+      },
+      "verification_status": "verified"
+    },
+    {
+      "cost_usd": null,
+      "latency_ms": null,
+      "model": "claude-opus-4-7",
+      "notes": "Official model label has no SNS-only Fast suffix.",
+      "official_sources": [
+        "https://www.anthropic.com/news/claude-opus-4-7",
+        "https://platform.claude.com/docs/en/build-with-claude/extended-thinking"
+      ],
+      "provider": "anthropic",
+      "scores": {
+        "accuracy": null,
+        "ci_signal": null,
+        "cost": null,
+        "diff_discipline": null,
+        "latency": null,
+        "safety": null,
+        "test_quality": null,
+        "thinking_budget": null
+      },
+      "verification_status": "verified"
+    },
+    {
+      "cost_usd": null,
+      "latency_ms": null,
+      "model": "gemini-3.1-pro-preview",
+      "notes": "Use exact live API model string from Google docs at run time.",
+      "official_sources": [
+        "https://ai.google.dev/gemini-api/docs/models"
+      ],
+      "provider": "google",
+      "scores": {
+        "accuracy": null,
+        "ci_signal": null,
+        "cost": null,
+        "diff_discipline": null,
+        "latency": null,
+        "safety": null,
+        "test_quality": null,
+        "thinking_budget": null
+      },
+      "verification_status": "verified"
+    },
+    {
+      "cost_usd": null,
+      "latency_ms": null,
+      "model": "kimi-k2.6",
+      "notes": "Official Kimi API model list candidate.",
+      "official_sources": [
+        "https://platform.kimi.ai/docs/models"
+      ],
+      "provider": "moonshot",
+      "scores": {
+        "accuracy": null,
+        "ci_signal": null,
+        "cost": null,
+        "diff_discipline": null,
+        "latency": null,
+        "safety": null,
+        "test_quality": null,
+        "thinking_budget": null
+      },
+      "verification_status": "verified"
+    },
+    {
+      "cost_usd": null,
+      "latency_ms": null,
+      "model": "deepseek-v4-flash",
+      "notes": "Official DeepSeek API docs candidate; compare price and safety separately.",
+      "official_sources": [
+        "https://api-docs.deepseek.com/updates/",
+        "https://api-docs.deepseek.com/quick_start/pricing/"
+      ],
+      "provider": "deepseek",
+      "scores": {
+        "accuracy": null,
+        "ci_signal": null,
+        "cost": null,
+        "diff_discipline": null,
+        "latency": null,
+        "safety": null,
+        "test_quality": null,
+        "thinking_budget": null
+      },
+      "verification_status": "verified"
+    },
+    {
+      "cost_usd": null,
+      "latency_ms": null,
+      "model": "grok-4.3",
+      "notes": "Official xAI docs candidate for research-heavy tasks.",
+      "official_sources": [
+        "https://docs.x.ai/developers/models"
+      ],
+      "provider": "xai",
+      "scores": {
+        "accuracy": null,
+        "ci_signal": null,
+        "cost": null,
+        "diff_discipline": null,
+        "latency": null,
+        "safety": null,
+        "test_quality": null,
+        "thinking_budget": null
+      },
+      "verification_status": "verified"
+    },
+    {
+      "cost_usd": null,
+      "latency_ms": null,
+      "model": "seedance-2.0",
+      "notes": "Primary paper verified; video ranking claims require separate evidence.",
+      "official_sources": [
+        "https://arxiv.org/abs/2604.14148"
+      ],
+      "provider": "bytedance",
+      "scores": {
+        "accuracy": null,
+        "ci_signal": null,
+        "cost": null,
+        "diff_discipline": null,
+        "latency": null,
+        "safety": null,
+        "test_quality": null,
+        "thinking_budget": null
+      },
+      "verification_status": "partial"
+    },
+    {
+      "cost_usd": null,
+      "latency_ms": null,
+      "model": "mimo-v2.5-pro",
+      "notes": "SNS-only claim until an official provider source is added.",
+      "official_sources": [],
+      "provider": "mimo",
+      "scores": {
+        "accuracy": null,
+        "ci_signal": null,
+        "cost": null,
+        "diff_discipline": null,
+        "latency": null,
+        "safety": null,
+        "test_quality": null,
+        "thinking_budget": null
+      },
+      "verification_status": "unverified"
+    }
+  ],
+  "run_date": "2026-05-17",
+  "schema_version": 1,
+  "source_watch": {
+    "ai_tool_watch": "scripts/ai_tool_watch.py",
+    "policy": "Official sources first; SNS-only claims stay unranked."
+  },
+  "tasks": {
+    "B1": {
+      "proof": "Analyzer/test pass with small repository-patterned diff.",
+      "title": "Asset repository month-range micro change",
+      "track": "backend"
+    },
+    "B2": {
+      "proof": "Build or widget test plus screenshot/manual smoke evidence.",
+      "title": "Asset dashboard compact UI chip",
+      "track": "frontend"
+    },
+    "B3": {
+      "proof": "Dry-runable flow with PR/check/cleanup summary.",
+      "title": "Issue to branch to PR to CI procedure",
+      "track": "agent"
+    },
+    "R1": {
+      "proof": "Official URLs, verification status, and deduplicated issue route.",
+      "title": "Official model-source intake to WBS action",
+      "track": "research"
+    }
+  },
+  "verdict": "No fixed strongest model. Use task-specific fit after official source verification and repeatable bench evidence."
+}

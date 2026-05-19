@@ -51,6 +51,9 @@ class AssetLiabilityPlanningService {
   static const String kddiProviderAccountId = 'kddi_provider';
   static const String kddiProviderAccountName = 'KDDI';
   static const double kddiProviderMonthlyPaymentAmount = 5764;
+  static const String rentAccountId = 'rent';
+  static const String rentAccountName = '\u5bb6\u8cc3';
+  static const double rentMonthlyPaymentAmount = 63000;
 
   const AssetLiabilityPlanningService();
 
@@ -69,18 +72,28 @@ class AssetLiabilityPlanningService {
     Map<String, String> cardBillingAccountIds = const <String, String>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
+    List<AssetLiabilityTransferTask> transferTasks =
+        const <AssetLiabilityTransferTask>[],
     List<AssetLiabilityCardStatementLine> cardStatementLines =
         const <AssetLiabilityCardStatementLine>[],
     bool includeDefaultFixedPayments = false,
   }) {
     final shouldIncludeDefaultKddiProvider =
         includeDefaultFixedPayments && !_hasKddiProvider(latestSnapshot);
-    final effectiveSnapshot = shouldIncludeDefaultKddiProvider
-        ? _withDefaultFixedPayments(latestSnapshot)
-        : latestSnapshot;
+    final shouldIncludeDefaultRent =
+        includeDefaultFixedPayments && !_hasRent(latestSnapshot);
+    final effectiveSnapshot =
+        shouldIncludeDefaultKddiProvider || shouldIncludeDefaultRent
+            ? _withDefaultFixedPayments(
+                latestSnapshot,
+                includeKddiProvider: shouldIncludeDefaultKddiProvider,
+                includeRent: shouldIncludeDefaultRent,
+              )
+            : latestSnapshot;
     final effectiveMonthlyPaymentOverrides = _withDefaultFixedPaymentOverrides(
       monthlyPaymentOverrides: monthlyPaymentOverrides,
       includeDefaultKddiProvider: shouldIncludeDefaultKddiProvider,
+      includeDefaultRent: shouldIncludeDefaultRent,
     );
     final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
@@ -97,6 +110,10 @@ class AssetLiabilityPlanningService {
     };
     final resolvedIncomePlans = _resolveIncomePlans(
       incomePlans: incomePlans,
+      accountsById: accountsById,
+    );
+    final resolvedTransferTasks = _resolveTransferTasks(
+      transferTasks: transferTasks,
       accountsById: accountsById,
     );
     final effectivePaymentSourceAccountIds = <String, String>{
@@ -164,6 +181,7 @@ class AssetLiabilityPlanningService {
     final accountCashflowSummaries = _buildAccountCashflowSummaries(
       accounts: accounts,
       cashflowRows: cashflowRows,
+      transferTasks: resolvedTransferTasks,
     );
     final transferSuggestions = _buildTransferSuggestions(
       summaries: accountCashflowSummaries,
@@ -223,6 +241,7 @@ class AssetLiabilityPlanningService {
       paymentDayRisks: paymentDayRisks,
       cashflowRows: cashflowRows,
       incomePlans: resolvedIncomePlans,
+      transferTasks: resolvedTransferTasks,
       accountCashflowSummaries: accountCashflowSummaries,
       transferSuggestions: transferSuggestions,
       cardBillingReview: cardBillingReview,
@@ -332,6 +351,18 @@ class AssetLiabilityPlanningService {
         name: name,
         balance: balance,
         kind: AssetLiabilityAccountKind.utility,
+        paymentDay: 25,
+        annualRate: 0,
+        minimumPaymentRate: 1,
+        minimumPaymentFloor: balance.abs(),
+        fullPaymentEstimate: true,
+      );
+    }
+    if (_accountIdForName(name) == rentAccountId) {
+      return _liability(
+        name: name,
+        balance: balance,
+        kind: AssetLiabilityAccountKind.otherLiability,
         paymentDay: 25,
         annualRate: 0,
         minimumPaymentRate: 1,
@@ -1196,9 +1227,57 @@ class AssetLiabilityPlanningService {
     return result;
   }
 
+  List<AssetLiabilityTransferTask> _resolveTransferTasks({
+    required List<AssetLiabilityTransferTask> transferTasks,
+    required Map<String, AssetLiabilityAccount> accountsById,
+  }) {
+    final result = <AssetLiabilityTransferTask>[];
+    for (final task in transferTasks) {
+      if (task.id.trim().isEmpty ||
+          task.fromAccountId.trim().isEmpty ||
+          task.toAccountId.trim().isEmpty ||
+          task.fromAccountId == task.toAccountId ||
+          task.amount <= 0) {
+        continue;
+      }
+      final fromAccount = accountsById[task.fromAccountId];
+      final toAccount = accountsById[task.toAccountId];
+      result.add(
+        AssetLiabilityTransferTask(
+          id: task.id,
+          fromAccountId: task.fromAccountId,
+          fromAccountName: fromAccount?.name ?? task.fromAccountName,
+          toAccountId: task.toAccountId,
+          toAccountName: toAccount?.name ?? task.toAccountName,
+          amount: task.amount,
+          dueDate: task.dueDate == null ? null : _dateOnly(task.dueDate!),
+          completed: task.completed,
+          completedAt: task.completedAt,
+        ),
+      );
+    }
+    result.sort((a, b) {
+      final aDate = a.dueDate;
+      final bDate = b.dueDate;
+      if (aDate != null && bDate != null) {
+        final date = aDate.compareTo(bDate);
+        if (date != 0) {
+          return date;
+        }
+      } else if (aDate != null) {
+        return -1;
+      } else if (bDate != null) {
+        return 1;
+      }
+      return a.id.compareTo(b.id);
+    });
+    return result;
+  }
+
   List<AssetLiabilityAccountCashflowSummary> _buildAccountCashflowSummaries({
     required List<AssetLiabilityAccount> accounts,
     required List<AssetLiabilityCashflowRow> cashflowRows,
+    required List<AssetLiabilityTransferTask> transferTasks,
   }) {
     final cashLikeAccounts = accounts.where(_isCashLike).toList()
       ..sort((a, b) => b.balance.compareTo(a.balance));
@@ -1222,13 +1301,31 @@ class AssetLiabilityPlanningService {
                 ? sum + row.paymentAmount
                 : sum,
           );
-          final projected = account.balance - payments + income;
+          final pendingTransferIn = transferTasks.fold<double>(
+            0,
+            (sum, task) => !task.completed && task.toAccountId == account.id
+                ? sum + task.amount
+                : sum,
+          );
+          final pendingTransferOut = transferTasks.fold<double>(
+            0,
+            (sum, task) => !task.completed && task.fromAccountId == account.id
+                ? sum + task.amount
+                : sum,
+          );
+          final projected = account.balance -
+              payments +
+              income +
+              pendingTransferIn -
+              pendingTransferOut;
           return AssetLiabilityAccountCashflowSummary(
             accountId: account.id,
             accountName: account.name,
             currentBalance: account.balance,
             upcomingPayments: payments,
             upcomingIncome: income,
+            pendingTransferIn: pendingTransferIn,
+            pendingTransferOut: pendingTransferOut,
             projectedBalance: projected,
             riskLevel: _cashRiskLevel(projected),
           );
@@ -1358,6 +1455,9 @@ class AssetLiabilityPlanningService {
     if (_containsAny(key, const <String>['kddi'])) {
       return kddiProviderAccountId;
     }
+    if (key == 'rent' || _containsAny(key, const <String>['家賃'])) {
+      return rentAccountId;
+    }
     if (key == 'au' || _containsAny(key, const <String>['通信', '携帯'])) {
       return 'au';
     }
@@ -1378,11 +1478,16 @@ class AssetLiabilityPlanningService {
   }
 
   Map<String, double> _withDefaultFixedPayments(
-    Map<String, double> latestSnapshot,
-  ) {
+    Map<String, double> latestSnapshot, {
+    required bool includeKddiProvider,
+    required bool includeRent,
+  }) {
     final result = Map<String, double>.from(latestSnapshot);
-    if (!_hasKddiProvider(result)) {
+    if (includeKddiProvider && !_hasKddiProvider(result)) {
       result[kddiProviderAccountName] = -kddiProviderMonthlyPaymentAmount;
+    }
+    if (includeRent && !_hasRent(result)) {
+      result[rentAccountName] = -rentMonthlyPaymentAmount;
     }
     return result;
   }
@@ -1390,22 +1495,33 @@ class AssetLiabilityPlanningService {
   Map<String, double> _withDefaultFixedPaymentOverrides({
     required Map<String, double> monthlyPaymentOverrides,
     required bool includeDefaultKddiProvider,
+    required bool includeDefaultRent,
   }) {
-    if (!includeDefaultKddiProvider ||
-        monthlyPaymentOverrides.containsKey(kddiProviderAccountId) ||
-        monthlyPaymentOverrides.containsKey(kddiProviderAccountName)) {
-      return monthlyPaymentOverrides;
-    }
-    return <String, double>{
-      kddiProviderAccountId: kddiProviderMonthlyPaymentAmount,
+    final result = <String, double>{
       ...monthlyPaymentOverrides,
     };
+    if (includeDefaultKddiProvider &&
+        !result.containsKey(kddiProviderAccountId) &&
+        !result.containsKey(kddiProviderAccountName)) {
+      result[kddiProviderAccountId] = kddiProviderMonthlyPaymentAmount;
+    }
+    if (includeDefaultRent &&
+        !result.containsKey(rentAccountId) &&
+        !result.containsKey(rentAccountName)) {
+      result[rentAccountId] = rentMonthlyPaymentAmount;
+    }
+    return result;
   }
 
   bool _hasKddiProvider(Map<String, double> snapshot) {
     return snapshot.keys.any(
       (name) => _accountIdForName(name) == kddiProviderAccountId,
     );
+  }
+
+  bool _hasRent(Map<String, double> snapshot) {
+    return snapshot.keys
+        .any((name) => _accountIdForName(name) == rentAccountId);
   }
 
   String _fallbackAccountId(String name) {

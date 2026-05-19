@@ -20,7 +20,7 @@ class AiToolUpdateRoutingTest(unittest.TestCase):
 
         self.assertTrue(any("missing file" in item for item in missing))
 
-    def test_contract_tracks_all_three_docs(self) -> None:
+    def test_contract_tracks_all_required_docs(self) -> None:
         self.assertEqual(
             set(REQUIRED_MARKERS),
             {

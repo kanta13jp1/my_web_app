@@ -1,13 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-16T21:34:14Z`
-- Previous check: `2026-05-15T21:38:10Z`
-- Changed/new official sources: `2`
+- Checked at: `2026-05-18T21:43:40Z`
+- Previous check: `2026-05-17T21:36:13Z`
+- Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.143 / May 15, 2026
-- `changed` Codex changelog: 2026-05-14 / Work with Codex from anywhere You can now use Codex from the ChatGPT mobile app by connecti
+- `changed` Codex changelog: 2026-05-18 / Codex CLI 0.131.0 pre
+- `changed` Cursor changelog: 3.4 / May 13, 2026
+- `changed` Devin release notes: May 17, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -37,10 +38,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-14 / Work with Codex from anywhere You can now use Codex from the ChatGPT mobile app by connecti
+  - Latest signal: 2026-05-18 / Codex CLI 0.131.0 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: This launch also includes Hooks general availability, Codex access tokens for trusted automation, and Enterprise admin setup guidance.
+  - Short signal: ( #19068 , #22375 ) Plugin workflows gained marketplace CLI commands, version-aware sharing, share checkout, clearer shared-workspace buckets, and default-enabled plugin hooks.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -56,7 +57,7 @@
   - Latest signal: 3.4 / May 13, 2026
   - Keyword groups: schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...
-  - Short signal: # Multi-repo environments Cloud agents and automations now support multi-repo environments, building off our work on multi-root workspaces .
+  - Short signal: 3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup...
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.82.0 / May 14, 2026
@@ -65,10 +66,10 @@
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: May 13, 2026
+  - Latest signal: May 17, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: ​ May 13, 2026 Snapshot Build Delete You can now delete snapshot builds directly from the build history menu or detail page, with a confirmation dialog to prevent accidental...
-  - Short signal: MCP Multiline Environment Variables When configuring MCP server connections in the marketplace, you can now enter multiline values for environment variables — such as PEM...
+  - Short signal: Default Member Roles Enterprise admins can now configure default roles that are automatically assigned to new organization members on join, with badge display in the members...
+  - Short signal: GHES App Registration Restriction GitHub Enterprise Server app registration is now restricted to one app per account and host combination, preventing duplicate registrations...
 
 ## NotebookLM Harness Mapping
 - Source notebook: `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)

@@ -1104,6 +1104,44 @@ void main() {
       },
     );
 
+    test('loads generated monthly reports from remote store', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore()
+        ..seedMonthlyReports(<AssetLiabilityMonthlyReport>[
+          AssetLiabilityMonthlyReport(
+            monthKey: '2026-06',
+            generatedAt: DateTime.utc(2026, 7, 1),
+            totalAssets: 160000,
+            totalLiabilities: -6800000,
+            netWorth: -6640000,
+            aiSummary: 'June summary',
+            aiModel: 'deterministic-fallback',
+          ),
+          AssetLiabilityMonthlyReport(
+            monthKey: '2026-05',
+            generatedAt: DateTime.utc(2026, 6, 1),
+            totalAssets: 120000,
+            totalLiabilities: -7000000,
+            netWorth: -6880000,
+            aiSummary: 'May summary',
+            aiModel: 'claude-opus-4-7',
+          ),
+        ]);
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+
+      final reports = await repository.loadMonthlyReports(limit: 1);
+
+      expect(reports, hasLength(1));
+      expect(reports.single.monthKey, '2026-06');
+      expect(reports.single.aiSummary, 'June summary');
+      expect(remote.calls, contains('loadMonthlyReports:user-1:1'));
+    });
+
     test(
       'keeps local repository usable when no Supabase user is available',
       () async {
@@ -1136,6 +1174,19 @@ void main() {
           'mobit': 'fee adjustment',
         },
         annualRateOverrides: const <String, double>{'mobit': 0.175},
+        annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+          'mobit': AssetLiabilityAnnualRateEvidence(
+            accountId: 'mobit',
+            fileName: 'mobit_apr.png',
+            mimeType: 'image/png',
+            submittedAt: DateTime(2026, 5, 14, 9),
+            submittedAnnualRate: 0.175,
+            detectedAnnualRate: 0.175,
+            status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+            summary: '17.5% APR visible',
+            source: 'ai-hub',
+          ),
+        },
         paidAccountNames: const <String>{'kddi_provider'},
         paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
         cardBillingAccountIds: const <String, String>{
@@ -1162,6 +1213,17 @@ void main() {
             received: true,
           ),
         ],
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_bank_topup',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'Cash',
+            toAccountId: 'smbc_otsuka',
+            toAccountName: 'SMBC Otsuka',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 18),
+          ),
+        ],
       );
 
       final payload = AssetLiabilityMonthlyStatePayload.fromState(
@@ -1182,12 +1244,17 @@ void main() {
       expect(restored.actualPaymentAmounts['mobit'], 71000);
       expect(restored.paymentDifferenceReasons['mobit'], 'fee adjustment');
       expect(restored.annualRateOverrides['mobit'], 0.175);
+      expect(restored.annualRateEvidences['mobit']?.verified, isTrue);
+      expect(row['annual_rate_evidences'], isA<Map<String, Object?>>());
       expect(restored.paidAccountNames, contains('kddi_provider'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
       expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
       expect(restored.cardStatementLines.single.description, 'KDDI');
       expect(restored.cardStatementLines.single.amount, 5764);
       expect(restored.incomePlans.single.received, isTrue);
+      expect(row['transfer_tasks'], isA<List<Object?>>());
+      expect(restored.transferTasks.single.toAccountId, 'smbc_otsuka');
+      expect(restored.transferTasks.single.amount, 10000);
     });
 
     test('round-trips settings and snapshot payloads', () {
@@ -1377,11 +1444,14 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
       <AssetLiabilityRecurringIncomeTemplate>[];
   final List<AssetLiabilityMonthlySnapshot> _monthlySnapshots =
       <AssetLiabilityMonthlySnapshot>[];
+  final List<AssetLiabilityMonthlyReport> _monthlyReports =
+      <AssetLiabilityMonthlyReport>[];
 
   bool _hasDefaultPaymentSources = false;
   bool _hasDefaultCardBillingAccounts = false;
   bool _hasRecurringIncomeTemplates = false;
   bool _hasMonthlySnapshots = false;
+  bool _hasMonthlyReports = false;
   bool failSaves = false;
 
   Map<String, String> get defaultPaymentSources =>
@@ -1397,6 +1467,9 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
 
   List<AssetLiabilityMonthlySnapshot> get monthlySnapshots =>
       List<AssetLiabilityMonthlySnapshot>.from(_monthlySnapshots);
+
+  List<AssetLiabilityMonthlyReport> get monthlyReports =>
+      List<AssetLiabilityMonthlyReport>.from(_monthlyReports);
 
   AssetLiabilityMonthlyState? monthState(String monthKey) => _states[monthKey];
 
@@ -1433,6 +1506,14 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
       ..clear()
       ..addAll(snapshots)
       ..sort((a, b) => a.monthKey.compareTo(b.monthKey));
+  }
+
+  void seedMonthlyReports(List<AssetLiabilityMonthlyReport> reports) {
+    _hasMonthlyReports = true;
+    _monthlyReports
+      ..clear()
+      ..addAll(reports)
+      ..sort((a, b) => b.monthKey.compareTo(a.monthKey));
   }
 
   @override
@@ -1556,6 +1637,20 @@ class _RecordingAssetLiabilityRemoteStore extends AssetLiabilityRemoteStore {
     _monthlySnapshots.sort((a, b) => a.monthKey.compareTo(b.monthKey));
   }
 
+  @override
+  Future<List<AssetLiabilityMonthlyReport>?> loadMonthlyReports({
+    required String userId,
+    int limit = 24,
+  }) async {
+    calls.add('loadMonthlyReports:$userId:$limit');
+    if (!_hasMonthlyReports) {
+      return null;
+    }
+    return List<AssetLiabilityMonthlyReport>.from(
+      _monthlyReports.take(limit < 0 ? 0 : limit),
+    );
+  }
+
   void _throwIfSavingFails() {
     if (failSaves) {
       throw StateError('remote save failed');
@@ -1571,6 +1666,19 @@ AssetLiabilityMonthlyState _sampleMonthlyState() {
       'kddi_provider': 'confirmed bill',
     },
     annualRateOverrides: const <String, double>{'mobit': 0.175},
+    annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+      'mobit': AssetLiabilityAnnualRateEvidence(
+        accountId: 'mobit',
+        fileName: 'mobit_apr.png',
+        mimeType: 'image/png',
+        submittedAt: DateTime(2026, 5, 14, 9),
+        submittedAnnualRate: 0.175,
+        detectedAnnualRate: 0.175,
+        status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+        summary: '17.5% APR visible',
+        source: 'ai-hub',
+      ),
+    },
     paidAccountNames: const <String>{'kddi_provider'},
     paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
     cardBillingAccountIds: const <String, String>{
@@ -1595,6 +1703,17 @@ AssetLiabilityMonthlyState _sampleMonthlyState() {
         destinationAccountId: 'smbc_otsuka',
         destinationAccountName: 'SMBC Otsuka',
         received: false,
+      ),
+    ],
+    transferTasks: <AssetLiabilityTransferTask>[
+      AssetLiabilityTransferTask(
+        id: 'transfer_bank_topup',
+        fromAccountId: 'custom_cash',
+        fromAccountName: 'Cash',
+        toAccountId: 'smbc_otsuka',
+        toAccountName: 'SMBC Otsuka',
+        amount: 10000,
+        dueDate: DateTime(2026, 5, 18),
       ),
     ],
   );

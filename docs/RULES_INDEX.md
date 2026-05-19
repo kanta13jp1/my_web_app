@@ -1,4 +1,4 @@
-# inject-rules.txt 詳細 expand (= 37 rule full body)
+# inject-rules.txt 詳細 expand (= 39 rule full body)
 
 > **Win版#132 part 134 (2026-05-05)**: 旧 `~/.claude/hooks/inject-rules.txt` (= 344 行) の詳細を本ファイルに移行 (= Karpathy 80 行 KPI 達成 / inject-rules.txt は ≤ 80 行 pointer hub 化).
 > 詳細 body は本ファイル参照. 違反例 / 受領者 instance / 関連 docs link も保存.
@@ -72,6 +72,14 @@ git stash は同一 workdir の全 process に影響:
   → 1 つでも YES = Win Claude / 全部 NO = Win Codex
 - SLA: Issue 起票 → 24h 以内 Win Claude triage → severity ≤ normal は Win Codex / 重い設計判断は Win Claude
 
+### `[AI-TOOL-VERIFY]`
+
+AI tool / model / agent capability claims are verify-first. Check official sources via `scripts/check_versions.py --web` before adopting fleet-wide behavior, model routing, or automation changes. The top-level operating model remains Claude Code #1 for policy/review and Codex #1 for scoped PR/CI/cleanup.
+
+### `[SUBAGENT-GUARD]`
+
+Guarded child subagents are allowed only under Claude Code #1 or Codex #1 as short-lived workers. Record lead owner, role, scope, validation, risk, and cleanup evidence in PR/Issue/wrap-up. Old Codex #2/#3, PS, WEB, and mobile lanes stay dormant.
+
 ### `[CONCURRENCY]`
 
 (Win#109 修正) deploy-prod / dev / staging は `cancel-in-progress: false` 変更済. 並行 push でも全 commit が順次 deploy. 後発 push は最大 11min × 並行数 待機.
@@ -104,7 +112,7 @@ git stash は同一 workdir の全 process に影響:
 
 ---
 
-## C. Behavioral 1-line (= 15 rule)
+## C. Behavioral 1-line (= 14 rule)
 
 ### `[ROADMAP-LOG]`
 

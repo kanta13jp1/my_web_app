@@ -868,6 +868,77 @@ void main() {
       expect(workbook.transferSuggestions.single.toAccountId, 'custom_bank');
     });
 
+    test('applies pending transfer tasks to account-level cashflow', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_bank_topup',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'cash',
+            toAccountId: 'custom_bank',
+            toAccountName: 'bank',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 8),
+          ),
+        ],
+      );
+
+      final cashSummary = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_cash',
+      );
+      final bankSummary = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_bank',
+      );
+
+      expect(cashSummary.pendingTransferOut, 10000);
+      expect(cashSummary.projectedBalance, 40000);
+      expect(bankSummary.pendingTransferIn, 10000);
+      expect(bankSummary.projectedBalance, 0);
+      expect(workbook.transferSuggestions, isEmpty);
+    });
+
+    test('does not double count completed transfer tasks', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_done',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'cash',
+            toAccountId: 'custom_bank',
+            toAccountName: 'bank',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 8),
+            completed: true,
+            completedAt: DateTime(2026, 5, 8, 9),
+          ),
+        ],
+      );
+
+      final bankSummary = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_bank',
+      );
+
+      expect(bankSummary.pendingTransferIn, 0);
+      expect(bankSummary.projectedBalance, -10000);
+      expect(workbook.transferSuggestions.single.amount, 10000);
+    });
+
     test('applies default payment source to unset monthly items', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
@@ -928,7 +999,7 @@ void main() {
       expect(workbook.cashAfterScheduledPayments, 5000);
     });
 
-    test('adds KDDI provider as a separate day 25 fixed payment', () {
+    test('adds KDDI provider and rent as separate fixed payments', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{'cash': 50000, 'au': -32152},
         baseDate: DateTime(2026, 5, 1),
@@ -941,6 +1012,9 @@ void main() {
       final au = workbook.debtMasterRows.firstWhere((row) => row.id == 'au');
       final kddi = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
       );
       final kddiCashflow = workbook.cashflowRows.firstWhere(
         (row) =>
@@ -978,6 +1052,10 @@ void main() {
         AssetLiabilityPlanningService.kddiProviderMonthlyPaymentAmount,
       );
       expect(kddiCashflow.paid, isFalse);
+      expect(rent.name, AssetLiabilityPlanningService.rentAccountName);
+      expect(rent.paymentDay, 25);
+      expect(rent.scheduledPaymentAmount, 63000);
+      expect(rent.isDirectCashflowTarget, isTrue);
       expect(
         kddiCashflow.cashAfterPayment,
         closeTo(
@@ -988,7 +1066,10 @@ void main() {
       );
       expect(
         workbook.monthlyUnpaidPaymentTotal,
-        closeTo(kddi.scheduledPaymentAmount, 0.001),
+        closeTo(
+          kddi.scheduledPaymentAmount + rent.scheduledPaymentAmount,
+          0.001,
+        ),
       );
     });
 
@@ -1006,6 +1087,9 @@ void main() {
       final kddi = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
       );
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+      );
       final kddiCashflow = workbook.cashflowRows.firstWhere(
         (row) =>
             row.accountId ==
@@ -1016,7 +1100,7 @@ void main() {
       expect(kddi.paid, isTrue);
       expect(kddiCashflow.paid, isTrue);
       expect(kddiCashflow.cashBeforePayment, kddiCashflow.cashAfterPayment);
-      expect(workbook.monthlyUnpaidPaymentTotal, 0);
+      expect(workbook.monthlyUnpaidPaymentTotal, rent.scheduledPaymentAmount);
     });
   });
 }

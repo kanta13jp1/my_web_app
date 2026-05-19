@@ -36,6 +36,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MEMORY_DIR = Path("C:/Users/kanta/.claude/projects/C--Users-kanta-GitHub-my-web-app/memory")
 DOCS_DIR = REPO_ROOT / "docs"
+COLLECTION_EXCLUDED_PARTS = {
+    ".git",
+    "node_modules",
+    "build",
+    "dist",
+    "knowledge-vault-lint",
+    # Draft imports are pre-curation scratch space. The curated memory/vault
+    # copy remains linted.
+    "ingest_drafts",
+}
 
 # memory dir が存在しなければ repo root の memory/ を fallback (= dev 環境)
 if not MEMORY_DIR.exists():
@@ -52,8 +62,7 @@ def collect_md_files(roots: list[Path]) -> list[Path]:
             # node_modules / .git 等除外
             # knowledge-vault-lint は本 script 自身の出力 (= [[xxx]] 例文を含む) で
             # scan すると大量 self-reference noise が出るため除外。
-            if any(part in {".git", "node_modules", "build", "dist",
-                            "knowledge-vault-lint"} for part in p.parts):
+            if any(part in COLLECTION_EXCLUDED_PARTS for part in p.parts):
                 continue
             if "knowledge-vault-lint" in p.parts:
                 continue
@@ -145,11 +154,29 @@ def detect_orphans(files: list[Path]) -> list[Path]:
         if f.name in {"MEMORY.md", "log.md", "README.md", "DESIGN.md",
                       "PHILOSOPHY.md", "CLAUDE.md"}:
             continue
+        if is_orphan_exempt_file(f):
+            continue
         if f.suffix != ".md":
             continue
         if f.name not in referenced and f.stem not in referenced:
             orphans.append(f)
     return orphans
+
+
+def is_orphan_exempt_file(path: Path) -> bool:
+    """Return True for docs artifacts that should not affect orphan score.
+
+    Root docs are curated through docs/DOCS_KNOWLEDGE_HUB.md. Most nested docs
+    folders are generated reports, handoff packets, archives, or dated logs; if
+    every dated artifact must be backlinked, the health score tracks repository
+    volume rather than actionable vault hygiene. These files are still scanned
+    for broken links and duplicate H1 titles.
+    """
+    try:
+        rel = path.relative_to(DOCS_DIR)
+    except ValueError:
+        return False
+    return len(rel.parts) > 1
 
 
 def detect_broken_links(files: list[Path]) -> list[tuple[Path, str]]:
@@ -250,9 +277,10 @@ def render_markdown(now: datetime, memory_files: list[Path], docs_files: list[Pa
     lines.append(f"- duplicate titles: {len(dup_titles)}")
     lines.append(f"- missing index entries: {len(missing_idx)}")
     lines.append("- scoring: size-normalized weighted penalties")
+    lines.append("- orphan scope: memory files + root docs; nested docs are link-checked only")
     lines.append("")
 
-    lines.append("## Orphan files (= 他 file から [[link]] 参照なし)")
+    lines.append("## Orphan files (= memory/root docs without [[link]] references)")
     lines.append("")
     if orphans:
         for f in orphans[:30]:

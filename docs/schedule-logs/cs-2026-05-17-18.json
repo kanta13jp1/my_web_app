@@ -1,0 +1,7 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-17T18:04:24Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22関数登録済み) / チケット: 0件 / Issue修正: 0件 (auto-review 0件 / workflow-failure #2550はpowershell-instance担当でスキップ) / Schedule健全性: 正常 / Supabase: 200 / ギター録音: 異常なし"
+}

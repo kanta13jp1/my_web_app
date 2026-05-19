@@ -1,14 +1,35 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-05-16",
+    "date": "2026-05-18",
     "users": {
       "total": 37
     },
     "featureRequests": {
-      "newToday": 0,
-      "openCount": 41,
-      "newTodayList": [],
+      "newToday": 4,
+      "openCount": 45,
+      "newTodayList": [
+        {
+          "id": "cbee5718-d1e2-40ed-afd1-6be08d291f80",
+          "title": "[資産管理] 口座間移動タスク管理",
+          "created_at": "2026-05-18T22:36:42.607803+00:00"
+        },
+        {
+          "id": "b4836b8f-6e1d-42bf-973c-e719ccc03a84",
+          "title": "[資産管理] カード請求内訳の設定監査",
+          "created_at": "2026-05-18T22:36:35.903504+00:00"
+        },
+        {
+          "id": "b400bac1-3046-4528-9966-b7cdaed86c60",
+          "title": "[資産管理] 支払原資口座の未設定レビュー",
+          "created_at": "2026-05-18T22:36:23.567793+00:00"
+        },
+        {
+          "id": "4f60ca78-d194-4db4-8ea4-f3589e6976ca",
+          "title": "[資産管理] 実支払額と推定額の差分管理",
+          "created_at": "2026-05-18T22:36:08.3827+00:00"
+        }
+      ],
       "topOpen": [
         {
           "title": "AI大学をもっと改善して",
@@ -34,6 +55,10 @@
     },
     "recentAchievements": [
       {
+        "title": "Scheduled Daily part 225: PR Gate Declaration Body Patch + Close/Reopen pattern blog draft (JA+EN) for stuck CI gates",
+        "completed_at": "2026-05-17T00:00:00+00:00"
+      },
+      {
         "title": "Codex #1: asset-management WBS rebalance with AI model benchmark plan",
         "completed_at": "2026-05-16T05:39:38.410901+00:00"
       },
@@ -48,13 +73,9 @@
       {
         "title": "Scheduled Daily S4: v21 5-layer structural prevention spec (Z-DD) + same-day natural recovery 第 1 例",
         "completed_at": "2026-05-13T00:00:00+00:00"
-      },
-      {
-        "title": "Codex #1: Issue #1964 FinTech disruption / Trading x AI seed",
-        "completed_at": "2026-05-12T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-05-17T07:48:09+09:00",
-  "report_date": "2026-05-17"
+  "fetched_at": "2026-05-19T07:50:12+09:00",
+  "report_date": "2026-05-19"
 }

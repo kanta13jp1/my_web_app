@@ -3,7 +3,7 @@ name: Inject Rules Drift Detection
 # Win版#132 part 135 (2026-05-05) — fleet 横断 inject-rules.txt 同期 mechanism
 # .claude/inject-rules.txt (= repo canonical) の integrity を weekly check.
 # - 行数 ≤ 80 (Karpathy KPI 維持)
-# - rule ID 数 = 37 (= 既知の 37 rule 揃ってるか)
+# - rule ID 数 = 39 (= 既知の 39 rule 揃ってるか)
 # - 各 critical rule 存在
 # - docs/RULES_INDEX.md との整合 (= 全 rule ID が docs に expand されてるか)
 #
@@ -51,6 +51,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Run sync_inject_rules unit test
+        run: python test/scripts/test_sync_inject_rules.py
+
       - name: Run sync_inject_rules --verify (canonical only)
         id: verify
         run: |
@@ -67,12 +70,12 @@ jobs:
           echo "rules=$RULES"       >> $GITHUB_OUTPUT
           echo "missing=$MISSING"   >> $GITHUB_OUTPUT
 
-      - name: Verify docs/RULES_INDEX.md mentions all 37 rules
+      - name: Verify docs/RULES_INDEX.md mentions all 39 rules
         id: docs_match
         run: |
           DOCS_RULE_COUNT=$(grep -cE "^### \`\[" docs/RULES_INDEX.md || echo 0)
           DOCS_TABLE_COUNT=$(grep -cE "^\| \`\[" docs/RULES_INDEX.md || echo 0)
-          # Section A (= ### form) + Section B (= table form) + Section C (= ### form) で 37 entry あるはず
+          # Section A (= ### form) + Section B (= table form) + Section C (= ### form) で 39 entry あるはず
           TOTAL=$((DOCS_RULE_COUNT + DOCS_TABLE_COUNT))
           echo "docs_rule_section=$DOCS_RULE_COUNT" >> $GITHUB_OUTPUT
           echo "docs_rule_table=$DOCS_TABLE_COUNT" >> $GITHUB_OUTPUT
@@ -102,7 +105,7 @@ jobs:
             echo ""
             echo "### KPI 詳細"
             echo "- 行数: ${{ steps.verify.outputs.lines }} (= 80 行上限)"
-            echo "- rule ID 数: ${{ steps.verify.outputs.rules }} (= 37 期待)"
+            echo "- rule ID 数: ${{ steps.verify.outputs.rules }} (= 39 期待)"
             echo "- 不足 critical rule: ${{ steps.verify.outputs.missing }}"
             echo ""
             echo "### 修復手順"

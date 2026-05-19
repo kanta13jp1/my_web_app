@@ -80,11 +80,13 @@ class AssetLiabilityMonthlyStatePayload {
   final Map<String, double> actualPaymentAmounts;
   final Map<String, String> paymentDifferenceReasons;
   final Map<String, double> annualRateOverrides;
+  final Map<String, AssetLiabilityAnnualRateEvidence> annualRateEvidences;
   final Set<String> paidAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
   final List<AssetLiabilityCardStatementLine> cardStatementLines;
   final List<AssetLiabilityIncomePlan> incomePlans;
+  final List<AssetLiabilityTransferTask> transferTasks;
 
   const AssetLiabilityMonthlyStatePayload({
     required this.monthKey,
@@ -92,11 +94,13 @@ class AssetLiabilityMonthlyStatePayload {
     required this.actualPaymentAmounts,
     required this.paymentDifferenceReasons,
     required this.annualRateOverrides,
+    required this.annualRateEvidences,
     required this.paidAccountIds,
     required this.paymentSourceAccountIds,
     required this.cardBillingAccountIds,
     required this.cardStatementLines,
     required this.incomePlans,
+    required this.transferTasks,
   });
 
   factory AssetLiabilityMonthlyStatePayload.fromState({
@@ -112,8 +116,9 @@ class AssetLiabilityMonthlyStatePayload {
       paymentDifferenceReasons: Map<String, String>.from(
         state.paymentDifferenceReasons,
       ),
-      annualRateOverrides: Map<String, double>.from(
-        state.annualRateOverrides,
+      annualRateOverrides: Map<String, double>.from(state.annualRateOverrides),
+      annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        state.annualRateEvidences,
       ),
       paidAccountIds: Set<String>.from(state.paidAccountNames),
       paymentSourceAccountIds: Map<String, String>.from(
@@ -126,6 +131,7 @@ class AssetLiabilityMonthlyStatePayload {
         state.cardStatementLines,
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(state.incomePlans),
+      transferTasks: List<AssetLiabilityTransferTask>.from(state.transferTasks),
     );
   }
 
@@ -149,6 +155,10 @@ class AssetLiabilityMonthlyStatePayload {
       annualRateOverrides: _readDoubleMap(json, 'annual_rate_overrides') ??
           _readDoubleMap(json, 'annualRateOverrides') ??
           const <String, double>{},
+      annualRateEvidences:
+          _readAnnualRateEvidences(json, 'annual_rate_evidences') ??
+              _readAnnualRateEvidences(json, 'annualRateEvidences') ??
+              const <String, AssetLiabilityAnnualRateEvidence>{},
       paidAccountIds: _readStringSet(json, 'paid_account_ids') ??
           _readStringSet(json, 'paidAccountIds') ??
           const <String>{},
@@ -166,6 +176,9 @@ class AssetLiabilityMonthlyStatePayload {
       incomePlans: _readIncomePlans(json, 'income_plans') ??
           _readIncomePlans(json, 'incomePlans') ??
           const <AssetLiabilityIncomePlan>[],
+      transferTasks: _readTransferTasks(json, 'transfer_tasks') ??
+          _readTransferTasks(json, 'transferTasks') ??
+          const <AssetLiabilityTransferTask>[],
     );
   }
 
@@ -177,6 +190,9 @@ class AssetLiabilityMonthlyStatePayload {
         paymentDifferenceReasons,
       ),
       annualRateOverrides: Map<String, double>.from(annualRateOverrides),
+      annualRateEvidences: Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        annualRateEvidences,
+      ),
       paidAccountNames: Set<String>.from(paidAccountIds),
       paymentSourceAccountIds: Map<String, String>.from(
         paymentSourceAccountIds,
@@ -186,6 +202,7 @@ class AssetLiabilityMonthlyStatePayload {
         cardStatementLines,
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(incomePlans),
+      transferTasks: List<AssetLiabilityTransferTask>.from(transferTasks),
     );
   }
 
@@ -203,6 +220,10 @@ class AssetLiabilityMonthlyStatePayload {
         paymentDifferenceReasons,
       ),
       'annual_rate_overrides': Map<String, double>.from(annualRateOverrides),
+      'annual_rate_evidences': {
+        for (final entry in annualRateEvidences.entries)
+          entry.key: entry.value.toJson(),
+      },
       'paid_account_ids': (paidAccountIds.toList()..sort()),
       'payment_source_account_ids': Map<String, String>.from(
         paymentSourceAccountIds,
@@ -214,6 +235,9 @@ class AssetLiabilityMonthlyStatePayload {
         for (final line in cardStatementLines) _encodeCardStatementLine(line),
       ],
       'income_plans': [for (final plan in incomePlans) _encodeIncomePlan(plan)],
+      'transfer_tasks': [
+        for (final task in transferTasks) _encodeTransferTask(task),
+      ],
       if (timestamp != null) 'updated_at': timestamp,
     };
   }
@@ -392,6 +416,20 @@ Map<String, Object?> _encodeCardStatementLine(
   };
 }
 
+Map<String, Object?> _encodeTransferTask(AssetLiabilityTransferTask task) {
+  return <String, Object?>{
+    'id': task.id,
+    'fromAccountId': task.fromAccountId,
+    'fromAccountName': task.fromAccountName,
+    'toAccountId': task.toAccountId,
+    'toAccountName': task.toAccountName,
+    'amount': task.amount,
+    'dueDate': task.dueDate == null ? null : _dateOnly(task.dueDate!),
+    'completed': task.completed,
+    'completedAt': task.completedAt?.toUtc().toIso8601String(),
+  };
+}
+
 AssetLiabilityIncomePlan? _decodeIncomePlan(Object? source) {
   if (source is! Map) {
     return null;
@@ -476,6 +514,48 @@ AssetLiabilityCardStatementLine? _decodeCardStatementLine(Object? source) {
   );
 }
 
+AssetLiabilityTransferTask? _decodeTransferTask(Object? source) {
+  if (source is! Map) {
+    return null;
+  }
+  final id = _cleanString(source['id']);
+  final fromAccountId = _cleanString(source['fromAccountId']) ??
+      _cleanString(source['from_account_id']);
+  final toAccountId = _cleanString(source['toAccountId']) ??
+      _cleanString(source['to_account_id']);
+  final amount = _parseDouble(source['amount']);
+  final dueDateText =
+      _cleanString(source['dueDate']) ?? _cleanString(source['due_date']);
+  final completedAtText = _cleanString(source['completedAt']) ??
+      _cleanString(source['completed_at']);
+  final dueDate = dueDateText == null ? null : DateTime.tryParse(dueDateText);
+  final completedAt =
+      completedAtText == null ? null : DateTime.tryParse(completedAtText);
+  if (id == null ||
+      fromAccountId == null ||
+      toAccountId == null ||
+      fromAccountId == toAccountId ||
+      amount == null ||
+      amount <= 0) {
+    return null;
+  }
+  return AssetLiabilityTransferTask(
+    id: id,
+    fromAccountId: fromAccountId,
+    fromAccountName: _cleanString(source['fromAccountName']) ??
+        _cleanString(source['from_account_name']) ??
+        fromAccountId,
+    toAccountId: toAccountId,
+    toAccountName: _cleanString(source['toAccountName']) ??
+        _cleanString(source['to_account_name']) ??
+        toAccountId,
+    amount: amount,
+    dueDate: dueDate,
+    completed: source['completed'] == true,
+    completedAt: completedAt,
+  );
+}
+
 List<AssetLiabilityIncomePlan>? _readIncomePlans(
   Map<String, Object?> json,
   String key,
@@ -555,6 +635,66 @@ List<AssetLiabilityCardStatementLine>? _readCardStatementLines(
     return a.description.compareTo(b.description);
   });
   return lines;
+}
+
+List<AssetLiabilityTransferTask>? _readTransferTasks(
+  Map<String, Object?> json,
+  String key,
+) {
+  final source = json[key];
+  if (source is! Iterable) {
+    return null;
+  }
+  final tasks = <AssetLiabilityTransferTask>[];
+  for (final value in source) {
+    final task = _decodeTransferTask(value);
+    if (task != null) {
+      tasks.add(task);
+    }
+  }
+  tasks.sort((a, b) {
+    final aDue = a.dueDate;
+    final bDue = b.dueDate;
+    if (aDue != null && bDue != null) {
+      final date = aDue.compareTo(bDue);
+      if (date != 0) {
+        return date;
+      }
+    } else if (aDue != null) {
+      return -1;
+    } else if (bDue != null) {
+      return 1;
+    }
+    return a.id.compareTo(b.id);
+  });
+  return tasks;
+}
+
+Map<String, AssetLiabilityAnnualRateEvidence>? _readAnnualRateEvidences(
+  Map<String, Object?> json,
+  String key,
+) {
+  final source = json[key];
+  if (source is! Map) {
+    return null;
+  }
+  final result = <String, AssetLiabilityAnnualRateEvidence>{};
+  for (final entry in source.entries) {
+    if (entry.value is! Map) {
+      continue;
+    }
+    final evidence = AssetLiabilityAnnualRateEvidence.fromJson(
+      Map<String, Object?>.from(
+        (entry.value as Map).map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      ),
+    );
+    if (evidence != null) {
+      result[entry.key.toString()] = evidence;
+    }
+  }
+  return result;
 }
 
 Map<String, double>? _readDoubleMap(Map<String, Object?> json, String key) {

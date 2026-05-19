@@ -318,6 +318,12 @@ abstract class AssetLiabilityRepository {
 
   Future<void> saveMonthlySnapshot(AssetLiabilityMonthlySnapshot snapshot);
 
+  Future<List<AssetLiabilityMonthlyReport>> loadMonthlyReports({
+    int limit = 24,
+  }) async {
+    return const <AssetLiabilityMonthlyReport>[];
+  }
+
   Future<List<AssetLiabilitySyncAuditLog>> loadSyncAuditLogs({
     int limit = 20,
   }) async {
@@ -404,6 +410,11 @@ abstract class AssetLiabilityRemoteStore {
   Future<void> saveMonthlySnapshot({
     required String userId,
     required AssetLiabilityMonthlySnapshot snapshot,
+  });
+
+  Future<List<AssetLiabilityMonthlyReport>?> loadMonthlyReports({
+    required String userId,
+    int limit = 24,
   });
 }
 
@@ -712,6 +723,26 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
 
     return local;
+  }
+
+  @override
+  Future<List<AssetLiabilityMonthlyReport>> loadMonthlyReports({
+    int limit = 24,
+  }) async {
+    final remote = _remoteOrNull();
+    final userId = _userIdOrNull();
+    if (remote == null || userId == null) {
+      return const <AssetLiabilityMonthlyReport>[];
+    }
+    final remoteReports = await _tryRemote(
+      () => remote.loadMonthlyReports(userId: userId, limit: limit),
+    );
+    if (remoteReports == null || remoteReports.isEmpty) {
+      return const <AssetLiabilityMonthlyReport>[];
+    }
+    final sorted = List<AssetLiabilityMonthlyReport>.from(remoteReports)
+      ..sort((a, b) => b.monthKey.compareTo(a.monthKey));
+    return sorted.take(limit < 0 ? 0 : limit).toList(growable: false);
   }
 
   @override
@@ -1419,6 +1450,10 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           local.annualRateOverrides,
           remote.annualRateOverrides,
         ) &&
+        _annualRateEvidencesEqual(
+          local.annualRateEvidences,
+          remote.annualRateEvidences,
+        ) &&
         _stringSetEquals(local.paidAccountNames, remote.paidAccountNames) &&
         _stringMapEquals(
           local.paymentSourceAccountIds,
@@ -1432,7 +1467,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           local.cardStatementLines,
           remote.cardStatementLines,
         ) &&
-        _incomePlansEqual(local.incomePlans, remote.incomePlans);
+        _incomePlansEqual(local.incomePlans, remote.incomePlans) &&
+        _transferTasksEqual(local.transferTasks, remote.transferTasks);
   }
 
   bool _doubleMapEquals(Map<String, double> a, Map<String, double> b) {
@@ -1453,6 +1489,33 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
     for (final entry in a.entries) {
       if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _annualRateEvidencesEqual(
+    Map<String, AssetLiabilityAnnualRateEvidence> a,
+    Map<String, AssetLiabilityAnnualRateEvidence> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      final other = b[entry.key];
+      final current = entry.value;
+      if (other == null ||
+          other.accountId != current.accountId ||
+          other.fileName != current.fileName ||
+          other.mimeType != current.mimeType ||
+          other.submittedAt.toUtc() != current.submittedAt.toUtc() ||
+          other.submittedAnnualRate != current.submittedAnnualRate ||
+          other.detectedAnnualRate != current.detectedAnnualRate ||
+          other.status != current.status ||
+          other.summary != current.summary ||
+          other.source != current.source ||
+          other.errorMessage != current.errorMessage) {
         return false;
       }
     }
@@ -1513,6 +1576,35 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.postedAt != right.postedAt ||
           left.description != right.description ||
           left.amount != right.amount) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _transferTasksEqual(
+    List<AssetLiabilityTransferTask> a,
+    List<AssetLiabilityTransferTask> b,
+  ) {
+    final first = List<AssetLiabilityTransferTask>.from(a)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    final second = List<AssetLiabilityTransferTask>.from(b)
+      ..sort((left, right) => left.id.compareTo(right.id));
+    if (first.length != second.length) {
+      return false;
+    }
+    for (var i = 0; i < first.length; i++) {
+      final left = first[i];
+      final right = second[i];
+      if (left.id != right.id ||
+          left.fromAccountId != right.fromAccountId ||
+          left.fromAccountName != right.fromAccountName ||
+          left.toAccountId != right.toAccountId ||
+          left.toAccountName != right.toAccountName ||
+          left.amount != right.amount ||
+          left.dueDate != right.dueDate ||
+          left.completed != right.completed ||
+          left.completedAt != right.completedAt) {
         return false;
       }
     }
@@ -1677,6 +1769,7 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
         'actual_payment_amounts': row['actual_payment_amounts'],
         'payment_difference_reasons': row['payment_difference_reasons'],
         'annual_rate_overrides': row['annual_rate_overrides'],
+        'annual_rate_evidences': row['annual_rate_evidences'],
         'paid_account_ids': row['paid_account_ids'],
         'payment_source_account_ids': row['payment_source_account_ids'],
         'card_billing_account_ids': row['card_billing_account_ids'],
@@ -1849,6 +1942,43 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
     );
   }
 
+  @override
+  Future<List<AssetLiabilityMonthlyReport>?> loadMonthlyReports({
+    required String userId,
+    int limit = 24,
+  }) async {
+    final response = await client
+        .from('monthly_asset_reports')
+        .select(
+          'year_month,total_assets,total_liabilities,net_worth,ai_summary,ai_model,generated_at',
+        )
+        .eq('user_id', userId)
+        .order('year_month', ascending: false)
+        .limit(limit < 0 ? 0 : limit);
+
+    final reports = <AssetLiabilityMonthlyReport>[];
+    for (final item in response) {
+      final monthKey = _monthKeyFromReportValue(item['year_month']);
+      final generatedAt = _dateTimeFromReportValue(item['generated_at']);
+      if (monthKey == null || generatedAt == null) {
+        continue;
+      }
+      reports.add(
+        AssetLiabilityMonthlyReport(
+          monthKey: monthKey,
+          generatedAt: generatedAt,
+          totalAssets: _doubleFromReportValue(item['total_assets']),
+          totalLiabilities: _doubleFromReportValue(item['total_liabilities']),
+          netWorth: _doubleFromReportValue(item['net_worth']),
+          aiSummary: item['ai_summary']?.toString() ?? '',
+          aiModel: item['ai_model']?.toString() ?? '',
+        ),
+      );
+    }
+    reports.sort((a, b) => b.monthKey.compareTo(a.monthKey));
+    return reports;
+  }
+
   Future<Map<String, Object?>?> _loadPayloadRow(
     String table, {
     required String userId,
@@ -1907,6 +2037,43 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
       );
     }
     return null;
+  }
+
+  String? _monthKeyFromReportValue(Object? value) {
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty) {
+      return null;
+    }
+    final direct = RegExp(r'^(\d{4})-(\d{2})').firstMatch(text);
+    if (direct != null) {
+      final month = int.tryParse(direct.group(2)!);
+      if (month != null && month >= 1 && month <= 12) {
+        return '${direct.group(1)}-${direct.group(2)}';
+      }
+    }
+    final parsed = DateTime.tryParse(text);
+    if (parsed == null) {
+      return null;
+    }
+    return AssetLiabilityMonthlyStateStore.formatMonthKey(parsed);
+  }
+
+  DateTime? _dateTimeFromReportValue(Object? value) {
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(text);
+  }
+
+  double _doubleFromReportValue(Object? value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value.trim()) ?? 0;
+    }
+    return 0;
   }
 }
 

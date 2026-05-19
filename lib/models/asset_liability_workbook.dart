@@ -18,6 +18,152 @@ enum AssetLiabilityPaymentMethodSettingSource {
   monthlyOverride,
 }
 
+enum AssetLiabilityAnnualRateEvidenceStatus {
+  verified,
+  rejected,
+  needsReview,
+  failed,
+}
+
+class AssetLiabilityAnnualRateEvidence {
+  final String accountId;
+  final String fileName;
+  final String mimeType;
+  final DateTime submittedAt;
+  final double submittedAnnualRate;
+  final double? detectedAnnualRate;
+  final AssetLiabilityAnnualRateEvidenceStatus status;
+  final String summary;
+  final String source;
+  final String? errorMessage;
+
+  const AssetLiabilityAnnualRateEvidence({
+    required this.accountId,
+    required this.fileName,
+    required this.mimeType,
+    required this.submittedAt,
+    required this.submittedAnnualRate,
+    required this.detectedAnnualRate,
+    required this.status,
+    required this.summary,
+    required this.source,
+    this.errorMessage,
+  });
+
+  bool get verified =>
+      status == AssetLiabilityAnnualRateEvidenceStatus.verified;
+
+  bool matchesAnnualRate(double annualRate) {
+    return verified && (submittedAnnualRate - annualRate).abs() < 0.0001;
+  }
+
+  AssetLiabilityAnnualRateEvidence copyWith({
+    String? accountId,
+    String? fileName,
+    String? mimeType,
+    DateTime? submittedAt,
+    double? submittedAnnualRate,
+    double? detectedAnnualRate,
+    AssetLiabilityAnnualRateEvidenceStatus? status,
+    String? summary,
+    String? source,
+    String? errorMessage,
+  }) {
+    return AssetLiabilityAnnualRateEvidence(
+      accountId: accountId ?? this.accountId,
+      fileName: fileName ?? this.fileName,
+      mimeType: mimeType ?? this.mimeType,
+      submittedAt: submittedAt ?? this.submittedAt,
+      submittedAnnualRate: submittedAnnualRate ?? this.submittedAnnualRate,
+      detectedAnnualRate: detectedAnnualRate ?? this.detectedAnnualRate,
+      status: status ?? this.status,
+      summary: summary ?? this.summary,
+      source: source ?? this.source,
+      errorMessage: errorMessage ?? this.errorMessage,
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'accountId': accountId,
+      'fileName': fileName,
+      'mimeType': mimeType,
+      'submittedAt': submittedAt.toUtc().toIso8601String(),
+      'submittedAnnualRate': submittedAnnualRate,
+      'detectedAnnualRate': detectedAnnualRate,
+      'status': status.name,
+      'summary': summary,
+      'source': source,
+      'errorMessage': errorMessage,
+    };
+  }
+
+  static AssetLiabilityAnnualRateEvidence? fromJson(Map<String, Object?> json) {
+    final accountId = json['accountId']?.toString().trim() ??
+        json['account_id']?.toString().trim();
+    final fileName = json['fileName']?.toString().trim() ??
+        json['file_name']?.toString().trim();
+    final mimeType = json['mimeType']?.toString().trim() ??
+        json['mime_type']?.toString().trim();
+    final submittedAtText =
+        json['submittedAt']?.toString() ?? json['submitted_at']?.toString();
+    final submittedAt =
+        submittedAtText == null ? null : DateTime.tryParse(submittedAtText);
+    final submittedAnnualRate = _parseEvidenceDouble(
+          json['submittedAnnualRate'] ?? json['submitted_annual_rate'],
+        ) ??
+        -1;
+    final detectedAnnualRate = _parseEvidenceDouble(
+      json['detectedAnnualRate'] ?? json['detected_annual_rate'],
+    );
+    final rawStatus = json['status']?.toString().trim();
+    AssetLiabilityAnnualRateEvidenceStatus? status;
+    for (final value in AssetLiabilityAnnualRateEvidenceStatus.values) {
+      if (value.name == rawStatus) {
+        status = value;
+        break;
+      }
+    }
+    if (accountId == null ||
+        accountId.isEmpty ||
+        fileName == null ||
+        fileName.isEmpty ||
+        mimeType == null ||
+        mimeType.isEmpty ||
+        submittedAt == null ||
+        submittedAnnualRate < 0 ||
+        status == null) {
+      return null;
+    }
+    final rawError =
+        json['errorMessage']?.toString() ?? json['error_message']?.toString();
+    final error =
+        rawError == null || rawError.trim().isEmpty ? null : rawError.trim();
+    return AssetLiabilityAnnualRateEvidence(
+      accountId: accountId,
+      fileName: fileName,
+      mimeType: mimeType,
+      submittedAt: submittedAt,
+      submittedAnnualRate: submittedAnnualRate,
+      detectedAnnualRate: detectedAnnualRate,
+      status: status,
+      summary: json['summary']?.toString().trim() ?? '',
+      source: json['source']?.toString().trim() ?? '',
+      errorMessage: error,
+    );
+  }
+}
+
+double? _parseEvidenceDouble(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+  if (value == null) {
+    return null;
+  }
+  return double.tryParse(value.toString().replaceAll(',', '').trim());
+}
+
 class AssetLiabilityAccount {
   final String id;
   final String name;
@@ -279,6 +425,8 @@ class AssetLiabilityAccountCashflowSummary {
   final double currentBalance;
   final double upcomingPayments;
   final double upcomingIncome;
+  final double pendingTransferIn;
+  final double pendingTransferOut;
   final double projectedBalance;
   final AssetLiabilityCashRiskLevel riskLevel;
 
@@ -288,6 +436,8 @@ class AssetLiabilityAccountCashflowSummary {
     required this.currentBalance,
     required this.upcomingPayments,
     required this.upcomingIncome,
+    this.pendingTransferIn = 0,
+    this.pendingTransferOut = 0,
     required this.projectedBalance,
     required this.riskLevel,
   });
@@ -312,6 +462,54 @@ class AssetLiabilityTransferSuggestion {
     required this.amount,
     required this.neededBy,
   });
+}
+
+class AssetLiabilityTransferTask {
+  final String id;
+  final String fromAccountId;
+  final String fromAccountName;
+  final String toAccountId;
+  final String toAccountName;
+  final double amount;
+  final DateTime? dueDate;
+  final bool completed;
+  final DateTime? completedAt;
+
+  const AssetLiabilityTransferTask({
+    required this.id,
+    required this.fromAccountId,
+    required this.fromAccountName,
+    required this.toAccountId,
+    required this.toAccountName,
+    required this.amount,
+    required this.dueDate,
+    this.completed = false,
+    this.completedAt,
+  });
+
+  AssetLiabilityTransferTask copyWith({
+    String? id,
+    String? fromAccountId,
+    String? fromAccountName,
+    String? toAccountId,
+    String? toAccountName,
+    double? amount,
+    DateTime? dueDate,
+    bool? completed,
+    DateTime? completedAt,
+  }) {
+    return AssetLiabilityTransferTask(
+      id: id ?? this.id,
+      fromAccountId: fromAccountId ?? this.fromAccountId,
+      fromAccountName: fromAccountName ?? this.fromAccountName,
+      toAccountId: toAccountId ?? this.toAccountId,
+      toAccountName: toAccountName ?? this.toAccountName,
+      amount: amount ?? this.amount,
+      dueDate: dueDate ?? this.dueDate,
+      completed: completed ?? this.completed,
+      completedAt: completedAt ?? this.completedAt,
+    );
+  }
 }
 
 class AssetLiabilityMonthlySnapshot {
@@ -341,6 +539,26 @@ class AssetLiabilityMonthlySnapshot {
     this.monthlyActualPaymentTotal = 0,
     this.monthlyPaymentDifferenceTotal = 0,
     required this.overduePaymentCount,
+  });
+}
+
+class AssetLiabilityMonthlyReport {
+  final String monthKey;
+  final DateTime generatedAt;
+  final double totalAssets;
+  final double totalLiabilities;
+  final double netWorth;
+  final String aiSummary;
+  final String aiModel;
+
+  const AssetLiabilityMonthlyReport({
+    required this.monthKey,
+    required this.generatedAt,
+    required this.totalAssets,
+    required this.totalLiabilities,
+    required this.netWorth,
+    required this.aiSummary,
+    required this.aiModel,
   });
 }
 
@@ -632,6 +850,7 @@ class AssetLiabilityWorkbook {
   final List<AssetLiabilityPaymentDayRisk> paymentDayRisks;
   final List<AssetLiabilityCashflowRow> cashflowRows;
   final List<AssetLiabilityIncomePlan> incomePlans;
+  final List<AssetLiabilityTransferTask> transferTasks;
   final List<AssetLiabilityAccountCashflowSummary> accountCashflowSummaries;
   final List<AssetLiabilityTransferSuggestion> transferSuggestions;
   final AssetLiabilityCardBillingReviewData cardBillingReview;
@@ -663,6 +882,7 @@ class AssetLiabilityWorkbook {
     required this.paymentDayRisks,
     required this.cashflowRows,
     required this.incomePlans,
+    required this.transferTasks,
     required this.accountCashflowSummaries,
     required this.transferSuggestions,
     required this.cardBillingReview,
