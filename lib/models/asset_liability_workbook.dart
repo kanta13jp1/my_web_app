@@ -98,9 +98,7 @@ class AssetLiabilityAnnualRateEvidence {
     };
   }
 
-  static AssetLiabilityAnnualRateEvidence? fromJson(
-    Map<String, Object?> json,
-  ) {
+  static AssetLiabilityAnnualRateEvidence? fromJson(Map<String, Object?> json) {
     final accountId = json['accountId']?.toString().trim() ??
         json['account_id']?.toString().trim();
     final fileName = json['fileName']?.toString().trim() ??
@@ -541,6 +539,26 @@ class AssetLiabilityMonthlySnapshot {
     this.monthlyActualPaymentTotal = 0,
     this.monthlyPaymentDifferenceTotal = 0,
     required this.overduePaymentCount,
+  });
+}
+
+class AssetLiabilityMonthlyReport {
+  final String monthKey;
+  final DateTime generatedAt;
+  final double totalAssets;
+  final double totalLiabilities;
+  final double netWorth;
+  final String aiSummary;
+  final String aiModel;
+
+  const AssetLiabilityMonthlyReport({
+    required this.monthKey,
+    required this.generatedAt,
+    required this.totalAssets,
+    required this.totalLiabilities,
+    required this.netWorth,
+    required this.aiSummary,
+    required this.aiModel,
   });
 }
 

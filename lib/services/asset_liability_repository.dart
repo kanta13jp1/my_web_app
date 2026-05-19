@@ -318,6 +318,12 @@ abstract class AssetLiabilityRepository {
 
   Future<void> saveMonthlySnapshot(AssetLiabilityMonthlySnapshot snapshot);
 
+  Future<List<AssetLiabilityMonthlyReport>> loadMonthlyReports({
+    int limit = 24,
+  }) async {
+    return const <AssetLiabilityMonthlyReport>[];
+  }
+
   Future<List<AssetLiabilitySyncAuditLog>> loadSyncAuditLogs({
     int limit = 20,
   }) async {
@@ -404,6 +410,11 @@ abstract class AssetLiabilityRemoteStore {
   Future<void> saveMonthlySnapshot({
     required String userId,
     required AssetLiabilityMonthlySnapshot snapshot,
+  });
+
+  Future<List<AssetLiabilityMonthlyReport>?> loadMonthlyReports({
+    required String userId,
+    int limit = 24,
   });
 }
 
@@ -712,6 +723,26 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
     }
 
     return local;
+  }
+
+  @override
+  Future<List<AssetLiabilityMonthlyReport>> loadMonthlyReports({
+    int limit = 24,
+  }) async {
+    final remote = _remoteOrNull();
+    final userId = _userIdOrNull();
+    if (remote == null || userId == null) {
+      return const <AssetLiabilityMonthlyReport>[];
+    }
+    final remoteReports = await _tryRemote(
+      () => remote.loadMonthlyReports(userId: userId, limit: limit),
+    );
+    if (remoteReports == null || remoteReports.isEmpty) {
+      return const <AssetLiabilityMonthlyReport>[];
+    }
+    final sorted = List<AssetLiabilityMonthlyReport>.from(remoteReports)
+      ..sort((a, b) => b.monthKey.compareTo(a.monthKey));
+    return sorted.take(limit < 0 ? 0 : limit).toList(growable: false);
   }
 
   @override
@@ -1911,6 +1942,43 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
     );
   }
 
+  @override
+  Future<List<AssetLiabilityMonthlyReport>?> loadMonthlyReports({
+    required String userId,
+    int limit = 24,
+  }) async {
+    final response = await client
+        .from('monthly_asset_reports')
+        .select(
+          'year_month,total_assets,total_liabilities,net_worth,ai_summary,ai_model,generated_at',
+        )
+        .eq('user_id', userId)
+        .order('year_month', ascending: false)
+        .limit(limit < 0 ? 0 : limit);
+
+    final reports = <AssetLiabilityMonthlyReport>[];
+    for (final item in response) {
+      final monthKey = _monthKeyFromReportValue(item['year_month']);
+      final generatedAt = _dateTimeFromReportValue(item['generated_at']);
+      if (monthKey == null || generatedAt == null) {
+        continue;
+      }
+      reports.add(
+        AssetLiabilityMonthlyReport(
+          monthKey: monthKey,
+          generatedAt: generatedAt,
+          totalAssets: _doubleFromReportValue(item['total_assets']),
+          totalLiabilities: _doubleFromReportValue(item['total_liabilities']),
+          netWorth: _doubleFromReportValue(item['net_worth']),
+          aiSummary: item['ai_summary']?.toString() ?? '',
+          aiModel: item['ai_model']?.toString() ?? '',
+        ),
+      );
+    }
+    reports.sort((a, b) => b.monthKey.compareTo(a.monthKey));
+    return reports;
+  }
+
   Future<Map<String, Object?>?> _loadPayloadRow(
     String table, {
     required String userId,
@@ -1969,6 +2037,43 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
       );
     }
     return null;
+  }
+
+  String? _monthKeyFromReportValue(Object? value) {
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty) {
+      return null;
+    }
+    final direct = RegExp(r'^(\d{4})-(\d{2})').firstMatch(text);
+    if (direct != null) {
+      final month = int.tryParse(direct.group(2)!);
+      if (month != null && month >= 1 && month <= 12) {
+        return '${direct.group(1)}-${direct.group(2)}';
+      }
+    }
+    final parsed = DateTime.tryParse(text);
+    if (parsed == null) {
+      return null;
+    }
+    return AssetLiabilityMonthlyStateStore.formatMonthKey(parsed);
+  }
+
+  DateTime? _dateTimeFromReportValue(Object? value) {
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(text);
+  }
+
+  double _doubleFromReportValue(Object? value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value.trim()) ?? 0;
+    }
+    return 0;
   }
 }
 
