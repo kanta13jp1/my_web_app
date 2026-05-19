@@ -424,7 +424,7 @@
       "date": "2026-05-19",
       "extensions": {
         "aiToolWatch": {
-          "changedSourceCount": 0,
+          "changedSourceCount": 3,
           "signalCount": 0,
           "source": "docs/ai-tool-watch/latest-report.json"
         }
