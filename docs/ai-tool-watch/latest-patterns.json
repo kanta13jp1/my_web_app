@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-19T21:48:09Z",
+  "generated_at": "2026-05-20T21:56:45Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "1ac4affcbb223f9cc18aac32cbef96a15f20fd44e3ceba48e64cbb84860421b5",
+          "hash": "d0fc7a2b650b450fd13f601a1a79f79e015c53549bf7561d47f373e276c57383",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -77,7 +77,7 @@
           "latest_signal": "2.1.145 / May 19, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "e60a10db424c11ec2586a0226dd097e78030903e39a9ace570672f764a90654d",
+          "previous_hash": "1ac4affcbb223f9cc18aac32cbef96a15f20fd44e3ceba48e64cbb84860421b5",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
@@ -118,7 +118,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a291649d038bb13016858d672806cb8d56f20618163a99863bd3a37f263536b4",
+          "hash": "329e559e454f14196600c95c858cd5311ccdd9eadd8750cdbdace9f13bf5a9e5",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -148,13 +148,14 @@
             ],
             "schedule": [
               "schedule",
+              "cron",
               "workflow"
             ]
           },
           "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "2c377ae8c14e19e4f0ddd7636e3b77709788ff53844b4e90417547cc8f4b660b",
+          "previous_hash": "a291649d038bb13016858d672806cb8d56f20618163a99863bd3a37f263536b4",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -195,7 +196,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "cdac2cc4329d2a25207508041b7a569f247fa861e50c7e6a11a80f214462a692",
+          "hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -228,7 +229,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "a27e5806bf82bc34fb597b1793e227fd4282ca4138184e63066acd1645f8fe0e",
+          "previous_hash": "cdac2cc4329d2a25207508041b7a569f247fa861e50c7e6a11a80f214462a692",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -258,9 +259,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-acb3bdc2b786",
+        "entry_id": "nf-3d660b5f3daa",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-05-18 / Codex CLI 0.131.0 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #19068 , #22375 ) Plugin workflows gained marketplace CLI commands, version-aware sharing, share checkout, clearer shared-workspace buckets, and default-enabled plugin hooks. ( #21396 , #22397 , #22425 , #22435 , #22549 ) Remote workflows now support daemon-managed codex remote-control , runtime enable/disable APIs, status reads, and registry-...",
+        "text": "Codex changelog 2026-05-20 / Codex CLI 0.132.0 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #23093 ) Python turn APIs are easier to use for text-only workflows: you can pass a plain string as input, and handle-based runs now return a richer TurnResult with collected... ( #23151 , #23162 ) codex exec resume now accepts --output-schema , so resumed automations can keep session context while still enforcing structured JSON output.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -269,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "16c38b04b442454e1d31b53726e454ba8a12cdb27a5ce5be50f76f8eefd54c17",
+          "hash": "6f3e46565929005e3f2aebffc5a16e1eac9f6103085587cd1fab30fc8e1d5691",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -314,22 +315,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-05-18 / Codex CLI 0.131.0 pre",
+          "latest_signal": "2026-05-20 / Codex CLI 0.132.0 pre",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "557926109b5f667d4948f66a8f5ee4a7a64392e0e86314cbd838fb7dd7e6ff1c",
+          "previous_hash": "16c38b04b442454e1d31b53726e454ba8a12cdb27a5ce5be50f76f8eefd54c17",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "( #19068 , #22375 ) Plugin workflows gained marketplace CLI commands, version-aware sharing, share checkout, clearer shared-workspace buckets, and default-enabled plugin hooks.",
-            "( #21396 , #22397 , #22425 , #22435 , #22549 ) Remote workflows now support daemon-managed codex remote-control , runtime enable/disable APIs, status reads, and registry-..."
+            "( #23093 ) Python turn APIs are easier to use for text-only workflows: you can pass a plain string as input, and handle-based runs now return a richer TurnResult with collected...",
+            "( #23151 , #23162 ) codex exec resume now accepts --output-schema , so resumed automations can keep session context while still enforcing structured JSON output."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-acb3bdc2b786",
+        "entry_id": "nf-3d660b5f3daa",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -358,7 +359,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a74bff1b2a30e636020673907f19f624ab2b9e8ee6f35d9952cdc6c152d6b723",
+          "hash": "b60543b04f698ccbceebcee2a21ac92bacb27d5806fcf5ab7e4dacd441511351",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -397,7 +398,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "e43152c7f321582a2aaa58da1d710953e3f55b99346a7caf8fbb55bd74756479",
+          "previous_hash": "a74bff1b2a30e636020673907f19f624ab2b9e8ee6f35d9952cdc6c152d6b723",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -470,9 +471,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-c9fdd7f70679",
+        "entry_id": "nf-4219e325b7b0",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.4 / May 13, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog... You need Cursor admin access and Jira Commercial Cloud with Rovo enabled. 3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup...",
+        "text": "Cursor changelog 3.5 / May 20, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog... For the next 7 days, all agent runs for newly created automations are 50% off. # Automations in the Agents Window Cursor Automations are now available in the Agents Window , in addition to cursor.com/automations.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -481,8 +482,19 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "30b16f5d50f4a981b500fd7f14a0b9865ffd8ec13c823a8001f1f000538ce0dc",
+          "hash": "cfd49d6dc1366bca80c3d35e6b2497b566292f51396cdc969cf3eec327a76f2f",
           "keyword_groups": {
+            "codex-runtime": [
+              "model picker",
+              "subagents"
+            ],
+            "hooks": [
+              "hook"
+            ],
+            "integration": [
+              "MCP",
+              "Slack"
+            ],
             "quality-cost": [
               "permission",
               "review",
@@ -493,22 +505,22 @@
               "automations"
             ]
           },
-          "latest_signal": "3.4 / May 13, 2026",
+          "latest_signal": "3.5 / May 20, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "38b4806b2ff3e5c516ab0c11bfd1591fbf373c60c19ad670cb36fcb3cd319df4",
+          "previous_hash": "30b16f5d50f4a981b500fd7f14a0b9865ffd8ec13c823a8001f1f000538ce0dc",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
-            "You need Cursor admin access and Jira Commercial Cloud with Rovo enabled.",
-            "3.4 May 13, 2026 · Changelog Development environments for cloud agents To take engineering tasks from start to finish, agents need a development environment similar to the setup..."
+            "For the next 7 days, all agent runs for newly created automations are 50% off.",
+            "# Automations in the Agents Window Cursor Automations are now available in the Agents Window , in addition to cursor.com/automations."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-c9fdd7f70679",
+        "entry_id": "nf-4219e325b7b0",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -534,7 +546,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "dc44991b04c930d112113135d848a3cffb1049de9316a72d1ba7d679bfc1f220",
@@ -562,7 +574,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.82.0 / May 14, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "094937429b2b633f2dedcf4e45abfdc69e8202a2c14ead170898b56ef5a1fa59",
+          "previous_hash": "dc44991b04c930d112113135d848a3cffb1049de9316a72d1ba7d679bfc1f220",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -600,10 +612,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "1b66e00e044234619f3f8c895cd3b0f728c984a1f7bbc491acc93cfd6938b63b",
+          "hash": "a13266034613428ab968730cdba246cfe84889fb7367cf96df4019a9e6029ee4",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
