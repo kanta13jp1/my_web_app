@@ -89,6 +89,16 @@ jobs:
             NOTE=""
           fi
 
+          # コミット & push (ファイルが変わった場合のみ)
+          # NOTE: reset --hard を jq 書き込みより先に実行しないと、書いた直後の
+          # docs/infra-status.json が origin/main で上書きされ消える (= 2026-04-25
+          # 以降 stale 化していた真因。infra-health-check.yml ordering bug fix.)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --quiet
+          git checkout main --quiet
+          git reset --hard origin/main --quiet
+
           mkdir -p docs
           jq -n \
             --arg firebase "$FIREBASE_CODE" \
@@ -105,12 +115,6 @@ jobs:
 
           echo "✅ docs/infra-status.json 更新: Firebase=$FIREBASE_CODE supabase_ok=$ALL_OK"
 
-          # コミット & push (ファイルが変わった場合のみ)
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main --quiet
-          git checkout main --quiet
-          git reset --hard origin/main --quiet
           git add docs/infra-status.json
           if git diff --cached --quiet; then
             echo "変更なし — スキップ"
