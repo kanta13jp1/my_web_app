@@ -1,6 +1,12 @@
 {
-  "firebase": {"code": "unknown", "ok": false},
-  "supabase": {"all_ok": false, "results": ""},
-  "fetched_at": "2026-04-25T08:00:00Z",
-  "note": "infra-health-check.yml (毎時37分) が自動更新。初回は GHA 実行後に反映。fix-supabase-network.yml (allow-all) で Network Restrictions を解除すると全エンドポイントが正常になります。"
+  "firebase": {
+    "code": "200",
+    "ok": true
+  },
+  "supabase": {
+    "all_ok": true,
+    "results": "schedule-hub=400 tools-hub=401 admin-hub=400 guitar-recording-studio=200 get-home-dashboard=200 health-check=200 "
+  },
+  "fetched_at": "2026-05-20T21:38:58Z",
+  "note": ""
 }
