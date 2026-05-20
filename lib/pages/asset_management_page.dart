@@ -272,6 +272,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final Set<String> _developerRequestIssueSubmissionKeys = <String>{};
   final Map<String, Map<String, dynamic>> _developerRequestIssueResults =
       <String, Map<String, dynamic>>{};
+  bool _isCheckingExistingDeveloperRequestIssues = false;
+  String? _developerRequestExistingIssueLookupKey;
+  final Map<String, Map<String, dynamic>>
+      _developerRequestExistingIssueResults = <String, Map<String, dynamic>>{};
 
   final List<Color> _colors = [
     const Color(0xFF6366F1),
@@ -8595,6 +8599,91 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return jsonEncode(_assetManagementAiSummaryService.buildPayload(report));
   }
 
+  void _requestExistingDeveloperIssuesIfNeeded(
+    List<AssetManagementDeveloperRequest> requests,
+  ) {
+    if (_supabase.auth.currentUser == null || requests.isEmpty) {
+      return;
+    }
+    final payload = requests
+        .map(_developerRequestExistingIssuePayload)
+        .toList(growable: false);
+    final lookupKey = jsonEncode(payload);
+    if (_developerRequestExistingIssueLookupKey == lookupKey) {
+      return;
+    }
+    _developerRequestExistingIssueLookupKey = lookupKey;
+    _isCheckingExistingDeveloperRequestIssues = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _developerRequestExistingIssueLookupKey != lookupKey) {
+        return;
+      }
+      unawaited(
+        _loadExistingDeveloperIssues(
+          lookupKey: lookupKey,
+          requests: payload,
+        ),
+      );
+    });
+  }
+
+  Map<String, String> _developerRequestExistingIssuePayload(
+    AssetManagementDeveloperRequest request,
+  ) {
+    return <String, String>{
+      'key': _developerRequestIssueKey(request),
+      'title': request.title,
+      'description': request.description,
+    };
+  }
+
+  Future<void> _loadExistingDeveloperIssues({
+    required String lookupKey,
+    required List<Map<String, String>> requests,
+  }) async {
+    try {
+      final response = await _supabase.functions.invoke(
+        'core-hub',
+        body: {
+          'action': 'feature_request.existing_issues',
+          'source': 'asset_management_developer_request',
+          'requests': requests,
+        },
+      );
+      if (!mounted || _developerRequestExistingIssueLookupKey != lookupKey) {
+        return;
+      }
+      final rawData = response.data;
+      final existingByKey = <String, Map<String, dynamic>>{};
+      if (rawData is Map) {
+        final existingIssues = rawData['existingIssues'];
+        if (existingIssues is List) {
+          for (final item in existingIssues) {
+            final issue = _assetManagementDynamicMap(item);
+            final key = issue['key']?.toString() ?? '';
+            if (key.isNotEmpty) {
+              existingByKey[key] = issue;
+            }
+          }
+        }
+      }
+      setState(() {
+        _developerRequestExistingIssueResults
+          ..clear()
+          ..addAll(existingByKey);
+        _isCheckingExistingDeveloperRequestIssues = false;
+      });
+    } catch (_) {
+      if (!mounted || _developerRequestExistingIssueLookupKey != lookupKey) {
+        return;
+      }
+      setState(() {
+        _developerRequestExistingIssueResults.clear();
+        _isCheckingExistingDeveloperRequestIssues = false;
+      });
+    }
+  }
+
   Future<void> _submitAssetManagementDeveloperIssue(
     AssetManagementDeveloperRequest request,
   ) async {
@@ -8635,6 +8724,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           'category': 'UX改善',
           'priority': _developerRequestIssuePriority(request.severity),
           'source': 'asset_management_developer_request',
+          'dedupe_key': issueKey,
         },
       );
 
@@ -9027,6 +9117,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetManagementDeveloperRequestList(
     List<AssetManagementDeveloperRequest> requests,
   ) {
+    _requestExistingDeveloperIssuesIfNeeded(requests);
+    final visibleRequests = _isCheckingExistingDeveloperRequestIssues
+        ? <AssetManagementDeveloperRequest>[]
+        : requests
+            .where(
+              (request) => !_developerRequestExistingIssueResults.containsKey(
+                _developerRequestIssueKey(request),
+              ),
+            )
+            .toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -9035,7 +9135,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 6),
-        for (final request in requests.take(4))
+        for (final request in visibleRequests.take(4))
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Container(
