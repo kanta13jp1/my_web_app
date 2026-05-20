@@ -6,6 +6,13 @@ import {
   handleMemoReactionAction,
   type MemoReactionAction,
 } from "./memo_reactions.ts";
+import {
+  type ExistingFeatureRequestIssue,
+  type FeatureRequestCandidate,
+  featureRequestCandidateKey,
+  type FeatureRequestIssueLike,
+  matchExistingFeatureRequestIssues,
+} from "./feature_request_dedupe.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -534,6 +541,142 @@ async function createGitHubIssue(params: {
     html_url: issue.html_url,
     title: issue.title,
   };
+}
+
+function githubAuthHeaders(): Record<string, string> {
+  const token = Deno.env.get("GITHUB_PAT") ??
+    Deno.env.get("GITHUB_TOKEN") ??
+    Deno.env.get("GH_TOKEN") ??
+    "";
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "jibun-app-feature-request-dedupe",
+  };
+  if (token !== "") {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+function githubRepoName(): string {
+  return Deno.env.get("GITHUB_REPO") ??
+    Deno.env.get("GITHUB_REPOSITORY") ??
+    "kanta13jp1/my_web_app";
+}
+
+function normalizeFeatureRequestCandidates(
+  rawCandidates: unknown,
+  source: string,
+): FeatureRequestCandidate[] {
+  if (!Array.isArray(rawCandidates)) return [];
+  return rawCandidates.slice(0, 20).map((raw, index) => {
+    const item = raw && typeof raw === "object"
+      ? raw as Record<string, unknown>
+      : {};
+    const title = textValue(item.title, 180);
+    const description = textValue(item.description, 800);
+    const key = textValue(item.key, 240) ||
+      featureRequestCandidateKey(title, description, source) ||
+      `candidate-${index}`;
+    return { key, title, description };
+  }).filter((candidate) => candidate.title.length >= 3);
+}
+
+async function fetchGitHubIssuesByTitle(
+  repo: string,
+  title: string,
+): Promise<FeatureRequestIssueLike[]> {
+  const query = `repo:${repo} is:issue in:title "${
+    title.replaceAll('"', " ")
+  }"`;
+  const url = new URL("https://api.github.com/search/issues");
+  url.searchParams.set("q", query);
+  url.searchParams.set("per_page", "10");
+  const response = await fetch(url, { headers: githubAuthHeaders() });
+  if (!response.ok) return [];
+  const data = await response.json().catch(() => ({}));
+  const items = (data as { items?: unknown }).items;
+  return Array.isArray(items) ? items as FeatureRequestIssueLike[] : [];
+}
+
+async function findGitHubFeatureRequestIssues(
+  candidates: FeatureRequestCandidate[],
+): Promise<ExistingFeatureRequestIssue[]> {
+  const repo = githubRepoName();
+  const matched = new Map<string, ExistingFeatureRequestIssue>();
+  for (const candidate of candidates) {
+    if (matched.has(candidate.key)) continue;
+    const issues = await fetchGitHubIssuesByTitle(repo, candidate.title);
+    const [match] = matchExistingFeatureRequestIssues(
+      [candidate],
+      issues,
+      "github_title",
+    );
+    if (match) {
+      matched.set(candidate.key, match);
+    }
+  }
+  return [...matched.values()];
+}
+
+async function findLocalFeatureRequestIssues(
+  admin: SupabaseClient,
+  candidates: FeatureRequestCandidate[],
+  source: string,
+): Promise<ExistingFeatureRequestIssue[]> {
+  const { data, error } = await admin
+    .from("hub_data")
+    .select("metadata, created_at")
+    .eq("source", "feature_request_user")
+    .filter("metadata->>source", "eq", source)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) return [];
+  const issues: FeatureRequestIssueLike[] = [];
+  for (const row of data ?? []) {
+    const metadata = (row.metadata ?? {}) as Record<string, unknown>;
+    const githubIssue = (metadata.github_issue ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const title = textValue(metadata.title, 200) ||
+      textValue(githubIssue.title, 200);
+    if (!title) continue;
+    issues.push({
+      number: githubIssue.number,
+      title,
+      html_url: githubIssue.html_url,
+      state: "registered",
+    });
+  }
+  return matchExistingFeatureRequestIssues(
+    candidates,
+    issues,
+    "local_record",
+  );
+}
+
+async function findExistingFeatureRequestIssues(
+  admin: SupabaseClient,
+  candidates: FeatureRequestCandidate[],
+  source: string,
+): Promise<ExistingFeatureRequestIssue[]> {
+  const byKey = new Map<string, ExistingFeatureRequestIssue>();
+  for (
+    const match of await findLocalFeatureRequestIssues(
+      admin,
+      candidates,
+      source,
+    )
+  ) {
+    byKey.set(match.key, match);
+  }
+  const unmatched = candidates.filter((candidate) => !byKey.has(candidate.key));
+  for (const match of await findGitHubFeatureRequestIssues(unmatched)) {
+    byKey.set(match.key, match);
+  }
+  return [...byKey.values()];
 }
 
 async function createFeatureRequestWbsTask(
@@ -1066,6 +1209,25 @@ serve(async (req: Request) => {
         return json({ success: true, analysis, item });
       }
 
+      case "feature_request.existing_issues": {
+        const source = textValue(body.source, 80) ||
+          "home_feature_request_form";
+        const candidates = normalizeFeatureRequestCandidates(
+          body.requests ?? body.candidates,
+          source,
+        );
+        const existingIssues = await findExistingFeatureRequestIssues(
+          admin,
+          candidates,
+          source,
+        );
+        return json({
+          success: true,
+          existingIssues,
+          existing_keys: existingIssues.map((issue) => issue.key),
+        });
+      }
+
       case "feature_request.submit": {
         const title = textValue(body.title, 120);
         const description = textValue(body.description, 4000);
@@ -1115,6 +1277,48 @@ serve(async (req: Request) => {
 
         const createdAt = new Date().toISOString();
         const userEmail = await getUserEmail(admin, userId);
+        const dedupeKey = textValue(body.dedupe_key ?? body.dedupeKey, 240) ||
+          featureRequestCandidateKey(title, description, source);
+        const [existingIssue] = await findExistingFeatureRequestIssues(
+          admin,
+          [{ key: dedupeKey, title, description }],
+          source,
+        );
+        if (existingIssue) {
+          const item = await addItem(admin, "feature_request_user", userId, {
+            title,
+            description,
+            expected_outcome: expectedOutcome,
+            category,
+            priority,
+            status: "existing_issue",
+            source,
+            dedupe_key: dedupeKey,
+            created_at: createdAt,
+            github_issue: existingIssue,
+            wbs_task: {
+              skipped: true,
+              reason: "existing_github_issue",
+            },
+          });
+          return json({
+            success: true,
+            partialSuccess: true,
+            deduped: true,
+            existingIssue: true,
+            item,
+            githubIssue: {
+              number: existingIssue.number,
+              html_url: existingIssue.html_url,
+              title: existingIssue.title,
+              state: existingIssue.state,
+            },
+            wbsTask: {
+              skipped: true,
+              reason: "existing_github_issue",
+            },
+          });
+        }
         const issueBody = buildFeatureRequestBody({
           title,
           description,
@@ -1197,6 +1401,7 @@ serve(async (req: Request) => {
           priority,
           status: "open",
           source,
+          dedupe_key: dedupeKey,
           created_at: createdAt,
           github_issue: githubIssue,
           wbs_task: wbsTask,
