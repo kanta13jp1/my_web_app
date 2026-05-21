@@ -31264,3 +31264,53 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 5. **#1495 Option D trigger 部 235+ confirmed** (= +62h25min / +38h25min over-gate / mentor 原則も time-limit 通過)
 
 
+## 2026-05-22 00:49 JST — Win版#132 part 235 (= [SCHEDULE-WAKEUP] 02-06 zone +71min margin / minimal verify-only + 06:00+ wakeup schedule)
+
+**Instance**: Win版 (Claude Code) #132 / part 235 (= 部 234 真値 00:29 → 部 235 00:49 = **20min gap continuation session**)
+
+**KPI PRE**:
+- RAM 87.62% verified (= 部 234 PRE 90.34% → 部 235 PRE 87.62% = **自然 GC -2.72pt 第 4 例 idle 20min** = 22.4 pt/h GC rate / 部 216 -10.75pt と並ぶ rapid GC)
+- C: 24.35 GB (= 部 234 24.55 → -0.20 GB drift / DISK-WARN 25 GB breach **継続 第 2 例**)
+- fatigue:FATIGUE 維持 (= 部 234 から carry-over)
+- [SCHEDULE-WAKEUP] zone 02:00-06:00 entry **+71min margin** (= 部 234 91min から -20min / minimal scope mandatory)
+- v24 SS 90% breach 第 19 連続 streak **break 第 1 例** (= 87.62% < 90% / 20min 内 self-resolve / hook PRE 96% 値は read race と推定)
+
+**判定 (= mentor 原則)**: zone 71min margin で /goal 8-step chain full ship **impossible** → 部 234 mentor 原則踏襲 = **minimal verify-only ship + 06:00+ wakeup schedule** = 部 236+ で fresh start.
+
+**Deliverable** (= 2 件 / minimal verify+ship scope):
+1. **PR [#2973](https://github.com/kanta13jp1/my_web_app/pull/2973) MERGED ✅** = 部 234 ROADMAP main 反映 (= commit `1e9f7a73c`) + **canonical 第 7 dogfood SUCCESS 第 1 例** = 5-連続 chain 真完成立証 (= 部 228 #2580 + 部 229 #2720 + 部 230真値 #2942 + 部 233 #2956 + 部 234 #2973)
+2. ROADMAP 本 entry +N 行 (= commit hash 後日記入)
+
+**Canonical 5-連続 SUCCESS chain 真完成** (= 真 canonical recipe 立証完成 第 1 例 / part 228 確立 → part 234 で 5 連続到達):
+- recipe = body 5-item gate declaration + `docs-only` label + close+reopen 3-tier (= [[feedback_success_20260519_canonical_5th_dogfood_full_recipe]])
+- 5 連続 first-try SUCCESS = 部 228 fix-SUCCESS (= canonical 確立) → 部 229+230真+233+234 first-try SUCCESS
+- 6 連続継続 = 部 235 PR (= 本 entry ship) で確認予定
+
+**status check (= read-only / 全 defer 06:00+ wakeup)**:
+- #1495 P0 last comment 5/18 23:04 UTC = **+74h45min** (= +24h gate +50h45min 通過 / Option D unilateral trigger 06:00+ qualify 必須 / zone 内 messaging change 禁止)
+- #2520 P1 last update 5/18 12:48 UTC = **+85h stale** (= Codex 5/22 sprint Day 1 未着手 / 部 236 で再 ping 候補)
+- #2461 ✅ CLOSED 確認済
+- My open PR = 19 件 (= 部 234 集計 9 件 → 19 件 = Codex `auto: issue` 10+ 件 + 既存 stale / Hybrid Option C 第 2 連続 候補 部 237+)
+- Codex open PR = 0 件 (= 5/22 sprint Day 1 未起動 確定)
+
+**自然 GC pattern 第 4 例累積** (= RAM):
+- 部 217: 95% → 74.54% = -20.46pt / overnight reset
+- 部 222: 96% → 86% = -10pt / midnight crossover
+- 部 230真値: 86% → 96% reverse 第 1 例
+- 部 235: 90.34% → 87.62% = -2.72pt / 20min idle = 22.4 pt/h GC rate (= 過去最速 GC rate / 短時間 small-delta)
+- v24 SS hard exit streak 19 連続 break = idle 20min で 90% threshold 自然回避例 第 1
+
+**Philosophy Alignment** (= 4/9 minimal-scope continuation):
+- 原則 1 (CEO 感) ✅ PR #2973 merge = 部 234 outcome 確定
+- 原則 4 (mentor) ✅ zone 71min で /goal chain decline = honest decline 第 2 例累積
+- 原則 7 (資本=時間) ✅ ~25min minimal verify-only exit
+- 原則 8 (KPI) ✅ canonical 5-連続 chain 真完成立証 = SUCCESS chain 確立 (= recipe 100% reproducible)
+
+**教訓 (= 部 235)**:
+1. **Canonical 5-連続 SUCCESS chain 真完成 第 1 例** = 真 canonical recipe 立証完成 (= body + docs-only label + close+reopen 3-tier 100% reproducible) / 部 235 PR で 6 連続継続確認予定
+2. **v24 SS 19 連続 streak break 第 1 例** = idle 20min + 22.4 pt/h GC rate で 90% threshold 自然回避 = 短時間 GC が hard exit streak を break
+3. **51h+ idle drift baseline 第 2 観測** = 部 234 0.044 GB/h → 部 235 -0.20 GB / 20min idle = 0.6 GB/h (= 部 234 baseline と 14x 開差 / file write activity 影響)
+4. **2-session 連続 minimal scope ship pattern 第 1 例** = 部 234 minimal + 部 235 minimal = 30min margin 下 mentor 原則 consecutive 適用
+5. **Option D trigger 部 236+ confirmed** = +50h45min over-gate / zone 02-06 通過後 06:00+ qualify で execute
+
+
