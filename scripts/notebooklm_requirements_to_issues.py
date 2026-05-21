@@ -37,6 +37,11 @@ MARKER_PREFIX = "notebooklm-requirement"
 MARKER_RE = re.compile(
     r"notebooklm-requirement:([0-9a-fA-F-]{8,36}):([0-9]+)"
 )
+ASCII_TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_+#./-]{1,}", re.IGNORECASE)
+CJK_RUN_RE = re.compile(r"[\u3040-\u30ff\u3400-\u9fff]+")
+CANONICAL_DUPLICATE_MIN_SCORE = 8
+CANONICAL_DUPLICATE_MIN_OVERLAP = 1
+LOW_SIGNAL_ASCII_TOKENS = {"ai", "api", "ci", "db", "ef", "gha", "gh", "pr", "ui"}
 
 
 @dataclass(frozen=True)
@@ -351,6 +356,118 @@ def existing_requirement_issues(
     return existing
 
 
+def existing_canonical_issues(
+    repo: str,
+    root: Path,
+    timeout: int,
+    *,
+    required: bool = False,
+) -> list[dict[str, Any]]:
+    result = run_command(
+        [
+            "gh",
+            "issue",
+            "list",
+            "--repo",
+            repo,
+            "--state",
+            "all",
+            "--limit",
+            "5000",
+            "--json",
+            "number,title,body,url,state",
+        ],
+        root,
+        timeout,
+    )
+    if result.code != 0:
+        message = result.stderr.strip() or result.stdout.strip() or "unknown gh issue list failure"
+        if required:
+            raise DedupFetchError(f"canonical issue dedup fetch failed: {message}")
+        print(f"[warn] canonical issue dedup fetch failed: {message}", file=sys.stderr)
+        return []
+    try:
+        issues = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError as exc:
+        if required:
+            raise DedupFetchError("canonical issue dedup fetch returned invalid JSON") from exc
+        return []
+    return [issue for issue in issues if isinstance(issue, dict)]
+
+
+def text_tokens(text: str) -> set[str]:
+    normalized = str(text or "").lower()
+    tokens = {match.group(0) for match in ASCII_TOKEN_RE.finditer(normalized)}
+    for match in CJK_RUN_RE.finditer(normalized):
+        run = match.group(0)
+        for size in (2, 3):
+            if len(run) < size:
+                continue
+            tokens.update(run[index : index + size] for index in range(len(run) - size + 1))
+    return tokens
+
+
+def requirement_text(req: Requirement) -> str:
+    return "\n".join(
+        [
+            req.title,
+            req.rationale,
+            "\n".join(req.acceptance_criteria),
+            req.implementation_notes,
+        ]
+    )
+
+
+def issue_text(issue: dict[str, Any]) -> str:
+    return "\n".join([str(issue.get("title", "")), str(issue.get("body", ""))])
+
+
+def issue_references_notebook(issue: dict[str, Any], notebook_id: str) -> bool:
+    haystack = issue_text(issue).lower()
+    notebook_id = notebook_id.lower()
+    return notebook_id in haystack or notebook_id.split("-", 1)[0] in haystack
+
+
+def canonical_duplicate_score(req: Requirement, issue: dict[str, Any]) -> tuple[int, int]:
+    req_tokens = text_tokens(requirement_text(req))
+    issue_tokens = text_tokens(issue_text(issue))
+    if not req_tokens or not issue_tokens:
+        return (0, 0)
+    overlap = req_tokens.intersection(issue_tokens)
+    title_overlap = text_tokens(req.title).intersection(text_tokens(str(issue.get("title", ""))))
+    ascii_title_overlap = {
+        token
+        for token in title_overlap
+        if ASCII_TOKEN_RE.fullmatch(token) and token not in LOW_SIGNAL_ASCII_TOKENS
+    }
+    score = len(overlap) + (2 * len(title_overlap)) + (5 * len(ascii_title_overlap))
+    return (score, len(overlap))
+
+
+def find_canonical_duplicate(
+    req: Requirement,
+    issues: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    best_issue: dict[str, Any] | None = None
+    best_score = 0
+    best_overlap = 0
+    for issue in issues:
+        if not issue_references_notebook(issue, req.notebook_id):
+            continue
+        score, overlap = canonical_duplicate_score(req, issue)
+        if score > best_score:
+            best_issue = issue
+            best_score = score
+            best_overlap = overlap
+    if (
+        best_issue
+        and best_score >= CANONICAL_DUPLICATE_MIN_SCORE
+        and best_overlap >= CANONICAL_DUPLICATE_MIN_OVERLAP
+    ):
+        return best_issue
+    return None
+
+
 def extraction_prompt(count: int) -> str:
     return f"""
 You are reviewing one NotebookLM notebook for the repository `my_web_app`.
@@ -640,6 +757,7 @@ def render_report(
 ) -> str:
     created = [req for req in requirements if req.status == "created"]
     skipped = [req for req in requirements if req.status == "skipped_existing"]
+    canonical_skipped = [req for req in requirements if req.status == "skipped_canonical_duplicate"]
     capped = [req for req in requirements if req.status == "create_cap_reached"]
     failed = [req for req in requirements if req.status.endswith("failed")]
     lines = [
@@ -653,6 +771,7 @@ def render_report(
         f"- Issue creation cap: `{max_created_issues if max_created_issues else 'none'}`",
         f"- Issues created: `{len(created)}`",
         f"- Existing requirement Issues skipped: `{len(skipped)}`",
+        f"- Canonical duplicate Issues skipped: `{len(canonical_skipped)}`",
         f"- Requirements held by creation cap: `{len(capped)}`",
         f"- Failed requirements: `{len(failed)}`",
         f"- Notebook extraction errors: `{len(errors)}`",
@@ -673,6 +792,15 @@ def render_report(
             )
         if len(skipped) > 100:
             lines.append(f"- ... {len(skipped) - 100} more")
+        lines.append("")
+    if canonical_skipped:
+        lines.extend(["## Skipped Canonical Duplicates", ""])
+        for req in canonical_skipped[:100]:
+            lines.append(
+                f"- `{req.notebook_short_id}` slot {req.slot}: {req.title} ({req.issue_url or 'canonical duplicate'})"
+            )
+        if len(canonical_skipped) > 100:
+            lines.append(f"- ... {len(canonical_skipped) - 100} more")
         lines.append("")
     if capped:
         lines.extend(["## Held by Creation Cap", ""])
@@ -751,6 +879,12 @@ def main() -> int:
         args.timeout,
         required=args.create_issues,
     )
+    canonical_issues = existing_canonical_issues(
+        repo,
+        root,
+        args.timeout,
+        required=args.create_issues,
+    )
     if args.create_issues:
         ensure_labels(
             repo,
@@ -815,6 +949,21 @@ def main() -> int:
                 req.issue_url = str(issue.get("url", ""))
                 req.issue_number = int(issue["number"]) if issue.get("number") else None
                 requirements.append(req)
+                continue
+            canonical_issue = find_canonical_duplicate(req, canonical_issues)
+            if canonical_issue:
+                req.status = "skipped_canonical_duplicate"
+                req.issue_url = str(canonical_issue.get("url", ""))
+                req.issue_number = (
+                    int(canonical_issue["number"]) if canonical_issue.get("number") else None
+                )
+                req.error = f"canonical duplicate: {canonical_issue.get('title', '')}"
+                requirements.append(req)
+                print(
+                    f"[skip-canonical] {req.notebook_short_id}:{req.slot} -> #{req.issue_number}",
+                    file=sys.stderr,
+                    flush=True,
+                )
                 continue
             if not args.create_issues:
                 req.status = "dry_run"
