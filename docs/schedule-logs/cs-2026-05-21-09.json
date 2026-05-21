@@ -1,0 +1,8 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-21T09:05:00Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件 / PR確認: 10件 / Issue修正: 0件 / workflow-failure: 2件スキップ(手動対応) / Schedule健全性: daily-report欠落 Issue#2959継続",
+  "escalations": ["PR#2540 CONFLICT(Issue#2550)", "Issue#1962 VSCode手動", "Issue#2959 daily-report欠落", "Issue#2967 NotebookLM auth要復旧"]
+}
