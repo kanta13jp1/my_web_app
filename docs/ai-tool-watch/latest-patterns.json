@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-20T21:56:45Z",
+  "generated_at": "2026-05-21T21:49:13Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-1a79914cb925",
+        "entry_id": "nf-8984ebd34421",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.145 / May 19, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.145 May 19, 2026 Added claude agents --json to list live Claude sessions as JSON for scripting (tmux-resurrect, status bars, session pickers) Added agent_id and...",
+        "text": "Claude Code changelog 2.1.147 / May 21, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.147 May 21, 2026 Added the Workflow tool for deterministic multi-agent orchestration.",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d0fc7a2b650b450fd13f601a1a79f79e015c53549bf7561d47f373e276c57383",
+          "hash": "a8103609065171516096d5d57ab96e61ef9a362c5c1201aede460d720a700597",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.145 / May 19, 2026",
+          "latest_signal": "2.1.147 / May 21, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "1ac4affcbb223f9cc18aac32cbef96a15f20fd44e3ceba48e64cbb84860421b5",
+          "previous_hash": "d0fc7a2b650b450fd13f601a1a79f79e015c53549bf7561d47f373e276c57383",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.145 May 19, 2026 Added claude agents --json to list live Claude sessions as JSON for scripting (tmux-resurrect, status bars, session pickers) Added agent_id and..."
+            "​ 2.1.147 May 21, 2026 Added the Workflow tool for deterministic multi-agent orchestration."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-1a79914cb925",
+        "entry_id": "nf-8984ebd34421",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -118,7 +118,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "329e559e454f14196600c95c858cd5311ccdd9eadd8750cdbdace9f13bf5a9e5",
+          "hash": "55e217cadb391c07940b883f64e56ac12ace7f7b8b41137d7b0a0236110e9340",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "a291649d038bb13016858d672806cb8d56f20618163a99863bd3a37f263536b4",
+          "previous_hash": "329e559e454f14196600c95c858cd5311ccdd9eadd8750cdbdace9f13bf5a9e5",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -193,7 +193,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
@@ -229,7 +229,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "cdac2cc4329d2a25207508041b7a569f247fa861e50c7e6a11a80f214462a692",
+          "previous_hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -259,9 +259,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-3d660b5f3daa",
+        "entry_id": "nf-70d29a4bafb4",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-05-20 / Codex CLI 0.132.0 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #23093 ) Python turn APIs are easier to use for text-only workflows: you can pass a plain string as input, and handle-based runs now return a richer TurnResult with collected... ( #23151 , #23162 ) codex exec resume now accepts --output-schema , so resumed automations can keep session context while still enforcing structured JSON output.",
+        "text": "Codex changelog 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS. Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI. With Goal mode, you can have Codex drive toward a specific objective for hours or even days.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "6f3e46565929005e3f2aebffc5a16e1eac9f6103085587cd1fab30fc8e1d5691",
+          "hash": "6083172e5626975fbf07c3579fd3e9c1c71c6ba73b196fdaf0f7b44f62696b17",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,8 +285,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "SessionStart",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -298,7 +296,6 @@
               "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -311,26 +308,25 @@
               "automation",
               "automations",
               "schedule",
-              "GitHub Actions",
               "workflow"
             ]
           },
-          "latest_signal": "2026-05-20 / Codex CLI 0.132.0 pre",
+          "latest_signal": "2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "16c38b04b442454e1d31b53726e454ba8a12cdb27a5ce5be50f76f8eefd54c17",
+          "previous_hash": "6f3e46565929005e3f2aebffc5a16e1eac9f6103085587cd1fab30fc8e1d5691",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "( #23093 ) Python turn APIs are easier to use for text-only workflows: you can pass a plain string as input, and handle-based runs now return a richer TurnResult with collected...",
-            "( #23151 , #23162 ) codex exec resume now accepts --output-schema , so resumed automations can keep session context while still enforcing structured JSON output."
+            "This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.",
+            "With Goal mode, you can have Codex drive toward a specific objective for hours or even days."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-3d660b5f3daa",
+        "entry_id": "nf-70d29a4bafb4",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -359,7 +355,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "b60543b04f698ccbceebcee2a21ac92bacb27d5806fcf5ab7e4dacd441511351",
+          "hash": "7db564bb4274aa2c92a4f869e7edb2137a827a406973b41955294ce469710282",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -398,7 +394,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "a74bff1b2a30e636020673907f19f624ab2b9e8ee6f35d9952cdc6c152d6b723",
+          "previous_hash": "b60543b04f698ccbceebcee2a21ac92bacb27d5806fcf5ab7e4dacd441511351",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -479,7 +475,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "cfd49d6dc1366bca80c3d35e6b2497b566292f51396cdc969cf3eec327a76f2f",
@@ -508,7 +504,7 @@
           "latest_signal": "3.5 / May 20, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "30b16f5d50f4a981b500fd7f14a0b9865ffd8ec13c823a8001f1f000538ce0dc",
+          "previous_hash": "cfd49d6dc1366bca80c3d35e6b2497b566292f51396cdc969cf3eec327a76f2f",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...",
@@ -612,7 +608,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "a13266034613428ab968730cdba246cfe84889fb7367cf96df4019a9e6029ee4",
@@ -648,7 +644,7 @@
           "latest_signal": "May 17, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "1b66e00e044234619f3f8c895cd3b0f728c984a1f7bbc491acc93cfd6938b63b",
+          "previous_hash": "a13266034613428ab968730cdba246cfe84889fb7367cf96df4019a9e6029ee4",
           "slug": "devin-release-notes",
           "snippets": [
             "Default Member Roles Enterprise admins can now configure default roles that are automatically assigned to new organization members on join, with badge display in the members...",
