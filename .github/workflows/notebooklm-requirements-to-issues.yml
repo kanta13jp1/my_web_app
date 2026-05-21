@@ -48,6 +48,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.BYPASS_RULES || github.token }}
       NOTEBOOKLM_STORAGE_STATE: ${{ secrets.NOTEBOOKLM_STORAGE_STATE_JSON }}
+      HAS_NOTEBOOKLM_STORAGE_STATE: ${{ secrets.NOTEBOOKLM_STORAGE_STATE_JSON != '' }}
 
     steps:
       - name: Checkout
@@ -131,3 +132,18 @@ jobs:
           name: notebooklm-requirements-report
           path: docs/notebooklm-requirements
           if-no-files-found: ignore
+
+      - name: Notify auth or extraction failure
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONUTF8=1 python scripts/notebooklm_requirements_failure_notice.py \
+            --repo "${{ github.repository }}" \
+            --issue 2967 \
+            --workflow "NotebookLM Requirements to Issues" \
+            --run-id "${{ github.run_id }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --event "${{ github.event_name }}" \
+            --head-sha "${{ github.sha }}" \
+            --secret-present "${HAS_NOTEBOOKLM_STORAGE_STATE}"
