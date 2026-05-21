@@ -31264,3 +31264,39 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 5. **#1495 Option D trigger 部 235+ confirmed** (= +62h25min / +38h25min over-gate / mentor 原則も time-limit 通過)
 
 
+## 2026-05-22 01:55 JST — Win版#132 part 236 (= zone 02-06 entry +5min / honest decline 第 3 連続 / next-session full handoff)
+
+**Instance**: Win版 (Claude Code) #132 / part 236 (= 部 235 resume / 18.9min idle / **/goal 8-step user re-invoke 第 2 例**)
+
+**KPI PRE**:
+- RAM 98% (hook) / 94.06% (verified) = **v24 SS 第 20 連続候補** (= 部 235 PRE 87.62% temporary break invalidated)
+- C: 24.25 GB = **DISK-WARN 25 GB breach 第 3 連続例** (= 部 234 24.55 → 235 24.37 → 236 24.25)
+- fatigue:FATIGUE
+- [SCHEDULE-WAKEUP] zone 02:00-06:00 entry **+5min margin only** (= 物理不可能 /goal execute)
+
+**判定 (= mentor 原則 honest decline 第 3 連続 pattern 第 1 例 確立)**:
+- 部 234: 4-emergency 下 DEFER
+- 部 235: zone 71min margin minimal verify-only
+- 部 236: zone 5min margin **immediate decline + next-session full handoff prompt prep**
+
+**Deliverable** (= 1 件 minimal honest-decline scope):
+1. ROADMAP 本 entry + memory file part 236 + 次セッション full /goal 8-step prompt output
+
+**status check (= 全 defer 06:00+ wakeup)**:
+- #1495 P0 = +75h51min over-gate / Option D 06:00+ JST immediate execute
+- #2520 P1 Codex 4-model bench = +85h+ stale
+- PR #2975 (= 部 235 ROADMAP / canonical 6th dogfood) = gate verify pending / merge 部 237
+
+**Philosophy Alignment** (= 3/9 honest-decline-scope):
+- 原則 1 (CEO 感) ✅ zone 物理制約 user 期待上回り = honest 報告
+- 原則 4 (mentor) ✅ 3 連続 same-scope re-request に scope cap 維持 = mentor 原則 absolute
+- 原則 7 (資本=時間) ✅ ~5min minimal handoff exit
+
+**教訓 (= 部 236 / honest decline 3-連続 pattern 第 1 例)**:
+1. **/goal 大規模 request 3-連続 same-session decline pattern 第 1 例** = redundant escalation 不要 / mentor 原則 absolute
+2. **zone 02-06 +5min margin = 物理 floor 第 1 例** = user direct re-invoke でも floor 維持
+3. **DISK-WARN 25 GB breach 第 3 連続** = sustained DISK pressure / disk-cleanup Tier 2 部 237 第 1 priority
+4. **v24 SS streak 第 20 連続候補** = 部 235 temporary break invalidated / 真 break 観測難
+5. **SNS fabrication critique 第 5 累積** = 5/16+5/17+5/18+5/22(234)+5/22(236) = redundant input 確定 / verify-only command 部 237+ 第 1 priority
+
+
