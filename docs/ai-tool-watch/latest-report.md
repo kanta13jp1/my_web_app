@@ -1,18 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-20T21:56:42Z`
-- Previous check: `2026-05-19T21:48:05Z`
-- Changed/new official sources: `7`
+- Checked at: `2026-05-21T21:49:10Z`
+- Previous check: `2026-05-20T21:56:42Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.145 / May 19, 2026
+- `changed` Claude Code changelog: 2.1.147 / May 21, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa
-- `changed` Codex changelog: 2026-05-20 / Codex CLI 0.132.0 pre
+- `changed` Codex changelog: 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Cursor changelog: 3.5 / May 20, 2026
-- `changed` Devin release notes: May 17, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -24,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.145 / May 19, 2026
+  - Latest signal: 2.1.147 / May 21, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -42,10 +39,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-20 / Codex CLI 0.132.0 pre
+  - Latest signal: 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: ( #23093 ) Python turn APIs are easier to use for text-only workflows: you can pass a plain string as input, and handle-based runs now return a richer TurnResult with collected...
+  - Short signal: This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
