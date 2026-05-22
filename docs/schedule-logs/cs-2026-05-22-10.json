@@ -1,7 +1,7 @@
 {
   "task_id": "cs-check",
   "status": "success",
-  "executed_at": "2026-05-22T10:14:21Z",
+  "executed_at": "2026-05-22T10:00:00Z",
   "environment": "web-version",
-  "summary": "Edge Function UI追加: 0件 (全22件登録済み) / チケット: 0件 / PR: 10件確認 問題なし / Issue修正: 0件 / workflow-failure修復: 0件 (scope外) / daily-report: 本日実行確認 ✅ / Supabase: 200 / ギター録音: 正常"
+  "summary": "Edge Function UI追加: 0件 (全23件登録済み) / チケット: 0件 / PR: 10件問題なし / Issue修正: 0件 / workflow-failure修復: 0件 (powershell/vscode担当) / Schedule健全性: daily-report Issue #2979継続監視中 / Supabase: 200 / ギター録音: 正常"
 }
