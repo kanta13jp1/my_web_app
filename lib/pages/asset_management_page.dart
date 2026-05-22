@@ -34,6 +34,7 @@ import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
+import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
@@ -81,6 +82,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
   static const String _smbcSheetGid = '0';
   static const List<String> _jibunCandidateSheetGids = <String>['0'];
+  static const int _salarySpendingSalaryDay = 25;
+  static const List<Color> _salarySpendingChartColors = <Color>[
+    Color(0xFF0F766E),
+    Color(0xFF2563EB),
+    Color(0xFFF97316),
+    Color(0xFF9333EA),
+    Color(0xFFDC2626),
+    Color(0xFF0891B2),
+    Color(0xFF65A30D),
+    Color(0xFF7C3AED),
+    Color(0xFFB45309),
+    Color(0xFF475569),
+  ];
 
   final _supabase = Supabase.instance.client;
 
@@ -247,6 +261,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementInsightService();
   final AssetManagementAiSummaryService _assetManagementAiSummaryService =
       AssetManagementAiSummaryService();
+  final SalarySpendingBreakdownService _salarySpendingBreakdownService =
+      const SalarySpendingBreakdownService();
   final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
@@ -5881,6 +5897,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             _buildMonthlyFlowFirstCard(),
             const SizedBox(height: 16),
+            _buildSalarySpendingBreakdownCard(),
+            const SizedBox(height: 16),
             _buildMonthlyFlowPrimaryActionBar(),
             const SizedBox(height: 16),
             _buildWasteTrainingAiCard(),
@@ -6107,6 +6125,332 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  SalarySpendingBreakdown _buildSalarySpendingBreakdown() {
+    final expenses = <SalarySpendingEntry>[];
+    final incomes = <SalaryIncomeEntry>[];
+    final cardBillingMarkers = <String>{};
+
+    for (final line in _cardStatementLines) {
+      final postedAt = line.postedAt;
+      if (postedAt == null) {
+        continue;
+      }
+      final billingName = line.billingAccountName?.trim();
+      if (billingName != null && billingName.isNotEmpty) {
+        cardBillingMarkers.add(billingName.toLowerCase());
+      }
+      cardBillingMarkers.add(line.billingAccountId.toLowerCase());
+      final billingLabel =
+          billingName != null && billingName.isNotEmpty
+              ? billingName
+              : line.billingAccountId;
+      expenses.add(
+        SalarySpendingEntry(
+          date: postedAt,
+          amount: line.amount,
+          description: line.description,
+          sourceLabel: billingLabel,
+        ),
+      );
+    }
+
+    for (final flow in _recentFlows) {
+      final actionType = flow['action_type']?.toString() ?? '';
+      if (_isTransferActionType(actionType)) {
+        continue;
+      }
+      final occurredAt =
+          DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
+      final amount = (flow['amount'] as num?)?.toDouble() ?? 0;
+      if (occurredAt == null || amount <= 0) {
+        continue;
+      }
+      final description = flow['description']?.toString() ?? '';
+      final displayTitle = _flowDisplayTitle(flow);
+      if (_isExpenseActionType(actionType)) {
+        final lowerDescription = description.toLowerCase();
+        final representedByCardDetail = cardBillingMarkers.any(
+          (marker) => marker.isNotEmpty && lowerDescription.contains(marker),
+        );
+        if (representedByCardDetail) {
+          continue;
+        }
+        expenses.add(
+          SalarySpendingEntry(
+            date: occurredAt,
+            amount: amount,
+            description: displayTitle.isEmpty ? description : displayTitle,
+            sourceLabel: _actionTypeToFlowLabel(actionType),
+          ),
+        );
+      } else if (_isIncomeActionType(actionType)) {
+        incomes.add(
+          SalaryIncomeEntry(
+            date: occurredAt,
+            amount: amount,
+            description: displayTitle.isEmpty ? description : displayTitle,
+          ),
+        );
+      }
+    }
+
+    for (final plan in _monthlyIncomePlans) {
+      incomes.add(
+        SalaryIncomeEntry(
+          date: plan.date,
+          amount: plan.amount,
+          description: plan.name,
+        ),
+      );
+    }
+
+    return _salarySpendingBreakdownService.build(
+      referenceDate: _now,
+      expenses: expenses,
+      incomes: incomes,
+      salaryDay: _salarySpendingSalaryDay,
+    );
+  }
+
+  Widget _buildSalarySpendingBreakdownCard() {
+    final breakdown = _buildSalarySpendingBreakdown();
+    final periodLabel =
+        '${DateFormat('M/d').format(breakdown.periodStart)}〜'
+        '${DateFormat('M/d').format(breakdown.periodEndInclusive)}';
+    final remaining = breakdown.remainingAfterExpense;
+    final topSection = breakdown.topSection;
+    final chartSections = breakdown.sections.take(8).toList(growable: false);
+
+    return Card(
+      key: const Key('asset_salary_spending_breakdown_card'),
+      elevation: 3,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFDBEAFE)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.pie_chart_outline,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '前回給料の使いみち',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '給料日${breakdown.salaryDay}日基準の $periodLabel を集計。支出カテゴリ別に、前回給料が何へ消えたかを見ます。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildFlowPriorityMetric(
+                  label: '期間支出',
+                  value: _formatYen(breakdown.totalExpense),
+                  color: const Color(0xFFB91C1C),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '給料収入',
+                  value: breakdown.salaryIncomeTotal > 0
+                      ? _formatYen(breakdown.salaryIncomeTotal)
+                      : '未記録',
+                  color: const Color(0xFF0F766E),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '残り目安',
+                  value: remaining == null
+                      ? '未計算'
+                      : _formatSignedYen(remaining),
+                  color: remaining == null || remaining >= 0
+                      ? const Color(0xFF065F46)
+                      : const Color(0xFF7F1D1D),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '最大カテゴリ',
+                  value: topSection == null
+                      ? '未記録'
+                      : '${topSection.category} ${(topSection.ratio * 100).round()}%',
+                  color: const Color(0xFF2563EB),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (breakdown.sections.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: const Text(
+                  'この給与サイクルの支出がまだありません。収支入力またはカード明細取込を行うと円グラフが表示されます。',
+                  style: TextStyle(
+                    color: Color(0xFF1E3A8A),
+                    height: 1.5,
+                  ),
+                ),
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 620;
+                  final chart = SizedBox(
+                    height: compact ? 210 : 240,
+                    width: compact ? double.infinity : 260,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: compact ? 42 : 50,
+                        sections: [
+                          for (var i = 0; i < chartSections.length; i++)
+                            PieChartSectionData(
+                              color: _salarySpendingChartColors[
+                                  i % _salarySpendingChartColors.length],
+                              value: chartSections[i].amount,
+                              title:
+                                  '${(chartSections[i].ratio * 100).round()}%',
+                              radius: compact ? 72 : 82,
+                              titleStyle: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                  final legend = Column(
+                    children: [
+                      for (var i = 0; i < chartSections.length; i++)
+                        _buildSalarySpendingLegendRow(
+                          section: chartSections[i],
+                          color: _salarySpendingChartColors[
+                              i % _salarySpendingChartColors.length],
+                        ),
+                    ],
+                  );
+                  if (compact) {
+                    return Column(
+                      children: [
+                        chart,
+                        const SizedBox(height: 12),
+                        legend,
+                      ],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      chart,
+                      const SizedBox(width: 18),
+                      Expanded(child: legend),
+                    ],
+                  );
+                },
+              ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () => _scrollTo(_keyFlow),
+                icon: const Icon(Icons.add_chart),
+                label: const Text('支出を追加して内訳を更新'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSalarySpendingLegendRow({
+    required SalarySpendingCategorySlice section,
+    required Color color,
+  }) {
+    final samples = section.sampleDescriptions
+        .where((sample) => sample.trim().isNotEmpty)
+        .take(2)
+        .join(' / ');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            margin: const EdgeInsets.only(top: 4),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${section.category} ${_formatYen(section.amount)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                Text(
+                  '${(section.ratio * 100).toStringAsFixed(1)}% / ${section.entryCount}件'
+                  '${samples.isEmpty ? '' : ' / $samples'}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF64748B),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
