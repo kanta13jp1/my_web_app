@@ -68,7 +68,8 @@ void main() {
       expect(
         sql,
         contains(
-            'create policy investment_market_price_cache_service_role_all'),
+          'create policy investment_market_price_cache_service_role_all',
+        ),
       );
       expect(sql, contains('to service_role'));
       expect(sql, contains('using (true)'));
