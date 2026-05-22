@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+// Keeps the market-price cache migration contract pinned without live providers.
 const _migrationPath =
     'supabase/migrations/20260523090000_create_investment_market_price_cache.sql';
 
