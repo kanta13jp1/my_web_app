@@ -6144,10 +6144,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         cardBillingMarkers.add(billingName.toLowerCase());
       }
       cardBillingMarkers.add(line.billingAccountId.toLowerCase());
-      final billingLabel =
-          billingName != null && billingName.isNotEmpty
-              ? billingName
-              : line.billingAccountId;
+      final billingLabel = billingName != null && billingName.isNotEmpty
+          ? billingName
+          : line.billingAccountId;
       expenses.add(
         SalarySpendingEntry(
           date: postedAt,
@@ -6218,8 +6217,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildSalarySpendingBreakdownCard() {
     final breakdown = _buildSalarySpendingBreakdown();
-    final periodLabel =
-        '${DateFormat('M/d').format(breakdown.periodStart)}〜'
+    final periodLabel = '${DateFormat('M/d').format(breakdown.periodStart)}〜'
         '${DateFormat('M/d').format(breakdown.periodEndInclusive)}';
     final remaining = breakdown.remainingAfterExpense;
     final topSection = breakdown.topSection;
@@ -6299,9 +6297,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 _buildFlowPriorityMetric(
                   label: '残り目安',
-                  value: remaining == null
-                      ? '未計算'
-                      : _formatSignedYen(remaining),
+                  value:
+                      remaining == null ? '未計算' : _formatSignedYen(remaining),
                   color: remaining == null || remaining >= 0
                       ? const Color(0xFF065F46)
                       : const Color(0xFF7F1D1D),
