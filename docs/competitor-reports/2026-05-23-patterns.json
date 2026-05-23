@@ -1,0 +1,2626 @@
+{
+  "generated_at": "2026-05-22T22:24:25Z",
+  "source_files": [
+    "docs/competitor-reports/2026-05-23.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 83,
+  "filter_summary": {
+    "total": 83,
+    "by_verdict": {
+      "pass": 0,
+      "review": 83,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 83,
+      "sensational_language": 2
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-b8c6f331d042",
+        "title": "エグゼクティブサマリー (= 5/22-5/23 新シグナル + 過去誤記訂正)",
+        "text": "エグゼクティブサマリー (= 5/22-5/23 新シグナル + 過去誤記訂正)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (= 5/22-5/23 新シグナル + 過去誤記訂正)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b8c6f331d042",
+        "title": "エグゼクティブサマリー (= 5/22-5/23 新シグナル + 過去誤記訂正)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ca1368c61bb6",
+        "title": "競合",
+        "text": "競合 競合 5/22-5/23 確定 自社差別化軸への影響 脅威度",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "競合",
+          "url": "",
+          "status": "",
+          "summary": "競合 5/22-5/23 確定 自社差別化軸への影響 脅威度"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ca1368c61bb6",
+        "title": "競合",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-89c8a03a6c8f",
+        "title": "**★ Anthropic Claude for Financial Services 5/5 既 GA factual correction**",
+        "text": "**★ Anthropic Claude for Financial Services 5/5 既 GA factual correction** **★ Anthropic Claude for Financial Services 5/5 既 GA factual correction** 5/22 report で 「Financial Services = pre-announced as next bundle (= 4 vertical 目)」と分類したが、**真実 = 2026-05-05 既 GA**. NY invite-only briefing で Anthropic は **(a) Claude Opus 4.7 (= 最高 finance 性能 model)** + **(b) 10 prebuilt finance agent templates** (= pitchbook generation / KYC screening / earnings review / month-end close / valuation review) + **(c) Microsoft 365 統合** (= Excel / PowerPoint / Word add-ins) + **(d) Moody's data partnership** + **(e) Claude Cowork / Claude Code / Managed Agents 全環境で動作** を一括 launch. JPMorgan Jamie Dimon 言及あり = Wall Street 全面浸透. 戦略 = **(i) 大手機関 (= 自社 configure + run)** + **(ii) mid-market (= PE-backed JV で 直接 embed)** の 2-track. **🔴🔴 6 部署 narrative 真の overlap = 50% → ~67% (= 4/6) に拡張確定**: Anthropic vertical = Legal (5/12) + Small Business (5/13) + Marketing Ops (5/18) + **Financial Services (5/5 = 実は最早)** = 4 vertical / 自社 6 部署 = 経理 / 法務 / マーケ / 人事 / 営業 / 開発 のうち **経理 + 法務 + マーケ の 3 部署 = 50%** だが **Financial Services 真の射程 = B/S + valuation + month-end close = 自社 [PHILOSOPHY-22] 原則 6 (商品=価値) + 7 (資本=時間) + 8 (資産負債) の中核** = 自社 narrative 「個人 CEO の B/S」と **正面同軸**. **6/1 戦略レビューを 5/26-5/28 前倒し議題化必須** (= MoneyForward CONNECT with AI 5/25-26 直後 = JP + US 二極 backoffice 自律 AI 同時 timing). 自社 narrative pivot = **「Anthropic vertical = 法人 B2B 4 vertical」 vs 「自社 = individual 6 部署統合 lifestyle CEO dashboard + 個人 B/S layer」** の明示的 sharpening. 🔴🔴 (= factual correction + 6/1 議題前倒し必須)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**★ Anthropic Claude for Financial Services 5/5 既 GA factual correction**",
+          "url": "",
+          "status": "",
+          "summary": "**★ Anthropic Claude for Financial Services 5/5 既 GA factual correction** 5/22 report で 「Financial Services = pre-announced as next bundle (= 4 vertical 目)」と分類したが、**真実 = 2026-05-05 既 GA**. NY invite-only briefing で Anthropic は **(a) Claude Opus 4.7 (= 最高 finance 性能 model)** + **(b) 10 prebuilt finance agent templates** (= pitchbook generation / KYC screening / earnings review / month-end close / valuation review) + **(c) Microsoft 365 統合** (= Excel / PowerPoint / Word add-ins) + **(d) Moody's data partnership** + **(e) Claude Cowork / Claude Code / Managed Agents 全環境で動作** を一括 launch. JPMorgan Jamie Dimon 言及あり = Wall Street 全面浸透. 戦略 = **(i) 大手機関 (= 自社 configure + run)** + **(ii) mid-market (= PE-backed JV で 直接 embed)** の 2-track. **🔴🔴 6 部署 narrative 真の overlap = 50% → ~67% (= 4/6) に拡張確定**: Anthropic vertical = Legal (5/12) + Small Business (5/13) + Marketing Ops (5/18) + **Financial Services (5/5 = 実は最早)** = 4 vertical / 自社 6 部署 = 経理 / 法務 / マーケ / 人事 / 営業 / 開発 のうち **経理 + 法務 + マーケ の 3 部署 = 50%** だが **Financial Services 真の射程 = B/S + valuation + month-end close = 自社 [PHILOSOPHY-22] 原則 6 (商品=価値) + 7 (資本=時間) + 8 (資産負債) の中核** = 自社 narrative 「個人 CEO の B/S」と **正面同軸**. **6/1 戦略レビューを 5/26-5/28 前倒し議題化必須** (= MoneyForward CONNECT with AI 5/25-26 直後 = JP + US 二極 backoffice 自律 AI 同時 timing). 自社 narrative pivot = **「Anthropic vertical = 法人 B2B 4 vertical」 vs 「自社 = individual 6 部署統合 lifestyle CEO dashboard + 個人 B/S layer」** の明示的 sharpening. 🔴🔴 (= factual correction + 6/1 議題前倒し必須)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-89c8a03a6c8f",
+        "title": "**★ Anthropic Claude for Financial Services 5/5 既 GA factual correction**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-82db9749d876",
+        "title": "**Google Antigravity 2.0.2 emergency patch 進行中 + Logan Kilpatrick 5/21 公式 acknowledgement**",
+        "text": "**Google Antigravity 2.0.2 emergency patch 進行中 + Logan Kilpatrick 5/21 公式 acknowledgement** **Google Antigravity 2.0.2 emergency patch 進行中 + Logan Kilpatrick 5/21 公式 acknowledgement** 5/19 I/O 2026 keynote 同日 push の 2.0 + 2.0.1 自動 update で **既存 install の code editor / terminal / file explorer / editing tools 消失** → 5/21 Google AI staffer **Logan Kilpatrick が discuss.ai.google.dev で公式 acknowledge** (= 「IDE experience is being updated to make it more clear」). Antigravity 2.0.2 = **emergency patch (highly anticipated)** が rollout 進行中. **root cause** = `AppData\\Roaming\\Antigravity` (旧) vs `AppData\\Roaming\\Antigravity IDE` (新) の **separate directories split** で 旧 install data が読み込み不可 → developer workaround = 完全 uninstall + manual config copy. **🔴 narrative 強化継続**: 5/22 report の [WORKDIR-ISOLATION] + worktree 設計 narrative を **5/19 → 5/21 → 5/23 の 5 day rollout 障害継続** = 「Google 自動 push で IDE 消失 → 公式 acknowledgement 必要 → 緊急 patch 進行」 timeline で **AI 大学記事 narrative material 強化**. Plan B (Google Jules / Antigravity 2.0) 信頼度 **5/22 「downgrade」 → 5/23 「factual confirmation」** = **1 month cooldown = 6/24 再評価** 確定. 自社 = lefthook pre-push + branch protection + worktree 別レイヤ + commit ship discipline = **同種 failure mode が構造的に排除** narrative の confidence ↑. 🔴 (= narrative material 強化 + 5/24 Plan B 永続 downgrade 確定)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Google Antigravity 2.0.2 emergency patch 進行中 + Logan Kilpatrick 5/21 公式 acknowledgement**",
+          "url": "",
+          "status": "",
+          "summary": "**Google Antigravity 2.0.2 emergency patch 進行中 + Logan Kilpatrick 5/21 公式 acknowledgement** 5/19 I/O 2026 keynote 同日 push の 2.0 + 2.0.1 自動 update で **既存 install の code editor / terminal / file explorer / editing tools 消失** → 5/21 Google AI staffer **Logan Kilpatrick が discuss.ai.google.dev で公式 acknowledge** (= 「IDE experience is being updated to make it more clear」). Antigravity 2.0.2 = **emergency patch (highly anticipated)** が rollout 進行中. **root cause** = `AppData\\Roaming\\Antigravity` (旧) vs `AppData\\Roaming\\Antigravity IDE` (新) の **separate directories split** で 旧 install data が読み込み不可 → developer workaround = 完全 uninstall + manual config copy. **🔴 narrative 強化継続**: 5/22 report の [WORKDIR-ISOLATION] + worktree 設計 narrative を **5/19 → 5/21 → 5/23 の 5 day rollout 障害継続** = 「Google 自動 push で IDE 消失 → 公式 acknowledgement 必要 → 緊急 patch 進行」 timeline で **AI 大学記事 narrative material 強化**. Plan B (Google Jules / Antigravity 2.0) 信頼度 **5/22 「downgrade」 → 5/23 「factual confirmation」** = **1 month cooldown = 6/24 再評価** 確定. 自社 = lefthook pre-push + branch protection + worktree 別レイヤ + commit ship discipline = **同種 failure mode が構造的に排除** narrative の confidence ↑. 🔴 (= narrative material 強化 + 5/24 Plan B 永続 downgrade 確定)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-82db9749d876",
+        "title": "**Google Antigravity 2.0.2 emergency patch 進行中 + Logan Kilpatrick 5/21 公式 acknowledgement**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e3961eaeaf12",
+        "title": "**OpenAI Codex Goal mode GA + Appshots macOS + Locked Computer Use**",
+        "text": "**OpenAI Codex Goal mode GA + Appshots macOS + Locked Computer Use** **OpenAI Codex Goal mode GA + Appshots macOS + Locked Computer Use** Goal mode = **GA 化** (= 旧 experimental → app / IDE extension / CLI 全環境利用可) = 「特定目標に向け Codex が数時間〜数日 drive」. **Appshots on macOS** = 最前面 app window を screenshot + text で送信 → instant context (= 自社 mobile UAT screenshot workflow と類似 UX). **Locked Computer Use** = Mac Computer Use eligible user は **lock 後も remote 動作継続** (= 既存 regional constraints 適用). **🟠 Win Codex dogfood 機会継続**: (a) Goal mode GA = 自社 Win Codex sprint 累積 114 deliverable (= part 218 時点) の継続 → 自社 [INSTANCE-ROLES] の 「Win Codex = 実装 / 修正PR / SQL / EF Deno / GHA / T-1 dispatch / 競馬 / Karpathy Compile-Lint」 で Goal mode GA を **dogfood 機会** として 5/24 以降 sprint で 1 案件 試験運用候補. (b) Appshots macOS = 自社 mobile UAT screenshot workflow (= `mobile-bug-triage` skill) に対し UX 類似 = **自社 skill の OS-native 統合 化 候補** (= part 240+). (c) Locked Computer Use = 自社 [SCHEDULE-WAKEUP] rule + Mac 環境外 = 直接 impact 薄 / Win 環境では同等機能なし. 🟠 (= Win Codex sprint 強化材料)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**OpenAI Codex Goal mode GA + Appshots macOS + Locked Computer Use**",
+          "url": "",
+          "status": "",
+          "summary": "**OpenAI Codex Goal mode GA + Appshots macOS + Locked Computer Use** Goal mode = **GA 化** (= 旧 experimental → app / IDE extension / CLI 全環境利用可) = 「特定目標に向け Codex が数時間〜数日 drive」. **Appshots on macOS** = 最前面 app window を screenshot + text で送信 → instant context (= 自社 mobile UAT screenshot workflow と類似 UX). **Locked Computer Use** = Mac Computer Use eligible user は **lock 後も remote 動作継続** (= 既存 regional constraints 適用). **🟠 Win Codex dogfood 機会継続**: (a) Goal mode GA = 自社 Win Codex sprint 累積 114 deliverable (= part 218 時点) の継続 → 自社 [INSTANCE-ROLES] の 「Win Codex = 実装 / 修正PR / SQL / EF Deno / GHA / T-1 dispatch / 競馬 / Karpathy Compile-Lint」 で Goal mode GA を **dogfood 機会** として 5/24 以降 sprint で 1 案件 試験運用候補. (b) Appshots macOS = 自社 mobile UAT screenshot workflow (= `mobile-bug-triage` skill) に対し UX 類似 = **自社 skill の OS-native 統合 化 候補** (= part 240+). (c) Locked Computer Use = 自社 [SCHEDULE-WAKEUP] rule + Mac 環境外 = 直接 impact 薄 / Win 環境では同等機能なし. 🟠 (= Win Codex sprint 強化材料)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e3961eaeaf12",
+        "title": "**OpenAI Codex Goal mode GA + Appshots macOS + Locked Computer Use**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b360c0706c24",
+        "title": "**Cursor Bugbot usage billing 開始 timing = 6/8+ next renewal**",
+        "text": "**Cursor Bugbot usage billing 開始 timing = 6/8+ next renewal** **Cursor Bugbot usage billing 開始 timing = 6/8+ next renewal** 5/22 report 「seat fee 撤廃 → usage billing」既収載 + **timing 確定** = **6/8/2026 以降の next billing renewal** から既存顧客 transition 開始. Teams = on-demand spend 課金 / Individuals = included usage 課金. **平均 1 Bugbot run = $1.00-$1.50** (= PR size + complexity 連動). Effort level = default / high / **custom** (= 動的判定 logic 設定可). **🟠 価格モデル比較 narrative timing 強化**: 自社 `scripts/check_high_risk_ultrareview_gate.py` canonical recipe 5+ 連続 dogfood pattern (= 部 228+229+230+233+234 SUCCESS chain) = **self-hosted gate / free internal use / no per-run cost** vs Cursor Bugbot **6/8+ usage billing $1-$1.5/run** + custom effort logic = **TCO 比較 narrative の calendar pinning 確定**. AI 大学 candidate = 「Cursor Bugbot 6/8+ usage billing transition vs 自社 self-hosted gate canonical recipe — TCO 軸の差」. 🟠 (= TCO narrative timing pinning)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Cursor Bugbot usage billing 開始 timing = 6/8+ next renewal**",
+          "url": "",
+          "status": "",
+          "summary": "**Cursor Bugbot usage billing 開始 timing = 6/8+ next renewal** 5/22 report 「seat fee 撤廃 → usage billing」既収載 + **timing 確定** = **6/8/2026 以降の next billing renewal** から既存顧客 transition 開始. Teams = on-demand spend 課金 / Individuals = included usage 課金. **平均 1 Bugbot run = $1.00-$1.50** (= PR size + complexity 連動). Effort level = default / high / **custom** (= 動的判定 logic 設定可). **🟠 価格モデル比較 narrative timing 強化**: 自社 `scripts/check_high_risk_ultrareview_gate.py` canonical recipe 5+ 連続 dogfood pattern (= 部 228+229+230+233+234 SUCCESS chain) = **self-hosted gate / free internal use / no per-run cost** vs Cursor Bugbot **6/8+ usage billing $1-$1.5/run** + custom effort logic = **TCO 比較 narrative の calendar pinning 確定**. AI 大学 candidate = 「Cursor Bugbot 6/8+ usage billing transition vs 自社 self-hosted gate canonical recipe — TCO 軸の差」. 🟠 (= TCO narrative timing pinning)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b360c0706c24",
+        "title": "**Cursor Bugbot usage billing 開始 timing = 6/8+ next renewal**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-48b6035492ee",
+        "title": "競合",
+        "text": "競合 競合 観察項目 timing",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "競合",
+          "url": "",
+          "status": "",
+          "summary": "競合 観察項目 timing"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-48b6035492ee",
+        "title": "競合",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8bf66a1c4b89",
+        "title": "Bolt.new",
+        "text": "Bolt.new Bolt.new 5/22 既収載 mega update 維持 (= AI 画像生成 + Nano Banana + MCP + Sonnet 4.6 default + Opus 4.5 EOL + file upload + GitHub disconnect + 48h Sonnet 4.6 promo). **5/24 Plan A 単独採択 confidence 維持 ↑** (= Antigravity 5/23 factual confirmation で Plan B 永続 downgrade).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Bolt.new",
+          "url": "",
+          "status": "",
+          "summary": "Bolt.new 5/22 既収載 mega update 維持 (= AI 画像生成 + Nano Banana + MCP + Sonnet 4.6 default + Opus 4.5 EOL + file upload + GitHub disconnect + 48h Sonnet 4.6 promo). **5/24 Plan A 単独採択 confidence 維持 ↑** (= Antigravity 5/23 factual confirmation で Plan B 永続 downgrade)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8bf66a1c4b89",
+        "title": "Bolt.new",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e7723b7799bd",
+        "title": "Lovable",
+        "text": "Lovable Lovable 4/28 iOS/Android mobile launch + 5/11 Aesthetics update / 5/23 新規シグナルなし. 5/17 採択後 carry-over 観察継続.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Lovable",
+          "url": "",
+          "status": "",
+          "summary": "Lovable 4/28 iOS/Android mobile launch + 5/11 Aesthetics update / 5/23 新規シグナルなし. 5/17 採択後 carry-over 観察継続."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e7723b7799bd",
+        "title": "Lovable",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2f71e94dfeb2",
+        "title": "MoneyForward AI Cowork",
+        "text": "MoneyForward AI Cowork MoneyForward AI Cowork 7月 GA + **CONNECT with AI 5/25-26 = 2 day 先** (= JP 経理/管理部門 leader 向け conf / 「経理と AI で描く、未来への第一歩」). WebSearch では agenda 詳細未取得 = **5/25 当日 fetch 必須**. **5/25-26 conf fetch + 5/26-5/28 6/1 戦略レビュー前倒し議題統合**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "MoneyForward AI Cowork",
+          "url": "",
+          "status": "",
+          "summary": "MoneyForward AI Cowork 7月 GA + **CONNECT with AI 5/25-26 = 2 day 先** (= JP 経理/管理部門 leader 向け conf / 「経理と AI で描く、未来への第一歩」). WebSearch では agenda 詳細未取得 = **5/25 当日 fetch 必須**. **5/25-26 conf fetch + 5/26-5/28 6/1 戦略レビュー前倒し議題統合**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2f71e94dfeb2",
+        "title": "MoneyForward AI Cowork",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bc6074d4c177",
+        "title": "GitHub Copilot CLI",
+        "text": "GitHub Copilot CLI GitHub Copilot CLI 5/18 v1.0.49 既収載 (= `/rubber-duck` + `/chronicle` + Alpine + JetBrains). 5/23 新規シグナルなし. cross-vendor critic UX 監視継続.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "GitHub Copilot CLI",
+          "url": "",
+          "status": "",
+          "summary": "GitHub Copilot CLI 5/18 v1.0.49 既収載 (= `/rubber-duck` + `/chronicle` + Alpine + JetBrains). 5/23 新規シグナルなし. cross-vendor critic UX 監視継続."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bc6074d4c177",
+        "title": "GitHub Copilot CLI",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-599ccc5270b7",
+        "title": "Salesforce Summer '26 + Agentforce Operations",
+        "text": "Salesforce Summer '26 + Agentforce Operations Salesforce Summer '26 + Agentforce Operations 6/15 GA. 6/15 GA 後採択検討.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Salesforce Summer '26 + Agentforce Operations",
+          "url": "",
+          "status": "",
+          "summary": "Salesforce Summer '26 + Agentforce Operations 6/15 GA. 6/15 GA 後採択検討."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-599ccc5270b7",
+        "title": "Salesforce Summer '26 + Agentforce Operations",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8c0652d100a2",
+        "title": "Microsoft Agent 365",
+        "text": "Microsoft Agent 365 Microsoft Agent 365 5月 AWS Bedrock + Google Cloud connections public preview 既収載. Slack 経由間接監視継続.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Microsoft Agent 365",
+          "url": "",
+          "status": "",
+          "summary": "Microsoft Agent 365 5月 AWS Bedrock + Google Cloud connections public preview 既収載. Slack 経由間接監視継続."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8c0652d100a2",
+        "title": "Microsoft Agent 365",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7959b34bf45e",
+        "title": "詳細セクション (= 戦略級 1 件 + factual correction 1 件 深掘り)",
+        "text": "詳細セクション (= 戦略級 1 件 + factual correction 1 件 深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (= 戦略級 1 件 + factual correction 1 件 深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7959b34bf45e",
+        "title": "詳細セクション (= 戦略級 1 件 + factual correction 1 件 深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e11714948df2",
+        "title": "領域",
+        "text": "領域 領域 内容",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "領域",
+          "url": "",
+          "status": "",
+          "summary": "領域 内容"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e11714948df2",
+        "title": "領域",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5adcc199af6c",
+        "title": "**新 model**",
+        "text": "**新 model** **新 model** **Claude Opus 4.7** = 最高 finance 性能 model (= 自社 Win Claude #132 dogfood 中核と同 model = 偶然の同期)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**新 model**",
+          "url": "",
+          "status": "",
+          "summary": "**新 model** **Claude Opus 4.7** = 最高 finance 性能 model (= 自社 Win Claude #132 dogfood 中核と同 model = 偶然の同期)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5adcc199af6c",
+        "title": "**新 model**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b5f0f063441b",
+        "title": "**10 prebuilt finance agent templates**",
+        "text": "**10 prebuilt finance agent templates** **10 prebuilt finance agent templates** (1) pitchbook generation / (2) KYC screening / (3) earnings review / (4) **month-end close** / (5) valuation review + 5 more",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**10 prebuilt finance agent templates**",
+          "url": "",
+          "status": "",
+          "summary": "**10 prebuilt finance agent templates** (1) pitchbook generation / (2) KYC screening / (3) earnings review / (4) **month-end close** / (5) valuation review + 5 more"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b5f0f063441b",
+        "title": "**10 prebuilt finance agent templates**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-86cf48f1740f",
+        "title": "**Microsoft 365 add-ins**",
+        "text": "**Microsoft 365 add-ins** **Microsoft 365 add-ins** Excel / PowerPoint / Word に Claude agent plugin として動作",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Microsoft 365 add-ins**",
+          "url": "",
+          "status": "",
+          "summary": "**Microsoft 365 add-ins** Excel / PowerPoint / Word に Claude agent plugin として動作"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-86cf48f1740f",
+        "title": "**Microsoft 365 add-ins**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6573280d21c5",
+        "title": "**Moody's data partnership**",
+        "text": "**Moody's data partnership** **Moody's data partnership** 公式 financial data integration",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**Moody's data partnership**",
+          "url": "",
+          "status": "",
+          "summary": "**Moody's data partnership** 公式 financial data integration"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6573280d21c5",
+        "title": "**Moody's data partnership**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d21e9141514a",
+        "title": "**deployment options**",
+        "text": "**deployment options** **deployment options** (a) Claude Cowork (= self-managed) / (b) Claude Code (= dev integration) / (c) Claude Managed Agents (= Anthropic-hosted secure production)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**deployment options**",
+          "url": "",
+          "status": "",
+          "summary": "**deployment options** (a) Claude Cowork (= self-managed) / (b) Claude Code (= dev integration) / (c) Claude Managed Agents (= Anthropic-hosted secure production)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d21e9141514a",
+        "title": "**deployment options**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cda72789f4e6",
+        "title": "**strategic tracks**",
+        "text": "**strategic tracks** **strategic tracks** (i) 大手機関 = configure + run themselves / (ii) **mid-market = PE-backed JV で 企業 operations に直接 embed**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**strategic tracks**",
+          "url": "",
+          "status": "",
+          "summary": "**strategic tracks** (i) 大手機関 = configure + run themselves / (ii) **mid-market = PE-backed JV で 企業 operations に直接 embed**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cda72789f4e6",
+        "title": "**strategic tracks**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a5ab2cc73f79",
+        "title": "**flagship endorsement**",
+        "text": "**flagship endorsement** **flagship endorsement** **JPMorgan Jamie Dimon 言及** (= Wall Street 全面浸透)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**flagship endorsement**",
+          "url": "",
+          "status": "",
+          "summary": "**flagship endorsement** **JPMorgan Jamie Dimon 言及** (= Wall Street 全面浸透)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a5ab2cc73f79",
+        "title": "**flagship endorsement**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-738e58405267",
+        "title": "自社 6 部署",
+        "text": "自社 6 部署 自社 6 部署 Anthropic vertical 対応 overlap",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "自社 6 部署",
+          "url": "",
+          "status": "",
+          "summary": "自社 6 部署 Anthropic vertical 対応 overlap"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-738e58405267",
+        "title": "自社 6 部署",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-90a2625be7ab",
+        "title": "**経理**",
+        "text": "**経理** **経理** **Financial Services (5/5)** + Small Business (5/13 QuickBooks integration) 🔴🔴 二重 overlap",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**経理**",
+          "url": "",
+          "status": "",
+          "summary": "**経理** **Financial Services (5/5)** + Small Business (5/13 QuickBooks integration) 🔴🔴 二重 overlap"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-90a2625be7ab",
+        "title": "**経理**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3e80959c4396",
+        "title": "**法務**",
+        "text": "**法務** **法務** **Legal (5/12)** + 20+ MCP + Thomson Reuters CoCounsel rebuilt on Claude Agent SDK 🔴🔴 直接",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**法務**",
+          "url": "",
+          "status": "",
+          "summary": "**法務** **Legal (5/12)** + 20+ MCP + Thomson Reuters CoCounsel rebuilt on Claude Agent SDK 🔴🔴 直接"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3e80959c4396",
+        "title": "**法務**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-46bb6e23facc",
+        "title": "**マーケ**",
+        "text": "**マーケ** **マーケ** **Marketing Ops (5/18)** 🔴🔴 直接",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**マーケ**",
+          "url": "",
+          "status": "",
+          "summary": "**マーケ** **Marketing Ops (5/18)** 🔴🔴 直接"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-46bb6e23facc",
+        "title": "**マーケ**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0f94284a21f1",
+        "title": "**人事**",
+        "text": "**人事** **人事** (= まだ専用 vertical なし) 🟢 differentiator 維持可能",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**人事**",
+          "url": "",
+          "status": "",
+          "summary": "**人事** (= まだ専用 vertical なし) 🟢 differentiator 維持可能"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0f94284a21f1",
+        "title": "**人事**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-58e2a778a300",
+        "title": "**営業**",
+        "text": "**営業** **営業** Small Business (= HubSpot integration / 一部 overlap) 🟠 部分 overlap",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**営業**",
+          "url": "",
+          "status": "",
+          "summary": "**営業** Small Business (= HubSpot integration / 一部 overlap) 🟠 部分 overlap"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-58e2a778a300",
+        "title": "**営業**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-704236925c94",
+        "title": "**開発**",
+        "text": "**開発** **開発** Claude Code (= 別 product line / 直接 vertical でないが overlap) 🟠 部分 overlap",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**開発**",
+          "url": "",
+          "status": "",
+          "summary": "**開発** Claude Code (= 別 product line / 直接 vertical でないが overlap) 🟠 部分 overlap"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-704236925c94",
+        "title": "**開発**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8eb249d4d096",
+        "title": "🔴🔴 6/1 戦略レビューを 5/26-5/28 前倒し議題化必須**:",
+        "text": "🔴🔴 6/1 戦略レビューを 5/26-5/28 前倒し議題化必須**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🔴🔴 6/1 戦略レビューを 5/26-5/28 前倒し議題化必須**:"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8eb249d4d096",
+        "title": "🔴🔴 6/1 戦略レビューを 5/26-5/28 前倒し議題化必須**:",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a499e0728700",
+        "title": "timing 結節点** = MoneyForward CONNECT with AI 5/25-26 (= JP 経理/管理部門 leader 向け conf) **直後** = **JP + US 二極 backoffice 自律 AI",
+        "text": "timing 結節点** = MoneyForward CONNECT with AI 5/25-26 (= JP 経理/管理部門 leader 向け conf) **直後** = **JP + US 二極 backoffice 自律 AI 同時 timing**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "timing 結節点** = MoneyForward CONNECT with AI 5/25-26 (= JP 経理/管理部門 leader 向け conf) **直後** = **JP + US 二極 backoffice 自律 AI 同時 timing**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a499e0728700",
+        "title": "timing 結節点** = MoneyForward CONNECT with AI 5/25-26 (= JP 経理/管理部門 leader 向け conf) **直後** = **JP + US 二極 backoffice 自律 AI",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-477cc43cb4a1",
+        "title": "agenda candidate**: (a) Anthropic 4 vertical 完成 (= 5/5/12/13/18) の自社 6 部署 narrative 影響再評価 / (b) MoneyForward 7月 GA confi",
+        "text": "agenda candidate**: (a) Anthropic 4 vertical 完成 (= 5/5/12/13/18) の自社 6 部署 narrative 影響再評価 / (b) MoneyForward 7月 GA confirmed + 5/25-26 conf 内容 / (c) 自社 narrative pivot 案 — 「個人 CEO B/S」 + 「人事 部署 differentiator 維持」 + 「lifestyle 統合 narrative」 sharpening.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "agenda candidate**: (a) Anthropic 4 vertical 完成 (= 5/5/12/13/18) の自社 6 部署 narrative 影響再評価 / (b) MoneyForward 7月 GA confirmed + 5/25-26 conf 内容 / (c) 自社 narrative pivot 案 — 「個人 CEO B/S」 + 「人事 部署 differentiator 維持」 + 「lifestyle 統合 narrative」 sharpening."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-477cc43cb4a1",
+        "title": "agenda candidate**: (a) Anthropic 4 vertical 完成 (= 5/5/12/13/18) の自社 6 部署 narrative 影響再評価 / (b) MoneyForward 7月 GA confi",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-db025c559023",
+        "title": "🔴 narrative pivot 案** = (i) Anthropic vertical = **法人 B2B 4 vertical** / (ii) 自社 = **individual 6 部署統合 lifestyle CEO das",
+        "text": "🔴 narrative pivot 案** = (i) Anthropic vertical = **法人 B2B 4 vertical** / (ii) 自社 = **individual 6 部署統合 lifestyle CEO dashboard + 個人 B/S layer** の明示的 narrative sharpening. 「個人」 / 「lifestyle 統合」 / 「人事 部署 (= Anthropic 未 cover)」 = 3 軸 differentiator.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🔴 narrative pivot 案** = (i) Anthropic vertical = **法人 B2B 4 vertical** / (ii) 自社 = **individual 6 部署統合 lifestyle CEO dashboard + 個人 B/S layer** の明示的 narrative sharpening. 「個人」 / 「lifestyle 統合」 / 「人事 部署 (= Anthropic 未 cover)」 = 3 軸 differentiator."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-db025c559023",
+        "title": "🔴 narrative pivot 案** = (i) Anthropic vertical = **法人 B2B 4 vertical** / (ii) 自社 = **individual 6 部署統合 lifestyle CEO das",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c147dba8753c",
+        "title": "🟠 AI 大学 candidate priority ↑**: 「Anthropic Financial Services 5/5 GA — Wall Street + JPMorgan 浸透 vs 自社 個人 CEO B/S narrat",
+        "text": "🟠 AI 大学 candidate priority ↑**: 「Anthropic Financial Services 5/5 GA — Wall Street + JPMorgan 浸透 vs 自社 個人 CEO B/S narrative — 法人 B2B 4 vertical と individual lifestyle 6 部署の 2 極化」 = **5/24 Codex T-1 dispatch backlog 第 1 候補追加**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟠 AI 大学 candidate priority ↑**: 「Anthropic Financial Services 5/5 GA — Wall Street + JPMorgan 浸透 vs 自社 個人 CEO B/S narrative — 法人 B2B 4 vertical と individual lifestyle 6 部署の 2 極化」 = **5/24 Codex T-1 dispatch backlog 第 1 候補追加**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c147dba8753c",
+        "title": "🟠 AI 大学 candidate priority ↑**: 「Anthropic Financial Services 5/5 GA — Wall Street + JPMorgan 浸透 vs 自社 個人 CEO B/S narrat",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d5627dad9ddc",
+        "title": "[P0 / 6/1 戦略レビュー前倒し]** 5/26-5/28 に 6/1 戦略レビューを前倒し議題化 (= MoneyForward CONNECT with AI 5/25-26 直後 = JP + US 二極 backoffice ",
+        "text": "[P0 / 6/1 戦略レビュー前倒し]** 5/26-5/28 に 6/1 戦略レビューを前倒し議題化 (= MoneyForward CONNECT with AI 5/25-26 直後 = JP + US 二極 backoffice 自律 AI 同時 timing 結節点).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[P0 / 6/1 戦略レビュー前倒し]** 5/26-5/28 に 6/1 戦略レビューを前倒し議題化 (= MoneyForward CONNECT with AI 5/25-26 直後 = JP + US 二極 backoffice 自律 AI 同時 timing 結節点)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d5627dad9ddc",
+        "title": "[P0 / 6/1 戦略レビュー前倒し]** 5/26-5/28 に 6/1 戦略レビューを前倒し議題化 (= MoneyForward CONNECT with AI 5/25-26 直後 = JP + US 二極 backoffice ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-651b1b69ac37",
+        "title": "[P1 / narrative sharpening]** [`docs/PHILOSOPHY.md`](../PHILOSOPHY.md) 原則 6 (商品=価値) + 7 (資本=時間) + 8 (資産負債) の 「個人 CEO B/S",
+        "text": "[P1 / narrative sharpening]** [`docs/PHILOSOPHY.md`](../PHILOSOPHY.md) 原則 6 (商品=価値) + 7 (資本=時間) + 8 (資産負債) の 「個人 CEO B/S layer」 narrative pivot 検討 PR 候補 (= 6/1 戦略レビュー結論受け 6/2 以降 ship).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[P1 / narrative sharpening]** [`docs/PHILOSOPHY.md`](../PHILOSOPHY.md) 原則 6 (商品=価値) + 7 (資本=時間) + 8 (資産負債) の 「個人 CEO B/S layer」 narrative pivot 検討 PR 候補 (= 6/1 戦略レビュー結論受け 6/2 以降 ship)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-651b1b69ac37",
+        "title": "[P1 / narrative sharpening]** [`docs/PHILOSOPHY.md`](../PHILOSOPHY.md) 原則 6 (商品=価値) + 7 (資本=時間) + 8 (資産負債) の 「個人 CEO B/S",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5acf018042a7",
+        "title": "[P2 / AI 大学 candidate]** Codex T-1 dispatch backlog 第 1 候補追加 = 「Anthropic 4 vertical Wall Street vs 自社 個人 CEO B/S — 法人 B",
+        "text": "[P2 / AI 大学 candidate]** Codex T-1 dispatch backlog 第 1 候補追加 = 「Anthropic 4 vertical Wall Street vs 自社 個人 CEO B/S — 法人 B2B vs individual lifestyle 6 部署 2 極化」 (= 5/24 以降 ship target).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[P2 / AI 大学 candidate]** Codex T-1 dispatch backlog 第 1 候補追加 = 「Anthropic 4 vertical Wall Street vs 自社 個人 CEO B/S — 法人 B2B vs individual lifestyle 6 部署 2 極化」 (= 5/24 以降 ship target)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5acf018042a7",
+        "title": "[P2 / AI 大学 candidate]** Codex T-1 dispatch backlog 第 1 候補追加 = 「Anthropic 4 vertical Wall Street vs 自社 個人 CEO B/S — 法人 B",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-580c73336faf",
+        "title": "[P3 / docs 修正]** 5/22 report の 「Financial Services 次 vertical 予告」 誤記は本日 report で訂正 = **append-only chronological pattern",
+        "text": "[P3 / docs 修正]** 5/22 report の 「Financial Services 次 vertical 予告」 誤記は本日 report で訂正 = **append-only chronological pattern** で remediate (= 直接書換せず本 5/23 report で factual correction 表記).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[P3 / docs 修正]** 5/22 report の 「Financial Services 次 vertical 予告」 誤記は本日 report で訂正 = **append-only chronological pattern** で remediate (= 直接書換せず本 5/23 report で factual correction 表記)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-580c73336faf",
+        "title": "[P3 / docs 修正]** 5/22 report の 「Financial Services 次 vertical 予告」 誤記は本日 report で訂正 = **append-only chronological pattern",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2e5f1eff319a",
+        "title": "日付",
+        "text": "日付 日付 事象",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "日付",
+          "url": "",
+          "status": "",
+          "summary": "日付 事象"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2e5f1eff319a",
+        "title": "日付",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fef8c97f9738",
+        "title": "5/19 PT",
+        "text": "5/19 PT 5/19 PT I/O 2026 keynote で Antigravity 2.0 発表 + **同日 自動 update push**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5/19 PT",
+          "url": "",
+          "status": "",
+          "summary": "5/19 PT I/O 2026 keynote で Antigravity 2.0 発表 + **同日 自動 update push**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fef8c97f9738",
+        "title": "5/19 PT",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b0d1eca0f2b3",
+        "title": "5/19-5/20",
+        "text": "5/19-5/20 5/19-5/20 既存 install の code editor + terminal + file explorer + editing tools が **gut** = developer community で公然 critique (TechCrunch / piunikaweb / techloy)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5/19-5/20",
+          "url": "",
+          "status": "",
+          "summary": "5/19-5/20 既存 install の code editor + terminal + file explorer + editing tools が **gut** = developer community で公然 critique (TechCrunch / piunikaweb / techloy)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b0d1eca0f2b3",
+        "title": "5/19-5/20",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-186df6a5c396",
+        "title": "5/20",
+        "text": "5/20 5/20 piunikaweb で root cause 特定 = `AppData\\Roaming\\Antigravity` (旧) vs `AppData\\Roaming\\Antigravity IDE` (新) の **separate directories split**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5/20",
+          "url": "",
+          "status": "",
+          "summary": "5/20 piunikaweb で root cause 特定 = `AppData\\Roaming\\Antigravity` (旧) vs `AppData\\Roaming\\Antigravity IDE` (新) の **separate directories split**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-186df6a5c396",
+        "title": "5/20",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-578457d3669c",
+        "title": "5/21",
+        "text": "5/21 5/21 Google AI staffer **Logan Kilpatrick が discuss.ai.google.dev で公式 acknowledge** (= 「IDE experience is being updated to make it more clear」)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5/21",
+          "url": "",
+          "status": "",
+          "summary": "5/21 Google AI staffer **Logan Kilpatrick が discuss.ai.google.dev で公式 acknowledge** (= 「IDE experience is being updated to make it more clear」)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-578457d3669c",
+        "title": "5/21",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3c1428a455bb",
+        "title": "5/23 (= 本日)",
+        "text": "5/23 (= 本日) 5/23 (= 本日) Antigravity 2.0.2 = **highly anticipated emergency patch** が rollout 進行中. workaround = 完全 uninstall + manual config copy 継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "5/23 (= 本日)",
+          "url": "",
+          "status": "",
+          "summary": "5/23 (= 本日) Antigravity 2.0.2 = **highly anticipated emergency patch** が rollout 進行中. workaround = 完全 uninstall + manual config copy 継続"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3c1428a455bb",
+        "title": "5/23 (= 本日)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ba12336db2ff",
+        "title": "🔴 narrative material 5 day 継続強化**: [WORKDIR-ISOLATION] + worktree 別レイヤ + lefthook pre-push + branch protection + commit ",
+        "text": "🔴 narrative material 5 day 継続強化**: [WORKDIR-ISOLATION] + worktree 別レイヤ + lefthook pre-push + branch protection + commit ship discipline = **同種 failure mode が構造的に排除** narrative の **factual citation 強化** = AI 大学記事 candidate priority ↑.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🔴 narrative material 5 day 継続強化**: [WORKDIR-ISOLATION] + worktree 別レイヤ + lefthook pre-push + branch protection + commit ship discipline = **同種 failure mode が構造的に排除** narrative の **factual citation 強化** = AI 大学記事 candidate priority ↑."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ba12336db2ff",
+        "title": "🔴 narrative material 5 day 継続強化**: [WORKDIR-ISOLATION] + worktree 別レイヤ + lefthook pre-push + branch protection + commit ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-400cce9863ea",
+        "title": "🟠 5/24 discovery Plan B 永続 downgrade 確定**: 5/22 「downgrade」 → 5/23 「factual confirmation」 = **Plan B (Google Jules / Ant",
+        "text": "🟠 5/24 discovery Plan B 永続 downgrade 確定**: 5/22 「downgrade」 → 5/23 「factual confirmation」 = **Plan B (Google Jules / Antigravity 2.0) = 1 month cooldown 確定 (= 6/24 再評価)**. 5/24 = **Bolt.new Plan A 単独採択 confidence MAX**.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟠 5/24 discovery Plan B 永続 downgrade 確定**: 5/22 「downgrade」 → 5/23 「factual confirmation」 = **Plan B (Google Jules / Antigravity 2.0) = 1 month cooldown 確定 (= 6/24 再評価)**. 5/24 = **Bolt.new Plan A 単独採択 confidence MAX**."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-400cce9863ea",
+        "title": "🟠 5/24 discovery Plan B 永続 downgrade 確定**: 5/22 「downgrade」 → 5/23 「factual confirmation」 = **Plan B (Google Jules / Ant",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cbd2614b086d",
+        "title": "🟢 [VIBE-30] dogfood 補強**: 「destructive auto-update は CEO レビュー強化前提」 narrative の **5 day 継続 factual citation source** として ",
+        "text": "🟢 [VIBE-30] dogfood 補強**: 「destructive auto-update は CEO レビュー強化前提」 narrative の **5 day 継続 factual citation source** として Antigravity 2.0/2.0.1/2.0.2 timeline を [`docs/VIBE_CODING_PRINCIPLES.md`](../VIBE_CODING_PRINCIPLES.md) に追加 PR 候補.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "🟢 [VIBE-30] dogfood 補強**: 「destructive auto-update は CEO レビュー強化前提」 narrative の **5 day 継続 factual citation source** として Antigravity 2.0/2.0.1/2.0.2 timeline を [`docs/VIBE_CODING_PRINCIPLES.md`](../VIBE_CODING_PRINCIPLES.md) に追加 PR 候補."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cbd2614b086d",
+        "title": "🟢 [VIBE-30] dogfood 補強**: 「destructive auto-update は CEO レビュー強化前提」 narrative の **5 day 継続 factual citation source** として ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-596b6a9ea54d",
+        "title": "[P1 / 5/24 discovery]** Bolt.new Plan A 単独採択 confidence MAX 維持 + 5/24 解禁日初日採択推奨 (= Lovable 5/17 解禁日初日採択 pattern 踏襲 / coo",
+        "text": "[P1 / 5/24 discovery]** Bolt.new Plan A 単独採択 confidence MAX 維持 + 5/24 解禁日初日採択推奨 (= Lovable 5/17 解禁日初日採択 pattern 踏襲 / cooldown lag 回避).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[P1 / 5/24 discovery]** Bolt.new Plan A 単独採択 confidence MAX 維持 + 5/24 解禁日初日採択推奨 (= Lovable 5/17 解禁日初日採択 pattern 踏襲 / cooldown lag 回避)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-596b6a9ea54d",
+        "title": "[P1 / 5/24 discovery]** Bolt.new Plan A 単独採択 confidence MAX 維持 + 5/24 解禁日初日採択推奨 (= Lovable 5/17 解禁日初日採択 pattern 踏襲 / coo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bf862d8ff7b2",
+        "title": "[P2 / AI 大学 candidate]** 「Google Antigravity 2.0 5 day rollout 障害 (5/19→5/23) — Logan Kilpatrick 公式 acknowledge + 2.0.2 ",
+        "text": "[P2 / AI 大学 candidate]** 「Google Antigravity 2.0 5 day rollout 障害 (5/19→5/23) — Logan Kilpatrick 公式 acknowledge + 2.0.2 emergency patch + workaround 継続 vs 自社 [WORKDIR-ISOLATION] worktree 設計 — destructive auto-update 排除の 4 layer 構造」 (= 5/24 以降 Codex T-1 dispatch 第 2 候補).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[P2 / AI 大学 candidate]** 「Google Antigravity 2.0 5 day rollout 障害 (5/19→5/23) — Logan Kilpatrick 公式 acknowledge + 2.0.2 emergency patch + workaround 継続 vs 自社 [WORKDIR-ISOLATION] worktree 設計 — destructive auto-update 排除の 4 layer 構造」 (= 5/24 以降 Codex T-1 dispatch 第 2 候補)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bf862d8ff7b2",
+        "title": "[P2 / AI 大学 candidate]** 「Google Antigravity 2.0 5 day rollout 障害 (5/19→5/23) — Logan Kilpatrick 公式 acknowledge + 2.0.2 ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-96fcceeb762b",
+        "title": "5/24 Discovery 解禁 D-1 — Bolt.new Plan A 単独採択 confidence MAX 維持",
+        "text": "5/24 Discovery 解禁 D-1 — Bolt.new Plan A 単独採択 confidence MAX 維持",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "5/24 Discovery 解禁 D-1 — Bolt.new Plan A 単独採択 confidence MAX 維持"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-96fcceeb762b",
+        "title": "5/24 Discovery 解禁 D-1 — Bolt.new Plan A 単独採択 confidence MAX 維持",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1bb7ab5ddeec",
+        "title": "Plan A (= 第 1 候補 / 単独採択 confidence MAX)**: **Bolt.new**",
+        "text": "Plan A (= 第 1 候補 / 単独採択 confidence MAX)**: **Bolt.new**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Plan A (= 第 1 候補 / 単独採択 confidence MAX)**: **Bolt.new**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1bb7ab5ddeec",
+        "title": "Plan A (= 第 1 候補 / 単独採択 confidence MAX)**: **Bolt.new**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-74784271d259",
+        "title": "基準 a (= 差別化軸直接競合) ✅ = vibe coding 4 強 (Lovable / Replit / Cursor / Bolt.new) で **Lovable 採択後の自然な次手** + 自社 design-skills ",
+        "text": "基準 a (= 差別化軸直接競合) ✅ = vibe coding 4 強 (Lovable / Replit / Cursor / Bolt.new) で **Lovable 採択後の自然な次手** + 自社 design-skills + Figma MCP との重複拡大.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "基準 a (= 差別化軸直接競合) ✅ = vibe coding 4 強 (Lovable / Replit / Cursor / Bolt.new) で **Lovable 採択後の自然な次手** + 自社 design-skills + Figma MCP との重複拡大."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-74784271d259",
+        "title": "基準 a (= 差別化軸直接競合) ✅ = vibe coding 4 強 (Lovable / Replit / Cursor / Bolt.new) で **Lovable 採択後の自然な次手** + 自社 design-skills ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.37,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url",
+          "sensational_language"
+        ],
+        "reasons": [
+          "missing source URL",
+          "sensational terms: kill",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0d2fc87e3241",
+        "title": "基準 c (= 過去 30 日重大リリース) ✅ = 5月 mega update = AI 画像生成 + Nano Banana + MCP + Sonnet 4.6 default + Opus 4.5 EOL + file uploa",
+        "text": "基準 c (= 過去 30 日重大リリース) ✅ = 5月 mega update = AI 画像生成 + Nano Banana + MCP + Sonnet 4.6 default + Opus 4.5 EOL + file upload + GitHub disconnect + 48h promo + team admin public/private.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "基準 c (= 過去 30 日重大リリース) ✅ = 5月 mega update = AI 画像生成 + Nano Banana + MCP + Sonnet 4.6 default + Opus 4.5 EOL + file upload + GitHub disconnect + 48h promo + team admin public/private."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0d2fc87e3241",
+        "title": "基準 c (= 過去 30 日重大リリース) ✅ = 5月 mega update = AI 画像生成 + Nano Banana + MCP + Sonnet 4.6 default + Opus 4.5 EOL + file uploa",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f7e138252e12",
+        "title": "vendor neutrality 補強** ✅ = Sonnet 4.6 default = 自社 Win Claude #132 中核と同 vendor / 自社 routing matrix の vendor-neutral vali",
+        "text": "vendor neutrality 補強** ✅ = Sonnet 4.6 default = 自社 Win Claude #132 中核と同 vendor / 自社 routing matrix の vendor-neutral validation 軸.",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "vendor neutrality 補強** ✅ = Sonnet 4.6 default = 自社 Win Claude #132 中核と同 vendor / 自社 routing matrix の vendor-neutral validation 軸."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f7e138252e12",
+        "title": "vendor neutrality 補強** ✅ = Sonnet 4.6 default = 自社 Win Claude #132 中核と同 vendor / 自社 routing matrix の vendor-neutral vali",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d697821271ab",
+        "title": "Plan B (= 永続 downgrade 確定)**: Google Jules / Antigravity 2.0 = **6/24 再評価** (= 1 month cooldown / rollout discipline 改善後",
+        "text": "Plan B (= 永続 downgrade 確定)**: Google Jules / Antigravity 2.0 = **6/24 再評価** (= 1 month cooldown / rollout discipline 改善後).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Plan B (= 永続 downgrade 確定)**: Google Jules / Antigravity 2.0 = **6/24 再評価** (= 1 month cooldown / rollout discipline 改善後)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d697821271ab",
+        "title": "Plan B (= 永続 downgrade 確定)**: Google Jules / Antigravity 2.0 = **6/24 再評価** (= 1 month cooldown / rollout discipline 改善後",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d1147dc29379",
+        "title": "Plan C (= hybrid)**: **却下** (= Antigravity 2.0 5 day 継続障害で hybrid 不要 / Bolt.new 単独採択で十分).",
+        "text": "Plan C (= hybrid)**: **却下** (= Antigravity 2.0 5 day 継続障害で hybrid 不要 / Bolt.new 単独採択で十分).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Plan C (= hybrid)**: **却下** (= Antigravity 2.0 5 day 継続障害で hybrid 不要 / Bolt.new 単独採択で十分)."
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d1147dc29379",
+        "title": "Plan C (= hybrid)**: **却下** (= Antigravity 2.0 5 day 継続障害で hybrid 不要 / Bolt.new 単独採択で十分).",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1fd41fb298ca",
+        "title": "Priority",
+        "text": "Priority Priority Action Owner Due",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Priority",
+          "url": "",
+          "status": "",
+          "summary": "Priority Action Owner Due"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1fd41fb298ca",
+        "title": "Priority",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ed1bace221b8",
+        "title": "**P0**",
+        "text": "**P0** **P0** **6/1 戦略レビュー 5/26-5/28 前倒し** (= Anthropic Financial Services 5/5 既 GA factual correction + MoneyForward CONNECT with AI 5/25-26 直後 timing 結節点 / agenda = 6 部署 narrative pivot + 個人 CEO B/S layer narrative sharpening + 人事 部署 differentiator 維持戦略) CEO + Win Claude 5/26-5/28",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**P0**",
+          "url": "",
+          "status": "",
+          "summary": "**P0** **6/1 戦略レビュー 5/26-5/28 前倒し** (= Anthropic Financial Services 5/5 既 GA factual correction + MoneyForward CONNECT with AI 5/25-26 直後 timing 結節点 / agenda = 6 部署 narrative pivot + 個人 CEO B/S layer narrative sharpening + 人事 部署 differentiator 維持戦略) CEO + Win Claude 5/26-5/28"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ed1bace221b8",
+        "title": "**P0**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-dc75e400bfd2",
+        "title": "**P1**",
+        "text": "**P1** **P1** **5/24 discovery 解禁日初日 Bolt.new 採択** (= Plan A 単独 confidence MAX / Lovable 5/17 pattern 踏襲) Win Claude 5/24",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**P1**",
+          "url": "",
+          "status": "",
+          "summary": "**P1** **5/24 discovery 解禁日初日 Bolt.new 採択** (= Plan A 単独 confidence MAX / Lovable 5/17 pattern 踏襲) Win Claude 5/24"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-dc75e400bfd2",
+        "title": "**P1**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7f9ef46aedb6",
+        "title": "**P1**",
+        "text": "**P1** **P1** **MoneyForward CONNECT with AI 5/25-26 agenda fetch** (= JP 経理/管理部門 leader 向け / WebSearch では未取得 / 5/25 当日 fetch 必須) Win Claude 5/25",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**P1**",
+          "url": "",
+          "status": "",
+          "summary": "**P1** **MoneyForward CONNECT with AI 5/25-26 agenda fetch** (= JP 経理/管理部門 leader 向け / WebSearch では未取得 / 5/25 当日 fetch 必須) Win Claude 5/25"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7f9ef46aedb6",
+        "title": "**P1**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5b95bd01c307",
+        "title": "**P1**",
+        "text": "**P1** **P1** **AI 大学記事 candidate priority ↑** = 「Anthropic 4 vertical Wall Street vs 自社 個人 CEO B/S — 法人 B2B vs individual lifestyle 6 部署 2 極化」 + 「Google Antigravity 2.0 5 day 障害 vs 自社 [WORKDIR-ISOLATION] worktree 設計」 = 2 本連続 candidate Codex (= T-1 dispatch) 5/24-5/28",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**P1**",
+          "url": "",
+          "status": "",
+          "summary": "**P1** **AI 大学記事 candidate priority ↑** = 「Anthropic 4 vertical Wall Street vs 自社 個人 CEO B/S — 法人 B2B vs individual lifestyle 6 部署 2 極化」 + 「Google Antigravity 2.0 5 day 障害 vs 自社 [WORKDIR-ISOLATION] worktree 設計」 = 2 本連続 candidate Codex (= T-1 dispatch) 5/24-5/28"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5b95bd01c307",
+        "title": "**P1**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6e99bd6220fd",
+        "title": "**P2**",
+        "text": "**P2** **P2** [`docs/PHILOSOPHY.md`](../PHILOSOPHY.md) narrative pivot 検討 PR 候補 = 「個人 CEO B/S layer」 (= 6/1 戦略レビュー結論受け 6/2 以降 ship) Win Claude 6/2+",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**P2**",
+          "url": "",
+          "status": "",
+          "summary": "**P2** [`docs/PHILOSOPHY.md`](../PHILOSOPHY.md) narrative pivot 検討 PR 候補 = 「個人 CEO B/S layer」 (= 6/1 戦略レビュー結論受け 6/2 以降 ship) Win Claude 6/2+"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6e99bd6220fd",
+        "title": "**P2**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-da4273fde334",
+        "title": "**P2**",
+        "text": "**P2** **P2** [`docs/VIBE_CODING_PRINCIPLES.md`](../VIBE_CODING_PRINCIPLES.md) に Antigravity 2.0 5 day timeline factual citation 追加 PR 候補 Win Claude 5/26+",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**P2**",
+          "url": "",
+          "status": "",
+          "summary": "**P2** [`docs/VIBE_CODING_PRINCIPLES.md`](../VIBE_CODING_PRINCIPLES.md) に Antigravity 2.0 5 day timeline factual citation 追加 PR 候補 Win Claude 5/26+"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-da4273fde334",
+        "title": "**P2**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5a8c764f0597",
+        "title": "**P3**",
+        "text": "**P3** **P3** Codex Goal mode GA + Appshots macOS = Win Codex sprint dogfood 試験運用 1 案件候補 Win Codex 5/24-5/31",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**P3**",
+          "url": "",
+          "status": "",
+          "summary": "**P3** Codex Goal mode GA + Appshots macOS = Win Codex sprint dogfood 試験運用 1 案件候補 Win Codex 5/24-5/31"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5a8c764f0597",
+        "title": "**P3**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-737ffdab4475",
+        "title": "**P3**",
+        "text": "**P3** **P3** Cursor Bugbot 6/8+ usage billing transition TCO narrative AI 大学候補 (= self-hosted gate canonical recipe との TCO 比較) Codex (= T-1 dispatch) 6/8+",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "**P3**",
+          "url": "",
+          "status": "",
+          "summary": "**P3** Cursor Bugbot 6/8+ usage billing transition TCO narrative AI 大学候補 (= self-hosted gate canonical recipe との TCO 比較) Codex (= T-1 dispatch) 6/8+"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-737ffdab4475",
+        "title": "**P3**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-afa4fed4182a",
+        "title": "[Anthropic deepens push into Wall Street with new AI agents, full Microsoft 365 integration, Moody's data partnership (F",
+        "text": "[Anthropic deepens push into Wall Street with new AI agents, full Microsoft 365 integration, Moody's data partnership (Fortune, 2026-05-05)](https://fortune.com/2026/05/05/anthropic-wall-street-financial-services-agents-jamie-dimon/) ★ factual correction source",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Anthropic deepens push into Wall Street with new AI agents, full Microsoft 365 integration, Moody's data partnership (Fortune, 2026-05-05)](https://fortune.com/2026/05/05/anthropic-wall-street-financial-services-agents-jamie-dimon/) ★ factual correction source"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-afa4fed4182a",
+        "title": "[Anthropic deepens push into Wall Street with new AI agents, full Microsoft 365 integration, Moody's data partnership (F",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-aa365bec33ee",
+        "title": "[Anthropic Launches Ten Finance Agent Templates for Claude (Let's Data Science)](https://letsdatascience.com/news/anthro",
+        "text": "[Anthropic Launches Ten Finance Agent Templates for Claude (Let's Data Science)](https://letsdatascience.com/news/anthropic-launches-ten-finance-agent-templates-for-claude-6516f048)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Anthropic Launches Ten Finance Agent Templates for Claude (Let's Data Science)](https://letsdatascience.com/news/anthropic-launches-ten-finance-agent-templates-for-claude-6516f048)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-aa365bec33ee",
+        "title": "[Anthropic Launches Ten Finance Agent Templates for Claude (Let's Data Science)](https://letsdatascience.com/news/anthro",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bb84c0cdf3be",
+        "title": "[Anthropic Launches Claude Financial Services Solutions That Can Conduct Valuation Reviews & Close Books At Month End (O",
+        "text": "[Anthropic Launches Claude Financial Services Solutions That Can Conduct Valuation Reviews & Close Books At Month End (OfficeChai)](https://officechai.com/ai/anthropic-launches-claude-financial-services-solutions-that-can-conduct-valuation-reviews-close-books-at-month-end/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Anthropic Launches Claude Financial Services Solutions That Can Conduct Valuation Reviews & Close Books At Month End (OfficeChai)](https://officechai.com/ai/anthropic-launches-claude-financial-services-solutions-that-can-conduct-valuation-reviews-close-books-at-month-end/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bb84c0cdf3be",
+        "title": "[Anthropic Launches Claude Financial Services Solutions That Can Conduct Valuation Reviews & Close Books At Month End (O",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3fde46d03937",
+        "title": "[The Briefing: Financial Services (Anthropic events)](https://www.anthropic.com/events/the-briefing-financial-services-v",
+        "text": "[The Briefing: Financial Services (Anthropic events)](https://www.anthropic.com/events/the-briefing-financial-services-virtual-event)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[The Briefing: Financial Services (Anthropic events)](https://www.anthropic.com/events/the-briefing-financial-services-virtual-event)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3fde46d03937",
+        "title": "[The Briefing: Financial Services (Anthropic events)](https://www.anthropic.com/events/the-briefing-financial-services-v",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5f18c66ee2b9",
+        "title": "[Google Antigravity 2.0 broken? Missing IDE and folder fixes explained (piunikaweb, 2026-05-20)](https://piunikaweb.com/",
+        "text": "[Google Antigravity 2.0 broken? Missing IDE and folder fixes explained (piunikaweb, 2026-05-20)](https://piunikaweb.com/2026/05/20/fix-google-antigravity-2-0-missing-ide-error/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Google Antigravity 2.0 broken? Missing IDE and folder fixes explained (piunikaweb, 2026-05-20)](https://piunikaweb.com/2026/05/20/fix-google-antigravity-2-0-missing-ide-error/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5f18c66ee2b9",
+        "title": "[Google Antigravity 2.0 broken? Missing IDE and folder fixes explained (piunikaweb, 2026-05-20)](https://piunikaweb.com/",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ec40c1eb8423",
+        "title": "[Antigravity 2.0.2 changelog (Google AI Developers Forum)](https://discuss.ai.google.dev/t/antigravity-2-0-2-changelog/1",
+        "text": "[Antigravity 2.0.2 changelog (Google AI Developers Forum)](https://discuss.ai.google.dev/t/antigravity-2-0-2-changelog/146835)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Antigravity 2.0.2 changelog (Google AI Developers Forum)](https://discuss.ai.google.dev/t/antigravity-2-0-2-changelog/146835)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ec40c1eb8423",
+        "title": "[Antigravity 2.0.2 changelog (Google AI Developers Forum)](https://discuss.ai.google.dev/t/antigravity-2-0-2-changelog/1",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4563dcc8944e",
+        "title": "[Solution for Antigravity 2.0 Installation / Update Bug (Google AI Developers Forum)](https://discuss.ai.google.dev/t/so",
+        "text": "[Solution for Antigravity 2.0 Installation / Update Bug (Google AI Developers Forum)](https://discuss.ai.google.dev/t/solution-for-antigravity-2-0-installation-update-bug/145787)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Solution for Antigravity 2.0 Installation / Update Bug (Google AI Developers Forum)](https://discuss.ai.google.dev/t/solution-for-antigravity-2-0-installation-update-bug/145787)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4563dcc8944e",
+        "title": "[Solution for Antigravity 2.0 Installation / Update Bug (Google AI Developers Forum)](https://discuss.ai.google.dev/t/so",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-48aae2c284e1",
+        "title": "[Why Google's Antigravity 2.0 AI Update Has Developers Furious (Techloy)](https://www.techloy.com/why-googles-antigravit",
+        "text": "[Why Google's Antigravity 2.0 AI Update Has Developers Furious (Techloy)](https://www.techloy.com/why-googles-antigravity-2-0-ai-update-has-developers-furious/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Why Google's Antigravity 2.0 AI Update Has Developers Furious (Techloy)](https://www.techloy.com/why-googles-antigravity-2-0-ai-update-has-developers-furious/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-48aae2c284e1",
+        "title": "[Why Google's Antigravity 2.0 AI Update Has Developers Furious (Techloy)](https://www.techloy.com/why-googles-antigravit",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f75ee9bfb15a",
+        "title": "[Bolt.new — Claude Sonnet 4.6 just landed in Bolt (bolt.new/blog)](https://bolt.new/blog/sonnet-4.6-in-bolt)",
+        "text": "[Bolt.new — Claude Sonnet 4.6 just landed in Bolt (bolt.new/blog)](https://bolt.new/blog/sonnet-4.6-in-bolt)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Bolt.new — Claude Sonnet 4.6 just landed in Bolt (bolt.new/blog)](https://bolt.new/blog/sonnet-4.6-in-bolt)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f75ee9bfb15a",
+        "title": "[Bolt.new — Claude Sonnet 4.6 just landed in Bolt (bolt.new/blog)](https://bolt.new/blog/sonnet-4.6-in-bolt)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bdc3826ed1ac",
+        "title": "[Bolt Release Notes](https://support.bolt.new/release-notes)",
+        "text": "[Bolt Release Notes](https://support.bolt.new/release-notes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Bolt Release Notes](https://support.bolt.new/release-notes)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bdc3826ed1ac",
+        "title": "[Bolt Release Notes](https://support.bolt.new/release-notes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-47508593d36b",
+        "title": "[Updates to Bugbot for Teams and Individuals (Cursor blog, May 2026)](https://cursor.com/blog/may-2026-bugbot-changes)",
+        "text": "[Updates to Bugbot for Teams and Individuals (Cursor blog, May 2026)](https://cursor.com/blog/may-2026-bugbot-changes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Updates to Bugbot for Teams and Individuals (Cursor blog, May 2026)](https://cursor.com/blog/may-2026-bugbot-changes)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-47508593d36b",
+        "title": "[Updates to Bugbot for Teams and Individuals (Cursor blog, May 2026)](https://cursor.com/blog/may-2026-bugbot-changes)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-747072320a66",
+        "title": "[Bugbot Effort Levels (Cursor changelog 2026-05-11)](https://cursor.com/changelog/05-11-26)",
+        "text": "[Bugbot Effort Levels (Cursor changelog 2026-05-11)](https://cursor.com/changelog/05-11-26)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Bugbot Effort Levels (Cursor changelog 2026-05-11)](https://cursor.com/changelog/05-11-26)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-747072320a66",
+        "title": "[Bugbot Effort Levels (Cursor changelog 2026-05-11)](https://cursor.com/changelog/05-11-26)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f5cfa040a318",
+        "title": "[PR Review, Build Plan in Parallel, and Split PRs (Cursor changelog 2026-05-07)](https://cursor.com/changelog/05-07-26)",
+        "text": "[PR Review, Build Plan in Parallel, and Split PRs (Cursor changelog 2026-05-07)](https://cursor.com/changelog/05-07-26)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[PR Review, Build Plan in Parallel, and Split PRs (Cursor changelog 2026-05-07)](https://cursor.com/changelog/05-07-26)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f5cfa040a318",
+        "title": "[PR Review, Build Plan in Parallel, and Split PRs (Cursor changelog 2026-05-07)](https://cursor.com/changelog/05-07-26)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8b2444769eda",
+        "title": "[Bugbot Ditches Per-Seat Fees for Usage Billing (StartupHub.ai)](https://www.startuphub.ai/ai-news/technology/2026/bugbo",
+        "text": "[Bugbot Ditches Per-Seat Fees for Usage Billing (StartupHub.ai)](https://www.startuphub.ai/ai-news/technology/2026/bugbot-ditches-per-seat-fees-for-usage-billing)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Bugbot Ditches Per-Seat Fees for Usage Billing (StartupHub.ai)](https://www.startuphub.ai/ai-news/technology/2026/bugbot-ditches-per-seat-fees-for-usage-billing)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8b2444769eda",
+        "title": "[Bugbot Ditches Per-Seat Fees for Usage Billing (StartupHub.ai)](https://www.startuphub.ai/ai-news/technology/2026/bugbo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-975b4750b7cc",
+        "title": "[Codex Changelog (OpenAI Developers)](https://developers.openai.com/codex/changelog)",
+        "text": "[Codex Changelog (OpenAI Developers)](https://developers.openai.com/codex/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Codex Changelog (OpenAI Developers)](https://developers.openai.com/codex/changelog)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-975b4750b7cc",
+        "title": "[Codex Changelog (OpenAI Developers)](https://developers.openai.com/codex/changelog)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c12689819c33",
+        "title": "[Codex Updates by OpenAI May 2026 (Releasebot)](https://releasebot.io/updates/openai/codex)",
+        "text": "[Codex Updates by OpenAI May 2026 (Releasebot)](https://releasebot.io/updates/openai/codex)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Codex Updates by OpenAI May 2026 (Releasebot)](https://releasebot.io/updates/openai/codex)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c12689819c33",
+        "title": "[Codex Updates by OpenAI May 2026 (Releasebot)](https://releasebot.io/updates/openai/codex)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}
