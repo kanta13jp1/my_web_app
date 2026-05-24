@@ -704,7 +704,15 @@ class LocalElectionShareService {
     buffer
       ..writeln()
       ..writeln('現職地方議員名簿');
+    String? currentPrefecture;
     for (final member in members) {
+      final prefecture = member.prefecture.trim();
+      if (prefecture != currentPrefecture) {
+        currentPrefecture = prefecture;
+        buffer
+          ..writeln()
+          ..writeln('◽️ 国民民主党$prefecture現職地方議員');
+      }
       buffer.writeln(_describeMember(member));
     }
 
@@ -954,22 +962,17 @@ class LocalElectionShareService {
   }
 
   String _describeMember(LocalElectionLegislatorProfile member) {
+    // 形式: {議会ラベル} / {選挙区(区)} / {氏名} / {当選期数}
+    // 例:   横浜市議 / 旭区 / 小粥 康弘 / 6期
+    //       鎌倉市議 / 大石 香 / 1期   (区の無い市町村は選挙区を省略)
     final segments = <String>[
-      member.prefecture,
-      if (member.municipality.trim().isNotEmpty) member.municipality.trim(),
       if (member.assemblyLabel.trim().isNotEmpty) member.assemblyLabel.trim(),
+      if (member.constituency.trim().isNotEmpty) member.constituency.trim(),
       member.name.trim(),
       if (member.electionCountLabel.trim().isNotEmpty)
         member.electionCountLabel.trim(),
-      if (member.gender.trim().isNotEmpty) member.gender.trim(),
-      if (member.age != null) '${member.age}歳',
-      if (member.birthDate.trim().isNotEmpty) member.birthDate.trim(),
     ];
-    final profile = member.profile.trim();
-    if (profile.isNotEmpty) {
-      segments.add(_truncate(profile, 120));
-    }
-    return '- ${segments.join(' / ')}';
+    return segments.join(' / ');
   }
 
   String _describePlanPrefecture(
@@ -1053,13 +1056,6 @@ class LocalElectionShareService {
       return trimmed.substring(0, trimmed.length - 1);
     }
     return trimmed;
-  }
-
-  String _truncate(String value, int maxLength) {
-    if (value.length <= maxLength) {
-      return value;
-    }
-    return '${value.substring(0, maxLength - 1)}…';
   }
 }
 
