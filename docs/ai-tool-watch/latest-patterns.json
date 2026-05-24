@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-22T21:42:22Z",
+  "generated_at": "2026-05-23T21:36:20Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-b888a871a4bd",
+        "entry_id": "nf-9d78427d143d",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.148 / May 22, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.148 May 22, 2026 Fixed the Bash tool returning exit code 127 on every command for some users (a regression introduced in 2.1.147) ​ 2.1.147 May 21, 2026 Pinned background...",
+        "text": "Claude Code changelog 2.1.150 / May 23, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.150 May 23, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.149 May 22, 2026 /usage now shows a per-category breakdown of what’s driving your...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "08cd2a7b8278321a90957c70003a9961e96cfc4441c26641b14a5e9c053d55b5",
+          "hash": "3934517c2183981f3a1864fdf3406276e49c0b9c4a3ec2d002735b9076efabc1",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.148 / May 22, 2026",
+          "latest_signal": "2.1.150 / May 23, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "a8103609065171516096d5d57ab96e61ef9a362c5c1201aede460d720a700597",
+          "previous_hash": "08cd2a7b8278321a90957c70003a9961e96cfc4441c26641b14a5e9c053d55b5",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.148 May 22, 2026 Fixed the Bash tool returning exit code 127 on every command for some users (a regression introduced in 2.1.147) ​ 2.1.147 May 21, 2026 Pinned background..."
+            "​ 2.1.150 May 23, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.149 May 22, 2026 /usage now shows a per-category breakdown of what’s driving your..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-b888a871a4bd",
+        "entry_id": "nf-9d78427d143d",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ba9657f7c166d28ec8b99a9d8416727f71d0e4361cf68421beb9d3a0e91d7ac9",
+          "hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -318,7 +318,7 @@
           "latest_signal": "2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "6083172e5626975fbf07c3579fd3e9c1c71c6ba73b196fdaf0f7b44f62696b17",
+          "previous_hash": "ba9657f7c166d28ec8b99a9d8416727f71d0e4361cf68421beb9d3a0e91d7ac9",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -479,10 +479,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "cfd49d6dc1366bca80c3d35e6b2497b566292f51396cdc969cf3eec327a76f2f",
+          "hash": "9b0756b6c568f3af42a15fd676a25df5957656f92a7221877ede1143c91a5304",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -604,24 +604,25 @@
     },
     {
       "entry": {
-        "entry_id": "nf-bca2a5711f39",
+        "entry_id": "nf-aec075416377",
         "title": "Devin release notes",
-        "text": "Devin release notes May 17, 2026 Default Member Roles Enterprise admins can now configure default roles that are automatically assigned to new organization members on join, with badge display in the members... GHES App Registration Restriction GitHub Enterprise Server app registration is now restricted to one app per account and host combination, preventing duplicate registrations... Admin-Enforced Settings Lock Icon Settings that have been locked by an admin now display a lock icon with an explanatory tooltip, replacing the previous banner-style callout for...",
+        "text": "Devin release notes May 22, 2026 The default platform is honored across all session creation methods, including Slack, Linear, Jira, API, and automations. Slack Channel Override Type !channel #channel-name in Slack to override which channel Devin spawns its response thread in for that session. MCP OAuth Resource Parameter MCP OAuth flows now forward the RFC 8707 resource parameter, fixing authentication for MCP servers that require resource indicators (such as...",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a13266034613428ab968730cdba246cfe84889fb7367cf96df4019a9e6029ee4",
+          "hash": "8b166ffac58e0c82087b11af5d7181bc8b4740b80ed14cf405f2096f2a3c537c",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
               "subagents"
             ],
             "hooks": [
+              "hook",
               "Stop"
             ],
             "integration": [
@@ -645,22 +646,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "May 17, 2026",
+          "latest_signal": "May 22, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "a13266034613428ab968730cdba246cfe84889fb7367cf96df4019a9e6029ee4",
           "slug": "devin-release-notes",
           "snippets": [
-            "Default Member Roles Enterprise admins can now configure default roles that are automatically assigned to new organization members on join, with badge display in the members...",
-            "GHES App Registration Restriction GitHub Enterprise Server app registration is now restricted to one app per account and host combination, preventing duplicate registrations...",
-            "Admin-Enforced Settings Lock Icon Settings that have been locked by an admin now display a lock icon with an explanatory tooltip, replacing the previous banner-style callout for..."
+            "The default platform is honored across all session creation methods, including Slack, Linear, Jira, API, and automations.",
+            "Slack Channel Override Type !channel #channel-name in Slack to override which channel Devin spawns its response thread in for that session.",
+            "MCP OAuth Resource Parameter MCP OAuth flows now forward the RFC 8707 resource parameter, fixing authentication for MCP servers that require resource indicators (such as..."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-bca2a5711f39",
+        "entry_id": "nf-aec075416377",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",

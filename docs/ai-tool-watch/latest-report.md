@@ -1,13 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-22T21:42:20Z`
-- Previous check: `2026-05-21T21:49:10Z`
-- Changed/new official sources: `2`
+- Checked at: `2026-05-23T21:36:16Z`
+- Previous check: `2026-05-22T21:42:20Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.148 / May 22, 2026
+- `changed` Claude Code changelog: 2.1.150 / May 23, 2026
 - `changed` Codex changelog: 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.
+- `changed` Cursor changelog: 3.5 / May 20, 2026
+- `changed` Devin release notes: May 22, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -19,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.148 / May 22, 2026
+  - Latest signal: 2.1.150 / May 23, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -65,10 +67,10 @@
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: May 17, 2026
+  - Latest signal: May 22, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: Default Member Roles Enterprise admins can now configure default roles that are automatically assigned to new organization members on join, with badge display in the members...
-  - Short signal: GHES App Registration Restriction GitHub Enterprise Server app registration is now restricted to one app per account and host combination, preventing duplicate registrations...
+  - Short signal: The default platform is honored across all session creation methods, including Slack, Linear, Jira, API, and automations.
+  - Short signal: Slack Channel Override Type !channel #channel-name in Slack to override which channel Devin spawns its response thread in for that session.
 
 ## NotebookLM Harness Mapping
 - Source notebook: `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)
