@@ -1,15 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-23T21:36:16Z`
-- Previous check: `2026-05-22T21:42:20Z`
-- Changed/new official sources: `4`
+- Checked at: `2026-05-24T21:36:39Z`
+- Previous check: `2026-05-23T21:36:16Z`
+- Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.150 / May 23, 2026
-- `changed` Codex changelog: 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.
 - `changed` Cursor changelog: 3.5 / May 20, 2026
-- `changed` Devin release notes: May 22, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -57,7 +54,7 @@
   - URL: https://cursor.com/changelog
   - Latest signal: 3.5 / May 20, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Code Review Cloud Tab CLI Marketplace ↗ Enterprise Pricing Resources ↓ Changelog...
+  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
   - Short signal: For the next 7 days, all agent runs for newly created automations are 50% off.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
