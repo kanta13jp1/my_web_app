@@ -42,6 +42,24 @@ import {
   type MonthlyAssetReportDb,
   normalizeMonthlyAssetReportProvider,
 } from "./monthly_asset_report.ts";
+import {
+  handleParsePayslipAction,
+  isPayslipIngestionAction,
+  type PayslipDb,
+  PayslipIngestionError,
+  type PayslipStorage,
+} from "./payslip_ingestion.ts";
+import {
+  type ExpenseAiDb,
+  ExpenseAiError,
+  handleClassifyExpenseAction,
+  handleWeeklySpendingCoachingAction,
+} from "./expense_ai.ts";
+import {
+  type DisposableBalanceDb,
+  DisposableBalanceError,
+  handleDisposableBalanceAction,
+} from "./disposable_balance.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2838,6 +2856,13 @@ serve(async (req: Request) => {
       "kpi.monthly_summary",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
+      "payslip.parse",
+      "parse-payslip",
+      "expense.classify",
+      "classify-expense",
+      "expense.weekly_coaching.generate",
+      "asset.disposable_balance.compute",
+      "compute-disposable-balance",
       "voice.tts",
       "voice.stt",
     ];
@@ -4214,6 +4239,109 @@ serve(async (req: Request) => {
         });
       }
 
+      case "payslip.parse":
+      case "parse-payslip": {
+        if (!isPayslipIngestionAction(action)) {
+          return json({ error: "Invalid payslip action" }, 400);
+        }
+        const result = await handleParsePayslipAction({
+          db: admin as unknown as PayslipDb,
+          storage: admin.storage as unknown as PayslipStorage,
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "expense.classify":
+      case "classify-expense": {
+        const result = await handleClassifyExpenseAction({
+          db: admin as unknown as ExpenseAiDb,
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "expense.weekly_coaching.generate": {
+        const result = await handleWeeklySpendingCoachingAction({
+          db: admin as unknown as ExpenseAiDb,
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "asset.disposable_balance.compute":
+      case "compute-disposable-balance": {
+        const result = await handleDisposableBalanceAction({
+          db: admin as unknown as DisposableBalanceDb,
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.monthly_report.generate":
       case "asset_liability.monthly_report.generate": {
         const aiSummaryEnabled = isMonthlyAssetReportAiSummaryEnabled(body);
@@ -5347,6 +5475,15 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof MonthlyAssetReportActionError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof PayslipIngestionError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof ExpenseAiError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof DisposableBalanceError) {
       return json({ error: err.message }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
