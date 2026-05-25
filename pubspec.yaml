@@ -52,7 +52,7 @@ dependencies:
   latlong2: ^0.9.1
   http: any
   graphview: ^1.2.0
-  flutter_secure_storage: ^10.2.0
+  flutter_secure_storage: ^10.3.0
   pdf: ^3.11.1                     # PDF生成 (選挙KPIレポート出力)
   printing: ^5.13.2                # PDF印刷 (選挙KPIレポート出力)
   sentry_flutter: ^9.20.0
