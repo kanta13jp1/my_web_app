@@ -1,12 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-24T21:36:39Z`
-- Previous check: `2026-05-23T21:36:16Z`
+- Checked at: `2026-05-25T21:42:53Z`
+- Previous check: `2026-05-24T21:36:39Z`
 - Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Cursor changelog: 3.5 / May 20, 2026
+- `changed` Codex changelog: 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.

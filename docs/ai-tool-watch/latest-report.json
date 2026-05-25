@@ -11,44 +11,62 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
+      "hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
       "keyword_groups": {
         "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
           "model picker",
+          "in-app browser",
+          "browser use",
+          "computer use",
+          "worktree",
           "subagents"
         ],
         "hooks": [
-          "hook"
+          "hook",
+          "hooks",
+          "Stop"
         ],
         "integration": [
           "MCP",
-          "Slack"
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
         ],
         "quality-cost": [
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
           "permission",
           "review",
           "CI"
         ],
         "schedule": [
           "automation",
-          "automations"
+          "automations",
+          "schedule",
+          "workflow"
         ]
       },
-      "latest_signal": "3.5 / May 20, 2026",
-      "name": "Cursor changelog",
-      "owner": "Cursor",
-      "previous_hash": "9b0756b6c568f3af42a15fd676a25df5957656f92a7221877ede1143c91a5304",
-      "slug": "cursor-changelog",
+      "latest_signal": "2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
+      "slug": "codex-changelog",
       "snippets": [
-        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-        "For the next 7 days, all agent runs for newly created automations are 50% off.",
-        "# Automations in the Agents Window Cursor Automations are now available in the Agents Window , in addition to cursor.com/automations."
+        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.",
+        "With Goal mode, you can have Codex drive toward a specific objective for hours or even days."
       ],
       "status": 200,
-      "url": "https://cursor.com/changelog"
+      "url": "https://developers.openai.com/codex/changelog"
     }
   ],
-  "checked_at": "2026-05-24T21:36:39Z",
+  "checked_at": "2026-05-25T21:42:53Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -100,7 +118,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-23T21:36:16Z",
+  "previous_checked_at": "2026-05-24T21:36:39Z",
   "sources": [
     {
       "changed": false,
@@ -262,10 +280,10 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
+      "hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -280,8 +298,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -293,7 +309,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -306,7 +321,6 @@
           "automation",
           "automations",
           "schedule",
-          "GitHub Actions",
           "workflow"
         ]
       },
@@ -392,7 +406,7 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
@@ -421,7 +435,7 @@
       "latest_signal": "3.5 / May 20, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "9b0756b6c568f3af42a15fd676a25df5957656f92a7221877ede1143c91a5304",
+      "previous_hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-24T21:36:42Z",
+  "generated_at": "2026-05-25T21:42:57Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -267,10 +267,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
+          "hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,8 +285,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "SessionStart",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -298,7 +296,6 @@
               "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -311,7 +308,6 @@
               "automation",
               "automations",
               "schedule",
-              "GitHub Actions",
               "workflow"
             ]
           },
@@ -479,7 +475,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
@@ -508,7 +504,7 @@
           "latest_signal": "3.5 / May 20, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "9b0756b6c568f3af42a15fd676a25df5957656f92a7221877ede1143c91a5304",
+          "previous_hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
