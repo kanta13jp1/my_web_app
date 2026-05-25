@@ -98,7 +98,11 @@ type ProviderConfig = {
   chatUrl: string;
   defaultModel: string;
   extraHeaders?: Record<string, string>;
-  buildBody: (messages: unknown[], model: string) => Record<string, unknown>;
+  buildBody: (
+    messages: unknown[],
+    model: string,
+    inlineFiles?: ProviderInlineFile[],
+  ) => Record<string, unknown>;
   parseResponse: (data: unknown) => string;
 };
 
@@ -106,6 +110,12 @@ type InlineImage = {
   base64: string;
   mimeType: string;
   name: string | null;
+};
+
+type ProviderInlineFile = {
+  base64: string;
+  mimeType: string;
+  name?: string | null;
 };
 
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
@@ -131,6 +141,36 @@ const OPENAI_COMPAT_BODY = (messages: unknown[], model: string) => ({
 });
 const OPENAI_COMPAT_PARSE = (data: unknown): string =>
   String(pick(data, "choices", 0, "message", "content") ?? "");
+
+function buildGoogleGeminiBody(
+  messages: unknown[],
+  inlineFiles: ProviderInlineFile[] = [],
+): Record<string, unknown> {
+  const contents = (messages as { role: string; content: string }[]).map(
+    (m) => {
+      const parts: Record<string, unknown>[] = [{ text: m.content }];
+      return {
+        role: m.role === "assistant" ? "model" : "user",
+        parts,
+      };
+    },
+  );
+  if (inlineFiles.length > 0) {
+    if (contents.length === 0) {
+      contents.push({ role: "user", parts: [] });
+    }
+    const target = contents[contents.length - 1];
+    for (const file of inlineFiles) {
+      target.parts.push({
+        inline_data: {
+          mime_type: file.mimeType,
+          data: file.base64,
+        },
+      });
+    }
+  }
+  return { contents };
+}
 
 const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   // OpenAI 互換グループ (7社)
@@ -256,12 +296,8 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     chatUrl:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
     defaultModel: "gemini-2.5-flash",
-    buildBody: (messages, _model) => ({
-      contents: (messages as { role: string; content: string }[]).map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      })),
-    }),
+    buildBody: (messages, _model, inlineFiles) =>
+      buildGoogleGeminiBody(messages, inlineFiles),
     parseResponse: (data) =>
       String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
   },
@@ -274,12 +310,8 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     chatUrl:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
     defaultModel: "gemini-2.5-flash-lite",
-    buildBody: (messages, _model) => ({
-      contents: (messages as { role: string; content: string }[]).map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      })),
-    }),
+    buildBody: (messages, _model, inlineFiles) =>
+      buildGoogleGeminiBody(messages, inlineFiles),
     parseResponse: (data) =>
       String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
   },
@@ -566,6 +598,7 @@ async function callSingleProvider(
   providerId: string,
   messages: { role: string; content: string }[],
   model?: string,
+  inlineFiles?: ProviderInlineFile[],
 ): Promise<
   {
     ok: boolean;
@@ -599,7 +632,9 @@ async function callSingleProvider(
         "Content-Type": "application/json",
         ...(cfg.extraHeaders ?? {}),
       },
-      body: JSON.stringify(cfg.buildBody(messages, model ?? cfg.defaultModel)),
+      body: JSON.stringify(
+        cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+      ),
     });
     const respText = await resp.text();
     if (!resp.ok) {
@@ -4262,6 +4297,7 @@ serve(async (req: Request) => {
               request.provider,
               request.messages,
               request.model,
+              request.inlineFiles,
             );
           },
         });

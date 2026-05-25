@@ -4,6 +4,11 @@ export type PayslipProviderRequest = {
   provider: string;
   model?: string;
   messages: { role: string; content: string }[];
+  inlineFiles?: Array<{
+    base64: string;
+    mimeType: string;
+    name?: string | null;
+  }>;
 };
 
 export type PayslipProviderResult = {
@@ -97,6 +102,8 @@ const EARNING_FIELDS = [
   ["allowance", ["手当", "allowance"]],
   ["commuting", ["通勤手当", "commuting", "transportation"]],
 ] as const;
+
+const MAX_INLINE_AI_PDF_BYTES = 18 * 1024 * 1024;
 
 export function isPayslipIngestionAction(action: string): boolean {
   return action === "payslip.parse" || action === "parse-payslip";
@@ -201,6 +208,40 @@ export function parsePayslipText(text: string): ParsedPayslip {
   return parsed;
 }
 
+export function inferPayslipPayDateFromPath(path: string): string | null {
+  const normalized = safeDecodeURIComponent(path)
+    .replace(/[\\_]+/g, " ")
+    .replace(/\s+/g, " ");
+  const labeled = normalized.match(
+    /(\d{4})\s*(?:\u5e74|[\/.-])\s*(\d{1,2})\s*(?:\u6708|[\/.-])\s*(\d{1,2})\s*(?:\u65e5)?\s*(?:\u652f\u7d66|pay)/i,
+  );
+  if (labeled) {
+    const date = formatValidDateParts(labeled[1], labeled[2], labeled[3]);
+    if (date) return date;
+  }
+
+  const delimitedDates = normalized.matchAll(
+    /(^|[^\d])(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})(?!\d)/g,
+  );
+  for (const match of delimitedDates) {
+    const date = formatValidDateParts(match[2], match[3], match[4]);
+    if (date) return date;
+  }
+
+  const compactLabeled = normalized.match(
+    /(^|[^\d])(\d{4})(\d{2})(\d{2})(?:[^\d]{0,8})(?:\u652f\u7d66|pay)/i,
+  );
+  if (compactLabeled) {
+    return formatValidDateParts(
+      compactLabeled[2],
+      compactLabeled[3],
+      compactLabeled[4],
+    );
+  }
+
+  return null;
+}
+
 export async function handleParsePayslipAction(options: {
   db: PayslipDb;
   storage: PayslipStorage;
@@ -234,12 +275,22 @@ export async function handleParsePayslipAction(options: {
   if (
     aiFallbackEnabled && parsed.confidence < 0.72 && options.invokeProvider
   ) {
+    const inlineFiles = buildInlineAiPdfFiles(
+      bytes,
+      storagePath.path,
+      options.body,
+    );
     const providerResult = await options.invokeProvider({
       provider: "google",
       model: typeof options.body.model === "string"
         ? options.body.model
         : "gemini-2.5-flash",
-      messages: buildPayslipExtractionMessages(maskedText),
+      messages: buildPayslipExtractionMessages({
+        maskedText,
+        sourcePdfPath: storagePath.fullPath,
+        documentAttached: inlineFiles.length > 0,
+      }),
+      inlineFiles,
     });
     if (providerResult.ok && providerResult.text) {
       const providerParsed = parseProviderPayslipJson(providerResult.text);
@@ -256,6 +307,7 @@ export async function handleParsePayslipAction(options: {
     }
   }
 
+  parsed = applyStoragePathFallback(parsed, storagePath.fullPath, warnings);
   validateParsedPayslip(parsed);
   const reviewStatus = parsed.confidence >= 0.72 ? "auto" : "needs_review";
   const rawTextSha256 = await sha256Hex(maskedText);
@@ -315,12 +367,16 @@ export async function handleParsePayslipAction(options: {
   };
 }
 
-function buildPayslipExtractionMessages(maskedText: string) {
+function buildPayslipExtractionMessages(options: {
+  maskedText: string;
+  sourcePdfPath: string;
+  documentAttached: boolean;
+}) {
   return [
     {
       role: "system",
       content:
-        "Extract one Japanese payslip into strict JSON. Return only JSON. Do not infer identity fields.",
+        "Extract one Japanese payslip into strict JSON. Return only JSON. Do not include identity fields.",
     },
     {
       role: "user",
@@ -337,7 +393,15 @@ function buildPayslipExtractionMessages(maskedText: string) {
           attendance: "object",
           confidence: "0..1",
         },
-        masked_text: maskedText.slice(0, 16000),
+        source_pdf_path: options.sourcePdfPath,
+        document_attached: options.documentAttached,
+        extraction_rules: [
+          "If a PDF is attached, OCR the document and prefer document values.",
+          "If the PDF text layer is unreadable, use source_pdf_path only for date hints.",
+          "When a filename has upload timestamp, pay date, and closing date, choose the first delimited date after the upload timestamp as pay_date.",
+          "Do not return employee name, employee id, email, or address.",
+        ],
+        masked_text: options.maskedText.slice(0, 16000),
       }),
     },
   ];
@@ -369,6 +433,40 @@ function validateParsedPayslip(parsed: ParsedPayslip) {
   if (parsed.net_amount <= 0) {
     throw new PayslipIngestionError("net_amount could not be parsed", 422);
   }
+}
+
+function applyStoragePathFallback(
+  parsed: ParsedPayslip,
+  sourcePdfPath: string,
+  warnings: string[],
+): ParsedPayslip {
+  if (parsed.pay_date) return parsed;
+  const payDate = inferPayslipPayDateFromPath(sourcePdfPath);
+  if (!payDate) return parsed;
+  warnings.push("pay_date inferred from source_pdf_path");
+  const next = {
+    ...parsed,
+    pay_date: payDate,
+    parsed_by: `${parsed.parsed_by}+source_pdf_path`,
+  };
+  return {
+    ...next,
+    confidence: Math.max(parsed.confidence, scoreParsedPayslip(next)),
+  };
+}
+
+function buildInlineAiPdfFiles(
+  bytes: Uint8Array,
+  storagePath: string,
+  body: UnknownRecord,
+): NonNullable<PayslipProviderRequest["inlineFiles"]> {
+  if (body.enable_ai_fallback !== true) return [];
+  if (bytes.length === 0 || bytes.length > MAX_INLINE_AI_PDF_BYTES) return [];
+  return [{
+    base64: bytesToBase64(bytes),
+    mimeType: "application/pdf",
+    name: storagePath.split("/").pop() || "payslip.pdf",
+  }];
 }
 
 async function storagePayloadToBytes(
@@ -477,6 +575,31 @@ function formatDateParts(year: string, month: string, day: string): string {
   }`;
 }
 
+function formatValidDateParts(
+  year: string,
+  month: string,
+  day: string,
+): string | null {
+  const y = Number(year);
+  const m = Number(month);
+  const d = Number(day);
+  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) {
+    return null;
+  }
+  if (y < 2000 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31) {
+    return null;
+  }
+  const date = new Date(Date.UTC(y, m - 1, d));
+  if (
+    date.getUTCFullYear() !== y ||
+    date.getUTCMonth() !== m - 1 ||
+    date.getUTCDate() !== d
+  ) {
+    return null;
+  }
+  return formatDateParts(year, month, day);
+}
+
 function readAmount(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
     return Math.max(0, value);
@@ -508,6 +631,25 @@ function readDateString(value: unknown): string | null {
   if (!raw) return null;
   const date = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return date ? raw : findPayDate(raw);
+}
+
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(
+      ...bytes.subarray(offset, offset + chunkSize),
+    );
+  }
+  return btoa(binary);
 }
 
 function scoreParsedPayslip(parsed: ParsedPayslip): number {
