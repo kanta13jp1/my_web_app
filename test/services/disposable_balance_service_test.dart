@@ -1,0 +1,84 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/disposable_balance_service.dart';
+
+void main() {
+  group('DisposableBalanceService', () {
+    const service = DisposableBalanceService();
+
+    test('calculates next payday and daily disposable pace', () {
+      final result = service.build(
+        asOfDate: DateTime(2026, 5, 25),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 5, 25),
+            netAmount: 465108,
+            companyName: 'Acme',
+            confidence: 0.9,
+          ),
+        ],
+        recurringExpenses: const <DisposableBalanceRecurringExpense>[
+          DisposableBalanceRecurringExpense(
+            name: 'Rent',
+            amount: 92400,
+            dayOfMonth: 27,
+            category: 'housing',
+          ),
+        ],
+        debts: <DisposableBalanceDebt>[
+          DisposableBalanceDebt(
+            name: 'student loan',
+            monthlyPayment: 58000,
+            principal: 800000,
+            lastUpdated: DateTime(2026, 2, 1),
+          ),
+        ],
+      );
+
+      expect(result.nextPayday, DateTime(2026, 6, 25));
+      expect(result.daysRemaining, 30);
+      expect(result.disposable, 314708);
+      expect(result.dailyPace.round(), 10490);
+      expect(
+        result.requiredActions.single.actionKey,
+        'refresh_debt_student_loan',
+      );
+    });
+
+    test(
+      'requests payslip and fixed expense setup when sources are missing',
+      () {
+        final result = service.build(asOfDate: DateTime(2026, 5, 26));
+
+        expect(result.income, 0);
+        expect(
+          result.requiredActions.map((action) => action.actionKey),
+          containsAll(<String>[
+            'upload_current_payslip',
+            'add_recurring_expenses',
+          ]),
+        );
+      },
+    );
+
+    test('detects duplicate music subscriptions', () {
+      final result = service.build(
+        asOfDate: DateTime(2026, 5, 25),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 5, 25),
+            netAmount: 300000,
+          ),
+        ],
+        recurringExpenses: const <DisposableBalanceRecurringExpense>[
+          DisposableBalanceRecurringExpense(name: 'Spotify', amount: 980),
+          DisposableBalanceRecurringExpense(name: 'Apple Music', amount: 1080),
+        ],
+      );
+
+      expect(
+        result.requiredActions.map((action) => action.actionKey),
+        contains('cancel_duplicate_music'),
+      );
+    });
+  });
+}

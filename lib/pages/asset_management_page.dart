@@ -34,6 +34,7 @@ import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
+import 'package:my_web_app/services/disposable_balance_service.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
@@ -263,6 +264,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementAiSummaryService();
   final SalarySpendingBreakdownService _salarySpendingBreakdownService =
       const SalarySpendingBreakdownService();
+  final DisposableBalanceService _disposableBalanceService =
+      const DisposableBalanceService();
   final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
@@ -285,6 +288,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isGeneratingAssetManagementAiSummary = false;
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
+  List<Map<String, dynamic>> _payslipRows = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _payslipSalaryIncomes = <Map<String, dynamic>>[];
+  bool _isLoadingPayslipFinance = false;
+  bool _isUploadingPayslip = false;
+  String? _payslipIngestionMessage;
+  bool _isComputingDisposableBalance = false;
+  Map<String, dynamic>? _serverDisposableBalanceResult;
+  String? _disposableBalanceMessage;
   final Set<String> _developerRequestIssueSubmissionKeys = <String>{};
   final Map<String, Map<String, dynamic>> _developerRequestIssueResults =
       <String, Map<String, dynamic>>{};
@@ -328,6 +339,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDataFromSupabase();
     _loadAssetLiabilityMonthlyState();
     _loadWatchlistEntries();
+    _loadPayslipFinanceData();
     _fetchRecentFlows();
     _fetchSubscriptions();
     _fetchMustTasks();
@@ -658,6 +670,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String _formatSignedYen(num value) {
     final sign = value >= 0 ? '+' : '-';
     return '$sign¥${NumberFormat('#,###').format(value.abs().round())}';
+  }
+
+  double _numberFromDynamic(Object? value) {
+    if (value is num) return value.toDouble();
+    if (value == null) return 0;
+    return double.tryParse(value.toString().replaceAll(',', '').trim()) ?? 0;
   }
 
   AssetWasteTrainingSnapshot _buildWasteTrainingSnapshot() {
@@ -4748,6 +4766,194 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  Future<void> _loadPayslipFinanceData() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      if (!mounted) return;
+      setState(() {
+        _payslipRows = <Map<String, dynamic>>[];
+        _payslipSalaryIncomes = <Map<String, dynamic>>[];
+        _isLoadingPayslipFinance = false;
+      });
+      return;
+    }
+    if (mounted) {
+      setState(() => _isLoadingPayslipFinance = true);
+    }
+    try {
+      final payslips = await _supabase
+          .from('payslips')
+          .select(
+            'id,pay_date,company_name,gross_amount,net_amount,confidence,review_status,source_pdf_path',
+          )
+          .eq('user_id', userId)
+          .order('pay_date', ascending: false)
+          .limit(12);
+      final salaryIncomes = await _supabase
+          .from('salary_incomes')
+          .select('id,pay_date,amount,description,source,confidence')
+          .eq('user_id', userId)
+          .order('pay_date', ascending: false)
+          .limit(12);
+      if (!mounted) return;
+      setState(() {
+        _payslipRows = List<Map<String, dynamic>>.from(payslips);
+        _payslipSalaryIncomes = List<Map<String, dynamic>>.from(salaryIncomes);
+        _isLoadingPayslipFinance = false;
+        _payslipIngestionMessage = null;
+      });
+    } catch (e) {
+      debugPrint('Error loading payslip finance data: $e');
+      if (!mounted) return;
+      setState(() {
+        _payslipRows = <Map<String, dynamic>>[];
+        _payslipSalaryIncomes = <Map<String, dynamic>>[];
+        _isLoadingPayslipFinance = false;
+        _payslipIngestionMessage =
+            'Payslip tables are not ready yet. Apply the latest migration, then reload.';
+      });
+    }
+  }
+
+  Future<void> _pickAndUploadPayslipPdf() async {
+    if (_isUploadingPayslip) return;
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sign in before uploading a payslip PDF.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isUploadingPayslip = true;
+      _payslipIngestionMessage = 'Waiting for PDF selection...';
+    });
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const <String>['pdf'],
+        allowMultiple: false,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _isUploadingPayslip = false;
+            _payslipIngestionMessage = null;
+          });
+        }
+        return;
+      }
+      final file = result.files.single;
+      final bytes = file.bytes;
+      if (bytes == null || bytes.isEmpty) {
+        throw Exception('PDF bytes were empty.');
+      }
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final fileName = _safePayslipStorageFileName(file.name);
+      final storagePath = '$userId/$timestamp-$fileName';
+
+      await _supabase.storage.from('payslips').uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: const FileOptions(
+              contentType: 'application/pdf',
+              upsert: true,
+            ),
+          );
+      final response = await _supabase.functions.invoke(
+        'ai-hub',
+        body: <String, dynamic>{
+          'action': 'payslip.parse',
+          'storage_path': storagePath,
+          'enable_ai_fallback': true,
+          'trace_id': 'asset-payslip-upload',
+        },
+      );
+      final data = response.data;
+      final parsed = data is Map ? Map<String, dynamic>.from(data) : null;
+      final status = parsed?['status']?.toString() ?? 'parsed';
+      if (!mounted) return;
+      setState(() {
+        _payslipIngestionMessage = status == 'needs_review'
+            ? 'Payslip was imported but needs review because confidence was low.'
+            : 'Payslip imported and salary income was auto-filled.';
+      });
+      await _loadPayslipFinanceData();
+      unawaited(_computeDisposableBalanceFromServer(enableAiActions: false));
+    } catch (e) {
+      debugPrint('Error uploading payslip PDF: $e');
+      if (!mounted) return;
+      setState(() {
+        _payslipIngestionMessage = 'Payslip upload failed: $e';
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Payslip upload failed: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingPayslip = false);
+      }
+    }
+  }
+
+  Future<void> _computeDisposableBalanceFromServer({
+    bool enableAiActions = true,
+  }) async {
+    if (_isComputingDisposableBalance) return;
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    setState(() {
+      _isComputingDisposableBalance = true;
+      _disposableBalanceMessage = 'Computing disposable balance...';
+    });
+    try {
+      final response = await _supabase.functions.invoke(
+        'ai-hub',
+        body: <String, dynamic>{
+          'action': 'asset.disposable_balance.compute',
+          'as_of_date': _dateOnly(_now),
+          'salary_day': _salarySpendingSalaryDay,
+          'enable_ai_actions': enableAiActions,
+          'trace_id': 'asset-disposable-balance',
+        },
+      );
+      final data = response.data;
+      if (!mounted) return;
+      setState(() {
+        _serverDisposableBalanceResult =
+            data is Map ? Map<String, dynamic>.from(data) : null;
+        _disposableBalanceMessage = 'Disposable balance refreshed.';
+      });
+    } catch (e) {
+      debugPrint('Error computing disposable balance: $e');
+      if (!mounted) return;
+      setState(() {
+        _disposableBalanceMessage =
+            'Server balance is unavailable; showing local estimate.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isComputingDisposableBalance = false);
+      }
+    }
+  }
+
+  String _safePayslipStorageFileName(String value) {
+    const fallback = 'payslip.pdf';
+    final trimmed = value.trim().isEmpty ? fallback : value.trim();
+    final sanitized = trimmed
+        .replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '-')
+        .replaceAll(RegExp(r'-+'), '-');
+    if (sanitized.toLowerCase().endsWith('.pdf')) {
+      return sanitized;
+    }
+    return '$sanitized.pdf';
+  }
+
   Future<void> _fetchRecentFlows() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -4805,6 +5011,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
       }
       final records = <Map<String, dynamic>>[];
+      final classificationExpenses = <Map<String, dynamic>>[];
       var duplicateCount = 0;
 
       for (final transaction in parsed.transactions) {
@@ -4828,11 +5035,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           'occurred_at': transaction.date.toUtc().toIso8601String(),
         });
+        if (!transaction.isDeposit) {
+          classificationExpenses.add({
+            'source': 'smbc_csv',
+            'id': transaction.importKey,
+            'posted_at': _dateOnly(transaction.date),
+            'description': transaction.displayMemo,
+            'amount': transaction.amount.abs(),
+          });
+        }
       }
 
       for (var i = 0; i < records.length; i += 200) {
         final chunk = records.sublist(i, min(i + 200, records.length));
         await _supabase.from('wealth_struggles').insert(chunk);
+      }
+      if (classificationExpenses.isNotEmpty) {
+        unawaited(_classifyImportedExpenses(classificationExpenses));
       }
 
       final latestDate = parsed.latestDate;
@@ -4877,6 +5096,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (mounted) {
         setState(() => _isImportingSmbcCsv = false);
       }
+    }
+  }
+
+  Future<void> _classifyImportedExpenses(
+    List<Map<String, dynamic>> expenses,
+  ) async {
+    try {
+      await _supabase.functions.invoke(
+        'ai-hub',
+        body: <String, dynamic>{
+          'action': 'expense.classify',
+          'source': 'smbc_csv',
+          'expenses': expenses,
+          'trace_id': 'asset-smbc-csv-classify',
+        },
+      );
+    } catch (e) {
+      debugPrint('Expense classification failed: $e');
     }
   }
 
@@ -5899,6 +6136,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 16),
             _buildSalarySpendingBreakdownCard(),
             const SizedBox(height: 16),
+            _buildDisposableBalanceCard(),
+            const SizedBox(height: 16),
             _buildMonthlyFlowPrimaryActionBar(),
             const SizedBox(height: 16),
             _buildWasteTrainingAiCard(),
@@ -6162,8 +6401,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (_isTransferActionType(actionType)) {
         continue;
       }
-      final occurredAt =
-          DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
+      final occurredAt = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
       final amount = (flow['amount'] as num?)?.toDouble() ?? 0;
       if (occurredAt == null || amount <= 0) {
         continue;
@@ -6207,11 +6447,384 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     }
 
+    for (final row in _payslipSalaryIncomes) {
+      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final amount = _numberFromDynamic(row['amount']);
+      if (payDate == null || amount <= 0) {
+        continue;
+      }
+      final rowKey = '${_dateOnly(payDate)}:${amount.round()}';
+      final alreadyLoaded = incomes.any(
+        (entry) => '${_dateOnly(entry.date)}:${entry.amount.round()}' == rowKey,
+      );
+      if (alreadyLoaded) {
+        continue;
+      }
+      incomes.add(
+        SalaryIncomeEntry(
+          date: payDate,
+          amount: amount,
+          description: row['description']?.toString() ?? 'payslip salary',
+        ),
+      );
+    }
+
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,
       expenses: expenses,
       incomes: incomes,
       salaryDay: _salarySpendingSalaryDay,
+    );
+  }
+
+  DisposableBalanceResult _buildDisposableBalance(
+    SalarySpendingBreakdown salaryBreakdown,
+  ) {
+    final payslips = <DisposableBalancePayslip>[
+      for (final row in _payslipRows)
+        if (DateTime.tryParse(row['pay_date']?.toString() ?? '') != null)
+          DisposableBalancePayslip(
+            payDate: DateTime.parse(row['pay_date'].toString()),
+            netAmount: _numberFromDynamic(row['net_amount']),
+            companyName: row['company_name']?.toString() ?? '',
+            confidence: _numberFromDynamic(row['confidence']),
+          ),
+    ];
+    if (payslips.isEmpty && salaryBreakdown.salaryIncomeTotal > 0) {
+      payslips.add(
+        DisposableBalancePayslip(
+          payDate: salaryBreakdown.periodStart,
+          netAmount: salaryBreakdown.salaryIncomeTotal,
+          companyName: 'local income',
+          confidence: 0.5,
+        ),
+      );
+    }
+
+    final nextPayday = _disposableBalanceService.nextPaydayFor(
+      asOfDate: _now,
+      salaryDay: _salarySpendingSalaryDay,
+    );
+    final recurringExpenses = <DisposableBalanceRecurringExpense>[];
+    for (final row in _subscriptionsThreeMonths) {
+      final dueDate = DateTime.tryParse(row['due_date']?.toString() ?? '');
+      if (dueDate == null) {
+        continue;
+      }
+      final dueDateOnly = DateTime(dueDate.year, dueDate.month, dueDate.day);
+      final asOfDateOnly = DateTime(_now.year, _now.month, _now.day);
+      if (dueDateOnly.isBefore(asOfDateOnly) ||
+          !dueDateOnly.isBefore(nextPayday)) {
+        continue;
+      }
+      final amount = _numberFromDynamic(row['price'] ?? row['amount']);
+      if (amount <= 0) {
+        continue;
+      }
+      recurringExpenses.add(
+        DisposableBalanceRecurringExpense(
+          name: row['name']?.toString() ?? 'subscription',
+          amount: amount,
+          dayOfMonth: dueDate.day.clamp(1, 28).toInt(),
+          category: 'subscription',
+        ),
+      );
+    }
+
+    final debts = <DisposableBalanceDebt>[];
+    final latestSnapshot = _latestSnapshotForDisplay();
+    if (latestSnapshot.isNotEmpty) {
+      final workbook = _assetLiabilityPlanner.buildWorkbook(
+        latestSnapshot: latestSnapshot,
+        baseDate: _now,
+        monthlyPaymentOverrides: _monthlyPaymentOverrides,
+        actualPaymentAmounts: _actualPaymentAmounts,
+        paymentDifferenceReasons: _paymentDifferenceReasons,
+        annualRateOverrides: _annualRateOverrides,
+        paidAccountNames: _monthlyPaidAccountNames,
+        paymentSourceAccountIds: _paymentSourceAccountIds,
+        defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
+        defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
+        cardBillingAccountIds: _cardBillingAccountIds,
+        incomePlans: _monthlyIncomePlans,
+        cardStatementLines: _cardStatementLines,
+        transferTasks: _transferTasks,
+        includeDefaultFixedPayments: true,
+      );
+      for (final row in workbook.debtMasterRows) {
+        if (!row.isDirectCashflowTarget || row.scheduledPaymentAmount <= 0) {
+          continue;
+        }
+        debts.add(
+          DisposableBalanceDebt(
+            name: row.name,
+            principal: row.balance.abs(),
+            monthlyPayment: row.scheduledPaymentAmount,
+            interestRate: row.annualRate,
+            lastUpdated: DateTime.tryParse(_lastUpdatedDates[row.name] ?? ''),
+          ),
+        );
+      }
+    }
+
+    return _disposableBalanceService.build(
+      asOfDate: _now,
+      payslips: payslips,
+      recurringExpenses: recurringExpenses,
+      debts: debts,
+      salaryDay: _salarySpendingSalaryDay,
+    );
+  }
+
+  Widget _buildDisposableBalanceCard() {
+    final salaryBreakdown = _buildSalarySpendingBreakdown();
+    final balance = _buildDisposableBalance(salaryBreakdown);
+    final serverActions =
+        (_serverDisposableBalanceResult?['required_actions'] as List?)
+                ?.whereType<Map>()
+                .map((action) => Map<String, dynamic>.from(action))
+                .toList(growable: false) ??
+            const <Map<String, dynamic>>[];
+    final localActions = balance.requiredActions
+        .map(
+          (action) => <String, dynamic>{
+            'action_key': action.actionKey,
+            'title': action.title,
+            'instruction': action.instruction,
+            'amount_impact': action.amountImpact,
+          },
+        )
+        .toList(growable: false);
+    final actions = serverActions.isNotEmpty ? serverActions : localActions;
+    final periodLabel =
+        '${DateFormat('yyyy/MM/dd').format(balance.asOfDate)} - '
+        '${DateFormat('yyyy/MM/dd').format(balance.nextPayday.subtract(const Duration(days: 1)))}';
+
+    return Card(
+      key: const Key('asset_disposable_balance_card'),
+      elevation: 3,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFA7F3D0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F766E).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Disposable balance until payday',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$periodLabel / ${balance.daysRemaining} days. Income comes from payslips when available.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildFlowPriorityMetric(
+                  label: 'Income',
+                  value: _formatYen(balance.income),
+                  color: const Color(0xFF0F766E),
+                ),
+                _buildFlowPriorityMetric(
+                  label: 'Fixed',
+                  value: '-${_formatYen(balance.fixedTotal)}',
+                  color: const Color(0xFFB45309),
+                ),
+                _buildFlowPriorityMetric(
+                  label: 'Debt',
+                  value: '-${_formatYen(balance.debtTotal)}',
+                  color: const Color(0xFFB91C1C),
+                ),
+                _buildFlowPriorityMetric(
+                  label: 'Usable',
+                  value: _formatSignedYen(balance.disposable),
+                  color: balance.disposable >= 0
+                      ? const Color(0xFF065F46)
+                      : const Color(0xFF7F1D1D),
+                ),
+                _buildFlowPriorityMetric(
+                  label: 'Daily pace',
+                  value: _formatSignedYen(balance.dailyPace),
+                  color: const Color(0xFF2563EB),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed:
+                      _isUploadingPayslip ? null : _pickAndUploadPayslipPdf,
+                  icon: _isUploadingPayslip
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.upload_file_outlined),
+                  label: const Text('Upload payslip PDF'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isComputingDisposableBalance
+                      ? null
+                      : () => _computeDisposableBalanceFromServer(),
+                  icon: _isComputingDisposableBalance
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome_outlined),
+                  label: const Text('Refresh AI actions'),
+                ),
+              ],
+            ),
+            if (_isLoadingPayslipFinance ||
+                _payslipIngestionMessage != null ||
+                _disposableBalanceMessage != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _isLoadingPayslipFinance
+                    ? 'Loading payslip source data...'
+                    : (_payslipIngestionMessage ??
+                        _disposableBalanceMessage ??
+                        ''),
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            if (actions.isEmpty)
+              Text(
+                'No required action. Keep the current spending pace.',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              )
+            else
+              Column(
+                children: [
+                  for (var i = 0; i < actions.take(3).length; i++)
+                    _buildDisposableBalanceActionRow(
+                      index: i + 1,
+                      action: actions[i],
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDisposableBalanceActionRow({
+    required int index,
+    required Map<String, dynamic> action,
+  }) {
+    final title = action['title']?.toString().trim() ?? '';
+    final instruction = action['instruction']?.toString().trim() ?? '';
+    final impact = _numberFromDynamic(action['amount_impact']);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 13,
+            backgroundColor: const Color(0xFF0F766E),
+            child: Text(
+              '$index',
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.isEmpty ? 'Recommended action' : title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+                if (instruction.isNotEmpty)
+                  Text(
+                    instruction,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.45,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                if (impact > 0)
+                  Text(
+                    'Impact: ${_formatYen(impact)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F766E),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -6324,10 +6937,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 child: const Text(
                   'この給与サイクルの支出がまだありません。収支入力またはカード明細取込を行うと円グラフが表示されます。',
-                  style: TextStyle(
-                    color: Color(0xFF1E3A8A),
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: Color(0xFF1E3A8A), height: 1.5),
                 ),
               )
             else
@@ -6372,11 +6982,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   );
                   if (compact) {
                     return Column(
-                      children: [
-                        chart,
-                        const SizedBox(height: 12),
-                        legend,
-                      ],
+                      children: [chart, const SizedBox(height: 12), legend],
                     );
                   }
                   return Row(
@@ -8960,10 +9566,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
       unawaited(
-        _loadExistingDeveloperIssues(
-          lookupKey: lookupKey,
-          requests: payload,
-        ),
+        _loadExistingDeveloperIssues(lookupKey: lookupKey, requests: payload),
       );
     });
   }
