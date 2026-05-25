@@ -31299,4 +31299,52 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 4. **v24 SS streak 第 20 連続候補** = 部 235 temporary break invalidated / 真 break 観測難
 5. **SNS fabrication critique 第 5 累積** = 5/16+5/17+5/18+5/22(234)+5/22(236) = redundant input 確定 / verify-only command 部 237+ 第 1 priority
 
+---
+
+## Win版#132 part 236 継続 (= 3-day gap resume / 2026-05-25 昼 JST)
+
+**Instance**: Win Claude #1
+**Branch**: `claude/part-236-defer-handoff`
+**Mode**: Caveman + fatigue:FATIGUE 維持
+**Trigger**: user 給与明細 PDF (MightyLINK 5 月分) attach → AI 連携で parse + DB 取込依頼
+
+### 🎯 ship 結果: 3-Issue coherent chain 1-session ship (= 第 1 例 / 同一 widget 周辺の段階機能 3 角度分解)
+
+| # | Issue | scope | WBS schedule | commit |
+|---|-------|-------|--------------|--------|
+| 1 | [#3003](https://github.com/kanta13jp1/my_web_app/issues/3003) | 給与明細 PDF AI parse → payslips table 取込 | 2026-08-13〜20 | `4b76bd19e` |
+| 2 | [#3006](https://github.com/kanta13jp1/my_web_app/issues/3006) | 「前回給料の使いみち」widget AI 連携 (過去視点) | 2026-08-21〜09-03 | `0621b18bd` |
+| 3 | [#3007](https://github.com/kanta13jp1/my_web_app/issues/3007) | 給料日サイクル可処分残高 + AI action 指示 (未来視点) | 2026-09-04〜09-17 | `a13a4f123` |
+
+全 3 commit `claude/part-236-defer-handoff` に push 済。Codex backlog (= 既存 8/12 まで充填) 直後に slot 配置。
+
+### 振分 ([INSTANCE-ROLES] / CODEX_WORKFLOW §6)
+
+- **Win Claude**: schema 設計 (payslips / recurring_expenses / debts) / AI prompt template / tone 監修 / PII mask セキュリティレビュー
+- **Win Codex**: migration impl / EF Deno (parse-payslip / classify-expense / compute-disposable-balance) / Flutter `SalarySpendingBreakdown` widget 拡張 / weekly cron
+
+### 重要設計判断
+
+- **PII mask 必須** ([MCP-AUTH-27]) — LLM 送信前に氏名・従業員番号 mask
+- **Vision fallback** — PDF text layer 抽出第 1 段 (= sample PDF で verified) / scan/画像 PDF 時のみ Gemini 2.5 Pro Vision
+- **confidence gate** — 支出 AI 分類 >=0.7 で自動確定 / <0.7 は手動 review queue
+- **mentor tone** — AI 提案は「CEO への mentor 助言」固定 ([IMBUE-25] pattern 1)
+- **既存 widget 統合可** — #3006 + #3007 は同一 `SalarySpendingBreakdown` 内に過去/未来両視点を統合可
+
+### 教訓 (= 部 236 継続)
+
+1. **3-Issue coherent chain triage pattern 第 1 例確立** = user 1 機能要望を「過去視点 / 未来視点 / data source」3 角度で分解 → 1 session 3 ship → memory [[feedback_success_20260525_3issue_chain_triage_pattern]] 化
+2. **label syntax precheck** = `gh label list` を 1 度確認すれば P2 vs priority:medium 等の miss 即回避
+3. **本番 UI screenshot drives Issue** = 部 236 [UI-VERIFY] で発見した SalarySpendingBreakdown「未記録」状態 → 3 Issue trigger / [UI-VERIFY] と triage は連動
+4. **既存 `salaryDay` setting** = #3007 給料日サイクル境界 logic は半分実装済 / Codex impl 時に低コスト
+5. **Issue #1344 ≠ 重複** = 国民民主党政策 What-if simulator / 似た keyword で別物 = [ISSUE-PRECHECK] body 内容確認重要
+
+### Philosophy Alignment (Win#132 part 236 継続)
+
+- 主要実装: 給与明細 AI 取込 chain (= 入金 source + 過去使途 + 未来可処分 / 3 Issue + 3 WBS migration)
+- 該当原則: 1 (CEO感) / 3 (mentor) / 4 (6 部署 finance 自動化) / 6 (商品=価値) / 7 (資産負債) / 8 (KPI) / 9 (IPO) / 2 (ミッション 弱関連)
+- 整合性スコア: 8/9 ✅
+- 理念的貢献: CEO ペルソナが「給料が入った瞬間 → 次月使える額 + 必要 action」を AI mentor 経由で即把握できる architecture を設計
+- 懸念: 実装は Codex 後続 phase / LLM コスト cap (= user 1 人 < ¥15/月) 監視必要
+
 
