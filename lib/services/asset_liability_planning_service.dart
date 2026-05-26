@@ -54,6 +54,15 @@ class AssetLiabilityPlanningService {
   static const String rentAccountId = 'rent';
   static const String rentAccountName = '\u5bb6\u8cc3';
   static const double rentMonthlyPaymentAmount = 63000;
+  static const String acomShoppingAccountId = 'acom_shopping';
+  static const String anthropicAcomShoppingPaymentId =
+      'anthropic_acom_shopping_repayment';
+  static const String anthropicAcomShoppingPaymentName =
+      'Anthropic\u30b5\u30d6\u30b9\u30af'
+      '\uff08\u30a2\u30b3\u30e0\u30b7\u30e7\u30c3\u30d4\u30f3\u30b0'
+      '\u8fd4\u6e08\uff09';
+  static const int anthropicAcomShoppingPaymentDay = 26;
+  static const double anthropicAcomShoppingPaymentAmount = 40000;
 
   const AssetLiabilityPlanningService();
 
@@ -177,6 +186,9 @@ class AssetLiabilityPlanningService {
       incomePlans: resolvedIncomePlans,
       baseDate: baseDate,
       startingCash: cashLikeTotal,
+      paidAccountNames: paidAccountNames,
+      paymentSourceAccountIds: effectivePaymentSourceAccountIds,
+      accountsById: accountsById,
     );
     final accountCashflowSummaries = _buildAccountCashflowSummaries(
       accounts: accounts,
@@ -202,19 +214,24 @@ class AssetLiabilityPlanningService {
       0,
       (sum, row) => sum + row.minimumPaymentEstimate,
     );
-    final monthlyScheduledPaymentTotal = directDebtRows.fold<double>(
+    final directPaymentCashflowRows = cashflowRows
+        .where((row) => row.isPayment && row.isDirectCashflowTarget)
+        .toList(growable: false);
+    final monthlyScheduledPaymentTotal = directPaymentCashflowRows.fold<double>(
       0,
-      (sum, row) => sum + row.scheduledPaymentAmount,
+      (sum, row) => sum + row.paymentAmount,
     );
-    final monthlyUnpaidPaymentTotal = directDebtRows.fold<double>(
+    final monthlyUnpaidPaymentTotal = directPaymentCashflowRows.fold<double>(
       0,
-      (sum, row) => row.paid ? sum : sum + row.scheduledPaymentAmount,
+      (sum, row) => row.paid ? sum : sum + row.paymentAmount,
     );
-    final monthlyActualPaymentTotal = directDebtRows.fold<double>(
+    final monthlyActualPaymentTotal = directPaymentCashflowRows.fold<double>(
       0,
-      (sum, row) => sum + row.effectivePaidPaymentAmount,
+      (sum, row) =>
+          row.paid ? sum + (row.actualPaymentAmount ?? row.paymentAmount) : sum,
     );
-    final monthlyPaymentDifferenceTotal = directDebtRows.fold<double>(
+    final monthlyPaymentDifferenceTotal =
+        directPaymentCashflowRows.fold<double>(
       0,
       (sum, row) => sum + (row.paymentDifferenceAmount ?? 0),
     );
@@ -1054,6 +1071,9 @@ class AssetLiabilityPlanningService {
     required List<AssetLiabilityIncomePlan> incomePlans,
     required DateTime baseDate,
     required double startingCash,
+    required Set<String> paidAccountNames,
+    required Map<String, String> paymentSourceAccountIds,
+    required Map<String, AssetLiabilityAccount> accountsById,
   }) {
     final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
     final result = <AssetLiabilityCashflowRow>[];
@@ -1132,6 +1152,52 @@ class AssetLiabilityPlanningService {
         ),
       );
     }
+    final acomShoppingRow = _findAcomShoppingDebtRow(rows);
+    if (acomShoppingRow != null && acomShoppingRow.isDirectCashflowTarget) {
+      const paymentDay = anthropicAcomShoppingPaymentDay;
+      final resolvedDay = paymentDay.clamp(1, lastDay).toInt();
+      final paymentDate = DateTime(baseDate.year, baseDate.month, resolvedDay);
+      final paid = paidAccountNames.contains(anthropicAcomShoppingPaymentId) ||
+          paidAccountNames.contains(anthropicAcomShoppingPaymentName);
+      final sourceAccountId =
+          paymentSourceAccountIds[anthropicAcomShoppingPaymentId] ??
+              acomShoppingRow.paymentSourceAccountId;
+      final sourceAccountName = sourceAccountId == null
+          ? acomShoppingRow.paymentSourceAccountName
+          : accountsById[sourceAccountId]?.name ??
+              acomShoppingRow.paymentSourceAccountName;
+      result.add(
+        AssetLiabilityCashflowRow(
+          eventType: AssetLiabilityCashflowEventType.payment,
+          accountId: anthropicAcomShoppingPaymentId,
+          accountName: anthropicAcomShoppingPaymentName,
+          paymentDay: paymentDay,
+          paymentDate: paymentDate,
+          paymentSourceAccountId: sourceAccountId,
+          paymentSourceAccountName: sourceAccountName,
+          destinationAccountId: acomShoppingRow.id,
+          destinationAccountName: acomShoppingRow.name,
+          paymentMethod: AssetLiabilityPaymentMethod.direct,
+          paymentMethodLabel: acomShoppingRow.paymentMethodLabel,
+          paymentMethodSettingSource:
+              AssetLiabilityPaymentMethodSettingSource.builtInDefault,
+          billingAccountId: null,
+          billingAccountName: null,
+          includedInBillingAccount: false,
+          paymentAmount: anthropicAcomShoppingPaymentAmount,
+          actualPaymentAmount: null,
+          paymentDifferenceAmount: null,
+          paymentDifferenceReason: null,
+          paymentAmountEstimated: false,
+          paid: paid,
+          received: false,
+          overdue: !paid && !paymentDate.isAfter(_dateOnly(baseDate)),
+          cashBeforePayment: 0,
+          cashAfterPayment: 0,
+          riskLevel: AssetLiabilityCashRiskLevel.normal,
+        ),
+      );
+    }
 
     result.sort((a, b) {
       final date = a.paymentDate.compareTo(b.paymentDate);
@@ -1186,6 +1252,17 @@ class AssetLiabilityPlanningService {
           );
         }(),
     ];
+  }
+
+  AssetLiabilityDebtRow? _findAcomShoppingDebtRow(
+    List<AssetLiabilityDebtRow> rows,
+  ) {
+    for (final row in rows) {
+      if (row.id == acomShoppingAccountId) {
+        return row;
+      }
+    }
+    return null;
   }
 
   AssetLiabilityCashRiskLevel _cashRiskLevel(double cashAfterPayment) {
@@ -1420,7 +1497,7 @@ class AssetLiabilityPlanningService {
     final key = _normalize(name);
 
     if (_containsAll(key, const <String>['アコム', 'ショッピング'])) {
-      return 'acom_shopping';
+      return acomShoppingAccountId;
     }
     if (_containsAll(key, const <String>['アコム', 'ローン'])) {
       return 'acom_card_loan';
