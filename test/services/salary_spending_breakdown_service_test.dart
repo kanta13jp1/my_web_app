@@ -99,5 +99,25 @@ void main() {
 
       expect(breakdown.salaryIncomeTotal, 180000);
     });
+
+    test('counts payslip income even when other income entries exist', () {
+      final breakdown = service.build(
+        referenceDate: DateTime(2026, 5, 26),
+        incomes: <SalaryIncomeEntry>[
+          SalaryIncomeEntry(
+            date: DateTime(2026, 5, 25),
+            amount: 452815,
+            description: 'Payslip: 自分株式会社',
+          ),
+          SalaryIncomeEntry(
+            date: DateTime(2026, 5, 25),
+            amount: 12000,
+            description: '副業売上',
+          ),
+        ],
+      );
+
+      expect(breakdown.salaryIncomeTotal, 452815);
+    });
   });
 }

@@ -425,9 +425,9 @@ function buildRequiredActions(params: {
     actions.push({
       action_key: "upload_current_payslip",
       priority: 1,
-      title: "Current payslip is missing",
+      title: "今月の給与明細が未登録です",
       instruction:
-        "Upload the latest payslip PDF so income is calculated from source data (10 sec).",
+        "最新の給与明細PDFをアップロードして、収入を明細データで計算してください（約10秒）。",
       estimated_seconds: 10,
       amount_impact: params.fallbackPayslip?.net_amount ?? 0,
       category: "data_gap",
@@ -437,9 +437,9 @@ function buildRequiredActions(params: {
     actions.push({
       action_key: "add_recurring_expenses",
       priority: actions.length + 1,
-      title: "Fixed expenses are not registered",
+      title: "固定費が未登録です",
       instruction:
-        "Add rent, utilities, and subscriptions to recurring expenses (180 sec).",
+        "家賃・公共料金・サブスクを固定費として登録してください（約180秒）。",
       estimated_seconds: 180,
       amount_impact: 0,
       category: "data_gap",
@@ -456,9 +456,9 @@ function buildRequiredActions(params: {
       actions.push({
         action_key: `refresh_debt_${slugify(debt.name)}`,
         priority: actions.length + 1,
-        title: `${debt.name} balance is stale`,
+        title: `${debt.name}の残高が古くなっています`,
         instruction:
-          `Enter the current ${debt.name} balance before deciding repayment order (60 sec).`,
+          `返済順を決める前に、${debt.name}の現在残高を入力してください（約60秒）。`,
         estimated_seconds: 60,
         amount_impact: debt.monthly_payment,
         category: "debt_refresh",
@@ -471,11 +471,14 @@ function buildRequiredActions(params: {
     actions.push({
       action_key: `cancel_duplicate_${duplicate.group}`,
       priority: actions.length + 1,
-      title: `${duplicate.group} subscriptions overlap`,
-      instruction:
-        `Choose one ${duplicate.group} subscription and cancel the other to save about ${
-          formatYen(duplicate.savings)
-        } per month (120 sec).`,
+      title: `${
+        duplicateSubscriptionLabel(duplicate.group)
+      }サブスクが重複しています`,
+      instruction: `${
+        duplicateSubscriptionLabel(duplicate.group)
+      }サブスクを1つに絞ると、毎月${
+        formatYen(duplicate.savings)
+      }を削減できます（約120秒）。`,
       estimated_seconds: 120,
       amount_impact: duplicate.savings,
       category: "savings",
@@ -513,6 +516,12 @@ function findDuplicateSubscription(expenses: RecurringExpenseRow[]) {
   return null;
 }
 
+function duplicateSubscriptionLabel(group: string): string {
+  if (group === "music") return "音楽";
+  if (group === "video") return "動画";
+  return group || "対象";
+}
+
 function buildDisposableBalanceMessages(
   base: Omit<
     DisposableBalanceResult,
@@ -523,13 +532,13 @@ function buildDisposableBalanceMessages(
     {
       role: "system",
       content:
-        "You are a concise CEO mentor. Return strict JSON {actions:[{action_key,priority,title,instruction,estimated_seconds,amount_impact,category}]}.",
+        "あなたは簡潔なCEOメンターです。title と instruction は必ず日本語で書き、厳密なJSON {actions:[{action_key,priority,title,instruction,estimated_seconds,amount_impact,category}]} だけを返してください。",
     },
     {
       role: "user",
       content: JSON.stringify({
         rule:
-          "No scolding. Each instruction must use the form 'do X (N sec)' and be based only on the supplied numbers.",
+          "叱責しない。各 instruction は「Xをする（約N秒）」の形にし、渡された数字だけに基づく。",
         balance: base,
       }),
     },
