@@ -63,6 +63,12 @@ class AssetLiabilityPlanningService {
       '\u8fd4\u6e08\uff09';
   static const int anthropicAcomShoppingPaymentDay = 26;
   static const double anthropicAcomShoppingPaymentAmount = 40000;
+  static const String smbcOtsukaBranchAccountId = 'smbc_otsuka_branch';
+  static const String jibunBankAccountId = 'jibun_bank_card_loan';
+  static const String auPayCardFundingTransferTaskId =
+      'transfer_smbc_otsuka_to_jibun_aupay_card_funding';
+  static const int auPayCardFundingTransferDay = 26;
+  static const double auPayCardFundingTransferAmount = 80000;
 
   const AssetLiabilityPlanningService();
 
@@ -121,8 +127,14 @@ class AssetLiabilityPlanningService {
       incomePlans: incomePlans,
       accountsById: accountsById,
     );
-    final resolvedTransferTasks = _resolveTransferTasks(
+    final effectiveTransferTasks = _withDefaultAuPayCardFundingTransfer(
       transferTasks: transferTasks,
+      accounts: accounts,
+      baseDate: baseDate,
+    );
+    final resolvedTransferTasks = _resolveTransferTasks(
+      transferTasks: effectiveTransferTasks,
+      accounts: accounts,
       accountsById: accountsById,
     );
     final effectivePaymentSourceAccountIds = <String, String>{
@@ -1306,6 +1318,7 @@ class AssetLiabilityPlanningService {
 
   List<AssetLiabilityTransferTask> _resolveTransferTasks({
     required List<AssetLiabilityTransferTask> transferTasks,
+    required List<AssetLiabilityAccount> accounts,
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
     final result = <AssetLiabilityTransferTask>[];
@@ -1317,8 +1330,11 @@ class AssetLiabilityPlanningService {
           task.amount <= 0) {
         continue;
       }
-      final fromAccount = accountsById[task.fromAccountId];
-      final toAccount = accountsById[task.toAccountId];
+      final fromAccount =
+          _findCashLikeAccountById(accounts, task.fromAccountId) ??
+              accountsById[task.fromAccountId];
+      final toAccount = _findCashLikeAccountById(accounts, task.toAccountId) ??
+          accountsById[task.toAccountId];
       result.add(
         AssetLiabilityTransferTask(
           id: task.id,
@@ -1349,6 +1365,52 @@ class AssetLiabilityPlanningService {
       return a.id.compareTo(b.id);
     });
     return result;
+  }
+
+  List<AssetLiabilityTransferTask> _withDefaultAuPayCardFundingTransfer({
+    required List<AssetLiabilityTransferTask> transferTasks,
+    required List<AssetLiabilityAccount> accounts,
+    required DateTime baseDate,
+  }) {
+    if (transferTasks.any(
+      (task) => task.id == auPayCardFundingTransferTaskId,
+    )) {
+      return transferTasks;
+    }
+
+    final fromAccount =
+        _findCashLikeAccountById(accounts, smbcOtsukaBranchAccountId);
+    final toAccount = _findCashLikeAccountById(accounts, jibunBankAccountId);
+    if (fromAccount == null || toAccount == null) {
+      return transferTasks;
+    }
+
+    final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
+    final resolvedDay = auPayCardFundingTransferDay.clamp(1, lastDay).toInt();
+    return <AssetLiabilityTransferTask>[
+      ...transferTasks,
+      AssetLiabilityTransferTask(
+        id: auPayCardFundingTransferTaskId,
+        fromAccountId: fromAccount.id,
+        fromAccountName: fromAccount.name,
+        toAccountId: toAccount.id,
+        toAccountName: toAccount.name,
+        amount: auPayCardFundingTransferAmount,
+        dueDate: DateTime(baseDate.year, baseDate.month, resolvedDay),
+      ),
+    ];
+  }
+
+  AssetLiabilityAccount? _findCashLikeAccountById(
+    List<AssetLiabilityAccount> accounts,
+    String accountId,
+  ) {
+    for (final account in accounts) {
+      if (account.id == accountId && _isCashLike(account)) {
+        return account;
+      }
+    }
+    return null;
   }
 
   List<AssetLiabilityAccountCashflowSummary> _buildAccountCashflowSummaries({
