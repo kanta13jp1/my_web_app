@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-25T21:42:57Z",
+  "generated_at": "2026-05-26T21:55:03Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -27,10 +27,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3934517c2183981f3a1864fdf3406276e49c0b9c4a3ec2d002735b9076efabc1",
+          "hash": "bb24527fd2d800c2d51f92f1508ef0338e7cbe03b9b6015b3c8f22a8d58c062b",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -115,10 +115,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "55e217cadb391c07940b883f64e56ac12ace7f7b8b41137d7b0a0236110e9340",
+          "hash": "d624e97c28f452ace794aa237fc9ba15bebb8ac0ec52f5fdc2474d86eb5bbc23",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -193,10 +193,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
+          "hash": "6dac13d60ea848a604413c924436b4d07e905c55b54cdb8cfb20d11b6445fc93",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -259,9 +259,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-70d29a4bafb4",
+        "entry_id": "nf-ae94e79b7200",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS. Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI. With Goal mode, you can have Codex drive toward a specific objective for hours or even days.",
+        "text": "Codex changelog 2026-05-26 / Codex CLI 0.134.0 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #23519 , #23921 ) Made --profile the primary profile selector across CLI, TUI permissions, and sandbox flows, with legacy profile configs rejected through migration guidance. ( #23708 , #23883 , #23890 , #24051 , #24055 , #24059 , #24067 , #24110 ) Improved MCP setup with per-server environment targeting and OAuth options for streamable HTTP servers.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
+          "hash": "7cbdf9cdbb2c405338bf357211fa1b3ee17249e8fbb81521a7f377f6ce0ecf5f",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,6 +285,8 @@
             "hooks": [
               "hook",
               "hooks",
+              "SessionStart",
+              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -296,6 +298,7 @@
               "IDE extension"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -308,25 +311,26 @@
               "automation",
               "automations",
               "schedule",
+              "GitHub Actions",
               "workflow"
             ]
           },
-          "latest_signal": "2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.",
+          "latest_signal": "2026-05-26 / Codex CLI 0.134.0 pre",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
+          "previous_hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.",
-            "With Goal mode, you can have Codex drive toward a specific objective for hours or even days."
+            "( #23519 , #23921 ) Made --profile the primary profile selector across CLI, TUI permissions, and sandbox flows, with legacy profile configs rejected through migration guidance.",
+            "( #23708 , #23883 , #23890 , #24051 , #24055 , #24059 , #24067 , #24110 ) Improved MCP setup with per-server environment targeting and OAuth options for streamable HTTP servers."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-70d29a4bafb4",
+        "entry_id": "nf-ae94e79b7200",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -467,18 +471,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-facfaea67e06",
+        "entry_id": "nf-95b7f2d30e75",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.5 / May 20, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... For the next 7 days, all agent runs for newly created automations are 50% off. # Automations in the Agents Window Cursor Automations are now available in the Agents Window , in addition to cursor.com/automations.",
+        "text": "Cursor changelog 3.5 / May 20, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... 3.5 May 20, 2026 · Changelog Improvements to Cursor Automations This release brings Cursor Automations to the Agents Window and introduces the ability to configure automations... For the next 7 days, all agent runs for newly created automations are 50% off.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
+          "hash": "7b71962473696c25040223356574fe448182b8fbd310f3324d247bc9846707ff",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -492,7 +496,6 @@
               "Slack"
             ],
             "quality-cost": [
-              "permission",
               "review",
               "CI"
             ],
@@ -508,15 +511,15 @@
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "For the next 7 days, all agent runs for newly created automations are 50% off.",
-            "# Automations in the Agents Window Cursor Automations are now available in the Agents Window , in addition to cursor.com/automations."
+            "3.5 May 20, 2026 · Changelog Improvements to Cursor Automations This release brings Cursor Automations to the Agents Window and introduces the ability to configure automations...",
+            "For the next 7 days, all agent runs for newly created automations are 50% off."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-facfaea67e06",
+        "entry_id": "nf-95b7f2d30e75",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",

@@ -11,120 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "model picker",
-          "in-app browser",
-          "browser use",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.",
-      "name": "Codex changelog",
-      "owner": "Codex",
-      "previous_hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
-      "slug": "codex-changelog",
-      "snippets": [
-        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.",
-        "With Goal mode, you can have Codex drive toward a specific objective for hours or even days."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/changelog"
-    }
-  ],
-  "checked_at": "2026-05-25T21:42:53Z",
-  "high_priority_groups": [
-    "codex-runtime",
-    "hooks",
-    "schedule"
-  ],
-  "impact_routes": {
-    "codex-runtime": {
-      "action": "Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.",
-      "issues": [
-        "#1422",
-        "#1377",
-        "#1375",
-        "#1408"
-      ]
-    },
-    "hooks": {
-      "action": "Route to Claude Code quality gates: SessionStart/UserPromptSubmit for session context, PostToolUse/Stop for lint-test feedback.",
-      "issues": [
-        "#1422",
-        "#1337",
-        "#1350"
-      ]
-    },
-    "integration": {
-      "action": "Route to connector reliability: MCP/Slack/GitHub integration checks and NotebookLM knowledge capture.",
-      "issues": [
-        "#1339",
-        "#1335",
-        "#1405"
-      ]
-    },
-    "quality-cost": {
-      "action": "Route to cost and safety controls: deny-by-default checks, budget routing, and telemetry before wider automation.",
-      "issues": [
-        "#1380",
-        "#1374",
-        "#1336",
-        "#1352"
-      ]
-    },
-    "schedule": {
-      "action": "Route to GitHub Actions or Codex Automations: daily source watch, merge-backlog triage, and deterministic CI/deploy checks.",
-      "issues": [
-        "#1422",
-        "#862",
-        "#1307",
-        "#1372"
-      ]
-    }
-  },
-  "issue": "1422",
-  "previous_checked_at": "2026-05-24T21:36:39Z",
-  "sources": [
-    {
-      "changed": false,
-      "error": null,
-      "first_seen": false,
-      "hash": "3934517c2183981f3a1864fdf3406276e49c0b9c4a3ec2d002735b9076efabc1",
+      "hash": "bb24527fd2d800c2d51f92f1508ef0338e7cbe03b9b6015b3c8f22a8d58c062b",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -182,10 +69,10 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "55e217cadb391c07940b883f64e56ac12ace7f7b8b41137d7b0a0236110e9340",
+      "hash": "d624e97c28f452ace794aa237fc9ba15bebb8ac0ec52f5fdc2474d86eb5bbc23",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -233,10 +120,10 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
+      "hash": "6dac13d60ea848a604413c924436b4d07e905c55b54cdb8cfb20d11b6445fc93",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -283,7 +170,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
+      "hash": "7cbdf9cdbb2c405338bf357211fa1b3ee17249e8fbb81521a7f377f6ce0ecf5f",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -298,6 +185,8 @@
         "hooks": [
           "hook",
           "hooks",
+          "SessionStart",
+          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -309,6 +198,7 @@
           "IDE extension"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -321,18 +211,334 @@
           "automation",
           "automations",
           "schedule",
+          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.",
+      "latest_signal": "2026-05-26 / Codex CLI 0.134.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
+      "previous_hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.",
-        "With Goal mode, you can have Codex drive toward a specific objective for hours or even days."
+        "( #23519 , #23921 ) Made --profile the primary profile selector across CLI, TUI permissions, and sandbox flows, with legacy profile configs rejected through migration guidance.",
+        "( #23708 , #23883 , #23890 , #24051 , #24055 , #24059 , #24067 , #24110 ) Improved MCP setup with per-server environment targeting and OAuth options for streamable HTTP servers."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "7b71962473696c25040223356574fe448182b8fbd310f3324d247bc9846707ff",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "subagents"
+        ],
+        "hooks": [
+          "hook"
+        ],
+        "integration": [
+          "MCP",
+          "Slack"
+        ],
+        "quality-cost": [
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations"
+        ]
+      },
+      "latest_signal": "3.5 / May 20, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
+      "slug": "cursor-changelog",
+      "snippets": [
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
+        "3.5 May 20, 2026 · Changelog Improvements to Cursor Automations This release brings Cursor Automations to the Agents Window and introduces the ability to configure automations...",
+        "For the next 7 days, all agent runs for newly created automations are 50% off."
+      ],
+      "status": 200,
+      "url": "https://cursor.com/changelog"
+    }
+  ],
+  "checked_at": "2026-05-26T21:54:59Z",
+  "high_priority_groups": [
+    "codex-runtime",
+    "hooks",
+    "schedule"
+  ],
+  "impact_routes": {
+    "codex-runtime": {
+      "action": "Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.",
+      "issues": [
+        "#1422",
+        "#1377",
+        "#1375",
+        "#1408"
+      ]
+    },
+    "hooks": {
+      "action": "Route to Claude Code quality gates: SessionStart/UserPromptSubmit for session context, PostToolUse/Stop for lint-test feedback.",
+      "issues": [
+        "#1422",
+        "#1337",
+        "#1350"
+      ]
+    },
+    "integration": {
+      "action": "Route to connector reliability: MCP/Slack/GitHub integration checks and NotebookLM knowledge capture.",
+      "issues": [
+        "#1339",
+        "#1335",
+        "#1405"
+      ]
+    },
+    "quality-cost": {
+      "action": "Route to cost and safety controls: deny-by-default checks, budget routing, and telemetry before wider automation.",
+      "issues": [
+        "#1380",
+        "#1374",
+        "#1336",
+        "#1352"
+      ]
+    },
+    "schedule": {
+      "action": "Route to GitHub Actions or Codex Automations: daily source watch, merge-backlog triage, and deterministic CI/deploy checks.",
+      "issues": [
+        "#1422",
+        "#862",
+        "#1307",
+        "#1372"
+      ]
+    }
+  },
+  "issue": "1422",
+  "previous_checked_at": "2026-05-25T21:42:53Z",
+  "sources": [
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "bb24527fd2d800c2d51f92f1508ef0338e7cbe03b9b6015b3c8f22a8d58c062b",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure",
+          "ultrareview"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2.1.150 / May 23, 2026",
+      "name": "Claude Code changelog",
+      "owner": "Claude Code",
+      "previous_hash": "3934517c2183981f3a1864fdf3406276e49c0b9c4a3ec2d002735b9076efabc1",
+      "slug": "claude-code-changelog",
+      "snippets": [
+        "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
+        "This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.150 May 23, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.149 May 22, 2026 /usage now shows a per-category breakdown of what’s driving your..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "d624e97c28f452ace794aa237fc9ba15bebb8ac0ec52f5fdc2474d86eb5bbc23",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "55e217cadb391c07940b883f64e56ac12ace7f7b8b41137d7b0a0236110e9340",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "For a quickstart guide with examples, see Automate workflows with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "6dac13d60ea848a604413c924436b4d07e905c55b54cdb8cfb20d11b6445fc93",
+      "keyword_groups": {
+        "codex-runtime": [
+          "computer use"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "GitHub",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "cost",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
+      "name": "Claude Code GitHub Actions",
+      "owner": "Claude Code",
+      "previous_hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
+      "slug": "claude-code-github-actions",
+      "snippets": [
+        "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
+        "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
+        "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/github-actions"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "7cbdf9cdbb2c405338bf357211fa1b3ee17249e8fbb81521a7f377f6ce0ecf5f",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "model picker",
+          "in-app browser",
+          "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "PostToolUse",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-05-26 / Codex CLI 0.134.0 pre",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "1a0169272cfae2fecf88d432f500ab362d810bc822786e57d59dffa1a408630a",
+      "slug": "codex-changelog",
+      "snippets": [
+        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "( #23519 , #23921 ) Made --profile the primary profile selector across CLI, TUI permissions, and sandbox flows, with legacy profile configs rejected through migration guidance.",
+        "( #23708 , #23883 , #23890 , #24051 , #24055 , #24059 , #24067 , #24110 ) Improved MCP setup with per-server environment targeting and OAuth options for streamable HTTP servers."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -406,10 +612,10 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
+      "hash": "7b71962473696c25040223356574fe448182b8fbd310f3324d247bc9846707ff",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -423,7 +629,6 @@
           "Slack"
         ],
         "quality-cost": [
-          "permission",
           "review",
           "CI"
         ],
@@ -439,8 +644,8 @@
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-        "For the next 7 days, all agent runs for newly created automations are 50% off.",
-        "# Automations in the Agents Window Cursor Automations are now available in the Agents Window , in addition to cursor.com/automations."
+        "3.5 May 20, 2026 · Changelog Improvements to Cursor Automations This release brings Cursor Automations to the Agents Window and introduces the ability to configure automations...",
+        "For the next 7 days, all agent runs for newly created automations are 50% off."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"

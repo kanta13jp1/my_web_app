@@ -1,12 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-25T21:42:53Z`
-- Previous check: `2026-05-24T21:36:39Z`
-- Changed/new official sources: `1`
+- Checked at: `2026-05-26T21:54:59Z`
+- Previous check: `2026-05-25T21:42:53Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Codex changelog: 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.
+- `changed` Claude Code changelog: 2.1.150 / May 23, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa
+- `changed` Codex changelog: 2026-05-26 / Codex CLI 0.134.0 pre
+- `changed` Cursor changelog: 3.5 / May 20, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -36,10 +40,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.
+  - Latest signal: 2026-05-26 / Codex CLI 0.134.0 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.
+  - Short signal: ( #23519 , #23921 ) Made --profile the primary profile selector across CLI, TUI permissions, and sandbox flows, with legacy profile configs rejected through migration guidance.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -55,7 +59,7 @@
   - Latest signal: 3.5 / May 20, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
-  - Short signal: For the next 7 days, all agent runs for newly created automations are 50% off.
+  - Short signal: 3.5 May 20, 2026 · Changelog Improvements to Cursor Automations This release brings Cursor Automations to the Agents Window and introduces the ability to configure automations...
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.82.0 / May 14, 2026
