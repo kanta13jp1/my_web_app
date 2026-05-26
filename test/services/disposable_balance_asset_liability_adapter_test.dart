@@ -70,5 +70,48 @@ void main() {
       );
       expect(payPayDebt.dayOfMonth, 27);
     });
+
+    test('routes supplemental Anthropic repayment into debts', () {
+      const acomShoppingName =
+          '\u30a2\u30b3\u30e0\u30b7\u30e7\u30c3\u30d4\u30f3\u30b0';
+      final asOfDate = DateTime(2026, 5, 26);
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'cash': 150000,
+          acomShoppingName: -200000,
+        },
+        baseDate: asOfDate,
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 68000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 'custom_cash',
+        },
+      );
+      final nextPayday = disposableBalance.nextPaydayFor(
+        asOfDate: asOfDate,
+      );
+      final cycleStart = disposableBalance.salaryCycleStartFor(
+        asOfDate: asOfDate,
+      );
+
+      final result = adapter.build(
+        workbook: workbook,
+        cycleStart: cycleStart,
+        nextPayday: nextPayday,
+      );
+
+      final anthropicDebt = result.debts.singleWhere(
+        (debt) =>
+            debt.name ==
+            AssetLiabilityPlanningService.anthropicAcomShoppingPaymentName,
+      );
+      expect(
+        anthropicDebt.monthlyPayment,
+        AssetLiabilityPlanningService.anthropicAcomShoppingPaymentAmount,
+      );
+      expect(anthropicDebt.dayOfMonth, 26);
+      expect(anthropicDebt.principal, 0);
+    });
   });
 }

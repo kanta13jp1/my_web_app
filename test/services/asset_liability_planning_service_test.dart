@@ -99,8 +99,8 @@ void main() {
       expect(
         workbook.monthlyScheduledPaymentTotal,
         closeTo(
-          baseline.monthlyMinimumPaymentEstimateTotal -
-              baselineMobit.minimumPaymentEstimate +
+          baseline.monthlyScheduledPaymentTotal -
+              baselineMobit.scheduledPaymentAmount +
               70000,
           0.001,
         ),
@@ -775,6 +775,53 @@ void main() {
         workbook.cashflowRows[2].riskLevel,
         AssetLiabilityCashRiskLevel.short,
       );
+    });
+
+    test('adds Anthropic Acom shopping repayment on the 26th', () {
+      const acomShoppingName =
+          '\u30a2\u30b3\u30e0\u30b7\u30e7\u30c3\u30d4\u30f3\u30b0';
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 100000,
+          acomShoppingName: -200000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 68000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 'custom_cash',
+        },
+      );
+
+      final anthropicPayment = workbook.cashflowRows.singleWhere(
+        (row) =>
+            row.accountId ==
+            AssetLiabilityPlanningService.anthropicAcomShoppingPaymentId,
+      );
+
+      expect(
+        anthropicPayment.accountName,
+        AssetLiabilityPlanningService.anthropicAcomShoppingPaymentName,
+      );
+      expect(anthropicPayment.paymentDay, 26);
+      expect(
+        anthropicPayment.paymentAmount,
+        AssetLiabilityPlanningService.anthropicAcomShoppingPaymentAmount,
+      );
+      expect(anthropicPayment.paymentSourceAccountId, 'custom_cash');
+      expect(
+        anthropicPayment.destinationAccountId,
+        AssetLiabilityPlanningService.acomShoppingAccountId,
+      );
+      expect(
+        workbook.cashflowRows.map((row) => row.paymentDay).toList(),
+        <int>[8, 26],
+      );
+      expect(workbook.monthlyScheduledPaymentTotal, 108000);
+      expect(workbook.monthlyUnpaidPaymentTotal, 108000);
+      expect(workbook.cashAfterScheduledPayments, -8000);
+      expect(anthropicPayment.cashAfterPayment, -8000);
     });
 
     test('reflects unreceived income plans in chronological cashflow', () {

@@ -60,6 +60,22 @@ class DisposableBalanceAssetLiabilityAdapter {
         ),
       );
     }
+    for (final row in workbook.cashflowRows) {
+      if (!_isSupplementalDebtCashflowRow(row, debtRowsById) ||
+          !_isWithinCycle(row.paymentDate, cycleStart, nextPayday)) {
+        continue;
+      }
+      debts.add(
+        DisposableBalanceDebt(
+          name: row.accountName,
+          principal: 0,
+          monthlyPayment: row.paymentAmount,
+          interestRate: 0,
+          dayOfMonth: row.paymentDate.day.clamp(1, 31).toInt(),
+          lastUpdated: null,
+        ),
+      );
+    }
 
     return DisposableBalanceAssetLiabilityInputs(
       recurringExpenses: List<DisposableBalanceRecurringExpense>.unmodifiable(
@@ -84,6 +100,16 @@ class DisposableBalanceAssetLiabilityAdapter {
     return row.kind == AssetLiabilityAccountKind.utility ||
         row.id == AssetLiabilityPlanningService.rentAccountId ||
         row.id == AssetLiabilityPlanningService.kddiProviderAccountId;
+  }
+
+  bool _isSupplementalDebtCashflowRow(
+    AssetLiabilityCashflowRow row,
+    Map<String, AssetLiabilityDebtRow> debtRowsById,
+  ) {
+    return row.isPayment &&
+        row.isDirectCashflowTarget &&
+        row.paymentAmount > 0 &&
+        !debtRowsById.containsKey(row.accountId);
   }
 
   String _fixedExpenseCategoryFor(AssetLiabilityDebtRow? row) {
