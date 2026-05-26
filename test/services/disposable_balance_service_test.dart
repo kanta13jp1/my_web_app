@@ -44,6 +44,36 @@ void main() {
       );
     });
 
+    test('subtracts rent due on the salary cycle start', () {
+      final result = service.build(
+        asOfDate: DateTime(2026, 5, 26),
+        payslips: <DisposableBalancePayslip>[
+          DisposableBalancePayslip(
+            payDate: DateTime(2026, 5, 25),
+            netAmount: 452815,
+            companyName: 'Acme',
+            confidence: 0.9,
+          ),
+        ],
+        recurringExpenses: const <DisposableBalanceRecurringExpense>[
+          DisposableBalanceRecurringExpense(
+            name: 'Rent',
+            amount: 63000,
+            dayOfMonth: 25,
+            category: 'housing',
+          ),
+        ],
+      );
+
+      expect(result.nextPayday, DateTime(2026, 6, 25));
+      expect(result.fixedTotal, 63000);
+      expect(result.disposable, 389815);
+      expect(
+        result.requiredActions.map((action) => action.actionKey),
+        isNot(contains('add_recurring_expenses')),
+      );
+    });
+
     test(
       'requests payslip and fixed expense setup when sources are missing',
       () {
