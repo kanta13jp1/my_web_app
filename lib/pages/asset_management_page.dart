@@ -6530,6 +6530,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       asOfDate: _now,
       salaryDay: _salarySpendingSalaryDay,
     );
+    final cycleStart = _disposableBalanceService.salaryCycleStartFor(
+      asOfDate: _now,
+      salaryDay: _salarySpendingSalaryDay,
+    );
+    final cycleStartOnly = DateTime(
+      cycleStart.year,
+      cycleStart.month,
+      cycleStart.day,
+    );
     final recurringExpenses = <DisposableBalanceRecurringExpense>[];
     for (final row in _subscriptionsThreeMonths) {
       final dueDate = DateTime.tryParse(row['due_date']?.toString() ?? '');
@@ -6537,8 +6546,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         continue;
       }
       final dueDateOnly = DateTime(dueDate.year, dueDate.month, dueDate.day);
-      final asOfDateOnly = DateTime(_now.year, _now.month, _now.day);
-      if (dueDateOnly.isBefore(asOfDateOnly) ||
+      if (dueDateOnly.isBefore(cycleStartOnly) ||
           !dueDateOnly.isBefore(nextPayday)) {
         continue;
       }
@@ -6620,7 +6628,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           },
         )
         .toList(growable: false);
-    final actions = serverActions.isNotEmpty ? serverActions : localActions;
+    final actions = _effectiveDisposableBalanceActions(
+      balance: balance,
+      serverActions: serverActions,
+      localActions: localActions,
+    );
     final periodLabel = '${DateFormat('yyyy/MM/dd').format(balance.asOfDate)}〜'
         '${DateFormat('yyyy/MM/dd').format(balance.nextPayday.subtract(const Duration(days: 1)))}';
 
@@ -6859,6 +6871,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _effectiveDisposableBalanceActions({
+    required DisposableBalanceResult balance,
+    required List<Map<String, dynamic>> serverActions,
+    required List<Map<String, dynamic>> localActions,
+  }) {
+    final source = serverActions.isNotEmpty ? serverActions : localActions;
+    return source.where((action) {
+      final actionKey =
+          (action['action_key'] ?? action['actionKey'])?.toString() ?? '';
+      if (actionKey == 'upload_current_payslip' && balance.income > 0) {
+        return false;
+      }
+      if (actionKey == 'add_recurring_expenses' && balance.fixedTotal > 0) {
+        return false;
+      }
+      return true;
+    }).toList(growable: false);
   }
 
   String _localizedDisposableActionTitle(String actionKey, String rawTitle) {
