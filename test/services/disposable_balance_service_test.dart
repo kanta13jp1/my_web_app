@@ -38,12 +38,6 @@ void main() {
       expect(result.daysRemaining, 30);
       expect(result.disposable, 314708);
       expect(result.dailyPace.round(), 10490);
-      expect(result.recurringExpenses, hasLength(1));
-      expect(result.recurringExpenses.single.name, 'Rent');
-      expect(result.recurringExpenses.single.amount, 92400);
-      expect(result.debts, hasLength(1));
-      expect(result.debts.single.name, 'student loan');
-      expect(result.debts.single.monthlyPayment, 58000);
       expect(
         result.requiredActions.single.actionKey,
         'refresh_debt_student_loan',
@@ -73,7 +67,6 @@ void main() {
 
       expect(result.nextPayday, DateTime(2026, 6, 25));
       expect(result.fixedTotal, 63000);
-      expect(result.recurringExpenses.single.dayOfMonth, 25);
       expect(result.disposable, 389815);
       expect(
         result.requiredActions.map((action) => action.actionKey),

@@ -35,7 +35,6 @@ class DisposableBalanceDebt {
     this.principal = 0,
     this.interestRate = 0,
     this.lender = '',
-    this.dayOfMonth,
     this.lastUpdated,
     this.pausedAt,
   });
@@ -45,7 +44,6 @@ class DisposableBalanceDebt {
   final double monthlyPayment;
   final double interestRate;
   final String lender;
-  final int? dayOfMonth;
   final DateTime? lastUpdated;
   final DateTime? pausedAt;
 }
@@ -81,8 +79,6 @@ class DisposableBalanceResult {
     required this.debtTotal,
     required this.disposable,
     required this.dailyPace,
-    required this.recurringExpenses,
-    required this.debts,
     required this.requiredActions,
   });
 
@@ -95,8 +91,6 @@ class DisposableBalanceResult {
   final double debtTotal;
   final double disposable;
   final double dailyPace;
-  final List<DisposableBalanceRecurringExpense> recurringExpenses;
-  final List<DisposableBalanceDebt> debts;
   final List<DisposableBalanceActionRecommendation> requiredActions;
 }
 
@@ -173,10 +167,6 @@ class DisposableBalanceService {
       debtTotal: debtTotal,
       disposable: disposable,
       dailyPace: dailyPace,
-      recurringExpenses: List<DisposableBalanceRecurringExpense>.unmodifiable(
-        activeRecurring,
-      ),
-      debts: List<DisposableBalanceDebt>.unmodifiable(activeDebts),
       requiredActions: List<DisposableBalanceActionRecommendation>.unmodifiable(
         actions,
       ),

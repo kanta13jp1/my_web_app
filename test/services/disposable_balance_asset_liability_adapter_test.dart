@@ -65,10 +65,6 @@ void main() {
         result.debts.map((debt) => debt.name),
         contains('PayPayカード'),
       );
-      final payPayDebt = result.debts.singleWhere(
-        (debt) => debt.monthlyPayment == 17229,
-      );
-      expect(payPayDebt.dayOfMonth, 27);
     });
   });
 }

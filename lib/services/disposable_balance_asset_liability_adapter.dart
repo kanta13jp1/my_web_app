@@ -55,7 +55,6 @@ class DisposableBalanceAssetLiabilityAdapter {
           principal: row.balance.abs(),
           monthlyPayment: row.scheduledPaymentAmount,
           interestRate: row.annualRate,
-          dayOfMonth: row.paymentDay?.clamp(1, 31).toInt(),
           lastUpdated: lastUpdatedForDebt?.call(row),
         ),
       );
