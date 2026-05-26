@@ -34,6 +34,7 @@ import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
+import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
@@ -266,6 +267,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const SalarySpendingBreakdownService();
   final DisposableBalanceService _disposableBalanceService =
       const DisposableBalanceService();
+  final DisposableBalanceAssetLiabilityAdapter
+      _disposableBalanceAssetLiabilityAdapter =
+      const DisposableBalanceAssetLiabilityAdapter();
   final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
@@ -6540,6 +6544,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       cycleStart.day,
     );
     final recurringExpenses = <DisposableBalanceRecurringExpense>[];
+    final recurringExpenseKeys = <String>{};
+    void addRecurringExpense(DisposableBalanceRecurringExpense expense) {
+      if (expense.amount <= 0) {
+        return;
+      }
+      final normalizedName = expense.name.trim().toLowerCase();
+      final key =
+          '$normalizedName|${expense.dayOfMonth}|${expense.amount.round()}';
+      if (!recurringExpenseKeys.add(key)) {
+        return;
+      }
+      recurringExpenses.add(expense);
+    }
+
     for (final row in _subscriptionsThreeMonths) {
       final dueDate = DateTime.tryParse(row['due_date']?.toString() ?? '');
       if (dueDate == null) {
@@ -6554,7 +6572,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (amount <= 0) {
         continue;
       }
-      recurringExpenses.add(
+      addRecurringExpense(
         DisposableBalanceRecurringExpense(
           name: row['name']?.toString() ?? 'サブスク',
           amount: amount,
@@ -6584,20 +6602,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         transferTasks: _transferTasks,
         includeDefaultFixedPayments: true,
       );
-      for (final row in workbook.debtMasterRows) {
-        if (!row.isDirectCashflowTarget || row.scheduledPaymentAmount <= 0) {
-          continue;
-        }
-        debts.add(
-          DisposableBalanceDebt(
-            name: row.name,
-            principal: row.balance.abs(),
-            monthlyPayment: row.scheduledPaymentAmount,
-            interestRate: row.annualRate,
-            lastUpdated: DateTime.tryParse(_lastUpdatedDates[row.name] ?? ''),
-          ),
-        );
+      final assetLiabilityInputs =
+          _disposableBalanceAssetLiabilityAdapter.build(
+        workbook: workbook,
+        cycleStart: cycleStartOnly,
+        nextPayday: nextPayday,
+        lastUpdatedForDebt: (row) {
+          return DateTime.tryParse(_lastUpdatedDates[row.name] ?? '');
+        },
+      );
+      for (final expense in assetLiabilityInputs.recurringExpenses) {
+        addRecurringExpense(expense);
       }
+      debts.addAll(assetLiabilityInputs.debts);
     }
 
     return _disposableBalanceService.build(
