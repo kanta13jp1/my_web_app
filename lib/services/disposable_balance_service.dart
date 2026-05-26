@@ -118,8 +118,8 @@ class DisposableBalanceService {
       asOfDate: normalizedAsOf,
       salaryDay: normalizedSalaryDay,
     );
-    final daysRemaining = (nextPayday.difference(normalizedAsOf).inDays - 1)
-        .clamp(1, 366);
+    final daysRemaining =
+        (nextPayday.difference(normalizedAsOf).inDays - 1).clamp(1, 366);
 
     final sortedPayslips = payslips.toList(growable: false)
       ..sort((a, b) => b.payDate.compareTo(a.payDate));
@@ -131,16 +131,14 @@ class DisposableBalanceService {
         break;
       }
     }
-    final fallbackPayslip = sortedPayslips.isEmpty
-        ? null
-        : sortedPayslips.first;
+    final fallbackPayslip =
+        sortedPayslips.isEmpty ? null : sortedPayslips.first;
     final income = (currentPayslip ?? fallbackPayslip)?.netAmount ?? 0;
     final activeRecurring = recurringExpenses
         .where((expense) => expense.pausedAt == null)
         .toList(growable: false);
-    final activeDebts = debts
-        .where((debt) => debt.pausedAt == null)
-        .toList(growable: false);
+    final activeDebts =
+        debts.where((debt) => debt.pausedAt == null).toList(growable: false);
     final fixedTotal = activeRecurring.fold<double>(
       0,
       (sum, expense) => sum + expense.amount.abs(),
@@ -296,16 +294,15 @@ class DisposableBalanceService {
     final groups = <String, List<DisposableBalanceRecurringExpense>>{};
     for (final expense in expenses) {
       final name = expense.name.toLowerCase();
-      final group =
-          name.contains('spotify') ||
+      final group = name.contains('spotify') ||
               name.contains('apple music') ||
               name.contains('youtube music')
           ? 'music'
           : name.contains('netflix') ||
-                name.contains('hulu') ||
-                name.contains('disney')
-          ? 'video'
-          : null;
+                  name.contains('hulu') ||
+                  name.contains('disney')
+              ? 'video'
+              : null;
       if (group == null) continue;
       groups.putIfAbsent(group, () => <DisposableBalanceRecurringExpense>[]);
       groups[group]!.add(expense);
