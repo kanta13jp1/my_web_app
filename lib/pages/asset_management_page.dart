@@ -6722,11 +6722,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   label: '固定費',
                   value: '-${_formatYen(balance.fixedTotal)}',
                   color: const Color(0xFFB45309),
+                  tooltipMessage: _buildDisposableBalanceFixedTooltip(balance),
                 ),
                 _buildFlowPriorityMetric(
                   label: '返済',
                   value: '-${_formatYen(balance.debtTotal)}',
                   color: const Color(0xFFB91C1C),
+                  tooltipMessage: _buildDisposableBalanceDebtTooltip(balance),
                 ),
                 _buildFlowPriorityMetric(
                   label: '使える残高',
@@ -6814,6 +6816,58 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
+  }
+
+  String _buildDisposableBalanceFixedTooltip(DisposableBalanceResult balance) {
+    final rows = List<DisposableBalanceRecurringExpense>.from(
+      balance.recurringExpenses,
+    )..sort((a, b) {
+        final day = a.dayOfMonth.compareTo(b.dayOfMonth);
+        if (day != 0) return day;
+        return b.amount.compareTo(a.amount);
+      });
+    return _buildDisposableBalanceBreakdownTooltip(
+      title: '固定費内訳',
+      totalLabel: '固定費合計',
+      total: balance.fixedTotal,
+      lines: [
+        for (final row in rows)
+          '${row.dayOfMonth}日 ${row.name.trim().isEmpty ? '固定費' : row.name.trim()} ${_formatYen(row.amount)}',
+      ],
+    );
+  }
+
+  String _buildDisposableBalanceDebtTooltip(DisposableBalanceResult balance) {
+    final rows = List<DisposableBalanceDebt>.from(balance.debts)
+      ..sort((a, b) {
+        final day = (a.dayOfMonth ?? 99).compareTo(b.dayOfMonth ?? 99);
+        if (day != 0) return day;
+        return b.monthlyPayment.compareTo(a.monthlyPayment);
+      });
+    return _buildDisposableBalanceBreakdownTooltip(
+      title: '返済内訳',
+      totalLabel: '返済合計',
+      total: balance.debtTotal,
+      lines: [
+        for (final row in rows)
+          '${row.dayOfMonth == null ? '' : '${row.dayOfMonth}日 '}'
+              '${row.name.trim().isEmpty ? '返済' : row.name.trim()} ${_formatYen(row.monthlyPayment)}'
+              '${row.principal > 0 ? ' / 残高 ${_formatYen(row.principal)}' : ''}',
+      ],
+    );
+  }
+
+  String _buildDisposableBalanceBreakdownTooltip({
+    required String title,
+    required String totalLabel,
+    required double total,
+    required List<String> lines,
+  }) {
+    return <String>[
+      title,
+      if (lines.isEmpty) '対象なし' else ...lines,
+      '$totalLabel ${_formatYen(total)}',
+    ].join('\n');
   }
 
   Widget _buildDisposableBalanceActionRow({
@@ -7454,8 +7508,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required String label,
     required String value,
     required Color color,
+    String? tooltipMessage,
   }) {
-    return Container(
+    final metric = Container(
       constraints: const BoxConstraints(minWidth: 108),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -7485,6 +7540,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ],
       ),
+    );
+    if (tooltipMessage == null || tooltipMessage.trim().isEmpty) {
+      return metric;
+    }
+    return Tooltip(
+      message: tooltipMessage,
+      waitDuration: const Duration(milliseconds: 250),
+      showDuration: const Duration(seconds: 12),
+      preferBelow: false,
+      child: metric,
     );
   }
 
