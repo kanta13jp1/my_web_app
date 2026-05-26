@@ -300,6 +300,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isComputingDisposableBalance = false;
   Map<String, dynamic>? _serverDisposableBalanceResult;
   String? _disposableBalanceMessage;
+  String? _disposableBalanceBreakdownKey;
   final Set<String> _developerRequestIssueSubmissionKeys = <String>{};
   final Map<String, Map<String, dynamic>> _developerRequestIssueResults =
       <String, Map<String, dynamic>>{};
@@ -6652,6 +6653,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     final periodLabel = '${DateFormat('yyyy/MM/dd').format(balance.asOfDate)}〜'
         '${DateFormat('yyyy/MM/dd').format(balance.nextPayday.subtract(const Duration(days: 1)))}';
+    final breakdownMessage = switch (_disposableBalanceBreakdownKey) {
+      'fixed' => _buildDisposableBalanceFixedBreakdown(balance),
+      'debt' => _buildDisposableBalanceDebtBreakdown(balance),
+      _ => null,
+    };
 
     return Card(
       key: const Key('asset_disposable_balance_card'),
@@ -6722,11 +6728,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   label: '固定費',
                   value: '-${_formatYen(balance.fixedTotal)}',
                   color: const Color(0xFFB45309),
+                  isSelected: _disposableBalanceBreakdownKey == 'fixed',
+                  onHoverStart: () => _setDisposableBalanceBreakdown('fixed'),
+                  onHoverEnd: () => _clearDisposableBalanceBreakdown('fixed'),
                 ),
                 _buildFlowPriorityMetric(
                   label: '返済',
                   value: '-${_formatYen(balance.debtTotal)}',
                   color: const Color(0xFFB91C1C),
+                  isSelected: _disposableBalanceBreakdownKey == 'debt',
+                  onHoverStart: () => _setDisposableBalanceBreakdown('debt'),
+                  onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
                 ),
                 _buildFlowPriorityMetric(
                   label: '使える残高',
@@ -6742,6 +6754,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ],
             ),
+            if (breakdownMessage != null) ...[
+              const SizedBox(height: 10),
+              _buildDisposableBalanceBreakdownPanel(breakdownMessage),
+            ],
             const SizedBox(height: 14),
             Wrap(
               spacing: 8,
@@ -6812,6 +6828,113 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  String _buildDisposableBalanceFixedBreakdown(
+      DisposableBalanceResult balance) {
+    final rows = List<DisposableBalanceRecurringExpense>.from(
+      balance.recurringExpenses,
+    )..sort((a, b) {
+        final day = a.dayOfMonth.compareTo(b.dayOfMonth);
+        if (day != 0) return day;
+        return b.amount.compareTo(a.amount);
+      });
+    return _buildDisposableBalanceBreakdownText(
+      title: '固定費内訳',
+      totalLabel: '固定費合計',
+      total: balance.fixedTotal,
+      lines: [
+        for (final row in rows)
+          '${row.dayOfMonth}日 ${row.name.trim().isEmpty ? '固定費' : row.name.trim()} ${_formatYen(row.amount)}',
+      ],
+    );
+  }
+
+  String _buildDisposableBalanceDebtBreakdown(DisposableBalanceResult balance) {
+    final rows = List<DisposableBalanceDebt>.from(balance.debts)
+      ..sort((a, b) {
+        final day = (a.dayOfMonth ?? 99).compareTo(b.dayOfMonth ?? 99);
+        if (day != 0) return day;
+        return b.monthlyPayment.compareTo(a.monthlyPayment);
+      });
+    return _buildDisposableBalanceBreakdownText(
+      title: '返済内訳',
+      totalLabel: '返済合計',
+      total: balance.debtTotal,
+      lines: [
+        for (final row in rows)
+          '${row.dayOfMonth == null ? '' : '${row.dayOfMonth}日 '}'
+              '${row.name.trim().isEmpty ? '返済' : row.name.trim()} ${_formatYen(row.monthlyPayment)}'
+              '${row.principal > 0 ? ' / 残高 ${_formatYen(row.principal)}' : ''}',
+      ],
+    );
+  }
+
+  String _buildDisposableBalanceBreakdownText({
+    required String title,
+    required String totalLabel,
+    required double total,
+    required List<String> lines,
+  }) {
+    return <String>[
+      title,
+      if (lines.isEmpty) '対象なし' else ...lines,
+      '$totalLabel ${_formatYen(total)}',
+    ].join('\n');
+  }
+
+  void _setDisposableBalanceBreakdown(String key) {
+    if (_disposableBalanceBreakdownKey == key) {
+      return;
+    }
+    setState(() => _disposableBalanceBreakdownKey = key);
+  }
+
+  void _clearDisposableBalanceBreakdown(String key) {
+    if (_disposableBalanceBreakdownKey != key) {
+      return;
+    }
+    setState(() => _disposableBalanceBreakdownKey = null);
+  }
+
+  Widget _buildDisposableBalanceBreakdownPanel(String message) {
+    final lines = message.split('\n');
+    final title = lines.isEmpty ? '内訳' : lines.first;
+    final detailLines =
+        lines.length <= 1 ? const <String>[] : lines.skip(1).toList();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFECFDF5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFA7F3D0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF047857),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          for (final line in detailLines)
+            Text(
+              line,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF0F172A),
+                height: 1.5,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -7454,13 +7577,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required String label,
     required String value,
     required Color color,
+    bool isSelected = false,
+    VoidCallback? onHoverStart,
+    VoidCallback? onHoverEnd,
   }) {
-    return Container(
+    final metric = Container(
       constraints: const BoxConstraints(minWidth: 108),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
+        border: isSelected ? Border.all(color: color, width: 1.2) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -7484,6 +7611,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
         ],
+      ),
+    );
+    if (onHoverStart == null && onHoverEnd == null) {
+      return metric;
+    }
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => onHoverStart?.call(),
+      onExit: (_) => onHoverEnd?.call(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onHoverStart,
+        child: metric,
       ),
     );
   }
