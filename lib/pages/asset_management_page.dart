@@ -2508,21 +2508,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     bool completed,
   ) {
     setState(() {
+      var found = false;
+      final completedAt = completed ? DateTime.now() : null;
       _transferTasks = [
         for (final current in _transferTasks)
-          current.id == task.id
-              ? AssetLiabilityTransferTask(
-                  id: current.id,
-                  fromAccountId: current.fromAccountId,
-                  fromAccountName: current.fromAccountName,
-                  toAccountId: current.toAccountId,
-                  toAccountName: current.toAccountName,
-                  amount: current.amount,
-                  dueDate: current.dueDate,
-                  completed: completed,
-                  completedAt: completed ? DateTime.now() : null,
-                )
-              : current,
+          if (current.id == task.id)
+            () {
+              found = true;
+              return AssetLiabilityTransferTask(
+                id: current.id,
+                fromAccountId: current.fromAccountId,
+                fromAccountName: current.fromAccountName,
+                toAccountId: current.toAccountId,
+                toAccountName: current.toAccountName,
+                amount: current.amount,
+                dueDate: current.dueDate,
+                completed: completed,
+                completedAt: completedAt,
+              );
+            }()
+          else
+            current,
+        if (!found)
+          AssetLiabilityTransferTask(
+            id: task.id,
+            fromAccountId: task.fromAccountId,
+            fromAccountName: task.fromAccountName,
+            toAccountId: task.toAccountId,
+            toAccountName: task.toAccountName,
+            amount: task.amount,
+            dueDate: task.dueDate,
+            completed: completed,
+            completedAt: completedAt,
+          ),
       ]..sort(_compareTransferTasksByDueDate);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -2536,6 +2554,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
+
+  bool _isBuiltInTransferTask(AssetLiabilityTransferTask task) =>
+      task.id == AssetLiabilityPlanningService.auPayCardFundingTransferTaskId;
 
   void _deleteRecurringIncomeTemplate(String templateId) {
     final currentMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
@@ -12942,20 +12963,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildTransferSuggestionSection(AssetLiabilityWorkbook workbook) {
-    if (workbook.transferSuggestions.isEmpty && _transferTasks.isEmpty) {
+    if (workbook.transferSuggestions.isEmpty &&
+        workbook.transferTasks.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final activeTasks = _transferTasks
+    final activeTasks = workbook.transferTasks
         .where((task) => !task.completed)
         .toList(growable: false)
       ..sort(_compareTransferTasksByDueDate);
-    final completedTasks = _transferTasks
+    final completedTasks = workbook.transferTasks
         .where((task) => task.completed)
         .toList(growable: false)
       ..sort(_compareTransferTasksByDueDate);
 
     Widget buildTaskRow(AssetLiabilityTransferTask task) {
+      final isBuiltIn = _isBuiltInTransferTask(task);
       final dueLabel = task.dueDate == null
           ? 'No due date'
           : DateFormat('M/d').format(task.dueDate!);
@@ -12985,9 +13008,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
             IconButton(
-              tooltip: 'Delete transfer task',
+              tooltip: isBuiltIn ? '定例振替' : '振替タスクを削除',
               icon: const Icon(Icons.delete_outline, size: 18),
-              onPressed: () => _deleteTransferTask(task.id),
+              onPressed: isBuiltIn ? null : () => _deleteTransferTask(task.id),
             ),
           ],
         ),
