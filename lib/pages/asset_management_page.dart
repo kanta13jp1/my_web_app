@@ -4810,7 +4810,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _payslipSalaryIncomes = <Map<String, dynamic>>[];
         _isLoadingPayslipFinance = false;
         _payslipIngestionMessage =
-            'Payslip tables are not ready yet. Apply the latest migration, then reload.';
+            '給与明細テーブルの準備がまだです。最新マイグレーション適用後に再読み込みしてください。';
       });
     }
   }
@@ -4820,16 +4820,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sign in before uploading a payslip PDF.'),
-        ),
+        const SnackBar(content: Text('給与明細PDFをアップロードする前にログインしてください。')),
       );
       return;
     }
 
     setState(() {
       _isUploadingPayslip = true;
-      _payslipIngestionMessage = 'Waiting for PDF selection...';
+      _payslipIngestionMessage = 'PDFの選択を待っています...';
     });
     try {
       final result = await FilePicker.pickFiles(
@@ -4850,7 +4848,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final file = result.files.single;
       final bytes = file.bytes;
       if (bytes == null || bytes.isEmpty) {
-        throw Exception('PDF bytes were empty.');
+        throw Exception('PDFの中身が空でした。');
       }
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final fileName = _safePayslipStorageFileName(file.name);
@@ -4879,8 +4877,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return;
       setState(() {
         _payslipIngestionMessage = status == 'needs_review'
-            ? 'Payslip was imported but needs review because confidence was low.'
-            : 'Payslip imported and salary income was auto-filled.';
+            ? '給与明細を取り込みました。信頼度が低いため確認してください。'
+            : '給与明細を取り込み、給料収入へ反映しました。';
       });
       await _loadPayslipFinanceData();
       unawaited(_computeDisposableBalanceFromServer(enableAiActions: false));
@@ -4888,11 +4886,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('Error uploading payslip PDF: $e');
       if (!mounted) return;
       setState(() {
-        _payslipIngestionMessage = 'Payslip upload failed: $e';
+        _payslipIngestionMessage = '給与明細のアップロードに失敗しました: $e';
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Payslip upload failed: $e')));
+      ).showSnackBar(SnackBar(content: Text('給与明細のアップロードに失敗しました: $e')));
     } finally {
       if (mounted) {
         setState(() => _isUploadingPayslip = false);
@@ -4908,7 +4906,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (userId == null) return;
     setState(() {
       _isComputingDisposableBalance = true;
-      _disposableBalanceMessage = 'Computing disposable balance...';
+      _disposableBalanceMessage = '可処分残高を計算しています...';
     });
     try {
       final response = await _supabase.functions.invoke(
@@ -4926,14 +4924,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _serverDisposableBalanceResult =
             data is Map ? Map<String, dynamic>.from(data) : null;
-        _disposableBalanceMessage = 'Disposable balance refreshed.';
+        _disposableBalanceMessage = '可処分残高を更新しました。';
       });
     } catch (e) {
       debugPrint('Error computing disposable balance: $e');
       if (!mounted) return;
       setState(() {
-        _disposableBalanceMessage =
-            'Server balance is unavailable; showing local estimate.';
+        _disposableBalanceMessage = 'サーバー計算を利用できないため、端末側の概算を表示しています。';
       });
     } finally {
       if (mounted) {
@@ -6373,6 +6370,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final incomes = <SalaryIncomeEntry>[];
     final cardBillingMarkers = <String>{};
 
+    bool hasIncomeEntry(DateTime date, double amount) {
+      final rowKey = '${_dateOnly(date)}:${amount.round()}';
+      return incomes.any(
+        (entry) => '${_dateOnly(entry.date)}:${entry.amount.round()}' == rowKey,
+      );
+    }
+
+    void addIncomeEntry({
+      required DateTime date,
+      required double amount,
+      required String description,
+    }) {
+      if (amount <= 0 || hasIncomeEntry(date, amount)) {
+        return;
+      }
+      incomes.add(
+        SalaryIncomeEntry(
+          date: date,
+          amount: amount,
+          description: description.trim().isEmpty ? '収入' : description.trim(),
+        ),
+      );
+    }
+
     for (final line in _cardStatementLines) {
       final postedAt = line.postedAt;
       if (postedAt == null) {
@@ -6438,12 +6459,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     for (final plan in _monthlyIncomePlans) {
-      incomes.add(
-        SalaryIncomeEntry(
-          date: plan.date,
-          amount: plan.amount,
-          description: plan.name,
-        ),
+      addIncomeEntry(
+        date: plan.date,
+        amount: plan.amount,
+        description: plan.name,
       );
     }
 
@@ -6453,19 +6472,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (payDate == null || amount <= 0) {
         continue;
       }
-      final rowKey = '${_dateOnly(payDate)}:${amount.round()}';
-      final alreadyLoaded = incomes.any(
-        (entry) => '${_dateOnly(entry.date)}:${entry.amount.round()}' == rowKey,
+      final description = row['description']?.toString().trim() ?? '';
+      addIncomeEntry(
+        date: payDate,
+        amount: amount,
+        description: description.isEmpty ? '給与明細' : '給与明細: $description',
       );
-      if (alreadyLoaded) {
+    }
+
+    for (final row in _payslipRows) {
+      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
+      final amount = _numberFromDynamic(row['net_amount']);
+      if (payDate == null || amount <= 0) {
         continue;
       }
-      incomes.add(
-        SalaryIncomeEntry(
-          date: payDate,
-          amount: amount,
-          description: row['description']?.toString() ?? 'payslip salary',
-        ),
+      final companyName = row['company_name']?.toString().trim() ?? '';
+      addIncomeEntry(
+        date: payDate,
+        amount: amount,
+        description: companyName.isEmpty ? '給与明細' : '給与明細: $companyName',
       );
     }
 
@@ -6495,7 +6520,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         DisposableBalancePayslip(
           payDate: salaryBreakdown.periodStart,
           netAmount: salaryBreakdown.salaryIncomeTotal,
-          companyName: 'local income',
+          companyName: '収入入力',
           confidence: 0.5,
         ),
       );
@@ -6523,7 +6548,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       recurringExpenses.add(
         DisposableBalanceRecurringExpense(
-          name: row['name']?.toString() ?? 'subscription',
+          name: row['name']?.toString() ?? 'サブスク',
           amount: amount,
           dayOfMonth: dueDate.day.clamp(1, 28).toInt(),
           category: 'subscription',
@@ -6596,8 +6621,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         )
         .toList(growable: false);
     final actions = serverActions.isNotEmpty ? serverActions : localActions;
-    final periodLabel =
-        '${DateFormat('yyyy/MM/dd').format(balance.asOfDate)} - '
+    final periodLabel = '${DateFormat('yyyy/MM/dd').format(balance.asOfDate)}〜'
         '${DateFormat('yyyy/MM/dd').format(balance.nextPayday.subtract(const Duration(days: 1)))}';
 
     return Card(
@@ -6634,7 +6658,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Disposable balance until payday',
+                        '給料日までの可処分残高',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -6643,7 +6667,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$periodLabel / ${balance.daysRemaining} days. Income comes from payslips when available.',
+                        '$periodLabel / 残り${balance.daysRemaining}日。収入は給与明細の解析結果を優先します。',
                         style: TextStyle(
                           fontSize: 12,
                           height: 1.5,
@@ -6661,29 +6685,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               runSpacing: 10,
               children: [
                 _buildFlowPriorityMetric(
-                  label: 'Income',
+                  label: '収入',
                   value: _formatYen(balance.income),
                   color: const Color(0xFF0F766E),
                 ),
                 _buildFlowPriorityMetric(
-                  label: 'Fixed',
+                  label: '固定費',
                   value: '-${_formatYen(balance.fixedTotal)}',
                   color: const Color(0xFFB45309),
                 ),
                 _buildFlowPriorityMetric(
-                  label: 'Debt',
+                  label: '返済',
                   value: '-${_formatYen(balance.debtTotal)}',
                   color: const Color(0xFFB91C1C),
                 ),
                 _buildFlowPriorityMetric(
-                  label: 'Usable',
+                  label: '使える残高',
                   value: _formatSignedYen(balance.disposable),
                   color: balance.disposable >= 0
                       ? const Color(0xFF065F46)
                       : const Color(0xFF7F1D1D),
                 ),
                 _buildFlowPriorityMetric(
-                  label: 'Daily pace',
+                  label: '1日あたり',
                   value: _formatSignedYen(balance.dailyPace),
                   color: const Color(0xFF2563EB),
                 ),
@@ -6704,7 +6728,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.upload_file_outlined),
-                  label: const Text('Upload payslip PDF'),
+                  label: const Text('給与明細PDFをアップロード'),
                 ),
                 OutlinedButton.icon(
                   onPressed: _isComputingDisposableBalance
@@ -6717,7 +6741,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.auto_awesome_outlined),
-                  label: const Text('Refresh AI actions'),
+                  label: const Text('AI提案を更新'),
                 ),
               ],
             ),
@@ -6727,7 +6751,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 10),
               Text(
                 _isLoadingPayslipFinance
-                    ? 'Loading payslip source data...'
+                    ? '給与明細データを読み込んでいます...'
                     : (_payslipIngestionMessage ??
                         _disposableBalanceMessage ??
                         ''),
@@ -6741,7 +6765,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 14),
             if (actions.isEmpty)
               Text(
-                'No required action. Keep the current spending pace.',
+                '必要なアクションはありません。今の支出ペースを維持しましょう。',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.5,
@@ -6767,9 +6791,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required int index,
     required Map<String, dynamic> action,
   }) {
-    final title = action['title']?.toString().trim() ?? '';
-    final instruction = action['instruction']?.toString().trim() ?? '';
+    final actionKey =
+        (action['action_key'] ?? action['actionKey'])?.toString().trim() ?? '';
+    final rawTitle = action['title']?.toString().trim() ?? '';
+    final rawInstruction = action['instruction']?.toString().trim() ?? '';
     final impact = _numberFromDynamic(action['amount_impact']);
+    final title = _localizedDisposableActionTitle(actionKey, rawTitle);
+    final instruction = _localizedDisposableActionInstruction(
+      actionKey,
+      rawTitle,
+      rawInstruction,
+      impact,
+    );
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
@@ -6796,7 +6829,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title.isEmpty ? 'Recommended action' : title,
+                  title.isEmpty ? 'おすすめアクション' : title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     height: 1.4,
@@ -6813,7 +6846,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 if (impact > 0)
                   Text(
-                    'Impact: ${_formatYen(impact)}',
+                    '効果目安: ${_formatYen(impact)}',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -6826,6 +6859,73 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  String _localizedDisposableActionTitle(String actionKey, String rawTitle) {
+    if (actionKey == 'upload_current_payslip') {
+      return '今月の給与明細が未登録です';
+    }
+    if (actionKey == 'add_recurring_expenses') {
+      return '固定費が未登録です';
+    }
+    if (actionKey.startsWith('refresh_debt_')) {
+      final staleDebtName = _englishStaleDebtName(rawTitle);
+      if (staleDebtName != null && staleDebtName.isNotEmpty) {
+        return '$staleDebtNameの残高が古くなっています';
+      }
+      return rawTitle.isEmpty ? '借入残高を更新してください' : rawTitle;
+    }
+    if (actionKey.startsWith('cancel_duplicate_')) {
+      final group = actionKey.substring('cancel_duplicate_'.length);
+      return '${_duplicateSubscriptionLabel(group)}サブスクが重複しています';
+    }
+    return rawTitle;
+  }
+
+  String _localizedDisposableActionInstruction(
+    String actionKey,
+    String rawTitle,
+    String rawInstruction,
+    double impact,
+  ) {
+    if (actionKey == 'upload_current_payslip') {
+      return '最新の給与明細PDFをアップロードして、収入を明細データで計算してください（約10秒）。';
+    }
+    if (actionKey == 'add_recurring_expenses') {
+      return '家賃・公共料金・サブスクを固定費として登録してください（約180秒）。';
+    }
+    if (actionKey.startsWith('refresh_debt_')) {
+      final debtName = _englishStaleDebtName(rawTitle);
+      final subject = debtName == null || debtName.isEmpty ? '借入' : debtName;
+      return '返済順を決める前に、$subjectの現在残高を入力してください（約60秒）。';
+    }
+    if (actionKey.startsWith('cancel_duplicate_')) {
+      final group = actionKey.substring('cancel_duplicate_'.length);
+      final label = _duplicateSubscriptionLabel(group);
+      final impactLabel =
+          impact > 0 ? '毎月${_formatYen(impact)}を削減できます' : '毎月の固定費を削減できます';
+      return '$labelサブスクを1つに絞ると、$impactLabel（約120秒）。';
+    }
+    return rawInstruction;
+  }
+
+  String? _englishStaleDebtName(String rawTitle) {
+    const suffix = ' balance is stale';
+    final lowerTitle = rawTitle.toLowerCase();
+    if (!lowerTitle.endsWith(suffix)) {
+      return null;
+    }
+    return rawTitle.substring(0, rawTitle.length - suffix.length).trim();
+  }
+
+  String _duplicateSubscriptionLabel(String group) {
+    switch (group) {
+      case 'music':
+        return '音楽';
+      case 'video':
+        return '動画';
+    }
+    return group.isEmpty ? '対象' : group;
   }
 
   Widget _buildSalarySpendingBreakdownCard() {

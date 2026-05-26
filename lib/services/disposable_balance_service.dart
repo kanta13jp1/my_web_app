@@ -215,9 +215,8 @@ class DisposableBalanceService {
         DisposableBalanceActionRecommendation(
           actionKey: 'upload_current_payslip',
           priority: actions.length + 1,
-          title: 'Current payslip is missing',
-          instruction:
-              'Upload the latest payslip PDF so income uses source data (10 sec).',
+          title: '今月の給与明細が未登録です',
+          instruction: '最新の給与明細PDFをアップロードして、収入を明細データで計算してください（約10秒）。',
           estimatedSeconds: 10,
           amountImpact: fallbackPayslip?.netAmount ?? 0,
           category: 'data_gap',
@@ -229,9 +228,8 @@ class DisposableBalanceService {
         DisposableBalanceActionRecommendation(
           actionKey: 'add_recurring_expenses',
           priority: actions.length + 1,
-          title: 'Fixed expenses are not registered',
-          instruction:
-              'Add rent, utilities, and subscriptions as recurring expenses (180 sec).',
+          title: '固定費が未登録です',
+          instruction: '家賃・公共料金・サブスクを固定費として登録してください（約180秒）。',
           estimatedSeconds: 180,
           amountImpact: 0,
           category: 'data_gap',
@@ -247,9 +245,8 @@ class DisposableBalanceService {
           DisposableBalanceActionRecommendation(
             actionKey: 'refresh_debt_${_slugify(debt.name)}',
             priority: actions.length + 1,
-            title: '${debt.name} balance is stale',
-            instruction:
-                'Enter the current ${debt.name} balance before deciding repayment order (60 sec).',
+            title: '${debt.name}の残高が古くなっています',
+            instruction: '返済順を決める前に、${debt.name}の現在残高を入力してください（約60秒）。',
             estimatedSeconds: 60,
             amountImpact: debt.monthlyPayment,
             category: 'debt_refresh',
@@ -264,9 +261,9 @@ class DisposableBalanceService {
         DisposableBalanceActionRecommendation(
           actionKey: 'cancel_duplicate_${duplicate.group}',
           priority: actions.length + 1,
-          title: '${duplicate.group} subscriptions overlap',
+          title: '${_duplicateGroupLabel(duplicate.group)}サブスクが重複しています',
           instruction:
-              'Choose one ${duplicate.group} subscription and cancel the other (${duplicate.savings.round()} JPY/month, 120 sec).',
+              '${_duplicateGroupLabel(duplicate.group)}サブスクを1つに絞ると、毎月${duplicate.savings.round()}円を削減できます（約120秒）。',
           estimatedSeconds: 120,
           amountImpact: duplicate.savings,
           category: 'savings',
@@ -339,6 +336,16 @@ class DisposableBalanceService {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
     return slug.isEmpty ? 'debt' : slug;
+  }
+
+  static String _duplicateGroupLabel(String group) {
+    switch (group) {
+      case 'music':
+        return '音楽';
+      case 'video':
+        return '動画';
+    }
+    return group;
   }
 }
 
