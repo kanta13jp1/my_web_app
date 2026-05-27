@@ -1,16 +1,17 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-26T21:54:59Z`
-- Previous check: `2026-05-25T21:42:53Z`
-- Changed/new official sources: `5`
+- Checked at: `2026-05-27T21:56:51Z`
+- Previous check: `2026-05-26T21:54:59Z`
+- Changed/new official sources: `6`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.150 / May 23, 2026
+- `changed` Claude Code changelog: 2.1.152 / May 27, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa
 - `changed` Codex changelog: 2026-05-26 / Codex CLI 0.134.0 pre
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
 - `changed` Cursor changelog: 3.5 / May 20, 2026
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.82.0 / May 14, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -22,7 +23,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.150 / May 23, 2026
+  - Latest signal: 2.1.152 / May 27, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -59,7 +60,7 @@
   - Latest signal: 3.5 / May 20, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
-  - Short signal: 3.5 May 20, 2026 · Changelog Improvements to Cursor Automations This release brings Cursor Automations to the Agents Window and introduces the ability to configure automations...
+  - Short signal: # /loop skill With /loop, Cursor can run a prompt repeatedly on a local schedule, until a certain outcome is achieved, or until you stop it.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.82.0 / May 14, 2026
