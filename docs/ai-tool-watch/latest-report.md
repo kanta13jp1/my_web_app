@@ -1,17 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-27T21:56:51Z`
-- Previous check: `2026-05-26T21:54:59Z`
-- Changed/new official sources: `6`
+- Checked at: `2026-05-28T21:56:45Z`
+- Previous check: `2026-05-27T21:56:51Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.152 / May 27, 2026
+- `changed` Claude Code changelog: 2.1.154 / May 28, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `changed` Codex changelog: 2026-05-26 / Codex CLI 0.134.0 pre
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa
+- `changed` Codex changelog: 2026-05-28 / Codex CLI 0.135.0 pre
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Cursor changelog: 3.5 / May 20, 2026
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.82.0 / May 14, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -23,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.152 / May 27, 2026
+  - Latest signal: 2.1.154 / May 28, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -41,10 +40,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-26 / Codex CLI 0.134.0 pre
+  - Latest signal: 2026-05-28 / Codex CLI 0.135.0 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: ( #23519 , #23921 ) Made --profile the primary profile selector across CLI, TUI permissions, and sandbox flows, with legacy profile configs rejected through migration guidance.
+  - Short signal: ( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-27T21:56:53Z",
+  "generated_at": "2026-05-28T21:56:48Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,9 +20,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-b556df1f1446",
+        "entry_id": "nf-8833137e1934",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.152 / May 27, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.152 May 27, 2026 /code-review --fix now applies review findings to your working tree after the review, surfacing reuse, simplification, and efficiency suggestions;...",
+        "text": "Claude Code changelog 2.1.154 / May 28, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . Now defaults to high effort · /effort xhigh for your hardest tasks Introducing dynamic workflows: ask Claude to create a workflow and it orchestrates work across tens to...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "13048a92193c996a36d902cad197e6ca9f1a924b14b85ddb48114165510752ca",
+          "hash": "8c905009f25b1e62f3ea6a9831e730d58f4d9e45dd0ebe174ca4425b6fd72210",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.152 / May 27, 2026",
+          "latest_signal": "2.1.154 / May 28, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "bb24527fd2d800c2d51f92f1508ef0338e7cbe03b9b6015b3c8f22a8d58c062b",
+          "previous_hash": "13048a92193c996a36d902cad197e6ca9f1a924b14b85ddb48114165510752ca",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.152 May 27, 2026 /code-review --fix now applies review findings to your working tree after the review, surfacing reuse, simplification, and efficiency suggestions;..."
+            "Now defaults to high effort · /effort xhigh for your hardest tasks Introducing dynamic workflows: ask Claude to create a workflow and it orchestrates work across tens to..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-b556df1f1446",
+        "entry_id": "nf-8833137e1934",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -119,7 +119,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "62d73c0fe094512eda57c0332862d93ee3ddadb85424ec8cf7b8fde2a46e3557",
+          "hash": "945cc4ed4ca0b6dc15e2bf2152cd25ac03fbe666ac0b61f667a2bc31ff6687c1",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -156,7 +156,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "d624e97c28f452ace794aa237fc9ba15bebb8ac0ec52f5fdc2474d86eb5bbc23",
+          "previous_hash": "62d73c0fe094512eda57c0332862d93ee3ddadb85424ec8cf7b8fde2a46e3557",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -194,10 +194,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "6dac13d60ea848a604413c924436b4d07e905c55b54cdb8cfb20d11b6445fc93",
+          "hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -260,9 +260,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-ae94e79b7200",
+        "entry_id": "nf-dea00a50d1fc",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-05-26 / Codex CLI 0.134.0 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #23519 , #23921 ) Made --profile the primary profile selector across CLI, TUI permissions, and sandbox flows, with legacy profile configs rejected through migration guidance. ( #23708 , #23883 , #23890 , #24051 , #24055 , #24059 , #24067 , #24110 ) Improved MCP setup with per-server environment targeting and OAuth options for streamable HTTP servers.",
+        "text": "Codex changelog 2026-05-28 / Codex CLI 0.135.0 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles. ( #23756 , #24171 ) The Python SDK now exposes friendly Sandbox presets for thread and turn APIs.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -271,7 +271,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "82a21ee4439a0055b2a666263d982a2a0098b7e5b5aa66b40f41864bfb5f2a14",
+          "hash": "0a3d1ee0a54a13881d8270b89fe61538146818e8736e3a229709d51e96a9e229",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -316,22 +316,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-05-26 / Codex CLI 0.134.0 pre",
+          "latest_signal": "2026-05-28 / Codex CLI 0.135.0 pre",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "7cbdf9cdbb2c405338bf357211fa1b3ee17249e8fbb81521a7f377f6ce0ecf5f",
+          "previous_hash": "82a21ee4439a0055b2a666263d982a2a0098b7e5b5aa66b40f41864bfb5f2a14",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "( #23519 , #23921 ) Made --profile the primary profile selector across CLI, TUI permissions, and sandbox flows, with legacy profile configs rejected through migration guidance.",
-            "( #23708 , #23883 , #23890 , #24051 , #24055 , #24059 , #24067 , #24110 ) Improved MCP setup with per-server environment targeting and OAuth options for streamable HTTP servers."
+            "( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles.",
+            "( #23756 , #24171 ) The Python SDK now exposes friendly Sandbox presets for thread and turn APIs."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-ae94e79b7200",
+        "entry_id": "nf-dea00a50d1fc",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -360,7 +360,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "531bfd7e22ac09bc6cbd007351b33cc53fccebcd51b06cb617cdaf8545cca653",
+          "hash": "fb339c38427f0852cc75a4ec977e3cd33d201f5d405d2b2aba3f267582c64309",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -400,7 +400,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "7db564bb4274aa2c92a4f869e7edb2137a827a406973b41955294ce469710282",
+          "previous_hash": "531bfd7e22ac09bc6cbd007351b33cc53fccebcd51b06cb617cdaf8545cca653",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -481,7 +481,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "9f13619e88c21e7b31f418236d70c61ccee0ec64e064a1c1b673b03585bc6ef4",
@@ -511,7 +511,7 @@
           "latest_signal": "3.5 / May 20, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "7b71962473696c25040223356574fe448182b8fbd310f3324d247bc9846707ff",
+          "previous_hash": "9f13619e88c21e7b31f418236d70c61ccee0ec64e064a1c1b673b03585bc6ef4",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
@@ -552,7 +552,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
@@ -580,7 +580,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.82.0 / May 14, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "dc44991b04c930d112113135d848a3cffb1049de9316a72d1ba7d679bfc1f220",
+          "previous_hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
