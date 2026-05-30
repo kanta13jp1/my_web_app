@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_management_ai_provider_router.dart';
@@ -57,11 +58,23 @@ void main() {
       expect(capturedBody?['tier'], 'performance');
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
-        capturedBody?['message'].toString().contains('計算済みインサイトの安全化ペイロード'),
+        capturedBody?['message'].toString().contains('AIに渡す詳細ペイロード'),
         true,
       );
       expect(
         capturedBody?['message'].toString().contains('必ず自然な日本語だけで回答してください'),
+        true,
+      );
+      expect(
+        capturedBody?['message'].toString().contains('細木数子'),
+        true,
+      );
+      expect(
+        capturedBody?['message'].toString().contains('負債マスタ詳細'),
+        true,
+      );
+      expect(
+        capturedBody?['message'].toString().contains('今月の支払いと利息'),
         true,
       );
       expect(
@@ -70,7 +83,7 @@ void main() {
       );
       expect(
         capturedBody?['message'].toString().contains(
-              '"external_ai_may_recalculate_amounts":false',
+              '"external_ai_receives_exact_account_data":true',
             ),
         true,
       );
@@ -80,8 +93,17 @@ void main() {
             ),
         true,
       );
-      expect(capturedBody?['message'].toString().contains('50,000'), false);
-      expect(capturedBody?['message'].toString().contains('50000'), false);
+      expect(
+        capturedBody?['message'].toString().contains(
+              '"external_ai_may_reference_exact_money_values":true',
+            ),
+        true,
+      );
+      expect(capturedBody?['message'].toString().contains('50,000'), true);
+      expect(capturedBody?['message'].toString().contains('50000'), true);
+      expect(capturedBody?['message'].toString().contains('PayPay'), true);
+      expect(capturedBody?['message'].toString().contains('職業: 自営業'), true);
+      expect(capturedBody?['message'].toString().contains('年収'), true);
       expect(capturedBody?['provider_choice_reason'], contains('summary'));
       expect(capturedBody?['routing_use_case'], 'summary');
     });
@@ -186,20 +208,37 @@ void main() {
     );
 
     test(
-      'ai-safe payload keeps exact money values out of external AI context',
+      'ai detailed payload includes exact account and debt values',
       () {
         final service = AssetManagementAiSummaryService(
           now: () => DateTime(2026, 5, 1, 12),
         );
 
-        final payload = service.buildAiSafePayload(_report());
+        final payload = service.buildAiDetailedPayload(_emergencyReport());
         final encoded = payload.toString();
 
-        expect(encoded.contains('50000'), false);
-        expect(encoded.contains('20000'), false);
-        expect(encoded.contains('available_money_bands'), true);
+        expect(encoded.contains('50000'), true);
+        expect(encoded.contains('200000'), true);
+        expect(encoded.contains('PayPay'), true);
+        expect(encoded.contains('自営業'), true);
+        expect(encoded.contains('annual_income'), true);
+        expect(encoded.contains('favorite_foods'), true);
+        expect(encoded.contains('debt_master_rows'), true);
+        expect(encoded.contains('minimum_payment_estimate'), true);
+        expect(encoded.contains('scheduled_payment_amount'), true);
+        expect(encoded.contains('annual_rate'), true);
+        expect(encoded.contains('monthly_interest_estimate'), true);
+        expect(encoded.contains('liability_share'), true);
+        expect(encoded.contains('available_money'), true);
+        expect(encoded.contains('personal_context_signals'), true);
+        expect(encoded.contains('priority_situation_cards'), true);
+        expect(encoded.contains('recommended_next_step'), true);
         expect(
-          encoded.contains('external_ai_payload_redacts_exact_money_values'),
+          encoded.contains('external_ai_receives_exact_account_data'),
+          true,
+        );
+        expect(
+          encoded.contains('external_ai_receives_exact_profile_data'),
           true,
         );
       },
@@ -233,16 +272,26 @@ void main() {
       final today = available['today'] as Map<String, dynamic>;
       final guardrails = payload['guardrails'] as Map<String, dynamic>;
       final emergencyAdvices = payload['emergency_advices'] as List<dynamic>;
+      final workbook = payload['workbook'] as Map<String, dynamic>;
+      final profile = payload['user_profile'] as Map<String, dynamic>;
+      final debtRows = workbook['debt_master_rows'] as List<dynamic>;
 
-      expect(payload.containsKey('workbook'), false);
+      expect(payload.containsKey('workbook'), true);
+      expect(debtRows, isNotEmpty);
+      expect(profile['occupation'], '自営業');
+      expect(profile['annual_income'], 452815 * 12);
       expect(today['available_amount'], report.todayAvailable.availableAmount);
       expect(payload['action_items'] is List<dynamic>, true);
       expect(payload['movement_suggestions'] is List<dynamic>, true);
       expect(emergencyAdvices.length, report.emergencyAdvices.length);
       expect(payload['developer_requests'] is List<dynamic>, true);
       expect(guardrails['calculation_owner'], 'dart_service');
-      expect(guardrails['external_ai_may_summarize_only'], true);
-      expect(guardrails['external_ai_may_recalculate_amounts'], false);
+      expect(guardrails['external_ai_receives_exact_account_data'], true);
+      expect(guardrails['external_ai_receives_exact_profile_data'], true);
+      expect(
+        guardrails['external_ai_may_reference_account_names'],
+        true,
+      );
       expect(guardrails['must_not_recommend_starvation_or_water_only'], true);
     });
 
@@ -289,7 +338,11 @@ AssetManagementInsightReport _report() {
     monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
     paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
   );
-  return insight.buildReport(workbook: workbook, minimumSafetyBalance: 10000);
+  return insight.buildReport(
+    workbook: workbook,
+    userProfile: _userProfile(),
+    minimumSafetyBalance: 10000,
+  );
 }
 
 AssetManagementInsightReport _emergencyReport() {
@@ -301,5 +354,30 @@ AssetManagementInsightReport _emergencyReport() {
     monthlyPaymentOverrides: const <String, double>{'paypay_card': 200000},
     paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
   );
-  return insight.buildReport(workbook: workbook, minimumSafetyBalance: 10000);
+  return insight.buildReport(
+    workbook: workbook,
+    userProfile: _userProfile(),
+    minimumSafetyBalance: 10000,
+  );
+}
+
+UserProfile _userProfile() {
+  return UserProfile(
+    userId: 'user-1',
+    displayName: 'kanta',
+    bio: '借金を減らして生活を立て直したい',
+    location: '東京都',
+    birthDate: DateTime(1978, 9, 30),
+    targetDeathAge: 85,
+    gender: '男',
+    occupation: '自営業',
+    annualIncome: 452815 * 12,
+    address: '東京都豊島区',
+    education: '大学卒',
+    careerHistory: '営業、Web開発、個人事業',
+    hobbies: 'AIツール検証、音楽',
+    alcoholUse: '時々',
+    smokingUse: '吸わない',
+    favoriteFoods: 'カレー、焼肉',
+  );
 }

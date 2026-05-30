@@ -1,4 +1,5 @@
 import '../models/asset_liability_workbook.dart';
+import '../models/user_profile.dart';
 
 enum AssetManagementInsightActionType {
   missingInput,
@@ -112,6 +113,8 @@ class AssetManagementEmergencyAdvice {
 }
 
 class AssetManagementInsightReport {
+  final AssetLiabilityWorkbook workbook;
+  final UserProfile? userProfile;
   final List<AssetManagementInsightActionItem> actionItems;
   final AssetManagementAvailableMoneyInsight todayAvailable;
   final AssetManagementAvailableMoneyInsight weekAvailable;
@@ -121,6 +124,8 @@ class AssetManagementInsightReport {
   final List<AssetManagementDeveloperRequest> developerRequests;
 
   const AssetManagementInsightReport({
+    required this.workbook,
+    this.userProfile,
     required this.actionItems,
     required this.todayAvailable,
     required this.weekAvailable,
@@ -153,6 +158,7 @@ class AssetManagementInsightService {
 
   AssetManagementInsightReport buildReport({
     required AssetLiabilityWorkbook workbook,
+    UserProfile? userProfile,
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
   }) {
@@ -201,6 +207,8 @@ class AssetManagementInsightService {
     );
 
     return AssetManagementInsightReport(
+      workbook: workbook,
+      userProfile: userProfile,
       actionItems: actions,
       todayAvailable: today,
       weekAvailable: week,
@@ -868,6 +876,10 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String buildRedactedPrompt(AssetManagementInsightReport report) {
+    return buildDetailedAdvicePrompt(report);
+  }
+
+  String buildDetailedAdvicePrompt(AssetManagementInsightReport report) {
     final severityCounts = _countBy(
       report.actionItems.map((item) => item.severity.name),
     );
@@ -880,23 +892,89 @@ class AssetManagementInsightPromptBuilder {
     final developerCounts = _countBy(
       report.developerRequests.map((item) => item.severity.name),
     );
+    final workbook = report.workbook;
     final buffer = StringBuffer()
-      ..writeln('あなたは資産管理AIアシスタントです。')
+      ..writeln('あなたは「細木数子」を彷彿とさせる、ズバズバ断言型の資産管理アシスタントです。')
       ..writeln(
-        '重要: 金額計算はDart側で完了しています。下記の安全化された分類だけを使い、'
-        '推測・再計算・正確な残高の追加要求はしないでください。',
+        '役割: 厳しめ、でも本質的には愛情のある生活再建メンターとして、ユーザーの資産・負債・支払予定・利息から個別事情を読み取り、'
+        '曖昧な一般論ではなく「あんたは今これを先にやるのよ」と言い切ってください。',
+      )
+      ..writeln(
+        '口調: 「いい？」「あんたね」「ここははっきり言うわよ」「〜なのよ」を使い、少し怖いくらいハッキリ言う。'
+        '人生経験豊富な姐御感、時々笑える毒舌、悪いことも包み隠さないが、最後は前向きに導いてください。',
+      )
+      ..writeln(
+        '占いスタイル: 四柱推命・六星占術風の運命周期・宿命・性格分析のような語り口を、お金の流れ、仕事運、生活習慣、今後3〜5年の立て直し方に重ねてください。',
+      )
+      ..writeln(
+        '重要: 金額計算はDart側で完了しています。下記の詳細データを正として、口座名・残高・支払日・支払額・利率・月利息・負債割合を具体的に引用してください。'
+        '再計算する場合は「概算」と明記し、Dart計算値と矛盾する断定はしないでください。',
       )
       ..writeln('出力は必ず日本語だけにしてください。見出し、ラベル、箇条書きも日本語にしてください。')
+      ..writeln(
+        '回答は「1. 宿命・本質」「2. 性格の怖いほど当たる特徴」「3. 仕事・お金」「4. 今月の支払いと利息」「5. 今後3〜5年の運気と借金圧縮」「6. 人生で気をつけること」「7. 最後にズバッと総評」の順にしてください。',
+      )
       ..writeln()
-      ..writeln('## 安全化された使用可能額の状態')
+      ..writeln('## 総合サマリー')
+      ..writeln('- 基準日: ${_formatDate(workbook.baseDate)}')
+      ..writeln('- 現金同等資産: ${_formatAmount(workbook.cashLikeTotal)}')
+      ..writeln('- 資産合計: ${_formatAmount(workbook.positiveAssetTotal)}')
+      ..writeln('- 負債合計: ${_formatAmount(workbook.liabilityTotal)}')
+      ..writeln('- 純資産: ${_formatAmount(workbook.netWorth)}')
+      ..writeln('- 負債/資産比率: ${_formatPercent(workbook.debtToAssetRatio)}')
+      ..writeln('- 上位4負債の集中度: ${_formatPercent(workbook.topFourDebtShare)}')
+      ..writeln(
+        '- 今月最低支払推定合計: ${_formatAmount(workbook.monthlyMinimumPaymentEstimateTotal)}',
+      )
+      ..writeln(
+        '- 今月支払予定合計: ${_formatAmount(workbook.monthlyScheduledPaymentTotal)}',
+      )
+      ..writeln(
+        '- 今月未払い合計: ${_formatAmount(workbook.monthlyUnpaidPaymentTotal)}',
+      )
+      ..writeln(
+        '- 今月実支払合計: ${_formatAmount(workbook.monthlyActualPaymentTotal)}',
+      )
+      ..writeln(
+        '- 今月未受取入金合計: ${_formatAmount(workbook.monthlyUnreceivedIncomeTotal)}',
+      )
+      ..writeln(
+        '- 支払後見込み現金: ${_formatAmount(workbook.cashAfterScheduledPayments)}',
+      )
+      ..writeln()
+      ..writeln('## プロフィール詳細')
+      ..write(_profileLines(report.userProfile))
+      ..writeln()
+      ..writeln('## 使用可能額の状態')
       ..writeln('- 本日: ${_availabilityBand(report.todayAvailable)}')
       ..writeln('- 今週: ${_availabilityBand(report.weekAvailable)}')
       ..writeln('- 今月: ${_availabilityBand(report.monthAvailable)}')
+      ..writeln()
+      ..writeln('## 口座一覧')
+      ..write(_accountLines(workbook))
+      ..writeln()
+      ..writeln('## 負債マスタ詳細')
+      ..write(_debtMasterLines(workbook))
+      ..writeln()
+      ..writeln('## 支払日別リスク')
+      ..write(_paymentDayRiskLines(workbook))
+      ..writeln()
+      ..writeln('## 今月キャッシュフロー')
+      ..write(_cashflowLines(workbook))
+      ..writeln()
+      ..writeln('## 収入予定と口座移動')
+      ..write(_incomeAndTransferLines(workbook))
+      ..writeln()
+      ..writeln('## カード請求内訳と照合')
+      ..write(_cardBillingLines(workbook))
       ..writeln()
       ..writeln('## アクション件数')
       ..writeln('- 合計: ${report.actionItems.length}')
       ..writeln('- 重要度別: ${_formatCounts(severityCounts)}')
       ..writeln('- 種別: ${_formatCounts(typeCounts)}')
+      ..writeln()
+      ..writeln('## 個別事情カード')
+      ..write(_redactedSituationCards(report))
       ..writeln()
       ..writeln('## 口座移動と緊急アドバイス')
       ..writeln('- 口座移動・出金提案件数: ${report.movementSuggestions.length}')
@@ -931,6 +1009,264 @@ class AssetManagementInsightPromptBuilder {
     return keys.map((key) => '$key=${counts[key]}').join(', ');
   }
 
+  String _accountLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.accounts.isEmpty) {
+      return '- 口座データはありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final account in workbook.accounts) {
+      buffer.writeln(
+        '- ${account.name} / 種別:${account.kind.name} / 残高:${_formatAmount(account.balance)} / '
+        '支払日:${account.paymentDay?.toString() ?? '未設定'} / '
+        '年利:${_formatRate(account.annualRate)} / '
+        '最低支払率:${_formatRate(account.minimumPaymentRate)} / '
+        '最低支払下限:${_formatAmount(account.minimumPaymentFloor)} / '
+        '支払い方式:${account.paymentMethodLabel ?? account.paymentMethod.name} / '
+        '請求先:${account.billingAccountName ?? 'なし'}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _profileLines(UserProfile? profile) {
+    if (profile == null) {
+      return '- プロフィール未連携。生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物は未入力です。\n';
+    }
+    final buffer = StringBuffer()
+      ..writeln('- 表示名: ${profile.displayName ?? '未入力'}')
+      ..writeln('- 生年月日: ${_formatNullableDate(profile.birthDate)}')
+      ..writeln('- 性別: ${profile.gender ?? '未入力'}')
+      ..writeln('- 職業: ${profile.occupation ?? '未入力'}')
+      ..writeln(
+        '- 年収: ${profile.annualIncome == null ? '未入力' : _formatAmount(profile.annualIncome!)}',
+      )
+      ..writeln('- 住所: ${profile.address ?? profile.location ?? '未入力'}')
+      ..writeln('- 学歴: ${profile.education ?? '未入力'}')
+      ..writeln('- 職歴: ${profile.careerHistory ?? '未入力'}')
+      ..writeln('- 趣味: ${profile.hobbies ?? '未入力'}')
+      ..writeln('- 飲酒の有無: ${profile.alcoholUse ?? '未入力'}')
+      ..writeln('- 喫煙の有無: ${profile.smokingUse ?? '未入力'}')
+      ..writeln('- 好きな食べ物: ${profile.favoriteFoods ?? '未入力'}')
+      ..writeln('- 自己紹介: ${profile.bio ?? '未入力'}');
+    return buffer.toString();
+  }
+
+  String _debtMasterLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.debtMasterRows.isEmpty) {
+      return '- 負債はありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final row in workbook.debtMasterRows) {
+      buffer.writeln(
+        '- ${row.name} / 種別:${row.kind.name} / 残高:${_formatAmount(row.balance)} / '
+        '負債割合:${_formatPercent(row.liabilityShare)} / '
+        '支払日:${row.paymentDay?.toString() ?? '未設定'} / '
+        '今月支払予定日:${_formatNullableDate(_paymentDateFor(row, workbook.baseDate))} / '
+        '推定最低支払額:${_formatAmount(row.minimumPaymentEstimate)} / '
+        '今月支払予定額:${_formatAmount(row.scheduledPaymentAmount)} / '
+        '実支払額:${row.actualPaymentAmount == null ? '未入力' : _formatAmount(row.actualPaymentAmount!)} / '
+        '差分:${row.paymentDifferenceAmount == null ? '未確定' : _formatAmount(row.paymentDifferenceAmount!)} / '
+        '差分理由:${row.paymentDifferenceReason ?? 'なし'} / '
+        '年利:${_formatRate(row.annualRate)} / '
+        '月利息:${_formatAmount(row.monthlyInterestEstimate)} / '
+        '元金返済見込み:${_formatAmount(row.principalPaymentEstimate)} / '
+        '支払後残高見込み:${_formatAmount(row.balanceAfterPaymentEstimate)} / '
+        '優先度:${row.priorityLabel} / '
+        '推定額:${row.paymentAmountEstimated ? 'はい' : 'いいえ'} / '
+        '支払済み:${row.paid ? 'はい' : 'いいえ'} / '
+        '支払原資:${row.paymentSourceAccountName ?? '未設定'} / '
+        '支払い方式:${row.paymentMethodLabel ?? row.paymentMethod.name} / '
+        'カード請求先:${row.billingAccountName ?? 'なし'}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _paymentDayRiskLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.paymentDayRisks.isEmpty) {
+      return '- 支払日別リスクはありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final risk in workbook.paymentDayRisks) {
+      buffer.writeln(
+        '- ${_formatDate(risk.paymentDate)} / 支払日:${risk.paymentDay}日 / '
+        '対象:${risk.accountNames.join('、')} / '
+        '負債残高合計:${_formatAmount(risk.balanceTotal)} / '
+        '推定最低支払合計:${_formatAmount(risk.minimumPaymentEstimateTotal)} / '
+        '支払予定合計:${_formatAmount(risk.scheduledPaymentTotal)} / '
+        '手入力支払合計:${_formatAmount(risk.manualPaymentTotal)} / '
+        '利息見込み合計:${_formatAmount(risk.interestEstimateTotal)} / '
+        '状態:${risk.isPast ? '期限超過' : risk.isToday ? '本日' : '今後'}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _cashflowLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.cashflowRows.isEmpty) {
+      return '- キャッシュフロー行はありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final row in workbook.cashflowRows) {
+      buffer.writeln(
+        '- ${_formatDate(row.paymentDate)} / ${row.eventType.name} / '
+        '項目:${row.accountName} / 金額:${_formatAmount(row.paymentAmount)} / '
+        '支払原資:${row.paymentSourceAccountName ?? 'なし'} / '
+        '入金先:${row.destinationAccountName ?? 'なし'} / '
+        '支払い方式:${row.paymentMethodLabel ?? row.paymentMethod.name} / '
+        'カード請求先:${row.billingAccountName ?? 'なし'} / '
+        '推定額:${row.paymentAmountEstimated ? 'はい' : 'いいえ'} / '
+        '支払済み:${row.paid ? 'はい' : 'いいえ'} / 入金済み:${row.received ? 'はい' : 'いいえ'} / '
+        '期限超過:${row.overdue ? 'はい' : 'いいえ'} / '
+        '実支払額:${row.actualPaymentAmount == null ? '未入力' : _formatAmount(row.actualPaymentAmount!)} / '
+        '差分:${row.paymentDifferenceAmount == null ? '未確定' : _formatAmount(row.paymentDifferenceAmount!)} / '
+        '支払前現金:${_formatAmount(row.cashBeforePayment)} / '
+        '支払後現金:${_formatAmount(row.cashAfterPayment)} / '
+        'リスク:${row.riskLevel.name}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _incomeAndTransferLines(AssetLiabilityWorkbook workbook) {
+    final buffer = StringBuffer();
+    if (workbook.incomePlans.isEmpty) {
+      buffer.writeln('- 収入予定: なし');
+    } else {
+      for (final plan in workbook.incomePlans) {
+        buffer.writeln(
+          '- 収入予定:${plan.name} / 日付:${_formatDate(plan.date)} / '
+          '金額:${_formatAmount(plan.amount)} / 入金先:${plan.destinationAccountName ?? '未設定'} / '
+          '入金済み:${plan.received ? 'はい' : 'いいえ'}',
+        );
+      }
+    }
+    if (workbook.accountCashflowSummaries.isEmpty) {
+      buffer.writeln('- 口座別見込み: なし');
+    } else {
+      for (final summary in workbook.accountCashflowSummaries) {
+        buffer.writeln(
+          '- 口座別見込み:${summary.accountName} / 現在残高:${_formatAmount(summary.currentBalance)} / '
+          '今後支払:${_formatAmount(summary.upcomingPayments)} / 今後入金:${_formatAmount(summary.upcomingIncome)} / '
+          '移動入:${_formatAmount(summary.pendingTransferIn)} / 移動出:${_formatAmount(summary.pendingTransferOut)} / '
+          '見込み残高:${_formatAmount(summary.projectedBalance)} / リスク:${summary.riskLevel.name}',
+        );
+      }
+    }
+    if (workbook.transferSuggestions.isEmpty &&
+        workbook.transferTasks.isEmpty) {
+      buffer.writeln('- 口座移動: なし');
+    } else {
+      for (final suggestion in workbook.transferSuggestions) {
+        buffer.writeln(
+          '- 口座移動提案:${suggestion.fromAccountName} -> ${suggestion.toAccountName} / '
+          '金額:${_formatAmount(suggestion.amount)} / 期限:${_formatNullableDate(suggestion.neededBy)}',
+        );
+      }
+      for (final task in workbook.transferTasks) {
+        buffer.writeln(
+          '- 口座移動タスク:${task.fromAccountName} -> ${task.toAccountName} / '
+          '金額:${_formatAmount(task.amount)} / 期限:${_formatNullableDate(task.dueDate)} / '
+          '完了:${task.completed ? 'はい' : 'いいえ'}',
+        );
+      }
+    }
+    return buffer.toString();
+  }
+
+  String _cardBillingLines(AssetLiabilityWorkbook workbook) {
+    final review = workbook.cardBillingReview;
+    final reconciliation = workbook.cardStatementReconciliation;
+    final buffer = StringBuffer();
+    if (review.directPaymentItems.isEmpty &&
+        review.cardBillingGroups.isEmpty &&
+        reconciliation.groups.isEmpty) {
+      return '- カード請求内訳はありません。\n';
+    }
+    for (final item in review.directPaymentItems) {
+      buffer.writeln(
+        '- 直接支払い:${item.accountName} / 金額:${_formatAmount(item.amount)} / '
+        '支払日:${item.paymentDay?.toString() ?? '未設定'} / アラート:${item.alerts.join('、')}',
+      );
+    }
+    for (final group in review.cardBillingGroups) {
+      buffer.writeln(
+        '- カード請求グループ:${group.billingAccountName} / 合計:${_formatAmount(group.totalAmount)} / '
+        '内訳:${group.items.map((item) => '${item.accountName} ${_formatAmount(item.amount)}').join('、')}',
+      );
+    }
+    for (final group in reconciliation.groups) {
+      buffer.writeln(
+        '- 明細照合:${group.billingAccountName} / 請求額:${_formatAmount(group.billedAmount)} / '
+        '設定内訳合計:${_formatAmount(group.configuredDetailTotal)} / '
+        '取込明細合計:${_formatAmount(group.statementLineTotal)} / '
+        '設定差分:${_formatAmount(group.configuredDifference)} / '
+        '明細差分:${_formatAmount(group.statementDifference)} / '
+        'アラート:${group.alerts.join('、')}',
+      );
+    }
+    if (reconciliation.unmatchedStatementLines.isNotEmpty) {
+      for (final line in reconciliation.unmatchedStatementLines) {
+        buffer.writeln(
+          '- 未照合明細:${line.billingAccountName ?? line.billingAccountId} / '
+          '日付:${_formatNullableDate(line.postedAt)} / 内容:${line.description} / '
+          '金額:${_formatAmount(line.amount)}',
+        );
+      }
+    }
+    return buffer.toString();
+  }
+
+  String _redactedSituationCards(AssetManagementInsightReport report) {
+    if (report.actionItems.isEmpty && report.emergencyAdvices.isEmpty) {
+      return '- 目立つ個別リスクはありません。現状維持と入力精度の確認を優先してください。\n';
+    }
+    final buffer = StringBuffer();
+    for (final item in report.actionItems.take(8)) {
+      buffer.writeln(
+        '- ${_actionTypeLabel(item.type)} / 項目:${item.title} / '
+        '重要度:${item.severity.name} / '
+        '期限:${_dueTimingBand(item.dueDate, report.todayAvailable.startDate)} / '
+        '次の一手:${item.suggestedAction}',
+      );
+    }
+    for (final advice in report.emergencyAdvices.take(4)) {
+      buffer.writeln(
+        '- 緊急生活防衛 / 重要度:${advice.severity.name} / '
+        '状況:${advice.title} / 次の一手:${advice.suggestedAction}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _dueTimingBand(DateTime? dueDate, DateTime baseDate) {
+    if (dueDate == null) return '不明';
+    final base = DateTime(baseDate.year, baseDate.month, baseDate.day);
+    final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final days = due.difference(base).inDays;
+    if (days < 0) return '期限超過';
+    if (days == 0) return '今日';
+    if (days <= 3) return '3日以内';
+    if (days <= 7) return '7日以内';
+    if (due.year == base.year && due.month == base.month) return '今月中';
+    return '将来';
+  }
+
+  String _actionTypeLabel(AssetManagementInsightActionType type) {
+    return switch (type) {
+      AssetManagementInsightActionType.missingInput => '請求額の未確定',
+      AssetManagementInsightActionType.missingPaymentDay => '支払日の未設定',
+      AssetManagementInsightActionType.missingAnnualRate => '金利情報の未設定',
+      AssetManagementInsightActionType.missingPaymentSource => '支払原資口座の未設定',
+      AssetManagementInsightActionType.overduePayment => '期限超過の未払い',
+      AssetManagementInsightActionType.upcomingPayment => '近い支払期限',
+      AssetManagementInsightActionType.cashShortageRisk => '支払後の資金ショート',
+      AssetManagementInsightActionType.emergencyLivingExpense => '生活費の不足',
+      AssetManagementInsightActionType.cardBillingConfiguration => 'カード請求設定の確認',
+      AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
+    };
+  }
+
   String _formatAmount(double amount) {
     final sign = amount < 0 ? '-' : '';
     final digits = amount.abs().round().toString();
@@ -943,5 +1279,34 @@ class AssetManagementInsightPromptBuilder {
       }
     }
     return '$sign$buffer円';
+  }
+
+  String _formatDate(DateTime value) {
+    return '${value.year}/${value.month.toString().padLeft(2, '0')}/'
+        '${value.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatNullableDate(DateTime? value) {
+    return value == null ? '未設定' : _formatDate(value);
+  }
+
+  String _formatPercent(double value) {
+    if (value.isInfinite) return '∞';
+    if (value.isNaN) return '不明';
+    return '${(value * 100).toStringAsFixed(1)}%';
+  }
+
+  String _formatRate(double value) {
+    return _formatPercent(value);
+  }
+
+  DateTime? _paymentDateFor(AssetLiabilityDebtRow row, DateTime baseDate) {
+    if (row.paymentDay == null) return null;
+    final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
+    return DateTime(
+      baseDate.year,
+      baseDate.month,
+      row.paymentDay!.clamp(1, lastDay),
+    );
   }
 }

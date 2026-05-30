@@ -34,7 +34,9 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
           .from('user_profiles')
           .select(
             'display_name, bio, avatar_url, website_url, location, '
-            'twitter_handle, github_handle, is_public',
+            'twitter_handle, github_handle, birth_date, gender, occupation, '
+            'annual_income, address, education, career_history, hobbies, '
+            'alcohol_use, smoking_use, favorite_foods, is_public',
           )
           .eq('user_id', uid)
           .maybeSingle();
@@ -297,6 +299,17 @@ class _ProfileData {
   final String? location;
   final String? twitterHandle;
   final String? githubHandle;
+  final String? birthDate;
+  final String? gender;
+  final String? occupation;
+  final String? annualIncome;
+  final String? address;
+  final String? education;
+  final String? careerHistory;
+  final String? hobbies;
+  final String? alcoholUse;
+  final String? smokingUse;
+  final String? favoriteFoods;
   final bool isPublic;
 
   const _ProfileData({
@@ -307,6 +320,17 @@ class _ProfileData {
     this.location,
     this.twitterHandle,
     this.githubHandle,
+    this.birthDate,
+    this.gender,
+    this.occupation,
+    this.annualIncome,
+    this.address,
+    this.education,
+    this.careerHistory,
+    this.hobbies,
+    this.alcoholUse,
+    this.smokingUse,
+    this.favoriteFoods,
     this.isPublic = false,
   });
 
@@ -320,6 +344,17 @@ class _ProfileData {
       location: map['location']?.toString(),
       twitterHandle: map['twitter_handle']?.toString(),
       githubHandle: map['github_handle']?.toString(),
+      birthDate: map['birth_date']?.toString(),
+      gender: map['gender']?.toString(),
+      occupation: map['occupation']?.toString(),
+      annualIncome: map['annual_income']?.toString(),
+      address: map['address']?.toString(),
+      education: map['education']?.toString(),
+      careerHistory: map['career_history']?.toString(),
+      hobbies: map['hobbies']?.toString(),
+      alcoholUse: map['alcohol_use']?.toString(),
+      smokingUse: map['smoking_use']?.toString(),
+      favoriteFoods: map['favorite_foods']?.toString(),
       isPublic: map['is_public'] == true,
     );
   }
@@ -335,10 +370,22 @@ class _ProfileData {
         if (!_filled(githubHandle)) const _FieldStatus('GitHub', Icons.code),
         if (!_filled(websiteUrl))
           const _FieldStatus('WebサイトURL', Icons.language),
+        if (!_filled(birthDate)) const _FieldStatus('生年月日', Icons.cake),
+        if (!_filled(gender)) const _FieldStatus('性別', Icons.wc),
+        if (!_filled(occupation)) const _FieldStatus('職業', Icons.work),
+        if (!_filled(annualIncome)) const _FieldStatus('年収', Icons.payments),
+        if (!_filled(address)) const _FieldStatus('住所', Icons.home),
+        if (!_filled(education)) const _FieldStatus('学歴', Icons.school),
+        if (!_filled(careerHistory)) const _FieldStatus('職歴', Icons.badge),
+        if (!_filled(hobbies)) const _FieldStatus('趣味', Icons.interests),
+        if (!_filled(alcoholUse)) const _FieldStatus('飲酒', Icons.local_bar),
+        if (!_filled(smokingUse)) const _FieldStatus('喫煙', Icons.smoke_free),
+        if (!_filled(favoriteFoods))
+          const _FieldStatus('好きな食べ物', Icons.restaurant),
       ];
 
   int get completionPct {
-    const total = 7;
+    const total = 18;
     final filled = [
       _filled(displayName),
       _filled(avatarUrl),
@@ -347,6 +394,17 @@ class _ProfileData {
       _filled(twitterHandle),
       _filled(githubHandle),
       _filled(websiteUrl),
+      _filled(birthDate),
+      _filled(gender),
+      _filled(occupation),
+      _filled(annualIncome),
+      _filled(address),
+      _filled(education),
+      _filled(careerHistory),
+      _filled(hobbies),
+      _filled(alcoholUse),
+      _filled(smokingUse),
+      _filled(favoriteFoods),
     ].where((v) => v).length;
     return (filled / total * 100).round();
   }

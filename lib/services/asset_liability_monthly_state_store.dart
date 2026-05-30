@@ -397,6 +397,26 @@ class AssetLiabilityMonthlyStateStore {
     return DateFormat('yyyy-MM').format(month);
   }
 
+  static DateTime salaryCycleMonthFor(
+    DateTime date, {
+    int salaryDay = 25,
+  }) {
+    final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
+    if (date.day >= normalizedSalaryDay) {
+      return DateTime(date.year, date.month);
+    }
+    return DateTime(date.year, date.month - 1);
+  }
+
+  static String formatSalaryCycleMonthKey(
+    DateTime date, {
+    int salaryDay = 25,
+  }) {
+    return formatMonthKey(
+      salaryCycleMonthFor(date, salaryDay: salaryDay),
+    );
+  }
+
   static AssetLiabilityMonthlyState copyPreviousMonthState({
     required AssetLiabilityMonthlyState previousState,
     required DateTime targetMonth,

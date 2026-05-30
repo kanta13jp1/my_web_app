@@ -8,6 +8,16 @@ class UserProfile {
   final String? location;
   final String? twitterHandle;
   final String? githubHandle;
+  final String? gender;
+  final String? occupation;
+  final double? annualIncome;
+  final String? address;
+  final String? education;
+  final String? careerHistory;
+  final String? hobbies;
+  final String? alcoholUse;
+  final String? smokingUse;
+  final String? favoriteFoods;
   final bool isPublic;
 
   // ✅ 追加: 死生観クロック用のフィールド
@@ -27,6 +37,16 @@ class UserProfile {
     this.location,
     this.twitterHandle,
     this.githubHandle,
+    this.gender,
+    this.occupation,
+    this.annualIncome,
+    this.address,
+    this.education,
+    this.careerHistory,
+    this.hobbies,
+    this.alcoholUse,
+    this.smokingUse,
+    this.favoriteFoods,
     this.isPublic = true,
     // ✅ 追加
     this.birthDate,
@@ -47,6 +67,16 @@ class UserProfile {
       location: json['location'] as String?,
       twitterHandle: json['twitter_handle'] as String?,
       githubHandle: json['github_handle'] as String?,
+      gender: json['gender'] as String?,
+      occupation: json['occupation'] as String?,
+      annualIncome: (json['annual_income'] as num?)?.toDouble(),
+      address: json['address'] as String?,
+      education: json['education'] as String?,
+      careerHistory: json['career_history'] as String?,
+      hobbies: json['hobbies'] as String?,
+      alcoholUse: json['alcohol_use'] as String?,
+      smokingUse: json['smoking_use'] as String?,
+      favoriteFoods: json['favorite_foods'] as String?,
       isPublic: json['is_public'] as bool? ?? true,
 
       // ✅ 追加: JSONからのマッピング
@@ -76,6 +106,16 @@ class UserProfile {
       'location': location,
       'twitter_handle': twitterHandle,
       'github_handle': githubHandle,
+      'gender': gender,
+      'occupation': occupation,
+      'annual_income': annualIncome,
+      'address': address,
+      'education': education,
+      'career_history': careerHistory,
+      'hobbies': hobbies,
+      'alcohol_use': alcoholUse,
+      'smoking_use': smokingUse,
+      'favorite_foods': favoriteFoods,
       'is_public': isPublic,
 
       // ✅ 追加: JSONへの変換
@@ -96,6 +136,16 @@ class UserProfile {
     String? location,
     String? twitterHandle,
     String? githubHandle,
+    String? gender,
+    String? occupation,
+    double? annualIncome,
+    String? address,
+    String? education,
+    String? careerHistory,
+    String? hobbies,
+    String? alcoholUse,
+    String? smokingUse,
+    String? favoriteFoods,
     bool? isPublic,
     // ✅ 追加
     DateTime? birthDate,
@@ -112,6 +162,16 @@ class UserProfile {
       location: location ?? this.location,
       twitterHandle: twitterHandle ?? this.twitterHandle,
       githubHandle: githubHandle ?? this.githubHandle,
+      gender: gender ?? this.gender,
+      occupation: occupation ?? this.occupation,
+      annualIncome: annualIncome ?? this.annualIncome,
+      address: address ?? this.address,
+      education: education ?? this.education,
+      careerHistory: careerHistory ?? this.careerHistory,
+      hobbies: hobbies ?? this.hobbies,
+      alcoholUse: alcoholUse ?? this.alcoholUse,
+      smokingUse: smokingUse ?? this.smokingUse,
+      favoriteFoods: favoriteFoods ?? this.favoriteFoods,
       isPublic: isPublic ?? this.isPublic,
       // ✅ 追加
       birthDate: birthDate ?? this.birthDate,
