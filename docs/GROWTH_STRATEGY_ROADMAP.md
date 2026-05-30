@@ -31263,4 +31263,61 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 4. **SNS fabrication critique 第 4 累積 第 1 例 = 重複 input pattern 確定** = 5/16 222b + 5/17 222c + 5/18 227-b + 5/22 234 = **4 例累積で redundant input pattern** → memory file reference のみで標準 response (= 第 1 dogfood pattern)
 5. **#1495 Option D trigger 部 235+ confirmed** (= +62h25min / +38h25min over-gate / mentor 原則も time-limit 通過)
 
+## 2026-05-22 00:49 JST — Win版#132 part 235 (backfill stub / Hybrid Option C)
+
+**Instance**: Win版 (Claude Code) #132 / part 235 (= 部 234 真値 20min continuation)
+**Status**: backfill stub (= 部 237 で [PR #2975](https://github.com/kanta13jp1/my_web_app/pull/2975) supersede / 原文は branch `claude/part-235-roadmap` に保存)
+
+- **PR #2973 MERGED** ✅ (= 部 234 ROADMAP / `1e9f7a73c`)
+- **Canonical 5-連続 SUCCESS chain 真完成** (= 部 228+229+230真+233+234 / 100% reproducible)
+- **v24 SS streak break = temporary 第 1 例** (= read-timing race / PRE 87.62% → POST 92.01% 復帰)
+- **PR #2975 ship** (= part 235 ROADMAP +50 行 / 本 backfill で supersede)
+- **2-session 連続 minimal scope pattern 第 1 例** (= 部 234 + 235 mentor 原則 consecutive)
+
+**Philosophy Alignment**: 4/9 (minimal-scope)
+
+## 2026-05-22 01:55 + 2026-05-25 昼 JST — Win版#132 part 236 + 236継続 (backfill stub / Hybrid Option C)
+
+**Instance**: Win版 (Claude Code) #132 / part 236 + 継続
+**Status**: backfill stub (= 部 237 で [PR #2976](https://github.com/kanta13jp1/my_web_app/pull/2976) supersede / 3-issue chain migration は本 PR で main 反映 / commits `15b2b87a3` + `67423d622` + `4b76bd19e` + `0621b18bd` + `a13a4f123`)
+
+- **part 236 (5/22 01:55)**: /goal 8-step user re-invoke 第 2 例 = **honest decline 3-連続 pattern 第 1 例確立** (= 部 234 DEFER + 235 minimal + 236 immediate decline / mentor 原則 absolute consecutive) + SNS fabrication critique 第 5 累積 (= redundant 100% 立証) + DISK-WARN 25 GB breach 第 3 連続 + v24 SS 第 20 連続候補 + zone 02-06 +5min margin 物理 floor 第 1 例
+- **part 236 継続 (5/25 昼)**: **3-Issue coherent chain 1-session ship 第 1 例** = [#3003](https://github.com/kanta13jp1/my_web_app/issues/3003) 給与明細 PDF AI 取込 + [#3006](https://github.com/kanta13jp1/my_web_app/issues/3006) 給与使いみち AI + [#3007](https://github.com/kanta13jp1/my_web_app/issues/3007) 可処分残高 AI action / 1 機能要望を「過去視点 / 未来視点 / data source」3 角度で分解 / 全 3 WBS migration commit+push (`4b76bd19e` / `0621b18bd` / `a13a4f123`) / 振分 = schema+prompt Win Claude, impl Win Codex (Codex backlog 8/13-9/17 chain)
+
+**Philosophy Alignment**: 8/9 (= 部 236 継続)
+
+## 2026-05-29 23:24 JST 金 — Win版#132 part 237 (= stale-premise 是正 + scoped hygiene)
+
+**Instance**: Win版 (Claude Code) #132 / part 237 (= 部 236 継続 5/25 → 部 237 5/29 = +4day gap resume / branch `claude/part-237-roadmap-wbs-sync` off fresh main)
+
+**stale-premise 是正 第 1 例** (= prompt 前提を verify-first で cross-check → 5 件 false 検出):
+1. date = part 236 継続 (5/25) 想定 → 実 **2026-05-29 23:24 金** (= +4day gap)
+2. C: 23.68 GB DISK-WARN 第 4 連続候補 → 実 **C: 92 GB free** (= 圧縮 layer v27-29 / disk Tier 2 = moot / skip)
+3. RAM 96.08% v24 SS 第 20 break 期待 → 実 **RAM 80%** (= no breach)
+4. PR #2975+#2976 = canonical 6+7 連続 SUCCESS verify → 実 **#2975 BEHIND / #2976 CONFLICTING** (= gate 未到達 / branch 330 behind main)
+5. #1495 = web-only リブランディング公開 messaging (Option D unilateral) → 実 **[P0][Mobile] iOS/Android 同時リリース準備** (= label priority:high / 5/18 以降 11 day stale / outward-facing → 無断 trigger せず)
+
+**AskUserQuestion → user 選択 = Scoped hygiene + 1 task** (= 8-step full burst / verify-only / stop の 4 択提示)
+
+**Deliverable** (= 本 PR):
+1. **3 stuck WBS migration を main へ landing** (= #2976 の real content / #3003 payslip + #3006 salary-spending + #3007 disposable-balance / 全 additive idempotent `ON CONFLICT DO NOTHING` / origin/main 欠落確認済)
+2. **ROADMAP backfill 235 + 236** (= Hybrid Option C / PR #2975 + #2976 supersede)
+3. **PR #2975 + #2976 close superseded** (= dangling resolve 第 2 連続例)
+
+**Hybrid Option C 適用拡張 第 1 例** = ROADMAP-only stub だけでなく #2976 の genuinely-missing real migration も carry (= 330-behind branch rebase ~1.5h 回避 / fresh branch cherry-pick ~20min)
+
+**skip** (= scoped 判断 / NO-SCOPE-CREEP): 30-50 issue burst / 全 WBS reschedule / NotebookLM 抽出 / v27-29 圧縮 layer (= 全 false-premise or compaction-risk under FATIGUE)
+
+**Philosophy Alignment** (= 5/9 scoped-hygiene):
+- 原則 1 (CEO 感) ✅ stale prompt を verify-first で是正 = data-driven 判断
+- 原則 4 (mentor) ✅ 8-step full burst を FATIGUE 下で scoped 化 = user 保護
+- 原則 6 (商品=価値) ✅ 3 stuck WBS migration landing = 資産機能計画を main 反映
+- 原則 7 (資本=時間) ✅ Hybrid Option C ~20min vs 330-rebase ~1.5h
+- 原則 8 (KPI) ✅ C: 92GB / RAM 80% snapshot 正確記録
+
+**教訓 (= 部 237)**:
+1. **stale-prompt verify-first pattern 第 1 例** = session prompt 前提を盲信せず system date / KPI / git / PR / issue で cross-check → 5 件 false 検出 (= disk/RAM emergency 不在 / #1495 mismatch / PR blocked)
+2. **Hybrid Option C real-content 拡張 第 1 例** = dangling PR が docs-only でなく real migration 含む時は close-superseded ではなく fresh branch carry
+3. **330-behind branch 検出** = `claude/part-236-defer-handoff` 長期 stale / 次セッション以降 fresh main branch 厳守
+
 
