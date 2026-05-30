@@ -112,21 +112,21 @@ class AssetLiabilityMonthlyReportService {
     required AssetLiabilityMonthlySnapshot? snapshot,
   }) {
     if (snapshot == null) {
-      return '$monthKey report is available, but the KPI snapshot has not been synced locally yet.';
+      return '$monthKey のレポートはありますが、KPIスナップショットがまだ端末側に同期されていません。';
     }
     final paidRate = snapshot.monthlyScheduledPaymentTotal <= 0
         ? 0.0
         : snapshot.monthlyPaidPaymentTotal /
             snapshot.monthlyScheduledPaymentTotal;
     final formatter = NumberFormat('#,###');
+    String yen(double amount) => '${formatter.format(amount.round())}円';
+    final netWorthLabel = snapshot.netWorth >= 0 ? 'プラス' : 'マイナス';
     return [
-      '$monthKey monthly asset report.',
-      'Net worth: JPY ${formatter.format(snapshot.netWorth.round())}; '
-          'cash-like assets: JPY ${formatter.format(snapshot.cashLikeTotal.round())}.',
-      'Scheduled payments: JPY ${formatter.format(snapshot.monthlyScheduledPaymentTotal.round())}; '
-          'paid ${(paidRate * 100).clamp(0, 999).toStringAsFixed(0)}%.',
-      'Actual payment difference: JPY ${formatter.format(snapshot.monthlyPaymentDifferenceTotal.round())}; '
-          'overdue payments: ${snapshot.overduePaymentCount}.',
+      '$monthKey 月次資産レポート。',
+      '純資産は${yen(snapshot.netWorth)}（$netWorthLabel）、現金性資産は${yen(snapshot.cashLikeTotal)}です。',
+      '支払予定は${yen(snapshot.monthlyScheduledPaymentTotal)}、支払済みは'
+          '${(paidRate * 100).clamp(0, 999).toStringAsFixed(0)}%です。',
+      '実支払差分は${yen(snapshot.monthlyPaymentDifferenceTotal)}、期限超過は${snapshot.overduePaymentCount}件です。',
     ].join(' ');
   }
 

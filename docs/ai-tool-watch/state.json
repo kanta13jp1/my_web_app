@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-05-21T21:49:10Z",
-      "hash": "a8103609065171516096d5d57ab96e61ef9a362c5c1201aede460d720a700597",
+      "checked_at": "2026-05-29T21:55:57Z",
+      "hash": "e02ea93ded98e8803cce350871bb70dc14581b9e8a304f66d2f01a82a4f201ef",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,14 +46,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.147 / May 21, 2026",
+      "latest_signal": "2.1.157 / May 29, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-05-21T21:49:10Z",
-      "hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
+      "checked_at": "2026-05-29T21:55:57Z",
+      "hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -89,8 +89,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-05-21T21:49:10Z",
-      "hash": "55e217cadb391c07940b883f64e56ac12ace7f7b8b41137d7b0a0236110e9340",
+      "checked_at": "2026-05-29T21:55:57Z",
+      "hash": "22abf4ccbbb4bbf2634df08b644c6e091bfe54ebc0efc3f11e08eecd214be9b5",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -130,8 +130,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-05-21T21:49:10Z",
-      "hash": "6083172e5626975fbf07c3579fd3e9c1c71c6ba73b196fdaf0f7b44f62696b17",
+      "checked_at": "2026-05-29T21:55:57Z",
+      "hash": "02cf1ed5a46653a6246cb20cc60a10014037e0134972f281ff37480cc40f2b64",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -169,16 +169,17 @@
           "automation",
           "automations",
           "schedule",
+          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.",
+      "latest_signal": "2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-05-21T21:49:10Z",
+      "checked_at": "2026-05-29T21:55:57Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -187,8 +188,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-05-21T21:49:10Z",
-      "hash": "7db564bb4274aa2c92a4f869e7edb2137a827a406973b41955294ce469710282",
+      "checked_at": "2026-05-29T21:55:57Z",
+      "hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -221,6 +222,7 @@
         "schedule": [
           "automation",
           "automations",
+          "GitHub Actions",
           "workflow"
         ]
       },
@@ -230,44 +232,42 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-05-21T21:49:10Z",
-      "hash": "cfd49d6dc1366bca80c3d35e6b2497b566292f51396cdc969cf3eec327a76f2f",
+      "checked_at": "2026-05-29T21:55:57Z",
+      "hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
       "keyword_groups": {
-        "codex-runtime": [
-          "model picker",
-          "subagents"
-        ],
         "hooks": [
-          "hook"
+          "Stop"
         ],
         "integration": [
           "MCP",
           "Slack"
         ],
         "quality-cost": [
-          "permission",
+          "sandbox",
           "review",
           "CI"
         ],
         "schedule": [
           "automation",
-          "automations"
+          "automations",
+          "schedule"
         ]
       },
-      "latest_signal": "3.5 / May 20, 2026",
+      "latest_signal": "3.6 / May 29, 2026",
       "name": "Cursor changelog",
       "status": 200,
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-05-21T21:49:10Z",
-      "hash": "a13266034613428ab968730cdba246cfe84889fb7367cf96df4019a9e6029ee4",
+      "checked_at": "2026-05-29T21:55:57Z",
+      "hash": "8b166ffac58e0c82087b11af5d7181bc8b4740b80ed14cf405f2096f2a3c537c",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
           "subagents"
         ],
         "hooks": [
+          "hook",
           "Stop"
         ],
         "integration": [
@@ -291,14 +291,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "May 17, 2026",
+      "latest_signal": "May 22, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-05-21T21:49:10Z",
-      "hash": "dc44991b04c930d112113135d848a3cffb1049de9316a72d1ba7d679bfc1f220",
+      "checked_at": "2026-05-29T21:55:57Z",
+      "hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -326,5 +326,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-05-21T21:49:10Z"
+  "updated_at": "2026-05-29T21:55:57Z"
 }

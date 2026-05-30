@@ -62,18 +62,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          # Win版#131 part 9: GH_PAT で push 認証 (workflow file 変更を含む tag push)
-          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --tags --prune origin "+${GITHUB_REF}:refs/remotes/origin/checkout"
+          git checkout --force refs/remotes/origin/checkout
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: "stable"
-          cache: true
 
       - name: Install dependencies
         run: flutter pub get

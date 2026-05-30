@@ -3,7 +3,7 @@ title: "PR ゲートが詰まった時の二段階アンロック — 5 項目 b
 emoji: "🚦"
 type: "tech"
 topics: ["githubactions", "ci", "githubapi", "workflows", "devops"]
-published: false
+published: true
 ---
 
 ## TL;DR
