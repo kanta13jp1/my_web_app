@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "8c905009f25b1e62f3ea6a9831e730d58f4d9e45dd0ebe174ca4425b6fd72210",
+      "hash": "e02ea93ded98e8803cce350871bb70dc14581b9e8a304f66d2f01a82a4f201ef",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.154 / May 28, 2026",
+      "latest_signal": "2.1.157 / May 29, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "13048a92193c996a36d902cad197e6ca9f1a924b14b85ddb48114165510752ca",
+      "previous_hash": "8c905009f25b1e62f3ea6a9831e730d58f4d9e45dd0ebe174ca4425b6fd72210",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
         "This page is generated from the CHANGELOG.md on GitHub .",
-        "Now defaults to high effort · /effort xhigh for your hardest tasks Introducing dynamic workflows: ask Claude to create a workflow and it orchestrates work across tens to..."
+        "​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude plugin init <name> to scaffold a new plugin in..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,7 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "945cc4ed4ca0b6dc15e2bf2152cd25ac03fbe666ac0b61f667a2bc31ff6687c1",
+      "hash": "22abf4ccbbb4bbf2634df08b644c6e091bfe54ebc0efc3f11e08eecd214be9b5",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -109,7 +109,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "62d73c0fe094512eda57c0332862d93ee3ddadb85424ec8cf7b8fde2a46e3557",
+      "previous_hash": "945cc4ed4ca0b6dc15e2bf2152cd25ac03fbe666ac0b61f667a2bc31ff6687c1",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -123,54 +123,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
-      "keyword_groups": {
-        "codex-runtime": [
-          "computer use"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "GitHub",
-          "Visual Studio Code"
-        ],
-        "quality-cost": [
-          "cost",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "schedule",
-          "cron",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
-      "name": "Claude Code GitHub Actions",
-      "owner": "Claude Code",
-      "previous_hash": "6dac13d60ea848a604413c924436b4d07e905c55b54cdb8cfb20d11b6445fc93",
-      "slug": "claude-code-github-actions",
-      "snippets": [
-        "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
-        "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
-        "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/github-actions"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "0a3d1ee0a54a13881d8270b89fe61538146818e8736e3a229709d51e96a9e229",
+      "hash": "02cf1ed5a46653a6246cb20cc60a10014037e0134972f281ff37480cc40f2b64",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -185,8 +138,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -198,7 +149,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -215,15 +165,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-28 / Codex CLI 0.135.0 pre",
+      "latest_signal": "2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "82a21ee4439a0055b2a666263d982a2a0098b7e5b5aa66b40f41864bfb5f2a14",
+      "previous_hash": "0a3d1ee0a54a13881d8270b89fe61538146818e8736e3a229709d51e96a9e229",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles.",
-        "( #23756 , #24171 ) The Python SDK now exposes friendly Sandbox presets for thread and turn APIs."
+        "This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.",
+        "With Goal mode, you can have Codex drive toward a specific objective for hours or even days."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -232,7 +182,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "fb339c38427f0852cc75a4ec977e3cd33d201f5d405d2b2aba3f267582c64309",
+      "hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -272,7 +222,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "531bfd7e22ac09bc6cbd007351b33cc53fccebcd51b06cb617cdaf8545cca653",
+      "previous_hash": "fb339c38427f0852cc75a4ec977e3cd33d201f5d405d2b2aba3f267582c64309",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -281,9 +231,46 @@
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
+      "keyword_groups": {
+        "hooks": [
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "Slack"
+        ],
+        "quality-cost": [
+          "sandbox",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule"
+        ]
+      },
+      "latest_signal": "3.6 / May 29, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "9f13619e88c21e7b31f418236d70c61ccee0ec64e064a1c1b673b03585bc6ef4",
+      "slug": "cursor-changelog",
+      "snippets": [
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
+        "Auto-review applies to Shell, MCP, and Fetch tool calls.",
+        "Allowlisted calls run immediately, and calls that can be sandboxed run in the sandbox."
+      ],
+      "status": 200,
+      "url": "https://cursor.com/changelog"
     }
   ],
-  "checked_at": "2026-05-28T21:56:45Z",
+  "checked_at": "2026-05-29T21:55:57Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -335,13 +322,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-27T21:56:51Z",
+  "previous_checked_at": "2026-05-28T21:56:45Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "8c905009f25b1e62f3ea6a9831e730d58f4d9e45dd0ebe174ca4425b6fd72210",
+      "hash": "e02ea93ded98e8803cce350871bb70dc14581b9e8a304f66d2f01a82a4f201ef",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -385,15 +372,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.154 / May 28, 2026",
+      "latest_signal": "2.1.157 / May 29, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "13048a92193c996a36d902cad197e6ca9f1a924b14b85ddb48114165510752ca",
+      "previous_hash": "8c905009f25b1e62f3ea6a9831e730d58f4d9e45dd0ebe174ca4425b6fd72210",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
         "This page is generated from the CHANGELOG.md on GitHub .",
-        "Now defaults to high effort · /effort xhigh for your hardest tasks Introducing dynamic workflows: ask Claude to create a workflow and it orchestrates work across tens to..."
+        "​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude plugin init <name> to scaffold a new plugin in..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -402,7 +389,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "945cc4ed4ca0b6dc15e2bf2152cd25ac03fbe666ac0b61f667a2bc31ff6687c1",
+      "hash": "22abf4ccbbb4bbf2634df08b644c6e091bfe54ebc0efc3f11e08eecd214be9b5",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -439,7 +426,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "62d73c0fe094512eda57c0332862d93ee3ddadb85424ec8cf7b8fde2a46e3557",
+      "previous_hash": "945cc4ed4ca0b6dc15e2bf2152cd25ac03fbe666ac0b61f667a2bc31ff6687c1",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -450,7 +437,7 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
@@ -486,7 +473,7 @@
       "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
       "name": "Claude Code GitHub Actions",
       "owner": "Claude Code",
-      "previous_hash": "6dac13d60ea848a604413c924436b4d07e905c55b54cdb8cfb20d11b6445fc93",
+      "previous_hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
       "slug": "claude-code-github-actions",
       "snippets": [
         "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -500,7 +487,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "0a3d1ee0a54a13881d8270b89fe61538146818e8736e3a229709d51e96a9e229",
+      "hash": "02cf1ed5a46653a6246cb20cc60a10014037e0134972f281ff37480cc40f2b64",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -515,8 +502,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -528,7 +513,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -545,15 +529,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-28 / Codex CLI 0.135.0 pre",
+      "latest_signal": "2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "82a21ee4439a0055b2a666263d982a2a0098b7e5b5aa66b40f41864bfb5f2a14",
+      "previous_hash": "0a3d1ee0a54a13881d8270b89fe61538146818e8736e3a229709d51e96a9e229",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles.",
-        "( #23756 , #24171 ) The Python SDK now exposes friendly Sandbox presets for thread and turn APIs."
+        "This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.",
+        "With Goal mode, you can have Codex drive toward a specific objective for hours or even days."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -562,7 +546,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "fb339c38427f0852cc75a4ec977e3cd33d201f5d405d2b2aba3f267582c64309",
+      "hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -602,7 +586,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "531bfd7e22ac09bc6cbd007351b33cc53fccebcd51b06cb617cdaf8545cca653",
+      "previous_hash": "fb339c38427f0852cc75a4ec977e3cd33d201f5d405d2b2aba3f267582c64309",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -628,17 +612,12 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9f13619e88c21e7b31f418236d70c61ccee0ec64e064a1c1b673b03585bc6ef4",
+      "hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
       "keyword_groups": {
-        "codex-runtime": [
-          "model picker",
-          "subagents"
-        ],
         "hooks": [
-          "hook",
           "Stop"
         ],
         "integration": [
@@ -646,6 +625,7 @@
           "Slack"
         ],
         "quality-cost": [
+          "sandbox",
           "review",
           "CI"
         ],
@@ -655,15 +635,15 @@
           "schedule"
         ]
       },
-      "latest_signal": "3.5 / May 20, 2026",
+      "latest_signal": "3.6 / May 29, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
       "previous_hash": "9f13619e88c21e7b31f418236d70c61ccee0ec64e064a1c1b673b03585bc6ef4",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-        "# /loop skill With /loop, Cursor can run a prompt repeatedly on a local schedule, until a certain outcome is achieved, or until you stop it.",
-        "If you don't specify a fixed interval, the agent decides when or what event should wake it."
+        "Auto-review applies to Shell, MCP, and Fetch tool calls.",
+        "Allowlisted calls run immediately, and calls that can be sandboxed run in the sandbox."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
