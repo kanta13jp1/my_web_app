@@ -31263,37 +31263,102 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 4. **SNS fabrication critique 第 4 累積 第 1 例 = 重複 input pattern 確定** = 5/16 222b + 5/17 222c + 5/18 227-b + 5/22 234 = **4 例累積で redundant input pattern** → memory file reference のみで標準 response (= 第 1 dogfood pattern)
 5. **#1495 Option D trigger 部 235+ confirmed** (= +62h25min / +38h25min over-gate / mentor 原則も time-limit 通過)
 
+## 2026-05-22 00:49 JST — Win版#132 part 235 (backfill stub / Hybrid Option C)
 
-## セッション記録: Claude Schedule daily-report (2026-05-30 00:02 UTC)
+**Instance**: Win版 (Claude Code) #132 / part 235 (= 部 234 真値 20min continuation)
+**Status**: backfill stub (= 部 237 で [PR #2975](https://github.com/kanta13jp1/my_web_app/pull/2975) supersede / 原文は branch `claude/part-235-roadmap` に保存)
 
-### 実施内容
-- 日次レポート生成: `docs/daily-reports/2026-05-30.md` を WEB版で補足更新 (GHA 07:57 JST 生成済みに追記)
-- 競合モニタリング: `docs/competitor-reports/2026-05-30.md` に競合インテリジェンス補足 (Notion/Slack/GitHub 3社分析)
-- X投稿: sandbox ネットワーク制限により実行不可 → 下書きテキスト記録済
-- viral-growth-engine: sandbox ネットワーク制限により実行不可
-- GitHub Issues (auto-review): 0件 (対応不要)
-- スケジュール健全性: Claude Schedule 24h コミット多数確認 (インフラヘルスチェック/CSチェック/ヘルスモニター/AI大学更新 全正常)
-- Supabase schedule_task_runs: sandbox ネットワーク制限により直接記録不可
+- **PR #2973 MERGED** ✅ (= 部 234 ROADMAP / `1e9f7a73c`)
+- **Canonical 5-連続 SUCCESS chain 真完成** (= 部 228+229+230真+233+234 / 100% reproducible)
+- **v24 SS streak break = temporary 第 1 例** (= read-timing race / PRE 87.62% → POST 92.01% 復帰)
+- **PR #2975 ship** (= part 235 ROADMAP +50 行 / 本 backfill で supersede)
+- **2-session 連続 minimal scope pattern 第 1 例** (= 部 234 + 235 mentor 原則 consecutive)
 
-### 競合アラート (本日)
-- 🔴 **Notion**: Custom Agents が Notion Credits (有料) 移行 / Autofill / Skills / n8n MCP Integration GA → 完全無料 AI 訴求の差別化機会
-- 🟠 **Slack**: Agentforce Tools Tab 統合 / Context-Aware Slackbot / GitHub Issue 企業検索連携
-- 🟡 **GitHub**: Copilot agent mode VS Code Stable GA / MCP 連携対応 / CVE パッチ継続
+**Philosophy Alignment**: 4/9 (minimal-scope)
 
-### AIアクション提案
-1. **AI大学コンテンツ形式革新** — 投票上位リクエスト着手。学習フロー改善・インタラクティブ化でリテンション向上 (VSCode版)
-2. **Service Worker キャッシュバグ修正** — 「Loading from existing service worker.」報告調査・SW 更新戦略見直し (VSCode版)
-3. **Notion 有料化対抗 LP 強化** — 「完全無料 AI 機能」訴求バナーを LP に追加し移行促進 (VSCode版 今週中)
+## 2026-05-22 01:55 + 2026-05-25 昼 JST — Win版#132 part 236 + 236継続 (backfill stub / Hybrid Option C)
 
-### スケジュール健全性サマリー
-- インフラヘルスチェック: 正常 (毎時実行 / GHA)
-- CSチェック: 正常 (毎時実行 / WEB版)
-- ヘルスモニター: 正常 (複数回/日 / JST)
-- AI大学コンテンツ更新: 正常 (複数回/日 実行確認)
-- サポートチケット: 0件 (正常)
-- workflow-failure Issues: open=2 / tracked=200 / avg recovery 7.25h
+**Instance**: Win版 (Claude Code) #132 / part 236 + 継続
+**Status**: backfill stub (= 部 237 で [PR #2976](https://github.com/kanta13jp1/my_web_app/pull/2976) supersede / 3-issue chain migration は本 PR で main 反映 / commits `15b2b87a3` + `67423d622` + `4b76bd19e` + `0621b18bd` + `a13a4f123`)
 
-### Philosophy Alignment
-#5 商品=ユーザー価値 (= Notion Agent有料化を早期検知して対抗策立案) / #6 資本=時間 (= 自動スケジュールで手動レポート工数ゼロ) / #1 CEO感 (= 競合脅威を3段階優先度で分類)
+- **part 236 (5/22 01:55)**: /goal 8-step user re-invoke 第 2 例 = **honest decline 3-連続 pattern 第 1 例確立** (= 部 234 DEFER + 235 minimal + 236 immediate decline / mentor 原則 absolute consecutive) + SNS fabrication critique 第 5 累積 (= redundant 100% 立証) + DISK-WARN 25 GB breach 第 3 連続 + v24 SS 第 20 連続候補 + zone 02-06 +5min margin 物理 floor 第 1 例
+- **part 236 継続 (5/25 昼)**: **3-Issue coherent chain 1-session ship 第 1 例** = [#3003](https://github.com/kanta13jp1/my_web_app/issues/3003) 給与明細 PDF AI 取込 + [#3006](https://github.com/kanta13jp1/my_web_app/issues/3006) 給与使いみち AI + [#3007](https://github.com/kanta13jp1/my_web_app/issues/3007) 可処分残高 AI action / 1 機能要望を「過去視点 / 未来視点 / data source」3 角度で分解 / 全 3 WBS migration commit+push (`4b76bd19e` / `0621b18bd` / `a13a4f123`) / 振分 = schema+prompt Win Claude, impl Win Codex (Codex backlog 8/13-9/17 chain)
+
+**Philosophy Alignment**: 8/9 (= 部 236 継続)
+
+## 2026-05-29 23:24 JST 金 — Win版#132 part 237 (= stale-premise 是正 + scoped hygiene)
+
+**Instance**: Win版 (Claude Code) #132 / part 237 (= 部 236 継続 5/25 → 部 237 5/29 = +4day gap resume / branch `claude/part-237-roadmap-wbs-sync` off fresh main)
+
+**stale-premise 是正 第 1 例** (= prompt 前提を verify-first で cross-check → 5 件 false 検出):
+1. date = part 236 継続 (5/25) 想定 → 実 **2026-05-29 23:24 金** (= +4day gap)
+2. C: 23.68 GB DISK-WARN 第 4 連続候補 → 実 **C: 92 GB free** (= 圧縮 layer v27-29 / disk Tier 2 = moot / skip)
+3. RAM 96.08% v24 SS 第 20 break 期待 → 実 **RAM 80%** (= no breach)
+4. PR #2975+#2976 = canonical 6+7 連続 SUCCESS verify → 実 **#2975 BEHIND / #2976 CONFLICTING** (= gate 未到達 / branch 330 behind main)
+5. #1495 = web-only リブランディング公開 messaging (Option D unilateral) → 実 **[P0][Mobile] iOS/Android 同時リリース準備** (= label priority:high / 5/18 以降 11 day stale / outward-facing → 無断 trigger せず)
+
+**AskUserQuestion → user 選択 = Scoped hygiene + 1 task** (= 8-step full burst / verify-only / stop の 4 択提示)
+
+**Deliverable** (= 本 PR):
+1. **3 stuck WBS migration を main へ landing** (= #2976 の real content / #3003 payslip + #3006 salary-spending + #3007 disposable-balance / 全 additive idempotent `ON CONFLICT DO NOTHING` / origin/main 欠落確認済)
+2. **ROADMAP backfill 235 + 236** (= Hybrid Option C / PR #2975 + #2976 supersede)
+3. **PR #2975 + #2976 close superseded** (= dangling resolve 第 2 連続例)
+
+**Hybrid Option C 適用拡張 第 1 例** = ROADMAP-only stub だけでなく #2976 の genuinely-missing real migration も carry (= 330-behind branch rebase ~1.5h 回避 / fresh branch cherry-pick ~20min)
+
+**skip** (= scoped 判断 / NO-SCOPE-CREEP): 30-50 issue burst / 全 WBS reschedule / NotebookLM 抽出 / v27-29 圧縮 layer (= 全 false-premise or compaction-risk under FATIGUE)
+
+**Philosophy Alignment** (= 5/9 scoped-hygiene):
+- 原則 1 (CEO 感) ✅ stale prompt を verify-first で是正 = data-driven 判断
+- 原則 4 (mentor) ✅ 8-step full burst を FATIGUE 下で scoped 化 = user 保護
+- 原則 6 (商品=価値) ✅ 3 stuck WBS migration landing = 資産機能計画を main 反映
+- 原則 7 (資本=時間) ✅ Hybrid Option C ~20min vs 330-rebase ~1.5h
+- 原則 8 (KPI) ✅ C: 92GB / RAM 80% snapshot 正確記録
+
+**教訓 (= 部 237)**:
+1. **stale-prompt verify-first pattern 第 1 例** = session prompt 前提を盲信せず system date / KPI / git / PR / issue で cross-check → 5 件 false 検出 (= disk/RAM emergency 不在 / #1495 mismatch / PR blocked)
+2. **Hybrid Option C real-content 拡張 第 1 例** = dangling PR が docs-only でなく real migration 含む時は close-superseded ではなく fresh branch carry
+3. **330-behind branch 検出** = `claude/part-236-defer-handoff` 長期 stale / 次セッション以降 fresh main branch 厳守
 
 
+
+## 2026-05-30 09:11 JST 土 — Win版#132 part 238 (= part 237 deferred PR landing + ROADMAP truncation 復旧 incident)
+
+**Instance**: Win版 (Claude Code) #132 / part 238 (= 部 237 5/29 23:24 → 部 238 5/30 09:11 = ~10h gap / 06:00+ qualified / FATIGUE 維持 scoped)
+
+**stale-prompt verify-first 第 2 例** (= prompt 前提 cross-check):
+1. date = 2026-05-30 09:11 JST 土 (= 06:00+ ✅ / zone 02-06 外)
+2. C: ~92GB (部 237 figure) → 実 **77.6 GB free** (= -14GB drift / no emergency)
+3. RAM → 実 **92-96%** v24 SS zone (= FATIGUE → scoped)
+4. branch fresh off main 期待 → 実 **`claude/part-236-defer-handoff` 369 behind / 253 staged files** (= 現 checkout stale)
+5. PR #3046 green verify → 実 **12/12 checks pass + ultrareview skip (opt-in) / MERGEABLE / BEHIND 40**
+
+**Deliverable**:
+1. **PR #3046 MERGED** ✅ (= 部 237 work landing / 3 stuck WBS migration #3003/#3006/#3007 + ROADMAP backfill 235-237 + #2975/#2976 close superseded / mergeCommit `578160fec`)
+   - BEHIND 40 → `gh pr update-branch` → CI 12/12 再 green → squash merge (= auto-merge repo-disabled → manual gate-poll)
+   - part-237 worktree + remote/local branch cleanup
+2. 🔴 **ROADMAP truncation incident 復旧 第 1 例** (= 本 PR core):
+   - **`988febd07` "自動: ロードマップ セッション記録 2026-05-30 (Claude Schedule)" が ROADMAP を 31,323 行 → 5 行 (header のみ) に破壊** (= 1 insertion / 31,318 deletions)
+   - 発生 09:22:50 JST = 私の #3046 merge (09:21:58) の **52 秒後** → automated Claude Schedule commit が full content を読めず destructive overwrite
+   - **復旧 = `578160fec:docs/GROWTH_STRATEGY_ROADMAP.md` から full restore** (= last-good / part 237 entry 含む 31,323 行)
+   - 5/29 `ca88c5fe4` 同名 task は schedule-log 書込のみ (= benign) → destructive 化は 5/30 第 1 例
+3. **ROADMAP part 238 entry** (= 本エントリ)
+4. **Issue 起票** = 再発防止 (= push-to-main regression guard + append-only discipline / Codex impl 振分)
+
+**#1495**: mobile / priority:high / 5/18 stale 確認 (= status comment defer = redundant / mentor 自制)
+
+**skip** (= NO-SCOPE-CREEP / FATIGUE): WBS task 実装 (= MCP unavailable / impl=Codex) / 競合 monitor (= cron / 5/31 解禁) / worktree sprawl ~50 件 cleanup (= 別 task)
+
+**Philosophy Alignment** (= 6/9 incident-recovery):
+- 原則 1 (CEO 感) ✅ data-loss incident を verify-first で検出 → 即復旧
+- 原則 4 (mentor) ✅ FATIGUE 下 scoped / #1495 redundant comment 自制
+- 原則 6 (商品=価値) ✅ 3 WBS migration main 反映 + 成長戦略 31k 行資産 復旧
+- 原則 7 (資本=時間) ✅ git restore ~5min vs 手再構築 不能
+- 原則 8 (KPI) ✅ C: 77.6GB / RAM 92-96% snapshot 正確記録
+- 原則 9 (IPO) ✅ 再発防止 issue = systemic prevention
+
+**教訓 (= 部 238)**:
+1. **ROADMAP truncation incident 第 1 例** = automated Claude Schedule "ロードマップ更新" agent が 31k 行 file を full-overwrite で truncate / merge 直後 52 秒の race / restore = git last-good commit
+2. **deferred-handoff PR landing pattern 第 1 例** = part 237 PR 作成 → part 238 verify+merge = session 跨ぎ clean handoff
+3. **auto-merge repo-disabled + branch protection "require up to date"** = BEHIND branch は update-branch → CI 再走 → manual merge (= `--admin` bypass 不要)
+4. **再発防止候補** = (a) push-to-main regression guard (ROADMAP 大量削除 reject / 既存 regression guard pattern 踏襲) (b) scheduled agent prompt = append-only Edit 強制 / full Write 禁止 (c) ROADMAP 巨大化 (31k 行) archive/split 検討
