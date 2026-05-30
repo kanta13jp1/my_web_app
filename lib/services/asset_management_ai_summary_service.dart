@@ -243,6 +243,25 @@ class AssetManagementAiSummaryService {
         'by_severity': _countBy(
           report.developerRequests.map((request) => request.severity.name),
         ),
+        'items': report.developerRequests
+            .map(_developerRequestToJson)
+            .toList(growable: false),
+        'required_output_contract': const <String>[
+          '現状の痛み',
+          '根拠データ',
+          '変更ファイル',
+          '実装手順',
+          '受け入れ条件',
+          'テスト/確認コマンド',
+          'リスク',
+        ],
+      },
+      'implementation_context': <String, dynamic>{
+        'count': report.implementationContexts.length,
+        'items': report.implementationContexts
+            .map(_implementationContextToJson)
+            .toList(growable: false),
+        'purpose': '開発者向け改善提案を、現実装のソースコード/ドキュメントに基づく具体的な実装タスクへ落とすための入力。',
       },
       'guardrails': const <String, dynamic>{
         'calculation_owner': 'dart_service',
@@ -251,6 +270,7 @@ class AssetManagementAiSummaryService {
         'must_not_use_english_headings': true,
         'external_ai_receives_exact_account_data': true,
         'external_ai_receives_exact_profile_data': true,
+        'external_ai_receives_implementation_context': true,
         'external_ai_may_reference_exact_money_values': true,
         'external_ai_may_reference_account_names': true,
         'external_ai_may_derive_additional_ratios': true,
@@ -310,18 +330,16 @@ class AssetManagementAiSummaryService {
           )
           .toList(growable: false),
       'developer_requests': report.developerRequests
-          .map(
-            (request) => <String, dynamic>{
-              'title': request.title,
-              'description': request.description,
-              'severity': request.severity.name,
-            },
-          )
+          .map(_developerRequestToJson)
+          .toList(growable: false),
+      'implementation_context': report.implementationContexts
+          .map(_implementationContextToJson)
           .toList(growable: false),
       'guardrails': const <String, dynamic>{
         'calculation_owner': 'dart_service',
         'external_ai_receives_exact_account_data': true,
         'external_ai_receives_exact_profile_data': true,
+        'external_ai_receives_implementation_context': true,
         'external_ai_may_reference_exact_money_values': true,
         'external_ai_may_reference_account_names': true,
         'external_ai_may_derive_additional_ratios': true,
@@ -331,6 +349,10 @@ class AssetManagementAiSummaryService {
         'must_prioritize_food_shelter_health_and_contacting_creditors': true,
       },
     };
+  }
+
+  String buildRequestFingerprint(AssetManagementInsightReport report) {
+    return jsonEncode(_fingerprintValue(buildPayload(report)));
   }
 
   String buildDeterministicSummary(AssetManagementInsightReport report) {
@@ -373,6 +395,7 @@ class AssetManagementAiSummaryService {
       jsonEncode(payload),
       '',
       '出力ルール: 必ず自然な日本語だけで回答してください。Markdownの見出し、箇条書き、ラベルも日本語にしてください。英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
+      '開発者向け改善提案の出力ルール: implementation_context と developer_requests を根拠にしてください。各提案は「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
     ].join('\n');
   }
 
@@ -526,6 +549,33 @@ class AssetManagementAiSummaryService {
       'alcohol_use': profile.alcoholUse,
       'smoking_use': profile.smokingUse,
       'favorite_foods': profile.favoriteFoods,
+    };
+  }
+
+  Map<String, dynamic> _developerRequestToJson(
+    AssetManagementDeveloperRequest request,
+  ) {
+    return <String, dynamic>{
+      'title': request.title,
+      'description': request.description,
+      'severity': request.severity.name,
+      'evidence': request.evidence,
+      'implementation_steps': request.implementationSteps,
+      'acceptance_criteria': request.acceptanceCriteria,
+      'source_references': request.sourceReferences,
+    };
+  }
+
+  Map<String, dynamic> _implementationContextToJson(
+    AssetManagementImplementationContext context,
+  ) {
+    return <String, dynamic>{
+      'kind': context.kind,
+      'title': context.title,
+      'path': context.path,
+      'summary': context.summary,
+      'excerpt': context.excerpt,
+      'improvement_use': context.improvementUse,
     };
   }
 
@@ -926,6 +976,39 @@ class AssetManagementAiSummaryService {
     if (absolute < 10000) return 'low';
     if (absolute < 100000) return 'medium';
     return 'high';
+  }
+
+  dynamic _fingerprintValue(dynamic value) {
+    if (value is Map) {
+      final normalized = <String, dynamic>{};
+      for (final entry in value.entries) {
+        normalized[entry.key.toString()] = _fingerprintValue(entry.value);
+      }
+      return normalized;
+    }
+    if (value is Iterable) {
+      return value.map(_fingerprintValue).toList(growable: false);
+    }
+    if (value is String) {
+      return _fingerprintString(value);
+    }
+    return value;
+  }
+
+  String _fingerprintString(String value) {
+    if (!value.contains('T')) {
+      return value;
+    }
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) {
+      return value;
+    }
+    return _dateKey(parsed);
+  }
+
+  String _dateKey(DateTime value) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${value.year}-${two(value.month)}-${two(value.day)}';
   }
 
   String _formatYen(double amount) {

@@ -233,12 +233,19 @@ void main() {
         expect(encoded.contains('personal_context_signals'), true);
         expect(encoded.contains('priority_situation_cards'), true);
         expect(encoded.contains('recommended_next_step'), true);
+        expect(encoded.contains('implementation_context'), true);
+        expect(encoded.contains('source_references'), true);
+        expect(encoded.contains('acceptance_criteria'), true);
         expect(
           encoded.contains('external_ai_receives_exact_account_data'),
           true,
         );
         expect(
           encoded.contains('external_ai_receives_exact_profile_data'),
+          true,
+        );
+        expect(
+          encoded.contains('external_ai_receives_implementation_context'),
           true,
         );
       },
@@ -275,6 +282,9 @@ void main() {
       final workbook = payload['workbook'] as Map<String, dynamic>;
       final profile = payload['user_profile'] as Map<String, dynamic>;
       final debtRows = workbook['debt_master_rows'] as List<dynamic>;
+      final developerRequests = payload['developer_requests'] as List<dynamic>;
+      final implementationContext =
+          payload['implementation_context'] as List<dynamic>;
 
       expect(payload.containsKey('workbook'), true);
       expect(debtRows, isNotEmpty);
@@ -284,15 +294,43 @@ void main() {
       expect(payload['action_items'] is List<dynamic>, true);
       expect(payload['movement_suggestions'] is List<dynamic>, true);
       expect(emergencyAdvices.length, report.emergencyAdvices.length);
-      expect(payload['developer_requests'] is List<dynamic>, true);
+      expect(developerRequests, isNotEmpty);
+      expect(
+        developerRequests.first as Map<String, dynamic>,
+        containsPair('acceptance_criteria', isA<List<String>>()),
+      );
+      expect(implementationContext, isNotEmpty);
       expect(guardrails['calculation_owner'], 'dart_service');
       expect(guardrails['external_ai_receives_exact_account_data'], true);
       expect(guardrails['external_ai_receives_exact_profile_data'], true);
+      expect(
+        guardrails['external_ai_receives_implementation_context'],
+        true,
+      );
       expect(
         guardrails['external_ai_may_reference_account_names'],
         true,
       );
       expect(guardrails['must_not_recommend_starvation_or_water_only'], true);
+    });
+
+    test('request fingerprint ignores volatile clock seconds', () {
+      final service = AssetManagementAiSummaryService(
+        now: () => DateTime(2026, 5, 1, 12),
+      );
+
+      final morning = service.buildRequestFingerprint(
+        _report(baseDate: DateTime(2026, 5, 1, 9, 0, 1)),
+      );
+      final evening = service.buildRequestFingerprint(
+        _report(baseDate: DateTime(2026, 5, 1, 21, 59, 59)),
+      );
+      final nextDay = service.buildRequestFingerprint(
+        _report(baseDate: DateTime(2026, 5, 2)),
+      );
+
+      expect(morning, evening);
+      expect(morning, isNot(nextDay));
     });
 
     test(
@@ -329,12 +367,12 @@ void main() {
   });
 }
 
-AssetManagementInsightReport _report() {
+AssetManagementInsightReport _report({DateTime? baseDate}) {
   const planner = AssetLiabilityPlanningService();
   const insight = AssetManagementInsightService();
   final workbook = planner.buildWorkbook(
     latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
-    baseDate: DateTime(2026, 5, 1),
+    baseDate: baseDate ?? DateTime(2026, 5, 1),
     monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
     paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
   );

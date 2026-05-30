@@ -228,6 +228,11 @@ class _SalarySpendingCategoryRule {
 
 const List<_SalarySpendingCategoryRule> _categoryRules =
     <_SalarySpendingCategoryRule>[
+  _SalarySpendingCategoryRule('使途不明金', <String>[
+    '使途不明金',
+    '使途不明',
+    '用途不明',
+  ]),
   _SalarySpendingCategoryRule('住居', <String>[
     '家賃',
     '住宅',
