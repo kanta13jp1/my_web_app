@@ -1042,14 +1042,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _monthlyReports = List<AssetLiabilityMonthlyReport>.from(reports);
         _monthlyReportMessage = reports.isEmpty
-            ? 'No generated monthly AI reports were found. Local snapshots remain available.'
-            : 'Monthly reports refreshed.';
+            ? '生成済みの月次AIレポートはありません。ローカルスナップショットは引き続き確認できます。'
+            : '月次レポートを更新しました。';
       });
     } catch (e) {
       debugPrint('Error loading monthly asset reports: $e');
       if (!mounted) return;
       setState(() {
-        _monthlyReportMessage = 'Monthly report refresh failed: $e';
+        _monthlyReportMessage = '月次レポートの更新に失敗しました: $e';
       });
     } finally {
       if (mounted) {
@@ -6723,7 +6723,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$periodLabel / 残り${balance.daysRemaining}日。収入は給与明細の解析結果を優先します。',
+                        '$periodLabel / 残り${balance.daysRemaining}日。収入は給与明細の解析結果を優先します。支出未入力時は上限目安です。',
                         style: TextStyle(
                           fontSize: 12,
                           height: 1.5,
@@ -6762,7 +6762,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
                 ),
                 _buildFlowPriorityMetric(
-                  label: '使える残高',
+                  label: '使える上限目安',
                   value: _formatSignedYen(balance.disposable),
                   color: balance.disposable >= 0
                       ? const Color(0xFF065F46)
@@ -6774,6 +6774,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: const Color(0xFF2563EB),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _disposableBalanceReviewText(salaryBreakdown, balance),
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             if (breakdownMessage != null) ...[
               const SizedBox(height: 10),
@@ -6851,6 +6860,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
+  }
+
+  String _disposableBalanceReviewText(
+    SalarySpendingBreakdown salaryBreakdown,
+    DisposableBalanceResult balance,
+  ) {
+    final formula = '計算: ${_formatYen(balance.income)} - '
+        '${_formatYen(balance.fixedTotal)} - ${_formatYen(balance.debtTotal)} = '
+        '${_formatSignedYen(balance.disposable)}。';
+    if (salaryBreakdown.expenseEntryCount == 0) {
+      return '$formula 給与日後の支出明細が未入力のため、これは「使ってよい確定額」ではなく給与ベースの上限目安です。銀行・カード明細を取り込むと実額に近づきます。';
+    }
+    return '$formula 給与日後の記録済み支出は${_formatYen(salaryBreakdown.totalExpense)}です。未取り込み支出がある場合は、この目安からさらに差し引いてください。';
   }
 
   String _buildDisposableBalanceFixedBreakdown(
@@ -9714,9 +9736,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementAiSummaryStatus.disabled => const Color(0xFF475569),
     };
     final statusLabel = switch (result.status) {
-      AssetManagementAiSummaryStatus.aiGenerated => 'AI summary',
-      AssetManagementAiSummaryStatus.fallback => 'Fallback',
-      AssetManagementAiSummaryStatus.disabled => 'Feature flag OFF',
+      AssetManagementAiSummaryStatus.aiGenerated => 'AI要約',
+      AssetManagementAiSummaryStatus.fallback => '定型要約',
+      AssetManagementAiSummaryStatus.disabled => 'AI無効',
     };
 
     return Container(
@@ -9769,8 +9791,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 color: color,
               ),
               _buildAssetLiabilitySyncChip(
-                label: 'source',
-                value: result.source,
+                label: 'ソース',
+                value: _localizedAssetManagementAiSource(result.source),
                 color: color,
               ),
               OutlinedButton.icon(
@@ -9786,15 +9808,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     : const Icon(Icons.auto_awesome_outlined, size: 16),
                 label: Text(
                   enabled
-                      ? 'AI summary'
-                      : 'AI summary disabled by feature flag',
+                      ? 'AI要約を更新'
+                      : 'AI要約は機能フラグで無効です',
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            'AI receives only calculated insight payloads. Amount calculation stays in Dart.',
+            'AIには計算済みインサイトだけを渡します。金額計算はDart側で固定しています。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 11,
@@ -9804,6 +9826,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  String _localizedAssetManagementAiSource(String source) {
+    return switch (source) {
+      'deterministic fallback / feature flag off' => 'ルールベース要約 / AI無効',
+      'deterministic fallback / ai-hub failed' => 'ルールベース要約 / AI接続失敗',
+      'deterministic fallback / waiting for ai-hub' => 'ルールベース要約 / AI応答待ち',
+      _ => source
+          .replaceAll('deterministic fallback', 'ルールベース要約')
+          .replaceAll('feature flag off', 'AI無効')
+          .replaceAll('ai-hub failed', 'AI接続失敗')
+          .replaceAll('waiting for ai-hub', 'AI応答待ち'),
+    };
   }
 
   Future<void> _generateAssetManagementAiSummary(
@@ -12737,7 +12772,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                view.hasAiReport ? 'AI summary' : 'Local snapshot',
+                view.hasAiReport ? 'AI要約' : 'ローカルスナップショット',
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontSize: 11,
@@ -12784,7 +12819,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
               IconButton(
-                tooltip: 'Newer month',
+                tooltip: '新しい月',
                 onPressed: canSelectNewer
                     ? () => _selectMonthlyReportAt(
                           reportViews[selectedIndex - 1].monthKey,
@@ -12793,7 +12828,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 icon: const Icon(Icons.chevron_left),
               ),
               IconButton(
-                tooltip: 'Older month',
+                tooltip: '古い月',
                 onPressed: canSelectOlder
                     ? () => _selectMonthlyReportAt(
                           reportViews[selectedIndex + 1].monthKey,
@@ -12809,53 +12844,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             runSpacing: 8,
             children: [
               _buildMonthlyReportStatTile(
-                label: 'Assets',
+                label: '資産',
                 value: _formatManagementYen(report.totalAssets),
                 color: const Color(0xFF0D9488),
               ),
               _buildMonthlyReportStatTile(
-                label: 'Liabilities',
+                label: '負債',
                 value: _formatManagementYen(report.totalLiabilities),
                 color: const Color(0xFFB91C1C),
               ),
               _buildMonthlyReportStatTile(
-                label: 'Net worth',
+                label: '純資産',
                 value: _formatManagementYen(report.netWorth),
                 color: report.netWorth < 0
                     ? const Color(0xFFB91C1C)
                     : const Color(0xFF0D9488),
               ),
               _buildMonthlyReportStatTile(
-                label: 'MoM net worth',
+                label: '前月比',
                 value: _formatManagementDeltaYen(report.netWorthDelta),
                 color: const Color(0xFF4F46E5),
               ),
               _buildMonthlyReportStatTile(
-                label: 'Cash-like',
+                label: '現金性資産',
                 value: _formatManagementYen(report.cashLikeTotal),
                 color: const Color(0xFF0891B2),
               ),
               _buildMonthlyReportStatTile(
-                label: 'Planned payments',
+                label: '支払予定',
                 value: _formatManagementYen(
                   report.monthlyScheduledPaymentTotal,
                 ),
                 color: const Color(0xFF7C3AED),
               ),
               _buildMonthlyReportStatTile(
-                label: 'Actual paid',
+                label: '実支払',
                 value: _formatManagementYen(report.monthlyActualPaymentTotal),
                 color: const Color(0xFF2563EB),
               ),
               _buildMonthlyReportStatTile(
-                label: 'Planned/actual diff',
+                label: '予定/実績差',
                 value: _formatManagementYen(
                   report.monthlyPaymentDifferenceTotal,
                 ),
                 color: const Color(0xFFD97706),
               ),
               _buildMonthlyReportStatTile(
-                label: 'Overdue',
+                label: '期限超過',
                 value: '${report.overduePaymentCount}',
                 color: const Color(0xFFB91C1C),
               ),
@@ -12880,7 +12915,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  report.hasAiReport ? 'AI summary' : 'Deterministic summary',
+                  report.hasAiReport ? 'AI要約' : 'ルールベース要約',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
