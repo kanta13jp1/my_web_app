@@ -3,7 +3,7 @@ title: "When to defer massive /goal requests in Claude Code sessions — mentor 
 emoji: "🛑"
 type: "tech"
 topics: ["claudecode", "ai", "agents", "devops", "productivity"]
-published: false
+published: true
 ---
 
 ## TL;DR
