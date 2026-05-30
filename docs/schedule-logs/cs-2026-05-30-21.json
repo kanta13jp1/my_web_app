@@ -1,0 +1,7 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-30T21:11:41Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22件登録済み) / チケット: 0件 / Issue修正: 0件 / workflow-failure: 自動修復困難(dependabot) / Schedule健全性: daily-report停止中(Issue #3047) / Supabase: 200 OK"
+}
