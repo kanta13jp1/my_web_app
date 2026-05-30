@@ -45,6 +45,8 @@ class AssetManagementAiSummaryResult {
 }
 
 class AssetManagementAiSummaryService {
+  static const int _summaryMaxTokens = 3200;
+
   final bool _aiEnabled;
   final AiHubChatService _chatService;
   final AssetManagementInsightPromptBuilder _promptBuilder;
@@ -105,6 +107,7 @@ class AssetManagementAiSummaryService {
               ? await _chatService.sendAutoChat(
                   message: prompt,
                   tier: 'performance',
+                  maxTokens: _summaryMaxTokens,
                   traceId: 'asset-management-ai-summary',
                   providerChoiceReason: route.providerChoiceReason,
                   routingUseCase: route.useCase.id,
@@ -112,6 +115,7 @@ class AssetManagementAiSummaryService {
               : await _chatService.sendProviderChat(
                   message: prompt,
                   provider: _provider,
+                  maxTokens: _summaryMaxTokens,
                   traceId: 'asset-management-ai-summary',
                   providerChoiceReason: route.providerChoiceReason,
                   routingUseCase: route.useCase.id,
@@ -394,7 +398,8 @@ class AssetManagementAiSummaryService {
       '## AIに渡す詳細ペイロード',
       jsonEncode(payload),
       '',
-      '出力ルール: 必ず自然な日本語だけで回答してください。Markdownの見出し、箇条書き、ラベルも日本語にしてください。英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
+      '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
+      '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. 最後にズバッと総評」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
       '開発者向け改善提案の出力ルール: implementation_context と developer_requests を根拠にしてください。各提案は「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
     ].join('\n');
   }
@@ -410,6 +415,7 @@ class AssetManagementAiSummaryService {
           message: prompt,
           provider: candidate.providerId,
           model: candidate.modelId,
+          maxTokens: _summaryMaxTokens,
           traceId: 'asset-management-ai-summary',
           providerChoiceReason: route.providerChoiceReason,
           routingUseCase: route.useCase.id,

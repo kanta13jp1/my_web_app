@@ -56,13 +56,20 @@ void main() {
       expect(result.text, 'AIが生成した日本語要約です。');
       expect(capturedBody?['action'], 'provider.chat_auto');
       expect(capturedBody?['tier'], 'performance');
+      expect(capturedBody?['max_tokens'], 3200);
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
         capturedBody?['message'].toString().contains('AIに渡す詳細ペイロード'),
         true,
       );
       expect(
-        capturedBody?['message'].toString().contains('必ず自然な日本語だけで回答してください'),
+        capturedBody?['message']
+            .toString()
+            .contains('GitHub Flavored Markdown'),
+        true,
+      );
+      expect(
+        capturedBody?['message'].toString().contains('8. 最後にズバッと総評'),
         true,
       );
       expect(
@@ -141,6 +148,7 @@ void main() {
         expect(calls.single['action'], 'provider.chat');
         expect(calls.single['provider'], 'anthropic');
         expect(calls.single['model'], 'claude-opus-4-7');
+        expect(calls.single['max_tokens'], 3200);
         expect(calls.single['routing_use_case'], 'summary');
         expect(
           calls.single['provider_choice_reason'],

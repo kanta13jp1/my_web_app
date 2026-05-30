@@ -10064,17 +10064,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.psychology_alt_outlined, color: color, size: 18),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
+                child: _buildAssetManagementAiSummaryMarkdown(
                   result.text,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    height: 1.5,
-                  ),
+                  color,
                 ),
               ),
             ],
@@ -10136,6 +10133,56 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAssetManagementAiSummaryMarkdown(String text, Color color) {
+    final theme = Theme.of(context);
+    final base = theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurface,
+          fontSize: 12,
+          height: 1.5,
+        ) ??
+        const TextStyle(fontSize: 12, height: 1.5);
+    final heading = base.copyWith(
+      color: color,
+      fontWeight: FontWeight.w800,
+      fontSize: 13,
+      height: 1.35,
+    );
+
+    return SelectionArea(
+      child: MarkdownBody(
+        data: text,
+        softLineBreak: true,
+        styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+          p: base,
+          strong: base.copyWith(fontWeight: FontWeight.w800),
+          h1: heading.copyWith(fontSize: 14),
+          h2: heading,
+          h3: heading.copyWith(fontSize: 12.5),
+          listBullet: base.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+          blockquote: base.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          blockquoteDecoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: color.withValues(alpha: 0.45), width: 3),
+            ),
+          ),
+          horizontalRuleDecoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: theme.colorScheme.outlineVariant,
+                width: 1,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

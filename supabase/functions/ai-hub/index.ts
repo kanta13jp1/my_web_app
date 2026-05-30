@@ -118,6 +118,10 @@ type ProviderInlineFile = {
   name?: string | null;
 };
 
+type ProviderCallOptions = {
+  maxTokens?: number;
+};
+
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
   let cur: unknown = obj;
   for (const key of path) {
@@ -578,6 +582,53 @@ function estimateTokensFromChars(chars: number): number {
   return Math.max(1, Math.ceil(Math.max(0, chars) / 4));
 }
 
+function normalizeMaxTokens(value: unknown): number | undefined {
+  const raw = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(raw) || raw <= 0) return undefined;
+  return Math.max(64, Math.min(8192, Math.round(raw)));
+}
+
+function applyProviderGenerationOptions(
+  providerId: string,
+  requestBody: Record<string, unknown>,
+  options?: ProviderCallOptions,
+): Record<string, unknown> {
+  const maxTokens = options?.maxTokens;
+  if (!maxTokens) return requestBody;
+
+  if (providerId === "google" || providerId === "google_flash_lite") {
+    const generationConfig = requestBody.generationConfig &&
+        typeof requestBody.generationConfig === "object"
+      ? requestBody.generationConfig as Record<string, unknown>
+      : {};
+    return {
+      ...requestBody,
+      generationConfig: {
+        ...generationConfig,
+        maxOutputTokens: maxTokens,
+      },
+    };
+  }
+
+  return {
+    ...requestBody,
+    max_tokens: maxTokens,
+  };
+}
+
+function providerFinishReason(data: unknown): string | null {
+  const raw = pick(data, "choices", 0, "finish_reason") ??
+    pick(data, "candidates", 0, "finishReason") ??
+    pick(data, "stop_reason");
+  return typeof raw === "string" && raw.trim().length > 0 ? raw.trim() : null;
+}
+
+function isProviderOutputLengthLimited(reason: string | null): boolean {
+  const normalized = reason?.toLowerCase().replace(/[_\s-]+/g, "") ?? "";
+  return normalized === "length" || normalized === "maxtokens" ||
+    normalized === "maxoutputtokens";
+}
+
 function isProviderPaymentRequired(
   status: number,
   responseText: string,
@@ -599,6 +650,7 @@ async function callSingleProvider(
   messages: { role: string; content: string }[],
   model?: string,
   inlineFiles?: ProviderInlineFile[],
+  options?: ProviderCallOptions,
 ): Promise<
   {
     ok: boolean;
@@ -633,7 +685,11 @@ async function callSingleProvider(
         ...(cfg.extraHeaders ?? {}),
       },
       body: JSON.stringify(
-        cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+        applyProviderGenerationOptions(
+          providerId,
+          cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+          options,
+        ),
       ),
     });
     const respText = await resp.text();
@@ -661,6 +717,15 @@ async function callSingleProvider(
       };
     }
     const content = cfg.parseResponse(data);
+    const finishReason = providerFinishReason(data);
+    if (content && isProviderOutputLengthLimited(finishReason)) {
+      return {
+        ok: false,
+        error: `outputLengthLimited: ${providerId}: ${finishReason}`,
+        modelUsed: model ?? cfg.defaultModel,
+        isRetriable: true,
+      };
+    }
     const modelUsed =
       (typeof (data as Record<string, unknown>)?.model === "string"
         ? (data as Record<string, unknown>).model
@@ -4504,6 +4569,9 @@ serve(async (req: Request) => {
           body.routing_use_case,
           80,
         );
+        const requestedMaxTokens = normalizeMaxTokens(
+          body.max_tokens ?? body.maxTokens,
+        );
         const inputChars = finalMessages
           .map((m) => typeof m.content === "string" ? m.content.length : 0)
           .reduce((a, b) => a + b, 0);
@@ -4582,7 +4650,13 @@ serve(async (req: Request) => {
               "Content-Type": "application/json",
               ...(cfg.extraHeaders ?? {}),
             },
-            body: JSON.stringify(cfg.buildBody(finalMessages, requestedModel)),
+            body: JSON.stringify(
+              applyProviderGenerationOptions(
+                providerId,
+                cfg.buildBody(finalMessages, requestedModel),
+                { maxTokens: requestedMaxTokens },
+              ),
+            ),
           });
           const respText = await resp.text();
           if (!resp.ok) {
@@ -4654,9 +4728,28 @@ serve(async (req: Request) => {
             });
           }
           const content = cfg.parseResponse(data);
+          const finishReason = providerFinishReason(data);
           const modelUsed = pick(data, "model");
           const outputChars = content.length;
           const usedModel = String(modelUsed ?? requestedModel);
+          if (content && isProviderOutputLengthLimited(finishReason)) {
+            await logProviderChat({
+              success: false,
+              statusCode: 502,
+              model: usedModel,
+              outputChars,
+              errorMessage: `outputLengthLimited: ${finishReason}`,
+            });
+            return json({
+              success: false,
+              status: "outputLengthLimited",
+              provider: providerId,
+              model: usedModel,
+              finish_reason: finishReason,
+              message:
+                "AI応答が出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
+            }, 502);
+          }
           const estimatedCost = calculateApiCost(
             usedModel,
             estimateTokensFromChars(inputChars),
@@ -4746,6 +4839,9 @@ serve(async (req: Request) => {
           body.routing_use_case,
           80,
         );
+        const requestedMaxTokens = normalizeMaxTokens(
+          body.max_tokens ?? body.maxTokens,
+        );
 
         let resultText: string | undefined;
         let usedProvider: string | undefined;
@@ -4763,6 +4859,8 @@ serve(async (req: Request) => {
               pid,
               finalMessages,
               undefined,
+              undefined,
+              { maxTokens: requestedMaxTokens },
             );
             if (result.ok && result.text) {
               resultText = result.text;
