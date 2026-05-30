@@ -208,13 +208,19 @@ export async function handleMonthlyAssetReportAction(options: {
         isRetriable: false,
       };
     const providerText = readString(providerResult.text);
-    if (providerResult.ok && providerText) {
+    if (
+      providerResult.ok && providerText && containsJapaneseText(providerText)
+    ) {
       status = "ai_summary_generated";
       aiSummary = providerText.slice(0, 2400);
       aiModel = providerResult.modelUsed ?? `${provider}:default`;
     } else {
       warnings.push(
-        `AI summary fallback used: ${providerResult.error ?? "empty response"}`,
+        providerResult.ok && providerText
+          ? "AI要約が日本語ではなかったため、ルールベース要約を使用しました。"
+          : `AI要約フォールバックを使用しました: ${
+            providerResult.error ?? "empty response"
+          }`,
       );
     }
   }
@@ -347,20 +353,18 @@ async function readCfoAssetRows(options: {
 export function buildDeterministicMonthlyAssetSummary(
   snapshot: MonthlyAssetSnapshot,
 ): string {
-  const netDeltaLabel = snapshot.net_worth >= 0 ? "positive" : "negative";
+  const netDeltaLabel = snapshot.net_worth >= 0 ? "プラス" : "マイナス";
   return [
-    `${snapshot.month_key} monthly asset report.`,
-    `Assets: ${formatYen(snapshot.total_assets)}; liabilities: ${
+    `${snapshot.month_key} 月次資産レポート。`,
+    `資産: ${formatYen(snapshot.total_assets)}、負債: ${
       formatYen(snapshot.total_liabilities)
-    }; net worth: ${formatYen(snapshot.net_worth)} (${netDeltaLabel}).`,
-    `Cash-like assets: ${
-      formatYen(snapshot.cash_like_total)
-    }; scheduled payments: ${
+    }、純資産: ${formatYen(snapshot.net_worth)}（${netDeltaLabel}）。`,
+    `現金性資産: ${formatYen(snapshot.cash_like_total)}、支払予定: ${
       formatYen(snapshot.monthly_scheduled_payment_total)
-    }; actual payments: ${formatYen(snapshot.monthly_actual_payment_total)}.`,
-    `Payment difference: ${
+    }、実支払: ${formatYen(snapshot.monthly_actual_payment_total)}。`,
+    `予定と実支払の差分: ${
       formatYen(snapshot.monthly_payment_difference_total)
-    }; overdue payments: ${snapshot.overdue_payment_count}.`,
+    }、期限超過: ${snapshot.overdue_payment_count}件。`,
   ].join(" ");
 }
 
@@ -371,14 +375,14 @@ export function buildMonthlyAssetReportMessages(
     {
       role: "system",
       content:
-        "You are a cautious personal finance analyst. Do not invent account balances. Return a concise Japanese summary with risks and next actions.",
+        "あなたは慎重な個人財務アナリストです。口座残高を推測で補わず、リスクと次の行動を含む短い日本語要約だけを返してください。",
     },
     {
       role: "user",
       content: [
-        "Create a monthly asset management summary from this deterministic snapshot.",
-        "Keep it under 600 Japanese characters.",
-        "Include: net worth, liability pressure, payment variance, overdue risk, and one next action.",
+        "この確定スナップショットから月次資産管理サマリーを作成してください。",
+        "600字以内の自然な日本語で返してください。",
+        "純資産、負債圧力、予定と実支払の差分、期限超過リスク、次の行動を1つ含めてください。",
         JSON.stringify(snapshot),
       ].join("\n"),
     },
@@ -530,7 +534,11 @@ function roundYen(value: number): number {
 }
 
 function formatYen(value: number): string {
-  return `${roundYen(value).toLocaleString("en-US")} JPY`;
+  return `${roundYen(value).toLocaleString("ja-JP")}円`;
+}
+
+function containsJapaneseText(value: string): boolean {
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(value);
 }
 
 function asRecord(value: unknown): UnknownRecord | null {
