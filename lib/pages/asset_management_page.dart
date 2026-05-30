@@ -6762,9 +6762,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
                 ),
                 _buildFlowPriorityMetric(
-                  label: '使える上限目安',
-                  value: _formatSignedYen(balance.disposable),
-                  color: balance.disposable >= 0
+                  label: '返済元金',
+                  value: '-${_formatYen(balance.debtPrincipalTotal)}',
+                  color: const Color(0xFF7C2D12),
+                  isSelected: _disposableBalanceBreakdownKey == 'debt',
+                  onHoverStart: () => _setDisposableBalanceBreakdown('debt'),
+                  onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '金利',
+                  value: '-${_formatYen(balance.debtInterestTotal)}',
+                  color: const Color(0xFF9F1239),
+                  isSelected: _disposableBalanceBreakdownKey == 'debt',
+                  onHoverStart: () => _setDisposableBalanceBreakdown('debt'),
+                  onHoverEnd: () => _clearDisposableBalanceBreakdown('debt'),
+                ),
+                _buildFlowPriorityMetric(
+                  label: '借金減少ライン',
+                  value: _formatSignedYen(balance.debtReductionSpendingLimit),
+                  color: balance.debtReductionSpendingLimit >= 0
                       ? const Color(0xFF065F46)
                       : const Color(0xFF7F1D1D),
                 ),
@@ -6868,11 +6884,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     final formula = '計算: ${_formatYen(balance.income)} - '
         '${_formatYen(balance.fixedTotal)} - ${_formatYen(balance.debtTotal)} = '
-        '${_formatSignedYen(balance.disposable)}。';
-    if (salaryBreakdown.expenseEntryCount == 0) {
-      return '$formula 給与日後の支出明細が未入力のため、これは「使ってよい確定額」ではなく給与ベースの上限目安です。銀行・カード明細を取り込むと実額に近づきます。';
+        '${_formatSignedYen(balance.debtReductionSpendingLimit)}。';
+    final debtSplit =
+        '返済${_formatYen(balance.debtTotal)}の内訳は、元金${_formatYen(balance.debtPrincipalTotal)} / 金利${_formatYen(balance.debtInterestTotal)}です。';
+    final String debtGuard;
+    if (balance.debtTotal <= 0) {
+      debtGuard = '今月の返済予定はありません。新規借入をしなければ債務残高は増えません。';
+    } else if (balance.debtPrincipalTotal <= 0) {
+      debtGuard = '今月の返済は元金減少が見込めないため、残高を減らすには追加返済か金利条件の見直しが必要です。';
+    } else if (balance.debtReductionSpendingLimit >= 0) {
+      debtGuard =
+          'この借金減少ライン以内に使用額を抑えると、新規借入なしで元金${_formatYen(balance.debtPrincipalTotal)}分だけ先月より債務総額が減る見込みです。';
+    } else {
+      debtGuard = '固定費と返済で給与を超えているため、このままでは債務残高を増やさない運用ができません。支出削減か入金追加が必要です。';
     }
-    return '$formula 給与日後の記録済み支出は${_formatYen(salaryBreakdown.totalExpense)}です。未取り込み支出がある場合は、この目安からさらに差し引いてください。';
+    if (salaryBreakdown.expenseEntryCount == 0) {
+      return '$formula $debtSplit $debtGuard 給与日後の支出明細が未入力のため、これは「使ってよい確定額」ではなく給与ベースの上限目安です。銀行・カード明細を取り込むと実額に近づきます。';
+    }
+    return '$formula $debtSplit $debtGuard 給与日後の記録済み支出は${_formatYen(salaryBreakdown.totalExpense)}です。未取り込み支出がある場合は、この目安からさらに差し引いてください。';
   }
 
   String _buildDisposableBalanceFixedBreakdown(
@@ -6910,7 +6939,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         for (final row in rows)
           '${row.dayOfMonth == null ? '' : '${row.dayOfMonth}日 '}'
               '${row.name.trim().isEmpty ? '返済' : row.name.trim()} ${_formatYen(row.monthlyPayment)}'
+              ' / 元金 ${_formatYen(_disposableBalanceService.principalPaymentFor(row))}'
+              ' / 金利 ${_formatYen(_disposableBalanceService.interestPaymentFor(row))}'
               '${row.principal > 0 ? ' / 残高 ${_formatYen(row.principal)}' : ''}',
+        '元金合計 ${_formatYen(balance.debtPrincipalTotal)}',
+        '金利合計 ${_formatYen(balance.debtInterestTotal)}',
       ],
     );
   }

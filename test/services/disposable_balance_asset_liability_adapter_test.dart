@@ -68,7 +68,12 @@ void main() {
       final payPayDebt = result.debts.singleWhere(
         (debt) => debt.monthlyPayment == 17229,
       );
+      final payPayRow = workbook.debtMasterRows.singleWhere(
+        (row) => row.name == 'PayPayカード',
+      );
       expect(payPayDebt.dayOfMonth, 27);
+      expect(payPayDebt.principalPayment, payPayRow.principalPaymentEstimate);
+      expect(payPayDebt.interestPayment, payPayRow.monthlyInterestEstimate);
     });
 
     test('routes supplemental Anthropic repayment into debts', () {
@@ -112,6 +117,11 @@ void main() {
       );
       expect(anthropicDebt.dayOfMonth, 26);
       expect(anthropicDebt.principal, 0);
+      expect(
+        anthropicDebt.principalPayment,
+        AssetLiabilityPlanningService.anthropicAcomShoppingPaymentAmount,
+      );
+      expect(anthropicDebt.interestPayment, 0);
     });
   });
 }

@@ -53,6 +53,8 @@ class DisposableBalanceAssetLiabilityAdapter {
         DisposableBalanceDebt(
           name: row.name,
           principal: row.balance.abs(),
+          principalPayment: row.principalPaymentEstimate,
+          interestPayment: row.monthlyInterestEstimate,
           monthlyPayment: row.scheduledPaymentAmount,
           interestRate: row.annualRate,
           dayOfMonth: row.paymentDay?.clamp(1, 31).toInt(),
@@ -69,6 +71,8 @@ class DisposableBalanceAssetLiabilityAdapter {
         DisposableBalanceDebt(
           name: row.accountName,
           principal: 0,
+          principalPayment: row.paymentAmount,
+          interestPayment: 0,
           monthlyPayment: row.paymentAmount,
           interestRate: 0,
           dayOfMonth: row.paymentDate.day.clamp(1, 31).toInt(),

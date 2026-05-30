@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class DisposableBalancePayslip {
   const DisposableBalancePayslip({
     required this.payDate,
@@ -33,6 +35,8 @@ class DisposableBalanceDebt {
     required this.name,
     required this.monthlyPayment,
     this.principal = 0,
+    this.principalPayment = 0,
+    this.interestPayment = 0,
     this.interestRate = 0,
     this.lender = '',
     this.dayOfMonth,
@@ -42,6 +46,8 @@ class DisposableBalanceDebt {
 
   final String name;
   final double principal;
+  final double principalPayment;
+  final double interestPayment;
   final double monthlyPayment;
   final double interestRate;
   final String lender;
@@ -79,6 +85,9 @@ class DisposableBalanceResult {
     required this.income,
     required this.fixedTotal,
     required this.debtTotal,
+    required this.debtPrincipalTotal,
+    required this.debtInterestTotal,
+    required this.debtReductionSpendingLimit,
     required this.disposable,
     required this.dailyPace,
     required this.recurringExpenses,
@@ -93,6 +102,9 @@ class DisposableBalanceResult {
   final double income;
   final double fixedTotal;
   final double debtTotal;
+  final double debtPrincipalTotal;
+  final double debtInterestTotal;
+  final double debtReductionSpendingLimit;
   final double disposable;
   final double dailyPace;
   final List<DisposableBalanceRecurringExpense> recurringExpenses;
@@ -153,7 +165,16 @@ class DisposableBalanceService {
       0,
       (sum, debt) => sum + debt.monthlyPayment.abs(),
     );
+    final debtInterestTotal = activeDebts.fold<double>(
+      0,
+      (sum, debt) => sum + _interestPaymentFor(debt),
+    );
+    final debtPrincipalTotal = activeDebts.fold<double>(
+      0,
+      (sum, debt) => sum + _principalPaymentFor(debt),
+    );
     final disposable = income - fixedTotal - debtTotal;
+    final debtReductionSpendingLimit = disposable;
     final dailyPace = disposable / daysRemaining;
     final actions = _buildActions(
       asOfDate: normalizedAsOf,
@@ -171,6 +192,9 @@ class DisposableBalanceService {
       income: income,
       fixedTotal: fixedTotal,
       debtTotal: debtTotal,
+      debtPrincipalTotal: debtPrincipalTotal,
+      debtInterestTotal: debtInterestTotal,
+      debtReductionSpendingLimit: debtReductionSpendingLimit,
       disposable: disposable,
       dailyPace: dailyPace,
       recurringExpenses: List<DisposableBalanceRecurringExpense>.unmodifiable(
@@ -181,6 +205,53 @@ class DisposableBalanceService {
         actions,
       ),
     );
+  }
+
+  double interestPaymentFor(DisposableBalanceDebt debt) =>
+      _interestPaymentFor(debt);
+
+  double principalPaymentFor(DisposableBalanceDebt debt) =>
+      _principalPaymentFor(debt);
+
+  static double _interestPaymentFor(DisposableBalanceDebt debt) {
+    return _paymentSplitFor(debt).interest;
+  }
+
+  static double _principalPaymentFor(DisposableBalanceDebt debt) {
+    return _paymentSplitFor(debt).principal;
+  }
+
+  static _DebtPaymentSplit _paymentSplitFor(DisposableBalanceDebt debt) {
+    final monthlyPayment = debt.monthlyPayment.abs();
+    if (monthlyPayment <= 0) {
+      return const _DebtPaymentSplit(principal: 0, interest: 0);
+    }
+    final explicitPrincipal =
+        debt.principalPayment > 0 ? debt.principalPayment.abs() : 0.0;
+    final explicitInterest =
+        debt.interestPayment > 0 ? debt.interestPayment.abs() : 0.0;
+    final hasExplicitPrincipal = explicitPrincipal > 0;
+    final hasExplicitInterest = explicitInterest > 0;
+    var interest = hasExplicitInterest
+        ? explicitInterest
+        : hasExplicitPrincipal
+            ? max(0.0, monthlyPayment - explicitPrincipal)
+            : debt.principal.abs() * max(0.0, debt.interestRate) / 12;
+    interest = min(monthlyPayment, max(0.0, interest));
+
+    var principal = hasExplicitPrincipal
+        ? explicitPrincipal
+        : max(0.0, monthlyPayment - interest);
+    principal = min(monthlyPayment, max(0.0, principal));
+
+    if (principal + interest > monthlyPayment) {
+      if (hasExplicitInterest) {
+        principal = max(0.0, monthlyPayment - interest);
+      } else {
+        interest = max(0.0, monthlyPayment - principal);
+      }
+    }
+    return _DebtPaymentSplit(principal: principal, interest: interest);
   }
 
   DateTime nextPaydayFor({
@@ -357,6 +428,16 @@ class DisposableBalanceService {
     }
     return group;
   }
+}
+
+class _DebtPaymentSplit {
+  const _DebtPaymentSplit({
+    required this.principal,
+    required this.interest,
+  });
+
+  final double principal;
+  final double interest;
 }
 
 class _DuplicateSubscription {
