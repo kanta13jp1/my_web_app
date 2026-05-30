@@ -99,8 +99,8 @@ void main() {
       expect(
         workbook.monthlyScheduledPaymentTotal,
         closeTo(
-          baseline.monthlyMinimumPaymentEstimateTotal -
-              baselineMobit.minimumPaymentEstimate +
+          baseline.monthlyScheduledPaymentTotal -
+              baselineMobit.scheduledPaymentAmount +
               70000,
           0.001,
         ),
@@ -777,6 +777,53 @@ void main() {
       );
     });
 
+    test('adds Anthropic Acom shopping repayment on the 26th', () {
+      const acomShoppingName =
+          '\u30a2\u30b3\u30e0\u30b7\u30e7\u30c3\u30d4\u30f3\u30b0';
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 100000,
+          acomShoppingName: -200000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 68000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 'custom_cash',
+        },
+      );
+
+      final anthropicPayment = workbook.cashflowRows.singleWhere(
+        (row) =>
+            row.accountId ==
+            AssetLiabilityPlanningService.anthropicAcomShoppingPaymentId,
+      );
+
+      expect(
+        anthropicPayment.accountName,
+        AssetLiabilityPlanningService.anthropicAcomShoppingPaymentName,
+      );
+      expect(anthropicPayment.paymentDay, 26);
+      expect(
+        anthropicPayment.paymentAmount,
+        AssetLiabilityPlanningService.anthropicAcomShoppingPaymentAmount,
+      );
+      expect(anthropicPayment.paymentSourceAccountId, 'custom_cash');
+      expect(
+        anthropicPayment.destinationAccountId,
+        AssetLiabilityPlanningService.acomShoppingAccountId,
+      );
+      expect(
+        workbook.cashflowRows.map((row) => row.paymentDay).toList(),
+        <int>[8, 26],
+      );
+      expect(workbook.monthlyScheduledPaymentTotal, 108000);
+      expect(workbook.monthlyUnpaidPaymentTotal, 108000);
+      expect(workbook.cashAfterScheduledPayments, -8000);
+      expect(anthropicPayment.cashAfterPayment, -8000);
+    });
+
     test('reflects unreceived income plans in chronological cashflow', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{'cash': 10000, 'mobit': -100000},
@@ -903,6 +950,111 @@ void main() {
       expect(bankSummary.pendingTransferIn, 10000);
       expect(bankSummary.projectedBalance, 0);
       expect(workbook.transferSuggestions, isEmpty);
+    });
+
+    test('adds monthly auPay card funding transfer to Jibun bank', () {
+      const smbcOtsukaName =
+          '\u4e09\u4e95\u4f4f\u53cb\u9280\u884c\u5927\u585a\u652f\u5e97';
+      const jibunBankName = '\u3058\u3076\u3093\u9280\u884c';
+      const auPayCardName = 'auPay\u30ab\u30fc\u30c9';
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          smbcOtsukaName: 200000,
+          jibunBankName: 10000,
+          auPayCardName: -80000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.auPayCardAccountId: 80000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.auPayCardAccountId:
+              AssetLiabilityPlanningService.jibunBankAccountId,
+        },
+      );
+
+      final transfer = workbook.transferTasks.singleWhere(
+        (task) =>
+            task.id ==
+            AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
+      );
+      final smbcSummary = workbook.accountCashflowSummaries.singleWhere(
+        (summary) =>
+            summary.accountId ==
+            AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+      );
+      final jibunSummary = workbook.accountCashflowSummaries.singleWhere(
+        (summary) =>
+            summary.accountId ==
+            AssetLiabilityPlanningService.jibunBankAccountId,
+      );
+
+      expect(
+        transfer.fromAccountId,
+        AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+      );
+      expect(
+        transfer.toAccountId,
+        AssetLiabilityPlanningService.jibunBankAccountId,
+      );
+      expect(
+        transfer.amount,
+        AssetLiabilityPlanningService.auPayCardFundingTransferAmount,
+      );
+      expect(transfer.dueDate, DateTime(2026, 5, 26));
+      expect(smbcSummary.pendingTransferOut, 80000);
+      expect(smbcSummary.projectedBalance, 120000);
+      expect(jibunSummary.upcomingPayments, 80000);
+      expect(jibunSummary.pendingTransferIn, 80000);
+      expect(jibunSummary.projectedBalance, 10000);
+    });
+
+    test('does not duplicate completed built-in auPay funding transfer', () {
+      const smbcOtsukaName =
+          '\u4e09\u4e95\u4f4f\u53cb\u9280\u884c\u5927\u585a\u652f\u5e97';
+      const jibunBankName = '\u3058\u3076\u3093\u9280\u884c';
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          smbcOtsukaName: 200000,
+          jibunBankName: 10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
+            fromAccountId:
+                AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+            fromAccountName: smbcOtsukaName,
+            toAccountId: AssetLiabilityPlanningService.jibunBankAccountId,
+            toAccountName: jibunBankName,
+            amount:
+                AssetLiabilityPlanningService.auPayCardFundingTransferAmount,
+            dueDate: DateTime(2026, 5, 26),
+            completed: true,
+            completedAt: DateTime(2026, 5, 26, 8),
+          ),
+        ],
+      );
+
+      final transfer = workbook.transferTasks.singleWhere(
+        (task) =>
+            task.id ==
+            AssetLiabilityPlanningService.auPayCardFundingTransferTaskId,
+      );
+      final smbcSummary = workbook.accountCashflowSummaries.singleWhere(
+        (summary) =>
+            summary.accountId ==
+            AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+      );
+      final jibunSummary = workbook.accountCashflowSummaries.singleWhere(
+        (summary) =>
+            summary.accountId ==
+            AssetLiabilityPlanningService.jibunBankAccountId,
+      );
+
+      expect(transfer.completed, isTrue);
+      expect(smbcSummary.pendingTransferOut, 0);
+      expect(jibunSummary.pendingTransferIn, 0);
     });
 
     test('does not double count completed transfer tasks', () {

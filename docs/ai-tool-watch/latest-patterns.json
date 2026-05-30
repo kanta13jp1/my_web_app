@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-24T21:36:42Z",
+  "generated_at": "2026-05-29T21:55:59Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -13,24 +13,25 @@
       "drop": 0
     },
     "risk_flags": {
+      "sensational_language": 1,
       "source_http_problem": 1
     }
   },
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-9d78427d143d",
+        "entry_id": "nf-b247466b6cbd",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.150 / May 23, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.150 May 23, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.149 May 22, 2026 /usage now shows a per-category breakdown of what’s driving your...",
+        "text": "Claude Code changelog 2.1.157 / May 29, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude plugin init <name> to scaffold a new plugin in...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3934517c2183981f3a1864fdf3406276e49c0b9c4a3ec2d002735b9076efabc1",
+          "hash": "e02ea93ded98e8803cce350871bb70dc14581b9e8a304f66d2f01a82a4f201ef",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,33 +75,36 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.150 / May 23, 2026",
+          "latest_signal": "2.1.157 / May 29, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "3934517c2183981f3a1864fdf3406276e49c0b9c4a3ec2d002735b9076efabc1",
+          "previous_hash": "8c905009f25b1e62f3ea6a9831e730d58f4d9e45dd0ebe174ca4425b6fd72210",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.150 May 23, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.149 May 22, 2026 /usage now shows a per-category breakdown of what’s driving your..."
+            "​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude plugin init <name> to scaffold a new plugin in..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-9d78427d143d",
+        "entry_id": "nf-b247466b6cbd",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
-        "confidence": 0.97,
+        "confidence": 0.91,
         "verdict": "pass",
-        "risk_flags": [],
+        "risk_flags": [
+          "sensational_language"
+        ],
         "reasons": [
           "has source URL",
           "source domain is official or primary",
           "HTTP 200 reachable",
+          "sensational terms: kill",
           "has enough context for review"
         ]
       }
@@ -115,10 +119,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "55e217cadb391c07940b883f64e56ac12ace7f7b8b41137d7b0a0236110e9340",
+          "hash": "22abf4ccbbb4bbf2634df08b644c6e091bfe54ebc0efc3f11e08eecd214be9b5",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -155,7 +159,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "55e217cadb391c07940b883f64e56ac12ace7f7b8b41137d7b0a0236110e9340",
+          "previous_hash": "945cc4ed4ca0b6dc15e2bf2152cd25ac03fbe666ac0b61f667a2bc31ff6687c1",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -196,7 +200,7 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
+          "hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -229,7 +233,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "ff8a65d9d447ae709f999738fe0c50ec5ae337e29b3e3feebd94b04111c7a3c5",
+          "previous_hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -259,18 +263,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-70d29a4bafb4",
+        "entry_id": "nf-5826c7c49931",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS. Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI. With Goal mode, you can have Codex drive toward a specific objective for hours or even days.",
+        "text": "Codex changelog 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI. With Goal mode, you can have Codex drive toward a specific objective for hours or even days.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
+          "hash": "02cf1ed5a46653a6246cb20cc60a10014037e0134972f281ff37480cc40f2b64",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,8 +289,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "SessionStart",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -298,7 +300,6 @@
               "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -315,10 +316,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-05-21 / Appshots, goal mode, and more 26.519 Appshots are now available in the Codex app on macOS.",
+          "latest_signal": "2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "2804bbc0e742065f59775df7325ca7a398cd3cf251f75649d22a63df09be0672",
+          "previous_hash": "0a3d1ee0a54a13881d8270b89fe61538146818e8736e3a229709d51e96a9e229",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -330,7 +331,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-70d29a4bafb4",
+        "entry_id": "nf-5826c7c49931",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -356,10 +357,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "7db564bb4274aa2c92a4f869e7edb2137a827a406973b41955294ce469710282",
+          "hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -392,13 +393,14 @@
             "schedule": [
               "automation",
               "automations",
+              "GitHub Actions",
               "workflow"
             ]
           },
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "7db564bb4274aa2c92a4f869e7edb2137a827a406973b41955294ce469710282",
+          "previous_hash": "fb339c38427f0852cc75a4ec977e3cd33d201f5d405d2b2aba3f267582c64309",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -471,9 +473,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-facfaea67e06",
+        "entry_id": "nf-73e3233d2bce",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.5 / May 20, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... For the next 7 days, all agent runs for newly created automations are 50% off. # Automations in the Agents Window Cursor Automations are now available in the Agents Window , in addition to cursor.com/automations.",
+        "text": "Cursor changelog 3.6 / May 29, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Auto-review applies to Shell, MCP, and Fetch tool calls. Allowlisted calls run immediately, and calls that can be sandboxed run in the sandbox.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -482,45 +484,42 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d0d203d73928d8fb40e70d2f5e9738173b9c3ea452dcf536e739f45baaa34fb5",
+          "hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
           "keyword_groups": {
-            "codex-runtime": [
-              "model picker",
-              "subagents"
-            ],
             "hooks": [
-              "hook"
+              "Stop"
             ],
             "integration": [
               "MCP",
               "Slack"
             ],
             "quality-cost": [
-              "permission",
+              "sandbox",
               "review",
               "CI"
             ],
             "schedule": [
               "automation",
-              "automations"
+              "automations",
+              "schedule"
             ]
           },
-          "latest_signal": "3.5 / May 20, 2026",
+          "latest_signal": "3.6 / May 29, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "9b0756b6c568f3af42a15fd676a25df5957656f92a7221877ede1143c91a5304",
+          "previous_hash": "9f13619e88c21e7b31f418236d70c61ccee0ec64e064a1c1b673b03585bc6ef4",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "For the next 7 days, all agent runs for newly created automations are 50% off.",
-            "# Automations in the Agents Window Cursor Automations are now available in the Agents Window , in addition to cursor.com/automations."
+            "Auto-review applies to Shell, MCP, and Fetch tool calls.",
+            "Allowlisted calls run immediately, and calls that can be sandboxed run in the sandbox."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-facfaea67e06",
+        "entry_id": "nf-73e3233d2bce",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -549,7 +548,7 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "dc44991b04c930d112113135d848a3cffb1049de9316a72d1ba7d679bfc1f220",
+          "hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -574,7 +573,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.82.0 / May 14, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "dc44991b04c930d112113135d848a3cffb1049de9316a72d1ba7d679bfc1f220",
+          "previous_hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -684,9 +683,11 @@
       "company": "multi-source",
       "topic": "agentic-workflows",
       "entry_count": 6,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
+      "average_confidence": 0.96,
+      "risk_level": "review",
+      "risk_flags": [
+        "sensational_language"
+      ],
       "evidence_titles": [
         "Claude Code changelog",
         "Claude Code hooks reference",
@@ -694,22 +695,24 @@
         "Codex use cases",
         "Cursor changelog"
       ],
-      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
     {
       "id": "np-30487c423ada",
       "company": "anthropic",
       "topic": "agentic-workflows",
       "entry_count": 3,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
+      "average_confidence": 0.95,
+      "risk_level": "review",
+      "risk_flags": [
+        "sensational_language"
+      ],
       "evidence_titles": [
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions"
       ],
-      "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
     {
       "id": "np-5704207fd35a",
@@ -745,38 +748,5 @@
       "recommended_action": "Hold for human review before creating issues or blog drafts."
     }
   ],
-  "issue_candidates": [
-    {
-      "id": "np-ac6cd8e89955",
-      "company": "multi-source",
-      "topic": "agentic-workflows",
-      "entry_count": 6,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
-      "evidence_titles": [
-        "Claude Code changelog",
-        "Claude Code hooks reference",
-        "Claude Code GitHub Actions",
-        "Codex use cases",
-        "Cursor changelog"
-      ],
-      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
-    },
-    {
-      "id": "np-30487c423ada",
-      "company": "anthropic",
-      "topic": "agentic-workflows",
-      "entry_count": 3,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
-      "evidence_titles": [
-        "Claude Code changelog",
-        "Claude Code hooks reference",
-        "Claude Code GitHub Actions"
-      ],
-      "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
-    }
-  ]
+  "issue_candidates": []
 }
