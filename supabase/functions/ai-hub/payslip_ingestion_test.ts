@@ -1,0 +1,174 @@
+import {
+  handleParsePayslipAction,
+  inferPayslipPayDateFromPath,
+  maskPayslipPii,
+  parsePayslipText,
+  type PayslipDb,
+  type PayslipDbQuery,
+  type PayslipStorage,
+} from "./payslip_ingestion.ts";
+
+Deno.test("inferPayslipPayDateFromPath prefers pay date after upload timestamp", () => {
+  assertEquals(
+    inferPayslipPayDateFromPath(
+      "user-1/20260526_082024-2026-05-25-2026-04-30-payslip.pdf",
+    ),
+    "2026-05-25",
+  );
+});
+
+Deno.test("inferPayslipPayDateFromPath reads Japanese pay-date filenames", () => {
+  assertEquals(
+    inferPayslipPayDateFromPath(
+      "2026\u5e7405\u670825\u65e5\u652f\u7d66_2026\u5e7404\u670830\u65e5\u7de0_\u7d66\u4e0e\u660e\u7d30.pdf",
+    ),
+    "2026-05-25",
+  );
+});
+
+Deno.test("maskPayslipPii removes identity fields before AI fallback", () => {
+  const masked = maskPayslipPii(
+    "氏名: 山田太郎\n従業員番号: EMP-12345\nmail taro@example.com",
+  );
+  assertEquals(masked.includes("山田太郎"), false);
+  assertEquals(masked.includes("EMP-12345"), false);
+  assertEquals(masked.includes("taro@example.com"), false);
+  assertEquals(masked.includes("[MASKED_NAME]"), true);
+});
+
+Deno.test("parsePayslipText extracts core money fields", () => {
+  const parsed = parsePayslipText(`
+    株式会社サンプル
+    支給日 2026年05月25日
+    総支給額 520,000
+    課税対象額 480,000
+    社会保険料計 71,000
+    健康保険 24,000
+    厚生年金 45,000
+    差引支給額 465,108
+  `);
+
+  assertEquals(parsed.pay_date, "2026-05-25");
+  assertEquals(parsed.company_name, "株式会社サンプル");
+  assertEquals(parsed.gross_amount, 520000);
+  assertEquals(parsed.net_amount, 465108);
+  assertEquals(parsed.social_insurance_total, 71000);
+  assertEquals(parsed.deductions.health_insurance, 24000);
+  assertEquals(parsed.confidence >= 0.72, true);
+});
+
+Deno.test("handleParsePayslipAction upserts payslip and salary income", async () => {
+  const db = new FakeDb();
+  const storage = new FakeStorage(`
+    株式会社サンプル
+    支給日 2026/05/25
+    総支給額 520,000
+    差引支給額 465,108
+  `);
+
+  const result = await handleParsePayslipAction({
+    db,
+    storage,
+    userId: "user-1",
+    body: { storage_path: "user-1/20260525.pdf" },
+  });
+
+  assertEquals(result.status, "parsed");
+  assertEquals(db.upserts[0].table, "payslips");
+  assertEquals(db.upserts[0].value.net_amount, 465108);
+  assertEquals(db.upserts[1].table, "salary_incomes");
+  assertEquals(db.upserts[1].value.source, "payslip_auto");
+});
+
+Deno.test("handleParsePayslipAction uses PDF AI fallback and path pay date", async () => {
+  const db = new FakeDb();
+  const storage = new FakeStorage("%PDF-1.3\nbinary-image-only");
+  let sentInlinePdf = false;
+
+  const result = await handleParsePayslipAction({
+    db,
+    storage,
+    userId: "user-1",
+    body: {
+      storage_path: "user-1/20260526_082024-2026-05-25-2026-04-30-payslip.pdf",
+      enable_ai_fallback: true,
+    },
+    invokeProvider: (request) => {
+      sentInlinePdf = (request.inlineFiles?.length ?? 0) === 1 &&
+        request.inlineFiles?.[0].mimeType === "application/pdf";
+      return Promise.resolve({
+        ok: true,
+        text: JSON.stringify({
+          pay_date: null,
+          company_name: "Example Co",
+          gross_amount: 520000,
+          net_amount: 465108,
+          taxable_amount: null,
+          social_insurance_total: null,
+          deductions: {},
+          earnings: {},
+          attendance: {},
+          confidence: 0.78,
+        }),
+        isRetriable: false,
+      });
+    },
+  });
+
+  assertEquals(sentInlinePdf, true);
+  assertEquals(result.parsed.pay_date, "2026-05-25");
+  assertEquals(result.status, "parsed");
+  assertEquals(db.upserts[0].value.pay_date, "2026-05-25");
+});
+
+function assertEquals(actual: unknown, expected: unknown) {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(
+      `Assertion failed:\nactual:   ${JSON.stringify(actual)}\nexpected: ${
+        JSON.stringify(expected)
+      }`,
+    );
+  }
+}
+
+class FakeDb implements PayslipDb {
+  upserts: Array<{ table: string; value: Record<string, unknown> }> = [];
+
+  from(table: string): PayslipDbQuery {
+    return new FakeQuery(table, this);
+  }
+}
+
+class FakeQuery implements PayslipDbQuery {
+  constructor(
+    private readonly table: string,
+    private readonly db: FakeDb,
+  ) {}
+
+  upsert(value: Record<string, unknown>) {
+    this.db.upserts.push({ table: this.table, value });
+    return {
+      select: () => ({
+        single: () =>
+          Promise.resolve({
+            data: { id: `${this.table}-1`, ...value },
+            error: null,
+          }),
+      }),
+    };
+  }
+}
+
+class FakeStorage implements PayslipStorage {
+  constructor(private readonly text: string) {}
+
+  from() {
+    return {
+      download: () =>
+        Promise.resolve({
+          data: new TextEncoder().encode(this.text),
+          error: null,
+        }),
+    };
+  }
+}

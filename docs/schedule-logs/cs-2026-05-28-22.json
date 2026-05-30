@@ -1,0 +1,19 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-28T22:11:32Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件 / PR レビュー: 10件 / Issue修正: 0件 / workflow-failure: 担当外3件 / Schedule健全性: daily-report停止中+Issue重複(#2979,#3040) / Supabase: 200 OK",
+  "details": {
+    "edge_function_ui_added": 0,
+    "tickets_handled": 0,
+    "prs_reviewed": 10,
+    "issues_fixed": 0,
+    "escalations": [
+      "daily-report停止継続 (2026-05-16以降) / Issue重複: #2979 + #3040",
+      "PR #2540 merge conflict (Codex #1 待ち)",
+      "blog-publish PR累積: #3009, #3024, #3039 (同一ブログ記事)",
+      "flutter analyze WEB版実行不可 (ci.yml cancelled)"
+    ]
+  }
+}

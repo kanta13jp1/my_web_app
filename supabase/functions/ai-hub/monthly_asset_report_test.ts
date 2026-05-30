@@ -94,17 +94,41 @@ Deno.test("handleMonthlyAssetReportAction uses provider when enabled", async () 
       assertEquals(request.provider, "anthropic");
       return Promise.resolve({
         ok: true,
-        text: "AI summary",
+        text: "AI要約です。",
         modelUsed: "claude-test",
       });
     },
   });
 
   assertEquals(result.status, "ai_summary_generated");
-  assertEquals(result.ai_summary, "AI summary");
+  assertEquals(result.ai_summary, "AI要約です。");
   assertEquals(result.ai_model, "claude-test");
   assertEquals(db.upserts[0].value.total_assets, 700000);
   assertEquals(db.upserts[0].value.total_liabilities, 200000);
+});
+
+Deno.test("handleMonthlyAssetReportAction rejects English provider summaries", async () => {
+  const db = new FakeDb();
+  const result = await handleMonthlyAssetReportAction({
+    db,
+    userId: "user-1",
+    body: {
+      year_month: "2026-06",
+      snapshot: { total_assets: 100, total_liabilities: 25 },
+    },
+    aiSummaryEnabled: true,
+    invokeProvider: () =>
+      Promise.resolve({
+        ok: true,
+        text: "English-only summary",
+        modelUsed: "model-test",
+      }),
+  });
+
+  assertEquals(result.status, "deterministic_fallback");
+  assertEquals(result.ai_model, "deterministic-fallback");
+  assertEquals(result.ai_summary.includes("月次資産レポート"), true);
+  assertEquals(result.warnings.length, 1);
 });
 
 Deno.test("handleMonthlyAssetReportAction falls back when provider fails", async () => {
@@ -146,9 +170,9 @@ Deno.test("buildDeterministicMonthlyAssetSummary includes core metrics", () => {
     source: "request",
   });
 
-  assertEquals(summary.includes("Assets: 1,000 JPY"), true);
-  assertEquals(summary.includes("liabilities: 300 JPY"), true);
-  assertEquals(summary.includes("Payment difference: -5 JPY"), true);
+  assertEquals(summary.includes("資産: 1,000円"), true);
+  assertEquals(summary.includes("負債: 300円"), true);
+  assertEquals(summary.includes("予定と実支払の差分: -5円"), true);
 });
 
 function assertEquals(actual: unknown, expected: unknown) {
