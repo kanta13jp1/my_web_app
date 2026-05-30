@@ -114,9 +114,12 @@ class AssetManagementAiSummaryService {
                   providerChoiceReason: route.providerChoiceReason,
                   routingUseCase: route.useCase.id,
                 );
+      if (!_containsJapaneseText(response.text)) {
+        throw const AiHubChatException('AI要約が日本語ではありませんでした');
+      }
       return AssetManagementAiSummaryResult(
         status: AssetManagementAiSummaryStatus.aiGenerated,
-        text: response.text,
+        text: response.text.trim(),
         source: response.source,
         errorMessage: null,
         generatedAt: _now(),
@@ -427,5 +430,9 @@ class AssetManagementAiSummaryService {
       }
     }
     return '$sign$buffer円';
+  }
+
+  bool _containsJapaneseText(String value) {
+    return RegExp('[\u3040-\u30ff\u3400-\u9fff]').hasMatch(value);
   }
 }

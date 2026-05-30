@@ -31,7 +31,7 @@ Deno.test("monthly asset report integration keeps provider isolated when feature
   assertEquals(db.upserts[0].value.year_month, "2026-06-01");
   assertStringIncludes(
     String(db.upserts[0].value.ai_summary),
-    "2026-06 monthly asset report",
+    "2026-06 月次資産レポート",
   );
 });
 
@@ -44,6 +44,7 @@ Deno.test("monthly asset report integration routes three provider mocks when fea
 
   for (const provider of providers) {
     const db = new FakeDb();
+    const providerSummary = `${provider.expected} の月次資産レポート要約です`;
     const result = await handleMonthlyAssetReportAction({
       db,
       userId: "user-1",
@@ -65,7 +66,7 @@ Deno.test("monthly asset report integration routes three provider mocks when fea
         );
         return Promise.resolve({
           ok: true,
-          text: `${provider.expected} mock monthly report summary`,
+          text: providerSummary,
           modelUsed: `${provider.expected}-mock-model`,
         });
       },
@@ -74,16 +75,10 @@ Deno.test("monthly asset report integration routes three provider mocks when fea
     assertEquals(result.status, "ai_summary_generated");
     assertEquals(result.ai_enabled, true);
     assertEquals(result.provider, provider.expected);
-    assertEquals(
-      result.ai_summary,
-      `${provider.expected} mock monthly report summary`,
-    );
+    assertEquals(result.ai_summary, providerSummary);
     assertEquals(result.ai_model, `${provider.expected}-mock-model`);
     assertEquals(db.upserts.length, 1);
-    assertEquals(
-      db.upserts[0].value.ai_summary,
-      `${provider.expected} mock monthly report summary`,
-    );
+    assertEquals(db.upserts[0].value.ai_summary, providerSummary);
   }
 });
 
@@ -118,7 +113,7 @@ Deno.test("monthly asset report integration falls back deterministically when pr
   assertStringIncludes(result.warnings[0], "mock provider.chat unavailable");
   assertStringIncludes(
     String(db.upserts[0].value.ai_summary),
-    "Assets: 1,200,000 JPY",
+    "資産: 1,200,000円",
   );
 });
 
