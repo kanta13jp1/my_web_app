@@ -1,0 +1,7 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-29T21:11:49Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22件登録済み) / チケット: 0件 / PR #3046 WBS seed review OK / Issue修正: 0件 / workflow-failure 3件全担当外スキップ / daily-report Issue #3047既存 / Schedule健全性: cs-check正常 / Supabase 200 ✅"
+}

@@ -1,16 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-28T21:56:45Z`
-- Previous check: `2026-05-27T21:56:51Z`
+- Checked at: `2026-05-29T21:55:57Z`
+- Previous check: `2026-05-28T21:56:45Z`
 - Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.154 / May 28, 2026
+- `changed` Claude Code changelog: 2.1.157 / May 29, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa
-- `changed` Codex changelog: 2026-05-28 / Codex CLI 0.135.0 pre
+- `changed` Codex changelog: 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+- `changed` Cursor changelog: 3.6 / May 29, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -22,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.154 / May 28, 2026
+  - Latest signal: 2.1.157 / May 29, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -40,10 +40,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-28 / Codex CLI 0.135.0 pre
+  - Latest signal: 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: ( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles.
+  - Short signal: This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -56,10 +56,10 @@
   - Keyword groups: none
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
-  - Latest signal: 3.5 / May 20, 2026
-  - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
+  - Latest signal: 3.6 / May 29, 2026
+  - Keyword groups: hooks, schedule, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
-  - Short signal: # /loop skill With /loop, Cursor can run a prompt repeatedly on a local schedule, until a certain outcome is achieved, or until you stop it.
+  - Short signal: Auto-review applies to Shell, MCP, and Fetch tool calls.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.82.0 / May 14, 2026
