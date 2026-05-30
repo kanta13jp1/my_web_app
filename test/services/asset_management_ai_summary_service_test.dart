@@ -70,14 +70,14 @@ void main() {
       );
       expect(
         capturedBody?['message'].toString().contains(
-          '"external_ai_may_recalculate_amounts":false',
-        ),
+              '"external_ai_may_recalculate_amounts":false',
+            ),
         true,
       );
       expect(
         capturedBody?['message'].toString().contains(
-          '"must_respond_in_japanese":true',
-        ),
+              '"must_respond_in_japanese":true',
+            ),
         true,
       );
       expect(capturedBody?['message'].toString().contains('50,000'), false);

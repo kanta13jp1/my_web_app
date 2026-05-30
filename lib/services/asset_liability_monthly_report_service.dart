@@ -88,7 +88,8 @@ class AssetLiabilityMonthlyReportService {
     final monthKeys = <String>{
       ...snapshotsByMonth.keys,
       ...reportsByMonth.keys,
-    }.toList()..sort((a, b) => b.compareTo(a));
+    }.toList()
+      ..sort((a, b) => b.compareTo(a));
     final previousByMonth = _previousSnapshotsByMonth(snapshotsByMonth.values);
 
     return [
@@ -116,7 +117,7 @@ class AssetLiabilityMonthlyReportService {
     final paidRate = snapshot.monthlyScheduledPaymentTotal <= 0
         ? 0.0
         : snapshot.monthlyPaidPaymentTotal /
-              snapshot.monthlyScheduledPaymentTotal;
+            snapshot.monthlyScheduledPaymentTotal;
     final formatter = NumberFormat('#,###');
     String yen(double amount) => '${formatter.format(amount.round())}円';
     final netWorthLabel = snapshot.netWorth >= 0 ? 'プラス' : 'マイナス';
