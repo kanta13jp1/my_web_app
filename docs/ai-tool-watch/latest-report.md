@@ -1,16 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-29T21:55:57Z`
-- Previous check: `2026-05-28T21:56:45Z`
-- Changed/new official sources: `5`
+- Checked at: `2026-05-30T21:37:27Z`
+- Previous check: `2026-05-29T21:55:57Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.157 / May 29, 2026
+- `changed` Claude Code changelog: 2.1.158 / May 30, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
 - `changed` Codex changelog: 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win
-- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Cursor changelog: 3.6 / May 29, 2026
+- `changed` Devin release notes: May 29, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -22,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.157 / May 29, 2026
+  - Latest signal: 2.1.158 / May 30, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -43,7 +42,7 @@
   - Latest signal: 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.
+  - Short signal: Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -68,10 +67,10 @@
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: May 22, 2026
+  - Latest signal: May 29, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: The default platform is honored across all session creation methods, including Slack, Linear, Jira, API, and automations.
-  - Short signal: Slack Channel Override Type !channel #channel-name in Slack to override which channel Devin spawns its response thread in for that session.
+  - Short signal: Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events.
+  - Short signal: You can configure automations to run only when specific files or directories are modified in a push.
 
 ## NotebookLM Harness Mapping
 - Source notebook: `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)

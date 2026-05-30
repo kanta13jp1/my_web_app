@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-29T21:55:59Z",
+  "generated_at": "2026-05-30T21:37:29Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,9 +20,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-b247466b6cbd",
+        "entry_id": "nf-c36bf9c4d93b",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.157 / May 29, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude plugin init <name> to scaffold a new plugin in...",
+        "text": "Claude Code changelog 2.1.158 / May 30, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . Opt in by setting CLAUDE_CODE_ENABLE_AUTO_MODE=1 ​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "e02ea93ded98e8803cce350871bb70dc14581b9e8a304f66d2f01a82a4f201ef",
+          "hash": "82309a3af14af81b5d7bddfb3941c34f800f83c180e2bd627f8b31a5867ce057",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.157 / May 29, 2026",
+          "latest_signal": "2.1.158 / May 30, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "8c905009f25b1e62f3ea6a9831e730d58f4d9e45dd0ebe174ca4425b6fd72210",
+          "previous_hash": "e02ea93ded98e8803cce350871bb70dc14581b9e8a304f66d2f01a82a4f201ef",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude plugin init <name> to scaffold a new plugin in..."
+            "Opt in by setting CLAUDE_CODE_ENABLE_AUTO_MODE=1 ​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-b247466b6cbd",
+        "entry_id": "nf-c36bf9c4d93b",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -122,7 +122,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "22abf4ccbbb4bbf2634df08b644c6e091bfe54ebc0efc3f11e08eecd214be9b5",
+          "hash": "3d39ee0181f832b0480fc562b838a9c8f77ae2e2d769b2f2aa88609a2fb30445",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -159,7 +159,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "945cc4ed4ca0b6dc15e2bf2152cd25ac03fbe666ac0b61f667a2bc31ff6687c1",
+          "previous_hash": "22abf4ccbbb4bbf2634df08b644c6e091bfe54ebc0efc3f11e08eecd214be9b5",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -263,9 +263,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-5826c7c49931",
+        "entry_id": "nf-925ce9b17dc7",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI. With Goal mode, you can have Codex drive toward a specific objective for hours or even days.",
+        "text": "Codex changelog 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested. ( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -274,7 +274,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "02cf1ed5a46653a6246cb20cc60a10014037e0134972f281ff37480cc40f2b64",
+          "hash": "fd94b0c55a9fdecb180c53bfa4f8ff369a357121be8b961c0f7bce95b7cc8f7c",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -289,6 +289,8 @@
             "hooks": [
               "hook",
               "hooks",
+              "SessionStart",
+              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -300,6 +302,7 @@
               "IDE extension"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -319,19 +322,19 @@
           "latest_signal": "2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "0a3d1ee0a54a13881d8270b89fe61538146818e8736e3a229709d51e96a9e229",
+          "previous_hash": "02cf1ed5a46653a6246cb20cc60a10014037e0134972f281ff37480cc40f2b64",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "This launch also includes: Goal mode is no longer an experimental feature and is available in the Codex app, IDE extension, and CLI.",
-            "With Goal mode, you can have Codex drive toward a specific objective for hours or even days."
+            "Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested.",
+            "( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-5826c7c49931",
+        "entry_id": "nf-925ce9b17dc7",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -357,7 +360,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
@@ -400,7 +403,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "fb339c38427f0852cc75a4ec977e3cd33d201f5d405d2b2aba3f267582c64309",
+          "previous_hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -481,7 +484,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
@@ -507,7 +510,7 @@
           "latest_signal": "3.6 / May 29, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "9f13619e88c21e7b31f418236d70c61ccee0ec64e064a1c1b673b03585bc6ef4",
+          "previous_hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
@@ -603,18 +606,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-aec075416377",
+        "entry_id": "nf-fe02b6e48957",
         "title": "Devin release notes",
-        "text": "Devin release notes May 22, 2026 The default platform is honored across all session creation methods, including Slack, Linear, Jira, API, and automations. Slack Channel Override Type !channel #channel-name in Slack to override which channel Devin spawns its response thread in for that session. MCP OAuth Resource Parameter MCP OAuth flows now forward the RFC 8707 resource parameter, fixing authentication for MCP servers that require resource indicators (such as...",
+        "text": "Devin release notes May 29, 2026 Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events. You can configure automations to run only when specific files or directories are modified in a push. PR Review Sidebar Restructure The in-session PR review sidebar has been redesigned with collapsible sections, portalized toolbar actions, and a new diff settings menu replacing...",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "8b166ffac58e0c82087b11af5d7181bc8b4740b80ed14cf405f2096f2a3c537c",
+          "hash": "b0bf437a0f0c5e0d9782826f0468b02f7afd23d79c7adefc1363cda55be15bd7",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -645,22 +648,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "May 22, 2026",
+          "latest_signal": "May 29, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "8b166ffac58e0c82087b11af5d7181bc8b4740b80ed14cf405f2096f2a3c537c",
           "slug": "devin-release-notes",
           "snippets": [
-            "The default platform is honored across all session creation methods, including Slack, Linear, Jira, API, and automations.",
-            "Slack Channel Override Type !channel #channel-name in Slack to override which channel Devin spawns its response thread in for that session.",
-            "MCP OAuth Resource Parameter MCP OAuth flows now forward the RFC 8707 resource parameter, fixing authentication for MCP servers that require resource indicators (such as..."
+            "Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events.",
+            "You can configure automations to run only when specific files or directories are modified in a push.",
+            "PR Review Sidebar Restructure The in-session PR review sidebar has been redesigned with collapsible sections, portalized toolbar actions, and a new diff settings menu replacing..."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-aec075416377",
+        "entry_id": "nf-fe02b6e48957",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
@@ -682,8 +685,8 @@
       "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 6,
-      "average_confidence": 0.96,
+      "entry_count": 7,
+      "average_confidence": 0.961,
       "risk_level": "review",
       "risk_flags": [
         "sensational_language"
@@ -715,25 +718,24 @@
       "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
     {
-      "id": "np-5704207fd35a",
-      "company": "multi-source",
+      "id": "np-633b3c99949c",
+      "company": "openai",
       "topic": "mcp-integration",
-      "entry_count": 3,
-      "average_confidence": 0.89,
+      "entry_count": 2,
+      "average_confidence": 0.85,
       "risk_level": "review",
       "risk_flags": [
         "source_http_problem"
       ],
       "evidence_titles": [
         "Codex changelog",
-        "Codex overview",
-        "Devin release notes"
+        "Codex overview"
       ],
       "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
     {
-      "id": "np-633b3c99949c",
-      "company": "openai",
+      "id": "np-8d8df4ba6ed1",
+      "company": "multi-source",
       "topic": "mcp-integration",
       "entry_count": 2,
       "average_confidence": 0.85,
