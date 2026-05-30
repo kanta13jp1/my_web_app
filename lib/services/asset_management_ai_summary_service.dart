@@ -62,13 +62,13 @@ class AssetManagementAiSummaryService {
         AssetManagementAiProviderUseCase.summary,
     DateTime Function()? now,
     String? provider,
-  })  : _aiEnabled = aiEnabled,
-        _chatService = chatService,
-        _promptBuilder = promptBuilder,
-        _providerRouter = providerRouter,
-        _useCase = useCase,
-        _now = now ?? DateTime.now,
-        _provider = provider;
+  }) : _aiEnabled = aiEnabled,
+       _chatService = chatService,
+       _promptBuilder = promptBuilder,
+       _providerRouter = providerRouter,
+       _useCase = useCase,
+       _now = now ?? DateTime.now,
+       _provider = provider;
 
   bool get aiEnabled => _aiEnabled;
 
@@ -100,23 +100,26 @@ class AssetManagementAiSummaryService {
       final response = route.routingEnabled
           ? await _sendRoutedSummary(prompt: prompt, route: route)
           : _provider == null || _provider == 'auto'
-              ? await _chatService.sendAutoChat(
-                  message: prompt,
-                  tier: 'performance',
-                  traceId: 'asset-management-ai-summary',
-                  providerChoiceReason: route.providerChoiceReason,
-                  routingUseCase: route.useCase.id,
-                )
-              : await _chatService.sendProviderChat(
-                  message: prompt,
-                  provider: _provider,
-                  traceId: 'asset-management-ai-summary',
-                  providerChoiceReason: route.providerChoiceReason,
-                  routingUseCase: route.useCase.id,
-                );
+          ? await _chatService.sendAutoChat(
+              message: prompt,
+              tier: 'performance',
+              traceId: 'asset-management-ai-summary',
+              providerChoiceReason: route.providerChoiceReason,
+              routingUseCase: route.useCase.id,
+            )
+          : await _chatService.sendProviderChat(
+              message: prompt,
+              provider: _provider,
+              traceId: 'asset-management-ai-summary',
+              providerChoiceReason: route.providerChoiceReason,
+              routingUseCase: route.useCase.id,
+            );
+      if (!_containsJapaneseText(response.text)) {
+        throw const AiHubChatException('AI要約が日本語ではありませんでした');
+      }
       return AssetManagementAiSummaryResult(
         status: AssetManagementAiSummaryStatus.aiGenerated,
-        text: response.text,
+        text: response.text.trim(),
         source: response.source,
         errorMessage: null,
         generatedAt: _now(),
@@ -300,12 +303,13 @@ class AssetManagementAiSummaryService {
     final emergency = report.emergencyAdvices.isEmpty
         ? '緊急の生活費防衛アドバイスはありません。'
         : report.emergencyAdvices
-            .take(3)
-            .map(
-              (advice) => '${advice.title}: ${advice.description} '
-                  '${advice.suggestedAction}',
-            )
-            .join(' ');
+              .take(3)
+              .map(
+                (advice) =>
+                    '${advice.title}: ${advice.description} '
+                    '${advice.suggestedAction}',
+              )
+              .join(' ');
     final status = critical > 0 ? '緊急の資金繰り項目があります。' : '緊急度の高い資金繰り項目は検出されていません。';
     return [
       status,
@@ -427,5 +431,9 @@ class AssetManagementAiSummaryService {
       }
     }
     return '$sign$buffer円';
+  }
+
+  bool _containsJapaneseText(String value) {
+    return RegExp('[\u3040-\u30ff\u3400-\u9fff]').hasMatch(value);
   }
 }

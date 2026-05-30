@@ -40,7 +40,7 @@ void main() {
             capturedBody = body;
             return <String, dynamic>{
               'success': true,
-              'text': 'AI generated summary',
+              'text': 'AIが生成した日本語要約です。',
               'provider': 'groq',
             };
           },
@@ -52,7 +52,7 @@ void main() {
 
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(result.usedExternalAi, true);
-      expect(result.text, 'AI generated summary');
+      expect(result.text, 'AIが生成した日本語要約です。');
       expect(capturedBody?['action'], 'provider.chat_auto');
       expect(capturedBody?['tier'], 'performance');
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
@@ -70,14 +70,14 @@ void main() {
       );
       expect(
         capturedBody?['message'].toString().contains(
-              '"external_ai_may_recalculate_amounts":false',
-            ),
+          '"external_ai_may_recalculate_amounts":false',
+        ),
         true,
       );
       expect(
         capturedBody?['message'].toString().contains(
-              '"must_respond_in_japanese":true',
-            ),
+          '"must_respond_in_japanese":true',
+        ),
         true,
       );
       expect(capturedBody?['message'].toString().contains('50,000'), false);
@@ -100,7 +100,7 @@ void main() {
               calls.add(Map<String, dynamic>.from(body));
               return <String, dynamic>{
                 'success': true,
-                'text': 'Claude routed summary',
+                'text': 'Claude経由の日本語要約です。',
                 'observability': <String, dynamic>{
                   'provider': body['provider'],
                   'model': body['model'],
@@ -114,7 +114,7 @@ void main() {
         final result = await service.generateSummary(report: _report());
 
         expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
-        expect(result.text, 'Claude routed summary');
+        expect(result.text, 'Claude経由の日本語要約です。');
         expect(calls, hasLength(1));
         expect(calls.single['action'], 'provider.chat');
         expect(calls.single['provider'], 'anthropic');
@@ -145,7 +145,7 @@ void main() {
               }
               return <String, dynamic>{
                 'success': true,
-                'text': 'GPT fallback summary',
+                'text': 'GPT経由の日本語要約です。',
                 'provider': body['provider'],
               };
             },
@@ -156,8 +156,32 @@ void main() {
         final result = await service.generateSummary(report: _report());
 
         expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
-        expect(result.text, 'GPT fallback summary');
+        expect(result.text, 'GPT経由の日本語要約です。');
         expect(providers, <String>['anthropic', 'openai']);
+      },
+    );
+
+    test(
+      'falls back when provider ignores the Japanese-only instruction',
+      () async {
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async => <String, dynamic>{
+              'success': true,
+              'text': 'English-only summary',
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 5, 1, 12),
+        );
+
+        final result = await service.generateSummary(report: _report());
+
+        expect(result.status, AssetManagementAiSummaryStatus.fallback);
+        expect(result.usedExternalAi, false);
+        expect(result.errorMessage, contains('日本語ではありません'));
+        expect(result.text.contains('Dartルール'), true);
       },
     );
 
