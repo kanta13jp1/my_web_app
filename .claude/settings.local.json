@@ -153,7 +153,11 @@
       "Bash(sed -n '32,50p' ~/.claude/hooks/inject-rules.txt)",
       "Bash(gh label *)",
       "Bash(Get-Date -Format \"yyyy-MM-dd HH:mm:ss zzz\")",
-      "Bash(git worktree *)"
+      "Bash(git worktree *)",
+      "Bash(git ls-tree *)",
+      "Bash(echo \"abort rc=$?\")",
+      "Bash(echo \"rc=$?\")",
+      "Bash(git branch *)"
     ]
   }
 }

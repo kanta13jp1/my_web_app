@@ -1,7 +1,6 @@
 {
   "version": "5",
   "specifiers": {
-    "npm:@playwright/test@^1.59.1": "1.59.1",
     "npm:@supabase/supabase-js@2": "2.105.1"
   },
   "npm": {
@@ -361,7 +360,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@playwright/test@^1.59.1",
+        "npm:@playwright/test@^1.60.0",
         "npm:lefthook@^2.1.6"
       ]
     }

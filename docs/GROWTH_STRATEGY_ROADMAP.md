@@ -31276,15 +31276,88 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 
 **Philosophy Alignment**: 4/9 (minimal-scope)
 
-## 2026-05-22 01:55 + 2026-05-25 昼 JST — Win版#132 part 236 + 236継続 (backfill stub / Hybrid Option C)
+## 2026-05-22 01:55 JST — Win版#132 part 236 (= zone 02-06 entry +5min / honest decline 第 3 連続 / next-session full handoff)
 
-**Instance**: Win版 (Claude Code) #132 / part 236 + 継続
-**Status**: backfill stub (= 部 237 で [PR #2976](https://github.com/kanta13jp1/my_web_app/pull/2976) supersede / 3-issue chain migration は本 PR で main 反映 / commits `15b2b87a3` + `67423d622` + `4b76bd19e` + `0621b18bd` + `a13a4f123`)
+**Instance**: Win版 (Claude Code) #132 / part 236 (= 部 235 resume / 18.9min idle / **/goal 8-step user re-invoke 第 2 例**)
 
-- **part 236 (5/22 01:55)**: /goal 8-step user re-invoke 第 2 例 = **honest decline 3-連続 pattern 第 1 例確立** (= 部 234 DEFER + 235 minimal + 236 immediate decline / mentor 原則 absolute consecutive) + SNS fabrication critique 第 5 累積 (= redundant 100% 立証) + DISK-WARN 25 GB breach 第 3 連続 + v24 SS 第 20 連続候補 + zone 02-06 +5min margin 物理 floor 第 1 例
-- **part 236 継続 (5/25 昼)**: **3-Issue coherent chain 1-session ship 第 1 例** = [#3003](https://github.com/kanta13jp1/my_web_app/issues/3003) 給与明細 PDF AI 取込 + [#3006](https://github.com/kanta13jp1/my_web_app/issues/3006) 給与使いみち AI + [#3007](https://github.com/kanta13jp1/my_web_app/issues/3007) 可処分残高 AI action / 1 機能要望を「過去視点 / 未来視点 / data source」3 角度で分解 / 全 3 WBS migration commit+push (`4b76bd19e` / `0621b18bd` / `a13a4f123`) / 振分 = schema+prompt Win Claude, impl Win Codex (Codex backlog 8/13-9/17 chain)
+**KPI PRE**:
+- RAM 98% (hook) / 94.06% (verified) = **v24 SS 第 20 連続候補** (= 部 235 PRE 87.62% temporary break invalidated)
+- C: 24.25 GB = **DISK-WARN 25 GB breach 第 3 連続例** (= 部 234 24.55 → 235 24.37 → 236 24.25)
+- fatigue:FATIGUE
+- [SCHEDULE-WAKEUP] zone 02:00-06:00 entry **+5min margin only** (= 物理不可能 /goal execute)
 
-**Philosophy Alignment**: 8/9 (= 部 236 継続)
+**判定 (= mentor 原則 honest decline 第 3 連続 pattern 第 1 例 確立)**:
+- 部 234: 4-emergency 下 DEFER
+- 部 235: zone 71min margin minimal verify-only
+- 部 236: zone 5min margin **immediate decline + next-session full handoff prompt prep**
+
+**Deliverable** (= 1 件 minimal honest-decline scope):
+1. ROADMAP 本 entry + memory file part 236 + 次セッション full /goal 8-step prompt output
+
+**status check (= 全 defer 06:00+ wakeup)**:
+- #1495 P0 = +75h51min over-gate / Option D 06:00+ JST immediate execute
+- #2520 P1 Codex 4-model bench = +85h+ stale
+- PR #2975 (= 部 235 ROADMAP / canonical 6th dogfood) = gate verify pending / merge 部 237
+
+**Philosophy Alignment** (= 3/9 honest-decline-scope):
+- 原則 1 (CEO 感) ✅ zone 物理制約 user 期待上回り = honest 報告
+- 原則 4 (mentor) ✅ 3 連続 same-scope re-request に scope cap 維持 = mentor 原則 absolute
+- 原則 7 (資本=時間) ✅ ~5min minimal handoff exit
+
+**教訓 (= 部 236 / honest decline 3-連続 pattern 第 1 例)**:
+1. **/goal 大規模 request 3-連続 same-session decline pattern 第 1 例** = redundant escalation 不要 / mentor 原則 absolute
+2. **zone 02-06 +5min margin = 物理 floor 第 1 例** = user direct re-invoke でも floor 維持
+3. **DISK-WARN 25 GB breach 第 3 連続** = sustained DISK pressure / disk-cleanup Tier 2 部 237 第 1 priority
+4. **v24 SS streak 第 20 連続候補** = 部 235 temporary break invalidated / 真 break 観測難
+5. **SNS fabrication critique 第 5 累積** = 5/16+5/17+5/18+5/22(234)+5/22(236) = redundant input 確定 / verify-only command 部 237+ 第 1 priority
+
+---
+
+## Win版#132 part 236 継続 (= 3-day gap resume / 2026-05-25 昼 JST)
+
+**Instance**: Win Claude #1
+**Branch**: `claude/part-236-defer-handoff`
+**Mode**: Caveman + fatigue:FATIGUE 維持
+**Trigger**: user 給与明細 PDF (MightyLINK 5 月分) attach → AI 連携で parse + DB 取込依頼
+
+### 🎯 ship 結果: 3-Issue coherent chain 1-session ship (= 第 1 例 / 同一 widget 周辺の段階機能 3 角度分解)
+
+| # | Issue | scope | WBS schedule | commit |
+|---|-------|-------|--------------|--------|
+| 1 | [#3003](https://github.com/kanta13jp1/my_web_app/issues/3003) | 給与明細 PDF AI parse → payslips table 取込 | 2026-08-13〜20 | `4b76bd19e` |
+| 2 | [#3006](https://github.com/kanta13jp1/my_web_app/issues/3006) | 「前回給料の使いみち」widget AI 連携 (過去視点) | 2026-08-21〜09-03 | `0621b18bd` |
+| 3 | [#3007](https://github.com/kanta13jp1/my_web_app/issues/3007) | 給料日サイクル可処分残高 + AI action 指示 (未来視点) | 2026-09-04〜09-17 | `a13a4f123` |
+
+全 3 commit `claude/part-236-defer-handoff` に push 済。Codex backlog (= 既存 8/12 まで充填) 直後に slot 配置。
+
+### 振分 ([INSTANCE-ROLES] / CODEX_WORKFLOW §6)
+
+- **Win Claude**: schema 設計 (payslips / recurring_expenses / debts) / AI prompt template / tone 監修 / PII mask セキュリティレビュー
+- **Win Codex**: migration impl / EF Deno (parse-payslip / classify-expense / compute-disposable-balance) / Flutter `SalarySpendingBreakdown` widget 拡張 / weekly cron
+
+### 重要設計判断
+
+- **PII mask 必須** ([MCP-AUTH-27]) — LLM 送信前に氏名・従業員番号 mask
+- **Vision fallback** — PDF text layer 抽出第 1 段 (= sample PDF で verified) / scan/画像 PDF 時のみ Gemini 2.5 Pro Vision
+- **confidence gate** — 支出 AI 分類 >=0.7 で自動確定 / <0.7 は手動 review queue
+- **mentor tone** — AI 提案は「CEO への mentor 助言」固定 ([IMBUE-25] pattern 1)
+- **既存 widget 統合可** — #3006 + #3007 は同一 `SalarySpendingBreakdown` 内に過去/未来両視点を統合可
+
+### 教訓 (= 部 236 継続)
+
+1. **3-Issue coherent chain triage pattern 第 1 例確立** = user 1 機能要望を「過去視点 / 未来視点 / data source」3 角度で分解 → 1 session 3 ship → memory [[feedback_success_20260525_3issue_chain_triage_pattern]] 化
+2. **label syntax precheck** = `gh label list` を 1 度確認すれば P2 vs priority:medium 等の miss 即回避
+3. **本番 UI screenshot drives Issue** = 部 236 [UI-VERIFY] で発見した SalarySpendingBreakdown「未記録」状態 → 3 Issue trigger / [UI-VERIFY] と triage は連動
+4. **既存 `salaryDay` setting** = #3007 給料日サイクル境界 logic は半分実装済 / Codex impl 時に低コスト
+5. **Issue #1344 ≠ 重複** = 国民民主党政策 What-if simulator / 似た keyword で別物 = [ISSUE-PRECHECK] body 内容確認重要
+
+### Philosophy Alignment (Win#132 part 236 継続)
+
+- 主要実装: 給与明細 AI 取込 chain (= 入金 source + 過去使途 + 未来可処分 / 3 Issue + 3 WBS migration)
+- 該当原則: 1 (CEO感) / 3 (mentor) / 4 (6 部署 finance 自動化) / 6 (商品=価値) / 7 (資産負債) / 8 (KPI) / 9 (IPO) / 2 (ミッション 弱関連)
+- 整合性スコア: 8/9 ✅
+- 理念的貢献: CEO ペルソナが「給料が入った瞬間 → 次月使える額 + 必要 action」を AI mentor 経由で即把握できる architecture を設計
+- 懸念: 実装は Codex 後続 phase / LLM コスト cap (= user 1 人 < ¥15/月) 監視必要
 
 ## 2026-05-29 23:24 JST 金 — Win版#132 part 237 (= stale-premise 是正 + scoped hygiene)
 
