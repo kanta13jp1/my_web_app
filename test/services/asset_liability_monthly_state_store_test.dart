@@ -12,6 +12,37 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
+    test('maps paid-state cycles to salary day boundaries', () {
+      expect(
+        AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+          DateTime(2026, 5, 24, 23, 59),
+          salaryDay: 25,
+        ),
+        '2026-04',
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+          DateTime(2026, 5, 25),
+          salaryDay: 25,
+        ),
+        '2026-05',
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+          DateTime(2026, 6, 24),
+          salaryDay: 25,
+        ),
+        '2026-05',
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+          DateTime(2026, 6, 25),
+          salaryDay: 25,
+        ),
+        '2026-06',
+      );
+    });
+
     test('saves and restores monthly paid statuses', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),

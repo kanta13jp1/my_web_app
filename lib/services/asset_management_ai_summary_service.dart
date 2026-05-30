@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../models/asset_liability_workbook.dart';
+import '../models/user_profile.dart';
 import 'ai_hub_chat_service.dart';
 import 'asset_management_ai_provider_router.dart';
 import 'asset_management_insight_service.dart';
@@ -95,8 +97,8 @@ class AssetManagementAiSummaryService {
     }
 
     try {
-      final aiSafePayload = buildAiSafePayload(report);
-      final prompt = _buildPrompt(report: report, payload: aiSafePayload);
+      final detailedPayload = buildAiDetailedPayload(report);
+      final prompt = _buildPrompt(report: report, payload: detailedPayload);
       final response = route.routingEnabled
           ? await _sendRoutedSummary(prompt: prompt, route: route)
           : _provider == null || _provider == 'auto'
@@ -170,11 +172,21 @@ class AssetManagementAiSummaryService {
   }
 
   Map<String, dynamic> buildAiSafePayload(AssetManagementInsightReport report) {
+    return buildAiDetailedPayload(report);
+  }
+
+  Map<String, dynamic> buildAiDetailedPayload(
+    AssetManagementInsightReport report,
+  ) {
+    final workbook = report.workbook;
     return <String, dynamic>{
-      'available_money_bands': <String, dynamic>{
-        'today': _availableToAiSafeJson(report.todayAvailable),
-        'week': _availableToAiSafeJson(report.weekAvailable),
-        'month': _availableToAiSafeJson(report.monthAvailable),
+      'mode': 'exact_financial_detail_for_concrete_advice',
+      'user_profile': _profileToDetailedJson(report.userProfile),
+      'workbook': _workbookToDetailedJson(workbook),
+      'available_money': <String, dynamic>{
+        'today': _availableToJson(report.todayAvailable),
+        'week': _availableToJson(report.weekAvailable),
+        'month': _availableToJson(report.monthAvailable),
       },
       'action_inventory': <String, dynamic>{
         'total': report.actionItems.length,
@@ -187,13 +199,33 @@ class AssetManagementAiSummaryService {
           (item) => item.paymentDay != null,
         ),
       },
+      'personal_context_signals': _buildPersonalContextSignals(report),
+      'priority_situation_cards': report.actionItems
+          .map(
+            (item) => _actionToDetailedSituationCard(
+              item,
+              report.todayAvailable.startDate,
+            ),
+          )
+          .toList(growable: false),
+      'emergency_situation_cards': report.emergencyAdvices
+          .map(_emergencyAdviceToDetailedSituationCard)
+          .toList(growable: false),
       'movement_suggestions': <String, dynamic>{
         'count': report.movementSuggestions.length,
-        'amount_pressure_bands': _countBy(
-          report.movementSuggestions.map(
-            (suggestion) => _amountPressureBand(suggestion.amount),
-          ),
-        ),
+        'items': report.movementSuggestions
+            .map(
+              (suggestion) => <String, dynamic>{
+                'from_account_id': suggestion.fromAccountId,
+                'from_account_name': suggestion.fromAccountName,
+                'to_account_id': suggestion.toAccountId,
+                'to_account_name': suggestion.toAccountName,
+                'amount': suggestion.amount,
+                'needed_by': suggestion.neededBy?.toIso8601String(),
+                'reason': suggestion.reason,
+              },
+            )
+            .toList(growable: false),
       },
       'emergency_advices': <String, dynamic>{
         'count': report.emergencyAdvices.length,
@@ -217,10 +249,13 @@ class AssetManagementAiSummaryService {
         'response_language': 'ja-JP',
         'must_respond_in_japanese': true,
         'must_not_use_english_headings': true,
-        'external_ai_may_summarize_only': true,
-        'external_ai_may_recalculate_amounts': false,
-        'external_ai_payload_redacts_exact_money_values': true,
-        'external_ai_payload_redacts_account_identifiers': true,
+        'external_ai_receives_exact_account_data': true,
+        'external_ai_receives_exact_profile_data': true,
+        'external_ai_may_reference_exact_money_values': true,
+        'external_ai_may_reference_account_names': true,
+        'external_ai_may_derive_additional_ratios': true,
+        'must_use_supplied_financial_details_as_source_of_truth': true,
+        'must_not_invent_unknown_profile_fields': true,
         'must_not_recommend_starvation_or_water_only': true,
         'must_prioritize_food_shelter_health_and_contacting_creditors': true,
       },
@@ -229,6 +264,8 @@ class AssetManagementAiSummaryService {
 
   Map<String, dynamic> buildPayload(AssetManagementInsightReport report) {
     return <String, dynamic>{
+      'user_profile': _profileToDetailedJson(report.userProfile),
+      'workbook': _workbookToDetailedJson(report.workbook),
       'available_money': <String, dynamic>{
         'today': _availableToJson(report.todayAvailable),
         'week': _availableToJson(report.weekAvailable),
@@ -283,8 +320,13 @@ class AssetManagementAiSummaryService {
           .toList(growable: false),
       'guardrails': const <String, dynamic>{
         'calculation_owner': 'dart_service',
-        'external_ai_may_summarize_only': true,
-        'external_ai_may_recalculate_amounts': false,
+        'external_ai_receives_exact_account_data': true,
+        'external_ai_receives_exact_profile_data': true,
+        'external_ai_may_reference_exact_money_values': true,
+        'external_ai_may_reference_account_names': true,
+        'external_ai_may_derive_additional_ratios': true,
+        'must_use_supplied_financial_details_as_source_of_truth': true,
+        'must_not_invent_unknown_profile_fields': true,
         'must_not_recommend_starvation_or_water_only': true,
         'must_prioritize_food_shelter_health_and_contacting_creditors': true,
       },
@@ -325,12 +367,12 @@ class AssetManagementAiSummaryService {
     required Map<String, dynamic> payload,
   }) {
     return [
-      _promptBuilder.buildRedactedPrompt(report),
+      _promptBuilder.buildDetailedAdvicePrompt(report),
       '',
-      '## 計算済みインサイトの安全化ペイロード',
+      '## AIに渡す詳細ペイロード',
       jsonEncode(payload),
       '',
-      '出力ルール: 必ず自然な日本語だけで回答してください。Markdownの見出し、箇条書き、ラベルも日本語にしてください。英語の見出しや英語ラベルは使わないでください。安全化されたカテゴリだけを要約し、金額を再計算しないでください。正確な残高の追加開示を求めないでください。法的助言、投資助言、信用判断の断定はしないでください。飢える、水だけで耐える、食事を抜くといった健康を害する提案は絶対にしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。短く、今日実行できる行動に寄せてください。',
+      '出力ルール: 必ず自然な日本語だけで回答してください。Markdownの見出し、箇条書き、ラベルも日本語にしてください。英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
     ].join('\n');
   }
 
@@ -376,20 +418,351 @@ class AssetManagementAiSummaryService {
     };
   }
 
-  Map<String, dynamic> _availableToAiSafeJson(
-    AssetManagementAvailableMoneyInsight insight,
+  Map<String, dynamic> _workbookToDetailedJson(
+    AssetLiabilityWorkbook workbook,
   ) {
     return <String, dynamic>{
-      'window': insight.window.name,
-      'risk_band': _availableRiskBand(insight),
-      'date_window_days':
-          insight.endDate.difference(insight.startDate).inDays + 1,
-      'cash_like_status': _amountPressureBand(insight.cashLikeTotal),
-      'unpaid_payment_status': _amountPressureBand(insight.unpaidPaymentTotal),
-      'unreceived_income_status': _amountPressureBand(
-        insight.unreceivedIncomeTotal,
-      ),
-      'minimum_safety_balance_policy': 'configured_in_dart',
+      'base_date': workbook.baseDate.toIso8601String(),
+      'totals': <String, dynamic>{
+        'cash_like_total': workbook.cashLikeTotal,
+        'securities_total': workbook.securitiesTotal,
+        'positive_asset_total': workbook.positiveAssetTotal,
+        'liability_total': workbook.liabilityTotal,
+        'net_worth': workbook.netWorth,
+        'monthly_minimum_payment_estimate_total':
+            workbook.monthlyMinimumPaymentEstimateTotal,
+        'monthly_scheduled_payment_total':
+            workbook.monthlyScheduledPaymentTotal,
+        'monthly_actual_payment_total': workbook.monthlyActualPaymentTotal,
+        'monthly_payment_difference_total':
+            workbook.monthlyPaymentDifferenceTotal,
+        'monthly_unpaid_payment_total': workbook.monthlyUnpaidPaymentTotal,
+        'monthly_unreceived_income_total':
+            workbook.monthlyUnreceivedIncomeTotal,
+        'cash_after_minimum_payments': workbook.cashAfterMinimumPayments,
+        'cash_after_scheduled_payments': workbook.cashAfterScheduledPayments,
+        'debt_to_asset_ratio': workbook.debtToAssetRatio,
+        'top_four_debt_share': workbook.topFourDebtShare,
+        'manual_payment_count': workbook.manualPaymentCount,
+        'estimated_payment_count': workbook.estimatedPaymentCount,
+      },
+      'accounts': workbook.accounts.map(_accountToJson).toList(growable: false),
+      'debt_master_rows': workbook.debtMasterRows
+          .map((row) => _debtRowToJson(row, workbook.baseDate))
+          .toList(growable: false),
+      'repayment_priority_rows': workbook.repaymentPriorityRows
+          .map((row) => _debtRowToJson(row, workbook.baseDate))
+          .toList(growable: false),
+      'payment_day_risks': workbook.paymentDayRisks
+          .map(_paymentDayRiskToJson)
+          .toList(growable: false),
+      'cashflow_rows':
+          workbook.cashflowRows.map(_cashflowRowToJson).toList(growable: false),
+      'income_plans':
+          workbook.incomePlans.map(_incomePlanToJson).toList(growable: false),
+      'transfer_tasks': workbook.transferTasks
+          .map(_transferTaskToJson)
+          .toList(growable: false),
+      'account_cashflow_summaries': workbook.accountCashflowSummaries
+          .map(_accountCashflowSummaryToJson)
+          .toList(growable: false),
+      'transfer_suggestions': workbook.transferSuggestions
+          .map(_transferSuggestionToJson)
+          .toList(growable: false),
+      'card_billing_review': <String, dynamic>{
+        'direct_payment_items': workbook.cardBillingReview.directPaymentItems
+            .map(_cardReviewItemToJson)
+            .toList(growable: false),
+        'card_billing_groups': workbook.cardBillingReview.cardBillingGroups
+            .map(_cardBillingGroupToJson)
+            .toList(growable: false),
+        'missing_billing_account_items': workbook
+            .cardBillingReview.missingBillingAccountItems
+            .map(_cardReviewItemToJson)
+            .toList(growable: false),
+        'needs_review_items': workbook.cardBillingReview.needsReviewItems
+            .map(_cardReviewItemToJson)
+            .toList(growable: false),
+        'double_counting_risk_items': workbook
+            .cardBillingReview.doubleCountingRiskItems
+            .map(_cardReviewItemToJson)
+            .toList(growable: false),
+      },
+      'card_statement_reconciliation': <String, dynamic>{
+        'groups': workbook.cardStatementReconciliation.groups
+            .map(_cardStatementReconciliationGroupToJson)
+            .toList(growable: false),
+        'unmatched_statement_lines': workbook
+            .cardStatementReconciliation.unmatchedStatementLines
+            .map(_statementLineToJson)
+            .toList(growable: false),
+        'imported_line_count':
+            workbook.cardStatementReconciliation.importedLineCount,
+        'imported_line_total':
+            workbook.cardStatementReconciliation.importedLineTotal,
+      },
+    };
+  }
+
+  Map<String, dynamic>? _profileToDetailedJson(UserProfile? profile) {
+    if (profile == null) {
+      return null;
+    }
+    return <String, dynamic>{
+      'user_id': profile.userId,
+      'display_name': profile.displayName,
+      'bio': profile.bio,
+      'location': profile.location,
+      'birth_date': profile.birthDate?.toIso8601String(),
+      'target_death_age': profile.targetDeathAge,
+      'disposable_time_ratio': profile.disposableTimeRatio,
+      'gender': profile.gender,
+      'occupation': profile.occupation,
+      'annual_income': profile.annualIncome,
+      'address': profile.address,
+      'education': profile.education,
+      'career_history': profile.careerHistory,
+      'hobbies': profile.hobbies,
+      'alcohol_use': profile.alcoholUse,
+      'smoking_use': profile.smokingUse,
+      'favorite_foods': profile.favoriteFoods,
+    };
+  }
+
+  Map<String, dynamic> _accountToJson(AssetLiabilityAccount account) {
+    return <String, dynamic>{
+      'id': account.id,
+      'name': account.name,
+      'kind': account.kind.name,
+      'balance': account.balance,
+      'payment_day': account.paymentDay,
+      'payment_source_account_name': account.paymentSourceAccountName,
+      'payment_method': account.paymentMethod.name,
+      'payment_method_label': account.paymentMethodLabel,
+      'payment_method_setting_source': account.paymentMethodSettingSource.name,
+      'billing_account_id': account.billingAccountId,
+      'billing_account_name': account.billingAccountName,
+      'included_in_billing_account': account.includedInBillingAccount,
+      'annual_rate': account.annualRate,
+      'minimum_payment_rate': account.minimumPaymentRate,
+      'minimum_payment_floor': account.minimumPaymentFloor,
+      'full_payment_estimate': account.fullPaymentEstimate,
+    };
+  }
+
+  Map<String, dynamic> _debtRowToJson(
+    AssetLiabilityDebtRow row,
+    DateTime baseDate,
+  ) {
+    return <String, dynamic>{
+      'id': row.id,
+      'name': row.name,
+      'kind': row.kind.name,
+      'balance': row.balance,
+      'liability_share': row.liabilityShare,
+      'payment_day': row.paymentDay,
+      'scheduled_payment_date':
+          _paymentDateFor(row, baseDate)?.toIso8601String(),
+      'payment_source_account_id': row.paymentSourceAccountId,
+      'payment_source_account_name': row.paymentSourceAccountName,
+      'payment_method': row.paymentMethod.name,
+      'payment_method_label': row.paymentMethodLabel,
+      'payment_method_setting_source': row.paymentMethodSettingSource.name,
+      'billing_account_id': row.billingAccountId,
+      'billing_account_name': row.billingAccountName,
+      'included_in_billing_account': row.includedInBillingAccount,
+      'is_direct_cashflow_target': row.isDirectCashflowTarget,
+      'annual_rate': row.annualRate,
+      'minimum_payment_estimate': row.minimumPaymentEstimate,
+      'manual_payment_amount': row.manualPaymentAmount,
+      'scheduled_payment_amount': row.scheduledPaymentAmount,
+      'actual_payment_amount': row.actualPaymentAmount,
+      'payment_difference_amount': row.paymentDifferenceAmount,
+      'payment_difference_reason': row.paymentDifferenceReason,
+      'monthly_interest_estimate': row.monthlyInterestEstimate,
+      'principal_payment_estimate': row.principalPaymentEstimate,
+      'balance_after_payment_estimate': row.balanceAfterPaymentEstimate,
+      'priority_label': row.priorityLabel,
+      'payment_amount_estimated': row.paymentAmountEstimated,
+      'paid': row.paid,
+      'effective_paid_payment_amount': row.effectivePaidPaymentAmount,
+    };
+  }
+
+  Map<String, dynamic> _paymentDayRiskToJson(
+    AssetLiabilityPaymentDayRisk risk,
+  ) {
+    return <String, dynamic>{
+      'payment_day': risk.paymentDay,
+      'payment_date': risk.paymentDate.toIso8601String(),
+      'account_names': risk.accountNames,
+      'balance_total': risk.balanceTotal,
+      'minimum_payment_estimate_total': risk.minimumPaymentEstimateTotal,
+      'scheduled_payment_total': risk.scheduledPaymentTotal,
+      'manual_payment_total': risk.manualPaymentTotal,
+      'interest_estimate_total': risk.interestEstimateTotal,
+      'manual_payment_count': risk.manualPaymentCount,
+      'estimated_payment_count': risk.estimatedPaymentCount,
+      'is_past': risk.isPast,
+      'is_today': risk.isToday,
+      'is_upcoming': risk.isUpcoming,
+    };
+  }
+
+  Map<String, dynamic> _cashflowRowToJson(AssetLiabilityCashflowRow row) {
+    return <String, dynamic>{
+      'event_type': row.eventType.name,
+      'account_id': row.accountId,
+      'account_name': row.accountName,
+      'payment_day': row.paymentDay,
+      'payment_date': row.paymentDate.toIso8601String(),
+      'payment_source_account_id': row.paymentSourceAccountId,
+      'payment_source_account_name': row.paymentSourceAccountName,
+      'destination_account_id': row.destinationAccountId,
+      'destination_account_name': row.destinationAccountName,
+      'payment_method': row.paymentMethod.name,
+      'payment_method_label': row.paymentMethodLabel,
+      'payment_method_setting_source': row.paymentMethodSettingSource.name,
+      'billing_account_id': row.billingAccountId,
+      'billing_account_name': row.billingAccountName,
+      'included_in_billing_account': row.includedInBillingAccount,
+      'payment_amount': row.paymentAmount,
+      'actual_payment_amount': row.actualPaymentAmount,
+      'payment_difference_amount': row.paymentDifferenceAmount,
+      'payment_difference_reason': row.paymentDifferenceReason,
+      'payment_amount_estimated': row.paymentAmountEstimated,
+      'paid': row.paid,
+      'received': row.received,
+      'overdue': row.overdue,
+      'cash_before_payment': row.cashBeforePayment,
+      'cash_after_payment': row.cashAfterPayment,
+      'risk_level': row.riskLevel.name,
+      'is_direct_cashflow_target': row.isDirectCashflowTarget,
+    };
+  }
+
+  Map<String, dynamic> _incomePlanToJson(AssetLiabilityIncomePlan plan) {
+    return <String, dynamic>{
+      'id': plan.id,
+      'date': plan.date.toIso8601String(),
+      'name': plan.name,
+      'amount': plan.amount,
+      'destination_account_id': plan.destinationAccountId,
+      'destination_account_name': plan.destinationAccountName,
+      'received': plan.received,
+    };
+  }
+
+  Map<String, dynamic> _transferTaskToJson(AssetLiabilityTransferTask task) {
+    return <String, dynamic>{
+      'id': task.id,
+      'from_account_id': task.fromAccountId,
+      'from_account_name': task.fromAccountName,
+      'to_account_id': task.toAccountId,
+      'to_account_name': task.toAccountName,
+      'amount': task.amount,
+      'due_date': task.dueDate?.toIso8601String(),
+      'completed': task.completed,
+      'completed_at': task.completedAt?.toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> _accountCashflowSummaryToJson(
+    AssetLiabilityAccountCashflowSummary summary,
+  ) {
+    return <String, dynamic>{
+      'account_id': summary.accountId,
+      'account_name': summary.accountName,
+      'current_balance': summary.currentBalance,
+      'upcoming_payments': summary.upcomingPayments,
+      'upcoming_income': summary.upcomingIncome,
+      'pending_transfer_in': summary.pendingTransferIn,
+      'pending_transfer_out': summary.pendingTransferOut,
+      'projected_balance': summary.projectedBalance,
+      'risk_level': summary.riskLevel.name,
+      'is_short': summary.isShort,
+      'shortfall': summary.shortfall,
+    };
+  }
+
+  Map<String, dynamic> _transferSuggestionToJson(
+    AssetLiabilityTransferSuggestion suggestion,
+  ) {
+    return <String, dynamic>{
+      'from_account_id': suggestion.fromAccountId,
+      'from_account_name': suggestion.fromAccountName,
+      'to_account_id': suggestion.toAccountId,
+      'to_account_name': suggestion.toAccountName,
+      'amount': suggestion.amount,
+      'needed_by': suggestion.neededBy?.toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> _cardReviewItemToJson(
+    AssetLiabilityCardBillingReviewItem item,
+  ) {
+    return <String, dynamic>{
+      'account_id': item.accountId,
+      'account_name': item.accountName,
+      'amount': item.amount,
+      'payment_day': item.paymentDay,
+      'payment_method': item.paymentMethod.name,
+      'payment_method_label': item.paymentMethodLabel,
+      'payment_method_setting_source': item.paymentMethodSettingSource.name,
+      'billing_account_id': item.billingAccountId,
+      'billing_account_name': item.billingAccountName,
+      'included_in_billing_account': item.includedInBillingAccount,
+      'direct_cashflow_target': item.directCashflowTarget,
+      'alerts': item.alerts,
+      'needs_review': item.needsReview,
+    };
+  }
+
+  Map<String, dynamic> _cardBillingGroupToJson(
+    AssetLiabilityCardBillingGroup group,
+  ) {
+    return <String, dynamic>{
+      'billing_account_id': group.billingAccountId,
+      'billing_account_name': group.billingAccountName,
+      'total_amount': group.totalAmount,
+      'items': group.items.map(_cardReviewItemToJson).toList(growable: false),
+    };
+  }
+
+  Map<String, dynamic> _cardStatementReconciliationGroupToJson(
+    AssetLiabilityCardStatementReconciliationGroup group,
+  ) {
+    return <String, dynamic>{
+      'billing_account_id': group.billingAccountId,
+      'billing_account_name': group.billingAccountName,
+      'billed_amount': group.billedAmount,
+      'configured_detail_total': group.configuredDetailTotal,
+      'statement_line_total': group.statementLineTotal,
+      'configured_difference': group.configuredDifference,
+      'statement_difference': group.statementDifference,
+      'has_statement_lines': group.hasStatementLines,
+      'needs_review': group.needsReview,
+      'alerts': group.alerts,
+      'configured_items':
+          group.configuredItems.map(_cardReviewItemToJson).toList(
+                growable: false,
+              ),
+      'statement_lines': group.statementLines.map(_statementLineToJson).toList(
+            growable: false,
+          ),
+    };
+  }
+
+  Map<String, dynamic> _statementLineToJson(
+    AssetLiabilityCardStatementLine line,
+  ) {
+    return <String, dynamic>{
+      'id': line.id,
+      'billing_account_id': line.billingAccountId,
+      'billing_account_name': line.billingAccountName,
+      'posted_at': line.postedAt?.toIso8601String(),
+      'description': line.description,
+      'amount': line.amount,
     };
   }
 
@@ -401,12 +774,149 @@ class AssetManagementAiSummaryService {
     return counts;
   }
 
-  String _availableRiskBand(AssetManagementAvailableMoneyInsight insight) {
-    final amount = insight.availableAmount;
-    if (amount < 0) return 'shortage';
-    if (amount < insight.minimumSafetyBalance) return 'below_safety_balance';
-    if (amount < insight.minimumSafetyBalance * 2) return 'near_safety_buffer';
-    return 'buffer_available';
+  Map<String, dynamic> _buildPersonalContextSignals(
+    AssetManagementInsightReport report,
+  ) {
+    return <String, dynamic>{
+      'overall_pressure': _overallPressure(report),
+      'worst_available_window': _worstAvailableWindow(report).window.name,
+      'has_overdue_or_shortage': report.actionItems.any(
+        (item) =>
+            item.type == AssetManagementInsightActionType.overduePayment ||
+            item.type == AssetManagementInsightActionType.cashShortageRisk ||
+            item.type ==
+                AssetManagementInsightActionType.emergencyLivingExpense,
+      ),
+      'has_uncertain_debt_inputs': report.actionItems.any(
+        (item) =>
+            item.type == AssetManagementInsightActionType.missingInput ||
+            item.type == AssetManagementInsightActionType.missingAnnualRate ||
+            item.type == AssetManagementInsightActionType.missingPaymentDay ||
+            item.type == AssetManagementInsightActionType.missingPaymentSource,
+      ),
+      'has_card_billing_review': report.actionItems.any(
+        (item) =>
+            item.type ==
+                AssetManagementInsightActionType.cardBillingConfiguration ||
+            item.type == AssetManagementInsightActionType.doubleCountingRisk,
+      ),
+      'has_cash_movement_candidate': report.movementSuggestions.isNotEmpty,
+      'advice_focus': _adviceFocus(report),
+    };
+  }
+
+  Map<String, dynamic> _actionToDetailedSituationCard(
+    AssetManagementInsightActionItem item,
+    DateTime baseDate,
+  ) {
+    return <String, dynamic>{
+      'severity': item.severity.name,
+      'type': item.type.name,
+      'situation': _actionTypeLabel(item.type),
+      'due_timing': _dueTimingBand(item.dueDate, baseDate),
+      'payment_day_known': item.paymentDay != null,
+      'recommended_next_step': item.suggestedAction,
+    };
+  }
+
+  Map<String, dynamic> _emergencyAdviceToDetailedSituationCard(
+    AssetManagementEmergencyAdvice advice,
+  ) {
+    return <String, dynamic>{
+      'severity': advice.severity.name,
+      'situation': advice.title,
+      'amount_pressure': _amountPressureBand(advice.amount),
+      'recommended_next_step': advice.suggestedAction,
+    };
+  }
+
+  AssetManagementAvailableMoneyInsight _worstAvailableWindow(
+    AssetManagementInsightReport report,
+  ) {
+    final windows = <AssetManagementAvailableMoneyInsight>[
+      report.todayAvailable,
+      report.weekAvailable,
+      report.monthAvailable,
+    ]..sort((a, b) => a.availableAmount.compareTo(b.availableAmount));
+    return windows.first;
+  }
+
+  String _overallPressure(AssetManagementInsightReport report) {
+    if (report.criticalActions.isNotEmpty ||
+        _worstAvailableWindow(report).availableAmount < 0) {
+      return 'critical_cashflow_pressure';
+    }
+    if (report.actionItems.any(
+      (item) => item.severity == AssetManagementInsightSeverity.warning,
+    )) {
+      return 'needs_review_this_cycle';
+    }
+    return 'stable_with_monitoring';
+  }
+
+  String _adviceFocus(AssetManagementInsightReport report) {
+    if (report.emergencyAdvices.isNotEmpty) {
+      return 'protect_living_expenses_before_payments';
+    }
+    if (report.movementSuggestions.isNotEmpty) {
+      return 'move_cash_before_due_dates';
+    }
+    if (report.actionItems.any(
+      (item) =>
+          item.type == AssetManagementInsightActionType.missingAnnualRate ||
+          item.type == AssetManagementInsightActionType.missingInput,
+    )) {
+      return 'fix_uncertain_debt_inputs';
+    }
+    if (report.actionItems.any(
+      (item) =>
+          item.type ==
+              AssetManagementInsightActionType.cardBillingConfiguration ||
+          item.type == AssetManagementInsightActionType.doubleCountingRisk,
+    )) {
+      return 'clean_card_billing_rules';
+    }
+    return 'keep_current_pace';
+  }
+
+  String _dueTimingBand(DateTime? dueDate, DateTime baseDate) {
+    if (dueDate == null) return 'unknown';
+    final today = DateTime(baseDate.year, baseDate.month, baseDate.day);
+    final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final days = due.difference(today).inDays;
+    if (days < 0) return 'overdue';
+    if (days == 0) return 'today';
+    if (days <= 3) return 'within_3_days';
+    if (days <= 7) return 'within_7_days';
+    if (due.year == today.year && due.month == today.month) {
+      return 'later_this_month';
+    }
+    return 'future';
+  }
+
+  DateTime? _paymentDateFor(AssetLiabilityDebtRow row, DateTime baseDate) {
+    if (row.paymentDay == null) return null;
+    final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
+    return DateTime(
+      baseDate.year,
+      baseDate.month,
+      row.paymentDay!.clamp(1, lastDay),
+    );
+  }
+
+  String _actionTypeLabel(AssetManagementInsightActionType type) {
+    return switch (type) {
+      AssetManagementInsightActionType.missingInput => '請求額の未確定',
+      AssetManagementInsightActionType.missingPaymentDay => '支払日の未設定',
+      AssetManagementInsightActionType.missingAnnualRate => '金利情報の未設定',
+      AssetManagementInsightActionType.missingPaymentSource => '支払原資口座の未設定',
+      AssetManagementInsightActionType.overduePayment => '期限超過の未払い',
+      AssetManagementInsightActionType.upcomingPayment => '近い支払期限',
+      AssetManagementInsightActionType.cashShortageRisk => '支払後の資金ショート',
+      AssetManagementInsightActionType.emergencyLivingExpense => '生活費の不足',
+      AssetManagementInsightActionType.cardBillingConfiguration => 'カード請求設定の確認',
+      AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
+    };
   }
 
   String _amountPressureBand(double? amount) {

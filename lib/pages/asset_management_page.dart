@@ -18,6 +18,7 @@ import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
+import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
 import 'package:my_web_app/services/asset_liability_csv_restore_service.dart';
@@ -36,6 +37,7 @@ import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
+import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
@@ -99,6 +101,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ];
 
   final _supabase = Supabase.instance.client;
+  final ProfileService _profileService = ProfileService();
 
   // --- 今日18:00締切のためのチェックリスト ---
   final ScrollController _scrollController = ScrollController();
@@ -292,6 +295,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isGeneratingAssetManagementAiSummary = false;
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
+  UserProfile? _assetManagementUserProfile;
+  bool _isLoadingAssetManagementUserProfile = false;
   List<Map<String, dynamic>> _payslipRows = <Map<String, dynamic>>[];
   List<Map<String, dynamic>> _payslipSalaryIncomes = <Map<String, dynamic>>[];
   bool _isLoadingPayslipFinance = false;
@@ -344,19 +349,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDataFromSupabase();
     _loadAssetLiabilityMonthlyState();
     _loadWatchlistEntries();
+    _loadAssetManagementUserProfile();
     _loadPayslipFinanceData();
     _fetchRecentFlows();
     _fetchSubscriptions();
     _fetchMustTasks();
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      final previousMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
-        _now,
-      );
+      final previousMonthKey = _assetLiabilityStateMonthKey(_now);
       final nextNow = DateTime.now();
-      final nextMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
-        nextNow,
-      );
+      final nextMonthKey = _assetLiabilityStateMonthKey(nextNow);
       setState(() => _now = nextNow);
       if (nextMonthKey != previousMonthKey &&
           nextMonthKey != _loadedAssetLiabilityMonthKey) {
@@ -402,6 +404,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     super.dispose();
   }
 
+  Future<void> _loadAssetManagementUserProfile() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null || _isLoadingAssetManagementUserProfile) {
+      return;
+    }
+    setState(() {
+      _isLoadingAssetManagementUserProfile = true;
+    });
+    try {
+      final profile = await _profileService.getProfile(userId);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _assetManagementUserProfile = profile;
+        _isLoadingAssetManagementUserProfile = false;
+        _assetManagementAiSummaryRequestKey = null;
+        _assetManagementAiSummaryResult = null;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoadingAssetManagementUserProfile = false;
+      });
+    }
+  }
+
   List<String> _paymentSourceCandidates() {
     // _assetTypes の順序を維持しつつ重複排除
     final ordered = <String>[];
@@ -433,6 +464,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _dateOnly(DateTime.now().subtract(const Duration(days: 1)));
 
   DateTime _monthStart(DateTime dt) => DateTime(dt.year, dt.month, 1);
+
+  DateTime _assetLiabilityStateMonth(DateTime dt) {
+    return AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+      dt,
+      salaryDay: _salarySpendingSalaryDay,
+    );
+  }
+
+  String _assetLiabilityStateMonthKey(DateTime dt) {
+    return AssetLiabilityMonthlyStateStore.formatMonthKey(
+      _assetLiabilityStateMonth(dt),
+    );
+  }
 
   void _scrollToInitialFocus() {
     switch (widget.initialFocus) {
@@ -925,10 +969,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _loadAssetLiabilityMonthlyState() async {
     try {
-      final targetMonth = _now;
-      final monthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
-        targetMonth,
-      );
+      final targetMonth = _assetLiabilityStateMonth(_now);
+      final monthKey = _assetLiabilityStateMonthKey(_now);
       final state = await _assetLiabilityRepository.loadMonth(targetMonth);
       final defaultSources =
           await _assetLiabilityRepository.loadDefaultPaymentSources();
@@ -1062,7 +1104,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _persistAssetLiabilityMonthlyState() async {
     await _assetLiabilityRepository.saveMonth(
-      month: _now,
+      month: _assetLiabilityStateMonth(_now),
       state: _currentAssetLiabilityMonthlyState(),
     );
   }
@@ -1176,9 +1218,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     try {
       final existingStates = <String, AssetLiabilityMonthlyState>{};
-      final currentMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
-        _now,
-      );
+      final currentMonthKey = _assetLiabilityStateMonthKey(_now);
       for (final monthKey in preview.monthlyStates.keys) {
         if (monthKey == currentMonthKey) {
           existingStates[monthKey] = _currentAssetLiabilityMonthlyState();
@@ -1296,7 +1336,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _isRunningAssetLiabilitySync = true;
     });
     try {
-      final result = await _assetLiabilityRepository.syncMonth(_now);
+      final result = await _assetLiabilityRepository.syncMonth(
+        _assetLiabilityStateMonth(_now),
+      );
       if (!mounted) return;
       setState(() {
         _assetLiabilitySyncStatus = result.status;
@@ -1356,7 +1398,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _isPreviewingAssetLiabilitySync = true;
     });
     try {
-      final result = await _assetLiabilityRepository.previewSyncMonth(_now);
+      final result = await _assetLiabilityRepository.previewSyncMonth(
+        _assetLiabilityStateMonth(_now),
+      );
       if (!mounted) return;
       setState(() {
         _assetLiabilitySyncPreview = result;
@@ -1392,7 +1436,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final result = await _assetLiabilityRepository.previewSyncMonth(_now);
+      final result = await _assetLiabilityRepository.previewSyncMonth(
+        _assetLiabilityStateMonth(_now),
+      );
       if (!mounted) return;
       setState(() {
         _assetLiabilitySyncPreview = result;
@@ -1450,7 +1496,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     try {
       final result = await _assetLiabilityRepository.resolveSyncConflicts(
-        month: _now,
+        month: _assetLiabilityStateMonth(_now),
         resolutions: <AssetLiabilityConflictResolution>[
           AssetLiabilityConflictResolution(target: item.target, choice: choice),
         ],
@@ -2344,12 +2390,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _copyPreviousMonthSettings() async {
+    final targetMonth = _assetLiabilityStateMonth(_now);
     final copied = await _assetLiabilityRepository.copyPreviousMonthToMonth(
-      _now,
+      targetMonth,
     );
     final incomePlansWithTemplates =
         AssetLiabilityMonthlyStateStore.applyRecurringIncomeTemplates(
-      month: _now,
+      month: targetMonth,
       templates: _recurringIncomeTemplates,
       existingPlans: copied.incomePlans,
     );
@@ -2375,7 +2422,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     unawaited(_saveAssetLiabilityMonthlyState());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('前月設定をコピーしました。支払済み・入金済み状態はコピーしていません。')),
+      const SnackBar(content: Text('前サイクル設定をコピーしました。支払済み・入金済み状態はコピーしていません。')),
     );
   }
 
@@ -2559,9 +2606,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       task.id == AssetLiabilityPlanningService.auPayCardFundingTransferTaskId;
 
   void _deleteRecurringIncomeTemplate(String templateId) {
-    final currentMonthKey = AssetLiabilityMonthlyStateStore.formatMonthKey(
-      _now,
-    );
+    final currentMonthKey = _assetLiabilityStateMonthKey(_now);
     setState(() {
       _recurringIncomeTemplates = _recurringIncomeTemplates
           .where((template) => template.id != templateId)
@@ -2819,9 +2864,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       destinationAccountId: selectedDestinationId,
                       destinationAccountName: destinationName,
                     );
+                    final stateMonth = _assetLiabilityStateMonth(_now);
                     final generatedId = _generatedPlanIdForTemplate(
                       template,
-                      _now,
+                      stateMonth,
                     );
                     final previousGeneratedPlan = _monthlyIncomePlans.where((
                       plan,
@@ -2830,7 +2876,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     }).toList();
                     final generatedPlan = _incomePlanForTemplate(
                       template,
-                      _now,
+                      stateMonth,
                       received: previousGeneratedPlan.isNotEmpty
                           ? previousGeneratedPlan.first.received
                           : false,
@@ -8886,6 +8932,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _scheduleAssetLiabilityStateIdMigration(workbook);
     final insightReport = _assetManagementInsightService.buildReport(
       workbook: workbook,
+      userProfile: _assetManagementUserProfile,
     );
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
@@ -9705,6 +9752,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildAssetLiabilitySyncChip(
+                label: 'プロフィール',
+                value: report.userProfile == null ? '未連携' : '連携済み',
+                color: report.userProfile == null
+                    ? const Color(0xFFD97706)
+                    : const Color(0xFF0D9488),
+              ),
               _buildAssetLiabilitySyncChip(
                 label: '要対応',
                 value: '${report.actionItems.length}件',
@@ -9714,7 +9775,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            '金額は資産/負債ボードの計算結果を使い、外部AI APIは呼び出さずに安全なルールベースで確認しています。',
+            'AIにはプロフィールと資産/負債ボードの詳細データを渡し、職業・年収・住所・趣味・生活習慣と、口座名・残高・支払日・利率・月利息まで踏み込んだ助言を生成します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
@@ -9847,7 +9908,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'AIには計算済みインサイトだけを渡します。金額計算はDart側で固定しています。',
+            'AIにはプロフィール、口座名、残高、支払予定、支払原資、利率、月利息、負債割合を含む詳細ペイロードを渡します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 11,
@@ -11561,7 +11622,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   TextButton.icon(
                     onPressed: _copyPreviousMonthSettings,
                     icon: const Icon(Icons.copy_all_outlined),
-                    label: const Text('前月コピー'),
+                    label: const Text('前サイクルコピー'),
                   ),
                   TextButton.icon(
                     onPressed: () =>
@@ -13192,7 +13253,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          '画面に収まらない場合は、表を横にスクロールして支払済み・年利・月利息まで確認できます。支払済みチェックは当月の状態として保存されます。',
+          '画面に収まらない場合は、表を横にスクロールして支払済み・年利・月利息まで確認できます。支払済みチェックは給料日25日基準のサイクルで保存されます。',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 12,
