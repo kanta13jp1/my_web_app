@@ -31362,3 +31362,40 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 2. **deferred-handoff PR landing pattern 第 1 例** = part 237 PR 作成 → part 238 verify+merge = session 跨ぎ clean handoff
 3. **auto-merge repo-disabled + branch protection "require up to date"** = BEHIND branch は update-branch → CI 再走 → manual merge (= `--admin` bypass 不要)
 4. **再発防止候補** = (a) push-to-main regression guard (ROADMAP 大量削除 reject / 既存 regression guard pattern 踏襲) (b) scheduled agent prompt = append-only Edit 強制 / full Write 禁止 (c) ROADMAP 巨大化 (31k 行) archive/split 検討
+
+---
+
+## 2026-05-30 12:00 UTC 土 — Win版#132 part 239 (= scheduled `daily-development` cron / autonomous / no user attention)
+
+**Instance**: Win版 (Claude Code) #132 / part 239 (= 部 238 5/30 09:11 manual → 部 239 5/30 cron / 同日 2nd session = autonomous-safe triad / FATIGUE 維持 scoped)
+
+**stale-prompt verify-first 第 3 例** (= prompt 前提 cross-check / 部 237→238→239 連続適用):
+1. date = 2026-05-30 (= cron run / 06:00+ ✅ / zone 02-06 外)
+2. C: 77.65 GB free / RAM 87% (= hook KPI / no emergency / < 90% v24 SS 回避)
+3. branch 期待 fresh → 実 **`claude/part-236-defer-handoff` が MERGE IN PROGRESS + 386 behind main + 2 conflict (competitor-reports)** = dead orphan (PR #3046 merged 済 / no PR) → **触らず fresh worktree off origin/main で作業** (= WORKDIR-ISOLATION)
+4. `git merge --abort` 試行 → **`lib/pages/asset_management_page.dart` uncommitted で abort refuse** = git が real work 保護 → **強制せず main dir そのまま flag** (= clobber 回避 / 部 237 verify-first 精神)
+5. 最新 ROADMAP part = 238 / 最新 cron seed on main = part225 (part238/239 seed は worktree 内 uncommitted で未 land) → 衝突なし part239 採番
+
+**Deliverable** (= autonomous-safe triad / 部 219+225 pattern 踏襲 / docs-only / no `.dart`):
+1. **Blog draft pair (JA+EN)** = 「scheduled-agent append-only discipline + verify-first detection」(= `docs/blog-drafts/2026-05-30-scheduled-agent-append-only-guard.md` / -en.md / published:false) — 部 238 ROADMAP truncation incident **real-event 蒸留** (= fabrication 回避 / 実 incident のみ題材)
+2. **Idempotent seed** = `20260530120000_seed_achievements_scheduled_daily_part239.sql` (= INSERT...WHERE NOT EXISTS)
+3. **ROADMAP part 239 entry** (= 本エントリ / **append-only Edit = 31,364 行 1 行も full-read せず末尾 unique anchor 追記** = 部 238 教訓を本 session で dogfood)
+
+**flag (= 次 session / Codex 候補)**:
+- 🔴 main dir `claude/part-236-defer-handoff` = MERGE IN PROGRESS + uncommitted `lib/pages/asset_management_page.dart` 放置 (= abort refuse / 手動 resolve or 意図確認 要)
+- worktree sprawl ~50+ 件 + dup blog-publish PR 4 件 (#3045/#3039/#3024/#3009 同一 draft) = cleanup 別 task
+
+**skip** (= NO-SCOPE-CREEP / FATIGUE / autonomous): WBS 実装 (= impl=Codex / MCP unavailable) / 競合 monitor (= cron / 5/31 解禁) / broken merge 強制 resolve (= clobber risk)
+
+**Philosophy Alignment** (= 6/9 autonomous-scoped):
+- 原則 1 (CEO 感) ✅ dead branch / broken merge を verify-first 検知 → 触らず isolate
+- 原則 4 (mentor) ✅ FATIGUE + autonomous 下 triad のみ / 強制 abort 自制
+- 原則 6 (商品=価値) ✅ 実 incident 蒸留 blog = 再発防止知見の資産化
+- 原則 7 (資本=時間) ✅ append-only Edit で 31k 行 file を安全更新 (= truncation 再発 0)
+- 原則 8 (KPI) ✅ C:77.65GB / RAM 87% snapshot 正確記録
+- 原則 9 (IPO) ✅ append-only 規律 + regression guard = systemic prevention 横展開
+
+**教訓 (= 部 239)**:
+1. **append-only Edit dogfood 第 1 例** = 部 238 truncation 教訓を即 session で実践 (= 31,364 行 file を unique-anchor 追記 / full Write 禁止を自ら遵守)
+2. **dead-branch isolate pattern 第 1 例** = MERGE IN PROGRESS + 386 behind + uncommitted の orphan branch は abort 強制せず fresh worktree off main で迂回 (= clobber 回避)
+3. **autonomous-cron triad safe 第 3 例** = 部 219 + 部 225 + 部 239 (= FATIGUE 下 docs-only triad = 再 compaction / scope creep 回避の安全形)
