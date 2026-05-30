@@ -42,6 +42,24 @@ import {
   type MonthlyAssetReportDb,
   normalizeMonthlyAssetReportProvider,
 } from "./monthly_asset_report.ts";
+import {
+  handleParsePayslipAction,
+  isPayslipIngestionAction,
+  type PayslipDb,
+  PayslipIngestionError,
+  type PayslipStorage,
+} from "./payslip_ingestion.ts";
+import {
+  type ExpenseAiDb,
+  ExpenseAiError,
+  handleClassifyExpenseAction,
+  handleWeeklySpendingCoachingAction,
+} from "./expense_ai.ts";
+import {
+  type DisposableBalanceDb,
+  DisposableBalanceError,
+  handleDisposableBalanceAction,
+} from "./disposable_balance.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,7 +98,11 @@ type ProviderConfig = {
   chatUrl: string;
   defaultModel: string;
   extraHeaders?: Record<string, string>;
-  buildBody: (messages: unknown[], model: string) => Record<string, unknown>;
+  buildBody: (
+    messages: unknown[],
+    model: string,
+    inlineFiles?: ProviderInlineFile[],
+  ) => Record<string, unknown>;
   parseResponse: (data: unknown) => string;
 };
 
@@ -88,6 +110,12 @@ type InlineImage = {
   base64: string;
   mimeType: string;
   name: string | null;
+};
+
+type ProviderInlineFile = {
+  base64: string;
+  mimeType: string;
+  name?: string | null;
 };
 
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
@@ -113,6 +141,36 @@ const OPENAI_COMPAT_BODY = (messages: unknown[], model: string) => ({
 });
 const OPENAI_COMPAT_PARSE = (data: unknown): string =>
   String(pick(data, "choices", 0, "message", "content") ?? "");
+
+function buildGoogleGeminiBody(
+  messages: unknown[],
+  inlineFiles: ProviderInlineFile[] = [],
+): Record<string, unknown> {
+  const contents = (messages as { role: string; content: string }[]).map(
+    (m) => {
+      const parts: Record<string, unknown>[] = [{ text: m.content }];
+      return {
+        role: m.role === "assistant" ? "model" : "user",
+        parts,
+      };
+    },
+  );
+  if (inlineFiles.length > 0) {
+    if (contents.length === 0) {
+      contents.push({ role: "user", parts: [] });
+    }
+    const target = contents[contents.length - 1];
+    for (const file of inlineFiles) {
+      target.parts.push({
+        inline_data: {
+          mime_type: file.mimeType,
+          data: file.base64,
+        },
+      });
+    }
+  }
+  return { contents };
+}
 
 const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   // OpenAI 互換グループ (7社)
@@ -238,12 +296,8 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     chatUrl:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
     defaultModel: "gemini-2.5-flash",
-    buildBody: (messages, _model) => ({
-      contents: (messages as { role: string; content: string }[]).map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      })),
-    }),
+    buildBody: (messages, _model, inlineFiles) =>
+      buildGoogleGeminiBody(messages, inlineFiles),
     parseResponse: (data) =>
       String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
   },
@@ -256,12 +310,8 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     chatUrl:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
     defaultModel: "gemini-2.5-flash-lite",
-    buildBody: (messages, _model) => ({
-      contents: (messages as { role: string; content: string }[]).map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      })),
-    }),
+    buildBody: (messages, _model, inlineFiles) =>
+      buildGoogleGeminiBody(messages, inlineFiles),
     parseResponse: (data) =>
       String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
   },
@@ -548,6 +598,7 @@ async function callSingleProvider(
   providerId: string,
   messages: { role: string; content: string }[],
   model?: string,
+  inlineFiles?: ProviderInlineFile[],
 ): Promise<
   {
     ok: boolean;
@@ -581,7 +632,9 @@ async function callSingleProvider(
         "Content-Type": "application/json",
         ...(cfg.extraHeaders ?? {}),
       },
-      body: JSON.stringify(cfg.buildBody(messages, model ?? cfg.defaultModel)),
+      body: JSON.stringify(
+        cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+      ),
     });
     const respText = await resp.text();
     if (!resp.ok) {
@@ -2838,6 +2891,13 @@ serve(async (req: Request) => {
       "kpi.monthly_summary",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
+      "payslip.parse",
+      "parse-payslip",
+      "expense.classify",
+      "classify-expense",
+      "expense.weekly_coaching.generate",
+      "asset.disposable_balance.compute",
+      "compute-disposable-balance",
       "voice.tts",
       "voice.stt",
     ];
@@ -4214,6 +4274,110 @@ serve(async (req: Request) => {
         });
       }
 
+      case "payslip.parse":
+      case "parse-payslip": {
+        if (!isPayslipIngestionAction(action)) {
+          return json({ error: "Invalid payslip action" }, 400);
+        }
+        const result = await handleParsePayslipAction({
+          db: admin as unknown as PayslipDb,
+          storage: admin.storage as unknown as PayslipStorage,
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+              request.inlineFiles,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "expense.classify":
+      case "classify-expense": {
+        const result = await handleClassifyExpenseAction({
+          db: admin as unknown as ExpenseAiDb,
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "expense.weekly_coaching.generate": {
+        const result = await handleWeeklySpendingCoachingAction({
+          db: admin as unknown as ExpenseAiDb,
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
+      case "asset.disposable_balance.compute":
+      case "compute-disposable-balance": {
+        const result = await handleDisposableBalanceAction({
+          db: admin as unknown as DisposableBalanceDb,
+          body,
+          userId: userId ?? "",
+          invokeProvider: async (request) => {
+            const budget = await checkBudget("ef", "ai-hub");
+            if (!budget.ok) {
+              return {
+                ok: false,
+                error: `budgetExceeded:${budget.exceeded_scope ?? "unknown"}`,
+                isRetriable: false,
+              };
+            }
+            return await callSingleProvider(
+              request.provider,
+              request.messages,
+              request.model,
+            );
+          },
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.monthly_report.generate":
       case "asset_liability.monthly_report.generate": {
         const aiSummaryEnabled = isMonthlyAssetReportAiSummaryEnabled(body);
@@ -5347,6 +5511,15 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof MonthlyAssetReportActionError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof PayslipIngestionError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof ExpenseAiError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof DisposableBalanceError) {
       return json({ error: err.message }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
