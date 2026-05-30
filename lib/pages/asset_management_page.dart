@@ -295,6 +295,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isGeneratingAssetManagementAiSummary = false;
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
+  String? _assetManagementAiSummaryInFlightKey;
+  final Set<String> _assetManagementAiSummaryAutoRequestedKeys = <String>{};
   UserProfile? _assetManagementUserProfile;
   bool _isLoadingAssetManagementUserProfile = false;
   List<Map<String, dynamic>> _payslipRows = <Map<String, dynamic>>[];
@@ -333,8 +335,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static final RegExp _flowImportMarkerPattern = RegExp(
     r'\s*\[import:smbc:[^\]]+\]\s*$',
   );
+  static final RegExp _flowAutoAssetDeltaMarkerPattern = RegExp(
+    r'\s*\[auto_asset_delta:[^\]]+\]\s*$',
+  );
   static final RegExp _smbcImportKeyPattern = RegExp(
     r'\[import:(smbc:[^\]]+)\]\s*$',
+  );
+  static final RegExp _autoAssetDeltaKeyPattern = RegExp(
+    r'\[auto_asset_delta:([^\]]+)\]\s*$',
   );
   bool get _isCompact =>
       MediaQuery.sizeOf(context).width < _compactWidthBreakpoint;
@@ -509,16 +517,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String get _defaultFlowSource =>
       _sourceOptions.contains('[その他]') ? '[その他]' : _sourceOptions.last;
 
-  String _stripFlowImportMarker(String description) =>
-      description.replaceFirst(_flowImportMarkerPattern, '').trim();
+  String _stripFlowMetadataMarkers(String description) {
+    var result = description.trim();
+    result = result.replaceFirst(_flowImportMarkerPattern, '').trim();
+    result = result.replaceFirst(_flowAutoAssetDeltaMarkerPattern, '').trim();
+    return result;
+  }
 
   String? _extractSmbcImportKey(String description) {
     final match = _smbcImportKeyPattern.firstMatch(description.trim());
     return match?.group(1);
   }
 
+  String? _extractAutoAssetDeltaKey(String description) {
+    final match = _autoAssetDeltaKeyPattern.firstMatch(description.trim());
+    return match?.group(1);
+  }
+
   String _withFlowImportMarker(String description, String importKey) =>
       '${description.trim()} [import:$importKey]';
+
+  String _withFlowAutoAssetDeltaMarker(String description, String importKey) =>
+      '${description.trim()} [auto_asset_delta:$importKey]';
 
   String _sourceLabel(String source) =>
       source.replaceAll('[', '').replaceAll(']', '').trim();
@@ -4314,6 +4334,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (userId == null) return;
 
     final today = _todayDateKey();
+    final previousDate = _lastUpdatedDates[type];
+    final previousAmount =
+        previousDate == null ? null : _assetData[previousDate]?[type];
     try {
       await _supabase.from('cfo_assets').insert({
         'user_id': userId,
@@ -4330,6 +4353,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _updateChartData();
       });
 
+      final autoRecorded = previousAmount == null
+          ? false
+          : await _autoRecordUnknownExpenseFromAssetDrop(
+              assetType: type,
+              dateKey: today,
+              previousAmount: previousAmount,
+              currentAmount: amount,
+            );
+      if (autoRecorded) {
+        await _fetchRecentFlows();
+      }
+
       if (clearController) {
         _controllers[type]?.clear();
       }
@@ -4337,7 +4372,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(successMessage ?? '✅ $type を記録しました'),
+          content: Text(
+            autoRecorded
+                ? '✅ $type を記録し、減少分を使途不明金として自動追加しました'
+                : successMessage ?? '✅ $type を記録しました',
+          ),
           backgroundColor: const Color(0xFF047857),
         ),
       );
@@ -4429,6 +4468,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!hasData) return;
 
     try {
+      final previousAmounts = <String, double?>{
+        for (final entry in todayData.entries)
+          entry.key: _lastUpdatedDates[entry.key] == null
+              ? null
+              : _assetData[_lastUpdatedDates[entry.key]]?[entry.key],
+      };
       for (var entry in todayData.entries) {
         await _supabase.from('cfo_assets').insert({
           'user_id': userId,
@@ -4444,11 +4489,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _sortAssetTypes(); // ★ 一括更新後にも並び替え
         _updateChartData();
       });
+      var autoRecordedCount = 0;
+      for (final entry in todayData.entries) {
+        final previousAmount = previousAmounts[entry.key];
+        if (previousAmount == null) {
+          continue;
+        }
+        final autoRecorded = await _autoRecordUnknownExpenseFromAssetDrop(
+          assetType: entry.key,
+          dateKey: today,
+          previousAmount: previousAmount,
+          currentAmount: entry.value,
+        );
+        if (autoRecorded) {
+          autoRecordedCount += 1;
+        }
+      }
+      if (autoRecordedCount > 0) {
+        await _fetchRecentFlows();
+      }
       _controllers.forEach((_, controller) => controller.clear());
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('資産・負債を一括記録しました。')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(
+              autoRecordedCount > 0
+                  ? '資産・負債を一括記録し、減少分を使途不明金として$autoRecordedCount件自動追加しました。'
+                  : '資産・負債を一括記録しました。',
+            ),
+          ),
+        );
       }
       await _fetchTodayClosing();
     } catch (e) {
@@ -5212,6 +5284,114 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       text.contains('お預入れ') &&
       text.contains('お取り扱い内容');
 
+  String _flowSourceForAssetType(String assetType) {
+    final normalized = assetType.trim().isEmpty ? '口座' : assetType.trim();
+    return '[$normalized]';
+  }
+
+  bool _isAutoAssetDeltaFlow(Map<String, dynamic> flow) {
+    return _extractAutoAssetDeltaKey(flow['description']?.toString() ?? '') !=
+        null;
+  }
+
+  String _autoAssetDeltaKey({
+    required String dateKey,
+    required String assetType,
+    required double previousAmount,
+    required double currentAmount,
+  }) {
+    final encodedAsset = base64Url.encode(utf8.encode(assetType.trim()));
+    return [
+      dateKey,
+      encodedAsset,
+      previousAmount.round().toString(),
+      currentAmount.round().toString(),
+    ].join(':');
+  }
+
+  bool _shouldAutoRecordUnknownExpenseFromAssetDrop({
+    required String assetType,
+    required double previousAmount,
+    required double currentAmount,
+  }) {
+    final drop = previousAmount - currentAmount;
+    if (previousAmount <= 0 || drop < 1) {
+      return false;
+    }
+    final key = assetType.toLowerCase();
+    final looksLikeInvestment = key.contains('証券') ||
+        key.contains('株') ||
+        key.contains('投資') ||
+        key.contains('nisa') ||
+        key.contains('securities') ||
+        key.contains('stock') ||
+        key.contains('crypto') ||
+        key.contains('coincheck') ||
+        key.contains('bitflyer');
+    if (looksLikeInvestment) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> _autoRecordUnknownExpenseFromAssetDrop({
+    required String assetType,
+    required String dateKey,
+    required double previousAmount,
+    required double currentAmount,
+  }) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null ||
+        !_shouldAutoRecordUnknownExpenseFromAssetDrop(
+          assetType: assetType,
+          previousAmount: previousAmount,
+          currentAmount: currentAmount,
+        )) {
+      return false;
+    }
+
+    final markerKey = _autoAssetDeltaKey(
+      dateKey: dateKey,
+      assetType: assetType,
+      previousAmount: previousAmount,
+      currentAmount: currentAmount,
+    );
+    final alreadyExists = _recentFlows.any(
+      (flow) =>
+          _extractAutoAssetDeltaKey(flow['description']?.toString() ?? '') ==
+          markerKey,
+    );
+    if (alreadyExists) {
+      return false;
+    }
+
+    final amount = previousAmount - currentAmount;
+    final source = _flowSourceForAssetType(assetType);
+    final occurredAt = DateTime.tryParse(dateKey) ?? DateTime.now();
+    await _supabase.from('wealth_struggles').insert({
+      'user_id': userId,
+      'action_type': 'expense',
+      'amount': amount.round(),
+      'description': _withFlowAutoAssetDeltaMarker(
+        _composeFlowDescription(
+          flowType: '支出',
+          source: source,
+          memo: '使途不明金（残高差分から自動記録）',
+          wasteCategory: null,
+        ),
+        markerKey,
+      ),
+      'occurred_at': occurredAt.toUtc().toIso8601String(),
+    });
+
+    if (mounted && !_sourceOptions.contains(source)) {
+      setState(() {
+        _sourceOptions = [..._sourceOptions, source];
+      });
+    }
+    return true;
+  }
+
   String _composeFlowDescription({
     required String flowType,
     required String source,
@@ -5248,7 +5428,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String? wasteCategory,
     bool isTransfer,
   }) _parseFlowDescription(String description, {String? actionType}) {
-    final normalizedDescription = _stripFlowImportMarker(description.trim());
+    final normalizedDescription = _stripFlowMetadataMarkers(
+      description.trim(),
+    );
     final isExpense = _isExpenseActionType(actionType ?? '');
     final wasteCategory = isExpense
         ? WasteTrackingService.extractWasteCategory(normalizedDescription)
@@ -7228,6 +7410,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final remaining = breakdown.remainingAfterExpense;
     final topSection = breakdown.topSection;
     final chartSections = breakdown.sections.take(8).toList(growable: false);
+    SalarySpendingCategorySlice? unknownSection;
+    for (final section in breakdown.sections) {
+      if (section.category == '使途不明金') {
+        unknownSection = section;
+        break;
+      }
+    }
 
     return Card(
       key: const Key('asset_salary_spending_breakdown_card'),
@@ -7316,6 +7505,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       : '${topSection.category} ${(topSection.ratio * 100).round()}%',
                   color: const Color(0xFF2563EB),
                 ),
+                if (unknownSection != null)
+                  _buildFlowPriorityMetric(
+                    label: '使途不明金',
+                    value: _formatYen(unknownSection.amount),
+                    color: const Color(0xFFD97706),
+                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -7388,13 +7583,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   );
                 },
               ),
+            if (unknownSection != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFBBF24)),
+                ),
+                child: Text(
+                  '残高差分から ${_formatYen(unknownSection.amount)} を使途不明金として自動記録しています。下の収支履歴で行をタップすると、家賃・返済・食費などへ後から分類できます。',
+                  style: const TextStyle(
+                    color: Color(0xFF92400E),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
               child: OutlinedButton.icon(
                 onPressed: () => _scrollTo(_keyFlow),
                 icon: const Icon(Icons.add_chart),
-                label: const Text('支出を追加して内訳を更新'),
+                label: Text(
+                  unknownSection == null ? '支出を追加して内訳を更新' : '使途不明金を分類して内訳を更新',
+                ),
               ),
             ),
           ],
@@ -9775,7 +9992,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'AIにはプロフィールと資産/負債ボードの詳細データを渡し、職業・年収・住所・趣味・生活習慣と、口座名・残高・支払日・利率・月利息まで踏み込んだ助言を生成します。',
+            'AIにはプロフィール、資産/負債ボードの詳細データ、現実装のソース/ドキュメント文脈を渡し、生活再建アドバイスと開発者向け改善提案を具体化します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
@@ -9891,7 +10108,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               OutlinedButton.icon(
                 onPressed: enabled && !_isGeneratingAssetManagementAiSummary
-                    ? () => _generateAssetManagementAiSummary(report)
+                    ? () => _generateAssetManagementAiSummary(
+                          report,
+                          force: true,
+                        )
                     : null,
                 icon: _isGeneratingAssetManagementAiSummary
                     ? const SizedBox(
@@ -9908,7 +10128,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'AIにはプロフィール、口座名、残高、支払予定、支払原資、利率、月利息、負債割合を含む詳細ペイロードを渡します。',
+            'AIにはプロフィール、口座名、残高、支払予定、支払原資、利率、月利息、負債割合、現実装コンテキストを含む詳細ペイロードを渡します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 11,
@@ -9936,10 +10156,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _generateAssetManagementAiSummary(
     AssetManagementInsightReport report, {
     String? requestKey,
+    bool force = false,
   }) async {
     final key = requestKey ?? _assetManagementAiSummaryKey(report);
+    if (_assetManagementAiSummaryInFlightKey == key) {
+      return;
+    }
+    if (!force &&
+        _assetManagementAiSummaryAutoRequestedKeys.contains(key) &&
+        _assetManagementAiSummaryRequestKey == key &&
+        _assetManagementAiSummaryResult != null) {
+      return;
+    }
     setState(() {
       _isGeneratingAssetManagementAiSummary = true;
+      _assetManagementAiSummaryInFlightKey = key;
       _assetManagementAiSummaryRequestKey = key;
     });
     final result = await _assetManagementAiSummaryService.generateSummary(
@@ -9948,9 +10179,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted) {
       return;
     }
+    if (_assetManagementAiSummaryInFlightKey != key) {
+      return;
+    }
     setState(() {
       _assetManagementAiSummaryResult = result;
       _isGeneratingAssetManagementAiSummary = false;
+      _assetManagementAiSummaryInFlightKey = null;
       _assetManagementAiSummaryRequestKey = key;
     });
   }
@@ -9963,14 +10198,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final key = _assetManagementAiSummaryKey(report);
-    if (_assetManagementAiSummaryRequestKey == key) {
+    if (_assetManagementAiSummaryRequestKey == key ||
+        _assetManagementAiSummaryInFlightKey == key ||
+        _assetManagementAiSummaryAutoRequestedKeys.contains(key)) {
       return;
     }
     _assetManagementAiSummaryRequestKey = key;
+    _assetManagementAiSummaryAutoRequestedKeys.add(key);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted ||
           !_assetManagementAiSummaryService.aiEnabled ||
           _isGeneratingAssetManagementAiSummary ||
+          _assetManagementAiSummaryInFlightKey == key ||
           _assetManagementAiSummaryRequestKey != key) {
         return;
       }
@@ -9979,7 +10218,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _assetManagementAiSummaryKey(AssetManagementInsightReport report) {
-    return jsonEncode(_assetManagementAiSummaryService.buildPayload(report));
+    return _assetManagementAiSummaryService.buildRequestFingerprint(report);
   }
 
   void _requestExistingDeveloperIssuesIfNeeded(
@@ -10092,13 +10331,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         body: {
           'action': 'feature_request.submit',
           'title': '[資産管理] ${request.title}',
-          'description': [
-            request.description,
-            '',
-            '発行元: 資産管理画面 > 開発者向け改善提案',
-            '重要度: $severityLabel',
-            '画面: /asset-management',
-          ].join('\n'),
+          'description': _developerRequestIssueDescription(
+            request,
+            severityLabel,
+          ),
           'expected_outcome':
               '資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。',
           'category': 'UX改善',
@@ -10167,6 +10403,51 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _developerRequestIssueKey(AssetManagementDeveloperRequest request) {
     return '${request.title}\n${request.description}\n${request.severity.name}';
+  }
+
+  String _developerRequestIssueDescription(
+    AssetManagementDeveloperRequest request,
+    String severityLabel,
+  ) {
+    final buffer = StringBuffer()
+      ..writeln(request.description)
+      ..writeln()
+      ..writeln('発行元: 資産管理画面 > 開発者向け改善提案')
+      ..writeln('重要度: $severityLabel')
+      ..writeln('画面: /asset-management');
+    _appendDeveloperIssueSection(buffer, '根拠データ', request.evidence);
+    _appendDeveloperIssueSection(
+      buffer,
+      '変更候補ファイル',
+      request.sourceReferences,
+    );
+    _appendDeveloperIssueSection(
+      buffer,
+      '実装手順',
+      request.implementationSteps,
+    );
+    _appendDeveloperIssueSection(
+      buffer,
+      '受け入れ条件',
+      request.acceptanceCriteria,
+    );
+    return buffer.toString().trim();
+  }
+
+  void _appendDeveloperIssueSection(
+    StringBuffer buffer,
+    String title,
+    List<String> items,
+  ) {
+    if (items.isEmpty) {
+      return;
+    }
+    buffer
+      ..writeln()
+      ..writeln('## $title');
+    for (final item in items) {
+      buffer.writeln('- $item');
+    }
   }
 
   String _developerRequestIssuePriority(
@@ -10547,10 +10828,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       height: 1.5,
                     ),
                   ),
+                  if (request.evidence.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildAssetManagementDeveloperRequestSection(
+                      title: '根拠',
+                      items: request.evidence,
+                    ),
+                  ],
+                  if (request.sourceReferences.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildAssetManagementDeveloperRequestSection(
+                      title: '変更候補',
+                      items: request.sourceReferences,
+                    ),
+                  ],
+                  if (request.acceptanceCriteria.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildAssetManagementDeveloperRequestSection(
+                      title: '受け入れ条件',
+                      items: request.acceptanceCriteria,
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   _buildAssetManagementDeveloperIssueControls(request),
                 ],
               ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAssetManagementDeveloperRequestSection({
+    required String title,
+    required List<String> items,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 3),
+        for (final item in items.take(4))
+          Text(
+            '・$item',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.45,
             ),
           ),
       ],
@@ -15558,6 +15889,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   }
                   if (parsed.wasteCategory != null) {
                     subtitleParts.add('浪費:${parsed.wasteCategory}');
+                  }
+                  if (_isAutoAssetDeltaFlow(item)) {
+                    subtitleParts.add('残高差分から自動記録');
                   }
                   subtitleParts.add('タップで編集');
 
