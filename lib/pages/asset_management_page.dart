@@ -9807,7 +9807,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       )
                     : const Icon(Icons.auto_awesome_outlined, size: 16),
                 label: Text(
-                  enabled ? 'AI要約を更新' : 'AI要約は機能フラグで無効です',
+                  enabled
+                      ? 'AI要約を更新'
+                      : 'AI要約は機能フラグで無効です',
                 ),
               ),
             ],
