@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T21:37:29Z",
+  "generated_at": "2026-05-31T21:37:32Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -13,16 +13,15 @@
       "drop": 0
     },
     "risk_flags": {
-      "sensational_language": 1,
       "source_http_problem": 1
     }
   },
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-c36bf9c4d93b",
+        "entry_id": "nf-61560437a811",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.158 / May 30, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . Opt in by setting CLAUDE_CODE_ENABLE_AUTO_MODE=1 ​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude...",
+        "text": "Claude Code changelog 2.1.159 / May 31, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.159 May 31, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.158 May 30, 2026 Auto mode is now available on Bedrock, Vertex, and Foundry for Opus...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "82309a3af14af81b5d7bddfb3941c34f800f83c180e2bd627f8b31a5867ce057",
+          "hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,36 +74,33 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.158 / May 30, 2026",
+          "latest_signal": "2.1.159 / May 31, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "e02ea93ded98e8803cce350871bb70dc14581b9e8a304f66d2f01a82a4f201ef",
+          "previous_hash": "82309a3af14af81b5d7bddfb3941c34f800f83c180e2bd627f8b31a5867ce057",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "Opt in by setting CLAUDE_CODE_ENABLE_AUTO_MODE=1 ​ 2.1.157 May 29, 2026 Plugins in .claude/skills directories are now automatically loaded, no marketplace required Added claude..."
+            "​ 2.1.159 May 31, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.158 May 30, 2026 Auto mode is now available on Bedrock, Vertex, and Foundry for Opus..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-c36bf9c4d93b",
+        "entry_id": "nf-61560437a811",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
-        "confidence": 0.91,
+        "confidence": 0.97,
         "verdict": "pass",
-        "risk_flags": [
-          "sensational_language"
-        ],
+        "risk_flags": [],
         "reasons": [
           "has source URL",
           "source domain is official or primary",
           "HTTP 200 reachable",
-          "sensational terms: kill",
           "has enough context for review"
         ]
       }
@@ -119,7 +115,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "3d39ee0181f832b0480fc562b838a9c8f77ae2e2d769b2f2aa88609a2fb30445",
@@ -159,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "22abf4ccbbb4bbf2634df08b644c6e091bfe54ebc0efc3f11e08eecd214be9b5",
+          "previous_hash": "3d39ee0181f832b0480fc562b838a9c8f77ae2e2d769b2f2aa88609a2fb30445",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -271,7 +267,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "fd94b0c55a9fdecb180c53bfa4f8ff369a357121be8b961c0f7bce95b7cc8f7c",
@@ -322,7 +318,7 @@
           "latest_signal": "2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "02cf1ed5a46653a6246cb20cc60a10014037e0134972f281ff37480cc40f2b64",
+          "previous_hash": "fd94b0c55a9fdecb180c53bfa4f8ff369a357121be8b961c0f7bce95b7cc8f7c",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -614,7 +610,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "b0bf437a0f0c5e0d9782826f0468b02f7afd23d79c7adefc1363cda55be15bd7",
@@ -651,7 +647,7 @@
           "latest_signal": "May 29, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "8b166ffac58e0c82087b11af5d7181bc8b4740b80ed14cf405f2096f2a3c537c",
+          "previous_hash": "b0bf437a0f0c5e0d9782826f0468b02f7afd23d79c7adefc1363cda55be15bd7",
           "slug": "devin-release-notes",
           "snippets": [
             "Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events.",
@@ -686,11 +682,9 @@
       "company": "multi-source",
       "topic": "agentic-workflows",
       "entry_count": 7,
-      "average_confidence": 0.961,
-      "risk_level": "review",
-      "risk_flags": [
-        "sensational_language"
-      ],
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
       "evidence_titles": [
         "Claude Code changelog",
         "Claude Code hooks reference",
@@ -698,24 +692,22 @@
         "Codex use cases",
         "Cursor changelog"
       ],
-      "recommended_action": "Hold for human review before creating issues or blog drafts."
+      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },
     {
       "id": "np-30487c423ada",
       "company": "anthropic",
       "topic": "agentic-workflows",
       "entry_count": 3,
-      "average_confidence": 0.95,
-      "risk_level": "review",
-      "risk_flags": [
-        "sensational_language"
-      ],
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
       "evidence_titles": [
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions"
       ],
-      "recommended_action": "Hold for human review before creating issues or blog drafts."
+      "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
     },
     {
       "id": "np-633b3c99949c",
@@ -750,5 +742,38 @@
       "recommended_action": "Hold for human review before creating issues or blog drafts."
     }
   ],
-  "issue_candidates": []
+  "issue_candidates": [
+    {
+      "id": "np-ac6cd8e89955",
+      "company": "multi-source",
+      "topic": "agentic-workflows",
+      "entry_count": 7,
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "Claude Code changelog",
+        "Claude Code hooks reference",
+        "Claude Code GitHub Actions",
+        "Codex use cases",
+        "Cursor changelog"
+      ],
+      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
+    },
+    {
+      "id": "np-30487c423ada",
+      "company": "anthropic",
+      "topic": "agentic-workflows",
+      "entry_count": 3,
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "Claude Code changelog",
+        "Claude Code hooks reference",
+        "Claude Code GitHub Actions"
+      ],
+      "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
+    }
+  ]
 }

@@ -1,15 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-30T21:37:27Z`
-- Previous check: `2026-05-29T21:55:57Z`
-- Changed/new official sources: `4`
+- Checked at: `2026-05-31T21:37:28Z`
+- Previous check: `2026-05-30T21:37:27Z`
+- Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.158 / May 30, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `changed` Codex changelog: 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win
-- `changed` Devin release notes: May 29, 2026
+- `changed` Claude Code changelog: 2.1.159 / May 31, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -21,7 +18,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.158 / May 30, 2026
+  - Latest signal: 2.1.159 / May 31, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
