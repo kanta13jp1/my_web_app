@@ -1,20 +1,14 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-05-30",
+    "date": "2026-05-31",
     "users": {
       "total": 37
     },
     "featureRequests": {
-      "newToday": 1,
+      "newToday": 0,
       "openCount": 54,
-      "newTodayList": [
-        {
-          "id": "1ec8c675-b44b-4529-ae2a-f5cd3afc033c",
-          "title": "[資産管理] 請求確定額と推定額の差分レビュー導線",
-          "created_at": "2026-05-30T14:28:33.682952+00:00"
-        }
-      ],
+      "newTodayList": [],
       "topOpen": [
         {
           "title": "不具合報告: Loading from existing service worker.",
@@ -61,6 +55,6 @@
       }
     ]
   },
-  "fetched_at": "2026-05-31T07:50:02+09:00",
-  "report_date": "2026-05-31"
+  "fetched_at": "2026-06-01T07:50:14+09:00",
+  "report_date": "2026-06-01"
 }
