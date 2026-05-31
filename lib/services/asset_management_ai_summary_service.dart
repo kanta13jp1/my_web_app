@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../models/asset_management_ai_analysis_history.dart';
 import '../models/asset_liability_workbook.dart';
 import '../models/user_profile.dart';
 import 'ai_hub_chat_service.dart';
@@ -78,6 +79,8 @@ class AssetManagementAiSummaryService {
 
   Future<AssetManagementAiSummaryResult> generateSummary({
     required AssetManagementInsightReport report,
+    List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses =
+        const <AssetManagementAiAnalysisHistoryEntry>[],
   }) async {
     final payload = buildPayload(report);
     final route = _providerRouter.routeFor(
@@ -99,8 +102,15 @@ class AssetManagementAiSummaryService {
     }
 
     try {
-      final detailedPayload = buildAiDetailedPayload(report);
-      final prompt = _buildPrompt(report: report, payload: detailedPayload);
+      final detailedPayload = buildAiDetailedPayload(
+        report,
+        previousAnalyses: previousAnalyses,
+      );
+      final prompt = _buildPrompt(
+        report: report,
+        payload: detailedPayload,
+        previousAnalyses: previousAnalyses,
+      );
       final response = route.routingEnabled
           ? await _sendRoutedSummary(prompt: prompt, route: route)
           : _provider == null || _provider == 'auto'
@@ -180,13 +190,16 @@ class AssetManagementAiSummaryService {
   }
 
   Map<String, dynamic> buildAiDetailedPayload(
-    AssetManagementInsightReport report,
-  ) {
+    AssetManagementInsightReport report, {
+    List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses =
+        const <AssetManagementAiAnalysisHistoryEntry>[],
+  }) {
     final workbook = report.workbook;
     return <String, dynamic>{
       'mode': 'exact_financial_detail_for_concrete_advice',
       'user_profile': _profileToDetailedJson(report.userProfile),
       'workbook': _workbookToDetailedJson(workbook),
+      'previous_ai_analyses': _previousAnalysesToJson(previousAnalyses),
       'available_money': <String, dynamic>{
         'today': _availableToJson(report.todayAvailable),
         'week': _availableToJson(report.weekAvailable),
@@ -275,6 +288,7 @@ class AssetManagementAiSummaryService {
         'external_ai_receives_exact_account_data': true,
         'external_ai_receives_exact_profile_data': true,
         'external_ai_receives_implementation_context': true,
+        'external_ai_receives_previous_analysis_history': true,
         'external_ai_may_reference_exact_money_values': true,
         'external_ai_may_reference_account_names': true,
         'external_ai_may_derive_additional_ratios': true,
@@ -391,6 +405,8 @@ class AssetManagementAiSummaryService {
   String _buildPrompt({
     required AssetManagementInsightReport report,
     required Map<String, dynamic> payload,
+    List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses =
+        const <AssetManagementAiAnalysisHistoryEntry>[],
   }) {
     return [
       _promptBuilder.buildDetailedAdvicePrompt(report),
@@ -398,7 +414,13 @@ class AssetManagementAiSummaryService {
       '## AIに渡す詳細ペイロード',
       jsonEncode(payload),
       '',
+      if (previousAnalyses.isNotEmpty) ...[
+        '## これまでのAI分析履歴',
+        jsonEncode(_previousAnalysesToJson(previousAnalyses)),
+        '',
+      ],
       '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
+      '履歴利用ルール: previous_ai_analyses がある場合は、前回までの指摘をただ繰り返さず、今回の金額・支払状況・未解決アクションとの差分を明示してください。前回から改善した点、悪化した点、まだ放置されている点を分けて、次に同じ分析をしたときに進捗確認できる言葉で書いてください。',
       '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. 最後にズバッと総評」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
       '開発者向け改善提案の出力ルール: implementation_context と developer_requests を根拠にしてください。各提案は「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
     ].join('\n');
@@ -555,6 +577,22 @@ class AssetManagementAiSummaryService {
       'alcohol_use': profile.alcoholUse,
       'smoking_use': profile.smokingUse,
       'favorite_foods': profile.favoriteFoods,
+    };
+  }
+
+  Map<String, dynamic> _previousAnalysesToJson(
+    List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses,
+  ) {
+    final usefulAnalyses = previousAnalyses
+        .where((entry) => entry.summaryText.trim().isNotEmpty)
+        .take(5)
+        .toList(growable: false);
+    return <String, dynamic>{
+      'count': usefulAnalyses.length,
+      'items': usefulAnalyses
+          .map((entry) => entry.toPromptContextJson())
+          .toList(growable: false),
+      'usage_rule': '過去のAI分析を踏まえ、前回からの改善点・悪化点・未解決点を分けて今回の助言に反映する。',
     };
   }
 

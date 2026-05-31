@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
@@ -113,6 +114,40 @@ void main() {
       expect(capturedBody?['message'].toString().contains('年収'), true);
       expect(capturedBody?['provider_choice_reason'], contains('summary'));
       expect(capturedBody?['routing_use_case'], 'summary');
+    });
+
+    test('includes previous persisted analyses in the AI prompt', () async {
+      Map<String, dynamic>? capturedBody;
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            capturedBody = body;
+            return <String, dynamic>{
+              'success': true,
+              'text': '過去分析を踏まえた日本語要約です。',
+              'provider': 'openai',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 5, 1, 12),
+      );
+
+      final result = await service.generateSummary(
+        report: _report(),
+        previousAnalyses: <AssetManagementAiAnalysisHistoryEntry>[
+          _historyEntry(
+            summaryText: '前回は支払い確認と生活費確保を最優先にした分析です。',
+          ),
+        ],
+      );
+
+      final message = capturedBody?['message'].toString() ?? '';
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(message.contains('previous_ai_analyses'), true);
+      expect(message.contains('これまでのAI分析履歴'), true);
+      expect(message.contains('前回は支払い確認と生活費確保'), true);
+      expect(message.contains('履歴利用ルール'), true);
     });
 
     test(
@@ -425,5 +460,23 @@ UserProfile _userProfile() {
     alcoholUse: '時々',
     smokingUse: '吸わない',
     favoriteFoods: 'カレー、焼肉',
+  );
+}
+
+AssetManagementAiAnalysisHistoryEntry _historyEntry({
+  required String summaryText,
+}) {
+  return AssetManagementAiAnalysisHistoryEntry(
+    id: 'history-1',
+    requestFingerprint: 'fingerprint-1',
+    summaryText: summaryText,
+    status: AssetManagementAiSummaryStatus.aiGenerated.name,
+    source: 'ai-hub provider.chat_auto / openai',
+    generatedAt: DateTime(2026, 4, 30, 12),
+    createdAt: DateTime(2026, 4, 30, 12),
+    reportBaseDate: DateTime(2026, 4, 30),
+    providerChoiceReason: 'test route',
+    providerRoute: const <String, dynamic>{'provider': 'openai'},
+    inputPayload: const <String, dynamic>{'sample': true},
   );
 }

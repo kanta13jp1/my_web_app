@@ -14,6 +14,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
@@ -29,6 +30,7 @@ import 'package:my_web_app/services/asset_liability_payment_reminder_service.dar
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
+import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
@@ -266,6 +268,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementInsightService();
   final AssetManagementAiSummaryService _assetManagementAiSummaryService =
       AssetManagementAiSummaryService();
+  final AssetManagementAiAnalysisHistoryService
+      _assetManagementAiAnalysisHistoryService =
+      const AssetManagementAiAnalysisHistoryService();
   final SalarySpendingBreakdownService _salarySpendingBreakdownService =
       const SalarySpendingBreakdownService();
   final DisposableBalanceService _disposableBalanceService =
@@ -297,6 +302,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _assetManagementAiSummaryRequestKey;
   String? _assetManagementAiSummaryInFlightKey;
   final Set<String> _assetManagementAiSummaryAutoRequestedKeys = <String>{};
+  List<AssetManagementAiAnalysisHistoryEntry>
+      _assetManagementAiSummaryReferencedHistory =
+      const <AssetManagementAiAnalysisHistoryEntry>[];
   UserProfile? _assetManagementUserProfile;
   bool _isLoadingAssetManagementUserProfile = false;
   List<Map<String, dynamic>> _payslipRows = <Map<String, dynamic>>[];
@@ -311,6 +319,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final Set<String> _developerRequestIssueSubmissionKeys = <String>{};
   final Map<String, Map<String, dynamic>> _developerRequestIssueResults =
       <String, Map<String, dynamic>>{};
+  bool _isSubmittingAllDeveloperIssues = false;
   bool _isCheckingExistingDeveloperRequestIssues = false;
   String? _developerRequestExistingIssueLookupKey;
   final Map<String, Map<String, dynamic>>
@@ -10037,6 +10046,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (enabled) {
       _requestAssetManagementAiSummaryIfNeeded(report);
     }
+    _requestExistingDeveloperIssuesIfNeeded(report.developerRequests);
     final result = _assetManagementAiSummaryResult ??
         (enabled
             ? _assetManagementAiSummaryService.buildWaitingForAiResult(report)
@@ -10051,6 +10061,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementAiSummaryStatus.fallback => '定型要約',
       AssetManagementAiSummaryStatus.disabled => 'AI無効',
     };
+    final issueableDeveloperRequests = _issueableDeveloperRequests(
+      report.developerRequests,
+    );
+    final canCopySummary = result.text.trim().isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -10103,6 +10117,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 value: _localizedAssetManagementAiSource(result.source),
                 color: color,
               ),
+              if (_assetManagementAiSummaryReferencedHistory.isNotEmpty)
+                _buildAssetLiabilitySyncChip(
+                  label: '履歴参照',
+                  value:
+                      '${_assetManagementAiSummaryReferencedHistory.length}件',
+                  color: color,
+                ),
+              OutlinedButton.icon(
+                onPressed: canCopySummary
+                    ? () => _copyAssetManagementAiSummary(result)
+                    : null,
+                icon: const Icon(Icons.content_copy_outlined, size: 16),
+                label: const Text('分析結果をコピー'),
+              ),
               OutlinedButton.icon(
                 onPressed: enabled && !_isGeneratingAssetManagementAiSummary
                     ? () => _generateAssetManagementAiSummary(
@@ -10121,6 +10149,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   enabled ? 'AI要約を更新' : 'AI要約は機能フラグで無効です',
                 ),
               ),
+              if (report.developerRequests.isNotEmpty)
+                OutlinedButton.icon(
+                  onPressed: _isSubmittingAllDeveloperIssues ||
+                          _isCheckingExistingDeveloperRequestIssues ||
+                          issueableDeveloperRequests.isEmpty
+                      ? null
+                      : () => _submitAssetManagementDeveloperIssues(
+                            report.developerRequests,
+                          ),
+                  icon: _isSubmittingAllDeveloperIssues
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_task_outlined, size: 16),
+                  label: Text(
+                    _isSubmittingAllDeveloperIssues
+                        ? 'Issues登録中'
+                        : '改善提案をIssues登録',
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 6),
@@ -10200,6 +10250,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     };
   }
 
+  Future<void> _copyAssetManagementAiSummary(
+    AssetManagementAiSummaryResult result,
+  ) async {
+    final text = result.text.trim();
+    if (text.isEmpty) {
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI分析結果をコピーしました')),
+    );
+  }
+
   Future<void> _generateAssetManagementAiSummary(
     AssetManagementInsightReport report, {
     String? requestKey,
@@ -10220,9 +10286,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = key;
       _assetManagementAiSummaryRequestKey = key;
     });
+    var previousAnalyses = const <AssetManagementAiAnalysisHistoryEntry>[];
+    try {
+      previousAnalyses =
+          await _assetManagementAiAnalysisHistoryService.loadRecent(limit: 5);
+    } catch (_) {
+      previousAnalyses = const <AssetManagementAiAnalysisHistoryEntry>[];
+    }
+    if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+      return;
+    }
     final result = await _assetManagementAiSummaryService.generateSummary(
       report: report,
+      previousAnalyses: previousAnalyses,
     );
+    if (result.usedExternalAi) {
+      try {
+        await _assetManagementAiAnalysisHistoryService.saveResult(
+          result: result,
+          report: report,
+          requestFingerprint: key,
+        );
+      } catch (_) {
+        // AI分析の表示を優先し、履歴保存失敗は次回の再試行に任せます。
+      }
+    }
     if (!mounted) {
       return;
     }
@@ -10231,6 +10319,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     setState(() {
       _assetManagementAiSummaryResult = result;
+      _assetManagementAiSummaryReferencedHistory = previousAnalyses;
       _isGeneratingAssetManagementAiSummary = false;
       _assetManagementAiSummaryInFlightKey = null;
       _assetManagementAiSummaryRequestKey = key;
@@ -10350,8 +10439,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<void> _submitAssetManagementDeveloperIssue(
-    AssetManagementDeveloperRequest request,
+  List<AssetManagementDeveloperRequest> _issueableDeveloperRequests(
+    List<AssetManagementDeveloperRequest> requests,
+  ) {
+    return requests.where((request) {
+      final issueKey = _developerRequestIssueKey(request);
+      if (_developerRequestExistingIssueResults.containsKey(issueKey)) {
+        return false;
+      }
+      final result = _developerRequestIssueResults[issueKey];
+      final githubIssue = _assetManagementDynamicMap(result?['githubIssue']);
+      return (githubIssue['html_url']?.toString() ?? '').isEmpty;
+    }).toList(growable: false);
+  }
+
+  Future<void> _submitAssetManagementDeveloperIssues(
+    List<AssetManagementDeveloperRequest> requests,
   ) async {
     if (_supabase.auth.currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -10360,9 +10463,65 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
 
+    final targets = _issueableDeveloperRequests(requests);
+    if (targets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('登録できる新規改善提案はありません')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmittingAllDeveloperIssues = true;
+    });
+
+    var createdCount = 0;
+    for (final request in targets) {
+      if (!mounted) {
+        return;
+      }
+      final submitted = await _submitAssetManagementDeveloperIssue(
+        request,
+        showSnackBar: false,
+      );
+      if (submitted) {
+        createdCount += 1;
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isSubmittingAllDeveloperIssues = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          createdCount == targets.length
+              ? '改善提案を $createdCount 件 GitHub Issuesへ登録しました'
+              : '改善提案 $createdCount/${targets.length} 件を登録しました。未登録分は個別に再試行してください',
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _submitAssetManagementDeveloperIssue(
+    AssetManagementDeveloperRequest request, {
+    bool showSnackBar = true,
+  }) async {
+    if (_supabase.auth.currentUser == null) {
+      if (showSnackBar) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('GitHub Issueの発行にはログインが必要です')),
+        );
+      }
+      return false;
+    }
+
     final issueKey = _developerRequestIssueKey(request);
     if (_developerRequestIssueSubmissionKeys.contains(issueKey)) {
-      return;
+      return false;
     }
 
     setState(() {
@@ -10403,7 +10562,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         throw Exception(data['error'] ?? 'GitHub Issueの発行に失敗しました');
       }
 
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _developerRequestIssueResults[issueKey] = data;
       });
@@ -10413,32 +10572,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final issueUrl = githubIssue['html_url']?.toString() ?? '';
       final issueNumber = githubIssue['number']?.toString() ?? '';
       final wbsCreated = wbsTask.isNotEmpty && !wbsTask.containsKey('error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            issueUrl.isEmpty
-                ? 'WBSに登録しました。GitHub Issue連携は設定確認が必要です'
-                : wbsCreated
-                    ? 'GitHub Issue #$issueNumber を発行してWBSに登録しました'
-                    : 'GitHub Issue #$issueNumber を発行しました。'
-                        'WBS連携は設定確認が必要です',
+      if (showSnackBar) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              issueUrl.isEmpty
+                  ? 'WBSに登録しました。GitHub Issue連携は設定確認が必要です'
+                  : wbsCreated
+                      ? 'GitHub Issue #$issueNumber を発行してWBSに登録しました'
+                      : 'GitHub Issue #$issueNumber を発行しました。'
+                          'WBS連携は設定確認が必要です',
+            ),
+            action: issueUrl.isEmpty
+                ? null
+                : SnackBarAction(
+                    label: '開く',
+                    onPressed: () => web.window.open(issueUrl, '_blank'),
+                  ),
           ),
-          action: issueUrl.isEmpty
-              ? null
-              : SnackBarAction(
-                  label: '開く',
-                  onPressed: () => web.window.open(issueUrl, '_blank'),
-                ),
-        ),
-      );
+        );
+      }
+      return true;
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('GitHub Issueの発行に失敗しました: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      if (!mounted) return false;
+      if (showSnackBar) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('GitHub Issueの発行に失敗しました: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      return false;
     } finally {
       if (mounted) {
         setState(() {
