@@ -1346,6 +1346,7 @@ class AssetLiabilityPlanningService {
           dueDate: task.dueDate == null ? null : _dateOnly(task.dueDate!),
           completed: task.completed,
           completedAt: task.completedAt,
+          completionMemo: task.completionMemo,
         ),
       );
     }

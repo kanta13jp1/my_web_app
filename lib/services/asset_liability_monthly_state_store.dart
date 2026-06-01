@@ -812,6 +812,10 @@ class AssetLiabilityMonthlyStateStore {
           final completedAt = completedAtText == null
               ? null
               : DateTime.tryParse(completedAtText);
+          final completionMemo = _cleanNullableString(
+                rawTask['completionMemo'] ?? rawTask['completion_memo'],
+              ) ??
+              '';
           if (id == null ||
               id.isEmpty ||
               fromAccountId == null ||
@@ -840,6 +844,7 @@ class AssetLiabilityMonthlyStateStore {
               dueDate: dueDate,
               completed: rawTask['completed'] == true,
               completedAt: completedAt,
+              completionMemo: completionMemo,
             ),
           );
         }
@@ -1209,6 +1214,7 @@ class AssetLiabilityMonthlyStateStore {
           dueDate: task.dueDate,
           completed: task.completed,
           completedAt: task.completedAt,
+          completionMemo: task.completionMemo,
         ),
     ];
 
@@ -1345,6 +1351,7 @@ class AssetLiabilityMonthlyStateStore {
                 : DateFormat('yyyy-MM-dd').format(task.dueDate!),
             'completed': task.completed,
             'completedAt': task.completedAt?.toIso8601String(),
+            'completionMemo': task.completionMemo,
           },
       ]);
     });

@@ -1604,7 +1604,8 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.amount != right.amount ||
           left.dueDate != right.dueDate ||
           left.completed != right.completed ||
-          left.completedAt != right.completedAt) {
+          left.completedAt != right.completedAt ||
+          left.completionMemo != right.completionMemo) {
         return false;
       }
     }

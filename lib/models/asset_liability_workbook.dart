@@ -474,6 +474,7 @@ class AssetLiabilityTransferTask {
   final DateTime? dueDate;
   final bool completed;
   final DateTime? completedAt;
+  final String completionMemo;
 
   const AssetLiabilityTransferTask({
     required this.id,
@@ -485,6 +486,7 @@ class AssetLiabilityTransferTask {
     required this.dueDate,
     this.completed = false,
     this.completedAt,
+    this.completionMemo = '',
   });
 
   AssetLiabilityTransferTask copyWith({
@@ -497,6 +499,7 @@ class AssetLiabilityTransferTask {
     DateTime? dueDate,
     bool? completed,
     DateTime? completedAt,
+    String? completionMemo,
   }) {
     return AssetLiabilityTransferTask(
       id: id ?? this.id,
@@ -508,6 +511,7 @@ class AssetLiabilityTransferTask {
       dueDate: dueDate ?? this.dueDate,
       completed: completed ?? this.completed,
       completedAt: completedAt ?? this.completedAt,
+      completionMemo: completionMemo ?? this.completionMemo,
     );
   }
 }

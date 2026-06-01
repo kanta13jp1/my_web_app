@@ -1881,7 +1881,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           left.dueDate?.toIso8601String() != right.dueDate?.toIso8601String() ||
           left.completed != right.completed ||
           left.completedAt?.toIso8601String() !=
-              right.completedAt?.toIso8601String()) {
+              right.completedAt?.toIso8601String() ||
+          left.completionMemo != right.completionMemo) {
         return false;
       }
     }
@@ -2630,6 +2631,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 dueDate: current.dueDate,
                 completed: completed,
                 completedAt: completedAt,
+                completionMemo: current.completionMemo,
               );
             }()
           else
@@ -2645,7 +2647,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             dueDate: task.dueDate,
             completed: completed,
             completedAt: completedAt,
+            completionMemo: task.completionMemo,
           ),
+      ]..sort(_compareTransferTasksByDueDate);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  Future<void> _showTransferTaskMemoDialog(
+    AssetLiabilityTransferTask task,
+  ) async {
+    final controller = TextEditingController(text: task.completionMemo);
+    final nextMemo = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('口座移動タスクの実行メモ'),
+          content: TextField(
+            controller: controller,
+            minLines: 3,
+            maxLines: 6,
+            decoration: const InputDecoration(
+              hintText: '例: ATM手数料110円。移動後のじぶん銀行残高は84,000円。',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(''),
+              child: const Text('メモをクリア'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
+              child: const Text('保存'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (nextMemo == null) {
+      return;
+    }
+
+    setState(() {
+      _transferTasks = [
+        for (final current in _transferTasks)
+          if (current.id == task.id)
+            current.copyWith(completionMemo: nextMemo)
+          else
+            current,
       ]..sort(_compareTransferTasksByDueDate);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -11947,7 +12002,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final billingRows = workbook.billingConfirmationPendingRows;
     final sourceRows = workbook.paymentSourceMissingRows;
-    final hasReviewTargets = billingRows.isNotEmpty || sourceRows.isNotEmpty;
+    final consultationRows = _paymentConsultationRows(workbook);
+    final hasReviewTargets = billingRows.isNotEmpty ||
+        sourceRows.isNotEmpty ||
+        consultationRows.isNotEmpty;
     final color =
         hasReviewTargets ? const Color(0xFFD97706) : const Color(0xFF0D9488);
     final background =
@@ -12023,6 +12081,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     '${sourceRows.length}件 / ${_formatManagementYen(workbook.paymentSourceMissingTotal)}',
                 color: const Color(0xFFB91C1C),
               ),
+              _buildOverviewStatChip(
+                label: '連絡優先',
+                value: '${consultationRows.length}件',
+                color: const Color(0xFFDC2626),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -12064,6 +12127,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
             ],
           ),
+          if (consultationRows.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              '支払い相談の優先先',
+              style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '未払いで支払日が近い、または金利負担が大きい支払いです。払えない可能性があるものは、支払う前に支払先へ猶予・分割・支払日変更を相談してください。',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            for (final row in consultationRows.take(3))
+              _buildPaymentConsultationReviewRow(row, workbook),
+          ],
           if (billingRows.isNotEmpty) ...[
             const SizedBox(height: 12),
             const Text(
@@ -12109,6 +12191,145 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  List<AssetLiabilityDebtRow> _paymentConsultationRows(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final rows = workbook.debtMasterRows
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget &&
+              !row.paid &&
+              row.scheduledPaymentAmount > 0,
+        )
+        .toList(growable: false);
+    rows.sort((a, b) {
+      final urgency = _consultationUrgencyRank(a, workbook.baseDate)
+          .compareTo(_consultationUrgencyRank(b, workbook.baseDate));
+      if (urgency != 0) {
+        return urgency;
+      }
+      final rate = b.annualRate.compareTo(a.annualRate);
+      if (rate != 0) {
+        return rate;
+      }
+      final amount =
+          b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount);
+      if (amount != 0) {
+        return amount;
+      }
+      return a.name.compareTo(b.name);
+    });
+    return rows;
+  }
+
+  int _consultationUrgencyRank(
+    AssetLiabilityDebtRow row,
+    DateTime baseDate,
+  ) {
+    final dueDate = _debtRowPaymentDate(row, baseDate);
+    if (dueDate == null) {
+      return 4;
+    }
+    final today = DateTime(baseDate.year, baseDate.month, baseDate.day);
+    final days = dueDate.difference(today).inDays;
+    if (days <= 0) {
+      return 0;
+    }
+    if (days <= 3) {
+      return 1;
+    }
+    if (days <= 7) {
+      return 2;
+    }
+    return 3;
+  }
+
+  DateTime? _debtRowPaymentDate(
+    AssetLiabilityDebtRow row,
+    DateTime baseDate,
+  ) {
+    final paymentDay = row.paymentDay;
+    if (paymentDay == null) {
+      return null;
+    }
+    final maxDay = DateUtils.getDaysInMonth(baseDate.year, baseDate.month);
+    final day = paymentDay.clamp(1, maxDay).toInt();
+    return DateTime(baseDate.year, baseDate.month, day);
+  }
+
+  Widget _buildPaymentConsultationReviewRow(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final dueDate = _debtRowPaymentDate(row, workbook.baseDate);
+    final dueLabel =
+        dueDate == null ? '-' : DateFormat('yyyy/MM/dd').format(dueDate);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.support_agent_outlined, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${row.name} / 支払日 $dueLabel / '
+              '予定 ${_formatManagementYen(row.scheduledPaymentAmount)} / '
+              '月利息 ${_formatManagementYen(row.monthlyInterestEstimate)} / '
+              '年利 ${(row.annualRate * 100).toStringAsFixed(1)}%',
+              style: const TextStyle(fontSize: 12, height: 1.5),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () => unawaited(
+              _copyPaymentConsultationText(row, workbook),
+            ),
+            icon: const Icon(Icons.content_copy, size: 16),
+            label: const Text('相談文をコピー'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _copyPaymentConsultationText(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    await Clipboard.setData(
+      ClipboardData(text: _paymentConsultationText(row, workbook)),
+    );
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${row.name}への相談文をコピーしました。')),
+    );
+  }
+
+  String _paymentConsultationText(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final dueDate = _debtRowPaymentDate(row, workbook.baseDate);
+    final dueLabel =
+        dueDate == null ? '未設定' : DateFormat('yyyy/MM/dd').format(dueDate);
+    return [
+      '${row.name} ご担当者様',
+      '',
+      '今月の支払いについて相談させてください。',
+      '支払予定日: $dueLabel',
+      '支払予定額: ${_formatManagementYen(row.scheduledPaymentAmount)}',
+      '残高: ${_formatManagementYen(row.balance)}',
+      '年利: ${(row.annualRate * 100).toStringAsFixed(1)}%',
+      '月利息見込み: ${_formatManagementYen(row.monthlyInterestEstimate)}',
+      '',
+      '生活費と他の支払いを確認したうえで、支払日変更、分割、猶予、または最低支払額の調整が可能か相談したいです。',
+      '現時点で支払える金額と支払可能日は、確認して折り返します。',
+    ].join('\n');
   }
 
   Widget _buildBillingConfirmationReviewRow(AssetLiabilityDebtRow row) {
@@ -13992,17 +14213,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: Text(
-                  '${task.fromAccountName} -> ${task.toAccountName} / '
-                  '${_formatManagementYen(task.amount)} / $dueLabel',
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.5,
-                    decoration:
-                        task.completed ? TextDecoration.lineThrough : null,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${task.fromAccountName} -> ${task.toAccountName} / '
+                      '${_formatManagementYen(task.amount)} / $dueLabel',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                        decoration:
+                            task.completed ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                    if (task.completionMemo.trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '実行メモ: ${task.completionMemo.trim()}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
+            ),
+            TextButton.icon(
+              onPressed: () => unawaited(_showTransferTaskMemoDialog(task)),
+              icon: const Icon(Icons.edit_note, size: 16),
+              label: const Text('メモ'),
             ),
             IconButton(
               tooltip: isBuiltIn ? '定例振替' : '振替タスクを削除',

@@ -427,6 +427,7 @@ Map<String, Object?> _encodeTransferTask(AssetLiabilityTransferTask task) {
     'dueDate': task.dueDate == null ? null : _dateOnly(task.dueDate!),
     'completed': task.completed,
     'completedAt': task.completedAt?.toUtc().toIso8601String(),
+    'completionMemo': task.completionMemo,
   };
 }
 
@@ -553,6 +554,9 @@ AssetLiabilityTransferTask? _decodeTransferTask(Object? source) {
     dueDate: dueDate,
     completed: source['completed'] == true,
     completedAt: completedAt,
+    completionMemo: _cleanString(source['completionMemo']) ??
+        _cleanString(source['completion_memo']) ??
+        '',
   );
 }
 

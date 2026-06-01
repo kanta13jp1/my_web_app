@@ -778,6 +778,7 @@ class AssetManagementAiSummaryService {
       'due_date': task.dueDate?.toIso8601String(),
       'completed': task.completed,
       'completed_at': task.completedAt?.toIso8601String(),
+      'completion_memo': task.completionMemo,
     };
   }
 

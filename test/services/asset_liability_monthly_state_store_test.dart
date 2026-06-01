@@ -101,6 +101,9 @@ void main() {
               toAccountName: 'Bank',
               amount: 10000,
               dueDate: DateTime(2026, 5, 18),
+              completed: true,
+              completedAt: DateTime(2026, 5, 18, 10),
+              completionMemo: 'ATM手数料110円。移動後の銀行残高は84,000円。',
             ),
           ],
         ),
@@ -123,6 +126,15 @@ void main() {
       expect(loadedMay.incomePlans.single.name, 'Salary');
       expect(loadedMay.transferTasks.single.id, 'transfer_bank_topup');
       expect(loadedMay.transferTasks.single.amount, 10000);
+      expect(loadedMay.transferTasks.single.completed, isTrue);
+      expect(
+        loadedMay.transferTasks.single.completedAt,
+        DateTime(2026, 5, 18, 10),
+      );
+      expect(
+        loadedMay.transferTasks.single.completionMemo,
+        'ATM手数料110円。移動後の銀行残高は84,000円。',
+      );
       expect(loadedJune.paymentOverrides, isEmpty);
       expect(loadedJune.actualPaymentAmounts, isEmpty);
       expect(loadedJune.paymentDifferenceReasons, isEmpty);
