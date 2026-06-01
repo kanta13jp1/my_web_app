@@ -1,0 +1,7 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-06-01T17:00:00Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22件登録済み) / チケット: 0件 / Issue修正: 0件 / workflow-failure偽陽性スキップ / Schedule健全性: daily-report停止中(#3047既存) / Supabase:200 / ギター録音:正常"
+}
