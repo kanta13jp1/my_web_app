@@ -929,4 +929,69 @@ class AssetLiabilityWorkbook {
   bool get hasUnassignedDestinationIncomePlans {
     return unassignedDestinationIncomePlans.isNotEmpty;
   }
+
+  List<AssetLiabilityDebtRow> get billingConfirmationPendingRows {
+    return debtMasterRows
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget &&
+              row.paymentAmountEstimated &&
+              row.scheduledPaymentAmount > 0 &&
+              !row.paid,
+        )
+        .toList();
+  }
+
+  bool get hasBillingConfirmationPendingRows {
+    return billingConfirmationPendingRows.isNotEmpty;
+  }
+
+  double get billingConfirmationPendingTotal {
+    return billingConfirmationPendingRows.fold<double>(
+      0,
+      (sum, row) => sum + row.scheduledPaymentAmount,
+    );
+  }
+
+  List<AssetLiabilityDebtRow> get paymentSourceMissingRows {
+    return debtMasterRows
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget &&
+              row.scheduledPaymentAmount > 0 &&
+              (row.paymentSourceAccountId == null ||
+                  row.paymentSourceAccountId!.trim().isEmpty),
+        )
+        .toList();
+  }
+
+  bool get hasPaymentSourceMissingRows {
+    return paymentSourceMissingRows.isNotEmpty;
+  }
+
+  double get paymentSourceMissingTotal {
+    return paymentSourceMissingRows.fold<double>(
+      0,
+      (sum, row) => sum + row.scheduledPaymentAmount,
+    );
+  }
+
+  double get monthlyScheduledPrincipalEstimateTotal {
+    return debtMasterRows
+        .where((row) => row.isDirectCashflowTarget)
+        .fold<double>(0, (sum, row) => sum + row.principalPaymentEstimate);
+  }
+
+  double get monthlyScheduledInterestEstimateTotal {
+    return debtMasterRows
+        .where((row) => row.isDirectCashflowTarget)
+        .fold<double>(
+          0,
+          (sum, row) =>
+              sum +
+              row.monthlyInterestEstimate
+                  .clamp(0, row.scheduledPaymentAmount)
+                  .toDouble(),
+        );
+  }
 }

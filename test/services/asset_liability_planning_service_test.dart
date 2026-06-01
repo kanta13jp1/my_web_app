@@ -158,6 +158,51 @@ void main() {
       );
     });
 
+    test('exposes debt control review targets and payment split totals', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      expect(workbook.billingConfirmationPendingRows.length, 1);
+      expect(workbook.billingConfirmationPendingRows.single.id, 'paypay_card');
+      expect(
+        workbook.billingConfirmationPendingTotal,
+        workbook.billingConfirmationPendingRows.single.scheduledPaymentAmount,
+      );
+      expect(workbook.paymentSourceMissingRows.length, 1);
+      expect(workbook.paymentSourceMissingRows.single.id, 'paypay_card');
+      expect(
+        workbook.paymentSourceMissingTotal,
+        workbook.paymentSourceMissingRows.single.scheduledPaymentAmount,
+      );
+      expect(
+        workbook.monthlyScheduledPrincipalEstimateTotal +
+            workbook.monthlyScheduledInterestEstimateTotal,
+        closeTo(workbook.monthlyScheduledPaymentTotal, 0.001),
+      );
+
+      final reviewed = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'paypay_card': 20000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          'paypay_card': 'custom_bank',
+        },
+      );
+
+      expect(reviewed.billingConfirmationPendingRows, isEmpty);
+      expect(reviewed.paymentSourceMissingRows, isEmpty);
+    });
+
     test('treats zero yen as a valid manually entered payment', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,

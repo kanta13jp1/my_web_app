@@ -61,6 +61,8 @@ enum AssetDebtPlannerMode { ask, code }
 
 enum _CardBillingSaveScope { defaultSetting, monthlyOverride }
 
+enum _DebtMasterReviewFilter { all, billingConfirmation, paymentSource }
+
 class AssetManagementPage extends StatefulWidget {
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
@@ -151,6 +153,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, String> _defaultCardBillingAccountIds = <String, String>{};
   final Map<String, _CardBillingSaveScope> _cardBillingSaveScopes =
       <String, _CardBillingSaveScope>{};
+  _DebtMasterReviewFilter _debtMasterReviewFilter = _DebtMasterReviewFilter.all;
   List<AssetLiabilityIncomePlan> _monthlyIncomePlans =
       <AssetLiabilityIncomePlan>[];
   List<AssetLiabilityTransferTask> _transferTasks =
@@ -2004,6 +2007,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _monthlyPaymentControllers[accountId]?.clear();
     setState(() {
       _monthlyPaymentOverrides.remove(accountId);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _confirmEstimatedPaymentAmount(AssetLiabilityDebtRow row) {
+    final amount = row.scheduledPaymentAmount.round();
+    _monthlyPaymentControllers[row.id]?.text = amount.toString();
+    setState(() {
+      _monthlyPaymentOverrides[row.id] = amount.toDouble();
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _confirmAllEstimatedPaymentAmounts(
+    Iterable<AssetLiabilityDebtRow> rows,
+  ) {
+    final targets = rows.where((row) => row.paymentAmountEstimated).toList();
+    if (targets.isEmpty) {
+      return;
+    }
+    setState(() {
+      for (final row in targets) {
+        final amount = row.scheduledPaymentAmount.round();
+        _monthlyPaymentOverrides[row.id] = amount.toDouble();
+        _monthlyPaymentControllers[row.id]?.text = amount.toString();
+      }
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
@@ -9292,6 +9321,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 12),
             _buildAssetWorkbookWarning(workbook),
             const SizedBox(height: 16),
+            _buildDebtControlReviewSection(workbook),
+            const SizedBox(height: 16),
             _buildAssetPaymentReminderPanel(workbook),
             const SizedBox(height: 16),
             _buildAssetWorkbookPaymentList(workbook),
@@ -11909,6 +11940,302 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Widget _buildDebtControlReviewSection(AssetLiabilityWorkbook workbook) {
+    if (workbook.debtMasterRows.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final billingRows = workbook.billingConfirmationPendingRows;
+    final sourceRows = workbook.paymentSourceMissingRows;
+    final hasReviewTargets = billingRows.isNotEmpty || sourceRows.isNotEmpty;
+    final color =
+        hasReviewTargets ? const Color(0xFFD97706) : const Color(0xFF0D9488);
+    final background =
+        hasReviewTargets ? const Color(0xFFFFFBEB) : const Color(0xFFECFDF5);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.32)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.fact_check_outlined, color: color),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '借金減少ラインの確認導線',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'この月の返済予定を、請求確定額・支払原資・元金/金利に分けて確認します。ここが埋まるほど「使ってよい上限」が実態に近づきます。',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildOverviewStatChip(
+                label: '返済予定',
+                value: _formatManagementYen(
+                  workbook.monthlyScheduledPaymentTotal,
+                ),
+                color: const Color(0xFF4F46E5),
+              ),
+              _buildOverviewStatChip(
+                label: '元金見込み',
+                value: _formatManagementYen(
+                  workbook.monthlyScheduledPrincipalEstimateTotal,
+                ),
+                color: const Color(0xFF7C2D12),
+              ),
+              _buildOverviewStatChip(
+                label: '金利見込み',
+                value: _formatManagementYen(
+                  workbook.monthlyScheduledInterestEstimateTotal,
+                ),
+                color: const Color(0xFF9F1239),
+              ),
+              _buildOverviewStatChip(
+                label: '請求確定待ち',
+                value:
+                    '${billingRows.length}件 / ${_formatManagementYen(workbook.billingConfirmationPendingTotal)}',
+                color: const Color(0xFFD97706),
+              ),
+              _buildOverviewStatChip(
+                label: '原資未設定',
+                value:
+                    '${sourceRows.length}件 / ${_formatManagementYen(workbook.paymentSourceMissingTotal)}',
+                color: const Color(0xFFB91C1C),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                selected:
+                    _debtMasterReviewFilter == _DebtMasterReviewFilter.all,
+                label: const Text('負債マスタ全件'),
+                onSelected: (_) => _setDebtMasterReviewFilter(
+                  _DebtMasterReviewFilter.all,
+                ),
+              ),
+              FilterChip(
+                selected: _debtMasterReviewFilter ==
+                    _DebtMasterReviewFilter.billingConfirmation,
+                label: Text('請求確定待ち ${billingRows.length}件'),
+                onSelected: (_) => _setDebtMasterReviewFilter(
+                  _DebtMasterReviewFilter.billingConfirmation,
+                ),
+              ),
+              FilterChip(
+                selected: _debtMasterReviewFilter ==
+                    _DebtMasterReviewFilter.paymentSource,
+                label: Text('原資未設定 ${sourceRows.length}件'),
+                onSelected: (_) => _setDebtMasterReviewFilter(
+                  _DebtMasterReviewFilter.paymentSource,
+                ),
+              ),
+              if (billingRows.isNotEmpty)
+                OutlinedButton.icon(
+                  onPressed: () => _confirmAllEstimatedPaymentAmounts(
+                    billingRows,
+                  ),
+                  icon: const Icon(Icons.done_all, size: 18),
+                  label: const Text('推定額を一括確定'),
+                ),
+            ],
+          ),
+          if (billingRows.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              '請求確定待ち',
+              style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+            ),
+            const SizedBox(height: 6),
+            for (final row in billingRows.take(5))
+              _buildBillingConfirmationReviewRow(row),
+            if (billingRows.length > 5)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'ほか ${billingRows.length - 5}件はフィルタで確認できます。',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+          if (sourceRows.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              '支払原資口座の未設定',
+              style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
+            ),
+            const SizedBox(height: 6),
+            for (final row in sourceRows.take(5))
+              _buildMissingPaymentSourceReviewRow(row, workbook),
+            if (sourceRows.length > 5)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'ほか ${sourceRows.length - 5}件はフィルタで確認できます。',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillingConfirmationReviewRow(AssetLiabilityDebtRow row) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.receipt_long_outlined, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
+              '予定 ${_formatManagementYen(row.scheduledPaymentAmount)} / '
+              '最低推定 ${_formatManagementYen(row.minimumPaymentEstimate)} / '
+              '元金 ${_formatManagementYen(row.principalPaymentEstimate)} / '
+              '金利 ${_formatManagementYen(row.monthlyInterestEstimate)}',
+              style: const TextStyle(fontSize: 12, height: 1.5),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () => _confirmEstimatedPaymentAmount(row),
+            icon: const Icon(Icons.check_circle_outline, size: 16),
+            label: const Text('この額で確定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMissingPaymentSourceReviewRow(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(Icons.account_balance_outlined, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
+              '予定 ${_formatManagementYen(row.scheduledPaymentAmount)} / '
+              '支払後手元を口座別に再計算します。',
+              style: const TextStyle(fontSize: 12, height: 1.5),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildPaymentSourceDebtDropdown(row, workbook),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSourceDebtDropdown(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final options = _paymentSourceAccountOptions(workbook);
+    if (options.isEmpty) {
+      return const Text(
+        '候補口座なし',
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+      );
+    }
+    final monthlySelected = _paymentSourceAccountIds[row.id];
+    final defaultSelected = _defaultPaymentSourceAccountIds[row.id];
+    final selected =
+        monthlySelected ?? defaultSelected ?? row.paymentSourceAccountId;
+    final validSelected =
+        selected != null && options.any((account) => account.id == selected);
+    final isDefaultSelected =
+        validSelected && defaultSelected != null && defaultSelected == selected;
+
+    return SizedBox(
+      width: 300,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: DropdownButton<String>(
+              value: validSelected ? selected : '',
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem<String>(value: '', child: Text('未設定')),
+                for (final account in options)
+                  DropdownMenuItem<String>(
+                    value: account.id,
+                    child: Text(account.name),
+                  ),
+              ],
+              onChanged: (value) => _updatePaymentSourceAccount(
+                row.id,
+                value == null || value.isEmpty ? null : value,
+              ),
+            ),
+          ),
+          Tooltip(
+            message: isDefaultSelected ? 'デフォルトを解除' : 'この口座をデフォルトにする',
+            child: IconButton(
+              icon: Icon(
+                isDefaultSelected ? Icons.push_pin : Icons.push_pin_outlined,
+                size: 18,
+              ),
+              color: isDefaultSelected ? const Color(0xFF0D9488) : null,
+              onPressed: validSelected
+                  ? () => _updateDefaultPaymentSourceAccount(
+                        row.id,
+                        isDefaultSelected ? null : selected,
+                      )
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _setDebtMasterReviewFilter(_DebtMasterReviewFilter filter) {
+    setState(() {
+      _debtMasterReviewFilter = filter;
+    });
+  }
+
   Widget _buildAssetPaymentReminderPanel(AssetLiabilityWorkbook workbook) {
     final reminders = _assetLiabilityReminderService.buildCandidates(
       workbook: workbook,
@@ -13780,7 +14107,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
-    final rows = List<AssetLiabilityDebtRow>.from(workbook.debtMasterRows)
+    final rows = _filteredDebtMasterRows(workbook)
       ..sort(_compareDebtRowsByPaymentDay);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -13803,6 +14130,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             height: 1.5,
           ),
         ),
+        if (_debtMasterReviewFilter != _DebtMasterReviewFilter.all) ...[
+          const SizedBox(height: 6),
+          _buildTextStatusChip(
+            label: _debtMasterReviewFilter ==
+                    _DebtMasterReviewFilter.billingConfirmation
+                ? '請求確定待ちだけ表示中'
+                : '支払原資未設定だけ表示中',
+            color: const Color(0xFFD97706),
+          ),
+        ],
         const SizedBox(height: 6),
         Scrollbar(
           controller: _debtMasterHorizontalScrollController,
@@ -13889,6 +14226,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return balance;
     }
     return a.name.compareTo(b.name);
+  }
+
+  List<AssetLiabilityDebtRow> _filteredDebtMasterRows(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    return switch (_debtMasterReviewFilter) {
+      _DebtMasterReviewFilter.billingConfirmation =>
+        List<AssetLiabilityDebtRow>.from(
+          workbook.billingConfirmationPendingRows,
+        ),
+      _DebtMasterReviewFilter.paymentSource =>
+        List<AssetLiabilityDebtRow>.from(workbook.paymentSourceMissingRows),
+      _DebtMasterReviewFilter.all =>
+        List<AssetLiabilityDebtRow>.from(workbook.debtMasterRows),
+    };
   }
 
   Widget _buildPaymentMethodDropdown(

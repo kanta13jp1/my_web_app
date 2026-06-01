@@ -484,6 +484,10 @@ class AssetManagementAiSummaryService {
             workbook.monthlyMinimumPaymentEstimateTotal,
         'monthly_scheduled_payment_total':
             workbook.monthlyScheduledPaymentTotal,
+        'monthly_scheduled_principal_estimate_total':
+            workbook.monthlyScheduledPrincipalEstimateTotal,
+        'monthly_scheduled_interest_estimate_total':
+            workbook.monthlyScheduledInterestEstimateTotal,
         'monthly_actual_payment_total': workbook.monthlyActualPaymentTotal,
         'monthly_payment_difference_total':
             workbook.monthlyPaymentDifferenceTotal,
@@ -496,6 +500,22 @@ class AssetManagementAiSummaryService {
         'top_four_debt_share': workbook.topFourDebtShare,
         'manual_payment_count': workbook.manualPaymentCount,
         'estimated_payment_count': workbook.estimatedPaymentCount,
+      },
+      'debt_control_review': <String, dynamic>{
+        'billing_confirmation_pending_count':
+            workbook.billingConfirmationPendingRows.length,
+        'billing_confirmation_pending_total':
+            workbook.billingConfirmationPendingTotal,
+        'billing_confirmation_pending_rows': workbook
+            .billingConfirmationPendingRows
+            .map((row) => _debtRowToJson(row, workbook.baseDate))
+            .toList(growable: false),
+        'payment_source_missing_count':
+            workbook.paymentSourceMissingRows.length,
+        'payment_source_missing_total': workbook.paymentSourceMissingTotal,
+        'payment_source_missing_rows': workbook.paymentSourceMissingRows
+            .map((row) => _debtRowToJson(row, workbook.baseDate))
+            .toList(growable: false),
       },
       'accounts': workbook.accounts.map(_accountToJson).toList(growable: false),
       'debt_master_rows': workbook.debtMasterRows
