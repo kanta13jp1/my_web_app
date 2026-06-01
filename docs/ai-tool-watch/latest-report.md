@@ -1,12 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-31T21:37:28Z`
-- Previous check: `2026-05-30T21:37:27Z`
-- Changed/new official sources: `1`
+- Checked at: `2026-06-01T22:17:15Z`
+- Previous check: `2026-05-31T21:37:28Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.159 / May 31, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
+- `changed` Codex changelog: 2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+- `changed` Devin release notes: May 29, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -36,10 +39,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win
+  - Latest signal: 2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested.
+  - Short signal: May 2026 li+li]:mt-12"> 2026-05-29 Computer use and mobile access on Windows 26.527 New features Computer Use now works on Windows.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -66,8 +69,8 @@
   - URL: https://docs.devin.ai/release-notes
   - Latest signal: May 29, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events.
-  - Short signal: You can configure automations to run only when specific files or directories are modified in a push.
+  - Short signal: Navigation Release Notes Recent Updates Cloud CLI Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to Use...
+  - Short signal: Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...
 
 ## NotebookLM Harness Mapping
 - Source notebook: `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)

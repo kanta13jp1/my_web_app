@@ -11,11 +11,9 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
+      "hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
       "keyword_groups": {
         "codex-runtime": [
-          "model picker",
-          "computer use",
           "worktree",
           "subagents"
         ],
@@ -26,8 +24,60 @@
           "UserPromptSubmit",
           "PostToolUse",
           "Stop",
-          "StopFailure",
-          "ultrareview"
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "3d39ee0181f832b0480fc562b838a9c8f77ae2e2d769b2f2aa88609a2fb30445",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "For a quickstart guide with examples, see Automate actions with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "31aca23164e5523d257656c21a606b422ea15609340e0c0338c71571ceb784a7",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "model picker",
+          "in-app browser",
+          "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
         ],
         "integration": [
           "MCP",
@@ -35,12 +85,65 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode",
-          "Visual Studio Code"
+          "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "fd94b0c55a9fdecb180c53bfa4f8ff369a357121be8b961c0f7bce95b7cc8f7c",
+      "slug": "codex-changelog",
+      "snippets": [
+        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "May 2026 li+li]:mt-12\"> 2026-05-29 Computer use and mobile access on Windows 26.527 New features Computer Use now works on Windows.",
+        "Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "57df9ca561b8ed61439843ce2080464725de68af47fe54d44705e6ed86de1424",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "in-app browser",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
           "cost",
           "rate limit",
           "sandbox",
@@ -49,27 +152,75 @@
           "CI"
         ],
         "schedule": [
-          "schedule",
-          "cron",
+          "automation",
+          "automations",
           "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "2.1.159 / May 31, 2026",
-      "name": "Claude Code changelog",
-      "owner": "Claude Code",
-      "previous_hash": "82309a3af14af81b5d7bddfb3941c34f800f83c180e2bd627f8b31a5867ce057",
-      "slug": "claude-code-changelog",
+      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
+      "slug": "codex-use-cases",
       "snippets": [
-        "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
-        "This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.159 May 31, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.158 May 30, 2026 Auto mode is now available on Bedrock, Vertex, and Foundry for Opus..."
+        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
+        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
+        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
       ],
       "status": 200,
-      "url": "https://code.claude.com/docs/en/changelog"
+      "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "8bcd8189add9789c89a8ff8fa402c34854a80dfa5e0d88eaadcafa9b2aead8b7",
+      "keyword_groups": {
+        "codex-runtime": [
+          "computer use",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "Slack",
+          "Linear",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "workflow"
+        ]
+      },
+      "latest_signal": "May 29, 2026",
+      "name": "Devin release notes",
+      "owner": "Devin",
+      "previous_hash": "b0bf437a0f0c5e0d9782826f0468b02f7afd23d79c7adefc1363cda55be15bd7",
+      "slug": "devin-release-notes",
+      "snippets": [
+        "Navigation Release Notes Recent Updates Cloud CLI Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to Use...",
+        "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
+        "Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events."
+      ],
+      "status": 200,
+      "url": "https://docs.devin.ai/release-notes"
     }
   ],
-  "checked_at": "2026-05-31T21:37:28Z",
+  "checked_at": "2026-06-01T22:17:15Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -121,10 +272,10 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-30T21:37:27Z",
+  "previous_checked_at": "2026-05-31T21:37:28Z",
   "sources": [
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
@@ -174,7 +325,7 @@
       "latest_signal": "2.1.159 / May 31, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "82309a3af14af81b5d7bddfb3941c34f800f83c180e2bd627f8b31a5867ce057",
+      "previous_hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
@@ -185,10 +336,10 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3d39ee0181f832b0480fc562b838a9c8f77ae2e2d769b2f2aa88609a2fb30445",
+      "hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -230,7 +381,7 @@
       "snippets": [
         "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
         "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "For a quickstart guide with examples, see Automate workflows with hooks ."
+        "For a quickstart guide with examples, see Automate actions with hooks ."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/hooks"
@@ -283,10 +434,10 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "fd94b0c55a9fdecb180c53bfa4f8ff369a357121be8b961c0f7bce95b7cc8f7c",
+      "hash": "31aca23164e5523d257656c21a606b422ea15609340e0c0338c71571ceb784a7",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -301,8 +452,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -314,7 +463,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -331,24 +479,24 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win",
+      "latest_signal": "2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A",
       "name": "Codex changelog",
       "owner": "Codex",
       "previous_hash": "fd94b0c55a9fdecb180c53bfa4f8ff369a357121be8b961c0f7bce95b7cc8f7c",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested.",
-        "( #24382 , #24380 , #24766 ) /permissions now understands named permission profiles and displays configured custom profiles."
+        "May 2026 li+li]:mt-12\"> 2026-05-29 Computer use and mobile access on Windows 26.527 New features Computer Use now works on Windows.",
+        "Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
+      "hash": "57df9ca561b8ed61439843ce2080464725de68af47fe54d44705e6ed86de1424",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -490,10 +638,10 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "b0bf437a0f0c5e0d9782826f0468b02f7afd23d79c7adefc1363cda55be15bd7",
+      "hash": "8bcd8189add9789c89a8ff8fa402c34854a80dfa5e0d88eaadcafa9b2aead8b7",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -530,9 +678,9 @@
       "previous_hash": "b0bf437a0f0c5e0d9782826f0468b02f7afd23d79c7adefc1363cda55be15bd7",
       "slug": "devin-release-notes",
       "snippets": [
-        "Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events.",
-        "You can configure automations to run only when specific files or directories are modified in a push.",
-        "PR Review Sidebar Restructure The in-session PR review sidebar has been redesigned with collapsible sections, portalized toolbar actions, and a new diff settings menu replacing..."
+        "Navigation Release Notes Recent Updates Cloud CLI Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to Use...",
+        "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
+        "Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"

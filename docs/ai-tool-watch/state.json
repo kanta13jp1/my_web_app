@@ -1,7 +1,7 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-05-31T21:37:28Z",
+      "checked_at": "2026-06-01T22:17:15Z",
       "hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
       "keyword_groups": {
         "codex-runtime": [
@@ -52,7 +52,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-05-31T21:37:28Z",
+      "checked_at": "2026-06-01T22:17:15Z",
       "hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
       "keyword_groups": {
         "codex-runtime": [
@@ -89,8 +89,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-05-31T21:37:28Z",
-      "hash": "3d39ee0181f832b0480fc562b838a9c8f77ae2e2d769b2f2aa88609a2fb30445",
+      "checked_at": "2026-06-01T22:17:15Z",
+      "hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -130,8 +130,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-05-31T21:37:28Z",
-      "hash": "fd94b0c55a9fdecb180c53bfa4f8ff369a357121be8b961c0f7bce95b7cc8f7c",
+      "checked_at": "2026-06-01T22:17:15Z",
+      "hash": "31aca23164e5523d257656c21a606b422ea15609340e0c0338c71571ceb784a7",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -146,8 +146,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -159,7 +157,6 @@
           "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -176,13 +173,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-29 / Computer use and mobile access on Windows 26.527 New features Computer Use now works on Win",
+      "latest_signal": "2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-05-31T21:37:28Z",
+      "checked_at": "2026-06-01T22:17:15Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -191,8 +188,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-05-31T21:37:28Z",
-      "hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
+      "checked_at": "2026-06-01T22:17:15Z",
+      "hash": "57df9ca561b8ed61439843ce2080464725de68af47fe54d44705e6ed86de1424",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -235,7 +232,7 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-05-31T21:37:28Z",
+      "checked_at": "2026-06-01T22:17:15Z",
       "hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
       "keyword_groups": {
         "hooks": [
@@ -262,8 +259,8 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-05-31T21:37:28Z",
-      "hash": "b0bf437a0f0c5e0d9782826f0468b02f7afd23d79c7adefc1363cda55be15bd7",
+      "checked_at": "2026-06-01T22:17:15Z",
+      "hash": "8bcd8189add9789c89a8ff8fa402c34854a80dfa5e0d88eaadcafa9b2aead8b7",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -300,7 +297,7 @@
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-05-31T21:37:28Z",
+      "checked_at": "2026-06-01T22:17:15Z",
       "hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
       "keyword_groups": {
         "hooks": [
@@ -329,5 +326,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-05-31T21:37:28Z"
+  "updated_at": "2026-06-01T22:17:15Z"
 }
