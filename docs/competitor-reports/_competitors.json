@@ -411,6 +411,23 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-03",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 1 day 経過 / cooldown 残 ~6 day / 次回 6/09 解禁). 本日 6/02→6/03 新規 3 シグナル = (1) **★ Anthropic Claude 6/2 大規模障害 🔴** (= API/Console/Code 同時障害・復旧済 / 機能 delta ではなく Win Claude #132 fleet 単一ベンダー依存 risk 顕在化 / [AI_FALLBACK_RUNBOOK] fallback chain 実地検証機会) / (2) **★ frontier coding 価格フロア低下 + Alibaba Qwen 3.7 Max 🟠** (= developer-tech 6/3 集約: Cursor Composer 2.5 + Anthropic Self-hosted Sandboxes + Alibaba Qwen 3.7 Max = 非 US/中国 frontier 初参入 closed-weight / SWE-Bench Verified 72.5 [要検証] / vendor カバレッジに中国空白軸を発見 → 次回 6/09 第 1 候補) / (3) **Anthropic Code with Claude London 🟠** (= 欧州初 dev event / Self-hosted Sandboxes public beta + MCP tunnels research preview + Dreaming = 自社 [WORKDIR-ISOLATION] + [MCP-AUTH-27] + consolidate-memory 同軸). 次回 6/09 採択 第 1 候補 = Alibaba Qwen (基準 b 未カバー領域 + 基準 c 5/19 release). https://www.developer-tech.com/news/ai-coding-agents-cursor-anthropic-alibaba-price-floor-2026/",
+      "skipped_candidates": [
+        "Alibaba Qwen (= 6/09 第 1 候補 / 非 US/中国 frontier coding 空白軸 / Qwen 3.7 Max closed-weight 5/19 / 基準 b+c 該当)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / adjacent 軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
