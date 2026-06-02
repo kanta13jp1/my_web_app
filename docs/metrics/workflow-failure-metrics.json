@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-01T23:10:53.813559+00:00",
+  "generated_at": "2026-06-02T23:10:41.077678+00:00",
   "tracked_count": 200,
   "open_count": 4,
   "closed_count": 196,
@@ -9,7 +9,7 @@
     "deno-lint": 38,
     "generic-ci": 3,
     "migration-collision": 2,
-    "notion-sync": 6,
-    "unclassified": 151
+    "notion-sync": 7,
+    "unclassified": 150
   }
 }
