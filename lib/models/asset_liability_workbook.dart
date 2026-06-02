@@ -475,6 +475,9 @@ class AssetLiabilityTransferTask {
   final bool completed;
   final DateTime? completedAt;
   final String completionMemo;
+  final bool canceled;
+  final DateTime? canceledAt;
+  final String cancellationReason;
 
   const AssetLiabilityTransferTask({
     required this.id,
@@ -487,6 +490,9 @@ class AssetLiabilityTransferTask {
     this.completed = false,
     this.completedAt,
     this.completionMemo = '',
+    this.canceled = false,
+    this.canceledAt,
+    this.cancellationReason = '',
   });
 
   AssetLiabilityTransferTask copyWith({
@@ -500,6 +506,9 @@ class AssetLiabilityTransferTask {
     bool? completed,
     DateTime? completedAt,
     String? completionMemo,
+    bool? canceled,
+    DateTime? canceledAt,
+    String? cancellationReason,
   }) {
     return AssetLiabilityTransferTask(
       id: id ?? this.id,
@@ -512,6 +521,9 @@ class AssetLiabilityTransferTask {
       completed: completed ?? this.completed,
       completedAt: completedAt ?? this.completedAt,
       completionMemo: completionMemo ?? this.completionMemo,
+      canceled: canceled ?? this.canceled,
+      canceledAt: canceledAt ?? this.canceledAt,
+      cancellationReason: cancellationReason ?? this.cancellationReason,
     );
   }
 }

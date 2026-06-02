@@ -428,6 +428,9 @@ Map<String, Object?> _encodeTransferTask(AssetLiabilityTransferTask task) {
     'completed': task.completed,
     'completedAt': task.completedAt?.toUtc().toIso8601String(),
     'completionMemo': task.completionMemo,
+    'canceled': task.canceled,
+    'canceledAt': task.canceledAt?.toUtc().toIso8601String(),
+    'cancellationReason': task.cancellationReason,
   };
 }
 
@@ -532,6 +535,12 @@ AssetLiabilityTransferTask? _decodeTransferTask(Object? source) {
   final dueDate = dueDateText == null ? null : DateTime.tryParse(dueDateText);
   final completedAt =
       completedAtText == null ? null : DateTime.tryParse(completedAtText);
+  final canceledAtText = _cleanString(source['canceledAt']) ??
+      _cleanString(source['cancelledAt']) ??
+      _cleanString(source['canceled_at']) ??
+      _cleanString(source['cancelled_at']);
+  final canceledAt =
+      canceledAtText == null ? null : DateTime.tryParse(canceledAtText);
   if (id == null ||
       fromAccountId == null ||
       toAccountId == null ||
@@ -556,6 +565,13 @@ AssetLiabilityTransferTask? _decodeTransferTask(Object? source) {
     completedAt: completedAt,
     completionMemo: _cleanString(source['completionMemo']) ??
         _cleanString(source['completion_memo']) ??
+        '',
+    canceled: source['canceled'] == true || source['cancelled'] == true,
+    canceledAt: canceledAt,
+    cancellationReason: _cleanString(source['cancellationReason']) ??
+        _cleanString(source['cancelReason']) ??
+        _cleanString(source['cancellation_reason']) ??
+        _cleanString(source['cancel_reason']) ??
         '',
   );
 }

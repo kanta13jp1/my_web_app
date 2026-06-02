@@ -148,6 +148,37 @@ void main() {
       expect(loadedJune.transferTasks, isEmpty);
     });
 
+    test('round-trips canceled transfer task reason', () async {
+      await store.saveMonth(
+        month: DateTime(2026, 5, 13),
+        state: AssetLiabilityMonthlyState(
+          transferTasks: <AssetLiabilityTransferTask>[
+            AssetLiabilityTransferTask(
+              id: 'transfer_cancelled',
+              fromAccountId: 'cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'bank',
+              toAccountName: 'Bank',
+              amount: 15000,
+              dueDate: DateTime(2026, 5, 20),
+              canceled: true,
+              canceledAt: DateTime(2026, 5, 19, 21),
+              cancellationReason: 'Paid directly from salary account.',
+            ),
+          ],
+        ),
+      );
+
+      final loaded = await store.loadMonth(DateTime(2026, 5, 20));
+      final task = loaded.transferTasks.single;
+
+      expect(task.id, 'transfer_cancelled');
+      expect(task.canceled, isTrue);
+      expect(task.canceledAt, DateTime(2026, 5, 19, 21));
+      expect(task.cancellationReason, 'Paid directly from salary account.');
+      expect(task.completed, isFalse);
+    });
+
     test('clears monthly paid status after unchecked state is saved', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
@@ -377,6 +408,63 @@ void main() {
       expect(loaded.actualPaymentAmounts, isEmpty);
       expect(loaded.paymentDifferenceReasons, isEmpty);
       expect(loaded.paidAccountNames, isEmpty);
+    });
+
+    test('can carry open transfer tasks to the copied month', () async {
+      await store.saveMonth(
+        month: DateTime(2026, 5, 13),
+        state: AssetLiabilityMonthlyState(
+          transferTasks: <AssetLiabilityTransferTask>[
+            AssetLiabilityTransferTask(
+              id: 'open_transfer',
+              fromAccountId: 'cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'bank',
+              toAccountName: 'Bank',
+              amount: 12000,
+              dueDate: DateTime(2026, 5, 31),
+              completionMemo: 'ATM planned.',
+            ),
+            AssetLiabilityTransferTask(
+              id: 'done_transfer',
+              fromAccountId: 'cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'bank',
+              toAccountName: 'Bank',
+              amount: 8000,
+              dueDate: DateTime(2026, 5, 20),
+              completed: true,
+              completedAt: DateTime(2026, 5, 20, 9),
+            ),
+            AssetLiabilityTransferTask(
+              id: 'canceled_transfer',
+              fromAccountId: 'cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'bank',
+              toAccountName: 'Bank',
+              amount: 7000,
+              dueDate: DateTime(2026, 5, 21),
+              canceled: true,
+              canceledAt: DateTime(2026, 5, 21, 8),
+              cancellationReason: 'No longer needed.',
+            ),
+          ],
+        ),
+      );
+
+      final copied = await store.copyPreviousMonthToMonth(
+        DateTime(2026, 6, 10),
+        carryOverIncompleteTransferTasks: true,
+      );
+      final loaded = await store.loadMonth(DateTime(2026, 6, 20));
+
+      expect(copied.transferTasks, hasLength(1));
+      expect(copied.transferTasks.single.id, 'carry_2026-06_open_transfer');
+      expect(copied.transferTasks.single.dueDate, DateTime(2026, 6, 30));
+      expect(copied.transferTasks.single.completed, isFalse);
+      expect(copied.transferTasks.single.canceled, isFalse);
+      expect(copied.transferTasks.single.completionMemo, 'ATM planned.');
+      expect(loaded.transferTasks.single.id, 'carry_2026-06_open_transfer');
     });
 
     test('saves and restores default payment source accounts', () async {

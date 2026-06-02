@@ -311,8 +311,9 @@ abstract class AssetLiabilityRepository {
   );
 
   Future<AssetLiabilityMonthlyState> copyPreviousMonthToMonth(
-    DateTime targetMonth,
-  );
+    DateTime targetMonth, {
+    bool carryOverIncompleteTransferTasks = false,
+  });
 
   Future<List<AssetLiabilityMonthlySnapshot>> loadMonthlySnapshots();
 
@@ -679,13 +680,15 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
 
   @override
   Future<AssetLiabilityMonthlyState> copyPreviousMonthToMonth(
-    DateTime targetMonth,
-  ) async {
+    DateTime targetMonth, {
+    bool carryOverIncompleteTransferTasks = false,
+  }) async {
     final previousMonth = DateTime(targetMonth.year, targetMonth.month - 1);
     final previousState = await loadMonth(previousMonth);
     final copied = AssetLiabilityMonthlyStateStore.copyPreviousMonthState(
       previousState: previousState,
       targetMonth: targetMonth,
+      carryOverIncompleteTransferTasks: carryOverIncompleteTransferTasks,
     );
     await saveMonth(month: targetMonth, state: copied);
     return copied;
@@ -1605,7 +1608,10 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           left.dueDate != right.dueDate ||
           left.completed != right.completed ||
           left.completedAt != right.completedAt ||
-          left.completionMemo != right.completionMemo) {
+          left.completionMemo != right.completionMemo ||
+          left.canceled != right.canceled ||
+          left.canceledAt != right.canceledAt ||
+          left.cancellationReason != right.cancellationReason) {
         return false;
       }
     }
@@ -2134,9 +2140,13 @@ class SharedPreferencesAssetLiabilityRepository
 
   @override
   Future<AssetLiabilityMonthlyState> copyPreviousMonthToMonth(
-    DateTime targetMonth,
-  ) {
-    return store.copyPreviousMonthToMonth(targetMonth);
+    DateTime targetMonth, {
+    bool carryOverIncompleteTransferTasks = false,
+  }) {
+    return store.copyPreviousMonthToMonth(
+      targetMonth,
+      carryOverIncompleteTransferTasks: carryOverIncompleteTransferTasks,
+    );
   }
 
   @override

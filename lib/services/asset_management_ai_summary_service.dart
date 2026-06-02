@@ -779,6 +779,9 @@ class AssetManagementAiSummaryService {
       'completed': task.completed,
       'completed_at': task.completedAt?.toIso8601String(),
       'completion_memo': task.completionMemo,
+      'canceled': task.canceled,
+      'canceled_at': task.canceledAt?.toIso8601String(),
+      'cancellation_reason': task.cancellationReason,
     };
   }
 

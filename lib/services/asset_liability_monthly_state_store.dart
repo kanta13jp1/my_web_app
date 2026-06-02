@@ -336,13 +336,15 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   Future<AssetLiabilityMonthlyState> copyPreviousMonthToMonth(
-    DateTime targetMonth,
-  ) async {
+    DateTime targetMonth, {
+    bool carryOverIncompleteTransferTasks = false,
+  }) async {
     final previousMonth = DateTime(targetMonth.year, targetMonth.month - 1);
     final previousState = await loadMonth(previousMonth);
     final copied = copyPreviousMonthState(
       previousState: previousState,
       targetMonth: targetMonth,
+      carryOverIncompleteTransferTasks: carryOverIncompleteTransferTasks,
     );
     await saveMonth(month: targetMonth, state: copied);
     return copied;
@@ -420,6 +422,7 @@ class AssetLiabilityMonthlyStateStore {
   static AssetLiabilityMonthlyState copyPreviousMonthState({
     required AssetLiabilityMonthlyState previousState,
     required DateTime targetMonth,
+    bool carryOverIncompleteTransferTasks = false,
   }) {
     final targetMonthKey = formatMonthKey(targetMonth);
     final lastDay = DateTime(targetMonth.year, targetMonth.month + 1, 0).day;
@@ -439,6 +442,28 @@ class AssetLiabilityMonthlyStateStore {
           received: false,
         ),
     ]..sort((a, b) => a.date.compareTo(b.date));
+    final copiedTransferTasks = carryOverIncompleteTransferTasks
+        ? (<AssetLiabilityTransferTask>[
+            for (final task in previousState.transferTasks)
+              if (!task.completed && !task.canceled)
+                AssetLiabilityTransferTask(
+                  id: 'carry_${targetMonthKey}_${task.id}',
+                  fromAccountId: task.fromAccountId,
+                  fromAccountName: task.fromAccountName,
+                  toAccountId: task.toAccountId,
+                  toAccountName: task.toAccountName,
+                  amount: task.amount,
+                  dueDate: task.dueDate == null
+                      ? null
+                      : DateTime(
+                          targetMonth.year,
+                          targetMonth.month,
+                          min(task.dueDate!.day, lastDay),
+                        ),
+                  completionMemo: task.completionMemo,
+                ),
+          ]..sort(_compareTransferTasks))
+        : const <AssetLiabilityTransferTask>[];
 
     return AssetLiabilityMonthlyState(
       paymentOverrides: Map<String, double>.from(
@@ -457,6 +482,7 @@ class AssetLiabilityMonthlyStateStore {
         previousState.cardBillingAccountIds,
       ),
       incomePlans: copiedIncomePlans,
+      transferTasks: copiedTransferTasks,
     );
   }
 
@@ -816,6 +842,19 @@ class AssetLiabilityMonthlyStateStore {
                 rawTask['completionMemo'] ?? rawTask['completion_memo'],
               ) ??
               '';
+          final canceledAtText = rawTask['canceledAt']?.toString() ??
+              rawTask['cancelledAt']?.toString() ??
+              rawTask['canceled_at']?.toString() ??
+              rawTask['cancelled_at']?.toString();
+          final canceledAt =
+              canceledAtText == null ? null : DateTime.tryParse(canceledAtText);
+          final cancellationReason = _cleanNullableString(
+                rawTask['cancellationReason'] ??
+                    rawTask['cancelReason'] ??
+                    rawTask['cancellation_reason'] ??
+                    rawTask['cancel_reason'],
+              ) ??
+              '';
           if (id == null ||
               id.isEmpty ||
               fromAccountId == null ||
@@ -845,6 +884,10 @@ class AssetLiabilityMonthlyStateStore {
               completed: rawTask['completed'] == true,
               completedAt: completedAt,
               completionMemo: completionMemo,
+              canceled:
+                  rawTask['canceled'] == true || rawTask['cancelled'] == true,
+              canceledAt: canceledAt,
+              cancellationReason: cancellationReason,
             ),
           );
         }
@@ -1215,6 +1258,9 @@ class AssetLiabilityMonthlyStateStore {
           completed: task.completed,
           completedAt: task.completedAt,
           completionMemo: task.completionMemo,
+          canceled: task.canceled,
+          canceledAt: task.canceledAt,
+          cancellationReason: task.cancellationReason,
         ),
     ];
 
@@ -1352,6 +1398,9 @@ class AssetLiabilityMonthlyStateStore {
             'completed': task.completed,
             'completedAt': task.completedAt?.toIso8601String(),
             'completionMemo': task.completionMemo,
+            'canceled': task.canceled,
+            'canceledAt': task.canceledAt?.toIso8601String(),
+            'cancellationReason': task.cancellationReason,
           },
       ]);
     });

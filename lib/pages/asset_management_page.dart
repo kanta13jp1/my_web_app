@@ -2574,6 +2574,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final duplicate = _transferTasks.any(
       (task) =>
           !task.completed &&
+          !task.canceled &&
           task.fromAccountId == suggestion.fromAccountId &&
           task.toAccountId == suggestion.toAccountId &&
           task.amount == suggestion.amount &&
@@ -2632,6 +2633,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 completed: completed,
                 completedAt: completedAt,
                 completionMemo: current.completionMemo,
+                canceled: completed ? false : current.canceled,
+                canceledAt: completed ? null : current.canceledAt,
+                cancellationReason: completed ? '' : current.cancellationReason,
               );
             }()
           else
@@ -2648,6 +2652,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             completed: completed,
             completedAt: completedAt,
             completionMemo: task.completionMemo,
+            canceled: completed ? false : task.canceled,
+            canceledAt: completed ? null : task.canceledAt,
+            cancellationReason: completed ? '' : task.cancellationReason,
           ),
       ]..sort(_compareTransferTasksByDueDate);
     });
@@ -2704,6 +2711,187 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ]..sort(_compareTransferTasksByDueDate);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  Future<void> _showTransferTaskCancelDialog(
+    AssetLiabilityTransferTask task,
+  ) async {
+    final controller = TextEditingController(text: task.cancellationReason);
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('口座移動タスクをキャンセル'),
+          content: TextField(
+            controller: controller,
+            minLines: 3,
+            maxLines: 6,
+            decoration: const InputDecoration(
+              hintText: '例: 支払日変更のため今月は不要、別口座から直接支払い済み',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('戻る'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
+              child: const Text('キャンセルとして保存'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (reason == null) {
+      return;
+    }
+
+    final now = DateTime.now();
+    setState(() {
+      _transferTasks = [
+        for (final current in _transferTasks)
+          if (current.id == task.id)
+            AssetLiabilityTransferTask(
+              id: current.id,
+              fromAccountId: current.fromAccountId,
+              fromAccountName: current.fromAccountName,
+              toAccountId: current.toAccountId,
+              toAccountName: current.toAccountName,
+              amount: current.amount,
+              dueDate: current.dueDate,
+              completionMemo: current.completionMemo,
+              canceled: true,
+              canceledAt: now,
+              cancellationReason: reason,
+            )
+          else
+            current,
+      ]..sort(_compareTransferTasksByDueDate);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _restoreCanceledTransferTask(AssetLiabilityTransferTask task) {
+    setState(() {
+      _transferTasks = [
+        for (final current in _transferTasks)
+          if (current.id == task.id)
+            AssetLiabilityTransferTask(
+              id: current.id,
+              fromAccountId: current.fromAccountId,
+              fromAccountName: current.fromAccountName,
+              toAccountId: current.toAccountId,
+              toAccountName: current.toAccountName,
+              amount: current.amount,
+              dueDate: current.dueDate,
+              completed: false,
+              completedAt: null,
+              completionMemo: current.completionMemo,
+            )
+          else
+            current,
+      ]..sort(_compareTransferTasksByDueDate);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  Future<void> _carryOpenTransferTasksToNextCycle(
+    List<AssetLiabilityTransferTask> tasks,
+  ) async {
+    if (tasks.isEmpty) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('未完了タスクを次サイクルへ繰り越し'),
+          content: Text(
+            '${tasks.length}件の未完了口座移動タスクを次の給料サイクルへ繰り越します。'
+            '既に繰り越し済みの同じタスクは重複作成しません。',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('戻る'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('繰り越す'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    final currentMonth = _assetLiabilityStateMonth(_now);
+    final nextMonth = DateTime(currentMonth.year, currentMonth.month + 1);
+    final nextMonthKey =
+        AssetLiabilityMonthlyStateStore.formatMonthKey(nextMonth);
+    final lastDay = DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
+    final nextState = await _assetLiabilityRepository.loadMonth(nextMonth);
+    final existingIds = nextState.transferTasks.map((task) => task.id).toSet();
+    final carriedTasks = <AssetLiabilityTransferTask>[
+      for (final task in tasks)
+        if (!existingIds.contains('carry_${nextMonthKey}_${task.id}'))
+          AssetLiabilityTransferTask(
+            id: 'carry_${nextMonthKey}_${task.id}',
+            fromAccountId: task.fromAccountId,
+            fromAccountName: task.fromAccountName,
+            toAccountId: task.toAccountId,
+            toAccountName: task.toAccountName,
+            amount: task.amount,
+            dueDate: task.dueDate == null
+                ? null
+                : DateTime(
+                    nextMonth.year,
+                    nextMonth.month,
+                    min(task.dueDate!.day, lastDay),
+                  ),
+            completionMemo: task.completionMemo,
+          ),
+    ];
+    if (carriedTasks.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('繰り越し済みのため追加はありません。')),
+      );
+      return;
+    }
+
+    await _assetLiabilityRepository.saveMonth(
+      month: nextMonth,
+      state: AssetLiabilityMonthlyState(
+        paymentOverrides: nextState.paymentOverrides,
+        actualPaymentAmounts: nextState.actualPaymentAmounts,
+        paymentDifferenceReasons: nextState.paymentDifferenceReasons,
+        annualRateOverrides: nextState.annualRateOverrides,
+        annualRateEvidences: nextState.annualRateEvidences,
+        paidAccountNames: nextState.paidAccountNames,
+        paymentSourceAccountIds: nextState.paymentSourceAccountIds,
+        cardBillingAccountIds: nextState.cardBillingAccountIds,
+        cardStatementLines: nextState.cardStatementLines,
+        incomePlans: nextState.incomePlans,
+        transferTasks: <AssetLiabilityTransferTask>[
+          ...nextState.transferTasks,
+          ...carriedTasks,
+        ]..sort(_compareTransferTasksByDueDate),
+      ),
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$nextMonthKey に ${carriedTasks.length}件の口座移動タスクを繰り越しました。',
+        ),
+      ),
+    );
   }
 
   void _deleteTransferTask(String taskId) {
@@ -14187,11 +14375,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final activeTasks = workbook.transferTasks
-        .where((task) => !task.completed)
+        .where((task) => !task.completed && !task.canceled)
         .toList(growable: false)
       ..sort(_compareTransferTasksByDueDate);
     final completedTasks = workbook.transferTasks
         .where((task) => task.completed)
+        .toList(growable: false)
+      ..sort(_compareTransferTasksByDueDate);
+    final canceledTasks = workbook.transferTasks
+        .where((task) => task.canceled)
         .toList(growable: false)
       ..sort(_compareTransferTasksByDueDate);
 
@@ -14200,6 +14392,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final dueLabel = task.dueDate == null
           ? 'No due date'
           : DateFormat('M/d').format(task.dueDate!);
+      final taskMuted = task.completed || task.canceled;
       return Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Row(
@@ -14207,8 +14400,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             Checkbox(
               value: task.completed,
-              onChanged: (value) =>
-                  _toggleTransferTaskCompleted(task, value ?? false),
+              onChanged: task.canceled
+                  ? null
+                  : (value) =>
+                      _toggleTransferTaskCompleted(task, value ?? false),
             ),
             Expanded(
               child: Padding(
@@ -14220,6 +14415,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       '${task.fromAccountName} -> ${task.toAccountName} / '
                       '${_formatManagementYen(task.amount)} / $dueLabel',
                       style: TextStyle(
+                        color: taskMuted
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                            : null,
                         fontSize: 12,
                         height: 1.5,
                         decoration:
@@ -14237,6 +14435,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                       ),
                     ],
+                    if (task.cancellationReason.trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'キャンセル理由: ${task.cancellationReason.trim()}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -14246,6 +14455,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               icon: const Icon(Icons.edit_note, size: 16),
               label: const Text('メモ'),
             ),
+            if (task.canceled)
+              TextButton.icon(
+                onPressed: () => _restoreCanceledTransferTask(task),
+                icon: const Icon(Icons.restore, size: 16),
+                label: const Text('再開'),
+              )
+            else if (!task.completed)
+              TextButton.icon(
+                onPressed: () => unawaited(_showTransferTaskCancelDialog(task)),
+                icon: const Icon(Icons.block, size: 16),
+                label: const Text('キャンセル'),
+              ),
             IconButton(
               tooltip: isBuiltIn ? '定例振替' : '振替タスクを削除',
               icon: const Icon(Icons.delete_outline, size: 18),
@@ -14286,7 +14507,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Text(
             'Pending transfer tasks are included in account-level projected '
             'balances. Completed tasks are treated as already reflected in '
-            'the current balance, so they are not counted twice.',
+            'the current balance, and canceled tasks are excluded from '
+            'projected balances.',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
@@ -14301,6 +14523,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 4),
             for (final task in activeTasks) buildTaskRow(task),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () =>
+                    unawaited(_carryOpenTransferTasksToNextCycle(activeTasks)),
+                icon: const Icon(Icons.redo, size: 16),
+                label: const Text('未完了を次サイクルへ繰り越し'),
+              ),
+            ),
           ],
           if (completedTasks.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -14310,6 +14541,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const SizedBox(height: 4),
             for (final task in completedTasks) buildTaskRow(task),
+          ],
+          if (canceledTasks.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'キャンセル済みタスク',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+            for (final task in canceledTasks) buildTaskRow(task),
           ],
           if (workbook.transferSuggestions.isNotEmpty) ...[
             const SizedBox(height: 10),

@@ -997,6 +997,47 @@ void main() {
       expect(workbook.transferSuggestions, isEmpty);
     });
 
+    test('excludes canceled transfer tasks from account-level cashflow', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'bank': 10000,
+          'mobit': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 20000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'custom_bank'},
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_cancelled',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'cash',
+            toAccountId: 'custom_bank',
+            toAccountName: 'bank',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 8),
+            canceled: true,
+            canceledAt: DateTime(2026, 5, 7, 21),
+            cancellationReason: 'Paid from another account.',
+          ),
+        ],
+      );
+
+      final cashSummary = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_cash',
+      );
+      final bankSummary = workbook.accountCashflowSummaries.firstWhere(
+        (summary) => summary.accountId == 'custom_bank',
+      );
+      final task = workbook.transferTasks.single;
+
+      expect(task.canceled, isTrue);
+      expect(task.cancellationReason, 'Paid from another account.');
+      expect(cashSummary.pendingTransferOut, 0);
+      expect(bankSummary.pendingTransferIn, 0);
+      expect(bankSummary.projectedBalance, -10000);
+    });
+
     test('adds monthly auPay card funding transfer to Jibun bank', () {
       const smbcOtsukaName =
           '\u4e09\u4e95\u4f4f\u53cb\u9280\u884c\u5927\u585a\u652f\u5e97';

@@ -1347,6 +1347,9 @@ class AssetLiabilityPlanningService {
           completed: task.completed,
           completedAt: task.completedAt,
           completionMemo: task.completionMemo,
+          canceled: task.canceled,
+          canceledAt: task.canceledAt,
+          cancellationReason: task.cancellationReason,
         ),
       );
     }
@@ -1443,13 +1446,17 @@ class AssetLiabilityPlanningService {
           );
           final pendingTransferIn = transferTasks.fold<double>(
             0,
-            (sum, task) => !task.completed && task.toAccountId == account.id
+            (sum, task) => !task.completed &&
+                    !task.canceled &&
+                    task.toAccountId == account.id
                 ? sum + task.amount
                 : sum,
           );
           final pendingTransferOut = transferTasks.fold<double>(
             0,
-            (sum, task) => !task.completed && task.fromAccountId == account.id
+            (sum, task) => !task.completed &&
+                    !task.canceled &&
+                    task.fromAccountId == account.id
                 ? sum + task.amount
                 : sum,
           );

@@ -1222,6 +1222,9 @@ void main() {
             toAccountName: 'SMBC Otsuka',
             amount: 10000,
             dueDate: DateTime(2026, 5, 18),
+            canceled: true,
+            canceledAt: DateTime.utc(2026, 5, 17, 22),
+            cancellationReason: 'Paid from salary account directly.',
           ),
         ],
       );
@@ -1255,6 +1258,15 @@ void main() {
       expect(row['transfer_tasks'], isA<List<Object?>>());
       expect(restored.transferTasks.single.toAccountId, 'smbc_otsuka');
       expect(restored.transferTasks.single.amount, 10000);
+      expect(restored.transferTasks.single.canceled, isTrue);
+      expect(
+        restored.transferTasks.single.canceledAt,
+        DateTime.utc(2026, 5, 17, 22),
+      );
+      expect(
+        restored.transferTasks.single.cancellationReason,
+        'Paid from salary account directly.',
+      );
     });
 
     test('round-trips settings and snapshot payloads', () {
@@ -1408,12 +1420,14 @@ class _FakeAssetLiabilityRepository extends AssetLiabilityRepository {
 
   @override
   Future<AssetLiabilityMonthlyState> copyPreviousMonthToMonth(
-    DateTime targetMonth,
-  ) async {
+    DateTime targetMonth, {
+    bool carryOverIncompleteTransferTasks = false,
+  }) async {
     final previousMonth = DateTime(targetMonth.year, targetMonth.month - 1);
     final copied = AssetLiabilityMonthlyStateStore.copyPreviousMonthState(
       previousState: await loadMonth(previousMonth),
       targetMonth: targetMonth,
+      carryOverIncompleteTransferTasks: carryOverIncompleteTransferTasks,
     );
     await saveMonth(month: targetMonth, state: copied);
     return copied;

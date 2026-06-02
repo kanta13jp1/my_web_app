@@ -1413,7 +1413,9 @@ class AssetManagementInsightPromptBuilder {
         buffer.writeln(
           '- 口座移動タスク:${task.fromAccountName} -> ${task.toAccountName} / '
           '金額:${_formatAmount(task.amount)} / 期限:${_formatNullableDate(task.dueDate)} / '
-          '完了:${task.completed ? 'はい' : 'いいえ'}',
+          '完了:${task.completed ? 'はい' : 'いいえ'} / '
+          'キャンセル:${task.canceled ? 'はい' : 'いいえ'}'
+          '${task.cancellationReason.trim().isEmpty ? '' : ' / 理由:${task.cancellationReason.trim()}'}',
         );
       }
     }
