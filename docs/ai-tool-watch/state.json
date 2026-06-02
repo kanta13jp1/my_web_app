@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-06-01T22:17:15Z",
-      "hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
+      "checked_at": "2026-06-02T22:09:09Z",
+      "hash": "e9a0a277f6144b7a654ab5cc58cbae7a3711803dc205c6990a063751f208df51",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.159 / May 31, 2026",
+      "latest_signal": "2.1.160 / June 2, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-06-01T22:17:15Z",
+      "checked_at": "2026-06-02T22:09:09Z",
       "hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
       "keyword_groups": {
         "codex-runtime": [
@@ -89,7 +89,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-06-01T22:17:15Z",
+      "checked_at": "2026-06-02T22:09:09Z",
       "hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
       "keyword_groups": {
         "codex-runtime": [
@@ -130,8 +130,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-06-01T22:17:15Z",
-      "hash": "31aca23164e5523d257656c21a606b422ea15609340e0c0338c71571ceb784a7",
+      "checked_at": "2026-06-02T22:09:09Z",
+      "hash": "7936a8c1dd992db2f7041fe65f3e73b3cc1bd97ad1af8f5103bed304a51f2729",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -173,13 +173,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A",
+      "latest_signal": "2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-06-01T22:17:15Z",
+      "checked_at": "2026-06-02T22:09:09Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -188,8 +188,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-06-01T22:17:15Z",
-      "hash": "57df9ca561b8ed61439843ce2080464725de68af47fe54d44705e6ed86de1424",
+      "checked_at": "2026-06-02T22:09:09Z",
+      "hash": "780f9a0be895955789911940c588a35cb242a0f31b37a8ab03ec45de3465bfe2",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -232,7 +232,7 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-06-01T22:17:15Z",
+      "checked_at": "2026-06-02T22:09:09Z",
       "hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
       "keyword_groups": {
         "hooks": [
@@ -259,8 +259,8 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-06-01T22:17:15Z",
-      "hash": "8bcd8189add9789c89a8ff8fa402c34854a80dfa5e0d88eaadcafa9b2aead8b7",
+      "checked_at": "2026-06-02T22:09:09Z",
+      "hash": "b31f701ec918443959b6b882d2449fb58cd9476bb485f592d59fff1133dc4489",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -297,7 +297,7 @@
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-06-01T22:17:15Z",
+      "checked_at": "2026-06-02T22:09:09Z",
       "hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
       "keyword_groups": {
         "hooks": [
@@ -326,5 +326,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-06-01T22:17:15Z"
+  "updated_at": "2026-06-02T22:09:09Z"
 }

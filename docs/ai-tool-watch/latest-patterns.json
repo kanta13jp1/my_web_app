@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-01T22:17:18Z",
+  "generated_at": "2026-06-02T22:09:14Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,18 +19,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-61560437a811",
+        "entry_id": "nf-89f59b45d91d",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.159 / May 31, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.159 May 31, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.158 May 30, 2026 Auto mode is now available on Bedrock, Vertex, and Foundry for Opus...",
+        "text": "Claude Code changelog 2.1.160 / June 2, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . links being rewritten to a broken path on Windows terminals with hyperlink support Fixed voice mode failing to connect when the project directory or branch name contains non-...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
+          "hash": "e9a0a277f6144b7a654ab5cc58cbae7a3711803dc205c6990a063751f208df51",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,7 +74,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.159 / May 31, 2026",
+          "latest_signal": "2.1.160 / June 2, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
           "previous_hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
@@ -82,14 +82,14 @@
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.159 May 31, 2026 Internal infrastructure improvements (no user-facing changes) ​ 2.1.158 May 30, 2026 Auto mode is now available on Bedrock, Vertex, and Foundry for Opus..."
+            "links being rewritten to a broken path on Windows terminals with hyperlink support Fixed voice mode failing to connect when the project directory or branch name contains non-..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-61560437a811",
+        "entry_id": "nf-89f59b45d91d",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,7 +115,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "3d39ee0181f832b0480fc562b838a9c8f77ae2e2d769b2f2aa88609a2fb30445",
+          "previous_hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -259,9 +259,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-27e25113a3ae",
+        "entry_id": "nf-01d78beff5ce",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... May 2026 li+li]:mt-12\"> 2026-05-29 Computer use and mobile access on Windows 26.527 New features Computer Use now works on Windows. Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested.",
+        "text": "Codex changelog 2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... May 2026 li+li]:mt-12\"> 2026-05-29 Computer use and mobile access on Windows 26.527 New features Computer Use now works on Windows. Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "31aca23164e5523d257656c21a606b422ea15609340e0c0338c71571ceb784a7",
+          "hash": "7936a8c1dd992db2f7041fe65f3e73b3cc1bd97ad1af8f5103bed304a51f2729",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -312,10 +312,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A",
+          "latest_signal": "2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "fd94b0c55a9fdecb180c53bfa4f8ff369a357121be8b961c0f7bce95b7cc8f7c",
+          "previous_hash": "31aca23164e5523d257656c21a606b422ea15609340e0c0338c71571ceb784a7",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -327,7 +327,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-27e25113a3ae",
+        "entry_id": "nf-01d78beff5ce",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -356,7 +356,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "57df9ca561b8ed61439843ce2080464725de68af47fe54d44705e6ed86de1424",
+          "hash": "780f9a0be895955789911940c588a35cb242a0f31b37a8ab03ec45de3465bfe2",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -396,7 +396,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "2eef0d2ac63759b06373c6ae6d7b22b4a4caaefd6ded97f3eac3479bce8c4abe",
+          "previous_hash": "57df9ca561b8ed61439843ce2080464725de68af47fe54d44705e6ed86de1424",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -599,9 +599,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-89612b21de6a",
+        "entry_id": "nf-4e9e574b1551",
         "title": "Devin release notes",
-        "text": "Devin release notes May 29, 2026 Navigation Release Notes Recent Updates Cloud CLI Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to Use... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events.",
+        "text": "Devin release notes May 29, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
@@ -610,7 +610,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "8bcd8189add9789c89a8ff8fa402c34854a80dfa5e0d88eaadcafa9b2aead8b7",
+          "hash": "b31f701ec918443959b6b882d2449fb58cd9476bb485f592d59fff1133dc4489",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -644,10 +644,10 @@
           "latest_signal": "May 29, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "b0bf437a0f0c5e0d9782826f0468b02f7afd23d79c7adefc1363cda55be15bd7",
+          "previous_hash": "8bcd8189add9789c89a8ff8fa402c34854a80dfa5e0d88eaadcafa9b2aead8b7",
           "slug": "devin-release-notes",
           "snippets": [
-            "Navigation Release Notes Recent Updates Cloud CLI Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to Use...",
+            "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
             "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
             "Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events."
           ],
@@ -656,7 +656,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-89612b21de6a",
+        "entry_id": "nf-4e9e574b1551",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",

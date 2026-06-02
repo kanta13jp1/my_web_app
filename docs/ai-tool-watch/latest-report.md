@@ -1,13 +1,13 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-01T22:17:15Z`
-- Previous check: `2026-05-31T21:37:28Z`
+- Checked at: `2026-06-02T22:09:09Z`
+- Previous check: `2026-06-01T22:17:15Z`
 - Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `changed` Codex changelog: 2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A
+- `changed` Claude Code changelog: 2.1.160 / June 2, 2026
+- `changed` Codex changelog: 2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
 - `changed` Devin release notes: May 29, 2026
 
@@ -21,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.159 / May 31, 2026
+  - Latest signal: 2.1.160 / June 2, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -39,7 +39,7 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-06-01 / Use Codex with Amazon Bedrock Codex can now use supported OpenAI models available through A
+  - Latest signal: 2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
   - Short signal: May 2026 li+li]:mt-12"> 2026-05-29 Computer use and mobile access on Windows 26.527 New features Computer Use now works on Windows.
@@ -69,7 +69,7 @@
   - URL: https://docs.devin.ai/release-notes
   - Latest signal: May 29, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: Navigation Release Notes Recent Updates Cloud CLI Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to Use...
+  - Short signal: Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...
   - Short signal: Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...
 
 ## NotebookLM Harness Mapping
