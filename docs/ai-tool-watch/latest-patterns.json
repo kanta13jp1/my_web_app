@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T22:09:14Z",
+  "generated_at": "2026-06-03T11:39:55Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-89f59b45d91d",
+        "entry_id": "nf-f26ef2f74239",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.160 / June 2, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . links being rewritten to a broken path on Windows terminals with hyperlink support Fixed voice mode failing to connect when the project directory or branch name contains non-...",
+        "text": "Claude Code changelog 2.1.161 / June 2, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.161 June 2, 2026 OTEL_RESOURCE_ATTRIBUTES values are now included as labels on metric datapoints, so you can slice usage metrics by custom dimensions like team or repo...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "e9a0a277f6144b7a654ab5cc58cbae7a3711803dc205c6990a063751f208df51",
+          "hash": "da2ea5ac069ea94a68baedf82545439e13ce6a31835c5742f3b75f9907a54eb4",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.160 / June 2, 2026",
+          "latest_signal": "2.1.161 / June 2, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "4efcd34b385b996f89035d583bfde6c5b8e3c2b5667591802fc8da176bb06200",
+          "previous_hash": "e9a0a277f6144b7a654ab5cc58cbae7a3711803dc205c6990a063751f208df51",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
             "This page is generated from the CHANGELOG.md on GitHub .",
-            "links being rewritten to a broken path on Windows terminals with hyperlink support Fixed voice mode failing to connect when the project directory or branch name contains non-..."
+            "​ 2.1.161 June 2, 2026 OTEL_RESOURCE_ATTRIBUTES values are now included as labels on metric datapoints, so you can slice usage metrics by custom dimensions like team or repo..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-89f59b45d91d",
+        "entry_id": "nf-f26ef2f74239",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -267,7 +267,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "7936a8c1dd992db2f7041fe65f3e73b3cc1bd97ad1af8f5103bed304a51f2729",
@@ -315,7 +315,7 @@
           "latest_signal": "2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "31aca23164e5523d257656c21a606b422ea15609340e0c0338c71571ceb784a7",
+          "previous_hash": "7936a8c1dd992db2f7041fe65f3e73b3cc1bd97ad1af8f5103bed304a51f2729",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -353,7 +353,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "780f9a0be895955789911940c588a35cb242a0f31b37a8ab03ec45de3465bfe2",
@@ -396,7 +396,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "57df9ca561b8ed61439843ce2080464725de68af47fe54d44705e6ed86de1424",
+          "previous_hash": "780f9a0be895955789911940c588a35cb242a0f31b37a8ab03ec45de3465bfe2",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -533,18 +533,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-39f7979adc34",
+        "entry_id": "nf-7dd4f5f8ccab",
         "title": "Gemini Code Assist release notes",
-        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.82.0 / May 14, 2026 Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体... Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview). Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories.",
+        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.84.0 / May 29, 2026 Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体... Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview). Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories.",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
+          "hash": "3841b54c295ae240815ccf6428a7651b0cae105112ab55c0d0f9105e53d3b1ee",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -566,7 +566,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "VS Code Gemini Code Assist 2.82.0 / May 14, 2026",
+          "latest_signal": "VS Code Gemini Code Assist 2.84.0 / May 29, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
           "previous_hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
@@ -581,7 +581,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-39f7979adc34",
+        "entry_id": "nf-7dd4f5f8ccab",
         "title": "Gemini Code Assist release notes",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
@@ -610,7 +610,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "b31f701ec918443959b6b882d2449fb58cd9476bb485f592d59fff1133dc4489",
+          "hash": "37efffc7738b238db2a82a12361f1443efee0b1a800300a3fe0f7f9c7ed9626b",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -644,7 +644,7 @@
           "latest_signal": "May 29, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "8bcd8189add9789c89a8ff8fa402c34854a80dfa5e0d88eaadcafa9b2aead8b7",
+          "previous_hash": "b31f701ec918443959b6b882d2449fb58cd9476bb485f592d59fff1133dc4489",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",

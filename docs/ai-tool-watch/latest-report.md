@@ -1,14 +1,13 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-02T22:09:09Z`
-- Previous check: `2026-06-01T22:17:15Z`
-- Changed/new official sources: `4`
+- Checked at: `2026-06-03T11:39:53Z`
+- Previous check: `2026-06-02T22:09:09Z`
+- Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.160 / June 2, 2026
-- `changed` Codex changelog: 2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us
-- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+- `changed` Claude Code changelog: 2.1.161 / June 2, 2026
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.84.0 / May 29, 2026
 - `changed` Devin release notes: May 29, 2026
 
 ## Recommended Actions
@@ -21,7 +20,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.160 / June 2, 2026
+  - Latest signal: 2.1.161 / June 2, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -61,7 +60,7 @@
   - Short signal: Auto-review applies to Shell, MCP, and Fetch tool calls.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
-  - Latest signal: VS Code Gemini Code Assist 2.82.0 / May 14, 2026
+  - Latest signal: VS Code Gemini Code Assist 2.84.0 / May 29, 2026
   - Keyword groups: hooks, schedule, integration, quality-cost
   - Short signal: Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).
