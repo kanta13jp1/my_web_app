@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-03T11:39:55Z",
+  "generated_at": "2026-06-03T22:12:16Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-f26ef2f74239",
+        "entry_id": "nf-5c040b5fe9f1",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.161 / June 2, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.161 June 2, 2026 OTEL_RESOURCE_ATTRIBUTES values are now included as labels on metric datapoints, so you can slice usage metrics by custom dimensions like team or repo...",
+        "text": "Claude Code changelog 2.1.162 / June 3, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... Copy page This page is generated from the CHANGELOG.md on GitHub . permission prompt) --tools : explicitly listing Grep/Glob now provides the dedicated search tools on native builds with embedded search (previously these names were silently...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "da2ea5ac069ea94a68baedf82545439e13ce6a31835c5742f3b75f9907a54eb4",
+          "hash": "eb84290eecabd238d2e9fa8e07d81145a34b7d343543772e4849ad12e346e5b3",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.161 / June 2, 2026",
+          "latest_signal": "2.1.162 / June 3, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "e9a0a277f6144b7a654ab5cc58cbae7a3711803dc205c6990a063751f208df51",
+          "previous_hash": "da2ea5ac069ea94a68baedf82545439e13ce6a31835c5742f3b75f9907a54eb4",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
-            "This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.161 June 2, 2026 OTEL_RESOURCE_ATTRIBUTES values are now included as labels on metric datapoints, so you can slice usage metrics by custom dimensions like team or repo..."
+            "Copy page This page is generated from the CHANGELOG.md on GitHub .",
+            "permission prompt) --tools : explicitly listing Grep/Glob now provides the dedicated search tools on native builds with embedded search (previously these names were silently..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-f26ef2f74239",
+        "entry_id": "nf-5c040b5fe9f1",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -107,18 +107,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-5f791d3c6f50",
+        "entry_id": "nf-30d335d2a62a",
         "title": "Claude Code hooks reference",
-        "text": "Claude Code hooks reference Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search... Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference... For a quickstart guide with examples, see Automate actions with hooks .",
+        "text": "Claude Code hooks reference Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring... Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference... Copy page For a quickstart guide with examples, see Automate actions with hooks .",
         "url": "https://code.claude.com/docs/en/hooks",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
+          "hash": "bcb3d4aaa2db89399f15532a300edc7af9afeee6f9f2d5af47e0c070d5f94c3c",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -152,22 +152,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
+          "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
           "previous_hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
           "slug": "claude-code-hooks",
           "snippets": [
-            "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
+            "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
             "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-            "For a quickstart guide with examples, see Automate actions with hooks ."
+            "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/hooks"
         }
       },
       "filter": {
-        "entry_id": "nf-5f791d3c6f50",
+        "entry_id": "nf-30d335d2a62a",
         "title": "Claude Code hooks reference",
         "url": "https://code.claude.com/docs/en/hooks",
         "source": "Claude Code",
@@ -185,18 +185,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-a37a4b60b102",
+        "entry_id": "nf-b4df2736dc00",
         "title": "Claude Code GitHub Actions",
-        "text": "Claude Code GitHub Actions Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search... Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting... Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow...",
+        "text": "Claude Code GitHub Actions Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before... Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting... Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow...",
         "url": "https://code.claude.com/docs/en/github-actions",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
+          "hash": "9fe958dee600a799876799cf6bd13c1b17cae634f679d97b26ce317f0f9e2ba5",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -226,13 +226,13 @@
               "workflow"
             ]
           },
-          "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
+          "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
           "previous_hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
           "slug": "claude-code-github-actions",
           "snippets": [
-            "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
+            "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
             "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
             "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
           ],
@@ -241,7 +241,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-a37a4b60b102",
+        "entry_id": "nf-b4df2736dc00",
         "title": "Claude Code GitHub Actions",
         "url": "https://code.claude.com/docs/en/github-actions",
         "source": "Claude Code",
@@ -267,10 +267,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "7936a8c1dd992db2f7041fe65f3e73b3cc1bd97ad1af8f5103bed304a51f2729",
+          "hash": "a59dbaf13219088df7a63bcfee1393d0f52681ab8a4c8fcbf1e8f3c260d35cfa",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -353,10 +353,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "780f9a0be895955789911940c588a35cb242a0f31b37a8ab03ec45de3465bfe2",
+          "hash": "4fde2472f78c32c343b44e2ff07bf5a3c66b212eddc9c617d38b78c01150f075",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -469,18 +469,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-73e3233d2bce",
+        "entry_id": "nf-58606c768e42",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.6 / May 29, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Auto-review applies to Shell, MCP, and Fetch tool calls. Allowlisted calls run immediately, and calls that can be sandboxed run in the sandbox.",
+        "text": "Cursor changelog 3.6 / May 29, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... They give cohorts of users separate model access, spend limits, and agent permissions without standing up a whole new team. Improvements (5) ↓ ↑ Multi-team support so users can be on multiple teams at once Organization-level IDP management Organization-level usage analytics, with drill downs to each...",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
+          "hash": "e8772480edb94c39e26dac0ef0128514968b349834914e6ea4f8576fe93aaef5",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -491,6 +491,7 @@
             ],
             "quality-cost": [
               "sandbox",
+              "permission",
               "review",
               "CI"
             ],
@@ -507,15 +508,15 @@
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "Auto-review applies to Shell, MCP, and Fetch tool calls.",
-            "Allowlisted calls run immediately, and calls that can be sandboxed run in the sandbox."
+            "They give cohorts of users separate model access, spend limits, and agent permissions without standing up a whole new team.",
+            "Improvements (5) ↓ ↑ Multi-team support so users can be on multiple teams at once Organization-level IDP management Organization-level usage analytics, with drill downs to each..."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-73e3233d2bce",
+        "entry_id": "nf-58606c768e42",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -544,7 +545,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3841b54c295ae240815ccf6428a7651b0cae105112ab55c0d0f9105e53d3b1ee",
+          "hash": "feb09096c018f44874df30775f75dee7f30c64ecb939b1fef36c07969d1c40a1",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -569,7 +570,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.84.0 / May 29, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "90758f24fe0db77f4e0af815e3d828a8545920b1a0650d5b54865d637b088320",
+          "previous_hash": "3841b54c295ae240815ccf6428a7651b0cae105112ab55c0d0f9105e53d3b1ee",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -610,7 +611,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "37efffc7738b238db2a82a12361f1443efee0b1a800300a3fe0f7f9c7ed9626b",
+          "hash": "a52107d599262e15d023ee25990bbd55d81a05544346af501e42057a04af0252",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -644,7 +645,7 @@
           "latest_signal": "May 29, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "b31f701ec918443959b6b882d2449fb58cd9476bb485f592d59fff1133dc4489",
+          "previous_hash": "37efffc7738b238db2a82a12361f1443efee0b1a800300a3fe0f7f9c7ed9626b",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
