@@ -374,6 +374,10 @@ void main() {
 
       expect(morning, evening);
       expect(morning, isNot(nextDay));
+      expect(morning, startsWith('sha256:'));
+      expect(morning, hasLength(71));
+      expect(morning, isNot(contains('workbook')));
+      expect(morning, isNot(contains('{')));
     });
 
     test(
