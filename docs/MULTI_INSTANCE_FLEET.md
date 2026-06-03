@@ -8,6 +8,12 @@
 > **運用憲章 (5 正本 + 6 AI 役割 + 監査)**: [`docs/OPERATIONS_CHARTER.md`](./OPERATIONS_CHARTER.md) を併せて参照.
 > **移行ログ**: [`docs/FLEET_2_INSTANCE_TRANSITION.md`](./FLEET_2_INSTANCE_TRANSITION.md).
 
+## 2026-06-03 3-Lane Operating Model Overlay (part 240d)
+
+- 運用モデルの **canonical** は [`AI_DRIVEN_DEV_OPERATING_MODEL.md`](./AI_DRIVEN_DEV_OPERATING_MODEL.md). 本 roster はその **L2/L3** の実体台帳.
+- **3 レーン**: **L1 探索** = Antigravity + Gemini (企画 / UI 探索 / **user 実行・Claude 駆動不可**) / **L2 実装** = VSCode + Codex (= 下表「Win版 (Codex CLI)」) / **L3 設計** = VSCode + Claude Code (= 下表「Win版 (Claude Code)」).
+- 旧 2-instance 記述は **L2 + L3** に読み替え. L1 は新規レーン (ローカル app instance ではなく user の IDE). dormant 10 instance は不変.
+
 ## 2026-05-07 AI Tool Update Overlay (#1706)
 
 - Keep the active fleet at exactly two local app instances: **Claude Code #1 (Windows app)** for architecture/review/docs triage and **Codex #1 (Windows app)** for scoped implementation PRs, CI, merge, and cleanup.
