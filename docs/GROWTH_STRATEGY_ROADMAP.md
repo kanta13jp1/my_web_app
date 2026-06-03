@@ -31525,3 +31525,20 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 **commit**: 本 PR / **follow-up**: WBS phase migration (Codex 適用) / `inject-rules.txt` `[INSTANCE]` 3 レーン更新 / `COMPRESSED_PROMPT_V3.md` stale 精査。
 
 **Philosophy Alignment**: 原則 4 (mentor=verify-first/honest scope) ✅ / 原則 6 (商品=価値=運用モデル) ✅ / 原則 7 (資本=時間=stale 削除) ✅ / 原則 8 (KPI) ✅ / 原則 9 (IPO=systemic process) ✅ = **5/9**
+
+---
+
+## 📋 part 240e (2026-06-03) — AI大学 公民モジュール (kokkaimap.jp 相当) 設計
+
+**instance**: Win版 (Claude Code) = L3 設計レーン / **session**: part 240e (2026-06-03 / interactive / user 依頼「kokkaimap.jp 相当機能の取り込み可否」)
+
+**サマリ**:
+- **feasibility verify-first**: kokkaimap.jp = 国会議員マップ (712議員地図 + 発言/投票 + Claude Haiku AI要約 + 投票マッチング / 源=国会会議録検索システム)。技術적には取り込み可だが core mission と別軸 + 政治コンテンツ固有リスク (中立性/名誉毀損) → **AI大学の「学び」に接続** = `civics` 学部として教育先行で取り込む方針を user 確定。
+- **AI大学 構造 verify**: 学部→学科→content のデータ駆動階層 → **学部行追加で UI 自動表示 (Flutter 変更不要)**。AI要約は `ai-hub` EF `summarize.text` 再利用 (EF~15≪50 / 新規EF不要)。
+- **段階設計** ([`docs/AI_UNIVERSITY_CIVICS_MODULE.md`](AI_UNIVERSITY_CIVICS_MODULE.md)): Phase1-2 (civics学部+4学科+教材seed / 低リスク MVP) → Phase3 (地図UI/郵便番号/AI要約 / 要GO) → Phase4 (国会会議録 live同期 / 🔴中立性ポリシー必須)。**v1=教材のみ**で議員評点を持たず名誉毀損リスクを構造回避。
+- **Codex handoff** ([`cross-instance-prs/20260603_civics_module_mvp.md`](cross-instance-prs/20260603_civics_module_mvp.md)): Phase1-2 migration 完全SQL (idempotent / スキーマ準拠 / 中立ガード)。Issue 起票。
+- データ源 = [国会会議録 API](https://kokkai.ndl.go.jp/api.html) (登録不要/JSON/**高頻度禁止→数秒間隔+キャッシュ必須**)。
+
+**commit**: 本 PR / **follow-up**: Phase1-2 migration (Codex 適用) / Phase3-4 は別 Issue + 中立性ポリシー策定後。
+
+**Philosophy Alignment**: 原則 1 (CEO感=mission整合へ reframe) ✅ / 原則 2 (ミッション=学びへ接続) ✅ / 原則 4 (mentor=feasibility verify+リスク明示) ✅ / 原則 6 (商品=価値=civic教育) ✅ / 原則 8 (KPI) ✅ = **5/9**
