@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/asset_management_ai_analysis_history.dart';
@@ -62,7 +65,7 @@ class AssetManagementAiAnalysisHistoryService {
 
     await client.from(tableName).insert(<String, dynamic>{
       'user_id': userId,
-      'request_fingerprint': requestFingerprint,
+      'request_fingerprint': _safeRequestFingerprint(requestFingerprint),
       'report_base_date': _dateOnly(report.workbook.baseDate),
       'status': result.status.name,
       'source': result.source,
@@ -72,6 +75,22 @@ class AssetManagementAiAnalysisHistoryService {
       'input_payload': result.payload,
       'generated_at': result.generatedAt.toUtc().toIso8601String(),
     });
+  }
+
+  String _safeRequestFingerprint(String value) {
+    final trimmed = value.trim();
+    if (_isSha256Fingerprint(trimmed)) {
+      return trimmed;
+    }
+    return 'sha256:${sha256.convert(utf8.encode(trimmed))}';
+  }
+
+  bool _isSha256Fingerprint(String value) {
+    if (value.length != 71 || !value.startsWith('sha256:')) {
+      return false;
+    }
+    final hex = value.substring(7);
+    return RegExp(r'^[0-9a-f]{64}$').hasMatch(hex);
   }
 
   SupabaseClient? _resolveClient() {

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+
 import '../models/asset_management_ai_analysis_history.dart';
 import '../models/asset_liability_workbook.dart';
 import '../models/user_profile.dart';
@@ -370,7 +372,8 @@ class AssetManagementAiSummaryService {
   }
 
   String buildRequestFingerprint(AssetManagementInsightReport report) {
-    return jsonEncode(_fingerprintValue(buildPayload(report)));
+    final canonical = jsonEncode(_fingerprintValue(buildPayload(report)));
+    return 'sha256:${sha256.convert(utf8.encode(canonical))}';
   }
 
   String buildDeterministicSummary(AssetManagementInsightReport report) {

@@ -15,6 +15,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   supabase_flutter: ^2.0.0
+  crypto: ^3.0.7
   cupertino_icons: ^1.0.6
   web: ^1.1.0
 
