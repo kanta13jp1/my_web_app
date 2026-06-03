@@ -31542,3 +31542,20 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 **commit**: 本 PR / **follow-up**: Phase1-2 migration (Codex 適用) / Phase3-4 は別 Issue + 中立性ポリシー策定後。
 
 **Philosophy Alignment**: 原則 1 (CEO感=mission整合へ reframe) ✅ / 原則 2 (ミッション=学びへ接続) ✅ / 原則 4 (mentor=feasibility verify+リスク明示) ✅ / 原則 6 (商品=価値=civic教育) ✅ / 原則 8 (KPI) ✅ = **5/9**
+
+---
+
+## 2026-06-04 - Codex #1: WBS SDLC 7工程 phase migration
+
+**Scope**: Applied the Win Claude part 240d handoff for a schema-only WBS SDLC axis.
+
+**Changes**:
+- Added `public.wbs_tasks.phase` with the seven allowed values: `planning`, `design`, `impl`, `test`, `release`, `ops`, `maintenance`.
+- Backfilled only production-confirmed WBS categories where phase mapping is unambiguous.
+- Seeded one or more durable WBS tasks for every SDLC phase so planning through maintenance is visible in the backlog.
+- Moved the completed handoff note to `docs/cross-instance-prs/done/20260603_wbs_sdlc_phase.md`.
+
+**Validation focus**:
+- Migration is additive and idempotent.
+- Existing ambiguous WBS categories remain `NULL` for later manual/UI classification.
+- Production verification target: `select phase, count(*) from public.wbs_tasks group by phase order by phase;`.
