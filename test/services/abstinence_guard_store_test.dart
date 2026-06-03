@@ -269,4 +269,41 @@ void main() {
     expect(trend.map((day) => day.count), <int>[0, 1, 0, 2]);
     expect(trend.last.label, '3/21');
   });
+
+  test('loadSnapshotWithSlipCounts returns snapshot and trend together',
+      () async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime(2026, 3, 21, 9);
+
+    await AbstinenceGuardStore.setEnabled(
+      itemId: 'touch_hair',
+      isEnabled: true,
+      prefs: prefs,
+      now: today,
+    );
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: 'touch_hair',
+      prefs: prefs,
+      now: DateTime(2026, 3, 19, 10),
+    );
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: 'touch_hair',
+      prefs: prefs,
+      now: today,
+    );
+
+    final bundle = await AbstinenceGuardStore.loadSnapshotWithSlipCounts(
+      itemId: 'touch_hair',
+      days: 4,
+      prefs: prefs,
+      now: today,
+    );
+
+    expect(
+      bundle.snapshot.enabledStates.map((state) => state.item.id),
+      contains('touch_hair'),
+    );
+    expect(bundle.snapshot.primaryInterference?.item.id, 'touch_hair');
+    expect(bundle.slipCounts.map((day) => day.count), <int>[0, 1, 0, 1]);
+  });
 }
