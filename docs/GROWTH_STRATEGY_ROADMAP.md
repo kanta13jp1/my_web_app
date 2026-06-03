@@ -31508,3 +31508,20 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 1. **append-only Edit dogfood 第 1 例** = 部 238 truncation 教訓を即 session で実践 (= 31,364 行 file を unique-anchor 追記 / full Write 禁止を自ら遵守)
 2. **dead-branch isolate pattern 第 1 例** = MERGE IN PROGRESS + 386 behind + uncommitted の orphan branch は abort 強制せず fresh worktree off main で迂回 (= clobber 回避)
 3. **autonomous-cron triad safe 第 3 例** = 部 219 + 部 225 + 部 239 (= FATIGUE 下 docs-only triad = 再 compaction / scope creep 回避の安全形)
+
+---
+
+## 📋 part 240d (2026-06-03) — AI 駆動開発 運用モデル v1 + 3 レーン再定義 + WBS SDLC 工程 + stale doc 削除
+
+**instance**: Win版 (Claude Code) = L3 設計レーン / **session**: part 240d (2026-06-03 / interactive / user 大型運用依頼)
+
+**サマリ**:
+- **3 レーン体制再定義** (user 指示): L1 Antigravity+Gemini 探索 / L2 VSCode+Codex 実装 / L3 VSCode+Claude 設計。canonical [`docs/AI_DRIVEN_DEV_OPERATING_MODEL.md`](AI_DRIVEN_DEV_OPERATING_MODEL.md) 新設 + `MULTI_INSTANCE_FLEET.md` + `CLAUDE.md` overlay repoint。
+- **SDLC 7 工程タクソノミ** 定義 (企画/設計/実装/テスト/リリース/運用/保守) + WBS `phase` 列 migration を Codex へ handoff ([`cross-instance-prs/20260603_wbs_sdlc_phase.md`](cross-instance-prs/20260603_wbs_sdlc_phase.md) / Architect-Implementer ③)。
+- **ベストプラクティス取得機構 (現実版)**: 24 社 full-read/session は非現実 → per-task context7/公式 fetch verify-first + 週次 vendor-digest routine 新設。
+- **stale doc 削除 (verify-first)**: MULTI_INSTANCE_COORDINATION / INSTANCE_CONFIG / multi-ai-fallback / multi-ai-resilience + archive 重複 1 (AUTO_SAVE) = 5 件。archive 4 件は DIFFER 検出で誤削除回避。`DOCS_KNOWLEDGE_HUB.md` dead link 同時修正。
+- **セッション儀式確立**: 1 WBS タスク/session + best-practice verify + commit→push→main merge。
+
+**commit**: 本 PR / **follow-up**: WBS phase migration (Codex 適用) / `inject-rules.txt` `[INSTANCE]` 3 レーン更新 / `COMPRESSED_PROMPT_V3.md` stale 精査。
+
+**Philosophy Alignment**: 原則 4 (mentor=verify-first/honest scope) ✅ / 原則 6 (商品=価値=運用モデル) ✅ / 原則 7 (資本=時間=stale 削除) ✅ / 原則 8 (KPI) ✅ / 原則 9 (IPO=systemic process) ✅ = **5/9**
