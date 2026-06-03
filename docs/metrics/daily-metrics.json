@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-06-02",
+    "date": "2026-06-03",
     "users": {
       "total": 37
     },
@@ -34,6 +34,10 @@
     },
     "recentAchievements": [
       {
+        "title": "Codex #1: WBS SDLC phase axis migration",
+        "completed_at": "2026-06-03T19:05:55.027242+00:00"
+      },
+      {
         "title": "Scheduled Daily part 239: scheduled-agent append-only discipline + verify-first detection blog draft (JA+EN)",
         "completed_at": "2026-05-30T00:00:00+00:00"
       },
@@ -48,13 +52,9 @@
       {
         "title": "Win Claude #1: WBS task 給料日サイクル可処分残高 AI (Issue #3007)",
         "completed_at": "2026-05-25T00:00:00+00:00"
-      },
-      {
-        "title": "Scheduled Daily part 237: Massive /goal DEFER + 3-consecutive honest-decline pattern blog draft (JA+EN) for Claude Code long-running sessions",
-        "completed_at": "2026-05-22T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-06-03T08:10:14+09:00",
-  "report_date": "2026-06-03"
+  "fetched_at": "2026-06-04T08:12:50+09:00",
+  "report_date": "2026-06-04"
 }

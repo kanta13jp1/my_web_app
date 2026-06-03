@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T23:10:41.077678+00:00",
+  "generated_at": "2026-06-03T23:13:20.572743+00:00",
   "tracked_count": 200,
   "open_count": 4,
   "closed_count": 196,
@@ -10,6 +10,7 @@
     "generic-ci": 3,
     "migration-collision": 2,
     "notion-sync": 7,
-    "unclassified": 150
+    "supabase-push": 1,
+    "unclassified": 149
   }
 }
