@@ -1,19 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-03T22:12:13Z`
-- Previous check: `2026-06-03T11:39:53Z`
-- Changed/new official sources: `8`
+- Checked at: `2026-06-04T21:51:57Z`
+- Previous check: `2026-06-03T22:12:13Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
 - `changed` Claude Code changelog: 2.1.162 / June 3, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
-- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
 - `changed` Codex changelog: 2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us
-- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Cursor changelog: 3.6 / May 29, 2026
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.84.0 / May 29, 2026
-- `changed` Devin release notes: May 29, 2026
+- `changed` Cursor changelog: 3.7 / Jun 4, 2026
+- `changed` Devin release notes: June 3, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -27,7 +23,7 @@
   - URL: https://code.claude.com/docs/en/changelog
   - Latest signal: 2.1.162 / June 3, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
+  - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
 - **Claude Code hooks reference** (HTTP 200)
   - URL: https://code.claude.com/docs/en/hooks
@@ -59,10 +55,10 @@
   - Keyword groups: none
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
-  - Latest signal: 3.6 / May 29, 2026
+  - Latest signal: 3.7 / Jun 4, 2026
   - Keyword groups: hooks, schedule, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
-  - Short signal: They give cohorts of users separate model access, spend limits, and agent permissions without standing up a whole new team.
+  - Short signal: Because it's a canvas, you can ask the agent follow-up questions, and it can customize the report to answer your specific questions.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.84.0 / May 29, 2026
@@ -71,7 +67,7 @@
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: May 29, 2026
+  - Latest signal: June 3, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...
   - Short signal: Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...

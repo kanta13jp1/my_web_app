@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-03T22:12:16Z",
+  "generated_at": "2026-06-04T21:52:01Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-5c040b5fe9f1",
+        "entry_id": "nf-524a9b59c788",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.162 / June 3, 2026 Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview... Copy page This page is generated from the CHANGELOG.md on GitHub . permission prompt) --tools : explicitly listing Grep/Glob now provides the dedicated search tools on native builds with embedded search (previously these names were silently...",
+        "text": "Claude Code changelog 2.1.162 / June 3, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . permission prompt) --tools : explicitly listing Grep/Glob now provides the dedicated search tools on native builds with embedded search (previously these names were silently...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "eb84290eecabd238d2e9fa8e07d81145a34b7d343543772e4849ad12e346e5b3",
+          "hash": "975292e2fe22766eab1836650d3302bcd849aba2e3272c947c08cb4c1fd118e8",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -77,10 +77,10 @@
           "latest_signal": "2.1.162 / June 3, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "da2ea5ac069ea94a68baedf82545439e13ce6a31835c5742f3b75f9907a54eb4",
+          "previous_hash": "eb84290eecabd238d2e9fa8e07d81145a34b7d343543772e4849ad12e346e5b3",
           "slug": "claude-code-changelog",
           "snippets": [
-            "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
+            "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
             "permission prompt) --tools : explicitly listing Grep/Glob now provides the dedicated search tools on native builds with embedded search (previously these names were silently..."
           ],
@@ -89,7 +89,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-5c040b5fe9f1",
+        "entry_id": "nf-524a9b59c788",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,7 +115,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "bcb3d4aaa2db89399f15532a300edc7af9afeee6f9f2d5af47e0c070d5f94c3c",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "096a3499fd5d1c272946277ca640cb91f2020b83fddf5706f2d0de959737cd6a",
+          "previous_hash": "bcb3d4aaa2db89399f15532a300edc7af9afeee6f9f2d5af47e0c070d5f94c3c",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -193,7 +193,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "9fe958dee600a799876799cf6bd13c1b17cae634f679d97b26ce317f0f9e2ba5",
@@ -229,7 +229,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "a557c85a29d450c4f59d93a5988c0636a221851deb092c1b771df83be9fca09c",
+          "previous_hash": "9fe958dee600a799876799cf6bd13c1b17cae634f679d97b26ce317f0f9e2ba5",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a59dbaf13219088df7a63bcfee1393d0f52681ab8a4c8fcbf1e8f3c260d35cfa",
+          "hash": "9f40652ed23264562e2707ad583861bba96442e9998596233dfde3a222f84b06",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -315,7 +315,7 @@
           "latest_signal": "2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "7936a8c1dd992db2f7041fe65f3e73b3cc1bd97ad1af8f5103bed304a51f2729",
+          "previous_hash": "a59dbaf13219088df7a63bcfee1393d0f52681ab8a4c8fcbf1e8f3c260d35cfa",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -353,7 +353,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "4fde2472f78c32c343b44e2ff07bf5a3c66b212eddc9c617d38b78c01150f075",
@@ -396,7 +396,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "780f9a0be895955789911940c588a35cb242a0f31b37a8ab03ec45de3465bfe2",
+          "previous_hash": "4fde2472f78c32c343b44e2ff07bf5a3c66b212eddc9c617d38b78c01150f075",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -469,9 +469,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-58606c768e42",
+        "entry_id": "nf-47ec8f1624c2",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.6 / May 29, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... They give cohorts of users separate model access, spend limits, and agent permissions without standing up a whole new team. Improvements (5) ↓ ↑ Multi-team support so users can be on multiple teams at once Organization-level IDP management Organization-level usage analytics, with drill downs to each...",
+        "text": "Cursor changelog 3.7 / Jun 4, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Because it's a canvas, you can ask the agent follow-up questions, and it can customize the report to answer your specific questions. Added the ability for agents to embed buttons in canvases that will run a specific prompt when clicked.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -480,7 +480,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "e8772480edb94c39e26dac0ef0128514968b349834914e6ea4f8576fe93aaef5",
+          "hash": "f0638a3f4e9d45eefd6af1a0812ecd70c8eb2c03a4b760969048857c7b147ecb",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -501,22 +501,22 @@
               "schedule"
             ]
           },
-          "latest_signal": "3.6 / May 29, 2026",
+          "latest_signal": "3.7 / Jun 4, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "29a71533aefdf3453cab7727acabf3be12726f7dc2125b69698eedc6883433b1",
+          "previous_hash": "e8772480edb94c39e26dac0ef0128514968b349834914e6ea4f8576fe93aaef5",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "They give cohorts of users separate model access, spend limits, and agent permissions without standing up a whole new team.",
-            "Improvements (5) ↓ ↑ Multi-team support so users can be on multiple teams at once Organization-level IDP management Organization-level usage analytics, with drill downs to each..."
+            "Because it's a canvas, you can ask the agent follow-up questions, and it can customize the report to answer your specific questions.",
+            "Added the ability for agents to embed buttons in canvases that will run a specific prompt when clicked."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-58606c768e42",
+        "entry_id": "nf-47ec8f1624c2",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -542,7 +542,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "feb09096c018f44874df30775f75dee7f30c64ecb939b1fef36c07969d1c40a1",
@@ -570,7 +570,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.84.0 / May 29, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "3841b54c295ae240815ccf6428a7651b0cae105112ab55c0d0f9105e53d3b1ee",
+          "previous_hash": "feb09096c018f44874df30775f75dee7f30c64ecb939b1fef36c07969d1c40a1",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -600,9 +600,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-4e9e574b1551",
+        "entry_id": "nf-83c7a8193477",
         "title": "Devin release notes",
-        "text": "Devin release notes May 29, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events.",
+        "text": "Devin release notes June 3, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Personal automations include a dedicated toggle, permission model, and badge in automation lists.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
@@ -611,7 +611,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a52107d599262e15d023ee25990bbd55d81a05544346af501e42057a04af0252",
+          "hash": "f6ba31c4f42a0f86259555c1274c268fa985ce10346e290ab2b9425005052fd0",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -623,6 +623,7 @@
             ],
             "integration": [
               "MCP",
+              "connector",
               "Slack",
               "Linear",
               "GitHub"
@@ -642,22 +643,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "May 29, 2026",
+          "latest_signal": "June 3, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "37efffc7738b238db2a82a12361f1443efee0b1a800300a3fe0f7f9c7ed9626b",
+          "previous_hash": "a52107d599262e15d023ee25990bbd55d81a05544346af501e42057a04af0252",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
             "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-            "Automations: Files-Changed Trigger The automation builder now supports file-change triggers for GitHub push events."
+            "Personal automations include a dedicated toggle, permission model, and badge in automation lists."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-4e9e574b1551",
+        "entry_id": "nf-83c7a8193477",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
