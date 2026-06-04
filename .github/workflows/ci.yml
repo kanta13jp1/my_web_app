@@ -61,6 +61,14 @@ jobs:
       - name: Get Flutter version
         run: flutter --version
 
+      - name: Cache pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -162,7 +170,7 @@ jobs:
       - name: Check SQL migration shell quoting artifacts
         run: |
           # bash quoting pattern '"'"' が SQL ファイルに混入すると SQLSTATE 42601 で deploy-prod が失敗する
-          FOUND=$(grep -rl "'\"\\'\"'" supabase/migrations/ 2>/dev/null || true)
+          FOUND=$(grep -rl "'\"\\'\"|'" supabase/migrations/ 2>/dev/null || true)
           # シングルクォートのアーティファクトパターン: ' + " + ' + " + '
           FOUND2=$(python3 -c "
           import os, sys
