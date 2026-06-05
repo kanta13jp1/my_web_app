@@ -31576,3 +31576,23 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - Migration is additive and idempotent.
 - Content remains educational, source-linked, politically neutral, and contains no party/candidate recommendation or legislator scoring.
 - Production verification target: `select name_ja from public.university_faculties where faculty_code = 'civics';` and `select count(*) from public.university_departments d join public.university_faculties f on d.faculty_id = f.id where f.faculty_code = 'civics';`.
+
+---
+
+## 2026-06-05 - Win Claude part 241: ADR (設計判断ログ) 運用の確立
+
+**Scope**: WBS 設計タスク `2e41ebca-36bd-4c47-a87f-90b7b5948ece`「アーキテクチャ判断ログ運用 (ADR)」を完了 (/loop dynamic mode, Win Claude architect lane)。
+
+**Changes**:
+- `docs/adr/README.md` を新設 — いつ ADR を書くか / 命名 (`YYYY-MM-DD-kebab.md`) / Status ライフサイクル (Proposed→Accepted→Deprecated/Superseded) / WBS・Issue・NotebookLM への紐づけ / 原則 docs との関係 / Index 表。
+- `docs/adr/TEMPLATE.md` を新設 — 新規 ADR のコピー元。
+- 主要設計判断 3 件を backfill ADR 化: Flutter Web+Supabase+Firebase スタック / Edge-Function-first (EF-FIRST・EF-CAP-50) / 2-instance fleet (Architect+Implementer)。
+- `docs/DIRECTORY_STRUCTURE.md` に `docs/adr/` への pointer を追記。
+- migration `20260605140000_wbs_complete_adr_operating_process.sql` で WBS task を completed (progress=100 / ai_review_status=approved) 化 + `development_achievements` 追記。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。
+- migration は idempotent (固定値 UPDATE / description LIKE guard / achievement NOT EXISTS guard)。
+- `ai_review_status='approved'` を同一 UPDATE で設定し `wbs_request_ai_review` trigger の in_progress 差し戻しを回避。
+- Philosophy Alignment: 原則 2 ミッション / 4 mentor / 8 KPI (= 設計判断の追跡可能性) + [BRAIN-32] PKM。
+- commit hash: (PR merge 後に追記)。
