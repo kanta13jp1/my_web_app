@@ -62,4 +62,5 @@ web/
 - [`docs/DEVELOPMENT_ACHIEVEMENTS_FORMAT.md`](DEVELOPMENT_ACHIEVEMENTS_FORMAT.md) — migration 命名 + seed 形式
 - [`docs/SCHEDULE_TASKS.md`](SCHEDULE_TASKS.md) — cron 詳細
 - [`docs/adr/README.md`](adr/README.md) — ADR (設計判断ログ) 運用ガイド + Index
+- [`docs/PRD.md`](PRD.md) — プロダクト要件定義書 (persona / scope / 非目標 / KPI)
 - [`CLAUDE.md`](../CLAUDE.md) — pointer hub
