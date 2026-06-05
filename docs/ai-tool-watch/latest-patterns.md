@@ -1,9 +1,9 @@
 # News Pattern Detector Report
 
-- Generated at: `2026-06-04T21:52:01Z`
+- Generated at: `2026-06-05T21:47:23Z`
 - Sources: `docs/ai-tool-watch/latest-report.json`
 - Entries scanned: `9`
-- Patterns: `4`
+- Patterns: `2`
 - Issue candidates: `2`
 
 ## Patterns
@@ -17,14 +17,6 @@
   - Evidence: Claude Code changelog
   - Evidence: Claude Code hooks reference
   - Evidence: Claude Code GitHub Actions
-- **openai / mcp-integration**: 2 entries, confidence=0.85, risk=review
-  - Action: Hold for human review before creating issues or blog drafts.
-  - Evidence: Codex changelog
-  - Evidence: Codex overview
-- **multi-source / mcp-integration**: 2 entries, confidence=0.85, risk=review
-  - Action: Hold for human review before creating issues or blog drafts.
-  - Evidence: Codex changelog
-  - Evidence: Codex overview
 
 ## Filter Summary
 

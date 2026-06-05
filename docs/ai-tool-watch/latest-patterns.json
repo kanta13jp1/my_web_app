@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-04T21:52:01Z",
+  "generated_at": "2026-06-05T21:47:23Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-524a9b59c788",
+        "entry_id": "nf-4ac7a65fa1a3",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.162 / June 3, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . permission prompt) --tools : explicitly listing Grep/Glob now provides the dedicated search tools on native builds with embedded search (previously these names were silently...",
+        "text": "Claude Code changelog 2.1.165 / June 5, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.165 June 5, 2026 Bug fixes and reliability improvements ​ 2.1.163 June 4, 2026 Added requiredMinimumVersion and requiredMaximumVersion managed settings — Claude Code...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "975292e2fe22766eab1836650d3302bcd849aba2e3272c947c08cb4c1fd118e8",
+          "hash": "40deac625dfcb2a1cc55c21a5b4f7b6c13eee573ab62cfd6916993f6dc20b75b",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.162 / June 3, 2026",
+          "latest_signal": "2.1.165 / June 5, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "eb84290eecabd238d2e9fa8e07d81145a34b7d343543772e4849ad12e346e5b3",
+          "previous_hash": "975292e2fe22766eab1836650d3302bcd849aba2e3272c947c08cb4c1fd118e8",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "permission prompt) --tools : explicitly listing Grep/Glob now provides the dedicated search tools on native builds with embedded search (previously these names were silently..."
+            "​ 2.1.165 June 5, 2026 Bug fixes and reliability improvements ​ 2.1.163 June 4, 2026 Added requiredMinimumVersion and requiredMaximumVersion managed settings — Claude Code..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-524a9b59c788",
+        "entry_id": "nf-4ac7a65fa1a3",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,10 +115,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "bcb3d4aaa2db89399f15532a300edc7af9afeee6f9f2d5af47e0c070d5f94c3c",
+          "hash": "3585d0dcebf3d7e49981d07198fd66caca4f99944fe01704fa10e619aaf6b420",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -259,9 +259,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-01d78beff5ce",
+        "entry_id": "nf-8824fbff1a3e",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... May 2026 li+li]:mt-12\"> 2026-05-29 Computer use and mobile access on Windows 26.527 New features Computer Use now works on Windows. Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested.",
+        "text": "Codex changelog 2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... You can review Codex usage highlights and save a profile card; sharing is available on consumer ChatGPT plans. Performance improvements and bug fixes Improved Computer Use startup readiness and appshot error reporting.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "9f40652ed23264562e2707ad583861bba96442e9998596233dfde3a222f84b06",
+          "hash": "8fc372537c2da492b9cf8c3c328a7ec478e925cd3e022f312163ea1cb3cb9ac2",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,6 +285,8 @@
             "hooks": [
               "hook",
               "hooks",
+              "SessionStart",
+              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -293,9 +295,11 @@
               "Slack",
               "Linear",
               "GitHub",
-              "IDE extension"
+              "IDE extension",
+              "VSCode"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -312,22 +316,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-06-02 / Build and deploy websites with Sites Sites is now available in preview in the Codex app. Us",
+          "latest_signal": "2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "a59dbaf13219088df7a63bcfee1393d0f52681ab8a4c8fcbf1e8f3c260d35cfa",
+          "previous_hash": "9f40652ed23264562e2707ad583861bba96442e9998596233dfde3a222f84b06",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "May 2026 li+li]:mt-12\"> 2026-05-29 Computer use and mobile access on Windows 26.527 New features Computer Use now works on Windows.",
-            "Added thread coordination for local projects and worktrees, including separate background threads when explicitly requested."
+            "You can review Codex usage highlights and save a profile card; sharing is available on consumer ChatGPT plans.",
+            "Performance improvements and bug fixes Improved Computer Use startup readiness and appshot error reporting."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-01d78beff5ce",
+        "entry_id": "nf-8824fbff1a3e",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -353,10 +357,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "4fde2472f78c32c343b44e2ff07bf5a3c66b212eddc9c617d38b78c01150f075",
+          "hash": "a09b2b0c2ff17b884457972db9163221c127c436c0146d756dd4e7cd111d8c63",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -469,9 +473,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-47ec8f1624c2",
+        "entry_id": "nf-32d0fae6d9ba",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.7 / Jun 4, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Because it's a canvas, you can ask the agent follow-up questions, and it can customize the report to answer your specific questions. Added the ability for agents to embed buttons in canvases that will run a specific prompt when clicked.",
+        "text": "Cursor changelog 3.7 / Jun 5, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Jun 4, 2026 · Changelog Custom stores, custom tools, and auto-review for the Cursor SDK We've shipped a batch of new functionality across the TypeScript and Python SDKs. You can now choose how agent and run metadata is persisted, expose your own functions to the agent as tools, route local tool calls through auto-review, and nest subagents to...",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -480,43 +484,41 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "f0638a3f4e9d45eefd6af1a0812ecd70c8eb2c03a4b760969048857c7b147ecb",
+          "hash": "6e14bcba2e137dc2844191facafb2e913a7f78eee659aa6e8c5f521de1bab36b",
           "keyword_groups": {
-            "hooks": [
-              "Stop"
+            "codex-runtime": [
+              "subagents"
             ],
             "integration": [
-              "MCP",
-              "Slack"
+              "MCP"
             ],
             "quality-cost": [
+              "cost",
               "sandbox",
               "permission",
               "review",
               "CI"
             ],
             "schedule": [
-              "automation",
-              "automations",
-              "schedule"
+              "automation"
             ]
           },
-          "latest_signal": "3.7 / Jun 4, 2026",
+          "latest_signal": "3.7 / Jun 5, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "e8772480edb94c39e26dac0ef0128514968b349834914e6ea4f8576fe93aaef5",
+          "previous_hash": "f0638a3f4e9d45eefd6af1a0812ecd70c8eb2c03a4b760969048857c7b147ecb",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "Because it's a canvas, you can ask the agent follow-up questions, and it can customize the report to answer your specific questions.",
-            "Added the ability for agents to embed buttons in canvases that will run a specific prompt when clicked."
+            "Jun 4, 2026 · Changelog Custom stores, custom tools, and auto-review for the Cursor SDK We've shipped a batch of new functionality across the TypeScript and Python SDKs.",
+            "You can now choose how agent and run metadata is persisted, expose your own functions to the agent as tools, route local tool calls through auto-review, and nest subagents to..."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-47ec8f1624c2",
+        "entry_id": "nf-32d0fae6d9ba",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -608,7 +610,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "f6ba31c4f42a0f86259555c1274c268fa985ce10346e290ab2b9425005052fd0",
@@ -646,7 +648,7 @@
           "latest_signal": "June 3, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "a52107d599262e15d023ee25990bbd55d81a05544346af501e42057a04af0252",
+          "previous_hash": "f6ba31c4f42a0f86259555c1274c268fa985ce10346e290ab2b9425005052fd0",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
@@ -707,38 +709,6 @@
         "Claude Code GitHub Actions"
       ],
       "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
-    },
-    {
-      "id": "np-633b3c99949c",
-      "company": "openai",
-      "topic": "mcp-integration",
-      "entry_count": 2,
-      "average_confidence": 0.85,
-      "risk_level": "review",
-      "risk_flags": [
-        "source_http_problem"
-      ],
-      "evidence_titles": [
-        "Codex changelog",
-        "Codex overview"
-      ],
-      "recommended_action": "Hold for human review before creating issues or blog drafts."
-    },
-    {
-      "id": "np-8d8df4ba6ed1",
-      "company": "multi-source",
-      "topic": "mcp-integration",
-      "entry_count": 2,
-      "average_confidence": 0.85,
-      "risk_level": "review",
-      "risk_flags": [
-        "source_http_problem"
-      ],
-      "evidence_titles": [
-        "Codex changelog",
-        "Codex overview"
-      ],
-      "recommended_action": "Hold for human review before creating issues or blog drafts."
     }
   ],
   "issue_candidates": [
