@@ -63,4 +63,5 @@ web/
 - [`docs/SCHEDULE_TASKS.md`](SCHEDULE_TASKS.md) — cron 詳細
 - [`docs/adr/README.md`](adr/README.md) — ADR (設計判断ログ) 運用ガイド + Index
 - [`docs/PRD.md`](PRD.md) — プロダクト要件定義書 (persona / scope / 非目標 / KPI)
+- [`docs/QUARTERLY_ROADMAP.md`](QUARTERLY_ROADMAP.md) — 四半期ロードマップ (SDLC 7 工程別優先順 / WBS フェーズバランス / リスク)
 - [`CLAUDE.md`](../CLAUDE.md) — pointer hub
