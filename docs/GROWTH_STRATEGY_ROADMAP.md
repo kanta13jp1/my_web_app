@@ -31595,4 +31595,23 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - migration は idempotent (固定値 UPDATE / description LIKE guard / achievement NOT EXISTS guard)。
 - `ai_review_status='approved'` を同一 UPDATE で設定し `wbs_request_ai_review` trigger の in_progress 差し戻しを回避。
 - Philosophy Alignment: 原則 2 ミッション / 4 mentor / 8 KPI (= 設計判断の追跡可能性) + [BRAIN-32] PKM。
+- commit hash: `fff8cbc5c` ([#3115](https://github.com/kanta13jp1/my_web_app/pull/3115) / squash-merge)。
+
+---
+
+## 2026-06-05 - Win Claude part 242: プロダクト要件定義書 (PRD) v1 整備
+
+**Scope**: WBS 企画タスク `5ef83c7e-1808-4dc2-9e9d-f19c799e8240`「[企画] プロダクト要件定義書 (PRD) 整備」を完了 (/loop dynamic mode, Win Claude architect lane)。
+
+**Changes**:
+- `docs/PRD.md` を新設 — v1 PRD baseline: ビジョン (人生を会社として経営) / ターゲットペルソナ (primary/secondary/anti) / 6 部署の提供価値 / スコープ / 非目標 (理念 NG 例から導出) / 2 層 KPI (ウェルビーイング North-Star + 事業マイルストーン guardrail) / 9 原則整合 / living-doc 運用。
+- 既存 canon (PHILOSOPHY / 本番機能 / 競合 21 社 / WBS マイルストーン) から codify。L1 Antigravity 探索結果で継続精緻化する想定。
+- `docs/DIRECTORY_STRUCTURE.md` に `docs/PRD.md` への pointer 追記。
+- migration `20260605150000_wbs_complete_prd.sql` で WBS task を completed 化 + `development_achievements` 追記。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。
+- migration idempotent (固定値 UPDATE / description LIKE guard / achievement NOT EXISTS guard)。
+- PR body に high-risk-ultrareview-exception + Claude Code #1 + minimal-E2E 宣言を初稿から内包 (= part 241 で確立した recipe を適用し close/reopen 不要の first-try gate pass を狙う)。
+- Philosophy Alignment: 原則 1 CEO感 / 2 ミッション / 8 KPI (昨日の自分比較) / 9 ウェルビーイング。
 - commit hash: (PR merge 後に追記)。
