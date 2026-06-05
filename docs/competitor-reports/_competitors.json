@@ -428,6 +428,23 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-05",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 3 day 経過 / cooldown 残 ~4 day / 次回 6/09 解禁). 前回 report = 6/03 (6/04 run なし / 2 day delta 集約). 本日 6/03→6/05 新規 2 戦略級シグナル = (1) **★ Anthropic 6/15 課金分離確定 🔴** (= Claude サブスクが interactive pool と programmatic pool に分離 / Agent SDK + `claude -p` + Claude Code GitHub Actions + 第三者エージェント (OpenClaw) が月次クレジット枠 Pro $20 / Max5x $100 / Max20x $200 / 繰越なし へ移行 / 対話ターミナル Claude Code + Cowork は不変 / 自社 GHA cron 30+ + Schedule cron + daily-development cron の programmatic Claude 利用が 6/15 以降クレジット消費 = 6/2 障害に続く運用シグナル 2 連続 / 棚卸し最優先) / (2) **★ Claude Code Dynamic Workflows + ultracode 🔴** (= 1 コマンドで数十〜数百 agent orchestrate + xhigh effort 設定 + Opus 4.8 Fast 3× 安 / 自社 [SUBAGENT-GUARD] + 2 instance fleet narrative の標準機能内蔵化 = Cursor Build in Parallel + xAI 8 並列 + Devin Command Center と合わせ並列 orchestrate commoditize / narrative pivot 「並列できる」→「並列を監査可能に統治」). + 中国軸具体化 = Alibaba **Qoder** (agentic coding platform / NTUC 6 月 token 配布) + **Qwen3.7-Plus** 6/02 Bailian → 6/09 第 1 候補を「Qwen (model)」→「Qoder (product)」へ精緻化. 6/09 採択 第 1 候補 = Alibaba Qoder (基準 a 正面競合 + 基準 b 中国 frontier 未カバー + 基準 c Qwen3.7-Plus 6/02). https://devtoolpicks.com/blog/anthropic-splits-claude-subscriptions-agent-sdk-credit-june-2026",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / agentic coding platform / 6/03 「Qwen model」から製品名精緻化 / 基準 a+b+c 該当)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
