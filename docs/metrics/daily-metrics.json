@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-06-04",
+    "date": "2026-06-05",
     "users": {
       "total": 37
     },
@@ -34,27 +34,27 @@
     },
     "recentAchievements": [
       {
+        "title": "ADR (設計判断ログ) 運用の確立",
+        "completed_at": "2026-06-05T00:00:00+00:00"
+      },
+      {
+        "title": "プロダクト要件定義書 (PRD) v1 の整備",
+        "completed_at": "2026-06-05T00:00:00+00:00"
+      },
+      {
         "title": "Codex #1: WBS SDLC phase axis migration",
         "completed_at": "2026-06-03T19:05:55.027242+00:00"
       },
       {
+        "title": "製品ライフサイクル管理 (企画・設計・テスト・リリース・運用・保守) タスクをWBSに統合",
+        "completed_at": "2026-06-03T00:00:00+00:00"
+      },
+      {
         "title": "Scheduled Daily part 239: scheduled-agent append-only discipline + verify-first detection blog draft (JA+EN)",
         "completed_at": "2026-05-30T00:00:00+00:00"
-      },
-      {
-        "title": "Win Claude #1: WBS task 給与明細 PDF AI 取込 (Issue #3003)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
-      },
-      {
-        "title": "Win Claude #1: WBS task 前回給料の使いみち AI 連携 (Issue #3006)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
-      },
-      {
-        "title": "Win Claude #1: WBS task 給料日サイクル可処分残高 AI (Issue #3007)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-06-05T07:56:15+09:00",
-  "report_date": "2026-06-05"
+  "fetched_at": "2026-06-06T07:51:31+09:00",
+  "report_date": "2026-06-06"
 }
