@@ -31559,3 +31559,20 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - Migration is additive and idempotent.
 - Existing ambiguous WBS categories remain `NULL` for later manual/UI classification.
 - Production verification target: `select phase, count(*) from public.wbs_tasks group by phase order by phase;`.
+
+---
+
+## 2026-06-05 - Codex #1: AI大学 civics 学部 MVP migration
+
+**Scope**: Applied the Win Claude part 240e handoff for the AI大学 civics faculty MVP.
+
+**Changes**:
+- Added the `civics` faculty (`政治・選挙リテラシー学部`) plus four departments: `diet_structure`, `diet_members`, `policy_themes`, and `election`.
+- Seeded one neutral, source-linked education item per department under `provider='civics_literacy'`.
+- Used each department code as `ai_university_content.category` to satisfy the existing `UNIQUE(provider, category)` constraint while preserving clean provider-based rollback.
+- Moved the completed handoff note to `docs/cross-instance-prs/done/20260603_civics_module_mvp.md`.
+
+**Validation focus**:
+- Migration is additive and idempotent.
+- Content remains educational, source-linked, politically neutral, and contains no party/candidate recommendation or legislator scoring.
+- Production verification target: `select name_ja from public.university_faculties where faculty_code = 'civics';` and `select count(*) from public.university_departments d join public.university_faculties f on d.faculty_id = f.id where f.faculty_code = 'civics';`.
