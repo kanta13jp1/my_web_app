@@ -1458,6 +1458,10 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           remote.annualRateEvidences,
         ) &&
         _stringSetEquals(local.paidAccountNames, remote.paidAccountNames) &&
+        _stringSetEquals(
+          local.billingConfirmedAccountIds,
+          remote.billingConfirmedAccountIds,
+        ) &&
         _stringMapEquals(
           local.paymentSourceAccountIds,
           remote.paymentSourceAccountIds,

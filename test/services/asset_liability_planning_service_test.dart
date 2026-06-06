@@ -196,6 +196,16 @@ void main() {
         closeTo(workbook.monthlyScheduledPaymentTotal, 0.001),
       );
 
+      final billingConfirmed = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        billingConfirmedAccountIds: const <String>{'paypay_card'},
+      );
+
+      expect(billingConfirmed.debtMasterRows.single.billingConfirmed, isTrue);
+      expect(billingConfirmed.billingConfirmationPendingRows, isEmpty);
+      expect(billingConfirmed.paymentSourceMissingRows.length, 1);
+
       final reviewed = service.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
         baseDate: DateTime(2026, 5, 1),

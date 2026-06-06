@@ -62,7 +62,25 @@ enum AssetDebtPlannerMode { ask, code }
 
 enum _CardBillingSaveScope { defaultSetting, monthlyOverride }
 
+enum _PaymentSourceSaveScope { monthlyOverride, defaultSetting }
+
 enum _DebtMasterReviewFilter { all, billingConfirmation, paymentSource }
+
+class _PaymentSourceCandidate {
+  final AssetLiabilityAccount account;
+  final double currentBalance;
+  final double projectedBeforePayment;
+  final double projectedAfterPayment;
+  final double safetyBalanceDelta;
+
+  const _PaymentSourceCandidate({
+    required this.account,
+    required this.currentBalance,
+    required this.projectedBeforePayment,
+    required this.projectedAfterPayment,
+    required this.safetyBalanceDelta,
+  });
+}
 
 class AssetManagementPage extends StatefulWidget {
   final AssetManagementInitialFocus initialFocus;
@@ -112,6 +130,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final ScrollController _scrollController = ScrollController();
   final ScrollController _debtMasterHorizontalScrollController =
       ScrollController();
+  static const double _paymentSourceSafetyBalance = 30000;
   final _keyStock = GlobalKey();
   final _keyFlow = GlobalKey();
   final _keySubs = GlobalKey();
@@ -146,6 +165,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, AssetLiabilityAnnualRateEvidence> _annualRateEvidences =
       <String, AssetLiabilityAnnualRateEvidence>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
+  Set<String> _billingConfirmedAccountIds = <String>{};
   Map<String, String> _paymentSourceAccountIds = <String, String>{};
   Map<String, String> _cardBillingAccountIds = <String, String>{};
   List<AssetLiabilityCardStatementLine> _cardStatementLines =
@@ -1046,6 +1066,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           state.annualRateEvidences,
         );
         _monthlyPaidAccountNames = Set<String>.from(state.paidAccountNames);
+        _billingConfirmedAccountIds = Set<String>.from(
+          state.billingConfirmedAccountIds,
+        );
         _paymentSourceAccountIds = Map<String, String>.from(
           state.paymentSourceAccountIds,
         );
@@ -1154,6 +1177,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _annualRateEvidences,
       ),
       paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
+      billingConfirmedAccountIds: Set<String>.from(_billingConfirmedAccountIds),
       paymentSourceAccountIds: Map<String, String>.from(
         _paymentSourceAccountIds,
       ),
@@ -1309,6 +1333,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           );
           _monthlyPaidAccountNames = Set<String>.from(
             currentState.paidAccountNames,
+          );
+          _billingConfirmedAccountIds = Set<String>.from(
+            currentState.billingConfirmedAccountIds,
           );
           _paymentSourceAccountIds = Map<String, String>.from(
             currentState.paymentSourceAccountIds,
@@ -1666,6 +1693,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _annualRateEvidences,
         ),
         paidAccountNames: Set<String>.from(_monthlyPaidAccountNames),
+        billingConfirmedAccountIds: Set<String>.from(
+          _billingConfirmedAccountIds,
+        ),
         paymentSourceAccountIds: Map<String, String>.from(
           _paymentSourceAccountIds,
         ),
@@ -1698,6 +1728,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           migrated.annualRateEvidences,
         ) &&
         _sameStringSet(_monthlyPaidAccountNames, migrated.paidAccountNames) &&
+        _sameStringSet(
+          _billingConfirmedAccountIds,
+          migrated.billingConfirmedAccountIds,
+        ) &&
         _sameStringMap(
           _paymentSourceAccountIds,
           migrated.paymentSourceAccountIds,
@@ -1742,6 +1776,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           migrated.annualRateEvidences,
         );
         _monthlyPaidAccountNames = Set<String>.from(migrated.paidAccountNames);
+        _billingConfirmedAccountIds = Set<String>.from(
+          migrated.billingConfirmedAccountIds,
+        );
         _paymentSourceAccountIds = Map<String, String>.from(
           migrated.paymentSourceAccountIds,
         );
@@ -1998,8 +2035,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       if (amount == null || amount < 0) {
         _monthlyPaymentOverrides.remove(accountId);
+        _billingConfirmedAccountIds.remove(accountId);
       } else {
         _monthlyPaymentOverrides[accountId] = amount;
+        _billingConfirmedAccountIds.add(accountId);
       }
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -2009,6 +2048,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _monthlyPaymentControllers[accountId]?.clear();
     setState(() {
       _monthlyPaymentOverrides.remove(accountId);
+      _billingConfirmedAccountIds.remove(accountId);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
@@ -2018,6 +2058,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _monthlyPaymentControllers[row.id]?.text = amount.toString();
     setState(() {
       _monthlyPaymentOverrides[row.id] = amount.toDouble();
+      _billingConfirmedAccountIds.add(row.id);
     });
     unawaited(_saveAssetLiabilityMonthlyState());
   }
@@ -2033,7 +2074,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       for (final row in targets) {
         final amount = row.scheduledPaymentAmount.round();
         _monthlyPaymentOverrides[row.id] = amount.toDouble();
+        _billingConfirmedAccountIds.add(row.id);
         _monthlyPaymentControllers[row.id]?.text = amount.toString();
+      }
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _toggleBillingConfirmed(String accountId, bool confirmed) {
+    setState(() {
+      if (confirmed) {
+        _billingConfirmedAccountIds.add(accountId);
+      } else {
+        _billingConfirmedAccountIds.remove(accountId);
       }
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -2301,12 +2354,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     bool paid,
   ) async {
     final previousPaidAccountNames = Set<String>.from(_monthlyPaidAccountNames);
+    final previousBillingConfirmedAccountIds = Set<String>.from(
+      _billingConfirmedAccountIds,
+    );
     final previousActualPaymentAmounts = Map<String, double>.from(
       _actualPaymentAmounts,
     );
     setState(() {
       if (paid) {
         _monthlyPaidAccountNames.add(row.id);
+        _billingConfirmedAccountIds.add(row.id);
         _actualPaymentAmounts.putIfAbsent(
           row.id,
           () => row.scheduledPaymentAmount,
@@ -2324,6 +2381,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) return;
       setState(() {
         _monthlyPaidAccountNames = previousPaidAccountNames;
+        _billingConfirmedAccountIds = previousBillingConfirmedAccountIds;
         _actualPaymentAmounts = previousActualPaymentAmounts;
         _syncActualPaymentControllers();
       });
@@ -2344,6 +2402,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _paymentSourceAccountIds[liabilityId] = sourceAccountId;
       }
     });
+    unawaited(_saveAssetLiabilityMonthlyState());
+  }
+
+  void _savePaymentSourceReviewChoice({
+    required String liabilityId,
+    required String sourceAccountId,
+    required _PaymentSourceSaveScope scope,
+  }) {
+    setState(() {
+      if (scope == _PaymentSourceSaveScope.defaultSetting) {
+        _defaultPaymentSourceAccountIds[liabilityId] = sourceAccountId;
+        _paymentSourceAccountIds.remove(liabilityId);
+      } else {
+        _paymentSourceAccountIds[liabilityId] = sourceAccountId;
+      }
+    });
+    if (scope == _PaymentSourceSaveScope.defaultSetting) {
+      unawaited(_saveDefaultPaymentSources());
+    }
     unawaited(_saveAssetLiabilityMonthlyState());
   }
 
@@ -2532,6 +2609,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _actualPaymentAmounts = <String, double>{};
       _paymentDifferenceReasons = <String, String>{};
       _monthlyPaidAccountNames = <String>{};
+      _billingConfirmedAccountIds = <String>{};
       _paymentSourceAccountIds = Map<String, String>.from(
         copied.paymentSourceAccountIds,
       );
@@ -6718,6 +6796,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       paymentDifferenceReasons: _paymentDifferenceReasons,
       annualRateOverrides: _annualRateOverrides,
       paidAccountNames: _monthlyPaidAccountNames,
+      billingConfirmedAccountIds: _billingConfirmedAccountIds,
       paymentSourceAccountIds: _paymentSourceAccountIds,
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
       defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
@@ -7211,6 +7290,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         paymentDifferenceReasons: _paymentDifferenceReasons,
         annualRateOverrides: _annualRateOverrides,
         paidAccountNames: _monthlyPaidAccountNames,
+        billingConfirmedAccountIds: _billingConfirmedAccountIds,
         paymentSourceAccountIds: _paymentSourceAccountIds,
         defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
         defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
@@ -12533,6 +12613,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ),
           const SizedBox(height: 10),
+          if (billingRows.isNotEmpty) ...[
+            Text(
+              '請求確定待ち対象: ${_debtReviewNamesLabel(billingRows)}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+          if (sourceRows.isNotEmpty) ...[
+            Text(
+              '原資未設定対象: ${_debtReviewNamesLabel(sourceRows)}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -12714,6 +12816,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return rows;
   }
 
+  String _debtReviewNamesLabel(List<AssetLiabilityDebtRow> rows) {
+    return rows.map((row) => row.name).join(' / ');
+  }
+
   int _consultationUrgencyRank(AssetLiabilityDebtRow row, DateTime baseDate) {
     final dueDate = _debtRowPaymentDate(row, baseDate);
     if (dueDate == null) {
@@ -12848,26 +12954,178 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityDebtRow row,
     AssetLiabilityWorkbook workbook,
   ) {
+    final candidates = _paymentSourceCandidatesForRow(row, workbook);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.account_balance_outlined, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
-              '予定 ${_formatManagementYen(row.scheduledPaymentAmount)} / '
-              '支払後手元を口座別に再計算します。',
-              style: const TextStyle(fontSize: 12, height: 1.5),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(Icons.account_balance_outlined, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${row.name} / 支払日 ${row.paymentDay ?? '-'}日 / '
+                  '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
+                  style: const TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildPaymentSourceDebtDropdown(row, workbook),
+            ],
           ),
-          const SizedBox(width: 8),
-          _buildPaymentSourceDebtDropdown(row, workbook),
+          if (candidates.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final candidate in candidates)
+                    _buildPaymentSourceCandidateChoice(row, candidate),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  List<_PaymentSourceCandidate> _paymentSourceCandidatesForRow(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final summariesById = <String, AssetLiabilityAccountCashflowSummary>{
+      for (final summary in workbook.accountCashflowSummaries)
+        summary.accountId: summary,
+    };
+    final candidates = <_PaymentSourceCandidate>[];
+    for (final account in _paymentSourceAccountOptions(workbook)) {
+      final summary = summariesById[account.id];
+      final projectedBefore = summary?.projectedBalance ?? account.balance;
+      final projectedAfter = projectedBefore - row.scheduledPaymentAmount;
+      candidates.add(
+        _PaymentSourceCandidate(
+          account: account,
+          currentBalance: account.balance,
+          projectedBeforePayment: projectedBefore,
+          projectedAfterPayment: projectedAfter,
+          safetyBalanceDelta: projectedAfter - _paymentSourceSafetyBalance,
+        ),
+      );
+    }
+    candidates.sort(
+      (a, b) => b.projectedAfterPayment.compareTo(a.projectedAfterPayment),
+    );
+    return candidates;
+  }
+
+  Widget _buildPaymentSourceCandidateChoice(
+    AssetLiabilityDebtRow row,
+    _PaymentSourceCandidate candidate,
+  ) {
+    final selected = _paymentSourceAccountIds[row.id] ??
+        _defaultPaymentSourceAccountIds[row.id] ??
+        row.paymentSourceAccountId;
+    final isSelected = selected == candidate.account.id;
+    final riskLevel = _paymentSourceRiskLevel(candidate.projectedAfterPayment);
+    final color = _cashRiskColor(riskLevel);
+    return Container(
+      width: 280,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? const Color(0xFFECFDF5)
+            : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isSelected
+              ? const Color(0xFF0D9488)
+              : Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  candidate.account.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              _buildTextStatusChip(
+                label: _cashRiskLabel(riskLevel),
+                color: color,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '現在 ${_formatManagementYen(candidate.currentBalance)} / '
+            '支払前見込み ${_formatManagementYen(candidate.projectedBeforePayment)}',
+            style: const TextStyle(fontSize: 11, height: 1.4),
+          ),
+          Text(
+            '支払後見込み ${_formatManagementYen(candidate.projectedAfterPayment)} / '
+            '安全残高差 ${_formatSignedManagementYen(candidate.safetyBalanceDelta)}',
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              OutlinedButton(
+                onPressed: () => _savePaymentSourceReviewChoice(
+                  liabilityId: row.id,
+                  sourceAccountId: candidate.account.id,
+                  scope: _PaymentSourceSaveScope.monthlyOverride,
+                ),
+                child: const Text('今月'),
+              ),
+              OutlinedButton(
+                onPressed: () => _savePaymentSourceReviewChoice(
+                  liabilityId: row.id,
+                  sourceAccountId: candidate.account.id,
+                  scope: _PaymentSourceSaveScope.defaultSetting,
+                ),
+                child: const Text('既定'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  AssetLiabilityCashRiskLevel _paymentSourceRiskLevel(double balance) {
+    if (balance < 0) {
+      return AssetLiabilityCashRiskLevel.short;
+    }
+    if (balance < 10000) {
+      return AssetLiabilityCashRiskLevel.caution;
+    }
+    if (balance < _paymentSourceSafetyBalance) {
+      return AssetLiabilityCashRiskLevel.watch;
+    }
+    return AssetLiabilityCashRiskLevel.normal;
   }
 
   Widget _buildPaymentSourceDebtDropdown(
@@ -14943,6 +15201,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 DataColumn(label: Text('推定最低支払額'), numeric: true),
                 DataColumn(label: Text('今月支払予定額'), numeric: true),
                 DataColumn(label: Text('区分')),
+                DataColumn(label: Text('請求確認')),
                 DataColumn(label: Text('支払済み')),
                 DataColumn(label: Text('年利'), numeric: true),
                 DataColumn(label: Text('月利息'), numeric: true),
@@ -14970,6 +15229,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       DataCell(_buildMonthlyPaymentInput(row)),
                       DataCell(_buildPaymentAmountSourceChip(row)),
+                      DataCell(_buildBillingConfirmedCell(row)),
                       DataCell(_buildPaidCheckbox(row)),
                       DataCell(_buildAnnualRateInputWithEvidence(row)),
                       DataCell(
@@ -15229,6 +15489,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           fontWeight: FontWeight.bold,
           height: 1.2,
         ),
+      ),
+    );
+  }
+
+  Widget _buildBillingConfirmedCell(AssetLiabilityDebtRow row) {
+    if (row.includedInBillingAccount) {
+      return _buildTextStatusChip(
+        label: AssetLiabilityPlanningService.cardBillingIncludedLabel,
+        color: const Color(0xFF2563EB),
+      );
+    }
+    final effectiveConfirmed =
+        row.billingConfirmed || !row.paymentAmountEstimated || row.paid;
+    final canToggle = row.paymentAmountEstimated && !row.paid;
+    return SizedBox(
+      width: 160,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Checkbox(
+            value: effectiveConfirmed,
+            onChanged: canToggle
+                ? (value) => _toggleBillingConfirmed(row.id, value ?? false)
+                : null,
+          ),
+          _buildTextStatusChip(
+            label: effectiveConfirmed ? '確認済み' : '未確認',
+            color: effectiveConfirmed
+                ? const Color(0xFF0D9488)
+                : const Color(0xFFD97706),
+          ),
+        ],
       ),
     );
   }
@@ -15771,6 +16063,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _formatManagementYen(num value) {
     final sign = value < 0 ? '-' : '';
+    return '$sign¥${NumberFormat('#,###').format(value.abs().round())}';
+  }
+
+  String _formatSignedManagementYen(num value) {
+    if (value == 0) {
+      return '±¥0';
+    }
+    final sign = value > 0 ? '+' : '-';
     return '$sign¥${NumberFormat('#,###').format(value.abs().round())}';
   }
 

@@ -49,6 +49,7 @@ void main() {
         state: AssetLiabilityMonthlyState(
           paymentOverrides: const <String, double>{'モビット': 70000},
           paidAccountNames: const <String>{'auPayカード'},
+          billingConfirmedAccountIds: const <String>{'paypay_card'},
           actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
           paymentDifferenceReasons: const <String, String>{
             'aupay_card': 'late fee',
@@ -114,6 +115,7 @@ void main() {
 
       expect(loadedMay.paymentOverrides['モビット'], 70000);
       expect(loadedMay.paidAccountNames, contains('auPayカード'));
+      expect(loadedMay.billingConfirmedAccountIds, contains('paypay_card'));
       expect(loadedMay.actualPaymentAmounts['aupay_card'], 6200);
       expect(loadedMay.paymentDifferenceReasons['aupay_card'], 'late fee');
       expect(loadedMay.annualRateOverrides['mobit'], 0.175);
@@ -141,6 +143,7 @@ void main() {
       expect(loadedJune.annualRateOverrides, isEmpty);
       expect(loadedJune.annualRateEvidences, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
+      expect(loadedJune.billingConfirmedAccountIds, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
       expect(loadedJune.cardStatementLines, isEmpty);
