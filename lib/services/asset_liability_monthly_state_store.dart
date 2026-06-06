@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AssetLiabilityMonthlyState {
@@ -189,25 +190,26 @@ class AssetLiabilityMonthlyStateStore {
     final allAnnualRates = decodePaymentOverrides(
       prefs.getString(annualRatePrefsKey),
     );
-    if (state.annualRateOverrides.isEmpty) {
+    final sanitizedAnnualRateOverrides = sanitizeAnnualRateOverrides(
+      state.annualRateOverrides,
+    );
+    if (sanitizedAnnualRateOverrides.isEmpty) {
       allAnnualRates.remove(monthKey);
     } else {
-      allAnnualRates[monthKey] = Map<String, double>.from(
-        state.annualRateOverrides,
-      );
+      allAnnualRates[monthKey] = sanitizedAnnualRateOverrides;
     }
     await prefs.setString(annualRatePrefsKey, jsonEncode(allAnnualRates));
 
     final allAnnualRateEvidences = decodeAnnualRateEvidences(
       prefs.getString(annualRateEvidencePrefsKey),
     );
-    if (state.annualRateEvidences.isEmpty) {
+    final sanitizedAnnualRateEvidences = sanitizeAnnualRateEvidences(
+      state.annualRateEvidences,
+    );
+    if (sanitizedAnnualRateEvidences.isEmpty) {
       allAnnualRateEvidences.remove(monthKey);
     } else {
-      allAnnualRateEvidences[monthKey] =
-          Map<String, AssetLiabilityAnnualRateEvidence>.from(
-        state.annualRateEvidences,
-      );
+      allAnnualRateEvidences[monthKey] = sanitizedAnnualRateEvidences;
     }
     await prefs.setString(
       annualRateEvidencePrefsKey,
@@ -399,10 +401,7 @@ class AssetLiabilityMonthlyStateStore {
     return DateFormat('yyyy-MM').format(month);
   }
 
-  static DateTime salaryCycleMonthFor(
-    DateTime date, {
-    int salaryDay = 25,
-  }) {
+  static DateTime salaryCycleMonthFor(DateTime date, {int salaryDay = 25}) {
     final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
     if (date.day >= normalizedSalaryDay) {
       return DateTime(date.year, date.month);
@@ -410,13 +409,8 @@ class AssetLiabilityMonthlyStateStore {
     return DateTime(date.year, date.month - 1);
   }
 
-  static String formatSalaryCycleMonthKey(
-    DateTime date, {
-    int salaryDay = 25,
-  }) {
-    return formatMonthKey(
-      salaryCycleMonthFor(date, salaryDay: salaryDay),
-    );
+  static String formatSalaryCycleMonthKey(DateTime date, {int salaryDay = 25}) {
+    return formatMonthKey(salaryCycleMonthFor(date, salaryDay: salaryDay));
   }
 
   static AssetLiabilityMonthlyState copyPreviousMonthState({
@@ -1082,20 +1076,48 @@ class AssetLiabilityMonthlyStateStore {
     String? raw,
     String monthKey,
   ) {
-    return Map<String, double>.from(
-      decodePaymentOverrides(raw)[monthKey] ?? const <String, double>{},
+    return sanitizeAnnualRateOverrides(
+      Map<String, double>.from(
+        decodePaymentOverrides(raw)[monthKey] ?? const <String, double>{},
+      ),
     );
   }
 
   static Map<String, AssetLiabilityAnnualRateEvidence>
-      annualRateEvidencesForMonth(
-    String? raw,
-    String monthKey,
-  ) {
-    return Map<String, AssetLiabilityAnnualRateEvidence>.from(
-      decodeAnnualRateEvidences(raw)[monthKey] ??
-          const <String, AssetLiabilityAnnualRateEvidence>{},
+      annualRateEvidencesForMonth(String? raw, String monthKey) {
+    return sanitizeAnnualRateEvidences(
+      Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        decodeAnnualRateEvidences(raw)[monthKey] ??
+            const <String, AssetLiabilityAnnualRateEvidence>{},
+      ),
     );
+  }
+
+  static Map<String, double> sanitizeAnnualRateOverrides(
+    Map<String, double> values,
+  ) {
+    return <String, double>{
+      for (final entry in values.entries)
+        if (DebtLockdownService.isRegistrableAnnualRate(entry.value))
+          entry.key: entry.value,
+    };
+  }
+
+  static Map<String, AssetLiabilityAnnualRateEvidence>
+      sanitizeAnnualRateEvidences(
+    Map<String, AssetLiabilityAnnualRateEvidence> values,
+  ) {
+    return <String, AssetLiabilityAnnualRateEvidence>{
+      for (final entry in values.entries)
+        if (DebtLockdownService.isRegistrableAnnualRate(
+              entry.value.submittedAnnualRate,
+            ) &&
+            (entry.value.detectedAnnualRate == null ||
+                DebtLockdownService.isRegistrableAnnualRate(
+                  entry.value.detectedAnnualRate!,
+                )))
+          entry.key: entry.value,
+    };
   }
 
   static Map<String, String> paymentDifferenceReasonsForMonth(
@@ -1192,6 +1214,9 @@ class AssetLiabilityMonthlyStateStore {
 
     final migratedAnnualRates = <String, double>{};
     for (final entry in state.annualRateOverrides.entries) {
+      if (!DebtLockdownService.isRegistrableAnnualRate(entry.value)) {
+        continue;
+      }
       final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
       if (legacyKeyToAccountId.containsKey(entry.key)) {
         migratedAnnualRates.putIfAbsent(migratedKey, () => entry.value);
@@ -1203,9 +1228,19 @@ class AssetLiabilityMonthlyStateStore {
     final migratedAnnualRateEvidences =
         <String, AssetLiabilityAnnualRateEvidence>{};
     for (final entry in state.annualRateEvidences.entries) {
+      if (!DebtLockdownService.isRegistrableAnnualRate(
+            entry.value.submittedAnnualRate,
+          ) ||
+          (entry.value.detectedAnnualRate != null &&
+              !DebtLockdownService.isRegistrableAnnualRate(
+                entry.value.detectedAnnualRate!,
+              ))) {
+        continue;
+      }
       final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
-      migratedAnnualRateEvidences[migratedKey] =
-          entry.value.copyWith(accountId: migratedKey);
+      migratedAnnualRateEvidences[migratedKey] = entry.value.copyWith(
+        accountId: migratedKey,
+      );
     }
 
     final migratedPaidAccounts = <String>{};
