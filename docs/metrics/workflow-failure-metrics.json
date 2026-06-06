@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-06-05T22:51:58.199462+00:00",
+  "generated_at": "2026-06-06T22:51:17.271777+00:00",
   "tracked_count": 200,
   "open_count": 4,
   "closed_count": 196,
   "recovered_count": 196,
   "avg_recovery_hours": 7.33,
   "categories": {
-    "deno-lint": 38,
+    "deno-lint": 39,
     "generic-ci": 3,
     "migration-collision": 2,
     "notion-sync": 7,
     "supabase-push": 1,
-    "unclassified": 149
+    "unclassified": 148
   }
 }

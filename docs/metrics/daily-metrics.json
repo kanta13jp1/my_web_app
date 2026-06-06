@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-06-05",
+    "date": "2026-06-06",
     "users": {
       "total": 37
     },
@@ -34,6 +34,10 @@
     },
     "recentAchievements": [
       {
+        "title": "四半期ロードマップ v1 の策定",
+        "completed_at": "2026-06-06T00:00:00+00:00"
+      },
+      {
         "title": "ADR (設計判断ログ) 運用の確立",
         "completed_at": "2026-06-05T00:00:00+00:00"
       },
@@ -48,13 +52,9 @@
       {
         "title": "製品ライフサイクル管理 (企画・設計・テスト・リリース・運用・保守) タスクをWBSに統合",
         "completed_at": "2026-06-03T00:00:00+00:00"
-      },
-      {
-        "title": "Scheduled Daily part 239: scheduled-agent append-only discipline + verify-first detection blog draft (JA+EN)",
-        "completed_at": "2026-05-30T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-06-06T07:51:31+09:00",
-  "report_date": "2026-06-06"
+  "fetched_at": "2026-06-07T07:50:50+09:00",
+  "report_date": "2026-06-07"
 }
