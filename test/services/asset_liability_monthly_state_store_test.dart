@@ -212,6 +212,58 @@ void main() {
     });
 
     test(
+      'drops annual rates above the 20 percent registration block',
+      () async {
+        await store.saveMonth(
+          month: DateTime(2026, 5, 13),
+          state: AssetLiabilityMonthlyState(
+            annualRateOverrides: const <String, double>{
+              'legal': 0.20,
+              'blocked': 0.205,
+            },
+            annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+              'legal': AssetLiabilityAnnualRateEvidence(
+                accountId: 'legal',
+                fileName: 'legal.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.20,
+                detectedAnnualRate: 0.20,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20%',
+                source: 'test',
+              ),
+              'blocked': AssetLiabilityAnnualRateEvidence(
+                accountId: 'blocked',
+                fileName: 'blocked.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.205,
+                detectedAnnualRate: 0.205,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20.5%',
+                source: 'test',
+              ),
+            },
+          ),
+        );
+
+        final loaded = await store.loadMonth(DateTime(2026, 5, 13));
+        expect(loaded.annualRateOverrides, <String, double>{'legal': 0.20});
+        expect(loaded.annualRateEvidences.keys, contains('legal'));
+        expect(loaded.annualRateEvidences.keys, isNot(contains('blocked')));
+
+        const raw = '{"2026-05":{"legal":0.2,"blocked":0.205}}';
+        final decoded =
+            AssetLiabilityMonthlyStateStore.annualRateOverridesForMonth(
+          raw,
+          '2026-05',
+        );
+        expect(decoded, <String, double>{'legal': 0.2});
+      },
+    );
+
+    test(
       'falls back to estimated payment after manual amount is cleared',
       () async {
         await store.saveMonth(

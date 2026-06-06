@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:my_web_app/services/debt_lockdown_service.dart';
+
 import '../models/asset_liability_workbook.dart';
 
 class AssetLiabilityPlanningService {
@@ -611,15 +613,16 @@ class AssetLiabilityPlanningService {
     required Map<String, double> annualRateOverrides,
   }) {
     final byId = annualRateOverrides[account.id];
-    if (byId != null && byId >= 0) {
+    if (byId != null && DebtLockdownService.isRegistrableAnnualRate(byId)) {
       return byId;
     }
     final byTrimmedName = annualRateOverrides[account.name.trim()];
-    if (byTrimmedName != null && byTrimmedName >= 0) {
+    if (byTrimmedName != null &&
+        DebtLockdownService.isRegistrableAnnualRate(byTrimmedName)) {
       return byTrimmedName;
     }
     final byName = annualRateOverrides[account.name];
-    if (byName != null && byName >= 0) {
+    if (byName != null && DebtLockdownService.isRegistrableAnnualRate(byName)) {
       return byName;
     }
     return account.annualRate;
@@ -1382,8 +1385,10 @@ class AssetLiabilityPlanningService {
       return transferTasks;
     }
 
-    final fromAccount =
-        _findCashLikeAccountById(accounts, smbcOtsukaBranchAccountId);
+    final fromAccount = _findCashLikeAccountById(
+      accounts,
+      smbcOtsukaBranchAccountId,
+    );
     final toAccount = _findCashLikeAccountById(accounts, jibunBankAccountId);
     if (fromAccount == null || toAccount == null) {
       return transferTasks;
@@ -1644,9 +1649,7 @@ class AssetLiabilityPlanningService {
     required bool includeDefaultKddiProvider,
     required bool includeDefaultRent,
   }) {
-    final result = <String, double>{
-      ...monthlyPaymentOverrides,
-    };
+    final result = <String, double>{...monthlyPaymentOverrides};
     if (includeDefaultKddiProvider &&
         !result.containsKey(kddiProviderAccountId) &&
         !result.containsKey(kddiProviderAccountName)) {
@@ -1667,8 +1670,9 @@ class AssetLiabilityPlanningService {
   }
 
   bool _hasRent(Map<String, double> snapshot) {
-    return snapshot.keys
-        .any((name) => _accountIdForName(name) == rentAccountId);
+    return snapshot.keys.any(
+      (name) => _accountIdForName(name) == rentAccountId,
+    );
   }
 
   String _fallbackAccountId(String name) {
