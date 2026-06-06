@@ -103,6 +103,7 @@ import 'package:my_web_app/pages/memo_reactions_page.dart';
 import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
+import 'package:my_web_app/pages/corporate_bank_account_simulator_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:my_web_app/pages/categories_page.dart';
@@ -423,6 +424,17 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
   }
 }
 
+String _initialRouteName() {
+  final uri = Uri.base;
+  if (uri.path.isNotEmpty && uri.path != '/') {
+    return uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path;
+  }
+  if (uri.fragment.startsWith('/')) {
+    return uri.fragment;
+  }
+  return Navigator.defaultRouteName;
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -462,6 +474,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _scaffoldMessengerKey,
       navigatorKey: _navigatorKey,
+      initialRoute: _initialRouteName(),
       theme: themeService.overrideTheme ?? themeService.getLightTheme(),
       darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
       themeMode: themeService.overrideTheme != null
@@ -887,6 +900,10 @@ class _MyAppState extends State<MyApp> {
             );
           case '/enterprise':
             return MaterialPageRoute(builder: (_) => const EnterprisePage());
+          case '/corporate-bank-account-cost':
+            return MaterialPageRoute(
+              builder: (_) => const CorporateBankAccountSimulatorPage(),
+            );
           case '/ai-secretary':
             return MaterialPageRoute(builder: (_) => const AISecretaryPage());
           case '/team-workspace':

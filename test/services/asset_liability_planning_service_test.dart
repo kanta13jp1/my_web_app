@@ -133,6 +133,20 @@ void main() {
       expect(mobit.priorityLabel, isNotEmpty);
     });
 
+    test('ignores annual rate overrides above the 20 percent block line', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        annualRateOverrides: const <String, double>{'mobit': 0.205},
+      );
+
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.annualRate, 0.18);
+    });
+
     test('uses the estimated minimum payment when manual input is absent', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -160,10 +174,7 @@ void main() {
 
     test('exposes debt control review targets and payment split totals', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 50000,
-          'PayPay': -20000,
-        },
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
         baseDate: DateTime(2026, 5, 1),
       );
 
@@ -185,15 +196,20 @@ void main() {
         closeTo(workbook.monthlyScheduledPaymentTotal, 0.001),
       );
 
-      final reviewed = service.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 50000,
-          'PayPay': -20000,
-        },
+      final billingConfirmed = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
         baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{
-          'paypay_card': 20000,
-        },
+        billingConfirmedAccountIds: const <String>{'paypay_card'},
+      );
+
+      expect(billingConfirmed.debtMasterRows.single.billingConfirmed, isTrue);
+      expect(billingConfirmed.billingConfirmationPendingRows, isEmpty);
+      expect(billingConfirmed.paymentSourceMissingRows.length, 1);
+
+      final reviewed = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
         paymentSourceAccountIds: const <String, String>{
           'paypay_card': 'custom_bank',
         },
@@ -859,10 +875,10 @@ void main() {
         anthropicPayment.destinationAccountId,
         AssetLiabilityPlanningService.acomShoppingAccountId,
       );
-      expect(
-        workbook.cashflowRows.map((row) => row.paymentDay).toList(),
-        <int>[8, 26],
-      );
+      expect(workbook.cashflowRows.map((row) => row.paymentDay).toList(), <int>[
+        8,
+        26,
+      ]);
       expect(workbook.monthlyScheduledPaymentTotal, 108000);
       expect(workbook.monthlyUnpaidPaymentTotal, 108000);
       expect(workbook.cashAfterScheduledPayments, -8000);

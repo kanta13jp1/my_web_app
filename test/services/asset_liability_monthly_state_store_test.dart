@@ -49,6 +49,7 @@ void main() {
         state: AssetLiabilityMonthlyState(
           paymentOverrides: const <String, double>{'モビット': 70000},
           paidAccountNames: const <String>{'auPayカード'},
+          billingConfirmedAccountIds: const <String>{'paypay_card'},
           actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
           paymentDifferenceReasons: const <String, String>{
             'aupay_card': 'late fee',
@@ -114,6 +115,7 @@ void main() {
 
       expect(loadedMay.paymentOverrides['モビット'], 70000);
       expect(loadedMay.paidAccountNames, contains('auPayカード'));
+      expect(loadedMay.billingConfirmedAccountIds, contains('paypay_card'));
       expect(loadedMay.actualPaymentAmounts['aupay_card'], 6200);
       expect(loadedMay.paymentDifferenceReasons['aupay_card'], 'late fee');
       expect(loadedMay.annualRateOverrides['mobit'], 0.175);
@@ -141,6 +143,7 @@ void main() {
       expect(loadedJune.annualRateOverrides, isEmpty);
       expect(loadedJune.annualRateEvidences, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
+      expect(loadedJune.billingConfirmedAccountIds, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
       expect(loadedJune.cardStatementLines, isEmpty);
@@ -210,6 +213,58 @@ void main() {
       expect(decoded['PayPayカード'], 0);
       expect(decoded['モビット'], 70000);
     });
+
+    test(
+      'drops annual rates above the 20 percent registration block',
+      () async {
+        await store.saveMonth(
+          month: DateTime(2026, 5, 13),
+          state: AssetLiabilityMonthlyState(
+            annualRateOverrides: const <String, double>{
+              'legal': 0.20,
+              'blocked': 0.205,
+            },
+            annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+              'legal': AssetLiabilityAnnualRateEvidence(
+                accountId: 'legal',
+                fileName: 'legal.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.20,
+                detectedAnnualRate: 0.20,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20%',
+                source: 'test',
+              ),
+              'blocked': AssetLiabilityAnnualRateEvidence(
+                accountId: 'blocked',
+                fileName: 'blocked.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.205,
+                detectedAnnualRate: 0.205,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20.5%',
+                source: 'test',
+              ),
+            },
+          ),
+        );
+
+        final loaded = await store.loadMonth(DateTime(2026, 5, 13));
+        expect(loaded.annualRateOverrides, <String, double>{'legal': 0.20});
+        expect(loaded.annualRateEvidences.keys, contains('legal'));
+        expect(loaded.annualRateEvidences.keys, isNot(contains('blocked')));
+
+        const raw = '{"2026-05":{"legal":0.2,"blocked":0.205}}';
+        final decoded =
+            AssetLiabilityMonthlyStateStore.annualRateOverridesForMonth(
+          raw,
+          '2026-05',
+        );
+        expect(decoded, <String, double>{'legal': 0.2});
+      },
+    );
 
     test(
       'falls back to estimated payment after manual amount is cleared',

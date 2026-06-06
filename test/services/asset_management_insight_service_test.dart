@@ -347,6 +347,7 @@ AssetLiabilityDebtRow _debtRow({
     liabilityShare: 1,
     priorityLabel: 'test',
     paymentAmountEstimated: false,
+    billingConfirmed: true,
     paid: false,
   );
 }
