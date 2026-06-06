@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// カレンダーイベントページ
 /// calendar-events Edge Function と連携してイベントを管理
 /// table_calendar による月次ビュー + 日付別イベントリスト
 class CalendarEventsPage extends StatefulWidget {
   const CalendarEventsPage({super.key, SupabaseClient? supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient? _supabaseClient;
 
@@ -32,8 +33,8 @@ bool _eventIsAllDay(Map<String, dynamic> event) => event['all_day'] == true;
 
 String _eventTitle(Map<String, dynamic> event) =>
     event['title']?.toString().trim().isNotEmpty == true
-        ? event['title'].toString()
-        : 'Untitled';
+    ? event['title'].toString()
+    : 'Untitled';
 
 String _eventTimeLabel(Map<String, dynamic> event) {
   if (_eventIsAllDay(event)) return 'All-day';
@@ -57,8 +58,8 @@ String _eventDateTimeLabel(Map<String, dynamic> event) {
   if (end == null) return _formatDateTime(start);
   final endLabel =
       start.year == end.year && start.month == end.month && start.day == end.day
-          ? _formatClock(end)
-          : _formatDateTime(end);
+      ? _formatClock(end)
+      : _formatDateTime(end);
   return '${_formatDateTime(start)} - $endLabel';
 }
 
@@ -68,6 +69,89 @@ String _eventColorHex(Map<String, dynamic> event) {
   final normalized = raw.startsWith('#') ? raw : '#$raw';
   final lower = normalized.toLowerCase();
   return RegExp(r'^#[0-9a-f]{6}$').hasMatch(lower) ? lower : '#4285f4';
+}
+
+typedef _CalendarFeatureLinkOption = ({
+  String label,
+  String path,
+  List<String> keywords,
+});
+
+const List<_CalendarFeatureLinkOption> _calendarFeatureLinkOptions = [
+  (
+    label: '資産管理',
+    path: '/asset-management',
+    keywords: ['資産管理', '資産', '投資', '家計', '財務', 'asset', 'finance'],
+  ),
+  (label: 'ノート', path: '/note-list', keywords: ['ノート', 'メモ', 'note']),
+];
+
+@visibleForTesting
+String? inferCalendarEventFeatureLinkUrl(String title, String description) {
+  final text = '$title $description'.toLowerCase();
+  for (final option in _calendarFeatureLinkOptions) {
+    for (final keyword in option.keywords) {
+      if (text.contains(keyword.toLowerCase())) return option.path;
+    }
+  }
+  return null;
+}
+
+@visibleForTesting
+String? normalizeCalendarEventFeatureLinkUrl(String? raw) {
+  final value = raw?.trim();
+  if (value == null || value.isEmpty) return null;
+
+  for (final option in _calendarFeatureLinkOptions) {
+    if (value == option.label ||
+        value == option.path ||
+        value == option.path.replaceFirst('/', '')) {
+      return option.path;
+    }
+  }
+
+  if (value.startsWith('//')) return null;
+  if (value.startsWith('/')) return value;
+
+  final parsed = Uri.tryParse(value);
+  if (parsed != null && parsed.hasScheme) {
+    final scheme = parsed.scheme.toLowerCase();
+    if (scheme == 'http' || scheme == 'https') return value;
+    return null;
+  }
+
+  if (RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9_/-]*$').hasMatch(value)) {
+    return '/$value';
+  }
+  return null;
+}
+
+String? _eventFeatureLinkUrl(Map<String, dynamic> event) {
+  const keys = [
+    'feature_link_url',
+    'featureLinkUrl',
+    'feature_url',
+    'feature_path',
+    'link_url',
+    'url',
+  ];
+  for (final key in keys) {
+    final normalized = normalizeCalendarEventFeatureLinkUrl(
+      event[key]?.toString(),
+    );
+    if (normalized != null) return normalized;
+  }
+  return null;
+}
+
+String _eventFeatureLinkLabel(Map<String, dynamic> event, String url) {
+  final storedLabel = event['feature_link_label']?.toString().trim();
+  if (storedLabel != null && storedLabel.isNotEmpty) return storedLabel;
+
+  for (final option in _calendarFeatureLinkOptions) {
+    if (url == option.path) return option.label;
+  }
+  return 'リンク';
 }
 
 @visibleForTesting
@@ -200,22 +284,28 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     String description = '',
     bool allDay = false,
     String color = '#4285f4',
+    String? featureLinkUrl,
   }) async {
     try {
-      final end =
-          allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
-      await _supabase.functions.invoke(
-        'app-hub',
-        body: {
-          'action': 'calendar.create',
-          'title': title,
-          'description': description,
-          'start_at': startAt.toIso8601String(),
-          'end_at': end.toIso8601String(),
-          'all_day': allDay,
-          'color': color,
-        },
+      final end = allDay
+          ? startAt
+          : (endAt ?? startAt.add(const Duration(hours: 1)));
+      final body = <String, dynamic>{
+        'action': 'calendar.create',
+        'title': title,
+        'description': description,
+        'start_at': startAt.toIso8601String(),
+        'end_at': end.toIso8601String(),
+        'all_day': allDay,
+        'color': color,
+      };
+      final normalizedLink = normalizeCalendarEventFeatureLinkUrl(
+        featureLinkUrl,
       );
+      if (normalizedLink != null) {
+        body['feature_link_url'] = normalizedLink;
+      }
+      await _supabase.functions.invoke('app-hub', body: body);
       await _fetchMonth(_focusedDay);
     } catch (e) {
       if (mounted) {
@@ -232,27 +322,32 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     String description = '',
     bool allDay = false,
     String color = '#4285f4',
+    String? featureLinkUrl,
+    bool updateFeatureLink = false,
   }) async {
     if (eventId.isEmpty) {
       setState(() => _errorMessage = 'Event id is missing.');
       return;
     }
     try {
-      final end =
-          allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
-      await _supabase.functions.invoke(
-        'app-hub',
-        body: {
-          'action': 'calendar.update',
-          'id': eventId,
-          'title': title,
-          'description': description,
-          'start_at': startAt.toIso8601String(),
-          'end_at': end.toIso8601String(),
-          'all_day': allDay,
-          'color': color,
-        },
-      );
+      final end = allDay
+          ? startAt
+          : (endAt ?? startAt.add(const Duration(hours: 1)));
+      final body = <String, dynamic>{
+        'action': 'calendar.update',
+        'id': eventId,
+        'title': title,
+        'description': description,
+        'start_at': startAt.toIso8601String(),
+        'end_at': end.toIso8601String(),
+        'all_day': allDay,
+        'color': color,
+      };
+      if (updateFeatureLink) {
+        body['feature_link_url'] =
+            normalizeCalendarEventFeatureLinkUrl(featureLinkUrl) ?? '';
+      }
+      await _supabase.functions.invoke('app-hub', body: body);
       await _fetchMonth(_focusedDay);
     } catch (e) {
       if (mounted) {
@@ -342,6 +437,10 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     buffer
       ..writeln()
       ..writeln('Color: ${_eventColorHex(event)}');
+    final featureLinkUrl = _eventFeatureLinkUrl(event);
+    if (featureLinkUrl != null) {
+      buffer.writeln('Link: $featureLinkUrl');
+    }
     final eventId = event['event_id']?.toString() ?? '';
     if (eventId.isNotEmpty) {
       buffer.writeln('Event ID: $eventId');
@@ -384,12 +483,57 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     );
   }
 
+  Future<void> _handleEventTap(
+    BuildContext context,
+    Map<String, dynamic> event,
+  ) async {
+    if (_eventFeatureLinkUrl(event) != null) {
+      await _openEventLink(context, event);
+      return;
+    }
+    if (context.mounted) {
+      _showEventDetailsSheet(context, event);
+    }
+  }
+
+  Future<void> _openEventLink(
+    BuildContext context,
+    Map<String, dynamic> event,
+  ) async {
+    final rawUrl = _eventFeatureLinkUrl(event);
+    if (rawUrl == null) {
+      if (context.mounted) _showEventDetailsSheet(context, event);
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    final uri = Uri.parse(rawUrl).hasScheme
+        ? Uri.parse(rawUrl)
+        : Uri.base.resolve(rawUrl);
+    try {
+      final opened = await launchUrl(uri, webOnlyWindowName: '_blank');
+      if (!opened && mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('リンクを開けませんでした: $rawUrl')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text('リンクを開けませんでした: $e')));
+      }
+    }
+  }
+
   void _showEventDetailsSheet(
     BuildContext context,
     Map<String, dynamic> event,
   ) {
     final color = _eventColor(event);
     final description = event['description']?.toString().trim() ?? '';
+    final featureLinkUrl = _eventFeatureLinkUrl(event);
+    final featureLinkLabel = featureLinkUrl == null
+        ? null
+        : _eventFeatureLinkLabel(event, featureLinkUrl);
     final metadataRows = _eventMetadataRows(event);
     showModalBottomSheet<void>(
       context: context,
@@ -438,6 +582,17 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                   const SizedBox(height: 4),
                   Text(description, style: theme.textTheme.bodyMedium),
                 ],
+                if (featureLinkUrl != null) ...[
+                  const SizedBox(height: 16),
+                  Text('リンク', style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 4),
+                  SelectableText(
+                    featureLinkUrl,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -461,6 +616,15 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    if (featureLinkUrl != null)
+                      FilledButton.icon(
+                        icon: const Icon(Icons.open_in_new),
+                        label: Text('$featureLinkLabelを開く'),
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _openEventLink(context, event);
+                        },
+                      ),
                     FilledButton.icon(
                       icon: const Icon(Icons.edit),
                       label: const Text('Edit'),
@@ -633,76 +797,76 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                 ? _DayTimelineView(
                     selectedDay: _selectedDay,
                     events: _selectedDayEvents,
-                    onTap: (event) => _showEventDetailsSheet(context, event),
+                    onTap: (event) => _handleEventTap(context, event),
+                    onDetails: (event) =>
+                        _showEventDetailsSheet(context, event),
                     onDelete: (event) => _confirmDeleteEvent(context, event),
                   )
                 : _selectedDayEvents.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.event_available,
-                              size: 48,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'この日のイベントはありません',
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .outlineVariant,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.event_available,
+                          size: 48,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: _selectedDayEvents.length,
-                        itemBuilder: (context, index) {
-                          final event = _selectedDayEvents[index];
-                          return _EventCard(
-                            event: event,
-                            color: _eventColor(event),
-                            onTap: () => _showEventDetailsSheet(context, event),
-                            onDelete: () {
-                              final eventId =
-                                  event['event_id']?.toString() ?? '';
-                              if (eventId.isEmpty) return;
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('削除確認'),
-                                  content: Text('「${event['title']}」を削除しますか？'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(ctx),
-                                      child: const Text('キャンセル'),
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFFE53935),
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.pop(ctx);
-                                        _deleteEvent(eventId);
-                                      },
-                                      child: const Text('削除'),
-                                    ),
-                                  ],
+                        const SizedBox(height: 8),
+                        Text(
+                          'この日のイベントはありません',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: _selectedDayEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = _selectedDayEvents[index];
+                      return _EventCard(
+                        event: event,
+                        color: _eventColor(event),
+                        onTap: () => _handleEventTap(context, event),
+                        onLongPress: () =>
+                            _showEventDetailsSheet(context, event),
+                        onDelete: () {
+                          final eventId = event['event_id']?.toString() ?? '';
+                          if (eventId.isEmpty) return;
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('削除確認'),
+                              content: Text('「${event['title']}」を削除しますか？'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('キャンセル'),
                                 ),
-                              );
-                            },
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFE53935),
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _deleteEvent(eventId);
+                                  },
+                                  child: const Text('削除'),
+                                ),
+                              ],
+                            ),
                           );
                         },
-                      ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -731,13 +895,17 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     final initialEnd = event == null
         ? initialStart.add(const Duration(hours: 1))
         : (_eventDateTime(event, 'end_at') ??
-            initialStart.add(const Duration(hours: 1)));
+              initialStart.add(const Duration(hours: 1)));
     final titleCtrl = TextEditingController(
       text: event?['title']?.toString() ?? '',
     );
     final descCtrl = TextEditingController(
       text: event?['description']?.toString() ?? '',
     );
+    final initialFeatureLinkUrl = event == null
+        ? ''
+        : (_eventFeatureLinkUrl(event) ?? '');
+    final linkCtrl = TextEditingController(text: initialFeatureLinkUrl);
     var eventDate = DateTime(
       initialStart.year,
       initialStart.month,
@@ -755,6 +923,15 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     String fmtTime(TimeOfDay t) =>
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
+    void applySuggestedFeatureLink() {
+      if (linkCtrl.text.trim().isNotEmpty) return;
+      final suggested = inferCalendarEventFeatureLinkUrl(
+        titleCtrl.text,
+        descCtrl.text,
+      );
+      if (suggested != null) linkCtrl.text = suggested;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -771,6 +948,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     labelText: 'タイトル *',
                     border: OutlineInputBorder(),
                   ),
+                  onChanged: (_) => setDialogState(applySuggestedFeatureLink),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -780,6 +958,31 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     border: OutlineInputBorder(),
                   ),
                   maxLines: 2,
+                  onChanged: (_) => setDialogState(applySuggestedFeatureLink),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: linkCtrl,
+                  decoration: const InputDecoration(
+                    labelText: '開くリンク（任意）',
+                    hintText: '/asset-management',
+                    prefixIcon: Icon(Icons.open_in_new),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final option in _calendarFeatureLinkOptions)
+                      ActionChip(
+                        avatar: const Icon(Icons.link, size: 16),
+                        label: Text(option.label),
+                        onPressed: () =>
+                            setDialogState(() => linkCtrl.text = option.path),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -930,7 +1133,11 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         endTime.hour,
                         endTime.minute,
                       );
+                final featureLinkUrl = linkCtrl.text.trim();
                 if (isEditing) {
+                  final shouldUpdateFeatureLink =
+                      initialFeatureLinkUrl.isNotEmpty ||
+                      featureLinkUrl.isNotEmpty;
                   _updateEvent(
                     eventId: eventId,
                     title: title,
@@ -939,6 +1146,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     description: descCtrl.text.trim(),
                     allDay: allDay,
                     color: selectedColor,
+                    featureLinkUrl: featureLinkUrl,
+                    updateFeatureLink: shouldUpdateFeatureLink,
                   );
                 } else {
                   _createEvent(
@@ -948,6 +1157,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     description: descCtrl.text.trim(),
                     allDay: allDay,
                     color: selectedColor,
+                    featureLinkUrl: featureLinkUrl,
                   );
                 }
               },
@@ -1101,6 +1311,7 @@ class _DayTimelineView extends StatelessWidget {
     required this.selectedDay,
     required this.events,
     required this.onTap,
+    required this.onDetails,
     required this.onDelete,
   });
 
@@ -1111,6 +1322,7 @@ class _DayTimelineView extends StatelessWidget {
   final DateTime selectedDay;
   final List<Map<String, dynamic>> events;
   final ValueChanged<Map<String, dynamic>> onTap;
+  final ValueChanged<Map<String, dynamic>> onDetails;
   final ValueChanged<Map<String, dynamic>> onDelete;
 
   @override
@@ -1176,7 +1388,8 @@ class _DayTimelineView extends StatelessWidget {
   }
 
   Widget _buildPositionedEvent(_TimelineEntry entry, double contentWidth) {
-    final columnWidth = (contentWidth - (entry.columnCount - 1) * _eventGap) /
+    final columnWidth =
+        (contentWidth - (entry.columnCount - 1) * _eventGap) /
         entry.columnCount;
     final safeColumnWidth = columnWidth < 48 ? 48.0 : columnWidth;
     final top = (entry.startMinute / 60) * _hourHeight + 2;
@@ -1186,7 +1399,8 @@ class _DayTimelineView extends StatelessWidget {
 
     return Positioned(
       top: top,
-      left: _timeGutterWidth +
+      left:
+          _timeGutterWidth +
           _eventGap +
           entry.column * (safeColumnWidth + _eventGap),
       width: safeColumnWidth,
@@ -1195,6 +1409,7 @@ class _DayTimelineView extends StatelessWidget {
         event: entry.event,
         color: _CalendarEventsPageState._eventColor(entry.event),
         onTap: () => onTap(entry.event),
+        onLongPress: () => onDetails(entry.event),
         onDelete: () => onDelete(entry.event),
       ),
     );
@@ -1293,8 +1508,9 @@ class _DayTimelineView extends StatelessWidget {
       1440,
     );
     final minimumEndMinute = _clampInt(startMinute + 30, 1, 1440);
-    final endMinute =
-        rawEndMinute < minimumEndMinute ? minimumEndMinute : rawEndMinute;
+    final endMinute = rawEndMinute < minimumEndMinute
+        ? minimumEndMinute
+        : rawEndMinute;
 
     return _TimelineRange(startMinute, endMinute);
   }
@@ -1344,24 +1560,28 @@ class _DayTimelineEventTile extends StatelessWidget {
     required this.event,
     required this.color,
     required this.onTap,
+    required this.onLongPress,
     required this.onDelete,
   });
 
   final Map<String, dynamic> event;
   final Color color;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final description = event['description']?.toString() ?? '';
+    final hasFeatureLink = _eventFeatureLinkUrl(event) != null;
     return Material(
       color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         borderRadius: BorderRadius.circular(6),
         onTap: onTap,
+        onLongPress: onLongPress,
         child: DecoratedBox(
           decoration: BoxDecoration(
             border: Border(left: BorderSide(color: color, width: 4)),
@@ -1401,6 +1621,15 @@ class _DayTimelineEventTile extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (hasFeatureLink)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, right: 2),
+                    child: Icon(
+                      Icons.open_in_new,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
                 IconButton(
                   tooltip: 'Delete',
                   visualDensity: VisualDensity.compact,
@@ -1460,12 +1689,14 @@ class _EventCard extends StatelessWidget {
     required this.event,
     required this.color,
     required this.onTap,
+    required this.onLongPress,
     required this.onDelete,
   });
 
   final Map<String, dynamic> event;
   final Color color;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final VoidCallback onDelete;
 
   @override
@@ -1475,6 +1706,7 @@ class _EventCard extends StatelessWidget {
     final startAt = event['start_at']?.toString() ?? '';
     final endAt = event['end_at']?.toString() ?? '';
     final allDay = event['all_day'] == true;
+    final hasFeatureLink = _eventFeatureLinkUrl(event) != null;
 
     String fmt(DateTime d) =>
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
@@ -1496,6 +1728,7 @@ class _EventCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         onTap: onTap,
+        onLongPress: onLongPress,
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(Icons.event, color: color, size: 20),
@@ -1514,10 +1747,24 @@ class _EventCard extends StatelessWidget {
               ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Color(0xFFE53935)),
-          tooltip: '削除',
-          onPressed: onDelete,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (hasFeatureLink)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.open_in_new,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Color(0xFFE53935)),
+              tooltip: '削除',
+              onPressed: onDelete,
+            ),
+          ],
         ),
       ),
     );

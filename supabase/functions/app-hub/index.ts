@@ -26,6 +26,37 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+function optionalTrimmedString(value: unknown): string {
+  if (value == null) return "";
+  return String(value).trim();
+}
+
+function normalizeCalendarFeatureLinkUrl(value: unknown): string {
+  const raw = optionalTrimmedString(value);
+  if (!raw || raw.length > 2048) return "";
+  if (raw.startsWith("//")) return "";
+  if (raw.startsWith("/")) return raw;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.toString()
+      : "";
+  } catch {
+    return /^[a-zA-Z0-9][a-zA-Z0-9_/-]*$/.test(raw) ? `/${raw}` : "";
+  }
+}
+
+function calendarFeatureLinkUrlFromBody(body: Record<string, unknown>): string {
+  return normalizeCalendarFeatureLinkUrl(
+    body.feature_link_url ??
+      body.featureLinkUrl ??
+      body.feature_url ??
+      body.feature_path ??
+      body.link_url ??
+      body.url,
+  );
+}
+
 async function getUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return null;
@@ -252,6 +283,10 @@ serve(async (req: Request) => {
       }
 
       case "calendar.create": {
+        const featureLinkUrl = calendarFeatureLinkUrlFromBody(body);
+        const featureLinkLabel = optionalTrimmedString(
+          body.feature_link_label ?? body.featureLinkLabel,
+        );
         const item = await addItem(admin, "calendar_event", userId, {
           title: body.title,
           start_at: body.start_at,
@@ -259,6 +294,10 @@ serve(async (req: Request) => {
           description: body.description ?? "",
           all_day: body.all_day ?? false,
           color: body.color ?? "#4285f4",
+          ...(featureLinkUrl ? { feature_link_url: featureLinkUrl } : {}),
+          ...(featureLinkLabel
+            ? { feature_link_label: featureLinkLabel.slice(0, 120) }
+            : {}),
         });
         const meta = (item.metadata ?? {}) as Record<string, unknown>;
         return json({
@@ -281,6 +320,24 @@ serve(async (req: Request) => {
           patch.all_day = body.all_day ?? false;
         }
         if (Object.hasOwn(body, "color")) patch.color = body.color ?? "#4285f4";
+        if (
+          Object.hasOwn(body, "feature_link_url") ||
+          Object.hasOwn(body, "featureLinkUrl") ||
+          Object.hasOwn(body, "feature_url") ||
+          Object.hasOwn(body, "feature_path") ||
+          Object.hasOwn(body, "link_url") ||
+          Object.hasOwn(body, "url")
+        ) {
+          patch.feature_link_url = calendarFeatureLinkUrlFromBody(body);
+        }
+        if (
+          Object.hasOwn(body, "feature_link_label") ||
+          Object.hasOwn(body, "featureLinkLabel")
+        ) {
+          patch.feature_link_label = optionalTrimmedString(
+            body.feature_link_label ?? body.featureLinkLabel,
+          ).slice(0, 120);
+        }
         const item = await updateItem(
           admin,
           "calendar_event",

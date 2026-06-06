@@ -78,10 +78,35 @@ void main() {
       event('All day event', day, day, allDay: true),
     ]);
 
+    expect(sorted.map((event) => event['title']), [
+      'All day event',
+      'Earlier event',
+      'Late event',
+    ]);
+  });
+
+  test('calendar event feature links infer and normalize app routes', () {
     expect(
-      sorted.map((event) => event['title']),
-      ['All day event', 'Earlier event', 'Late event'],
+      inferCalendarEventFeatureLinkUrl('資産管理', '今日の残高を更新する'),
+      '/asset-management',
     );
+    expect(
+      inferCalendarEventFeatureLinkUrl('Portfolio check', 'asset allocation'),
+      '/asset-management',
+    );
+    expect(
+      normalizeCalendarEventFeatureLinkUrl('asset-management'),
+      '/asset-management',
+    );
+    expect(
+      normalizeCalendarEventFeatureLinkUrl('https://example.com/work'),
+      'https://example.com/work',
+    );
+    expect(
+      normalizeCalendarEventFeatureLinkUrl('mailto:test@example.com'),
+      isNull,
+    );
+    expect(normalizeCalendarEventFeatureLinkUrl('//example.com'), isNull);
   });
 
   Widget testWidget() {
