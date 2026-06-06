@@ -82,6 +82,7 @@ class AssetLiabilityPlanningService {
     Map<String, String> paymentDifferenceReasons = const <String, String>{},
     Map<String, double> annualRateOverrides = const <String, double>{},
     Set<String> paidAccountNames = const <String>{},
+    Set<String> billingConfirmedAccountIds = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
     Map<String, String> defaultPaymentSourceAccountIds =
         const <String, String>{},
@@ -175,6 +176,7 @@ class AssetLiabilityPlanningService {
             paymentDifferenceReasons: paymentDifferenceReasons,
             annualRateOverrides: annualRateOverrides,
             paidAccountNames: paidAccountNames,
+            billingConfirmedAccountIds: billingConfirmedAccountIds,
             paymentSourceAccountIds: effectivePaymentSourceAccountIds,
             defaultCardBillingAccountIds: defaultCardBillingAccountIds,
             cardBillingAccountIds: cardBillingAccountIds,
@@ -529,6 +531,7 @@ class AssetLiabilityPlanningService {
     required Map<String, String> paymentDifferenceReasons,
     required Map<String, double> annualRateOverrides,
     required Set<String> paidAccountNames,
+    required Set<String> billingConfirmedAccountIds,
     required Map<String, String> paymentSourceAccountIds,
     required Map<String, String> defaultCardBillingAccountIds,
     required Map<String, String> cardBillingAccountIds,
@@ -602,10 +605,23 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : principal / liabilityTotal.abs(),
       priorityLabel: _priorityLabel(annualRate),
       paymentAmountEstimated: manualPayment == null,
+      billingConfirmed: _containsAccountKey(
+        billingConfirmedAccountIds,
+        account,
+      ),
       paid: paidAccountNames.contains(account.id) ||
           paidAccountNames.contains(account.name.trim()) ||
           paidAccountNames.contains(account.name),
     );
+  }
+
+  bool _containsAccountKey(
+    Set<String> accountKeys,
+    AssetLiabilityAccount account,
+  ) {
+    return accountKeys.contains(account.id) ||
+        accountKeys.contains(account.name.trim()) ||
+        accountKeys.contains(account.name);
   }
 
   double _annualRateFor({

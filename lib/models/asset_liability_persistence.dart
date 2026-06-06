@@ -82,6 +82,7 @@ class AssetLiabilityMonthlyStatePayload {
   final Map<String, double> annualRateOverrides;
   final Map<String, AssetLiabilityAnnualRateEvidence> annualRateEvidences;
   final Set<String> paidAccountIds;
+  final Set<String> billingConfirmedAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
   final List<AssetLiabilityCardStatementLine> cardStatementLines;
@@ -96,6 +97,7 @@ class AssetLiabilityMonthlyStatePayload {
     required this.annualRateOverrides,
     required this.annualRateEvidences,
     required this.paidAccountIds,
+    required this.billingConfirmedAccountIds,
     required this.paymentSourceAccountIds,
     required this.cardBillingAccountIds,
     required this.cardStatementLines,
@@ -121,6 +123,9 @@ class AssetLiabilityMonthlyStatePayload {
         state.annualRateEvidences,
       ),
       paidAccountIds: Set<String>.from(state.paidAccountNames),
+      billingConfirmedAccountIds: Set<String>.from(
+        state.billingConfirmedAccountIds,
+      ),
       paymentSourceAccountIds: Map<String, String>.from(
         state.paymentSourceAccountIds,
       ),
@@ -162,6 +167,10 @@ class AssetLiabilityMonthlyStatePayload {
       paidAccountIds: _readStringSet(json, 'paid_account_ids') ??
           _readStringSet(json, 'paidAccountIds') ??
           const <String>{},
+      billingConfirmedAccountIds:
+          _readStringSet(json, 'billing_confirmed_account_ids') ??
+              _readStringSet(json, 'billingConfirmedAccountIds') ??
+              const <String>{},
       paymentSourceAccountIds:
           _readStringMap(json, 'payment_source_account_ids') ??
               _readStringMap(json, 'paymentSourceAccountIds') ??
@@ -194,6 +203,7 @@ class AssetLiabilityMonthlyStatePayload {
         annualRateEvidences,
       ),
       paidAccountNames: Set<String>.from(paidAccountIds),
+      billingConfirmedAccountIds: Set<String>.from(billingConfirmedAccountIds),
       paymentSourceAccountIds: Map<String, String>.from(
         paymentSourceAccountIds,
       ),
@@ -225,6 +235,8 @@ class AssetLiabilityMonthlyStatePayload {
           entry.key: entry.value.toJson(),
       },
       'paid_account_ids': (paidAccountIds.toList()..sort()),
+      'billing_confirmed_account_ids': (billingConfirmedAccountIds.toList()
+        ..sort()),
       'payment_source_account_ids': Map<String, String>.from(
         paymentSourceAccountIds,
       ),
