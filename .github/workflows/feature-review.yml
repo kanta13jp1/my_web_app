@@ -2,7 +2,7 @@ name: Feature Review
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 */4 * * *"  # 4時間毎 (2026-06-06 ci-audit: 毎時→4時間, 540実行/月削減)
   workflow_dispatch:
     inputs:
       dry_run:
