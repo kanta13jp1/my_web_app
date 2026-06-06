@@ -31615,3 +31615,20 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - PR body に high-risk-ultrareview-exception + Claude Code #1 + minimal-E2E 宣言を初稿から内包 (= part 241 で確立した recipe を適用し close/reopen 不要の first-try gate pass を狙う)。
 - Philosophy Alignment: 原則 1 CEO感 / 2 ミッション / 8 KPI (昨日の自分比較) / 9 ウェルビーイング。
 - commit hash: (PR merge 後に追記)。
+
+### 2026-06-06 Win版#132 part 243 — 四半期ロードマップ v1 策定 (WBS be0354f6 完了 / /loop autonomous)
+
+**Context**:
+- `/loop` dynamic mode で「WBS 上の未完了タスクを 1 つ完了」を自走。Win-completable な唯一の未完了タスク `[企画] 四半期ロードマップ策定` (be0354f6) を選択 (#1495 mobile / #1950 automation は Codex realm で Win 完了不可)。part 242 PRD v1 の後続。
+
+**Changes**:
+- `docs/QUARTERLY_ROADMAP.md` を新設 — 四半期ロードマップ v1: 競合監視・ユーザー要望・WBS 進捗を反映し Q3 2026 (MVP ローンチ / 1,000 users) の優先順位を SDLC 7 工程別に再配置 / WBS フェーズバランスレビュー (実測 3,143 tasks / 完了 2,211 = 70.3% / 未完了 932 / phase 未設定 879 = 94.3% という中心的所見) / リスクノート (低確度の機能レーンを delivery タスクより先に削る) / 原則整合。
+- `docs/DIRECTORY_STRUCTURE.md` に `docs/QUARTERLY_ROADMAP.md` への pointer 追記。
+- migration `20260606090000_wbs_complete_quarterly_roadmap.sql` で WBS task を completed/100/approved 化 + `development_achievements` 追記 (part 242 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate (high-risk ultrareview + minimal-E2E) を初稿 body で first-try PASS (close/reopen 不要 / part 242 recipe 再現)。
+- BEHIND-by-1 (health-monitor cron churn `6049630a9`) + file-overlap 0 + 全 12 check green を検証し admin squash-merge。
+- prod DB の completed flip は deploy-prod (~30min) で反映。
+- Philosophy Alignment: 原則 4 mentor (最終決定権は user) / 6 商品=価値 (delivery 死守) / 8 KPI (North-Star 優先) / 9 IPO=ウェルビーイング。
+- commit hash: `044cbc9df` (squash merge / [PR #3120](https://github.com/kanta13jp1/my_web_app/pull/3120))。
