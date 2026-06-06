@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-05T21:47:23Z",
+  "generated_at": "2026-06-06T21:39:50Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-4ac7a65fa1a3",
+        "entry_id": "nf-fb87a9824462",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.165 / June 5, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.165 June 5, 2026 Bug fixes and reliability improvements ​ 2.1.163 June 4, 2026 Added requiredMinimumVersion and requiredMaximumVersion managed settings — Claude Code...",
+        "text": "Claude Code changelog 2.1.167 / June 6, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.167 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.166 June 6, 2026 Added fallbackModel setting to configure up to three fallback models tried in order when the...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "40deac625dfcb2a1cc55c21a5b4f7b6c13eee573ab62cfd6916993f6dc20b75b",
+          "hash": "d0f59a704d6ad0b995a7e46bab91cab05ba73d3f6699a5dd72db014286230583",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.165 / June 5, 2026",
+          "latest_signal": "2.1.167 / June 6, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "975292e2fe22766eab1836650d3302bcd849aba2e3272c947c08cb4c1fd118e8",
+          "previous_hash": "40deac625dfcb2a1cc55c21a5b4f7b6c13eee573ab62cfd6916993f6dc20b75b",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.165 June 5, 2026 Bug fixes and reliability improvements ​ 2.1.163 June 4, 2026 Added requiredMinimumVersion and requiredMaximumVersion managed settings — Claude Code..."
+            "​ 2.1.167 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.166 June 6, 2026 Added fallbackModel setting to configure up to three fallback models tried in order when the..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-4ac7a65fa1a3",
+        "entry_id": "nf-fb87a9824462",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,7 +115,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "3585d0dcebf3d7e49981d07198fd66caca4f99944fe01704fa10e619aaf6b420",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "bcb3d4aaa2db89399f15532a300edc7af9afeee6f9f2d5af47e0c070d5f94c3c",
+          "previous_hash": "3585d0dcebf3d7e49981d07198fd66caca4f99944fe01704fa10e619aaf6b420",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -267,7 +267,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "8fc372537c2da492b9cf8c3c328a7ec478e925cd3e022f312163ea1cb3cb9ac2",
@@ -319,7 +319,7 @@
           "latest_signal": "2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "9f40652ed23264562e2707ad583861bba96442e9998596233dfde3a222f84b06",
+          "previous_hash": "8fc372537c2da492b9cf8c3c328a7ec478e925cd3e022f312163ea1cb3cb9ac2",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -357,7 +357,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "a09b2b0c2ff17b884457972db9163221c127c436c0146d756dd4e7cd111d8c63",
@@ -400,7 +400,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "4fde2472f78c32c343b44e2ff07bf5a3c66b212eddc9c617d38b78c01150f075",
+          "previous_hash": "a09b2b0c2ff17b884457972db9163221c127c436c0146d756dd4e7cd111d8c63",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -481,7 +481,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "6e14bcba2e137dc2844191facafb2e913a7f78eee659aa6e8c5f521de1bab36b",
@@ -506,7 +506,7 @@
           "latest_signal": "3.7 / Jun 5, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "f0638a3f4e9d45eefd6af1a0812ecd70c8eb2c03a4b760969048857c7b147ecb",
+          "previous_hash": "6e14bcba2e137dc2844191facafb2e913a7f78eee659aa6e8c5f521de1bab36b",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
