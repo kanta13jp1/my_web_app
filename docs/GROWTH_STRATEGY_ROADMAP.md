@@ -31159,3 +31159,57 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 6. **J3 backend layer impl** (= 部 224 skeleton 後続 / Win Claude 担当 候補)
 7. **/goal pivot 提案検討** (= 8+ 連続 redundant 強化 → 「Codex sprint status report」command or skill 化)
 8. **disk-cleanup Tier 2** (= C: 28.39 GB → 部 230 で 25 GB breach 接近 / cleanup-skill manual fire)
+
+
+---
+
+## Win版#132 part 231 cron (= 真値 part 233 / 2026-05-19 12:00 UTC / autonomous daily-development cron / Win Claude / numbering reconciliation deferred)
+
+### Session ritual
+
+- **開始**: 2026-05-19 12:00 UTC = 21:00 JST = scheduled `daily-development` cron / autonomous / no user attention
+- **trigger**: `~/.claude/scheduled-tasks/daily-development/SKILL.md`
+- **worktree**: `.claude/worktrees/part-233-daily-dev` ([WORKDIR-ISOLATION] 厳守) / branch `claude/part-233-daily-dev` / from `origin/main` HEAD `8ce2d3b6f`
+- **numbering note**: ROADMAP label uses `part 231 cron` per "ROADMAP last entry が真の正本" rule (= part 230 lesson). MEMORY.md sequencing says true count = part 233. Numbering collision (first surfaced part 232) reconciliation = user-driven session per [NO-SCOPE-CREEP] autonomous-cron discipline.
+- **scope decision**: triad ship only (= part 219 cron + part 225 cron precedent) = blog draft pair JA+EN + idempotent seed + ROADMAP entry. No PR rebase / no dangling PR cleanup / no Dart impact.
+
+### Deliverable (1 PR / 4 files)
+
+1. **Tech blog draft pair JA + EN — "3-Tier Canonical for Docs-Only PRs"**
+   - `docs/blog-drafts/2026-05-19-canonical-3tier-docs-only-pr-recipe.md` (JA)
+   - `docs/blog-drafts/2026-05-19-canonical-3tier-docs-only-pr-recipe-en.md` (EN)
+   - Distilled from part 232 PR #2942 (5th-and-final dogfood that locked the canonical)
+   - Recipe documented = (Tier 1) body must hold gate-script exact phrases (implementation-detail independent E2E + minimal 3 cases + integration_test/Playwright/smoke mechanism) — generic 5-item checkbox does NOT match / (Tier 2) `gh pr edit --add-label docs-only` to enter the `scripts/check_minimal_e2e_gate.py` line 159-161 early-return path / (Tier 3) `gh pr close` + `gh pr reopen` within 1 sec to fire fresh `reopened` event payload bypassing the cached `opened` payload
+   - Failure-mode mapping = part 225-followup + 226 (missed Tier 1) → part 228 + 229 (missed Tier 2, passed by body coincidence) → part 232 (all 3 tiers, true canonical first-try SUCCESS)
+   - Application scope (✅) = owner-authored single-reviewer docs-only PRs / (❌) = gates inspecting code semantics, shared PRs with reviewer approvals, applying `docs-only` label to implementation PRs (= contract violation)
+   - Same `published: false` discipline as prior daily-dev cron drafts (part 219 + part 225)
+2. **Idempotent seed `supabase/migrations/20260519120000_seed_achievements_scheduled_daily_part233.sql`**
+   - INSERT ... WHERE NOT EXISTS guard (= replay-safe)
+   - feeds `development_achievements` table → GrowthRoadmapProgressCard
+3. **ROADMAP part 231 cron entry +N 行 strict-append**
+
+### Philosophy Alignment (= 6/9 autonomous-cron minimal-scope)
+
+- 原則 1 (CEO 感) ✅ scheduled cron 完走 / 原則 6 (商品=価値) ✅ canonical recipe distillation = fleet-wide reusable / 原則 7 (資本=時間) ✅ ~15min triad ship / 原則 8 (KPI) ✅ daily achievements stream 継続 / 原則 9 (IPO) ✅ canonical 3-tier = reproducible systemic 価値
+- [VIBE-30] ✅ responsible CI workflow + bounded scope / [BRAIN-32] ✅ Karpathy Ingest→Compile→Publish 最短 turn-around 第 2 例累積 (= part 217 同日 lesson 横展開 pattern と並ぶ / part 232 morning recipe lock → part 233 cron blog distill = ~13h turn-around)
+- minimal-scope のため [PHILOSOPHY-22] 3 軸不満 (= 原則 2 ミッション / 原則 3 6 部署 / 原則 5 mentor 拡張)
+- **autonomous-safe pattern 第 3 例累積** = part 219 + part 225 + part 233 = scheduled cron 下 fatigue:FATIGUE でも triad-only で safe ship 立証
+
+### 教訓 (= 部 231 cron)
+
+- **scheduled cron + minimal triad = autonomous-safe 第 3 例** = part 219 (4-layer AI rollout) + part 225 (PR gate body patch) + part 233 (3-tier canonical) chain. fatigue:FATIGUE 下でも sequential Bash + worktree + triad scope なら safe ship 再現性確認.
+- **same-day Karpathy turn-around 第 2 例累積** = part 217 morning insight → afternoon cron ship pattern を part 232 morning (07:59 JST) → part 233 cron (12:00 UTC = 21:00 JST) で再現. **session→blog distill 13h turn-around** が cron 自走の sweet spot.
+- **3-tier canonical = 5 cycle dogfood の総括** = 真の canonical recipe は failure mode mapping (= どの tier が抜けたか) と一緒に文書化することで「2 つで通った特例」を再現と勘違いしないで済む.
+- **numbering collision deferral 第 1 例** = autonomous-cron は scope discipline 厳守 = ROADMAP last entry label に従う ("part 231 cron"). 真値 (part 233) 認識は併記するが renumber は user-driven session に委譲.
+
+### next session 候補 (= 部 232+ user-driven)
+
+1. 🚨 **session numbering reconciliation** (= part 232 で 第 1 例 detect + part 233 cron で deferred / Option B+C combo: PR rebase+merge for dangling PRs #2819+#2823 + ROADMAP rename annotation)
+2. **#1495 P0 Option D 候補化判断** (= +24h reply 待ち継続 / Option D unilateral trigger threshold pre-warning から +24h 経過判定)
+3. **#2520 Codex impl status** (= 5/22 sprint Day 4 = 残 3 日)
+4. **#2461 A1 EF Codex impl status** (= 5/22 sprint target / stale 4+ days)
+5. **MEMORY.md consolidation 第 6 例** (= part 215-220 archive / 200 entries 余裕継続)
+6. **dangling PR resolve** (= #2819 + #2823 part 230b + part 231 由来 / unmerged 状態確認 + canonical 3-tier 適用候補)
+7. **J3 backend layer impl** (= 部 224 skeleton 後続 / Win Claude 担当)
+8. **disk-cleanup Tier 2** (= 部 230 で 25 GB breach 接近 / cleanup-skill manual fire)
+
