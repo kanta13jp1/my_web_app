@@ -445,6 +445,24 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-07",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 5 day 経過 / cooldown 残 2 day / 次回 6/09 解禁). 前回 report = 6/06 (GHA static-template 可用性 + Notion/Slack/GitHub WebSearch 補遺) / 本 6/07 は WebSearch 主体で 6/05→6/07 delta 集約. 新規 6 シグナル = (1) **★ Cognition Devin Desktop 6/2 🔴** (= Windsurf rebrand / Agent Command Center = local+cloud 全 agent 1 Kanban 統治 + Devin Local Rust 化 subagent 並列 +30% token 効率 + 6/3 personal automations / 自社 2 instance fleet + cross-instance-pr 手動監視に対し UI 統治先取り = narrative pivot「並列 → 監査可能な並列統治」緊急度上昇) / (2) **★ Replit super-app 越境 6/1-6/4 🔴** (= Shopify storefront prompt→受注10分 + SEO Agent + Growth dashboard + Microsoft Fabric / vibe coding が ecommerce+集客+enterprise governance へ拡張 = 自社 LP+動画+AI大学+B/S 統合戦略へ接近 / 🟠→🔴 昇格) / (3) **★ Anthropic Dynamic Workflows GA + ultracode 🔴** (= 並列探索→所見ごと独立検証 = 自社 judge-panel/adversarial-verify/loop-until-dry 思想の標準コマンド化 + rate limit 2x / 6/15 課金分離 既報) / (4) **Cursor Design Mode for canvases 🟠** (= UI 直接注釈 = design-skills+Figma MCP 正面接近 + Context Usage Report token 内訳 = prompt-caching コスト可視化軸 + Organizations Enterprise GA) / (5) **xAI Grok Build worktrees 対応 🟠** (= subagent 並列ブランチ = 自社 [WORKDIR-ISOLATION] commoditize 加速 / 差別化は worktree 運用ルール側へ移行 + Connectors 7 service+自前MCP) / (6) **MoneyForward AI Cowork 7月 GA 確定再確認 🔴** (= Claude Agent SDK+API+MCP / 経理労務法務6業務 / 自社 6部署+B/S narrative 最大 overlap / 非対称防衛=個人 lifestyle CEO ダッシュボード). 新候補=Microsoft MAI-Code-1-Flash (Build 2026 / MS 初自社製 coding model / Agent 365 統合監視). 6/09 採択 第 1 候補 = Alibaba Qoder (= 事前スキャン済 / Qwen-Coder-Qoder 60.51% vs Opus 4.5 64.86% / code graph+project memory+self-orchestration / 基準 a+b+c 該当). https://www.digitalapplied.com/blog/windsurf-becomes-devin-desktop-ide-migration-2026",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / 事前スキャン済 / Qwen-Coder-Qoder 60.51% task resolution / code graph + project memory + self-orchestration / 基準 a+b+c 該当 / 解禁日初日採択推奨)",
+        "Microsoft MAI-Code-1-Flash (= Build 2026 新 / MS 初自社製 coding model / Microsoft Agent 365 統合監視 / 動向観察)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
