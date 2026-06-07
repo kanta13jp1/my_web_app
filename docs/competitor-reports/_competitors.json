@@ -463,6 +463,24 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-08",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 6 day 経過 / cooldown 残 1 day / 次回 6/09 解禁 = 明日). 前回 report = 6/07 (GHA static-template 可用性 + Win Claude WebSearch merged). 本 6/08 は WebSearch 主体で 6/07→6/08 delta 集約. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 新規シグナル = (1) **★ Anthropic Opus 4.8 default 化 + Claude Code 6月更新 🔴** (= Opus 4.8 を Max/Team Premium/Enterprise PAYG/API default 化 + Fast mode → Opus 4.8 $10/$50 [2x 料金 2.5x 速度] + `/reload-skills` + `.claude/skills` 自動ロード + `!` background job + Enterprise custom role connector 権限 / competitor というより自社 Win Claude #132 fleet 中核の直接 dogfood 対象 = `.claude/skills` 多数手動 skill 運用に直結) / (2) **★ GitHub Copilot SDK GA + Copilot App desktop 6/2 🔴** (= agentic engine 埋込 SDK GA [custom tools + MCP + OpenTelemetry] + Copilot App 'My Work' で複数 agent session 1 画面統治 + Slack から cloud agent 起動→PR / 6/2 同日 Devin Agent Command Center と fleet 統治 UI commoditize 確定 = narrative pivot「並列 → 監査可能な並列統治」緊急度上昇) / (3) **Cursor 3.6 Auto-review classifier subagent 5/29 🟠** (= Shell/MCP/Fetch ごと小型 reasoning agent が allow/retry/ask 判断 / 公式が「best-effort convenience, NOT a security boundary」明言 = 自社 [SUBAGENT-GUARD] deny-by-default + [MCP-AUTH-27] narrative を競合自身の言葉で補強 = 追い風) / (4) **MoneyForward AI Cowork 7月 GA 確定 delta なし 🔴** (= 経理労務法務 6 業務 / 複数 AI エージェント並列自律 / Claude Agent SDK + API / B/S 中核最大脅威 / GA まで 1ヶ月弱). 6/09 採択 第 1 候補 = Alibaba Qoder (= pre-scan 有効 / June delta なし [最新 2026/2 Qwen-Coder-Qoder 60.51% vs Opus 4.5 64.86%] / 基準 a+b+c 該当 / 解禁日初日採択推奨 / [AI-TOOL-VERIFY] qoder.com 公式裏取り必須). https://github.blog/changelog/2026-06-02-copilot-sdk-is-now-generally-available/",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / pre-scan 有効 / agentic coding platform / Qwen-Coder-Qoder 60.51% task resolution / code graph + project memory + self-orchestration / 基準 a+b+c 該当 / 解禁日初日採択推奨)",
+        "Microsoft MAI-Code-1-Flash (= Build 2026 / MS 初自社製 coding model / Microsoft Agent 365 統合監視 / 動向観察)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
