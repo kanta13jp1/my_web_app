@@ -13,7 +13,7 @@ name: Health Monitor (統合ヘルスモニター)
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # 毎30分
+    - cron: "0 * * * *"  # 毎時 (ci-audit 2026-06-07: 30分→毎時、月720実行削減)
   workflow_dispatch:
 
 concurrency:
