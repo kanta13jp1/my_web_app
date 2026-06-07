@@ -2582,20 +2582,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ..sort((a, b) => a.name.compareTo(b.name));
   }
 
-  List<Map<String, dynamic>> _liabilitiesFromSnapshot(
-    Map<String, double> snapshot,
-  ) {
-    final liabilities = snapshot.entries
-        .where((e) => e.value < 0)
-        .map((e) => <String, dynamic>{'name': e.key, 'balance': e.value.abs()})
-        .toList();
-
-    liabilities.sort(
-      (a, b) => (b['balance'] as double).compareTo(a['balance'] as double),
-    );
-    return liabilities;
-  }
-
   void _ensureDebtLockdownSnapshotLoaded(double remainingDebt) {
     final loadedForDebt = _debtLockdownLoadedForDebt;
     if (_isLoadingDebtLockdown) {
@@ -2855,6 +2841,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         child: Text('高金利優先（アバランチ）'),
                       ),
                       DropdownMenuItem(
+                        value: 'dueDate',
+                        child: Text('支払日順'),
+                      ),
+                      DropdownMenuItem(
                         value: 'hybrid',
                         child: Text('ハイブリッド（高金利×少額）'),
                       ),
@@ -2975,7 +2965,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required String userMemo,
   }) async {
     final snapshot = _latestSnapshotForPlanning();
-    final liabilities = _liabilitiesFromSnapshot(snapshot);
+    final workbook = _assetLiabilityPlanner.buildWorkbook(
+      latestSnapshot: snapshot,
+      baseDate: _now,
+      monthlyPaymentOverrides: _monthlyPaymentOverrides,
+      actualPaymentAmounts: _actualPaymentAmounts,
+      paymentDifferenceReasons: _paymentDifferenceReasons,
+      annualRateOverrides: _annualRateOverrides,
+      paidAccountNames: _monthlyPaidAccountNames,
+      paymentSourceAccountIds: _paymentSourceAccountIds,
+      defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
+      defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
+      cardBillingAccountIds: _cardBillingAccountIds,
+      incomePlans: _monthlyIncomePlans,
+      cardStatementLines: _cardStatementLines,
+      transferTasks: _transferTasks,
+    );
+    final liabilities = workbook.debtMasterRows;
     if (liabilities.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -3000,12 +3006,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final netWorth = snapshot.values.fold<double>(0, (sum, v) => sum + v);
     final strategy = _strategyFromKey(strategyKey);
     final inputDebts = liabilities
-        .map((l) {
-          final name = l['name']?.toString() ?? '';
-          final balance = (l['balance'] as num?)?.toDouble() ?? 0;
+        .map((row) {
+          final minimumPayment = max(
+            row.minimumPaymentEstimate,
+            row.scheduledPaymentAmount,
+          );
           return _debtRepaymentPlanner.normalizeDebt(
-            name: name,
-            balance: balance,
+            name: row.name,
+            balance: row.balance.abs(),
+            annualRate: row.annualRate,
+            minimumPaymentRate: 0,
+            minimumPaymentFloor: minimumPayment,
+            paymentDay: row.paymentDay,
           );
         })
         .where((d) => d.name.isNotEmpty && d.balance > 0)
