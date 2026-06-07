@@ -39,6 +39,13 @@ enum AssetDebtPlannerMode {
   code,
 }
 
+enum _AssetTrendWindow {
+  oneMonth,
+  threeMonths,
+  sixMonths,
+  all,
+}
+
 class AssetManagementPage extends StatefulWidget {
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
@@ -106,6 +113,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<String> _sortedDates = [];
   bool _isStacked = true;
   bool _showDailyChange = false;
+  _AssetTrendWindow _assetTrendWindow = _AssetTrendWindow.sixMonths;
 
   // --- 収支（フロー）記録用変数 ---
   // 収支の支払元選択肢: DB の過去履歴から自動追加（初期デフォルトにマージ）
@@ -5466,41 +5474,84 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetLiabilityCard() {
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.account_balance,
-                  color: Color(0xFF0D9488),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0F2FE),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance,
+                    color: Color(0xFF0369A1),
+                  ),
                 ),
-                SizedBox(
-                  width: 8,
-                ),
-                Text(
-                  '①資産・②負債の全容把握',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '①資産・②負債の全容把握',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          height: 1.4,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        '残高一覧・純資産・日時推移',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const Text(
-              '現金、銀行口座、クレカの未払い(マイナス入力)をすべて記録せよ。',
-              style: TextStyle(
-                fontSize: 11,
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
-            ),
+            const SizedBox(height: 16),
+            _buildAssetSnapshotPanel(),
+            const SizedBox(height: 16),
+            _buildAssetTrendOverviewPanel(),
             const SizedBox(height: 16),
             _buildAssetWatchlistSection(),
             const SizedBox(height: 16),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '残高一覧',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${_assetTypes.length}件',
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             ..._assetTypes.map((type) => _buildAssetInputRow(type)),
             const SizedBox(height: 8),
             Wrap(
@@ -5561,6 +5612,546 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  ({String date, double assets, double liabilities, double netWorth})?
+      _latestAssetTotals() {
+    final dates = _sortedDates.isNotEmpty
+        ? _sortedDates
+        : (_assetData.keys.toList()..sort());
+    return dates.isEmpty ? null : _assetTotalsForDate(dates.last);
+  }
+
+  ({String date, double assets, double liabilities, double netWorth})
+      _assetTotalsForDate(String date) {
+    final snapshot =
+        _effectiveAssetDataByDate[date] ?? _assetData[date] ?? {};
+    var assets = 0.0;
+    var liabilities = 0.0;
+    for (final value in snapshot.values) {
+      value >= 0 ? assets += value : liabilities += value;
+    }
+    return (
+      date: date,
+      assets: assets,
+      liabilities: liabilities,
+      netWorth: assets + liabilities,
+    );
+  }
+
+  List<({String date, double assets, double liabilities, double netWorth})>
+      _assetTrendPointsForWindow() {
+    final dates = _sortedDates.isNotEmpty
+        ? _sortedDates
+        : (_assetData.keys.toList()..sort());
+    if (dates.isEmpty) return [];
+    final days = _assetTrendWindowDays(_assetTrendWindow);
+    final latest = DateTime.tryParse(dates.last);
+    final visibleDates = days == null || latest == null
+        ? dates
+        : dates.where((date) {
+            final parsed = DateTime.tryParse(date);
+            return parsed != null &&
+                !parsed.isBefore(latest.subtract(Duration(days: days)));
+          }).toList();
+    return visibleDates.map(_assetTotalsForDate).toList();
+  }
+
+  int? _assetTrendWindowDays(_AssetTrendWindow window) {
+    switch (window) {
+      case _AssetTrendWindow.oneMonth:
+        return 31;
+      case _AssetTrendWindow.threeMonths:
+        return 93;
+      case _AssetTrendWindow.sixMonths:
+        return 186;
+      case _AssetTrendWindow.all:
+        return null;
+    }
+  }
+
+  String _assetTrendWindowLabel(_AssetTrendWindow window) {
+    switch (window) {
+      case _AssetTrendWindow.oneMonth:
+        return '1M';
+      case _AssetTrendWindow.threeMonths:
+        return '3M';
+      case _AssetTrendWindow.sixMonths:
+        return '6M';
+      case _AssetTrendWindow.all:
+        return 'ALL';
+    }
+  }
+
+  Widget _buildAssetSnapshotPanel() {
+    final latest = _latestAssetTotals();
+    final points = _assetTrendPointsForWindow();
+    final previous = points.length >= 2 ? points[points.length - 2] : null;
+    final netDelta = latest == null || previous == null
+        ? null
+        : latest.netWorth - previous.netWorth;
+    final dateLabel = latest == null
+        ? '未記録'
+        : DateFormat('yyyy/MM/dd').format(DateTime.parse(latest.date));
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '現在の資産サマリー',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              _buildAssetStatusPill(
+                icon: Icons.today,
+                label: dateLabel,
+                color: const Color(0xFF0369A1),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _buildAssetMetricTile(
+                label: '総資産',
+                value: latest == null ? '--' : _formatYen(latest.assets),
+                color: const Color(0xFF0D9488),
+                icon: Icons.savings_outlined,
+              ),
+              _buildAssetMetricTile(
+                label: '総負債',
+                value: latest == null ? '--' : _formatYen(latest.liabilities),
+                color: const Color(0xFFDC2626),
+                icon: Icons.credit_card,
+              ),
+              _buildAssetMetricTile(
+                label: '純資産',
+                value: latest == null ? '--' : _formatYen(latest.netWorth),
+                color: latest != null && latest.netWorth < 0
+                    ? const Color(0xFFDC2626)
+                    : const Color(0xFF2563EB),
+                icon: Icons.account_balance_wallet_outlined,
+                supporting: netDelta == null
+                    ? null
+                    : '前回比 ${_formatSignedYen(netDelta)}',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetMetricTile({
+    required String label,
+    required String value,
+    required Color color,
+    required IconData icon,
+    String? supporting,
+  }) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 170),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.20)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: color,
+                      fontWeight: FontWeight.w900,
+                      height: 1.35,
+                    ),
+                  ),
+                  if (supporting != null)
+                    Text(
+                      supporting,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssetTrendOverviewPanel() {
+    final points = _assetTrendPointsForWindow();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '日時推移グラフ',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        height: 1.4,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      '総資産・純資産・負債を期間ごとに確認できます。',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final window in _AssetTrendWindow.values)
+                    ChoiceChip(
+                      label: Text(_assetTrendWindowLabel(window)),
+                      selected: _assetTrendWindow == window,
+                      onSelected: (_) =>
+                          setState(() => _assetTrendWindow = window),
+                      showCheckmark: false,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: _isCompact ? 220 : 260,
+            child: points.length < 2
+                ? _buildAssetTrendEmptyState()
+                : _buildAssetOverviewTrendChart(points),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              _buildAssetTrendLegendDot('総資産', const Color(0xFF0D9488)),
+              _buildAssetTrendLegendDot('純資産', const Color(0xFF2563EB)),
+              _buildAssetTrendLegendDot('総負債', const Color(0xFFDC2626)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetTrendEmptyState() {
+    return Container(
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: const Text(
+        '2日以上記録すると推移グラフを表示します',
+        style: TextStyle(
+          color: Color(0xFF64748B),
+          fontWeight: FontWeight.w700,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssetTrendLegendDot(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF334155),
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAssetOverviewTrendChart(
+    List<({String date, double assets, double liabilities, double netWorth})>
+        points,
+  ) {
+    final values = <double>[
+      for (final point in points) ...[
+        point.assets,
+        point.netWorth,
+        point.liabilities,
+      ],
+    ];
+    var minY = values.reduce((a, b) => a < b ? a : b);
+    var maxY = values.reduce((a, b) => a > b ? a : b);
+    if (minY == maxY) {
+      minY -= 1000;
+      maxY += 1000;
+    } else {
+      final padding = (maxY - minY) * 0.14;
+      minY -= padding;
+      maxY += padding;
+    }
+    final interval = max(1, (points.length / 4).floor()).toDouble();
+
+    LineChartBarData line({
+      required List<FlSpot> spots,
+      required Color color,
+      bool area = false,
+    }) {
+      return LineChartBarData(
+        spots: spots,
+        isCurved: true,
+        curveSmoothness: 0.22,
+        color: color,
+        barWidth: 3,
+        dotData: const FlDotData(show: false),
+        isStrokeCapRound: true,
+        belowBarData: BarAreaData(
+          show: area,
+          color: color.withValues(alpha: 0.10),
+        ),
+      );
+    }
+
+    return LineChart(
+      LineChartData(
+        minY: minY,
+        maxY: maxY,
+        lineTouchData: LineTouchData(
+          handleBuiltInTouches: true,
+          touchTooltipData: LineTouchTooltipData(
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
+            getTooltipItems: (spots) {
+              return spots.map((spot) {
+                final index =
+                    spot.x.toInt().clamp(0, points.length - 1).toInt();
+                final point = points[index];
+                final label = spot.barIndex == 0
+                    ? '総資産'
+                    : spot.barIndex == 1
+                        ? '純資産'
+                        : '総負債';
+                final color = spot.barIndex == 0
+                    ? const Color(0xFF0D9488)
+                    : spot.barIndex == 1
+                        ? const Color(0xFF2563EB)
+                        : const Color(0xFFDC2626);
+                final date =
+                    DateFormat('yyyy/MM/dd').format(DateTime.parse(point.date));
+                final prefix = spot == spots.first ? '$date\n' : '';
+                return LineTooltipItem(
+                  '$prefix$label: ${_formatYen(spot.y)}',
+                  TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                    height: 1.45,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) =>
+              const FlLine(color: Color(0xFFE2E8F0), strokeWidth: 1),
+        ),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              getTitlesWidget: (value, meta) {
+                return SideTitleWidget(
+                  meta: meta,
+                  space: 8,
+                  child: Text(
+                    NumberFormat.compact(locale: 'ja_JP').format(value),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF64748B),
+                      height: 1.5,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              interval: interval,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index < 0 || index >= points.length) {
+                  return const SizedBox.shrink();
+                }
+                final date =
+                    DateFormat('M/d').format(DateTime.parse(points[index].date));
+                return SideTitleWidget(
+                  meta: meta,
+                  child: Text(
+                    date,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF64748B),
+                      height: 1.5,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        lineBarsData: [
+          line(
+            spots: [
+              for (var i = 0; i < points.length; i++)
+                FlSpot(i.toDouble(), points[i].assets),
+            ],
+            color: const Color(0xFF0D9488),
+            area: true,
+          ),
+          line(
+            spots: [
+              for (var i = 0; i < points.length; i++)
+                FlSpot(i.toDouble(), points[i].netWorth),
+            ],
+            color: const Color(0xFF2563EB),
+          ),
+          line(
+            spots: [
+              for (var i = 0; i < points.length; i++)
+                FlSpot(i.toDouble(), points[i].liabilities),
+            ],
+            color: const Color(0xFFDC2626),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetStatusPill({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAssetInputRow(String type) {
     final todayStr = _todayDateKey();
     final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
@@ -5578,233 +6169,229 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         !isUpdatedToday &&
         lastDate == _yesterdayDateKey();
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        key: _assetRowKeyForType(type),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (watchlistEntry != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildWatchlistMetaChip(
-                    icon: Icons.star,
-                    label: watchlistEntry.group.isEmpty
-                        ? 'Watching'
-                        : 'Watch: ${watchlistEntry.group}',
-                    iconColor: const Color(0xFF92400E),
-                  ),
-                  if (watchlistEntry.memo.isNotEmpty)
-                    _buildWatchlistMetaChip(
-                      icon: Icons.sticky_note_2_outlined,
-                      label: watchlistEntry.memo,
-                    ),
-                ],
-              ),
-            ),
-          isCompact
-              ? Column(
-                  children: [
-                    TextField(
-                      controller: _controllers[type],
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: type,
-                        hintText: '負債はマイナス(-)をつける',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          tooltip: '符号切替',
-                          onPressed: () => _toggleMinusForType(type),
-                          icon: const Icon(Icons.exposure_neg_1),
-                        ),
-                        isDense: true,
-                        filled: isUpdatedToday,
-                        fillColor:
-                            isUpdatedToday ? const Color(0xFF64748B) : null,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          tooltip: watchlistEntry == null
-                              ? 'Add to watchlist'
-                              : 'Edit watchlist',
-                          onPressed: () => _showWatchlistDialog(type),
-                          icon: Icon(
-                            watchlistEntry == null
-                                ? Icons.star_border
-                                : Icons.star,
-                            color: watchlistEntry == null
-                                ? const Color(0xFF64748B)
-                                : const Color(0xFF92400E),
-                          ),
-                        ),
-                        if (canQuickUpdate) ...[
-                          OutlinedButton.icon(
-                            onPressed: () => _quickUpdateAssetData(type),
-                            icon:
-                                const Icon(Icons.history_toggle_off, size: 16),
-                            label: const Text('同額'),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        ElevatedButton(
-                          onPressed: () => _saveSingleAssetData(type),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isUpdatedToday
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF047857),
-                            foregroundColor: Colors.white,
-                          ),
-                          child: Text(isUpdatedToday ? '済' : '記録'),
-                        ),
-                        if (type != '現金')
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                            onPressed: () => _showRemoveAssetDialog(type),
-                          ),
-                      ],
-                    ),
-                  ],
-                )
-              : Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controllers[type],
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                          signed: true,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: type,
-                          hintText: '負債はマイナス(-)をつける',
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            tooltip: '符号切替',
-                            onPressed: () => _toggleMinusForType(type),
-                            icon: const Icon(Icons.exposure_neg_1),
-                          ),
-                          isDense: true,
-                          filled: isUpdatedToday,
-                          fillColor:
-                              isUpdatedToday ? const Color(0xFF64748B) : null,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      tooltip: watchlistEntry == null
-                          ? 'Add to watchlist'
-                          : 'Edit watchlist',
-                      onPressed: () => _showWatchlistDialog(type),
-                      icon: Icon(
-                        watchlistEntry == null ? Icons.star_border : Icons.star,
-                        color: watchlistEntry == null
-                            ? const Color(0xFF64748B)
-                            : const Color(0xFF92400E),
-                      ),
-                    ),
-                    if (canQuickUpdate) ...[
-                      OutlinedButton.icon(
-                        onPressed: () => _quickUpdateAssetData(type),
-                        icon: const Icon(Icons.history_toggle_off, size: 16),
-                        label: const Text('同額'),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    ElevatedButton(
-                      onPressed: () => _saveSingleAssetData(type),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isUpdatedToday
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF047857),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: Text(isUpdatedToday ? '済' : '記録'),
-                    ),
-                    if (type != '現金')
-                      IconButton(
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Color(0xFF9CA3AF),
-                        ),
-                        onPressed: () => _showRemoveAssetDialog(type),
-                      ),
-                  ],
+    final accentColor =
+        isLiability ? const Color(0xFFDC2626) : const Color(0xFF0D9488);
+    final statusLabel = lastAmount == null
+        ? '未記録'
+        : lastDate == todayStr
+            ? '本日更新'
+            : '最終更新 $lastDate';
+
+    final titleBlock = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: accentColor.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(_getIconForAsset(type), size: 19, color: accentColor),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                type,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  height: 1.35,
                 ),
-          if (lastAmount != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 4, top: 3),
-              child: Row(
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Icon(
-                    _getIconForAsset(type),
-                    size: 11,
-                    color: isLiability
-                        ? const Color(0xFFF87171)
+                  Text(
+                    lastAmount == null ? '--' : _formatYen(lastAmount),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: accentColor,
+                      height: 1.35,
+                    ),
+                  ),
+                  _buildAssetStatusPill(
+                    icon: isUpdatedToday
+                        ? Icons.check_circle
+                        : Icons.history_toggle_off,
+                    label: statusLabel,
+                    color: isUpdatedToday
+                        ? const Color(0xFF047857)
                         : const Color(0xFF64748B),
                   ),
-                  const SizedBox(width: 2),
-                  Text(
-                    '現在: ¥${NumberFormat('#,###').format(lastAmount)}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isLiability
-                          ? const Color(0xFF64748B)
-                          : const Color(0xFF047857),
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '(${lastDate == todayStr ? "本日更新" : "最終更新: $lastDate"})',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      height: 1.5,
-                    ),
-                  ),
-                  if (canQuickUpdate) ...[
-                    const SizedBox(width: 8),
-                    const Text(
-                      '昨日と同額なら「同額」で更新',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF64748B),
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
                 ],
               ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final amountField = TextField(
+      controller: _controllers[type],
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+        signed: true,
+      ),
+      decoration: InputDecoration(
+        labelText: '今日の残高',
+        hintText: '負債はマイナス(-)をつける',
+        prefixIcon: const Icon(Icons.edit_outlined, size: 18),
+        suffixIcon: IconButton(
+          tooltip: '符号切替',
+          onPressed: () => _toggleMinusForType(type),
+          icon: const Icon(Icons.exposure_neg_1),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accentColor, width: 1.6),
+        ),
+        isDense: true,
+        filled: true,
+        fillColor:
+            isUpdatedToday ? const Color(0xFFECFDF5) : const Color(0xFFF8FAFC),
+      ),
+    );
+
+    final actions = Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        IconButton(
+          tooltip: watchlistEntry == null ? 'Add to watchlist' : 'Edit watchlist',
+          onPressed: () => _showWatchlistDialog(type),
+          icon: Icon(
+            watchlistEntry == null ? Icons.star_border : Icons.star,
+            color: watchlistEntry == null
+                ? const Color(0xFF64748B)
+                : const Color(0xFF92400E),
+          ),
+        ),
+        if (canQuickUpdate)
+          OutlinedButton.icon(
+            onPressed: () => _quickUpdateAssetData(type),
+            icon: const Icon(Icons.history_toggle_off, size: 16),
+            label: const Text('同額'),
+          ),
+        FilledButton.icon(
+          onPressed: () => _saveSingleAssetData(type),
+          icon: Icon(isUpdatedToday ? Icons.check : Icons.save_outlined),
+          label: Text(isUpdatedToday ? '保存済' : '記録'),
+          style: FilledButton.styleFrom(
+            backgroundColor:
+                isUpdatedToday ? const Color(0xFF94A3B8) : accentColor,
+            foregroundColor: Colors.white,
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        if (type != '現金')
+          IconButton(
+            tooltip: '削除',
+            icon: const Icon(
+              Icons.delete_outline,
+              color: Color(0xFF94A3B8),
+            ),
+            onPressed: () => _showRemoveAssetDialog(type),
+          ),
+      ],
+    );
+
+    return Container(
+      key: _assetRowKeyForType(type),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isLiability ? const Color(0xFFFFFBFB) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isUpdatedToday
+              ? const Color(0xFF86EFAC)
+              : accentColor.withValues(alpha: isLiability ? 0.35 : 0.16),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A0F172A),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (watchlistEntry != null) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildWatchlistMetaChip(
+                  icon: Icons.star,
+                  label: watchlistEntry.group.isEmpty
+                      ? 'Watching'
+                      : 'Watch: ${watchlistEntry.group}',
+                  iconColor: const Color(0xFF92400E),
+                ),
+                if (watchlistEntry.memo.isNotEmpty)
+                  _buildWatchlistMetaChip(
+                    icon: Icons.sticky_note_2_outlined,
+                    label: watchlistEntry.memo,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (isCompact)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                titleBlock,
+                const SizedBox(height: 10),
+                amountField,
+                const SizedBox(height: 10),
+                Align(alignment: Alignment.centerRight, child: actions),
+              ],
             )
           else
-            Padding(
-              padding: const EdgeInsets.only(left: 4, top: 3),
-              child: Text(
-                '未記録',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                ),
+            Row(
+              children: [
+                Expanded(flex: 3, child: titleBlock),
+                const SizedBox(width: 12),
+                Expanded(flex: 2, child: amountField),
+                const SizedBox(width: 10),
+                Flexible(flex: 2, child: actions),
+              ],
+            ),
+          if (canQuickUpdate) ...[
+            const SizedBox(height: 8),
+            const Text(
+              '昨日と同額なら「同額」で素早く更新できます。',
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
             ),
+          ],
         ],
       ),
     );
