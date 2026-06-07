@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T21:39:50Z",
+  "generated_at": "2026-06-07T21:43:02Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-fb87a9824462",
+        "entry_id": "nf-4476264257ec",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.167 / June 6, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.167 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.166 June 6, 2026 Added fallbackModel setting to configure up to three fallback models tried in order when the...",
+        "text": "Claude Code changelog 2.1.168 / June 6, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.168 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.167 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.166 June 6, 2026 Added fallbackModel setting to...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d0f59a704d6ad0b995a7e46bab91cab05ba73d3f6699a5dd72db014286230583",
+          "hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.167 / June 6, 2026",
+          "latest_signal": "2.1.168 / June 6, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "40deac625dfcb2a1cc55c21a5b4f7b6c13eee573ab62cfd6916993f6dc20b75b",
+          "previous_hash": "d0f59a704d6ad0b995a7e46bab91cab05ba73d3f6699a5dd72db014286230583",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.167 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.166 June 6, 2026 Added fallbackModel setting to configure up to three fallback models tried in order when the..."
+            "​ 2.1.168 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.167 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.166 June 6, 2026 Added fallbackModel setting to..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-fb87a9824462",
+        "entry_id": "nf-4476264257ec",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -602,18 +602,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-83c7a8193477",
+        "entry_id": "nf-86b2f56c0d72",
         "title": "Devin release notes",
-        "text": "Devin release notes June 3, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Personal automations include a dedicated toggle, permission model, and badge in automation lists.",
+        "text": "Devin release notes June 5, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Playbook Devin Mode Playbooks can now specify a Devin mode (e.g., Fast or Normal).",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "f6ba31c4f42a0f86259555c1274c268fa985ce10346e290ab2b9425005052fd0",
+          "hash": "a6b5738abc0fcc97c625c5a0600ed02212751a77bf96671ea5cb12bdc539d64a",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -645,7 +645,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "June 3, 2026",
+          "latest_signal": "June 5, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "f6ba31c4f42a0f86259555c1274c268fa985ce10346e290ab2b9425005052fd0",
@@ -653,14 +653,14 @@
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
             "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-            "Personal automations include a dedicated toggle, permission model, and badge in automation lists."
+            "Playbook Devin Mode Playbooks can now specify a Devin mode (e.g., Fast or Normal)."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-83c7a8193477",
+        "entry_id": "nf-86b2f56c0d72",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
