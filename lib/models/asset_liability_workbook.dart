@@ -655,6 +655,7 @@ class AssetLiabilityCardBillingReviewItem {
   final String? billingAccountName;
   final bool includedInBillingAccount;
   final bool directCashflowTarget;
+  final bool paid;
   final List<String> alerts;
 
   const AssetLiabilityCardBillingReviewItem({
@@ -669,6 +670,7 @@ class AssetLiabilityCardBillingReviewItem {
     required this.billingAccountName,
     required this.includedInBillingAccount,
     required this.directCashflowTarget,
+    required this.paid,
     this.alerts = const <String>[],
   });
 

@@ -128,8 +128,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   // --- 今日18:00締切のためのチェックリスト ---
   final ScrollController _scrollController = ScrollController();
-  final ScrollController _debtMasterHorizontalScrollController =
-      ScrollController();
   static const double _paymentSourceSafetyBalance = 30000;
   final _keyStock = GlobalKey();
   final _keyFlow = GlobalKey();
@@ -441,7 +439,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _deadlineTimer?.cancel();
     _annualRateEvidencePasteRegistration?.dispose();
     _scrollController.dispose();
-    _debtMasterHorizontalScrollController.dispose();
     super.dispose();
   }
 
@@ -12141,6 +12138,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       title: '直接支払い',
       items: items,
       emptyMessage: '直接支払いの項目はありません',
+      showTodayMarker: true,
     );
   }
 
@@ -12191,7 +12189,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required String? title,
     required List<AssetLiabilityCardBillingReviewItem> items,
     required String emptyMessage,
+    bool showTodayMarker = false,
   }) {
+    final itemWidgets = items.isEmpty
+        ? const <Widget>[]
+        : _buildCardBillingReviewItemWidgets(
+            items: items,
+            showTodayMarker: showTodayMarker,
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -12212,77 +12217,359 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           )
         else
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowHeight: 34,
-              dataRowMinHeight: 46,
-              dataRowMaxHeight: 58,
-              columns: const [
-                DataColumn(label: Text('支払い項目')),
-                DataColumn(label: Text('金額'), numeric: true),
-                DataColumn(label: Text('支払日'), numeric: true),
-                DataColumn(label: Text('支払い方式')),
-                DataColumn(label: Text('請求先カード')),
-                DataColumn(label: Text('設定元')),
-                DataColumn(label: Text('資金繰り')),
-                DataColumn(label: Text('確認事項')),
+          Column(
+            children: [
+              if (showTodayMarker) ...[
+                _buildCardBillingRemainingSummary(items),
+                const SizedBox(height: 8),
               ],
-              rows: [
-                for (final item in items)
-                  DataRow(
-                    cells: [
-                      DataCell(Text(item.accountName)),
-                      DataCell(Text(_formatManagementYen(item.amount))),
-                      DataCell(
-                        Text(
-                          item.paymentDay == null
-                              ? '未設定'
-                              : '${item.paymentDay}日',
-                        ),
-                      ),
-                      DataCell(Text(item.paymentMethodLabel)),
-                      DataCell(
-                        Text(
-                          item.billingAccountName ??
-                              item.billingAccountId ??
-                              'なし',
-                        ),
-                      ),
-                      DataCell(
-                        Text(
-                          AssetLiabilityPlanningService
-                              .paymentMethodSettingSourceLabel(
-                            item.paymentMethodSettingSource,
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        _buildTextStatusChip(
-                          label: item.excludedFromDirectCashflow
-                              ? AssetLiabilityPlanningService
-                                  .cardBillingReviewExcludedFromDirectCashflowLabel
-                              : AssetLiabilityPlanningService
-                                  .cardBillingReviewDirectCashflowTargetLabel,
-                          color: item.excludedFromDirectCashflow
-                              ? const Color(0xFF2563EB)
-                              : const Color(0xFF0D9488),
-                        ),
-                      ),
-                      DataCell(
-                        Text(
-                          item.alerts.isEmpty
-                              ? '問題なし'
-                              : item.alerts.join(' / '),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
+              ...itemWidgets,
+            ],
           ),
       ],
     );
+  }
+
+  List<Widget> _buildCardBillingReviewItemWidgets({
+    required List<AssetLiabilityCardBillingReviewItem> items,
+    required bool showTodayMarker,
+  }) {
+    final widgets = <Widget>[];
+    var markerInserted = false;
+    for (final item in items) {
+      if (showTodayMarker &&
+          !markerInserted &&
+          _shouldInsertTodayMarkerBeforeCardBillingItem(item)) {
+        widgets.add(_buildCardBillingTodayMarker(items));
+        markerInserted = true;
+      }
+      widgets.add(_buildCardBillingReviewItemCard(item));
+    }
+    if (showTodayMarker && !markerInserted) {
+      widgets.add(_buildCardBillingTodayMarker(items));
+    }
+    return widgets;
+  }
+
+  Widget _buildCardBillingRemainingSummary(
+    List<AssetLiabilityCardBillingReviewItem> items,
+  ) {
+    final remainingItems =
+        items.where((item) => !item.paid).toList(growable: false);
+    final overdueItems =
+        remainingItems.where(_isCardBillingReviewItemOverdue).toList();
+    final todayOrLaterItems = remainingItems
+        .where((item) => _isCardBillingReviewItemTodayOrLater(item))
+        .toList();
+    final noDateCount =
+        remainingItems.where((item) => item.paymentDay == null).length;
+    final remainingTotal = remainingItems.fold<double>(
+      0,
+      (sum, item) => sum + item.amount,
+    );
+    final todayOrLaterTotal = todayOrLaterItems.fold<double>(
+      0,
+      (sum, item) => sum + item.amount,
+    );
+    final color = overdueItems.isNotEmpty
+        ? const Color(0xFFB91C1C)
+        : remainingItems.isEmpty
+            ? const Color(0xFF0D9488)
+            : const Color(0xFF2563EB);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                remainingItems.isEmpty
+                    ? Icons.check_circle_outline
+                    : Icons.event_note_outlined,
+                color: color,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  remainingItems.isEmpty
+                      ? '今月の直接支払いはすべて支払済みです'
+                      : '今月残り ${remainingItems.length}件 / ${_formatManagementYen(remainingTotal)}',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (remainingItems.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildTextStatusChip(
+                  label:
+                      '今日以降 ${todayOrLaterItems.length}件 / ${_formatManagementYen(todayOrLaterTotal)}',
+                  color: const Color(0xFF2563EB),
+                ),
+                if (overdueItems.isNotEmpty)
+                  _buildTextStatusChip(
+                    label: '期限超過 ${overdueItems.length}件',
+                    color: const Color(0xFFB91C1C),
+                  ),
+                if (noDateCount > 0)
+                  _buildTextStatusChip(
+                    label: '支払日未設定 $noDateCount件',
+                    color: const Color(0xFF64748B),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardBillingTodayMarker(
+    List<AssetLiabilityCardBillingReviewItem> items,
+  ) {
+    final remainingItems =
+        items.where((item) => !item.paid).toList(growable: false);
+    final remainingTotal = remainingItems.fold<double>(
+      0,
+      (sum, item) => sum + item.amount,
+    );
+    const color = Color(0xFF2563EB);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(height: 2, color: color.withValues(alpha: 0.45)),
+          ),
+          Flexible(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: color.withValues(alpha: 0.35)),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '今日 ${DateFormat('M/d').format(_now)} / 残り ${remainingItems.length}件 ${_formatManagementYen(remainingTotal)}',
+                  style: const TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(height: 2, color: color.withValues(alpha: 0.45)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardBillingReviewItemCard(
+    AssetLiabilityCardBillingReviewItem item,
+  ) {
+    final statusColor = _cardBillingReviewItemStatusColor(item);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: item.paid
+            ? const Color(0xFFF0FDFA)
+            : _isCardBillingReviewItemOverdue(item)
+                ? const Color(0xFFFEF2F2)
+                : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: statusColor.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  item.accountName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      _buildTextStatusChip(
+                        label: _cardBillingReviewItemStatusLabel(item),
+                        color: statusColor,
+                      ),
+                      _buildTextStatusChip(
+                        label: item.excludedFromDirectCashflow
+                            ? AssetLiabilityPlanningService
+                                  .cardBillingReviewExcludedFromDirectCashflowLabel
+                            : AssetLiabilityPlanningService
+                                  .cardBillingReviewDirectCashflowTargetLabel,
+                        color: item.excludedFromDirectCashflow
+                            ? const Color(0xFF2563EB)
+                            : const Color(0xFF0D9488),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildDebtMasterMetric(
+                label: '金額',
+                value: _formatManagementYen(item.amount),
+              ),
+              _buildDebtMasterMetric(
+                label: '支払日',
+                value: item.paymentDay == null ? '未設定' : '${item.paymentDay}日',
+              ),
+              _buildDebtMasterMetric(
+                label: '支払い方式',
+                value: item.paymentMethodLabel,
+              ),
+              _buildDebtMasterMetric(
+                label: '請求先カード',
+                value: item.billingAccountName ?? item.billingAccountId ?? 'なし',
+              ),
+              _buildDebtMasterMetric(
+                label: '設定元',
+                value:
+                    AssetLiabilityPlanningService.paymentMethodSettingSourceLabel(
+                  item.paymentMethodSettingSource,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            item.alerts.isEmpty
+                ? '確認事項: 問題なし'
+                : '確認事項: ${item.alerts.join(' / ')}',
+            style: TextStyle(
+              color: item.alerts.isEmpty
+                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                  : const Color(0xFFB91C1C),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _shouldInsertTodayMarkerBeforeCardBillingItem(
+    AssetLiabilityCardBillingReviewItem item,
+  ) {
+    final day = item.paymentDay;
+    if (day == null) {
+      return true;
+    }
+    final lastDay = DateTime(_now.year, _now.month + 1, 0).day;
+    final resolvedDay = day.clamp(1, lastDay).toInt();
+    return resolvedDay >= _now.day;
+  }
+
+  bool _isCardBillingReviewItemTodayOrLater(
+    AssetLiabilityCardBillingReviewItem item,
+  ) {
+    final day = item.paymentDay;
+    if (day == null) {
+      return false;
+    }
+    final lastDay = DateTime(_now.year, _now.month + 1, 0).day;
+    return day.clamp(1, lastDay).toInt() >= _now.day;
+  }
+
+  bool _isCardBillingReviewItemOverdue(
+    AssetLiabilityCardBillingReviewItem item,
+  ) {
+    final day = item.paymentDay;
+    if (item.paid || day == null) {
+      return false;
+    }
+    final lastDay = DateTime(_now.year, _now.month + 1, 0).day;
+    return day.clamp(1, lastDay).toInt() < _now.day;
+  }
+
+  String _cardBillingReviewItemStatusLabel(
+    AssetLiabilityCardBillingReviewItem item,
+  ) {
+    if (item.paid) {
+      return '支払済み';
+    }
+    if (item.paymentDay == null) {
+      return '支払日未設定';
+    }
+    final lastDay = DateTime(_now.year, _now.month + 1, 0).day;
+    final day = item.paymentDay!.clamp(1, lastDay).toInt();
+    if (day < _now.day) {
+      return '期限超過';
+    }
+    if (day == _now.day) {
+      return '今日';
+    }
+    return '今後';
+  }
+
+  Color _cardBillingReviewItemStatusColor(
+    AssetLiabilityCardBillingReviewItem item,
+  ) {
+    if (item.paid) {
+      return const Color(0xFF0D9488);
+    }
+    if (item.paymentDay == null) {
+      return const Color(0xFF64748B);
+    }
+    final lastDay = DateTime(_now.year, _now.month + 1, 0).day;
+    final day = item.paymentDay!.clamp(1, lastDay).toInt();
+    if (day < _now.day) {
+      return const Color(0xFFB91C1C);
+    }
+    if (day == _now.day) {
+      return const Color(0xFFD97706);
+    }
+    return const Color(0xFF2563EB);
   }
 
   Widget _buildCardStatementReconciliationPanel(
@@ -12321,19 +12608,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  'Card statement import and reconciliation',
+                  'カード明細取り込み・照合',
                   style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
                 ),
               ),
               _buildTextStatusChip(
-                label: '${reconciliation.importedLineCount} lines',
+                label: '${reconciliation.importedLineCount}行',
                 color: const Color(0xFF2563EB),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            'Paste CSV rows as description,amount,date or billing_account_id,description,amount,date. Imported totals are checked against card billing.',
+            'CSV行は「摘要,金額,日付」または「請求先ID,摘要,金額,日付」で貼り付けできます。取り込み合計をカード請求額と照合します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
@@ -12351,7 +12638,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 child: DropdownButton<String>(
                   value: selectedValue,
                   isExpanded: true,
-                  hint: const Text('Billing card'),
+                  hint: const Text('請求先カード'),
                   items: [
                     for (final account in cardOptions)
                       DropdownMenuItem<String>(
@@ -12371,14 +12658,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ? null
                     : () => _importCardStatementLines(workbook, selectedValue),
                 icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('Import lines'),
+                label: const Text('明細を取り込む'),
               ),
               OutlinedButton.icon(
                 onPressed: selectedValue == null
                     ? null
                     : () => _clearCardStatementLines(selectedValue),
                 icon: const Icon(Icons.delete_outline),
-                label: const Text('Clear card lines'),
+                label: const Text('カード明細をクリア'),
               ),
             ],
           ),
@@ -12390,7 +12677,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             decoration: const InputDecoration(
               isDense: true,
               border: OutlineInputBorder(),
-              hintText: 'Netflix,1980,2026-05-10\nMobile plan,5764,2026-05-12',
+              hintText: '電気代,1980,2026-05-10\n携帯料金,5764,2026-05-12',
             ),
           ),
           if (_cardStatementImportMessage != null) ...[
@@ -12416,7 +12703,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     if (reconciliation.groups.isEmpty) {
       return Text(
-        'No card-billed details or statement lines to reconcile.',
+        '照合できるカード請求内訳またはカード明細がまだありません。',
         style: TextStyle(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontSize: 12,
@@ -12432,12 +12719,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         dataRowMinHeight: 46,
         dataRowMaxHeight: 64,
         columns: const [
-          DataColumn(label: Text('billing card')),
-          DataColumn(label: Text('billed amount'), numeric: true),
-          DataColumn(label: Text('statement total'), numeric: true),
-          DataColumn(label: Text('configured total'), numeric: true),
-          DataColumn(label: Text('difference'), numeric: true),
-          DataColumn(label: Text('alerts')),
+          DataColumn(label: Text('請求先カード')),
+          DataColumn(label: Text('請求額'), numeric: true),
+          DataColumn(label: Text('明細合計'), numeric: true),
+          DataColumn(label: Text('設定内訳合計'), numeric: true),
+          DataColumn(label: Text('差額'), numeric: true),
+          DataColumn(label: Text('確認事項')),
         ],
         rows: [
           for (final group in reconciliation.groups)
@@ -15148,17 +15435,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '負債マスタ（残高順）',
+          '負債マスタ（支払日順）',
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 8),
         const Text(
-          '支払日順で表示しています。',
+          '各負債の支払額、差額、年利、証跡をカード内で確認できます。',
           style: TextStyle(fontSize: 12, height: 1.4),
         ),
         const SizedBox(height: 4),
         Text(
-          '画面に収まらない場合は、表を横にスクロールして支払済み・年利・月利息まで確認できます。支払済みチェックは給料日25日基準のサイクルで保存されます。',
+          '支払済みチェックは給料日25日基準のサイクルで保存されます。入力欄は画面幅に合わせて折り返します。',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 12,
@@ -15176,75 +15463,220 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ],
         const SizedBox(height: 6),
-        Scrollbar(
-          controller: _debtMasterHorizontalScrollController,
-          thumbVisibility: true,
-          child: SingleChildScrollView(
-            controller: _debtMasterHorizontalScrollController,
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowHeight: 36,
-              dataRowMinHeight: 64,
-              dataRowMaxHeight: 96,
-              columns: const [
-                DataColumn(label: Text('actual payment'), numeric: true),
-                DataColumn(label: Text('difference'), numeric: true),
-                DataColumn(label: Text('difference reason')),
-                DataColumn(
-                  label: Text('\u8a2d\u5b9a\u5143/\u4fdd\u5b58\u5148'),
-                ),
-                DataColumn(label: Text('支払い方式')),
-                DataColumn(label: Text('項目')),
-                DataColumn(label: Text('種別')),
-                DataColumn(label: Text('残高'), numeric: true),
-                DataColumn(label: Text('支払日'), numeric: true),
-                DataColumn(label: Text('推定最低支払額'), numeric: true),
-                DataColumn(label: Text('今月支払予定額'), numeric: true),
-                DataColumn(label: Text('区分')),
-                DataColumn(label: Text('請求確認')),
-                DataColumn(label: Text('支払済み')),
-                DataColumn(label: Text('年利'), numeric: true),
-                DataColumn(label: Text('月利息'), numeric: true),
-                DataColumn(label: Text('負債割合'), numeric: true),
-              ],
-              rows: [
-                for (final row in rows)
-                  DataRow(
-                    cells: [
-                      DataCell(_buildActualPaymentInput(row)),
-                      DataCell(_buildPaymentDifferenceCell(row)),
-                      DataCell(_buildPaymentDifferenceReasonInput(row)),
-                      DataCell(_buildPaymentMethodScopeControl(row)),
-                      DataCell(_buildPaymentMethodDropdown(row, workbook)),
-                      DataCell(Text(row.name)),
-                      DataCell(Text(_assetKindLabel(row.kind))),
-                      DataCell(Text(_formatManagementYen(row.balance))),
-                      DataCell(
-                        Text(
-                          row.paymentDay == null ? '未設定' : '${row.paymentDay}日',
+        for (final row in rows) _buildDebtMasterCard(row, workbook),
+      ],
+    );
+  }
+
+  Widget _buildDebtMasterCard(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final difference = row.paymentDifferenceAmount;
+    final differenceColor = difference == null || difference == 0
+        ? const Color(0xFF64748B)
+        : difference > 0
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF0D9488);
+    final paymentDayLabel =
+        row.paymentDay == null ? '支払日未設定' : '${row.paymentDay}日支払';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      row.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _buildTextStatusChip(
+                          label: _assetKindLabel(row.kind),
+                          color: const Color(0xFF475569),
                         ),
-                      ),
-                      DataCell(
-                        Text(_formatManagementYen(row.minimumPaymentEstimate)),
-                      ),
-                      DataCell(_buildMonthlyPaymentInput(row)),
-                      DataCell(_buildPaymentAmountSourceChip(row)),
-                      DataCell(_buildBillingConfirmedCell(row)),
-                      DataCell(_buildPaidCheckbox(row)),
-                      DataCell(_buildAnnualRateInputWithEvidence(row)),
-                      DataCell(
-                        Text(_formatManagementYen(row.monthlyInterestEstimate)),
-                      ),
-                      DataCell(
-                        Text(_formatManagementPercent(row.liabilityShare)),
-                      ),
-                    ],
-                  ),
-              ],
+                        _buildTextStatusChip(
+                          label: paymentDayLabel,
+                          color: const Color(0xFF2563EB),
+                        ),
+                        if (row.paymentSourceAccountName != null)
+                          _buildTextStatusChip(
+                            label: '支払元: ${row.paymentSourceAccountName}',
+                            color: const Color(0xFF0F766E),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              _buildDebtMasterControl(
+                label: '支払状態',
+                child: _buildPaidCheckbox(row),
+                maxWidth: 220,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildDebtMasterMetric(
+                label: '残高',
+                value: _formatManagementYen(row.balance),
+              ),
+              _buildDebtMasterMetric(
+                label: '推定最低支払額',
+                value: _formatManagementYen(row.minimumPaymentEstimate),
+              ),
+              _buildDebtMasterMetric(
+                label: '月利息',
+                value: _formatManagementYen(row.monthlyInterestEstimate),
+              ),
+              _buildDebtMasterMetric(
+                label: '負債割合',
+                value: _formatManagementPercent(row.liabilityShare),
+              ),
+              _buildDebtMasterMetric(
+                label: '予定との差額',
+                value: difference == null
+                    ? (row.paid ? _formatManagementYen(0) : '-')
+                    : '${difference > 0 ? '+' : ''}${_formatManagementYen(difference)}',
+                color: differenceColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.start,
+            children: [
+              _buildDebtMasterControl(
+                label: '実支払額',
+                child: _buildActualPaymentInput(row),
+              ),
+              _buildDebtMasterControl(
+                label: '差額理由',
+                child: _buildPaymentDifferenceReasonInput(row),
+              ),
+              _buildDebtMasterControl(
+                label: '設定元/保存先',
+                child: _buildPaymentMethodScopeControl(row),
+              ),
+              _buildDebtMasterControl(
+                label: '支払い方式',
+                child: _buildPaymentMethodDropdown(row, workbook),
+              ),
+              _buildDebtMasterControl(
+                label: '今月支払予定額',
+                child: _buildMonthlyPaymentInput(row),
+              ),
+              _buildDebtMasterControl(
+                label: '支払額区分',
+                child: _buildPaymentAmountSourceChip(row),
+                maxWidth: 150,
+              ),
+              _buildDebtMasterControl(
+                label: '請求確認',
+                child: _buildBillingConfirmedCell(row),
+                maxWidth: 180,
+              ),
+              _buildDebtMasterControl(
+                label: '年利と証跡',
+                child: _buildAnnualRateInputWithEvidence(row),
+                maxWidth: 240,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtMasterMetric({
+    required String label,
+    required String value,
+    Color? color,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 124, maxWidth: 180),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              height: 1.3,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtMasterControl({
+    required String label,
+    required Widget child,
+    double maxWidth = 260,
+  }) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(minWidth: 140, maxWidth: maxWidth),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          child,
+        ],
+      ),
     );
   }
 

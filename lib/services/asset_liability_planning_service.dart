@@ -39,15 +39,15 @@ class AssetLiabilityPlanningService {
       '請求先カードが見つかりません';
   static const String cardBillingReviewZeroAmountAlert = '金額が0円のため確認してください';
   static const String cardStatementMissingImportAlert =
-      'card statement detail import is missing';
+      'カード明細の取り込みが未実施です';
   static const String cardStatementBillingAccountMissingAlert =
-      'billing card account is missing';
+      '請求先カード口座が見つかりません';
   static const String cardStatementAmountMismatchAlert =
-      'card statement total does not match billed amount';
+      'カード明細合計が請求額と一致しません';
   static const String cardStatementConfiguredMismatchAlert =
-      'configured card-billed detail total does not match billed amount';
+      '設定済みカード内訳合計が請求額と一致しません';
   static const String cardStatementImportedConfiguredMismatchAlert =
-      'imported statement total does not match configured detail total';
+      '取り込み明細合計が設定済み内訳合計と一致しません';
   static const String auCardBillingNotice =
       'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
@@ -837,6 +837,7 @@ class AssetLiabilityPlanningService {
       billingAccountName: row.billingAccountName,
       includedInBillingAccount: row.includedInBillingAccount,
       directCashflowTarget: row.isDirectCashflowTarget,
+      paid: row.paid,
       alerts: alerts,
     );
   }
