@@ -242,6 +242,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isGeneratingAssetManagementAiSummary = false;
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
+  final Set<String> _submittingDeveloperRequestIssueKeys = <String>{};
+  final Map<String, String> _developerRequestIssueUrls = <String, String>{};
+  final Map<String, int> _developerRequestIssueNumbers = <String, int>{};
 
   final List<Color> _colors = [
     const Color(0xFF6366F1),
@@ -271,7 +274,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
-    _assetLiabilityRepository = widget.assetLiabilityRepository ??
+    _assetLiabilityRepository =
+        widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
         );
@@ -757,7 +761,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
 
       if (latestDateKey == null) continue;
-      final snapshot = _effectiveAssetDataByDate[latestDateKey] ??
+      final snapshot =
+          _effectiveAssetDataByDate[latestDateKey] ??
           _assetData[latestDateKey] ??
           {};
       double total = 0;
@@ -827,7 +832,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_sortedDates.isEmpty) return {};
 
     final latestDate = _sortedDates.last;
-    final snapshot = _effectiveAssetDataByDate[latestDate] ??
+    final snapshot =
+        _effectiveAssetDataByDate[latestDate] ??
         _assetData[latestDate] ??
         const <String, double>{};
     return Map<String, double>.from(snapshot);
@@ -837,12 +843,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final dateKeys = <String>{
       ..._assetData.keys,
       ..._effectiveAssetDataByDate.keys,
-    }.toList()
-      ..sort();
+    }.toList()..sort();
     if (dateKeys.isEmpty) return {};
 
     final latestDate = dateKeys.last;
-    final snapshot = _effectiveAssetDataByDate[latestDate] ??
+    final snapshot =
+        _effectiveAssetDataByDate[latestDate] ??
         _assetData[latestDate] ??
         const <String, double>{};
     return Map<String, double>.from(snapshot);
@@ -855,23 +861,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         targetMonth,
       );
       final state = await _assetLiabilityRepository.loadMonth(targetMonth);
-      final defaultSources =
-          await _assetLiabilityRepository.loadDefaultPaymentSources();
-      final defaultCardBillingAccounts =
-          await _assetLiabilityRepository.loadDefaultCardBillingAccounts();
-      final templates =
-          await _assetLiabilityRepository.loadRecurringIncomeTemplates();
-      final monthlySnapshots =
-          await _assetLiabilityRepository.loadMonthlySnapshots();
+      final defaultSources = await _assetLiabilityRepository
+          .loadDefaultPaymentSources();
+      final defaultCardBillingAccounts = await _assetLiabilityRepository
+          .loadDefaultCardBillingAccounts();
+      final templates = await _assetLiabilityRepository
+          .loadRecurringIncomeTemplates();
+      final monthlySnapshots = await _assetLiabilityRepository
+          .loadMonthlySnapshots();
       final syncAuditLogs = await _assetLiabilityRepository.loadSyncAuditLogs(
         limit: 12,
       );
       final incomePlansWithTemplates =
           AssetLiabilityMonthlyStateStore.applyRecurringIncomeTemplates(
-        month: targetMonth,
-        templates: templates,
-        existingPlans: state.incomePlans,
-      );
+            month: targetMonth,
+            templates: templates,
+            existingPlans: state.incomePlans,
+          );
       final generatedTemplatePlans =
           incomePlansWithTemplates.length != state.incomePlans.length;
       if (!mounted) return;
@@ -890,8 +896,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _annualRateEvidences =
             Map<String, AssetLiabilityAnnualRateEvidence>.from(
-          state.annualRateEvidences,
-        );
+              state.annualRateEvidences,
+            );
         _monthlyPaidAccountNames = Set<String>.from(state.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           state.paymentSourceAccountIds,
@@ -1123,7 +1129,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     if (choice == AssetLiabilityConflictResolutionChoice.supabaseWins) {
-      final confirmed = await showDialog<bool>(
+      final confirmed =
+          await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Supabase側の値で上書きしますか？'),
@@ -1163,9 +1170,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _assetLiabilitySyncStatus = result.isSuccess
             ? (result.resolvedTargets.isEmpty &&
-                    result.skippedTargets.isNotEmpty
-                ? AssetLiabilityManualSyncStatus.conflict
-                : AssetLiabilityManualSyncStatus.success)
+                      result.skippedTargets.isNotEmpty
+                  ? AssetLiabilityManualSyncStatus.conflict
+                  : AssetLiabilityManualSyncStatus.success)
             : AssetLiabilityManualSyncStatus.failure;
         _lastAssetLiabilitySyncAt = result.completedAt;
         _assetLiabilitySyncMessage = result.message;
@@ -1364,8 +1371,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _annualRateEvidences =
             Map<String, AssetLiabilityAnnualRateEvidence>.from(
-          migrated.annualRateEvidences,
-        );
+              migrated.annualRateEvidences,
+            );
         _monthlyPaidAccountNames = Set<String>.from(migrated.paidAccountNames);
         _paymentSourceAccountIds = Map<String, String>.from(
           migrated.paymentSourceAccountIds,
@@ -1525,8 +1532,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     for (final entry in _monthlyPaymentControllers.entries) {
       final hasOverride = _monthlyPaymentOverrides.containsKey(entry.key);
       final amount = _monthlyPaymentOverrides[entry.key];
-      final text =
-          hasOverride && amount != null ? amount.round().toString() : '';
+      final text = hasOverride && amount != null
+          ? amount.round().toString()
+          : '';
       if (entry.value.text != text) {
         entry.value.text = text;
       }
@@ -1846,8 +1854,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           row.id,
           () => row.scheduledPaymentAmount,
         );
-        _actualPaymentControllers[row.id]?.text =
-            _actualPaymentAmounts[row.id]!.round().toString();
+        _actualPaymentControllers[row.id]?.text = _actualPaymentAmounts[row.id]!
+            .round()
+            .toString();
       } else {
         _monthlyPaidAccountNames.remove(row.id);
       }
@@ -1985,7 +1994,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _selectedCardStatementBillingAccountId = billingAccountId;
       _cardStatementLines = merged.values.toList(growable: false);
       _cardStatementImportController.clear();
-      _cardStatementImportMessage = 'Imported ${result.lines.length} rows'
+      _cardStatementImportMessage =
+          'Imported ${result.lines.length} rows'
           '${result.rejectedRows.isEmpty ? '' : ', rejected ${result.rejectedRows.length}'}.';
     });
     unawaited(_saveAssetLiabilityMonthlyState());
@@ -2053,10 +2063,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     final incomePlansWithTemplates =
         AssetLiabilityMonthlyStateStore.applyRecurringIncomeTemplates(
-      month: _now,
-      templates: _recurringIncomeTemplates,
-      existingPlans: copied.incomePlans,
-    );
+          month: _now,
+          templates: _recurringIncomeTemplates,
+          existingPlans: copied.incomePlans,
+        );
 
     if (!mounted) return;
     setState(() {
@@ -2330,8 +2340,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ],
                       onChanged: (value) {
                         setDialogState(() {
-                          selectedDestinationId =
-                              value == null || value.isEmpty ? null : value;
+                          selectedDestinationId = value == null || value.isEmpty
+                              ? null
+                              : value;
                         });
                       },
                     ),
@@ -2368,7 +2379,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       }
                     }
                     final plan = AssetLiabilityIncomePlan(
-                      id: existing?.id ??
+                      id:
+                          existing?.id ??
                           'income_${DateTime.now().microsecondsSinceEpoch}',
                       date: selectedDate,
                       name: name,
@@ -2459,8 +2471,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ],
                       onChanged: (value) {
                         setDialogState(() {
-                          selectedDestinationId =
-                              value == null || value.isEmpty ? null : value;
+                          selectedDestinationId = value == null || value.isEmpty
+                              ? null
+                              : value;
                         });
                       },
                     ),
@@ -2494,7 +2507,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       }
                     }
                     final template = AssetLiabilityRecurringIncomeTemplate(
-                      id: existing?.id ??
+                      id:
+                          existing?.id ??
                           'income_template_${DateTime.now().microsecondsSinceEpoch}',
                       dayOfMonth: day.clamp(1, 31).toInt(),
                       name: name,
@@ -2519,17 +2533,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           : false,
                     );
                     setState(() {
-                      _recurringIncomeTemplates = [
-                        for (final current in _recurringIncomeTemplates)
-                          if (current.id != template.id) current,
-                        template,
-                      ]..sort((a, b) {
-                          final day = a.dayOfMonth.compareTo(b.dayOfMonth);
-                          if (day != 0) {
-                            return day;
-                          }
-                          return a.name.compareTo(b.name);
-                        });
+                      _recurringIncomeTemplates =
+                          [
+                            for (final current in _recurringIncomeTemplates)
+                              if (current.id != template.id) current,
+                            template,
+                          ]..sort((a, b) {
+                            final day = a.dayOfMonth.compareTo(b.dayOfMonth);
+                            if (day != 0) {
+                              return day;
+                            }
+                            return a.name.compareTo(b.name);
+                          });
                       _monthlyIncomePlans = [
                         for (final current in _monthlyIncomePlans)
                           if (current.id != generatedId) current,
@@ -2805,7 +2820,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       final amount =
           double.tryParse(amountController.text.replaceAll(',', '').trim()) ??
-              0;
+          0;
       await _recordDebtLockdownViolation(
         category: selectedCategory,
         note: note,
@@ -2921,14 +2936,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       if (ok != true) return;
 
-      final monthlyBudget = int.tryParse(
+      final monthlyBudget =
+          int.tryParse(
             monthlyBudgetController.text.replaceAll(',', '').trim(),
           ) ??
           0;
       final extraBudget =
           int.tryParse(extraBudgetController.text.replaceAll(',', '').trim()) ??
-              0;
-      final targetMonths = int.tryParse(
+          0;
+      final targetMonths =
+          int.tryParse(
             targetMonthsController.text.replaceAll(',', '').trim(),
           ) ??
           12;
@@ -3042,8 +3059,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _debtPlanMarkdown = result.markdown;
         _debtExecutionPlan = executionPlan;
-        _selectedDebtExecutionTaskIds =
-            executionPlan.tasks.map((task) => task.id).toSet();
+        _selectedDebtExecutionTaskIds = executionPlan.tasks
+            .map((task) => task.id)
+            .toSet();
         _debtPlannerMode = AssetDebtPlannerMode.ask;
         _debtPlanGeneratedAt = DateTime.now();
       });
@@ -3106,8 +3124,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final deadline = DateTime.tryParse(
       task['deadline']?.toString() ?? '',
     )?.toLocal();
-    final deadlineKey =
-        deadline == null ? '' : DateFormat('yyyy-MM-dd').format(deadline);
+    final deadlineKey = deadline == null
+        ? ''
+        : DateFormat('yyyy-MM-dd').format(deadline);
     return '$title|$deadlineKey';
   }
 
@@ -3142,8 +3161,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
 
-    final existingSignatures =
-        _mustTasks.map(_mustTaskSignatureFromMap).toSet();
+    final existingSignatures = _mustTasks
+        .map(_mustTaskSignatureFromMap)
+        .toSet();
     final rows = <Map<String, dynamic>>[];
     final insertedIds = <String>[];
     var skippedCount = 0;
@@ -3324,7 +3344,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // NOTE: Closing checks intentionally use raw inputs recorded today.
     // Do not use display-complemented values here.
     final todayStock = _assetData[todayStr] ?? {};
-    final allTypesFilledToday = _assetTypes.isNotEmpty &&
+    final allTypesFilledToday =
+        _assetTypes.isNotEmpty &&
         _assetTypes.every((t) => todayStock.containsKey(t));
 
     final hasAnyPositive = todayStock.values.any((v) => v >= 0);
@@ -3333,10 +3354,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final subsOk = _subscriptions.isNotEmpty;
 
     final currentMonthFlows = _flowsForMonth(DateTime.now());
-    final incomeCount =
-        currentMonthFlows.where((r) => r['action_type'] == 'conquer').length;
-    final expenseCount =
-        currentMonthFlows.where((r) => r['action_type'] == 'expense').length;
+    final incomeCount = currentMonthFlows
+        .where((r) => r['action_type'] == 'conquer')
+        .length;
+    final expenseCount = currentMonthFlows
+        .where((r) => r['action_type'] == 'expense')
+        .length;
     final flowsOk = (incomeCount + expenseCount) > 0;
 
     final now = DateTime.now();
@@ -3409,13 +3432,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final monthLabel = '${now.year}/${now.month.toString().padLeft(2, '0')}';
-    final mustThisMonth = _mustTasks.where((t) {
-      final d = DateTime.parse(t['deadline']).toLocal();
-      return d.year == now.year && d.month == now.month;
-    }).toList()
-      ..sort(
-        (a, b) => (a['deadline'] as String).compareTo(b['deadline'] as String),
-      );
+    final mustThisMonth =
+        _mustTasks.where((t) {
+          final d = DateTime.parse(t['deadline']).toLocal();
+          return d.year == now.year && d.month == now.month;
+        }).toList()..sort(
+          (a, b) =>
+              (a['deadline'] as String).compareTo(b['deadline'] as String),
+        );
 
     final done = [
       _assetsDone,
@@ -3765,8 +3789,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         .toList();
     entries.sort((a, b) {
       final groupCompare = a.group.toLowerCase().compareTo(
-            b.group.toLowerCase(),
-          );
+        b.group.toLowerCase(),
+      );
       if (groupCompare != 0) {
         if (a.group.isEmpty) return 1;
         if (b.group.isEmpty) return -1;
@@ -4144,8 +4168,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             onPressed: () async {
               final userId = _supabase.auth.currentUser?.id;
               if (userId != null) {
-                final watchlistEntries =
-                    await widget.watchlistService.removeEntry(type);
+                final watchlistEntries = await widget.watchlistService
+                    .removeEntry(type);
                 await _supabase
                     .from('cfo_assets')
                     .delete()
@@ -4359,8 +4383,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     final sourceText = paymentSource == '（未設定）'
                         ? null
                         : (paymentSource == 'その他'
-                            ? customPaymentSourceController.text.trim()
-                            : paymentSource);
+                              ? customPaymentSourceController.text.trim()
+                              : paymentSource);
 
                     await _supabase.from('subscriptions').insert({
                       'user_id': userId,
@@ -4370,8 +4394,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       'is_paid': isPaid,
                       'payment_source':
                           (sourceText == null || sourceText.isEmpty)
-                              ? null
-                              : sourceText,
+                          ? null
+                          : sourceText,
                     });
 
                     if (mounted) {
@@ -4435,7 +4459,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       await _supabase
           .from('subscriptions')
-          .update({'is_paid': !current}).eq('id', id);
+          .update({'is_paid': !current})
+          .eq('id', id);
       await _fetchSubscriptions();
       await _fetchTodayClosing();
     } catch (e) {
@@ -4668,7 +4693,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String memo,
     String? wasteCategory,
     bool isTransfer,
-  }) _parseFlowDescription(String description, {String? actionType}) {
+  })
+  _parseFlowDescription(String description, {String? actionType}) {
     final normalizedDescription = _stripFlowImportMarker(description.trim());
     final isExpense = _isExpenseActionType(actionType ?? '');
     final wasteCategory = isExpense
@@ -4857,8 +4883,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final amountController = TextEditingController(
       text: ((flow['amount'] as num?)?.toInt() ?? 0).toString(),
     );
-    var selectedSource =
-        parsed.source.isNotEmpty ? parsed.source : _defaultFlowSource;
+    var selectedSource = parsed.source.isNotEmpty
+        ? parsed.source
+        : _defaultFlowSource;
     if (!availableSources.contains(selectedSource)) {
       availableSources.add(selectedSource);
     }
@@ -4870,7 +4897,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String? selectedWasteCategory = parsed.wasteCategory;
     var selectedDate =
         DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal() ??
-            DateTime.now();
+        DateTime.now();
 
     try {
       final shouldSave = await showDialog<bool>(
@@ -4980,17 +5007,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
-                      items: _transferDestinationOptions(
-                        selectedSource,
-                        include: selectedDestination,
-                      )
-                          .map(
-                            (source) => DropdownMenuItem(
-                              value: source,
-                              child: Text(_sourceLabel(source)),
-                            ),
-                          )
-                          .toList(),
+                      items:
+                          _transferDestinationOptions(
+                                selectedSource,
+                                include: selectedDestination,
+                              )
+                              .map(
+                                (source) => DropdownMenuItem(
+                                  value: source,
+                                  child: Text(_sourceLabel(source)),
+                                ),
+                              )
+                              .toList(),
                       onChanged: (value) {
                         if (value == null) return;
                         setDialogState(() => selectedDestination = value);
@@ -5086,18 +5114,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
 
-      await _supabase.from('wealth_struggles').update({
-        'action_type': _flowLabelToActionType(selectedType),
-        'amount': amount,
-        'description': _composeFlowDescription(
-          flowType: selectedType,
-          source: selectedSource,
-          destination: isTransfer ? selectedDestination : null,
-          memo: memo,
-          wasteCategory: selectedType == '支出' ? selectedWasteCategory : null,
-        ),
-        'occurred_at': selectedDate.toUtc().toIso8601String(),
-      }).eq('id', flowId);
+      await _supabase
+          .from('wealth_struggles')
+          .update({
+            'action_type': _flowLabelToActionType(selectedType),
+            'amount': amount,
+            'description': _composeFlowDescription(
+              flowType: selectedType,
+              source: selectedSource,
+              destination: isTransfer ? selectedDestination : null,
+              memo: memo,
+              wasteCategory: selectedType == '支出'
+                  ? selectedWasteCategory
+                  : null,
+            ),
+            'occurred_at': selectedDate.toUtc().toIso8601String(),
+          })
+          .eq('id', flowId);
 
       if (mounted) {
         setState(() {
@@ -5142,7 +5175,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final amount = (flow['amount'] as num?)?.toInt() ?? 0;
     final date =
         DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal() ??
-            DateTime.now();
+        DateTime.now();
     final typeLabel = _actionTypeToFlowLabel(actionType);
 
     final confirmed = await showDialog<bool>(
@@ -5319,8 +5352,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         _mustTasks.add({
                           'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
                           'title': title,
-                          'deadline':
-                              selectedDeadline.toUtc().toIso8601String(),
+                          'deadline': selectedDeadline
+                              .toUtc()
+                              .toIso8601String(),
                           'is_completed': false,
                         });
                       });
@@ -5342,7 +5376,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       await _supabase
           .from('must_tasks')
-          .update({'is_completed': !currentStatus}).eq('id', id);
+          .update({'is_completed': !currentStatus})
+          .eq('id', id);
       _fetchMustTasks();
     } catch (e) {
       if (!mounted) return;
@@ -5383,7 +5418,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       await _supabase
           .from('subscriptions')
-          .update({'due_date': dueDateStr}).eq('id', id);
+          .update({'due_date': dueDateStr})
+          .eq('id', id);
 
       await _fetchSubscriptions();
       await _fetchTodayClosing();
@@ -5480,10 +5516,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     custom.dispose();
 
     try {
-      await _supabase.from('subscriptions').update({
-        'payment_source':
-            (sourceText == null || sourceText.isEmpty) ? null : sourceText,
-      }).eq('id', id);
+      await _supabase
+          .from('subscriptions')
+          .update({
+            'payment_source': (sourceText == null || sourceText.isEmpty)
+                ? null
+                : sourceText,
+          })
+          .eq('id', id);
 
       await _fetchSubscriptions();
       await _fetchTodayClosing();
@@ -5575,8 +5615,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       double diff = 0;
       if (i > 0) diff = dailyTotals[i] - dailyTotals[i - 1];
       if (diff.abs() > _maxDailyChange) _maxDailyChange = diff.abs();
-      final color =
-          diff >= 0 ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
+      final color = diff >= 0
+          ? const Color(0xFF0D9488)
+          : const Color(0xFFB91C1C);
       _barChartGroups.add(
         BarChartGroupData(
           x: i,
@@ -5977,7 +6018,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 final review = snapshot.data;
                 final isLoading =
                     snapshot.connectionState == ConnectionState.waiting &&
-                        review == null;
+                    review == null;
                 return _buildWasteTrainingReviewBox(
                   review: review,
                   isLoading: isLoading,
@@ -6408,16 +6449,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         : 'データ不足';
     final netDiffColor = (prevNet != null && currentNet != null)
         ? ((currentNet - prevNet) >= 0
-            ? const Color(0xFF0D9488)
-            : const Color(0xFFB91C1C))
+              ? const Color(0xFF0D9488)
+              : const Color(0xFFB91C1C))
         : const Color(0xFF9CA3AF);
 
     final fixedDiff =
         (fixedCostByMonth[currentKey] ?? 0) - (fixedCostByMonth[prevKey] ?? 0);
-    final fixedDiffColor =
-        fixedDiff <= 0 ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
+    final fixedDiffColor = fixedDiff <= 0
+        ? const Color(0xFF0D9488)
+        : const Color(0xFFB91C1C);
 
-    final currentTask = taskStatsByMonth[currentKey] ??
+    final currentTask =
+        taskStatsByMonth[currentKey] ??
         {'total': 0, 'completed': 0, 'pending': 0};
     final nextTask =
         taskStatsByMonth[nextKey] ?? {'total': 0, 'completed': 0, 'pending': 0};
@@ -6482,8 +6525,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             fixedCost: fixedCostByMonth[monthKeys[i]] ?? 0,
                             totalTasks:
                                 taskStatsByMonth[monthKeys[i]]?['total'] ?? 0,
-                            completedTasks: taskStatsByMonth[monthKeys[i]]
-                                    ?['completed'] ??
+                            completedTasks:
+                                taskStatsByMonth[monthKeys[i]]?['completed'] ??
                                 0,
                             pendingTasks:
                                 taskStatsByMonth[monthKeys[i]]?['pending'] ?? 0,
@@ -6532,13 +6575,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final latestSnapshot = _sortedDates.isEmpty
         ? const <String, double>{}
         : (_effectiveAssetDataByDate[_sortedDates.last] ??
-            _assetData[_sortedDates.last] ??
-            const <String, double>{});
+              _assetData[_sortedDates.last] ??
+              const <String, double>{});
 
-    final liabilities = latestSnapshot.entries
-        .where((e) => e.value < 0)
-        .toList()
-      ..sort((a, b) => a.value.compareTo(b.value));
+    final liabilities =
+        latestSnapshot.entries.where((e) => e.value < 0).toList()
+          ..sort((a, b) => a.value.compareTo(b.value));
     final totalDebt = liabilities.fold<double>(
       0,
       (sum, e) => sum + e.value.abs(),
@@ -6600,8 +6642,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       ElevatedButton.icon(
-                        onPressed:
-                            _isGeneratingDebtPlan ? null : _showDebtPlanDialog,
+                        onPressed: _isGeneratingDebtPlan
+                            ? null
+                            : _showDebtPlanDialog,
                         icon: _isGeneratingDebtPlan
                             ? const SizedBox(
                                 width: 14,
@@ -6767,13 +6810,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final statusLabel = isReleased
         ? '釈放'
         : isEnabled
-            ? '収監中'
-            : '未開始';
+        ? '収監中'
+        : '未開始';
     final statusColor = isReleased
         ? const Color(0xFF0D9488)
         : isEnabled
-            ? const Color(0xFFB91C1C)
-            : const Color(0xFF475569);
+        ? const Color(0xFFB91C1C)
+        : const Color(0xFF475569);
 
     return Container(
       width: double.infinity,
@@ -6871,9 +6914,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       onPressed: isReleased
                           ? null
                           : () => _setDebtLockdownEnabled(
-                                !isEnabled,
-                                remainingDebt,
-                              ),
+                              !isEnabled,
+                              remainingDebt,
+                            ),
                       icon: Icon(isEnabled ? Icons.pause_circle : Icons.shield),
                       label: Text(isEnabled ? '収監モードを中断' : '収監モードを開始'),
                     ),
@@ -6881,7 +6924,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     OutlinedButton.icon(
                       onPressed: isEnabled
                           ? () =>
-                              _showDebtLockdownViolationDialog(remainingDebt)
+                                _showDebtLockdownViolationDialog(remainingDebt)
                           : null,
                       icon: const Icon(Icons.report_problem_outlined),
                       label: const Text('違反を記録'),
@@ -6895,9 +6938,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         onPressed: isReleased
                             ? null
                             : () => _setDebtLockdownEnabled(
-                                  !isEnabled,
-                                  remainingDebt,
-                                ),
+                                !isEnabled,
+                                remainingDebt,
+                              ),
                         icon: Icon(
                           isEnabled ? Icons.pause_circle : Icons.shield,
                         ),
@@ -6908,7 +6951,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     OutlinedButton.icon(
                       onPressed: isEnabled
                           ? () =>
-                              _showDebtLockdownViolationDialog(remainingDebt)
+                                _showDebtLockdownViolationDialog(remainingDebt)
                           : null,
                       icon: const Icon(Icons.report_problem_outlined),
                       label: const Text('違反を記録'),
@@ -6943,10 +6986,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               subtitle: Text(rule.description),
               onChanged: isEnabled
                   ? (value) => _toggleDebtLockdownRule(
-                        rule.id,
-                        value ?? false,
-                        remainingDebt,
-                      )
+                      rule.id,
+                      value ?? false,
+                      remainingDebt,
+                    )
                   : null,
             );
           }),
@@ -7050,8 +7093,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
       selectedColor: const Color(0xFF7C3AED),
       labelStyle: TextStyle(
-        color:
-            selected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+        color: selected
+            ? Colors.white
+            : Theme.of(context).colorScheme.onSurface,
         fontWeight: FontWeight.w700,
         height: 1.5,
       ),
@@ -7133,7 +7177,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onChanged: alreadyAdded
                     ? null
                     : (value) =>
-                        _toggleDebtExecutionTask(task.id, value ?? false),
+                          _toggleDebtExecutionTask(task.id, value ?? false),
                 controlAffinity: ListTileControlAffinity.leading,
                 secondary: Icon(
                   _debtExecutionTaskIcon(task.kind),
@@ -7523,7 +7567,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           Align(
             alignment: Alignment.centerRight,
             child: OutlinedButton.icon(
-              onPressed: syncEnabled &&
+              onPressed:
+                  syncEnabled &&
                       !_isRunningAssetLiabilitySync &&
                       !_isPreviewingAssetLiabilitySync
                   ? _previewAssetLiabilitySync
@@ -7791,8 +7836,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final previewedAt = DateFormat(
       'yyyy/MM/dd HH:mm',
     ).format(preview.completedAt.toLocal());
-    final conflictColor =
-        preview.hasConflict ? const Color(0xFFD97706) : const Color(0xFF0D9488);
+    final conflictColor = preview.hasConflict
+        ? const Color(0xFFD97706)
+        : const Color(0xFF0D9488);
 
     return Container(
       width: double.infinity,
@@ -7906,8 +7952,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetLiabilityConflictResolutionSection(
     AssetLiabilitySyncPreviewResult preview,
   ) {
-    final conflictItems =
-        preview.items.where((item) => item.conflict).toList(growable: false);
+    final conflictItems = preview.items
+        .where((item) => item.conflict)
+        .toList(growable: false);
     if (conflictItems.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -7966,7 +8013,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetLiabilityConflictResolutionTile(
     AssetLiabilitySyncPreviewItem item,
   ) {
-    final disabled = _isResolvingAssetLiabilityConflict ||
+    final disabled =
+        _isResolvingAssetLiabilityConflict ||
         _isRunningAssetLiabilitySync ||
         _isPreviewingAssetLiabilitySync;
 
@@ -8014,10 +8062,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onPressed: disabled
                     ? null
                     : () => _resolveAssetLiabilitySyncConflict(
-                          item: item,
-                          choice:
-                              AssetLiabilityConflictResolutionChoice.localWins,
-                        ),
+                        item: item,
+                        choice:
+                            AssetLiabilityConflictResolutionChoice.localWins,
+                      ),
                 icon: const Icon(Icons.upload_file_outlined),
                 label: const Text('ローカル優先'),
               ),
@@ -8025,10 +8073,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onPressed: disabled
                     ? null
                     : () => _resolveAssetLiabilitySyncConflict(
-                          item: item,
-                          choice: AssetLiabilityConflictResolutionChoice
-                              .supabaseWins,
-                        ),
+                        item: item,
+                        choice:
+                            AssetLiabilityConflictResolutionChoice.supabaseWins,
+                      ),
                 icon: const Icon(Icons.cloud_download_outlined),
                 label: const Text('Supabase優先'),
               ),
@@ -8036,9 +8084,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 onPressed: disabled
                     ? null
                     : () => _resolveAssetLiabilitySyncConflict(
-                          item: item,
-                          choice: AssetLiabilityConflictResolutionChoice.skip,
-                        ),
+                        item: item,
+                        choice: AssetLiabilityConflictResolutionChoice.skip,
+                      ),
                 icon: const Icon(Icons.block_outlined),
                 label: const Text('今回はスキップ'),
               ),
@@ -8107,8 +8155,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetManagementInsightReport report,
   ) {
     final criticalCount = report.criticalActions.length;
-    final statusColor =
-        criticalCount > 0 ? const Color(0xFFB91C1C) : const Color(0xFF0D9488);
+    final statusColor = criticalCount > 0
+        ? const Color(0xFFB91C1C)
+        : const Color(0xFF0D9488);
 
     return Container(
       width: double.infinity,
@@ -8185,7 +8234,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (enabled) {
       _requestAssetManagementAiSummaryIfNeeded(report);
     }
-    final result = _assetManagementAiSummaryResult ??
+    final result =
+        _assetManagementAiSummaryResult ??
         (enabled
             ? _assetManagementAiSummaryService.buildWaitingForAiResult(report)
             : _assetManagementAiSummaryService.buildDisabledResult(report));
@@ -8334,6 +8384,112 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _assetManagementAiSummaryKey(AssetManagementInsightReport report) {
     return jsonEncode(_assetManagementAiSummaryService.buildPayload(report));
+  }
+
+  String _developerRequestIssueKey(AssetManagementDeveloperRequest request) {
+    return '${request.title}\n${request.description}';
+  }
+
+  String _developerRequestPriority(AssetManagementInsightSeverity severity) {
+    return switch (severity) {
+      AssetManagementInsightSeverity.critical => 'high',
+      AssetManagementInsightSeverity.warning => 'medium',
+      AssetManagementInsightSeverity.info => 'low',
+    };
+  }
+
+  Future<void> _submitAssetManagementDeveloperRequest(
+    AssetManagementDeveloperRequest request,
+  ) async {
+    final key = _developerRequestIssueKey(request);
+    if (_submittingDeveloperRequestIssueKeys.contains(key)) return;
+    setState(() {
+      _submittingDeveloperRequestIssueKeys.add(key);
+    });
+
+    try {
+      final severityLabel = _assetManagementInsightSeverityLabel(
+        request.severity,
+      );
+      final description = [
+        request.description,
+        '',
+        'Source: asset-management developer improvement suggestions',
+        'Severity: $severityLabel',
+        'Detected at: ${DateFormat('yyyy-MM-dd HH:mm').format(_now)}',
+      ].join('\n');
+      final response = await _supabase.functions.invoke(
+        'core-hub',
+        body: {
+          'action': 'feature_request.submit',
+          'title': request.title,
+          'description': description,
+          'expected_outcome':
+              'この改善提案がGitHub IssueとWBSへ登録され、開発ワークフローで優先度・担当・検証条件を追跡できる。',
+          'category': '開発者向け改善提案',
+          'priority': _developerRequestPriority(request.severity),
+        },
+      );
+      final rawData = response.data;
+      if (rawData is! Map) {
+        throw const FormatException('Invalid feature request response');
+      }
+      final data = Map<String, dynamic>.from(rawData);
+      final success = data['success'] == true;
+      final partialSuccess = data['partialSuccess'] == true;
+      if (!success && !partialSuccess) {
+        throw Exception(data['error'] ?? 'Issue作成に失敗しました');
+      }
+
+      final githubIssueRaw = data['githubIssue'];
+      final githubIssue = githubIssueRaw is Map
+          ? Map<String, dynamic>.from(githubIssueRaw)
+          : <String, dynamic>{};
+      final issueUrl = (githubIssue['html_url'] ?? '').toString();
+      final issueNumber = int.tryParse(
+        (githubIssue['number'] ?? '').toString(),
+      );
+      if (!mounted) return;
+      setState(() {
+        if (issueUrl.isNotEmpty) {
+          _developerRequestIssueUrls[key] = issueUrl;
+        }
+        if (issueNumber != null) {
+          _developerRequestIssueNumbers[key] = issueNumber;
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            issueNumber == null
+                ? '改善提案を開発ワークフローへ登録しました'
+                : 'GitHub Issue #$issueNumber を作成しました',
+          ),
+          action: issueUrl.isEmpty
+              ? null
+              : SnackBarAction(
+                  label: 'URLコピー',
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: issueUrl));
+                  },
+                ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Issue作成に失敗しました: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submittingDeveloperRequestIssueKeys.remove(key);
+        });
+      }
+    }
   }
 
   Widget _buildAssetManagementAvailableCard(
@@ -8653,40 +8809,116 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         const SizedBox(height: 6),
         for (final request in requests.take(4))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
+          Builder(
+            builder: (context) {
+              final key = _developerRequestIssueKey(request);
+              final isSubmitting = _submittingDeveloperRequestIssueKeys
+                  .contains(key);
+              final issueUrl = _developerRequestIssueUrls[key] ?? '';
+              final issueNumber = _developerRequestIssueNumbers[key];
+              final severityColor = _assetManagementInsightSeverityColor(
+                request.severity,
+              );
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              request.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildAssetLiabilitySyncChip(
+                            label: 'priority',
+                            value: _assetManagementInsightSeverityLabel(
+                              request.severity,
+                            ),
+                            color: severityColor,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        request.description,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          FilledButton.tonalIcon(
+                            onPressed: isSubmitting || issueUrl.isNotEmpty
+                                ? null
+                                : () => _submitAssetManagementDeveloperRequest(
+                                    request,
+                                  ),
+                            icon: isSubmitting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.add_task_outlined, size: 16),
+                            label: Text(
+                              issueUrl.isNotEmpty
+                                  ? issueNumber == null
+                                        ? 'Issue作成済み'
+                                        : 'Issue #$issueNumber'
+                                  : isSubmitting
+                                  ? 'Issue作成中'
+                                  : 'GitHub Issue化',
+                            ),
+                          ),
+                          if (issueUrl.isNotEmpty)
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: issueUrl),
+                                );
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Issue URLをコピーしました'),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.copy_outlined, size: 16),
+                              label: const Text('URLコピー'),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    request.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    request.description,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+              );
+            },
           ),
       ],
     );
@@ -8948,7 +9180,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final color = hasRisk ? const Color(0xFFB91C1C) : const Color(0xFF0D9488);
     final message = hasRisk
         ? '${AssetLiabilityPlanningService.cardBillingReviewDoubleCountRiskLabel}: '
-            '${review.doubleCountingRiskItems.map((item) => item.accountName).join(' / ')}'
+              '${review.doubleCountingRiskItems.map((item) => item.accountName).join(' / ')}'
         : AssetLiabilityPlanningService.cardBillingReviewNoDoubleCountRiskLabel;
 
     return Container(
@@ -9128,8 +9360,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       DataCell(
                         Text(
-                          AssetLiabilityPlanningService
-                              .paymentMethodSettingSourceLabel(
+                          AssetLiabilityPlanningService.paymentMethodSettingSourceLabel(
                             item.paymentMethodSettingSource,
                           ),
                         ),
@@ -9138,9 +9369,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         _buildTextStatusChip(
                           label: item.excludedFromDirectCashflow
                               ? AssetLiabilityPlanningService
-                                  .cardBillingReviewExcludedFromDirectCashflowLabel
+                                    .cardBillingReviewExcludedFromDirectCashflowLabel
                               : AssetLiabilityPlanningService
-                                  .cardBillingReviewDirectCashflowTargetLabel,
+                                    .cardBillingReviewDirectCashflowTargetLabel,
                           color: item.excludedFromDirectCashflow
                               ? const Color(0xFF2563EB)
                               : const Color(0xFF0D9488),
@@ -9168,7 +9399,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final reconciliation = workbook.cardStatementReconciliation;
     final cardOptions = _cardBillingAccountOptions(workbook);
     final selected = _selectedCardStatementBillingAccountId;
-    final validSelected = selected != null &&
+    final validSelected =
+        selected != null &&
         cardOptions.any((account) => account.id == selected);
     final selectedValue = validSelected
         ? selected
@@ -9391,8 +9623,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetWorkbookWarning(AssetLiabilityWorkbook workbook) {
     final isShort = workbook.cashAfterScheduledPayments < 0;
     final color = isShort ? const Color(0xFFB91C1C) : const Color(0xFF0D9488);
-    final background =
-        isShort ? const Color(0xFFFEF2F2) : const Color(0xFFECFDF5);
+    final background = isShort
+        ? const Color(0xFFFEF2F2)
+        : const Color(0xFFECFDF5);
     final title = isShort ? '今月支払予定額ベースで手元資金が不足' : '今月支払予定額は手元資金内';
     final detail = isShort
         ? '不足見込: ${_formatManagementYen(workbook.cashAfterScheduledPayments.abs())}'
@@ -9471,8 +9704,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final color = risk.isToday
         ? const Color(0xFFFF6B35)
         : risk.isPast
-            ? const Color(0xFF64748B)
-            : const Color(0xFFB91C1C);
+        ? const Color(0xFF64748B)
+        : const Color(0xFFB91C1C);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -9810,9 +10043,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               color: isDefaultSelected ? const Color(0xFF0D9488) : null,
               onPressed: validSelected
                   ? () => _updateDefaultPaymentSourceAccount(
-                        row.accountId,
-                        isDefaultSelected ? null : selected,
-                      )
+                      row.accountId,
+                      isDefaultSelected ? null : selected,
+                    )
                   : null,
             ),
           ),
@@ -9852,13 +10085,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final label = reflected
         ? '反映済み'
         : row.overdue
-            ? (row.isIncome ? '入金遅れ' : '期限超過')
-            : (row.isIncome ? '入金待ち' : '未払い');
+        ? (row.isIncome ? '入金遅れ' : '期限超過')
+        : (row.isIncome ? '入金待ち' : '未払い');
     final color = reflected
         ? const Color(0xFF0D9488)
         : row.overdue
-            ? const Color(0xFFB91C1C)
-            : const Color(0xFFD97706);
+        ? const Color(0xFFB91C1C)
+        : const Color(0xFFD97706);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -10175,9 +10408,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   for (final series in chartData.series)
                     LineChartBarData(
                       spots: [
-                        for (var index = 0;
-                            index < series.points.length;
-                            index++)
+                        for (
+                          var index = 0;
+                          index < series.points.length;
+                          index++
+                        )
                           FlSpot(index.toDouble(), series.points[index].value),
                       ],
                       isCurved: false,
@@ -10189,8 +10424,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         getDotPainter: (spot, percent, barData, index) {
                           final point =
                               index >= 0 && index < series.points.length
-                                  ? series.points[index]
-                                  : null;
+                              ? series.points[index]
+                              : null;
                           final worsened = point?.worsened ?? false;
                           final color = worsened
                               ? const Color(0xFFB91C1C)
@@ -10531,14 +10766,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
 
-    final activeTasks = _transferTasks
-        .where((task) => !task.completed)
-        .toList(growable: false)
-      ..sort(_compareTransferTasksByDueDate);
-    final completedTasks = _transferTasks
-        .where((task) => task.completed)
-        .toList(growable: false)
-      ..sort(_compareTransferTasksByDueDate);
+    final activeTasks =
+        _transferTasks.where((task) => !task.completed).toList(growable: false)
+          ..sort(_compareTransferTasksByDueDate);
+    final completedTasks =
+        _transferTasks.where((task) => task.completed).toList(growable: false)
+          ..sort(_compareTransferTasksByDueDate);
 
     Widget buildTaskRow(AssetLiabilityTransferTask task) {
       final dueLabel = task.dueDate == null
@@ -10563,8 +10796,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.5,
-                    decoration:
-                        task.completed ? TextDecoration.lineThrough : null,
+                    decoration: task.completed
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
               ),
@@ -10791,13 +11025,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook,
     ).where((account) => account.id != row.id).toList(growable: false);
     final configured = _cardBillingAccountIds[row.id];
-    final selected = configured ??
+    final selected =
+        configured ??
         (row.paymentMethod == AssetLiabilityPaymentMethod.includedInCard
             ? row.billingAccountId
             : AssetLiabilityPlanningService.directPaymentMethodId);
     final validSelected =
         selected == AssetLiabilityPlanningService.directPaymentMethodId ||
-            cardOptions.any((account) => account.id == selected);
+        cardOptions.any((account) => account.id == selected);
 
     return SizedBox(
       width: 220,
@@ -10826,8 +11061,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final selectedScope = _cardBillingSaveScopeFor(row);
     final sourceLabel =
         AssetLiabilityPlanningService.paymentMethodSettingSourceLabel(
-      row.paymentMethodSettingSource,
-    );
+          row.paymentMethodSettingSource,
+        );
 
     return SizedBox(
       width: 180,
@@ -10837,7 +11072,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           _buildTextStatusChip(
             label: sourceLabel,
-            color: row.paymentMethodSettingSource ==
+            color:
+                row.paymentMethodSettingSource ==
                     AssetLiabilityPaymentMethodSettingSource.monthlyOverride
                 ? const Color(0xFF7C3AED)
                 : const Color(0xFF475569),
@@ -10940,8 +11176,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final color = difference == 0
         ? const Color(0xFF64748B)
         : difference > 0
-            ? const Color(0xFFDC2626)
-            : const Color(0xFF0D9488);
+        ? const Color(0xFFDC2626)
+        : const Color(0xFF0D9488);
     final prefix = difference > 0 ? '+' : '';
     return Text(
       '$prefix${_formatManagementYen(difference)}',
@@ -10968,14 +11204,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildPaymentAmountSourceChip(AssetLiabilityDebtRow row) {
     if (row.includedInBillingAccount) {
       return _buildTextStatusChip(
-        label: row.paymentMethodLabel ??
+        label:
+            row.paymentMethodLabel ??
             AssetLiabilityPlanningService.cardBillingIncludedLabel,
         color: const Color(0xFF2563EB),
       );
     }
     final isEstimated = row.paymentAmountEstimated;
-    final color =
-        isEstimated ? const Color(0xFFD97706) : const Color(0xFF0D9488);
+    final color = isEstimated
+        ? const Color(0xFFD97706)
+        : const Color(0xFF0D9488);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -11030,8 +11268,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             decoration: InputDecoration(
               isDense: true,
               hintText: _formatRateInput(row.annualRate),
-              helperText:
-                  hasOverride ? (verified ? 'AI確認済み' : '証跡確認が必要') : '年利変更は証跡必須',
+              helperText: hasOverride
+                  ? (verified ? 'AI確認済み' : '証跡確認が必要')
+                  : '年利変更は証跡必須',
               suffixText: '%',
               suffixIcon: hasOverride
                   ? IconButton(
@@ -11055,18 +11294,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final isPasteTarget = _annualRateEvidencePasteTargetRow?.id == row.id;
     final requestedRate =
         _parseAnnualRateInput(_annualRateControllerFor(row).text) ??
-            row.annualRate;
+        row.annualRate;
     final verified = evidence?.matchesAnnualRate(requestedRate) ?? false;
     final color = verified
         ? const Color(0xFF0D9488)
         : evidence == null
-            ? const Color(0xFFDC2626)
-            : const Color(0xFFD97706);
+        ? const Color(0xFFDC2626)
+        : const Color(0xFFD97706);
     final label = verified
         ? 'AI証跡OK'
         : evidence == null
-            ? '証跡提出'
-            : '再提出';
+        ? '証跡提出'
+        : '再提出';
     return Wrap(
       spacing: 6,
       runSpacing: 4,
@@ -11089,8 +11328,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ),
         OutlinedButton.icon(
-          onPressed:
-              isVerifying ? null : () => _startAnnualRateEvidencePaste(row),
+          onPressed: isVerifying
+              ? null
+              : () => _startAnnualRateEvidencePaste(row),
           icon: const Icon(Icons.content_paste, size: 14),
           label: const Text('貼付'),
           style: OutlinedButton.styleFrom(
@@ -11389,7 +11629,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       lastAmount = _assetData[lastDate]?[type];
     }
     final isLiability = (lastAmount ?? 0) < 0;
-    final canQuickUpdate = lastAmount != null &&
+    final canQuickUpdate =
+        lastAmount != null &&
         !isUpdatedToday &&
         lastDate == _yesterdayDateKey();
 
@@ -11441,8 +11682,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                         isDense: true,
                         filled: isUpdatedToday,
-                        fillColor:
-                            isUpdatedToday ? const Color(0xFF64748B) : null,
+                        fillColor: isUpdatedToday
+                            ? const Color(0xFF64748B)
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -11516,8 +11758,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           isDense: true,
                           filled: isUpdatedToday,
-                          fillColor:
-                              isUpdatedToday ? const Color(0xFF64748B) : null,
+                          fillColor: isUpdatedToday
+                              ? const Color(0xFF64748B)
+                              : null,
                         ),
                       ),
                     ),
@@ -12064,8 +12307,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   IconButton(
                     tooltip: '翌月',
-                    onPressed:
-                        canMoveForward ? () => _shiftFlowHistoryMonth(1) : null,
+                    onPressed: canMoveForward
+                        ? () => _shiftFlowHistoryMonth(1)
+                        : null,
                     icon: const Icon(Icons.chevron_right),
                   ),
                 ],
@@ -12225,7 +12469,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           (item['action_type'] as String?) == 'conquer';
                       final amount = (item['amount'] as num?)?.toInt() ?? 0;
                       final desc = item['description']?.toString() ?? '';
-                      final date = DateTime.tryParse(
+                      final date =
+                          DateTime.tryParse(
                             item['occurred_at']?.toString() ?? '',
                           )?.toLocal() ??
                           _selectedFlowHistoryMonth;
@@ -12484,8 +12729,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   IconButton(
                     tooltip: '次月',
-                    onPressed:
-                        canMoveForward ? () => _shiftFlowHistoryMonth(1) : null,
+                    onPressed: canMoveForward
+                        ? () => _shiftFlowHistoryMonth(1)
+                        : null,
                     icon: const Icon(Icons.chevron_right),
                   ),
                 ],
@@ -12737,7 +12983,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     actionType: actionType,
                   );
                   final amount = (item['amount'] as num?)?.toInt() ?? 0;
-                  final date = DateTime.tryParse(
+                  final date =
+                      DateTime.tryParse(
                         item['occurred_at']?.toString() ?? '',
                       )?.toLocal() ??
                       _selectedFlowHistoryMonth;
@@ -13069,133 +13316,131 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               : visibleSubscriptions.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(32),
-                      child:
-                          Center(child: Text('$visibleMonthLabel の固定費はありません')),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: visibleSubscriptions.length,
-                      itemBuilder: (context, index) {
-                        final item = visibleSubscriptions[index];
-                        final due = item['due_date'] as String?;
-                        final dueDate =
-                            due != null ? DateTime.parse(due) : null;
-                        final isPaid = (item['is_paid'] as bool?) == true;
-                        final src =
-                            (item['payment_source'] ?? '').toString().trim();
-                        return ListTile(
-                          dense: true,
-                          leading: Checkbox(
-                            value: isPaid,
-                            onChanged: (_) =>
-                                _toggleSubscriptionPaid(item['id'], isPaid),
-                          ),
-                          title: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item['service_name'] ?? '',
-                                  style: TextStyle(
-                                    decoration: isPaid
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color:
-                                        isPaid ? const Color(0xFF9CA3AF) : null,
-                                    fontWeight: isPaid
-                                        ? FontWeight.normal
-                                        : FontWeight.bold,
-                                    height: 1.5,
-                                  ),
-                                ),
+              ? Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(child: Text('$visibleMonthLabel の固定費はありません')),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: visibleSubscriptions.length,
+                  itemBuilder: (context, index) {
+                    final item = visibleSubscriptions[index];
+                    final due = item['due_date'] as String?;
+                    final dueDate = due != null ? DateTime.parse(due) : null;
+                    final isPaid = (item['is_paid'] as bool?) == true;
+                    final src = (item['payment_source'] ?? '')
+                        .toString()
+                        .trim();
+                    return ListTile(
+                      dense: true,
+                      leading: Checkbox(
+                        value: isPaid,
+                        onChanged: (_) =>
+                            _toggleSubscriptionPaid(item['id'], isPaid),
+                      ),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item['service_name'] ?? '',
+                              style: TextStyle(
+                                decoration: isPaid
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: isPaid ? const Color(0xFF9CA3AF) : null,
+                                fontWeight: isPaid
+                                    ? FontWeight.normal
+                                    : FontWeight.bold,
+                                height: 1.5,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '¥${NumberFormat('#,###').format(item['price'])}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isPaid
-                                      ? const Color(0xFF9CA3AF)
-                                      : Theme.of(context).colorScheme.onSurface,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                dueDate != null
-                                    ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
-                                    : '支払日: 未設定',
-                                style: TextStyle(
-                                  color: isPaid
-                                      ? const Color(0xFF9CA3AF)
-                                      : const Color(0xFFB91C1C),
-                                  fontSize: 12,
-                                  height: 1.5,
-                                ),
-                              ),
-                              if (src.isNotEmpty)
-                                Text(
-                                  '引落先: $src',
-                                  style: TextStyle(
-                                    color: isPaid
-                                        ? const Color(0xFF9CA3AF)
-                                        : Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                    fontSize: 12,
-                                    height: 1.5,
-                                  ),
-                                ),
-                            ],
+                          const SizedBox(width: 8),
+                          Text(
+                            '¥${NumberFormat('#,###').format(item['price'])}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isPaid
+                                  ? const Color(0xFF9CA3AF)
+                                  : Theme.of(context).colorScheme.onSurface,
+                              height: 1.5,
+                            ),
                           ),
-                          trailing: PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert),
-                            onSelected: (value) async {
-                              if (value == 'due') {
-                                await _editSubscriptionDueDate(item);
-                              } else if (value == 'source') {
-                                await _editSubscriptionPaymentSource(item);
-                              } else if (value == 'delete') {
-                                final serviceName =
-                                    (item['service_name'] ?? '').toString();
-                                final shouldDelete =
-                                    await _confirmDeleteSubscription(
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            dueDate != null
+                                ? '支払日: ${DateFormat('yyyy/M/d(E)', 'ja_JP').format(dueDate)}'
+                                : '支払日: 未設定',
+                            style: TextStyle(
+                              color: isPaid
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFFB91C1C),
+                              fontSize: 12,
+                              height: 1.5,
+                            ),
+                          ),
+                          if (src.isNotEmpty)
+                            Text(
+                              '引落先: $src',
+                              style: TextStyle(
+                                color: isPaid
+                                    ? const Color(0xFF9CA3AF)
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
+                            ),
+                        ],
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) async {
+                          if (value == 'due') {
+                            await _editSubscriptionDueDate(item);
+                          } else if (value == 'source') {
+                            await _editSubscriptionPaymentSource(item);
+                          } else if (value == 'delete') {
+                            final serviceName = (item['service_name'] ?? '')
+                                .toString();
+                            final shouldDelete =
+                                await _confirmDeleteSubscription(
                                   serviceName: serviceName,
                                 );
-                                if (!shouldDelete) return;
-                                await _deleteSubscription(item['id']);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem<String>(
-                                value: 'due',
-                                child: Text('支払日を編集'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'source',
-                                child: Text('引落先を編集'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Text(
-                                  '削除',
-                                  style: TextStyle(
-                                    color: Color(0xFFB91C1C),
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            if (!shouldDelete) return;
+                            await _deleteSubscription(item['id']);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem<String>(
+                            value: 'due',
+                            child: Text('支払日を編集'),
                           ),
-                        );
-                      },
-                    ),
+                          const PopupMenuItem<String>(
+                            value: 'source',
+                            child: Text('引落先を編集'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Text(
+                              '削除',
+                              style: TextStyle(
+                                color: Color(0xFFB91C1C),
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextButton.icon(
@@ -13247,52 +13492,52 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _isLoadingTasks
                 ? const Center(child: CircularProgressIndicator())
                 : _mustTasks.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: Text('登録されたタスクはありません')),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _mustTasks.length,
-                        itemBuilder: (context, index) {
-                          final task = _mustTasks[index];
-                          final isCompleted =
-                              (task['is_completed'] as bool?) == true;
-                          final deadline = DateTime.parse(
-                            task['deadline'],
-                          ).toLocal();
-                          final isOverdue =
-                              !isCompleted && deadline.isBefore(DateTime.now());
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: Text('登録されたタスクはありません')),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _mustTasks.length,
+                    itemBuilder: (context, index) {
+                      final task = _mustTasks[index];
+                      final isCompleted =
+                          (task['is_completed'] as bool?) == true;
+                      final deadline = DateTime.parse(
+                        task['deadline'],
+                      ).toLocal();
+                      final isOverdue =
+                          !isCompleted && deadline.isBefore(DateTime.now());
 
-                          return CheckboxListTile(
-                            value: isCompleted,
-                            onChanged: (val) =>
-                                _toggleTaskStatus(task['id'], isCompleted),
-                            title: Text(
-                              task['title'],
-                              style: TextStyle(
-                                decoration: isCompleted
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                                height: 1.5,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '締切: ${DateFormat('yyyy/MM/dd').format(deadline)}',
-                              style: TextStyle(
-                                color: isOverdue
-                                    ? const Color(0xFFB91C1C)
-                                    : const Color(0xFF9CA3AF),
-                                height: 1.5,
-                              ),
-                            ),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                          );
-                        },
-                      ),
+                      return CheckboxListTile(
+                        value: isCompleted,
+                        onChanged: (val) =>
+                            _toggleTaskStatus(task['id'], isCompleted),
+                        title: Text(
+                          task['title'],
+                          style: TextStyle(
+                            decoration: isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
+                            height: 1.5,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '締切: ${DateFormat('yyyy/MM/dd').format(deadline)}',
+                          style: TextStyle(
+                            color: isOverdue
+                                ? const Color(0xFFB91C1C)
+                                : const Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
+                        ),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                      );
+                    },
+                  ),
             TextButton.icon(
               onPressed: _addMustTask,
               icon: const Icon(Icons.add),
@@ -13382,8 +13627,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               child: _lineChartBars.isEmpty && _barChartGroups.isEmpty
                   ? const Center(child: Text('戦況データなし。'))
                   : _showDailyChange
-                      ? _buildDailyChangeChart()
-                      : _buildAssetTrendChart(),
+                  ? _buildDailyChangeChart()
+                  : _buildAssetTrendChart(),
             ),
           ],
         ),

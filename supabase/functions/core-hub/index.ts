@@ -516,6 +516,7 @@ async function createGitHubIssue(params: {
     body: JSON.stringify({
       title: `[追加要望] ${params.title}`,
       body: params.body,
+      labels: ["enhancement", "追加要望", "wbs"],
     }),
   });
   const data = await res.json().catch(() => ({}));
