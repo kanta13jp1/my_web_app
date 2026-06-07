@@ -1,60 +1,60 @@
 {
-  "checked_at": "2026-05-18T15:55:49Z",
+  "checked_at": "2026-05-18T03:25:39Z",
   "repo": "kanta13jp1/my_web_app",
   "requirements": {
     "notebooklm-requirement:02e9cf0a-55f6-4896-b0de-29278f3b18d0:1": {
-      "hash": "79472c969c29bb0c",
+      "hash": "9a731bc11ba2ef62",
       "issue_number": 2730,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2730",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:02e9cf0a:1] [追加要望] フォーカスアウト時の入力バリデーションとアトミックデザインの適用"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "[追加要望] フォーカスアウト時の入力バリデーションとアトミックデザインの適用"
     },
     "notebooklm-requirement:02e9cf0a-55f6-4896-b0de-29278f3b18d0:2": {
-      "hash": "8b93d01e02ee885d",
+      "hash": "7fb8af0656bf98aa",
       "issue_number": 2731,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2731",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:02e9cf0a:2] [追加要望] 長時間処理の非同期化とジョブステータス照会UIの実装"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "[追加要望] 長時間処理の非同期化とジョブステータス照会UIの実装"
     },
     "notebooklm-requirement:02e9cf0a-55f6-4896-b0de-29278f3b18d0:3": {
-      "hash": "520961827e98fdef",
+      "hash": "a6ab215f8a8565c4",
       "issue_number": 2732,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2732",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:02e9cf0a:3] [追加要望] ログ出力における機密情報マスク処理の共通機能化"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "[追加要望] ログ出力における機密情報マスク処理の共通機能化"
     },
     "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:1": {
-      "hash": "d7988d671235dffa",
+      "hash": "c1c179416c3f6a2d",
       "issue_number": 2571,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2571",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0678eea0:1] Supabaseリソース使用量および超過課金アラートの実装"
+      "last_seen_at": "2026-05-18T00:12:47Z",
+      "status": "created",
+      "title": "Supabaseリソース使用量および超過課金アラートの実装"
     },
     "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:2": {
-      "hash": "002cd5b45db3238b",
+      "hash": "15f8817fd4e4679a",
       "issue_number": 2572,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2572",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0678eea0:2] 7日間日次バックアップを活用した障害復旧（DR）プロセスの策定と検証"
+      "last_seen_at": "2026-05-18T00:12:47Z",
+      "status": "created",
+      "title": "7日間日次バックアップを活用した障害復旧（DR）プロセスの策定と検証"
     },
     "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:3": {
-      "hash": "f6086a0349468441",
+      "hash": "f4b496364e7b9628",
       "issue_number": 2573,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2573",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0678eea0:3] 複数プロジェクト運用時における追加コスト管理ルールの策定"
+      "last_seen_at": "2026-05-18T00:12:47Z",
+      "status": "created",
+      "title": "複数プロジェクト運用時における追加コスト管理ルールの策定"
     },
     "notebooklm-requirement:0829f536-32d7-4b49-917f-26d27b43e0c7:1": {
       "hash": "1ae69134b20acd1f",
       "issue_number": 2620,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2620",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:0829f536:1] プライバシー優先のAIエージェントメモリ管理およびユーザーコントロール機能の実装"
     },
@@ -62,7 +62,7 @@
       "hash": "fca0aed865c84c26",
       "issue_number": 2621,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2621",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:0829f536:2] AI競合監視ダッシュボードにおける脅威レベルトラッキングとGitHub Actions連携"
     },
@@ -70,87 +70,87 @@
       "hash": "96747563e1bd3d01",
       "issue_number": 2622,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2622",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:0829f536:3] 「シナリオCEO」向けハイパーパーソナライズ型意思決定支援UIの構築"
     },
     "notebooklm-requirement:0b7a7406-b695-48f9-b9b2-30dd1b08aef4:1": {
-      "hash": "1b4929e82c90984d",
+      "hash": "442ca4479b86f624",
       "issue_number": 2702,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2702",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0b7a7406:1] AIサーキットブレーカー発動時のSlack自動通知トリガーの実装"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "AIサーキットブレーカー発動時のSlack自動通知トリガーの実装"
     },
     "notebooklm-requirement:0b7a7406-b695-48f9-b9b2-30dd1b08aef4:2": {
-      "hash": "87fe97d97012b963",
+      "hash": "0af3a374cc363b3e",
       "issue_number": 2703,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2703",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0b7a7406:2] GitHub Actionsを利用した1時間ごとのNotion自動同期処理の構築"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "GitHub Actionsを利用した1時間ごとのNotion自動同期処理の構築"
     },
     "notebooklm-requirement:0b7a7406-b695-48f9-b9b2-30dd1b08aef4:3": {
-      "hash": "64b814df999ce9f7",
+      "hash": "0697bb8c3b6ad1d7",
       "issue_number": 2704,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2704",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0b7a7406:3] Discord Webhookを用いたセカンダリ通知機能のフェイルオーバー実装"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "Discord Webhookを用いたセカンダリ通知機能のフェイルオーバー実装"
     },
     "notebooklm-requirement:0dbe8df1-7225-4a03-b155-cd7bed34b50b:1": {
-      "hash": "8103a5956eaffdf3",
+      "hash": "706d33e4b432ab95",
       "issue_number": 2699,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2699",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0dbe8df1:1] ユーザープラン別の日次リクエスト上限管理システムの実装"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "ユーザープラン別の日次リクエスト上限管理システムの実装"
     },
     "notebooklm-requirement:0dbe8df1-7225-4a03-b155-cd7bed34b50b:2": {
-      "hash": "7bad97a56d1f9c9d",
+      "hash": "8bfa98f0f2a5cb9a",
       "issue_number": 2700,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2700",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0dbe8df1:2] GitHubプルリクエスト連携機能と独立したクォータ管理の導入"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "GitHubプルリクエスト連携機能と独立したクォータ管理の導入"
     },
     "notebooklm-requirement:0dbe8df1-7225-4a03-b155-cd7bed34b50b:3": {
-      "hash": "ec54b615e328b175",
+      "hash": "faa93e2b32b4bfa4",
       "issue_number": 2701,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2701",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0dbe8df1:3] 大規模コンテキスト制御のためのトークン数制限とバリデーション"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "大規模コンテキスト制御のためのトークン数制限とバリデーション"
     },
     "notebooklm-requirement:0f52e149-b074-44d2-931c-c43b4c527767:1": {
-      "hash": "aa1cc5e2f66dfeaf",
+      "hash": "7c6d1a1e1c690897",
       "issue_number": 2739,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2739",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0f52e149:1] GitHub Actionsを用いたCI/CDパイプラインの性能・コスト最適化およびDevSecOps基盤の見直し"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "GitHub Actionsを用いたCI/CDパイプラインの性能・コスト最適化およびDevSecOps基盤の見直し"
     },
     "notebooklm-requirement:0f52e149-b074-44d2-931c-c43b4c527767:2": {
-      "hash": "05d59a414e467022",
+      "hash": "dee91c94f909eda9",
       "issue_number": 2740,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2740",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0f52e149:2] 外部連携データの前回差分検知およびリアルタイムアラート・メール通知機能の実装"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "外部連携データの前回差分検知およびリアルタイムアラート・メール通知機能の実装"
     },
     "notebooklm-requirement:0f52e149-b074-44d2-931c-c43b4c527767:3": {
-      "hash": "f6ec300cc724fd04",
+      "hash": "994ac31b4ae7c5ac",
       "issue_number": 2741,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2741",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:0f52e149:3] サードパーティ標準フォーマット対応のデータインポーター及びカスタム属性（JSONB ）管理機能の追加"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "サードパーティ標準フォーマット対応のデータインポーター及びカスタム属性（JSONB ）管理機能の追加"
     },
     "notebooklm-requirement:0fc0b6cf-7d34-45d3-bea3-ca843cdf2ee9:1": {
       "hash": "0e8b5b989ef59f8a",
       "issue_number": 2611,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2611",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:0fc0b6cf:1] Cursor等のAIツールチェンジログ監視の自動化強化"
     },
@@ -158,7 +158,7 @@
       "hash": "66275cc86bd849e6",
       "issue_number": 2612,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2612",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:0fc0b6cf:2] APIクォータ消費時の段階的通知および自動停止機能の実装"
     },
@@ -166,63 +166,63 @@
       "hash": "d3bc1c0ee025f47e",
       "issue_number": 2613,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2613",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:0fc0b6cf:3] OpenAI Codex on Bedrockの3経路連携PoCとドキュメント更新"
     },
     "notebooklm-requirement:110ca978-707c-4fc5-820d-d50b74ee910c:1": {
-      "hash": "a5a8ce45adacb1ac",
+      "hash": "b213ec2ef01b437d",
       "issue_number": 2797,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2797",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:110ca978:1] AppStream 2.0マルチセッション機能の導入とコスト最適化"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "AppStream 2.0マルチセッション機能の導入とコスト最適化"
     },
     "notebooklm-requirement:110ca978-707c-4fc5-820d-d50b74ee910c:2": {
-      "hash": "30191b0f584646bc",
+      "hash": "6afefe33630a4fae",
       "issue_number": 2798,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2798",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:110ca978:2] Image Assistant CLIを活用したイメージ更新の自動化パイプライン構築"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "Image Assistant CLIを活用したイメージ更新の自動化パイプライン構築"
     },
     "notebooklm-requirement:110ca978-707c-4fc5-820d-d50b74ee910c:3": {
-      "hash": "c06485af4718f9db",
+      "hash": "2f776297e0ae7200",
       "issue_number": 2799,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2799",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:110ca978:3] 非永続インスタンスにおけるユーザーデータの永続化（ホームフォルダ連携）"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "非永続インスタンスにおけるユーザーデータの永続化（ホームフォルダ連携）"
     },
     "notebooklm-requirement:173db965-435a-429a-bcdf-7b38ffe68efb:1": {
-      "hash": "e4ee3a0e0dc84a75",
+      "hash": "0da9716296403d33",
       "issue_number": 2749,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2749",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:173db965:1] 遅延損害金の自動計算および支払い期日リマインダー機能"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "遅延損害金の自動計算および支払い期日リマインダー機能"
     },
     "notebooklm-requirement:173db965-435a-429a-bcdf-7b38ffe68efb:2": {
-      "hash": "e62bcb6e120280f0",
+      "hash": "63514b860b80962f",
       "issue_number": 2750,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2750",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:173db965:2] 複数借入のおまとめローン（借り換え）効果シミュレーション機能"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "複数借入のおまとめローン（借り換え）効果シミュレーション機能"
     },
     "notebooklm-requirement:173db965-435a-429a-bcdf-7b38ffe68efb:3": {
-      "hash": "80eebe2f3dccfa81",
+      "hash": "239468499c6f8f4f",
       "issue_number": 2751,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2751",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:173db965:3] 貸付自粛制度の案内および違法業者（ヤミ金）登録ブロック機能"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "貸付自粛制度の案内および違法業者（ヤミ金）登録ブロック機能"
     },
     "notebooklm-requirement:17cd45cd-5166-4b3f-aefb-107e2c1e3589:1": {
       "hash": "8d785855f4fcf17d",
       "issue_number": 2608,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2608",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:17cd45cd:1] Claude Code 2.1フロントマターへの設定移行とワイルドカード権限の適用"
     },
@@ -230,7 +230,7 @@
       "hash": "0a7503b2a97105b3",
       "issue_number": 2609,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2609",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:17cd45cd:2] AIエージェントのAPI予算監視と自動停止（Auto-Pause）機能の実装"
     },
@@ -238,639 +238,471 @@
       "hash": "3ec3a0705529a3fa",
       "issue_number": 2610,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2610",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:17cd45cd:3] GitHubイベント駆動型の自動PRレビュー・修正（Triggers相当機能）の導入"
     },
-    "notebooklm-requirement:1837f569-33bc-4b76-9b93-d12055bcb3a9:1": {
-      "hash": "fb63e21dfc33afb8",
-      "issue_number": 2829,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2829",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 1837f569:1 自動CIログ解析とトラブルシューティングのパイプライン統合"
-    },
-    "notebooklm-requirement:1837f569-33bc-4b76-9b93-d12055bcb3a9:2": {
-      "hash": "389cca621e9e153f",
-      "issue_number": 2830,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2830",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 1837f569:2 構造化JSON出力を活用したWBSタスクの自動分割と起票"
-    },
-    "notebooklm-requirement:1837f569-33bc-4b76-9b93-d12055bcb3a9:3": {
-      "hash": "30e831f1a6f1e745",
-      "issue_number": 2831,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2831",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 1837f569:3 プロジェクト固有のカスタムリンター自動生成とコードレビュー自動化"
-    },
     "notebooklm-requirement:1aced136-1352-4933-b727-478d3c35b360:1": {
-      "hash": "53366d908c30c540",
+      "hash": "92448b3a4b7ac683",
       "issue_number": 2687,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2687",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:1aced136:1] マルチモーダルRAG（Gemini Embedding 2）のSupabase統合"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "マルチモーダルRAG（Gemini Embedding 2）のSupabase統合"
     },
     "notebooklm-requirement:1aced136-1352-4933-b727-478d3c35b360:2": {
-      "hash": "b839da34090609b1",
+      "hash": "5a34067b6f647465",
       "issue_number": 2688,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2688",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:1aced136:2] Trigger.devを活用した24/7自律型ワークフローのクラウドデプロイ"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "Trigger.devを活用した24/7自律型ワークフローのクラウドデプロイ"
     },
     "notebooklm-requirement:1aced136-1352-4933-b727-478d3c35b360:3": {
-      "hash": "85c4a665a1ceb5ce",
+      "hash": "2f5fe0edf5e50576",
       "issue_number": 2689,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2689",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:1aced136:3] AI機能向け利用量ベース（Pay-Per-Use）課金モデルの実装"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "AI機能向け利用量ベース（Pay-Per-Use）課金モデルの実装"
     },
     "notebooklm-requirement:1b808a60-85d6-49f7-ab80-0e90a43cf1d8:1": {
-      "hash": "782ce93f851ad010",
+      "hash": "f9647bcdc22086f5",
       "issue_number": 2681,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2681",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:1b808a60:1] [自動化] ProtoAmp/MCPSecBench手法を用いたMCPエンドポイントの脆弱性スキャンCI/CD統合"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "[自動化] ProtoAmp/MCPSecBench手法を用いたMCPエンドポイントの脆弱性スキャンCI/CD統合"
     },
     "notebooklm-requirement:1b808a60-85d6-49f7-ab80-0e90a43cf1d8:2": {
-      "hash": "bb93c2460f3cb25f",
+      "hash": "c677721ad9f18710",
       "issue_number": 2682,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2682",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:1b808a60:2] [プロダクト] Flutter WebクライアントにおけるSampling要求のOrigin視覚的区別UIの実装"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "[プロダクト] Flutter WebクライアントにおけるSampling要求のOrigin視覚的区別UIの実装"
     },
     "notebooklm-requirement:1b808a60-85d6-49f7-ab80-0e90a43cf1d8:3": {
-      "hash": "c7bcf1f9426812ba",
+      "hash": "2f89737caa380fa8",
       "issue_number": 2683,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2683",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:1b808a60:3] [プロダクト] WorkOS Admin PortalおよびDirectory Sync(SCIM)によるB2B向けテナント管理の導入"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "[プロダクト] WorkOS Admin PortalおよびDirectory Sync(SCIM)によるB2B向けテナント管理の導入"
     },
     "notebooklm-requirement:20ef0ed7-8864-41ee-9d6e-8c85696d205a:1": {
-      "hash": "c5e57024f022603b",
+      "hash": "e2605feceb72fb38",
       "issue_number": 2770,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2770",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:20ef0ed7:1] ユーザーの自己資本（スキル・経験）ポートフォリオ管理機能"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "ユーザーの自己資本（スキル・経験）ポートフォリオ管理機能"
     },
     "notebooklm-requirement:20ef0ed7-8864-41ee-9d6e-8c85696d205a:2": {
-      "hash": "ec9ed5f3b4ff2e3a",
+      "hash": "c9b12f1598b65101",
       "issue_number": 2771,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2771",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:20ef0ed7:2] コンディション記録とバーンアウト（倒産）リスクのアラート機能"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "コンディション記録とバーンアウト（倒産）リスクのアラート機能"
     },
     "notebooklm-requirement:20ef0ed7-8864-41ee-9d6e-8c85696d205a:3": {
-      "hash": "90bb478f8ea169ec",
+      "hash": "9740d7a175b1c3c2",
       "issue_number": 2772,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2772",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:20ef0ed7:3] 月次KPI決算レポートの自動生成とAIモニタリング連携"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "月次KPI決算レポートの自動生成とAIモニタリング連携"
     },
     "notebooklm-requirement:239c758b-8a8f-4a9e-9d1d-1bdcafaacc09:1": {
-      "hash": "b66693294686f069",
+      "hash": "ae823b6e35d983bc",
       "issue_number": 2705,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2705",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:239c758b:1] .aiexcludeを活用したSupabase認証情報や機密設定のコンテキスト除外"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": ".aiexcludeを活用したSupabase認証情報や機密設定のコンテキスト除外"
     },
     "notebooklm-requirement:239c758b-8a8f-4a9e-9d1d-1bdcafaacc09:2": {
-      "hash": "29b66e6a4912de82",
+      "hash": "f9eb06815f68659c",
       "issue_number": 2706,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2706",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:239c758b:2] GitHubエンタープライズ機能を用いたAIによるPull Request自動レビューの導入"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "GitHubエンタープライズ機能を用いたAIによるPull Request自動レビューの導入"
     },
     "notebooklm-requirement:239c758b-8a8f-4a9e-9d1d-1bdcafaacc09:3": {
-      "hash": "8d214827fa37df71",
+      "hash": "1fb5fd58369443d2",
       "issue_number": 2707,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2707",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:239c758b:3] コードカスタマイズ機能によるFlutter/Supabase独自規則のインデックス化"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "コードカスタマイズ機能によるFlutter/Supabase独自規則のインデックス化"
     },
     "notebooklm-requirement:25e74fc2-784d-4b82-88ff-75c69f1a668c:1": {
-      "hash": "27b96121fea98b59",
+      "hash": "d336abf6d74ffc11",
       "issue_number": 2773,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2773",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:25e74fc2:1] Supabase RLSを用いたテナント分離のFail-closed強制"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "Supabase RLSを用いたテナント分離のFail-closed強制"
     },
     "notebooklm-requirement:25e74fc2-784d-4b82-88ff-75c69f1a668c:2": {
-      "hash": "a4cc6e5352794b85",
+      "hash": "226214fcdfceb169",
       "issue_number": 2774,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2774",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:25e74fc2:2] ゼロダウンタイム移行に向けた14日間デュアルライトプロセスの標準化"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "ゼロダウンタイム移行に向けた14日間デュアルライトプロセスの標準化"
     },
     "notebooklm-requirement:25e74fc2-784d-4b82-88ff-75c69f1a668c:3": {
-      "hash": "3e64e1dbdf77f2b4",
+      "hash": "fdaa2a51e260cd9f",
       "issue_number": 2775,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2775",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:25e74fc2:3] 複数テナントの評価に基づくグローバルデータのオプトイン昇格機構の実装"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "複数テナントの評価に基づくグローバルデータのオプトイン昇格機構の実装"
     },
     "notebooklm-requirement:27730002-fe8c-40ff-b2c3-431ab8f40a9a:1": {
-      "hash": "c05b97ac9427f95e",
+      "hash": "f1817f572cc03e8e",
       "issue_number": 2721,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2721",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:27730002:1] LLMルーティング最適化と構造化出力の統合"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "LLMルーティング最適化と構造化出力の統合"
     },
     "notebooklm-requirement:27730002-fe8c-40ff-b2c3-431ab8f40a9a:2": {
-      "hash": "e92247ee895f0b13",
+      "hash": "dac6e1fbdb447f9c",
       "issue_number": 2722,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2722",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:27730002:2] エージェント用隔離サンドボックスとセキュリティ監視の導入"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "エージェント用隔離サンドボックスとセキュリティ監視の導入"
     },
     "notebooklm-requirement:27730002-fe8c-40ff-b2c3-431ab8f40a9a:3": {
-      "hash": "d795bc64c1b96c29",
+      "hash": "7797dcc86b4199c0",
       "issue_number": 2723,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2723",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:27730002:3] 進化的アルゴリズムを用いたプロンプト継続的最適化パイプライン"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "進化的アルゴリズムを用いたプロンプト継続的最適化パイプライン"
     },
     "notebooklm-requirement:284ad4be-ffca-449a-9725-cab9337f3325:1": {
-      "hash": "ee742b5b54f9bc9e",
+      "hash": "7d77299af0f42043",
       "issue_number": 2654,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2654",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:284ad4be:1] AI推論深度の切り替え機能（Standard / Deep Research）の導入"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "AI推論深度の切り替え機能（Standard / Deep Research）の導入"
     },
     "notebooklm-requirement:284ad4be-ffca-449a-9725-cab9337f3325:2": {
-      "hash": "16a379863a1440e8",
+      "hash": "53f3428088e74980",
       "issue_number": 2655,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2655",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:284ad4be:2] 外部ソースと同期したファイル権限（RLS）連動型AI検索の実装"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "外部ソースと同期したファイル権限（RLS）連動型AI検索の実装"
     },
     "notebooklm-requirement:284ad4be-ffca-449a-9725-cab9337f3325:3": {
-      "hash": "f11a603bafd42a4c",
+      "hash": "20cebd08d691ae74",
       "issue_number": 2656,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2656",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:284ad4be:3] 継続的セッションにおけるコンテキストキャッシュの活用とコスト監視"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "継続的セッションにおけるコンテキストキャッシュの活用とコスト監視"
     },
     "notebooklm-requirement:28590c8b-8147-424f-b1a3-03facef824b9:1": {
-      "hash": "6b8329a622e1dafe",
+      "hash": "2eb514514a093e66",
       "issue_number": 2815,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2815",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:28590c8b:1] Notion 3.4の自動生成ダッシュボード機能の調査と競合ベンチマーク"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "Notion 3.4の自動生成ダッシュボード機能の調査と競合ベンチマーク"
     },
     "notebooklm-requirement:28590c8b-8147-424f-b1a3-03facef824b9:2": {
-      "hash": "11a72e3701896c5d",
+      "hash": "1dec8473389836e1",
       "issue_number": 2816,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2816",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:28590c8b:2] CI/CDパイプラインにおける非推奨API警告の自動ブロック化"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "CI/CDパイプラインにおける非推奨API警告の自動ブロック化"
     },
     "notebooklm-requirement:28590c8b-8147-424f-b1a3-03facef824b9:3": {
-      "hash": "6921a7ec62502e26",
+      "hash": "fcbd206e54e827dd",
       "issue_number": 2817,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2817",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:28590c8b:3] Edge Function先行開発（Tier2）ワークフローの標準化とドキュメント整備"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "Edge Function先行開発（Tier2）ワークフローの標準化とドキュメント整備"
     },
     "notebooklm-requirement:29540f60-4afa-4825-8e33-6751040caef2:1": {
-      "hash": "e5780843b53ce9df",
+      "hash": "895b3480b1174a29",
       "issue_number": 2746,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2746",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:29540f60:1] GitHubアカウントのセカンダリメールアドレス検証の義務化"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "GitHubアカウントのセカンダリメールアドレス検証の義務化"
     },
     "notebooklm-requirement:29540f60-4afa-4825-8e33-6751040caef2:2": {
-      "hash": "6f80d17ca9d96d24",
+      "hash": "d66d0bdece0b0d5e",
       "issue_number": 2747,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2747",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:29540f60:2] GitHub CopilotのAIモデル学習利用に関するオプトアウトの実施"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "GitHub CopilotのAIモデル学習利用に関するオプトアウトの実施"
     },
     "notebooklm-requirement:29540f60-4afa-4825-8e33-6751040caef2:3": {
-      "hash": "e2193617df27c7cd",
+      "hash": "c696c12e277991f4",
       "issue_number": 2748,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2748",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:29540f60:3] Dartアナライザー再起動ループおよび接続エラーからの自動復旧スクリプトの構築"
-    },
-    "notebooklm-requirement:2af23b5e-510a-4a2d-bd51-3b60731dd868:1": {
-      "hash": "e0105adcf99b28c1",
-      "issue_number": 2865,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2865",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2af23b5e:1 ライブ配信のチャットバウト解析を用いた配信者特性評価モジュール"
-    },
-    "notebooklm-requirement:2af23b5e-510a-4a2d-bd51-3b60731dd868:2": {
-      "hash": "78aeb1d99e0031a1",
-      "issue_number": 2866,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2866",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2af23b5e:2 Paid UGCクリエイター向けの報酬・インセンティブ統合管理システム"
-    },
-    "notebooklm-requirement:2af23b5e-510a-4a2d-bd51-3b60731dd868:3": {
-      "hash": "99aa3812c54dc5e5",
-      "issue_number": 2867,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2867",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2af23b5e:3 公開配信から限定サブスクリプション配信へのシームレス移行機能"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "Dartアナライザー再起動ループおよび接続エラーからの自動復旧スクリプトの構築"
     },
     "notebooklm-requirement:2eb9f737-82f2-4d73-8b4d-fd869e905d70:1": {
-      "hash": "55f08147eb9f7c9b",
+      "hash": "91a1dd3603aafe02",
       "issue_number": 2657,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2657",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2eb9f737:1] 創発的現象に伴う予測不確実性のためのAI出力検証パイプライン"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "創発的現象に伴う予測不確実性のためのAI出力検証パイプライン"
     },
     "notebooklm-requirement:2eb9f737-82f2-4d73-8b4d-fd869e905d70:2": {
-      "hash": "eb406f560f23585e",
+      "hash": "d69bf438518c2eb3",
       "issue_number": 2658,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2658",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2eb9f737:2] 計算規模とGPUコストに応じたAIツールモニタリング基盤の実装"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "計算規模とGPUコストに応じたAIツールモニタリング基盤の実装"
     },
     "notebooklm-requirement:2eb9f737-82f2-4d73-8b4d-fd869e905d70:3": {
-      "hash": "40ed56913c4eeac8",
+      "hash": "97a27c947282f525",
       "issue_number": 2659,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2659",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2eb9f737:3] 人間のフィードバック（RLHF）に基づくGitHub Issue自動起票ワークフロー"
-    },
-    "notebooklm-requirement:2ee2ea76-4a19-4586-926e-9e3fdca4463c:1": {
-      "hash": "9d6d430dc8579c80",
-      "issue_number": 2901,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2901",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2ee2ea76:1 画像生成APIリクエストのカスタム解像度バリデーション機能の実装"
-    },
-    "notebooklm-requirement:2ee2ea76-4a19-4586-926e-9e3fdca4463c:2": {
-      "hash": "5d400a1c1eb7e7a2",
-      "issue_number": 2902,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2902",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2ee2ea76:2 画像内テキスト生成用のプロンプト自動フォーマット機能の追加"
-    },
-    "notebooklm-requirement:2ee2ea76-4a19-4586-926e-9e3fdca4463c:3": {
-      "hash": "2386b0a6cd5c8db5",
-      "issue_number": 2903,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2903",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2ee2ea76:3 ドラフト用高速生成モード（低品質・軽量モデル）のトグル実装"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "人間のフィードバック（RLHF）に基づくGitHub Issue自動起票ワークフロー"
     },
     "notebooklm-requirement:2f516389-a41f-499d-bc05-ae54562a6295:1": {
-      "hash": "95659066a21a1f89",
+      "hash": "34c85f3aadbd1167",
       "issue_number": 2714,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2714",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2f516389:1] 統合メディアライブラリの構築とアセット再利用システムの導入"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "統合メディアライブラリの構築とアセット再利用システムの導入"
     },
     "notebooklm-requirement:2f516389-a41f-499d-bc05-ae54562a6295:2": {
-      "hash": "b5c0b4d85ec78736",
+      "hash": "c3e9132c38afcfb3",
       "issue_number": 2715,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2715",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2f516389:2] AI音声クローン機能における明示的同意（Consent Verification）フローの実装"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "AI音声クローン機能における明示的同意（Consent Verification）フローの実装"
     },
     "notebooklm-requirement:2f516389-a41f-499d-bc05-ae54562a6295:3": {
-      "hash": "fe23f8734fc242d8",
+      "hash": "80e72557d334eabb",
       "issue_number": 2716,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2716",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2f516389:3] 動画編集タスク起動前のシステム要件・ブラウザ互換性事前チェック機能"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "動画編集タスク起動前のシステム要件・ブラウザ互換性事前チェック機能"
     },
     "notebooklm-requirement:2f61ac17-d33d-4a18-80ae-71817aee505d:1": {
-      "hash": "964da243bc31cc81",
+      "hash": "45140f42f870a782",
       "issue_number": 2581,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2581",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2f61ac17:1] エージェント検証用デバッグUIの実装"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "エージェント検証用デバッグUIの実装"
     },
     "notebooklm-requirement:2f61ac17-d33d-4a18-80ae-71817aee505d:2": {
-      "hash": "0c43b895425b3e60",
+      "hash": "f76591d660aa6da6",
       "issue_number": 2582,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2582",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2f61ac17:2] タスク振り分け用オーケストレーターエージェントの導入"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "タスク振り分け用オーケストレーターエージェントの導入"
     },
     "notebooklm-requirement:2f61ac17-d33d-4a18-80ae-71817aee505d:3": {
-      "hash": "447fc04d2063deaf",
+      "hash": "044895b96cc19c45",
       "issue_number": 2583,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2583",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:2f61ac17:3] マネージドAI実行環境へのデプロイと運用監視基盤の検証"
-    },
-    "notebooklm-requirement:2fc6d86f-2bbd-4fdc-ad9e-f302d93b5c6e:1": {
-      "hash": "cd9e78e428da670b",
-      "issue_number": 2889,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2889",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2fc6d86f:1 並列AIエージェントによるFlutter/Supabaseコードの自動レビュー・検証パイプライン の構築"
-    },
-    "notebooklm-requirement:2fc6d86f-2bbd-4fdc-ad9e-f302d93b5c6e:2": {
-      "hash": "7dfe09e6d25ea664",
-      "issue_number": 2890,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2890",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2fc6d86f:2 ユーザー入力およびインテイクデータの自動品質評価・クレンジングAPIの導入"
-    },
-    "notebooklm-requirement:2fc6d86f-2bbd-4fdc-ad9e-f302d93b5c6e:3": {
-      "hash": "fe1dd5c8f74b808c",
-      "issue_number": 2891,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2891",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 2fc6d86f:3 CARBSアルゴリズムに着想を得たバックエンド処理のコスト対パフォーマンス自動最適 化バッチ"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "マネージドAI実行環境へのデプロイと運用監視基盤の検証"
     },
     "notebooklm-requirement:31ddb877-b168-4f86-abc8-2451e7c0f36a:1": {
-      "hash": "df1a86a459baf63e",
+      "hash": "85902430259f55aa",
       "issue_number": 2648,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2648",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:31ddb877:1] 記事公開パイプラインにおける自動品質評価ガードレールの導入"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "記事公開パイプラインにおける自動品質評価ガードレールの導入"
     },
     "notebooklm-requirement:31ddb877-b168-4f86-abc8-2451e7c0f36a:2": {
-      "hash": "14a7bc15b8a1df4e",
+      "hash": "3ba5a5f8c020971d",
       "issue_number": 2649,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2649",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:31ddb877:2] GitHub Actionsでの動的変数引き渡しの安全化と標準化"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "GitHub Actionsでの動的変数引き渡しの安全化と標準化"
     },
     "notebooklm-requirement:31ddb877-b168-4f86-abc8-2451e7c0f36a:3": {
-      "hash": "9dd0098bf2d9eec1",
+      "hash": "7b7e606bfa29de55",
       "issue_number": 2650,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2650",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:31ddb877:3] ブランチ保護ルールに対応した公開ステータス更新の完全自動化"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "ブランチ保護ルールに対応した公開ステータス更新の完全自動化"
     },
     "notebooklm-requirement:340b80d0-2582-436d-a01f-899418d2d1cc:1": {
-      "hash": "b31ce1919b20535e",
+      "hash": "e785339151ac8553",
       "issue_number": 2590,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2590",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:340b80d0:1] Flutter/Supabase開発のマルチエージェント化（Architect-Implementerパターンの導入）"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "Flutter/Supabase開発のマルチエージェント化（Architect-Implementerパターンの導入）"
     },
     "notebooklm-requirement:340b80d0-2582-436d-a01f-899418d2d1cc:2": {
-      "hash": "8a4133c7ae2c7759",
+      "hash": "df48d4e21e9a1aae",
       "issue_number": 2591,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2591",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:340b80d0:2] 評価用独立コンテキスト（Outcomes Loop）によるPRの自動検証と品質管理"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "評価用独立コンテキスト（Outcomes Loop）によるPRの自動検証と品質管理"
     },
     "notebooklm-requirement:340b80d0-2582-436d-a01f-899418d2d1cc:3": {
-      "hash": "6c060b7a40a81380",
+      "hash": "e1f078a962cbcb5d",
       "issue_number": 2592,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2592",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:340b80d0:3] AI実行環境におけるSSRF対策と環境変数（.env）境界のハードニング"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "AI実行環境におけるSSRF対策と環境変数（.env）境界のハードニング"
     },
     "notebooklm-requirement:3545ffe5-37b0-4d96-87f5-599039add518:1": {
-      "hash": "55eaa64b53b4c4a4",
+      "hash": "aa3d96f41203957f",
       "issue_number": 2752,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2752",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:3545ffe5:1] RAGネイティブ引用の自動解析とFlutterフロントエンドでのUI連携"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "RAGネイティブ引用の自動解析とFlutterフロントエンドでのUI連携"
     },
     "notebooklm-requirement:3545ffe5-37b0-4d96-87f5-599039add518:2": {
-      "hash": "fedff2320c19ce0d",
+      "hash": "1c499d3af93208f2",
       "issue_number": 2753,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2753",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:3545ffe5:2] 規制要件に対応する外部メモリパラダイム（分離実行モード）の導入"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "規制要件に対応する外部メモリパラダイム（分離実行モード）の導入"
     },
     "notebooklm-requirement:3545ffe5-37b0-4d96-87f5-599039add518:3": {
-      "hash": "cb4272cb6bb4f11a",
+      "hash": "3dd1c8bb27f0fcab",
       "issue_number": 2754,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2754",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:3545ffe5:3] クエリレポートに基づく検索クエリの自動再定式化とルーティング制御"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "クエリレポートに基づく検索クエリの自動再定式化とルーティング制御"
     },
     "notebooklm-requirement:386e02ec-cc1a-43ea-b1cb-f66176b9841e:1": {
-      "hash": "7e13069b01895bb6",
+      "hash": "746c2e78e429c532",
       "issue_number": 2761,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2761",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:386e02ec:1] 2026年第2四半期AI企業投資動向の自動収集バッチとSupabase統合"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "2026年第2四半期AI企業投資動向の自動収集バッチとSupabase統合"
     },
     "notebooklm-requirement:386e02ec-cc1a-43ea-b1cb-f66176b9841e:2": {
-      "hash": "bb757e06aebd223a",
+      "hash": "4929e4d401ba3e45",
       "issue_number": 2762,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2762",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:386e02ec:2] 新規LLMプロバイダー向けAPIヘルスチェックおよび監視機能の実装"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "新規LLMプロバイダー向けAPIヘルスチェックおよび監視機能の実装"
     },
     "notebooklm-requirement:386e02ec-cc1a-43ea-b1cb-f66176b9841e:3": {
-      "hash": "4d125f66600fb2ec",
+      "hash": "6ada18afd678c185",
       "issue_number": 2763,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2763",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:386e02ec:3] 新規AIモデル導入時のコンプライアンスおよびセキュリティ検証ワークフロー"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "新規AIモデル導入時のコンプライアンスおよびセキュリティ検証ワークフロー"
     },
     "notebooklm-requirement:38bab02b-dc28-4209-8825-a1d11b377c55:1": {
-      "hash": "e024a4693957123c",
+      "hash": "cfd19643c2e71b59",
       "issue_number": 2574,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2574",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:38bab02b:1] 全データベースクエリのEgress最適化実装"
+      "last_seen_at": "2026-05-18T00:12:47Z",
+      "status": "created",
+      "title": "全データベースクエリのEgress最適化実装"
     },
     "notebooklm-requirement:38bab02b-dc28-4209-8825-a1d11b377c55:2": {
-      "hash": "4550e8f5063be29e",
+      "hash": "df4237b37b50b7ac",
       "issue_number": 2575,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2575",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:38bab02b:2] 利用状況アラートの設定とインシデント対応フローの構築"
+      "last_seen_at": "2026-05-18T00:12:47Z",
+      "status": "created",
+      "title": "利用状況アラートの設定とインシデント対応フローの構築"
     },
     "notebooklm-requirement:38bab02b-dc28-4209-8825-a1d11b377c55:3": {
-      "hash": "1a873ebb740cab79",
+      "hash": "5c1948b7f89b1360",
       "issue_number": 2576,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2576",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:38bab02b:3] ストレージ画像の最適化とFlutterクライアントキャッシュの導入"
+      "last_seen_at": "2026-05-18T00:12:47Z",
+      "status": "created",
+      "title": "ストレージ画像の最適化とFlutterクライアントキャッシュの導入"
     },
     "notebooklm-requirement:3fc9a086-1d57-40a9-9447-519ba115f87f:1": {
-      "hash": "6c8963eeca4a143c",
+      "hash": "f8fac1e8079dc640",
       "issue_number": 2599,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2599",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:3fc9a086:1] クラウドインフラおよびCI/CDの単一障害点（SPOF）リスクの評価とマルチリージョン・フェイルオーバー戦略の策定"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "クラウドインフラおよびCI/CDの単一障害点（SPOF）リスクの評価とマルチリージョン・フェイルオーバー戦略の策定"
     },
     "notebooklm-requirement:3fc9a086-1d57-40a9-9447-519ba115f87f:2": {
-      "hash": "46e25b021c129788",
+      "hash": "6ad23bd2a918e58a",
       "issue_number": 2600,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2600",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:3fc9a086:2] GitHub App Installation Tokenの新フォーマット対応とシークレット管理の強化"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "GitHub App Installation Tokenの新フォーマット対応とシークレット管理の強化"
     },
     "notebooklm-requirement:3fc9a086-1d57-40a9-9447-519ba115f87f:3": {
-      "hash": "14dacfec444d5784",
+      "hash": "d210c87b98148068",
       "issue_number": 2601,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2601",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:3fc9a086:3] Notion AIおよびSlackの料金改定に伴うSaaS運用コストの監査と代替自動化手段の検証"
-    },
-    "notebooklm-requirement:41231bac-c9d5-4c03-8129-edb68dc048bc:1": {
-      "hash": "b40ab51245b5ee0c",
-      "issue_number": 2847,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2847",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 41231bac:1 新規参画者向けインフラ構成ドキュメントの自動生成パイプライン"
-    },
-    "notebooklm-requirement:41231bac-c9d5-4c03-8129-edb68dc048bc:2": {
-      "hash": "f4aac6968cdb96fd",
-      "issue_number": 2848,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2848",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 41231bac:2 インタビュー疲労を軽減するコンテキスト連動型マイクロサーベイの導入"
-    },
-    "notebooklm-requirement:41231bac-c9d5-4c03-8129-edb68dc048bc:3": {
-      "hash": "cdb12618d7dcedfd",
-      "issue_number": 2849,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2849",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 41231bac:3 システムスケールを見据えた分散トレーシングとオブザーバビリティの強化"
-    },
-    "notebooklm-requirement:463b1e16-a97b-4daf-aef0-9bf2652baba7:1": {
-      "hash": "9c6e961aeb7b8f18",
-      "issue_number": 2835,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2835",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 463b1e16:1 マルチクラウド環境向けトークン変換および連携ゲートウェイの検証"
-    },
-    "notebooklm-requirement:463b1e16-a97b-4daf-aef0-9bf2652baba7:2": {
-      "hash": "8c74078b6a945993",
-      "issue_number": 2836,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2836",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 463b1e16:2 特定業界向け品質管理ガイドラインの知識管理システムの導入"
-    },
-    "notebooklm-requirement:463b1e16-a97b-4daf-aef0-9bf2652baba7:3": {
-      "hash": "a6a4d8691d930359",
-      "issue_number": 2837,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2837",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 463b1e16:3 マルチメディア・ポートフォリオとメタデータ管理機能の実装"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "Notion AIおよびSlackの料金改定に伴うSaaS運用コストの監査と代替自動化手段の検証"
     },
     "notebooklm-requirement:47bd101a-533e-45b0-be0b-7a3299b2538d:1": {
-      "hash": "c028de8a3b2978a8",
+      "hash": "f23d169e47188581",
       "issue_number": 2678,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2678",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:47bd101a:1] 複数AIエージェント並列稼働時のCI/CDデプロイ競合（Concurrency Cancel）の解消"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "複数AIエージェント並列稼働時のCI/CDデプロイ競合（Concurrency Cancel）の解消"
     },
     "notebooklm-requirement:47bd101a-533e-45b0-be0b-7a3299b2538d:2": {
-      "hash": "cb03509fb7bab0b2",
+      "hash": "f46ff36d25fc8811",
       "issue_number": 2679,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2679",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:47bd101a:2] 未接続エッジファンクションを検知するUI監査ウィジェット（EdgeFunctionSummaryCar d）の実装"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "未接続エッジファンクションを検知するUI監査ウィジェット（EdgeFunctionSummaryCar d）の実装"
     },
     "notebooklm-requirement:47bd101a-533e-45b0-be0b-7a3299b2538d:3": {
-      "hash": "6015de7c244f6dd7",
+      "hash": "68abcd1db5d84fe2",
       "issue_number": 2680,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2680",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:47bd101a:3] 複数AIインスタンス向け共有メモリ（COMPRESSED_PROMPT.md）によるコンテキスト同期 機構の導入"
-    },
-    "notebooklm-requirement:491f57bc-68a1-4b12-b1f8-5eaffbc0fe8e:1": {
-      "hash": "f9c6ec56a29025cd",
-      "issue_number": 2895,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2895",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 491f57bc:1 本番環境デプロイ後のAI安全性・出力モニタリング機構の導入"
-    },
-    "notebooklm-requirement:491f57bc-68a1-4b12-b1f8-5eaffbc0fe8e:2": {
-      "hash": "18a052d401f84a6a",
-      "issue_number": 2896,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2896",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 491f57bc:2 タスク複雑度に応じたコスト最適化のための動的モデルルーティング"
-    },
-    "notebooklm-requirement:491f57bc-68a1-4b12-b1f8-5eaffbc0fe8e:3": {
-      "hash": "5f428b79ae2d16fd",
-      "issue_number": 2897,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2897",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 491f57bc:3 Tinker LoRAチェックポイントの定期自動バックアップとエクスポート機能"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "複数AIインスタンス向け共有メモリ（COMPRESSED_PROMPT.md）によるコンテキスト同期 機構の導入"
     },
     "notebooklm-requirement:4a131492-f89c-4b40-a11a-caaa0d0c3143:1": {
       "hash": "481d77f9a2b0ba93",
       "issue_number": 2617,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2617",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:4a131492:1] 管理者アクションの監査ログと影響評価機能の実装"
     },
@@ -878,7 +710,7 @@
       "hash": "84b8df05314e65f9",
       "issue_number": 2618,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2618",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:4a131492:2] 虚栄的指標を排除した客観的データ分析ダッシュボードの開発"
     },
@@ -886,255 +718,135 @@
       "hash": "b6de92fe0bfb0997",
       "issue_number": 2619,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2619",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:4a131492:3] コンテンツモデレーション基準の文書化とワークフロー構築"
     },
-    "notebooklm-requirement:4ba6066d-381c-4b4b-ad1a-5f7495761199:1": {
-      "hash": "f0f77672036189cc",
-      "issue_number": 2910,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2910",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 4ba6066d:1 長時間放置されたセッションの自動クリーンアップおよびヘルスチェック機能"
-    },
-    "notebooklm-requirement:4ba6066d-381c-4b4b-ad1a-5f7495761199:2": {
-      "hash": "dd5d2df4355a1aba",
-      "issue_number": 2911,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2911",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 4ba6066d:2 複雑なビジネス要件を事前検証するCSV一括インポートおよびエラーリスト出力機能"
-    },
-    "notebooklm-requirement:4ba6066d-381c-4b4b-ad1a-5f7495761199:3": {
-      "hash": "1f9ad535844aeea1",
-      "issue_number": 2912,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2912",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 4ba6066d:3 ドラッグ＆ドロップによる直感的なタスク割付・解除UIの導入"
-    },
     "notebooklm-requirement:4d9d5d89-b651-4db7-9d21-2c81d1459e2c:1": {
-      "hash": "13a398972afbfbaf",
+      "hash": "31a6572e08820db2",
       "issue_number": 2593,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2593",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:4d9d5d89:1] ステージゲート方式によるタスク承認ワークフローの導入"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "ステージゲート方式によるタスク承認ワークフローの導入"
     },
     "notebooklm-requirement:4d9d5d89-b651-4db7-9d21-2c81d1459e2c:2": {
-      "hash": "0d72afa56b65616c",
+      "hash": "fc4baac25c5dd340",
       "issue_number": 2594,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2594",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:4d9d5d89:2] アジア太平洋地域向け多言語・多通貨データモデリングの基盤構築"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "アジア太平洋地域向け多言語・多通貨データモデリングの基盤構築"
     },
     "notebooklm-requirement:4d9d5d89-b651-4db7-9d21-2c81d1459e2c:3": {
-      "hash": "214dbca447765750",
+      "hash": "81e4812f9528738f",
       "issue_number": 2595,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2595",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:4d9d5d89:3] インテークデータに対する法規制・コンプライアンスリスクの自動スクリーニング"
-    },
-    "notebooklm-requirement:4fb089e8-9d35-4bc4-b6ba-116c1777bb1e:1": {
-      "hash": "97e6683d718c144d",
-      "issue_number": 2913,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2913",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 4fb089e8:1 [追加要望] Cartesia APIを用いたWebSocketリアルタイム音声ストリーミングの実装"
-    },
-    "notebooklm-requirement:4fb089e8-9d35-4bc4-b6ba-116c1777bb1e:2": {
-      "hash": "740bd06665443390",
-      "issue_number": 2914,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2914",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 4fb089e8:2 [追加要望] 音声モデル学習データのオプトアウト機能とGDPR準拠対応"
-    },
-    "notebooklm-requirement:4fb089e8-9d35-4bc4-b6ba-116c1777bb1e:3": {
-      "hash": "3e1523916d0ccc97",
-      "issue_number": 2915,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2915",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 4fb089e8:3 [追加要望] 従量課金TTS/STT APIの利用量トラッキングとコスト監視機構の構築"
-    },
-    "notebooklm-requirement:52daba63-0971-42a8-a9d6-f3dbff3466bd:1": {
-      "hash": "6259c4c154afd3b9",
-      "issue_number": 2898,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2898",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 52daba63:1 Flutter Web版: 左サイドバーのチャット履歴表示と新規チャット機能の追加"
-    },
-    "notebooklm-requirement:52daba63-0971-42a8-a9d6-f3dbff3466bd:2": {
-      "hash": "1c8af27273bf42fa",
-      "issue_number": 2899,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2899",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 52daba63:2 GitHub Actionsにおけるビルドエラーの自律的解析および修正支援機能の導入"
-    },
-    "notebooklm-requirement:52daba63-0971-42a8-a9d6-f3dbff3466bd:3": {
-      "hash": "9d18bd4490ffd918",
-      "issue_number": 2900,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2900",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 52daba63:3 AIエージェントによる自動テスト生成とGitHubへの変更自動プッシュプロセスの構築"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "インテークデータに対する法規制・コンプライアンスリスクの自動スクリーニング"
     },
     "notebooklm-requirement:54b6f2f2-6831-4376-b2dd-99a1a4bf90ec:1": {
-      "hash": "3e005feb8a7215da",
+      "hash": "7d3a6f8025a7394f",
       "issue_number": 2736,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2736",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:54b6f2f2:1] AI出力の機密情報保護およびコンプライアンス監査機能の統合"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "AI出力の機密情報保護およびコンプライアンス監査機能の統合"
     },
     "notebooklm-requirement:54b6f2f2-6831-4376-b2dd-99a1a4bf90ec:2": {
-      "hash": "0dac7abef24005f7",
+      "hash": "b8ccee043177db0d",
       "issue_number": 2737,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2737",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:54b6f2f2:2] 非構造化データからの構造化JSON抽出とSupabase自動登録パイプライン"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "非構造化データからの構造化JSON抽出とSupabase自動登録パイプライン"
     },
     "notebooklm-requirement:54b6f2f2-6831-4376-b2dd-99a1a4bf90ec:3": {
-      "hash": "6bc8aad9ec4bc394",
+      "hash": "7da2ac44242767bc",
       "issue_number": 2738,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2738",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:54b6f2f2:3] PDFドキュメントのテキスト自動解析および非同期要約機能"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "PDFドキュメントのテキスト自動解析および非同期要約機能"
     },
     "notebooklm-requirement:5578d76e-012f-4739-bf1d-c47f5f4693ba:1": {
-      "hash": "7039beef60955b9d",
+      "hash": "5fb172ab844865a9",
       "issue_number": 2788,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2788",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:5578d76e:1] Opus 4.7新トークナイザー対応に伴うAPIコスト監視とキャッシュ最適化"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "Opus 4.7新トークナイザー対応に伴うAPIコスト監視とキャッシュ最適化"
     },
     "notebooklm-requirement:5578d76e-012f-4739-bf1d-c47f5f4693ba:2": {
-      "hash": "71bb879e5a5df48f",
+      "hash": "db8083c5886c3de1",
       "issue_number": 2789,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2789",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:5578d76e:2] 高性能AI・低品質コード（AI Slop）に備えた自動コードレビュー機構の導入"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "高性能AI・低品質コード（AI Slop）に備えた自動コードレビュー機構の導入"
     },
     "notebooklm-requirement:5578d76e-012f-4739-bf1d-c47f5f4693ba:3": {
-      "hash": "706b441e1266cb46",
+      "hash": "ebdf997a6ec90ced",
       "issue_number": 2790,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2790",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:5578d76e:3] 高解像度ビジョン機能を活用したFlutter WebアプリのE2E・UI自動テスト"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "高解像度ビジョン機能を活用したFlutter WebアプリのE2E・UI自動テスト"
     },
     "notebooklm-requirement:55a65bf0-61cc-4c73-aa44-662b2baa9a63:1": {
-      "hash": "ed1b790b481c85ba",
+      "hash": "d97bc4d9351a7515",
       "issue_number": 2803,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2803",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:55a65bf0:1] DockerとSupabase CLIを用いたローカルエミュレータ環境の構築"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "DockerとSupabase CLIを用いたローカルエミュレータ環境の構築"
     },
     "notebooklm-requirement:55a65bf0-61cc-4c73-aa44-662b2baa9a63:2": {
-      "hash": "07b888faf93bff61",
+      "hash": "dea8bc3cdddc4f79",
       "issue_number": 2804,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2804",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:55a65bf0:2] ローカルAPIおよびEdge Functionsの決定論的バリデーション自動化"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "ローカルAPIおよびEdge Functionsの決定論的バリデーション自動化"
     },
     "notebooklm-requirement:55a65bf0-61cc-4c73-aa44-662b2baa9a63:3": {
-      "hash": "1762215d5fda7b18",
+      "hash": "2a4d195ec3cec6b4",
       "issue_number": 2805,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2805",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:55a65bf0:3] Wingetを活用したFlutter/Supabase向けツールチェーン一括導入の整備"
-    },
-    "notebooklm-requirement:569fcf08-91d2-4e04-8634-d9f49d2bf616:1": {
-      "hash": "3121156fc07abc21",
-      "issue_number": 2850,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2850",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 569fcf08:1 AI生成コードに対する決定的検証（Deterministic Validation）プロセスの導入"
-    },
-    "notebooklm-requirement:569fcf08-91d2-4e04-8634-d9f49d2bf616:2": {
-      "hash": "e36c1321f489ee8a",
-      "issue_number": 2851,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2851",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 569fcf08:2 Token Vaultを利用したAIエージェント用APIキーのセキュア管理"
-    },
-    "notebooklm-requirement:569fcf08-91d2-4e04-8634-d9f49d2bf616:3": {
-      "hash": "db41b70cc0b4c360",
-      "issue_number": 2852,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2852",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 569fcf08:3 自動化エージェントの無限ループ検知およびタイムアウト保護機能の実装"
-    },
-    "notebooklm-requirement:579bd686-f17e-414a-894f-822f29b5c11e:1": {
-      "hash": "14bbb7a66db59a78",
-      "issue_number": 2880,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2880",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 579bd686:1 [追加要望] AIによる申請・承認プロセスの即時自動化"
-    },
-    "notebooklm-requirement:579bd686-f17e-414a-894f-822f29b5c11e:2": {
-      "hash": "971b9c14c48dd6ac",
-      "issue_number": 2881,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2881",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 579bd686:2 [追加要望] 画像解析を活用した課題の自動特定と自己解決サポート機能"
-    },
-    "notebooklm-requirement:579bd686-f17e-414a-894f-822f29b5c11e:3": {
-      "hash": "02b87e024ce40229",
-      "issue_number": 2882,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2882",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 579bd686:3 [追加要望] AIによる通知とメッセージの自動要約・優先度整理"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "Wingetを活用したFlutter/Supabase向けツールチェーン一括導入の整備"
     },
     "notebooklm-requirement:59536494-36fd-4c28-8444-df9c2c570f9c:1": {
-      "hash": "0db77753acfd6c6d",
+      "hash": "e700d7c932fabf98",
       "issue_number": 2758,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2758",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:59536494:1] AIモデル性能監視ダッシュボード（Visionベンチマーク）のUI実装"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "AIモデル性能監視ダッシュボード（Visionベンチマーク）のUI実装"
     },
     "notebooklm-requirement:59536494-36fd-4c28-8444-df9c2c570f9c:2": {
-      "hash": "8d940e537e29c134",
+      "hash": "549bfcaf2531f238",
       "issue_number": 2759,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2759",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:59536494:2] AIコンテキスト用必須ファイル群の自動同期・CI/CDパイプライン構築"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "AIコンテキスト用必須ファイル群の自動同期・CI/CDパイプライン構築"
     },
     "notebooklm-requirement:59536494-36fd-4c28-8444-df9c2c570f9c:3": {
-      "hash": "2deb7df078d53641",
+      "hash": "182875931928c476",
       "issue_number": 2760,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2760",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:59536494:3] サードパーティAI（Gemini/OpenAI/Anthropic）APIの利用コスト監視機能"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "サードパーティAI（Gemini/OpenAI/Anthropic）APIの利用コスト監視機能"
     },
     "notebooklm-requirement:5e03281b-e9de-43d4-bd58-07546dd5a478:1": {
       "hash": "e4856b3c3ca10e21",
       "issue_number": 2623,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2623",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:5e03281b:1] 依存パッケージのマルチライセンス自動監査と法的リスク管理パイプラインの導入"
     },
@@ -1142,7 +854,7 @@
       "hash": "19676335e3d13766",
       "issue_number": 2624,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2624",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:5e03281b:2] Supabaseリソース制約のインタラクティブ・シミュレーター画面の開発"
     },
@@ -1150,1311 +862,807 @@
       "hash": "a4dbb10f5835e5fc",
       "issue_number": 2625,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2625",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:5e03281b:3] 運用ドキュメントおよびコードの静的解析・自動バリデーションワークフローの構築"
     },
     "notebooklm-requirement:61dc9c75-f61c-4a56-93c9-00a31aa705b7:1": {
-      "hash": "4e4a2a7ef1b1669e",
+      "hash": "670d9379cfea7f3f",
       "issue_number": 2605,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2605",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:61dc9c75:1] モバイルPWA環境の音声入力とSupabaseを介したクロスデバイス状態同期の検証"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "モバイルPWA環境の音声入力とSupabaseを介したクロスデバイス状態同期の検証"
     },
     "notebooklm-requirement:61dc9c75-f61c-4a56-93c9-00a31aa705b7:2": {
-      "hash": "0348cfb2a48858e5",
+      "hash": "0935ea6e4ff319f0",
       "issue_number": 2606,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2606",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:61dc9c75:2] MCP（Model Context Protocol）を用いたGitHubおよび外部ツール連携機能の標準化"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "MCP（Model Context Protocol）を用いたGitHubおよび外部ツール連携機能の標準化"
     },
     "notebooklm-requirement:61dc9c75-f61c-4a56-93c9-00a31aa705b7:3": {
-      "hash": "3539028459e6aae7",
+      "hash": "43b59f8dbe50072b",
       "issue_number": 2607,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2607",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:61dc9c75:3] LLMのモデル移行（GPT-4o提供終了対応）とGitHub Actionsによるコスト監視の強化"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "LLMのモデル移行（GPT-4o提供終了対応）とGitHub Actionsによるコスト監視の強化"
     },
     "notebooklm-requirement:64fc639e-a6ac-4e32-84a8-f3f7278b6d6d:1": {
-      "hash": "26264f5384f37c02",
+      "hash": "341edb6c570a1445",
       "issue_number": 2645,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2645",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:64fc639e:1] 未対応プラットフォームへの自動投稿機能（note, はてな, Medium等）の追加実装"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "未対応プラットフォームへの自動投稿機能（note, はてな, Medium等）の追加実装"
     },
     "notebooklm-requirement:64fc639e-a6ac-4e32-84a8-f3f7278b6d6d:2": {
-      "hash": "75daf210d601082e",
+      "hash": "5b79e6023f6afbec",
       "issue_number": 2646,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2646",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:64fc639e:2] Zenn記事公開フローの完全自動化およびGitHubブランチ保護制約の解消"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "Zenn記事公開フローの完全自動化およびGitHubブランチ保護制約の解消"
     },
     "notebooklm-requirement:64fc639e-a6ac-4e32-84a8-f3f7278b6d6d:3": {
-      "hash": "8234b26c7364d2c4",
+      "hash": "e40158d3dcf74f6a",
       "issue_number": 2647,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2647",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:64fc639e:3] ドキュメント（CLAUDE.md）とSupabase実データベース間のスキーマ自動整合性テスト の導入"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "ドキュメント（CLAUDE.md）とSupabase実データベース間のスキーマ自動整合性テスト の導入"
     },
     "notebooklm-requirement:6884b88d-5a70-463c-9e48-7482ff504ac1:1": {
-      "hash": "198c0cd5952135ef",
+      "hash": "578923c94921975c",
       "issue_number": 2764,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2764",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:6884b88d:1] AIアシスタントの「機能的感情」ステータスのロギングおよび可視化ダッシュボードの 構築"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "AIアシスタントの「機能的感情」ステータスのロギングおよび可視化ダッシュボードの 構築"
     },
     "notebooklm-requirement:6884b88d-5a70-463c-9e48-7482ff504ac1:2": {
-      "hash": "46e40ae7e2a44991",
+      "hash": "2d7b09f3845fc6dc",
       "issue_number": 2765,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2765",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:6884b88d:2] CI/CDパイプラインへの「実行不可能なタスク」に対する安全な縮退テストの追加"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "CI/CDパイプラインへの「実行不可能なタスク」に対する安全な縮退テストの追加"
     },
     "notebooklm-requirement:6884b88d-5a70-463c-9e48-7482ff504ac1:3": {
-      "hash": "de91fb40288bacb4",
+      "hash": "009f55cfc0c846b6",
       "issue_number": 2766,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2766",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:6884b88d:3] AIの不適切な「感情的振る舞い」に関するユーザーフィードバック収集とナレッジベー スへの統合"
-    },
-    "notebooklm-requirement:6a7f61ea-5463-4ed5-aba0-7dd7dcc404ad:1": {
-      "hash": "1fb64277b548942f",
-      "issue_number": 2841,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2841",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 6a7f61ea:1 Supabaseローカル環境のサブセット起動（Compose Select Services）の運用手順化"
-    },
-    "notebooklm-requirement:6a7f61ea-5463-4ed5-aba0-7dd7dcc404ad:2": {
-      "hash": "ff0fae68bff16939",
-      "issue_number": 2842,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2842",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 6a7f61ea:2 セキュリティ要件に基づくRootlessコンテナ環境（Rootless Docker/Podman）の導入検証"
-    },
-    "notebooklm-requirement:6a7f61ea-5463-4ed5-aba0-7dd7dcc404ad:3": {
-      "hash": "cf0bc979170fc0a4",
-      "issue_number": 2843,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2843",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 6a7f61ea:3 開発マシンのリソース枯渇を防ぐコンテナ・ボリュームの定期クリーンアップ手順化"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "AIの不適切な「感情的振る舞い」に関するユーザーフィードバック収集とナレッジベー スへの統合"
     },
     "notebooklm-requirement:6deda071-e5a5-488f-9fc9-f3697c13a157:1": {
-      "hash": "b7af629fa666e120",
+      "hash": "02116c6daf8ac791",
       "issue_number": 2669,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2669",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:6deda071:1] Supabase Secretsの不足を検知・管理する自動化ワークフローの導入"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "Supabase Secretsの不足を検知・管理する自動化ワークフローの導入"
     },
     "notebooklm-requirement:6deda071-e5a5-488f-9fc9-f3697c13a157:2": {
-      "hash": "3f493cc953ad8e4a",
+      "hash": "3e67e61c047c47f0",
       "issue_number": 2670,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2670",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:6deda071:2] 複数インスタンス間でのファイル競合の自動解決およびAIコードレビュー機能の統合"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "複数インスタンス間でのファイル競合の自動解決およびAIコードレビュー機能の統合"
     },
     "notebooklm-requirement:6deda071-e5a5-488f-9fc9-f3697c13a157:3": {
-      "hash": "8fe352d0730ab48e",
+      "hash": "7eadeee7c477889b",
       "issue_number": 2671,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2671",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:6deda071:3] Claude Designプラグイン出力をFlutter Webへ統合するインポートパイプラインの構築"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "Claude Designプラグイン出力をFlutter Webへ統合するインポートパイプラインの構築"
     },
     "notebooklm-requirement:72d24a65-a81d-4b0a-a413-7ae3cd335dcc:1": {
-      "hash": "94242a0117d27d38",
+      "hash": "7d51b65d56873392",
       "issue_number": 2672,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2672",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:72d24a65:1] .aiexcludeファイルを用いたAIコンテキストからの機密情報除外設定"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": ".aiexcludeファイルを用いたAIコンテキストからの機密情報除外設定"
     },
     "notebooklm-requirement:72d24a65-a81d-4b0a-a413-7ae3cd335dcc:2": {
-      "hash": "5a9b5ad644a8e4ce",
+      "hash": "7c12e517a4a0e705",
       "issue_number": 2673,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2673",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:72d24a65:2] Gemini Code Assistのリリースチャネル管理の標準化"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "Gemini Code Assistのリリースチャネル管理の標準化"
     },
     "notebooklm-requirement:72d24a65-a81d-4b0a-a413-7ae3cd335dcc:3": {
-      "hash": "7a2e980cc97a37d8",
+      "hash": "f0c1f31b4625ecb4",
       "issue_number": 2674,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2674",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:72d24a65:3] Flutter開発における「Next Edit Predictions」機能の導入検証"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "Flutter開発における「Next Edit Predictions」機能の導入検証"
     },
     "notebooklm-requirement:75ee4479-b552-41da-b2ec-96d732c10751:1": {
-      "hash": "b2b64cdd706f5f18",
+      "hash": "b551055195765497",
       "issue_number": 2629,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2629",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:75ee4479:1] 動的UIカスタマイズとテーマ設定システムの導入"
+      "last_seen_at": "2026-05-18T00:28:39Z",
+      "status": "created",
+      "title": "動的UIカスタマイズとテーマ設定システムの導入"
     },
     "notebooklm-requirement:75ee4479-b552-41da-b2ec-96d732c10751:2": {
-      "hash": "353e38ae8670909c",
+      "hash": "f3a42d32302238d9",
       "issue_number": 2630,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2630",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:75ee4479:2] オフラインファースト・アーキテクチャおよび同期機能の実装"
+      "last_seen_at": "2026-05-18T00:28:39Z",
+      "status": "created",
+      "title": "オフラインファースト・アーキテクチャおよび同期機能の実装"
     },
     "notebooklm-requirement:75ee4479-b552-41da-b2ec-96d732c10751:3": {
-      "hash": "e256f8c34e707b19",
+      "hash": "9127f5935863f71b",
       "issue_number": 2631,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2631",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:75ee4479:3] 段階的アーリーアクセス機能とフィードバック収集の構築"
+      "last_seen_at": "2026-05-18T00:28:39Z",
+      "status": "created",
+      "title": "段階的アーリーアクセス機能とフィードバック収集の構築"
     },
     "notebooklm-requirement:7ccb0520-04f2-4775-adaa-1acf96025bd1:1": {
-      "hash": "99bbd9082313a70c",
+      "hash": "1861e1d6c2d3a22f",
       "issue_number": 2717,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2717",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7ccb0520:1] W&B Weave GuardrailsによるPIIマスキングとハルシネーション自動検知・フェイルセーフの導入"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "W&B Weave GuardrailsによるPIIマスキングとハルシネーション自動検知・フェイルセーフの導入"
     },
     "notebooklm-requirement:7ccb0520-04f2-4775-adaa-1acf96025bd1:2": {
-      "hash": "0a26c54eadd57fb5",
+      "hash": "ab96bb941bac51d7",
       "issue_number": 2718,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2718",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7ccb0520:2] W&B Sweepsを用いたプロンプトおよびハイパーパラメータの自動探索・最適化ワークフロー の構築"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "W&B Sweepsを用いたプロンプトおよびハイパーパラメータの自動探索・最適化ワークフロー の構築"
     },
     "notebooklm-requirement:7ccb0520-04f2-4775-adaa-1acf96025bd1:3": {
-      "hash": "79eff71cb09e1700",
+      "hash": "418b28bcfb7ba461",
       "issue_number": 2719,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2719",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7ccb0520:3] W&B TablesとReportsを利用したモデル評価結果のインタラクティブ可視化と監査レポート自 動生成"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "W&B TablesとReportsを利用したモデル評価結果のインタラクティブ可視化と監査レポート自 動生成"
     },
     "notebooklm-requirement:7e39f060-7f61-4a31-babb-237da14f06aa:1": {
-      "hash": "bf90c953623d6d7c",
+      "hash": "75a05c9ff5cb5969",
       "issue_number": 2782,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2782",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7e39f060:1] AI処理のチェックポイントと復元（リトライ）機能の実装"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "AI処理のチェックポイントと復元（リトライ）機能の実装"
     },
     "notebooklm-requirement:7e39f060-7f61-4a31-babb-237da14f06aa:2": {
-      "hash": "74be5b1e0389fad9",
+      "hash": "b21d73bb814340d4",
       "issue_number": 2783,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2783",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7e39f060:2] 出力品質を保証する監視ゲート（Sentinel & Warden）の導入"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "出力品質を保証する監視ゲート（Sentinel & Warden）の導入"
     },
     "notebooklm-requirement:7e39f060-7f61-4a31-babb-237da14f06aa:3": {
-      "hash": "42ea93808b0415fd",
+      "hash": "7e707a050cf2e230",
       "issue_number": 2784,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2784",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7e39f060:3] 階層型モデルルーティングと自動エスカレーションの構築"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "階層型モデルルーティングと自動エスカレーションの構築"
     },
     "notebooklm-requirement:7e72ced1-67b5-4f47-a3a0-2327236ffbd5:1": {
-      "hash": "732d4a4f5f5b3a15",
+      "hash": "d4787c17fbc7f959",
       "issue_number": 2806,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2806",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7e72ced1:1] 立法事実（事実認識）の共有・比較データベースの実装"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "立法事実（事実認識）の共有・比較データベースの実装"
     },
     "notebooklm-requirement:7e72ced1-67b5-4f47-a3a0-2327236ffbd5:2": {
-      "hash": "39ccf0083d79ed39",
+      "hash": "0be0406c7ccf59d7",
       "issue_number": 2807,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2807",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7e72ced1:2] 議論のロードマップ・マイルストーン可視化機能"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "議論のロードマップ・マイルストーン可視化機能"
     },
     "notebooklm-requirement:7e72ced1-67b5-4f47-a3a0-2327236ffbd5:3": {
-      "hash": "ff9be7466c43805a",
+      "hash": "b7ee9092daf30f68",
       "issue_number": 2808,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2808",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7e72ced1:3] 諸外国の制度比較リファレンスモジュールの追加"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "諸外国の制度比較リファレンスモジュールの追加"
     },
     "notebooklm-requirement:7f26d8be-f969-4bb4-81dd-d257728158eb:1": {
-      "hash": "752b7512ca8b9b99",
+      "hash": "a50d692419bd29bd",
       "issue_number": 2755,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2755",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7f26d8be:1] 農政改革のタイムラインとナレッジグラフ管理機能"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "農政改革のタイムラインとナレッジグラフ管理機能"
     },
     "notebooklm-requirement:7f26d8be-f969-4bb4-81dd-d257728158eb:2": {
-      "hash": "f79e0f8976c321e7",
+      "hash": "2ab5a0e1c489c708",
       "issue_number": 2756,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2756",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7f26d8be:2] 代替供給および輸入シナリオのリスク監視機能"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "代替供給および輸入シナリオのリスク監視機能"
     },
     "notebooklm-requirement:7f26d8be-f969-4bb4-81dd-d257728158eb:3": {
-      "hash": "df8cbadca5860626",
+      "hash": "44072057f5b6fb38",
       "issue_number": 2757,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2757",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:7f26d8be:3] 収入保険制度の課題分析と代替モデル比較シミュレーター"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "収入保険制度の課題分析と代替モデル比較シミュレーター"
     },
     "notebooklm-requirement:819f4e8d-d48f-4a09-8920-89cf83da9091:1": {
-      "hash": "bdb5248d43e41ad0",
+      "hash": "3a60fc2538351529",
       "issue_number": 2785,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2785",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:819f4e8d:1] エージェントアクションのイベント駆動型監査とリアルタイム監視"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "エージェントアクションのイベント駆動型監査とリアルタイム監視"
     },
     "notebooklm-requirement:819f4e8d-d48f-4a09-8920-89cf83da9091:2": {
-      "hash": "f72a287316c3693f",
+      "hash": "1ba88fc26cc8fcad",
       "issue_number": 2786,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2786",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:819f4e8d:2] コンテキスト層と共有ツール層による2層エージェントアーキテクチャの導入"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "コンテキスト層と共有ツール層による2層エージェントアーキテクチャの導入"
     },
     "notebooklm-requirement:819f4e8d-d48f-4a09-8920-89cf83da9091:3": {
-      "hash": "8f9e2406caf6323b",
+      "hash": "0402f6641628de30",
       "issue_number": 2787,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2787",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:819f4e8d:3] 引用メタデータを伴うファクトベース・リサーチパイプラインの統合"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "引用メタデータを伴うファクトベース・リサーチパイプラインの統合"
     },
     "notebooklm-requirement:850dfd54-0be1-47de-bd7f-4d4e51808fed:1": {
-      "hash": "3798778ffcb89fae",
+      "hash": "c186d9c5b39368f1",
       "issue_number": 2733,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2733",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:850dfd54:1] AIツールのトークン使用量監視とキャッシュ最適化の導入"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "AIツールのトークン使用量監視とキャッシュ最適化の導入"
     },
     "notebooklm-requirement:850dfd54-0be1-47de-bd7f-4d4e51808fed:2": {
-      "hash": "f504c2e8fa5d9321",
+      "hash": "525dc3194478b768",
       "issue_number": 2734,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2734",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:850dfd54:2] AIチャット履歴を活用した日次進捗報告およびWBS更新の自動化検証"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "AIチャット履歴を活用した日次進捗報告およびWBS更新の自動化検証"
     },
     "notebooklm-requirement:850dfd54-0be1-47de-bd7f-4d4e51808fed:3": {
-      "hash": "b2983fbe841b6bae",
+      "hash": "199d740facb6eb99",
       "issue_number": 2735,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2735",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:850dfd54:3] 承認済みGitHub Organizationによるアクセス制限と開発環境ロックの適用"
-    },
-    "notebooklm-requirement:8a74030c-f0d2-4aeb-b2c3-4e3673564ed6:1": {
-      "hash": "7f4ebddf40e52f3a",
-      "issue_number": 2928,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2928",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 8a74030c:1 動画バリエーションの一括生成（バッチ処理）機能の導入"
-    },
-    "notebooklm-requirement:8a74030c-f0d2-4aeb-b2c3-4e3673564ed6:2": {
-      "hash": "435ab6d6b372b128",
-      "issue_number": 2929,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2929",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 8a74030c:2 動画生成時の音声開始タイミング調整（ミリ秒単位）機能"
-    },
-    "notebooklm-requirement:8a74030c-f0d2-4aeb-b2c3-4e3673564ed6:3": {
-      "hash": "1d9ee45280d29ba0",
-      "issue_number": 2930,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2930",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 8a74030c:3 テキスト入力による音声合成と動画生成のワンステップ実行機能"
-    },
-    "notebooklm-requirement:8b3d152f-a391-4019-b64c-79711cd07eac:1": {
-      "hash": "71d004706e8715f6",
-      "issue_number": 2871,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2871",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 8b3d152f:1 認知負荷（TOT状態）検知と作業アシストUIの導入"
-    },
-    "notebooklm-requirement:8b3d152f-a391-4019-b64c-79711cd07eac:2": {
-      "hash": "85a9fb78e09ea887",
-      "issue_number": 2872,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2872",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 8b3d152f:2 疾患・医療関連データの免責事項表示と安全なインテークフロー構築"
-    },
-    "notebooklm-requirement:8b3d152f-a391-4019-b64c-79711cd07eac:3": {
-      "hash": "bee7516cba5f8a1b",
-      "issue_number": 2873,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2873",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 8b3d152f:3 代替行動のパーソナライズ設定およびリマインダー機能"
-    },
-    "notebooklm-requirement:9429530e-f350-44f6-ad2e-1df215c36eb2:1": {
-      "hash": "a70679146a9bdd62",
-      "issue_number": 2883,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2883",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9429530e:1 複数AIエージェント向けの共通コア・アイデンティティ管理基盤の実装"
-    },
-    "notebooklm-requirement:9429530e-f350-44f6-ad2e-1df215c36eb2:2": {
-      "hash": "5a9a3167d3d5d9e1",
-      "issue_number": 2884,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2884",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9429530e:2 長文脈対話における過剰介入（病理化）を防止する適応型安全ガードレール機能"
-    },
-    "notebooklm-requirement:9429530e-f350-44f6-ad2e-1df215c36eb2:3": {
-      "hash": "9bb8b3f79ca00e19",
-      "issue_number": 2885,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2885",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9429530e:3 内部開発者向けプロンプト実験・推論デバッグ用ワークスペースの追加"
-    },
-    "notebooklm-requirement:969632ac-01be-4d40-9f4f-47baadc92e7f:1": {
-      "hash": "168fe8bf2da3c66b",
-      "issue_number": 2874,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2874",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 969632ac:1 衝動的支出の抑制を目的とした予算管理およびアラート機能の実装"
-    },
-    "notebooklm-requirement:969632ac-01be-4d40-9f4f-47baadc92e7f:2": {
-      "hash": "fa6b7224c061a84c",
-      "issue_number": 2875,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2875",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 969632ac:2 競馬予想アルゴリズムの精度モニタリングと財務検証システムの構築"
-    },
-    "notebooklm-requirement:969632ac-01be-4d40-9f4f-47baadc92e7f:3": {
-      "hash": "08c8a3a8707f5e63",
-      "issue_number": 2876,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2876",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 969632ac:3 長時間無目的セッションの検知とライフログ自動記録ワークフローの実装"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "承認済みGitHub Organizationによるアクセス制限と開発環境ロックの適用"
     },
     "notebooklm-requirement:971910f8-b814-43bb-8bc3-591df138666d:1": {
-      "hash": "d722685dde8cb81f",
+      "hash": "bb8cc6373e8e8c31",
       "issue_number": 2724,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2724",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:971910f8:1] ローカル開発環境構築の標準化とオンボーディング手順の改善"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "ローカル開発環境構築の標準化とオンボーディング手順の改善"
     },
     "notebooklm-requirement:971910f8-b814-43bb-8bc3-591df138666d:2": {
-      "hash": "b9d5fcf876940b20",
+      "hash": "07d646ddf19297cb",
       "issue_number": 2725,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2725",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:971910f8:2] GitHub運用における内部レビューのチェックリスト化と品質メトリクス導入"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "GitHub運用における内部レビューのチェックリスト化と品質メトリクス導入"
     },
     "notebooklm-requirement:971910f8-b814-43bb-8bc3-591df138666d:3": {
-      "hash": "eeb4ff825e4afbc6",
+      "hash": "958ec0531ed5386d",
       "issue_number": 2726,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2726",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:971910f8:3] SPAの画面遷移設計に基づくUX向上と二重送信の防止"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "SPAの画面遷移設計に基づくUX向上と二重送信の防止"
     },
     "notebooklm-requirement:97352ce3-265a-4de4-b782-148eb62dd8ef:1": {
-      "hash": "6e412e3ccd7fe06c",
+      "hash": "6111886b03937da3",
       "issue_number": 2587,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2587",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:97352ce3:1] Supabaseデータベース連携用MCPサーバーとStrands SDKを活用したAIエージェントの試験導入"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "Supabaseデータベース連携用MCPサーバーとStrands SDKを活用したAIエージェントの試験導入"
     },
     "notebooklm-requirement:97352ce3-265a-4de4-b782-148eb62dd8ef:2": {
-      "hash": "4fc3ee45f3664c14",
+      "hash": "c100ee0ddfbfc6d3",
       "issue_number": 2588,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2588",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:97352ce3:2] 構成図自動生成MCPサーバーを用いたシステムアーキテクチャのドキュメント化とGitHub Actions連携"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "構成図自動生成MCPサーバーを用いたシステムアーキテクチャのドキュメント化とGitHub Actions連携"
     },
     "notebooklm-requirement:97352ce3-265a-4de4-b782-148eb62dd8ef:3": {
-      "hash": "c7edae6f8752b8a0",
+      "hash": "bd5ac054da7cf8fa",
       "issue_number": 2589,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2589",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:97352ce3:3] Amazon BedrockとStrands SDKを活用したセキュアな自律型アシスタントAPIの構築"
-    },
-    "notebooklm-requirement:9871b0b1-0748-4d7d-99bc-bd6aea2231f6:1": {
-      "hash": "f25623ebaa6e2936",
-      "issue_number": 2931,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2931",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9871b0b1:1 開発ドキュメントの自律的Ingestと自動更新パイプライン構築"
-    },
-    "notebooklm-requirement:9871b0b1-0748-4d7d-99bc-bd6aea2231f6:2": {
-      "hash": "59d1fe9ff6e4fa72",
-      "issue_number": 2932,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2932",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9871b0b1:2 知識ベースの定期的なLint（整合性チェック）と孤立ドキュメントの検知システム"
-    },
-    "notebooklm-requirement:9871b0b1-0748-4d7d-99bc-bd6aea2231f6:3": {
-      "hash": "41ee93053d064e84",
-      "issue_number": 2933,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2933",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9871b0b1:3 AI調査結果の「Query to Wiki（永続化）」直接保存機能の導入"
-    },
-    "notebooklm-requirement:9ac00733-88b4-4413-a09e-ba196347d67e:1": {
-      "hash": "17b9993c3a3635d7",
-      "issue_number": 2838,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2838",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9ac00733:1 Automatic Persisted Queries (APQ) とCDNエッジキャッシュの導入検証"
-    },
-    "notebooklm-requirement:9ac00733-88b4-4413-a09e-ba196347d67e:2": {
-      "hash": "126ff11b940ba88f",
-      "issue_number": 2839,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2839",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9ac00733:2 N+1問題のプロファイリングとバックエンドデータ取得の最適化"
-    },
-    "notebooklm-requirement:9ac00733-88b4-4413-a09e-ba196347d67e:3": {
-      "hash": "3ed3febeac705397",
-      "issue_number": 2840,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2840",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9ac00733:3 スキーマレジストリの導入とCI/CDでのスキーマ破壊的変更テストの構築"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "Amazon BedrockとStrands SDKを活用したセキュアな自律型アシスタントAPIの構築"
     },
     "notebooklm-requirement:9b2e686f-1189-4187-a5bf-e8347cb9d5f2:1": {
-      "hash": "f53c7d3c71fa7b1b",
+      "hash": "c83c0d657485a859",
       "issue_number": 2666,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2666",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:9b2e686f:1] チームワークスペース向けリアルタイム共同編集基盤の構築"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "チームワークスペース向けリアルタイム共同編集基盤の構築"
     },
     "notebooklm-requirement:9b2e686f-1189-4187-a5bf-e8347cb9d5f2:2": {
-      "hash": "33cb59ef13d0dfe3",
+      "hash": "7adf7288b5281868",
       "issue_number": 2667,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2667",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:9b2e686f:2] GitHub Actionsによる静的解析パイプラインの厳格化と非推奨APIの自動検知"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "GitHub Actionsによる静的解析パイプラインの厳格化と非推奨APIの自動検知"
     },
     "notebooklm-requirement:9b2e686f-1189-4187-a5bf-e8347cb9d5f2:3": {
-      "hash": "41a8a3fc38686322",
+      "hash": "3e011caa3b68a8d5",
       "issue_number": 2668,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2668",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:9b2e686f:3] Edge FunctionとRLSの二重アクセス制御に関する自動セキュリティテストの実装"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "Edge FunctionとRLSの二重アクセス制御に関する自動セキュリティテストの実装"
     },
     "notebooklm-requirement:9b8885ef-86a6-45c4-8e3d-2dc6fd601fd0:1": {
-      "hash": "13b61c5a9349afd7",
+      "hash": "bd3ded8e13dc4739",
       "issue_number": 2684,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2684",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:9b8885ef:1] タスクの複雑度に応じたLLMモデルの動的ルーティング機構の導入"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "タスクの複雑度に応じたLLMモデルの動的ルーティング機構の導入"
     },
     "notebooklm-requirement:9b8885ef-86a6-45c4-8e3d-2dc6fd601fd0:2": {
-      "hash": "6133818cf3438715",
+      "hash": "21501faff5646614",
       "issue_number": 2685,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2685",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:9b8885ef:2] 日次メトリクス集計とブログ・SNS原稿の自動生成パイプラインの構築"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "日次メトリクス集計とブログ・SNS原稿の自動生成パイプラインの構築"
     },
     "notebooklm-requirement:9b8885ef-86a6-45c4-8e3d-2dc6fd601fd0:3": {
-      "hash": "d727b1b50765c4e3",
+      "hash": "5328bd47ec0da358",
       "issue_number": 2686,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2686",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:9b8885ef:3] セッション間のパターン共有とデータ分離境界（Team Memory）の設計"
-    },
-    "notebooklm-requirement:9cf1602a-3f69-4811-a1da-b516379b299f:1": {
-      "hash": "7f3e917c9878277b",
-      "issue_number": 2853,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2853",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9cf1602a:1 Supabase RLSを活用したチーム別共有クレジットプールの実装"
-    },
-    "notebooklm-requirement:9cf1602a-3f69-4811-a1da-b516379b299f:2": {
-      "hash": "b818896895f31e7d",
-      "issue_number": 2854,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2854",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9cf1602a:2 動画生成時の消費クレジット事前見積もりとプレフライト検証機能"
-    },
-    "notebooklm-requirement:9cf1602a-3f69-4811-a1da-b516379b299f:3": {
-      "hash": "f3ed8371995a78fa",
-      "issue_number": 2855,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2855",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9cf1602a:3 GitHub ActionsによるHedra APIの新モデル・機能の自動監視ジョブの構築"
-    },
-    "notebooklm-requirement:9de41659-0832-4523-9d85-6737645a8ebe:1": {
-      "hash": "51f8c95bd44035f9",
-      "issue_number": 2892,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2892",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9de41659:1 リアルタイム音声対話機能（Realtime API / WebRTC）のプロトタイプ実装"
-    },
-    "notebooklm-requirement:9de41659-0832-4523-9d85-6737645a8ebe:2": {
-      "hash": "c8d7f244f52603a6",
-      "issue_number": 2893,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2893",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9de41659:2 CodexおよびGitHub Actionを活用した自動コードレビューパイプラインの構築"
-    },
-    "notebooklm-requirement:9de41659-0832-4523-9d85-6737645a8ebe:3": {
-      "hash": "e192c2e58cb0bb57",
-      "issue_number": 2894,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2894",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9de41659:3 プロンプトキャッシュとバッチ処理導入によるAPI呼び出しの最適化"
-    },
-    "notebooklm-requirement:9eb645cd-31f2-4f45-b615-68c776f06f70:1": {
-      "hash": "1af33e0385718518",
-      "issue_number": 2886,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2886",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9eb645cd:1 外部連携I/Fの送受信状況およびエラートラッキング機能"
-    },
-    "notebooklm-requirement:9eb645cd-31f2-4f45-b615-68c776f06f70:2": {
-      "hash": "d4bb199ec2770d09",
-      "issue_number": 2887,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2887",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9eb645cd:2 外部ベンダー向け要件提示・見積・Q&A統合管理モジュール"
-    },
-    "notebooklm-requirement:9eb645cd-31f2-4f45-b615-68c776f06f70:3": {
-      "hash": "692e0a0186171439",
-      "issue_number": 2888,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2888",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] 9eb645cd:3 プロセス品質指標（レビュー密度・バグ指摘密度）の自動集計ダッシュボード"
-    },
-    "notebooklm-requirement:a9d5de3e-f3b9-433f-b51d-d1bb12cc7b79:1": {
-      "hash": "680f565b90b8556d",
-      "issue_number": 2856,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2856",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] a9d5de3e:1 エンドポイントセキュリティと管理者権限ポリシーの最適化"
-    },
-    "notebooklm-requirement:a9d5de3e-f3b9-433f-b51d-d1bb12cc7b79:2": {
-      "hash": "d38d4167417db84f",
-      "issue_number": 2857,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2857",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] a9d5de3e:2 Flutter・Supabase並行開発向けターミナル分割設定（splitCwd）の標準化"
-    },
-    "notebooklm-requirement:a9d5de3e-f3b9-433f-b51d-d1bb12cc7b79:3": {
-      "hash": "4e5794159bf2c674",
-      "issue_number": 2858,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2858",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] a9d5de3e:3 Windows環境向けレガシーコンソール・残留プロセス自動診断機能の追加"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "セッション間のパターン共有とデータ分離境界（Team Memory）の設計"
     },
     "notebooklm-requirement:aa1ea2a5-2384-4062-9f59-22747b06e4d9:1": {
-      "hash": "ad6d650d63873df6",
+      "hash": "1afefac3e0bf948e",
       "issue_number": 2639,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2639",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:aa1ea2a5:1] マークダウン変換を活用した外部データの自動構造化パイプライン"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "マークダウン変換を活用した外部データの自動構造化パイプライン"
     },
     "notebooklm-requirement:aa1ea2a5-2384-4062-9f59-22747b06e4d9:2": {
-      "hash": "b22787f99b289eb5",
+      "hash": "26a43712960a2a24",
       "issue_number": 2640,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2640",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:aa1ea2a5:2] LLMを利用した週次パフォーマンスレポートの自動生成・配信システム"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "LLMを利用した週次パフォーマンスレポートの自動生成・配信システム"
     },
     "notebooklm-requirement:aa1ea2a5-2384-4062-9f59-22747b06e4d9:3": {
-      "hash": "696d2ea0d1d26983",
+      "hash": "17bb33a7dc240245",
       "issue_number": 2641,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2641",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:aa1ea2a5:3] 役割分割型マルチエージェント（Multi-Agent）による高度な分析モジュールの導入"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "役割分割型マルチエージェント（Multi-Agent）による高度な分析モジュールの導入"
     },
     "notebooklm-requirement:ab987be4-3e04-43aa-a94a-76eaaaad1fb9:1": {
-      "hash": "b19ad93745157d19",
+      "hash": "741c8e1df511aeb8",
       "issue_number": 2791,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2791",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ab987be4:1] 継続的なコードベース進化を支える自動リファクタリングパイプラインの構築"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "継続的なコードベース進化を支える自動リファクタリングパイプラインの構築"
     },
     "notebooklm-requirement:ab987be4-3e04-43aa-a94a-76eaaaad1fb9:2": {
-      "hash": "1abc43bb1776e912",
+      "hash": "87ca39e2b0afd76b",
       "issue_number": 2792,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2792",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ab987be4:2] Hyrumの法則に起因する暗黙的依存を検知する非決定性テストの導入"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "Hyrumの法則に起因する暗黙的依存を検知する非決定性テストの導入"
     },
     "notebooklm-requirement:ab987be4-3e04-43aa-a94a-76eaaaad1fb9:3": {
-      "hash": "f44581223bca698b",
+      "hash": "566a761959b14ec3",
       "issue_number": 2793,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2793",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ab987be4:3] 組織的スケールを見据えた「生きたドキュメント」のCI統合"
-    },
-    "notebooklm-requirement:afe03631-76b8-4d77-b7a3-62ec54e4ebca:1": {
-      "hash": "5002b793cbcd38fc",
-      "issue_number": 2862,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2862",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] afe03631:1 過去のリリースブランチに対するロック（読み取り専用）機能の適用"
-    },
-    "notebooklm-requirement:afe03631-76b8-4d77-b7a3-62ec54e4ebca:2": {
-      "hash": "08c683334d36997e",
-      "issue_number": 2863,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2863",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] afe03631:2 主要ブランチにおけるフォースプッシュとブランチ削除の明示的な禁止"
-    },
-    "notebooklm-requirement:afe03631-76b8-4d77-b7a3-62ec54e4ebca:3": {
-      "hash": "6f9d5b95ad4cb02a",
-      "issue_number": 2864,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2864",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] afe03631:3 組織レベルのRuleset導入と評価モード（Evaluate mode）の活用"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "組織的スケールを見据えた「生きたドキュメント」のCI統合"
     },
     "notebooklm-requirement:b0ca91aa-ae60-498d-a1d0-ed2fcf2a0a7f:1": {
-      "hash": "9a4eb47c3dee2af8",
+      "hash": "2385afa23b1a5c91",
       "issue_number": 2727,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2727",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:b0ca91aa:1] CI/CDパイプライン最適化とコミットメッセージルールの導入"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "CI/CDパイプライン最適化とコミットメッセージルールの導入"
     },
     "notebooklm-requirement:b0ca91aa-ae60-498d-a1d0-ed2fcf2a0a7f:2": {
-      "hash": "ce71db1d3ee109cb",
+      "hash": "1ba487ed94698e1e",
       "issue_number": 2728,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2728",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:b0ca91aa:2] インフラコストの予算監視と異常検知アラートの構築"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "インフラコストの予算監視と異常検知アラートの構築"
     },
     "notebooklm-requirement:b0ca91aa-ae60-498d-a1d0-ed2fcf2a0a7f:3": {
-      "hash": "5ab6793c0b75fb14",
+      "hash": "73e6b029175be9ed",
       "issue_number": 2729,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2729",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:b0ca91aa:3] シークレット情報の安全な管理と構成ファイルの静的検証"
-    },
-    "notebooklm-requirement:b7034883-0cc8-45fe-b816-bd596de00210:1": {
-      "hash": "4897e32f3131d292",
-      "issue_number": 2919,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2919",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] b7034883:1 割引適用・特別権限付与時の多段承認ワークフローの実装"
-    },
-    "notebooklm-requirement:b7034883-0cc8-45fe-b816-bd596de00210:2": {
-      "hash": "359cedb4c7afa6ac",
-      "issue_number": 2920,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2920",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] b7034883:2 コンテキスト逸脱と異常操作の検知用ガードレール機能"
-    },
-    "notebooklm-requirement:b7034883-0cc8-45fe-b816-bd596de00210:3": {
-      "hash": "252f5b21593a7937",
-      "issue_number": 2921,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2921",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] b7034883:3 役割分離に基づくマルチモジュール・権限管理アーキテクチャへの改修"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "シークレット情報の安全な管理と構成ファイルの静的検証"
     },
     "notebooklm-requirement:b74e9ada-b9b1-4917-9b8c-66afcb7bf6ce:1": {
-      "hash": "ad78807ec8491427",
+      "hash": "6dfef4afaa00ac04",
       "issue_number": 2711,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2711",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:b74e9ada:1] Claude Code SDKを活用したGitHub Actions経由の自動コード修正・PR支援"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "Claude Code SDKを活用したGitHub Actions経由の自動コード修正・PR支援"
     },
     "notebooklm-requirement:b74e9ada-b9b1-4917-9b8c-66afcb7bf6ce:2": {
-      "hash": "7ad5cc03a5b7b192",
+      "hash": "25f8a203c0dcb2b5",
       "issue_number": 2712,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2712",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:b74e9ada:2] 「Architectural Safety Checkpoints」に基づく自律エージェントの承認フロー構築"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "「Architectural Safety Checkpoints」に基づく自律エージェントの承認フロー構築"
     },
     "notebooklm-requirement:b74e9ada-b9b1-4917-9b8c-66afcb7bf6ce:3": {
-      "hash": "3f88a68a1966eb21",
+      "hash": "cbe8946d9cf0be7b",
       "issue_number": 2713,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2713",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:b74e9ada:3] 1時間TTLのプロンプトキャッシングを活用した長時間コンテキスト維持とコスト最適化"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "1時間TTLのプロンプトキャッシングを活用した長時間コンテキスト維持とコスト最適化"
     },
     "notebooklm-requirement:bc58b50b-5fc4-4840-9a62-b397d6d3b65a:1": {
-      "hash": "d5c9b7ec5470ed8a",
+      "hash": "6f133b333e16e5f4",
       "issue_number": 2651,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2651",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:bc58b50b:1] Codex Computer Useと内蔵ブラウザを用いたFlutter Webの視覚的UIテスト自動化"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "Codex Computer Useと内蔵ブラウザを用いたFlutter Webの視覚的UIテスト自動化"
     },
     "notebooklm-requirement:bc58b50b-5fc4-4840-9a62-b397d6d3b65a:2": {
-      "hash": "585edd7b8688ff9d",
+      "hash": "3407a8e43e20b2b5",
       "issue_number": 2652,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2652",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:bc58b50b:2] Claude Code「/ultrareview」とCodexカーネルサンドボックスによる二重品質ゲートの構築"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "Claude Code「/ultrareview」とCodexカーネルサンドボックスによる二重品質ゲートの構築"
     },
     "notebooklm-requirement:bc58b50b-5fc4-4840-9a62-b397d6d3b65a:3": {
-      "hash": "9dc3f8d2562e5e25",
+      "hash": "1d91ee9ee9d373af",
       "issue_number": 2653,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2653",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:bc58b50b:3] コンテキスト長（200K閾値）と出力トークン効率に基づくエージェントの動的タスクル ーティング"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "コンテキスト長（200K閾値）と出力トークン効率に基づくエージェントの動的タスクル ーティング"
     },
     "notebooklm-requirement:bc91fac9-ee55-4e19-9d90-3dfdf9145370:1": {
-      "hash": "b1c18acd11249760",
+      "hash": "ca5ba4594bb6abfd",
       "issue_number": 2663,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2663",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:bc91fac9:1] 外部AIツール連携用Webhookレシーバーおよび自動化ワークフローの構築"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "外部AIツール連携用Webhookレシーバーおよび自動化ワークフローの構築"
     },
     "notebooklm-requirement:bc91fac9-ee55-4e19-9d90-3dfdf9145370:2": {
-      "hash": "f391f49465754a3f",
+      "hash": "63f368105aa6c24a",
       "issue_number": 2664,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2664",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:bc91fac9:2] AI生成素材の商用利用ライセンスおよび著作権コンプライアンス管理機能"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "AI生成素材の商用利用ライセンスおよび著作権コンプライアンス管理機能"
     },
     "notebooklm-requirement:bc91fac9-ee55-4e19-9d90-3dfdf9145370:3": {
-      "hash": "6ae4e204ec2bb444",
+      "hash": "8ba25c2760e13915",
       "issue_number": 2665,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2665",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:bc91fac9:3] 「5要素」構造化プロンプトテンプレートのナレッジ管理機能"
-    },
-    "notebooklm-requirement:bc98957a-f609-417f-a655-6e581b0056ab:1": {
-      "hash": "48230e84cf62f942",
-      "issue_number": 2832,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2832",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] bc98957a:1 Edge Functions及びCIエラーログのAI要約パイプラインの構築"
-    },
-    "notebooklm-requirement:bc98957a-f609-417f-a655-6e581b0056ab:2": {
-      "hash": "fb52cbe8454fdafb",
-      "issue_number": 2833,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2833",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] bc98957a:2 フリーミアムモデルにおける利用上限の可視化とアップグレードへの切迫感（Urgency ）創出"
-    },
-    "notebooklm-requirement:bc98957a-f609-417f-a655-6e581b0056ab:3": {
-      "hash": "1b9960606093602b",
-      "issue_number": 2834,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2834",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] bc98957a:3 Supabaseマイグレーションリペアの動的自動化と一時的エラー（Transient Fail）への耐性強化"
-    },
-    "notebooklm-requirement:bdec9ea5-c6f6-4c7d-923c-9bdf87d553d0:1": {
-      "hash": "364ece477600bc0d",
-      "issue_number": 2868,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2868",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] bdec9ea5:1 CI/CDパイプラインにおけるClaude CodeのHeadless運用による自律的な保守タスク自動化"
-    },
-    "notebooklm-requirement:bdec9ea5-c6f6-4c7d-923c-9bdf87d553d0:2": {
-      "hash": "589e94624361bf34",
-      "issue_number": 2869,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2869",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] bdec9ea5:2 Notion MCPを利用したGitHub Issuesと連携する仕様書・PRDの自動生成と動的更新"
-    },
-    "notebooklm-requirement:bdec9ea5-c6f6-4c7d-923c-9bdf87d553d0:3": {
-      "hash": "b438f9e9e67032ab",
-      "issue_number": 2870,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2870",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] bdec9ea5:3 AIツール監視基盤におけるMCP Tool Search導入とコンテキスト消費の最適化"
-    },
-    "notebooklm-requirement:c3b1d9f2-1cc9-41ef-91d1-480d60b9df63:1": {
-      "hash": "86e37c3c1c4532b1",
-      "issue_number": 2922,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2922",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] c3b1d9f2:1 タスク難易度に応じたClaude APIの自動モデルルーティング（Haiku/Sonnet）の導入"
-    },
-    "notebooklm-requirement:c3b1d9f2-1cc9-41ef-91d1-480d60b9df63:2": {
-      "hash": "15c75da85104d839",
-      "issue_number": 2923,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2923",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] c3b1d9f2:2 長文システムプロンプトに対するPrompt Caching機能の有効化"
-    },
-    "notebooklm-requirement:c3b1d9f2-1cc9-41ef-91d1-480d60b9df63:3": {
-      "hash": "9359b465fd8e1fcd",
-      "issue_number": 2924,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2924",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] c3b1d9f2:3 GitHub Actionsを活用したClaude APIコストの定期モニタリングとアラート通知"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "「5要素」構造化プロンプトテンプレートのナレッジ管理機能"
     },
     "notebooklm-requirement:c4606454-d0f7-4936-a3f7-d0049505d4e3:1": {
-      "hash": "bf76529f704c99d8",
+      "hash": "f56851ccca6f59a7",
       "issue_number": 2577,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2577",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c4606454:1] Supabaseの新しいAI利用規約（2026年6月6日発効）に対する法務・コンプライアンス評価"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "Supabaseの新しいAI利用規約（2026年6月6日発効）に対する法務・コンプライアンス評価"
     },
     "notebooklm-requirement:c4606454-d0f7-4936-a3f7-d0049505d4e3:2": {
-      "hash": "be6ccb174917e98a",
+      "hash": "5465799d59c79c87",
       "issue_number": 2578,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2578",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c4606454:2] AI学習目的のデータ利用に関する同意プロセスの監査と社内フローの策定"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "AI学習目的のデータ利用に関する同意プロセスの監査と社内フローの策定"
     },
     "notebooklm-requirement:c4606454-d0f7-4936-a3f7-d0049505d4e3:3": {
-      "hash": "3cdfc773b1ae6437",
+      "hash": "94df13edf7fd616b",
       "issue_number": 2579,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2579",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c4606454:3] カスタマーサポート利用時における情報送信ガイドラインの改訂"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "カスタマーサポート利用時における情報送信ガイドラインの改訂"
     },
     "notebooklm-requirement:c60da02b-69b2-4c09-8708-8ddec784ebba:1": {
-      "hash": "67a7936a3d9fd5e9",
+      "hash": "89dce18218de6a21",
       "issue_number": 2596,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2596",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c60da02b:1] 競合比較ページのSupabaseデータ取得処理の移行と動的化"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "競合比較ページのSupabaseデータ取得処理の移行と動的化"
     },
     "notebooklm-requirement:c60da02b-69b2-4c09-8708-8ddec784ebba:2": {
-      "hash": "8f30fa602ea76cb4",
+      "hash": "c5d15e7e829832a8",
       "issue_number": 2597,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2597",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c60da02b:2] 代替AIコーディング支援ツールのセキュリティ評価および導入ポリシー策定"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "代替AIコーディング支援ツールのセキュリティ評価および導入ポリシー策定"
     },
     "notebooklm-requirement:c60da02b-69b2-4c09-8708-8ddec784ebba:3": {
-      "hash": "16d4efc48fa9b0bc",
+      "hash": "5710a1596bd839c1",
       "issue_number": 2598,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2598",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c60da02b:3] LLMO（大規模言語モデル最適化）に向けたアプリケーションの構造化データ実装"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "LLMO（大規模言語モデル最適化）に向けたアプリケーションの構造化データ実装"
     },
     "notebooklm-requirement:c7e786bb-b4fb-466e-9382-efdb739b992f:1": {
-      "hash": "9aada0dbe14a9ece",
+      "hash": "5c02cd11ac683d2b",
       "issue_number": 2776,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2776",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c7e786bb:1] 超低遅延ルーティングモデルを用いたLLMオーケストレーターパターンの導入"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "超低遅延ルーティングモデルを用いたLLMオーケストレーターパターンの導入"
     },
     "notebooklm-requirement:c7e786bb-b4fb-466e-9382-efdb739b992f:2": {
-      "hash": "d44e32e583c27cf3",
+      "hash": "df8163880c633108",
       "issue_number": 2777,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2777",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c7e786bb:2] 削除済みEdge Functions呼び出しに対する静的解析・CIチェックの自動化"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "削除済みEdge Functions呼び出しに対する静的解析・CIチェックの自動化"
     },
     "notebooklm-requirement:c7e786bb-b4fb-466e-9382-efdb739b992f:3": {
-      "hash": "d37796b888a7cbda",
+      "hash": "39e506b1c7b5d9ac",
       "issue_number": 2778,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2778",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:c7e786bb:3] ユーザー継続率向上を目的としたストリークおよび日次ジャーナル機能の実装"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "ユーザー継続率向上を目的としたストリークおよび日次ジャーナル機能の実装"
     },
     "notebooklm-requirement:cc9ac313-d42e-47a9-93e3-bcd5a4e61020:1": {
-      "hash": "aacbcb5fe948959a",
+      "hash": "3e59adee29658244",
       "issue_number": 2602,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2602",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:cc9ac313:1] 署名付きURL（または同等機能）を利用したSupabase Storageへの直接ファイルアップロード機能の導入"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "署名付きURL（または同等機能）を利用したSupabase Storageへの直接ファイルアップロード機能の導入"
     },
     "notebooklm-requirement:cc9ac313-d42e-47a9-93e3-bcd5a4e61020:2": {
-      "hash": "2f4fb22d57527ff8",
+      "hash": "aa949de45fd2f593",
       "issue_number": 2603,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2603",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:cc9ac313:2] 機能単位（features）のディレクトリ構成およびUIとロジックの分離設計（コンテナ・プレゼンテーション）の標準化"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "機能単位（features）のディレクトリ構成およびUIとロジックの分離設計（コンテナ・プレゼンテーション）の標準化"
     },
     "notebooklm-requirement:cc9ac313-d42e-47a9-93e3-bcd5a4e61020:3": {
-      "hash": "476dc7f20c7773de",
+      "hash": "33dc33037ff0c5c7",
       "issue_number": 2604,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2604",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:cc9ac313:3] HTTPインターセプターを用いたAPI認証処理・トークン更新およびエラーハンドリングの一元化"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "HTTPインターセプターを用いたAPI認証処理・トークン更新およびエラーハンドリングの一元化"
     },
     "notebooklm-requirement:d090afa0-bab8-4968-b7d8-ae11ea88edfa:1": {
-      "hash": "53570823699af1d6",
+      "hash": "f2e75e111b6316cc",
       "issue_number": 2584,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2584",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d090afa0:1] 危機管理および事前防災情報のインテークモジュール開発"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "危機管理および事前防災情報のインテークモジュール開発"
     },
     "notebooklm-requirement:d090afa0-bab8-4968-b7d8-ae11ea88edfa:2": {
-      "hash": "076bb9a8ee17f8c6",
+      "hash": "0c4fb203defe4fbe",
       "issue_number": 2585,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2585",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d090afa0:2] WPSおよびダイバーシティ方針のナレッジタグ付けと可視化機能"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "WPSおよびダイバーシティ方針のナレッジタグ付けと可視化機能"
     },
     "notebooklm-requirement:d090afa0-bab8-4968-b7d8-ae11ea88edfa:3": {
-      "hash": "c0bdda94f9d03d37",
+      "hash": "65fb49564aaeb7ef",
       "issue_number": 2586,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2586",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d090afa0:3] 外部規制およびサプライチェーン影響トラッキング機能の導入"
-    },
-    "notebooklm-requirement:d1b0fef3-155a-455f-a23c-4ec34bc9de4d:1": {
-      "hash": "41e1486c96abac7d",
-      "issue_number": 2916,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2916",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d1b0fef3:1 非構造化データの即時保存およびAI自動整理機能の追加"
-    },
-    "notebooklm-requirement:d1b0fef3-155a-455f-a23c-4ec34bc9de4d:2": {
-      "hash": "54ed2b6c2086569b",
-      "issue_number": 2917,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2917",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d1b0fef3:2 曖昧な記憶から情報に到達できるセマンティック検索の実装"
-    },
-    "notebooklm-requirement:d1b0fef3-155a-455f-a23c-4ec34bc9de4d:3": {
-      "hash": "170e0014109daa8f",
-      "issue_number": 2918,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2918",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d1b0fef3:3 心理的ハードルを下げる未整理データ用InboxUIの構築"
-    },
-    "notebooklm-requirement:d3264dd4-c3bc-4b63-8fb2-6c7003ff111d:1": {
-      "hash": "01e5a8711a2b9c46",
-      "issue_number": 2859,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2859",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d3264dd4:1 FlutterアプリケーションのAPI設定・シークレット管理の最適化"
-    },
-    "notebooklm-requirement:d3264dd4-c3bc-4b63-8fb2-6c7003ff111d:2": {
-      "hash": "a5dd2e9960074c5f",
-      "issue_number": 2860,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2860",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d3264dd4:2 セキュリティ・監査用の外部ログ転送（Log Drains）の要件定義"
-    },
-    "notebooklm-requirement:d3264dd4-c3bc-4b63-8fb2-6c7003ff111d:3": {
-      "hash": "647bd6cfd946f676",
-      "issue_number": 2861,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2861",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d3264dd4:3 ディスク容量とコンピュートリソース（Compute and Disk）のキャパシティプランニング策定"
-    },
-    "notebooklm-requirement:d420e53f-3477-4aac-b4c7-6a1f8703370c:1": {
-      "hash": "d0a845bf214264b9",
-      "issue_number": 2925,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2925",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d420e53f:1 法人口座審査向けコーポレートサイト要件チェック及び簡易生成機能"
-    },
-    "notebooklm-requirement:d420e53f-3477-4aac-b4c7-6a1f8703370c:2": {
-      "hash": "35d2d721ba6630d5",
-      "issue_number": 2926,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2926",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d420e53f:2 振込件数と要件に基づく法人口座コスト自動シミュレーション機能"
-    },
-    "notebooklm-requirement:d420e53f-3477-4aac-b4c7-6a1f8703370c:3": {
-      "hash": "f7cbf0f2c953460e",
-      "issue_number": 2927,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2927",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] d420e53f:3 CI失敗ログの自動解析とWBSリカバリタスク自動展開機能"
+      "last_seen_at": "2026-05-18T00:14:17Z",
+      "status": "created",
+      "title": "外部規制およびサプライチェーン影響トラッキング機能の導入"
     },
     "notebooklm-requirement:d6dd44af-a129-42fa-b30c-e9a87916eca0:1": {
-      "hash": "f4e09559c0fe04fa",
+      "hash": "3788247f8daeba8b",
       "issue_number": 2779,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2779",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d6dd44af:1] スクレイピングの耐障害性向上とバックオフ処理の統合"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "スクレイピングの耐障害性向上とバックオフ処理の統合"
     },
     "notebooklm-requirement:d6dd44af-a129-42fa-b30c-e9a87916eca0:2": {
-      "hash": "0106864f6158f021",
+      "hash": "f0d5f39dc8fb7bcb",
       "issue_number": 2780,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2780",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d6dd44af:2] 動的なCSSセレクタ管理システムの導入"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "動的なCSSセレクタ管理システムの導入"
     },
     "notebooklm-requirement:d6dd44af-a129-42fa-b30c-e9a87916eca0:3": {
-      "hash": "d7f08c732af84b28",
+      "hash": "afa94f4104a98497",
       "issue_number": 2781,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2781",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d6dd44af:3] 郵便番号（地域）に基づく価格トラッキングへの対応"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "郵便番号（地域）に基づく価格トラッキングへの対応"
     },
     "notebooklm-requirement:d83954af-f6a7-44fa-a1fe-fbc75b5ae7be:1": {
-      "hash": "d6306098a31660b8",
+      "hash": "9425985668509877",
       "issue_number": 2696,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2696",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d83954af:1] 競合他社発掘ワークフローのゼロ件結果に対するアラートおよび詳細ログ保存の実装"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "競合他社発掘ワークフローのゼロ件結果に対するアラートおよび詳細ログ保存の実装"
     },
     "notebooklm-requirement:d83954af-f6a7-44fa-a1fe-fbc75b5ae7be:2": {
-      "hash": "de7f7140987364c9",
+      "hash": "85a4ddf1c7e82f46",
       "issue_number": 2697,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2697",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d83954af:2] 情報圧縮アルゴリズムを用いたAI入力データの重複排除パイプラインの構築"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "情報圧縮アルゴリズムを用いたAI入力データの重複排除パイプラインの構築"
     },
     "notebooklm-requirement:d83954af-f6a7-44fa-a1fe-fbc75b5ae7be:3": {
-      "hash": "28692d514847f039",
+      "hash": "dac5f4cdd6b85cc1",
       "issue_number": 2698,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2698",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d83954af:3] 競合調査AIのハルシネーション対策および情報源URLの自動検証プロセスの導入"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "競合調査AIのハルシネーション対策および情報源URLの自動検証プロセスの導入"
     },
     "notebooklm-requirement:d89ae1f5-6081-4084-b573-6d817e4abaf4:1": {
-      "hash": "c7cd566ab21b37da",
+      "hash": "dad665d34fe2d0ab",
       "issue_number": 2708,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2708",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d89ae1f5:1] AIエージェントの記憶圧縮プロセスにおけるLLMコスト最適化"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "AIエージェントの記憶圧縮プロセスにおけるLLMコスト最適化"
     },
     "notebooklm-requirement:d89ae1f5-6081-4084-b573-6d817e4abaf4:2": {
-      "hash": "4fdd649bd6b97960",
+      "hash": "27adb934f2f73aef",
       "issue_number": 2709,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2709",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d89ae1f5:2] CI/CDおよびヘッドレス環境向けのエージェント記憶の監査・耐障害性向上"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "CI/CDおよびヘッドレス環境向けのエージェント記憶の監査・耐障害性向上"
     },
     "notebooklm-requirement:d89ae1f5-6081-4084-b573-6d817e4abaf4:3": {
-      "hash": "75451e8435e127f9",
+      "hash": "43a1cacf60b1466f",
       "issue_number": 2710,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2710",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d89ae1f5:3] 不変的ルール（静的ドキュメント）と動的コンテキスト（短期記憶）の階層的クリーン アップ運用"
+      "last_seen_at": "2026-05-18T02:57:23Z",
+      "status": "created",
+      "title": "不変的ルール（静的ドキュメント）と動的コンテキスト（短期記憶）の階層的クリーン アップ運用"
     },
     "notebooklm-requirement:d91788ce-67b5-4fcd-86dd-779de2e56972:1": {
-      "hash": "624736c384fc9643",
+      "hash": "8c58f9f42fd704dd",
       "issue_number": 2809,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2809",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d91788ce:1] 個人の尊厳を保護するアクセシビリティ・インクルーシブUI監査の自動化"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "個人の尊厳を保護するアクセシビリティ・インクルーシブUI監査の自動化"
     },
     "notebooklm-requirement:d91788ce-67b5-4fcd-86dd-779de2e56972:2": {
-      "hash": "7fdad80979e00a4d",
+      "hash": "01aa482e2add04a7",
       "issue_number": 2810,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2810",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d91788ce:2] 「ハイパー償却」をモデルとしたユーザー貢献の1.6倍リワード機能"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "「ハイパー償却」をモデルとしたユーザー貢献の1.6倍リワード機能"
     },
     "notebooklm-requirement:d91788ce-67b5-4fcd-86dd-779de2e56972:3": {
-      "hash": "0b3c88966d3b9c19",
+      "hash": "f8cb1690b9fd9304",
       "issue_number": 2811,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2811",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:d91788ce:3] 安全保障に基づく段階的アクセス制御（Geo-RBAC）とインフラ保護"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "安全保障に基づく段階的アクセス制御（Geo-RBAC）とインフラ保護"
     },
     "notebooklm-requirement:da2a95d1-2db3-4677-9e67-52fae69fb8e9:1": {
-      "hash": "9be7549ea44d8464",
+      "hash": "99e9b90fdbc0a384",
       "issue_number": 2660,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2660",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:da2a95d1:1] D-ID Video Translate APIを活用した多言語リップシンク動画の自動生成パイプライン"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "D-ID Video Translate APIを活用した多言語リップシンク動画の自動生成パイプライン"
     },
     "notebooklm-requirement:da2a95d1-2db3-4677-9e67-52fae69fb8e9:2": {
-      "hash": "0c1efaa3330592b5",
+      "hash": "47d5d4ed60348383",
       "issue_number": 2661,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2661",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:da2a95d1:2] 合成メディア倫理指針に準拠した動画監査・モデレーション機能の導入"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "合成メディア倫理指針に準拠した動画監査・モデレーション機能の導入"
     },
     "notebooklm-requirement:da2a95d1-2db3-4677-9e67-52fae69fb8e9:3": {
-      "hash": "ee3f5b25fb49a931",
+      "hash": "539ad84fe4620b94",
       "issue_number": 2662,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2662",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:da2a95d1:3] Model Context Protocol (MCP) を利用したAIエージェント連携基盤の構築"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "Model Context Protocol (MCP) を利用したAIエージェント連携基盤の構築"
     },
     "notebooklm-requirement:dd2b382d-88d7-4a79-b6a7-11e420f62759:1": {
-      "hash": "e01f2798a6bc5152",
+      "hash": "eb3513249e066c08",
       "issue_number": 2794,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2794",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:dd2b382d:1] LLMツール提案とユーザーエンゲージメントの相関モニタリング基盤構築"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "LLMツール提案とユーザーエンゲージメントの相関モニタリング基盤構築"
     },
     "notebooklm-requirement:dd2b382d-88d7-4a79-b6a7-11e420f62759:2": {
-      "hash": "0b3c6b2f3be033c9",
+      "hash": "be1e57dd5f49b1c4",
       "issue_number": 2795,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2795",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:dd2b382d:2] 「Creator Deception」を防ぐ汎用UIアクションのFlutterフロントエンド実装"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "「Creator Deception」を防ぐ汎用UIアクションのFlutterフロントエンド実装"
     },
     "notebooklm-requirement:dd2b382d-88d7-4a79-b6a7-11e420f62759:3": {
-      "hash": "3b5d6c386d74d99a",
+      "hash": "957aaa44da57b3f9",
       "issue_number": 2796,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2796",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:dd2b382d:3] AIの「建設的な逸脱行動（Constructive Scheming）」の検出・検証プロセス導入"
-    },
-    "notebooklm-requirement:ddde5a4b-ce1a-405d-8291-a334a9371454:1": {
-      "hash": "ef8adf7d21a74a0d",
-      "issue_number": 2907,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2907",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] ddde5a4b:1 事前計画アーティファクト生成用AI探索タスクの導入"
-    },
-    "notebooklm-requirement:ddde5a4b-ce1a-405d-8291-a334a9371454:2": {
-      "hash": "8a2b9a9ba59b65f6",
-      "issue_number": 2908,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2908",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] ddde5a4b:2 AI生成モジュール向け長時間稼働ストレステストの自動化"
-    },
-    "notebooklm-requirement:ddde5a4b-ce1a-405d-8291-a334a9371454:3": {
-      "hash": "477aea8e00aede5e",
-      "issue_number": 2909,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2909",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] ddde5a4b:3 コアとリーフ分離に基づく大規模AI PRの自動分割機能"
-    },
-    "notebooklm-requirement:e89d2ca7-1dc9-41a1-8fe2-bad5103a757b:1": {
-      "hash": "dd2c1f09f7a7d30e",
-      "issue_number": 2904,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2904",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] e89d2ca7:1 AIエージェントの操作に対する監視および監査ログ機能の実装"
-    },
-    "notebooklm-requirement:e89d2ca7-1dc9-41a1-8fe2-bad5103a757b:2": {
-      "hash": "ebfa0c9724eba973",
-      "issue_number": 2905,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2905",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] e89d2ca7:2 高解像度Vision APIを活用したFlutter Webの自動E2Eビジュアルテスト"
-    },
-    "notebooklm-requirement:e89d2ca7-1dc9-41a1-8fe2-bad5103a757b:3": {
-      "hash": "0d15fe2b1cd5a460",
-      "issue_number": 2906,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2906",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] e89d2ca7:3 Claude Opus 4.7移行に伴うAPIパラメータ設定の更新と最適化"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "AIの「建設的な逸脱行動（Constructive Scheming）」の検出・検証プロセス導入"
     },
     "notebooklm-requirement:ea6cff25-574d-4b8b-ad72-ab47cf1ed01f:1": {
       "hash": "306b6acfa54896cc",
       "issue_number": 2626,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2626",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:ea6cff25:1] [追加要望] CodexとNotebookLMの直接連携によるトークン削減とRAG強化"
     },
@@ -2462,7 +1670,7 @@
       "hash": "6a03a7bc4c8664cb",
       "issue_number": 2627,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2627",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:ea6cff25:2] [追加要望] ディスク容量枯渇を防止する多層クリーンアップフックの導入"
     },
@@ -2470,87 +1678,63 @@
       "hash": "990a4cde4cd33062",
       "issue_number": 2628,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2628",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:28:30Z",
       "status": "skipped_existing",
       "title": "[notebooklm:ea6cff25:3] [追加要望] 動画・音声教材の全自動字幕焼き込みとYouTube連携パイプライン"
     },
     "notebooklm-requirement:ebe88c7e-365f-465c-83e9-f1838762df49:1": {
-      "hash": "f35567a930d146d4",
+      "hash": "3e8227b0dbb32d1f",
       "issue_number": 2642,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2642",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ebe88c7e:1] Transformerモデルを活用した長文コンテンツの自動要約機能の実装"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "Transformerモデルを活用した長文コンテンツの自動要約機能の実装"
     },
     "notebooklm-requirement:ebe88c7e-365f-465c-83e9-f1838762df49:2": {
-      "hash": "6d68c3033b1f515f",
+      "hash": "ed8b936ffa5371d6",
       "issue_number": 2643,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2643",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ebe88c7e:2] TransformerベースのLLMを用いたQ&Aチャットボットの導入"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "TransformerベースのLLMを用いたQ&Aチャットボットの導入"
     },
     "notebooklm-requirement:ebe88c7e-365f-465c-83e9-f1838762df49:3": {
-      "hash": "e5c098c39bef34a5",
+      "hash": "b73c8c77a2ebcb10",
       "issue_number": 2644,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2644",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ebe88c7e:3] Vision Transformer (ViT) を応用したアップロード画像のモデレーションと自動タグ付け"
+      "last_seen_at": "2026-05-18T02:40:44Z",
+      "status": "created",
+      "title": "Vision Transformer (ViT) を応用したアップロード画像のモデレーションと自動タグ付け"
     },
     "notebooklm-requirement:ed1aac00-a9a0-4937-94c0-e835b71016c3:1": {
-      "hash": "cf174cbfcd8c1c9d",
+      "hash": "5fcc78994b3d2d8b",
       "issue_number": 2675,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2675",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ed1aac00:1] ターミナルベースのAIエージェントによる自動コード改修とテスト実行ワークフローの 導入"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "ターミナルベースのAIエージェントによる自動コード改修とテスト実行ワークフローの 導入"
     },
     "notebooklm-requirement:ed1aac00-a9a0-4937-94c0-e835b71016c3:2": {
-      "hash": "e8abf563fb286638",
+      "hash": "056f7bfc99cb2f36",
       "issue_number": 2676,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2676",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ed1aac00:2] NotebookLM取り込みとAIツール監視におけるプロンプト標準化とコンテキスト管理の徹 底"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "NotebookLM取り込みとAIツール監視におけるプロンプト標準化とコンテキスト管理の徹 底"
     },
     "notebooklm-requirement:ed1aac00-a9a0-4937-94c0-e835b71016c3:3": {
-      "hash": "3d38fa9e60681b3a",
+      "hash": "5ae8dd75cdce366b",
       "issue_number": 2677,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2677",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:ed1aac00:3] リサーチモードを活用したプロダクトおよび市場要件の体系的調査パイプラインの構築"
-    },
-    "notebooklm-requirement:f0895eb0-03e9-499d-ad8a-84b76417bd53:1": {
-      "hash": "03e6a7dda095ba2f",
-      "issue_number": 2877,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2877",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] f0895eb0:1 組織ポリシーにおけるRemote Controlの有効化とセキュリティ監査"
-    },
-    "notebooklm-requirement:f0895eb0-03e9-499d-ad8a-84b76417bd53:2": {
-      "hash": "afedb241859e8486",
-      "issue_number": 2878,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2878",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] f0895eb0:2 サーバーモード起動時のSandbox有効化とセッション上限（Capacity）設定の導入"
-    },
-    "notebooklm-requirement:f0895eb0-03e9-499d-ad8a-84b76417bd53:3": {
-      "hash": "4b07ec2ad7ae8135",
-      "issue_number": 2879,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2879",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] f0895eb0:3 Verboseモードを活用したネットワークトラブルシューティング手順の標準化"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "リサーチモードを活用したプロダクトおよび市場要件の体系的調査パイプラインの構築"
     },
     "notebooklm-requirement:f167dcc3-ca79-4c47-91f3-7ef90a409025:1": {
       "hash": "11d18bc084891074",
       "issue_number": 2614,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2614",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:f167dcc3:1] AIエージェントの動的モデルルーティング導入によるコスト最適化"
     },
@@ -2558,7 +1742,7 @@
       "hash": "6d4da71a0e8be78f",
       "issue_number": 2615,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2615",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:f167dcc3:2] claude-agent-review.ymlへのプロンプトインジェクションと脆弱性検出ステップの追加"
     },
@@ -2566,177 +1750,153 @@
       "hash": "7288c6c486d570d0",
       "issue_number": 2616,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2616",
-      "last_seen_at": "2026-05-18T15:55:49Z",
+      "last_seen_at": "2026-05-18T00:25:10Z",
       "status": "skipped_existing",
       "title": "[notebooklm:f167dcc3:3] quota-monitor.ymlの強化とサイレントポーズ通知およびデータ保護機能の構築"
     },
-    "notebooklm-requirement:f24897ad-12df-4d1a-a3a4-f7bb2eb08e73:1": {
-      "hash": "e8650640c8b8d151",
-      "issue_number": 2844,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2844",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] f24897ad:1 アカウント解約後のデータ保持・削除ポリシーの策定と実装"
-    },
-    "notebooklm-requirement:f24897ad-12df-4d1a-a3a4-f7bb2eb08e73:2": {
-      "hash": "de7b32efc0d783ed",
-      "issue_number": 2845,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2845",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] f24897ad:2 Paddle.jsのフロントエンド統合とサンドボックス環境での検証フロー構築"
-    },
-    "notebooklm-requirement:f24897ad-12df-4d1a-a3a4-f7bb2eb08e73:3": {
-      "hash": "529c758cb49380d0",
-      "issue_number": 2846,
-      "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2846",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[追加要望][P2][NotebookLM] f24897ad:3 B2B向けVAT（付加価値税）対応の検証とインボイス取得導線の整備"
-    },
     "notebooklm-requirement:f404e403-d347-4baf-850b-3702fb3c13ab:1": {
-      "hash": "c6f1dc51732e5483",
+      "hash": "d86f9847a786826d",
       "issue_number": 2743,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2743",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f404e403:1] 開発レビュー承認ワークフローのGitHub連動トラッキング"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "開発レビュー承認ワークフローのGitHub連動トラッキング"
     },
     "notebooklm-requirement:f404e403-d347-4baf-850b-3702fb3c13ab:2": {
-      "hash": "bb5b6d5bb0f06430",
+      "hash": "73641a1daaa2a554",
       "issue_number": 2744,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2744",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f404e403:2] Supabase Realtimeを活用したデータ同時更新の排他制御・競合検知"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "Supabase Realtimeを活用したデータ同時更新の排他制御・競合検知"
     },
     "notebooklm-requirement:f404e403-d347-4baf-850b-3702fb3c13ab:3": {
-      "hash": "9ca4fdc112f797d0",
+      "hash": "5fb26ebd03f67234",
       "issue_number": 2745,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2745",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f404e403:3] Edge Functionsを用いたシステム利用統計と月次キャパシティレポートの自動生成"
+      "last_seen_at": "2026-05-18T03:06:12Z",
+      "status": "created",
+      "title": "Edge Functionsを用いたシステム利用統計と月次キャパシティレポートの自動生成"
     },
     "notebooklm-requirement:f45600f2-1883-4043-bfec-b1309f468889:1": {
-      "hash": "f16b72eaa024aba7",
+      "hash": "8f2b2f31a89f0493",
       "issue_number": 2767,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2767",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f45600f2:1] クラウドインフラ利用枠の監視と課金事前アラート設定"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "クラウドインフラ利用枠の監視と課金事前アラート設定"
     },
     "notebooklm-requirement:f45600f2-1883-4043-bfec-b1309f468889:2": {
-      "hash": "455a53a1e7575b0a",
+      "hash": "2fb198753b832ecb",
       "issue_number": 2768,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2768",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f45600f2:2] Flutter Webクライアント向けのエラー監視とテスト自動化の評価"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "Flutter Webクライアント向けのエラー監視とテスト自動化の評価"
     },
     "notebooklm-requirement:f45600f2-1883-4043-bfec-b1309f468889:3": {
-      "hash": "b9da1b9a24ab0020",
+      "hash": "49fc77f07b96ae41",
       "issue_number": 2769,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2769",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f45600f2:3] インシデント管理およびサポートエスカレーションフローの標準化"
+      "last_seen_at": "2026-05-18T03:18:08Z",
+      "status": "created",
+      "title": "インシデント管理およびサポートエスカレーションフローの標準化"
     },
     "notebooklm-requirement:f56cc07c-4e9e-4370-be5f-5d5fa919ff78:1": {
-      "hash": "faa976307e729cc6",
+      "hash": "c62945344e3f203a",
       "issue_number": 2812,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2812",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f56cc07c:1] エンタープライズ向けコンプライアンス（SOC2/HIPAA/PCI DSS）のギャップ分析"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "エンタープライズ向けコンプライアンス（SOC2/HIPAA/PCI DSS）のギャップ分析"
     },
     "notebooklm-requirement:f56cc07c-4e9e-4370-be5f-5d5fa919ff78:2": {
-      "hash": "10cd200d297542a8",
+      "hash": "333f9c68b8dea12c",
       "issue_number": 2813,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2813",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f56cc07c:2] セルフホスト型AI監視インフラ（OSS）の技術検証（PoC）"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "セルフホスト型AI監視インフラ（OSS）の技術検証（PoC）"
     },
     "notebooklm-requirement:f56cc07c-4e9e-4370-be5f-5d5fa919ff78:3": {
-      "hash": "100167920c739f3b",
+      "hash": "05ed535ee8601599",
       "issue_number": 2814,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2814",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f56cc07c:3] マルチMCP環境向けの「推論プロセス（Why）」ログスキーマの策定とバリデーション"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "マルチMCP環境向けの「推論プロセス（Why）」ログスキーマの策定とバリデーション"
     },
     "notebooklm-requirement:f985728b-3976-4b24-b8c6-a3f318905e34:1": {
-      "hash": "b5a1737d742c9d4c",
+      "hash": "66c114f0b5354d69",
       "issue_number": 2690,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2690",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f985728b:1] GitHub Actionsを用いたAPIキーおよびシークレットの自動ローテーション機構の導入"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "GitHub Actionsを用いたAPIキーおよびシークレットの自動ローテーション機構の導入"
     },
     "notebooklm-requirement:f985728b-3976-4b24-b8c6-a3f318905e34:2": {
-      "hash": "9a34b02b85d0f94b",
+      "hash": "d814635a03169492",
       "issue_number": 2691,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2691",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f985728b:2] Supabaseを活用した組織・IdPグループベースのRBAC制御とSSO連携の実装"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "Supabaseを活用した組織・IdPグループベースのRBAC制御とSSO連携の実装"
     },
     "notebooklm-requirement:f985728b-3976-4b24-b8c6-a3f318905e34:3": {
-      "hash": "acfbe09ae33ab4ac",
+      "hash": "0ab231959c58251d",
       "issue_number": 2692,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2692",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:f985728b:3] 監査ログの記録およびリソース利用量上限（クォータ）管理機能の導入"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "監査ログの記録およびリソース利用量上限（クォータ）管理機能の導入"
     },
     "notebooklm-requirement:fdea9e6d-a2dd-428d-997c-36cba9626afd:1": {
-      "hash": "f7525f896e619f61",
+      "hash": "b047d87e0945a8bb",
       "issue_number": 2693,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2693",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:fdea9e6d:1] GitHub ActionsへのCursor SDKおよび自動セキュリティレビューの統合"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "GitHub ActionsへのCursor SDKおよび自動セキュリティレビューの統合"
     },
     "notebooklm-requirement:fdea9e6d-a2dd-428d-997c-36cba9626afd:2": {
-      "hash": "2154cc2b87969ecf",
+      "hash": "da2736ad85b6e851",
       "issue_number": 2694,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2694",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:fdea9e6d:2] AIツール従量課金化に伴うモデルルーティング戦略と推論コスト最適化"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "AIツール従量課金化に伴うモデルルーティング戦略と推論コスト最適化"
     },
     "notebooklm-requirement:fdea9e6d-a2dd-428d-997c-36cba9626afd:3": {
-      "hash": "2a594ef0284e1c33",
+      "hash": "60aaa2b4400f8788",
       "issue_number": 2695,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2695",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:fdea9e6d:3] Flutter WebとSupabase間の横断的変更に向けたマルチルートワークスペース設定"
+      "last_seen_at": "2026-05-18T02:48:47Z",
+      "status": "created",
+      "title": "Flutter WebとSupabase間の横断的変更に向けたマルチルートワークスペース設定"
     },
     "notebooklm-requirement:fe10a9f9-f50a-42cc-b5bd-1da5f5ab0917:1": {
-      "hash": "03e005239ee2ad3b",
+      "hash": "5fae742d2599c585",
       "issue_number": 2800,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2800",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:fe10a9f9:1] バックグラウンド処理のシステム通知UI統合"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "バックグラウンド処理のシステム通知UI統合"
     },
     "notebooklm-requirement:fe10a9f9-f50a-42cc-b5bd-1da5f5ab0917:2": {
-      "hash": "64ad1b8ec93b0407",
+      "hash": "667ffc96ae8add2c",
       "issue_number": 2801,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2801",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:fe10a9f9:2] 並行タスクのためのサブセッション作成機能"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "並行タスクのためのサブセッション作成機能"
     },
     "notebooklm-requirement:fe10a9f9-f50a-42cc-b5bd-1da5f5ab0917:3": {
-      "hash": "314666d044f2cd54",
+      "hash": "24707d18dbe87239",
       "issue_number": 2802,
       "issue_url": "https://github.com/kanta13jp1/my_web_app/issues/2802",
-      "last_seen_at": "2026-05-18T15:55:49Z",
-      "status": "skipped_existing",
-      "title": "[notebooklm:fe10a9f9:3] AI提案内容のインライン差分（Diff）表示コンポーネント"
+      "last_seen_at": "2026-05-18T03:25:39Z",
+      "status": "created",
+      "title": "AI提案内容のインライン差分（Diff）表示コンポーネント"
     }
   }
 }
