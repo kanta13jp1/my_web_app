@@ -11,10 +11,14 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
+      "hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
       "keyword_groups": {
         "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
           "model picker",
+          "in-app browser",
+          "browser use",
           "computer use",
           "worktree",
           "subagents"
@@ -23,11 +27,8 @@
           "hook",
           "hooks",
           "SessionStart",
-          "UserPromptSubmit",
           "PostToolUse",
-          "Stop",
-          "StopFailure",
-          "ultrareview"
+          "Stop"
         ],
         "integration": [
           "MCP",
@@ -36,63 +37,14 @@
           "Linear",
           "GitHub",
           "IDE extension",
-          "VSCode",
-          "Visual Studio Code"
+          "VSCode"
         ],
         "quality-cost": [
           "OpenTelemetry",
           "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "schedule",
-          "cron",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "2.1.168 / June 6, 2026",
-      "name": "Claude Code changelog",
-      "owner": "Claude Code",
-      "previous_hash": "d0f59a704d6ad0b995a7e46bab91cab05ba73d3f6699a5dd72db014286230583",
-      "slug": "claude-code-changelog",
-      "snippets": [
-        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
-        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.168 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.167 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.166 June 6, 2026 Added fallbackModel setting to..."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "a6b5738abc0fcc97c625c5a0600ed02212751a77bf96671ea5cb12bdc539d64a",
-      "keyword_groups": {
-        "codex-runtime": [
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "cost",
           "quota",
           "rate limit",
+          "sandbox",
           "permission",
           "review",
           "CI"
@@ -101,24 +53,118 @@
           "automation",
           "automations",
           "schedule",
+          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "June 5, 2026",
-      "name": "Devin release notes",
-      "owner": "Devin",
-      "previous_hash": "f6ba31c4f42a0f86259555c1274c268fa985ce10346e290ab2b9425005052fd0",
-      "slug": "devin-release-notes",
+      "latest_signal": "2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "8fc372537c2da492b9cf8c3c328a7ec478e925cd3e022f312163ea1cb3cb9ac2",
+      "slug": "codex-changelog",
       "snippets": [
-        "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
-        "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-        "Playbook Devin Mode Playbooks can now specify a Devin mode (e.g., Fast or Normal)."
+        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "You can review Codex usage highlights and save a profile card; sharing is available on consumer ChatGPT plans.",
+        "Performance improvements and bug fixes Improved Computer Use startup readiness and appshot error reporting."
       ],
       "status": 200,
-      "url": "https://docs.devin.ai/release-notes"
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "690e28914bc21e5538f982e3d942c39ea9da41052e1f601eaa22689b214db392",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "in-app browser",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "a09b2b0c2ff17b884457972db9163221c127c436c0146d756dd4e7cd111d8c63",
+      "slug": "codex-use-cases",
+      "snippets": [
+        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
+        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
+        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
+      "keyword_groups": {
+        "hooks": [
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "GitHub",
+          "IDE extension",
+          "VSCode"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "workflow"
+        ]
+      },
+      "latest_signal": "VS Code Gemini Code Assist 2.84.0 / May 29, 2026",
+      "name": "Gemini Code Assist release notes",
+      "owner": "Gemini Code Assist",
+      "previous_hash": "feb09096c018f44874df30775f75dee7f30c64ecb939b1fef36c07969d1c40a1",
+      "slug": "gemini-code-assist-release-notes",
+      "snippets": [
+        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
+        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
+        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
+      ],
+      "status": 200,
+      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   ],
-  "checked_at": "2026-06-07T21:42:58Z",
+  "checked_at": "2026-06-08T21:55:41Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -170,10 +216,10 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-06T21:39:46Z",
+  "previous_checked_at": "2026-06-07T21:42:58Z",
   "sources": [
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
@@ -223,7 +269,7 @@
       "latest_signal": "2.1.168 / June 6, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "d0f59a704d6ad0b995a7e46bab91cab05ba73d3f6699a5dd72db014286230583",
+      "previous_hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -332,10 +378,10 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "8fc372537c2da492b9cf8c3c328a7ec478e925cd3e022f312163ea1cb3cb9ac2",
+      "hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -395,10 +441,10 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "a09b2b0c2ff17b884457972db9163221c127c436c0146d756dd4e7cd111d8c63",
+      "hash": "690e28914bc21e5538f982e3d942c39ea9da41052e1f601eaa22689b214db392",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -500,10 +546,10 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "feb09096c018f44874df30775f75dee7f30c64ecb939b1fef36c07969d1c40a1",
+      "hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -539,7 +585,7 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "a6b5738abc0fcc97c625c5a0600ed02212751a77bf96671ea5cb12bdc539d64a",
@@ -577,7 +623,7 @@
       "latest_signal": "June 5, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "f6ba31c4f42a0f86259555c1274c268fa985ce10346e290ab2b9425005052fd0",
+      "previous_hash": "a6b5738abc0fcc97c625c5a0600ed02212751a77bf96671ea5cb12bdc539d64a",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",

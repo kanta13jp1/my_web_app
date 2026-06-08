@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-07T21:43:02Z",
+  "generated_at": "2026-06-08T21:55:44Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -27,7 +27,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
@@ -77,7 +77,7 @@
           "latest_signal": "2.1.168 / June 6, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "d0f59a704d6ad0b995a7e46bab91cab05ba73d3f6699a5dd72db014286230583",
+          "previous_hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -267,10 +267,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "8fc372537c2da492b9cf8c3c328a7ec478e925cd3e022f312163ea1cb3cb9ac2",
+          "hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -357,10 +357,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a09b2b0c2ff17b884457972db9163221c127c436c0146d756dd4e7cd111d8c63",
+          "hash": "690e28914bc21e5538f982e3d942c39ea9da41052e1f601eaa22689b214db392",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -544,10 +544,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "feb09096c018f44874df30775f75dee7f30c64ecb939b1fef36c07969d1c40a1",
+          "hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -610,7 +610,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "a6b5738abc0fcc97c625c5a0600ed02212751a77bf96671ea5cb12bdc539d64a",
@@ -648,7 +648,7 @@
           "latest_signal": "June 5, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "f6ba31c4f42a0f86259555c1274c268fa985ce10346e290ab2b9425005052fd0",
+          "previous_hash": "a6b5738abc0fcc97c625c5a0600ed02212751a77bf96671ea5cb12bdc539d64a",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",

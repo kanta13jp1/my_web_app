@@ -1,13 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-07T21:42:58Z`
-- Previous check: `2026-06-06T21:39:46Z`
-- Changed/new official sources: `2`
+- Checked at: `2026-06-08T21:55:41Z`
+- Previous check: `2026-06-07T21:42:58Z`
+- Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.168 / June 6, 2026
-- `changed` Devin release notes: June 5, 2026
+- `changed` Codex changelog: 2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.84.0 / May 29, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
