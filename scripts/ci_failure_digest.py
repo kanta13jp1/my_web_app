@@ -10,9 +10,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -153,6 +156,8 @@ SIGNATURE_HINT_RE = re.compile(
     r"sqlstate|schema_migrations|duplicate key|notion|supabase|deno|flutter)",
     re.IGNORECASE,
 )
+DEFAULT_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
+ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages"
 
 
 def append_summary(summary_path: str | None, title: str, lines: list[str]) -> None:
@@ -365,6 +370,169 @@ def write_json_file(path: str | None, payload: dict[str, object]) -> None:
     output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def truncate_middle(text: str, max_chars: int = 12000) -> str:
+    if len(text) <= max_chars:
+        return text
+    keep = max_chars // 2
+    omitted = len(text) - keep * 2
+    return (
+        text[:keep]
+        + f"\n\n[... omitted {omitted} chars from the middle of the CI log ...]\n\n"
+        + text[-keep:]
+    )
+
+
+def build_failure_summary_prompt(root: dict[str, str], log_text: str) -> str:
+    return "\n".join(
+        [
+            "Summarize this GitHub Actions failure in a concise StackTrace-style report.",
+            "Return Markdown with exactly these headings:",
+            "1. What failed",
+            "2. Where it failed",
+            "3. Likely cause",
+            "4. Next recovery step",
+            "",
+            "Keep it factual. Do not invent files, commands, or secrets.",
+            "",
+            "Known metadata:",
+            f"- workflow: {root.get('workflow_name', 'unknown')}",
+            f"- branch: {root.get('head_branch', 'unknown')}",
+            f"- failed step: {root.get('failed_step', 'unknown')}",
+            f"- category: {root.get('failure_category', 'unknown')}",
+            f"- normalized signature: {root.get('error_signature', 'unknown')}",
+            "",
+            "Log excerpt:",
+            "```text",
+            truncate_middle(log_text),
+            "```",
+        ]
+    )
+
+
+def deterministic_failure_summary(root: dict[str, str], log_text: str) -> str:
+    digest = log_digest(log_text, root.get("failure_category", "generic"), 12)
+    evidence = "\n".join(f"- `{compact_line(line, max_chars=140)}`" for line in digest[-5:])
+    if not evidence:
+        evidence = "- No matching error lines were found; inspect the failed job log."
+    return "\n".join(
+        [
+            "### What failed",
+            f"`{root.get('workflow_name', 'unknown-workflow')}` failed in `{root.get('failed_step', 'unknown-step')}`.",
+            "",
+            "### Where it failed",
+            f"Branch `{root.get('head_branch', 'unknown-branch')}` / category `{root.get('failure_category', 'generic-ci')}`.",
+            "",
+            "### Likely cause",
+            f"The normalized signature is `{root.get('error_signature', 'unknown')}`.",
+            "",
+            "### Next recovery step",
+            root.get("recovery_draft", "Inspect the failed job log and rerun the workflow after a focused fix."),
+            "",
+            "### Evidence",
+            evidence,
+        ]
+    )
+
+
+def extract_anthropic_text(payload: dict[str, object]) -> str:
+    parts: list[str] = []
+    for item in payload.get("content", []):  # type: ignore[union-attr]
+        if isinstance(item, dict) and item.get("type") == "text":
+            text = item.get("text")
+            if isinstance(text, str):
+                parts.append(text)
+    return "\n".join(parts).strip()
+
+
+def anthropic_failure_summary(prompt: str, *, api_key: str, model: str, timeout_seconds: int) -> str:
+    body = json.dumps(
+        {
+            "model": model,
+            "max_tokens": 700,
+            "temperature": 0,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        ANTHROPIC_MESSAGES_URL,
+        data=body,
+        method="POST",
+        headers={
+            "content-type": "application/json",
+            "anthropic-version": "2023-06-01",
+            "x-api-key": api_key,
+        },
+    )
+    with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    text = extract_anthropic_text(payload)
+    if not text:
+        raise ValueError("Anthropic response did not contain text content")
+    return text
+
+
+def workflow_ai_summary(
+    root: dict[str, str],
+    log_text: str,
+    *,
+    timeout_seconds: int = 30,
+) -> dict[str, object]:
+    prompt = build_failure_summary_prompt(root, log_text)
+    provider = "deterministic"
+    model = ""
+    error = ""
+    summary = deterministic_failure_summary(root, log_text)
+
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    if anthropic_key:
+        model = os.environ.get("ANTHROPIC_MODEL", DEFAULT_ANTHROPIC_MODEL).strip() or DEFAULT_ANTHROPIC_MODEL
+        try:
+            summary = anthropic_failure_summary(
+                prompt,
+                api_key=anthropic_key,
+                model=model,
+                timeout_seconds=timeout_seconds,
+            )
+            provider = "anthropic"
+        except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+            error = str(exc)
+
+    return {
+        "provider": provider,
+        "model": model,
+        "fallback_used": provider == "deterministic",
+        "error": error,
+        "summary": summary,
+    }
+
+
+def workflow_ai_summary_cli(args: argparse.Namespace) -> int:
+    log_path = Path(args.log)
+    log_text = read_log_text(log_path) if log_path.exists() else ""
+    root_path = Path(args.root_json)
+    root = json.loads(root_path.read_text(encoding="utf-8")) if root_path.exists() else workflow_root_cause(
+        workflow_name=args.workflow_name,
+        branch=args.branch,
+        failed_step=args.failed_step,
+        log_text=log_text,
+    )
+    result = workflow_ai_summary(root, log_text, timeout_seconds=args.timeout_seconds)
+    markdown = [
+        f"<!-- ai_summary_provider: {result['provider']} -->",
+        f"<!-- ai_summary_fallback_used: {str(result['fallback_used']).lower()} -->",
+        str(result["summary"]).strip(),
+    ]
+    if result.get("error"):
+        markdown.extend(["", f"_LLM summary fallback reason: `{result['error']}`_"])
+    if args.markdown:
+        output = Path(args.markdown)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text("\n".join(markdown).strip() + "\n", encoding="utf-8")
+    write_json_file(args.json, result)
+    print("\n".join(markdown).strip())
+    return 0
+
+
 def log_digest(log_text: str, kind: str, max_lines: int) -> list[str]:
     keywords = DEN0_KEYWORDS if kind == "deno-lint" else DEPLOY_KEYWORDS
     matched: list[str] = []
@@ -556,6 +724,17 @@ def main() -> int:
     root_cause.add_argument("--log")
     root_cause.add_argument("--json")
     root_cause.set_defaults(func=workflow_root_cause_cli)
+
+    ai_summary = sub.add_parser("workflow-ai-summary")
+    ai_summary.add_argument("--workflow-name", required=True)
+    ai_summary.add_argument("--branch", required=True)
+    ai_summary.add_argument("--failed-step", required=True)
+    ai_summary.add_argument("--log", required=True)
+    ai_summary.add_argument("--root-json", required=True)
+    ai_summary.add_argument("--markdown")
+    ai_summary.add_argument("--json")
+    ai_summary.add_argument("--timeout-seconds", type=int, default=30)
+    ai_summary.set_defaults(func=workflow_ai_summary_cli)
 
     scope = sub.add_parser("workflow-scope")
     scope.add_argument("--workflow-name", required=True)

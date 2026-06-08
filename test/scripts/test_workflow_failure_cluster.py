@@ -1,8 +1,10 @@
 import json
+import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -178,6 +180,78 @@ class WorkflowFailureClusterTest(unittest.TestCase):
                 json.loads(json_path.read_text(encoding="utf-8"))["categories"]["notion-sync"],
                 1,
             )
+
+    def test_deterministic_ai_summary_has_stacktrace_sections(self) -> None:
+        root = ci_failure_digest.workflow_root_cause(
+            workflow_name="CI",
+            branch="main",
+            failed_step="Deno lint",
+            log_text="error: Cannot resolve module at supabase/functions/a.ts:2:1",
+        )
+
+        summary = ci_failure_digest.deterministic_failure_summary(
+            root,
+            "error: Cannot resolve module at supabase/functions/a.ts:2:1",
+        )
+
+        self.assertIn("What failed", summary)
+        self.assertIn("Where it failed", summary)
+        self.assertIn("Likely cause", summary)
+        self.assertIn("Next recovery step", summary)
+
+    def test_extract_anthropic_text_reads_text_parts(self) -> None:
+        text = ci_failure_digest.extract_anthropic_text(
+            {
+                "content": [
+                    {"type": "text", "text": "first"},
+                    {"type": "tool_use", "name": "ignored"},
+                    {"type": "text", "text": "second"},
+                ]
+            }
+        )
+
+        self.assertEqual(text, "first\nsecond")
+
+    def test_workflow_ai_summary_cli_writes_fallback_without_key(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            log_path = tmp_path / "failure.log"
+            root_path = tmp_path / "root.json"
+            markdown_path = tmp_path / "summary.md"
+            json_path = tmp_path / "summary.json"
+            log_path.write_text(
+                "deno lint supabase/functions failed\nerror: no-explicit-any\n",
+                encoding="utf-8",
+            )
+            root = ci_failure_digest.workflow_root_cause(
+                workflow_name="CI",
+                branch="main",
+                failed_step="Deno lint",
+                log_text=log_path.read_text(encoding="utf-8"),
+            )
+            root_path.write_text(json.dumps(root), encoding="utf-8")
+
+            with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": ""}):
+                exit_code = ci_failure_digest.workflow_ai_summary_cli(
+                    type(
+                        "Args",
+                        (),
+                        {
+                            "workflow_name": "CI",
+                            "branch": "main",
+                            "failed_step": "Deno lint",
+                            "log": str(log_path),
+                            "root_json": str(root_path),
+                            "markdown": str(markdown_path),
+                            "json": str(json_path),
+                            "timeout_seconds": 1,
+                        },
+                    )()
+                )
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("ai_summary_provider: deterministic", markdown_path.read_text(encoding="utf-8"))
+            self.assertTrue(json.loads(json_path.read_text(encoding="utf-8"))["fallback_used"])
 
 
 if __name__ == "__main__":
