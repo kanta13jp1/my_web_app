@@ -60,6 +60,12 @@ import {
   DisposableBalanceError,
   handleDisposableBalanceAction,
 } from "./disposable_balance.ts";
+import {
+  handleMarketPriceAction,
+  isMarketPriceLiveFetchEnabled,
+  MarketPriceActionError,
+  type MarketPriceDb,
+} from "./market_price.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2954,6 +2960,9 @@ serve(async (req: Request) => {
       "quiz.evaluate",
       "quiz.explain",
       "kpi.monthly_summary",
+      "asset.market_price.fetch",
+      "asset.investment.market_price.fetch",
+      "ai_hub.fetch_market_price",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
       "payslip.parse",
@@ -4443,6 +4452,18 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "asset.market_price.fetch":
+      case "asset.investment.market_price.fetch":
+      case "ai_hub.fetch_market_price": {
+        const result = await handleMarketPriceAction({
+          db: admin as unknown as MarketPriceDb,
+          body,
+          userId: userId ?? "",
+          liveFetchEnabled: isMarketPriceLiveFetchEnabled(body),
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.monthly_report.generate":
       case "asset_liability.monthly_report.generate": {
         const aiSummaryEnabled = isMonthlyAssetReportAiSummaryEnabled(body);
@@ -5618,6 +5639,9 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof DisposableBalanceError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof MarketPriceActionError) {
       return json({ error: err.message }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
