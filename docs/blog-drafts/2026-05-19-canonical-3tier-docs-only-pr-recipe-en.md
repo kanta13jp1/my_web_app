@@ -3,7 +3,7 @@ title: "3-Tier Canonical for Docs-Only PRs — Body + Label + Close/Reopen"
 emoji: "🧪"
 type: "tech"
 topics: ["githubactions", "ci", "githubapi", "workflows", "devops"]
-published: false
+published: true
 ---
 
 ## TL;DR
