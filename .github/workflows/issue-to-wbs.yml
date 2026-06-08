@@ -4,7 +4,7 @@ on:
   issues:
     types: [opened, edited, closed, reopened, labeled, unlabeled]
   schedule:
-    - cron: "25 * * * *"
+    - cron: "25 */2 * * *"
   workflow_dispatch:
     inputs:
       recent_only:

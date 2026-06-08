@@ -17,7 +17,7 @@ name: WBS AI Review (1h cron)
 
 on:
   schedule:
-    - cron: "20 * * * *"  # 毎時 20 分
+    - cron: "20 */2 * * *"  # 2時間ごと 20 分
   workflow_dispatch:
     inputs:
       max_tasks:

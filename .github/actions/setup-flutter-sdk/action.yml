@@ -8,7 +8,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install Flutter
+    - name: Resolve Flutter ref
+      id: resolve
       shell: bash
       run: |
         set -euo pipefail
@@ -19,7 +20,22 @@ runs:
           *) ref="$requested" ;;
         esac
 
-        flutter_root="${RUNNER_TEMP}/flutter-${ref}"
+        echo "ref=${ref}" >> "$GITHUB_OUTPUT"
+        echo "flutter-root=${RUNNER_TEMP}/flutter-${ref}" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Flutter SDK
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.resolve.outputs.flutter-root }}
+        key: flutter-sdk-${{ runner.os }}-${{ steps.resolve.outputs.ref }}-v1
+
+    - name: Install Flutter
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        ref="${{ steps.resolve.outputs.ref }}"
+        flutter_root="${{ steps.resolve.outputs.flutter-root }}"
         if [ ! -x "${flutter_root}/bin/flutter" ]; then
           rm -rf "$flutter_root"
           git clone --depth 1 --branch "$ref" https://github.com/flutter/flutter.git "$flutter_root"
