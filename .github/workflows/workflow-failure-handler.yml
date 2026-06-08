@@ -157,6 +157,9 @@ jobs:
             const root = JSON.parse(fs.readFileSync('/tmp/workflow-root-cause.json', 'utf8'));
             const shortSha = (run.head_sha || '').substring(0, 7) || 'unknown';
             const escaped = (value) => String(value || '').replace(/\|/g, '\\|');
+            const recoveryDraft = String(root.recovery_draft || '')
+              .split('\n')
+              .filter((line) => line.trim().length > 0);
             const marker = `<!-- root_cause_key: ${root.root_cause_key} -->`;
             const issues = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
@@ -223,6 +226,10 @@ jobs:
               '## Recovery rule',
               '',
               'A later successful run of the same workflow and branch will comment with the success run URL and close this issue only when this root-cause marker is present.',
+              '',
+              '## Suggested recovery draft',
+              '',
+              ...recoveryDraft,
               '',
               '## Triage checklist',
               '',

@@ -85,6 +85,19 @@ class WorkflowFailureClusterTest(unittest.TestCase):
         self.assertEqual(first["recovery_scope_key"], different["recovery_scope_key"])
         self.assertTrue(first["root_cause_key"].startswith("wfrc-"))
 
+    def test_recovery_draft_is_category_specific(self) -> None:
+        root = ci_failure_digest.workflow_root_cause(
+            workflow_name="Deploy to Production",
+            branch="main",
+            failed_step="Run Supabase migrations",
+            log_text="duplicate key value violates unique constraint schema_migrations_pkey",
+        )
+
+        self.assertEqual(root["failure_category"], "migration-collision")
+        self.assertIn("Category `migration-collision`", root["recovery_draft"])
+        self.assertIn("supabase migration list", root["recovery_draft"])
+        self.assertIn("duplicate key", root["recovery_draft"])
+
     def test_marker_parser_reads_issue_metadata(self) -> None:
         markers = ci_failure_digest.parse_issue_markers(
             """

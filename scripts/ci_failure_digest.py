@@ -110,6 +110,44 @@ WORKFLOW_CATEGORY_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ),
 )
 
+RECOVERY_DRAFTS: dict[str, tuple[str, ...]] = {
+    "migration-collision": (
+        "- Compare local migration files with remote `schema_migrations` for duplicate or missing versions.",
+        "- Run `supabase migration list` and repair the exact version before retrying deploy.",
+        "- Re-run the failed deploy workflow after the repaired migration state is committed or confirmed.",
+    ),
+    "supabase-push": (
+        "- Inspect the Supabase CLI error and identify whether the failure is SQL, auth, or network related.",
+        "- Validate the newest migration locally, then retry `supabase db push` with the expected project credentials.",
+        "- If the remote state changed, record the recovery command in the issue before re-running CI.",
+    ),
+    "deno-lint": (
+        "- Run `deno fmt --check`, `deno lint`, and targeted Edge Function tests for the touched function.",
+        "- Fix the reported TypeScript or formatting issue at the path shown in the error signature.",
+        "- Re-run the same workflow after the lint/test patch is pushed.",
+    ),
+    "flutter-analyze": (
+        "- Run `flutter pub get` and `flutter analyze` locally on a clean checkout.",
+        "- Fix the analyzer diagnostic at the referenced Dart file, keeping generated plugin files out of the patch.",
+        "- Re-run the CI workflow after analyzer output is clean.",
+    ),
+    "flutter-build": (
+        "- Run the failing `flutter build` target locally with the same flavor or web flags.",
+        "- Check dependency resolution, asset declarations, and generated files before changing application code.",
+        "- Re-run the build workflow and attach the successful run URL.",
+    ),
+    "notion-sync": (
+        "- Check Notion secret availability, database schema drift, and API response status from the failed log.",
+        "- Update the Notion mapping or credential configuration before retrying the sync workflow.",
+        "- If Notion is temporarily unavailable, leave the issue open until a later scheduled success closes it.",
+    ),
+    "generic-ci": (
+        "- Inspect the failed step and the normalized error signature in this issue.",
+        "- Reproduce the command locally or with `gh run view --log` before editing code.",
+        "- Push the smallest recovery patch and confirm a later successful workflow closes this issue.",
+    ),
+}
+
 SIGNATURE_HINT_RE = re.compile(
     r"(error|failed|failure|exception|traceback|panic|fatal|denied|"
     r"sqlstate|schema_migrations|duplicate key|notion|supabase|deno|flutter)",
@@ -167,6 +205,20 @@ def classify_workflow_failure(workflow_name: str, failed_step: str, log_text: st
     return "generic-ci"
 
 
+def workflow_recovery_draft(
+    category: str,
+    workflow_name: str,
+    failed_step: str,
+    error_signature: str,
+) -> list[str]:
+    heading = (
+        f"- Category `{category or 'generic-ci'}` was detected for "
+        f"`{workflow_name or 'unknown-workflow'}` / `{failed_step or 'unknown-step'}`."
+    )
+    signature = f"- Start from this error signature: `{error_signature or 'unknown'}`."
+    return [heading, signature, *RECOVERY_DRAFTS.get(category, RECOVERY_DRAFTS["generic-ci"])]
+
+
 def extract_error_signature(log_text: str, fallback: str = "unknown-step", max_chars: int = 180) -> str:
     candidates: list[str] = []
     for raw in (log_text or "").splitlines():
@@ -216,6 +268,14 @@ def workflow_root_cause(
         "failed_step": failed_step or "unknown-step",
         "failure_category": category,
         "error_signature": signature,
+        "recovery_draft": "\n".join(
+            workflow_recovery_draft(
+                category=category,
+                workflow_name=workflow_name,
+                failed_step=failed_step,
+                error_signature=signature,
+            )
+        ),
         "root_cause_key": "wfrc-" + hashlib.sha256(key_payload.encode("utf-8")).hexdigest()[:16],
         "recovery_scope_key": recovery_scope_key(workflow_name, branch),
     }
