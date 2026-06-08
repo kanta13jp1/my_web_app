@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 name: Setup Flutter SDK
 description: Install Flutter from the public Flutter git repository without relying on third-party setup actions.
 inputs:
