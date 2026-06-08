@@ -64,4 +64,5 @@ web/
 - [`docs/adr/README.md`](adr/README.md) — ADR (設計判断ログ) 運用ガイド + Index
 - [`docs/PRD.md`](PRD.md) — プロダクト要件定義書 (persona / scope / 非目標 / KPI)
 - [`docs/QUARTERLY_ROADMAP.md`](QUARTERLY_ROADMAP.md) — 四半期ロードマップ (SDLC 7 工程別優先順 / WBS フェーズバランス / リスク)
+- [`docs/MVP_SCOPE.md`](MVP_SCOPE.md) — MVP 機能スコープ (コア 5 機能 / Deferred / keep / GA gate 関係)
 - [`CLAUDE.md`](../CLAUDE.md) — pointer hub

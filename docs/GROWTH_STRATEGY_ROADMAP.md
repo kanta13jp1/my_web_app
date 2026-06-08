@@ -31806,4 +31806,20 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - INDIE_DEV_VELOCITY_PRINCIPLES.md = smallest-unit-of-value shipping discipline
 - AI_FLEET_SYNERGY_PLAYBOOK.md = Win Claude + Win Codex 2-instance fan-out
 
+### 2026-06-08 Win版#132 part 244 — MVP 機能スコープ v1 確定 (WBS 2c710eb1 完了 / /loop autonomous)
+
+**Context**:
+- `/loop` dynamic mode で「WBS 上の未完了タスクを 1 つ完了」を自走。Win-owned 未完了 2 件 (#1495 mobile / #1950 automation) は Codex realm で Win 完了不可 → [DYNAMIC-CLAIM] で business-product の `MVP feature scope 確定` (2c710eb1 / owner codex→win 是正) を引き取り。part 242 PRD v1 → part 243 四半期ロードマップ v1 → 本 MVP スコープ v1 の planning 三部作。
+
+**Changes**:
+- `docs/MVP_SCOPE.md` を新設 — MVP 機能スコープ v1: PRD §4 In-Scope をコア 5 機能 (本社=ダッシュボード / 人事=健康 最優先 / R&D=AI大学+ノート / 財務=家計簿 / 横断=AI mentor) へ絞り込み + Deferred (SNS フル / モバイル同時リリース #1495 / 課金 Stripe / チーム機能) + keep (比較ページ等) + 遅延時の削減順 + GA gate 関係 (旧 closed Draft #1661 を supersede)。cut-line 最終確定は CEO 判断待ちの v1 叩き台。
+- migration `20260608080000_wbs_complete_mvp_scope.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-243 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate (high-risk ultrareview + minimal-E2E) を push 前に local script で確証 → 初稿 body で first-try PASS を狙う (part 241-243 recipe 再現)。
+- BEHIND は merge-base 基準で overlap 判定 (part 243 落とし穴訂正)。file-overlap 0 + 全 check green で admin squash-merge。
+- prod DB の completed flip は deploy-prod (~30min) で反映 → deferred wake で verify。
+- Philosophy Alignment: 原則 1 CEO感 (最終決定権は user) / 4 mentor / 8 KPI (North-Star = 昨日の自分比較) / 9 IPO=ウェルビーイング。
+- commit hash: (PR merge 後に追記)。
+
 
