@@ -12452,9 +12452,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       _buildTextStatusChip(
                         label: item.excludedFromDirectCashflow
                             ? AssetLiabilityPlanningService
-                                  .cardBillingReviewExcludedFromDirectCashflowLabel
+                                .cardBillingReviewExcludedFromDirectCashflowLabel
                             : AssetLiabilityPlanningService
-                                  .cardBillingReviewDirectCashflowTargetLabel,
+                                .cardBillingReviewDirectCashflowTargetLabel,
                         color: item.excludedFromDirectCashflow
                             ? const Color(0xFF2563EB)
                             : const Color(0xFF0D9488),
@@ -12488,8 +12488,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               _buildDebtMasterMetric(
                 label: '設定元',
-                value:
-                    AssetLiabilityPlanningService.paymentMethodSettingSourceLabel(
+                value: AssetLiabilityPlanningService
+                    .paymentMethodSettingSourceLabel(
                   item.paymentMethodSettingSource,
                 ),
               ),
@@ -16678,8 +16678,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   ({String date, double assets, double liabilities, double netWorth})
       _assetTotalsForDate(String date) {
-    final snapshot =
-        _effectiveAssetDataByDate[date] ?? _assetData[date] ?? {};
+    final snapshot = _effectiveAssetDataByDate[date] ?? _assetData[date] ?? {};
     var assets = 0.0;
     var liabilities = 0.0;
     for (final value in snapshot.values) {
@@ -17129,8 +17128,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 if (index < 0 || index >= points.length) {
                   return const SizedBox.shrink();
                 }
-                final date =
-                    DateFormat('M/d').format(DateTime.parse(points[index].date));
+                final date = DateFormat('M/d')
+                    .format(DateTime.parse(points[index].date));
                 return SideTitleWidget(
                   meta: meta,
                   child: Text(
@@ -17333,7 +17332,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         IconButton(
-          tooltip: watchlistEntry == null ? 'Add to watchlist' : 'Edit watchlist',
+          tooltip:
+              watchlistEntry == null ? 'Add to watchlist' : 'Edit watchlist',
           onPressed: () => _showWatchlistDialog(type),
           icon: Icon(
             watchlistEntry == null ? Icons.star_border : Icons.star,
