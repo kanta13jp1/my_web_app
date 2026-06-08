@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:my_web_app/services/debt_lockdown_service.dart';
-
 import '../models/asset_liability_workbook.dart';
 
 class AssetLiabilityPlanningService {
@@ -38,14 +36,16 @@ class AssetLiabilityPlanningService {
   static const String cardBillingReviewRemovedBillingAccountAlert =
       '請求先カードが見つかりません';
   static const String cardBillingReviewZeroAmountAlert = '金額が0円のため確認してください';
-  static const String cardStatementMissingImportAlert = 'カード明細の取り込みが未実施です';
+  static const String cardStatementMissingImportAlert =
+      'card statement detail import is missing';
   static const String cardStatementBillingAccountMissingAlert =
-      '請求先カード口座が見つかりません';
-  static const String cardStatementAmountMismatchAlert = 'カード明細合計が請求額と一致しません';
+      'billing card account is missing';
+  static const String cardStatementAmountMismatchAlert =
+      'card statement total does not match billed amount';
   static const String cardStatementConfiguredMismatchAlert =
-      '設定済みカード内訳合計が請求額と一致しません';
+      'configured card-billed detail total does not match billed amount';
   static const String cardStatementImportedConfiguredMismatchAlert =
-      '取り込み明細合計が設定済み内訳合計と一致しません';
+      'imported statement total does not match configured detail total';
   static const String auCardBillingNotice =
       'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
@@ -80,7 +80,6 @@ class AssetLiabilityPlanningService {
     Map<String, String> paymentDifferenceReasons = const <String, String>{},
     Map<String, double> annualRateOverrides = const <String, double>{},
     Set<String> paidAccountNames = const <String>{},
-    Set<String> billingConfirmedAccountIds = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
     Map<String, String> defaultPaymentSourceAccountIds =
         const <String, String>{},
@@ -174,7 +173,6 @@ class AssetLiabilityPlanningService {
             paymentDifferenceReasons: paymentDifferenceReasons,
             annualRateOverrides: annualRateOverrides,
             paidAccountNames: paidAccountNames,
-            billingConfirmedAccountIds: billingConfirmedAccountIds,
             paymentSourceAccountIds: effectivePaymentSourceAccountIds,
             defaultCardBillingAccountIds: defaultCardBillingAccountIds,
             cardBillingAccountIds: cardBillingAccountIds,
@@ -529,7 +527,6 @@ class AssetLiabilityPlanningService {
     required Map<String, String> paymentDifferenceReasons,
     required Map<String, double> annualRateOverrides,
     required Set<String> paidAccountNames,
-    required Set<String> billingConfirmedAccountIds,
     required Map<String, String> paymentSourceAccountIds,
     required Map<String, String> defaultCardBillingAccountIds,
     required Map<String, String> cardBillingAccountIds,
@@ -603,23 +600,10 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : principal / liabilityTotal.abs(),
       priorityLabel: _priorityLabel(annualRate),
       paymentAmountEstimated: manualPayment == null,
-      billingConfirmed: _containsAccountKey(
-        billingConfirmedAccountIds,
-        account,
-      ),
       paid: paidAccountNames.contains(account.id) ||
           paidAccountNames.contains(account.name.trim()) ||
           paidAccountNames.contains(account.name),
     );
-  }
-
-  bool _containsAccountKey(
-    Set<String> accountKeys,
-    AssetLiabilityAccount account,
-  ) {
-    return accountKeys.contains(account.id) ||
-        accountKeys.contains(account.name.trim()) ||
-        accountKeys.contains(account.name);
   }
 
   double _annualRateFor({
@@ -627,16 +611,15 @@ class AssetLiabilityPlanningService {
     required Map<String, double> annualRateOverrides,
   }) {
     final byId = annualRateOverrides[account.id];
-    if (byId != null && DebtLockdownService.isRegistrableAnnualRate(byId)) {
+    if (byId != null && byId >= 0) {
       return byId;
     }
     final byTrimmedName = annualRateOverrides[account.name.trim()];
-    if (byTrimmedName != null &&
-        DebtLockdownService.isRegistrableAnnualRate(byTrimmedName)) {
+    if (byTrimmedName != null && byTrimmedName >= 0) {
       return byTrimmedName;
     }
     final byName = annualRateOverrides[account.name];
-    if (byName != null && DebtLockdownService.isRegistrableAnnualRate(byName)) {
+    if (byName != null && byName >= 0) {
       return byName;
     }
     return account.annualRate;
@@ -835,7 +818,6 @@ class AssetLiabilityPlanningService {
       billingAccountName: row.billingAccountName,
       includedInBillingAccount: row.includedInBillingAccount,
       directCashflowTarget: row.isDirectCashflowTarget,
-      paid: row.paid,
       alerts: alerts,
     );
   }
@@ -1400,10 +1382,8 @@ class AssetLiabilityPlanningService {
       return transferTasks;
     }
 
-    final fromAccount = _findCashLikeAccountById(
-      accounts,
-      smbcOtsukaBranchAccountId,
-    );
+    final fromAccount =
+        _findCashLikeAccountById(accounts, smbcOtsukaBranchAccountId);
     final toAccount = _findCashLikeAccountById(accounts, jibunBankAccountId);
     if (fromAccount == null || toAccount == null) {
       return transferTasks;
@@ -1664,7 +1644,9 @@ class AssetLiabilityPlanningService {
     required bool includeDefaultKddiProvider,
     required bool includeDefaultRent,
   }) {
-    final result = <String, double>{...monthlyPaymentOverrides};
+    final result = <String, double>{
+      ...monthlyPaymentOverrides,
+    };
     if (includeDefaultKddiProvider &&
         !result.containsKey(kddiProviderAccountId) &&
         !result.containsKey(kddiProviderAccountName)) {
@@ -1685,9 +1667,8 @@ class AssetLiabilityPlanningService {
   }
 
   bool _hasRent(Map<String, double> snapshot) {
-    return snapshot.keys.any(
-      (name) => _accountIdForName(name) == rentAccountId,
-    );
+    return snapshot.keys
+        .any((name) => _accountIdForName(name) == rentAccountId);
   }
 
   String _fallbackAccountId(String name) {

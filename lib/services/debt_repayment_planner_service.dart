@@ -11,20 +11,14 @@ class DebtRepaymentPlannerService {
   DebtRepaymentInputDebt normalizeDebt({
     required String name,
     required double balance,
-    double? annualRate,
-    double? minimumPaymentRate,
-    double? minimumPaymentFloor,
-    int? paymentDay,
   }) {
     final assumption = _assumptionForName(name);
     return DebtRepaymentInputDebt(
       name: name,
       balance: balance.abs(),
-      annualRate: annualRate ?? assumption.annualRate,
-      minimumPaymentRate: minimumPaymentRate ?? assumption.minimumPaymentRate,
-      minimumPaymentFloor:
-          minimumPaymentFloor ?? assumption.minimumPaymentFloor,
-      paymentDay: _normalizePaymentDay(paymentDay),
+      annualRate: assumption.annualRate,
+      minimumPaymentRate: assumption.minimumPaymentRate,
+      minimumPaymentFloor: assumption.minimumPaymentFloor,
     );
   }
 
@@ -44,14 +38,10 @@ class DebtRepaymentPlannerService {
         priorities: const [],
         monthlyActions: const [],
         roadmap: const [],
-        requestedMonthlyBudget: max(
-          0,
-          input.monthlyBudget + input.extraBudget,
-        ).toDouble(),
-        affordableMonthlyBudget: max(
-          0,
-          input.monthlyIncome - input.monthlyExpense,
-        ).toDouble(),
+        requestedMonthlyBudget:
+            max(0, input.monthlyBudget + input.extraBudget).toDouble(),
+        affordableMonthlyBudget:
+            max(0, input.monthlyIncome - input.monthlyExpense).toDouble(),
         estimatedCompletionMonths: 0,
         canMeetTargetMonths: true,
       );
@@ -62,14 +52,10 @@ class DebtRepaymentPlannerService {
       strategy: input.strategy,
     );
 
-    final requestedMonthlyBudget = max(
-      0,
-      input.monthlyBudget + input.extraBudget,
-    ).toDouble();
-    final affordableMonthlyBudget = max(
-      0,
-      input.monthlyIncome - input.monthlyExpense,
-    ).toDouble();
+    final requestedMonthlyBudget =
+        max(0, input.monthlyBudget + input.extraBudget).toDouble();
+    final affordableMonthlyBudget =
+        max(0, input.monthlyIncome - input.monthlyExpense).toDouble();
 
     final warnings = <String>[];
     if (input.netWorth < 0) {
@@ -238,7 +224,10 @@ class DebtRepaymentPlannerService {
         ? 'Codex-style Code モード用に、今月の実行タスクを整理しました。'
         : 'Codex-style Code モード用に、${topPriority.name} を起点とした実行タスクへ落とし込みました。';
 
-    return DebtExecutionPlan(summary: summary, tasks: tasks);
+    return DebtExecutionPlan(
+      summary: summary,
+      tasks: tasks,
+    );
   }
 
   List<DebtPriorityItem> _buildPriorities({
@@ -256,8 +245,10 @@ class DebtRepaymentPlannerService {
         name: debt.name,
         balance: debt.balance,
         annualRate: debt.annualRate,
-        paymentDay: debt.paymentDay,
-        reason: _priorityReason(debt: debt, strategy: strategy),
+        reason: _priorityReason(
+          debt: debt,
+          strategy: strategy,
+        ),
       );
     }).toList();
   }
@@ -362,10 +353,8 @@ class DebtRepaymentPlannerService {
       actions.add(
         DebtMonthlyAction(
           monthIndex: monthIndex,
-          monthStart: DateTime(
-            baseMonth.year,
-            baseMonth.month + monthIndex - 1,
-          ),
+          monthStart:
+              DateTime(baseMonth.year, baseMonth.month + monthIndex - 1),
           focusDebt: focusDebt,
           paymentTotal: paymentTotal,
           minimumTotal: minimumTotal,
@@ -468,12 +457,6 @@ class DebtRepaymentPlannerService {
         final byRate = b.annualRate.compareTo(a.annualRate);
         if (byRate != 0) return byRate;
         return a.balance.compareTo(b.balance);
-      case DebtRepaymentStrategy.dueDate:
-        final byPaymentDay = (a.paymentDay ?? 99).compareTo(b.paymentDay ?? 99);
-        if (byPaymentDay != 0) return byPaymentDay;
-        final byRate = b.annualRate.compareTo(a.annualRate);
-        if (byRate != 0) return byRate;
-        return a.balance.compareTo(b.balance);
       case DebtRepaymentStrategy.hybrid:
         final rateGap = (a.annualRate - b.annualRate).abs();
         if (rateGap >= 0.03) {
@@ -495,11 +478,6 @@ class DebtRepaymentPlannerService {
         return '残高が小さく、早期完済で達成感を得やすいため';
       case DebtRepaymentStrategy.avalanche:
         return '推定金利 ${_percent(debt.annualRate)} と高く、利息削減効果が大きいため';
-      case DebtRepaymentStrategy.dueDate:
-        final day = debt.paymentDay;
-        return day == null
-            ? '支払日が未設定のため、設定済みの返済を先に並べた後で扱います'
-            : '支払日 $day日 が近く、月内の資金繰りリスクを抑えやすいため';
       case DebtRepaymentStrategy.hybrid:
         if (debt.annualRate >= 0.15) {
           return '高金利帯で、放置時の利息負担が大きいため';
@@ -517,7 +495,10 @@ class DebtRepaymentPlannerService {
   _DebtAssumption _assumptionForName(String name) {
     final key = name.toLowerCase();
 
-    if (_containsAny(key, const ['アコム', 'モビット', 'プロミス', 'レイク', 'アイフル'])) {
+    if (_containsAny(
+      key,
+      const ['アコム', 'モビット', 'プロミス', 'レイク', 'アイフル'],
+    )) {
       return const _DebtAssumption(
         annualRate: 0.18,
         minimumPaymentRate: 0.04,
@@ -525,14 +506,10 @@ class DebtRepaymentPlannerService {
       );
     }
 
-    if (_containsAny(key, const [
-      'paypay',
-      'aupay',
-      'カード',
-      'クレジット',
-      'リボ',
-      'ショッピング',
-    ])) {
+    if (_containsAny(
+      key,
+      const ['paypay', 'aupay', 'カード', 'クレジット', 'リボ', 'ショッピング'],
+    )) {
       return const _DebtAssumption(
         annualRate: 0.15,
         minimumPaymentRate: 0.03,
@@ -540,7 +517,10 @@ class DebtRepaymentPlannerService {
       );
     }
 
-    if (_containsAny(key, const ['銀行', 'ローン', 'じぶん', '三井住友', '横浜'])) {
+    if (_containsAny(
+      key,
+      const ['銀行', 'ローン', 'じぶん', '三井住友', '横浜'],
+    )) {
       return const _DebtAssumption(
         annualRate: 0.14,
         minimumPaymentRate: 0.03,
@@ -548,7 +528,10 @@ class DebtRepaymentPlannerService {
       );
     }
 
-    if (_containsAny(key, const ['通信', '携帯', '税', '公共', '滞納', 'au'])) {
+    if (_containsAny(
+      key,
+      const ['通信', '携帯', '税', '公共', '滞納', 'au'],
+    )) {
       return const _DebtAssumption(
         annualRate: 0.06,
         minimumPaymentRate: 0.02,
@@ -568,12 +551,6 @@ class DebtRepaymentPlannerService {
       if (source.contains(keyword.toLowerCase())) return true;
     }
     return false;
-  }
-
-  int? _normalizePaymentDay(int? paymentDay) {
-    if (paymentDay == null) return null;
-    if (paymentDay < 1 || paymentDay > 31) return null;
-    return paymentDay;
   }
 
   String _buildMarkdown({
@@ -608,9 +585,8 @@ class DebtRepaymentPlannerService {
 
     buffer.writeln('### 現状診断');
     buffer.writeln('');
-    buffer.writeln(
-      '現在の純資産は${_yen(input.netWorth)}、借入総額は${_yen(currentDebt)}です。',
-    );
+    buffer
+        .writeln('現在の純資産は${_yen(input.netWorth)}、借入総額は${_yen(currentDebt)}です。');
     buffer.writeln(
       '今月の収入合計は${_yen(input.monthlyIncome)}、固定費は${_yen(input.fixedCost)}、支出合計は${_yen(input.monthlyExpense)}です。',
     );
@@ -633,7 +609,9 @@ class DebtRepaymentPlannerService {
 
     buffer.writeln('### 返済優先順位（$strategyTitle）');
     buffer.writeln('');
-    buffer.writeln('※以下の金利は仮定値です。実際の金利は契約内容により異なりますので、必ずご確認ください。');
+    buffer.writeln(
+      '※以下の金利は仮定値です。実際の金利は契約内容により異なりますので、必ずご確認ください。',
+    );
     buffer.writeln('* 消費者金融系（アコム、モビットなど）: 年利18.0%');
     buffer.writeln('* 銀行系カードローン（じぶんローン、三井住友、横浜銀行など）: 年利14.0%');
     buffer.writeln('* クレジットカードのリボ・キャッシング（auPAY、PayPayカードなど）: 年利15.0%');
@@ -641,9 +619,8 @@ class DebtRepaymentPlannerService {
     buffer.writeln('');
 
     for (final item in priorities) {
-      buffer.writeln(
-        '${item.rank}.  **${item.name}:** 残高 ${_yen(item.balance)}',
-      );
+      buffer
+          .writeln('${item.rank}.  **${item.name}:** 残高 ${_yen(item.balance)}');
       buffer.writeln('    *   理由: ${item.reason}');
     }
     buffer.writeln('');
@@ -698,9 +675,8 @@ class DebtRepaymentPlannerService {
     buffer.writeln('');
     for (final step in roadmap) {
       if (step.endMonth == null) {
-        buffer.writeln(
-          '*   **${step.startMonth}ヶ月目以降:** ${step.name} の完済を目指す。',
-        );
+        buffer
+            .writeln('*   **${step.startMonth}ヶ月目以降:** ${step.name} の完済を目指す。');
       } else if (step.startMonth == step.endMonth) {
         buffer.writeln('*   **${step.startMonth}ヶ月目:** ${step.name} を完済。');
       } else {
@@ -758,8 +734,6 @@ class DebtRepaymentPlannerService {
         return '少額優先：スノーボール方式';
       case DebtRepaymentStrategy.avalanche:
         return '高金利優先：アバランチ方式';
-      case DebtRepaymentStrategy.dueDate:
-        return '支払日順方式';
       case DebtRepaymentStrategy.hybrid:
         return 'ハイブリッド方式';
     }
@@ -771,8 +745,6 @@ class DebtRepaymentPlannerService {
         return '少額優先（スノーボール）';
       case DebtRepaymentStrategy.avalanche:
         return '高金利優先（アバランチ）';
-      case DebtRepaymentStrategy.dueDate:
-        return '支払日順';
       case DebtRepaymentStrategy.hybrid:
         return 'ハイブリッド（高金利×少額）';
     }
@@ -812,7 +784,6 @@ class _DebtState {
   final double annualRate;
   final double minimumPaymentRate;
   final double minimumPaymentFloor;
-  final int? paymentDay;
 
   _DebtState({
     required this.name,
@@ -820,7 +791,6 @@ class _DebtState {
     required this.annualRate,
     required this.minimumPaymentRate,
     required this.minimumPaymentFloor,
-    required this.paymentDay,
   });
 
   factory _DebtState.fromInput(DebtRepaymentInputDebt input) {
@@ -830,7 +800,6 @@ class _DebtState {
       annualRate: input.annualRate,
       minimumPaymentRate: input.minimumPaymentRate,
       minimumPaymentFloor: input.minimumPaymentFloor,
-      paymentDay: input.paymentDay,
     );
   }
 
@@ -841,7 +810,6 @@ class _DebtState {
       annualRate: annualRate,
       minimumPaymentRate: minimumPaymentRate,
       minimumPaymentFloor: minimumPaymentFloor,
-      paymentDay: paymentDay,
     );
   }
 }
