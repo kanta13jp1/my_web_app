@@ -1,6 +1,6 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/6/7 (JST)_
+_Generated: 2026/6/8 (JST)_
 _Active user tasks: 58_
 
 ## 概要
@@ -19,7 +19,7 @@ NotebookLM に source として追加し、「具体的手順」「詰まりポ�
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-06
+- **deadline**: 2026-06-07
 
 **説明**:
 
@@ -34,7 +34,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2712 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-06
+- **deadline**: 2026-06-07
 
 **説明**:
 
@@ -49,7 +49,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2604 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-06
+- **deadline**: 2026-06-07
 
 **説明**:
 
@@ -64,236 +64,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2705 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-06
+- **deadline**: 2026-06-07
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2659 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T02:46:18Z
-
----
-
-### 🟡 ⏳ [Issue #1840] [追加要望][P2][NotebookLM] 2026-05-03 残 7 本 triage — Notion comments + Claude Design plugin + Gemini RN + Competitor Discovery + Slack-Notion + Tech blog automation
-
-- **id**: `b481c440-f3b1-43b7-9786-f9517695ac6c`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1840 / Author: kanta13jp1 / Labels: enhancement, priority:medium, 追加要望, notebooklm / GitHub updated: 2026-05-03T10:39:48Z
-
----
-
-### 🟡 ⏳ [Issue #2601] [notebooklm:3fc9a086:3] Notion AIおよびSlackの料金改定に伴うSaaS運用コストの監査と代替自動化手段の検証
-
-- **id**: `2843f0d5-68d1-4106-bce9-1e09b1f39938`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2601 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T00:20:20Z
-
----
-
-### 🟡 🔧 [Issue #1705] [追加要望][P2][NotebookLM] Notion DB ID + WorkOS AuthKit + Gemini Code Assist Quotas を運用統合
-
-- **id**: `1c5e767c-9cd9-4074-a66f-64b86bb3e6d1`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 20%
-- **status**: in_progress
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1705 / Author: kanta13jp1 / Labels: enhancement, priority:medium, 追加要望, notebooklm / GitHub updated: 2026-05-03T04:52:18Z
-
----
-
-### 🟡 ⏳ [Issue #2703] [notebooklm:0b7a7406:2] GitHub Actionsを利用した1時間ごとのNotion自動同期処理の構築
-
-- **id**: `9866f0cc-dd71-46ff-8994-0b52bb162a1e`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2703 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T02:58:47Z
-
----
-
-### 🟡 ⏳ [Issue #2735] [notebooklm:850dfd54:3] 承認済みGitHub Organizationによるアクセス制限と開発環境ロックの適用
-
-- **id**: `93af6b12-f2f0-4528-b5f2-bbbdeb87a4f4`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2735 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:12:33Z
-
----
-
-### 🟡 ⏳ [Issue #1926] [PS#1 S26] NotebookLM未確認 notebooks Issue登録 — 2eb9f737/0829f536/d89ae1f5/b74e9ada 等11本
-
-- **id**: `8588c618-0ae9-4b3c-9e10-bf68667f083d`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1926 / Author: kanta13jp1 / Labels: 追加要望 / GitHub updated: 2026-05-03T13:53:04Z
-
----
-
-### 🟡 ⏳ [Issue #2743] [notebooklm:f404e403:1] 開発レビュー承認ワークフローのGitHub連動トラッキング
-
-- **id**: `bcb02ffa-69f9-47ab-9a5d-397eabb37b7a`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2743 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:14:44Z
-
----
-
-### 🟡 ⏳ [Issue #1796] [追加要望][P2][NotebookLM] 1b808a60 WorkOS AuthKit MCP認証 — MCP-AUTH-27 原則実装強化
-
-- **id**: `c47e8e08-463b-4306-b8f5-b5a18cd37208`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1796 / Author: kanta13jp1 / Labels: enhancement, security, priority:medium, 追加要望, notebooklm / GitHub updated: 2026-05-03T08:42:23Z
-
----
-
-### 🟡 ⏳ [Issue #2593] [notebooklm:4d9d5d89:1] ステージゲート方式によるタスク承認ワークフローの導入
-
-- **id**: `75e13790-dba0-4af0-bc9c-1fadb0c229ed`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2593 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T00:18:34Z
-
----
-
-### 🟡 ⏳ [Issue #2737] [notebooklm:54b6f2f2:2] 非構造化データからの構造化JSON抽出とSupabase自動登録パイプライン
-
-- **id**: `c8923a4a-33ce-4bcf-b230-dbba869b2d2d`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2737 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:13:11Z
-
----
-
-### 🟡 ⏳ [Issue #2925] [追加要望][P2][NotebookLM] d420e53f:1 法人口座審査向けコーポレートサイト要件チェック及び簡易生成機能
-
-- **id**: `6a10127b-d4d6-462e-8aba-d911745634d7`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-07
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2925 / Author: kanta13jp1 / Labels: enhancement, priority:medium, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T15:49:36Z
-
----
-
-### 🟡 🔧 [Issue #1809] [追加要望][P3][Win版] NotebookLM 0b7a7406 Slack & Notion Manual Setup — OPS統合手順文書化
-
-- **id**: `390da2af-764c-422e-89fc-a678e0b07562`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 20%
-- **status**: in_progress
-- **priority**: medium
-- **deadline**: 2026-06-07
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1809 / Author: kanta13jp1 / Labels: enhancement, 追加要望, notebooklm / GitHub updated: 2026-06-06T01:22:45Z
-
----
-
-### 🟡 🔧 [Issue #1211] [追加要望] 滞留手動タスクのAI遅延予測と自動リスケジュール提案
-
-- **id**: `3dd2b515-ea4a-4344-a39c-5d5f849ee722`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 20%
-- **status**: in_progress
-- **priority**: medium
-- **deadline**: 2026-06-07
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1211 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-06-01T01:33:50Z
-
----
-
-### 🟡 🔧 [Issue #1807] [追加要望][P3][Win版] NotebookLM 47bd101a Managing Notion Database IDs — Notion統合改善
-
-- **id**: `b3cb095a-b4fe-4103-9db4-caa2fde6057d`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 20%
-- **status**: in_progress
-- **priority**: medium
-- **deadline**: 2026-06-07
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1807 / Author: kanta13jp1 / Labels: enhancement, 追加要望, notebooklm / GitHub updated: 2026-06-05T01:28:21Z
-
----
-
-### 🟡 ⏳ [Issue #1185] [追加要望] AI役員による法人口座開設向け事業計画書の自動生成機能
-
-- **id**: `4156da1f-8a43-4d98-8475-fd9393b0183a`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-07
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1185 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-05-31T01:47:28Z
 
 ---
 
@@ -312,9 +87,9 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2880 / Author: kan
 
 ---
 
-### 🟡 ⏳ [Issue #2815] [notebooklm:28590c8b:1] Notion 3.4の自動生成ダッシュボード機能の調査と競合ベンチマーク
+### 🟡 ⏳ [Issue #1840] [追加要望][P2][NotebookLM] 2026-05-03 残 7 本 triage — Notion comments + Claude Design plugin + Gemini RN + Competitor Discovery + Slack-Notion + Tech blog automation
 
-- **id**: `17797f72-5e86-4625-89b2-13ed9f88510e`
+- **id**: `b481c440-f3b1-43b7-9786-f9517695ac6c`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
@@ -323,13 +98,13 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2880 / Author: kan
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2815 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:34:00Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1840 / Author: kanta13jp1 / Labels: enhancement, priority:medium, 追加要望, notebooklm / GitHub updated: 2026-05-03T10:39:48Z
 
 ---
 
-### 🟡 ⏳ [Issue #2869] [追加要望][P2][NotebookLM] bdec9ea5:2 Notion MCPを利用したGitHub Issuesと連携する仕様書・PRDの自動生成と動的更新
+### 🟡 ⏳ [Issue #2601] [notebooklm:3fc9a086:3] Notion AIおよびSlackの料金改定に伴うSaaS運用コストの監査と代替自動化手段の検証
 
-- **id**: `536dfcc7-76d2-4892-b347-f99c9ba486e0`
+- **id**: `2843f0d5-68d1-4106-bce9-1e09b1f39938`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
@@ -338,13 +113,13 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2815 / Author: kan
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2869 / Author: kanta13jp1 / Labels: enhancement, priority:medium, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-30T01:21:55Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2601 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T00:20:20Z
 
 ---
 
-### 🟡 ⏳ [Issue #1321] [追加要望] 付箋（コメント）のステータス管理（解決済み・アーカイブ）機能
+### 🟡 ⏳ [Issue #2703] [notebooklm:0b7a7406:2] GitHub Actionsを利用した1時間ごとのNotion自動同期処理の構築
 
-- **id**: `43ad8384-7e02-494f-a30e-e8a8afd2b35f`
+- **id**: `9866f0cc-dd71-46ff-8994-0b52bb162a1e`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
@@ -353,52 +128,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2869 / Author: kan
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:10:40Z
-
----
-
-### 🟡 ⏳ [Issue #1289] [追加要望] APIのレート制限対応とCI/CD連携によるバッチ処理の堅牢化
-
-- **id**: `77b9e195-87f9-45df-b808-8708f04d7d0b`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-07
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1289 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:03:25Z
-
----
-
-### 🟡 ⏳ [Issue #1239] [追加要望] CSVファイルを用いたデータ一括登録機能
-
-- **id**: `d87a697c-ba10-404a-bbf8-29fd5fcdd380`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-07
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1239 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T15:58:30Z
-
----
-
-### 🟡 ⏳ [Issue #1215] [追加要望] 外部SaaS連携実行前のHuman-in-the-loop（承認プロンプト）機能
-
-- **id**: `07a1a461-327d-4c91-9426-e4cc43942b3c`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-07
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1215 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T15:51:10Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2703 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T02:58:47Z
 
 ---
 
@@ -417,6 +147,276 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2919 / Author: kan
 
 ---
 
+### 🟡 ⏳ [Issue #2735] [notebooklm:850dfd54:3] 承認済みGitHub Organizationによるアクセス制限と開発環境ロックの適用
+
+- **id**: `93af6b12-f2f0-4528-b5f2-bbbdeb87a4f4`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2735 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:12:33Z
+
+---
+
+### 🟡 ⏳ [Issue #1926] [PS#1 S26] NotebookLM未確認 notebooks Issue登録 — 2eb9f737/0829f536/d89ae1f5/b74e9ada 等11本
+
+- **id**: `8588c618-0ae9-4b3c-9e10-bf68667f083d`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1926 / Author: kanta13jp1 / Labels: 追加要望 / GitHub updated: 2026-05-03T13:53:04Z
+
+---
+
+### 🟡 ⏳ [Issue #2743] [notebooklm:f404e403:1] 開発レビュー承認ワークフローのGitHub連動トラッキング
+
+- **id**: `bcb02ffa-69f9-47ab-9a5d-397eabb37b7a`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2743 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:14:44Z
+
+---
+
+### 🟡 ⏳ [Issue #1796] [追加要望][P2][NotebookLM] 1b808a60 WorkOS AuthKit MCP認証 — MCP-AUTH-27 原則実装強化
+
+- **id**: `c47e8e08-463b-4306-b8f5-b5a18cd37208`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1796 / Author: kanta13jp1 / Labels: enhancement, security, priority:medium, 追加要望, notebooklm / GitHub updated: 2026-05-03T08:42:23Z
+
+---
+
+### 🟡 ⏳ [Issue #2925] [追加要望][P2][NotebookLM] d420e53f:1 法人口座審査向けコーポレートサイト要件チェック及び簡易生成機能
+
+- **id**: `6a10127b-d4d6-462e-8aba-d911745634d7`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2925 / Author: kanta13jp1 / Labels: enhancement, priority:medium, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T15:49:36Z
+
+---
+
+### 🟡 ⏳ [Issue #2593] [notebooklm:4d9d5d89:1] ステージゲート方式によるタスク承認ワークフローの導入
+
+- **id**: `75e13790-dba0-4af0-bc9c-1fadb0c229ed`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2593 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T00:18:34Z
+
+---
+
+### 🟡 ⏳ [Issue #2737] [notebooklm:54b6f2f2:2] 非構造化データからの構造化JSON抽出とSupabase自動登録パイプライン
+
+- **id**: `c8923a4a-33ce-4bcf-b230-dbba869b2d2d`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2737 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:13:11Z
+
+---
+
+### 🟡 ⏳ [Issue #2815] [notebooklm:28590c8b:1] Notion 3.4の自動生成ダッシュボード機能の調査と競合ベンチマーク
+
+- **id**: `17797f72-5e86-4625-89b2-13ed9f88510e`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2815 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:34:00Z
+
+---
+
+### 🟡 ⏳ [Issue #1321] [追加要望] 付箋（コメント）のステータス管理（解決済み・アーカイブ）機能
+
+- **id**: `43ad8384-7e02-494f-a30e-e8a8afd2b35f`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:10:40Z
+
+---
+
+### 🟡 🔧 [Issue #1705] [追加要望][P2][NotebookLM] Notion DB ID + WorkOS AuthKit + Gemini Code Assist Quotas を運用統合
+
+- **id**: `1c5e767c-9cd9-4074-a66f-64b86bb3e6d1`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 20%
+- **status**: in_progress
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1705 / Author: kanta13jp1 / Labels: enhancement, priority:medium, 追加要望, notebooklm / GitHub updated: 2026-06-07T01:31:54Z
+
+---
+
+### 🟡 🔧 [Issue #1211] [追加要望] 滞留手動タスクのAI遅延予測と自動リスケジュール提案
+
+- **id**: `3dd2b515-ea4a-4344-a39c-5d5f849ee722`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 20%
+- **status**: in_progress
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1211 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-06-01T01:33:50Z
+
+---
+
+### 🟡 🔧 [Issue #1809] [追加要望][P3][Win版] NotebookLM 0b7a7406 Slack & Notion Manual Setup — OPS統合手順文書化
+
+- **id**: `390da2af-764c-422e-89fc-a678e0b07562`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 20%
+- **status**: in_progress
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1809 / Author: kanta13jp1 / Labels: enhancement, 追加要望, notebooklm / GitHub updated: 2026-06-06T01:22:45Z
+
+---
+
+### 🟡 🔧 [Issue #1807] [追加要望][P3][Win版] NotebookLM 47bd101a Managing Notion Database IDs — Notion統合改善
+
+- **id**: `b3cb095a-b4fe-4103-9db4-caa2fde6057d`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 20%
+- **status**: in_progress
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1807 / Author: kanta13jp1 / Labels: enhancement, 追加要望, notebooklm / GitHub updated: 2026-06-05T01:28:21Z
+
+---
+
+### 🟡 ⏳ [Issue #1185] [追加要望] AI役員による法人口座開設向け事業計画書の自動生成機能
+
+- **id**: `4156da1f-8a43-4d98-8475-fd9393b0183a`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1185 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-05-31T01:47:28Z
+
+---
+
+### 🟡 ⏳ [Issue #1289] [追加要望] APIのレート制限対応とCI/CD連携によるバッチ処理の堅牢化
+
+- **id**: `77b9e195-87f9-45df-b808-8708f04d7d0b`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1289 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:03:25Z
+
+---
+
+### 🟡 ⏳ [Issue #2869] [追加要望][P2][NotebookLM] bdec9ea5:2 Notion MCPを利用したGitHub Issuesと連携する仕様書・PRDの自動生成と動的更新
+
+- **id**: `536dfcc7-76d2-4892-b347-f99c9ba486e0`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2869 / Author: kanta13jp1 / Labels: enhancement, priority:medium, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-30T01:21:55Z
+
+---
+
+### 🟡 ⏳ [Issue #1239] [追加要望] CSVファイルを用いたデータ一括登録機能
+
+- **id**: `d87a697c-ba10-404a-bbf8-29fd5fcdd380`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1239 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T15:58:30Z
+
+---
+
+### 🟡 ⏳ [Issue #1215] [追加要望] 外部SaaS連携実行前のHuman-in-the-loop（承認プロンプト）機能
+
+- **id**: `07a1a461-327d-4c91-9426-e4cc43942b3c`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-08
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1215 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T15:51:10Z
+
+---
+
 ### 🟡 ⏳ [Issue #1288] [追加要望] セキュアなデータベースID管理とデータ取得エンドポイントの最適化
 
 - **id**: `9d79b0cd-a146-4ef5-bb4a-8a6f4231162f`
@@ -424,7 +424,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2919 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-07
+- **deadline**: 2026-06-08
 
 **説明**:
 
@@ -439,7 +439,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1288 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-07
+- **deadline**: 2026-06-08
 
 **説明**:
 
@@ -454,7 +454,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1187 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-07
+- **deadline**: 2026-06-08
 
 **説明**:
 
@@ -469,7 +469,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1322 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-07
+- **deadline**: 2026-06-08
 
 **説明**:
 
@@ -484,7 +484,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1228 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-09
+- **deadline**: 2026-06-10
 
 **説明**:
 
@@ -507,21 +507,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2492 / Author: kan
 
 ---
 
-### 🟡 ⏳ 商標出願 (自分株式会社 / Logo)
-
-- **id**: `debfb353-935a-4419-9733-5f3096b982e8`
-- **category**: business-legal
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-10-04
-
-**説明**:
-
-弁理士経由で日本商標出願 → 米国 + EU 展開検討
-
----
-
 ### 🟡 ⏳ 会計ソフト導入 (freee or マネフォ)
 
 - **id**: `8faaec7c-6f22-4fef-bb4c-9721981e5bb6`
@@ -534,6 +519,21 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2492 / Author: kan
 **説明**:
 
 freee / MoneyForward Cloud 比較 → 契約
+
+---
+
+### 🟡 ⏳ 商標出願 (自分株式会社 / Logo)
+
+- **id**: `debfb353-935a-4419-9733-5f3096b982e8`
+- **category**: business-legal
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-10-04
+
+**説明**:
+
+弁理士経由で日本商標出願 → 米国 + EU 展開検討
 
 ---
 
@@ -628,36 +628,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2941
 
 ---
 
-### 🟢 ⏳ [Issue #2235] [追加要望][P1] /project-gantt に「GitHub Issue連携View」を追加
-
-- **id**: `d5cf7601-8ee1-4ffa-845a-9b3e6ef25d2e`
-- **category**: GitHub Issue
-- **progress**: 0%
-- **status**: pending
-- **priority**: low
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2235 / Author: kanta13jp1 / GitHub updated: 2026-05-09T06:22:07Z
-
----
-
-### 🟢 ⏳ [Issue #1731] [追加要望][P2][NotebookLM] 9b2e686f Notion風コメント機能 — FlutterSupabase RLS+DraggableSheet+unawaited実装
-
-- **id**: `de1188b6-adec-434b-bbef-77998c9ea801`
-- **category**: GitHub Issue
-- **progress**: 0%
-- **status**: pending
-- **priority**: low
-- **deadline**: 2026-06-06
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1731 / Author: kanta13jp1 / GitHub updated: 2026-05-03T11:13:50Z
-
----
-
 ### 🟢 ⏳ [Issue #2941] [追加要望] [資産管理] 口座間移動タスク管理
 
 - **id**: `599009a3-c4d6-42eb-9e0b-c03d85f4890c`
@@ -670,6 +640,36 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1731 / Author: kan
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2941 / Author: kanta13jp1 / GitHub updated: 2026-05-19T01:24:19Z
+
+---
+
+### 🟢 ⏳ [Issue #1731] [追加要望][P2][NotebookLM] 9b2e686f Notion風コメント機能 — FlutterSupabase RLS+DraggableSheet+unawaited実装
+
+- **id**: `de1188b6-adec-434b-bbef-77998c9ea801`
+- **category**: GitHub Issue
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1731 / Author: kanta13jp1 / GitHub updated: 2026-05-03T11:13:50Z
+
+---
+
+### 🟢 ⏳ [Issue #2235] [追加要望][P1] /project-gantt に「GitHub Issue連携View」を追加
+
+- **id**: `d5cf7601-8ee1-4ffa-845a-9b3e6ef25d2e`
+- **category**: GitHub Issue
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2026-06-07
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2235 / Author: kanta13jp1 / GitHub updated: 2026-05-09T06:22:07Z
 
 ---
 
@@ -695,7 +695,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2939 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-06-09
+- **deadline**: 2026-06-10
 
 **説明**:
 
@@ -710,7 +710,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1728 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-09-20
+- **deadline**: 2026-09-21
 
 **説明**:
 
@@ -725,7 +725,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1728 / Author: kan
 - **progress**: 70%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-06-06
+- **deadline**: 2026-06-07
 
 **説明**:
 
@@ -740,11 +740,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1662 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-06-07
+- **deadline**: 2026-06-08
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kanta13jp1 / Labels: enhancement, priority:high, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-06-06T22:37:55Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kanta13jp1 / Labels: enhancement, priority:high, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-06-07T22:38:26Z
 
 ---
 
@@ -778,21 +778,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kan
 
 ---
 
-### 🔴 ⏳ 司法書士・税理士契約
-
-- **id**: `bada5e2d-53da-46d0-b823-df68d5bef83d`
-- **category**: business-legal
-- **progress**: 0%
-- **status**: pending
-- **priority**: high
-- **deadline**: 2026-08-31
-
-**説明**:
-
-法人設立 + 顧問税理士 2 社相見積り
-
----
-
 ### 🔴 ⏳ 株式会社設立登記
 
 - **id**: `be8c9faa-6cb1-495a-9695-d0a95b8043af`
@@ -805,6 +790,21 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kan
 **説明**:
 
 定款認証 → 設立登記 → 印鑑証明
+
+---
+
+### 🔴 ⏳ 司法書士・税理士契約
+
+- **id**: `bada5e2d-53da-46d0-b823-df68d5bef83d`
+- **category**: business-legal
+- **progress**: 0%
+- **status**: pending
+- **priority**: high
+- **deadline**: 2026-08-31
+
+**説明**:
+
+法人設立 + 顧問税理士 2 社相見積り
 
 ---
 
