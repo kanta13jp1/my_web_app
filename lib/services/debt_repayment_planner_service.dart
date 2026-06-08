@@ -119,8 +119,7 @@ class DebtRepaymentPlannerService {
       estimatedCompletionMonths: estimatedCompletionMonths,
     );
 
-    final canMeetTargetMonths =
-        estimatedCompletionMonths != null &&
+    final canMeetTargetMonths = estimatedCompletionMonths != null &&
         estimatedCompletionMonths <= input.targetMonths;
 
     return DebtRepaymentPlanResult(
@@ -162,12 +161,10 @@ class DebtRepaymentPlannerService {
       );
     }
 
-    final topPriority = result.priorities.isEmpty
-        ? null
-        : result.priorities.first;
-    final firstAction = result.monthlyActions.isEmpty
-        ? null
-        : result.monthlyActions.first;
+    final topPriority =
+        result.priorities.isEmpty ? null : result.priorities.first;
+    final firstAction =
+        result.monthlyActions.isEmpty ? null : result.monthlyActions.first;
     final firstRoadmap = result.roadmap.isEmpty ? null : result.roadmap.first;
     final monthStart = DateTime(input.baseMonth.year, input.baseMonth.month, 1);
     final budgetGap = max(
@@ -413,9 +410,8 @@ class DebtRepaymentPlannerService {
 
     for (final item in priorities) {
       final endMonth = closedMonthByDebt[item.name];
-      final monthsRequired = endMonth == null
-          ? null
-          : max(1, endMonth - startMonth + 1);
+      final monthsRequired =
+          endMonth == null ? null : max(1, endMonth - startMonth + 1);
       steps.add(
         DebtRoadmapStep(
           name: item.name,
@@ -672,9 +668,8 @@ class DebtRepaymentPlannerService {
         : '1. 他借入は最低返済額を支払い、残余資金を「${firstAction.focusDebt ?? topDebt?.name ?? '最優先債務'}」へ集中。<br>2. 月内支払 ${_yen(firstAction.paymentTotal)}（最低返済 ${_yen(firstAction.minimumTotal)} + 上乗せ ${_yen(firstAction.extraTotal)}）を実行。';
 
     final row2DebtName = secondDebt?.name ?? '次順位の借入';
-    final row2DebtBalance = secondDebt == null
-        ? ''
-        : ' (${_yen(secondDebt.balance)})';
+    final row2DebtBalance =
+        secondDebt == null ? '' : ' (${_yen(secondDebt.balance)})';
     final row2Goal =
         '1. 収入・支出状況の継続的な改善と定着。<br>2. 「$row2DebtName$row2DebtBalance」の完済。';
     final row2Action = secondAction == null
@@ -682,9 +677,8 @@ class DebtRepaymentPlannerService {
         : '1. 他借入は最低返済額を維持し、残余資金を「${secondAction.focusDebt ?? row2DebtName}」へ集中。<br>2. 月内支払 ${_yen(secondAction.paymentTotal)}（利息 ${_yen(secondAction.interestTotal)}）を実行。';
 
     final row3DebtName = thirdDebt?.name ?? '次順位の借入';
-    final row3DebtBalance = thirdDebt == null
-        ? ''
-        : ' (${_yen(thirdDebt.balance)})';
+    final row3DebtBalance =
+        thirdDebt == null ? '' : ' (${_yen(thirdDebt.balance)})';
     final row3Goal =
         '1. 家計基盤のさらなる安定化と返済習慣の確立。<br>2. 「$row3DebtName$row3DebtBalance」の完済。';
     final row3Action = thirdAction == null

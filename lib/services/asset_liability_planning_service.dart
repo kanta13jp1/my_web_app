@@ -38,12 +38,10 @@ class AssetLiabilityPlanningService {
   static const String cardBillingReviewRemovedBillingAccountAlert =
       '請求先カードが見つかりません';
   static const String cardBillingReviewZeroAmountAlert = '金額が0円のため確認してください';
-  static const String cardStatementMissingImportAlert =
-      'カード明細の取り込みが未実施です';
+  static const String cardStatementMissingImportAlert = 'カード明細の取り込みが未実施です';
   static const String cardStatementBillingAccountMissingAlert =
       '請求先カード口座が見つかりません';
-  static const String cardStatementAmountMismatchAlert =
-      'カード明細合計が請求額と一致しません';
+  static const String cardStatementAmountMismatchAlert = 'カード明細合計が請求額と一致しません';
   static const String cardStatementConfiguredMismatchAlert =
       '設定済みカード内訳合計が請求額と一致しません';
   static const String cardStatementImportedConfiguredMismatchAlert =
