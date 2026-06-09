@@ -31893,3 +31893,21 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - prod DB の completed flip は deploy-prod 反映後に verify。
 - Philosophy Alignment: 原則 1 (ブランド最終決定は CEO) / 原則 2 (ミッション駆動) / 原則 3-4 (mentor) / 原則 8 (昨日の自分基準 / 他人比較しない) / 原則 9 (煽らない)。7+/9 ✅。
 - commit hash: (PR merge 後に追記)。
+
+---
+
+### 2026-06-09 Win版#132 part 249 — プレスリリース v1 起草 (WBS 88d0ac29 完了 / /loop autonomous)
+
+**Summary**:
+- `/loop` autonomous WBS — milestone `mvp-launch` の **marketing/docs レーン**から **`PR Times プレスリリース v1`** (88d0ac29 / 「MVP 公開 PR / メディア配信先 50 社」/ owner codex→win 是正) を [DYNAMIC-CLAIM] で claim。MVP ローンチ準備設計シリーズ第 9 弾 (対外発信面)。part 243-248 (roadmap/MVP/ADR/PRD/oncall/onboarding/X/brand) の流れを継ぐ。依存なし (depends_on 空) を確認して着手。
+
+**Changes**:
+- `docs/PRESS_RELEASE_V1.md` を新設 — プレスリリース v1 ドラフト + 配信戦略。(1) 配信用文面 v1 (タイトル/リード/背景/特長 5/サービス概要/代表コメント書式例/問い合わせ) で発行体・配信日・CEO コメント・実績数値は `【CEO確認】` プレースホルダ (**未検証数値・誇張・最上級を一切書かない** = BRAND_GUIDELINE §7 + 景表法配慮 + [REAL-DATA])。(2) 「メディア配信先 50 社」を **PR Times 主配信 + 重点 6 カテゴリ taxonomy** に reframe し、個別 50 件リスト・実入稿・発行体の法的確定は CEO/business-legal へ defer (フライング配信しない)。(3) アセット checklist + honesty ガードレール + Deferred + Philosophy 整合。MVP_SCOPE のコア 5 機能を価値訴求へ翻訳 / BRAND_GUIDELINE §2 ボイス準拠。
+- migration `20260609140000_wbs_complete_press_release.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-248 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate (high-risk-ultrareview / minimal-e2e) を push 前 local 確認 → docs-only label で first-try PASS 狙い (part 241-248 recipe)。
+- 完了の定義 = プレス文面 v1 + 配信戦略の「起草」。実配信・PR Times 入稿・発行体の法的確定は CEO/business-legal の別アクション (本 migration では完了扱いにしない / honest scope)。
+- prod DB の completed flip は deploy-prod 反映後に verify。
+- Philosophy Alignment: 原則 1 (発行体・文言の最終決定は CEO) / 原則 2 (ミッション訴求) / 原則 4 (mentor トーン) / 原則 6 (商品=価値) / 原則 8 (昨日の自分基準 / 他人比較しない) / 原則 9 (煽らない見出し)。7+/9 ✅。
+- commit hash: (PR merge 後に追記)。
