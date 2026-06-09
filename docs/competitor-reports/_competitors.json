@@ -150,6 +150,13 @@
       "category": "AI dev tool / agentic coding CLI / multi-agent + Arena Mode",
       "added": "discovery",
       "added_date": "2026-06-02"
+    },
+    {
+      "name": "Alibaba Qoder",
+      "url": "https://qoder.com",
+      "category": "AI agentic coding platform / China frontier / Quest Mode + Repo Wiki + Qwen-Coder-Qoder",
+      "added": "discovery",
+      "added_date": "2026-06-09"
     }
   ],
   "discovery_history": [
@@ -473,6 +480,23 @@
         "Alibaba Qoder (= 6/09 第 1 候補 / pre-scan 有効 / agentic coding platform / Qwen-Coder-Qoder 60.51% task resolution / code graph + project memory + self-orchestration / 基準 a+b+c 該当 / 解禁日初日採択推奨)",
         "Microsoft MAI-Code-1-Flash (= Build 2026 / MS 初自社製 coding model / Microsoft Agent 365 統合監視 / 動向観察)",
         "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-09",
+      "name": "Alibaba Qoder",
+      "category": "AI agentic coding platform / China frontier / Quest Mode + Repo Wiki",
+      "reason": "6/02 xAI Grok Build 採択以降 cooldown 明け (6/03〜6/08 で 5 サイクル連続第 1 候補 pre-scan / 7 day 経過) → 解禁日初日採択 (Lovable 5/17 + Bolt.new 5/24 pattern 踏襲). 採択理由 = (1) 基準 a (差別化軸直接競合) = Quest Mode の Spec 自動生成→自律実装が自社 PRD→Roadmap→MVP 三部作 (part 241-244) と同軸 + Repo Wiki が Karpathy wiki_compile.py (docs/concepts/ + INDEX.md 自動生成) と正面 + long-term memory が consolidate-memory + [MEMORY-DECAY] と同軸. (2) 基準 b (未カバー領域) = 中国 frontier coding の空白軸充足 = 「Anthropic / OpenAI / Google(間接) / xAI」4 frontier lab に Alibaba 追加. (3) 基準 c (過去 30 日重大リリース) = 6月 Qwen3.7-Max 搭載 (全ユーザー 200 calls/day free 期間限定) + Custom Commands + @databases context. モデル性能 = Qwen-Coder-Qoder (2026/2 自社学習) task resolution 60.51% vs Claude 4.5 Opus 64.86% に肉薄. Community Edition + BYOK 2026-04-30. [AI-TOOL-VERIFY] = 公式 qoder.com changelog + JetBrains Marketplace plugin で実在・機能裏取り済 (2 次メディア依拠ではない). https://qoder.com/en/changelog",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= Build 2026 / MS 初自社製 coding model / 次回 6/16 第 1 候補 / Microsoft Agent 365 統合監視)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
         "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
         "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
         "ServiceNow Build Agent (= 動向観察 1 月)",
