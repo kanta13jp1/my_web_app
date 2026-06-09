@@ -31839,3 +31839,21 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。
 - Philosophy Alignment: 原則 1 CEO感 (夜間 SEV1 のみ人を起こし最終判断は CEO に残す) / 原則 4 (6 部署 = 本社の運用即応性) / 原則 8 (KPI = MTTR を将来 North-Star 候補)。
 - commit hash: (PR merge 後に追記)。
+
+
+
+### 2026-06-09 Win版#132 part 246 — カスタマーオンボーディング設計 v1 確立 (WBS a7f97791 完了 / /loop)
+
+**Context**:
+- `/loop` dynamic mode で「WBS 上の未完了タスクを 1 つ完了」を自走。部 245 の oncall SOP は [PR #3168](https://github.com/kanta13jp1/my_web_app/pull/3168) として既に main merge 済 (`c5ea87997`) を fetch で確認。milestone `mvp-launch` の未完了から [DYNAMIC-CLAIM] で **`カスタマーオンボーディング設計`** (a7f97791 / owner codex→win 是正 / 2027 へ park 済を前倒し) を引き取り。business-legal (プライバシーポリシー/利用規約/特商法) は [DYNAMIC-CLAIM] 禁止レーンのため除外し、product-light の設計 docs を選択。part 242 PRD → part 243 四半期ロードマップ → part 244 MVP スコープ → part 245 oncall SOP に続く MVP ローンチ準備設計シリーズ第 6 弾。
+
+**Changes**:
+- `docs/CUSTOMER_ONBOARDING_DESIGN.md` を新設 — 初回 7 日間ジャーニー + アクティベーション基準の v1 baseline。コア 5 機能 (MVP_SCOPE §2) と「自分経営ループ」(入力→俯瞰→提案→ユーザー決定) を初回体験へ翻訳: アクティベーション定義 5 条件 (着任 A / 人事に実データ 1 件 B / 前日比の俯瞰 C / AI mentor 提案への決定 D / 別日再訪 E = 最小で #1 本社 +#2 人事 +#5 mentor に到達) + 指標と v1 目標仮説 (TTV<10 分 / Activation 30-40% / D1 40-50% / D7 20-30% = CEO 確認待ち) + 0-10 分の着任セッション + 1 日 1 部署を人事ファーストで増築し Day7 取締役会 (週次レビュー) で定着させる 7 日ジャーニー + 敬意ベースのエンプティステート/ナッジ (中毒性/監視/他人比較の回避) + 7 ステップ計測ファネル (イベント定義は本書 / 実装は L2) + Beta-50 (`e548b4b9`)/GA (`ea87d61a`) 接続 + Deferred (フロー A/B・パーソナライズ・通知/コーチマーク実装を下流 task `0e631085` オンボーディング最適化 へ明示引き継ぎ)。
+- migration `20260609103000_wbs_complete_onboarding_design.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-245 idempotent パターン: 同一 UPDATE で ai_review_status=approved → trigger 回避 / description LIKE guard / achievement NOT EXISTS guard)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate (high-risk ultrareview + minimal-E2E) を push 前に local script で確証 → 初稿 body で first-try PASS を狙う (part 241-245 recipe 再現)。
+- 下流の codex in_progress `0e631085` オンボーディング最適化 (beta) とはレーン分離 (本書=設計 baseline / 最適化=実装フェーズ) + ファイル非競合 ([FLEET-OPS])。
+- prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。
+- Philosophy Alignment: 原則 1 CEO感 (着任メタファー + mentor 提案の実行可否は常にユーザー / 閾値確定も CEO) / 原則 3-4 (優しい mentor + 人事ファースト段階開示) / 原則 8 (KPI = 昨日の自分 / 前日比・週次レビューを中核) / 原則 9 (IPO = ウェルビーイング / 連続記録強制・FOMO 回避)。7+/9 ✅。
+- commit hash: (PR merge 後に追記)。
