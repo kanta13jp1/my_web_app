@@ -31911,3 +31911,22 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - prod DB の completed flip は deploy-prod 反映後に verify。
 - Philosophy Alignment: 原則 1 (発行体・文言の最終決定は CEO) / 原則 2 (ミッション訴求) / 原則 4 (mentor トーン) / 原則 6 (商品=価値) / 原則 8 (昨日の自分基準 / 他人比較しない) / 原則 9 (煽らない見出し)。7+/9 ✅。
 - commit hash: (PR merge 後に追記)。
+
+---
+
+### 2026-06-09 Win版#132 part 250 — リリースチェックリスト & ロールバック Runbook 整備 (WBS e601b30f 完了 / /loop user 再起動)
+
+**Summary**:
+- `/loop` を **user が明示的に再起動** (前 turn で part 249 完了 → 新規 user 指示 = 本 session 2 件目 / user instruction > autonomous 2-cap)。mvp-launch の claimable docs タスクが枯渇 → [DYNAMIC-CLAIM] で全 milestone を探索し、`リリース` カテゴリの **`[リリース] リリースチェックリストとロールバック整備`** (e601b30f / high / owner codex→win) を引き取り。release SOP / rollback runbook の設計・文書化は L3 architect/ops-docs レーン。part 249 (プレスリリース) は merge `5fae817bd` + deploy-prod success + prod DB completed flip 確認済。
+
+**Changes**:
+- `docs/RELEASE_CHECKLIST_ROLLBACK.md` を新設 — 毎回の本番リリースを安全に回す反復手順 SSOT。**実 deploy-prod.yml を正確に記述** (ci→deploy→notify / 自動採番 / `supabase db push` + migration repair / EF 22 本 hub デプロイ / Flutter build / Firebase Hosting 原子入替 / `version.json` commit 反映検証 / 並行 `cancel-in-progress:false`)。リリース前チェックリスト + リリース後スモーク (**canary 基盤不在を正直に明記**し staging+スモーク+高速ロールバックで代替) + **rollback runbook** (Firebase 復帰 / `git revert`・migration **前進専用** / `reset --hard`+force-push **禁止** = 旧 archived `DEPLOYMENT_GUIDE.md` の危険手順を置換) + バージョン検証 + gotchas + 役割。
+- 既存 docs と**非重複**: `GA_LAUNCH_READINESS_GATE_SPEC.md` (一度きりの GA 可否) / `ONCALL_INCIDENT_SOP.md` (障害発生後) と境界明示し相互参照。
+- migration `20260609150000_wbs_complete_release_checklist.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-249 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → docs-only label で first-try PASS 狙い (part 241-249 recipe / minimal-E2E は close+reopen 再発火が必要なら実施)。
+- 完了の定義 = リリース手順 + runbook の「設計・文書化」。deploy-prod.yml 実装変更・canary 基盤構築は L2/Codex の別アクション (honest scope)。
+- 内容は実 deploy-prod.yml read で grounding (fabrication なし / 旧 stale DEPLOYMENT_GUIDE の force-push 手順は明示的に禁止へ是正)。
+- Philosophy Alignment: 原則 1 (重大リリース go は CEO) / 3-4 (mentor / チェックリスト) / 6 (時間=復旧時間短縮) / 7 (安定運用=資産) / 8 (成功率・MTTR KPI) / 9 (無人帯リリース回避)。7+/9 ✅。
+- commit hash: (PR merge 後に追記)。
