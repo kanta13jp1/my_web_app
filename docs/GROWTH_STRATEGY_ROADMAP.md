@@ -31823,3 +31823,19 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - commit hash: (PR merge 後に追記)。
 
 
+
+### 2026-06-09 Win版#132 part 245 — On-call / インシデント対応 SOP v1 確立 (WBS 8830188a 完了 / /loop autonomous)
+
+**Context**:
+- `/loop` dynamic mode で「WBS 上の未完了タスクを 1 つ完了」を自走。deploy-prod は part 244 blocker (#3162 / dart format) 解消済で GREEN 復帰確認 → 実成果物タスク完了が再び可能に。Win-owned 未完了の非 Issue タスクから [DYNAMIC-CLAIM] で business-product / milestone `mvp-launch` の `On-call / インシデント対応 SOP` (8830188a / owner codex→win 是正) を引き取り。part 242 PRD → part 243 四半期ロードマップ → part 244 MVP スコープ に続く運用設計シリーズ第 5 弾。
+
+**Changes**:
+- `docs/ONCALL_INCIDENT_SOP.md` を新設 — MVP ローンチ版 umbrella 障害対応 SOP v1: Sev 分類 (SEV1-3) + solo founder/AI fleet on-call モデル (GHA cron + Sentry 検知 → Slack webhook/GitHub Issue → mobile push エスカレーション / [SCHEDULE-WAKEUP] 夜間帯尊重) + 検知 source 表 (health-monitor / infra-health-check / quota-monitor / workflow-failure-handler 等の実在 workflow + Sentry) + 6 ステップ一次対応フロー (Detect/Classify→Contain→Communicate→Recover→Postmortem / mcp-auth-incident-runbook と同骨格) + 既存 domain runbook への dispatch 表 (front door) + 通信プロトコル (GitHub Issue 恒久 + Slack 時限 + mobile push / 秘密情報禁止) + blameless postmortem テンプレ。成熟版 (RACI / PagerDuty 実席 / SLA / MTTR) は paying-100 task `3cb3aa46` へ意図的に deferred。
+- migration `20260609020000_wbs_complete_oncall_incident_sop.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-244 idempotent パターン: 同一 UPDATE で ai_review_status=approved → trigger 回避 / description LIKE guard / achievement NOT EXISTS guard)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate (high-risk ultrareview + minimal-E2E) を push 前に local script で確証 → 初稿 body first-try PASS を狙う (part 241-244 recipe 再現)。
+- BEHIND は merge-base 基準で overlap 判定。file-overlap 0 + 全 check green で admin squash-merge。
+- prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。
+- Philosophy Alignment: 原則 1 CEO感 (夜間 SEV1 のみ人を起こし最終判断は CEO に残す) / 原則 4 (6 部署 = 本社の運用即応性) / 原則 8 (KPI = MTTR を将来 North-Star 候補)。
+- commit hash: (PR merge 後に追記)。
