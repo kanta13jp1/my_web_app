@@ -31930,3 +31930,22 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 内容は実 deploy-prod.yml read で grounding (fabrication なし / 旧 stale DEPLOYMENT_GUIDE の force-push 手順は明示的に禁止へ是正)。
 - Philosophy Alignment: 原則 1 (重大リリース go は CEO) / 3-4 (mentor / チェックリスト) / 6 (時間=復旧時間短縮) / 7 (安定運用=資産) / 8 (成功率・MTTR KPI) / 9 (無人帯リリース回避)。7+/9 ✅。
 - commit hash: (PR merge 後に追記)。
+
+---
+
+### 2026-06-09 Win版#132 part 251 — 本番監視 & 定常運用 Runbook 整備 (WBS 2e8be6a7 完了 / /loop user 再起動 / ops 三部作 完成)
+
+**Summary**:
+- `/loop` を **user が明示的に再起動** (part 250 完了後 / 本 session 3 件目 / user instruction > autonomous 2-cap)。mvp-launch claimable 枯渇 → 全 milestone 探索で `運用` カテゴリの **`[運用] 本番監視・インシデント対応 runbook`** (2e8be6a7 / high / no deps / owner codex→win) を引き取り。ONCALL_INCIDENT_SOP (part 245) との重複を verify し、**監視 (緑の道) は未整備の gap** と確認して着手。part 250 merge `2b0840902` + deploy-prod success + prod DB completed flip 確認済。
+
+**Changes**:
+- `docs/PRODUCTION_MONITORING_RUNBOOK.md` を新設 — 本番監視の定常運用 (緑の道) SSOT。**実 GHA cron 群** (health-monitor / infra-health-check / quota-monitor / daily-report-freshness / config-size / mcp-audit-anomaly / wbs-staleness-audit / edge-function-audit / competitor-monitoring / cs-check) + claude.ai Routine (ci-cd-cost-audit) + Sentry + deploy-prod 状態を cadence/健全vs異常/出力先で整理。定常運用 cadence (毎セッション/日次/定期/障害時/週次) を **WBS/Issue 接続規律**付きで定義 (定常は cron / 異常・改善のみ Issue 化)。健全性証跡 + escalation (緑→赤は Sev 判定して ONCALL_INCIDENT_SOP へ dispatch) + 役割 + Deferred。
+- **ops 三部作 完成**: 監視 (本書) / 対応 ([`ONCALL_INCIDENT_SOP.md`]) / リリース ([`RELEASE_CHECKLIST_ROLLBACK.md`] part 250) を境界明示で非重複 (SOP の検知 source 表を運用 cadence 視点で展開)。
+- migration `20260609160000_wbs_complete_monitoring_runbook.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-250 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → docs-only label + close+reopen 先制で first-try PASS 狙い (part 241-250 recipe)。
+- 完了の定義 = 監視運用手順 + escalation の「設計・文書化」。監視 workflow / Sentry 連携実装は L2/Codex の別アクション (honest scope)。
+- 既存 doc read で gap 確認 (ONCALL_INCIDENT_SOP は赤の道 / 本書は緑の道 = 非重複) + 実 workflow 名を glob 実在確認で grounding (fabrication なし)。
+- Philosophy Alignment: 原則 1 (夜間 SEV1 のみ CEO) / 3-4 (mentor / 運用即応) / 6 (時間=確認時間最小化) / 7 (安定運用=資産・過剰監視=負債) / 8 (健全率・検知遅延 KPI) / 9 (夜間負荷抑制)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 250 = 2b0840902)。
