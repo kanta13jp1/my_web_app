@@ -69,6 +69,14 @@ reaches the threshold, the decision resets execution to the safe default
 (`read`/`suggest`) and returns an `ai_tool_monitoring` event payload for the AI
 tool monitoring dashboard or notification pipeline.
 
+`multi_step_approval_workflow.ts` adds the multi-step approval contract for
+NotebookLM Issue #2919. `social-commerce-hub:discount_approval.request` now
+stores a workflow with manager, finance, legal, and CEO steps as required by
+discount size, free offers, or privilege grants. Transactions stay
+`held_for_approval` until all steps pass, each decision appends audit events,
+and the request payload includes an `admin_approval_requests` notification event
+for dashboard or notification delivery.
+
 This follows the Harness Engineering direction from NotebookLM
 `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`: Claude Code, Codex, and external AI
 agents should operate inside explicit scopes, approval gates, and audit logs.
