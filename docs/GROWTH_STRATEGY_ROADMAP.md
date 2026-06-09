@@ -31856,4 +31856,22 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 下流の codex in_progress `0e631085` オンボーディング最適化 (beta) とはレーン分離 (本書=設計 baseline / 最適化=実装フェーズ) + ファイル非競合 ([FLEET-OPS])。
 - prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。
 - Philosophy Alignment: 原則 1 CEO感 (着任メタファー + mentor 提案の実行可否は常にユーザー / 閾値確定も CEO) / 原則 3-4 (優しい mentor + 人事ファースト段階開示) / 原則 8 (KPI = 昨日の自分 / 前日比・週次レビューを中核) / 原則 9 (IPO = ウェルビーイング / 連続記録強制・FOMO 回避)。7+/9 ✅。
+- commit hash: `79e1d6ffb` ([PR #3169](https://github.com/kanta13jp1/my_web_app/pull/3169) MERGED)。
+
+
+
+### 2026-06-09 Win版#132 part 247 — X 公式アカウント運用設計 v1 確立 (WBS fd9616af 完了 / /loop)
+
+**Context**:
+- `/loop` dynamic mode の同一セッション iteration 2 ([DYNAMIC-CLAIM] 上限 2 件/session の 2 件目 = 本 session で打ち止め)。part 246 オンボーディング設計を [PR #3169](https://github.com/kanta13jp1/my_web_app/pull/3169) として merge (`79e1d6ffb`) 後、milestone `mvp-launch` 残りから [DYNAMIC-CLAIM] で marketing レーンの **`X 公式アカウント運用設計`** (fd9616af / owner codex→win 是正) を引き取り。business-legal は禁止レーンで除外。集客面の設計として MVP ローンチ準備設計シリーズ第 7 弾。
+
+**Changes**:
+- `docs/X_ACCOUNT_OPERATIONS_DESIGN.md` を新設 — X 公式アカウント運用 baseline v1。位置づけ (build-in-public × 多社 AI × 6 部署) + コンテンツ 4 柱 + 既存資産転用 (T-1 dispatch / ブログ / ROADMAP / AI大学) + 週 5 投稿カデンス + ハッシュタグ + **トーン/ガードレール (🔴 検証ファースト = AI ツール/競合主張は [AI-TOOL-VERIFY] 一次情報確認後のみ投稿し誇張・捏造を恒久禁止 / [AUTO-REPLY] 自己ループ禁止 / 秘密情報禁止)** + engagement KPI (主指標=サイト流入/Beta 寄与 / vanity 回避 / v1 目標仮説 CEO 確認待ち) + Beta-50 (`e548b4b9`)/GA (`ea87d61a`) 接続 + Deferred (投稿自動化実装/有料広告/他 PF を下流へ)。SNS 誇張・捏造の累積指摘を運用ルール化したのが本 doc の固有価値。
+- migration `20260609120000_wbs_complete_x_account_design.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-246 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate を push 前に local script で確証 → 初稿 body first-try PASS を狙う (part 241-246 recipe 再現)。
+- 投稿自動化の実装は L2 (Codex) 範疇 (本書=戦略/カデンス/KPI 定義まで) + ファイル非競合 ([FLEET-OPS])。
+- prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。part 246 (a7f97791) も同 deploy で flip 確認。
+- Philosophy Alignment: 原則 1 CEO感 (公開メッセージング最終決定は CEO) / 原則 3-4 (SNS でも穏やか mentor トーン / 煽らない) / 原則 8 (KPI 主指標=流入/Beta 寄与 / vanity 回避) / 原則 9 (射幸性・FOMO 回避) + [AI-TOOL-VERIFY] 検証ファースト恒久化。7+/9 ✅。
 - commit hash: (PR merge 後に追記)。
