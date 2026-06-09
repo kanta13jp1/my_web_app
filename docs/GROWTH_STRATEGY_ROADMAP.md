@@ -31874,4 +31874,22 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 投稿自動化の実装は L2 (Codex) 範疇 (本書=戦略/カデンス/KPI 定義まで) + ファイル非競合 ([FLEET-OPS])。
 - prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。part 246 (a7f97791) も同 deploy で flip 確認。
 - Philosophy Alignment: 原則 1 CEO感 (公開メッセージング最終決定は CEO) / 原則 3-4 (SNS でも穏やか mentor トーン / 煽らない) / 原則 8 (KPI 主指標=流入/Beta 寄与 / vanity 回避) / 原則 9 (射幸性・FOMO 回避) + [AI-TOOL-VERIFY] 検証ファースト恒久化。7+/9 ✅。
+- commit hash: `c980fc211` ([PR #3170](https://github.com/kanta13jp1/my_web_app/pull/3170) MERGED)。
+
+
+
+### 2026-06-09 Win版#132 part 248 — ブランドガイドライン v1 確立 (WBS dce3f86c 完了 / /loop user 再起動)
+
+**Context**:
+- `/loop` を **user が明示的に再起動** (前 turn で 2-cap 到達 stop 済 → 新規 user 指示)。autonomous [DYNAMIC-CLAIM] 2-cap を超える 3 件目は **user 明示指示が根拠** (user instruction > autonomous guardrail)。milestone `mvp-launch` の marketing/design レーンから **`ブランドガイドライン v1`** (dce3f86c / owner codex→win 是正) を引き取り。part 246/247 が個別に触れた「声・トーン」をブランド層で正本化。MVP ローンチ準備設計シリーズ第 8 弾。両 prior task (a7f97791 / fd9616af) は prod flip completed 確認済。
+
+**Changes**:
+- `docs/BRAND_GUIDELINE.md` を新設 — ブランドのアイデンティティ層 v1。**DESIGN.md (UI トークン正本) と重複せず**その上位を定義: ブランド約束 (AI と人生を会社のように経営 / 昨日の自分基準) + パーソナリティ (穏やか mentor × 生命力 × 誠実) + **ボイス&トーン 5 原則 (246 アプリ内 + 247 SNS の声を正本化 / 検証ファースト・誇張禁止内包)** + ロゴ運用 v1 + 色の意味 (hex は DESIGN.md 参照) + タイポ (実値は DESIGN.md) + 適用マトリクス + ブランド NG + Deferred (ロゴ実アセット/商標は外)。
+- migration `20260609130000_wbs_complete_brand_guideline.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-247 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → first-try PASS 狙い (part 241-247 recipe)。
+- DESIGN.md と非重複 (UI トークンは DESIGN.md 参照のみ / ブランド層は本書) = 役割分担明示で冗長回避。
+- prod DB の completed flip は deploy-prod 反映後に verify。
+- Philosophy Alignment: 原則 1 (ブランド最終決定は CEO) / 原則 2 (ミッション駆動) / 原則 3-4 (mentor) / 原則 8 (昨日の自分基準 / 他人比較しない) / 原則 9 (煽らない)。7+/9 ✅。
 - commit hash: (PR merge 後に追記)。
