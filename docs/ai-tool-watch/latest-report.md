@@ -1,14 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-08T21:55:41Z`
-- Previous check: `2026-06-07T21:42:58Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-06-09T21:55:08Z`
+- Previous check: `2026-06-08T21:55:41Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Codex changelog: 2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil
-- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.84.0 / May 29, 2026
+- `changed` Claude Code changelog: 2.1.170 / June 9, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
+- `changed` Codex changelog: 2026-06-09 / Codex CLI 0.139.0 pre
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.85.0 / June 09, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -20,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.168 / June 6, 2026
+  - Latest signal: 2.1.170 / June 9, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -38,10 +40,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil
+  - Latest signal: 2026-06-09 / Codex CLI 0.139.0 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: You can review Codex usage highlights and save a profile card; sharing is available on consumer ChatGPT plans.
+  - Short signal: ( #26719 ) Tool and connector input schemas now preserve oneOf and allOf , and large schemas keep more shallow structure when compacted, improving compatibility with richer MCP...
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -60,7 +62,7 @@
   - Short signal: Jun 4, 2026 · Changelog Custom stores, custom tools, and auto-review for the Cursor SDK We've shipped a batch of new functionality across the TypeScript and Python SDKs.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
-  - Latest signal: VS Code Gemini Code Assist 2.84.0 / May 29, 2026
+  - Latest signal: VS Code Gemini Code Assist 2.85.0 / June 09, 2026
   - Keyword groups: hooks, schedule, integration, quality-cost
   - Short signal: Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).

@@ -11,7 +11,166 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
+      "hash": "89d7990a590f179ec25ca12e70e8fda87d73243c07067d5a31d104754a2a2c6a",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure",
+          "ultrareview"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2.1.170 / June 9, 2026",
+      "name": "Claude Code changelog",
+      "owner": "Claude Code",
+      "previous_hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
+      "slug": "claude-code-changelog",
+      "snippets": [
+        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
+        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.170 June 9, 2026 Introducing Claude Fable 5: a Mythos-class model that we’ve made safe for general use."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "3585d0dcebf3d7e49981d07198fd66caca4f99944fe01704fa10e619aaf6b420",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
+      "keyword_groups": {
+        "codex-runtime": [
+          "computer use"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "GitHub",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "cost",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
+      "name": "Claude Code GitHub Actions",
+      "owner": "Claude Code",
+      "previous_hash": "9fe958dee600a799876799cf6bd13c1b17cae634f679d97b26ce317f0f9e2ba5",
+      "slug": "claude-code-github-actions",
+      "snippets": [
+        "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
+        "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
+        "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/github-actions"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "5247dbcaab221b8e184a3362acad7b7db701172624241ec604b59999e30b4872",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -57,15 +216,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil",
+      "latest_signal": "2026-06-09 / Codex CLI 0.139.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "8fc372537c2da492b9cf8c3c328a7ec478e925cd3e022f312163ea1cb3cb9ac2",
+      "previous_hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "You can review Codex usage highlights and save a profile card; sharing is available on consumer ChatGPT plans.",
-        "Performance improvements and bug fixes Improved Computer Use startup readiness and appshot error reporting."
+        "( #26719 ) Tool and connector input schemas now preserve oneOf and allOf , and large schemas keep more shallow structure when compacted, improving compatibility with richer MCP...",
+        "( #27081 ) Plugin marketplace automation is more informative and responsive: codex plugin marketplace list --json now includes each marketplace source, and plugin lists can..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -74,61 +233,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "690e28914bc21e5538f982e3d942c39ea9da41052e1f601eaa22689b214db392",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "in-app browser",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
-      "name": "Codex use cases",
-      "owner": "Codex",
-      "previous_hash": "a09b2b0c2ff17b884457972db9163221c127c436c0146d756dd4e7cd111d8c63",
-      "slug": "codex-use-cases",
-      "snippets": [
-        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
-        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/use-cases/"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
+      "hash": "6bb1061a4f77e08bb509905c72c71050079bdd1b3b2ff78c9eeab09a676f4e96",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -150,10 +255,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.84.0 / May 29, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.85.0 / June 09, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "feb09096c018f44874df30775f75dee7f30c64ecb939b1fef36c07969d1c40a1",
+      "previous_hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -164,7 +269,7 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   ],
-  "checked_at": "2026-06-08T21:55:41Z",
+  "checked_at": "2026-06-09T21:55:08Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -216,13 +321,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-07T21:42:58Z",
+  "previous_checked_at": "2026-06-08T21:55:41Z",
   "sources": [
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
+      "hash": "89d7990a590f179ec25ca12e70e8fda87d73243c07067d5a31d104754a2a2c6a",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -266,7 +371,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.168 / June 6, 2026",
+      "latest_signal": "2.1.170 / June 9, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
       "previous_hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
@@ -274,16 +379,16 @@
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.168 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.167 June 6, 2026 Bug fixes and reliability improvements ​ 2.1.166 June 6, 2026 Added fallbackModel setting to..."
+        "​ 2.1.170 June 9, 2026 Introducing Claude Fable 5: a Mythos-class model that we’ve made safe for general use."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3585d0dcebf3d7e49981d07198fd66caca4f99944fe01704fa10e619aaf6b420",
+      "hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -331,10 +436,10 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9fe958dee600a799876799cf6bd13c1b17cae634f679d97b26ce317f0f9e2ba5",
+      "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
@@ -381,7 +486,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
+      "hash": "5247dbcaab221b8e184a3362acad7b7db701172624241ec604b59999e30b4872",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -427,21 +532,21 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-06-04 / Codex app updates 26.602 New features Added activity insights and share cards to the Profil",
+      "latest_signal": "2026-06-09 / Codex CLI 0.139.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "8fc372537c2da492b9cf8c3c328a7ec478e925cd3e022f312163ea1cb3cb9ac2",
+      "previous_hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "You can review Codex usage highlights and save a profile card; sharing is available on consumer ChatGPT plans.",
-        "Performance improvements and bug fixes Improved Computer Use startup readiness and appshot error reporting."
+        "( #26719 ) Tool and connector input schemas now preserve oneOf and allOf , and large schemas keep more shallow structure when compacted, improving compatibility with richer MCP...",
+        "( #27081 ) Plugin marketplace automation is more informative and responsive: codex plugin marketplace list --json now includes each marketplace source, and plugin lists can..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "690e28914bc21e5538f982e3d942c39ea9da41052e1f601eaa22689b214db392",
@@ -484,7 +589,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "a09b2b0c2ff17b884457972db9163221c127c436c0146d756dd4e7cd111d8c63",
+      "previous_hash": "690e28914bc21e5538f982e3d942c39ea9da41052e1f601eaa22689b214db392",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -549,7 +654,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
+      "hash": "6bb1061a4f77e08bb509905c72c71050079bdd1b3b2ff78c9eeab09a676f4e96",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -571,10 +676,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.84.0 / May 29, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.85.0 / June 09, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "feb09096c018f44874df30775f75dee7f30c64ecb939b1fef36c07969d1c40a1",
+      "previous_hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
