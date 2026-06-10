@@ -32008,3 +32008,22 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - honest 監査原則: 「追加しない」判断を根拠 (全工程 open 実在 + WBS-DEDUP 教訓) 付きで文書化 — user 要求に「追加ゼロ」で答えるのは怠慢ではなく正答であることを検証可能にした。stale docs 大規模削除は §5 手順 (verify-first + inbound grep) が必要なため本 round 未実施 (COMPRESSED_PROMPT_V3 は flag 維持)。
 - Philosophy Alignment: 原則 1 (タスク追加/削除の最終判断材料を CEO へ提示) / 4 (mentor = 過剰タスク生成せず) / 6 (重複作業ゼロ = 時間資本保全) / 7 (重複タスク=負債の解消) / 8 (KPI = 工程カバレッジ実測) / 9 (プロセス健全性)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 253 = 584b190f6)。
+
+---
+
+### 2026-06-10 Win版#132 part 255 — 機能リリースサイクル方針 (隔週) 確立 (WBS 39b30ef2 完了 / /loop user 再起動 4 round 目)
+
+**Summary**:
+- `/loop` を **user が明示的に再起動** (part 254 merge `cf5e32b8a` 確認後 / 本 session 4 round 目 / fatigue OK 回復)。[DYNAMIC-CLAIM] で `business-product` の **`機能 release cycle 確立 (隔週)`** (39b30ef2 / medium / no deps / paying-100 / 定義 = 隔週 release note / changelog page / owner codex→win) を引き取り (設計シリーズ第 14 弾)。
+- **候補 skip の honest 判断**: 第一候補 `6781722f` CS/Onboarding playbook は定義に「動画 5 本」を含む → docs のみでの完了 = overclaim となるため **skip** (part 249 honesty 基準 / 制作系は完了主張しない)。
+- **verify-first の重要発見**: description の 2 artifact は既存 — release note は `generate_release_notes.py` で自動生成済み (PR/Releases/deploy metadata から決定的生成) + `release_notes_page` / `changelog_manager_page` / development_achievements ページも実装済み。**欠けていたのは「隔週リズムと編纂規律」のみ** → 新規アプリ開発ゼロで方針確立。
+
+**Changes**:
+- `docs/RELEASE_CYCLE_POLICY.md` を新設 — 隔週リリースサイクル方針の正本 (SSOT / CEO 承認で発効)。3 層整合 (四半期 QUARTERLY_ROADMAP = 何を / **隔週 = 本書 = 今 2 週で何を出しどう伝えるか** / 毎リリース RELEASE_CHECKLIST_ROLLBACK = どう安全に) + **技術は継続デプロイ維持・隔週は対外コミュニケーション編纂のリズム**という軸分け (デプロイ貯め込みはリスク集中 = しない) + cycle 定義 (計画 Day1 / soft cut Day12 / 編纂 Day13-14 / 公開 Day14 / 5 分ふりかえり) + 編纂規律 (自動生成 JSON = 事実の正本 / highlights ≤5 / 障害も隠さない / [REAL-DATA]) + 3 レーン役割 + **発効条件 = Cycle #1 note 公開 (起点日【CEO確定】/ 案 2026-06-19)** + 最小計測 (既存監視値参照のみ) + 3 cycle 周期見直し条項 + Deferred。
+- migration `20260610060000_wbs_complete_release_cycle.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-254 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-254 recipe)。
+- 完了の定義 = cadence 方針の「設計・文書化」。**隔週運行の実績はまだ無いと doc 内で明言** (発効 = Cycle #1 公開 / 方針の存在 ≠ 運用実績の honest 区別)。
+- Philosophy Alignment: 原則 1 (scope/公開/起点日 = CEO) / 4 (マーケ営業部の定常発信に接続) / 5 (note は利用者価値のみ) / 6 (既存自動化の上にリズムだけ / 重い儀式なし) / 7 (継続デプロイ維持 = リスク分散 / 正直 note = 信頼資産) / 8 (出荷数・成功率は既存監視参照) / 9 (持続可能リズム + 見直し条項)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 254 = cf5e32b8a)。
