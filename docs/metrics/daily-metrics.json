@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-06-09",
+    "date": "2026-06-10",
     "users": {
       "total": 37
     },
@@ -34,27 +34,27 @@
     },
     "recentAchievements": [
       {
-        "title": "本番監視 & 定常運用 Runbook 整備 (ops 三部作 完成)",
-        "completed_at": "2026-06-09T15:41:09.372179+00:00"
+        "title": "CI Setup Deno の deno.land 一時503耐性化 (retry+backoff)",
+        "completed_at": "2026-06-10T18:24:04.736707+00:00"
       },
       {
-        "title": "リリースチェックリスト & ロールバック Runbook 整備",
-        "completed_at": "2026-06-09T15:07:11.74907+00:00"
+        "title": "dependabot pub group 週次CI失敗の恒久解消 (flutter_native_splash ignore)",
+        "completed_at": "2026-06-10T18:03:21.222368+00:00"
       },
       {
-        "title": "プレスリリース v1 起草 (MVP 公開 PR + 配信戦略)",
-        "completed_at": "2026-06-09T14:09:09.981621+00:00"
+        "title": "GitHub Actions Node.js 20 廃止対応完了 (actions/cache v5 化)",
+        "completed_at": "2026-06-10T13:45:31.202955+00:00"
       },
       {
-        "title": "ブランドガイドライン v1 確立 (ボイス&トーン正本化)",
-        "completed_at": "2026-06-09T13:07:06.18152+00:00"
+        "title": "ブログ/ニュース配信 本番E2E検証完了 (Issue #1950 close)",
+        "completed_at": "2026-06-10T13:05:19.536047+00:00"
       },
       {
-        "title": "X 公式アカウント運用設計 v1 確立 (週 5 投稿 / KPI / 検証ファースト)",
-        "completed_at": "2026-06-09T12:29:14.186738+00:00"
+        "title": "モデルルーティング戦略 (コスト tier) 策定 — 従量課金時代の使い分けガイドライン",
+        "completed_at": "2026-06-10T04:56:13.94377+00:00"
       }
     ]
   },
-  "fetched_at": "2026-06-10T08:01:56+09:00",
-  "report_date": "2026-06-10"
+  "fetched_at": "2026-06-11T08:04:49+09:00",
+  "report_date": "2026-06-11"
 }
