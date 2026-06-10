@@ -32088,3 +32088,24 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - honest 区別 3 点: 復元手順は「設計」であって「実証済み」ではない (drill 未実施明記) / バックアップ実在は dashboard 確認まで断定しない / Issue は基準 3 実装まで close しない (タスク完了 ≠ Issue 完了の分離を migration 内に文書化)。
 - Philosophy Alignment: 原則 1 (PITR 加入・drill 日程・保管先 = CEO) / 4 (全部署データの土台) / 6 (現規模に過剰な常時冗長を避ける) / 7 (データ=取り返せない資産 / 未実証を実証と言わない) / 8 (drill 成否・バックアップ鮮度 KPI) / 9 (持続可能運用)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 257 = 8a7e946e4)。
+
+---
+
+### 2026-06-10 Win版#132 part 259 — stale-premise タスク triage (WBS 2c4d2f03 cancelled) + COMPRESSED_PROMPT_V3 精査確定 (/loop user 再起動 8 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 8 round 目** (part 258 merge `28e831825` + aa08e69f prod flip ✅ 確認後)。RAM 91% / FATIGUE のため hygiene 最小 scope。
+- **stale-premise triage 第 1 例**: `2c4d2f03` ([Issue #2647] CLAUDE.md×実 DB スキーマ自動整合 CI) — 前提「CLAUDE.md にスキーマ定義あり」が **part 133 (80 行 pointer hub 化) 以降 false** → 受入基準が記述のまま実装不能。実需 (スキーマ乖離検知) は migrations SSOT + PR CI (DB+Edge smoke / timestamp collision) が既に担う → **cancelled** (completed と主張しない = 要求された CI は存在しないため / dedup 第 3 類型: completed-by-reference / gap 充足 close / **stale-premise cancel**)。
+- **COMPRESSED_PROMPT_V3 精査確定 (運用モデル §7 flag 解消)**: 削除候補 flag は**誤り** — `two-instance-audit.yml` + scripts 3 本 (うち `update_cv3_instances.py` が自動更新) が参照する **automation-managed artifact** = 削除不可。inbound grep が削除判断を反転させた第 1 例 (§5 手順の有効性実証)。
+
+**Changes**:
+- migration `20260610120000_wbs_cancel_stale_schema_ci_task.sql` — 2c4d2f03 を **cancelled** 化 (progress 不変 = trigger 非発火 / achievement INSERT なし / 再起票条件を description に明記)。
+- `docs/AI_DRIVEN_DEV_OPERATING_MODEL.md` §7 — COMPRESSED_PROMPT_V3 行を「stale 候補」→「精査済み: automation-managed / 削除・手動編集禁止 / 3 レーン化は automation 改修 (L2) とセット」へ更新。
+- GitHub Issue #2647 は **PR merge 後に根拠コメント付き close** (再起票ガイダンス: スキーマ実記載 doc を対象化したとき / L2 レーン)。
+- ROADMAP part 259 エントリ (本欄 / part 258 merge hash `28e831825` 補記)。
+
+**Validation focus**:
+- docs 1 行更新 + cancel migration のみの最小 hygiene。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (recipe 第 15 連続狙い)。
+- honest triage 3 類型の確立: ① completed-by-reference (実体あり = 3cb3aa46/#1847) ② gap 充足後 complete (#1736) ③ **stale-premise cancel (実体なし・前提崩壊 = 本件)** — 「completed と cancelled の使い分け = 要求成果物が存在するか」で判定。
+- Philosophy Alignment: 原則 1 (cancel 判断根拠を可視化) / 4 (mentor = 実装不能タスクを放置しない) / 6 (実装不能タスクの調査時間を将来分まで削減) / 7 (zombie タスク = 負債解消 / 偽 completed を作らない = 信頼) / 8 (WBS 健全性) / 9 (持続性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 258 = 28e831825)。
