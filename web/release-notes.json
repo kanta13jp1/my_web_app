@@ -32,6 +32,19 @@
       ],
       "changes": [
         {
+          "category": "automation",
+          "id": "pr-3217",
+          "links": [
+            {
+              "title": "PR #3217",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3217"
+            }
+          ],
+          "mergedAt": "2026-06-10T18:12:46Z",
+          "summary": "#3217 ci: Setup Deno retry+backoff で deno.land 一時503による deploy-prod fail を恒久解消 + WBS保守タスク追加+完了 (part 266)"
+        },
+        {
           "category": "feature",
           "id": "pr-3214",
           "links": [
@@ -394,19 +407,6 @@
           ],
           "mergedAt": "2026-06-08T15:44:46Z",
           "summary": "#3152 auto: issue #1193 [追加要望] 権限と役割を分離したマルチモジュールアーキテクチャへの改修"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3151",
-          "links": [
-            {
-              "title": "PR #3151",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3151"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3151 auto: issue #1696 [追加要望][P2] 自動コミット多発時のPR BEHIND解消とmerge queue運用を整備する"
         },
         {
           "category": "fix",
