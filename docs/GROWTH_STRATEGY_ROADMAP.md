@@ -31987,3 +31987,24 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - opsec 配慮: 個別の鍵露出事案の詳細は public repo に書かず、§2-5「露出疑い時 即ローテ」の一般規程として吸収。
 - Philosophy Alignment: 原則 1 (権限・例外・VPN 選定は CEO 決裁) / 3 (規程=予防の道具・例外は追記管理) / 5 (顧客への安全の約束を規程で裏付け) / 6 (事故対応時間最小化) / 7 (放置クレデンシャル=負債→棚卸し) / 8 (paying-100 信頼基盤) / 9 (J-SOX/IPO 内部統制布石)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 252 = 86a8d0638)。
+
+---
+
+### 2026-06-10 Win版#132 part 254 — SDLC 工程×WBS カバレッジ監査 v1 + 重複 1 件解消 (user 標準セッション要求への verify 済み回答)
+
+**Summary**:
+- user 標準セッションプロンプト (3 レーン / 24 社 docs / 毎セッション 1 タスク / stale 削除 / WBS 工程 gap 追加) を **verify-first で実データ照合** (part 237 stale-prompt pattern)。本 session 3 round 目 (= #3180 法人提案 + #3181 IT セキュリティ規程 + 本 PR / user 明示指示で 2-cap override)。
+- **SDLC 7 工程×WBS カバレッジ監査 実施**: 総 3,159 / 未完了 807 / phase tagged 123 (3.9%) を実測。**全 7 工程に open タスク実在 → 「不足タスク追加 0 件」が正答** (機械的一括追加は [WBS-DEDUP] cartesian 事故の再発)。thin 工程 watch = planning 1 / maintenance 2。
+- **user 指定 24 社リスト = AI_DRIVEN_DEV_OPERATING_MODEL §4 ローテ対象と完全一致を確認** (差分 0 / 層 A per-task verify-first + 層 B 週次 digest が現実版 canonical / 最新 digest 2026-06-07 実在)。
+
+**Changes**:
+- `docs/SDLC_WBS_COVERAGE_AUDIT.md` を新設 — 再実行可能な監査手順 (PostgREST count + phase 集計 + category/title proxy) + 工程別 open 実在表 (実 id 付き) + 是正事項 + 次回発火条件 (living doc)。
+- **重複 1 件解消**: `3cb3aa46` インシデント対応プロセス (4/25 起票 / Runbook+RACI+Postmortem) は part 245 `8830188a` 成果物 ONCALL_INCIDENT_SOP.md (§5 dispatch 表 / §7 Postmortem / §2+§6 役割) が充足 → migration `20260610040000` で **completed-by-reference** 化 (新規成果物なしのため achievement INSERT なし / 形式 RACI は必要時 SOP 改訂で別起票)。
+- **stale 参照 1 件修正**: AI_DRIVEN_DEV_OPERATING_MODEL §7 の phase handoff link が `done/` 移動済みで dead → 実態 (列追加済 / backfill 3.9%) と監査 doc への pointer に更新。
+- ROADMAP part 254 エントリ (本欄 / part 253 merge hash `584b190f6` 補記)。
+
+**Validation focus**:
+- docs-only + dedup 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-253 recipe)。
+- honest 監査原則: 「追加しない」判断を根拠 (全工程 open 実在 + WBS-DEDUP 教訓) 付きで文書化 — user 要求に「追加ゼロ」で答えるのは怠慢ではなく正答であることを検証可能にした。stale docs 大規模削除は §5 手順 (verify-first + inbound grep) が必要なため本 round 未実施 (COMPRESSED_PROMPT_V3 は flag 維持)。
+- Philosophy Alignment: 原則 1 (タスク追加/削除の最終判断材料を CEO へ提示) / 4 (mentor = 過剰タスク生成せず) / 6 (重複作業ゼロ = 時間資本保全) / 7 (重複タスク=負債の解消) / 8 (KPI = 工程カバレッジ実測) / 9 (プロセス健全性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 253 = 584b190f6)。

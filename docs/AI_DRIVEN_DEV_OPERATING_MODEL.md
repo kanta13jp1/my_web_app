@@ -65,4 +65,4 @@ WBS は機能カテゴリ（8 種）に加え、**工程軸 (`phase`)** を持�
 
 - `~/.claude/hooks/inject-rules.txt` の `[INSTANCE]` は「2 instance 制」記述 → 3 レーンへ更新要（machine-local config / `/hook-rule-audit` で対応）。
 - `.github/COMPRESSED_PROMPT_V3.md` も旧多インスタンス記述 = stale 候補（次 session 精査）。
-- WBS `phase` 列 migration = Codex 適用待ち（[`cross-instance-prs/20260603_wbs_sdlc_phase.md`](cross-instance-prs/20260603_wbs_sdlc_phase.md)）。
+- WBS `phase` 列 = 列追加済みだが backfill 3.9% (123/3,159 / 2026-06-10 監査)。handoff は [`cross-instance-prs/done/20260603_wbs_sdlc_phase.md`](cross-instance-prs/done/20260603_wbs_sdlc_phase.md) (done 移動済) + `361c10d4` (L2)。工程カバレッジの実測は [`SDLC_WBS_COVERAGE_AUDIT.md`](SDLC_WBS_COVERAGE_AUDIT.md)。
