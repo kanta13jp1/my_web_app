@@ -29,6 +29,10 @@ on:
       - "scripts/smartcleanup_task_guard_test.py"
   workflow_dispatch:
 
+concurrency:
+  group: session-state-hooks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
