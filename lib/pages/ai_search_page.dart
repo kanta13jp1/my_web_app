@@ -49,6 +49,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
           'query': trimmed,
           'limit': 20,
           'mode': 'auto',
+          'includeRelated': true,
+          'relatedLimit': 3,
         },
       );
 
@@ -102,6 +104,17 @@ class _AiSearchPageState extends State<AiSearchPage> {
       return tags.map((e) => e.toString()).toList();
     }
     return [];
+  }
+
+  List<Map<String, dynamic>> _relatedNotes(Map<String, dynamic> note) {
+    final related = note['related_notes'];
+    if (related is List) {
+      return related
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(growable: false);
+    }
+    return const <Map<String, dynamic>>[];
   }
 
   @override
@@ -174,8 +187,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
                         _searchMode == 'ai'
                             ? 'AI 検索'
                             : _searchMode == 'text_fallback'
-                                ? 'テキスト検索（AIフォールバック）'
-                                : 'テキスト検索',
+                            ? 'テキスト検索（AIフォールバック）'
+                            : 'テキスト検索',
                         style: TextStyle(
                           fontSize: 11,
                           color: _searchMode == 'ai'
@@ -190,8 +203,9 @@ class _AiSearchPageState extends State<AiSearchPage> {
                           '${_results.length}件',
                           style: TextStyle(
                             fontSize: 11,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             height: 1.5,
                           ),
                         ),
@@ -240,10 +254,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFFEF5350),
-                  height: 1.5,
-                ),
+                style: const TextStyle(color: Color(0xFFEF5350), height: 1.5),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
@@ -295,6 +306,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
     final title = _noteTitle(note);
     final excerpt = _noteExcerpt(note);
     final tags = _noteTags(note);
+    final relatedNotes = _relatedNotes(note);
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     return Card(
@@ -363,6 +375,52 @@ class _AiSearchPageState extends State<AiSearchPage> {
                   );
                 }).toList(),
               ),
+            ],
+            if (relatedNotes.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Related notes',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...relatedNotes.take(3).map((related) {
+                final relatedTitle = (related['title'] as String? ?? '').trim();
+                final label = relatedTitle.isEmpty
+                    ? 'Untitled note'
+                    : relatedTitle;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.link,
+                        size: 14,
+                        color: Color(0xFF6366F1),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ],
           ],
         ),

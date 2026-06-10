@@ -10,6 +10,12 @@ class Note {
   final DateTime? reminderDate;
   final bool isArchived;
   final DateTime? archivedAt;
+  final List<String> tags;
+  final String captureStatus;
+  final String captureSource;
+  final String classificationStatus;
+  final DateTime? classifiedAt;
+  final DateTime? inboxSavedAt;
   final bool isPinned; // 追加
 
   Note({
@@ -24,10 +30,17 @@ class Note {
     this.reminderDate,
     this.isArchived = false,
     this.archivedAt,
+    this.tags = const <String>[],
+    this.captureStatus = 'organized',
+    this.captureSource = 'editor',
+    this.classificationStatus = 'classified',
+    this.classifiedAt,
+    this.inboxSavedAt,
     this.isPinned = false, // 追加
   });
 
   factory Note.fromJson(Map<String, dynamic> json) {
+    final rawTags = json['tags'];
     return Note(
       id: json['id'] as int,
       userId: json['user_id'] as String,
@@ -43,6 +56,19 @@ class Note {
       isArchived: json['is_archived'] as bool? ?? false,
       archivedAt: json['archived_at'] != null
           ? DateTime.parse(json['archived_at'] as String)
+          : null,
+      tags: rawTags is List
+          ? rawTags.map((tag) => tag.toString()).toList(growable: false)
+          : const <String>[],
+      captureStatus: json['capture_status'] as String? ?? 'organized',
+      captureSource: json['capture_source'] as String? ?? 'editor',
+      classificationStatus:
+          json['classification_status'] as String? ?? 'classified',
+      classifiedAt: json['classified_at'] != null
+          ? DateTime.parse(json['classified_at'] as String)
+          : null,
+      inboxSavedAt: json['inbox_saved_at'] != null
+          ? DateTime.parse(json['inbox_saved_at'] as String)
           : null,
       isPinned: json['is_pinned'] as bool? ?? false, // 追加
     );
@@ -61,9 +87,19 @@ class Note {
       'reminder_date': reminderDate?.toIso8601String(),
       'is_archived': isArchived,
       'archived_at': archivedAt?.toIso8601String(),
+      'tags': tags,
+      'capture_status': captureStatus,
+      'capture_source': captureSource,
+      'classification_status': classificationStatus,
+      'classified_at': classifiedAt?.toIso8601String(),
+      'inbox_saved_at': inboxSavedAt?.toIso8601String(),
       'is_pinned': isPinned, // 追加
     };
   }
+
+  bool get isInboxCapture => captureStatus == 'inbox';
+
+  bool get needsClassification => classificationStatus == 'pending';
 
   // 期限切れかどうか
   bool get isOverdue {

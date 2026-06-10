@@ -17,6 +17,12 @@ void main() {
       'is_archived': false,
       'archived_at': null,
       'is_pinned': true,
+      'tags': ['meeting', 'money'],
+      'capture_status': 'inbox',
+      'capture_source': 'quick_inbox',
+      'classification_status': 'pending',
+      'classified_at': null,
+      'inbox_saved_at': now.toIso8601String(),
     };
 
     test('Note can be created from JSON', () {
@@ -30,6 +36,9 @@ void main() {
       expect(note.isPinned, isTrue);
       expect(note.categoryId, 'cat1');
       expect(note.reminderDate, isNotNull);
+      expect(note.tags, <String>['meeting', 'money']);
+      expect(note.isInboxCapture, isTrue);
+      expect(note.needsClassification, isTrue);
     });
 
     test('Note can be converted to JSON', () {
@@ -42,6 +51,12 @@ void main() {
       expect(json['is_favorite'], sampleJson['is_favorite']);
       expect(json['is_pinned'], sampleJson['is_pinned']);
       expect(json['reminder_date'], sampleJson['reminder_date']);
+      expect(json['tags'], sampleJson['tags']);
+      expect(json['capture_status'], sampleJson['capture_status']);
+      expect(
+        json['classification_status'],
+        sampleJson['classification_status'],
+      );
     });
 
     test('isOverdue getter works correctly', () {
@@ -159,6 +174,12 @@ void main() {
         'is_archived': null,
         'archived_at': null,
         'is_pinned': null,
+        'tags': null,
+        'capture_status': null,
+        'capture_source': null,
+        'classification_status': null,
+        'classified_at': null,
+        'inbox_saved_at': null,
       };
       final note = Note.fromJson(minimalJson);
 
@@ -170,6 +191,12 @@ void main() {
       expect(note.isArchived, isFalse);
       expect(note.archivedAt, isNull);
       expect(note.isPinned, isFalse);
+      expect(note.tags, isEmpty);
+      expect(note.captureStatus, 'organized');
+      expect(note.captureSource, 'editor');
+      expect(note.classificationStatus, 'classified');
+      expect(note.isInboxCapture, isFalse);
+      expect(note.needsClassification, isFalse);
     });
   });
 }

@@ -6,14 +6,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/public_memo_service.dart';
+import '../services/note_inbox_service.dart';
+import '../services/note_search_ranker.dart';
 import 'note_editor_page.dart';
 
-enum _NoteCardAction {
-  duplicate,
-  publish,
-  unpublish,
-  delete,
-}
+enum _NoteCardAction { duplicate, organize, publish, unpublish, delete }
 
 class _LocalDraftEntry {
   final String storageKey;
@@ -52,15 +49,19 @@ class NoteListPage extends StatefulWidget {
 class _NoteListPageState extends State<NoteListPage> {
   late final SupabaseClient _supabase;
   late final PublicMemoService _publicMemoService;
+  late final NoteInboxService _noteInboxService;
   static const String _draftKeyPrefix = 'note_editor_draft_';
   bool _isLoading = true;
   bool _showFavoritesOnly = false;
+  bool _showInboxOnly = false;
+  bool _isQuickCapturing = false;
   List<Map<String, dynamic>> _notes = [];
   List<_LocalDraftEntry> _draftEntries = [];
   Set<String> _publishedNoteIds = <String>{};
 
   // Win版#108: メモ検索 (title + content 部分一致・case insensitive)
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _quickInboxController = TextEditingController();
   String _searchQuery = '';
 
   @override
@@ -68,22 +69,21 @@ class _NoteListPageState extends State<NoteListPage> {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _publicMemoService = PublicMemoService(_supabase);
+    _noteInboxService = NoteInboxService(_supabase);
     _fetchNotes();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _quickInboxController.dispose();
     super.dispose();
   }
 
   /// 検索クエリで note を絞り込み (title + content 部分一致・case insensitive)
   bool _matchesSearch(Map<String, dynamic> note) {
     if (_searchQuery.isEmpty) return true;
-    final q = _searchQuery.toLowerCase();
-    final title = (note['title'] as String? ?? '').toLowerCase();
-    final content = (note['content'] as String? ?? '').toLowerCase();
-    return title.contains(q) || content.contains(q);
+    return NoteSearchRanker.matches(note, _searchQuery);
   }
 
   Future<void> _fetchNotes() async {
@@ -105,7 +105,7 @@ class _NoteListPageState extends State<NoteListPage> {
       final data = await _supabase
           .from('notes')
           .select(
-            'id, title, content, created_at, is_pinned, is_favorite, reminder_date',
+            'id, title, content, created_at, is_pinned, is_favorite, reminder_date, tags, capture_status, capture_source, classification_status, inbox_saved_at',
           )
           .eq('user_id', userId)
           .eq('is_archived', false)
@@ -130,9 +130,9 @@ class _NoteListPageState extends State<NoteListPage> {
     } catch (e) {
       final drafts = await _loadDraftEntries(_notes);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('メモ一覧の取得に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('メモ一覧の取得に失敗しました: $e')));
       setState(() {
         _draftEntries = drafts;
         _isLoading = false;
@@ -164,6 +164,24 @@ class _NoteListPageState extends State<NoteListPage> {
       (note['content'] as String? ?? '').trim();
 
   bool _isFavorite(Map<String, dynamic> note) => note['is_favorite'] == true;
+
+  List<String> _noteTags(Map<String, dynamic> note) {
+    final rawTags = note['tags'];
+    if (rawTags is List) {
+      return rawTags
+          .map((tag) => tag.toString().trim())
+          .where((tag) => tag.isNotEmpty)
+          .toList(growable: false);
+    }
+    return const <String>[];
+  }
+
+  bool _isInboxNote(Map<String, dynamic> note) {
+    final captureStatus = note['capture_status']?.toString();
+    final classificationStatus = note['classification_status']?.toString();
+    return captureStatus == NoteInboxService.captureStatusInbox ||
+        classificationStatus == NoteInboxService.classificationStatusPending;
+  }
 
   bool _isPublished(Map<String, dynamic> note) =>
       _publishedNoteIds.contains(_noteId(note));
@@ -246,7 +264,8 @@ class _NoteListPageState extends State<NoteListPage> {
         }
 
         final fallbackNote = noteId == null ? null : noteById[noteId];
-        final savedAt = DateTime.tryParse(
+        final savedAt =
+            DateTime.tryParse(
               (decoded['saved_at'] ?? '').toString(),
             )?.toLocal() ??
             _createdAtOf(fallbackNote ?? const <String, dynamic>{});
@@ -305,16 +324,88 @@ class _NoteListPageState extends State<NoteListPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(draft.storageKey);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('下書きを削除しました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('下書きを削除しました')));
     await _fetchNotes();
   }
 
   void _toggleFavoritesOnly() {
     setState(() {
       _showFavoritesOnly = !_showFavoritesOnly;
+      if (_showFavoritesOnly) _showInboxOnly = false;
     });
+  }
+
+  void _toggleInboxOnly() {
+    setState(() {
+      _showInboxOnly = !_showInboxOnly;
+      if (_showInboxOnly) _showFavoritesOnly = false;
+    });
+  }
+
+  Future<void> _quickCaptureInbox() async {
+    final content = _quickInboxController.text.trim();
+    if (content.isEmpty || _isQuickCapturing) return;
+
+    setState(() => _isQuickCapturing = true);
+    try {
+      final noteId = await _noteInboxService.quickCapture(content);
+      if (!mounted) return;
+      _quickInboxController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Saved to Inbox.'),
+          action: noteId == null
+              ? null
+              : SnackBarAction(
+                  label: 'Open',
+                  onPressed: () => _navigateToEditor(context, noteId),
+                ),
+        ),
+      );
+      await _fetchNotes();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Inbox save failed: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _isQuickCapturing = false);
+      }
+    }
+  }
+
+  Future<void> _markOrganized(
+    BuildContext context,
+    Map<String, dynamic> note,
+  ) async {
+    final noteId = _noteId(note);
+    if (noteId.isEmpty) return;
+
+    try {
+      await _supabase
+          .from('notes')
+          .update({
+            'capture_status': NoteInboxService.captureStatusOrganized,
+            'classification_status':
+                NoteInboxService.classificationStatusClassified,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', noteId);
+
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Marked as organized.')));
+      await _fetchNotes();
+    } catch (e) {
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Organize failed: $e')));
+    }
   }
 
   Future<void> _toggleFavorite(
@@ -326,25 +417,24 @@ class _NoteListPageState extends State<NoteListPage> {
 
     final nextValue = !_isFavorite(note);
     try {
-      await _supabase.from('notes').update({
-        'is_favorite': nextValue,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', noteId);
+      await _supabase
+          .from('notes')
+          .update({
+            'is_favorite': nextValue,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', noteId);
 
       if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            nextValue ? 'お気に入りに追加しました' : 'お気に入りを解除しました',
-          ),
-        ),
+        SnackBar(content: Text(nextValue ? 'お気に入りに追加しました' : 'お気に入りを解除しました')),
       );
       await _fetchNotes();
     } catch (e) {
       if (!mounted || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('お気に入りの更新に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('お気に入りの更新に失敗しました: $e')));
     }
   }
 
@@ -356,9 +446,9 @@ class _NoteListPageState extends State<NoteListPage> {
     final noteId = _noteNumericId(note);
     if (userId == null || noteId == null) {
       if (!mounted || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('公開するには保存済みメモが必要です')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('公開するには保存済みメモが必要です')));
       return;
     }
 
@@ -372,9 +462,9 @@ class _NoteListPageState extends State<NoteListPage> {
 
     if (!mounted || !context.mounted) return;
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('公開メモの公開に失敗しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('公開メモの公開に失敗しました')));
       return;
     }
 
@@ -405,9 +495,9 @@ class _NoteListPageState extends State<NoteListPage> {
     final success = await _publicMemoService.unpublishMemo(noteId, userId);
     if (!mounted || !context.mounted) return;
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('公開メモの公開停止に失敗しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('公開メモの公開停止に失敗しました')));
       return;
     }
 
@@ -416,9 +506,9 @@ class _NoteListPageState extends State<NoteListPage> {
           .where((publishedId) => publishedId != _noteId(note))
           .toSet();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('「${_noteTitle(note)}」の公開を停止しました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('「${_noteTitle(note)}」の公開を停止しました')));
   }
 
   Future<bool> _confirmDeleteNote(
@@ -462,11 +552,10 @@ class _NoteListPageState extends State<NoteListPage> {
     final numericNoteId = _noteNumericId(note);
 
     try {
-      await _supabase.from('notes').update({
-        'is_archived': true,
-        'archived_at': now,
-        'updated_at': now,
-      }).eq('id', noteId);
+      await _supabase
+          .from('notes')
+          .update({'is_archived': true, 'archived_at': now, 'updated_at': now})
+          .eq('id', noteId);
 
       if (userId != null && numericNoteId != null) {
         await _publicMemoService.unpublishMemo(numericNoteId, userId);
@@ -476,16 +565,16 @@ class _NoteListPageState extends State<NoteListPage> {
       await prefs.remove('$_draftKeyPrefix$noteId');
 
       if (!mounted || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('「$deletedTitle」を削除しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('「$deletedTitle」を削除しました')));
       _publishedNoteIds.remove(noteId);
       await _fetchNotes();
     } catch (e) {
       if (!mounted || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('メモの削除に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('メモの削除に失敗しました: $e')));
     }
   }
 
@@ -545,9 +634,9 @@ class _NoteListPageState extends State<NoteListPage> {
       );
     } catch (e) {
       if (!mounted || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('メモの複製に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('メモの複製に失敗しました: $e')));
     }
   }
 
@@ -627,20 +716,24 @@ class _NoteListPageState extends State<NoteListPage> {
   List<Map<String, dynamic>> _shareCandidateEntries(
     List<Map<String, dynamic>> notes,
   ) {
-    final entries = notes
-        .where((note) {
-          final title = _noteTitle(note);
-          final content = _noteContent(note);
-          return title.isNotEmpty || content.isNotEmpty;
-        })
-        .map(_buildShareCandidateEntry)
-        .toList()
-      ..sort((a, b) {
-        final scoreCompare = (b['score'] as int).compareTo(a['score'] as int);
-        if (scoreCompare != 0) return scoreCompare;
-        return (b['createdAt'] as DateTime)
-            .compareTo(a['createdAt'] as DateTime);
-      });
+    final entries =
+        notes
+            .where((note) {
+              final title = _noteTitle(note);
+              final content = _noteContent(note);
+              return title.isNotEmpty || content.isNotEmpty;
+            })
+            .map(_buildShareCandidateEntry)
+            .toList()
+          ..sort((a, b) {
+            final scoreCompare = (b['score'] as int).compareTo(
+              a['score'] as int,
+            );
+            if (scoreCompare != 0) return scoreCompare;
+            return (b['createdAt'] as DateTime).compareTo(
+              a['createdAt'] as DateTime,
+            );
+          });
 
     if (entries.isNotEmpty) {
       return entries.take(3).toList();
@@ -702,6 +795,50 @@ class _NoteListPageState extends State<NoteListPage> {
     );
   }
 
+  Widget _buildQuickInboxBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              key: const Key('note_list_page_quick_inbox_field'),
+              controller: _quickInboxController,
+              minLines: 1,
+              maxLines: 3,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _quickCaptureInbox(),
+              decoration: InputDecoration(
+                hintText: 'Drop a thought into Inbox...',
+                prefixIcon: const Icon(Icons.inbox_outlined),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            key: const Key('note_list_page_quick_inbox_save'),
+            tooltip: 'Save to Inbox',
+            onPressed: _isQuickCapturing ? null : _quickCaptureInbox,
+            icon: _isQuickCapturing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.add),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDraftCard(BuildContext context, _LocalDraftEntry draft) {
     final accentColor = Theme.of(context).colorScheme.onSurface;
     final savedAtLabel = DateFormat('yyyy/MM/dd HH:mm').format(draft.savedAt);
@@ -711,9 +848,7 @@ class _NoteListPageState extends State<NoteListPage> {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: accentColor.withValues(alpha: 0.12),
-        ),
+        side: BorderSide(color: accentColor.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -810,13 +945,16 @@ class _NoteListPageState extends State<NoteListPage> {
     final isFavorite = _isFavorite(note);
     final title = _noteTitle(note);
     final content = _noteContent(note);
+    final isInbox = _isInboxNote(note);
+    final tags = _noteTags(note);
     final reminderDate = _reminderDateOf(note);
     final accentColor = highlightShareCandidate
         ? const Color(0xFF6366F1)
         : (highlightReminder
-            ? const Color(0xFF0D9488)
-            : (isPinned ? const Color(0xFFFF6B35) : const Color(0xFF6366F1)));
-    final fallbackAccentColor = isFavorite &&
+              ? const Color(0xFF0D9488)
+              : (isPinned ? const Color(0xFFFF6B35) : const Color(0xFF6366F1)));
+    final fallbackAccentColor =
+        isFavorite &&
             !highlightReminder &&
             !highlightShareCandidate &&
             !isPinned
@@ -841,12 +979,12 @@ class _NoteListPageState extends State<NoteListPage> {
             highlightShareCandidate
                 ? Icons.campaign
                 : highlightReminder
-                    ? Icons.alarm
-                    : isPinned
-                        ? Icons.push_pin
-                        : isFavorite
-                            ? Icons.star
-                            : Icons.description,
+                ? Icons.alarm
+                : isPinned
+                ? Icons.push_pin
+                : isFavorite
+                ? Icons.star
+                : Icons.description,
             color: fallbackAccentColor,
             size: 20,
           ),
@@ -887,13 +1025,31 @@ class _NoteListPageState extends State<NoteListPage> {
                       ),
                     ),
                   ),
+                if (isInbox) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D9488).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'Inbox',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0D9488),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
                 if (isFavorite) ...[
                   const SizedBox(width: 8),
-                  const Icon(
-                    Icons.star,
-                    size: 18,
-                    color: Color(0xFFFF6B35),
-                  ),
+                  const Icon(Icons.star, size: 18, color: Color(0xFFFF6B35)),
                 ],
               ],
             ),
@@ -906,6 +1062,14 @@ class _NoteListPageState extends State<NoteListPage> {
                   if (shareScore != null) _buildReasonChip('score $shareScore'),
                   ...shareReasons.take(4).map(_buildReasonChip),
                 ],
+              ),
+            ],
+            if (tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: tags.take(5).map(_buildReasonChip).toList(),
               ),
             ],
           ],
@@ -988,20 +1152,17 @@ class _NoteListPageState extends State<NoteListPage> {
                   case _NoteCardAction.duplicate:
                     _duplicateNote(context, note);
                     break;
+                  case _NoteCardAction.organize:
+                    _markOrganized(context, note);
+                    break;
                   case _NoteCardAction.publish:
                     _publishNote(context, note);
                     break;
                   case _NoteCardAction.unpublish:
-                    _unpublishNote(
-                      context,
-                      note,
-                    );
+                    _unpublishNote(context, note);
                     break;
                   case _NoteCardAction.delete:
-                    _deleteNote(
-                      context,
-                      note,
-                    );
+                    _deleteNote(context, note);
                     break;
                 }
               },
@@ -1016,6 +1177,17 @@ class _NoteListPageState extends State<NoteListPage> {
                     ],
                   ),
                 ),
+                if (isInbox)
+                  const PopupMenuItem<_NoteCardAction>(
+                    value: _NoteCardAction.organize,
+                    child: Row(
+                      children: [
+                        Icon(Icons.done_all, size: 18),
+                        SizedBox(width: 8),
+                        Text('Mark organized'),
+                      ],
+                    ),
+                  ),
                 PopupMenuItem<_NoteCardAction>(
                   value: _isPublished(note)
                       ? _NoteCardAction.unpublish
@@ -1055,14 +1227,19 @@ class _NoteListPageState extends State<NoteListPage> {
   @override
   Widget build(BuildContext context) {
     // Win版#108: お気に入り → 検索 の順でフィルタ適用
-    final favoritesFiltered =
-        _showFavoritesOnly ? _notes.where(_isFavorite).toList() : _notes;
+    final modeFiltered = _showInboxOnly
+        ? _notes.where(_isInboxNote).toList()
+        : _showFavoritesOnly
+        ? _notes.where(_isFavorite).toList()
+        : _notes;
     final visibleNotes = _searchQuery.isEmpty
-        ? favoritesFiltered
-        : favoritesFiltered.where(_matchesSearch).toList();
+        ? modeFiltered
+        : modeFiltered.where(_matchesSearch).toList();
     final reminderEntries = _reminderEntries(visibleNotes);
-    final reminderIds =
-        reminderEntries.map(_noteId).where((id) => id.isNotEmpty).toSet();
+    final reminderIds = reminderEntries
+        .map(_noteId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
     final reminderExcludedNotes = visibleNotes
         .where((note) => !reminderIds.contains(_noteId(note)))
         .toList();
@@ -1075,20 +1252,22 @@ class _NoteListPageState extends State<NoteListPage> {
         .toSet();
     final remainingNotes = widget.prioritizeShareCandidates
         ? reminderExcludedNotes
-            .where((note) => !shareCandidateIds.contains(_noteId(note)))
-            .toList()
+              .where((note) => !shareCandidateIds.contains(_noteId(note)))
+              .toList()
         : reminderExcludedNotes;
     final hasAnyEntries = _draftEntries.isNotEmpty || visibleNotes.isNotEmpty;
-    final pageTitle =
-        _showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)';
+    final pageTitle = _showFavoritesOnly
+        ? 'CKO OFFICE (お気に入り)'
+        : 'CKO OFFICE (メモ一覧)';
+
+    final effectivePageTitle = _showInboxOnly
+        ? 'CKO OFFICE (Inbox)'
+        : pageTitle;
 
     return Scaffold(
       key: const Key('note_list_page_scaffold'),
       appBar: AppBar(
-        title: Text(
-          pageTitle,
-          key: const Key('note_list_page_title'),
-        ),
+        title: Text(effectivePageTitle, key: const Key('note_list_page_title')),
         backgroundColor: const Color(0xFF6366F1),
         foregroundColor: Colors.white,
         actions: [
@@ -1100,9 +1279,13 @@ class _NoteListPageState extends State<NoteListPage> {
             onPressed: _toggleFavoritesOnly,
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchNotes,
+            key: const Key('note_list_page_inbox_filter'),
+            icon: Icon(_showInboxOnly ? Icons.inbox : Icons.inbox_outlined),
+            color: _showInboxOnly ? const Color(0xFFA7F3D0) : Colors.white,
+            tooltip: _showInboxOnly ? 'Show all notes' : 'Show Inbox',
+            onPressed: _toggleInboxOnly,
           ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchNotes),
           IconButton(
             icon: const Icon(Icons.public),
             tooltip: '公開メモ一覧',
@@ -1117,6 +1300,7 @@ class _NoteListPageState extends State<NoteListPage> {
       ),
       body: Column(
         children: [
+          _buildQuickInboxBar(),
           // Win版#108: メモ検索バー
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -1201,120 +1385,117 @@ class _NoteListPageState extends State<NoteListPage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : !hasAnyEntries
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.note_alt_outlined,
-                              size: 64,
-                              color: Color(0xFFB0B0B0),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _showFavoritesOnly
-                                  ? 'お気に入りのメモはまだありません'
-                                  : 'まだメモがありません',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                color: Color(0xFFB0B0B0),
-                                height: 1.5,
-                              ),
-                            ),
-                            if (_showFavoritesOnly) ...[
-                              const SizedBox(height: 12),
-                              TextButton.icon(
-                                onPressed: _toggleFavoritesOnly,
-                                icon: const Icon(Icons.list_alt),
-                                label: const Text('すべてのメモを見る'),
-                              ),
-                            ],
-                            const SizedBox(height: 24),
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: const Text('新しいメモを作成'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6366F1),
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () => _navigateToEditor(context),
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              onPressed: () =>
-                                  Navigator.of(context).pushNamed('/import'),
-                              icon: const Icon(Icons.file_upload_outlined),
-                              label: const Text('Notion / Evernote を取り込む'),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.note_alt_outlined,
+                          size: 64,
+                          color: Color(0xFFB0B0B0),
                         ),
-                      )
-                    : ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          if (_draftEntries.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              '下書き',
-                              'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
-                            ),
-                            ..._draftEntries.map(
-                              (draft) => _buildDraftCard(context, draft),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                          if (reminderEntries.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              'リマインダー',
-                              'Evernote のように、期限付きノートを先頭でまとめて確認できます。',
-                            ),
-                            ...reminderEntries.map(
-                              (note) => _buildNoteCard(
-                                context,
-                                note,
-                                highlightReminder: true,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                          if (widget.prioritizeShareCandidates &&
-                              shareCandidateEntries.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              '共有向け候補',
-                              'ピン留め・共有語・導線語・説明量をスコア化して上位3件を固定表示します。',
-                            ),
-                            ...shareCandidateEntries.map((entry) {
-                              final note =
-                                  entry['note'] as Map<String, dynamic>;
-                              final score = entry['score'] as int;
-                              final reasons = List<String>.from(
-                                entry['reasons'] as List,
-                              );
-                              return _buildNoteCard(
-                                context,
-                                note,
-                                highlightShareCandidate: true,
-                                shareScore: score,
-                                shareReasons: reasons,
-                              );
-                            }),
-                            const SizedBox(height: 8),
-                          ],
-                          if (remainingNotes.isNotEmpty)
-                            _buildSectionHeader(
-                              widget.prioritizeShareCandidates
-                                  ? 'すべてのメモ'
-                                  : 'メモ一覧',
-                              _showFavoritesOnly
-                                  ? 'Evernote のスター付きノートのように、お気に入りだけをまとめて見返せます。'
-                                  : widget.prioritizeShareCandidates
-                                      ? '共有候補の下に、残りのメモを時系列で表示します。'
-                                      : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
-                            ),
-                          ...remainingNotes.map(
-                            (note) => _buildNoteCard(context, note),
+                        const SizedBox(height: 16),
+                        Text(
+                          _showFavoritesOnly
+                              ? 'お気に入りのメモはまだありません'
+                              : 'まだメモがありません',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFFB0B0B0),
+                            height: 1.5,
+                          ),
+                        ),
+                        if (_showFavoritesOnly) ...[
+                          const SizedBox(height: 12),
+                          TextButton.icon(
+                            onPressed: _toggleFavoritesOnly,
+                            icon: const Icon(Icons.list_alt),
+                            label: const Text('すべてのメモを見る'),
                           ),
                         ],
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.add),
+                          label: const Text('新しいメモを作成'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => _navigateToEditor(context),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () =>
+                              Navigator.of(context).pushNamed('/import'),
+                          icon: const Icon(Icons.file_upload_outlined),
+                          label: const Text('Notion / Evernote を取り込む'),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      if (_draftEntries.isNotEmpty) ...[
+                        _buildSectionHeader(
+                          '下書き',
+                          'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
+                        ),
+                        ..._draftEntries.map(
+                          (draft) => _buildDraftCard(context, draft),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      if (reminderEntries.isNotEmpty) ...[
+                        _buildSectionHeader(
+                          'リマインダー',
+                          'Evernote のように、期限付きノートを先頭でまとめて確認できます。',
+                        ),
+                        ...reminderEntries.map(
+                          (note) => _buildNoteCard(
+                            context,
+                            note,
+                            highlightReminder: true,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      if (widget.prioritizeShareCandidates &&
+                          shareCandidateEntries.isNotEmpty) ...[
+                        _buildSectionHeader(
+                          '共有向け候補',
+                          'ピン留め・共有語・導線語・説明量をスコア化して上位3件を固定表示します。',
+                        ),
+                        ...shareCandidateEntries.map((entry) {
+                          final note = entry['note'] as Map<String, dynamic>;
+                          final score = entry['score'] as int;
+                          final reasons = List<String>.from(
+                            entry['reasons'] as List,
+                          );
+                          return _buildNoteCard(
+                            context,
+                            note,
+                            highlightShareCandidate: true,
+                            shareScore: score,
+                            shareReasons: reasons,
+                          );
+                        }),
+                        const SizedBox(height: 8),
+                      ],
+                      if (remainingNotes.isNotEmpty)
+                        _buildSectionHeader(
+                          widget.prioritizeShareCandidates ? 'すべてのメモ' : 'メモ一覧',
+                          _showFavoritesOnly
+                              ? 'Evernote のスター付きノートのように、お気に入りだけをまとめて見返せます。'
+                              : widget.prioritizeShareCandidates
+                              ? '共有候補の下に、残りのメモを時系列で表示します。'
+                              : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
+                        ),
+                      ...remainingNotes.map(
+                        (note) => _buildNoteCard(context, note),
                       ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -1330,9 +1511,7 @@ class _NoteListPageState extends State<NoteListPage> {
   Future<void> _navigateToEditor(BuildContext context, [String? noteId]) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => NoteEditorPage(noteId: noteId),
-      ),
+      MaterialPageRoute(builder: (_) => NoteEditorPage(noteId: noteId)),
     );
     _fetchNotes();
   }

@@ -2621,6 +2621,26 @@ type NoteSearchIndexRow = {
   match_reason: string | null;
 };
 
+type RelatedNoteRow = {
+  note_id: number;
+  title: string | null;
+  content: string | null;
+  tags: string[] | null;
+  category_id: string | null;
+  note_updated_at: string | null;
+  similarity_score: number | null;
+  match_reason: string | null;
+};
+
+type InboxClassificationResult = {
+  tags: string[];
+  captureStatus: "inbox" | "organized" | "archived";
+  classificationStatus: "pending" | "classified" | "failed" | "skipped";
+  confidence: number;
+  summary: string;
+  source: "gemini" | "heuristic_fallback";
+};
+
 function buildNoteSearchText(
   title: string | null | undefined,
   content: string | null | undefined,
@@ -2788,6 +2808,150 @@ async function fallbackTextSearch(
   }));
 }
 
+async function relatedIndexedNotes(
+  admin: SupabaseClient,
+  userId: string,
+  noteId: number,
+  limit: number,
+): Promise<RelatedNoteRow[]> {
+  const { data, error } = await admin.rpc("find_related_notes", {
+    p_user_id: userId,
+    p_note_id: noteId,
+    p_limit: limit,
+  });
+  if (error) {
+    throw new Error(`find_related_notes failed: ${error.message}`);
+  }
+  return (data ?? []) as RelatedNoteRow[];
+}
+
+function normalizeCaptureStatus(
+  value: unknown,
+): InboxClassificationResult["captureStatus"] | null {
+  const raw = asString(value).toLowerCase();
+  if (raw === "inbox" || raw === "organized" || raw === "archived") {
+    return raw;
+  }
+  return null;
+}
+
+function normalizeClassificationStatus(
+  value: unknown,
+): InboxClassificationResult["classificationStatus"] | null {
+  const raw = asString(value).toLowerCase();
+  if (
+    raw === "pending" || raw === "classified" || raw === "failed" ||
+    raw === "skipped"
+  ) {
+    return raw;
+  }
+  return null;
+}
+
+function uniqueTags(tags: string[], max = 5): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const tag of tags) {
+    const normalized = tag.trim().replace(/^#+/, "").slice(0, 32);
+    if (!normalized || seen.has(normalized.toLowerCase())) continue;
+    seen.add(normalized.toLowerCase());
+    result.push(normalized);
+    if (result.length >= max) break;
+  }
+  return result;
+}
+
+function parseJsonObject(text: string): Record<string, unknown> | null {
+  const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
+  try {
+    return asRecord(JSON.parse(cleaned));
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try {
+      return asRecord(JSON.parse(match[0]));
+    } catch {
+      return null;
+    }
+  }
+}
+
+function classifyInboxNoteHeuristically(
+  title: string,
+  content: string,
+): InboxClassificationResult {
+  const text = `${title} ${content}`.toLowerCase();
+  const tags: string[] = [];
+  const addTag = (tag: string, keywords: string[]) => {
+    if (tags.includes(tag)) return;
+    if (keywords.some((keyword) => text.includes(keyword))) tags.push(tag);
+  };
+
+  addTag("task", ["todo", "task", "deadline", "due", "fix"]);
+  addTag("meeting", ["meeting", "agenda", "minutes", "sync"]);
+  addTag("money", ["invoice", "payment", "budget", "cost"]);
+  addTag("idea", ["idea", "draft", "concept", "brainstorm"]);
+  addTag("learning", ["learn", "course", "study", "book"]);
+  addTag("contact", ["call", "email", "dm", "reply"]);
+
+  const compact = content.trim().replace(/\s+/g, " ");
+  const confidence = tags.length > 0
+    ? Math.min(0.92, 0.68 + tags.length * 0.05)
+    : compact.length >= 40
+    ? 0.55
+    : 0.32;
+
+  return {
+    tags: uniqueTags(tags),
+    captureStatus: "inbox",
+    classificationStatus: confidence >= 0.5 ? "classified" : "pending",
+    confidence,
+    summary: compact.length <= 120 ? compact : `${compact.slice(0, 120)}...`,
+    source: "heuristic_fallback",
+  };
+}
+
+async function classifyInboxNote(
+  title: string,
+  content: string,
+  geminiKey: string,
+): Promise<InboxClassificationResult> {
+  const fallback = classifyInboxNoteHeuristically(title, content);
+  if (!geminiKey || !content.trim()) return fallback;
+
+  const prompt = [
+    "Classify this quick-captured personal note.",
+    "Return JSON only with keys:",
+    '{"tags":["short-tag"],"capture_status":"inbox","classification_status":"classified","confidence":0.0,"summary":"short summary"}',
+    "Use capture_status=inbox unless the note is clearly already organized.",
+    `Title: ${title}`,
+    `Content: ${content}`,
+  ].join("\n");
+
+  try {
+    const text = await callGemini(prompt, geminiKey);
+    const parsed = parseJsonObject(text);
+    if (!parsed) return fallback;
+    const confidence = Math.max(
+      0,
+      Math.min(1, asNumber(parsed.confidence, fallback.confidence)),
+    );
+    return {
+      tags: uniqueTags(asStringArray(parsed.tags)),
+      captureStatus: normalizeCaptureStatus(parsed.capture_status) ?? "inbox",
+      classificationStatus:
+        normalizeClassificationStatus(parsed.classification_status) ??
+          (confidence >= 0.5 ? "classified" : "pending"),
+      confidence,
+      summary: asString(parsed.summary).slice(0, 240) || fallback.summary,
+      source: "gemini",
+    };
+  } catch (error) {
+    console.warn("notes.classify gemini failed", error);
+    return fallback;
+  }
+}
+
 async function invokeAiAssistant(
   authHeader: string,
   payload: Record<string, unknown>,
@@ -2933,6 +3097,8 @@ serve(async (req: Request) => {
     // Actions that require authentication
     const authRequired = [
       "search.query",
+      "search.related",
+      "notes.classify",
       "secretary.task",
       "secretary.history",
       "summarize.text",
@@ -3188,19 +3354,51 @@ serve(async (req: Request) => {
           searchMode = "text_fallback";
         }
 
-        const results = rows.map((row) => ({
-          id: row.note_id,
-          title: row.title ?? "",
-          content: row.content ?? "",
-          tags: row.tags ?? [],
-          category_id: row.category_id,
-          updated_at: row.note_updated_at,
-          search_score: row.combined_rank ?? row.text_rank ?? row.vector_rank ??
-            0,
-          search_text_rank: row.text_rank ?? 0,
-          search_vector_rank: row.vector_rank ?? 0,
-          match_reason: row.match_reason ??
-            (queryEmbedding == null ? "text" : "hybrid"),
+        const includeRelated = body.includeRelated === true ||
+          body.include_related === true;
+        const relatedLimit = Math.min(
+          Math.max(Number(body.relatedLimit ?? body.related_limit ?? 3), 1),
+          5,
+        );
+        const results = await Promise.all(rows.map(async (row, index) => {
+          let relatedNotes: RelatedNoteRow[] = [];
+          if (includeRelated && index < 5 && Number.isFinite(row.note_id)) {
+            try {
+              relatedNotes = await relatedIndexedNotes(
+                admin,
+                userId,
+                row.note_id,
+                relatedLimit,
+              );
+            } catch (error) {
+              console.warn("search.query related search failed", error);
+            }
+          }
+
+          return {
+            id: row.note_id,
+            title: row.title ?? "",
+            content: row.content ?? "",
+            tags: row.tags ?? [],
+            category_id: row.category_id,
+            updated_at: row.note_updated_at,
+            search_score: row.combined_rank ?? row.text_rank ??
+              row.vector_rank ?? 0,
+            search_text_rank: row.text_rank ?? 0,
+            search_vector_rank: row.vector_rank ?? 0,
+            match_reason: row.match_reason ??
+              (queryEmbedding == null ? "text" : "hybrid"),
+            related_notes: relatedNotes.map((related) => ({
+              id: related.note_id,
+              title: related.title ?? "",
+              content: related.content ?? "",
+              tags: related.tags ?? [],
+              category_id: related.category_id,
+              updated_at: related.note_updated_at,
+              similarity_score: related.similarity_score ?? 0,
+              match_reason: related.match_reason ?? "text",
+            })),
+          };
         }));
 
         const explanation = searchMode == "ai"
@@ -3214,6 +3412,120 @@ serve(async (req: Request) => {
           totalResults: results.length,
           searchMode,
           explanation,
+        });
+      }
+
+      case "search.related": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const noteId = Number(body.note_id ?? body.noteId ?? 0);
+        const relatedLimit = Math.min(
+          Math.max(Number(body.limit ?? 5), 1),
+          5,
+        );
+        if (!Number.isFinite(noteId) || noteId <= 0) {
+          return json({ error: "note_id is required" }, 400);
+        }
+
+        try {
+          await syncNoteSearchIndex(admin, userId);
+        } catch (error) {
+          console.warn("search.related sync failed", error);
+        }
+
+        const rows = await relatedIndexedNotes(
+          admin,
+          userId,
+          noteId,
+          relatedLimit,
+        );
+        return json({
+          success: true,
+          note_id: noteId,
+          results: rows.map((row) => ({
+            id: row.note_id,
+            title: row.title ?? "",
+            content: row.content ?? "",
+            tags: row.tags ?? [],
+            category_id: row.category_id,
+            updated_at: row.note_updated_at,
+            similarity_score: row.similarity_score ?? 0,
+            match_reason: row.match_reason ?? "text",
+          })),
+        });
+      }
+
+      case "notes.classify": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const noteId = Number(body.note_id ?? body.noteId ?? 0);
+        const requestedTitle = asString(body.title);
+        const requestedContent = asString(body.content);
+
+        let noteRow: Record<string, unknown> | null = null;
+        if (Number.isFinite(noteId) && noteId > 0) {
+          const { data, error } = await admin
+            .from("notes")
+            .select("id, title, content, tags, capture_status, capture_source")
+            .eq("id", noteId)
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (error) throw new Error(`notes load failed: ${error.message}`);
+          if (!data) return json({ error: "Note not found" }, 404);
+          noteRow = data as Record<string, unknown>;
+        }
+
+        const title = requestedTitle || asString(noteRow?.title);
+        const content = requestedContent || asString(noteRow?.content);
+        const existingTags = asStringArray(noteRow?.tags);
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        const classification = await classifyInboxNote(
+          title,
+          content,
+          geminiKey,
+        );
+        const mergedTags = uniqueTags([
+          ...existingTags,
+          ...classification.tags,
+        ]);
+        const captureStatus = normalizeCaptureStatus(body.capture_status) ??
+          normalizeCaptureStatus(noteRow?.capture_status) ??
+          classification.captureStatus;
+        const classificationStatus =
+          normalizeClassificationStatus(body.classification_status) ??
+            classification.classificationStatus;
+
+        if (noteRow) {
+          const { error } = await admin
+            .from("notes")
+            .update({
+              tags: mergedTags,
+              capture_status: captureStatus,
+              classification_status: classificationStatus,
+              classified_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", noteId)
+            .eq("user_id", userId);
+          if (error) {
+            throw new Error(
+              `notes classification update failed: ${error.message}`,
+            );
+          }
+          try {
+            await syncNoteSearchIndex(admin, userId);
+          } catch (error) {
+            console.warn("notes.classify sync failed", error);
+          }
+        }
+
+        return json({
+          success: true,
+          note_id: Number.isFinite(noteId) && noteId > 0 ? noteId : null,
+          tags: mergedTags,
+          capture_status: captureStatus,
+          classification_status: classificationStatus,
+          confidence: classification.confidence,
+          summary: classification.summary,
+          source: classification.source,
         });
       }
 
