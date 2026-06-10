@@ -26,9 +26,62 @@
       "category": "release",
       "changeCategories": [
         "automation",
-        "feature"
+        "feature",
+        "fix"
       ],
       "changes": [
+        {
+          "category": "automation",
+          "id": "pr-3226",
+          "links": [
+            {
+              "title": "PR #3226",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3226"
+            }
+          ],
+          "mergedAt": "2026-06-10T23:21:44Z",
+          "summary": "#3226 ci: soften NotebookLM auth blocker runs"
+        },
+        {
+          "category": "automation",
+          "id": "pr-3224",
+          "links": [
+            {
+              "title": "PR #3224",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3224"
+            }
+          ],
+          "mergedAt": "2026-06-10T21:50:52Z",
+          "summary": "#3224 ci: finish workflow concurrency audit batch"
+        },
+        {
+          "category": "automation",
+          "id": "pr-3222",
+          "links": [
+            {
+              "title": "PR #3222",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3222"
+            }
+          ],
+          "mergedAt": "2026-06-10T20:26:10Z",
+          "summary": "#3222 ci: add audit workflow concurrency batch"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3221",
+          "links": [
+            {
+              "title": "PR #3221",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3221"
+            }
+          ],
+          "mergedAt": "2026-06-10T20:10:07Z",
+          "summary": "#3221 fix: tolerate missing PR merge refs in CI"
+        },
         {
           "category": "feature",
           "id": "pr-3218",
@@ -366,64 +419,12 @@
           ],
           "mergedAt": "2026-06-09T14:27:36Z",
           "summary": "#3174 [CI/CD自動最適化] concurrency 追加 2 件 2026-06-09"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3173",
-          "links": [
-            {
-              "title": "PR #3173",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3173"
-            }
-          ],
-          "mergedAt": "2026-06-09T13:58:57Z",
-          "summary": "#3173 docs(press): プレスリリース v1 + complete WBS 88d0ac29 (part 249)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3171",
-          "links": [
-            {
-              "title": "PR #3171",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3171"
-            }
-          ],
-          "mergedAt": "2026-06-09T12:56:41Z",
-          "summary": "#3171 docs(brand): ブランドガイドライン v1 + complete WBS dce3f86c (part 248)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3170",
-          "links": [
-            {
-              "title": "PR #3170",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3170"
-            }
-          ],
-          "mergedAt": "2026-06-09T12:21:45Z",
-          "summary": "#3170 docs(marketing): X 公式アカウント運用設計 v1 + complete WBS fd9616af (part 247)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3169",
-          "links": [
-            {
-              "title": "PR #3169",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3169"
-            }
-          ],
-          "mergedAt": "2026-06-09T12:06:08Z",
-          "summary": "#3169 docs(onboarding): カスタマーオンボーディング設計 v1 + complete WBS a7f97791 (part 246)"
         }
       ],
       "date": "2026-06-10",
       "extensions": {
         "aiToolWatch": {
-          "changedSourceCount": 5,
+          "changedSourceCount": 3,
           "signalCount": 0,
           "source": "docs/ai-tool-watch/latest-report.json"
         }
