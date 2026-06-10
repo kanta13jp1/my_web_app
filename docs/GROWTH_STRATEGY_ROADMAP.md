@@ -32067,3 +32067,24 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 完了の定義 = 紹介プログラムの「設計・文書化」。**運用開始・報酬履行は claim しない** (発効 = §8 の 4 条件 / CEO 数値確定 + 規約承認 + activation 実装後)。設計/実装の 2 層分担: c9a3e346 (設計 = 本 session 完了) / f0fd0b22 (実装 = codex in_progress 継続) — Architect-Implementer ③ パターン。
 - Philosophy Alignment: 原則 1 (報酬数値・規約・公開 = CEO) / 4 (mentor = 履行できない約束を文言設計で禁止) / 5 (give-get = 双方に価値 / 利用内容非開示) / 6 (既存実装 verify → 新規開発ゼロ / 既存 signal 流用 = 時間資本保全) / 7 (sign-up 即 completed の abuse 脆弱性 = 負債を activation 設計で解消) / 8 (K-factor 定義) / 9 (cap + 規約 + 発効条件で持続可能設計)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 256 = 756632369)。
+
+---
+
+### 2026-06-10 Win版#132 part 258 — SPOF リスク評価 & フェイルオーバー戦略 v1 (WBS aa08e69f 完了 / /loop user 再起動 7 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 7 round 目**。並行セッション (part 257 = リファラル設計 / PR #3190 `8a7e946e4`) の merge 完了を確認し **part 258 へ改番** (numbering collision 第 2 例の回避継続)。先方は migration timestamp も自主 rename 済み (`20260610100000`) → 当方は `20260610110000` を使用 (衝突回避)。
+- [DYNAMIC-CLAIM] で **`aa08e69f`** ([Issue #2599] SPOF リスク評価とマルチリージョン・フェイルオーバー戦略の策定 / owner schedule→win) を引き取り。タスク本質 = 「評価 + 策定」(設計 / L3)。比較候補 #2647 (CLAUDE.md×DB スキーマ CI) は L2 実装 + 前提 stale (CLAUDE.md は part 133 以降 schema 非掲載) のため skip (次回 triage 候補)。
+- 設計シリーズ第 15 弾 / 本 session 7 PR 目。
+
+**Changes**:
+- `docs/SPOF_FAILOVER_STRATEGY.md` を新設 — **実在構成のみから** SPOF 台帳 (S1 Supabase データ = 最優先 / S2 GHA / S3 Firebase / S4 AI API / S5 人的) を評価。(1) **バックアップ・復元設計** (migrations=スキーマ SSOT / `supabase db dump` 手動手順 / 別プロジェクト復元 6 ステップ / **PITR・自動バックアップは plan 依存のため【確認事項】= 確認まで「ある」と言わない** / **restore drill 未実施を明記** = 実証済みと主張しない)。(2) **GHA 障害時の代替手動デプロイ手順** (実 deploy-prod.yml L530-705 から導出 / part 244 の local-CI バージョン不一致罠を注記)。(3) **縮退運転モード段階設計** (現状 verify: Sentry+ErrorReporter+auth-graceful 実装済・オフラインキャッシュ未実装 → Phase A/B 設計 / 実装 = L2)。(4) **マルチリージョン判断 = コールドスタンバイが v1 の正** (現規模で常時冗長は過剰 / 再評価 = paying-100 or 有償 SLA)。
+- migration `20260610110000_wbs_complete_spof_failover.sql` で WBS task を completed/100/approved 化 + owner schedule→win 是正 + `development_achievements` 追記 (idempotent)。
+- **Issue #2599 は close しない** — 受入基準 1-2 は本 doc で充足 / 基準 3 (Flutter 縮退の**実装**) が残るため open 維持 = L2 handoff (merge 後に criteria 状況 comment)。Issue 内の外部数値 (GHA 障害 57 回/12mo 等) は未検証として判断根拠から除外 ([AI-TOOL-VERIFY])。
+- ROADMAP part 258 エントリ (本欄 / part 257 merge hash `8a7e946e4` 補記)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-256 recipe / 第 14 連続狙い)。
+- honest 区別 3 点: 復元手順は「設計」であって「実証済み」ではない (drill 未実施明記) / バックアップ実在は dashboard 確認まで断定しない / Issue は基準 3 実装まで close しない (タスク完了 ≠ Issue 完了の分離を migration 内に文書化)。
+- Philosophy Alignment: 原則 1 (PITR 加入・drill 日程・保管先 = CEO) / 4 (全部署データの土台) / 6 (現規模に過剰な常時冗長を避ける) / 7 (データ=取り返せない資産 / 未実証を実証と言わない) / 8 (drill 成否・バックアップ鮮度 KPI) / 9 (持続可能運用)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 257 = 8a7e946e4)。
