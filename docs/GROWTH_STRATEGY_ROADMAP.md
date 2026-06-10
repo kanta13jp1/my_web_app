@@ -32309,3 +32309,24 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - Philosophy Alignment: 原則 4 (mentor = 週次ノイズ源の根絶を先回り) / 6 (資本=時間: 毎週の workflow-failure triage コスト削減) / 7 (壊れ bump の放置 = 負債) / 8 (CI 健全性 KPI) / 9 (無人 dependabot 運用の信頼性)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 264 = 7773200e4)。
 ---
+
+### 2026-06-11 Win版#132 part 266 — CI Setup Deno の deno.land 一時503耐性化 (retry+backoff / 保守 WBS 追加→同一セッション完了 第 3 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 265 終了 02:40 JST の直後 / 02:50 JST)。session-start fetch 儀式 (part 265 教訓) 適用後、**新規流入 Issue #3215 ([workflow-failure] Deploy to Production (main) deno-lint)** を triage — part 265 で確立した「補充源 = 新規 workflow-failure Issue 流入」の第 2 連続発火。
+- **誤分類を実ログで是正**: handler の「deno-lint」分類に対し、run 27293741687 (part 265 merge commit `407cdc9e4`) の job 80620889988 log 確証 = `curl: (22) The requested URL returned error: 503` → 真因は ci.yml「Setup Deno」の素の `curl -fsSL https://deno.land/install.sh | sh` が deno.land 一時 503 で fail (lint エラー不在 / 直前 commit `da667bc5d` の deploy は success)。reusable ci.yml fail → deploy job skip → **part 265 の WBS migration 本番未適用が滞留**、まで波及確認。
+- **2 段対応**: ① 即時復旧 = `gh run rerun 27293741687 --failed` (一時障害仮説の検証込み / green 化で handler recovery rule が #3215 自動 close + part 265 migration 適用回復) ② 恒久対応 = Setup Deno へ retry+backoff (3 attempts / 20s,40s / curl --retry 併用)。installer を一時ファイル経由に変更し、stdout パイプ直結で curl --retry が rewind 不能 → truncated script が sh に流れる潜在ハザードも同時解消。
+- **公式 docs verify-first**: 代替案 denoland/setup-deno@v2 の action.yml (main) で `runs.using: node24` を確認 (part 264 の Node20 廃止 sweep と矛盾しない) — ただし真因 (一時 503) には retry が strict superset の最小修正であり、deploy lane への新規依存追加を避けて defer (月 2 回以上再発で L2 移行検討 / WBS remaining_work に正本化)。
+
+**Changes**:
+- `.github/workflows/ci.yml` — Setup Deno step に retry+backoff loop (deploy-prod.yml `deploy_function` と同一 repo idiom) + 一時ファイル経由インストール。
+- migration `20260611030000_wbs_add_complete_ci_deno_retry.sql` — 保守 WBS タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。症状チケット #3215 は handler recovery rule 管理のため WBS 化せず (part 265 委譲準拠)。
+- ROADMAP part 266 エントリ (本欄 / part 265 merge hash `407cdc9e4` 補記)。
+
+**Validation focus**:
+- 「耐性化」の範囲: 一時障害 (数十秒〜分オーダー) は CI 内で自己回復 / 持続障害 (3 attempts 超) は fail して rerun に委ねる — 無限 retry で障害を隠蔽しない。
+- SDLC 7 工程 gap 監査: part 254 方法論 + part 265 結論を再確認 — 全工程 open 実在 / 今回の不足 = 保守工程の本タスク 1 件 (追加→同一セッション完了)。stale docs 棚卸しは part 265 (<24h 前) の「削除 0 件が正答」維持。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 22 連続狙い / .github+migration+docs = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = deploy lane の単一 flaky 依存を先回り根絶) / 6 (資本=時間: 503 一発で rerun 人手対応するコストの削減) / 7 (deploy skip = migration 滞留という隠れ負債の検出と回復) / 8 (deploy-prod 成功率100%維持 KPI) / 9 (無人 main push 運用の信頼性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 265 = 407cdc9e4)。
+---
