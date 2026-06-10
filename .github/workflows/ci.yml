@@ -47,10 +47,18 @@ jobs:
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
             ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+            if ! git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"; then
+              echo "::warning::PR merge ref ${ref} is unavailable; falling back to PR head SHA."
+              git fetch --depth=1 \
+                "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+                "${{ github.event.pull_request.head.sha }}"
+              git checkout --force FETCH_HEAD
+              exit 0
+            fi
           else
             ref="${GITHUB_REF}"
+            git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           fi
-          git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           git checkout --force refs/remotes/origin/checkout
 
       - name: Setup Flutter
@@ -308,10 +316,18 @@ jobs:
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
             ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+            if ! git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"; then
+              echo "::warning::PR merge ref ${ref} is unavailable; falling back to PR head SHA."
+              git fetch --depth=1 \
+                "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+                "${{ github.event.pull_request.head.sha }}"
+              git checkout --force FETCH_HEAD
+              exit 0
+            fi
           else
             ref="${GITHUB_REF}"
+            git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           fi
-          git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           git checkout --force refs/remotes/origin/checkout
 
       - name: Run security audit
