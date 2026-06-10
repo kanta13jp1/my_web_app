@@ -66,6 +66,19 @@ import {
   MarketPriceActionError,
   type MarketPriceDb,
 } from "./market_price.ts";
+import {
+  handleCartesiaRealtimeWebSocket,
+  handleVoiceCartesiaSessionAction,
+  handleVoiceMetricAction,
+  handleVoiceUsageSummaryAction,
+  normalizeVoiceProvider,
+  policyPayload,
+  recordVoiceSttUsage,
+  reserveVoiceTtsUsage,
+  usagePayload,
+  type VoiceAiDb,
+  VoiceAiError,
+} from "./voice_ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1946,7 +1959,9 @@ async function getCompanyBuilderDetail(
 }
 
 async function getUserId(req: Request): Promise<string | null> {
-  const auth = req.headers.get("Authorization") ?? "";
+  const token = new URL(req.url).searchParams.get("access_token") ?? "";
+  const auth = req.headers.get("Authorization") ??
+    (token ? `Bearer ${token}` : "");
   if (!auth) return null;
   const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: auth } },
@@ -2920,6 +2935,17 @@ serve(async (req: Request) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const reqUrl = new URL(req.url);
+  if (
+    req.headers.get("upgrade")?.toLowerCase() === "websocket" &&
+    reqUrl.searchParams.get("action") === "voice.cartesia.websocket"
+  ) {
+    const userId = await getUserId(req);
+    if (!userId) return new Response("Unauthorized", { status: 401 });
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    return handleCartesiaRealtimeWebSocket(req, admin as VoiceAiDb, userId);
+  }
+
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     const body = req.method === "POST"
@@ -2974,6 +3000,9 @@ serve(async (req: Request) => {
       "compute-disposable-balance",
       "voice.tts",
       "voice.stt",
+      "voice.metric",
+      "voice.usage.summary",
+      "voice.cartesia.session",
     ];
     if (authRequired.includes(action) && !userId) {
       return json({ error: "Unauthorized" }, 401);
@@ -5261,6 +5290,49 @@ serve(async (req: Request) => {
       case "voice.tts": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const text = String(body.text ?? "").slice(0, 5000);
+        if (!text.trim()) {
+          return json({ error: "text required" }, 400);
+        }
+        const provider = normalizeVoiceProvider(body.provider);
+        const feature = String(body.feature ?? "voice_tts");
+        const { policy, usage } = await reserveVoiceTtsUsage(
+          admin as VoiceAiDb,
+          {
+            userId,
+            body,
+            provider,
+            feature,
+            text,
+            metadata: {
+              action: "voice.tts",
+              realtime_requested: body.realtime === true ||
+                body.streaming === true,
+            },
+          },
+        );
+        if (usage.blocked) {
+          return json({
+            success: false,
+            error: "voice_usage_limit_exceeded",
+            fallback: "webspeech",
+            text,
+            policy: policyPayload(policy),
+            usage: usagePayload(usage),
+          }, 429);
+        }
+        if (provider === "cartesia") {
+          const session = await handleVoiceCartesiaSessionAction(
+            req,
+            admin as VoiceAiDb,
+            userId,
+          );
+          return json({
+            ...session,
+            text,
+            fallback: "cartesia_realtime_websocket",
+            usage: usagePayload(usage),
+          });
+        }
         const voiceId = String(body.voice_id ?? "21m00Tcm4TlvDq8ikWAM");
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
         if (!elevenKey) {
@@ -5269,6 +5341,8 @@ serve(async (req: Request) => {
             fallback: "webspeech",
             text,
             reason: "ELEVENLABS_API_KEY not configured",
+            policy: policyPayload(policy),
+            usage: usagePayload(usage),
           });
         }
         const ttsResp = await fetch(
@@ -5298,12 +5372,16 @@ serve(async (req: Request) => {
               fallback: "webspeech",
               text,
               reason: "elevenlabs_paid_plan_required",
+              policy: policyPayload(policy),
+              usage: usagePayload(usage),
             });
           }
           return json({
             error: `ElevenLabs error: ${errText}`,
             fallback: "webspeech",
             text,
+            policy: policyPayload(policy),
+            usage: usagePayload(usage),
           }, 502);
         }
         const audioBuffer = await ttsResp.arrayBuffer();
@@ -5317,6 +5395,8 @@ serve(async (req: Request) => {
           success: true,
           audio_base64: base64Audio,
           content_type: "audio/mpeg",
+          policy: policyPayload(policy),
+          usage: usagePayload(usage),
         });
       }
 
@@ -5337,6 +5417,34 @@ serve(async (req: Request) => {
         } catch {
           return json({ error: "Invalid base64 audio data" }, 400);
         }
+        const sttSeconds = Math.max(
+          1,
+          Number(body.duration_seconds ?? body.durationSeconds ?? 0) ||
+            Math.ceil(audioBytes.byteLength / 16000),
+        );
+        const { policy, usage } = await recordVoiceSttUsage(
+          admin as VoiceAiDb,
+          {
+            userId,
+            body,
+            provider: "deepgram",
+            feature: String(body.feature ?? "voice_stt"),
+            seconds: sttSeconds,
+            metadata: {
+              action: "voice.stt",
+              audio_bytes: audioBytes.byteLength,
+              language,
+            },
+          },
+        );
+        if (usage.blocked) {
+          return json({
+            success: false,
+            error: "voice_usage_limit_exceeded",
+            policy: policyPayload(policy),
+            usage: usagePayload(usage),
+          }, 429);
+        }
         const audioBody = new ArrayBuffer(audioBytes.byteLength);
         new Uint8Array(audioBody).set(audioBytes);
         const dgResp = await fetch(
@@ -5352,7 +5460,11 @@ serve(async (req: Request) => {
         );
         if (!dgResp.ok) {
           const errText = await dgResp.text();
-          return json({ error: `Deepgram error: ${errText}` }, 502);
+          return json({
+            error: `Deepgram error: ${errText}`,
+            policy: policyPayload(policy),
+            usage: usagePayload(usage),
+          }, 502);
         }
         const dgData = await dgResp.json() as Record<string, unknown>;
         const transcript =
@@ -5360,7 +5472,41 @@ serve(async (req: Request) => {
             Record<string, unknown>
           >)?.[0]?.alternatives as Array<{ transcript: string }>;
         const transcriptText = transcript?.[0]?.transcript ?? "";
-        return json({ success: true, transcript: transcriptText });
+        return json({
+          success: true,
+          transcript: transcriptText,
+          policy: policyPayload(policy),
+          usage: usagePayload(usage),
+        });
+      }
+
+      case "voice.metric": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const result = await handleVoiceMetricAction(
+          admin as VoiceAiDb,
+          userId,
+          body,
+        );
+        return json(result);
+      }
+
+      case "voice.usage.summary": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const result = await handleVoiceUsageSummaryAction(
+          admin as VoiceAiDb,
+          userId,
+        );
+        return json(result);
+      }
+
+      case "voice.cartesia.session": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const result = await handleVoiceCartesiaSessionAction(
+          req,
+          admin as VoiceAiDb,
+          userId,
+        );
+        return json(result);
       }
 
       case "home.recommend": {
@@ -5643,6 +5789,9 @@ serve(async (req: Request) => {
     }
     if (err instanceof MarketPriceActionError) {
       return json({ error: err.message }, err.status);
+    }
+    if (err instanceof VoiceAiError) {
+      return json({ error: err.message, ...err.payload }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
     return json({ error: message }, 500);

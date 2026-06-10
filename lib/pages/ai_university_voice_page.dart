@@ -86,9 +86,16 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
         body: {
           'action': 'voice.tts',
           'text': text,
+          'provider': 'elevenlabs',
+          'feature': 'ai_university_voice',
         },
       );
       final data = resp.data as Map<String, dynamic>?;
+      final error = data?['error'] as String? ?? '';
+      if (error == 'voice_usage_limit_exceeded') {
+        setState(() => _ttsStatus = 'blocked');
+        return;
+      }
       final base64Audio = data?['audio_base64'] as String? ?? '';
       final fallback = data?['fallback'] as String? ?? '';
       if (base64Audio.isEmpty) {
@@ -287,6 +294,8 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                               ? '音声生成中...'
                               : _ttsStatus == 'playing'
                                   ? '再生中...'
+                                  : _ttsStatus == 'blocked'
+                                      ? 'Voice AI usage limit reached'
                                   : _ttsStatus == 'error'
                                       ? '音声エラー（テキスト表示）'
                                       : '問題文',

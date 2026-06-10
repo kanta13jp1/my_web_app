@@ -19,6 +19,8 @@ class UserProfile {
   final String? smokingUse;
   final String? favoriteFoods;
   final bool isPublic;
+  final bool voiceAiTrainingConsent;
+  final DateTime? voiceAiConsentUpdatedAt;
 
   // ✅ 追加: 死生観クロック用のフィールド
   final DateTime? birthDate;
@@ -48,14 +50,16 @@ class UserProfile {
     this.smokingUse,
     this.favoriteFoods,
     this.isPublic = true,
+    this.voiceAiTrainingConsent = false,
+    this.voiceAiConsentUpdatedAt,
     // ✅ 追加
     this.birthDate,
     this.targetDeathAge,
     this.disposableTimeRatio,
     DateTime? createdAt,
     DateTime? updatedAt,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -78,6 +82,11 @@ class UserProfile {
       smokingUse: json['smoking_use'] as String?,
       favoriteFoods: json['favorite_foods'] as String?,
       isPublic: json['is_public'] as bool? ?? true,
+      voiceAiTrainingConsent:
+          json['voice_ai_training_consent'] as bool? ?? false,
+      voiceAiConsentUpdatedAt: json['voice_ai_consent_updated_at'] != null
+          ? DateTime.parse(json['voice_ai_consent_updated_at'] as String)
+          : null,
 
       // ✅ 追加: JSONからのマッピング
       birthDate: json['birth_date'] != null
@@ -117,6 +126,8 @@ class UserProfile {
       'smoking_use': smokingUse,
       'favorite_foods': favoriteFoods,
       'is_public': isPublic,
+      'voice_ai_training_consent': voiceAiTrainingConsent,
+      'voice_ai_consent_updated_at': voiceAiConsentUpdatedAt?.toIso8601String(),
 
       // ✅ 追加: JSONへの変換
       'birth_date': birthDate?.toIso8601String(),
@@ -147,6 +158,8 @@ class UserProfile {
     String? smokingUse,
     String? favoriteFoods,
     bool? isPublic,
+    bool? voiceAiTrainingConsent,
+    DateTime? voiceAiConsentUpdatedAt,
     // ✅ 追加
     DateTime? birthDate,
     int? targetDeathAge,
@@ -173,6 +186,10 @@ class UserProfile {
       smokingUse: smokingUse ?? this.smokingUse,
       favoriteFoods: favoriteFoods ?? this.favoriteFoods,
       isPublic: isPublic ?? this.isPublic,
+      voiceAiTrainingConsent:
+          voiceAiTrainingConsent ?? this.voiceAiTrainingConsent,
+      voiceAiConsentUpdatedAt:
+          voiceAiConsentUpdatedAt ?? this.voiceAiConsentUpdatedAt,
       // ✅ 追加
       birthDate: birthDate ?? this.birthDate,
       targetDeathAge: targetDeathAge ?? this.targetDeathAge,
@@ -241,8 +258,8 @@ class NoteComment {
     DateTime? updatedAt,
     this.userDisplayName,
     this.userAvatarUrl,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
 
   factory NoteComment.fromJson(Map<String, dynamic> json) {
     return NoteComment(

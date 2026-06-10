@@ -10,6 +10,7 @@ import 'admin_analytics_page.dart';
 import 'feedback_page.dart';
 import 'offline_secure_mode_settings_page.dart';
 import 'theme_selector_page.dart';
+import 'voice_ai_governance_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -60,6 +61,18 @@ class SettingsPage extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => const AiShareButtonSettingsPage(),
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.record_voice_over_outlined),
+            title: const Text('Voice AI governance'),
+            subtitle: const Text('Consent, ZDR, usage, and realtime TTS'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const VoiceAiGovernancePage(),
               ),
             ),
           ),
