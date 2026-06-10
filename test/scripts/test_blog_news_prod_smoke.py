@@ -43,6 +43,17 @@ class BlogNewsProdSmokeTest(unittest.TestCase):
 
             self.assertEqual(smoke.load_anon_key(root), "anon-token")
 
+    def test_load_anon_key_from_main_dart_publishable_key(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "lib").mkdir()
+            (root / "lib" / "main.dart").write_text(
+                "await Supabase.initialize(\n  publishableKey:\n      'publishable-token',\n);\n",
+                encoding="utf-8",
+            )
+
+            self.assertEqual(smoke.load_anon_key(root), "publishable-token")
+
     def test_public_routes_require_flutter_marker(self) -> None:
         def fake_urlopen(_req: object, timeout: int = 0) -> FakeResponse:
             self.assertGreater(timeout, 0)
