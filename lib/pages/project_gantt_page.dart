@@ -853,8 +853,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
     try {
       await _supabase
           .from('wbs_tasks')
-          .update({'owner_instance': targetOwner})
-          .eq('id', task.id);
+          .update({'owner_instance': targetOwner}).eq('id', task.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1403,11 +1402,11 @@ class _WbsOwnerDropLane extends StatelessWidget {
                 )
               else
                 ...tasks.take(6).map(
-                  (task) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _DraggableWbsTaskChip(task: task),
-                  ),
-                ),
+                      (task) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _DraggableWbsTaskChip(task: task),
+                      ),
+                    ),
               if (tasks.length > 6)
                 Text(
                   '+${tasks.length - 6} more',
