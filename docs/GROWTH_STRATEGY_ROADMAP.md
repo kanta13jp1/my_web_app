@@ -32286,3 +32286,26 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - ⚠️ **資産負債** (7/9): RAM 87% + C: 13.32 GB CRITICAL = liability accumulating / v26 impl で resolution 期待
 
 **Score: 8/9 ✅** (= [PHILOSOPHY-22] threshold 7+ ✅)
+
+---
+
+### 2026-06-11 Win版#132 part 265 — dependabot pub group 週次CI失敗の恒久解消 (flutter_native_splash ignore / 保守 WBS 追加→同一セッション完了 第 2 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 264 直後 / 02:08 JST)。WBS fresh query (REST 直読) で win-owned incomplete = #1495 のみ (巨大 L2 型) を確認後、**新規流入の保守シグナル 2 件 (Issue #3209 = dependabot PR #3208 CI fail / Issue #3211 = CI Auto-Fix の pub get fail on main context)** を triage — part 262 枯渇宣言の「次の補充源 = 新規 Issue 流入」が初めて実際に発火した形。
+- **annotation (= part 233 ID-correction 系譜)**: 本 entry 直前の part 216 verbose block は、セッション開始 3 分前 (02:05 JST) に stale session 残骸 [PR #3213](https://github.com/kanta13jp1/my_web_app/pull/3213) が merge され時系列外位置 (= part 264 の後 / 2026-05-14 の内容) へ混入したもの。正本 = line 30797 付近の既存 part 216 compact entry + memory 2 file (`project_20260514_win132_part216` 系)。append-only 原則に従い削除せず本 annotation で記録し、本 PR の rebase で衝突解消。
+- **root cause を log 全文で確証**: flutter_native_splash 2.4.8 が meta ^1.18.0 を要求 vs CI Flutter stable (3.38.10) の flutter_test が meta 1.17.0 を pin → group 全体の version solving fail (PR #3208 job 80577000469)。同じ失敗が CI Auto-Fix (run 27281548713) に伝播し #3211 を生成 = **2 Issue は同一根本原因**。2026-06-02 #3057 と同一パターンの週次再発 (2 回目) → 都度対応でなく恒久対応へ。
+- **GitHub 公式 docs を verify-first** (dependabot options reference + comment commands): config file ignore が auditable な正攻法 / `@dependabot close` は同 update の再作成まで block する副作用 → 不採用 / merge 後 `@dependabot recreate` で ignore 適用後の group PR を再生成、を確認してから実装。
+
+**Changes**:
+- `.github/dependabot.yml` — pub ecosystem に ignore (flutter_native_splash `>=2.4.8`) 追加。解除条件 (CI Flutter stable が meta >=1.18.0 同梱) を YAML コメントに明記。
+- migration `20260611021500_wbs_add_complete_dependabot_pub_ignore.sql` — 保守 WBS タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。症状チケット側 WBS 2 件 (9339a406/3b5fec8d) は issue-linked のため migration では触らず Issue close → sync cron の自然 lifecycle に委ねる (part 260 準拠)。
+- ROADMAP part 265 エントリ (本欄 / part 264 merge hash `7773200e4` 補記)。
+
+**Validation focus**:
+- 「恒久」の定義: ignore は無期限放置にしない — 解除条件を dependabot.yml 内コメントで正本化し、WBS remaining_work にも followup を明記 (見えない hidden state の `@dependabot ignore` コメントコマンドを避けた理由も migration に記録)。
+- 道連れ解消の実利: supabase / supabase_flutter / test の正常 bump 3 件が次回 group PR で green になる見込み (merge 後 #3208 へ recreate コメント)。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 21 連続狙い / .github+migration+docs = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = 週次ノイズ源の根絶を先回り) / 6 (資本=時間: 毎週の workflow-failure triage コスト削減) / 7 (壊れ bump の放置 = 負債) / 8 (CI 健全性 KPI) / 9 (無人 dependabot 運用の信頼性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 264 = 7773200e4)。
+---
