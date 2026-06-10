@@ -34,7 +34,7 @@ void main() {
       expect(views.first.aiModel, 'claude-opus-4-7');
       expect(views.first.netWorthDelta, 500000);
       expect(views.last.hasAiReport, isFalse);
-      expect(views.last.summary, contains('2026-05 monthly asset report'));
+      expect(views.last.summary, contains('2026-05 月次資産レポート'));
     });
 
     test('keeps remote-only reports visible until snapshots are synced', () {
@@ -55,10 +55,7 @@ void main() {
 
       expect(views.single.monthKey, '2026-07');
       expect(views.single.totalAssets, 100000);
-      expect(
-        views.single.summary,
-        contains('KPI snapshot has not been synced'),
-      );
+      expect(views.single.summary, contains('KPIスナップショットがまだ端末側に同期されていません'));
       expect(views.single.aiModel, 'deterministic-local-snapshot');
     });
 

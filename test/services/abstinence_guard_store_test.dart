@@ -140,6 +140,56 @@ void main() {
     expect(lockedAlcoholProtocol.isLockedForToday, isTrue);
   });
 
+  test('loadSnapshotsByDate returns keyed snapshots for a date range',
+      () async {
+    final prefs = await SharedPreferences.getInstance();
+    final start = DateTime(2026, 3, 19, 9);
+    final middle = DateTime(2026, 3, 20, 9);
+    final end = DateTime(2026, 3, 21, 9);
+
+    await AbstinenceGuardStore.setEnabled(
+      itemId: 'sns',
+      isEnabled: true,
+      prefs: prefs,
+      now: start,
+    );
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: 'sns',
+      prefs: prefs,
+      now: start,
+    );
+    await AbstinenceGuardStore.recordDisciplineRep(
+      categoryId: 'no_buy',
+      moneySaved: 1200,
+      timeSavedMinutes: 10,
+      prefs: prefs,
+      now: middle,
+    );
+    await AbstinenceGuardStore.setEnabled(
+      itemId: 'touch_hair',
+      isEnabled: true,
+      prefs: prefs,
+      now: end,
+    );
+
+    final snapshots = await AbstinenceGuardStore.loadSnapshotsByDate(
+      startDate: start,
+      endDate: end,
+      prefs: prefs,
+    );
+
+    expect(
+      snapshots.keys,
+      <String>['2026-03-19', '2026-03-20', '2026-03-21'],
+    );
+    expect(snapshots['2026-03-19']?.primaryInterference?.item.id, 'sns');
+    expect(snapshots['2026-03-20']?.disciplineSnapshot.totalRepCount, 1);
+    expect(
+      snapshots['2026-03-21']?.enabledStates.map((state) => state.item.id),
+      contains('touch_hair'),
+    );
+  });
+
   test('loadSnapshot includes discipline training totals and streak', () async {
     final prefs = await SharedPreferences.getInstance();
     final previousDay = DateTime(2026, 3, 20, 21);
@@ -268,5 +318,42 @@ void main() {
 
     expect(trend.map((day) => day.count), <int>[0, 1, 0, 2]);
     expect(trend.last.label, '3/21');
+  });
+
+  test('loadSnapshotWithSlipCounts returns snapshot and trend together',
+      () async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime(2026, 3, 21, 9);
+
+    await AbstinenceGuardStore.setEnabled(
+      itemId: 'touch_hair',
+      isEnabled: true,
+      prefs: prefs,
+      now: today,
+    );
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: 'touch_hair',
+      prefs: prefs,
+      now: DateTime(2026, 3, 19, 10),
+    );
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: 'touch_hair',
+      prefs: prefs,
+      now: today,
+    );
+
+    final bundle = await AbstinenceGuardStore.loadSnapshotWithSlipCounts(
+      itemId: 'touch_hair',
+      days: 4,
+      prefs: prefs,
+      now: today,
+    );
+
+    expect(
+      bundle.snapshot.enabledStates.map((state) => state.item.id),
+      contains('touch_hair'),
+    );
+    expect(bundle.snapshot.primaryInterference?.item.id, 'touch_hair');
+    expect(bundle.slipCounts.map((day) => day.count), <int>[0, 1, 0, 1]);
   });
 }

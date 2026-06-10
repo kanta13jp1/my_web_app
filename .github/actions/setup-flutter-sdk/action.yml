@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: Setup Flutter SDK
+description: Install Flutter from the public Flutter git repository without relying on third-party setup actions.
+inputs:
+  flutter-version:
+    description: Flutter version or tag to install.
+    required: false
+    default: "3.38.10"
+runs:
+  using: composite
+  steps:
+    - name: Resolve Flutter ref
+      id: resolve
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        requested="${{ inputs.flutter-version }}"
+        case "$requested" in
+          3.38.x) ref="3.38.10" ;;
+          *) ref="$requested" ;;
+        esac
+
+        echo "ref=${ref}" >> "$GITHUB_OUTPUT"
+        echo "flutter-root=${RUNNER_TEMP}/flutter-${ref}" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Flutter SDK
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.resolve.outputs.flutter-root }}
+        key: flutter-sdk-${{ runner.os }}-${{ steps.resolve.outputs.ref }}-v1
+
+    - name: Install Flutter
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        ref="${{ steps.resolve.outputs.ref }}"
+        flutter_root="${{ steps.resolve.outputs.flutter-root }}"
+        if [ ! -x "${flutter_root}/bin/flutter" ]; then
+          rm -rf "$flutter_root"
+          git clone --depth 1 --branch "$ref" https://github.com/flutter/flutter.git "$flutter_root"
+        fi
+
+        echo "${flutter_root}/bin" >> "$GITHUB_PATH"
+        "${flutter_root}/bin/flutter" config --no-analytics
+        "${flutter_root}/bin/flutter" --version

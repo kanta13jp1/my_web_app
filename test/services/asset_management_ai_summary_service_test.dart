@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
+import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_management_ai_provider_router.dart';
@@ -40,7 +42,7 @@ void main() {
             capturedBody = body;
             return <String, dynamic>{
               'success': true,
-              'text': 'AI generated summary',
+              'text': 'AIが生成した日本語要約です。',
               'provider': 'groq',
             };
           },
@@ -52,16 +54,35 @@ void main() {
 
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(result.usedExternalAi, true);
-      expect(result.text, 'AI generated summary');
+      expect(result.text, 'AIが生成した日本語要約です。');
       expect(capturedBody?['action'], 'provider.chat_auto');
       expect(capturedBody?['tier'], 'performance');
+      expect(capturedBody?['max_tokens'], 3200);
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
-        capturedBody?['message'].toString().contains('計算済みインサイトの安全化ペイロード'),
+        capturedBody?['message'].toString().contains('AIに渡す詳細ペイロード'),
         true,
       );
       expect(
-        capturedBody?['message'].toString().contains('必ず自然な日本語だけで回答してください'),
+        capturedBody?['message']
+            .toString()
+            .contains('GitHub Flavored Markdown'),
+        true,
+      );
+      expect(
+        capturedBody?['message'].toString().contains('8. 最後にズバッと総評'),
+        true,
+      );
+      expect(
+        capturedBody?['message'].toString().contains('細木数子'),
+        true,
+      );
+      expect(
+        capturedBody?['message'].toString().contains('負債マスタ詳細'),
+        true,
+      );
+      expect(
+        capturedBody?['message'].toString().contains('今月の支払いと利息'),
         true,
       );
       expect(
@@ -70,7 +91,7 @@ void main() {
       );
       expect(
         capturedBody?['message'].toString().contains(
-              '"external_ai_may_recalculate_amounts":false',
+              '"external_ai_receives_exact_account_data":true',
             ),
         true,
       );
@@ -80,10 +101,53 @@ void main() {
             ),
         true,
       );
-      expect(capturedBody?['message'].toString().contains('50,000'), false);
-      expect(capturedBody?['message'].toString().contains('50000'), false);
+      expect(
+        capturedBody?['message'].toString().contains(
+              '"external_ai_may_reference_exact_money_values":true',
+            ),
+        true,
+      );
+      expect(capturedBody?['message'].toString().contains('50,000'), true);
+      expect(capturedBody?['message'].toString().contains('50000'), true);
+      expect(capturedBody?['message'].toString().contains('PayPay'), true);
+      expect(capturedBody?['message'].toString().contains('職業: 自営業'), true);
+      expect(capturedBody?['message'].toString().contains('年収'), true);
       expect(capturedBody?['provider_choice_reason'], contains('summary'));
       expect(capturedBody?['routing_use_case'], 'summary');
+    });
+
+    test('includes previous persisted analyses in the AI prompt', () async {
+      Map<String, dynamic>? capturedBody;
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            capturedBody = body;
+            return <String, dynamic>{
+              'success': true,
+              'text': '過去分析を踏まえた日本語要約です。',
+              'provider': 'openai',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 5, 1, 12),
+      );
+
+      final result = await service.generateSummary(
+        report: _report(),
+        previousAnalyses: <AssetManagementAiAnalysisHistoryEntry>[
+          _historyEntry(
+            summaryText: '前回は支払い確認と生活費確保を最優先にした分析です。',
+          ),
+        ],
+      );
+
+      final message = capturedBody?['message'].toString() ?? '';
+      expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
+      expect(message.contains('previous_ai_analyses'), true);
+      expect(message.contains('これまでのAI分析履歴'), true);
+      expect(message.contains('前回は支払い確認と生活費確保'), true);
+      expect(message.contains('履歴利用ルール'), true);
     });
 
     test(
@@ -100,7 +164,7 @@ void main() {
               calls.add(Map<String, dynamic>.from(body));
               return <String, dynamic>{
                 'success': true,
-                'text': 'Claude routed summary',
+                'text': 'Claude経由の日本語要約です。',
                 'observability': <String, dynamic>{
                   'provider': body['provider'],
                   'model': body['model'],
@@ -114,11 +178,12 @@ void main() {
         final result = await service.generateSummary(report: _report());
 
         expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
-        expect(result.text, 'Claude routed summary');
+        expect(result.text, 'Claude経由の日本語要約です。');
         expect(calls, hasLength(1));
         expect(calls.single['action'], 'provider.chat');
         expect(calls.single['provider'], 'anthropic');
         expect(calls.single['model'], 'claude-opus-4-7');
+        expect(calls.single['max_tokens'], 3200);
         expect(calls.single['routing_use_case'], 'summary');
         expect(
           calls.single['provider_choice_reason'],
@@ -145,7 +210,7 @@ void main() {
               }
               return <String, dynamic>{
                 'success': true,
-                'text': 'GPT fallback summary',
+                'text': 'GPT経由の日本語要約です。',
                 'provider': body['provider'],
               };
             },
@@ -156,26 +221,74 @@ void main() {
         final result = await service.generateSummary(report: _report());
 
         expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
-        expect(result.text, 'GPT fallback summary');
+        expect(result.text, 'GPT経由の日本語要約です。');
         expect(providers, <String>['anthropic', 'openai']);
       },
     );
 
     test(
-      'ai-safe payload keeps exact money values out of external AI context',
+      'falls back when provider ignores the Japanese-only instruction',
+      () async {
+        final service = AssetManagementAiSummaryService(
+          aiEnabled: true,
+          chatService: AiHubChatService(
+            invoker: (body) async => <String, dynamic>{
+              'success': true,
+              'text': 'English-only summary',
+              'provider': 'openai',
+            },
+          ),
+          now: () => DateTime(2026, 5, 1, 12),
+        );
+
+        final result = await service.generateSummary(report: _report());
+
+        expect(result.status, AssetManagementAiSummaryStatus.fallback);
+        expect(result.usedExternalAi, false);
+        expect(result.errorMessage, contains('日本語ではありません'));
+        expect(result.text.contains('Dartルール'), true);
+      },
+    );
+
+    test(
+      'ai detailed payload includes exact account and debt values',
       () {
         final service = AssetManagementAiSummaryService(
           now: () => DateTime(2026, 5, 1, 12),
         );
 
-        final payload = service.buildAiSafePayload(_report());
+        final payload = service.buildAiDetailedPayload(_emergencyReport());
         final encoded = payload.toString();
 
-        expect(encoded.contains('50000'), false);
-        expect(encoded.contains('20000'), false);
-        expect(encoded.contains('available_money_bands'), true);
+        expect(encoded.contains('50000'), true);
+        expect(encoded.contains('200000'), true);
+        expect(encoded.contains('PayPay'), true);
+        expect(encoded.contains('自営業'), true);
+        expect(encoded.contains('annual_income'), true);
+        expect(encoded.contains('favorite_foods'), true);
+        expect(encoded.contains('debt_master_rows'), true);
+        expect(encoded.contains('minimum_payment_estimate'), true);
+        expect(encoded.contains('scheduled_payment_amount'), true);
+        expect(encoded.contains('annual_rate'), true);
+        expect(encoded.contains('monthly_interest_estimate'), true);
+        expect(encoded.contains('liability_share'), true);
+        expect(encoded.contains('available_money'), true);
+        expect(encoded.contains('personal_context_signals'), true);
+        expect(encoded.contains('priority_situation_cards'), true);
+        expect(encoded.contains('recommended_next_step'), true);
+        expect(encoded.contains('implementation_context'), true);
+        expect(encoded.contains('source_references'), true);
+        expect(encoded.contains('acceptance_criteria'), true);
         expect(
-          encoded.contains('external_ai_payload_redacts_exact_money_values'),
+          encoded.contains('external_ai_receives_exact_account_data'),
+          true,
+        );
+        expect(
+          encoded.contains('external_ai_receives_exact_profile_data'),
+          true,
+        );
+        expect(
+          encoded.contains('external_ai_receives_implementation_context'),
           true,
         );
       },
@@ -209,17 +322,62 @@ void main() {
       final today = available['today'] as Map<String, dynamic>;
       final guardrails = payload['guardrails'] as Map<String, dynamic>;
       final emergencyAdvices = payload['emergency_advices'] as List<dynamic>;
+      final workbook = payload['workbook'] as Map<String, dynamic>;
+      final profile = payload['user_profile'] as Map<String, dynamic>;
+      final debtRows = workbook['debt_master_rows'] as List<dynamic>;
+      final developerRequests = payload['developer_requests'] as List<dynamic>;
+      final implementationContext =
+          payload['implementation_context'] as List<dynamic>;
 
-      expect(payload.containsKey('workbook'), false);
+      expect(payload.containsKey('workbook'), true);
+      expect(debtRows, isNotEmpty);
+      expect(profile['occupation'], '自営業');
+      expect(profile['annual_income'], 452815 * 12);
       expect(today['available_amount'], report.todayAvailable.availableAmount);
       expect(payload['action_items'] is List<dynamic>, true);
       expect(payload['movement_suggestions'] is List<dynamic>, true);
       expect(emergencyAdvices.length, report.emergencyAdvices.length);
-      expect(payload['developer_requests'] is List<dynamic>, true);
+      expect(developerRequests, isNotEmpty);
+      expect(
+        developerRequests.first as Map<String, dynamic>,
+        containsPair('acceptance_criteria', isA<List<String>>()),
+      );
+      expect(implementationContext, isNotEmpty);
       expect(guardrails['calculation_owner'], 'dart_service');
-      expect(guardrails['external_ai_may_summarize_only'], true);
-      expect(guardrails['external_ai_may_recalculate_amounts'], false);
+      expect(guardrails['external_ai_receives_exact_account_data'], true);
+      expect(guardrails['external_ai_receives_exact_profile_data'], true);
+      expect(
+        guardrails['external_ai_receives_implementation_context'],
+        true,
+      );
+      expect(
+        guardrails['external_ai_may_reference_account_names'],
+        true,
+      );
       expect(guardrails['must_not_recommend_starvation_or_water_only'], true);
+    });
+
+    test('request fingerprint ignores volatile clock seconds', () {
+      final service = AssetManagementAiSummaryService(
+        now: () => DateTime(2026, 5, 1, 12),
+      );
+
+      final morning = service.buildRequestFingerprint(
+        _report(baseDate: DateTime(2026, 5, 1, 9, 0, 1)),
+      );
+      final evening = service.buildRequestFingerprint(
+        _report(baseDate: DateTime(2026, 5, 1, 21, 59, 59)),
+      );
+      final nextDay = service.buildRequestFingerprint(
+        _report(baseDate: DateTime(2026, 5, 2)),
+      );
+
+      expect(morning, evening);
+      expect(morning, isNot(nextDay));
+      expect(morning, startsWith('sha256:'));
+      expect(morning, hasLength(71));
+      expect(morning, isNot(contains('workbook')));
+      expect(morning, isNot(contains('{')));
     });
 
     test(
@@ -256,16 +414,20 @@ void main() {
   });
 }
 
-AssetManagementInsightReport _report() {
+AssetManagementInsightReport _report({DateTime? baseDate}) {
   const planner = AssetLiabilityPlanningService();
   const insight = AssetManagementInsightService();
   final workbook = planner.buildWorkbook(
     latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
-    baseDate: DateTime(2026, 5, 1),
+    baseDate: baseDate ?? DateTime(2026, 5, 1),
     monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
     paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
   );
-  return insight.buildReport(workbook: workbook, minimumSafetyBalance: 10000);
+  return insight.buildReport(
+    workbook: workbook,
+    userProfile: _userProfile(),
+    minimumSafetyBalance: 10000,
+  );
 }
 
 AssetManagementInsightReport _emergencyReport() {
@@ -277,5 +439,48 @@ AssetManagementInsightReport _emergencyReport() {
     monthlyPaymentOverrides: const <String, double>{'paypay_card': 200000},
     paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
   );
-  return insight.buildReport(workbook: workbook, minimumSafetyBalance: 10000);
+  return insight.buildReport(
+    workbook: workbook,
+    userProfile: _userProfile(),
+    minimumSafetyBalance: 10000,
+  );
+}
+
+UserProfile _userProfile() {
+  return UserProfile(
+    userId: 'user-1',
+    displayName: 'kanta',
+    bio: '借金を減らして生活を立て直したい',
+    location: '東京都',
+    birthDate: DateTime(1978, 9, 30),
+    targetDeathAge: 85,
+    gender: '男',
+    occupation: '自営業',
+    annualIncome: 452815 * 12,
+    address: '東京都豊島区',
+    education: '大学卒',
+    careerHistory: '営業、Web開発、個人事業',
+    hobbies: 'AIツール検証、音楽',
+    alcoholUse: '時々',
+    smokingUse: '吸わない',
+    favoriteFoods: 'カレー、焼肉',
+  );
+}
+
+AssetManagementAiAnalysisHistoryEntry _historyEntry({
+  required String summaryText,
+}) {
+  return AssetManagementAiAnalysisHistoryEntry(
+    id: 'history-1',
+    requestFingerprint: 'fingerprint-1',
+    summaryText: summaryText,
+    status: AssetManagementAiSummaryStatus.aiGenerated.name,
+    source: 'ai-hub provider.chat_auto / openai',
+    generatedAt: DateTime(2026, 4, 30, 12),
+    createdAt: DateTime(2026, 4, 30, 12),
+    reportBaseDate: DateTime(2026, 4, 30),
+    providerChoiceReason: 'test route',
+    providerRoute: const <String, dynamic>{'provider': 'openai'},
+    inputPayload: const <String, dynamic>{'sample': true},
+  );
 }

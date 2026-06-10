@@ -12,12 +12,44 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
     });
 
+    test('maps paid-state cycles to salary day boundaries', () {
+      expect(
+        AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+          DateTime(2026, 5, 24, 23, 59),
+          salaryDay: 25,
+        ),
+        '2026-04',
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+          DateTime(2026, 5, 25),
+          salaryDay: 25,
+        ),
+        '2026-05',
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+          DateTime(2026, 6, 24),
+          salaryDay: 25,
+        ),
+        '2026-05',
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+          DateTime(2026, 6, 25),
+          salaryDay: 25,
+        ),
+        '2026-06',
+      );
+    });
+
     test('saves and restores monthly paid statuses', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
         state: AssetLiabilityMonthlyState(
           paymentOverrides: const <String, double>{'モビット': 70000},
           paidAccountNames: const <String>{'auPayカード'},
+          billingConfirmedAccountIds: const <String>{'paypay_card'},
           actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
           paymentDifferenceReasons: const <String, String>{
             'aupay_card': 'late fee',
@@ -70,6 +102,9 @@ void main() {
               toAccountName: 'Bank',
               amount: 10000,
               dueDate: DateTime(2026, 5, 18),
+              completed: true,
+              completedAt: DateTime(2026, 5, 18, 10),
+              completionMemo: 'ATM手数料110円。移動後の銀行残高は84,000円。',
             ),
           ],
         ),
@@ -80,6 +115,7 @@ void main() {
 
       expect(loadedMay.paymentOverrides['モビット'], 70000);
       expect(loadedMay.paidAccountNames, contains('auPayカード'));
+      expect(loadedMay.billingConfirmedAccountIds, contains('paypay_card'));
       expect(loadedMay.actualPaymentAmounts['aupay_card'], 6200);
       expect(loadedMay.paymentDifferenceReasons['aupay_card'], 'late fee');
       expect(loadedMay.annualRateOverrides['mobit'], 0.175);
@@ -92,17 +128,58 @@ void main() {
       expect(loadedMay.incomePlans.single.name, 'Salary');
       expect(loadedMay.transferTasks.single.id, 'transfer_bank_topup');
       expect(loadedMay.transferTasks.single.amount, 10000);
+      expect(loadedMay.transferTasks.single.completed, isTrue);
+      expect(
+        loadedMay.transferTasks.single.completedAt,
+        DateTime(2026, 5, 18, 10),
+      );
+      expect(
+        loadedMay.transferTasks.single.completionMemo,
+        'ATM手数料110円。移動後の銀行残高は84,000円。',
+      );
       expect(loadedJune.paymentOverrides, isEmpty);
       expect(loadedJune.actualPaymentAmounts, isEmpty);
       expect(loadedJune.paymentDifferenceReasons, isEmpty);
       expect(loadedJune.annualRateOverrides, isEmpty);
       expect(loadedJune.annualRateEvidences, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
+      expect(loadedJune.billingConfirmedAccountIds, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
       expect(loadedJune.cardStatementLines, isEmpty);
       expect(loadedJune.incomePlans, isEmpty);
       expect(loadedJune.transferTasks, isEmpty);
+    });
+
+    test('round-trips canceled transfer task reason', () async {
+      await store.saveMonth(
+        month: DateTime(2026, 5, 13),
+        state: AssetLiabilityMonthlyState(
+          transferTasks: <AssetLiabilityTransferTask>[
+            AssetLiabilityTransferTask(
+              id: 'transfer_cancelled',
+              fromAccountId: 'cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'bank',
+              toAccountName: 'Bank',
+              amount: 15000,
+              dueDate: DateTime(2026, 5, 20),
+              canceled: true,
+              canceledAt: DateTime(2026, 5, 19, 21),
+              cancellationReason: 'Paid directly from salary account.',
+            ),
+          ],
+        ),
+      );
+
+      final loaded = await store.loadMonth(DateTime(2026, 5, 20));
+      final task = loaded.transferTasks.single;
+
+      expect(task.id, 'transfer_cancelled');
+      expect(task.canceled, isTrue);
+      expect(task.canceledAt, DateTime(2026, 5, 19, 21));
+      expect(task.cancellationReason, 'Paid directly from salary account.');
+      expect(task.completed, isFalse);
     });
 
     test('clears monthly paid status after unchecked state is saved', () async {
@@ -136,6 +213,58 @@ void main() {
       expect(decoded['PayPayカード'], 0);
       expect(decoded['モビット'], 70000);
     });
+
+    test(
+      'drops annual rates above the 20 percent registration block',
+      () async {
+        await store.saveMonth(
+          month: DateTime(2026, 5, 13),
+          state: AssetLiabilityMonthlyState(
+            annualRateOverrides: const <String, double>{
+              'legal': 0.20,
+              'blocked': 0.205,
+            },
+            annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+              'legal': AssetLiabilityAnnualRateEvidence(
+                accountId: 'legal',
+                fileName: 'legal.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.20,
+                detectedAnnualRate: 0.20,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20%',
+                source: 'test',
+              ),
+              'blocked': AssetLiabilityAnnualRateEvidence(
+                accountId: 'blocked',
+                fileName: 'blocked.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.205,
+                detectedAnnualRate: 0.205,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20.5%',
+                source: 'test',
+              ),
+            },
+          ),
+        );
+
+        final loaded = await store.loadMonth(DateTime(2026, 5, 13));
+        expect(loaded.annualRateOverrides, <String, double>{'legal': 0.20});
+        expect(loaded.annualRateEvidences.keys, contains('legal'));
+        expect(loaded.annualRateEvidences.keys, isNot(contains('blocked')));
+
+        const raw = '{"2026-05":{"legal":0.2,"blocked":0.205}}';
+        final decoded =
+            AssetLiabilityMonthlyStateStore.annualRateOverridesForMonth(
+          raw,
+          '2026-05',
+        );
+        expect(decoded, <String, double>{'legal': 0.2});
+      },
+    );
 
     test(
       'falls back to estimated payment after manual amount is cleared',
@@ -334,6 +463,63 @@ void main() {
       expect(loaded.actualPaymentAmounts, isEmpty);
       expect(loaded.paymentDifferenceReasons, isEmpty);
       expect(loaded.paidAccountNames, isEmpty);
+    });
+
+    test('can carry open transfer tasks to the copied month', () async {
+      await store.saveMonth(
+        month: DateTime(2026, 5, 13),
+        state: AssetLiabilityMonthlyState(
+          transferTasks: <AssetLiabilityTransferTask>[
+            AssetLiabilityTransferTask(
+              id: 'open_transfer',
+              fromAccountId: 'cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'bank',
+              toAccountName: 'Bank',
+              amount: 12000,
+              dueDate: DateTime(2026, 5, 31),
+              completionMemo: 'ATM planned.',
+            ),
+            AssetLiabilityTransferTask(
+              id: 'done_transfer',
+              fromAccountId: 'cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'bank',
+              toAccountName: 'Bank',
+              amount: 8000,
+              dueDate: DateTime(2026, 5, 20),
+              completed: true,
+              completedAt: DateTime(2026, 5, 20, 9),
+            ),
+            AssetLiabilityTransferTask(
+              id: 'canceled_transfer',
+              fromAccountId: 'cash',
+              fromAccountName: 'Cash',
+              toAccountId: 'bank',
+              toAccountName: 'Bank',
+              amount: 7000,
+              dueDate: DateTime(2026, 5, 21),
+              canceled: true,
+              canceledAt: DateTime(2026, 5, 21, 8),
+              cancellationReason: 'No longer needed.',
+            ),
+          ],
+        ),
+      );
+
+      final copied = await store.copyPreviousMonthToMonth(
+        DateTime(2026, 6, 10),
+        carryOverIncompleteTransferTasks: true,
+      );
+      final loaded = await store.loadMonth(DateTime(2026, 6, 20));
+
+      expect(copied.transferTasks, hasLength(1));
+      expect(copied.transferTasks.single.id, 'carry_2026-06_open_transfer');
+      expect(copied.transferTasks.single.dueDate, DateTime(2026, 6, 30));
+      expect(copied.transferTasks.single.completed, isFalse);
+      expect(copied.transferTasks.single.canceled, isFalse);
+      expect(copied.transferTasks.single.completionMemo, 'ATM planned.');
+      expect(loaded.transferTasks.single.id, 'carry_2026-06_open_transfer');
     });
 
     test('saves and restores default payment source accounts', () async {

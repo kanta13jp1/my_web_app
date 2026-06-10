@@ -1,4 +1,5 @@
 import '../models/asset_liability_workbook.dart';
+import '../models/user_profile.dart';
 
 enum AssetManagementInsightActionType {
   missingInput,
@@ -87,12 +88,112 @@ class AssetManagementDeveloperRequest {
   final String title;
   final String description;
   final AssetManagementInsightSeverity severity;
+  final List<String> evidence;
+  final List<String> implementationSteps;
+  final List<String> acceptanceCriteria;
+  final List<String> sourceReferences;
 
   const AssetManagementDeveloperRequest({
     required this.title,
     required this.description,
     required this.severity,
+    this.evidence = const <String>[],
+    this.implementationSteps = const <String>[],
+    this.acceptanceCriteria = const <String>[],
+    this.sourceReferences = const <String>[],
   });
+}
+
+class AssetManagementImplementationContext {
+  final String kind;
+  final String title;
+  final String path;
+  final String summary;
+  final String excerpt;
+  final String improvementUse;
+
+  const AssetManagementImplementationContext({
+    required this.kind,
+    required this.title,
+    required this.path,
+    required this.summary,
+    required this.excerpt,
+    required this.improvementUse,
+  });
+
+  static const List<AssetManagementImplementationContext>
+      defaultAssetManagementContexts = <AssetManagementImplementationContext>[
+    AssetManagementImplementationContext(
+      kind: 'source',
+      title: '資産管理ページ UI と Issue 発行導線',
+      path: 'lib/pages/asset_management_page.dart',
+      summary:
+          '資産/負債ボードを描画し、AssetManagementInsightReport を生成してAI要約、アクションアイテム、開発者向け改善提案、GitHub Issue化ボタンを表示する。',
+      excerpt:
+          '_buildAssetManagementAiAssistantSection(report) がAI資産管理アシスタント全体を描画し、_buildAssetManagementDeveloperRequestList(report.developerRequests) が改善提案を表示する。_submitAssetManagementDeveloperIssue は core-hub の feature_request.submit へ title/description/expected_outcome/category/priority/source/dedupe_key を送る。',
+      improvementUse: 'UI改善案では、画面上の表示粒度、Issue本文、重複判定キー、ユーザー操作の導線まで踏み込む。',
+    ),
+    AssetManagementImplementationContext(
+      kind: 'source',
+      title: '資産負債ワークブック生成',
+      path: 'lib/services/asset_liability_planning_service.dart',
+      summary:
+          '残高スナップショット、月次支払上書き、支払原資口座、カード請求設定、収入予定、口座移動タスクから AssetLiabilityWorkbook を構築する。',
+      excerpt:
+          'Workbook には accounts、debtMasterRows、paymentDayRisks、cashflowRows、incomePlans、transferTasks、accountCashflowSummaries、transferSuggestions、cardBillingReview、cardStatementReconciliation、月次支払/未払い/利息/元金見込みなどが集約される。',
+      improvementUse:
+          'データモデル改善案では、既存Workbookに足すべきフィールド、永続化対象、二重計上リスク、月次サイクルの扱いを具体化する。',
+    ),
+    AssetManagementImplementationContext(
+      kind: 'source',
+      title: 'AI資産管理インサイト生成',
+      path: 'lib/services/asset_management_insight_service.dart',
+      summary: 'Dart側で使用可能額、アクションアイテム、口座移動提案、緊急生活防衛アドバイス、開発者向け改善提案を決定論的に生成する。',
+      excerpt:
+          'buildReport は _buildActionItems、_buildAvailableMoneyInsight、_buildMovementSuggestions、_buildEmergencyAdvices、_buildDeveloperRequests を呼び、計算値はAIではなくDartを正とする。PromptBuilder は詳細プロンプトを作り、口座名・残高・支払日・利率・月利息・元金返済見込みを渡す。',
+      improvementUse:
+          'プロンプト改善案では、Dart計算値を真実として扱いつつ、AIには優先順位・UX改善・開発タスク分解を担当させる。',
+    ),
+    AssetManagementImplementationContext(
+      kind: 'source',
+      title: 'AI詳細ペイロードと ai-hub 呼び出し',
+      path: 'lib/services/asset_management_ai_summary_service.dart',
+      summary:
+          'AI機能フラグが有効な場合に詳細ペイロードを jsonEncode して ai-hub provider chat へ送信し、失敗時は決定論的要約へフォールバックする。',
+      excerpt:
+          'buildAiDetailedPayload は user_profile、workbook、available_money、action_inventory、situation cards、movement_suggestions、emergency_advices、developer_requests、guardrails を作る。_buildPrompt は PromptBuilder の本文と詳細ペイロード、出力ルールを結合する。',
+      improvementUse:
+          'AI出力改善案では、payloadに不足している情報、プロンプトの出力契約、fallback時の表示品質、provider routingの失敗時挙動を具体化する。',
+    ),
+    AssetManagementImplementationContext(
+      kind: 'source',
+      title: 'Feature Request Edge Function',
+      path: 'supabase/functions/core-hub/index.ts',
+      summary:
+          'feature_request.existing_issues と feature_request.submit が、資産管理画面からの改善提案をGitHub Issue/WBSへ連携する。',
+      excerpt:
+          'AssetManagementPage は source=asset_management_developer_request と dedupe_key を渡す。Issue本文の情報量が不足すると、後続の実装者が画面、データ、受け入れ条件を読み直す必要がある。',
+      improvementUse:
+          '開発者向け提案では、Issue化した瞬間に実装者が着手できる粒度の説明、受け入れ条件、検証コマンド、関連ファイルを含める。',
+    ),
+    AssetManagementImplementationContext(
+      kind: 'doc',
+      title: '資産管理WBS計画',
+      path: 'docs/asset-management-wbs-plan.md',
+      summary: '資産管理機能の計画、優先順位、AI活用、検証観点を管理するドキュメント。',
+      excerpt: '改善提案は単なるアイデアではなく、WBS/Issueへ落とせる具体タスク、検証方法、ユーザー価値に結びつける必要がある。',
+      improvementUse: '提案の優先順位は、借金増加防止、入力漏れ削減、二重計上防止、月次レビュー自動化を優先する。',
+    ),
+    AssetManagementImplementationContext(
+      kind: 'doc',
+      title: 'AIモデル評価計画',
+      path: 'docs/asset-management-ai-model-evaluation-plan.md',
+      summary: '資産管理AIのモデル評価、プロバイダールーティング、回帰検知、品質確認の計画。',
+      excerpt:
+          'Provider routing、ai-hub、migrationに触る変更はPRレベルの検証が必要。AI出力は金額計算を行わせず、Dart計算値に基づく助言に限定する。',
+      improvementUse: 'AI改善案では、promptの変更だけでなく、評価ケース、回帰テスト、期待出力の日本語品質まで提案する。',
+    ),
+  ];
 }
 
 class AssetManagementEmergencyAdvice {
@@ -112,6 +213,8 @@ class AssetManagementEmergencyAdvice {
 }
 
 class AssetManagementInsightReport {
+  final AssetLiabilityWorkbook workbook;
+  final UserProfile? userProfile;
   final List<AssetManagementInsightActionItem> actionItems;
   final AssetManagementAvailableMoneyInsight todayAvailable;
   final AssetManagementAvailableMoneyInsight weekAvailable;
@@ -119,8 +222,11 @@ class AssetManagementInsightReport {
   final List<AssetManagementMovementSuggestion> movementSuggestions;
   final List<AssetManagementEmergencyAdvice> emergencyAdvices;
   final List<AssetManagementDeveloperRequest> developerRequests;
+  final List<AssetManagementImplementationContext> implementationContexts;
 
   const AssetManagementInsightReport({
+    required this.workbook,
+    this.userProfile,
     required this.actionItems,
     required this.todayAvailable,
     required this.weekAvailable,
@@ -128,6 +234,8 @@ class AssetManagementInsightReport {
     required this.movementSuggestions,
     required this.emergencyAdvices,
     required this.developerRequests,
+    this.implementationContexts =
+        const <AssetManagementImplementationContext>[],
   });
 
   bool get hasCriticalActions {
@@ -153,6 +261,9 @@ class AssetManagementInsightService {
 
   AssetManagementInsightReport buildReport({
     required AssetLiabilityWorkbook workbook,
+    UserProfile? userProfile,
+    List<AssetManagementImplementationContext> implementationContexts =
+        AssetManagementImplementationContext.defaultAssetManagementContexts,
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
   }) {
@@ -201,6 +312,8 @@ class AssetManagementInsightService {
     );
 
     return AssetManagementInsightReport(
+      workbook: workbook,
+      userProfile: userProfile,
       actionItems: actions,
       todayAvailable: today,
       weekAvailable: week,
@@ -208,6 +321,7 @@ class AssetManagementInsightService {
       movementSuggestions: movementSuggestions,
       emergencyAdvices: emergencyAdvices,
       developerRequests: developerRequests,
+      implementationContexts: implementationContexts,
     );
   }
 
@@ -612,46 +726,147 @@ class AssetManagementInsightService {
     required List<AssetManagementMovementSuggestion> movementSuggestions,
   }) {
     final requests = <AssetManagementDeveloperRequest>[];
-    if (workbook.debtMasterRows.any((row) => row.paymentAmountEstimated)) {
+    final estimatedPaymentRows = workbook.debtMasterRows
+        .where((row) => row.paymentAmountEstimated)
+        .toList(growable: false);
+    if (estimatedPaymentRows.isNotEmpty) {
       requests.add(
-        const AssetManagementDeveloperRequest(
-          title: '実支払額と推定額の差分管理',
+        AssetManagementDeveloperRequest(
+          title: '請求確定額と推定額の差分レビュー導線',
           description:
-              '現状では推定最低支払額と実際の引落額の差分を月次で記録しにくいです。カード請求内訳の実績差分管理機能を追加してください。',
+              '現状では推定最低支払額のまま残っている負債が${estimatedPaymentRows.length}件あり、'
+              '請求確定後に「今月支払予定額」「実支払額」「差分理由」をまとめて見直す導線が弱いです。'
+              '負債マスタ上部に「請求確定待ち」フィルタと一括レビュー画面を追加し、'
+              'カード明細取込結果との差分、前月との差分、支払後残高見込みまで1画面で確定できるようにしてください。',
           severity: AssetManagementInsightSeverity.info,
+          evidence: <String>[
+            '推定額の負債行: ${estimatedPaymentRows.length}件',
+            '対象: ${_joinDebtNames(estimatedPaymentRows)}',
+            '今月支払予定合計: ${_formatYen(workbook.monthlyScheduledPaymentTotal)}',
+            '今月実支払合計: ${_formatYen(workbook.monthlyActualPaymentTotal)}',
+          ],
+          implementationSteps: const <String>[
+            'AssetManagementPageの負債マスタに「請求確定待ち」フィルタと一括編集モードを追加する。',
+            'AssetLiabilityMonthlyStateStoreへ実支払額、差分理由、確認済みフラグを月次キーで保存する。',
+            'カード明細取込がある場合はcardStatementReconciliationの差分を同じ画面に表示する。',
+            '確認後はdeveloper requestではなく通常アクションアイテムから消えるようにする。',
+          ],
+          acceptanceCriteria: const <String>[
+            '推定額行が1件以上あるとき、請求確定待ち件数と対象名が表示される。',
+            '実支払額と差分理由を保存すると、月次再読み込み後も値が復元される。',
+            'カード明細と設定内訳に差分がある場合、差分金額が同じレビュー画面に出る。',
+          ],
+          sourceReferences: const <String>[
+            'lib/pages/asset_management_page.dart',
+            'lib/services/asset_liability_monthly_state_store.dart',
+            'lib/services/asset_liability_planning_service.dart',
+          ],
         ),
       );
     }
-    if (actions.any(
-      (action) =>
-          action.type == AssetManagementInsightActionType.missingPaymentSource,
-    )) {
+    final missingSourceActions = actions
+        .where(
+          (action) =>
+              action.type ==
+              AssetManagementInsightActionType.missingPaymentSource,
+        )
+        .toList(growable: false);
+    if (missingSourceActions.isNotEmpty) {
       requests.add(
-        const AssetManagementDeveloperRequest(
+        AssetManagementDeveloperRequest(
           title: '支払原資口座の未設定レビュー',
-          description:
-              '現状では支払原資口座が未設定のままでも運用できてしまいます。未設定項目を一括で確認・設定できる機能を追加してください。',
+          description: '現状では支払原資口座が未設定のままでも資金繰り計算へ進めてしまい、'
+              'どの口座から引き落とされるか不明な支払いが残ります。'
+              '未設定項目だけを抽出するレビュー画面を用意し、候補口座、支払日、支払予定額、'
+              '支払後見込み残高を並べて、1クリックで既定値として保存できるようにしてください。',
           severity: AssetManagementInsightSeverity.warning,
+          evidence: <String>[
+            '支払原資未設定アクション: ${missingSourceActions.length}件',
+            '対象: ${missingSourceActions.map((item) => item.title).join('、')}',
+            '口座別見込み行: ${workbook.accountCashflowSummaries.length}件',
+          ],
+          implementationSteps: const <String>[
+            '支払原資未設定だけを表示するモーダルまたはセクションを追加する。',
+            '候補口座は現金同等資産の残高、支払後見込み残高、安全残高を併記して並べる。',
+            '保存時はデフォルト設定と当月上書きのどちらへ反映するかを選べるようにする。',
+            '保存後にWorkbookを再構築し、未設定アクションと口座別不足が減ることを確認する。',
+          ],
+          acceptanceCriteria: const <String>[
+            '未設定項目だけを一覧化でき、対象名、支払日、金額、候補口座が同時に見える。',
+            '保存後、同じ月の再表示で支払原資口座が復元される。',
+            '支払原資の変更で口座別見込み残高と口座移動提案が再計算される。',
+          ],
+          sourceReferences: const <String>[
+            'lib/pages/asset_management_page.dart',
+            'lib/services/asset_liability_planning_service.dart',
+            'lib/services/asset_liability_monthly_state_store.dart',
+          ],
         ),
       );
     }
     if (workbook.cardBillingReview.hasNeedsReviewItems) {
       requests.add(
-        const AssetManagementDeveloperRequest(
+        AssetManagementDeveloperRequest(
           title: 'カード請求内訳の設定監査',
-          description:
-              '現状ではカード請求に含める項目の請求先不整合を手動確認する必要があります。請求先カード未設定や削除済みカードを月次レビューで修正できる機能を強化してください。',
+          description: '現状ではカード請求に含める項目の請求先不整合、明細取込との差分、'
+              '直接支払いとの二重計上リスクを別々に確認する必要があります。'
+              'カードごとの請求額、設定内訳合計、取込明細合計、差分、対象内訳を1つの監査ビューにまとめ、'
+              '請求先未設定や削除済みカードをその場で修正できるようにしてください。',
           severity: AssetManagementInsightSeverity.warning,
+          evidence: <String>[
+            '確認が必要なカード請求項目: ${workbook.cardBillingReview.needsReviewItems.length}件',
+            '請求先未設定項目: ${workbook.cardBillingReview.missingBillingAccountItems.length}件',
+            '二重計上リスク: ${workbook.cardBillingReview.doubleCountingRiskItems.length}件',
+            '明細取込件数: ${workbook.cardStatementReconciliation.importedLineCount}件',
+          ],
+          implementationSteps: const <String>[
+            'cardBillingReviewとcardStatementReconciliationを統合した「カード請求監査」セクションを追加する。',
+            'カードごとに設定内訳合計、取込明細合計、請求額、差分、アラートを表示する。',
+            '未設定または削除済みカードはその場で請求先を再選択できるようにする。',
+            '直接支払いとカード請求内訳の二重計上候補は保存前に警告する。',
+          ],
+          acceptanceCriteria: const <String>[
+            'カードごとの差分が0円でない場合、差分理由と対象明細が見える。',
+            '請求先カード未設定の項目を監査ビューから修正できる。',
+            '二重計上リスクの項目は支払い方式を整理するまで警告が残る。',
+          ],
+          sourceReferences: const <String>[
+            'lib/pages/asset_management_page.dart',
+            'lib/services/asset_liability_card_statement_import_service.dart',
+            'lib/services/asset_liability_planning_service.dart',
+          ],
         ),
       );
     }
     if (movementSuggestions.isNotEmpty || workbook.hasAccountShortage) {
       requests.add(
-        const AssetManagementDeveloperRequest(
+        AssetManagementDeveloperRequest(
           title: '口座間移動タスク管理',
-          description:
-              '現状では口座間移動の提案を完了タスクとして保存できません。移動候補をタスク化し、実行済み管理できる機能を追加してください。',
+          description: '現状では口座間移動の提案が出ても、実行予定、実行済み、キャンセル理由を月次タスクとして扱いにくいです。'
+              '不足口座、移動元候補、必要額、期限、実行後見込み残高を1行にまとめ、'
+              '提案からタスク化、完了チェック、翌月への繰越まで管理できるようにしてください。',
           severity: AssetManagementInsightSeverity.warning,
+          evidence: <String>[
+            '口座移動提案: ${movementSuggestions.length}件',
+            '口座不足あり: ${workbook.hasAccountShortage ? 'はい' : 'いいえ'}',
+            '口座別見込み行: ${workbook.accountCashflowSummaries.length}件',
+          ],
+          implementationSteps: const <String>[
+            'movementSuggestionsをワンクリックでtransferTasksへ変換するボタンを追加する。',
+            'transferTasksに実行日、完了、キャンセル理由、実行後残高メモを保存できるようにする。',
+            '完了済みタスクは使用可能額計算で二重に差し引かないことを明示する。',
+            '給料日サイクルの切替時に未完了タスクを繰り越すか確認する。',
+          ],
+          acceptanceCriteria: const <String>[
+            '口座移動提案からタスクを作成でき、再読み込み後も残る。',
+            'タスク完了後、同じ移動提案が重複表示されない。',
+            '未完了タスクは翌給料サイクルに繰り越すか破棄するか選べる。',
+          ],
+          sourceReferences: const <String>[
+            'lib/pages/asset_management_page.dart',
+            'lib/services/asset_liability_monthly_state_store.dart',
+            'lib/services/asset_management_insight_service.dart',
+          ],
         ),
       );
     }
@@ -660,12 +875,40 @@ class AssetManagementInsightService {
         const AssetManagementDeveloperRequest(
           title: '月次レビュー履歴の強化',
           description:
-              '現状ではAI資産管理アシスタントの確認結果を月次履歴へ保存していません。レビュー完了ログと改善メモを保存できる機能を追加してください。',
+              '現状ではAI資産管理アシスタントの確認結果、ユーザーの判断、実行した改善アクションを月次履歴へ保存していません。'
+              'レビュー完了ログ、AI要約、採用した改善提案、手動メモ、翌月への申し送りを保存できるようにしてください。',
           severity: AssetManagementInsightSeverity.info,
+          evidence: <String>[
+            '現在のアクションアイテムは少ないため、月次の改善履歴を残す段階です。',
+            'AI要約と開発者向け改善提案は表示時点の状態に依存します。',
+          ],
+          implementationSteps: <String>[
+            'monthlyReportsまたは専用履歴にAI要約、開発者向け提案、ユーザーメモを保存する。',
+            '保存済みレビューを月別に再表示し、前月との差分を見られるようにする。',
+            'レビュー完了時に次回確認日または給料日サイクルへ申し送りを作る。',
+          ],
+          acceptanceCriteria: <String>[
+            'レビュー保存後、同じ月を開くとAI要約とメモが復元される。',
+            '前月から改善した項目と残った項目を一覧できる。',
+            '保存履歴はGitHub Issue化せずともローカル/DBで確認できる。',
+          ],
+          sourceReferences: <String>[
+            'lib/pages/asset_management_page.dart',
+            'lib/services/asset_liability_monthly_report_service.dart',
+            'lib/services/asset_management_ai_summary_service.dart',
+          ],
         ),
       );
     }
     return requests;
+  }
+
+  String _joinDebtNames(List<AssetLiabilityDebtRow> rows) {
+    if (rows.isEmpty) {
+      return 'なし';
+    }
+    return rows.take(6).map((row) => row.name).join('、') +
+        (rows.length > 6 ? ' ほか${rows.length - 6}件' : '');
   }
 
   double _paymentTotalForWindow({
@@ -868,6 +1111,10 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String buildRedactedPrompt(AssetManagementInsightReport report) {
+    return buildDetailedAdvicePrompt(report);
+  }
+
+  String buildDetailedAdvicePrompt(AssetManagementInsightReport report) {
     final severityCounts = _countBy(
       report.actionItems.map((item) => item.severity.name),
     );
@@ -880,32 +1127,109 @@ class AssetManagementInsightPromptBuilder {
     final developerCounts = _countBy(
       report.developerRequests.map((item) => item.severity.name),
     );
+    final workbook = report.workbook;
     final buffer = StringBuffer()
-      ..writeln('あなたは資産管理AIアシスタントです。')
+      ..writeln('あなたは「細木数子」を彷彿とさせる、ズバズバ断言型の資産管理アシスタントです。')
       ..writeln(
-        '重要: 金額計算はDart側で完了しています。下記の安全化された分類だけを使い、'
-        '推測・再計算・正確な残高の追加要求はしないでください。',
+        '役割: 厳しめ、でも本質的には愛情のある生活再建メンターとして、ユーザーの資産・負債・支払予定・利息から個別事情を読み取り、'
+        '曖昧な一般論ではなく「あんたは今これを先にやるのよ」と言い切ってください。',
+      )
+      ..writeln(
+        '口調: 「いい？」「あんたね」「ここははっきり言うわよ」「〜なのよ」を使い、少し怖いくらいハッキリ言う。'
+        '人生経験豊富な姐御感、時々笑える毒舌、悪いことも包み隠さないが、最後は前向きに導いてください。',
+      )
+      ..writeln(
+        '占いスタイル: 四柱推命・六星占術風の運命周期・宿命・性格分析のような語り口を、お金の流れ、仕事運、生活習慣、今後3〜5年の立て直し方に重ねてください。',
+      )
+      ..writeln(
+        '重要: 金額計算はDart側で完了しています。下記の詳細データを正として、口座名・残高・支払日・支払額・利率・月利息・負債割合を具体的に引用してください。'
+        '再計算する場合は「概算」と明記し、Dart計算値と矛盾する断定はしないでください。',
+      )
+      ..writeln(
+        '開発者向け改善提案: 現実装コンテキスト、関連ソース、候補タスク、根拠、実装手順、受け入れ条件を使い、'
+        '抽象論ではなく「どのファイルをどう変えるか」「どう検証するか」「何ができれば完了か」まで具体的に書いてください。',
       )
       ..writeln('出力は必ず日本語だけにしてください。見出し、ラベル、箇条書きも日本語にしてください。')
+      ..writeln(
+        '回答は「1. 宿命・本質」「2. 性格の怖いほど当たる特徴」「3. 仕事・お金」「4. 今月の支払いと利息」「5. 今後3〜5年の運気と借金圧縮」「6. 人生で気をつけること」「7. 開発者向け改善提案」「8. 最後にズバッと総評」の順にしてください。',
+      )
+      ..writeln(
+        '「7. 開発者向け改善提案」では、各提案ごとに「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず書いてください。',
+      )
       ..writeln()
-      ..writeln('## 安全化された使用可能額の状態')
+      ..writeln('## 総合サマリー')
+      ..writeln('- 基準日: ${_formatDate(workbook.baseDate)}')
+      ..writeln('- 現金同等資産: ${_formatAmount(workbook.cashLikeTotal)}')
+      ..writeln('- 資産合計: ${_formatAmount(workbook.positiveAssetTotal)}')
+      ..writeln('- 負債合計: ${_formatAmount(workbook.liabilityTotal)}')
+      ..writeln('- 純資産: ${_formatAmount(workbook.netWorth)}')
+      ..writeln('- 負債/資産比率: ${_formatPercent(workbook.debtToAssetRatio)}')
+      ..writeln('- 上位4負債の集中度: ${_formatPercent(workbook.topFourDebtShare)}')
+      ..writeln(
+        '- 今月最低支払推定合計: ${_formatAmount(workbook.monthlyMinimumPaymentEstimateTotal)}',
+      )
+      ..writeln(
+        '- 今月支払予定合計: ${_formatAmount(workbook.monthlyScheduledPaymentTotal)}',
+      )
+      ..writeln(
+        '- 今月未払い合計: ${_formatAmount(workbook.monthlyUnpaidPaymentTotal)}',
+      )
+      ..writeln(
+        '- 今月実支払合計: ${_formatAmount(workbook.monthlyActualPaymentTotal)}',
+      )
+      ..writeln(
+        '- 今月未受取入金合計: ${_formatAmount(workbook.monthlyUnreceivedIncomeTotal)}',
+      )
+      ..writeln(
+        '- 支払後見込み現金: ${_formatAmount(workbook.cashAfterScheduledPayments)}',
+      )
+      ..writeln()
+      ..writeln('## プロフィール詳細')
+      ..write(_profileLines(report.userProfile))
+      ..writeln()
+      ..writeln('## 使用可能額の状態')
       ..writeln('- 本日: ${_availabilityBand(report.todayAvailable)}')
       ..writeln('- 今週: ${_availabilityBand(report.weekAvailable)}')
       ..writeln('- 今月: ${_availabilityBand(report.monthAvailable)}')
+      ..writeln()
+      ..writeln('## 口座一覧')
+      ..write(_accountLines(workbook))
+      ..writeln()
+      ..writeln('## 負債マスタ詳細')
+      ..write(_debtMasterLines(workbook))
+      ..writeln()
+      ..writeln('## 支払日別リスク')
+      ..write(_paymentDayRiskLines(workbook))
+      ..writeln()
+      ..writeln('## 今月キャッシュフロー')
+      ..write(_cashflowLines(workbook))
+      ..writeln()
+      ..writeln('## 収入予定と口座移動')
+      ..write(_incomeAndTransferLines(workbook))
+      ..writeln()
+      ..writeln('## カード請求内訳と照合')
+      ..write(_cardBillingLines(workbook))
       ..writeln()
       ..writeln('## アクション件数')
       ..writeln('- 合計: ${report.actionItems.length}')
       ..writeln('- 重要度別: ${_formatCounts(severityCounts)}')
       ..writeln('- 種別: ${_formatCounts(typeCounts)}')
       ..writeln()
+      ..writeln('## 個別事情カード')
+      ..write(_redactedSituationCards(report))
+      ..writeln()
       ..writeln('## 口座移動と緊急アドバイス')
       ..writeln('- 口座移動・出金提案件数: ${report.movementSuggestions.length}')
       ..writeln('- 緊急生活防衛アドバイス件数: ${report.emergencyAdvices.length}')
       ..writeln('- 緊急アドバイス重要度別: ${_formatCounts(emergencyCounts)}')
       ..writeln()
-      ..writeln('## 開発者向け改善提案件数')
+      ..writeln('## 現実装コンテキスト（ドキュメント・ソースコード抜粋）')
+      ..write(_implementationContextLines(report.implementationContexts))
+      ..writeln()
+      ..writeln('## 開発者向け改善提案候補')
       ..writeln('- 合計: ${report.developerRequests.length}')
-      ..writeln('- 重要度別: ${_formatCounts(developerCounts)}');
+      ..writeln('- 重要度別: ${_formatCounts(developerCounts)}')
+      ..write(_developerRequestLines(report.developerRequests));
     return buffer.toString();
   }
 
@@ -931,6 +1255,312 @@ class AssetManagementInsightPromptBuilder {
     return keys.map((key) => '$key=${counts[key]}').join(', ');
   }
 
+  String _accountLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.accounts.isEmpty) {
+      return '- 口座データはありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final account in workbook.accounts) {
+      buffer.writeln(
+        '- ${account.name} / 種別:${account.kind.name} / 残高:${_formatAmount(account.balance)} / '
+        '支払日:${account.paymentDay?.toString() ?? '未設定'} / '
+        '年利:${_formatRate(account.annualRate)} / '
+        '最低支払率:${_formatRate(account.minimumPaymentRate)} / '
+        '最低支払下限:${_formatAmount(account.minimumPaymentFloor)} / '
+        '支払い方式:${account.paymentMethodLabel ?? account.paymentMethod.name} / '
+        '請求先:${account.billingAccountName ?? 'なし'}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _profileLines(UserProfile? profile) {
+    if (profile == null) {
+      return '- プロフィール未連携。生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物は未入力です。\n';
+    }
+    final buffer = StringBuffer()
+      ..writeln('- 表示名: ${profile.displayName ?? '未入力'}')
+      ..writeln('- 生年月日: ${_formatNullableDate(profile.birthDate)}')
+      ..writeln('- 性別: ${profile.gender ?? '未入力'}')
+      ..writeln('- 職業: ${profile.occupation ?? '未入力'}')
+      ..writeln(
+        '- 年収: ${profile.annualIncome == null ? '未入力' : _formatAmount(profile.annualIncome!)}',
+      )
+      ..writeln('- 住所: ${profile.address ?? profile.location ?? '未入力'}')
+      ..writeln('- 学歴: ${profile.education ?? '未入力'}')
+      ..writeln('- 職歴: ${profile.careerHistory ?? '未入力'}')
+      ..writeln('- 趣味: ${profile.hobbies ?? '未入力'}')
+      ..writeln('- 飲酒の有無: ${profile.alcoholUse ?? '未入力'}')
+      ..writeln('- 喫煙の有無: ${profile.smokingUse ?? '未入力'}')
+      ..writeln('- 好きな食べ物: ${profile.favoriteFoods ?? '未入力'}')
+      ..writeln('- 自己紹介: ${profile.bio ?? '未入力'}');
+    return buffer.toString();
+  }
+
+  String _debtMasterLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.debtMasterRows.isEmpty) {
+      return '- 負債はありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final row in workbook.debtMasterRows) {
+      buffer.writeln(
+        '- ${row.name} / 種別:${row.kind.name} / 残高:${_formatAmount(row.balance)} / '
+        '負債割合:${_formatPercent(row.liabilityShare)} / '
+        '支払日:${row.paymentDay?.toString() ?? '未設定'} / '
+        '今月支払予定日:${_formatNullableDate(_paymentDateFor(row, workbook.baseDate))} / '
+        '推定最低支払額:${_formatAmount(row.minimumPaymentEstimate)} / '
+        '今月支払予定額:${_formatAmount(row.scheduledPaymentAmount)} / '
+        '実支払額:${row.actualPaymentAmount == null ? '未入力' : _formatAmount(row.actualPaymentAmount!)} / '
+        '差分:${row.paymentDifferenceAmount == null ? '未確定' : _formatAmount(row.paymentDifferenceAmount!)} / '
+        '差分理由:${row.paymentDifferenceReason ?? 'なし'} / '
+        '年利:${_formatRate(row.annualRate)} / '
+        '月利息:${_formatAmount(row.monthlyInterestEstimate)} / '
+        '元金返済見込み:${_formatAmount(row.principalPaymentEstimate)} / '
+        '支払後残高見込み:${_formatAmount(row.balanceAfterPaymentEstimate)} / '
+        '優先度:${row.priorityLabel} / '
+        '推定額:${row.paymentAmountEstimated ? 'はい' : 'いいえ'} / '
+        '支払済み:${row.paid ? 'はい' : 'いいえ'} / '
+        '支払原資:${row.paymentSourceAccountName ?? '未設定'} / '
+        '支払い方式:${row.paymentMethodLabel ?? row.paymentMethod.name} / '
+        'カード請求先:${row.billingAccountName ?? 'なし'}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _paymentDayRiskLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.paymentDayRisks.isEmpty) {
+      return '- 支払日別リスクはありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final risk in workbook.paymentDayRisks) {
+      buffer.writeln(
+        '- ${_formatDate(risk.paymentDate)} / 支払日:${risk.paymentDay}日 / '
+        '対象:${risk.accountNames.join('、')} / '
+        '負債残高合計:${_formatAmount(risk.balanceTotal)} / '
+        '推定最低支払合計:${_formatAmount(risk.minimumPaymentEstimateTotal)} / '
+        '支払予定合計:${_formatAmount(risk.scheduledPaymentTotal)} / '
+        '手入力支払合計:${_formatAmount(risk.manualPaymentTotal)} / '
+        '利息見込み合計:${_formatAmount(risk.interestEstimateTotal)} / '
+        '状態:${risk.isPast ? '期限超過' : risk.isToday ? '本日' : '今後'}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _cashflowLines(AssetLiabilityWorkbook workbook) {
+    if (workbook.cashflowRows.isEmpty) {
+      return '- キャッシュフロー行はありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final row in workbook.cashflowRows) {
+      buffer.writeln(
+        '- ${_formatDate(row.paymentDate)} / ${row.eventType.name} / '
+        '項目:${row.accountName} / 金額:${_formatAmount(row.paymentAmount)} / '
+        '支払原資:${row.paymentSourceAccountName ?? 'なし'} / '
+        '入金先:${row.destinationAccountName ?? 'なし'} / '
+        '支払い方式:${row.paymentMethodLabel ?? row.paymentMethod.name} / '
+        'カード請求先:${row.billingAccountName ?? 'なし'} / '
+        '推定額:${row.paymentAmountEstimated ? 'はい' : 'いいえ'} / '
+        '支払済み:${row.paid ? 'はい' : 'いいえ'} / 入金済み:${row.received ? 'はい' : 'いいえ'} / '
+        '期限超過:${row.overdue ? 'はい' : 'いいえ'} / '
+        '実支払額:${row.actualPaymentAmount == null ? '未入力' : _formatAmount(row.actualPaymentAmount!)} / '
+        '差分:${row.paymentDifferenceAmount == null ? '未確定' : _formatAmount(row.paymentDifferenceAmount!)} / '
+        '支払前現金:${_formatAmount(row.cashBeforePayment)} / '
+        '支払後現金:${_formatAmount(row.cashAfterPayment)} / '
+        'リスク:${row.riskLevel.name}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _incomeAndTransferLines(AssetLiabilityWorkbook workbook) {
+    final buffer = StringBuffer();
+    if (workbook.incomePlans.isEmpty) {
+      buffer.writeln('- 収入予定: なし');
+    } else {
+      for (final plan in workbook.incomePlans) {
+        buffer.writeln(
+          '- 収入予定:${plan.name} / 日付:${_formatDate(plan.date)} / '
+          '金額:${_formatAmount(plan.amount)} / 入金先:${plan.destinationAccountName ?? '未設定'} / '
+          '入金済み:${plan.received ? 'はい' : 'いいえ'}',
+        );
+      }
+    }
+    if (workbook.accountCashflowSummaries.isEmpty) {
+      buffer.writeln('- 口座別見込み: なし');
+    } else {
+      for (final summary in workbook.accountCashflowSummaries) {
+        buffer.writeln(
+          '- 口座別見込み:${summary.accountName} / 現在残高:${_formatAmount(summary.currentBalance)} / '
+          '今後支払:${_formatAmount(summary.upcomingPayments)} / 今後入金:${_formatAmount(summary.upcomingIncome)} / '
+          '移動入:${_formatAmount(summary.pendingTransferIn)} / 移動出:${_formatAmount(summary.pendingTransferOut)} / '
+          '見込み残高:${_formatAmount(summary.projectedBalance)} / リスク:${summary.riskLevel.name}',
+        );
+      }
+    }
+    if (workbook.transferSuggestions.isEmpty &&
+        workbook.transferTasks.isEmpty) {
+      buffer.writeln('- 口座移動: なし');
+    } else {
+      for (final suggestion in workbook.transferSuggestions) {
+        buffer.writeln(
+          '- 口座移動提案:${suggestion.fromAccountName} -> ${suggestion.toAccountName} / '
+          '金額:${_formatAmount(suggestion.amount)} / 期限:${_formatNullableDate(suggestion.neededBy)}',
+        );
+      }
+      for (final task in workbook.transferTasks) {
+        buffer.writeln(
+          '- 口座移動タスク:${task.fromAccountName} -> ${task.toAccountName} / '
+          '金額:${_formatAmount(task.amount)} / 期限:${_formatNullableDate(task.dueDate)} / '
+          '完了:${task.completed ? 'はい' : 'いいえ'} / '
+          'キャンセル:${task.canceled ? 'はい' : 'いいえ'}'
+          '${task.cancellationReason.trim().isEmpty ? '' : ' / 理由:${task.cancellationReason.trim()}'}',
+        );
+      }
+    }
+    return buffer.toString();
+  }
+
+  String _cardBillingLines(AssetLiabilityWorkbook workbook) {
+    final review = workbook.cardBillingReview;
+    final reconciliation = workbook.cardStatementReconciliation;
+    final buffer = StringBuffer();
+    if (review.directPaymentItems.isEmpty &&
+        review.cardBillingGroups.isEmpty &&
+        reconciliation.groups.isEmpty) {
+      return '- カード請求内訳はありません。\n';
+    }
+    for (final item in review.directPaymentItems) {
+      buffer.writeln(
+        '- 直接支払い:${item.accountName} / 金額:${_formatAmount(item.amount)} / '
+        '支払日:${item.paymentDay?.toString() ?? '未設定'} / アラート:${item.alerts.join('、')}',
+      );
+    }
+    for (final group in review.cardBillingGroups) {
+      buffer.writeln(
+        '- カード請求グループ:${group.billingAccountName} / 合計:${_formatAmount(group.totalAmount)} / '
+        '内訳:${group.items.map((item) => '${item.accountName} ${_formatAmount(item.amount)}').join('、')}',
+      );
+    }
+    for (final group in reconciliation.groups) {
+      buffer.writeln(
+        '- 明細照合:${group.billingAccountName} / 請求額:${_formatAmount(group.billedAmount)} / '
+        '設定内訳合計:${_formatAmount(group.configuredDetailTotal)} / '
+        '取込明細合計:${_formatAmount(group.statementLineTotal)} / '
+        '設定差分:${_formatAmount(group.configuredDifference)} / '
+        '明細差分:${_formatAmount(group.statementDifference)} / '
+        'アラート:${group.alerts.join('、')}',
+      );
+    }
+    if (reconciliation.unmatchedStatementLines.isNotEmpty) {
+      for (final line in reconciliation.unmatchedStatementLines) {
+        buffer.writeln(
+          '- 未照合明細:${line.billingAccountName ?? line.billingAccountId} / '
+          '日付:${_formatNullableDate(line.postedAt)} / 内容:${line.description} / '
+          '金額:${_formatAmount(line.amount)}',
+        );
+      }
+    }
+    return buffer.toString();
+  }
+
+  String _redactedSituationCards(AssetManagementInsightReport report) {
+    if (report.actionItems.isEmpty && report.emergencyAdvices.isEmpty) {
+      return '- 目立つ個別リスクはありません。現状維持と入力精度の確認を優先してください。\n';
+    }
+    final buffer = StringBuffer();
+    for (final item in report.actionItems.take(8)) {
+      buffer.writeln(
+        '- ${_actionTypeLabel(item.type)} / 項目:${item.title} / '
+        '重要度:${item.severity.name} / '
+        '期限:${_dueTimingBand(item.dueDate, report.todayAvailable.startDate)} / '
+        '次の一手:${item.suggestedAction}',
+      );
+    }
+    for (final advice in report.emergencyAdvices.take(4)) {
+      buffer.writeln(
+        '- 緊急生活防衛 / 重要度:${advice.severity.name} / '
+        '状況:${advice.title} / 次の一手:${advice.suggestedAction}',
+      );
+    }
+    return buffer.toString();
+  }
+
+  String _implementationContextLines(
+    List<AssetManagementImplementationContext> contexts,
+  ) {
+    if (contexts.isEmpty) {
+      return '- 現実装コンテキストは未指定です。\n';
+    }
+    final buffer = StringBuffer();
+    for (final context in contexts) {
+      buffer
+        ..writeln('- 種別:${context.kind} / ${context.title}')
+        ..writeln('  - パス: ${context.path}')
+        ..writeln('  - 要約: ${context.summary}')
+        ..writeln('  - 抜粋: ${context.excerpt}')
+        ..writeln('  - 改善提案で見る観点: ${context.improvementUse}');
+    }
+    return buffer.toString();
+  }
+
+  String _developerRequestLines(
+    List<AssetManagementDeveloperRequest> requests,
+  ) {
+    if (requests.isEmpty) {
+      return '- 開発者向け改善提案候補はありません。\n';
+    }
+    final buffer = StringBuffer();
+    for (final request in requests) {
+      buffer
+        ..writeln('- ${request.title}')
+        ..writeln('  - 重要度: ${request.severity.name}')
+        ..writeln('  - 現状の痛み: ${request.description}');
+      if (request.evidence.isNotEmpty) {
+        buffer.writeln('  - 根拠データ: ${request.evidence.join(' / ')}');
+      }
+      if (request.sourceReferences.isNotEmpty) {
+        buffer.writeln('  - 変更候補ファイル: ${request.sourceReferences.join(' / ')}');
+      }
+      if (request.implementationSteps.isNotEmpty) {
+        buffer.writeln('  - 実装手順: ${request.implementationSteps.join(' / ')}');
+      }
+      if (request.acceptanceCriteria.isNotEmpty) {
+        buffer.writeln('  - 受け入れ条件: ${request.acceptanceCriteria.join(' / ')}');
+      }
+    }
+    return buffer.toString();
+  }
+
+  String _dueTimingBand(DateTime? dueDate, DateTime baseDate) {
+    if (dueDate == null) return '不明';
+    final base = DateTime(baseDate.year, baseDate.month, baseDate.day);
+    final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final days = due.difference(base).inDays;
+    if (days < 0) return '期限超過';
+    if (days == 0) return '今日';
+    if (days <= 3) return '3日以内';
+    if (days <= 7) return '7日以内';
+    if (due.year == base.year && due.month == base.month) return '今月中';
+    return '将来';
+  }
+
+  String _actionTypeLabel(AssetManagementInsightActionType type) {
+    return switch (type) {
+      AssetManagementInsightActionType.missingInput => '請求額の未確定',
+      AssetManagementInsightActionType.missingPaymentDay => '支払日の未設定',
+      AssetManagementInsightActionType.missingAnnualRate => '金利情報の未設定',
+      AssetManagementInsightActionType.missingPaymentSource => '支払原資口座の未設定',
+      AssetManagementInsightActionType.overduePayment => '期限超過の未払い',
+      AssetManagementInsightActionType.upcomingPayment => '近い支払期限',
+      AssetManagementInsightActionType.cashShortageRisk => '支払後の資金ショート',
+      AssetManagementInsightActionType.emergencyLivingExpense => '生活費の不足',
+      AssetManagementInsightActionType.cardBillingConfiguration => 'カード請求設定の確認',
+      AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
+    };
+  }
+
   String _formatAmount(double amount) {
     final sign = amount < 0 ? '-' : '';
     final digits = amount.abs().round().toString();
@@ -943,5 +1573,34 @@ class AssetManagementInsightPromptBuilder {
       }
     }
     return '$sign$buffer円';
+  }
+
+  String _formatDate(DateTime value) {
+    return '${value.year}/${value.month.toString().padLeft(2, '0')}/'
+        '${value.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatNullableDate(DateTime? value) {
+    return value == null ? '未設定' : _formatDate(value);
+  }
+
+  String _formatPercent(double value) {
+    if (value.isInfinite) return '∞';
+    if (value.isNaN) return '不明';
+    return '${(value * 100).toStringAsFixed(1)}%';
+  }
+
+  String _formatRate(double value) {
+    return _formatPercent(value);
+  }
+
+  DateTime? _paymentDateFor(AssetLiabilityDebtRow row, DateTime baseDate) {
+    if (row.paymentDay == null) return null;
+    final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
+    return DateTime(
+      baseDate.year,
+      baseDate.month,
+      row.paymentDay!.clamp(1, lastDay),
+    );
   }
 }

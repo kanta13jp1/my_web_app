@@ -99,5 +99,43 @@ void main() {
 
       expect(breakdown.salaryIncomeTotal, 180000);
     });
+
+    test('groups auto balance drops as unknown spending', () {
+      final breakdown = service.build(
+        referenceDate: DateTime(2026, 5, 26),
+        expenses: <SalarySpendingEntry>[
+          SalarySpendingEntry(
+            date: DateTime(2026, 5, 26),
+            amount: 18000,
+            description: '使途不明金（残高差分から自動記録）',
+            sourceLabel: '三井住友銀行',
+          ),
+        ],
+      );
+
+      expect(breakdown.sections.single.category, '使途不明金');
+      expect(breakdown.sections.single.amount, 18000);
+      expect(breakdown.expenseEntryCount, 1);
+    });
+
+    test('counts payslip income even when other income entries exist', () {
+      final breakdown = service.build(
+        referenceDate: DateTime(2026, 5, 26),
+        incomes: <SalaryIncomeEntry>[
+          SalaryIncomeEntry(
+            date: DateTime(2026, 5, 25),
+            amount: 452815,
+            description: 'Payslip: 自分株式会社',
+          ),
+          SalaryIncomeEntry(
+            date: DateTime(2026, 5, 25),
+            amount: 12000,
+            description: '副業売上',
+          ),
+        ],
+      );
+
+      expect(breakdown.salaryIncomeTotal, 452815);
+    });
   });
 }

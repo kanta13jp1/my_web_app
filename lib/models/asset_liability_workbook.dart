@@ -233,6 +233,7 @@ class AssetLiabilityDebtRow {
   final double liabilityShare;
   final String priorityLabel;
   final bool paymentAmountEstimated;
+  final bool billingConfirmed;
   final bool paid;
 
   const AssetLiabilityDebtRow({
@@ -261,6 +262,7 @@ class AssetLiabilityDebtRow {
     required this.liabilityShare,
     required this.priorityLabel,
     required this.paymentAmountEstimated,
+    required this.billingConfirmed,
     required this.paid,
   });
 
@@ -474,6 +476,10 @@ class AssetLiabilityTransferTask {
   final DateTime? dueDate;
   final bool completed;
   final DateTime? completedAt;
+  final String completionMemo;
+  final bool canceled;
+  final DateTime? canceledAt;
+  final String cancellationReason;
 
   const AssetLiabilityTransferTask({
     required this.id,
@@ -485,6 +491,10 @@ class AssetLiabilityTransferTask {
     required this.dueDate,
     this.completed = false,
     this.completedAt,
+    this.completionMemo = '',
+    this.canceled = false,
+    this.canceledAt,
+    this.cancellationReason = '',
   });
 
   AssetLiabilityTransferTask copyWith({
@@ -497,6 +507,10 @@ class AssetLiabilityTransferTask {
     DateTime? dueDate,
     bool? completed,
     DateTime? completedAt,
+    String? completionMemo,
+    bool? canceled,
+    DateTime? canceledAt,
+    String? cancellationReason,
   }) {
     return AssetLiabilityTransferTask(
       id: id ?? this.id,
@@ -508,6 +522,10 @@ class AssetLiabilityTransferTask {
       dueDate: dueDate ?? this.dueDate,
       completed: completed ?? this.completed,
       completedAt: completedAt ?? this.completedAt,
+      completionMemo: completionMemo ?? this.completionMemo,
+      canceled: canceled ?? this.canceled,
+      canceledAt: canceledAt ?? this.canceledAt,
+      cancellationReason: cancellationReason ?? this.cancellationReason,
     );
   }
 }
@@ -637,6 +655,7 @@ class AssetLiabilityCardBillingReviewItem {
   final String? billingAccountName;
   final bool includedInBillingAccount;
   final bool directCashflowTarget;
+  final bool paid;
   final List<String> alerts;
 
   const AssetLiabilityCardBillingReviewItem({
@@ -651,6 +670,7 @@ class AssetLiabilityCardBillingReviewItem {
     required this.billingAccountName,
     required this.includedInBillingAccount,
     required this.directCashflowTarget,
+    required this.paid,
     this.alerts = const <String>[],
   });
 
@@ -928,5 +948,71 @@ class AssetLiabilityWorkbook {
 
   bool get hasUnassignedDestinationIncomePlans {
     return unassignedDestinationIncomePlans.isNotEmpty;
+  }
+
+  List<AssetLiabilityDebtRow> get billingConfirmationPendingRows {
+    return debtMasterRows
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget &&
+              row.paymentAmountEstimated &&
+              !row.billingConfirmed &&
+              row.scheduledPaymentAmount > 0 &&
+              !row.paid,
+        )
+        .toList();
+  }
+
+  bool get hasBillingConfirmationPendingRows {
+    return billingConfirmationPendingRows.isNotEmpty;
+  }
+
+  double get billingConfirmationPendingTotal {
+    return billingConfirmationPendingRows.fold<double>(
+      0,
+      (sum, row) => sum + row.scheduledPaymentAmount,
+    );
+  }
+
+  List<AssetLiabilityDebtRow> get paymentSourceMissingRows {
+    return debtMasterRows
+        .where(
+          (row) =>
+              row.isDirectCashflowTarget &&
+              row.scheduledPaymentAmount > 0 &&
+              (row.paymentSourceAccountId == null ||
+                  row.paymentSourceAccountId!.trim().isEmpty),
+        )
+        .toList();
+  }
+
+  bool get hasPaymentSourceMissingRows {
+    return paymentSourceMissingRows.isNotEmpty;
+  }
+
+  double get paymentSourceMissingTotal {
+    return paymentSourceMissingRows.fold<double>(
+      0,
+      (sum, row) => sum + row.scheduledPaymentAmount,
+    );
+  }
+
+  double get monthlyScheduledPrincipalEstimateTotal {
+    return debtMasterRows
+        .where((row) => row.isDirectCashflowTarget)
+        .fold<double>(0, (sum, row) => sum + row.principalPaymentEstimate);
+  }
+
+  double get monthlyScheduledInterestEstimateTotal {
+    return debtMasterRows
+        .where((row) => row.isDirectCashflowTarget)
+        .fold<double>(
+          0,
+          (sum, row) =>
+              sum +
+              row.monthlyInterestEstimate
+                  .clamp(0, row.scheduledPaymentAmount)
+                  .toDouble(),
+        );
   }
 }

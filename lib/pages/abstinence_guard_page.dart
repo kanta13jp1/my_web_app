@@ -99,17 +99,14 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   }
 
   Future<void> _loadSnapshot() async {
-    final snapshot = await AbstinenceGuardStore.loadSnapshot(
-      now: _selectedDate,
-    );
-    final selfContactTrend = await AbstinenceGuardStore.loadSlipCountsByDate(
+    final bundle = await AbstinenceGuardStore.loadSnapshotWithSlipCounts(
       itemId: _selfContactItemId,
       now: _selectedDate,
     );
     if (!mounted) return;
     setState(() {
-      _snapshot = snapshot;
-      _selfContactTrend = selfContactTrend;
+      _snapshot = bundle.snapshot;
+      _selfContactTrend = bundle.slipCounts;
       _isLoading = false;
     });
   }

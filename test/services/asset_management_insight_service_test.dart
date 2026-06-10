@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 
@@ -17,7 +18,10 @@ void main() {
         baseDate: DateTime(2026, 5, 1),
       );
 
-      final report = service.buildReport(workbook: workbook);
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
 
       expect(
         report.actionItems.any(
@@ -35,7 +39,10 @@ void main() {
         ],
       );
 
-      final report = service.buildReport(workbook: workbook);
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
 
       expect(
         report.actionItems.any(
@@ -53,7 +60,10 @@ void main() {
         monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
       );
 
-      final report = service.buildReport(workbook: workbook);
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
 
       expect(
         report.actionItems.any(
@@ -189,6 +199,16 @@ void main() {
 
       expect(report.developerRequests.isNotEmpty, true);
       expect(report.developerRequests.first.description.contains('現状では'), true);
+      expect(report.developerRequests.first.evidence.isNotEmpty, true);
+      expect(
+        report.developerRequests.first.implementationSteps.isNotEmpty,
+        true,
+      );
+      expect(
+        report.developerRequests.first.acceptanceCriteria.isNotEmpty,
+        true,
+      );
+      expect(report.implementationContexts.isNotEmpty, true);
     });
 
     test('detects card billing configuration action items', () {
@@ -223,15 +243,23 @@ void main() {
         },
         baseDate: DateTime(2026, 5, 1),
       );
-      final report = service.buildReport(workbook: workbook);
-
-      final prompt = const AssetManagementInsightPromptBuilder().buildPrompt(
-        report,
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
       );
 
-      expect(prompt.contains('Dart側で計算済み'), true);
+      final prompt = const AssetManagementInsightPromptBuilder()
+          .buildDetailedAdvicePrompt(report);
+
+      expect(prompt.contains('Dart側で完了'), true);
       expect(prompt.contains('本日'), true);
-      expect(prompt.contains('アクションアイテム'), true);
+      expect(prompt.contains('プロフィール詳細'), true);
+      expect(prompt.contains('職業: 会社員'), true);
+      expect(prompt.contains('負債マスタ詳細'), true);
+      expect(prompt.contains('現実装コンテキスト'), true);
+      expect(prompt.contains('asset_management_page.dart'), true);
+      expect(prompt.contains('開発者向け改善提案候補'), true);
+      expect(prompt.contains('受け入れ条件'), true);
       expect(prompt.contains(report.actionItems.first.title), true);
     });
   });
@@ -319,6 +347,25 @@ AssetLiabilityDebtRow _debtRow({
     liabilityShare: 1,
     priorityLabel: 'test',
     paymentAmountEstimated: false,
+    billingConfirmed: true,
     paid: false,
+  );
+}
+
+UserProfile _userProfile() {
+  return UserProfile(
+    userId: 'user-1',
+    displayName: 'テスト太郎',
+    birthDate: DateTime(1978, 9, 30),
+    gender: '男',
+    occupation: '会社員',
+    annualIncome: 4500000,
+    address: '東京都',
+    education: '大学卒',
+    careerHistory: '営業職10年',
+    hobbies: '音楽、AI',
+    alcoholUse: '時々',
+    smokingUse: '吸わない',
+    favoriteFoods: 'カレー',
   );
 }

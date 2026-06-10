@@ -296,6 +296,16 @@ class AbstinenceGuardSnapshot {
       .toList();
 }
 
+class AbstinenceGuardSnapshotWithSlipCounts {
+  final AbstinenceGuardSnapshot snapshot;
+  final List<AbstinenceSlipDailyCount> slipCounts;
+
+  const AbstinenceGuardSnapshotWithSlipCounts({
+    required this.snapshot,
+    required this.slipCounts,
+  });
+}
+
 class AbstinenceGuardStore {
   static const List<String> quitProtocolItemIds = <String>[
     'alcohol',
@@ -525,43 +535,72 @@ class AbstinenceGuardStore {
       prefs: prefs,
     );
 
-    final states = items.map((item) {
-      final stored = storedStates[item.id] ??
-          const _StoredAbstinenceState(
-            isEnabled: false,
-            slipCount: 0,
-          );
-      return AbstinenceGuardState(
-        item: item,
-        isEnabled: stored.isEnabled,
-        slipCount: stored.slipCount,
-      );
-    }).toList();
-
     final protocolPrefs = prefs ?? await SharedPreferences.getInstance();
-    final stateByItemId = <String, AbstinenceGuardState>{
-      for (final state in states) state.item.id: state,
-    };
-    final quitProtocolStatuses = quitProtocolItemIds
-        .map(
-          (itemId) => _loadQuitProtocolStatus(
-            date: date,
-            itemId: itemId,
-            itemState: stateByItemId[itemId],
-            prefs: protocolPrefs,
-          ),
-        )
-        .whereType<AbstinenceQuitProtocolStatus>()
-        .toList();
-    final disciplineSnapshot = _loadDisciplineSnapshot(
+    return _buildSnapshotFromStoredStates(
       date: date,
+      storedStates: storedStates,
       prefs: protocolPrefs,
     );
+  }
 
-    return AbstinenceGuardSnapshot(
-      states: states,
-      quitProtocolStatuses: quitProtocolStatuses,
-      disciplineSnapshot: disciplineSnapshot,
+  static Future<Map<String, AbstinenceGuardSnapshot>> loadSnapshotsByDate({
+    required DateTime startDate,
+    required DateTime endDate,
+    SharedPreferences? prefs,
+  }) async {
+    final start = _startOfDay(startDate);
+    final end = _startOfDay(endDate);
+    final rangeStart = start.isAfter(end) ? end : start;
+    final rangeEnd = start.isAfter(end) ? start : end;
+    final protocolPrefs = prefs ?? await SharedPreferences.getInstance();
+    final statesByDate = await _loadStatesForDateRange(
+      startDate: rangeStart,
+      endDate: rangeEnd,
+      prefs: prefs,
+    );
+
+    return <String, AbstinenceGuardSnapshot>{
+      for (final date in _dateRange(startDate: rangeStart, endDate: rangeEnd))
+        todayKey(date): _buildSnapshotFromStoredStates(
+          date: date,
+          storedStates: statesByDate[todayKey(date)] ??
+              const <String, _StoredAbstinenceState>{},
+          prefs: protocolPrefs,
+        ),
+    };
+  }
+
+  static Future<AbstinenceGuardSnapshotWithSlipCounts>
+      loadSnapshotWithSlipCounts({
+    required String itemId,
+    int days = 7,
+    SharedPreferences? prefs,
+    DateTime? now,
+  }) async {
+    final safeDays = days.clamp(1, 31).toInt();
+    final date = _startOfDay(now ?? DateTime.now());
+    final startDate = date.subtract(Duration(days: safeDays - 1));
+    final protocolPrefs = prefs ?? await SharedPreferences.getInstance();
+    final statesByDate = await _loadStatesForDateRange(
+      startDate: startDate,
+      endDate: date,
+      prefs: prefs,
+    );
+    final storedStates =
+        statesByDate[todayKey(date)] ?? <String, _StoredAbstinenceState>{};
+
+    return AbstinenceGuardSnapshotWithSlipCounts(
+      snapshot: _buildSnapshotFromStoredStates(
+        date: date,
+        storedStates: storedStates,
+        prefs: protocolPrefs,
+      ),
+      slipCounts: _slipCountsFromDateStates(
+        itemId: itemId,
+        startDate: startDate,
+        days: safeDays,
+        statesByDate: statesByDate,
+      ),
     );
   }
 
@@ -670,20 +709,19 @@ class AbstinenceGuardStore {
   }) async {
     final safeDays = days.clamp(1, 31).toInt();
     final anchorDate = _startOfDay(now ?? DateTime.now());
-    final counts = <AbstinenceSlipDailyCount>[];
+    final startDate = anchorDate.subtract(Duration(days: safeDays - 1));
+    final statesByDate = await _loadStatesForDateRange(
+      startDate: startDate,
+      endDate: anchorDate,
+      prefs: prefs,
+    );
 
-    for (var offset = safeDays - 1; offset >= 0; offset -= 1) {
-      final date = anchorDate.subtract(Duration(days: offset));
-      final states = await _loadStatesForDate(date: date, prefs: prefs);
-      counts.add(
-        AbstinenceSlipDailyCount(
-          date: date,
-          count: states[itemId]?.slipCount ?? 0,
-        ),
-      );
-    }
-
-    return counts;
+    return _slipCountsFromDateStates(
+      itemId: itemId,
+      startDate: startDate,
+      days: safeDays,
+      statesByDate: statesByDate,
+    );
   }
 
   static Future<void> clearSlip({
@@ -828,6 +866,83 @@ class AbstinenceGuardStore {
     return _loadStatesFromPrefs(store, date);
   }
 
+  static Future<Map<String, Map<String, _StoredAbstinenceState>>>
+      _loadStatesForDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    SharedPreferences? prefs,
+  }) async {
+    final start = _startOfDay(startDate);
+    final end = _startOfDay(endDate);
+    if (prefs != null) {
+      return _loadStatesDateRangeFromPrefs(
+        store: prefs,
+        startDate: start,
+        endDate: end,
+      );
+    }
+
+    final userId = _currentUserId();
+    if (userId != null) {
+      try {
+        final supabaseStates = await _loadStatesDateRangeFromSupabase(
+          userId: userId,
+          startDate: start,
+          endDate: end,
+        );
+        final store = await SharedPreferences.getInstance();
+        final localBackfill = <String, Map<String, _StoredAbstinenceState>>{};
+
+        for (final date in _dateRange(startDate: start, endDate: end)) {
+          final key = todayKey(date);
+          if ((supabaseStates[key] ?? const <String, _StoredAbstinenceState>{})
+              .isNotEmpty) {
+            continue;
+          }
+          final localStates = _loadStatesFromPrefs(store, date);
+          final meaningfulLocalStates = _meaningfulStatesOnly(localStates);
+          if (meaningfulLocalStates.isEmpty) {
+            continue;
+          }
+          supabaseStates[key] = localStates;
+          localBackfill[key] = meaningfulLocalStates;
+        }
+
+        if (localBackfill.isNotEmpty) {
+          await _writeSupabaseStatesDateRangeBatch(
+            userId: userId,
+            statesByDateKey: localBackfill,
+          );
+        }
+
+        return supabaseStates;
+      } catch (e) {
+        debugPrint(
+          'AbstinenceGuardStore.loadSlipCounts supabase fallback: $e',
+        );
+      }
+    }
+
+    final store = await SharedPreferences.getInstance();
+    return _loadStatesDateRangeFromPrefs(
+      store: store,
+      startDate: start,
+      endDate: end,
+    );
+  }
+
+  static Map<String, Map<String, _StoredAbstinenceState>>
+      _loadStatesDateRangeFromPrefs({
+    required SharedPreferences store,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) {
+    return <String, Map<String, _StoredAbstinenceState>>{
+      for (final date in _dateRange(startDate: startDate, endDate: endDate))
+        todayKey(date): _loadStatesFromPrefs(store, date),
+    };
+  }
+
   static Map<String, _StoredAbstinenceState> _loadStatesFromPrefs(
     SharedPreferences store,
     DateTime date,
@@ -861,6 +976,43 @@ class AbstinenceGuardStore {
         continue;
       }
       map[itemId] = _StoredAbstinenceState(
+        isEnabled: row['is_enabled'] == true,
+        slipCount: _parseSlipCount(row['slip_count']),
+      );
+    }
+
+    return map;
+  }
+
+  static Future<Map<String, Map<String, _StoredAbstinenceState>>>
+      _loadStatesDateRangeFromSupabase({
+    required String userId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final dynamic rowsRaw = await Supabase.instance.client
+        .from('abstinence_daily_status')
+        .select('status_date,item_id,is_enabled,slip_count')
+        .eq('user_id', userId)
+        .gte('status_date', todayKey(startDate))
+        .lte('status_date', todayKey(endDate));
+
+    final rows = rowsRaw is List ? rowsRaw : const <dynamic>[];
+    final map = <String, Map<String, _StoredAbstinenceState>>{};
+
+    for (final row in rows.whereType<Map<String, dynamic>>()) {
+      final statusDate = row['status_date']?.toString();
+      final itemId = row['item_id']?.toString();
+      if (statusDate == null ||
+          statusDate.isEmpty ||
+          itemId == null ||
+          itemId.isEmpty) {
+        continue;
+      }
+      map.putIfAbsent(
+        statusDate,
+        () => <String, _StoredAbstinenceState>{},
+      )[itemId] = _StoredAbstinenceState(
         isEnabled: row['is_enabled'] == true,
         slipCount: _parseSlipCount(row['slip_count']),
       );
@@ -1117,6 +1269,109 @@ class AbstinenceGuardStore {
           rows,
           onConflict: 'user_id,status_date,item_id',
         );
+  }
+
+  static Future<void> _writeSupabaseStatesDateRangeBatch({
+    required String userId,
+    required Map<String, Map<String, _StoredAbstinenceState>> statesByDateKey,
+  }) async {
+    if (statesByDateKey.isEmpty) return;
+    final now = DateTime.now().toIso8601String();
+    final rows = <Map<String, dynamic>>[];
+    statesByDateKey.forEach((dateKey, statesByItemId) {
+      for (final entry in statesByItemId.entries) {
+        rows.add(<String, dynamic>{
+          'user_id': userId,
+          'status_date': dateKey,
+          'item_id': entry.key,
+          'is_enabled': entry.value.isEnabled,
+          'slip_count': entry.value.slipCount,
+          'updated_at': now,
+        });
+      }
+    });
+    if (rows.isEmpty) return;
+    await Supabase.instance.client.from('abstinence_daily_status').upsert(
+          rows,
+          onConflict: 'user_id,status_date,item_id',
+        );
+  }
+
+  static AbstinenceGuardSnapshot _buildSnapshotFromStoredStates({
+    required DateTime date,
+    required Map<String, _StoredAbstinenceState> storedStates,
+    required SharedPreferences prefs,
+  }) {
+    final states = items.map((item) {
+      final stored = storedStates[item.id] ??
+          const _StoredAbstinenceState(
+            isEnabled: false,
+            slipCount: 0,
+          );
+      return AbstinenceGuardState(
+        item: item,
+        isEnabled: stored.isEnabled,
+        slipCount: stored.slipCount,
+      );
+    }).toList();
+
+    final stateByItemId = <String, AbstinenceGuardState>{
+      for (final state in states) state.item.id: state,
+    };
+    final quitProtocolStatuses = quitProtocolItemIds
+        .map(
+          (itemId) => _loadQuitProtocolStatus(
+            date: date,
+            itemId: itemId,
+            itemState: stateByItemId[itemId],
+            prefs: prefs,
+          ),
+        )
+        .whereType<AbstinenceQuitProtocolStatus>()
+        .toList();
+    final disciplineSnapshot = _loadDisciplineSnapshot(
+      date: date,
+      prefs: prefs,
+    );
+
+    return AbstinenceGuardSnapshot(
+      states: states,
+      quitProtocolStatuses: quitProtocolStatuses,
+      disciplineSnapshot: disciplineSnapshot,
+    );
+  }
+
+  static List<AbstinenceSlipDailyCount> _slipCountsFromDateStates({
+    required String itemId,
+    required DateTime startDate,
+    required int days,
+    required Map<String, Map<String, _StoredAbstinenceState>> statesByDate,
+  }) {
+    return List<AbstinenceSlipDailyCount>.generate(
+      days,
+      (index) {
+        final date = startDate.add(Duration(days: index));
+        final states = statesByDate[todayKey(date)] ??
+            const <String, _StoredAbstinenceState>{};
+        return AbstinenceSlipDailyCount(
+          date: date,
+          count: states[itemId]?.slipCount ?? 0,
+        );
+      },
+      growable: false,
+    );
+  }
+
+  static Iterable<DateTime> _dateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) sync* {
+    var current = _startOfDay(startDate);
+    final end = _startOfDay(endDate);
+    while (!current.isAfter(end)) {
+      yield current;
+      current = current.add(const Duration(days: 1));
+    }
   }
 }
 

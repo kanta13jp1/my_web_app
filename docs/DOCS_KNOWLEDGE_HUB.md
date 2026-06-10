@@ -113,16 +113,13 @@ are not required to be part of this root hub.
 ## Multi-Agent Workflow
 
 - [[DEV_PROCESS_MULTI_AI]]
-- [[MULTI_INSTANCE_COORDINATION]]
+- [[AI_DRIVEN_DEV_OPERATING_MODEL]]
 - [[MULTI_INSTANCE_FLEET]]
 - [[MULTI_AI_RESILIENCE]]
-- [[multi-ai-resilience]]
-- [[multi-ai-fallback]]
 - [[FLEET_2_INSTANCE_TRANSITION]]
 - [[FLEET_SCALING_ROADMAP]]
 - [[AGENT_COORDINATION_PATTERNS]]
 - [[AGENT_TOOL_POLICY]]
-- [[INSTANCE_CONFIG]]
 - [[INSTANCE_CONFLICT_PREDICTOR]]
 - [[instance-constraints]]
 - [[HANDOFF_BUNDLE_SPEC]]

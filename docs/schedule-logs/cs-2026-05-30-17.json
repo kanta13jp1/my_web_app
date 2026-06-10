@@ -1,0 +1,25 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-30T17:30:00Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22件登録済み) / チケット対応: 0件 / Issue修正: 0件 / workflow-failure修復: 0件 / Schedule健全性: daily-report停止中(Issue #3047 open継続) / Supabase: 200 OK / ギター録音: 異常なし",
+  "details": {
+    "step0_edge_functions": { "deployed": 22, "registered": 22, "new_ui": 0 },
+    "step1_tickets": { "http_code": "200", "count": 0 },
+    "step4_prs_reviewed": ["#3057 dependabot flutter-deps (CI失敗Issue #3058 / auto-recovery待ち)"],
+    "step6_issues": {
+      "auto_review": 0,
+      "ef_connectivity": 0,
+      "workflow_failure_fixed": 0,
+      "workflow_failure_skipped": ["#3058 auto-recovery", "#3031 ps-instance", "#2550 ps-instance", "#1962 vscode-instance"]
+    },
+    "step7_schedule": {
+      "daily_report_24h": 0,
+      "alert_issue": "#3047 open継続 / 重複作成なし",
+      "roadmap_p1": "#3053 Codex #1 backlog"
+    },
+    "step8_infra": { "supabase": "200 OK", "firebase": "web-sandbox不可" },
+    "step9_guitar": "異常なし"
+  }
+}

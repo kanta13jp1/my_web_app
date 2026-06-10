@@ -161,6 +161,7 @@ class AiHubChatService {
     required String message,
     String provider = 'deepinfra',
     String? model,
+    int? maxTokens,
     String? sessionId,
     String? traceId,
     String? providerChoiceReason,
@@ -177,6 +178,7 @@ class AiHubChatService {
           'provider': provider,
           'message': message,
           if (model != null && model.trim().isNotEmpty) 'model': model.trim(),
+          if (maxTokens != null && maxTokens > 0) 'max_tokens': maxTokens,
           if (sessionId != null && sessionId.trim().isNotEmpty)
             'session_id': sessionId.trim(),
           if (traceId != null && traceId.trim().isNotEmpty)
@@ -220,6 +222,7 @@ class AiHubChatService {
   Future<AiHubChatResponse> sendAutoChat({
     required String message,
     String? tier,
+    int? maxTokens,
     String? sessionId,
     String? traceId,
     String? providerChoiceReason,
@@ -235,6 +238,7 @@ class AiHubChatService {
           'action': 'provider.chat_auto',
           'message': message,
           if (tier != null && tier.trim().isNotEmpty) 'tier': tier.trim(),
+          if (maxTokens != null && maxTokens > 0) 'max_tokens': maxTokens,
           if (sessionId != null && sessionId.trim().isNotEmpty)
             'session_id': sessionId.trim(),
           if (traceId != null && traceId.trim().isNotEmpty)

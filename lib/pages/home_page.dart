@@ -1279,6 +1279,17 @@ class _HomePageState extends State<HomePage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final today = _startOfDay(_now());
+      final calendarRange = _calendarVisibleRange();
+      final abstinenceStart = today.isBefore(calendarRange.startDay)
+          ? today
+          : calendarRange.startDay;
+      final abstinenceEnd =
+          today.isAfter(calendarRange.endDay) ? today : calendarRange.endDay;
+      final abstinenceSnapshotsByDate =
+          await AbstinenceGuardStore.loadSnapshotsByDate(
+        startDate: abstinenceStart,
+        endDate: abstinenceEnd,
+      );
       final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
         prefs: prefs,
         month: today,
@@ -1292,14 +1303,18 @@ class _HomePageState extends State<HomePage> {
       );
       final todayStatus =
           homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
-      final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
-        now: today,
-      );
+      final abstinenceSnapshot =
+          abstinenceSnapshotsByDate[_statusDateKey(today)] ??
+              _emptyAbstinenceSnapshot();
       final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
         now: today,
       );
       final primaryInterference = abstinenceSnapshot.primaryInterference;
-      final calendarDays = await _loadCalendarDays(prefs: prefs);
+      final calendarDays = await _loadCalendarDays(
+        prefs: prefs,
+        calendarRange: calendarRange,
+        abstinenceSnapshotsByDate: abstinenceSnapshotsByDate,
+      );
 
       return _HomeOpsSnapshot(
         morningBriefingDone: todayStatus.morningBriefingDone,
@@ -1334,10 +1349,21 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<List<_HomeCalendarDay>> _loadCalendarDays({
-    required SharedPreferences prefs,
-  }) async {
-    final now = _now();
+  AbstinenceGuardSnapshot _emptyAbstinenceSnapshot() {
+    return AbstinenceGuardSnapshot(
+      states: AbstinenceGuardStore.items
+          .map(
+            (item) => AbstinenceGuardState(
+              item: item,
+              isEnabled: false,
+              slipCount: 0,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  _HomeCalendarVisibleRange _calendarVisibleRange() {
     final monthAnchor = _calendarAnchorMonth();
     final firstDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month, 1);
     final lastDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month + 1, 0);
@@ -1345,6 +1371,24 @@ class _HomePageState extends State<HomePage> {
     final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
     final endOffset = 6 - (lastDayOfMonth.weekday % 7);
     final endDay = lastDayOfMonth.add(Duration(days: endOffset));
+
+    return _HomeCalendarVisibleRange(
+      monthAnchor: monthAnchor,
+      startDay: startDay,
+      endDay: endDay,
+    );
+  }
+
+  Future<List<_HomeCalendarDay>> _loadCalendarDays({
+    required SharedPreferences prefs,
+    _HomeCalendarVisibleRange? calendarRange,
+    Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
+  }) async {
+    final now = _now();
+    final range = calendarRange ?? _calendarVisibleRange();
+    final monthAnchor = range.monthAnchor;
+    final startDay = range.startDay;
+    final endDay = range.endDay;
     final homeDailyMap = await _loadHomeDailyStatusMap(
       prefs: prefs,
       startDate: startDay,
@@ -1362,15 +1406,19 @@ class _HomePageState extends State<HomePage> {
       startDate: startDay,
       endDate: endDay,
     );
+    final abstinenceByDate = abstinenceSnapshotsByDate ??
+        await AbstinenceGuardStore.loadSnapshotsByDate(
+          startDate: startDay,
+          endDate: endDay,
+        );
 
     final days = <_HomeCalendarDay>[];
     for (DateTime day = startDay;
         !day.isAfter(endDay);
         day = day.add(const Duration(days: 1))) {
       final dateKey = _statusDateKey(day);
-      final abstinence = await AbstinenceGuardStore.loadSnapshot(
-        now: day,
-      );
+      final abstinence =
+          abstinenceByDate[dateKey] ?? _emptyAbstinenceSnapshot();
       final isCurrentMonth =
           day.year == monthAnchor.year && day.month == monthAnchor.month;
       final isToday =
@@ -9146,6 +9194,18 @@ class _HomeDailyStatusRecord {
   const _HomeDailyStatusRecord({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
+  });
+}
+
+class _HomeCalendarVisibleRange {
+  final DateTime monthAnchor;
+  final DateTime startDay;
+  final DateTime endDay;
+
+  const _HomeCalendarVisibleRange({
+    required this.monthAnchor,
+    required this.startDay,
+    required this.endDay,
   });
 }
 

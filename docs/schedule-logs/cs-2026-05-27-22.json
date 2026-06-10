@@ -1,0 +1,25 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-27T22:13:40Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件 / Issue修正: 0件 / workflow-failure修復: 0件 / Schedule健全性: daily-report 14日間停止 → Issue #3036作成",
+  "details": {
+    "edge_function_ui_added": 0,
+    "tickets_handled": 0,
+    "issues_fixed": 0,
+    "workflow_failures_repaired": 0,
+    "new_issues_created": ["#3036: [Schedule監視] daily-report タスク未実行を検出 2026-05-27"],
+    "infrastructure": {
+      "supabase": "200 OK",
+      "firebase": "sandbox不可",
+      "guitar_recording": "正常"
+    },
+    "escalations": [
+      "#3036 daily-report 14日間停止 (新規)",
+      "#3034 Blog DLQ non-blocking",
+      "#3031/#2550 Codex backlog (powershell担当)",
+      "#1962 VSCode不具合 (vscode担当)"
+    ]
+  }
+}

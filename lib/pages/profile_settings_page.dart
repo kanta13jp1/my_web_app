@@ -25,6 +25,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   final _locationController = TextEditingController();
   final _twitterHandleController = TextEditingController();
   final _githubHandleController = TextEditingController();
+  final _genderController = TextEditingController();
+  final _occupationController = TextEditingController();
+  final _annualIncomeController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _educationController = TextEditingController();
+  final _careerHistoryController = TextEditingController();
+  final _hobbiesController = TextEditingController();
+  final _alcoholUseController = TextEditingController();
+  final _smokingUseController = TextEditingController();
+  final _favoriteFoodsController = TextEditingController();
   // ✅ 追加: 生年月日と目標寿命のコントローラー
   final _birthDateController = TextEditingController();
   final _targetDeathAgeController = TextEditingController();
@@ -54,6 +64,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     _locationController.dispose();
     _twitterHandleController.dispose();
     _githubHandleController.dispose();
+    _genderController.dispose();
+    _occupationController.dispose();
+    _annualIncomeController.dispose();
+    _addressController.dispose();
+    _educationController.dispose();
+    _careerHistoryController.dispose();
+    _hobbiesController.dispose();
+    _alcoholUseController.dispose();
+    _smokingUseController.dispose();
+    _favoriteFoodsController.dispose();
     _birthDateController.dispose();
     _targetDeathAgeController.dispose();
     super.dispose();
@@ -78,6 +98,18 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           _locationController.text = profile.location ?? '';
           _twitterHandleController.text = profile.twitterHandle ?? '';
           _githubHandleController.text = profile.githubHandle ?? '';
+          _genderController.text = profile.gender ?? '';
+          _occupationController.text = profile.occupation ?? '';
+          _annualIncomeController.text = profile.annualIncome == null
+              ? ''
+              : profile.annualIncome!.round().toString();
+          _addressController.text = profile.address ?? '';
+          _educationController.text = profile.education ?? '';
+          _careerHistoryController.text = profile.careerHistory ?? '';
+          _hobbiesController.text = profile.hobbies ?? '';
+          _alcoholUseController.text = profile.alcoholUse ?? '';
+          _smokingUseController.text = profile.smokingUse ?? '';
+          _favoriteFoodsController.text = profile.favoriteFoods ?? '';
           _isPublic = profile.isPublic;
           _avatarUrl = profile.avatarUrl;
 
@@ -124,6 +156,50 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
       });
     }
+  }
+
+  String? _optionalText(TextEditingController controller) {
+    final value = controller.text.trim();
+    return value.isEmpty ? null : value;
+  }
+
+  double? _parseOptionalYen(String value) {
+    final normalized = value.replaceAll(',', '').trim();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    return double.tryParse(normalized);
+  }
+
+  Widget _buildOptionalProfileField({
+    required TextEditingController controller,
+    required String labelText,
+    required String hintText,
+    required IconData icon,
+    int maxLines = 1,
+    int? maxLength,
+    TextInputType? keyboardType,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+      ),
+      maxLines: maxLines,
+      maxLength: maxLength,
+      keyboardType: keyboardType,
+      validator: (value) {
+        if (maxLength != null &&
+            value != null &&
+            value.trim().length > maxLength) {
+          return '$labelTextは$maxLength文字以内で入力してください';
+        }
+        return null;
+      },
+    );
   }
 
   // 画像選択・アップロード処理
@@ -217,6 +293,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       final userId = supabase.auth.currentUser!.id;
       // ✅ 追加: 目標寿命のパース
       final targetAge = int.tryParse(_targetDeathAgeController.text) ?? 80;
+      final annualIncome = _parseOptionalYen(_annualIncomeController.text);
 
       final updatedProfile = UserProfile(
         userId: userId,
@@ -238,6 +315,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         githubHandle: _githubHandleController.text.trim().isEmpty
             ? null
             : _githubHandleController.text.trim(),
+        gender: _optionalText(_genderController),
+        occupation: _optionalText(_occupationController),
+        annualIncome: annualIncome,
+        address: _optionalText(_addressController),
+        education: _optionalText(_educationController),
+        careerHistory: _optionalText(_careerHistoryController),
+        hobbies: _optionalText(_hobbiesController),
+        alcoholUse: _optionalText(_alcoholUseController),
+        smokingUse: _optionalText(_smokingUseController),
+        favoriteFoods: _optionalText(_favoriteFoodsController),
         isPublic: _isPublic,
         avatarUrl: _avatarUrl,
         // ✅ 追加: 生年月日と目標寿命を保存
@@ -498,6 +585,126 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         }
                         return null;
                       },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _genderController,
+                      labelText: '性別',
+                      hintText: '男 / 女 / その他 / 未回答 など',
+                      icon: Icons.wc_outlined,
+                      maxLength: 30,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _occupationController,
+                      labelText: '職業',
+                      hintText: '会社員、個人事業主、経営者、学生など',
+                      icon: Icons.work_outline,
+                      maxLength: 80,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _annualIncomeController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: '年収',
+                        hintText: '例: 4500000',
+                        prefixIcon: Icon(Icons.payments_outlined),
+                        border: OutlineInputBorder(),
+                        helperText: 'AI資産管理アシスタントの生活設計・返済余力分析に使います',
+                      ),
+                      validator: (value) {
+                        final text = value?.replaceAll(',', '').trim() ?? '';
+                        if (text.isEmpty) {
+                          return null;
+                        }
+                        final amount = double.tryParse(text);
+                        if (amount == null || amount < 0) {
+                          return '年収は0以上の数値で入力してください';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _addressController,
+                      labelText: '住所',
+                      hintText: '都道府県・市区町村・最寄り地域など',
+                      icon: Icons.home_outlined,
+                      maxLines: 2,
+                      maxLength: 160,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _educationController,
+                      labelText: '学歴',
+                      hintText: '最終学歴、専攻、資格学校など',
+                      icon: Icons.school_outlined,
+                      maxLines: 2,
+                      maxLength: 240,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _careerHistoryController,
+                      labelText: '職歴',
+                      hintText: 'これまでの職務、業界、経験年数など',
+                      icon: Icons.badge_outlined,
+                      maxLines: 3,
+                      maxLength: 400,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _hobbiesController,
+                      labelText: '趣味',
+                      hintText: '休日の過ごし方、好きな活動など',
+                      icon: Icons.sports_esports_outlined,
+                      maxLines: 2,
+                      maxLength: 240,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _alcoholUseController,
+                      labelText: '飲酒の有無',
+                      hintText: '飲まない / 時々 / 毎日 / 外食時だけ など',
+                      icon: Icons.local_bar_outlined,
+                      maxLength: 80,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _smokingUseController,
+                      labelText: '喫煙の有無',
+                      hintText: '吸わない / 吸う / 過去に吸っていた など',
+                      icon: Icons.smoke_free_outlined,
+                      maxLength: 80,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildOptionalProfileField(
+                      controller: _favoriteFoodsController,
+                      labelText: '好きな食べ物',
+                      hintText: '節約・健康・満足度の助言に使います',
+                      icon: Icons.restaurant_outlined,
+                      maxLines: 2,
+                      maxLength: 240,
                     ),
 
                     const SizedBox(height: 16),

@@ -209,6 +209,9 @@ class SalarySpendingBreakdownService {
     final text = description.toLowerCase();
     return text.contains('給料') ||
         text.contains('給与') ||
+        text.contains('給与明細') ||
+        text.contains('payslip') ||
+        text.contains('pay slip') ||
         text.contains('salary') ||
         text.contains('payroll') ||
         text.contains('賞与') ||
@@ -225,6 +228,11 @@ class _SalarySpendingCategoryRule {
 
 const List<_SalarySpendingCategoryRule> _categoryRules =
     <_SalarySpendingCategoryRule>[
+  _SalarySpendingCategoryRule('使途不明金', <String>[
+    '使途不明金',
+    '使途不明',
+    '用途不明',
+  ]),
   _SalarySpendingCategoryRule('住居', <String>[
     '家賃',
     '住宅',
@@ -337,10 +345,5 @@ const List<_SalarySpendingCategoryRule> _categoryRules =
     'ギャンブル',
     'casino',
   ]),
-  _SalarySpendingCategoryRule('手数料・税金', <String>[
-    '手数料',
-    '税',
-    'fee',
-    'tax',
-  ]),
+  _SalarySpendingCategoryRule('手数料・税金', <String>['手数料', '税', 'fee', 'tax']),
 ];

@@ -20,7 +20,8 @@
 
 ## 運用 docs
 
-- [`docs/MULTI_INSTANCE_FLEET.md`](docs/MULTI_INSTANCE_FLEET.md) — 2 instance fleet (Win Claude + Win Codex / 旧 12 dormant)
+- [`docs/AI_DRIVEN_DEV_OPERATING_MODEL.md`](docs/AI_DRIVEN_DEV_OPERATING_MODEL.md) — **AI 駆動開発 運用モデル v1 (canonical)** = 3 レーン (L1 Antigravity+Gemini 探索 / L2 VSCode+Codex 実装 / L3 VSCode+Claude 設計) + SDLC 7 工程 + セッション儀式
+- [`docs/MULTI_INSTANCE_FLEET.md`](docs/MULTI_INSTANCE_FLEET.md) — fleet roster (L2/L3 = Win Codex + Win Claude / L1 Antigravity = user 実行 / 旧 12 dormant)
 - [`docs/SUBAGENT_ORCHESTRATION_POLICY.md`](docs/SUBAGENT_ORCHESTRATION_POLICY.md) — guarded child subagents under Claude Code #1 / Codex #1
 - [`docs/AI_FALLBACK_RUNBOOK.md`](docs/AI_FALLBACK_RUNBOOK.md) — quota 超過時 fallback
 - [`docs/DEV_PROCESS_MULTI_AI.md`](docs/DEV_PROCESS_MULTI_AI.md) — AI 振り分け matrix
@@ -51,6 +52,14 @@
 - **終了**: `/wrap-up` skill (= memory + NotebookLM 蓄積 + 次回 candidate 3-5 件 必須)
 - **手動 skill**: `/session-start-check` `/rule17-wf-health` `/blog-publish-cleanup` `/wrap-up`
 - **自動化**: 5 daily cron (= ai-tool-watch / safety / residuals / crosscheck / wiki-compile) + 30+ workflow
+
+### Claude Code v2.1.126 session aids
+
+- Run `/recap` when resuming a stale or handed-off session; disable away summaries with `CLAUDE_CODE_ENABLE_AWAY_SUMMARY=0` only when the summary itself is noisy.
+- Use `/focus` during parallel fleet work to reduce transcript clutter; keep task state in the issue, PR, or WBS entry so the focus view does not become the source of truth.
+- Use mobile push notifications only for actionable remote-control events such as CI completion, blocked secrets, or schedule tasks that need the user's decision.
+- If `ANTHROPIC_BASE_URL` points at a gateway with `/v1/models`, prefer the `/model` picker over hard-coded model names.
+- Before removing an abandoned worktree/session, run `claude project purge [path]` only after git status and pushed branch/PR state are verified.
 
 ## Quota fallback
 

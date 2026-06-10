@@ -530,3 +530,37 @@ case 'notion.sync_wbs': {
 | **Gemini API (direct)** | schedule fallback LLM | ✅ **GitHub Secret 設定済** | `GEMINI_API_KEY` |
 | **Slack** | quota alert通知 | ✅ **GitHub Secret 設定済** | `SLACK_WEBHOOK_URL` |
 | **Notion AI** | 草案作成 (human review後) | ⚠️ 5/4課金開始 | Web |
+
+---
+
+## コスト tier ルーティング — 従量課金時代のモデル使い分け (= Issue #2694 基準 1 正本)
+
+> Win版#132 part 261 (2026-06-10): §1 (instance 振分) / §4 (EF provider routing) を**コスト軸**で補完。
+> 主要 AI ツールの従量課金化を前提に、「タスク難易度 → コスト tier」の使い分けを定義する。
+
+### 原則
+
+1. **モデル名を本表に固定しない** — モデルは数か月で世代交代する ([AI-TOOL-VERIFY])。本表は **tier (役割)** で指定し、tier→実モデルの対応は各ツールの設定 (`/model` picker / [`AI_FALLBACK_RUNBOOK.md`](AI_FALLBACK_RUNBOOK.md)) を正とする。
+2. **routing の第 1 判断は §1 (誰がやるか) → 第 2 判断が本節 (どの tier でやるか)**。
+3. 迷ったら 1 tier 下で試行 → 品質不足なら上げる (逆方向は気付きにくい / コスト超過は静かに進行する)。
+
+### 難易度 → tier 表
+
+| タスク類型 | 例 | tier | 根拠 |
+|-----------|----|------|------|
+| 定型・機械的 | Flutter 定型 widget / 既存 SQL コピー改変 / format 修正 / 単純リネーム | **低 tier** (各ツールの軽量モデル / inline 補完) | 失敗してもレビューで止まる・再試行が安い |
+| 中規模実装 | EF action 追加 / migration 作成 / テスト実装 / バグ fix | **中 tier** (L2 既定 = Codex 標準) | §1 matrix の L2 既定運用そのまま |
+| 複雑設計・横断判断 | アーキ設計 / セキュリティ境界 / Supabase 複雑ロジック / 障害調査 / レビュー gate | **高 tier** (L3 = Claude 上位モデル) | 誤判断のコスト >> 推論コスト |
+| 大量バッチ・요約 | リサーチ / URL 分析 / 競合調査 | **ゼロトークン経路優先** (NotebookLM / 既存 cron 成果物) | §5 既定 / 推論を買う前に既存知識を引く |
+
+### コスト消費の既存ガードレール (実在 / 基準 2-3 の現状)
+
+- **可視化 (部分既存)**: `quota-monitor.yml` (毎日 09:00 JST / §2) + claude.ai Routine `ci-cd-cost-audit` (毎日 23:00 JST / CI/CD 冗長検出)。**モデル別トークン消費の集計は未実装** → 拡張は L2 (Issue #2694 基準 2 として継続)。
+- **暴走停止 (部分既存)**: [AUTO-REPLY] の MAX_REPLIES cap / EF リトライ上限。**包括的なコスト上限アラート + エージェントループ自動停止は未実装** → L2 (同基準 3)。
+- 未実装 2 点は「ある」と主張しない — 本節は使い分けガイドライン (基準 1) の正本であり、計測・アラートの実装は Issue #2694 を open のまま L2 が拾う。
+
+### 関連正本
+
+[`PROMPT_CACHING_OPUS47_COST_GUIDE.md`](PROMPT_CACHING_OPUS47_COST_GUIDE.md) (キャッシュで 88% 削減 = tier を上げる前にキャッシュ設計) / [`AI_FALLBACK_RUNBOOK.md`](AI_FALLBACK_RUNBOOK.md) (quota 枯渇時の代替経路) / [`AI_DRIVEN_DEV_OPERATING_MODEL.md`](AI_DRIVEN_DEV_OPERATING_MODEL.md) §4 (vendor 最新情報の取得機構)。
+
+*Win版#132 part 261 / 2026-06-10 追記 / Issue #2694 ([notebooklm:fdea9e6d:2]) 基準 1 充足 — Issue 中の特定モデル名 (Composer 2 等) は未検証ベンダー主張として採用せず、tier 抽象で定義*

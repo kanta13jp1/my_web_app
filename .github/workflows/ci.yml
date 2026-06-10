@@ -10,6 +10,18 @@ on:
     branches:
       - staging   # main は deploy-prod.yml が workflow_call で CI を呼ぶため除外 (二重起動防止)
       - develop
+    paths-ignore:
+      - 'docs/**'
+      - 'memory/**'
+      - '.claude/**'
+      - '.codex/**'
+      - '.agents/**'
+      - '*.md'
+      - '**/*.md'
+      - '.github/*.md'
+      - '.github/**/*.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
   workflow_call:
 
 concurrency:
@@ -28,17 +40,34 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+          else
+            ref="${GITHUB_REF}"
+          fi
+          git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
+          git checkout --force refs/remotes/origin/checkout
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: ./.github/actions/setup-flutter-sdk
         with:
           flutter-version: '3.38.x' # 指定のバージョンに戻しました
-          channel: 'stable'
-          cache: true
 
       - name: Get Flutter version
         run: flutter --version
+
+      - name: Cache Flutter pub
+        uses: actions/cache@v5
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Install dependencies
         run: flutter pub get
@@ -51,12 +80,29 @@ jobs:
         # プロジェクトルール「flutter analyze 常に0エラー」をCIで強制 (continue-on-error 削除)
 
       - name: Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://deno.land/install.sh | sh
+          echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
+          "$HOME/.deno/bin/deno" --version
 
       - name: Check Edge Function imports
         run: python scripts/check_edge_function_imports.py
+
+      - name: Check CI/CD docs-only path filters
+        run: python scripts/check_cicd_path_filters.py
+
+      - name: Impossible task safe degradation gate
+        run: python scripts/impossible_task_degradation_check.py --artifact .ci-logs/impossible-task-degradation.json
+
+      - name: Upload impossible task degradation report
+        if: always() && hashFiles('.ci-logs/impossible-task-degradation.json') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: impossible-task-degradation-report
+          path: .ci-logs/impossible-task-degradation.json
+          if-no-files-found: ignore
 
       - name: Deno lint (Edge Functions)
         id: deno_lint
@@ -180,14 +226,6 @@ jobs:
         run: flutter test --platform chrome test/web_import_smoke_test.dart
         continue-on-error: false
 
-      - name: Upload coverage to Codecov (optional)
-        uses: codecov/codecov-action@v6
-        if: success() && hashFiles('coverage/lcov.info') != ''
-        with:
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-        continue-on-error: true  # Codecov upload is optional; network failures acceptable
-
       #  修正: --no-tree-shake-icons を追加
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
@@ -242,7 +280,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+          else
+            ref="${GITHUB_REF}"
+          fi
+          git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
+          git checkout --force refs/remotes/origin/checkout
 
       - name: Run security audit
         run: |

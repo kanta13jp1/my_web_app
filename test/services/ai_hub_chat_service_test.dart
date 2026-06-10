@@ -15,6 +15,7 @@ void main() {
         expect(body['action'], 'provider.chat');
         expect(body['provider'], 'deepinfra');
         expect(body['model'], 'deepinfra/test-model');
+        expect(body['max_tokens'], 2048);
         expect(body['message'], 'hello');
         expect(body['provider_choice_reason'], 'asset:summary; test route');
         expect(body['routing_use_case'], 'summary');
@@ -40,6 +41,7 @@ void main() {
     final response = await service.sendProviderChat(
       message: 'hello',
       model: 'deepinfra/test-model',
+      maxTokens: 2048,
       providerChoiceReason: 'asset:summary; test route',
       routingUseCase: 'summary',
     );
@@ -96,6 +98,7 @@ void main() {
         expect(body['action'], 'provider.chat_auto');
         expect(body['message'], 'hello');
         expect(body['session_id'], 'session-123');
+        expect(body['max_tokens'], 3072);
         expect(body['provider_choice_reason'], 'asset:summary; auto route');
         expect(body['routing_use_case'], 'summary');
         return {
@@ -113,6 +116,7 @@ void main() {
 
     final response = await service.sendAutoChat(
       message: 'hello',
+      maxTokens: 3072,
       sessionId: 'session-123',
       providerChoiceReason: 'asset:summary; auto route',
       routingUseCase: 'summary',

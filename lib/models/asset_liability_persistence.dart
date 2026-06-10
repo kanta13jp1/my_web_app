@@ -82,6 +82,7 @@ class AssetLiabilityMonthlyStatePayload {
   final Map<String, double> annualRateOverrides;
   final Map<String, AssetLiabilityAnnualRateEvidence> annualRateEvidences;
   final Set<String> paidAccountIds;
+  final Set<String> billingConfirmedAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
   final List<AssetLiabilityCardStatementLine> cardStatementLines;
@@ -96,6 +97,7 @@ class AssetLiabilityMonthlyStatePayload {
     required this.annualRateOverrides,
     required this.annualRateEvidences,
     required this.paidAccountIds,
+    required this.billingConfirmedAccountIds,
     required this.paymentSourceAccountIds,
     required this.cardBillingAccountIds,
     required this.cardStatementLines,
@@ -121,6 +123,9 @@ class AssetLiabilityMonthlyStatePayload {
         state.annualRateEvidences,
       ),
       paidAccountIds: Set<String>.from(state.paidAccountNames),
+      billingConfirmedAccountIds: Set<String>.from(
+        state.billingConfirmedAccountIds,
+      ),
       paymentSourceAccountIds: Map<String, String>.from(
         state.paymentSourceAccountIds,
       ),
@@ -162,6 +167,10 @@ class AssetLiabilityMonthlyStatePayload {
       paidAccountIds: _readStringSet(json, 'paid_account_ids') ??
           _readStringSet(json, 'paidAccountIds') ??
           const <String>{},
+      billingConfirmedAccountIds:
+          _readStringSet(json, 'billing_confirmed_account_ids') ??
+              _readStringSet(json, 'billingConfirmedAccountIds') ??
+              const <String>{},
       paymentSourceAccountIds:
           _readStringMap(json, 'payment_source_account_ids') ??
               _readStringMap(json, 'paymentSourceAccountIds') ??
@@ -194,6 +203,7 @@ class AssetLiabilityMonthlyStatePayload {
         annualRateEvidences,
       ),
       paidAccountNames: Set<String>.from(paidAccountIds),
+      billingConfirmedAccountIds: Set<String>.from(billingConfirmedAccountIds),
       paymentSourceAccountIds: Map<String, String>.from(
         paymentSourceAccountIds,
       ),
@@ -225,6 +235,8 @@ class AssetLiabilityMonthlyStatePayload {
           entry.key: entry.value.toJson(),
       },
       'paid_account_ids': (paidAccountIds.toList()..sort()),
+      'billing_confirmed_account_ids': (billingConfirmedAccountIds.toList()
+        ..sort()),
       'payment_source_account_ids': Map<String, String>.from(
         paymentSourceAccountIds,
       ),
@@ -427,6 +439,10 @@ Map<String, Object?> _encodeTransferTask(AssetLiabilityTransferTask task) {
     'dueDate': task.dueDate == null ? null : _dateOnly(task.dueDate!),
     'completed': task.completed,
     'completedAt': task.completedAt?.toUtc().toIso8601String(),
+    'completionMemo': task.completionMemo,
+    'canceled': task.canceled,
+    'canceledAt': task.canceledAt?.toUtc().toIso8601String(),
+    'cancellationReason': task.cancellationReason,
   };
 }
 
@@ -531,6 +547,12 @@ AssetLiabilityTransferTask? _decodeTransferTask(Object? source) {
   final dueDate = dueDateText == null ? null : DateTime.tryParse(dueDateText);
   final completedAt =
       completedAtText == null ? null : DateTime.tryParse(completedAtText);
+  final canceledAtText = _cleanString(source['canceledAt']) ??
+      _cleanString(source['cancelledAt']) ??
+      _cleanString(source['canceled_at']) ??
+      _cleanString(source['cancelled_at']);
+  final canceledAt =
+      canceledAtText == null ? null : DateTime.tryParse(canceledAtText);
   if (id == null ||
       fromAccountId == null ||
       toAccountId == null ||
@@ -553,6 +575,16 @@ AssetLiabilityTransferTask? _decodeTransferTask(Object? source) {
     dueDate: dueDate,
     completed: source['completed'] == true,
     completedAt: completedAt,
+    completionMemo: _cleanString(source['completionMemo']) ??
+        _cleanString(source['completion_memo']) ??
+        '',
+    canceled: source['canceled'] == true || source['cancelled'] == true,
+    canceledAt: canceledAt,
+    cancellationReason: _cleanString(source['cancellationReason']) ??
+        _cleanString(source['cancelReason']) ??
+        _cleanString(source['cancellation_reason']) ??
+        _cleanString(source['cancel_reason']) ??
+        '',
   );
 }
 

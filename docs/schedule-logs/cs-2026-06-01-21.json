@@ -1,0 +1,7 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-06-01T21:11:43Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22件登録済み) / チケット: 0件 / PR: #3086#3082#3081 問題なし / notebooklm-py 0.6.0 破壊的変更影響なし / Issue修正: 0件 / workflow-failure: GHAインフラ修復困難 / Schedule健全性: 正常"
+}

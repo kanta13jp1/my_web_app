@@ -5,6 +5,18 @@ on:
     # stagingブランチへのプッシュで実行
     branches:
       - staging
+    paths-ignore:
+      - 'docs/**'
+      - 'memory/**'
+      - '.claude/**'
+      - '.codex/**'
+      - '.agents/**'
+      - '*.md'
+      - '**/*.md'
+      - '.github/*.md'
+      - '.github/**/*.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
   workflow_dispatch:
 
 concurrency:

@@ -16,6 +16,10 @@ on:
     - cron: '0 0 * * 1'  # weekly Monday 09:00 JST
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   audit:
     name: Audit stale EF references
