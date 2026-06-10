@@ -121,4 +121,49 @@ void main() {
 
     expect(task.isGithubIssueLinkedTask, isTrue);
   });
+
+  test('WBS task owner drag rules allow assignment and unassignment', () {
+    final unassigned = _task(
+      id: 'unassigned',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'unassigned',
+    );
+    final codexOwned = _task(
+      id: 'codex-owned',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'codex',
+    );
+
+    expect(canMoveWbsTaskToOwner(unassigned, 'codex'), isTrue);
+    expect(canMoveWbsTaskToOwner(codexOwned, 'unassigned'), isTrue);
+    expect(canMoveWbsTaskToOwner(codexOwned, 'codex'), isFalse);
+  });
+
+  test('completed WBS task owner drag is rejected', () {
+    final completed = _task(
+      id: 'completed',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'codex',
+      status: 'completed',
+      progress: 100,
+    );
+
+    expect(canMoveWbsTaskToOwner(completed, 'user'), isFalse);
+    expect(canMoveWbsTaskToOwner(completed, 'unassigned'), isFalse);
+  });
+
+  test('WBS owner reassignment stores normalized owner key', () {
+    final task = _task(
+      id: 'schedule',
+      title: '[Issue #2912] Drag assignment',
+      ownerInstance: 'schedule',
+    );
+
+    final reassigned = reassignWbsTaskOwner(task, 'github-actions');
+    final unassigned = reassignWbsTaskOwner(task, 'none');
+
+    expect(reassigned.ownerInstance, 'automation');
+    expect(unassigned.ownerInstance, 'unassigned');
+    expect(unassigned.activeOwnerLabel, 'Unassigned');
+  });
 }
