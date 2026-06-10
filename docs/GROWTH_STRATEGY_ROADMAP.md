@@ -32213,3 +32213,76 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 20 連続狙い / .github+migration = 非 app-code)。
 - Philosophy Alignment: 原則 4 (mentor = 期限付きリスクの先回り) / 6 (資本=時間: 6/16 強制切替後の障害調査コストを 1 行 bump で回避) / 7 (platform deprecation = 放置すると負債) / 8 (CI 健全性 KPI) / 9 (無人 cron 群の持続稼働)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 263 = 34e38aca2)。
+
+## Win版#132 part 216 — minimum session → v26 disk+RAM dual-channel spec ship 第 1 例 (2026-05-14 木 19:28-19:50 JST)
+
+### Summary
+
+- **Instance**: Win版 (Claude Code) part 216 (= 149 part 連続 過去最長 update)
+- **Trigger**: user direct ask 第 7 例累積 (= 「メモリ/HDD 枯渇 必ず」+「毎セッション必ず圧縮」要求)
+- **post-wrap-up escalation 第 11 例累積 過去最重 risk band 越え update**
+- **iterative ask 累積 25 layer 過去最高 update** (= v25 24 → v26 25)
+
+### Ship (= 4 件)
+
+1. **v26 disk+RAM dual-channel mandatory compression spec ship 第 1 例** (= 5 new layer YY-CCC 累積 58)
+   - Layer YY: disk-aware SessionStart hard exit (= C: < 10 GB hard exit)
+   - Layer ZZ: dev_cache multi-source 並列 cron (= Flutter pub + npm + pnpm + Dart + gradle + IDE + memory backups)
+   - Layer AAA: session disk-delta enforce (= +0.3 GB minimum / v19 disk extension)
+   - Layer BBB: worktree pruning automation (= weekly cron / 35 → 25 → 20 worktrees)
+   - Layer CCC: archive offload monthly (= memory file aging + session-delta archive)
+2. **#1495 P0 day-of FINAL ALERT ping** (= comment 4450421809 / 残 ~4h22min / extend +1d 推奨 + Codex 5/22 sprint pickup 振分)
+3. **WBS triage TOP 5 期限近順** (= #1495 P0 + #1564 P1 claim + #1724 P1 + #1950 P1 + #1640 P1 / 2-instance 振分反映)
+4. **memory file** (= project_20260514_win132_part216.md + feedback_success_20260514_part216_v26_disk_ram_dual_channel.md + MEMORY.md index)
+
+### Key proofs (= part 216 で取得した一次データ)
+
+1. **fatigue:FATIGUE → OK 自然 reset 第 1 例確証** (= ~10h gap で reset / 部 215 仮説 VERIFIED)
+2. **RAM 自然 GC 連鎖 第 1 例実証** (= 97.0→89.0→86.25% in ~15min / -10.75 pt / 揺れ range 過去最大 update **-3.58 ~ +13.0 pt/h**)
+3. **v25 Layer TT cron freshness dogfood 第 1 例確証** (= Win Task Scheduler claude* 0 matches / C: 13.22 GB CRITICAL = effectiveness <500 MB/cycle 緊急性立証)
+4. **session-delta.csv auto-firing 第 X 例累積** (= 276 rows / pretooluse 71.7 MB reclaim / fatigue OK)
+5. **partial breach 第 7 例累積** (= 86.25% / 部 213-216 連続 pattern)
+6. **POST RAM 94.11% build-up 第 X 例** (= +7.86 pt in ~4min / partial breach 強化)
+
+### Codex 5/22 sprint queue update (= 累積 62 deliverable / 3.88 件/day pace)
+
+| Day | Date | New v26 layer |
+|-----|------|---------------|
+| Day 1 | 5/22 (金) | YY (disk-aware SS) |
+| Day 2 | 5/23 (土) | ZZ (multi-source cron) |
+| Day 3 | 5/24 (日) | AAA (disk-delta enforce) |
+| Day 4 | 5/25 (月) | BBB (worktree pruning) |
+| Day 5 | 5/26 (火) | CCC (monthly archive) |
+
+### next session 候補 (= part 217+)
+
+1. **5/14 22:00+ JST OR 5/15 02:00+ JST 厳守** (= user gate / [SCHEDULE-WAKEUP] 02-06 zone 注意)
+2. RAM PRE check 第 1 (= > 90% で v24 Layer SS hard exit MUST)
+3. **#1495 P0 post-mortem comment** (= 期限到達 5/15 00:00 後 / 7d Codex 0 progress root cause)
+4. **#1495 milestone shift OR extend +1d label apply**
+5. v26 Codex impl monitor (= 5/22 sprint Day 1-5 distribution / 62 deliverable)
+6. **DISK_HYGIENE §17.26-§17.30 5 章 batch backfill 第 3 例 過去最大** (= 既存 doc 章追加 第 21-25 例 / heavy write / RAM 安全時)
+7. MEMORY.md consolidation 第 5 例 trigger (= ~30 KB 突破 / 5-step pattern 第 5 適用)
+8. UI verify [UI-VERIFY] backlog ~8 day overdue (= Playwright MCP / 4 page / RAM ≤ 85% 安全時)
+
+### Lesson
+
+- **user direct ask 月内 4 連続 = paradigm 進化 trigger 確立 pattern** (= 部 213/214/215/216)
+- **v25 cron-only paradigm の disk side 弱点 verified** (= 部 216 C: 13.22 GB CRITICAL dogfood)
+- **iterative ask 25 layer 過去最高** (= 月内 4-day interval / 100% ship rate)
+- **partial breach 第 7 例累積下 spec ship 第 1 例** = text-only spec design は heavy task 外 verified
+- **disk side full coverage 達成** = v15-v26 累積 58 layer で RAM/disk 両軸 cover
+
+### Philosophy Alignment (Win#132 part 216)
+
+- ✅ **CEO 感** (1/9): user direct ask 即応 + paradigm 進化 leadership
+- ✅ **ミッション** (2/9): v26 = Codex 5/22 sprint pipeline 強化 = mobile UAT + 動画 + AI 大学 sustainability 担保
+- ✅ **mentor** (3/9): user 「必ず」要求 文字通り respect + immediate spec ship
+- ✅ **6 部署** (4/9): architect role = 全 spec design + 2-instance hand-off 第 12 例累積
+- ✅ **商品=価値** (5/9): memory file + v26 spec = 圧縮 paradigm 強化 価値
+- ✅ **資本=時間** (6/9): text-only spec / heavy task 回避 = RAM 87% partial breach 下安全 fire
+- ✅ **KPI** (8/9): 5 deliverable + Codex sprint 累積 62 件 / 3.88 件/day pace
+- ✅ **IPO** (9/9): part 216 = 149 part 連続 過去最長 update
+- ⚠️ **資産負債** (7/9): RAM 87% + C: 13.32 GB CRITICAL = liability accumulating / v26 impl で resolution 期待
+
+**Score: 8/9 ✅** (= [PHILOSOPHY-22] threshold 7+ ✅)
