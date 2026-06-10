@@ -61,6 +61,14 @@ jobs:
       - name: Get Flutter version
         run: flutter --version
 
+      - name: Cache Flutter pub
+        uses: actions/cache@v5
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -84,6 +92,17 @@ jobs:
 
       - name: Check CI/CD docs-only path filters
         run: python scripts/check_cicd_path_filters.py
+
+      - name: Impossible task safe degradation gate
+        run: python scripts/impossible_task_degradation_check.py --artifact .ci-logs/impossible-task-degradation.json
+
+      - name: Upload impossible task degradation report
+        if: always() && hashFiles('.ci-logs/impossible-task-degradation.json') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: impossible-task-degradation-report
+          path: .ci-logs/impossible-task-degradation.json
+          if-no-files-found: ignore
 
       - name: Deno lint (Edge Functions)
         id: deno_lint

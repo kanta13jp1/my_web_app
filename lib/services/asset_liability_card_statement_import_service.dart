@@ -85,7 +85,7 @@ class AssetLiabilityCardStatementImportService {
       return _ParsedCardStatementRow.rejected(
         rowNumber: rowNumber,
         rawText: rawRow,
-        reason: 'expected description and amount',
+        reason: '摘要と金額が必要です',
       );
     }
 
@@ -99,21 +99,21 @@ class AssetLiabilityCardStatementImportService {
       return _ParsedCardStatementRow.rejected(
         rowNumber: rowNumber,
         rawText: rawRow,
-        reason: 'billing account id is required',
+        reason: '請求先IDが必要です',
       );
     }
     if (description.isEmpty) {
       return _ParsedCardStatementRow.rejected(
         rowNumber: rowNumber,
         rawText: rawRow,
-        reason: 'description is required',
+        reason: '摘要が必要です',
       );
     }
     if (amount == null) {
       return _ParsedCardStatementRow.rejected(
         rowNumber: rowNumber,
         rawText: rawRow,
-        reason: 'amount is invalid',
+        reason: '金額が不正です',
       );
     }
 

@@ -53,6 +53,14 @@
 - **手動 skill**: `/session-start-check` `/rule17-wf-health` `/blog-publish-cleanup` `/wrap-up`
 - **自動化**: 5 daily cron (= ai-tool-watch / safety / residuals / crosscheck / wiki-compile) + 30+ workflow
 
+### Claude Code v2.1.126 session aids
+
+- Run `/recap` when resuming a stale or handed-off session; disable away summaries with `CLAUDE_CODE_ENABLE_AWAY_SUMMARY=0` only when the summary itself is noisy.
+- Use `/focus` during parallel fleet work to reduce transcript clutter; keep task state in the issue, PR, or WBS entry so the focus view does not become the source of truth.
+- Use mobile push notifications only for actionable remote-control events such as CI completion, blocked secrets, or schedule tasks that need the user's decision.
+- If `ANTHROPIC_BASE_URL` points at a gateway with `/v1/models`, prefer the `/model` picker over hard-coded model names.
+- Before removing an abandoned worktree/session, run `claude project purge [path]` only after git status and pushed branch/PR state are verified.
+
 ## Quota fallback
 
 Claude Code quota 超過 → Codex CLI / Gemini Code Assist Agent Mode (Gemini 3.1 Pro) / GitHub Copilot で継続. PR レビューは Gemini 1.5 Flash 自動 fallback. GHA cron 大半は Claude 非依存設計済 → 影響なし. 詳細: [`docs/AI_FALLBACK_RUNBOOK.md`](docs/AI_FALLBACK_RUNBOOK.md).

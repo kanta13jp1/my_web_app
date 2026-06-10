@@ -361,7 +361,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@playwright/test@^1.60.0",
-        "npm:lefthook@^2.1.6"
+        "npm:lefthook@^2.1.9"
       ]
     }
   }

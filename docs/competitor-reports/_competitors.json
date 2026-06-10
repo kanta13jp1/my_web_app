@@ -150,6 +150,13 @@
       "category": "AI dev tool / agentic coding CLI / multi-agent + Arena Mode",
       "added": "discovery",
       "added_date": "2026-06-02"
+    },
+    {
+      "name": "Alibaba Qoder",
+      "url": "https://qoder.com",
+      "category": "AI agentic coding platform / China frontier / Quest Mode + Repo Wiki + Qwen-Coder-Qoder",
+      "added": "discovery",
+      "added_date": "2026-06-09"
     }
   ],
   "discovery_history": [
@@ -421,6 +428,76 @@
         "Alibaba Qwen (= 6/09 第 1 候補 / 非 US/中国 frontier coding 空白軸 / Qwen 3.7 Max closed-weight 5/19 / 基準 b+c 該当)",
         "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / adjacent 軸遠い / monitor)",
         "Google Jules / Antigravity 2.0 (= 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-05",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 3 day 経過 / cooldown 残 ~4 day / 次回 6/09 解禁). 前回 report = 6/03 (6/04 run なし / 2 day delta 集約). 本日 6/03→6/05 新規 2 戦略級シグナル = (1) **★ Anthropic 6/15 課金分離確定 🔴** (= Claude サブスクが interactive pool と programmatic pool に分離 / Agent SDK + `claude -p` + Claude Code GitHub Actions + 第三者エージェント (OpenClaw) が月次クレジット枠 Pro $20 / Max5x $100 / Max20x $200 / 繰越なし へ移行 / 対話ターミナル Claude Code + Cowork は不変 / 自社 GHA cron 30+ + Schedule cron + daily-development cron の programmatic Claude 利用が 6/15 以降クレジット消費 = 6/2 障害に続く運用シグナル 2 連続 / 棚卸し最優先) / (2) **★ Claude Code Dynamic Workflows + ultracode 🔴** (= 1 コマンドで数十〜数百 agent orchestrate + xhigh effort 設定 + Opus 4.8 Fast 3× 安 / 自社 [SUBAGENT-GUARD] + 2 instance fleet narrative の標準機能内蔵化 = Cursor Build in Parallel + xAI 8 並列 + Devin Command Center と合わせ並列 orchestrate commoditize / narrative pivot 「並列できる」→「並列を監査可能に統治」). + 中国軸具体化 = Alibaba **Qoder** (agentic coding platform / NTUC 6 月 token 配布) + **Qwen3.7-Plus** 6/02 Bailian → 6/09 第 1 候補を「Qwen (model)」→「Qoder (product)」へ精緻化. 6/09 採択 第 1 候補 = Alibaba Qoder (基準 a 正面競合 + 基準 b 中国 frontier 未カバー + 基準 c Qwen3.7-Plus 6/02). https://devtoolpicks.com/blog/anthropic-splits-claude-subscriptions-agent-sdk-credit-june-2026",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / agentic coding platform / 6/03 「Qwen model」から製品名精緻化 / 基準 a+b+c 該当)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-07",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 5 day 経過 / cooldown 残 2 day / 次回 6/09 解禁). 前回 report = 6/06 (GHA static-template 可用性 + Notion/Slack/GitHub WebSearch 補遺) / 本 6/07 は WebSearch 主体で 6/05→6/07 delta 集約. 新規 6 シグナル = (1) **★ Cognition Devin Desktop 6/2 🔴** (= Windsurf rebrand / Agent Command Center = local+cloud 全 agent 1 Kanban 統治 + Devin Local Rust 化 subagent 並列 +30% token 効率 + 6/3 personal automations / 自社 2 instance fleet + cross-instance-pr 手動監視に対し UI 統治先取り = narrative pivot「並列 → 監査可能な並列統治」緊急度上昇) / (2) **★ Replit super-app 越境 6/1-6/4 🔴** (= Shopify storefront prompt→受注10分 + SEO Agent + Growth dashboard + Microsoft Fabric / vibe coding が ecommerce+集客+enterprise governance へ拡張 = 自社 LP+動画+AI大学+B/S 統合戦略へ接近 / 🟠→🔴 昇格) / (3) **★ Anthropic Dynamic Workflows GA + ultracode 🔴** (= 並列探索→所見ごと独立検証 = 自社 judge-panel/adversarial-verify/loop-until-dry 思想の標準コマンド化 + rate limit 2x / 6/15 課金分離 既報) / (4) **Cursor Design Mode for canvases 🟠** (= UI 直接注釈 = design-skills+Figma MCP 正面接近 + Context Usage Report token 内訳 = prompt-caching コスト可視化軸 + Organizations Enterprise GA) / (5) **xAI Grok Build worktrees 対応 🟠** (= subagent 並列ブランチ = 自社 [WORKDIR-ISOLATION] commoditize 加速 / 差別化は worktree 運用ルール側へ移行 + Connectors 7 service+自前MCP) / (6) **MoneyForward AI Cowork 7月 GA 確定再確認 🔴** (= Claude Agent SDK+API+MCP / 経理労務法務6業務 / 自社 6部署+B/S narrative 最大 overlap / 非対称防衛=個人 lifestyle CEO ダッシュボード). 新候補=Microsoft MAI-Code-1-Flash (Build 2026 / MS 初自社製 coding model / Agent 365 統合監視). 6/09 採択 第 1 候補 = Alibaba Qoder (= 事前スキャン済 / Qwen-Coder-Qoder 60.51% vs Opus 4.5 64.86% / code graph+project memory+self-orchestration / 基準 a+b+c 該当). https://www.digitalapplied.com/blog/windsurf-becomes-devin-desktop-ide-migration-2026",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / 事前スキャン済 / Qwen-Coder-Qoder 60.51% task resolution / code graph + project memory + self-orchestration / 基準 a+b+c 該当 / 解禁日初日採択推奨)",
+        "Microsoft MAI-Code-1-Flash (= Build 2026 新 / MS 初自社製 coding model / Microsoft Agent 365 統合監視 / 動向観察)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-08",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 6 day 経過 / cooldown 残 1 day / 次回 6/09 解禁 = 明日). 前回 report = 6/07 (GHA static-template 可用性 + Win Claude WebSearch merged). 本 6/08 は WebSearch 主体で 6/07→6/08 delta 集約. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 新規シグナル = (1) **★ Anthropic Opus 4.8 default 化 + Claude Code 6月更新 🔴** (= Opus 4.8 を Max/Team Premium/Enterprise PAYG/API default 化 + Fast mode → Opus 4.8 $10/$50 [2x 料金 2.5x 速度] + `/reload-skills` + `.claude/skills` 自動ロード + `!` background job + Enterprise custom role connector 権限 / competitor というより自社 Win Claude #132 fleet 中核の直接 dogfood 対象 = `.claude/skills` 多数手動 skill 運用に直結) / (2) **★ GitHub Copilot SDK GA + Copilot App desktop 6/2 🔴** (= agentic engine 埋込 SDK GA [custom tools + MCP + OpenTelemetry] + Copilot App 'My Work' で複数 agent session 1 画面統治 + Slack から cloud agent 起動→PR / 6/2 同日 Devin Agent Command Center と fleet 統治 UI commoditize 確定 = narrative pivot「並列 → 監査可能な並列統治」緊急度上昇) / (3) **Cursor 3.6 Auto-review classifier subagent 5/29 🟠** (= Shell/MCP/Fetch ごと小型 reasoning agent が allow/retry/ask 判断 / 公式が「best-effort convenience, NOT a security boundary」明言 = 自社 [SUBAGENT-GUARD] deny-by-default + [MCP-AUTH-27] narrative を競合自身の言葉で補強 = 追い風) / (4) **MoneyForward AI Cowork 7月 GA 確定 delta なし 🔴** (= 経理労務法務 6 業務 / 複数 AI エージェント並列自律 / Claude Agent SDK + API / B/S 中核最大脅威 / GA まで 1ヶ月弱). 6/09 採択 第 1 候補 = Alibaba Qoder (= pre-scan 有効 / June delta なし [最新 2026/2 Qwen-Coder-Qoder 60.51% vs Opus 4.5 64.86%] / 基準 a+b+c 該当 / 解禁日初日採択推奨 / [AI-TOOL-VERIFY] qoder.com 公式裏取り必須). https://github.blog/changelog/2026-06-02-copilot-sdk-is-now-generally-available/",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / pre-scan 有効 / agentic coding platform / Qwen-Coder-Qoder 60.51% task resolution / code graph + project memory + self-orchestration / 基準 a+b+c 該当 / 解禁日初日採択推奨)",
+        "Microsoft MAI-Code-1-Flash (= Build 2026 / MS 初自社製 coding model / Microsoft Agent 365 統合監視 / 動向観察)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-09",
+      "name": "Alibaba Qoder",
+      "category": "AI agentic coding platform / China frontier / Quest Mode + Repo Wiki",
+      "reason": "6/02 xAI Grok Build 採択以降 cooldown 明け (6/03〜6/08 で 5 サイクル連続第 1 候補 pre-scan / 7 day 経過) → 解禁日初日採択 (Lovable 5/17 + Bolt.new 5/24 pattern 踏襲). 採択理由 = (1) 基準 a (差別化軸直接競合) = Quest Mode の Spec 自動生成→自律実装が自社 PRD→Roadmap→MVP 三部作 (part 241-244) と同軸 + Repo Wiki が Karpathy wiki_compile.py (docs/concepts/ + INDEX.md 自動生成) と正面 + long-term memory が consolidate-memory + [MEMORY-DECAY] と同軸. (2) 基準 b (未カバー領域) = 中国 frontier coding の空白軸充足 = 「Anthropic / OpenAI / Google(間接) / xAI」4 frontier lab に Alibaba 追加. (3) 基準 c (過去 30 日重大リリース) = 6月 Qwen3.7-Max 搭載 (全ユーザー 200 calls/day free 期間限定) + Custom Commands + @databases context. モデル性能 = Qwen-Coder-Qoder (2026/2 自社学習) task resolution 60.51% vs Claude 4.5 Opus 64.86% に肉薄. Community Edition + BYOK 2026-04-30. [AI-TOOL-VERIFY] = 公式 qoder.com changelog + JetBrains Marketplace plugin で実在・機能裏取り済 (2 次メディア依拠ではない). https://qoder.com/en/changelog",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= Build 2026 / MS 初自社製 coding model / 次回 6/16 第 1 候補 / Microsoft Agent 365 統合監視)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
         "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
         "ServiceNow Build Agent (= 動向観察 1 月)",
         "Prime Intellect Lab (= 動向観察 1 月)",

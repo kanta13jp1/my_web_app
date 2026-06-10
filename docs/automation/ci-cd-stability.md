@@ -14,6 +14,7 @@ Related readiness gate: #1556
 - Production deploy uploads `.deploy-logs/` as an artifact when migration logs exist.
 - `release-readiness.yml` runs the alpha release gate manually, daily, and after successful `deploy-prod`: migration collision guard, Edge Function import guard, full Edge Function Deno lint, Deno check for the readiness smoke hub entrypoints, Flutter analyze/build, production route smoke, `tools-hub` / `schedule-hub` service-role smoke, Notion WBS preflight, Slack webhook readiness, and optional WBS completion for the synced #1556 task.
 - `workflow-failure-handler.yml` deduplicates new failures by workflow + branch + failed step + normalized error signature, appends duplicate occurrences to the existing issue, and closes matching root-cause issues after a later successful run of the same workflow and branch.
+- The failure handler writes a StackTrace-style summary into each failure issue. It uses Anthropic when `ANTHROPIC_API_KEY` is configured and falls back to the deterministic digest when no LLM key is available.
 
 ## Repair Rules
 

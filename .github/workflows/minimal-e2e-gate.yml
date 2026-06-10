@@ -29,20 +29,24 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   pr-e2e-declaration:
     name: PR minimal E2E declaration
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 45
     if: github.event_name == 'pull_request'
+    permissions:
+      checks: read
+      contents: read
+      pull-requests: read
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Collect changed files
         run: |
@@ -62,6 +66,86 @@ jobs:
           python scripts/check_minimal_e2e_gate.py
           --event "$GITHUB_EVENT_PATH"
           --changed-files .ci-logs/changed-files.txt
+
+      - name: Wait for deterministic CI checks
+        id: deterministic_ci
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          python scripts/check_pr_deterministic_ci.py
+          --repo "${{ github.repository }}"
+          --sha "${{ github.event.pull_request.head.sha }}"
+          --changed-files .ci-logs/changed-files.txt
+          --required-check "Lint, Format, and Test"
+          --required-check "Security Check"
+          --timeout-seconds 1800
+          --poll-seconds 20
+          --summary-md .ci-logs/deterministic-ci-summary.md
+
+      - name: Upload deterministic validation summary
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: deterministic-validation-summary
+          path: .ci-logs/deterministic-ci-summary.md
+          if-no-files-found: ignore
+
+      - name: Enforce deterministic CI result
+        if: steps.deterministic_ci.outcome == 'failure'
+        run: exit 1
+
+  deterministic-validation-comment:
+    name: Deterministic validation PR comment
+    runs-on: ubuntu-latest
+    needs: pr-e2e-declaration
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      actions: read
+      issues: write
+
+    steps:
+      - name: Download deterministic validation summary
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: deterministic-validation-summary
+          path: .ci-logs
+
+      - name: Comment deterministic validation summary
+        if: hashFiles('.ci-logs/deterministic-ci-summary.md') != ''
+        continue-on-error: true
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.ci-logs/deterministic-ci-summary.md';
+            const marker = '<!-- deterministic-validation-summary -->';
+            const body = `${marker}\n${fs.readFileSync(path, 'utf8')}`;
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const previous = comments.data.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: previous.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
   public-e2e-stability:
     name: Public E2E stability smoke

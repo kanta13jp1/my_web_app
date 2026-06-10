@@ -45,7 +45,7 @@ dependencies:
   image_picker: ^1.2.2
   google_generative_ai: ^0.4.7
   confetti: ^0.8.0
-  audioplayers: ^6.5.1
+  audioplayers: ^6.7.1
   table_calendar: ^3.1.2
   flutter_local_notifications: ^21.0.0
   timezone: ^0.11.0
@@ -53,10 +53,10 @@ dependencies:
   latlong2: ^0.9.1
   http: any
   graphview: ^1.2.0
-  flutter_secure_storage: ^10.2.0
+  flutter_secure_storage: ^10.3.1
   pdf: ^3.11.1                     # PDF生成 (選挙KPIレポート出力)
   printing: ^5.13.2                # PDF印刷 (選挙KPIレポート出力)
-  sentry_flutter: ^9.20.0
+  sentry_flutter: ^9.21.0
   rrule: ^0.2.18
 
 dev_dependencies:
@@ -69,9 +69,9 @@ dev_dependencies:
   mockito: ^5.6.1
   build_runner: ^2.15.0
   flutter_launcher_icons: ^0.14.1
-  flutter_native_splash: ^2.4.1
+  flutter_native_splash: ^2.4.7
 
-  supabase: any
+  supabase: 2.12.1
   image_picker_platform_interface: any
 
 flutter_launcher_icons:
