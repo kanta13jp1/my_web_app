@@ -71,7 +71,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.1
   flutter_native_splash: ^2.4.7
 
-  supabase: 2.12.1
+  supabase: 2.12.2
   image_picker_platform_interface: any
 
 flutter_launcher_icons:
