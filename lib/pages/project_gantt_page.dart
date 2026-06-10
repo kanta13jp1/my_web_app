@@ -1331,8 +1331,7 @@ class _WbsOwnerDropLane extends StatelessWidget {
     return DragTarget<WbsTask>(
       onWillAcceptWithDetails: (details) =>
           canMoveWbsTaskToOwner(details.data, ownerKey),
-      onAcceptWithDetails: (details) =>
-          onMoveTaskOwner(details.data, ownerKey),
+      onAcceptWithDetails: (details) => onMoveTaskOwner(details.data, ownerKey),
       builder: (context, candidateData, rejectedData) {
         final canDrop = candidateData.isNotEmpty;
         final rejected = rejectedData.isNotEmpty;
