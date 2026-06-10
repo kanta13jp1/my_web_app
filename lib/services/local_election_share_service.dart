@@ -704,8 +704,11 @@ class LocalElectionShareService {
     buffer
       ..writeln()
       ..writeln('現職地方議員名簿');
+    // Defensive sort: prefecture グルーピングを直前要素との比較で行うため、
+    // 呼び出し元のソート順に依存せずここで再ソートして安全側に倒す。
+    final rosterMembers = _sortedMembers(members);
     String? currentPrefecture;
-    for (final member in members) {
+    for (final member in rosterMembers) {
       final prefecture = member.prefecture.trim();
       if (prefecture != currentPrefecture) {
         currentPrefecture = prefecture;
