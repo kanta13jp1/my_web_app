@@ -59,6 +59,7 @@ Status を変えるときは本文を書き換えず、`Status:` 行と必要な
 - **WBS**: ADR が実装タスクを生むときは `Links` に WBS task id を記載。逆に WBS の設計タスク完了時は
   成果として該当 ADR を参照する (= 本 README は WBS task `2e41ebca-36bd-4c47-a87f-90b7b5948ece` の成果物)。
 - **GitHub Issue**: incident / feature 起点の判断は Issue 番号を `Links` に残す ([ISSUE-PRECHECK] と整合)。
+- **他レーン handoff (必須)**: ADR の Decision が他レーン (L1/L2) の実装・作業を生む場合は、`docs/cross-instance-prs/` への handoff 起票を **必須** とし、ADR の `Links` に当該 handoff ファイルを記載する (= AI_FLEET_SYNERGY 原則 2 Plan-Execute-Review の接続 / Issue #1736)。
 - **NotebookLM (Karpathy 外部脳)**: `docs/adr/` は Compile サイクル (`scripts/wiki_compile.py`) と
   NotebookLM ingest の対象。過去判断は `notebooklm` CLI / `/wiki-query` でゼロトークン検索できる
   (= 詳細 [`../NOTEBOOKLM_GUIDE.md`](../NOTEBOOKLM_GUIDE.md))。設計判断前に既存 ADR を query するのが推奨儀式。
