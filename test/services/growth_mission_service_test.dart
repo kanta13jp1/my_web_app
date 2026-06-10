@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -145,6 +146,20 @@ void main() {
       expect(status.message, SessionHygieneStatus.expiredMessage);
       expect(status.reason, 'idle_timeout');
       expect(status.invalidatedAt, DateTime.parse('2026-06-12T10:05:00Z'));
+    });
+
+    test('rotates local presence session after expiry reset', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+
+      const service = GrowthMissionService();
+      final firstSessionId = await service.ensureGuestSessionId();
+
+      await service.resetLocalPresenceSession();
+      final secondSessionId = await service.ensureGuestSessionId();
+
+      expect(firstSessionId, isNotEmpty);
+      expect(secondSessionId, isNotEmpty);
+      expect(secondSessionId, isNot(firstSessionId));
     });
   });
 

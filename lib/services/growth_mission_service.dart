@@ -658,6 +658,12 @@ $inviteUrl
     return created;
   }
 
+  Future<void> resetLocalPresenceSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_guestSessionIdKey);
+    _lastGuestCleanupSession = null;
+  }
+
   Future<void> syncPresence({required String pagePath}) async {
     final client = _client;
     if (client == null) {
@@ -754,6 +760,8 @@ $inviteUrl
       await client.auth.signOut();
     } catch (error) {
       debugPrint('Session hygiene signOut failed: $error');
+    } finally {
+      await resetLocalPresenceSession();
     }
   }
 
