@@ -1,7 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # "/" は .github/workflows のみ対象。composite action は明示列挙が必要
+    # (actions/cache@v4 が Node 20 deprecation まで放置された根本原因)
+    directories:
+      - "/"
+      - "/.github/actions/setup-flutter-sdk"
     schedule:
       interval: "weekly"
       day: "monday"
