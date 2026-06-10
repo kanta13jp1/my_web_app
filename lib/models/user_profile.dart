@@ -58,8 +58,8 @@ class UserProfile {
     this.disposableTimeRatio,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : createdAt = createdAt ?? DateTime.now(),
-       updatedAt = updatedAt ?? DateTime.now();
+  })  : createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -258,8 +258,8 @@ class NoteComment {
     DateTime? updatedAt,
     this.userDisplayName,
     this.userAvatarUrl,
-  }) : createdAt = createdAt ?? DateTime.now(),
-       updatedAt = updatedAt ?? DateTime.now();
+  })  : createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
 
   factory NoteComment.fromJson(Map<String, dynamic> json) {
     return NoteComment(

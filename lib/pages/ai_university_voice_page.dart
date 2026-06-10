@@ -296,9 +296,9 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                                   ? '再生中...'
                                   : _ttsStatus == 'blocked'
                                       ? 'Voice AI usage limit reached'
-                                  : _ttsStatus == 'error'
-                                      ? '音声エラー（テキスト表示）'
-                                      : '問題文',
+                                      : _ttsStatus == 'error'
+                                          ? '音声エラー（テキスト表示）'
+                                          : '問題文',
                           style: const TextStyle(
                             color: Color(0xFF3D5AFE),
                             fontWeight: FontWeight.bold,
