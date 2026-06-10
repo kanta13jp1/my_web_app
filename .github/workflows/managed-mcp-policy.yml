@@ -13,6 +13,10 @@ on:
       - ".github/workflows/managed-mcp-policy.yml"
   workflow_dispatch:
 
+concurrency:
+  group: managed-mcp-policy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 

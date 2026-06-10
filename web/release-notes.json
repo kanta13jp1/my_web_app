@@ -26,11 +26,48 @@
       "category": "release",
       "changeCategories": [
         "automation",
-        "docs",
-        "feature",
-        "fix"
+        "feature"
       ],
       "changes": [
+        {
+          "category": "automation",
+          "id": "pr-3212",
+          "links": [
+            {
+              "title": "PR #3212",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3212"
+            }
+          ],
+          "mergedAt": "2026-06-10T18:25:15Z",
+          "summary": "#3212 [CI/CD自動最適化] cs-check + notion-sync hourly → every 2h (2026-06-10)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-3210",
+          "links": [
+            {
+              "title": "PR #3210",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3210"
+            }
+          ],
+          "mergedAt": "2026-06-10T18:25:12Z",
+          "summary": "#3210 ci: bump actions/download-artifact from 7 to 8 in the github-actions group across 1 directory"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3216",
+          "links": [
+            {
+              "title": "PR #3216",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3216"
+            }
+          ],
+          "mergedAt": "2026-06-10T18:24:52Z",
+          "summary": "#3216 deps: bump the flutter-dependencies group with 3 updates"
+        },
         {
           "category": "automation",
           "id": "pr-3217",
@@ -381,45 +418,6 @@
           ],
           "mergedAt": "2026-06-08T15:44:46Z",
           "summary": "#3159 [CI/CD自動最適化] 2026-06-08: hourly → 4時間毎 (feature-review + edge-function-audit)"
-        },
-        {
-          "category": "docs",
-          "id": "pr-3157",
-          "links": [
-            {
-              "title": "PR #3157",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3157"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3157 docs: mark blog draft published 2026-05-19-canonical-3tier-docs-only-pr-recipe-en.md"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3152",
-          "links": [
-            {
-              "title": "PR #3152",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3152"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3152 auto: issue #1193 [追加要望] 権限と役割を分離したマルチモジュールアーキテクチャへの改修"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3154",
-          "links": [
-            {
-              "title": "PR #3154",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3154"
-            }
-          ],
-          "mergedAt": "2026-06-08T12:16:34Z",
-          "summary": "#3154 fix: restore asset_management_page.dart (19405 lines) — revert accidental file deletion"
         }
       ],
       "date": "2026-06-10",
