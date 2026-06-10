@@ -32192,3 +32192,24 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 19 連続狙い / scripts+test+docs+migration = 非 app-code 構成)。
 - Philosophy Alignment: 原則 3-4 (mentor / verify-first が silent degradation を検出 = 部 237 系譜) / 6 (資本=時間: 既存自動化の成果を計上し重複作業回避) / 7 (regex bitrot = 負債解消) / 8 (E2E 完了 KPI) / 9 (無人運用の信頼性回復)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 262 = 0d0961645)。
+
+---
+
+### 2026-06-10 Win版#132 part 264 — GitHub Actions Node.js 20 廃止対応 (保守工程 WBS 追加→同一セッション完了 第 1 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 263 直後 / 同夜)。part 263 の deploy-prod annotation で検出した **GitHub Actions Node.js 20 deprecation (2026-06-16 強制 Node 24 切替 / 6 日前)** を、user 標準指示「企画〜保守の全工程で WBS 不足タスクをゼロに」に基づき**保守工程の不足タスクとして WBS へ追加し、同一セッションで完了**。
+- **inventory が好状態を立証**: 全 .github/ grep で Node 20 残存は composite action `setup-flutter-sdk/action.yml` の `actions/cache@v4` **1 箇所のみ** (third-party action ゼロ方針 + 他 action は checkout@v6 / setup-python@v6 / upload-artifact@v7 / github-script@v9 等すべて Node 24 系 major)。ci.yml は cache@v5 移行済だった = composite 内の取り残し。
+- **GitHub 公式 releases を read して根拠確認** (vendor docs 毎回 read の現実版): v5 = Node.js 24 runtime / runner >= 2.327.1 / with: API 不変 → @v5 bump (1 行)。既存 Issue/PR 重複なしを確認済 (Codex #3179 は無関係)。
+
+**Changes**:
+- `.github/actions/setup-flutter-sdk/action.yml` — `actions/cache@v4` → `@v5` (1 行)。
+- migration `20260610223000_wbs_add_complete_node24_actions.sql` — WBS 保守タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。
+- ROADMAP part 264 エントリ (本欄 / part 263 merge hash `34e38aca2` 補記)。
+
+**Validation focus**:
+- 「追加→即完了」の honesty: 期限 6 日前の 1 行保守を分割しない判断を migration コメントに明記 (偽の planning overhead を作らない)。
+- in-repo 実証 (ci.yml cache@v5 green 稼働) + 公式 releases 確認の 2 点 grounding で「動くはず」を排除。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 20 連続狙い / .github+migration = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = 期限付きリスクの先回り) / 6 (資本=時間: 6/16 強制切替後の障害調査コストを 1 行 bump で回避) / 7 (platform deprecation = 放置すると負債) / 8 (CI 健全性 KPI) / 9 (無人 cron 群の持続稼働)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 263 = 34e38aca2)。
