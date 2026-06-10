@@ -92,12 +92,15 @@ class VoiceAiSettingsService {
     final now = DateTime.now().toUtc().toIso8601String();
     final row = await _supabase
         .from('user_profiles')
-        .upsert({
-          'user_id': user.id,
-          'voice_ai_training_consent': enabled,
-          'voice_ai_consent_updated_at': now,
-          'updated_at': now,
-        }, onConflict: 'user_id')
+        .upsert(
+          {
+            'user_id': user.id,
+            'voice_ai_training_consent': enabled,
+            'voice_ai_consent_updated_at': now,
+            'updated_at': now,
+          },
+          onConflict: 'user_id',
+        )
         .select('voice_ai_training_consent, voice_ai_consent_updated_at')
         .single();
     return VoiceAiSettings.fromJson(Map<String, dynamic>.from(row));
