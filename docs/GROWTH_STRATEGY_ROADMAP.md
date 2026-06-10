@@ -32109,3 +32109,23 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - honest triage 3 類型の確立: ① completed-by-reference (実体あり = 3cb3aa46/#1847) ② gap 充足後 complete (#1736) ③ **stale-premise cancel (実体なし・前提崩壊 = 本件)** — 「completed と cancelled の使い分け = 要求成果物が存在するか」で判定。
 - Philosophy Alignment: 原則 1 (cancel 判断根拠を可視化) / 4 (mentor = 実装不能タスクを放置しない) / 6 (実装不能タスクの調査時間を将来分まで削減) / 7 (zombie タスク = 負債解消 / 偽 completed を作らない = 信頼) / 8 (WBS 健全性) / 9 (持続性)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 258 = 28e831825)。
+
+---
+
+### 2026-06-10 Win版#132 part 260 — 階層的クリーンアップ運用の正本化 (WBS cbfe0326 完了 / /loop user 再起動 9 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 9 round 目** (part 259 merge `9be0f3fbc` + Issue #2647 close 確認後)。NotebookLM 系設計 Issue 3 件 (#2710/#2694/#2686) を body verify で比較 — #2694 (基準 2/3 = monitoring 実装+アラート実装) と #2686 (テーブル+sanitize+自動テスト = 全部実装) は **L2 実装が過半のため skip**。**#2710 (`cbfe0326`) を選択**: 受入基準 3 点が既存システムでほぼ充足済みと verify (triage 類型 ② = gap 充足後 complete)。
+- verify 結果: ① 静的 docs 独立管理 = CLAUDE.md pointer hub + 原則 12 軸 + inject-rules (SECOND_BRAIN 原則 1) ✅ / ② セッション開始時の静的+動的 別ファイルロード = CLAUDE.md + MEMORY.md + auto-capture log の実挙動 ✅ / ③ 昇格・破棄手順 = **実装は既存** (consolidate-memory 月 1 + --lint 3 検出器 / [MEMORY-DECAY] / vault lint 週次 / wrap-up) **だが一枚正本が無い = 唯一の gap**。
+
+**Changes**:
+- `docs/SECOND_BRAIN_PRINCIPLES.md` に **「階層的クリーンアップ運用」節を追記** (= Issue #2710 正本): 2 階層 mapping 表 (静的 = CLAUDE.md/docs/inject-rules / 動的 = MEMORY.md/memory files/auto-capture) + **昇格 3 step** (学び → memory 化 → 2-3 回再現で rule/doc/concepts へ昇格 → memory 側 pointer 化 = 二重管理禁止) + **破棄 cadence 4 行表** (毎セッション wrap-up / 月 1 consolidate-memory / MEMORY-DECAY 随時 / 週次 vault lint) + 禁止事項。**全て既存実装への pointer = 新規機構ゼロ**。
+- migration `20260610130000_wbs_complete_memory_cleanup_ops.sql` で WBS task を completed/100/approved 化 + owner schedule→win 是正 + `development_achievements` 追記 (idempotent)。
+- GitHub Issue #2710 は **merge 後に基準 ①②③ の evidence 付き close**。
+- ROADMAP part 260 エントリ (本欄 / part 259 merge hash `9be0f3fbc` 補記)。
+
+**Validation focus**:
+- docs 1 節追記 + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (recipe 第 16 連続狙い)。
+- 完了の定義 = 既存実装の verify + 唯一の gap (一枚正本) の充足。新規 cleanup 機構は作らない (既存 cadence が回っている事実を doc 化 / 原則 6)。[BRAIN-32] 7/7 整合。
+- Philosophy Alignment: 原則 1 (記憶統治の最終形を CEO が一覧可能に) / 3 (mentor = 記憶負債で AI を誤作動させない) / 6 (既存実装 pointer 化 = 新規機構ゼロ) / 7 (記憶の技術的負債への標準対処 = 資産) / 8 (lint report / Health Score 既存 KPI 接続) / 9 (持続可能な知識運用)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 259 = 9be0f3fbc)。
