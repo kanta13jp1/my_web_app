@@ -31,6 +31,19 @@
       "changes": [
         {
           "category": "automation",
+          "id": "pr-3179",
+          "links": [
+            {
+              "title": "PR #3179",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3179"
+            }
+          ],
+          "mergedAt": "2026-06-10T18:36:00Z",
+          "summary": "#3179 [codex] reduce workflow schedule churn (#3175)"
+        },
+        {
+          "category": "automation",
           "id": "pr-3212",
           "links": [
             {
@@ -405,19 +418,6 @@
           ],
           "mergedAt": "2026-06-09T10:08:08Z",
           "summary": "#3168 feat(ops): On-call / インシデント対応 SOP v1 + complete WBS 8830188a (part 245)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3159",
-          "links": [
-            {
-              "title": "PR #3159",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3159"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3159 [CI/CD自動最適化] 2026-06-08: hourly → 4時間毎 (feature-review + edge-function-audit)"
         }
       ],
       "date": "2026-06-10",
