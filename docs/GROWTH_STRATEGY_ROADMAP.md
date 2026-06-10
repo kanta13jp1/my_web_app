@@ -32047,3 +32047,23 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - honest dedup 原則: 重複と断定する前に **deliverable 実在 + 内容充足を per-要素 verify** (#1847 = dir+初回 entries+原則2適用 ✅ / #1736 = 運用導入 ✅ + 必須化 gap → 追記で充足してから complete / gap を無視した close はしない)。
 - Philosophy Alignment: 原則 1 (Issue close 判断根拠を可視化) / 4 (mentor = 重複作業させない) / 6 (重複再実装ゼロ = 時間資本保全) / 7 (open のまま放置された stale Issue = 負債の解消) / 8 (WBS 健全性) / 9 (プロセス持続性)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 255 = 82b34ac05)。
+
+---
+
+### 2026-06-10 Win版#132 part 257 — リファラル / 紹介プログラム設計 v1 (WBS c9a3e346 完了 / 実装 f0fd0b22 と 2 層分担)
+
+**Summary**:
+- part 252-256 の次 session (user 標準 WBS プロンプト)。冒頭 verify: 39b30ef2 prod flip ✅ (completed/100) + deploy-prod 3 連続 green ✅ + part-255-cycle worktree 残骸削除 ✅。
+- ⚠️ **session numbering collision 第 2 例を即時解決**: 本 session は当初 part 256 として作業したが、並行 session の [PR #3188](https://github.com/kanta13jp1/my_web_app/pull/3188) (ADR dedup) が「part 256」+ migration timestamp `20260610080000` を先着 merge (`756632369`) → 先着優先で本 session を **part 257** に改番 + migration を `20260610100000` に改番 + rebase で ROADMAP 衝突解消 (内容重複はゼロ / c9a3e346 とは無関係)。
+- [DYNAMIC-CLAIM] で `business-marketing` の **`リファラル / 紹介プログラム`** (c9a3e346 / medium / no deps / paying-100 / 定義 = Refer-a-friend → 1 ヶ月無料 / owner codex→win) を引き取り (設計シリーズ第 15 弾)。前 session 申し送りの「f0fd0b22 進捗 verify 必須」を実施してから着手。
+- **verify-first の重要発見**: 実装土台は f0fd0b22 (in_progress 25% / codex) で大半実在 — referral_codes/referrals/referral_tracking テーブル + growth-hub referral action 群 (self-referral guard / 冪等) + /referral 画面 + UTM 招待リンク + funnel signal。**欠けていたのは設計の正本**: 「1 ヶ月無料」offer と実装 (500pt 固定・sign-up 即 completed) の不整合 / 課金前 fulfillment / activation 条件 / 規約 / KPI。さらに `referrals.status` が最初から pending|completed|expired 想定 → **activation 2 段階化は schema 変更ゼロ**で実装可能と特定。
+
+**Changes**:
+- `docs/REFERRAL_PROGRAM_DESIGN.md` を新設 — 紹介プログラム設計の正本 (SSOT)。実在実装 verify 一覧 (§1 出典 file 付き) + **give-get offer + 課金前クレジット累積方式** (500pt = Pro 1 ヶ月無料へ課金開始時に交換 / 「今すぐ無料」と書かない = 履行できない約束をしない / 全数値【CEO確定】= dd9f690b 連動) (§2) + activation 2 段階化 (signed_up → activated / 既存 enum 流用) (§3) + 不正対策 6 項 (実装済 2 + 設計 4 / multi-account 機械検出は月間 activated 100 件超まで意図的 defer) (§4) + 規約骨子 8 項 (被紹介者の利用内容は紹介者に非開示 = PRD 原則整合の §5-7 含む) (§5) + K-factor 計測 = 既存 signal 流用のみ (§6) + **f0fd0b22 への実装残 7 件 handoff (着手順付き)** (§7) + 発効 4 条件 (§8) + Deferred (§9)。
+- migration `20260610100000_wbs_complete_referral_design.sql` で c9a3e346 を completed/100/approved 化 + owner codex→win 是正 + **f0fd0b22 の remaining_work へ設計 SSOT pointer append (status/owner 不変 = codex 継続)** + `development_achievements` 追記 (part 242-256 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-256 recipe)。
+- 完了の定義 = 紹介プログラムの「設計・文書化」。**運用開始・報酬履行は claim しない** (発効 = §8 の 4 条件 / CEO 数値確定 + 規約承認 + activation 実装後)。設計/実装の 2 層分担: c9a3e346 (設計 = 本 session 完了) / f0fd0b22 (実装 = codex in_progress 継続) — Architect-Implementer ③ パターン。
+- Philosophy Alignment: 原則 1 (報酬数値・規約・公開 = CEO) / 4 (mentor = 履行できない約束を文言設計で禁止) / 5 (give-get = 双方に価値 / 利用内容非開示) / 6 (既存実装 verify → 新規開発ゼロ / 既存 signal 流用 = 時間資本保全) / 7 (sign-up 即 completed の abuse 脆弱性 = 負債を activation 設計で解消) / 8 (K-factor 定義) / 9 (cap + 規約 + 発効条件で持続可能設計)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 256 = 756632369)。
