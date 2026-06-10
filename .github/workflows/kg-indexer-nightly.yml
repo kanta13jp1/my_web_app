@@ -14,6 +14,10 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: kg-indexer-nightly-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   index:
     name: Build Knowledge Graph source records
