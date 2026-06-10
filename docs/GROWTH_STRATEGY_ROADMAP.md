@@ -32129,3 +32129,24 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 完了の定義 = 既存実装の verify + 唯一の gap (一枚正本) の充足。新規 cleanup 機構は作らない (既存 cadence が回っている事実を doc 化 / 原則 6)。[BRAIN-32] 7/7 整合。
 - Philosophy Alignment: 原則 1 (記憶統治の最終形を CEO が一覧可能に) / 3 (mentor = 記憶負債で AI を誤作動させない) / 6 (既存実装 pointer 化 = 新規機構ゼロ) / 7 (記憶の技術的負債への標準対処 = 資産) / 8 (lint report / Health Score 既存 KPI 接続) / 9 (持続可能な知識運用)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 259 = 9be0f3fbc)。
+
+---
+
+### 2026-06-10 Win版#132 part 261 — モデルルーティング戦略 (コスト tier) 策定 (WBS 9e44b388 完了 / /loop user 再起動 10 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 10 round 目** (part 260 merge `0fe6d21c7` + Issue #2710 close 確認後)。**`9e44b388`** ([Issue #2694] AI ツール従量課金化に伴うモデルルーティング戦略と推論コスト最適化 / owner schedule→win) を claim — タスク本質 = 戦略「策定」(L3)。part 258 確立の **split 型** 適用 (基準 1 = 策定 → 完了 / 基準 2-3 = 可視化・アラート実装 → L2 = Issue open 維持)。
+- near-duplicate verify: DEV_PROCESS_MULTI_AI.md が Routing Matrix の正本 (§1 instance 振分 / §4 EF provider routing) — **コスト軸の節が gap** → 同 doc へ追記 (新 doc を作らない)。
+- ⚠️ part 259 後日談を記録: Issue-linked タスクの cancelled は WBS Sync cron が completed に上書き (2c4d2f03 実測) — automation と migration で戦わない方針 (意図は description/notes に永続記録済み)。
+
+**Changes**:
+- `docs/DEV_PROCESS_MULTI_AI.md` に **「コスト tier ルーティング」節を追記** (= Issue #2694 基準 1 正本): **モデル名を表に固定せず tier (役割) で定義** (世代交代耐性 / tier→実モデルは `/model` picker + AI_FALLBACK_RUNBOOK へ委譲 = [AI-TOOL-VERIFY] 整合) + 難易度→tier 4 行表 (定型=低 / 中規模実装=中=L2 既定 / 複雑設計・障害調査=高=L3 / リサーチ=**ゼロトークン経路優先**) + 「迷ったら 1 tier 下から (コスト超過は静かに進行する)」原則 + 既存ガードレール (quota-monitor / ci-cd-cost-audit / [AUTO-REPLY] cap) と**未実装 2 点 (モデル別消費集計 / コスト上限+ループ検知アラート) の正直な区別**。Issue 中の特定モデル名 (Composer 2 等) は未検証ベンダー主張として不採用。
+- migration `20260610140000_wbs_complete_model_routing.sql` で WBS task を completed/100/approved 化 + owner schedule→win 是正 + `development_achievements` 追記 (idempotent)。
+- **Issue #2694 は close しない** — 基準 2-3 (実装) の L2 handoff として open 維持 (merge 後に criteria 状況 comment / part 258 #2599 と同型)。
+- ROADMAP part 261 エントリ (本欄 / part 260 merge hash `0fe6d21c7` 補記)。
+
+**Validation focus**:
+- docs 1 節追記 + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (recipe 第 17 連続狙い)。
+- honest 区別: 「策定 = 完了」と「実装 = 未」の分離を doc 内・migration 内・Issue comment の 3 か所で一貫させる。モデル名の腐敗対策として tier 抽象を採用 (本表は世代交代で陳腐化しない)。
+- Philosophy Alignment: 原則 1 (tier 選択の最終判断は使用者 / CEO がコスト方針を一覧可能) / 4 (mentor = コスト不安なく使える基準) / 6 (資本=時間とコストの最適配分 = 本節の主題) / 7 (静かに進行するコスト超過 = 負債への防波堤) / 8 (quota/cost 監視 KPI 接続) / 9 (持続可能な AI 利用)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 260 = 0fe6d21c7)。
