@@ -548,7 +548,7 @@ class _NoteListPageState extends State<NoteListPage> {
       await _supabase.from('notes').update({
         'is_archived': true,
         'archived_at': now,
-        'updated_at': now
+        'updated_at': now,
       }).eq('id', noteId);
 
       if (userId != null && numericNoteId != null) {
