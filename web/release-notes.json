@@ -33,6 +33,227 @@
       "changes": [
         {
           "category": "feature",
+          "id": "pr-3214",
+          "links": [
+            {
+              "title": "PR #3214",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3214"
+            }
+          ],
+          "mergedAt": "2026-06-10T17:26:51Z",
+          "summary": "#3214 ci(dependabot): flutter_native_splash >=2.4.8 ignore で pub group 週次CI失敗を恒久解消 + WBS保守タスク追加+完了 (part 265)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3203",
+          "links": [
+            {
+              "title": "PR #3203",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3203"
+            }
+          ],
+          "mergedAt": "2026-06-10T17:05:49Z",
+          "summary": "#3203 Refactor local legislator display format with prefecture grouping"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3213",
+          "links": [
+            {
+              "title": "PR #3213",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3213"
+            }
+          ],
+          "mergedAt": "2026-06-10T17:05:29Z",
+          "summary": "#3213 docs(roadmap): Win版#132 part 216 v26 disk+RAM dual-channel spec ship"
+        },
+        {
+          "category": "automation",
+          "id": "pr-3204",
+          "links": [
+            {
+              "title": "PR #3204",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3204"
+            }
+          ],
+          "mergedAt": "2026-06-10T13:53:22Z",
+          "summary": "#3204 ci: dependabot に composite action 監視を追加 — Node 20 取り残し再発防止 (cache v4→v5 は #3202 先行)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-3202",
+          "links": [
+            {
+              "title": "PR #3202",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3202"
+            }
+          ],
+          "mergedAt": "2026-06-10T13:35:13Z",
+          "summary": "#3202 ci(actions): GitHub Actions Node.js 20 廃止対応 (cache v4→v5) + complete WBS 保守タスク (part 264)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3200",
+          "links": [
+            {
+              "title": "PR #3200",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3200"
+            }
+          ],
+          "mergedAt": "2026-06-10T12:54:18Z",
+          "summary": "#3200 docs(blog): ブログ/ニュース配信 本番E2E検証完了 + complete WBS f02d5e49 (part 263)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3197",
+          "links": [
+            {
+              "title": "PR #3197",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3197"
+            }
+          ],
+          "mergedAt": "2026-06-10T05:18:15Z",
+          "summary": "#3197 docs(fleet): L2実装handoff 3件起票 + L3 claimable枯渇のhonest宣言 (part 262)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3196",
+          "links": [
+            {
+              "title": "PR #3196",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3196"
+            }
+          ],
+          "mergedAt": "2026-06-10T04:45:55Z",
+          "summary": "#3196 docs(ai): モデルルーティング戦略 (コスト tier) + complete WBS 9e44b388 (part 261)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3195",
+          "links": [
+            {
+              "title": "PR #3195",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3195"
+            }
+          ],
+          "mergedAt": "2026-06-10T04:15:35Z",
+          "summary": "#3195 docs(pkm): 階層的クリーンアップ運用の正本化 + complete WBS cbfe0326 (part 260)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3194",
+          "links": [
+            {
+              "title": "PR #3194",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3194"
+            }
+          ],
+          "mergedAt": "2026-06-10T03:42:46Z",
+          "summary": "#3194 docs(wbs): stale-premiseタスク triage (2c4d2f03 cancelled) + CV3精査確定 (part 259)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3191",
+          "links": [
+            {
+              "title": "PR #3191",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3191"
+            }
+          ],
+          "mergedAt": "2026-06-10T03:10:09Z",
+          "summary": "#3191 docs(ops): SPOFリスク評価&フェイルオーバー戦略 v1 + complete WBS aa08e69f (part 258)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3190",
+          "links": [
+            {
+              "title": "PR #3190",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3190"
+            }
+          ],
+          "mergedAt": "2026-06-10T02:51:24Z",
+          "summary": "#3190 docs(growth): リファラル/紹介プログラム設計 v1 + complete WBS c9a3e346 (part 257)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3188",
+          "links": [
+            {
+              "title": "PR #3188",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3188"
+            }
+          ],
+          "mergedAt": "2026-06-10T02:32:00Z",
+          "summary": "#3188 docs(wbs): ADR系重複タスク2件解消 + handoff必須化1行 (part 256)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3185",
+          "links": [
+            {
+              "title": "PR #3185",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3185"
+            }
+          ],
+          "mergedAt": "2026-06-10T02:00:40Z",
+          "summary": "#3185 docs(release): 機能リリースサイクル方針 (隔週) v1 + complete WBS 39b30ef2 (part 255)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3183",
+          "links": [
+            {
+              "title": "PR #3183",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3183"
+            }
+          ],
+          "mergedAt": "2026-06-10T01:42:36Z",
+          "summary": "#3183 docs(wbs): SDLC工程×WBSカバレッジ監査 v1 + 重複1件解消 (part 254)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3181",
+          "links": [
+            {
+              "title": "PR #3181",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3181"
+            }
+          ],
+          "mergedAt": "2026-06-10T01:19:46Z",
+          "summary": "#3181 docs(ops): IT セキュリティポリシー v1 (パスワード/端末暗号化/VPN) + complete WBS bd345cfa (part 253)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3180",
+          "links": [
+            {
+              "title": "PR #3180",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3180"
+            }
+          ],
+          "mergedAt": "2026-06-10T00:50:22Z",
+          "summary": "#3180 docs(sales): 法人プラン提案資料 v1 (B2B deck/価格表/セキュリティFAQ) + complete WBS e12e02c2 (part 252)"
+        },
+        {
+          "category": "feature",
           "id": "pr-3177",
           "links": [
             {
@@ -188,110 +409,6 @@
           "summary": "#3151 auto: issue #1696 [追加要望][P2] 自動コミット多発時のPR BEHIND解消とmerge queue運用を整備する"
         },
         {
-          "category": "feature",
-          "id": "pr-3149",
-          "links": [
-            {
-              "title": "PR #3149",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3149"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3149 deps: bump the flutter-dependencies group across 1 directory with 7 updates"
-        },
-        {
-          "category": "automation",
-          "id": "pr-3148",
-          "links": [
-            {
-              "title": "PR #3148",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3148"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3148 ci: bump actions/cache from 4 to 5 in the github-actions group"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3137",
-          "links": [
-            {
-              "title": "PR #3137",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3137"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3137 [CI/CD自動最適化] 2026-06-07 — schedule cron 削減 (月1,260実行・14.7h削減)"
-        },
-        {
-          "category": "docs",
-          "id": "pr-3136",
-          "links": [
-            {
-              "title": "PR #3136",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3136"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3136 docs: mark blog draft published 2026-05-22-claude-code-massive-goal-defer-mentor-pattern.md"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3135",
-          "links": [
-            {
-              "title": "PR #3135",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3135"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3135 auto: issue #1197 [追加要望] クイックメモ入力とAI自動整理・タグ付け機能"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3134",
-          "links": [
-            {
-              "title": "PR #3134",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3134"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3134 auto: issue #1705 [追加要望][P2][NotebookLM] Notion DB ID + WorkOS AuthKit + Gemini Code Assist Quotas を運用統合"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3132",
-          "links": [
-            {
-              "title": "PR #3132",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3132"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3132 [CI/CD自動最適化] cron 頻度削減 2026-06-06"
-        },
-        {
-          "category": "docs",
-          "id": "pr-3131",
-          "links": [
-            {
-              "title": "PR #3131",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3131"
-            }
-          ],
-          "mergedAt": "2026-06-08T15:44:46Z",
-          "summary": "#3131 docs: mark blog draft published 2026-05-22-claude-code-massive-goal-defer-mentor-pattern.md"
-        },
-        {
           "category": "fix",
           "id": "pr-3154",
           "links": [
@@ -303,123 +420,6 @@
           ],
           "mergedAt": "2026-06-08T12:16:34Z",
           "summary": "#3154 fix: restore asset_management_page.dart (19405 lines) — revert accidental file deletion"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3145",
-          "links": [
-            {
-              "title": "PR #3145",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3145"
-            }
-          ],
-          "mergedAt": "2026-06-08T03:09:51Z",
-          "summary": "#3145 Preserve asset management design chart changes"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3144",
-          "links": [
-            {
-              "title": "PR #3144",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3144"
-            }
-          ],
-          "mergedAt": "2026-06-08T03:09:51Z",
-          "summary": "#3144 Add part 239 daily dev blog assets"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3143",
-          "links": [
-            {
-              "title": "PR #3143",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3143"
-            }
-          ],
-          "mergedAt": "2026-06-08T03:09:51Z",
-          "summary": "#3143 Add part 238 cross-post daily assets"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3142",
-          "links": [
-            {
-              "title": "PR #3142",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3142"
-            }
-          ],
-          "mergedAt": "2026-06-08T03:09:51Z",
-          "summary": "#3142 Add part 238 daily dev blog assets"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3141",
-          "links": [
-            {
-              "title": "PR #3141",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3141"
-            }
-          ],
-          "mergedAt": "2026-06-08T03:09:51Z",
-          "summary": "#3141 Add part 233 daily dev blog assets"
-        },
-        {
-          "category": "automation",
-          "id": "pr-3140",
-          "links": [
-            {
-              "title": "PR #3140",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3140"
-            }
-          ],
-          "mergedAt": "2026-06-08T03:09:51Z",
-          "summary": "#3140 Preserve NotebookLM daily requirements workflow"
-        },
-        {
-          "category": "automation",
-          "id": "pr-3139",
-          "links": [
-            {
-              "title": "PR #3139",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3139"
-            }
-          ],
-          "mergedAt": "2026-06-08T03:09:51Z",
-          "summary": "#3139 Preserve asset replan and NotebookLM workflow changes"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3138",
-          "links": [
-            {
-              "title": "PR #3138",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3138"
-            }
-          ],
-          "mergedAt": "2026-06-08T03:09:51Z",
-          "summary": "#3138 Preserve asset UI scroll evidence changes"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3129",
-          "links": [
-            {
-              "title": "PR #3129",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3129"
-            }
-          ],
-          "mergedAt": "2026-06-06T08:24:15Z",
-          "summary": "#3129 Batch abstinence calendar snapshot loads"
         }
       ],
       "date": "2026-06-10",

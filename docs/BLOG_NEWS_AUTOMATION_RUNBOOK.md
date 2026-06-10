@@ -1,6 +1,6 @@
 # Blog and News Automation Runbook
 
-Last updated: 2026-05-12
+Last updated: 2026-06-10
 
 ## Blog Flow
 
@@ -74,6 +74,53 @@ Last updated: 2026-05-12
 5. The smoke writes `tmp/blog-news-prod-smoke/report.json` as an Actions
    artifact. It never calls `blog.publish_post`, `blog.auto_publish`, or
    external posting APIs.
+
+## Production Verification Results (2026-06-10)
+
+Per-element verification recorded when closing Issue #1950 (Win Claude
+part 263). This section is the "updated with real operational results"
+deliverable the issue required.
+
+- Public routes: `/blog`, `/blog/compose`, and `/news-rss` return HTTP 200
+  with the Flutter app markers. Evidence: `blog-news-prod-smoke.yml` ran green
+  4 times after production deploys on 2026-06-10 alone, plus a manual local
+  run of `scripts/blog_news_prod_smoke.py` the same day (overall `pass`).
+- External posting: `blog-publish.yml` (daily 21:00 JST) is green on its
+  latest runs (2026-06-06 through 2026-06-09) and posts ready drafts to
+  dev.to. Published drafts are marked back into the repo via
+  `blog-publish/<run_id>-*` branches, now merged automatically by
+  `blog-publish-orphan-cleanup.yml` (added 2026-06-09). Qiita remains
+  rate-limit constrained (multi-day cooldowns observed in operation); dev.to
+  is the primary external target and `/qiita-retry` gates Qiita retries. See
+  `docs/BLOG_PUBLISH_STATUS_AUTOMATION.md`.
+- Engagement sync: `blog-engagement.yml` (daily) is green on its latest runs
+  (2026-06-07 through 2026-06-10).
+- RLS: `20260504100000_blog_posts_user_authoring.sql` is live in production.
+  Policies allow anonymous SELECT of `posted` articles only, and restrict
+  INSERT/UPDATE/DELETE to the author's own drafts
+  (`auth.uid() = created_by`), so cross-user edits are denied at the policy
+  layer. The public-read and automated-authoring paths are exercised daily by
+  the workflows above.
+- RSS partial failure: a live check on 2026-06-10 called `tools-hub`
+  `rss.fetch_latest` with one healthy feed plus one unreachable domain. The
+  Edge Function returned normalized items from the healthy feed without
+  failing the call, confirming server-side (CORS-free) fetch with structured
+  partial success.
+- Smoke key bitrot fix: `lib/main.dart` migrated from `anonKey:` to
+  `publishableKey:` (supabase_flutter API rename), which had silently
+  downgraded the smoke's live RSS check to a warn-skip in CI.
+  `scripts/blog_news_prod_smoke.py` now accepts both spellings (regression
+  test added in `test/scripts/test_blog_news_prod_smoke.py`), restoring the
+  live RSS check.
+- Changelog-watch automation: the "Claude Code / Codex changelog to
+  Issue/WBS/PR routing" follow-up from Issue #1950 is covered by the
+  completed WBS items for AI Tool Watch full routing (Issue #1559) and the
+  NotebookLM diff gate (Issue #1606).
+
+Remaining enhancement candidates (feed cache table, AI summarization,
+semantic lint extension, high-risk admin queue) stay in "Follow-Up Automation
+Ideas" below; they were listed as candidates in Issue #1950, not completion
+criteria.
 
 ## Two-Instance Operating Rule
 
