@@ -31968,3 +31968,22 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 参照 doc 8 件 (PRD / MVP_SCOPE / PRESS_RELEASE / BRAND_GUIDELINE / ops 三部作 / AI_DEV_PRINCIPLES) は filename 実在確認済み (fabrication なし)。
 - Philosophy Alignment: 原則 1 (雇用主閲覧不可 / 価格は CEO 決裁) / 3 (監視型を恒久排除) / 4 (6 部署 = deck 価値構造) / 5 (機能差でなく価値で法人プラン定義) / 6 (営業説明の SSOT 化) / 7 (正直 FAQ = 信頼資産) / 8 (paying-100 KPI 布石) / 9 (ウェルビーイング非毀損)。8/9 ✅。
 - commit hash: (PR merge 後に追記 / part 251 = 161172257)。
+
+---
+
+### 2026-06-10 Win版#132 part 253 — IT セキュリティポリシー v1 策定 (WBS bd345cfa 完了 / /loop user 再起動)
+
+**Summary**:
+- `/loop` を **user が明示的に再起動** (part 252 merge `86a8d0638` + deploy-prod success + prod DB completed flip 確認後 / 本 session 2 件目 = [DYNAMIC-CLAIM] 2-cap 内)。[DYNAMIC-CLAIM] で `business-ops` カテゴリの **`IT セキュリティポリシー v1`** (bd345cfa / medium / no deps / milestone paying-100 / owner codex→win / 定義 = パスワード管理・端末暗号化・VPN) を引き取り。part 252 B2B_PROPOSAL §4 セキュリティ FAQ の**正本化として自然な続き** (設計シリーズ第 13 弾)。
+- near-duplicate verify: 既存 MCP_AUTH_SECURITY_PRINCIPLES (MCP 公開技術 10 原則) / AI_DEV_PRINCIPLES (開発設計原則) と**軸分け** — 本書は「人と端末とアカウント」の組織運用規程で非重複。
+
+**Changes**:
+- `docs/IT_SECURITY_POLICY_V1.md` を新設 — 組織レベル IT セキュリティ規程の正本 (SSOT / CEO 承認で発効)。タスク定義 3 軸: §1 アカウント・パスワード管理 (パスワードマネージャー + 2FA 必須 + 共有アカウント禁止 + **dormant 旧 12 instance クレデンシャル棚卸し**) / §3 端末セキュリティ (**実機 Windows 11 Home に合わせ Device Encryption (BitLocker 相当) を必須**と正確に記述) / §4 ネットワーク・VPN (公衆 Wi-Fi は VPN またはテザリング / **製品選定は【CEO確定】placeholder = vendor 捏造しない**)。+ 組織固有: §2 鍵管理 (**anon key は公開前提で RLS が守る設計の明文化** / service_role 級は server-side のみ / 露出疑い時 即ローテ) / §5 AI エージェント運用 (deny-by-default + [SUBAGENT-GUARD] + MCP 10 原則 pointer) / §7 四半期棚卸し cadence / §8 incident は ONCALL_INCIDENT_SOP へ dispatch / §10 Deferred (SOC2=9a564512 / MDM は採用時 / 物理オフィスは契約後)。
+- migration `20260610023000_wbs_complete_it_security_policy.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-252 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → docs-only label + close+reopen 先制 + E2E 3-phrase belt+suspenders (part 252 確立) で first-try PASS 狙い。
+- 完了の定義 = 規程の「策定・文書化」(CEO 承認で発効)。実端末への設定適用は CEO 運用アクション (§7 点検で確認) / SOC2 gap 分析は 9a564512 の別タスク (honest scope)。
+- opsec 配慮: 個別の鍵露出事案の詳細は public repo に書かず、§2-5「露出疑い時 即ローテ」の一般規程として吸収。
+- Philosophy Alignment: 原則 1 (権限・例外・VPN 選定は CEO 決裁) / 3 (規程=予防の道具・例外は追記管理) / 5 (顧客への安全の約束を規程で裏付け) / 6 (事故対応時間最小化) / 7 (放置クレデンシャル=負債→棚卸し) / 8 (paying-100 信頼基盤) / 9 (J-SOX/IPO 内部統制布石)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 252 = 86a8d0638)。
