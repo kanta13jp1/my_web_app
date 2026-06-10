@@ -18,6 +18,76 @@ class GrowthBenchmarks {
   static const int beatEvernoteTarget = evernoteUsersFloor + 1;
 }
 
+enum SessionHygieneState { active, expired, invalidated, unknown, unavailable }
+
+class SessionHygieneStatus {
+  static const expiredMessage = 'Session expired. Please sign in again.';
+
+  final SessionHygieneState state;
+  final bool requiresRelogin;
+  final String message;
+  final DateTime? expiresAt;
+  final DateTime? invalidatedAt;
+  final String? reason;
+
+  const SessionHygieneStatus({
+    required this.state,
+    required this.requiresRelogin,
+    required this.message,
+    this.expiresAt,
+    this.invalidatedAt,
+    this.reason,
+  });
+
+  const SessionHygieneStatus.unavailable()
+      : state = SessionHygieneState.unavailable,
+        requiresRelogin = false,
+        message = 'Session hygiene is unavailable.',
+        expiresAt = null,
+        invalidatedAt = null,
+        reason = null;
+
+  const SessionHygieneStatus.active()
+      : state = SessionHygieneState.active,
+        requiresRelogin = false,
+        message = 'Session is active.',
+        expiresAt = null,
+        invalidatedAt = null,
+        reason = null;
+
+  factory SessionHygieneStatus.fromJson(Map<String, dynamic> json) {
+    final rawState = (json['status'] as String?)?.toLowerCase();
+    final state = switch (rawState) {
+      'active' => SessionHygieneState.active,
+      'expired' => SessionHygieneState.expired,
+      'invalidated' => SessionHygieneState.invalidated,
+      'unavailable' => SessionHygieneState.unavailable,
+      _ => SessionHygieneState.unknown,
+    };
+    final inferredRequiresRelogin = state == SessionHygieneState.expired ||
+        state == SessionHygieneState.invalidated;
+    final requiresRelogin =
+        json['requires_relogin'] as bool? ?? inferredRequiresRelogin;
+
+    return SessionHygieneStatus(
+      state: state,
+      requiresRelogin: requiresRelogin,
+      message: json['message'] as String? ??
+          (requiresRelogin ? expiredMessage : 'Session state is unknown.'),
+      expiresAt: _parseOptionalDateTime(json['expires_at']),
+      invalidatedAt: _parseOptionalDateTime(json['invalidated_at']),
+      reason: json['reason'] as String?,
+    );
+  }
+
+  bool get isActive => state == SessionHygieneState.active && !requiresRelogin;
+
+  static DateTime? _parseOptionalDateTime(Object? value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
+}
+
 class ReferralGrowthSnapshot {
   final ReferralCode? myReferralCode;
   final int totalReferrals;
@@ -68,9 +138,7 @@ class GrowthAcquisitionTouchpointSnapshot {
       id: json['id']?.toString() ?? 'touchpoint',
       label: (json['label'] ?? json['touchpoint'])?.toString() ?? 'Touchpoint',
       touchCount: _toInt(json['touchCount'] ?? json['touches']),
-      signupSubmitCount: _toInt(
-        json['signupSubmitCount'] ?? json['signups'],
-      ),
+      signupSubmitCount: _toInt(json['signupSubmitCount'] ?? json['signups']),
     );
   }
 
@@ -136,9 +204,7 @@ class GrowthAcquisitionSnapshot {
     required this.publicMemoSignupCtaCount,
   });
 
-  factory GrowthAcquisitionSnapshot.empty({
-    int windowDays = 30,
-  }) {
+  factory GrowthAcquisitionSnapshot.empty({int windowDays = 30}) {
     final now = DateTime.now();
     final startDate = now.subtract(Duration(days: math.max(0, windowDays - 1)));
     return GrowthAcquisitionSnapshot(
@@ -229,15 +295,11 @@ class GrowthAcquisitionSnapshot {
     );
   }
 
-  int get totalTouches => touchpoints.fold<int>(
-        0,
-        (sum, item) => sum + item.touchCount,
-      );
+  int get totalTouches =>
+      touchpoints.fold<int>(0, (sum, item) => sum + item.touchCount);
 
-  int get totalSignupSubmits => touchpoints.fold<int>(
-        0,
-        (sum, item) => sum + item.signupSubmitCount,
-      );
+  int get totalSignupSubmits =>
+      touchpoints.fold<int>(0, (sum, item) => sum + item.signupSubmitCount);
 }
 
 class GrowthMissionDashboard {
@@ -489,6 +551,7 @@ class GrowthMissionService {
   static const _pendingReferralCodeKey = 'growth_pending_referral_code';
   static const _referralAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   static const Duration _aggregateRefreshCooldown = Duration(minutes: 3);
+  static const Duration _sessionHygieneTimeout = Duration(hours: 48);
   static DateTime? _lastAggregateRefreshAt;
   static Future<void>? _aggregateRefreshInFlight;
 
@@ -498,9 +561,8 @@ class GrowthMissionService {
 
   final SupabaseClient? _clientOverride;
 
-  const GrowthMissionService({
-    SupabaseClient? clientOverride,
-  }) : _clientOverride = clientOverride;
+  const GrowthMissionService({SupabaseClient? clientOverride})
+      : _clientOverride = clientOverride;
 
   SupabaseClient? get _client {
     if (_clientOverride != null) {
@@ -523,10 +585,7 @@ class GrowthMissionService {
       ..['utm_medium'] = 'invite'
       ..['utm_campaign'] = 'growth_mission';
     return baseUri
-        .replace(
-          path: '/referral',
-          queryParameters: nextQuery,
-        )
+        .replace(path: '/referral', queryParameters: nextQuery)
         .toString();
   }
 
@@ -559,9 +618,7 @@ $inviteUrl
 ''';
   }
 
-  Future<void> capturePendingReferralFromUri({
-    Uri? currentUri,
-  }) async {
+  Future<void> capturePendingReferralFromUri({Uri? currentUri}) async {
     final uri = currentUri ?? Uri.base;
     final refCode = (uri.queryParameters['ref'] ?? uri.queryParameters['code'])
         ?.trim()
@@ -601,26 +658,34 @@ $inviteUrl
     return created;
   }
 
-  Future<void> syncPresence({
-    required String pagePath,
-  }) async {
+  Future<void> syncPresence({required String pagePath}) async {
     final client = _client;
     if (client == null) {
       return;
     }
 
-    final nowIso = DateTime.now().toUtc().toIso8601String();
+    final now = DateTime.now().toUtc();
+    final nowIso = now.toIso8601String();
     final sessionId = await ensureGuestSessionId();
     final user = client.auth.currentUser;
 
     try {
       if (user != null) {
+        final hygieneStatus = await checkSessionHygiene(sessionId: sessionId);
+        if (hygieneStatus.requiresRelogin) {
+          await _signOutForExpiredSession(client, hygieneStatus);
+          return;
+        }
+
         await client.from('user_presence').upsert(
           <String, dynamic>{
             'user_id': user.id,
             'session_id': sessionId,
             'is_online': true,
             'last_seen': nowIso,
+            'expires_at': now.add(_sessionHygieneTimeout).toIso8601String(),
+            'invalidated_at': null,
+            'invalidation_reason': null,
             'page_path': pagePath,
           },
           onConflict: 'user_id,session_id',
@@ -646,6 +711,49 @@ $inviteUrl
       }
     } catch (error) {
       debugPrint('Growth presence sync failed: $error');
+    }
+  }
+
+  Future<SessionHygieneStatus> checkSessionHygiene({String? sessionId}) async {
+    final client = _client;
+    if (client == null || client.auth.currentUser == null) {
+      return const SessionHygieneStatus.unavailable();
+    }
+
+    final resolvedSessionId = sessionId ?? await ensureGuestSessionId();
+    try {
+      final response = await client.rpc(
+        'get_session_hygiene_status',
+        params: <String, dynamic>{'p_session_id': resolvedSessionId},
+      );
+      if (response is Map<String, dynamic>) {
+        return SessionHygieneStatus.fromJson(response);
+      }
+      if (response is Map) {
+        return SessionHygieneStatus.fromJson(
+          Map<String, dynamic>.from(response),
+        );
+      }
+    } catch (error) {
+      debugPrint('get_session_hygiene_status failed: $error');
+    }
+
+    return const SessionHygieneStatus(
+      state: SessionHygieneState.unknown,
+      requiresRelogin: false,
+      message: 'Session hygiene status could not be checked.',
+    );
+  }
+
+  Future<void> _signOutForExpiredSession(
+    SupabaseClient client,
+    SessionHygieneStatus status,
+  ) async {
+    debugPrint(status.message);
+    try {
+      await client.auth.signOut();
+    } catch (error) {
+      debugPrint('Session hygiene signOut failed: $error');
     }
   }
 
@@ -706,9 +814,7 @@ $inviteUrl
     try {
       final response = await client.functions.invoke(
         'growth-hub',
-        body: const <String, dynamic>{
-          'action': 'referral.list',
-        },
+        body: const <String, dynamic>{'action': 'referral.list'},
       );
       final data = _toMapValue(response.data);
       if (data['success'] == true) {
@@ -850,9 +956,7 @@ $inviteUrl
     try {
       final response = await client.functions.invoke(
         'growth-hub',
-        body: const <String, dynamic>{
-          'action': 'referral.list',
-        },
+        body: const <String, dynamic>{'action': 'referral.list'},
       );
       final data = _toMapValue(response.data);
       if (data['success'] == true) {
@@ -1073,9 +1177,7 @@ $inviteUrl
         );
       }
 
-      return GrowthCommandCenterBrief.fromJson(
-        _toMapValue(data['brief']),
-      );
+      return GrowthCommandCenterBrief.fromJson(_toMapValue(data['brief']));
     } catch (error) {
       debugPrint('Growth command center fallback: $error');
       return _buildLocalCommandCenterBrief(dashboard);
@@ -1096,9 +1198,7 @@ $inviteUrl
 
       final data = _toMapValue(response.data);
       if (data['success'] != true) {
-        throw Exception(
-          data['error']?.toString() ?? 'Weekly digest failed.',
-        );
+        throw Exception(data['error']?.toString() ?? 'Weekly digest failed.');
       }
 
       return WeeklyDigestSnapshot.fromJson(data);
@@ -1455,10 +1555,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       );
     });
     _metricsTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      _runSafely(
-        _service.refreshAggregateMetrics(),
-        'refreshAggregateMetrics',
-      );
+      _runSafely(_service.refreshAggregateMetrics(), 'refreshAggregateMetrics');
     });
   }
 
@@ -1477,10 +1574,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
   }
 
   @override
-  void didReplace({
-    Route<dynamic>? newRoute,
-    Route<dynamic>? oldRoute,
-  }) {
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
     if (newRoute != null) {
       _trackRoute(newRoute);
