@@ -32170,3 +32170,25 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 「タスク完了 0」を正直に記録することが本 round の品質 — /loop の字義 (1 つ完了) より honesty を優先 (部 234 DEFER / 部 255 skip の系譜)。次の完了可能性: L2 が handoff 3 件を実装した後の L3 レビュー / L1 (Antigravity) 探索成果の設計化 / 新規 Issue 流入。
 - Philosophy Alignment: 原則 1 (リソース配分の判断材料を CEO へ = L2 セッション起動の提案) / 4 (mentor = できない約束をしない) / 6 (枯渇状態での無理な捻出 = 時間浪費を回避) / 7 (偽 completed = 負債を作らない) / 8 (session 実績の正確な計上) / 9 (持続可能なループ運用 = 健全な停止)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 261 = d0628d389)。
+
+---
+
+### 2026-06-10 Win版#132 part 263 — ブログ/ニュース配信 本番E2E検証完了 (WBS f02d5e49 / Issue #1950 close / smoke regex bitrot 修正)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 262 枯渇宣言後の新セッション / 21:28 JST)。新規流入ゼロ (6/9 以降 +1 件のみ = #3175 gha-owned / Codex draft 済) を確認後、win-owned in_progress の **`f02d5e49` ([Issue #1950] ブログ/ニュース配信の本番E2Eと完全自動化仕上げ)** を per-要素 verify → 残作業 5 項目の大半が後続自動化 (blog-news-prod-smoke / blog-publish / blog-engagement / blog-publish-orphan-cleanup / ai-tool-watch #1559) で充足済みと立証 → gap 2 件 (Runbook 実運用反映 + smoke regex bitrot) を充足して完了。part 261 残の prod flip (9e44b388 = completed 11:39 UTC) も verify 済み。
+- **verify が実バグを検出**: `lib/main.dart` の `anonKey:` → `publishableKey:` rename (supabase_flutter API 移行) で smoke の RSS live チェックが CI で warn-skip に退化していた (silent degradation)。regex を両対応に修正 + regression test 追加 → local 実行で `rss_fetch_latest: pass` 復活を確認。
+- **RSS 部分失敗耐性をライブ実証**: tools-hub `rss.fetch_latest` に正常 feed 1 + 死活 domain 1 を投げ、正常側の items 2 件が構造化 payload で返ることを確認 (CORS 非依存 + partial success)。
+
+**Changes**:
+- `scripts/blog_news_prod_smoke.py` — anon key 読み取り regex を `(?:anonKey|publishableKey)` に拡張。
+- `test/scripts/test_blog_news_prod_smoke.py` — publishableKey ケースの regression test 追加 (5 tests OK)。
+- `docs/BLOG_NEWS_AUTOMATION_RUNBOOK.md` — 「Production Verification Results (2026-06-10)」節を新設 (= Issue #1950 完了条件 4「Runbook が実運用結果で更新される」の充足)。run streak / RLS policy 根拠 / Qiita cooldown 正直記載 / 部分失敗ライブ検証を記録。Last updated 2026-06-10 化。
+- migration `20260610215000_wbs_complete_blog_news_e2e.sql` — f02d5e49 を completed/100/approved 化 + development_achievements 追記 (part 242-251 idempotent パターン)。
+
+**Validation focus**:
+- 完了の定義 = Issue #1950 完了条件 4 点の per-要素 verify (部 256「gap 無視 close 禁止」準拠): ① 本番 URL 公開閲覧 = smoke 4× green (6/10 単日) + local pass ② 外部投稿/engagement = daily green streak (Qiita は cooldown 制約を正直記載 / dev.to 正系) ③ RSS CORS 非依存+部分失敗 = live 実証 ④ Runbook 実運用反映 = 本 PR で充足。
+- RSS 拡張「候補」群 (cache/AI要約等) は Issue 原文どおり候補 = Follow-Up Ideas 維持 (overclaim なし)。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 19 連続狙い / scripts+test+docs+migration = 非 app-code 構成)。
+- Philosophy Alignment: 原則 3-4 (mentor / verify-first が silent degradation を検出 = 部 237 系譜) / 6 (資本=時間: 既存自動化の成果を計上し重複作業回避) / 7 (regex bitrot = 負債解消) / 8 (E2E 完了 KPI) / 9 (無人運用の信頼性回復)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 262 = 0d0961645)。
