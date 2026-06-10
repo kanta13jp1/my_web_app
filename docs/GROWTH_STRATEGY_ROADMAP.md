@@ -31949,3 +31949,22 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 既存 doc read で gap 確認 (ONCALL_INCIDENT_SOP は赤の道 / 本書は緑の道 = 非重複) + 実 workflow 名を glob 実在確認で grounding (fabrication なし)。
 - Philosophy Alignment: 原則 1 (夜間 SEV1 のみ CEO) / 3-4 (mentor / 運用即応) / 6 (時間=確認時間最小化) / 7 (安定運用=資産・過剰監視=負債) / 8 (健全率・検知遅延 KPI) / 9 (夜間負荷抑制)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 250 = 2b0840902)。
+
+---
+
+### 2026-06-10 Win版#132 part 252 — 法人プラン提案資料 v1 整備 (WBS e12e02c2 完了 / /loop autonomous)
+
+**Summary**:
+- `/loop` autonomous WBS — [DYNAMIC-CLAIM] で全 807 未完了タスクから「成果物が本質的に文書」のタスクを探索し、milestone `paying-100` の **`法人プラン提案資料 v1`** (e12e02c2 / high / no deps / category business-sales / owner codex→win) を claim。タスク定義 = 「B2B 営業 deck / 価格表 / セキュリティ FAQ」の 3 点 = sales enablement docs (L3 docs レーン / 禁止カテゴリ business-legal/urgent/IPO に非該当)。part 251 merge `161172257` + deploy-prod success 確認済。
+- **PRD §5 整合 verify-first**: 「⏸ 法人向け SaaS・チーム機能 = 保留」との衝突を着手前に検出 → **B2B2C ライセンス一括導入** (チーム機能・雇用主閲覧を作らない / 福利厚生モデル) として矛盾なく positioning。アンチ監視 (原則 1・3) を法人向けセールスポイントに反転。
+
+**Changes**:
+- `docs/B2B_PROPOSAL_V1.md` を新設 — 法人プラン提案の社内正本 (SSOT)。(1) **B2B 営業 deck 構成 10 スライド** (key message + PRD/MVP_SCOPE 出典 grounding / 実績ゼロを正直に「βパートナー募集」と表現)。(2) **価格表ドラフト** (シート段階制 S/M/L / 全数値【CEO確定】placeholder = 料金プラン v1.0 確定 dd9f690b 連動 / MVP 期間無料 = MVP_SCOPE §3)。(3) **セキュリティ FAQ 10 問** (実在事実のみ: Supabase Auth + RLS 有効化 migration 103 件 + HTTPS + ops 三部作 runbook + CI gates + Sentry / SOC2・ISO **未取得を正直回答** / 不明点は【確認事項】で断定禁止)。+ objection handling + Deferred 7 タスク表 + Philosophy 8/9。
+- migration `20260610010000_wbs_complete_b2b_proposal.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-251 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → docs-only label + close+reopen 先制で first-try PASS 狙い (part 241-251 recipe)。
+- 完了の定義 = deck 構成・価格構造・FAQ の「設計・文書化」(part 249 press release と同じ marketing/対外タスクの honest 完成定義)。価格確定 (dd9f690b/CEO) / 営業実行 (f3cd4740) / Stripe (ca38e2d2) / セキュリティポリシー (bd345cfa) / SOC2 (9a564512) は Deferred 明記で完了扱いにしない。社外配布は CEO 承認後のみ。
+- 参照 doc 8 件 (PRD / MVP_SCOPE / PRESS_RELEASE / BRAND_GUIDELINE / ops 三部作 / AI_DEV_PRINCIPLES) は filename 実在確認済み (fabrication なし)。
+- Philosophy Alignment: 原則 1 (雇用主閲覧不可 / 価格は CEO 決裁) / 3 (監視型を恒久排除) / 4 (6 部署 = deck 価値構造) / 5 (機能差でなく価値で法人プラン定義) / 6 (営業説明の SSOT 化) / 7 (正直 FAQ = 信頼資産) / 8 (paying-100 KPI 布石) / 9 (ウェルビーイング非毀損)。8/9 ✅。
+- commit hash: (PR merge 後に追記 / part 251 = 161172257)。
