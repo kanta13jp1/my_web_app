@@ -148,9 +148,8 @@ class NoteInboxService {
       captureStatus: captureStatusInbox,
       classificationStatus: status,
       confidence: confidence,
-      summary: compact.length <= 120
-          ? compact
-          : '${compact.substring(0, 120)}...',
+      summary:
+          compact.length <= 120 ? compact : '${compact.substring(0, 120)}...',
     );
   }
 }

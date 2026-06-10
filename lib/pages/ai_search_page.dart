@@ -187,8 +187,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
                         _searchMode == 'ai'
                             ? 'AI 検索'
                             : _searchMode == 'text_fallback'
-                            ? 'テキスト検索（AIフォールバック）'
-                            : 'テキスト検索',
+                                ? 'テキスト検索（AIフォールバック）'
+                                : 'テキスト検索',
                         style: TextStyle(
                           fontSize: 11,
                           color: _searchMode == 'ai'
@@ -390,9 +390,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
               const SizedBox(height: 6),
               ...relatedNotes.take(3).map((related) {
                 final relatedTitle = (related['title'] as String? ?? '').trim();
-                final label = relatedTitle.isEmpty
-                    ? 'Untitled note'
-                    : relatedTitle;
+                final label =
+                    relatedTitle.isEmpty ? 'Untitled note' : relatedTitle;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
