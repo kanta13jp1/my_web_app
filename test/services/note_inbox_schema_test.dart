@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _migrationPath =
-    'supabase/migrations/20260610023000_inbox_semantic_capture.sql';
+    'supabase/migrations/20260610023100_inbox_semantic_capture.sql';
 
 void main() {
   group('note inbox semantic capture schema', () {
