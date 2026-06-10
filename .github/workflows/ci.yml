@@ -83,7 +83,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSL https://deno.land/install.sh | sh
+          # deno.land は一時的な 5xx を返すことがあり、素の curl|sh だと main の
+          # deploy-prod ごと fail する (2026-06-10 run 27293741687 = 503 → exit 22 /
+          # Issue #3215)。deploy-prod.yml の deploy_function と同じ retry+backoff
+          # idiom で吸収する。一時ファイル経由にする理由: stdout パイプ直結だと
+          # curl --retry が rewind できず、切断時に途中までのスクリプトが sh に
+          # 流れる危険があるため。installer 内部の DL 失敗は外側 loop が拾う。
+          # 持続障害 (3 回 fail) は rerun に委ねる。
+          installer="$(mktemp)"
+          trap 'rm -f "$installer"' EXIT
+          for attempt in 1 2 3; do
+            if curl -fsSL --retry 3 --retry-delay 5 --retry-all-errors \
+                 -o "$installer" https://deno.land/install.sh \
+               && sh "$installer"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Deno install failed after ${attempt} attempts (deno.land transient error)"
+              exit 1
+            fi
+            echo "::warning::Deno install attempt ${attempt} failed; retrying in $((attempt * 20))s"
+            sleep $((attempt * 20))
+          done
           echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
           "$HOME/.deno/bin/deno" --version
 

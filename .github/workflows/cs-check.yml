@@ -3,7 +3,7 @@ name: CS Check (自動サポート対応)
 # 毎時実行 + 手動実行対応
 on:
   schedule:
-    - cron: "7 */2 * * *"  # 2時間ごと7分に実行
+    - cron: "7 */2 * * *"  # 2時間ごと7分 (2026-06-10 ci-audit: 毎時→2時間, 360runs/月削減)
   workflow_dispatch:       # 手動実行
 
 concurrency:

@@ -1,4 +1,4 @@
-name: Notion Mirror Sync (2-hourly)
+name: Notion Mirror Sync (hourly)
 
 # Multi-AI resilience / Win#132 part 7 (Backlog N5 消化)
 #
@@ -12,7 +12,7 @@ name: Notion Mirror Sync (2-hourly)
 
 on:
   schedule:
-    - cron: "10 */2 * * *" # 2時間ごと 10 分 (UTC) = JST の偶数時 10 分
+    - cron: "10 */2 * * *" # 2時間ごと10分 (2026-06-10 ci-audit: 毎時→2時間, 360runs/月削減)
   workflow_dispatch:
     inputs:
       offset:
