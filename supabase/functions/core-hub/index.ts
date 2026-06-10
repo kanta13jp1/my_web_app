@@ -7,6 +7,10 @@ import {
   type MemoReactionAction,
 } from "./memo_reactions.ts";
 import {
+  sendDiscordWebhook,
+  wantsDiscordSecondary,
+} from "./notification_channels.ts";
+import {
   type ExistingFeatureRequestIssue,
   type FeatureRequestCandidate,
   featureRequestCandidateKey,
@@ -764,6 +768,7 @@ serve(async (req: Request) => {
       "notification.broadcast_release",
       "system.proactive_diagnostics",
       "slack.notify",
+      "discord.notify",
     ]);
     // Anonymous-allowed actions (no auth required / page-specific cache)
     const anonymousActions = new Set(["page.share_generate"]);
@@ -1089,15 +1094,61 @@ serve(async (req: Request) => {
 
         if (!resp.ok) {
           const errBody = await resp.text();
+          const discord = await sendDiscordWebhook({
+            enabled: wantsDiscordSecondary(body),
+            webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
+            text: text || `Slack ${channel} notification failed.`,
+            username: body.discord_username ?? body.username,
+            channel,
+          });
           return json({
             error: `slack webhook failed: ${resp.status}`,
             detail: errBody.slice(0, 500),
             channel,
             envKey,
+            discord,
           }, 502);
         }
 
-        return json({ success: true, channel, envKey, status: resp.status });
+        const discord = await sendDiscordWebhook({
+          enabled: wantsDiscordSecondary(body),
+          webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
+          text: text || `Slack ${channel} notification mirrored to Discord.`,
+          username: body.discord_username ?? body.username,
+          channel,
+        });
+
+        return json({
+          success: true,
+          channel,
+          envKey,
+          status: resp.status,
+          discord,
+        });
+      }
+
+      case "discord.notify": {
+        const text = typeof body.text === "string"
+          ? body.text.trim()
+          : typeof body.message === "string"
+          ? body.message.trim()
+          : "";
+        if (!text) {
+          return json({ error: "text or message required" }, 400);
+        }
+
+        const discord = await sendDiscordWebhook({
+          enabled: true,
+          webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
+          text,
+          username: body.discord_username ?? body.username,
+          channel: typeof body.channel === "string" ? body.channel : undefined,
+        });
+
+        return json(
+          { success: discord.success, discord },
+          discord.success || discord.skipped ? 200 : 502,
+        );
       }
 
       // ---- User profile ----
