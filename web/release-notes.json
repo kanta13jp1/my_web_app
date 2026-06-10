@@ -30,6 +30,19 @@
       ],
       "changes": [
         {
+          "category": "feature",
+          "id": "pr-3218",
+          "links": [
+            {
+              "title": "PR #3218",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3218"
+            }
+          ],
+          "mergedAt": "2026-06-10T19:36:45Z",
+          "summary": "#3218 feat: add Discord secondary fallback notifications"
+        },
+        {
           "category": "automation",
           "id": "pr-3179",
           "links": [
@@ -405,19 +418,6 @@
           ],
           "mergedAt": "2026-06-09T12:06:08Z",
           "summary": "#3169 docs(onboarding): カスタマーオンボーディング設計 v1 + complete WBS a7f97791 (part 246)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3168",
-          "links": [
-            {
-              "title": "PR #3168",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3168"
-            }
-          ],
-          "mergedAt": "2026-06-09T10:08:08Z",
-          "summary": "#3168 feat(ops): On-call / インシデント対応 SOP v1 + complete WBS 8830188a (part 245)"
         }
       ],
       "date": "2026-06-10",
