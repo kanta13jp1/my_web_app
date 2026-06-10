@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-09T21:55:11Z",
+  "generated_at": "2026-06-10T21:57:47Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "89d7990a590f179ec25ca12e70e8fda87d73243c07067d5a31d104754a2a2c6a",
+          "hash": "eb0c3486b89712311cf699d8e5e2317192d1865c6ed1c8915878288cfa680a61",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -77,7 +77,7 @@
           "latest_signal": "2.1.170 / June 9, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
+          "previous_hash": "89d7990a590f179ec25ca12e70e8fda87d73243c07067d5a31d104754a2a2c6a",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -115,7 +115,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "3585d0dcebf3d7e49981d07198fd66caca4f99944fe01704fa10e619aaf6b420",
+          "previous_hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -193,7 +193,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
@@ -229,7 +229,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "9fe958dee600a799876799cf6bd13c1b17cae634f679d97b26ce317f0f9e2ba5",
+          "previous_hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
@@ -259,9 +259,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-967ff4d7f033",
+        "entry_id": "nf-8a9f3ca68c9d",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-06-09 / Codex CLI 0.139.0 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #26719 ) Tool and connector input schemas now preserve oneOf and allOf , and large schemas keep more shallow structure when compacted, improving compatibility with richer MCP... ( #27081 ) Plugin marketplace automation is more informative and responsive: codex plugin marketplace list --json now includes each marketplace source, and plugin lists can...",
+        "text": "Codex changelog 2026-06-09 / Codex app 26.608 New features Added Migrate to Codex flows for importing supported setup fr Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Kept review diff ordering consistent with the file tree. 2026-06-09 ChatGPT for iOS 1.2026.153 New features Added support for choosing a branch, creating a worktree, and running an environment setup script for new threads.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5247dbcaab221b8e184a3362acad7b7db701172624241ec604b59999e30b4872",
+          "hash": "db59274bbb0dc5cbbf85b908d5404207d021ce5553d9a1e257356879c6b2eb88",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,8 +285,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "SessionStart",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -295,11 +293,9 @@
               "Slack",
               "Linear",
               "GitHub",
-              "IDE extension",
-              "VSCode"
+              "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -316,22 +312,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-06-09 / Codex CLI 0.139.0 pre",
+          "latest_signal": "2026-06-09 / Codex app 26.608 New features Added Migrate to Codex flows for importing supported setup fr",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
+          "previous_hash": "5247dbcaab221b8e184a3362acad7b7db701172624241ec604b59999e30b4872",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "( #26719 ) Tool and connector input schemas now preserve oneOf and allOf , and large schemas keep more shallow structure when compacted, improving compatibility with richer MCP...",
-            "( #27081 ) Plugin marketplace automation is more informative and responsive: codex plugin marketplace list --json now includes each marketplace source, and plugin lists can..."
+            "Kept review diff ordering consistent with the file tree.",
+            "2026-06-09 ChatGPT for iOS 1.2026.153 New features Added support for choosing a branch, creating a worktree, and running an environment setup script for new threads."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-967ff4d7f033",
+        "entry_id": "nf-8a9f3ca68c9d",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -473,28 +469,28 @@
     },
     {
       "entry": {
-        "entry_id": "nf-32d0fae6d9ba",
+        "entry_id": "nf-2d93748cd3df",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.7 / Jun 5, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Jun 4, 2026 · Changelog Custom stores, custom tools, and auto-review for the Cursor SDK We've shipped a batch of new functionality across the TypeScript and Python SDKs. You can now choose how agent and run metadata is persisted, expose your own functions to the agent as tools, route local tool calls through auto-review, and nest subagents to...",
+        "text": "Cursor changelog 3.7 / Jun 5, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run. # Run Bugbot before you push You can now run Bugbot and Security Review with /review before pushing code.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "6e14bcba2e137dc2844191facafb2e913a7f78eee659aa6e8c5f521de1bab36b",
+          "hash": "e29025cfcfe697fcd062eba80bf5e9cc9784c9b7288cfa97d7b72063a9f8749a",
           "keyword_groups": {
             "codex-runtime": [
               "subagents"
             ],
             "integration": [
-              "MCP"
+              "MCP",
+              "GitHub"
             ],
             "quality-cost": [
               "cost",
-              "sandbox",
               "permission",
               "review",
               "CI"
@@ -510,15 +506,15 @@
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "Jun 4, 2026 · Changelog Custom stores, custom tools, and auto-review for the Cursor SDK We've shipped a batch of new functionality across the TypeScript and Python SDKs.",
-            "You can now choose how agent and run metadata is persisted, expose your own functions to the agent as tools, route local tool calls through auto-review, and nest subagents to..."
+            "Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run.",
+            "# Run Bugbot before you push You can now run Bugbot and Security Review with /review before pushing code."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-32d0fae6d9ba",
+        "entry_id": "nf-2d93748cd3df",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -544,7 +540,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "6bb1061a4f77e08bb509905c72c71050079bdd1b3b2ff78c9eeab09a676f4e96",
@@ -572,7 +568,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.85.0 / June 09, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
+          "previous_hash": "6bb1061a4f77e08bb509905c72c71050079bdd1b3b2ff78c9eeab09a676f4e96",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -679,10 +675,10 @@
   ],
   "patterns": [
     {
-      "id": "np-87b9ab2ffe3c",
+      "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 8,
+      "entry_count": 7,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -690,8 +686,8 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Codex changelog",
-        "Codex use cases"
+        "Codex use cases",
+        "Cursor changelog"
       ],
       "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },
@@ -709,28 +705,14 @@
         "Claude Code GitHub Actions"
       ],
       "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
-    },
-    {
-      "id": "np-fdf5cccc858a",
-      "company": "openai",
-      "topic": "agentic-workflows",
-      "entry_count": 2,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
-      "evidence_titles": [
-        "Codex changelog",
-        "Codex use cases"
-      ],
-      "recommended_action": "Review openai movement for competitor-monitoring follow-up."
     }
   ],
   "issue_candidates": [
     {
-      "id": "np-87b9ab2ffe3c",
+      "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 8,
+      "entry_count": 7,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -738,8 +720,8 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Codex changelog",
-        "Codex use cases"
+        "Codex use cases",
+        "Cursor changelog"
       ],
       "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },

@@ -505,6 +505,24 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-11",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-09 Alibaba Qoder 採択 / 2 day 経過 / cooldown 残 5 day / 次回 6/16 解禁). 前回 report = 6/10 (GHA static-template 可用性 + WEB版 Schedule Agent WebSearch deep-dive). EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/11 は WebSearch 主体で 6/09→6/11 delta 集約. 新規 5 シグナル = (1) **★ Anthropic 6/15 課金分離 T-4 day 確定詳細 🔴🔴** (= Interactive Pool + Agent SDK Credit Pool 2 本化 / Pro $20 / Max5x $100 / Max20x $200 / Team Standard $20-seat / Premium $100 / full API rate [Sonnet 4.6 $3/$15・Opus 4.8 $5/$25] = 従来 15-30x 補助撤廃 / 繰越なし・自動 fallback なし → クレジット枯渇で programmatic 停止 [overflow billing 手動 ON のみ例外] / 対象 = Agent SDK + `claude -p` + Claude Code GitHub Actions + 第三者 agent [OpenClaw] / 対話 Claude Code + Cowork は不変 / 自社 GHA cron 30+ + Schedule cron + daily-development cron の programmatic Claude が 6/15 以降クレジット枠消費 = 棚卸し最優先 T-4 day) / (2) **★ MoneyForward AI Cowork 7月 GA 確定再々確認 🔴** (= 経理/税務/財務/労務/法務 6 業務 / 『2030年までに AI で 150 億円』 revenue target / Claude Agent SDK + MCP 基盤 / 3 safety = ガードレール自動コンプラ + Draft & Approve + AI 監査ログ / 4/7 先行受付開始済 / 自社 6 部署 + B/S narrative 最大 overlap = 非対称防衛 = 個人 lifestyle CEO ダッシュボード) / (3) **★ Microsoft MAI-Code-1-Flash 公式裏取り完了 🔴** (= microsoft.ai 公式 = 5B active params agentic coding model / 第三者モデル distillation なし enterprise-grade clean data / GitHub Copilot + VS Code + MS stack 深統合 / Haiku 並み性能で割安 / ~10% individual user rollout / Agent 365 SDK GA = Entra+Defender+Purview single control plane / 『OpenAI 依存終焉』narrative + Build 2026 7 MAI model / 6/16 第 1 候補維持・基準 b+c 該当 [AI-TOOL-VERIFY] 2 次メディアではなく公式裏取り済) / (4) **AI dev tool fleet 統治 UI commoditize 継続 🟠** (= Windsurf→Devin Desktop rebrand 6/2 + Agent Command Center default + ACP [Agent Client Protocol] / GitHub Copilot usage-based flex billing live 6/1 + $100 Max / Cursor Teams seat pricing 刷新 + >$500M ARR / MarkTechPost 6/10 に Warp 新規参入シグナル / narrative pivot『並列 → 監査可能な並列統治』継続) / (5) **自社 dogfood = Opus 4.8 + Dynamic Workflows 🟢** (= same price + コード欠陥見逃し 4x 減 + 数百 parallel subagent 1 session + Fast mode 2.5x 速 3x 安 / Win Claude #132 fleet 中核 + [SUBAGENT-GUARD] 直接 dogfood 対象). 6/16 採択 第 1 候補 = Microsoft MAI-Code-1-Flash (= 公式裏取り完了 / 基準 b 未カバー [MS 自社製 frontier model] + 基準 c Build 2026 6/2). https://microsoft.ai/news/introducingmai-code-1-flash/",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= 6/16 第 1 候補 / microsoft.ai 公式裏取り完了 / 5B active params / 第三者 distillation なし / GitHub Copilot + VS Code 深統合 / Agent 365 SDK GA / 基準 b+c 該当 / 解禁日初日採択推奨)",
+        "Warp (= MarkTechPost 6/10 新規参入シグナル / terminal-native agentic dev / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
