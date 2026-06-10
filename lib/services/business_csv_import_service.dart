@@ -535,11 +535,25 @@ int _toInt(dynamic value) {
 }
 
 String _escapeCsv(String value) {
-  if (!value.contains(',') &&
-      !value.contains('"') &&
-      !value.contains('\n') &&
-      !value.contains('\r')) {
+  final safeValue = _neutralizeSpreadsheetFormula(value);
+  if (!safeValue.contains(',') &&
+      !safeValue.contains('"') &&
+      !safeValue.contains('\n') &&
+      !safeValue.contains('\r')) {
+    return safeValue;
+  }
+  return '"${safeValue.replaceAll('"', '""')}"';
+}
+
+String _neutralizeSpreadsheetFormula(String value) {
+  final trimmedLeft = value.trimLeft();
+  if (trimmedLeft.isEmpty) {
     return value;
   }
-  return '"${value.replaceAll('"', '""')}"';
+  if ('=+-@'.contains(trimmedLeft[0]) ||
+      value.startsWith('\t') ||
+      value.startsWith('\r')) {
+    return "'$value";
+  }
+  return value;
 }

@@ -63,6 +63,20 @@ void main() {
       expect(lines[2], contains('Bad, title'));
     });
 
+    test('neutralizes spreadsheet formulas in exported error CSV', () {
+      final result = service.dryRunRows(
+        fileName: 'business.csv',
+        rows: service.parseCsvText(
+          ['title,content', '=IMPORTXML("https://example.com"),'].join('\n'),
+        ),
+      );
+
+      final lines = const LineSplitter().convert(result.errorCsv);
+
+      expect(lines, hasLength(2));
+      expect(lines[1], contains("'=IMPORTXML"));
+    });
+
     test('reads server commit response shape', () {
       final result = BusinessCsvCommitResult.fromJson(<String, dynamic>{
         'insertedCount': 0,
