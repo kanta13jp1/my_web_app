@@ -1,16 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-09T21:55:08Z`
-- Previous check: `2026-06-08T21:55:41Z`
-- Changed/new official sources: `5`
+- Checked at: `2026-06-10T21:57:44Z`
+- Previous check: `2026-06-09T21:55:08Z`
+- Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
 - `changed` Claude Code changelog: 2.1.170 / June 9, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
-- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
-- `changed` Codex changelog: 2026-06-09 / Codex CLI 0.139.0 pre
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.85.0 / June 09, 2026
+- `changed` Codex changelog: 2026-06-09 / Codex app 26.608 New features Added Migrate to Codex flows for importing supported setup fr
+- `changed` Cursor changelog: 3.7 / Jun 5, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -40,10 +38,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-06-09 / Codex CLI 0.139.0 pre
+  - Latest signal: 2026-06-09 / Codex app 26.608 New features Added Migrate to Codex flows for importing supported setup fr
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: ( #26719 ) Tool and connector input schemas now preserve oneOf and allOf , and large schemas keep more shallow structure when compacted, improving compatibility with richer MCP...
+  - Short signal: Kept review diff ordering consistent with the file tree.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -59,7 +57,7 @@
   - Latest signal: 3.7 / Jun 5, 2026
   - Keyword groups: schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
-  - Short signal: Jun 4, 2026 · Changelog Custom stores, custom tools, and auto-review for the Cursor SDK We've shipped a batch of new functionality across the TypeScript and Python SDKs.
+  - Short signal: Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.85.0 / June 09, 2026
