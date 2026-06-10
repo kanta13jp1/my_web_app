@@ -32027,3 +32027,23 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 完了の定義 = cadence 方針の「設計・文書化」。**隔週運行の実績はまだ無いと doc 内で明言** (発効 = Cycle #1 公開 / 方針の存在 ≠ 運用実績の honest 区別)。
 - Philosophy Alignment: 原則 1 (scope/公開/起点日 = CEO) / 4 (マーケ営業部の定常発信に接続) / 5 (note は利用者価値のみ) / 6 (既存自動化の上にリズムだけ / 重い儀式なし) / 7 (継続デプロイ維持 = リスク分散 / 正直 note = 信頼資産) / 8 (出荷数・成功率は既存監視参照) / 9 (持続可能リズム + 見直し条項)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 254 = cf5e32b8a)。
+
+---
+
+### 2026-06-10 Win版#132 part 256 — ADR 系重複タスク 2 件解消 + handoff 必須化 1 行 (WBS 3e984213 + 99785f1a 完了 / /loop user 再起動 5 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 5 round 目** (part 255 merge `82b34ac05` + 39b30ef2 prod flip ✅ 確認後)。docs 系 pending を再 scan し、**ADR 系の重複 2 件**を検出: `3e984213` [Issue #1847] ADR directory 確立 + `99785f1a` [Issue #1736] ADR 文書化運用導入 — いずれも実体は **part 241 の `docs/adr/`** (README 運用ガイド + TEMPLATE + ADR 4 本 / Issue 文言の `docs/adrs/` は naming variant) で完了済みと verify。
+- #1736 の残 gap 「cross-instance-pr 必須化」のみ未明文化 → README に 1 行追記して充足させた上で両タスクを completed-by-reference 化 (part 254 dedup 規律の再適用)。
+
+**Changes**:
+- `docs/adr/README.md` に **他レーン handoff 必須ルール 1 行追記** (= ADR の Decision が L1/L2 実装を生む場合は `docs/cross-instance-prs/` handoff 起票必須 + ADR Links 記載 / AI_FLEET_SYNERGY 原則 2 の接続 / Issue #1736 の残要素充足)。
+- migration `20260610080000_wbs_complete_adr_dedup.sql` で 2 タスクを completed/100/approved 化 (completed-by-reference / 新規成果物は README 1 行のみのため achievement INSERT なし / idempotent)。
+- GitHub Issue #1847 / #1736 は **PR merge 後に根拠コメント付き close** ([ISSUE-PRECHECK] 整合 / L3 triage lane)。
+- ROADMAP part 256 エントリ (本欄 / part 255 merge hash `82b34ac05` 補記)。
+
+**Validation focus**:
+- docs-only (README 1 行 + ROADMAP) + dedup 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-255 recipe)。
+- honest dedup 原則: 重複と断定する前に **deliverable 実在 + 内容充足を per-要素 verify** (#1847 = dir+初回 entries+原則2適用 ✅ / #1736 = 運用導入 ✅ + 必須化 gap → 追記で充足してから complete / gap を無視した close はしない)。
+- Philosophy Alignment: 原則 1 (Issue close 判断根拠を可視化) / 4 (mentor = 重複作業させない) / 6 (重複再実装ゼロ = 時間資本保全) / 7 (open のまま放置された stale Issue = 負債の解消) / 8 (WBS 健全性) / 9 (プロセス持続性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 255 = 82b34ac05)。
