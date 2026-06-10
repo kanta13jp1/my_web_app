@@ -2943,7 +2943,11 @@ serve(async (req: Request) => {
     const userId = await getUserId(req);
     if (!userId) return new Response("Unauthorized", { status: 401 });
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    return handleCartesiaRealtimeWebSocket(req, admin as VoiceAiDb, userId);
+    return handleCartesiaRealtimeWebSocket(
+      req,
+      admin as unknown as VoiceAiDb,
+      userId,
+    );
   }
 
   try {
@@ -5296,7 +5300,7 @@ serve(async (req: Request) => {
         const provider = normalizeVoiceProvider(body.provider);
         const feature = String(body.feature ?? "voice_tts");
         const { policy, usage } = await reserveVoiceTtsUsage(
-          admin as VoiceAiDb,
+          admin as unknown as VoiceAiDb,
           {
             userId,
             body,
@@ -5323,7 +5327,7 @@ serve(async (req: Request) => {
         if (provider === "cartesia") {
           const session = await handleVoiceCartesiaSessionAction(
             req,
-            admin as VoiceAiDb,
+            admin as unknown as VoiceAiDb,
             userId,
           );
           return json({
@@ -5423,7 +5427,7 @@ serve(async (req: Request) => {
             Math.ceil(audioBytes.byteLength / 16000),
         );
         const { policy, usage } = await recordVoiceSttUsage(
-          admin as VoiceAiDb,
+          admin as unknown as VoiceAiDb,
           {
             userId,
             body,
@@ -5483,7 +5487,7 @@ serve(async (req: Request) => {
       case "voice.metric": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const result = await handleVoiceMetricAction(
-          admin as VoiceAiDb,
+          admin as unknown as VoiceAiDb,
           userId,
           body,
         );
@@ -5493,7 +5497,7 @@ serve(async (req: Request) => {
       case "voice.usage.summary": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const result = await handleVoiceUsageSummaryAction(
-          admin as VoiceAiDb,
+          admin as unknown as VoiceAiDb,
           userId,
         );
         return json(result);
@@ -5503,7 +5507,7 @@ serve(async (req: Request) => {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const result = await handleVoiceCartesiaSessionAction(
           req,
-          admin as VoiceAiDb,
+          admin as unknown as VoiceAiDb,
           userId,
         );
         return json(result);

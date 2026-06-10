@@ -32192,3 +32192,141 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 19 連続狙い / scripts+test+docs+migration = 非 app-code 構成)。
 - Philosophy Alignment: 原則 3-4 (mentor / verify-first が silent degradation を検出 = 部 237 系譜) / 6 (資本=時間: 既存自動化の成果を計上し重複作業回避) / 7 (regex bitrot = 負債解消) / 8 (E2E 完了 KPI) / 9 (無人運用の信頼性回復)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 262 = 0d0961645)。
+
+---
+
+### 2026-06-10 Win版#132 part 264 — GitHub Actions Node.js 20 廃止対応 (保守工程 WBS 追加→同一セッション完了 第 1 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 263 直後 / 同夜)。part 263 の deploy-prod annotation で検出した **GitHub Actions Node.js 20 deprecation (2026-06-16 強制 Node 24 切替 / 6 日前)** を、user 標準指示「企画〜保守の全工程で WBS 不足タスクをゼロに」に基づき**保守工程の不足タスクとして WBS へ追加し、同一セッションで完了**。
+- **inventory が好状態を立証**: 全 .github/ grep で Node 20 残存は composite action `setup-flutter-sdk/action.yml` の `actions/cache@v4` **1 箇所のみ** (third-party action ゼロ方針 + 他 action は checkout@v6 / setup-python@v6 / upload-artifact@v7 / github-script@v9 等すべて Node 24 系 major)。ci.yml は cache@v5 移行済だった = composite 内の取り残し。
+- **GitHub 公式 releases を read して根拠確認** (vendor docs 毎回 read の現実版): v5 = Node.js 24 runtime / runner >= 2.327.1 / with: API 不変 → @v5 bump (1 行)。既存 Issue/PR 重複なしを確認済 (Codex #3179 は無関係)。
+
+**Changes**:
+- `.github/actions/setup-flutter-sdk/action.yml` — `actions/cache@v4` → `@v5` (1 行)。
+- migration `20260610223000_wbs_add_complete_node24_actions.sql` — WBS 保守タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。
+- ROADMAP part 264 エントリ (本欄 / part 263 merge hash `34e38aca2` 補記)。
+
+**Validation focus**:
+- 「追加→即完了」の honesty: 期限 6 日前の 1 行保守を分割しない判断を migration コメントに明記 (偽の planning overhead を作らない)。
+- in-repo 実証 (ci.yml cache@v5 green 稼働) + 公式 releases 確認の 2 点 grounding で「動くはず」を排除。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 20 連続狙い / .github+migration = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = 期限付きリスクの先回り) / 6 (資本=時間: 6/16 強制切替後の障害調査コストを 1 行 bump で回避) / 7 (platform deprecation = 放置すると負債) / 8 (CI 健全性 KPI) / 9 (無人 cron 群の持続稼働)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 263 = 34e38aca2)。
+
+## Win版#132 part 216 — minimum session → v26 disk+RAM dual-channel spec ship 第 1 例 (2026-05-14 木 19:28-19:50 JST)
+
+### Summary
+
+- **Instance**: Win版 (Claude Code) part 216 (= 149 part 連続 過去最長 update)
+- **Trigger**: user direct ask 第 7 例累積 (= 「メモリ/HDD 枯渇 必ず」+「毎セッション必ず圧縮」要求)
+- **post-wrap-up escalation 第 11 例累積 過去最重 risk band 越え update**
+- **iterative ask 累積 25 layer 過去最高 update** (= v25 24 → v26 25)
+
+### Ship (= 4 件)
+
+1. **v26 disk+RAM dual-channel mandatory compression spec ship 第 1 例** (= 5 new layer YY-CCC 累積 58)
+   - Layer YY: disk-aware SessionStart hard exit (= C: < 10 GB hard exit)
+   - Layer ZZ: dev_cache multi-source 並列 cron (= Flutter pub + npm + pnpm + Dart + gradle + IDE + memory backups)
+   - Layer AAA: session disk-delta enforce (= +0.3 GB minimum / v19 disk extension)
+   - Layer BBB: worktree pruning automation (= weekly cron / 35 → 25 → 20 worktrees)
+   - Layer CCC: archive offload monthly (= memory file aging + session-delta archive)
+2. **#1495 P0 day-of FINAL ALERT ping** (= comment 4450421809 / 残 ~4h22min / extend +1d 推奨 + Codex 5/22 sprint pickup 振分)
+3. **WBS triage TOP 5 期限近順** (= #1495 P0 + #1564 P1 claim + #1724 P1 + #1950 P1 + #1640 P1 / 2-instance 振分反映)
+4. **memory file** (= project_20260514_win132_part216.md + feedback_success_20260514_part216_v26_disk_ram_dual_channel.md + MEMORY.md index)
+
+### Key proofs (= part 216 で取得した一次データ)
+
+1. **fatigue:FATIGUE → OK 自然 reset 第 1 例確証** (= ~10h gap で reset / 部 215 仮説 VERIFIED)
+2. **RAM 自然 GC 連鎖 第 1 例実証** (= 97.0→89.0→86.25% in ~15min / -10.75 pt / 揺れ range 過去最大 update **-3.58 ~ +13.0 pt/h**)
+3. **v25 Layer TT cron freshness dogfood 第 1 例確証** (= Win Task Scheduler claude* 0 matches / C: 13.22 GB CRITICAL = effectiveness <500 MB/cycle 緊急性立証)
+4. **session-delta.csv auto-firing 第 X 例累積** (= 276 rows / pretooluse 71.7 MB reclaim / fatigue OK)
+5. **partial breach 第 7 例累積** (= 86.25% / 部 213-216 連続 pattern)
+6. **POST RAM 94.11% build-up 第 X 例** (= +7.86 pt in ~4min / partial breach 強化)
+
+### Codex 5/22 sprint queue update (= 累積 62 deliverable / 3.88 件/day pace)
+
+| Day | Date | New v26 layer |
+|-----|------|---------------|
+| Day 1 | 5/22 (金) | YY (disk-aware SS) |
+| Day 2 | 5/23 (土) | ZZ (multi-source cron) |
+| Day 3 | 5/24 (日) | AAA (disk-delta enforce) |
+| Day 4 | 5/25 (月) | BBB (worktree pruning) |
+| Day 5 | 5/26 (火) | CCC (monthly archive) |
+
+### next session 候補 (= part 217+)
+
+1. **5/14 22:00+ JST OR 5/15 02:00+ JST 厳守** (= user gate / [SCHEDULE-WAKEUP] 02-06 zone 注意)
+2. RAM PRE check 第 1 (= > 90% で v24 Layer SS hard exit MUST)
+3. **#1495 P0 post-mortem comment** (= 期限到達 5/15 00:00 後 / 7d Codex 0 progress root cause)
+4. **#1495 milestone shift OR extend +1d label apply**
+5. v26 Codex impl monitor (= 5/22 sprint Day 1-5 distribution / 62 deliverable)
+6. **DISK_HYGIENE §17.26-§17.30 5 章 batch backfill 第 3 例 過去最大** (= 既存 doc 章追加 第 21-25 例 / heavy write / RAM 安全時)
+7. MEMORY.md consolidation 第 5 例 trigger (= ~30 KB 突破 / 5-step pattern 第 5 適用)
+8. UI verify [UI-VERIFY] backlog ~8 day overdue (= Playwright MCP / 4 page / RAM ≤ 85% 安全時)
+
+### Lesson
+
+- **user direct ask 月内 4 連続 = paradigm 進化 trigger 確立 pattern** (= 部 213/214/215/216)
+- **v25 cron-only paradigm の disk side 弱点 verified** (= 部 216 C: 13.22 GB CRITICAL dogfood)
+- **iterative ask 25 layer 過去最高** (= 月内 4-day interval / 100% ship rate)
+- **partial breach 第 7 例累積下 spec ship 第 1 例** = text-only spec design は heavy task 外 verified
+- **disk side full coverage 達成** = v15-v26 累積 58 layer で RAM/disk 両軸 cover
+
+### Philosophy Alignment (Win#132 part 216)
+
+- ✅ **CEO 感** (1/9): user direct ask 即応 + paradigm 進化 leadership
+- ✅ **ミッション** (2/9): v26 = Codex 5/22 sprint pipeline 強化 = mobile UAT + 動画 + AI 大学 sustainability 担保
+- ✅ **mentor** (3/9): user 「必ず」要求 文字通り respect + immediate spec ship
+- ✅ **6 部署** (4/9): architect role = 全 spec design + 2-instance hand-off 第 12 例累積
+- ✅ **商品=価値** (5/9): memory file + v26 spec = 圧縮 paradigm 強化 価値
+- ✅ **資本=時間** (6/9): text-only spec / heavy task 回避 = RAM 87% partial breach 下安全 fire
+- ✅ **KPI** (8/9): 5 deliverable + Codex sprint 累積 62 件 / 3.88 件/day pace
+- ✅ **IPO** (9/9): part 216 = 149 part 連続 過去最長 update
+- ⚠️ **資産負債** (7/9): RAM 87% + C: 13.32 GB CRITICAL = liability accumulating / v26 impl で resolution 期待
+
+**Score: 8/9 ✅** (= [PHILOSOPHY-22] threshold 7+ ✅)
+
+---
+
+### 2026-06-11 Win版#132 part 265 — dependabot pub group 週次CI失敗の恒久解消 (flutter_native_splash ignore / 保守 WBS 追加→同一セッション完了 第 2 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 264 直後 / 02:08 JST)。WBS fresh query (REST 直読) で win-owned incomplete = #1495 のみ (巨大 L2 型) を確認後、**新規流入の保守シグナル 2 件 (Issue #3209 = dependabot PR #3208 CI fail / Issue #3211 = CI Auto-Fix の pub get fail on main context)** を triage — part 262 枯渇宣言の「次の補充源 = 新規 Issue 流入」が初めて実際に発火した形。
+- **annotation (= part 233 ID-correction 系譜)**: 本 entry 直前の part 216 verbose block は、セッション開始 3 分前 (02:05 JST) に stale session 残骸 [PR #3213](https://github.com/kanta13jp1/my_web_app/pull/3213) が merge され時系列外位置 (= part 264 の後 / 2026-05-14 の内容) へ混入したもの。正本 = line 30797 付近の既存 part 216 compact entry + memory 2 file (`project_20260514_win132_part216` 系)。append-only 原則に従い削除せず本 annotation で記録し、本 PR の rebase で衝突解消。
+- **root cause を log 全文で確証**: flutter_native_splash 2.4.8 が meta ^1.18.0 を要求 vs CI Flutter stable (3.38.10) の flutter_test が meta 1.17.0 を pin → group 全体の version solving fail (PR #3208 job 80577000469)。同じ失敗が CI Auto-Fix (run 27281548713) に伝播し #3211 を生成 = **2 Issue は同一根本原因**。2026-06-02 #3057 と同一パターンの週次再発 (2 回目) → 都度対応でなく恒久対応へ。
+- **GitHub 公式 docs を verify-first** (dependabot options reference + comment commands): config file ignore が auditable な正攻法 / `@dependabot close` は同 update の再作成まで block する副作用 → 不採用 / merge 後 `@dependabot recreate` で ignore 適用後の group PR を再生成、を確認してから実装。
+
+**Changes**:
+- `.github/dependabot.yml` — pub ecosystem に ignore (flutter_native_splash `>=2.4.8`) 追加。解除条件 (CI Flutter stable が meta >=1.18.0 同梱) を YAML コメントに明記。
+- migration `20260611021500_wbs_add_complete_dependabot_pub_ignore.sql` — 保守 WBS タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。症状チケット側 WBS 2 件 (9339a406/3b5fec8d) は issue-linked のため migration では触らず Issue close → sync cron の自然 lifecycle に委ねる (part 260 準拠)。
+- ROADMAP part 265 エントリ (本欄 / part 264 merge hash `7773200e4` 補記)。
+
+**Validation focus**:
+- 「恒久」の定義: ignore は無期限放置にしない — 解除条件を dependabot.yml 内コメントで正本化し、WBS remaining_work にも followup を明記 (見えない hidden state の `@dependabot ignore` コメントコマンドを避けた理由も migration に記録)。
+- 道連れ解消の実利: supabase / supabase_flutter / test の正常 bump 3 件が次回 group PR で green になる見込み (merge 後 #3208 へ recreate コメント)。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 21 連続狙い / .github+migration+docs = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = 週次ノイズ源の根絶を先回り) / 6 (資本=時間: 毎週の workflow-failure triage コスト削減) / 7 (壊れ bump の放置 = 負債) / 8 (CI 健全性 KPI) / 9 (無人 dependabot 運用の信頼性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 264 = 7773200e4)。
+---
+
+### 2026-06-11 Win版#132 part 266 — CI Setup Deno の deno.land 一時503耐性化 (retry+backoff / 保守 WBS 追加→同一セッション完了 第 3 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 265 終了 02:40 JST の直後 / 02:50 JST)。session-start fetch 儀式 (part 265 教訓) 適用後、**新規流入 Issue #3215 ([workflow-failure] Deploy to Production (main) deno-lint)** を triage — part 265 で確立した「補充源 = 新規 workflow-failure Issue 流入」の第 2 連続発火。
+- **誤分類を実ログで是正**: handler の「deno-lint」分類に対し、run 27293741687 (part 265 merge commit `407cdc9e4`) の job 80620889988 log 確証 = `curl: (22) The requested URL returned error: 503` → 真因は ci.yml「Setup Deno」の素の `curl -fsSL https://deno.land/install.sh | sh` が deno.land 一時 503 で fail (lint エラー不在 / 直前 commit `da667bc5d` の deploy は success)。reusable ci.yml fail → deploy job skip → **part 265 の WBS migration 本番未適用が滞留**、まで波及確認。
+- **2 段対応**: ① 即時復旧 = `gh run rerun 27293741687 --failed` (一時障害仮説の検証込み / green 化で handler recovery rule が #3215 自動 close + part 265 migration 適用回復) ② 恒久対応 = Setup Deno へ retry+backoff (3 attempts / 20s,40s / curl --retry 併用)。installer を一時ファイル経由に変更し、stdout パイプ直結で curl --retry が rewind 不能 → truncated script が sh に流れる潜在ハザードも同時解消。
+- **公式 docs verify-first**: 代替案 denoland/setup-deno@v2 の action.yml (main) で `runs.using: node24` を確認 (part 264 の Node20 廃止 sweep と矛盾しない) — ただし真因 (一時 503) には retry が strict superset の最小修正であり、deploy lane への新規依存追加を避けて defer (月 2 回以上再発で L2 移行検討 / WBS remaining_work に正本化)。
+
+**Changes**:
+- `.github/workflows/ci.yml` — Setup Deno step に retry+backoff loop (deploy-prod.yml `deploy_function` と同一 repo idiom) + 一時ファイル経由インストール。
+- migration `20260611030000_wbs_add_complete_ci_deno_retry.sql` — 保守 WBS タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。症状チケット #3215 は handler recovery rule 管理のため WBS 化せず (part 265 委譲準拠)。
+- ROADMAP part 266 エントリ (本欄 / part 265 merge hash `407cdc9e4` 補記)。
+
+**Validation focus**:
+- 「耐性化」の範囲: 一時障害 (数十秒〜分オーダー) は CI 内で自己回復 / 持続障害 (3 attempts 超) は fail して rerun に委ねる — 無限 retry で障害を隠蔽しない。
+- SDLC 7 工程 gap 監査: part 254 方法論 + part 265 結論を再確認 — 全工程 open 実在 / 今回の不足 = 保守工程の本タスク 1 件 (追加→同一セッション完了)。stale docs 棚卸しは part 265 (<24h 前) の「削除 0 件が正答」維持。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 22 連続狙い / .github+migration+docs = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = deploy lane の単一 flaky 依存を先回り根絶) / 6 (資本=時間: 503 一発で rerun 人手対応するコストの削減) / 7 (deploy skip = migration 滞留という隠れ負債の検出と回復) / 8 (deploy-prod 成功率100%維持 KPI) / 9 (無人 main push 運用の信頼性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 265 = 407cdc9e4)。
+---

@@ -1,7 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # "/" は .github/workflows のみ対象。composite action は明示列挙が必要
+    # (actions/cache@v4 が Node 20 deprecation まで放置された根本原因)
+    directories:
+      - "/"
+      - "/.github/actions/setup-flutter-sdk"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -81,4 +85,11 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # flutter_native_splash >=2.4.8 は meta ^1.18.0 を要求するが、CI の
+      # Flutter stable (3.38.x) は flutter_test が meta 1.17.0 を pin しており
+      # group 全体の `flutter pub get` が version solving fail になる
+      # (Issue #3209 / #3211 / 2026-06-02 #3057 から週次再発)。
+      # 解除条件: CI の Flutter stable が meta >=1.18.0 を同梱したらこの 2 行を削除。
+      - dependency-name: "flutter_native_splash"
+        versions: [">=2.4.8"]
     rebase-strategy: "auto"
