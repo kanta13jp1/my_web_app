@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "89d7990a590f179ec25ca12e70e8fda87d73243c07067d5a31d104754a2a2c6a",
+      "hash": "eb0c3486b89712311cf699d8e5e2317192d1865c6ed1c8915878288cfa680a61",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -58,7 +58,7 @@
       "latest_signal": "2.1.170 / June 9, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
+      "previous_hash": "89d7990a590f179ec25ca12e70e8fda87d73243c07067d5a31d104754a2a2c6a",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -72,105 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
-      "keyword_groups": {
-        "codex-runtime": [
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "SessionStart",
-          "UserPromptSubmit",
-          "PostToolUse",
-          "Stop",
-          "StopFailure"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "OpenTelemetry",
-          "cost",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "schedule",
-          "cron",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
-      "name": "Claude Code hooks reference",
-      "owner": "Claude Code",
-      "previous_hash": "3585d0dcebf3d7e49981d07198fd66caca4f99944fe01704fa10e619aaf6b420",
-      "slug": "claude-code-hooks",
-      "snippets": [
-        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
-        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/hooks"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
-      "keyword_groups": {
-        "codex-runtime": [
-          "computer use"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "GitHub",
-          "Visual Studio Code"
-        ],
-        "quality-cost": [
-          "cost",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "schedule",
-          "cron",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
-      "name": "Claude Code GitHub Actions",
-      "owner": "Claude Code",
-      "previous_hash": "9fe958dee600a799876799cf6bd13c1b17cae634f679d97b26ce317f0f9e2ba5",
-      "slug": "claude-code-github-actions",
-      "snippets": [
-        "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
-        "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
-        "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/github-actions"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "5247dbcaab221b8e184a3362acad7b7db701172624241ec604b59999e30b4872",
+      "hash": "db59274bbb0dc5cbbf85b908d5404207d021ce5553d9a1e257356879c6b2eb88",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -185,8 +87,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -195,11 +95,9 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode"
+          "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -216,15 +114,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-06-09 / Codex CLI 0.139.0 pre",
+      "latest_signal": "2026-06-09 / Codex app 26.608 New features Added Migrate to Codex flows for importing supported setup fr",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
+      "previous_hash": "5247dbcaab221b8e184a3362acad7b7db701172624241ec604b59999e30b4872",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "( #26719 ) Tool and connector input schemas now preserve oneOf and allOf , and large schemas keep more shallow structure when compacted, improving compatibility with richer MCP...",
-        "( #27081 ) Plugin marketplace automation is more informative and responsive: codex plugin marketplace list --json now includes each marketplace source, and plugin lists can..."
+        "Kept review diff ordering consistent with the file tree.",
+        "2026-06-09 ChatGPT for iOS 1.2026.153 New features Added support for choosing a branch, creating a worktree, and running an environment setup script for new threads."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -233,43 +131,40 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "6bb1061a4f77e08bb509905c72c71050079bdd1b3b2ff78c9eeab09a676f4e96",
+      "hash": "e29025cfcfe697fcd062eba80bf5e9cc9784c9b7288cfa97d7b72063a9f8749a",
       "keyword_groups": {
-        "hooks": [
-          "Stop"
+        "codex-runtime": [
+          "subagents"
         ],
         "integration": [
           "MCP",
-          "GitHub",
-          "IDE extension",
-          "VSCode"
+          "GitHub"
         ],
         "quality-cost": [
           "cost",
-          "quota",
           "permission",
           "review",
           "CI"
         ],
         "schedule": [
-          "workflow"
+          "automation"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.85.0 / June 09, 2026",
-      "name": "Gemini Code Assist release notes",
-      "owner": "Gemini Code Assist",
-      "previous_hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
-      "slug": "gemini-code-assist-release-notes",
+      "latest_signal": "3.7 / Jun 5, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "6e14bcba2e137dc2844191facafb2e913a7f78eee659aa6e8c5f521de1bab36b",
+      "slug": "cursor-changelog",
       "snippets": [
-        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
-        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
-        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
+        "Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run.",
+        "# Run Bugbot before you push You can now run Bugbot and Security Review with /review before pushing code."
       ],
       "status": 200,
-      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
+      "url": "https://cursor.com/changelog"
     }
   ],
-  "checked_at": "2026-06-09T21:55:08Z",
+  "checked_at": "2026-06-10T21:57:44Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -321,13 +216,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-08T21:55:41Z",
+  "previous_checked_at": "2026-06-09T21:55:08Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "89d7990a590f179ec25ca12e70e8fda87d73243c07067d5a31d104754a2a2c6a",
+      "hash": "eb0c3486b89712311cf699d8e5e2317192d1865c6ed1c8915878288cfa680a61",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -374,7 +269,7 @@
       "latest_signal": "2.1.170 / June 9, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "9d5df7e1ab49ddeac5d19658fcd3dda32ae7ce3fa7e5ff952223790a94ab7137",
+      "previous_hash": "89d7990a590f179ec25ca12e70e8fda87d73243c07067d5a31d104754a2a2c6a",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -385,7 +280,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
@@ -425,7 +320,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "3585d0dcebf3d7e49981d07198fd66caca4f99944fe01704fa10e619aaf6b420",
+      "previous_hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -436,7 +331,7 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
@@ -472,7 +367,7 @@
       "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
       "name": "Claude Code GitHub Actions",
       "owner": "Claude Code",
-      "previous_hash": "9fe958dee600a799876799cf6bd13c1b17cae634f679d97b26ce317f0f9e2ba5",
+      "previous_hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
       "slug": "claude-code-github-actions",
       "snippets": [
         "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
@@ -486,7 +381,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "5247dbcaab221b8e184a3362acad7b7db701172624241ec604b59999e30b4872",
+      "hash": "db59274bbb0dc5cbbf85b908d5404207d021ce5553d9a1e257356879c6b2eb88",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -501,8 +396,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -511,11 +404,9 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode"
+          "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -532,15 +423,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-06-09 / Codex CLI 0.139.0 pre",
+      "latest_signal": "2026-06-09 / Codex app 26.608 New features Added Migrate to Codex flows for importing supported setup fr",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "1066ca6570ef90f6cace86840620648c6de5e2f84e2388f6938908da561c0917",
+      "previous_hash": "5247dbcaab221b8e184a3362acad7b7db701172624241ec604b59999e30b4872",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "( #26719 ) Tool and connector input schemas now preserve oneOf and allOf , and large schemas keep more shallow structure when compacted, improving compatibility with richer MCP...",
-        "( #27081 ) Plugin marketplace automation is more informative and responsive: codex plugin marketplace list --json now includes each marketplace source, and plugin lists can..."
+        "Kept review diff ordering consistent with the file tree.",
+        "2026-06-09 ChatGPT for iOS 1.2026.153 New features Added support for choosing a branch, creating a worktree, and running an environment setup script for new threads."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -615,20 +506,20 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "6e14bcba2e137dc2844191facafb2e913a7f78eee659aa6e8c5f521de1bab36b",
+      "hash": "e29025cfcfe697fcd062eba80bf5e9cc9784c9b7288cfa97d7b72063a9f8749a",
       "keyword_groups": {
         "codex-runtime": [
           "subagents"
         ],
         "integration": [
-          "MCP"
+          "MCP",
+          "GitHub"
         ],
         "quality-cost": [
           "cost",
-          "sandbox",
           "permission",
           "review",
           "CI"
@@ -644,14 +535,14 @@
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-        "Jun 4, 2026 · Changelog Custom stores, custom tools, and auto-review for the Cursor SDK We've shipped a batch of new functionality across the TypeScript and Python SDKs.",
-        "You can now choose how agent and run metadata is persisted, expose your own functions to the agent as tools, route local tool calls through auto-review, and nest subagents to..."
+        "Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run.",
+        "# Run Bugbot before you push You can now run Bugbot and Security Review with /review before pushing code."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "6bb1061a4f77e08bb509905c72c71050079bdd1b3b2ff78c9eeab09a676f4e96",
@@ -679,7 +570,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.85.0 / June 09, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "08970255dbf6a0bf8d40a94eeef48cababafd5e726aaa0817493b9bf6a11b8eb",
+      "previous_hash": "6bb1061a4f77e08bb509905c72c71050079bdd1b3b2ff78c9eeab09a676f4e96",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
