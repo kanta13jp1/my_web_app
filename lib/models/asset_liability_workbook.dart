@@ -233,6 +233,7 @@ class AssetLiabilityDebtRow {
   final double liabilityShare;
   final String priorityLabel;
   final bool paymentAmountEstimated;
+  final bool billingConfirmed;
   final bool paid;
 
   const AssetLiabilityDebtRow({
@@ -261,6 +262,7 @@ class AssetLiabilityDebtRow {
     required this.liabilityShare,
     required this.priorityLabel,
     required this.paymentAmountEstimated,
+    required this.billingConfirmed,
     required this.paid,
   });
 
@@ -653,6 +655,7 @@ class AssetLiabilityCardBillingReviewItem {
   final String? billingAccountName;
   final bool includedInBillingAccount;
   final bool directCashflowTarget;
+  final bool paid;
   final List<String> alerts;
 
   const AssetLiabilityCardBillingReviewItem({
@@ -667,6 +670,7 @@ class AssetLiabilityCardBillingReviewItem {
     required this.billingAccountName,
     required this.includedInBillingAccount,
     required this.directCashflowTarget,
+    required this.paid,
     this.alerts = const <String>[],
   });
 
@@ -952,6 +956,7 @@ class AssetLiabilityWorkbook {
           (row) =>
               row.isDirectCashflowTarget &&
               row.paymentAmountEstimated &&
+              !row.billingConfirmed &&
               row.scheduledPaymentAmount > 0 &&
               !row.paid,
         )

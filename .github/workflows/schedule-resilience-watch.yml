@@ -2,7 +2,7 @@ name: Schedule Resilience Watch
 
 on:
   schedule:
-    - cron: "22 * * * *"
+    - cron: "22 */4 * * *"
   workflow_dispatch:
     inputs:
       dry_run:

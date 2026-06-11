@@ -1188,6 +1188,7 @@ void main() {
           ),
         },
         paidAccountNames: const <String>{'kddi_provider'},
+        billingConfirmedAccountIds: const <String>{'mobit'},
         paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
         cardBillingAccountIds: const <String, String>{
           'kddi_provider': 'paypay_card',
@@ -1250,6 +1251,7 @@ void main() {
       expect(restored.annualRateEvidences['mobit']?.verified, isTrue);
       expect(row['annual_rate_evidences'], isA<Map<String, Object?>>());
       expect(restored.paidAccountNames, contains('kddi_provider'));
+      expect(restored.billingConfirmedAccountIds, contains('mobit'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
       expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
       expect(restored.cardStatementLines.single.description, 'KDDI');

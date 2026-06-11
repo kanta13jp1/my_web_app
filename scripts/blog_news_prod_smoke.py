@@ -91,7 +91,7 @@ def load_anon_key(repo_root: Path) -> str:
     if not main_dart.exists():
         return ""
     text = main_dart.read_text(encoding="utf-8", errors="replace")
-    match = re.search(r"anonKey:\s*[\r\n\s]*'([^']+)'", text)
+    match = re.search(r"(?:anonKey|publishableKey):\s*[\r\n\s]*'([^']+)'", text)
     return match.group(1).strip() if match else ""
 
 

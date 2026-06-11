@@ -73,6 +73,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/no_verify_sentinel_test.py"],
         ),
         GateCommand(
+            "deterministic PR CI gate tests",
+            [python, "scripts/check_pr_deterministic_ci_test.py"],
+        ),
+        GateCommand(
             "edge function import check",
             [python, "scripts/check_edge_function_imports.py"],
         ),

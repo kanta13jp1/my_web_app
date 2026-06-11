@@ -25,6 +25,15 @@ import {
   buildMcpClientRegistration,
 } from "../_shared/mcp_client_registration.ts";
 import {
+  buildSaasApprovalStatus,
+  externalSaasGateReason,
+  normalizeSaasApprovalDecision,
+  normalizeSaasConnectorSettings,
+  SAAS_APPROVAL_REQUEST_SOURCE,
+  SAAS_APPROVAL_SETTINGS_SOURCE,
+  type SaasApprovalDecision,
+} from "../_shared/saas_human_approval.ts";
+import {
   buildMcpFeatureRequestPayload,
   buildMcpToolCatalog,
   hasMcpWriteConfirmation,
@@ -1636,6 +1645,244 @@ async function addItem(
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
   return data;
+}
+
+async function latestHubMetadata(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+): Promise<Record<string, unknown>> {
+  const { data, error } = await admin.from("hub_data")
+    .select("metadata")
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return asRecord(data?.metadata) ?? {};
+}
+
+async function upsertLatestHubMetadata(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  meta: Record<string, unknown>,
+) {
+  const { data, error } = await admin.from("hub_data")
+    .select("id, metadata")
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+
+  const metadata = {
+    ...(asRecord(data?.metadata) ?? {}),
+    ...meta,
+    user_id: userId,
+    updated_at: new Date().toISOString(),
+  };
+  if (data?.id) {
+    const updated = await admin.from("hub_data")
+      .update({ metadata })
+      .eq("id", data.id)
+      .select("id, metadata, created_at")
+      .single();
+    if (updated.error) throw new Error(updated.error.message);
+    return updated.data;
+  }
+  return await addItem(admin, source, userId, metadata);
+}
+
+function publicSaasApprovalRequest(row: Record<string, unknown>) {
+  const metadata = asRecord(row.metadata) ?? {};
+  return {
+    id: row.id,
+    created_at: row.created_at,
+    ...metadata,
+  };
+}
+
+async function listSaasApprovalRequests(
+  admin: SupabaseClient,
+  userId: string,
+  limit = 50,
+) {
+  const { data, error } = await admin.from("hub_data")
+    .select("id, metadata, created_at")
+    .eq("source", SAAS_APPROVAL_REQUEST_SOURCE)
+    .filter("metadata->>user_id", "eq", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row: Record<string, unknown>) =>
+    publicSaasApprovalRequest(row)
+  );
+}
+
+async function getSaasApprovalSettings(
+  admin: SupabaseClient,
+  userId: string,
+) {
+  const metadata = await latestHubMetadata(
+    admin,
+    SAAS_APPROVAL_SETTINGS_SOURCE,
+    userId,
+  );
+  return {
+    team_id: normalizeText(metadata.team_id, "default"),
+    approval_required: true,
+    connector_enabled: normalizeSaasConnectorSettings(
+      metadata.connector_enabled,
+    ),
+  };
+}
+
+function bodyRequestedScopes(body: Record<string, unknown>): string[] {
+  if (Array.isArray(body.requested_scopes)) {
+    return body.requested_scopes.map((item) => normalizeText(item)).filter(
+      Boolean,
+    );
+  }
+  return ["send", "external_share"];
+}
+
+async function createSaasApprovalRequest(
+  admin: SupabaseClient,
+  userId: string,
+  input: {
+    provider: string;
+    actionKey: string;
+    actionLabel: string;
+    teamId: string;
+    preview: Record<string, unknown>;
+    payload: Record<string, unknown>;
+    requestedScopes: string[];
+    sourceAction: string;
+  },
+) {
+  const now = new Date().toISOString();
+  const item = await addItem(admin, SAAS_APPROVAL_REQUEST_SOURCE, userId, {
+    provider: input.provider,
+    action_key: input.actionKey,
+    action_label: input.actionLabel,
+    team_id: input.teamId || "default",
+    status: "pending",
+    preview: input.preview,
+    payload: input.payload,
+    requested_scopes: input.requestedScopes,
+    source_action: input.sourceAction,
+    created_by: userId,
+    created_at: now,
+    updated_at: now,
+  });
+  return publicSaasApprovalRequest(item as Record<string, unknown>);
+}
+
+async function executeApprovedSaasAction(
+  admin: SupabaseClient,
+  userId: string,
+  metadata: Record<string, unknown>,
+) {
+  const provider = normalizeText(metadata.provider);
+  const payload = asRecord(metadata.payload) ?? {};
+  if (provider !== "slack") {
+    return {
+      success: false,
+      skipped: true,
+      error: `unsupported provider: ${provider || "unknown"}`,
+    };
+  }
+
+  const config = await latestHubMetadata(admin, "slack_config", userId);
+  const webhookUrl = normalizeText(config.webhook_url);
+  if (!webhookUrl) {
+    return {
+      success: false,
+      error: "Slack webhook URL is not configured",
+    };
+  }
+
+  const text = normalizeText(payload.text, "Slack approval test");
+  const slackPayload: Record<string, unknown> = { text };
+  const channel = normalizeText(payload.channel);
+  const username = normalizeText(payload.username);
+  if (channel) slackPayload.channel = channel;
+  if (username) slackPayload.username = username;
+
+  const response = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(slackPayload),
+  });
+  const detail = await response.text();
+  return {
+    success: response.ok,
+    status: response.status,
+    detail: detail.slice(0, 500),
+  };
+}
+
+async function decideSaasApprovalRequest(
+  admin: SupabaseClient,
+  userId: string,
+  requestId: string,
+  decision: SaasApprovalDecision,
+  input: {
+    reviewNote: string;
+    revisedPayload: Record<string, unknown> | null;
+    execute: boolean;
+  },
+) {
+  const { data, error } = await admin.from("hub_data")
+    .select("id, metadata, created_at")
+    .eq("id", requestId)
+    .eq("source", SAAS_APPROVAL_REQUEST_SOURCE)
+    .filter("metadata->>user_id", "eq", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const metadata = asRecord(data.metadata) ?? {};
+  const now = new Date().toISOString();
+  const nextMetadata: Record<string, unknown> = {
+    ...metadata,
+    status: buildSaasApprovalStatus(decision),
+    decision,
+    decided_by: userId,
+    decided_at: now,
+    review_note: input.reviewNote,
+    updated_at: now,
+  };
+  if (decision === "revision_requested") {
+    nextMetadata.status = "pending";
+    nextMetadata.revision_requested_at = now;
+  }
+  if (input.revisedPayload) {
+    nextMetadata.revised_payload = input.revisedPayload;
+    nextMetadata.payload = input.revisedPayload;
+  }
+
+  if (decision === "approved" && input.execute) {
+    const execution = await executeApprovedSaasAction(
+      admin,
+      userId,
+      nextMetadata,
+    );
+    nextMetadata.execution = execution;
+    nextMetadata.execution_status = execution.success ? "sent" : "failed";
+    nextMetadata.executed_at = now;
+  }
+
+  const updated = await admin.from("hub_data")
+    .update({ metadata: nextMetadata })
+    .eq("id", data.id)
+    .select("id, metadata, created_at")
+    .single();
+  if (updated.error) throw new Error(updated.error.message);
+  return publicSaasApprovalRequest(updated.data as Record<string, unknown>);
 }
 
 type RssFeedInput = {
@@ -9676,24 +9923,57 @@ ${reportText ? `> ${reportText}` : ""}`,
 
       // ── Slack Integration ─────────────────────────────────────────────────────
       case "slack.post": {
-        const webhookUrl = Deno.env.get("SLACK_WEBHOOK_URL") ?? "";
-        if (!webhookUrl) {
-          return json({ error: "SLACK_WEBHOOK_URL not configured" }, 503);
-        }
-        const text = String(body.text ?? "");
+        const settings = await getSaasApprovalSettings(admin, userId);
+        const text = normalizeText(body.text);
         if (!text) return json({ error: "text is required" }, 400);
-        const payload: Record<string, unknown> = { text };
-        if (body.channel) payload.channel = body.channel;
-        if (body.username) payload.username = body.username;
-        const resp = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+
+        const gateReason = externalSaasGateReason({
+          connectorEnabled: settings.connector_enabled.slack,
+          humanApprovalRequired: settings.approval_required,
+          actorType: String(body.actor_type ?? "user"),
+          requestedScopes: bodyRequestedScopes(body),
         });
-        if (!resp.ok) {
-          return json({ error: `Slack API error: ${resp.status}` }, 502);
+        if (gateReason === "connector_disabled") {
+          return json({
+            success: false,
+            error: "Slack connector is disabled for this team",
+            connector: "slack",
+          }, 403);
         }
-        return json({ success: true, message: "Posted to Slack" });
+        if (gateReason === "approval_required") {
+          const payload: Record<string, unknown> = { text };
+          if (body.channel) payload.channel = body.channel;
+          if (body.username) payload.username = body.username;
+          const approval = await createSaasApprovalRequest(admin, userId, {
+            provider: "slack",
+            actionKey: "slack.post",
+            actionLabel: "Post Slack message",
+            teamId: settings.team_id,
+            preview: {
+              text,
+              channel: body.channel ?? "webhook default",
+              username: body.username ?? null,
+            },
+            payload,
+            requestedScopes: bodyRequestedScopes(body),
+            sourceAction: "slack.post",
+          });
+          return json({
+            success: false,
+            approval_required: true,
+            status: "pending",
+            approval,
+          }, 202);
+        }
+
+        const execution = await executeApprovedSaasAction(admin, userId, {
+          provider: "slack",
+          payload: { text, channel: body.channel, username: body.username },
+        });
+        return json(
+          { success: execution.success, execution },
+          execution.success ? 200 : 502,
+        );
       }
 
       case "slack.search": {
@@ -9730,63 +10010,163 @@ ${reportText ? `> ${reportText}` : ""}`,
         return json({ success: true, total: msgData?.total ?? 0, messages });
       }
       case "slack.get_config": {
-        const { data } = await admin.from("hub_data")
-          .select("metadata").eq("source", "slack_config").eq("user_id", userId)
-          .order("created_at", { ascending: false }).limit(1).maybeSingle();
-        const cfg = (data?.metadata ?? {}) as Record<string, unknown>;
+        const cfg = await latestHubMetadata(admin, "slack_config", userId);
+        const settings = await getSaasApprovalSettings(admin, userId);
+        const approvals = await listSaasApprovalRequests(admin, userId, 50);
         return json({
           success: true,
           webhook_url: cfg.webhook_url ?? "",
           triggers: cfg.triggers ?? [],
+          team_id: cfg.team_id ?? settings.team_id,
+          approval_required: settings.approval_required,
+          connector_enabled: settings.connector_enabled,
+          approvals,
         });
       }
       case "slack.configure": {
-        const existing = await admin.from("hub_data")
-          .select("id").eq("source", "slack_config").eq("user_id", userId)
-          .limit(1).maybeSingle();
-        const meta = {
+        const settings = await getSaasApprovalSettings(admin, userId);
+        const connectorEnabled = normalizeSaasConnectorSettings(
+          body.connector_enabled ?? settings.connector_enabled,
+        );
+        const teamId = normalizeText(body.team_id, settings.team_id);
+        await upsertLatestHubMetadata(admin, "slack_config", userId, {
           webhook_url: body.webhook_url,
           triggers: body.triggers ?? [],
-          updated_at: new Date().toISOString(),
-        };
-        if (existing.data?.id) {
-          await admin.from("hub_data").update({ metadata: meta }).eq(
-            "id",
-            existing.data.id,
-          );
-        } else {
-          await addItem(admin, "slack_config", userId, meta);
-        }
-        return json({ success: true });
+          team_id: teamId,
+        });
+        await upsertLatestHubMetadata(
+          admin,
+          SAAS_APPROVAL_SETTINGS_SOURCE,
+          userId,
+          {
+            team_id: teamId,
+            approval_required: true,
+            connector_enabled: connectorEnabled,
+          },
+        );
+        return json({
+          success: true,
+          team_id: teamId,
+          approval_required: true,
+          connector_enabled: connectorEnabled,
+        });
       }
       case "slack.test": {
-        const { data } = await admin.from("hub_data")
-          .select("metadata").eq("source", "slack_config").eq("user_id", userId)
-          .order("created_at", { ascending: false }).limit(1).maybeSingle();
-        const webhookUrl = String(
-          (data?.metadata as Record<string, unknown>)?.webhook_url ??
-            body.webhook_url ?? "",
-        );
-        if (!webhookUrl) {
+        const settings = await getSaasApprovalSettings(admin, userId);
+        if (!settings.connector_enabled.slack) {
           return json({
             success: false,
-            message: "Webhook URL が設定されていません",
-          });
+            error: "Slack connector is disabled for this team",
+            connector: "slack",
+          }, 403);
         }
-        const res = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: "🔔 自分株式会社 Slack通知テスト" }),
+        const text = normalizeText(
+          body.text,
+          "Slack approval test from my_web_app",
+        );
+        const gateReason = externalSaasGateReason({
+          connectorEnabled: true,
+          humanApprovalRequired: settings.approval_required,
+          actorType: String(body.actor_type ?? "user"),
+          requestedScopes: ["send", "external_share"],
+        });
+        if (gateReason === "approval_required") {
+          const approval = await createSaasApprovalRequest(admin, userId, {
+            provider: "slack",
+            actionKey: "slack.test",
+            actionLabel: "Send Slack test notification",
+            teamId: settings.team_id,
+            preview: { text, channel: "webhook default" },
+            payload: { text },
+            requestedScopes: ["send", "external_share"],
+            sourceAction: "slack.test",
+          });
+          return json({
+            success: false,
+            approval_required: true,
+            status: "pending",
+            message: "Slack test notification queued for approval",
+            approval,
+          }, 202);
+        }
+
+        const execution = await executeApprovedSaasAction(admin, userId, {
+          provider: "slack",
+          payload: { text },
         });
         return json({
-          success: res.status < 400,
-          message: res.status < 400
-            ? "テスト通知を送信しました"
-            : "送信に失敗しました",
-        });
+          success: execution.success,
+          message: execution.success
+            ? "Slack test notification sent"
+            : "Slack test notification failed",
+          execution,
+        }, execution.success ? 200 : 502);
+      }
+      case "saas_approval.list": {
+        const settings = await getSaasApprovalSettings(admin, userId);
+        const approvals = await listSaasApprovalRequests(
+          admin,
+          userId,
+          Math.min(Number(body.limit ?? 50), 100),
+        );
+        return json({ success: true, settings, approvals });
       }
 
-      // ── Legal / Harvey Integration ───────────────────────────────────────────
+      case "saas_approval.create": {
+        const provider = normalizeText(body.provider, "slack");
+        const settings = await getSaasApprovalSettings(admin, userId);
+        const connectorEnabled = normalizeSaasConnectorSettings(
+          settings.connector_enabled,
+        );
+        if (provider === "slack" && !connectorEnabled.slack) {
+          return json({
+            success: false,
+            error: "Slack connector is disabled for this team",
+          }, 403);
+        }
+        const approval = await createSaasApprovalRequest(admin, userId, {
+          provider,
+          actionKey: normalizeText(body.action_key, `${provider}.custom`),
+          actionLabel: normalizeText(body.action_label, "External SaaS action"),
+          teamId: normalizeText(body.team_id, settings.team_id),
+          preview: asRecord(body.preview) ?? {},
+          payload: asRecord(body.payload) ?? {},
+          requestedScopes: bodyRequestedScopes(body),
+          sourceAction: normalizeText(
+            body.source_action,
+            "saas_approval.create",
+          ),
+        });
+        return json({
+          success: false,
+          approval_required: true,
+          status: "pending",
+          approval,
+        }, 202);
+      }
+
+      case "saas_approval.decide": {
+        const requestId = normalizeText(body.request_id ?? body.id);
+        if (!requestId) return json({ error: "request_id is required" }, 400);
+        const decision = normalizeSaasApprovalDecision(body.decision);
+        if (!decision) return json({ error: "invalid decision" }, 400);
+        const approval = await decideSaasApprovalRequest(
+          admin,
+          userId,
+          requestId,
+          decision,
+          {
+            reviewNote: normalizeText(body.review_note),
+            revisedPayload: asRecord(body.revised_payload),
+            execute: body.execute === true,
+          },
+        );
+        if (!approval) {
+          return json({ error: "approval request not found" }, 404);
+        }
+        return json({ success: true, approval });
+      }
+
       case "legal.harvey.complete":
       case "legal-assistant.harvey.complete":
       case "legal-assistant.review": {

@@ -9,6 +9,10 @@ on:
       - "scripts/two_instance_audit.py"
   workflow_dispatch:
 
+concurrency:
+  group: two-instance-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

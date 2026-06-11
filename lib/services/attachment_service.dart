@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
 import '../main.dart';
 import '../models/attachment.dart';
+import 'direct_storage_upload_service.dart';
 
 class AttachmentService {
   static const int maxFileSize = 5 * 1024 * 1024; // 5MB
@@ -93,50 +94,43 @@ class AttachmentService {
       // ファイル情報
       final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
       final fileType = _getFileType(mimeType);
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final uploadService = DirectStorageUploadService.supabase(supabase);
 
       // ファイル名をURLセーフな形式にサニタイズ
-      final safeFileName = _sanitizeFileName(file.name);
-      final fileName = '${timestamp}_$safeFileName';
-      final filePath = '$userId/$noteId/$fileName';
+      final uploadResult = await uploadService.uploadAndInsertMetadata(
+        bucketId: 'attachments',
+        tableName: 'attachments',
+        userId: userId,
+        bytes: bytes,
+        originalFileName: file.name,
+        contentType: mimeType,
+        ownerPathSegments: <String>[noteId.toString()],
+        metadataBuilder: (final object) {
+          return <String, dynamic>{
+            'note_id': noteId,
+            'user_id': object.userId,
+            'file_name': file.name,
+            'file_path': object.storagePath,
+            'file_size': object.sizeBytes,
+            'file_type': fileType,
+            'mime_type': object.contentType,
+          };
+        },
+      );
 
       debugPrint(
         '📎 [AttachmentService] MIME type: $mimeType, file type: $fileType',
       );
-      debugPrint('📎 [AttachmentService] Upload path: $filePath');
-
-      // Supabase Storageにアップロード
-      debugPrint('📤 [AttachmentService] Uploading to Supabase Storage...');
-      await supabase.storage.from('attachments').uploadBinary(
-            filePath,
-            bytes,
-          );
-      debugPrint('✅ [AttachmentService] File uploaded to storage successfully');
-
-      // データベースに記録
       debugPrint(
-        '💾 [AttachmentService] Inserting attachment record to database...',
+        '📎 [AttachmentService] Upload path: ${uploadResult.storagePath}',
       );
-      final response = await supabase
-          .from('attachments')
-          .insert({
-            'note_id': noteId,
-            'user_id': userId,
-            'file_name': file.name,
-            'file_path': filePath,
-            'file_size': file.size,
-            'file_type': fileType,
-            'mime_type': mimeType,
-          })
-          .select()
-          .single();
 
       debugPrint(
         '✅ [AttachmentService] Attachment record inserted successfully',
       );
-      debugPrint('📎 [AttachmentService] Attachment ID: ${response['id']}');
+      debugPrint('📎 [AttachmentService] Attachment metadata inserted');
 
-      return Attachment.fromJson(response);
+      return Attachment.fromJson(uploadResult.metadataRow);
     } catch (e, stackTrace) {
       debugPrint('❌ [AttachmentService] Upload failed with error: $e');
       debugPrint('❌ [AttachmentService] Stack trace: $stackTrace');
@@ -161,28 +155,6 @@ class AttachmentService {
     } else {
       return 'other';
     }
-  }
-
-  // ファイル名をURLセーフな形式にサニタイズ
-  static String _sanitizeFileName(String fileName) {
-    // ファイル名から拡張子を分離
-    final lastDot = fileName.lastIndexOf('.');
-    final nameWithoutExt =
-        lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
-    final extension = lastDot > 0 ? fileName.substring(lastDot) : '';
-
-    // 非ASCII文字と特殊文字をアンダースコアに置換
-    // ASCII文字、数字、ハイフン、ピリオドのみ許可
-    final sanitized = nameWithoutExt
-        .replaceAll(RegExp(r'[^\x00-\x7F]'), '_') // 非ASCII文字を置換
-        .replaceAll(RegExp(r'[^\w\-.]'), '_') // 英数字、ハイフン、ピリオド以外を置換
-        .replaceAll(RegExp(r'_+'), '_') // 連続するアンダースコアを1つに
-        .replaceAll(RegExp(r'^_|_$'), ''); // 先頭と末尾のアンダースコアを削除
-
-    // サニタイズ後のファイル名が空の場合は'file'を使用
-    final safeName = sanitized.isEmpty ? 'file' : sanitized;
-
-    return '$safeName$extension';
   }
 
 // getAttachments メソッドの引数を修正

@@ -31,6 +31,7 @@ docs/
   concepts/              # wiki_compile.py が生成する Karpathy Compile 出力 (part 132)
   INDEX.md               # wiki_compile.py が生成するマスターインデックス
   cross-instance-prs/    # instance 間 task 依頼 / 規律拡散
+  adr/                   # Architecture Decision Records (= 設計判断ログ / docs/adr/README.md)
 scripts/
   wiki_compile.py        # Karpathy Compile cycle (part 132)
   memory_ingest.py       # Karpathy Ingest cycle (part 111)
@@ -60,4 +61,8 @@ web/
 - [`docs/EDGE_FUNCTION_LIST.md`](EDGE_FUNCTION_LIST.md) — EF 一覧
 - [`docs/DEVELOPMENT_ACHIEVEMENTS_FORMAT.md`](DEVELOPMENT_ACHIEVEMENTS_FORMAT.md) — migration 命名 + seed 形式
 - [`docs/SCHEDULE_TASKS.md`](SCHEDULE_TASKS.md) — cron 詳細
+- [`docs/adr/README.md`](adr/README.md) — ADR (設計判断ログ) 運用ガイド + Index
+- [`docs/PRD.md`](PRD.md) — プロダクト要件定義書 (persona / scope / 非目標 / KPI)
+- [`docs/QUARTERLY_ROADMAP.md`](QUARTERLY_ROADMAP.md) — 四半期ロードマップ (SDLC 7 工程別優先順 / WBS フェーズバランス / リスク)
+- [`docs/MVP_SCOPE.md`](MVP_SCOPE.md) — MVP 機能スコープ (コア 5 機能 / Deferred / keep / GA gate 関係)
 - [`CLAUDE.md`](../CLAUDE.md) — pointer hub

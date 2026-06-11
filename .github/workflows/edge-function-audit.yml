@@ -1,9 +1,9 @@
 name: Edge Function UI Audit (UI導線チェック)
 
-# 毎時47分 + 手動実行
+# 毎4時間47分 + 手動実行 (ci-cost-audit 2026-06-08: 毎時→毎4時間、18 runs/日削減)
 on:
   schedule:
-    - cron: "47 * * * *"
+    - cron: "47 */4 * * *"
   workflow_dispatch:
 
 concurrency:
