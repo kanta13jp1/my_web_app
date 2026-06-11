@@ -517,9 +517,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String _todayDateKey() => _dateOnly(DateTime.now());
 
-  String _yesterdayDateKey() =>
-      _dateOnly(DateTime.now().subtract(const Duration(days: 1)));
-
   DateTime _monthStart(DateTime dt) => DateTime(dt.year, dt.month, 1);
 
   DateTime _assetLiabilityStateMonth(DateTime dt) {
@@ -5209,13 +5206,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _quickUpdateAssetData(String type) async {
     final today = _todayDateKey();
     final lastDate = _lastUpdatedDates[type];
-    if (lastDate == null ||
-        lastDate == today ||
-        lastDate != _yesterdayDateKey()) {
+    if (lastDate == null || lastDate == today) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$type は昨日の記録がある場合のみ簡易更新できます')));
+      ).showSnackBar(SnackBar(content: Text('$type は過去の記録がある場合のみ簡易更新できます')));
       return;
     }
 
@@ -5231,7 +5226,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     await _recordAssetAmountForToday(
       type,
       lastAmount,
-      successMessage: '✅ $type を昨日と同額で簡易更新しました',
+      successMessage: '✅ $type を前回と同額で簡易更新しました',
     );
   }
 
@@ -18451,9 +18446,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       lastAmount = _assetData[lastDate]?[type];
     }
     final isLiability = (lastAmount ?? 0) < 0;
-    final canQuickUpdate = lastAmount != null &&
-        !isUpdatedToday &&
-        lastDate == _yesterdayDateKey();
+    final canQuickUpdate = lastAmount != null && !isUpdatedToday;
 
     final accentColor =
         isLiability ? const Color(0xFFDC2626) : const Color(0xFF0D9488);
@@ -18670,7 +18663,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           if (canQuickUpdate) ...[
             const SizedBox(height: 8),
             const Text(
-              '昨日と同額なら「同額」で素早く更新できます。',
+              '残高が変わっていなければ「同額」で前回と同じ額をすぐ記録できます。',
               style: TextStyle(
                 fontSize: 11,
                 color: Color(0xFF64748B),
