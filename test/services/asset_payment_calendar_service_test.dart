@@ -99,9 +99,8 @@ void main() {
       expect(day27!.hasSubscription, isTrue);
       expect(day27.events.single.amount, 65000);
       expect(calendar.dayFor(DateTime(2026, 6, 25))!.hasSalary, isTrue);
-      final withSubscription = calendar.days
-          .where((day) => day.hasSubscription)
-          .toList();
+      final withSubscription =
+          calendar.days.where((day) => day.hasSubscription).toList();
       expect(withSubscription, hasLength(1));
     });
 

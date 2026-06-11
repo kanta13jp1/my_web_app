@@ -7398,9 +7398,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       salaryDay: _salarySpendingSalaryDay,
     );
     final selectedDate = _calendarSelectedDate;
-    final selectedDay = selectedDate == null
-        ? null
-        : calendar.dayFor(selectedDate);
+    final selectedDay =
+        selectedDate == null ? null : calendar.dayFor(selectedDate);
     final today = DateTime.now();
     const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -7646,9 +7645,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String _formatCalendarAmount(double value) {
     if (value >= 10000) {
       final man = value / 10000;
-      final label = man >= 10
-          ? man.round().toString()
-          : man.toStringAsFixed(1);
+      final label = man >= 10 ? man.round().toString() : man.toStringAsFixed(1);
       return '$label万';
     }
     return NumberFormat('#,###').format(value.round());
