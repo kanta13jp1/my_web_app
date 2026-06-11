@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-06-11T17:15:15Z",
+  "fetched_at": "2026-06-11T19:03:28Z",
   "tickets": {
     "http_code": "200",
     "count": 0,
@@ -23,8 +23,8 @@
       "ok": true
     },
     "health-check": {
-      "code": "200",
-      "ok": true
+      "code": "000000",
+      "ok": false
     }
   }
 }
