@@ -212,23 +212,27 @@ jobs:
           # bash quoting pattern '"'"' が SQL ファイルに混入すると SQLSTATE 42601 で deploy-prod が失敗する
           FOUND=$(grep -rl "'\"\\'\"'" supabase/migrations/ 2>/dev/null || true)
           # シングルクォートのアーティファクトパターン: ' + " + ' + " + '
-          FOUND2=$(python3 -c "
-          import os, sys
+          FOUND2=$(python3 <<'PY' 2>&1
+          import os
+          import sys
+
           found = []
-          mig_dir = 'supabase/migrations'
+          mig_dir = "supabase/migrations"
           if os.path.isdir(mig_dir):
-              for f in os.listdir(mig_dir):
-                  if f.endswith('.sql'):
-                      path = os.path.join(mig_dir, f)
-                      content = open(path, encoding='utf-8', errors='replace').read()
-                      if \"'\\\"'\\\"'\" in content:
+              for filename in os.listdir(mig_dir):
+                  if filename.endswith(".sql"):
+                      path = os.path.join(mig_dir, filename)
+                      content = open(path, encoding="utf-8", errors="replace").read()
+                      if "'\"'\"'" in content:
                           found.append(path)
+
           if found:
-              print('FOUND: ' + ', '.join(found))
+              print("FOUND: " + ", ".join(found))
               sys.exit(1)
-          else:
-              print('OK: no shell quoting artifacts in migrations')
-          " 2>&1)
+
+          print("OK: no shell quoting artifacts in migrations")
+          PY
+          )
           echo "$FOUND2"
           if echo "$FOUND2" | grep -q "^FOUND:"; then
             echo "❌ bash quoting artifact '\"'\"' detected in SQL migration files"
@@ -239,6 +243,10 @@ jobs:
 
       - name: Check GitHub Actions Node runtime floor
         run: python scripts/check_github_actions_node_runtime.py
+        continue-on-error: false
+
+      - name: Check GitHub Actions inline Python safety
+        run: python scripts/check_github_actions_python_inline.py
         continue-on-error: false
 
       - name: Check formatting
