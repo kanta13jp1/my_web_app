@@ -11,6 +11,10 @@ import {
   wantsDiscordSecondary,
 } from "./notification_channels.ts";
 import {
+  externalSaasGateReason,
+  SAAS_APPROVAL_REQUEST_SOURCE,
+} from "../_shared/saas_human_approval.ts";
+import {
   type ExistingFeatureRequestIssue,
   type FeatureRequestCandidate,
   featureRequestCandidateKey,
@@ -95,6 +99,45 @@ async function deleteItem(
 
 function textValue(value: unknown, maxLength = 4000): string {
   return String(value ?? "").trim().slice(0, maxLength);
+}
+
+function coreRequestedScopes(body: Record<string, unknown>): string[] {
+  if (Array.isArray(body.requested_scopes)) {
+    return body.requested_scopes.map((item) => textValue(item, 80)).filter(
+      Boolean,
+    );
+  }
+  return ["send", "external_share"];
+}
+
+async function enqueueCoreSaasApprovalRequest(
+  admin: SupabaseClient,
+  userId: string,
+  input: {
+    provider: string;
+    actionKey: string;
+    actionLabel: string;
+    teamId: string;
+    preview: Record<string, unknown>;
+    payload: Record<string, unknown>;
+    requestedScopes: string[];
+  },
+) {
+  const now = new Date().toISOString();
+  return await addItem(admin, SAAS_APPROVAL_REQUEST_SOURCE, userId, {
+    provider: input.provider,
+    action_key: input.actionKey,
+    action_label: input.actionLabel,
+    team_id: input.teamId || "default",
+    status: "pending",
+    preview: input.preview,
+    payload: input.payload,
+    requested_scopes: input.requestedScopes,
+    source_action: input.actionKey,
+    created_by: "core-hub",
+    created_at: now,
+    updated_at: now,
+  });
 }
 
 function normalizePriority(value: unknown): "high" | "medium" | "low" {
@@ -1063,6 +1106,66 @@ serve(async (req: Request) => {
         const blocks = Array.isArray(body.blocks) ? body.blocks : null;
         if (!text && !blocks) {
           return json({ error: "text or blocks required" }, 400);
+        }
+
+        const actorType = textValue(body.actor_type, 40).toLowerCase();
+        const explicitApprovalGate = body.human_approval_required === true ||
+          body.approval_required === true ||
+          actorType === "ai" ||
+          actorType === "agent" ||
+          Array.isArray(body.requested_scopes);
+        if (explicitApprovalGate) {
+          const gateReason = externalSaasGateReason({
+            connectorEnabled: body.connector_enabled !== false,
+            humanApprovalRequired: body.human_approval_required === true ||
+              body.approval_required === true,
+            actorType,
+            requestedScopes: coreRequestedScopes(body),
+          });
+          if (gateReason === "connector_disabled") {
+            return json({
+              success: false,
+              error: "Slack connector is disabled for this team",
+              connector: "slack",
+            }, 403);
+          }
+          if (gateReason === "approval_required") {
+            const ownerUserId = textValue(
+              body.user_id ?? body.owner_user_id ?? body.approver_user_id,
+              120,
+            );
+            if (!ownerUserId) {
+              return json({
+                success: false,
+                approval_required: true,
+                error:
+                  "owner_user_id is required to queue an approval-gated Slack action",
+              }, 202);
+            }
+            const approval = await enqueueCoreSaasApprovalRequest(
+              admin,
+              ownerUserId,
+              {
+                provider: "slack",
+                actionKey: "slack.notify",
+                actionLabel: "Send Slack notification",
+                teamId: textValue(body.team_id, 120) || "default",
+                preview: {
+                  channel,
+                  text,
+                  has_blocks: blocks !== null,
+                },
+                payload: { channel, text, blocks },
+                requestedScopes: coreRequestedScopes(body),
+              },
+            );
+            return json({
+              success: false,
+              approval_required: true,
+              status: "pending",
+              approval,
+            }, 202);
+          }
         }
 
         const webhookEnvMap: Record<string, string> = {
