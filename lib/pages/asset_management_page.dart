@@ -32,13 +32,16 @@ import 'package:my_web_app/services/asset_liability_repayment_simulation_service
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
+import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
+import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
@@ -320,6 +323,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   DebtLockdownSnapshot? _debtLockdownSnapshot;
   bool _isLoadingDebtLockdown = false;
   double? _debtLockdownLoadedForDebt;
+  final KonbiniUdonChallengeService _konbiniUdonChallengeService =
+      const KonbiniUdonChallengeService();
+  KonbiniUdonChallengeSnapshot? _konbiniUdonSnapshot;
+  bool _isLoadingKonbiniUdon = false;
+  double? _konbiniUdonLoadedForDebt;
+  final AssetManagementDisplayModeStore _displayModeStore =
+      const AssetManagementDisplayModeStore();
+  AssetManagementDisplayMode _displayMode =
+      AssetManagementDisplayModeStore.defaultMode;
+  DateTime _calendarMonth = DateTime.now();
+  DateTime? _calendarSelectedDate;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
   String? _wasteTrainingAiReviewKey;
   bool _isGeneratingAssetManagementAiSummary = false;
@@ -396,6 +410,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchRecentFlows();
     _fetchSubscriptions();
     _fetchMustTasks();
+    _loadDisplayMode();
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -3608,6 +3623,374 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } finally {
       noteController.dispose();
       amountController.dispose();
+    }
+  }
+
+  void _ensureKonbiniUdonSnapshotLoaded(double remainingDebt) {
+    final loadedForDebt = _konbiniUdonLoadedForDebt;
+    if (_isLoadingKonbiniUdon) {
+      return;
+    }
+    if (loadedForDebt != null && (loadedForDebt - remainingDebt).abs() < 1) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isLoadingKonbiniUdon) {
+        return;
+      }
+      final latestLoadedDebt = _konbiniUdonLoadedForDebt;
+      if (latestLoadedDebt != null &&
+          (latestLoadedDebt - remainingDebt).abs() < 1) {
+        return;
+      }
+      _loadKonbiniUdonSnapshot(remainingDebt);
+    });
+  }
+
+  Future<void> _loadKonbiniUdonSnapshot(double remainingDebt) async {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isLoadingKonbiniUdon = true;
+    });
+
+    try {
+      final snapshot = await _konbiniUdonChallengeService.loadSnapshot(
+        remainingDebt: remainingDebt,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _konbiniUdonSnapshot = snapshot;
+        _konbiniUdonLoadedForDebt = remainingDebt;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingKonbiniUdon = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _setKonbiniUdonEnabled(
+    bool enabled,
+    double remainingDebt,
+  ) async {
+    final snapshot = await _konbiniUdonChallengeService.setEnabled(
+      enabled,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _konbiniUdonSnapshot = snapshot;
+      _konbiniUdonLoadedForDebt = remainingDebt;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          enabled ? 'うどん縛りを開始しました。完済の日まで。' : 'うどん縛りを中断しました',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmKonbiniUdonPledge(double remainingDebt) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('うどん縛りの誓い'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                KonbiniUdonChallengeService.pledgeText,
+                style: TextStyle(fontWeight: FontWeight.w700, height: 1.6),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                KonbiniUdonChallengeService.healthDisclaimer,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+                  height: 1.6,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('やめておく'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('誓う'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    await _setKonbiniUdonEnabled(true, remainingDebt);
+  }
+
+  Future<void> _toggleKonbiniUdonMeal(
+    KonbiniUdonMealSlot slot,
+    bool ateUdon,
+    double remainingDebt,
+  ) async {
+    final snapshot = await _konbiniUdonChallengeService.toggleMealSlot(
+      slot,
+      ateUdon,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _konbiniUdonSnapshot = snapshot;
+      _konbiniUdonLoadedForDebt = remainingDebt;
+    });
+  }
+
+  Future<void> _recordKonbiniUdonViolation({
+    required String note,
+    required double amount,
+    KonbiniUdonMealSlot? slot,
+    required double remainingDebt,
+  }) async {
+    final snapshot = await _konbiniUdonChallengeService.recordViolation(
+      note: note,
+      amount: amount,
+      slot: slot,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _konbiniUdonSnapshot = snapshot;
+      _konbiniUdonLoadedForDebt = remainingDebt;
+    });
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
+        const SnackBar(content: Text('うどん以外の食事を記録しました。明日また縛り直しです。')));
+  }
+
+  Future<void> _showKonbiniUdonViolationDialog(double remainingDebt) async {
+    KonbiniUdonMealSlot? selectedSlot;
+    final noteController = TextEditingController();
+    final amountController = TextEditingController();
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            title: const Text('うどん以外を食べた記録'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<KonbiniUdonMealSlot?>(
+                    initialValue: selectedSlot,
+                    decoration: const InputDecoration(
+                      labelText: 'どの食事か',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: [
+                      for (final slot in KonbiniUdonMealSlot.values)
+                        DropdownMenuItem<KonbiniUdonMealSlot?>(
+                          value: slot,
+                          child: Text('${slot.label}食'),
+                        ),
+                      const DropdownMenuItem<KonbiniUdonMealSlot?>(
+                        value: null,
+                        child: Text('間食・その他'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedSlot = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: noteController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: '何を食べたか',
+                      hintText: '例: 我慢できずに牛丼を食べた',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: '支払額（任意）',
+                      hintText: '0',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('記録'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (confirmed != true) {
+        return;
+      }
+
+      final note = noteController.text.trim();
+      if (note.isEmpty) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('何を食べたか入力してください')));
+        return;
+      }
+
+      final amount =
+          double.tryParse(amountController.text.replaceAll(',', '').trim()) ??
+              0;
+      await _recordKonbiniUdonViolation(
+        note: note,
+        amount: amount,
+        slot: selectedSlot,
+        remainingDebt: remainingDebt,
+      );
+    } finally {
+      noteController.dispose();
+      amountController.dispose();
+    }
+  }
+
+  Future<void> _showKonbiniUdonConfigDialog(double remainingDebt) async {
+    final config =
+        _konbiniUdonSnapshot?.config ?? KonbiniUdonChallengeConfig.defaults;
+    final priceController = TextEditingController(
+      text: config.udonUnitPrice.round().toString(),
+    );
+    final baselineController = TextEditingController(
+      text: config.baselineMonthlyFoodCost.round().toString(),
+    );
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('うどん縛りの前提を調整'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'コンビニうどん1食の価格（円）',
+                    helperText: 'トッピング込みの実勢価格に合わせて調整',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: baselineController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: '縛りなしの月間食費（円）',
+                    helperText: '目安: 総務省家計調査の単身世帯食料費 約45,000円',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('保存'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) {
+        return;
+      }
+
+      final price = double.tryParse(
+        priceController.text.replaceAll(',', '').trim(),
+      );
+      final baseline = double.tryParse(
+        baselineController.text.replaceAll(',', '').trim(),
+      );
+      if (price == null || baseline == null) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('数値で入力してください')));
+        return;
+      }
+
+      final snapshot = await _konbiniUdonChallengeService.updateConfig(
+        udonUnitPrice: price,
+        baselineMonthlyFoodCost: baseline,
+        remainingDebt: remainingDebt,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _konbiniUdonSnapshot = snapshot;
+        _konbiniUdonLoadedForDebt = remainingDebt;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('うどん縛りの前提を更新しました')));
+    } finally {
+      priceController.dispose();
+      baselineController.dispose();
     }
   }
 
@@ -6842,40 +7225,481 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildUnifiedEntryBanner(),
               const SizedBox(height: 16),
             ],
+            _buildDisplayModeSwitcher(),
+            const SizedBox(height: 12),
             _buildMonthlyFlowFirstCard(),
             const SizedBox(height: 16),
-            _buildSalarySpendingBreakdownCard(),
+            _buildAssetCalendarCard(assetLiabilityWorkbook),
             const SizedBox(height: 16),
+            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+              _buildSalarySpendingBreakdownCard(),
+              const SizedBox(height: 16),
+            ],
             _buildDisposableBalanceCard(),
             const SizedBox(height: 16),
             _buildMonthlyFlowPrimaryActionBar(),
             const SizedBox(height: 16),
-            _buildWasteTrainingAiCard(),
-            const SizedBox(height: 24),
-            _buildDeadlineChecklistCard(), // 締切チェックリスト
-            const SizedBox(height: 16),
-            _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
-            const SizedBox(height: 16),
+            if (_isTierVisible(AssetManagementSectionTier.full)) ...[
+              _buildWasteTrainingAiCard(),
+              const SizedBox(height: 24),
+            ],
+            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+              _buildDeadlineChecklistCard(), // 締切チェックリスト
+              const SizedBox(height: 16),
+              _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
+              const SizedBox(height: 16),
+            ],
             _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
             const SizedBox(height: 16),
-            _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
-            const SizedBox(height: 16),
-            Container(
-              key: _keyStock,
-              child: _buildAssetLiabilityCard(),
-            ), // ①②資産負債
-            const SizedBox(height: 24),
-            Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
-            const SizedBox(height: 24),
-            Container(key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
-            const SizedBox(height: 24),
-            Container(key: _keyMust, child: _buildMustTasksCard()), // ⑤必須タスク
-            const SizedBox(height: 24),
-            _buildChartCard(), // グラフ
+            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+              _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+              Container(
+                key: _keyStock,
+                child: _buildAssetLiabilityCard(),
+              ), // ①②資産負債
+              const SizedBox(height: 24),
+              Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
+              const SizedBox(height: 24),
+              Container(
+                key: _keySubs,
+                child: _buildSubscriptionCard(),
+              ), // ③固定費
+              const SizedBox(height: 24),
+              Container(
+                key: _keyMust,
+                child: _buildMustTasksCard(),
+              ), // ⑤必須タスク
+              const SizedBox(height: 24),
+            ],
+            if (_isTierVisible(AssetManagementSectionTier.full))
+              _buildChartCard(), // グラフ
           ],
         ),
       ),
     );
+  }
+
+  bool _isTierVisible(AssetManagementSectionTier tier) {
+    return AssetManagementDisplayModeStore.isTierVisible(
+      tier: tier,
+      mode: _displayMode,
+    );
+  }
+
+  Future<void> _loadDisplayMode() async {
+    final mode = await _displayModeStore.load();
+    if (!mounted || mode == _displayMode) {
+      return;
+    }
+    setState(() {
+      _displayMode = mode;
+    });
+  }
+
+  Future<void> _setDisplayMode(AssetManagementDisplayMode mode) async {
+    if (mode == _displayMode) {
+      return;
+    }
+    setState(() {
+      _displayMode = mode;
+    });
+    await _displayModeStore.save(mode);
+  }
+
+  Widget _buildDisplayModeSwitcher() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.tune, size: 18, color: Color(0xFF7C3AED)),
+                const SizedBox(width: 8),
+                const Text(
+                  '表示モード',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _displayMode.description,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final mode in AssetManagementDisplayMode.values)
+                  ChoiceChip(
+                    key: Key('asset_display_mode_${mode.name}'),
+                    selected: _displayMode == mode,
+                    onSelected: (_) => _setDisplayMode(mode),
+                    selectedColor: const Color(0xFF7C3AED),
+                    labelStyle: TextStyle(
+                      color: _displayMode == mode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                    label: Text(mode.label),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _shiftCalendarMonth(int delta) {
+    setState(() {
+      _calendarMonth = DateTime(
+        _calendarMonth.year,
+        _calendarMonth.month + delta,
+      );
+      _calendarSelectedDate = null;
+    });
+  }
+
+  Widget _buildAssetCalendarCard(AssetLiabilityWorkbook? workbook) {
+    final debtRows =
+        workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
+    final calendar = AssetPaymentCalendarService.buildMonth(
+      month: _calendarMonth,
+      flows: _recentFlows,
+      subscriptions: _subscriptionsForMonth(_calendarMonth),
+      debts: [
+        for (final row in debtRows)
+          AssetCalendarDebtInput(
+            name: row.name,
+            balance: row.balance,
+            paymentDay: row.paymentDay,
+            scheduledPaymentAmount: row.scheduledPaymentAmount,
+            isDirectCashflowTarget: row.isDirectCashflowTarget,
+          ),
+      ],
+      salaryDay: _salarySpendingSalaryDay,
+    );
+    final selectedDate = _calendarSelectedDate;
+    final selectedDay =
+        selectedDate == null ? null : calendar.dayFor(selectedDate);
+    final today = DateTime.now();
+    const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.calendar_month, color: Color(0xFF1D4ED8)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'マネーカレンダー',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  key: const Key('asset_calendar_prev_month'),
+                  tooltip: '前の月',
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () => _shiftCalendarMonth(-1),
+                ),
+                Text(
+                  DateFormat('yyyy年M月').format(calendar.month),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                IconButton(
+                  key: const Key('asset_calendar_next_month'),
+                  tooltip: '次の月',
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => _shiftCalendarMonth(1),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '日ごとの支出と、返済日・固定費・給料日のイベントをまとめて見渡せます。',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                for (final weekday in weekdayLabels)
+                  Expanded(
+                    child: Text(
+                      weekday,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            for (final week in calendar.weeks)
+              Row(
+                children: [
+                  for (final day in week)
+                    Expanded(child: _buildAssetCalendarCell(day, today)),
+                ],
+              ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: [
+                _buildCalendarLegendItem(const Color(0xFFB91C1C), '返済日'),
+                _buildCalendarLegendItem(const Color(0xFF9333EA), '固定費'),
+                _buildCalendarLegendItem(const Color(0xFF0D9488), '給料日'),
+                _buildCalendarLegendItem(const Color(0xFF2563EB), '収入'),
+              ],
+            ),
+            if (selectedDay != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                '${DateFormat('M月d日').format(selectedDay.date)} のイベント',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              if (!selectedDay.hasAnyEvent)
+                Text(
+                  'この日のイベントはありません。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                )
+              else
+                for (final event in selectedDay.events.take(10))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _calendarEventIcon(event.kind),
+                          size: 14,
+                          color: _calendarEventColor(event.kind),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            event.label,
+                            style: const TextStyle(fontSize: 12, height: 1.5),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (event.amount != null)
+                          Text(
+                            _formatYen(event.amount!),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+            ],
+            const SizedBox(height: 4),
+            Text(
+              '支出・収入は記録済みフロー(直近取得分)に基づく概算です。',
+              style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssetCalendarCell(AssetCalendarDaySummary? day, DateTime today) {
+    if (day == null) {
+      return const SizedBox(height: 54);
+    }
+    final isToday = day.date.year == today.year &&
+        day.date.month == today.month &&
+        day.date.day == today.day;
+    final selectedDate = _calendarSelectedDate;
+    final isSelected = selectedDate != null &&
+        day.date.year == selectedDate.year &&
+        day.date.month == selectedDate.month &&
+        day.date.day == selectedDate.day;
+    final markers = <Color>[
+      if (day.hasDebtPayment) const Color(0xFFB91C1C),
+      if (day.hasSubscription) const Color(0xFF9333EA),
+      if (day.hasSalary) const Color(0xFF0D9488),
+      if (day.hasIncome) const Color(0xFF2563EB),
+    ];
+
+    return InkWell(
+      key: Key('asset_calendar_day_${day.date.day}'),
+      borderRadius: BorderRadius.circular(6),
+      onTap: () {
+        setState(() {
+          _calendarSelectedDate = day.date;
+        });
+      },
+      child: Container(
+        height: 54,
+        margin: const EdgeInsets.all(1),
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
+              : null,
+          borderRadius: BorderRadius.circular(6),
+          border: isToday
+              ? Border.all(color: const Color(0xFF7C3AED), width: 1.5)
+              : null,
+        ),
+        child: Column(
+          children: [
+            Text(
+              '${day.date.day}',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                height: 1.2,
+              ),
+            ),
+            if (day.expenseTotal > 0)
+              Text(
+                _formatCalendarAmount(day.expenseTotal),
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Color(0xFFB91C1C),
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+            const Spacer(),
+            if (markers.isNotEmpty)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (final color in markers.take(4))
+                    Container(
+                      width: 5,
+                      height: 5,
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatCalendarAmount(double value) {
+    if (value >= 10000) {
+      final man = value / 10000;
+      final label = man >= 10 ? man.round().toString() : man.toStringAsFixed(1);
+      return '$label万';
+    }
+    return NumberFormat('#,###').format(value.round());
+  }
+
+  Widget _buildCalendarLegendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _calendarEventIcon(AssetCalendarEventKind kind) {
+    switch (kind) {
+      case AssetCalendarEventKind.salary:
+        return Icons.payments_outlined;
+      case AssetCalendarEventKind.debtPayment:
+        return Icons.account_balance_outlined;
+      case AssetCalendarEventKind.subscription:
+        return Icons.autorenew;
+      case AssetCalendarEventKind.expense:
+        return Icons.remove_circle_outline;
+      case AssetCalendarEventKind.income:
+        return Icons.add_circle_outline;
+    }
+  }
+
+  Color _calendarEventColor(AssetCalendarEventKind kind) {
+    switch (kind) {
+      case AssetCalendarEventKind.salary:
+        return const Color(0xFF0D9488);
+      case AssetCalendarEventKind.debtPayment:
+        return const Color(0xFFB91C1C);
+      case AssetCalendarEventKind.subscription:
+        return const Color(0xFF9333EA);
+      case AssetCalendarEventKind.expense:
+        return const Color(0xFFC05621);
+      case AssetCalendarEventKind.income:
+        return const Color(0xFF2563EB);
+    }
   }
 
   Widget _buildUnifiedEntryBanner() {
@@ -8848,6 +9672,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           );
     _ensureDebtLockdownSnapshotLoaded(totalDebt);
+    _ensureKonbiniUdonSnapshotLoaded(totalDebt);
 
     return Card(
       elevation: 2,
@@ -8903,6 +9728,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 12),
             ],
             _buildDebtLockdownPanel(totalDebt),
+            const SizedBox(height: 12),
+            _buildKonbiniUdonChallengePanel(totalDebt, workbook),
             const SizedBox(height: 12),
             _isCompact
                 ? Column(
@@ -9531,6 +10358,434 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               );
             }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKonbiniUdonChallengePanel(
+    double remainingDebt,
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    final snapshot = _konbiniUdonSnapshot;
+    final isReleased = remainingDebt <= 0;
+    final isEnabled = snapshot?.isActive == true && !isReleased;
+    final config = snapshot?.config ?? KonbiniUdonChallengeConfig.defaults;
+    final savings = KonbiniUdonChallengeService.estimateSavings(config);
+    final udonSlots = snapshot?.todayUdonSlots ?? const <KonbiniUdonMealSlot>{};
+    final recentViolations =
+        snapshot?.recentViolations ?? const <KonbiniUdonViolation>[];
+    final streakDays = snapshot?.currentStreakDays ?? 0;
+    final totalCompliantDays = snapshot?.totalCompliantDays ?? 0;
+    final cumulativeSavings = snapshot?.cumulativeSavings ?? 0;
+    final advisory = KonbiniUdonChallengeService.healthAdvisoryFor(streakDays);
+    final statusLabel = isReleased
+        ? '釈放'
+        : isEnabled
+            ? '縛り中'
+            : '未開始';
+    final statusColor = isReleased
+        ? const Color(0xFF0D9488)
+        : isEnabled
+            ? const Color(0xFFB45309)
+            : const Color(0xFF475569);
+
+    int? payoffMonthsWithUdon;
+    int? monthsSaved;
+    double? interestSaved;
+    var baselineNeverFinishes = false;
+    if (workbook != null && savings.hasSavings) {
+      final simulation =
+          _assetLiabilityRepaymentSimulationService.buildComparison(
+        workbook: workbook,
+        extraMonthlyPayment: savings.monthlySavings,
+      );
+      if (simulation.hasEligibleDebt) {
+        final udonPlan = simulation.planFor(
+          AssetLiabilityRepaymentSimulationStrategy.interestRate,
+        );
+        final baselinePlan = simulation.baselinePlanFor(
+          AssetLiabilityRepaymentSimulationStrategy.interestRate,
+        );
+        final udonMonths = udonPlan?.estimatedPayoffMonths;
+        final baselineMonths = baselinePlan?.estimatedPayoffMonths;
+        payoffMonthsWithUdon = udonMonths;
+        if (udonPlan != null && baselinePlan != null && udonMonths != null) {
+          if (baselineMonths != null) {
+            monthsSaved = baselineMonths - udonMonths;
+          } else {
+            baselineNeverFinishes = true;
+          }
+          interestSaved = baselinePlan.estimatedInterestTotal -
+              udonPlan.estimatedInterestTotal;
+        }
+      }
+    }
+
+    final advisoryIsWarning =
+        advisory.level == KonbiniUdonHealthAdvisoryLevel.warning;
+    final advisoryIsDanger =
+        advisory.level == KonbiniUdonHealthAdvisoryLevel.danger;
+    final advisoryBg = advisoryIsDanger
+        ? const Color(0xFFFEF2F2)
+        : advisoryIsWarning
+            ? const Color(0xFFFFF7ED)
+            : const Color(0xFFEFF6FF);
+    final advisoryBorder = advisoryIsDanger
+        ? const Color(0xFFFECACA)
+        : advisoryIsWarning
+            ? const Color(0xFFFED7AA)
+            : const Color(0xFFBFDBFE);
+    final advisoryFg = advisoryIsDanger
+        ? const Color(0xFFB91C1C)
+        : advisoryIsWarning
+            ? const Color(0xFFC05621)
+            : const Color(0xFF1D4ED8);
+    final advisoryIcon = advisoryIsDanger
+        ? Icons.medical_services_outlined
+        : advisoryIsWarning
+            ? Icons.warning_amber_rounded
+            : Icons.restaurant;
+
+    return Container(
+      key: const Key('konbini_udon_challenge_panel'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isReleased ? const Color(0xFFF0FDFA) : const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isReleased ? const Color(0xFF99F6E4) : const Color(0xFFFCD34D),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.ramen_dining, color: statusColor),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'うどん縛り — 完済までの獄中食',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              IconButton(
+                key: const Key('konbini_udon_config_button'),
+                tooltip: '節約前提を調整',
+                icon: const Icon(Icons.tune, size: 18),
+                onPressed: () => _showKonbiniUdonConfigDialog(remainingDebt),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isReleased
+                ? KonbiniUdonChallengeService.releaseMessage
+                : '借金を完済するまで、食事はコンビニのうどんのみ。浮いた食費(月 ${_formatYen(savings.monthlySavings)} 想定)は全額返済へ回します。',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
+            ),
+          ),
+          if (_isLoadingKonbiniUdon && snapshot == null) ...[
+            const SizedBox(height: 10),
+            const LinearProgressIndicator(minHeight: 3),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildOverviewStatChip(
+                label: '状態',
+                value: statusLabel,
+                color: statusColor,
+              ),
+              _buildOverviewStatChip(
+                label: '連続遵守',
+                value: '$streakDays日',
+                color: const Color(0xFF6366F1),
+              ),
+              _buildOverviewStatChip(
+                label: '通算遵守',
+                value: '$totalCompliantDays日',
+                color: const Color(0xFF0D9488),
+              ),
+              _buildOverviewStatChip(
+                label: '累計節約(概算)',
+                value: _formatYen(cumulativeSavings),
+                color: const Color(0xFFB45309),
+              ),
+            ],
+          ),
+          if (snapshot?.startedAt != null && !isReleased) ...[
+            const SizedBox(height: 8),
+            Text(
+              '誓約日: ${DateFormat('yyyy/MM/dd').format(snapshot!.startedAt!)}',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+          ],
+          if (isReleased && totalCompliantDays > 0) ...[
+            const SizedBox(height: 8),
+            Text(
+              '通算遵守 $totalCompliantDays日 / 概算節約 ${_formatYen(cumulativeSavings)}。よく耐えました。',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0D9488),
+                height: 1.5,
+              ),
+            ),
+          ],
+          if (!isReleased) ...[
+            const SizedBox(height: 10),
+            if (savings.hasSavings)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildRepaymentSimulationMetric(
+                    label: '月間節約見込み',
+                    value: _formatYen(savings.monthlySavings),
+                  ),
+                  if (payoffMonthsWithUdon != null)
+                    _buildRepaymentSimulationMetric(
+                      label: '縛り継続時の完済まで',
+                      value: '$payoffMonthsWithUdonヶ月',
+                    ),
+                  if (monthsSaved != null && monthsSaved > 0)
+                    _buildRepaymentSimulationMetric(
+                      label: '完済前倒し',
+                      value: '$monthsSavedヶ月',
+                    ),
+                  if (baselineNeverFinishes)
+                    _buildRepaymentSimulationMetric(
+                      label: '完済前倒し',
+                      value: '360ヶ月+ → 完済可能に',
+                    ),
+                  if (interestSaved != null && interestSaved > 0)
+                    _buildRepaymentSimulationMetric(
+                      label: '利息圧縮',
+                      value: _formatYen(interestSaved),
+                    ),
+                ],
+              )
+            else
+              Text(
+                '今の前提ではうどん縛りの節約が出ません。右上の調整ボタンから、うどん単価と月間食費の前提を見直してください。',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
+            const SizedBox(height: 12),
+            _isCompact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton.icon(
+                        key: const Key('konbini_udon_toggle_button'),
+                        onPressed: isEnabled
+                            ? () => _setKonbiniUdonEnabled(false, remainingDebt)
+                            : () => _confirmKonbiniUdonPledge(remainingDebt),
+                        icon: Icon(
+                          isEnabled ? Icons.pause_circle : Icons.ramen_dining,
+                        ),
+                        label: Text(isEnabled ? 'うどん縛りを中断' : 'うどん縛りを誓う'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: isEnabled
+                            ? () =>
+                                _showKonbiniUdonViolationDialog(remainingDebt)
+                            : null,
+                        icon: const Icon(Icons.no_food),
+                        label: const Text('うどん以外を食べた'),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          key: const Key('konbini_udon_toggle_button'),
+                          onPressed: isEnabled
+                              ? () =>
+                                  _setKonbiniUdonEnabled(false, remainingDebt)
+                              : () => _confirmKonbiniUdonPledge(remainingDebt),
+                          icon: Icon(
+                            isEnabled ? Icons.pause_circle : Icons.ramen_dining,
+                          ),
+                          label: Text(isEnabled ? 'うどん縛りを中断' : 'うどん縛りを誓う'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: isEnabled
+                            ? () =>
+                                _showKonbiniUdonViolationDialog(remainingDebt)
+                            : null,
+                        icon: const Icon(Icons.no_food),
+                        label: const Text('うどん以外を食べた'),
+                      ),
+                    ],
+                  ),
+            const SizedBox(height: 12),
+            const Text(
+              '今日の三食(うどんで完走)',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final slot in KonbiniUdonMealSlot.values)
+                  FilterChip(
+                    key: Key('konbini_udon_slot_${slot.storageId}'),
+                    selected: udonSlots.contains(slot),
+                    onSelected: isEnabled
+                        ? (value) =>
+                            _toggleKonbiniUdonMeal(slot, value, remainingDebt)
+                        : null,
+                    avatar: Icon(
+                      Icons.ramen_dining,
+                      size: 16,
+                      color: udonSlots.contains(slot)
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    selectedColor: const Color(0xFFB45309),
+                    labelStyle: TextStyle(
+                      color: udonSlots.contains(slot)
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                    label: Text('${slot.label}うどん'),
+                  ),
+              ],
+            ),
+            if (snapshot?.isTodayCompliant == true) ...[
+              const SizedBox(height: 6),
+              const Text(
+                '今日は三食うどんで完走。完済が一歩近づきました。',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0D9488),
+                  height: 1.5,
+                ),
+              ),
+            ],
+            if (advisory.level != KonbiniUdonHealthAdvisoryLevel.none) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: advisoryBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: advisoryBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(advisoryIcon, size: 16, color: advisoryFg),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            advisory.title,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: advisoryFg,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      advisory.body,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            const Text(
+              '最近のうどん違反',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            if (recentViolations.isEmpty)
+              Text(
+                isEnabled
+                    ? 'まだ違反はありません。今日もうどんで生き延びます。'
+                    : '誓いを立てると、ここにうどん以外の食事ログが溜まります。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  height: 1.5,
+                ),
+              )
+            else
+              ...recentViolations.take(3).map((violation) {
+                final amountLabel = violation.amount > 0
+                    ? ' / ${_formatYen(violation.amount)}'
+                    : '';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    '${DateFormat('MM/dd HH:mm').format(violation.createdAt)}  ${violation.mealSlotLabel}$amountLabel  ${violation.note}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      height: 1.5,
+                    ),
+                  ),
+                );
+              }),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            KonbiniUdonChallengeService.healthDisclaimer,
+            style: TextStyle(
+              fontSize: 10,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );
@@ -17714,401 +18969,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  // ④ 今月の支出と収入
-  // ignore: unused_element
-  Widget _buildFlowCardLegacy() {
-    final visibleFlows = _flowsForMonth(_selectedFlowHistoryMonth);
-    final visibleMonthLabel = _flowMonthLabel(_selectedFlowHistoryMonth);
-    final canMoveForward = !_isSameMonth(
-      _selectedFlowHistoryMonth,
-      DateTime.now(),
-    );
-    int totalIncome = 0;
-    int totalExpense = 0;
-
-    for (var item in visibleFlows) {
-      final amount = (item['amount'] as num?)?.toInt() ?? 0;
-      final actionType = item['action_type'] as String? ?? '';
-      if (actionType == 'conquer') totalIncome += amount; // 収入
-      if (actionType == 'expense') totalExpense += amount; // 支出
-    }
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.receipt_long, color: Color(0xFF6366F1)),
-                SizedBox(width: 8),
-                Text(
-                  '④収支の記録',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              'お金の流れをすべてリスト化する。表示中: $visibleMonthLabel（過去月に切替可）',
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedFlowType,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
-                      ),
-                    ),
-                    items: ['支出', '収入']
-                        .map(
-                          (String val) => DropdownMenuItem(
-                            value: val,
-                            child: Text(
-                              val,
-                              style: const TextStyle(fontSize: 13, height: 1.6),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedFlowType = val);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedFlowDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                      );
-                      if (date != null) {
-                        setState(() => _selectedFlowDate = date);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(DateFormat('MM/dd').format(_selectedFlowDate)),
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF64748B),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF475569).withValues(alpha: 0.12),
-                ),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: '前月',
-                    onPressed: () => _shiftFlowHistoryMonth(-1),
-                    icon: const Icon(Icons.chevron_left),
-                  ),
-                  Expanded(
-                    child: InkWell(
-                      onTap: _pickFlowHistoryMonth,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Column(
-                          children: [
-                            const Text(
-                              '履歴表示月',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Color(0xFF9CA3AF),
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              visibleMonthLabel,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: '翌月',
-                    onPressed:
-                        canMoveForward ? () => _shiftFlowHistoryMonth(1) : null,
-                    icon: const Icon(Icons.chevron_right),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedSource,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 8,
-                      ),
-                    ),
-                    items: _sourceOptions
-                        .map(
-                          (String source) => DropdownMenuItem(
-                            value: source,
-                            child: Text(
-                              source.replaceAll('[', '').replaceAll(']', ''),
-                              style: const TextStyle(fontSize: 13, height: 1.6),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedSource = val);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: TextField(
-                    controller: _flowMemoController,
-                    decoration: const InputDecoration(
-                      labelText: '内容',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _flowAmountController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: '金額 (円)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _recordFlow,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF64748B),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('追加'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF64748B),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        '$visibleMonthLabel 収入',
-                        style: const TextStyle(fontSize: 10, height: 1.5),
-                      ),
-                      Text(
-                        '¥${NumberFormat('#,###').format(totalIncome)}',
-                        style: const TextStyle(
-                          color: Color(0xFF065F46),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        '$visibleMonthLabel 支出',
-                        style: const TextStyle(fontSize: 10, height: 1.5),
-                      ),
-                      Text(
-                        '¥${NumberFormat('#,###').format(totalExpense)}',
-                        style: const TextStyle(
-                          color: Color(0xFF991B1B),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      const Text(
-                        '収支差額',
-                        style: TextStyle(fontSize: 10, height: 1.5),
-                      ),
-                      Text(
-                        '¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
-                        style: TextStyle(
-                          color: (totalIncome - totalExpense) >= 0
-                              ? const Color(0xFF065F46)
-                              : const Color(0xFF991B1B),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            visibleFlows.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Center(child: Text('$visibleMonthLabel の記録はありません')),
-                  )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: visibleFlows.length,
-                    itemBuilder: (context, index) {
-                      final item = visibleFlows[index];
-                      final isIncome =
-                          (item['action_type'] as String?) == 'conquer';
-                      final amount = (item['amount'] as num?)?.toInt() ?? 0;
-                      final desc = item['description']?.toString() ?? '';
-                      final date = DateTime.tryParse(
-                            item['occurred_at']?.toString() ?? '',
-                          )?.toLocal() ??
-                          _selectedFlowHistoryMonth;
-                      return ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        onTap: () => _editFlow(item),
-                        leading: Icon(
-                          isIncome ? Icons.add_circle : Icons.remove_circle,
-                          color: isIncome
-                              ? const Color(0xFF0D9488)
-                              : const Color(0xFFB91C1C),
-                          size: 20,
-                        ),
-                        title: Text(
-                          desc,
-                          style: const TextStyle(fontSize: 13, height: 1.6),
-                        ),
-                        subtitle: Text(
-                          '${DateFormat('MM/dd').format(date)} ・ タップで編集',
-                          style: const TextStyle(fontSize: 11, height: 1.5),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${isIncome ? '+' : '-'}¥${NumberFormat('#,###').format(amount)}',
-                              style: TextStyle(
-                                color: isIncome
-                                    ? const Color(0xFF0D9488)
-                                    : const Color(0xFFB91C1C),
-                                fontWeight: FontWeight.bold,
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              tooltip: '編集',
-                              visualDensity: VisualDensity.compact,
-                              icon: const Icon(Icons.edit_outlined, size: 20),
-                              color: const Color(0xFF64748B),
-                              onPressed: () => _editFlow(item),
-                            ),
-                            IconButton(
-                              tooltip: '削除',
-                              visualDensity: VisualDensity.compact,
-                              icon: const Icon(Icons.delete_outline, size: 20),
-                              color: const Color(0xFFF87171),
-                              onPressed: () => _deleteFlow(item),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ],
-        ),
       ),
     );
   }

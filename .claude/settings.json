@@ -15,7 +15,8 @@
   "env": {
     "MCP_TIMEOUT": "60000",
     "MAX_MCP_OUTPUT_TOKENS": "50000",
-    "ENABLE_MCP_TOOL_SEARCH": "true"
+    "ENABLE_MCP_TOOL_SEARCH": "true",
+    "NOTEBOOKLM_HOME": "C:\\Users\\kanta\\.notebooklm-gmail"
   },
   "statusLine": {
     "type": "command",
