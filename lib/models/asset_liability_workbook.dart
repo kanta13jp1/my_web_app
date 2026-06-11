@@ -205,6 +205,27 @@ class AssetLiabilityAccount {
   bool get isAsset => balance > 0;
   bool get isLiability => balance < 0;
   double get liabilityBalance => isLiability ? balance.abs() : 0;
+
+  AssetLiabilityAccount copyWith({int? paymentDay}) {
+    return AssetLiabilityAccount(
+      id: id,
+      name: name,
+      kind: kind,
+      balance: balance,
+      paymentDay: paymentDay ?? this.paymentDay,
+      paymentSourceAccountName: paymentSourceAccountName,
+      paymentMethod: paymentMethod,
+      paymentMethodLabel: paymentMethodLabel,
+      paymentMethodSettingSource: paymentMethodSettingSource,
+      billingAccountId: billingAccountId,
+      billingAccountName: billingAccountName,
+      includedInBillingAccount: includedInBillingAccount,
+      annualRate: annualRate,
+      minimumPaymentRate: minimumPaymentRate,
+      minimumPaymentFloor: minimumPaymentFloor,
+      fullPaymentEstimate: fullPaymentEstimate,
+    );
+  }
 }
 
 class AssetLiabilityDebtRow {

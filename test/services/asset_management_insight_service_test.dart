@@ -32,6 +32,30 @@ void main() {
       );
     });
 
+    test('clears missing payment day item once an override is entered', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'Custom Card': -10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        paymentDayOverrides: const <String, int>{'Custom Card': 27},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type == AssetManagementInsightActionType.missingPaymentDay,
+        ),
+        false,
+      );
+    });
+
     test('marks missing annual rate as an action item', () {
       final workbook = _workbook(
         debtRows: <AssetLiabilityDebtRow>[

@@ -79,6 +79,7 @@ class AssetLiabilityPlanningService {
     Map<String, double> actualPaymentAmounts = const <String, double>{},
     Map<String, String> paymentDifferenceReasons = const <String, String>{},
     Map<String, double> annualRateOverrides = const <String, double>{},
+    Map<String, int> paymentDayOverrides = const <String, int>{},
     Set<String> paidAccountNames = const <String>{},
     Set<String> billingConfirmedAccountIds = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
@@ -114,9 +115,12 @@ class AssetLiabilityPlanningService {
     final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
         .map(
-          (entry) => _classifyAccount(
-            name: entry.key.trim(),
-            balance: entry.value,
+          (entry) => _applyPaymentDayOverride(
+            account: _classifyAccount(
+              name: entry.key.trim(),
+              balance: entry.value,
+            ),
+            paymentDayOverrides: paymentDayOverrides,
           ),
         )
         .toList()
@@ -298,6 +302,22 @@ class AssetLiabilityPlanningService {
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
     );
+  }
+
+  AssetLiabilityAccount _applyPaymentDayOverride({
+    required AssetLiabilityAccount account,
+    required Map<String, int> paymentDayOverrides,
+  }) {
+    if (!account.isLiability) {
+      return account;
+    }
+    final override = paymentDayOverrides[account.id] ??
+        paymentDayOverrides[account.name.trim()] ??
+        paymentDayOverrides[account.name];
+    if (override == null || override < 1 || override > 31) {
+      return account;
+    }
+    return account.copyWith(paymentDay: override);
   }
 
   AssetLiabilityAccount _classifyAccount({

@@ -1356,5 +1356,60 @@ void main() {
       expect(kddiCashflow.cashBeforePayment, kddiCashflow.cashAfterPayment);
       expect(workbook.monthlyUnpaidPaymentTotal, rent.scheduledPaymentAmount);
     });
+
+    test('applies manual payment day override to unknown cards', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'ファミマカード': -25000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'ファミマカード': 27},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'ファミマカード',
+      );
+      expect(row.paymentDay, 27);
+      expect(
+        workbook.cashflowRows.any(
+          (cashflow) =>
+              cashflow.accountId == row.id && cashflow.paymentDate.day == 27,
+        ),
+        isTrue,
+      );
+    });
+
+    test('manual payment day override replaces the built-in default', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPayカード': -30000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'paypay_card': 15},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'paypay_card',
+      );
+      expect(row.paymentDay, 15);
+    });
+
+    test('ignores out-of-range payment day overrides', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'ファミマカード': -25000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'ファミマカード': 45},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'ファミマカード',
+      );
+      expect(row.paymentDay, isNull);
+    });
   });
 }
