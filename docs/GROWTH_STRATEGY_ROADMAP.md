@@ -32330,3 +32330,23 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - Philosophy Alignment: 原則 4 (mentor = deploy lane の単一 flaky 依存を先回り根絶) / 6 (資本=時間: 503 一発で rerun 人手対応するコストの削減) / 7 (deploy skip = migration 滞留という隠れ負債の検出と回復) / 8 (deploy-prod 成功率100%維持 KPI) / 9 (無人 main push 運用の信頼性)。7+/9 ✅。
 - commit hash: (PR merge 後に追記 / part 265 = 407cdc9e4)。
 ---
+
+### 2026-06-11 Win版#132 part 266b — NotebookLM 2 アカウント分離運用 (NOTEBOOKLM_HOME / user 訂正起点)
+
+**Summary**:
+- part 266 wrap-up の「jibun-master-brain 不存在 = CLAUDE.md stale」誤結論を **user が訂正** — 真因 = CLI login アカウント違い (CLI = k-umezawa@ml-mightylink.com / jibun-master-brain は kanta13jp@gmail.com 側に実在)。誤着地 source は `source delete -y` で除去し、memory を是正 (feedback_correction_20260611_notebooklm_account_mismatch)。
+- user 要件「両アカウント併用 (本プロジェクト = gmail / 他プロジェクト = ml-mightylink)」に対し、CLI `paths.py` を verify-first で読み **`NOTEBOOKLM_HOME` env による丸ごと分離** (storage_state.json + context.json + browser_profile) を採用。`--storage` 単独は context.json が共有され cross-contamination footgun のため不採用。
+- 構成: default `~/.notebooklm` = ml-mightylink (**無傷で維持** / env 未設定の他プロジェクトは自動的にこちら) / 新設 `~/.notebooklm-gmail` = gmail (`.claude/settings.json` env で本プロジェクトに自動適用)。
+- 実測で判明した CLI の罠 2 件を GUIDE に正本化: ① `status`/`auth check` とも login アカウント非表示 → 「notebook 不存在」はまず account 指紋 (`list`) を疑う ② `use` fail 後の `source add` は現行 context へ着地 → use 成功 verify 必須。
+
+**Changes**:
+- `.claude/settings.json` — env に `NOTEBOOKLM_HOME` 追加 (本プロジェクトの全セッションへ ambient 適用 / skill 群は無修正で済む)。
+- `CLAUDE.md` — Session ritual 行にアカウント注記 + GUIDE への pointer。
+- `docs/NOTEBOOKLM_GUIDE.md` — 「アカウント運用 — 2 アカウント分離」節新設 (分離表 + 罠 2 件 + GHA `NOTEBOOKLM_AUTH_JSON` secret の account 監査は別タスクと明記)。
+
+**Validation focus**:
+- merge 前実測: gmail home で `list` に jibun-master-brain 実在 → `use` 成功 → part 266 memory source add 成功 / default home の context (ml-mightylink notebook) 無傷。
+- 初回 login の教訓: 対話式 login (browser → ENTER) を background 実行中に hard-kill すると session 未 flush で消失 → **auto-ENTER 遅延窓 (sleep N; echo) 方式**で CLI 自身に保存させる。
+- Philosophy Alignment: 原則 3 (mentor = user 訂正の即時反映と仕組み化) / 6 (資本=時間: account 誤認 triage の再発防止) / 7 (誤着地 source = 負債の即時除去) / 8 (儀式の信頼性 KPI)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 266 = b2a9cf648)。
+---

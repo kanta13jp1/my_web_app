@@ -48,7 +48,7 @@
 
 ## Session ritual
 
-- **開始**: `~/.claude/projects/.../memory/MEMORY.md` 参照 + `notebooklm use jibun-master-brain` で過去判断確認
+- **開始**: `~/.claude/projects/.../memory/MEMORY.md` 参照 + `notebooklm use ea6cff25` (= jibun-master-brain / use は ID prefix のみ) で過去判断確認 (= NotebookLM は **kanta13jp@gmail.com 側** / `NOTEBOOKLM_HOME=~/.notebooklm-gmail` を settings.json env で自動適用。default `~/.notebooklm` = ml-mightylink 側 / 他プロジェクト用。詳細 [`docs/NOTEBOOKLM_GUIDE.md`](docs/NOTEBOOKLM_GUIDE.md))
 - **終了**: `/wrap-up` skill (= memory + NotebookLM 蓄積 + 次回 candidate 3-5 件 必須)
 - **手動 skill**: `/session-start-check` `/rule17-wf-health` `/blog-publish-cleanup` `/wrap-up`
 - **自動化**: 5 daily cron (= ai-tool-watch / safety / residuals / crosscheck / wiki-compile) + 30+ workflow
