@@ -7475,7 +7475,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 4),
             for (final week in calendar.weeks)
               Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (final day in week)
                     Expanded(child: _buildAssetCalendarCell(day, today)),
