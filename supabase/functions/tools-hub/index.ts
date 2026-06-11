@@ -1733,7 +1733,7 @@ async function getSaasApprovalSettings(
   );
   return {
     team_id: normalizeText(metadata.team_id, "default"),
-    approval_required: metadata.approval_required !== false,
+    approval_required: true,
     connector_enabled: normalizeSaasConnectorSettings(
       metadata.connector_enabled,
     ),
@@ -1856,6 +1856,10 @@ async function decideSaasApprovalRequest(
     review_note: input.reviewNote,
     updated_at: now,
   };
+  if (decision === "revision_requested") {
+    nextMetadata.status = "pending";
+    nextMetadata.revision_requested_at = now;
+  }
   if (input.revisedPayload) {
     nextMetadata.revised_payload = input.revisedPayload;
     nextMetadata.payload = input.revisedPayload;
@@ -10036,14 +10040,14 @@ ${reportText ? `> ${reportText}` : ""}`,
           userId,
           {
             team_id: teamId,
-            approval_required: body.approval_required !== false,
+            approval_required: true,
             connector_enabled: connectorEnabled,
           },
         );
         return json({
           success: true,
           team_id: teamId,
-          approval_required: body.approval_required !== false,
+          approval_required: true,
           connector_enabled: connectorEnabled,
         });
       }
@@ -10098,34 +10102,6 @@ ${reportText ? `> ${reportText}` : ""}`,
           execution,
         }, execution.success ? 200 : 502);
       }
-      case "slack.test_legacy_disabled": {
-        const { data } = await admin.from("hub_data")
-          .select("metadata").eq("source", "slack_config").eq("user_id", userId)
-          .order("created_at", { ascending: false }).limit(1).maybeSingle();
-        const webhookUrl = String(
-          (data?.metadata as Record<string, unknown>)?.webhook_url ??
-            body.webhook_url ?? "",
-        );
-        if (!webhookUrl) {
-          return json({
-            success: false,
-            message: "Webhook URL が設定されていません",
-          });
-        }
-        const res = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: "🔔 自分株式会社 Slack通知テスト" }),
-        });
-        return json({
-          success: res.status < 400,
-          message: res.status < 400
-            ? "テスト通知を送信しました"
-            : "送信に失敗しました",
-        });
-      }
-
-      // ── Legal / Harvey Integration ───────────────────────────────────────────
       case "saas_approval.list": {
         const settings = await getSaasApprovalSettings(admin, userId);
         const approvals = await listSaasApprovalRequests(

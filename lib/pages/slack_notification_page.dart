@@ -22,7 +22,6 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
   String? _successMessage;
   List<Map<String, dynamic>> _history = [];
   List<Map<String, dynamic>> _approvals = [];
-  bool _approvalRequired = true;
 
   final Map<String, bool> _triggers = {
     'task_created': true,
@@ -91,7 +90,6 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
       setState(() {
         _webhookController.text = data['webhook_url']?.toString() ?? '';
         _teamIdController.text = data['team_id']?.toString() ?? 'default';
-        _approvalRequired = data['approval_required'] != false;
 
         final savedTriggers = _asMap(data['triggers']);
         if (savedTriggers != null) {
@@ -142,7 +140,7 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
           'team_id': _teamIdController.text.trim().isEmpty
               ? 'default'
               : _teamIdController.text.trim(),
-          'approval_required': _approvalRequired,
+          'approval_required': true,
           'connector_enabled': _connectorEnabled,
         },
       );
@@ -422,11 +420,11 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                 Chip(label: Text('未承認 $pendingCount')),
               ],
             ),
-            SwitchListTile(
+            const ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('外部SaaS実行前に承認を必須にする'),
-              value: _approvalRequired,
-              onChanged: (value) => setState(() => _approvalRequired = value),
+              leading: Icon(Icons.lock_outline),
+              title: Text('外部SaaS実行前の承認'),
+              trailing: Chip(label: Text('必須')),
             ),
             const SizedBox(height: 8),
             const Text(
