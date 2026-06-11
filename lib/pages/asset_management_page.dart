@@ -39,6 +39,7 @@ import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
+import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
@@ -320,6 +321,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   DebtLockdownSnapshot? _debtLockdownSnapshot;
   bool _isLoadingDebtLockdown = false;
   double? _debtLockdownLoadedForDebt;
+  final KonbiniUdonChallengeService _konbiniUdonChallengeService =
+      const KonbiniUdonChallengeService();
+  KonbiniUdonChallengeSnapshot? _konbiniUdonSnapshot;
+  bool _isLoadingKonbiniUdon = false;
+  double? _konbiniUdonLoadedForDebt;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
   String? _wasteTrainingAiReviewKey;
   bool _isGeneratingAssetManagementAiSummary = false;
@@ -3608,6 +3614,374 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } finally {
       noteController.dispose();
       amountController.dispose();
+    }
+  }
+
+  void _ensureKonbiniUdonSnapshotLoaded(double remainingDebt) {
+    final loadedForDebt = _konbiniUdonLoadedForDebt;
+    if (_isLoadingKonbiniUdon) {
+      return;
+    }
+    if (loadedForDebt != null && (loadedForDebt - remainingDebt).abs() < 1) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isLoadingKonbiniUdon) {
+        return;
+      }
+      final latestLoadedDebt = _konbiniUdonLoadedForDebt;
+      if (latestLoadedDebt != null &&
+          (latestLoadedDebt - remainingDebt).abs() < 1) {
+        return;
+      }
+      _loadKonbiniUdonSnapshot(remainingDebt);
+    });
+  }
+
+  Future<void> _loadKonbiniUdonSnapshot(double remainingDebt) async {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isLoadingKonbiniUdon = true;
+    });
+
+    try {
+      final snapshot = await _konbiniUdonChallengeService.loadSnapshot(
+        remainingDebt: remainingDebt,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _konbiniUdonSnapshot = snapshot;
+        _konbiniUdonLoadedForDebt = remainingDebt;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingKonbiniUdon = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _setKonbiniUdonEnabled(
+    bool enabled,
+    double remainingDebt,
+  ) async {
+    final snapshot = await _konbiniUdonChallengeService.setEnabled(
+      enabled,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _konbiniUdonSnapshot = snapshot;
+      _konbiniUdonLoadedForDebt = remainingDebt;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          enabled ? 'うどん縛りを開始しました。完済の日まで。' : 'うどん縛りを中断しました',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmKonbiniUdonPledge(double remainingDebt) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('うどん縛りの誓い'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                KonbiniUdonChallengeService.pledgeText,
+                style: TextStyle(fontWeight: FontWeight.w700, height: 1.6),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                KonbiniUdonChallengeService.healthDisclaimer,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+                  height: 1.6,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('やめておく'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('誓う'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    await _setKonbiniUdonEnabled(true, remainingDebt);
+  }
+
+  Future<void> _toggleKonbiniUdonMeal(
+    KonbiniUdonMealSlot slot,
+    bool ateUdon,
+    double remainingDebt,
+  ) async {
+    final snapshot = await _konbiniUdonChallengeService.toggleMealSlot(
+      slot,
+      ateUdon,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _konbiniUdonSnapshot = snapshot;
+      _konbiniUdonLoadedForDebt = remainingDebt;
+    });
+  }
+
+  Future<void> _recordKonbiniUdonViolation({
+    required String note,
+    required double amount,
+    KonbiniUdonMealSlot? slot,
+    required double remainingDebt,
+  }) async {
+    final snapshot = await _konbiniUdonChallengeService.recordViolation(
+      note: note,
+      amount: amount,
+      slot: slot,
+      remainingDebt: remainingDebt,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _konbiniUdonSnapshot = snapshot;
+      _konbiniUdonLoadedForDebt = remainingDebt;
+    });
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
+        const SnackBar(content: Text('うどん以外の食事を記録しました。明日また縛り直しです。')));
+  }
+
+  Future<void> _showKonbiniUdonViolationDialog(double remainingDebt) async {
+    KonbiniUdonMealSlot? selectedSlot;
+    final noteController = TextEditingController();
+    final amountController = TextEditingController();
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            title: const Text('うどん以外を食べた記録'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<KonbiniUdonMealSlot?>(
+                    initialValue: selectedSlot,
+                    decoration: const InputDecoration(
+                      labelText: 'どの食事か',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: [
+                      for (final slot in KonbiniUdonMealSlot.values)
+                        DropdownMenuItem<KonbiniUdonMealSlot?>(
+                          value: slot,
+                          child: Text('${slot.label}食'),
+                        ),
+                      const DropdownMenuItem<KonbiniUdonMealSlot?>(
+                        value: null,
+                        child: Text('間食・その他'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedSlot = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: noteController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: '何を食べたか',
+                      hintText: '例: 我慢できずに牛丼を食べた',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: '支払額（任意）',
+                      hintText: '0',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('記録'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (confirmed != true) {
+        return;
+      }
+
+      final note = noteController.text.trim();
+      if (note.isEmpty) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('何を食べたか入力してください')));
+        return;
+      }
+
+      final amount =
+          double.tryParse(amountController.text.replaceAll(',', '').trim()) ??
+              0;
+      await _recordKonbiniUdonViolation(
+        note: note,
+        amount: amount,
+        slot: selectedSlot,
+        remainingDebt: remainingDebt,
+      );
+    } finally {
+      noteController.dispose();
+      amountController.dispose();
+    }
+  }
+
+  Future<void> _showKonbiniUdonConfigDialog(double remainingDebt) async {
+    final config =
+        _konbiniUdonSnapshot?.config ?? KonbiniUdonChallengeConfig.defaults;
+    final priceController = TextEditingController(
+      text: config.udonUnitPrice.round().toString(),
+    );
+    final baselineController = TextEditingController(
+      text: config.baselineMonthlyFoodCost.round().toString(),
+    );
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('うどん縛りの前提を調整'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'コンビニうどん1食の価格（円）',
+                    helperText: 'トッピング込みの実勢価格に合わせて調整',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: baselineController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: '縛りなしの月間食費（円）',
+                    helperText: '目安: 総務省家計調査の単身世帯食料費 約45,000円',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('保存'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) {
+        return;
+      }
+
+      final price = double.tryParse(
+        priceController.text.replaceAll(',', '').trim(),
+      );
+      final baseline = double.tryParse(
+        baselineController.text.replaceAll(',', '').trim(),
+      );
+      if (price == null || baseline == null) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('数値で入力してください')));
+        return;
+      }
+
+      final snapshot = await _konbiniUdonChallengeService.updateConfig(
+        udonUnitPrice: price,
+        baselineMonthlyFoodCost: baseline,
+        remainingDebt: remainingDebt,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _konbiniUdonSnapshot = snapshot;
+        _konbiniUdonLoadedForDebt = remainingDebt;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('うどん縛りの前提を更新しました')));
+    } finally {
+      priceController.dispose();
+      baselineController.dispose();
     }
   }
 
@@ -8848,6 +9222,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           );
     _ensureDebtLockdownSnapshotLoaded(totalDebt);
+    _ensureKonbiniUdonSnapshotLoaded(totalDebt);
 
     return Card(
       elevation: 2,
@@ -8903,6 +9278,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 12),
             ],
             _buildDebtLockdownPanel(totalDebt),
+            const SizedBox(height: 12),
+            _buildKonbiniUdonChallengePanel(totalDebt, workbook),
             const SizedBox(height: 12),
             _isCompact
                 ? Column(
@@ -9531,6 +9908,434 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               );
             }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKonbiniUdonChallengePanel(
+    double remainingDebt,
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    final snapshot = _konbiniUdonSnapshot;
+    final isReleased = remainingDebt <= 0;
+    final isEnabled = snapshot?.isActive == true && !isReleased;
+    final config = snapshot?.config ?? KonbiniUdonChallengeConfig.defaults;
+    final savings = KonbiniUdonChallengeService.estimateSavings(config);
+    final udonSlots = snapshot?.todayUdonSlots ?? const <KonbiniUdonMealSlot>{};
+    final recentViolations =
+        snapshot?.recentViolations ?? const <KonbiniUdonViolation>[];
+    final streakDays = snapshot?.currentStreakDays ?? 0;
+    final totalCompliantDays = snapshot?.totalCompliantDays ?? 0;
+    final cumulativeSavings = snapshot?.cumulativeSavings ?? 0;
+    final advisory = KonbiniUdonChallengeService.healthAdvisoryFor(streakDays);
+    final statusLabel = isReleased
+        ? '釈放'
+        : isEnabled
+            ? '縛り中'
+            : '未開始';
+    final statusColor = isReleased
+        ? const Color(0xFF0D9488)
+        : isEnabled
+            ? const Color(0xFFB45309)
+            : const Color(0xFF475569);
+
+    int? payoffMonthsWithUdon;
+    int? monthsSaved;
+    double? interestSaved;
+    var baselineNeverFinishes = false;
+    if (workbook != null && savings.hasSavings) {
+      final simulation =
+          _assetLiabilityRepaymentSimulationService.buildComparison(
+        workbook: workbook,
+        extraMonthlyPayment: savings.monthlySavings,
+      );
+      if (simulation.hasEligibleDebt) {
+        final udonPlan = simulation.planFor(
+          AssetLiabilityRepaymentSimulationStrategy.interestRate,
+        );
+        final baselinePlan = simulation.baselinePlanFor(
+          AssetLiabilityRepaymentSimulationStrategy.interestRate,
+        );
+        final udonMonths = udonPlan?.estimatedPayoffMonths;
+        final baselineMonths = baselinePlan?.estimatedPayoffMonths;
+        payoffMonthsWithUdon = udonMonths;
+        if (udonPlan != null && baselinePlan != null && udonMonths != null) {
+          if (baselineMonths != null) {
+            monthsSaved = baselineMonths - udonMonths;
+          } else {
+            baselineNeverFinishes = true;
+          }
+          interestSaved = baselinePlan.estimatedInterestTotal -
+              udonPlan.estimatedInterestTotal;
+        }
+      }
+    }
+
+    final advisoryIsWarning =
+        advisory.level == KonbiniUdonHealthAdvisoryLevel.warning;
+    final advisoryIsDanger =
+        advisory.level == KonbiniUdonHealthAdvisoryLevel.danger;
+    final advisoryBg = advisoryIsDanger
+        ? const Color(0xFFFEF2F2)
+        : advisoryIsWarning
+            ? const Color(0xFFFFF7ED)
+            : const Color(0xFFEFF6FF);
+    final advisoryBorder = advisoryIsDanger
+        ? const Color(0xFFFECACA)
+        : advisoryIsWarning
+            ? const Color(0xFFFED7AA)
+            : const Color(0xFFBFDBFE);
+    final advisoryFg = advisoryIsDanger
+        ? const Color(0xFFB91C1C)
+        : advisoryIsWarning
+            ? const Color(0xFFC05621)
+            : const Color(0xFF1D4ED8);
+    final advisoryIcon = advisoryIsDanger
+        ? Icons.medical_services_outlined
+        : advisoryIsWarning
+            ? Icons.warning_amber_rounded
+            : Icons.restaurant;
+
+    return Container(
+      key: const Key('konbini_udon_challenge_panel'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isReleased ? const Color(0xFFF0FDFA) : const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isReleased ? const Color(0xFF99F6E4) : const Color(0xFFFCD34D),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.ramen_dining, color: statusColor),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'うどん縛り — 完済までの獄中食',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              IconButton(
+                key: const Key('konbini_udon_config_button'),
+                tooltip: '節約前提を調整',
+                icon: const Icon(Icons.tune, size: 18),
+                onPressed: () => _showKonbiniUdonConfigDialog(remainingDebt),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isReleased
+                ? KonbiniUdonChallengeService.releaseMessage
+                : '借金を完済するまで、食事はコンビニのうどんのみ。浮いた食費(月 ${_formatYen(savings.monthlySavings)} 想定)は全額返済へ回します。',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
+            ),
+          ),
+          if (_isLoadingKonbiniUdon && snapshot == null) ...[
+            const SizedBox(height: 10),
+            const LinearProgressIndicator(minHeight: 3),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildOverviewStatChip(
+                label: '状態',
+                value: statusLabel,
+                color: statusColor,
+              ),
+              _buildOverviewStatChip(
+                label: '連続遵守',
+                value: '$streakDays日',
+                color: const Color(0xFF6366F1),
+              ),
+              _buildOverviewStatChip(
+                label: '通算遵守',
+                value: '$totalCompliantDays日',
+                color: const Color(0xFF0D9488),
+              ),
+              _buildOverviewStatChip(
+                label: '累計節約(概算)',
+                value: _formatYen(cumulativeSavings),
+                color: const Color(0xFFB45309),
+              ),
+            ],
+          ),
+          if (snapshot?.startedAt != null && !isReleased) ...[
+            const SizedBox(height: 8),
+            Text(
+              '誓約日: ${DateFormat('yyyy/MM/dd').format(snapshot!.startedAt!)}',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+          ],
+          if (isReleased && totalCompliantDays > 0) ...[
+            const SizedBox(height: 8),
+            Text(
+              '通算遵守 $totalCompliantDays日 / 概算節約 ${_formatYen(cumulativeSavings)}。よく耐えました。',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0D9488),
+                height: 1.5,
+              ),
+            ),
+          ],
+          if (!isReleased) ...[
+            const SizedBox(height: 10),
+            if (savings.hasSavings)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildRepaymentSimulationMetric(
+                    label: '月間節約見込み',
+                    value: _formatYen(savings.monthlySavings),
+                  ),
+                  if (payoffMonthsWithUdon != null)
+                    _buildRepaymentSimulationMetric(
+                      label: '縛り継続時の完済まで',
+                      value: '$payoffMonthsWithUdonヶ月',
+                    ),
+                  if (monthsSaved != null && monthsSaved > 0)
+                    _buildRepaymentSimulationMetric(
+                      label: '完済前倒し',
+                      value: '$monthsSavedヶ月',
+                    ),
+                  if (baselineNeverFinishes)
+                    _buildRepaymentSimulationMetric(
+                      label: '完済前倒し',
+                      value: '360ヶ月+ → 完済可能に',
+                    ),
+                  if (interestSaved != null && interestSaved > 0)
+                    _buildRepaymentSimulationMetric(
+                      label: '利息圧縮',
+                      value: _formatYen(interestSaved),
+                    ),
+                ],
+              )
+            else
+              Text(
+                '今の前提ではうどん縛りの節約が出ません。右上の調整ボタンから、うどん単価と月間食費の前提を見直してください。',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
+            const SizedBox(height: 12),
+            _isCompact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ElevatedButton.icon(
+                        key: const Key('konbini_udon_toggle_button'),
+                        onPressed: isEnabled
+                            ? () => _setKonbiniUdonEnabled(false, remainingDebt)
+                            : () => _confirmKonbiniUdonPledge(remainingDebt),
+                        icon: Icon(
+                          isEnabled ? Icons.pause_circle : Icons.ramen_dining,
+                        ),
+                        label: Text(isEnabled ? 'うどん縛りを中断' : 'うどん縛りを誓う'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: isEnabled
+                            ? () =>
+                                _showKonbiniUdonViolationDialog(remainingDebt)
+                            : null,
+                        icon: const Icon(Icons.no_food),
+                        label: const Text('うどん以外を食べた'),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          key: const Key('konbini_udon_toggle_button'),
+                          onPressed: isEnabled
+                              ? () =>
+                                  _setKonbiniUdonEnabled(false, remainingDebt)
+                              : () => _confirmKonbiniUdonPledge(remainingDebt),
+                          icon: Icon(
+                            isEnabled ? Icons.pause_circle : Icons.ramen_dining,
+                          ),
+                          label: Text(isEnabled ? 'うどん縛りを中断' : 'うどん縛りを誓う'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: isEnabled
+                            ? () =>
+                                _showKonbiniUdonViolationDialog(remainingDebt)
+                            : null,
+                        icon: const Icon(Icons.no_food),
+                        label: const Text('うどん以外を食べた'),
+                      ),
+                    ],
+                  ),
+            const SizedBox(height: 12),
+            const Text(
+              '今日の三食(うどんで完走)',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final slot in KonbiniUdonMealSlot.values)
+                  FilterChip(
+                    key: Key('konbini_udon_slot_${slot.storageId}'),
+                    selected: udonSlots.contains(slot),
+                    onSelected: isEnabled
+                        ? (value) =>
+                            _toggleKonbiniUdonMeal(slot, value, remainingDebt)
+                        : null,
+                    avatar: Icon(
+                      Icons.ramen_dining,
+                      size: 16,
+                      color: udonSlots.contains(slot)
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    selectedColor: const Color(0xFFB45309),
+                    labelStyle: TextStyle(
+                      color: udonSlots.contains(slot)
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                    label: Text('${slot.label}うどん'),
+                  ),
+              ],
+            ),
+            if (snapshot?.isTodayCompliant == true) ...[
+              const SizedBox(height: 6),
+              const Text(
+                '今日は三食うどんで完走。完済が一歩近づきました。',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0D9488),
+                  height: 1.5,
+                ),
+              ),
+            ],
+            if (advisory.level != KonbiniUdonHealthAdvisoryLevel.none) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: advisoryBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: advisoryBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(advisoryIcon, size: 16, color: advisoryFg),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            advisory.title,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: advisoryFg,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      advisory.body,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            const Text(
+              '最近のうどん違反',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            if (recentViolations.isEmpty)
+              Text(
+                isEnabled
+                    ? 'まだ違反はありません。今日もうどんで生き延びます。'
+                    : '誓いを立てると、ここにうどん以外の食事ログが溜まります。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  height: 1.5,
+                ),
+              )
+            else
+              ...recentViolations.take(3).map((violation) {
+                final amountLabel = violation.amount > 0
+                    ? ' / ${_formatYen(violation.amount)}'
+                    : '';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    '${DateFormat('MM/dd HH:mm').format(violation.createdAt)}  ${violation.mealSlotLabel}$amountLabel  ${violation.note}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      height: 1.5,
+                    ),
+                  ),
+                );
+              }),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            KonbiniUdonChallengeService.healthDisclaimer,
+            style: TextStyle(
+              fontSize: 10,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );
