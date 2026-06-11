@@ -137,11 +137,17 @@ void main() {
 
     test('isInvestmentLikeType', () {
       expect(
-          AssetUnknownExpenseRuleService.isInvestmentLikeType('証券口座'), isTrue);
+        AssetUnknownExpenseRuleService.isInvestmentLikeType('証券口座'),
+        isTrue,
+      );
       expect(
-          AssetUnknownExpenseRuleService.isInvestmentLikeType('NISA'), isTrue);
+        AssetUnknownExpenseRuleService.isInvestmentLikeType('NISA'),
+        isTrue,
+      );
       expect(
-          AssetUnknownExpenseRuleService.isInvestmentLikeType('現金'), isFalse);
+        AssetUnknownExpenseRuleService.isInvestmentLikeType('現金'),
+        isFalse,
+      );
     });
   });
 }
