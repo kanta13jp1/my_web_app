@@ -35,6 +35,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
+import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
@@ -6126,31 +6127,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ].join(':');
   }
 
-  bool _shouldAutoRecordUnknownExpenseFromAssetDrop({
-    required String assetType,
-    required double previousAmount,
-    required double currentAmount,
-  }) {
-    final drop = previousAmount - currentAmount;
-    if (previousAmount <= 0 || drop < 1) {
-      return false;
-    }
-    final key = assetType.toLowerCase();
-    final looksLikeInvestment = key.contains('証券') ||
-        key.contains('株') ||
-        key.contains('投資') ||
-        key.contains('nisa') ||
-        key.contains('securities') ||
-        key.contains('stock') ||
-        key.contains('crypto') ||
-        key.contains('coincheck') ||
-        key.contains('bitflyer');
-    if (looksLikeInvestment) {
-      return false;
-    }
-    return true;
-  }
-
   Future<bool> _autoRecordUnknownExpenseFromAssetDrop({
     required String assetType,
     required String dateKey,
@@ -6159,7 +6135,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null ||
-        !_shouldAutoRecordUnknownExpenseFromAssetDrop(
+        !AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
           assetType: assetType,
           previousAmount: previousAmount,
           currentAmount: currentAmount,
