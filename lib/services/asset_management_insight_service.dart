@@ -359,7 +359,7 @@ class AssetManagementInsightService {
             relatedAccountId: row.id,
             dueDate: null,
             paymentDay: null,
-            suggestedAction: '契約画面または請求明細で支払日を確認して入力してください。',
+            suggestedAction: '契約画面または請求明細で支払日を確認し、負債マスタ（支払日順）の「支払日」欄に入力してください。',
           ),
         );
       }

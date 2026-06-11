@@ -611,5 +611,42 @@ void main() {
       expect(snapshots.single.monthlyPaidPaymentTotal, 130000);
       expect(snapshots.single.overduePaymentCount, 0);
     });
+
+    test('saves and restores debt payment day overrides', () async {
+      await store.saveDebtPaymentDayOverrides(const <String, int>{
+        'famima_card': 27,
+        'paypay_card': 15,
+      });
+
+      final overrides = await store.loadDebtPaymentDayOverrides();
+
+      expect(overrides, <String, int>{'famima_card': 27, 'paypay_card': 15});
+    });
+
+    test('drops invalid debt payment day overrides on save and load', () async {
+      await store.saveDebtPaymentDayOverrides(const <String, int>{
+        'famima_card': 27,
+        'too_small': 0,
+        'too_large': 32,
+        '': 10,
+      });
+
+      final overrides = await store.loadDebtPaymentDayOverrides();
+
+      expect(overrides, <String, int>{'famima_card': 27});
+
+      expect(
+        AssetLiabilityMonthlyStateStore.decodeDebtPaymentDayOverrides(
+          '{"famima_card": 27, "junk": "abc", "out_of_range": 99}',
+        ),
+        <String, int>{'famima_card': 27},
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.decodeDebtPaymentDayOverrides(
+          '[1, 2, 3]',
+        ),
+        isEmpty,
+      );
+    });
   });
 }

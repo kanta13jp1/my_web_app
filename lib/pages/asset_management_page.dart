@@ -166,6 +166,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, double> _actualPaymentAmounts = <String, double>{};
   Map<String, String> _paymentDifferenceReasons = <String, String>{};
   Map<String, double> _annualRateOverrides = <String, double>{};
+  Map<String, int> _debtPaymentDayOverrides = <String, int>{};
+  final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   Map<String, AssetLiabilityAnnualRateEvidence> _annualRateEvidences =
       <String, AssetLiabilityAnnualRateEvidence>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
@@ -1042,6 +1044,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           await _assetLiabilityRepository.loadDefaultPaymentSources();
       final defaultCardBillingAccounts =
           await _assetLiabilityRepository.loadDefaultCardBillingAccounts();
+      final debtPaymentDayOverrides =
+          await _assetLiabilityRepository.loadDebtPaymentDayOverrides();
       final templates =
           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
@@ -1096,6 +1100,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         _defaultCardBillingAccountIds = Map<String, String>.from(
           defaultCardBillingAccounts,
+        );
+        _debtPaymentDayOverrides = Map<String, int>.from(
+          debtPaymentDayOverrides,
         );
         _monthlyIncomePlans = List<AssetLiabilityIncomePlan>.from(
           incomePlansWithTemplates,
@@ -4157,6 +4164,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       actualPaymentAmounts: _actualPaymentAmounts,
       paymentDifferenceReasons: _paymentDifferenceReasons,
       annualRateOverrides: _annualRateOverrides,
+      paymentDayOverrides: _debtPaymentDayOverrides,
       paidAccountNames: _monthlyPaidAccountNames,
       paymentSourceAccountIds: _paymentSourceAccountIds,
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
@@ -7161,6 +7169,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       actualPaymentAmounts: _actualPaymentAmounts,
       paymentDifferenceReasons: _paymentDifferenceReasons,
       annualRateOverrides: _annualRateOverrides,
+      paymentDayOverrides: _debtPaymentDayOverrides,
       paidAccountNames: _monthlyPaidAccountNames,
       billingConfirmedAccountIds: _billingConfirmedAccountIds,
       paymentSourceAccountIds: _paymentSourceAccountIds,
@@ -8096,6 +8105,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         actualPaymentAmounts: _actualPaymentAmounts,
         paymentDifferenceReasons: _paymentDifferenceReasons,
         annualRateOverrides: _annualRateOverrides,
+        paymentDayOverrides: _debtPaymentDayOverrides,
         paidAccountNames: _monthlyPaidAccountNames,
         billingConfirmedAccountIds: _billingConfirmedAccountIds,
         paymentSourceAccountIds: _paymentSourceAccountIds,
@@ -12767,6 +12777,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  String? _assetManagementActionJumpLabel(
+    AssetManagementInsightActionItem item,
+  ) {
+    final accountId = item.relatedAccountId;
+    if (accountId == null || accountId.trim().isEmpty) {
+      return null;
+    }
+    return switch (item.type) {
+      AssetManagementInsightActionType.missingPaymentDay => '支払日を入力する',
+      AssetManagementInsightActionType.missingInput => '今月支払予定額を入力する',
+      AssetManagementInsightActionType.missingAnnualRate => '利率を入力する',
+      AssetManagementInsightActionType.missingPaymentSource => '支払原資口座を設定する',
+      _ => null,
+    };
+  }
+
   Widget _buildAssetManagementAssistantActionTile(
     AssetManagementInsightActionItem item,
   ) {
@@ -12774,6 +12800,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final dueLabel = item.dueDate == null
         ? (item.paymentDay == null ? null : '${item.paymentDay}日')
         : DateFormat('M/d').format(item.dueDate!);
+    final jumpLabel = _assetManagementActionJumpLabel(item);
 
     return Container(
       width: double.infinity,
@@ -12838,6 +12865,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   item.suggestedAction,
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
+                if (jumpLabel != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        foregroundColor: color,
+                      ),
+                      onPressed: () =>
+                          _jumpToDebtMasterCard(item.relatedAccountId!),
+                      icon: const Icon(Icons.arrow_downward, size: 16),
+                      label: Text(jumpLabel),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -16709,6 +16751,94 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  GlobalKey _debtMasterCardKeyFor(String accountId) {
+    return _debtMasterCardKeys.putIfAbsent(
+      accountId,
+      () => GlobalKey(debugLabel: 'debt_master_card_$accountId'),
+    );
+  }
+
+  void _jumpToDebtMasterCard(String accountId) {
+    if (_debtMasterReviewFilter != _DebtMasterReviewFilter.all) {
+      setState(() {
+        _debtMasterReviewFilter = _DebtMasterReviewFilter.all;
+      });
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final key = _debtMasterCardKeys[accountId];
+      if (key == null || key.currentContext == null) {
+        return;
+      }
+      _scrollTo(key);
+    });
+  }
+
+  void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
+    setState(() {
+      if (day == null) {
+        _debtPaymentDayOverrides.remove(row.id);
+      } else {
+        _debtPaymentDayOverrides[row.id] = day.clamp(1, 31).toInt();
+      }
+    });
+    unawaited(_saveDebtPaymentDayOverrides());
+  }
+
+  Future<void> _saveDebtPaymentDayOverrides() async {
+    try {
+      await _assetLiabilityRepository.saveDebtPaymentDayOverrides(
+        Map<String, int>.from(_debtPaymentDayOverrides),
+      );
+    } catch (e) {
+      debugPrint('Error saving debt payment day overrides: $e');
+    }
+  }
+
+  Widget _buildDebtPaymentDayInput(AssetLiabilityDebtRow row) {
+    final hasOverride = _debtPaymentDayOverrides.containsKey(row.id);
+    final statusLabel = hasOverride
+        ? '手動設定'
+        : row.paymentDay == null
+            ? '未設定'
+            : '自動推定';
+    final statusColor = hasOverride
+        ? const Color(0xFF7C3AED)
+        : row.paymentDay == null
+            ? const Color(0xFFD97706)
+            : const Color(0xFF475569);
+    return SizedBox(
+      width: 140,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTextStatusChip(label: statusLabel, color: statusColor),
+          const SizedBox(height: 4),
+          DropdownButton<int?>(
+            value: row.paymentDay,
+            isExpanded: true,
+            isDense: true,
+            items: [
+              const DropdownMenuItem<int?>(
+                value: null,
+                child: Text('未設定'),
+              ),
+              for (var day = 1; day <= 31; day++)
+                DropdownMenuItem<int?>(
+                  value: day,
+                  child: Text('$day日'),
+                ),
+            ],
+            onChanged: (value) => _setDebtPaymentDayOverride(row, value),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDebtMasterCard(
     AssetLiabilityDebtRow row,
     AssetLiabilityWorkbook workbook,
@@ -16723,6 +16853,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         row.paymentDay == null ? '支払日未設定' : '${row.paymentDay}日支払';
 
     return Container(
+      key: _debtMasterCardKeyFor(row.id),
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -16814,6 +16945,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             runSpacing: 10,
             crossAxisAlignment: WrapCrossAlignment.start,
             children: [
+              _buildDebtMasterControl(
+                label: '支払日',
+                child: _buildDebtPaymentDayInput(row),
+                maxWidth: 150,
+              ),
               _buildDebtMasterControl(
                 label: '実支払額',
                 child: _buildActualPaymentInput(row),
