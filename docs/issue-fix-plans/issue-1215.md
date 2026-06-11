@@ -51,7 +51,23 @@ MCP（Model Context Protocol）のアーキテクチャや認証の仕組みを�
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
+- [x] Analyze/tests/CI are checked
+- [x] PR notes explain the change and the remaining risk
+
+## Codex Implementation Notes
+
+- Added a shared SaaS human-approval policy helper and Deno tests.
+- Routed Slack external writes through a pending approval queue in `tools-hub`.
+- Added approve / reject / revise decisions and approved Slack execution replay.
+- Added a Slack settings UI for previewing pending actions and team connector toggles.
+- Added an opt-in `core-hub:slack.notify` guard for AI/agent or explicit high-risk service-role sends without breaking existing operational notifications.
+
+## Validation
+
+- `deno test --allow-all --no-check --config supabase/functions/deno.json supabase/functions/_shared/saas_human_approval_test.ts`
+- `deno check --config supabase/functions/deno.json supabase/functions/_shared/saas_human_approval.ts supabase/functions/_shared/saas_human_approval_test.ts supabase/functions/tools-hub/index.ts supabase/functions/core-hub/index.ts`
+- `deno lint --config supabase/functions/deno.json supabase/functions/_shared/saas_human_approval.ts supabase/functions/_shared/saas_human_approval_test.ts supabase/functions/tools-hub/index.ts supabase/functions/core-hub/index.ts`
+- `dart format --output=none --set-exit-if-changed lib/pages/slack_notification_page.dart`
+- `flutter analyze --no-pub lib/pages/slack_notification_page.dart`
