@@ -32,7 +32,9 @@ import 'package:my_web_app/services/asset_liability_repayment_simulation_service
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
+import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
@@ -326,6 +328,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   KonbiniUdonChallengeSnapshot? _konbiniUdonSnapshot;
   bool _isLoadingKonbiniUdon = false;
   double? _konbiniUdonLoadedForDebt;
+  final AssetManagementDisplayModeStore _displayModeStore =
+      const AssetManagementDisplayModeStore();
+  AssetManagementDisplayMode _displayMode =
+      AssetManagementDisplayModeStore.defaultMode;
+  DateTime _calendarMonth = DateTime.now();
+  DateTime? _calendarSelectedDate;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
   String? _wasteTrainingAiReviewKey;
   bool _isGeneratingAssetManagementAiSummary = false;
@@ -402,6 +410,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchRecentFlows();
     _fetchSubscriptions();
     _fetchMustTasks();
+    _loadDisplayMode();
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -7216,40 +7225,482 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildUnifiedEntryBanner(),
               const SizedBox(height: 16),
             ],
+            _buildDisplayModeSwitcher(),
+            const SizedBox(height: 12),
             _buildMonthlyFlowFirstCard(),
             const SizedBox(height: 16),
-            _buildSalarySpendingBreakdownCard(),
+            _buildAssetCalendarCard(assetLiabilityWorkbook),
             const SizedBox(height: 16),
+            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+              _buildSalarySpendingBreakdownCard(),
+              const SizedBox(height: 16),
+            ],
             _buildDisposableBalanceCard(),
             const SizedBox(height: 16),
             _buildMonthlyFlowPrimaryActionBar(),
             const SizedBox(height: 16),
-            _buildWasteTrainingAiCard(),
-            const SizedBox(height: 24),
-            _buildDeadlineChecklistCard(), // 締切チェックリスト
-            const SizedBox(height: 16),
-            _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
-            const SizedBox(height: 16),
+            if (_isTierVisible(AssetManagementSectionTier.full)) ...[
+              _buildWasteTrainingAiCard(),
+              const SizedBox(height: 24),
+            ],
+            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+              _buildDeadlineChecklistCard(), // 締切チェックリスト
+              const SizedBox(height: 16),
+              _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
+              const SizedBox(height: 16),
+            ],
             _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
             const SizedBox(height: 16),
-            _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
-            const SizedBox(height: 16),
-            Container(
-              key: _keyStock,
-              child: _buildAssetLiabilityCard(),
-            ), // ①②資産負債
-            const SizedBox(height: 24),
-            Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
-            const SizedBox(height: 24),
-            Container(key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
-            const SizedBox(height: 24),
-            Container(key: _keyMust, child: _buildMustTasksCard()), // ⑤必須タスク
-            const SizedBox(height: 24),
-            _buildChartCard(), // グラフ
+            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+              _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+              Container(
+                key: _keyStock,
+                child: _buildAssetLiabilityCard(),
+              ), // ①②資産負債
+              const SizedBox(height: 24),
+              Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
+              const SizedBox(height: 24),
+              Container(
+                key: _keySubs,
+                child: _buildSubscriptionCard(),
+              ), // ③固定費
+              const SizedBox(height: 24),
+              Container(
+                key: _keyMust,
+                child: _buildMustTasksCard(),
+              ), // ⑤必須タスク
+              const SizedBox(height: 24),
+            ],
+            if (_isTierVisible(AssetManagementSectionTier.full))
+              _buildChartCard(), // グラフ
           ],
         ),
       ),
     );
+  }
+
+  bool _isTierVisible(AssetManagementSectionTier tier) {
+    return AssetManagementDisplayModeStore.isTierVisible(
+      tier: tier,
+      mode: _displayMode,
+    );
+  }
+
+  Future<void> _loadDisplayMode() async {
+    final mode = await _displayModeStore.load();
+    if (!mounted || mode == _displayMode) {
+      return;
+    }
+    setState(() {
+      _displayMode = mode;
+    });
+  }
+
+  Future<void> _setDisplayMode(AssetManagementDisplayMode mode) async {
+    if (mode == _displayMode) {
+      return;
+    }
+    setState(() {
+      _displayMode = mode;
+    });
+    await _displayModeStore.save(mode);
+  }
+
+  Widget _buildDisplayModeSwitcher() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.tune, size: 18, color: Color(0xFF7C3AED)),
+                const SizedBox(width: 8),
+                const Text(
+                  '表示モード',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _displayMode.description,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final mode in AssetManagementDisplayMode.values)
+                  ChoiceChip(
+                    key: Key('asset_display_mode_${mode.name}'),
+                    selected: _displayMode == mode,
+                    onSelected: (_) => _setDisplayMode(mode),
+                    selectedColor: const Color(0xFF7C3AED),
+                    labelStyle: TextStyle(
+                      color: _displayMode == mode
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                    label: Text(mode.label),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _shiftCalendarMonth(int delta) {
+    setState(() {
+      _calendarMonth = DateTime(
+        _calendarMonth.year,
+        _calendarMonth.month + delta,
+      );
+      _calendarSelectedDate = null;
+    });
+  }
+
+  Widget _buildAssetCalendarCard(AssetLiabilityWorkbook? workbook) {
+    final debtRows =
+        workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
+    final calendar = AssetPaymentCalendarService.buildMonth(
+      month: _calendarMonth,
+      flows: _recentFlows,
+      subscriptions: _subscriptionsForMonth(_calendarMonth),
+      debts: [
+        for (final row in debtRows)
+          AssetCalendarDebtInput(
+            name: row.name,
+            balance: row.balance,
+            paymentDay: row.paymentDay,
+            scheduledPaymentAmount: row.scheduledPaymentAmount,
+            isDirectCashflowTarget: row.isDirectCashflowTarget,
+          ),
+      ],
+      salaryDay: _salarySpendingSalaryDay,
+    );
+    final selectedDate = _calendarSelectedDate;
+    final selectedDay =
+        selectedDate == null ? null : calendar.dayFor(selectedDate);
+    final today = DateTime.now();
+    const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.calendar_month, color: Color(0xFF1D4ED8)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'マネーカレンダー',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  key: const Key('asset_calendar_prev_month'),
+                  tooltip: '前の月',
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () => _shiftCalendarMonth(-1),
+                ),
+                Text(
+                  DateFormat('yyyy年M月').format(calendar.month),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                IconButton(
+                  key: const Key('asset_calendar_next_month'),
+                  tooltip: '次の月',
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => _shiftCalendarMonth(1),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '日ごとの支出と、返済日・固定費・給料日のイベントをまとめて見渡せます。',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                for (final weekday in weekdayLabels)
+                  Expanded(
+                    child: Text(
+                      weekday,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            for (final week in calendar.weeks)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final day in week)
+                    Expanded(child: _buildAssetCalendarCell(day, today)),
+                ],
+              ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: [
+                _buildCalendarLegendItem(const Color(0xFFB91C1C), '返済日'),
+                _buildCalendarLegendItem(const Color(0xFF9333EA), '固定費'),
+                _buildCalendarLegendItem(const Color(0xFF0D9488), '給料日'),
+                _buildCalendarLegendItem(const Color(0xFF2563EB), '収入'),
+              ],
+            ),
+            if (selectedDay != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                '${DateFormat('M月d日').format(selectedDay.date)} のイベント',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              if (!selectedDay.hasAnyEvent)
+                Text(
+                  'この日のイベントはありません。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                )
+              else
+                for (final event in selectedDay.events.take(10))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _calendarEventIcon(event.kind),
+                          size: 14,
+                          color: _calendarEventColor(event.kind),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            event.label,
+                            style: const TextStyle(fontSize: 12, height: 1.5),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (event.amount != null)
+                          Text(
+                            _formatYen(event.amount!),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+            ],
+            const SizedBox(height: 4),
+            Text(
+              '支出・収入は記録済みフロー(直近取得分)に基づく概算です。',
+              style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAssetCalendarCell(AssetCalendarDaySummary? day, DateTime today) {
+    if (day == null) {
+      return const SizedBox(height: 54);
+    }
+    final isToday = day.date.year == today.year &&
+        day.date.month == today.month &&
+        day.date.day == today.day;
+    final selectedDate = _calendarSelectedDate;
+    final isSelected = selectedDate != null &&
+        day.date.year == selectedDate.year &&
+        day.date.month == selectedDate.month &&
+        day.date.day == selectedDate.day;
+    final markers = <Color>[
+      if (day.hasDebtPayment) const Color(0xFFB91C1C),
+      if (day.hasSubscription) const Color(0xFF9333EA),
+      if (day.hasSalary) const Color(0xFF0D9488),
+      if (day.hasIncome) const Color(0xFF2563EB),
+    ];
+
+    return InkWell(
+      key: Key('asset_calendar_day_${day.date.day}'),
+      borderRadius: BorderRadius.circular(6),
+      onTap: () {
+        setState(() {
+          _calendarSelectedDate = day.date;
+        });
+      },
+      child: Container(
+        height: 54,
+        margin: const EdgeInsets.all(1),
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
+              : null,
+          borderRadius: BorderRadius.circular(6),
+          border: isToday
+              ? Border.all(color: const Color(0xFF7C3AED), width: 1.5)
+              : null,
+        ),
+        child: Column(
+          children: [
+            Text(
+              '${day.date.day}',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                height: 1.2,
+              ),
+            ),
+            if (day.expenseTotal > 0)
+              Text(
+                _formatCalendarAmount(day.expenseTotal),
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Color(0xFFB91C1C),
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+            const Spacer(),
+            if (markers.isNotEmpty)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (final color in markers.take(4))
+                    Container(
+                      width: 5,
+                      height: 5,
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatCalendarAmount(double value) {
+    if (value >= 10000) {
+      final man = value / 10000;
+      final label = man >= 10 ? man.round().toString() : man.toStringAsFixed(1);
+      return '$label万';
+    }
+    return NumberFormat('#,###').format(value.round());
+  }
+
+  Widget _buildCalendarLegendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _calendarEventIcon(AssetCalendarEventKind kind) {
+    switch (kind) {
+      case AssetCalendarEventKind.salary:
+        return Icons.payments_outlined;
+      case AssetCalendarEventKind.debtPayment:
+        return Icons.account_balance_outlined;
+      case AssetCalendarEventKind.subscription:
+        return Icons.autorenew;
+      case AssetCalendarEventKind.expense:
+        return Icons.remove_circle_outline;
+      case AssetCalendarEventKind.income:
+        return Icons.add_circle_outline;
+    }
+  }
+
+  Color _calendarEventColor(AssetCalendarEventKind kind) {
+    switch (kind) {
+      case AssetCalendarEventKind.salary:
+        return const Color(0xFF0D9488);
+      case AssetCalendarEventKind.debtPayment:
+        return const Color(0xFFB91C1C);
+      case AssetCalendarEventKind.subscription:
+        return const Color(0xFF9333EA);
+      case AssetCalendarEventKind.expense:
+        return const Color(0xFFC05621);
+      case AssetCalendarEventKind.income:
+        return const Color(0xFF2563EB);
+    }
   }
 
   Widget _buildUnifiedEntryBanner() {
