@@ -278,5 +278,45 @@ void main() {
       expect(calendar.firstShortfallDate, isNull);
       expect(calendar.dayFor(DateTime(2026, 6, 25))!.projectedBalance, 0);
     });
+
+    test('reports the worst dip as the shortfall recovery amount', () {
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 6),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            name: 'ローンA',
+            balance: -100000,
+            paymentDay: 5,
+            scheduledPaymentAmount: 8000,
+          ),
+          AssetCalendarDebtInput(
+            name: 'ローンB',
+            balance: -100000,
+            paymentDay: 10,
+            scheduledPaymentAmount: 7000,
+          ),
+        ],
+        startingCashBalance: 10000,
+      );
+
+      expect(calendar.worstProjectedBalance, -5000);
+      expect(calendar.shortfallRecoveryAmount, 5000);
+      expect(calendar.firstShortfallDate, DateTime(2026, 6, 10));
+    });
+
+    test('recovery amount is zero when the month stays positive', () {
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 6),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[],
+        startingCashBalance: 1000,
+      );
+
+      expect(calendar.worstProjectedBalance, 1000);
+      expect(calendar.shortfallRecoveryAmount, 0);
+    });
   });
 }

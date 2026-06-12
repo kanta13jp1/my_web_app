@@ -204,5 +204,13 @@ void main() {
       expect(stats.switchCount, 2);
       expect(stats.lastChangedAt, isNotNull);
     });
+
+    test('hasStoredMode distinguishes saved from default', () async {
+      const store = AssetManagementDisplayModeStore();
+
+      expect(await store.hasStoredMode(), isFalse);
+      await store.save(AssetManagementDisplayMode.full);
+      expect(await store.hasStoredMode(), isTrue);
+    });
   });
 }

@@ -341,6 +341,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final AssetExpectedInflowStore _expectedInflowStore =
       const AssetExpectedInflowStore();
   List<AssetExpectedInflow> _expectedInflows = <AssetExpectedInflow>[];
+  List<AssetExpectedInflowRule> _expectedInflowRules =
+      <AssetExpectedInflowRule>[];
   String? _displayModeStatsLabel;
   DateTime _calendarMonth = DateTime.now();
   DateTime? _calendarSelectedDate;
@@ -7321,12 +7323,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _loadExpectedInflows() async {
     final entries = await _expectedInflowStore.loadAll();
+    final rules = await _expectedInflowStore.loadRules();
     if (!mounted) {
       return;
     }
     setState(() {
       _expectedInflows = entries;
+      _expectedInflowRules = rules;
     });
+  }
+
+  Future<void> _removeExpectedInflowRule(String id) async {
+    final rules = await _expectedInflowStore.removeRule(id);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _expectedInflowRules = rules;
+    });
+  }
+
+  DateTime _nextSalaryDate() {
+    final now = DateTime.now();
+    final thisMonth = DateTime(now.year, now.month, _salarySpendingSalaryDay);
+    if (!now.isAfter(thisMonth)) {
+      return thisMonth;
+    }
+    return DateTime(now.year, now.month + 1, _salarySpendingSalaryDay);
+  }
+
+  Future<void> _sendDisplayModeEvent({
+    required String eventType,
+    required AssetManagementDisplayMode mode,
+    bool? hasData,
+  }) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('display_mode_events').insert(<String, dynamic>{
+        'user_id': userId,
+        'event_type': eventType,
+        'mode': mode.storageId,
+        'has_data': hasData,
+      });
+    } catch (e) {
+      debugPrint('display_mode_events insert failed: $e');
+    }
   }
 
   Future<void> _removeExpectedInflow(String id) async {
@@ -7358,10 +7402,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<void> _showAddExpectedInflowDialog(DateTime initialDate) async {
+  Future<void> _showAddExpectedInflowDialog(
+    DateTime initialDate, {
+    double? initialAmount,
+    String? initialLabel,
+  }) async {
     var selectedDate = initialDate;
-    final amountController = TextEditingController();
-    final labelController = TextEditingController();
+    var repeatMonthly = false;
+    final amountController = TextEditingController(
+      text: initialAmount != null && initialAmount > 0
+          ? initialAmount.round().toString()
+          : '',
+    );
+    final labelController = TextEditingController(text: initialLabel ?? '');
 
     try {
       final confirmed = await showDialog<bool>(
@@ -7421,6 +7474,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     isDense: true,
                   ),
                 ),
+                const SizedBox(height: 4),
+                CheckboxListTile(
+                  key: const Key('asset_inflow_repeat_checkbox'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: repeatMonthly,
+                  onChanged: (value) {
+                    setDialogState(() {
+                      repeatMonthly = value ?? false;
+                    });
+                  },
+                  title: const Text(
+                    '毎月この日に繰り返す(給料など)',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
               ],
             ),
             actions: [
@@ -7451,6 +7521,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ).showSnackBar(const SnackBar(content: Text('金額を1円以上で入力してください')));
         return;
       }
+      if (repeatMonthly) {
+        final rules = await _expectedInflowStore.addRule(
+          dayOfMonth: selectedDate.day,
+          amount: amount,
+          label: labelController.text,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _expectedInflowRules = rules;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('毎月${selectedDate.day}日の入金予定を登録しました')),
+        );
+        return;
+      }
       final entries = await _expectedInflowStore.add(
         date: selectedDate,
         amount: amount,
@@ -7479,15 +7566,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _displayMode = mode;
     });
     await _displayModeStore.save(mode);
+    unawaited(_sendDisplayModeEvent(eventType: 'switch', mode: mode));
     await _refreshDisplayModeStats();
   }
 
   Future<void> _resolveInitialDisplayMode({
     required bool hasExistingData,
   }) async {
+    final hadStored = await _displayModeStore.hasStoredMode();
     final mode = await _displayModeStore.resolveInitialMode(
       hasExistingData: hasExistingData,
     );
+    if (!hadStored) {
+      unawaited(
+        _sendDisplayModeEvent(
+          eventType: 'initial',
+          mode: mode,
+          hasData: hasExistingData,
+        ),
+      );
+    }
     if (!mounted) {
       return;
     }
@@ -7700,6 +7798,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       startingCashBalance = liquid;
     }
+    final monthInflowEntries = AssetExpectedInflowStore.materializeMonth(
+      oneTime: _expectedInflows,
+      rules: _expectedInflowRules,
+      month: _calendarMonth,
+    );
     final calendar = AssetPaymentCalendarService.buildMonth(
       month: _calendarMonth,
       flows: _recentFlows,
@@ -7717,10 +7820,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       salaryDay: _salarySpendingSalaryDay,
       startingCashBalance: startingCashBalance,
       expectedInflows: [
-        for (final inflow in AssetExpectedInflowStore.monthInflows(
-          _expectedInflows,
-          _calendarMonth,
-        ))
+        for (final inflow in monthInflowEntries)
           AssetCalendarInflowInput(
             date: inflow.date,
             amount: inflow.amount,
@@ -7851,11 +7951,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         height: 1.6,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '回避ライン: ショート日までに ${_formatYen(calendar.shortfallRecoveryAmount)} の入金、または月内支払の同額圧縮で黒字化します。',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFB91C1C),
+                        height: 1.5,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
                       key: const Key('asset_calendar_add_inflow_button'),
                       onPressed: () => _showAddExpectedInflowDialog(
                         calendar.firstShortfallDate!,
+                        initialAmount: calendar.shortfallRecoveryAmount,
                       ),
                       icon: const Icon(Icons.savings, size: 16),
                       label: const Text('入金予定を追加して再計算'),
@@ -7911,26 +8022,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildCalendarLegendItem(const Color(0xFF0EA5E9), '入金予定'),
               ],
             ),
-            if (AssetExpectedInflowStore.monthInflows(
-              _expectedInflows,
-              _calendarMonth,
-            ).isNotEmpty) ...[
+            if (monthInflowEntries.isNotEmpty) ...[
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  for (final inflow in AssetExpectedInflowStore.monthInflows(
-                    _expectedInflows,
-                    _calendarMonth,
-                  ))
+                  for (final inflow in monthInflowEntries)
                     InputChip(
                       key: Key('asset_inflow_chip_${inflow.id}'),
+                      avatar: inflow.sourceRuleId != null
+                          ? const Icon(Icons.repeat, size: 14)
+                          : null,
                       label: Text(
                         '${DateFormat('M/d').format(inflow.date)} ${inflow.label} ${_formatYen(inflow.amount)}',
                         style: const TextStyle(fontSize: 11),
                       ),
-                      onDeleted: () => _removeExpectedInflow(inflow.id),
+                      onDeleted: () {
+                        final ruleId = inflow.sourceRuleId;
+                        if (ruleId != null) {
+                          _removeExpectedInflowRule(ruleId);
+                        } else {
+                          _removeExpectedInflow(inflow.id);
+                        }
+                      },
                     ),
                 ],
               ),
@@ -11063,6 +11178,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   height: 1.5,
                 ),
               ),
+            if (isEnabled && savings.hasSavings) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                key: const Key('konbini_udon_transfer_inflow_button'),
+                onPressed: () => _showAddExpectedInflowDialog(
+                  _nextSalaryDate(),
+                  initialAmount: savings.monthlySavings,
+                  initialLabel: 'うどん縛り節約分(返済原資)',
+                ),
+                icon: const Icon(Icons.savings, size: 16),
+                label: const Text('節約見込みを入金予定へ転記'),
+              ),
+            ],
             const SizedBox(height: 12),
             _isCompact
                 ? Column(
