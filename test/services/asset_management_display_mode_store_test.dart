@@ -212,5 +212,18 @@ void main() {
       await store.save(AssetManagementDisplayMode.full);
       expect(await store.hasStoredMode(), isTrue);
     });
+
+    test('save with recordEvent false keeps experiment stats untouched',
+        () async {
+      final store = AssetManagementDisplayModeStore(
+        nowProvider: () => DateTime(2026, 6, 12, 10, 0),
+      );
+
+      await store.save(AssetManagementDisplayMode.minimum, recordEvent: false);
+
+      final stats = await store.loadStats();
+      expect(stats.switchCount, 0);
+      expect(await store.load(), AssetManagementDisplayMode.minimum);
+    });
   });
 }

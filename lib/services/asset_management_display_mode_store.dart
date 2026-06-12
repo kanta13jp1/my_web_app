@@ -223,12 +223,18 @@ class AssetManagementDisplayModeStore {
     return _storedMode(store) != null;
   }
 
+  /// [recordEvent] を false にするとミラー復元などの非ユーザー操作を
+  /// 実験ログ (switch 回数) に混入させずに保存できる。
   Future<void> save(
     AssetManagementDisplayMode mode, {
     SharedPreferences? prefs,
+    bool recordEvent = true,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     await store.setString(_modeKey, mode.storageId);
+    if (!recordEvent) {
+      return;
+    }
     await _appendEvent(store, <String, dynamic>{
       'type': 'switch',
       'to': mode.storageId,
