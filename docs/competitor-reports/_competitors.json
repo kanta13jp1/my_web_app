@@ -523,6 +523,24 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-12",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-09 Alibaba Qoder 採択 / 3 day 経過 / cooldown 残 4 day / 次回 6/16 解禁). 前回 report = 6/11. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/12 は WebSearch 主体で 6/11→6/12 delta 集約. 新規シグナル = (1) **★★ Anthropic 6/15「ダブルヒット」確定 T-3 day 🔴🔴** (= 課金分離 [Agent SDK / claude -p / Claude Code GitHub Actions / 第三者 OpenClaw・Conductor・Zed・Jean が Interactive Pool から分離 → Agent SDK Credit Pool / Pro $20・Max5x $100・Max20x $200 / 月次繰越なし / API list rate / CI/CD は committer 個別枠集約不可] + **同日旧モデル API 退役** [claude-sonnet-4-20250514 + claude-opus-4-20250514 を 6/15 退役 / failover なし / 代替 Sonnet 4.6・Opus 4.8 / 公式 platform.claude.com docs + Make Help Center 裏取り済] / 自社 programmatic Claude [GHA cron 30+ / Schedule cron / daily-development cron] 棚卸し最優先 + 退役 ID 20250514 全域 sweep [本 run で .github/ scripts/ クリーン確認 / lib・supabase 全域 follow-up 推奨]) / (2) **★ Microsoft MAI-Code-1-Flash 公式モデルカード公開 🔴** (= 137B total sparse MoE / 256K ctx / 訓練 cutoff ~2026/5 / 第三者 distillation なし enterprise-grade clean data / Copilot 本番 harness 直接訓練 / Copilot Free–Max 段階 rollout + VS Code model picker / 6/11「5B active params」と整合 [sparse MoE 総 137B / active ~5B] / 6/16 第 1 候補 confidence ↑) / (3) **GitHub Copilot 従量課金 backlash 🟠** (= 6/1 flex billing GA + Copilot Max $100/20K credits ≒$200 / dev が想定より速く枠消費 = コスト意識ユーザー流入機会 = AI コーディング訴求 timing) / (4) **MoneyForward AI Cowork delta なし再確認** (= 7月 GA 維持 / 経理労務法務 6 業務 / Claude Agent SDK + MCP / Draft & Approve + ガードレール + 監査ログ / B/S 最大 overlap = 非対称防衛継続). 6/16 採択 第 1 候補 = Microsoft MAI-Code-1-Flash (= 公式裏取り完了 / 基準 b 未カバー [MS 自社製 frontier coding model] + 基準 c Build 2026 6/2 / 解禁日初日採択推奨). https://platform.claude.com/docs/en/about-claude/model-deprecations",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= 6/16 第 1 候補 / microsoft.ai 公式モデルカード公開 / 137B total sparse MoE / 256K ctx / 第三者 distillation なし / Copilot 本番 harness 直接訓練 / VS Code model picker / 基準 b+c 該当 / 解禁日初日採択推奨)",
+        "Warp (= MarkTechPost 6/10 新規参入シグナル / terminal-native agentic dev / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {

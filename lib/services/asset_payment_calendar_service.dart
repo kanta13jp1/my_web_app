@@ -8,8 +8,11 @@ class AssetCalendarDebtInput {
     required this.paymentDay,
     this.scheduledPaymentAmount = 0,
     this.isDirectCashflowTarget = true,
+    this.id = '',
   });
 
+  /// workbook 行ID(支払日移動などのアクション連携用)。
+  final String id;
   final String name;
   final double balance;
   final int? paymentDay;
@@ -20,10 +23,24 @@ class AssetCalendarDebtInput {
 /// カレンダーに載せる日次イベントの種別。
 enum AssetCalendarEventKind {
   salary,
+  expectedInflow,
   debtPayment,
   subscription,
   expense,
   income,
+}
+
+/// 入金予定の入力(ストアのモデルから必要項目だけ写す)。
+class AssetCalendarInflowInput {
+  const AssetCalendarInflowInput({
+    required this.date,
+    required this.amount,
+    required this.label,
+  });
+
+  final DateTime date;
+  final double amount;
+  final String label;
 }
 
 /// カレンダー1イベント。amount は不明な場合 null。
@@ -32,11 +49,15 @@ class AssetCalendarEvent {
     required this.kind,
     required this.label,
     this.amount,
+    this.sourceId,
   });
 
   final AssetCalendarEventKind kind;
   final String label;
   final double? amount;
+
+  /// 元データのID(debtPayment は workbook 行ID)。アクション連携用。
+  final String? sourceId;
 }
 
 /// 1日分のサマリ。支出/収入はフロー記録の合算。
@@ -46,12 +67,23 @@ class AssetCalendarDaySummary {
     required this.expenseTotal,
     required this.incomeTotal,
     required this.events,
+    this.scheduledOutflow = 0,
+    this.projectedBalance,
   });
 
   final DateTime date;
   final double expenseTotal;
   final double incomeTotal;
   final List<AssetCalendarEvent> events;
+
+  /// この日に予定されている支払(返済+固定費)の合計。
+  final double scheduledOutflow;
+
+  /// 月初の現金・預金から支払予定だけを引いた保守的な見込み残高。
+  /// 入金(給料等)は加算しない。起点残高が未指定なら null。
+  final double? projectedBalance;
+
+  bool get isShortfall => projectedBalance != null && projectedBalance! < 0;
 
   bool _has(AssetCalendarEventKind kind) =>
       events.any((event) => event.kind == kind);
@@ -61,6 +93,8 @@ class AssetCalendarDaySummary {
   bool get hasDebtPayment => _has(AssetCalendarEventKind.debtPayment);
 
   bool get hasSubscription => _has(AssetCalendarEventKind.subscription);
+
+  bool get hasExpectedInflow => _has(AssetCalendarEventKind.expectedInflow);
 
   bool get hasIncome => incomeTotal > 0;
 
@@ -73,11 +107,36 @@ class AssetPaymentCalendarMonth {
     required this.month,
     required this.days,
     required this.weeks,
+    this.scheduledDebtPaymentTotal = 0,
+    this.subscriptionTotal = 0,
+    this.firstShortfallDate,
+    this.worstProjectedBalance,
   });
 
   final DateTime month;
   final List<AssetCalendarDaySummary> days;
   final List<List<AssetCalendarDaySummary?>> weeks;
+
+  /// 月内の返済予定額合計(金額が分かるもののみ)。
+  final double scheduledDebtPaymentTotal;
+
+  /// 月内の固定費(サブスク)請求額合計。
+  final double subscriptionTotal;
+
+  /// 見込み残高が最初にマイナスへ落ちる日。資金リスクの早期警告。
+  final DateTime? firstShortfallDate;
+
+  /// 月内の見込み残高の最小値(起点未指定なら null)。
+  final double? worstProjectedBalance;
+
+  /// ショート回避に必要な追加入金額(=最大不足幅)。ショートなしなら 0。
+  double get shortfallRecoveryAmount =>
+      worstProjectedBalance != null && worstProjectedBalance! < 0
+          ? -worstProjectedBalance!
+          : 0;
+
+  double get scheduledOutflowTotal =>
+      scheduledDebtPaymentTotal + subscriptionTotal;
 
   AssetCalendarDaySummary? dayFor(DateTime date) {
     for (final day in days) {
@@ -114,12 +173,19 @@ class AssetPaymentCalendarService {
     required List<Map<String, dynamic>> subscriptions,
     required List<AssetCalendarDebtInput> debts,
     int? salaryDay,
+    double? startingCashBalance,
+    List<AssetCalendarInflowInput> expectedInflows =
+        const <AssetCalendarInflowInput>[],
   }) {
     final normalizedMonth = DateTime(month.year, month.month);
     final lastDay = DateTime(month.year, month.month + 1, 0).day;
     final expenseByDay = <int, double>{};
     final incomeByDay = <int, double>{};
+    final outflowByDay = <int, double>{};
+    final inflowByDay = <int, double>{};
     final eventsByDay = <int, List<AssetCalendarEvent>>{};
+    var scheduledDebtPaymentTotal = 0.0;
+    var subscriptionTotal = 0.0;
 
     void addEvent(int day, AssetCalendarEvent event) {
       eventsByDay.putIfAbsent(day, () => <AssetCalendarEvent>[]).add(event);
@@ -135,6 +201,24 @@ class AssetPaymentCalendarService {
       );
     }
 
+    for (final inflow in expectedInflows) {
+      if (inflow.date.year != normalizedMonth.year ||
+          inflow.date.month != normalizedMonth.month ||
+          inflow.amount <= 0) {
+        continue;
+      }
+      inflowByDay[inflow.date.day] =
+          (inflowByDay[inflow.date.day] ?? 0) + inflow.amount;
+      addEvent(
+        inflow.date.day,
+        AssetCalendarEvent(
+          kind: AssetCalendarEventKind.expectedInflow,
+          label: inflow.label,
+          amount: inflow.amount,
+        ),
+      );
+    }
+
     for (final row in debts) {
       final paymentDay = row.paymentDay;
       if (paymentDay == null || paymentDay <= 0) {
@@ -143,41 +227,54 @@ class AssetPaymentCalendarService {
       if (row.balance >= -_epsilon || !row.isDirectCashflowTarget) {
         continue;
       }
+      final clampedDay = clampDayToMonth(paymentDay, normalizedMonth);
+      final amount = row.scheduledPaymentAmount > _epsilon
+          ? row.scheduledPaymentAmount
+          : null;
+      if (amount != null) {
+        scheduledDebtPaymentTotal += amount;
+        outflowByDay[clampedDay] = (outflowByDay[clampedDay] ?? 0) + amount;
+      }
       addEvent(
-        clampDayToMonth(paymentDay, normalizedMonth),
+        clampedDay,
         AssetCalendarEvent(
           kind: AssetCalendarEventKind.debtPayment,
           label: '${row.name} 返済',
-          amount: row.scheduledPaymentAmount > _epsilon
-              ? row.scheduledPaymentAmount
-              : null,
+          amount: amount,
+          sourceId: row.id.isEmpty ? null : row.id,
         ),
       );
     }
 
     for (final subscription in subscriptions) {
-      final dueDate =
-          DateTime.tryParse(subscription['due_date']?.toString() ?? '')
-              ?.toLocal();
+      final dueDate = DateTime.tryParse(
+        subscription['due_date']?.toString() ?? '',
+      )?.toLocal();
       if (dueDate == null ||
           dueDate.year != normalizedMonth.year ||
           dueDate.month != normalizedMonth.month) {
         continue;
       }
       final name = subscription['service_name']?.toString().trim() ?? '';
+      final price = (subscription['price'] as num?)?.toDouble();
+      if (price != null && price > 0) {
+        subscriptionTotal += price;
+        outflowByDay[dueDate.day] = (outflowByDay[dueDate.day] ?? 0) + price;
+      }
       addEvent(
         dueDate.day,
         AssetCalendarEvent(
           kind: AssetCalendarEventKind.subscription,
           label: name.isEmpty ? '固定費' : name,
-          amount: (subscription['price'] as num?)?.toDouble(),
+          amount: price,
         ),
       );
     }
 
     for (final flow in flows) {
-      final occurredAt =
-          DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
+      final occurredAt = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
       if (occurredAt == null ||
           occurredAt.year != normalizedMonth.year ||
           occurredAt.month != normalizedMonth.month) {
@@ -210,20 +307,47 @@ class AssetPaymentCalendarService {
       }
     }
 
-    final days = <AssetCalendarDaySummary>[
-      for (var day = 1; day <= lastDay; day++)
+    var runningBalance = startingCashBalance;
+    DateTime? firstShortfallDate;
+    double? worstProjectedBalance;
+    final days = <AssetCalendarDaySummary>[];
+    for (var day = 1; day <= lastDay; day++) {
+      final outflow = outflowByDay[day] ?? 0;
+      final inflow = inflowByDay[day] ?? 0;
+      if (runningBalance != null) {
+        runningBalance = runningBalance + inflow - outflow;
+      }
+      final date = DateTime(normalizedMonth.year, normalizedMonth.month, day);
+      if (firstShortfallDate == null &&
+          runningBalance != null &&
+          runningBalance < 0) {
+        firstShortfallDate = date;
+      }
+      if (runningBalance != null &&
+          (worstProjectedBalance == null ||
+              runningBalance < worstProjectedBalance)) {
+        worstProjectedBalance = runningBalance;
+      }
+      days.add(
         AssetCalendarDaySummary(
-          date: DateTime(normalizedMonth.year, normalizedMonth.month, day),
+          date: date,
           expenseTotal: expenseByDay[day] ?? 0,
           incomeTotal: incomeByDay[day] ?? 0,
           events: _sortEvents(eventsByDay[day] ?? const <AssetCalendarEvent>[]),
+          scheduledOutflow: outflow,
+          projectedBalance: runningBalance,
         ),
-    ];
+      );
+    }
 
     return AssetPaymentCalendarMonth(
       month: normalizedMonth,
       days: days,
       weeks: _buildWeeks(normalizedMonth, days),
+      scheduledDebtPaymentTotal: scheduledDebtPaymentTotal,
+      subscriptionTotal: subscriptionTotal,
+      firstShortfallDate: firstShortfallDate,
+      worstProjectedBalance: worstProjectedBalance,
     );
   }
 

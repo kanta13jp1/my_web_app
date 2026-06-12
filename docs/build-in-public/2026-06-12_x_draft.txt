@@ -1,0 +1,6 @@
+自分株式会社 (= Jibun Inc.) 最近 7 日:
+- - Codex #1: AI大学 civics 学部 MVP migration
+- - Win Claude part 241: ADR (設計判断ログ) 運用の確立
+- - Win Claude part 242: プロダクト要件定義書 (PRD) v1 整備
+
+#buildinpublic #flutter #supabase #claudecode #aifleet
