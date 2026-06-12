@@ -235,6 +235,20 @@ void main() {
       expect(payPay.paymentAmountEstimated, isFalse);
     });
 
+    test('manual zero yen does not trigger card billing review alert', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        monthlyPaymentOverrides: const <String, double>{'PayPayカード': 0},
+      );
+
+      expect(
+        workbook.cardBillingReview.needsReviewItems
+            .where((item) => item.accountId == 'paypay_card'),
+        isEmpty,
+      );
+    });
+
     test('reflects manual and estimated sources in payment day risk', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -1410,6 +1424,28 @@ void main() {
         (row) => row.name == 'ファミマカード',
       );
       expect(row.paymentDay, isNull);
+    });
+
+    test('marks full-payment fixed costs on debt rows', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'cash': 50000, 'モビット': -100000},
+        baseDate: DateTime(2026, 5, 12),
+        includeDefaultFixedPayments: true,
+      );
+
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+      );
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'mobit',
+      );
+
+      expect(rent.fullPaymentEstimate, isTrue);
+      expect(kddi.fullPaymentEstimate, isTrue);
+      expect(mobit.fullPaymentEstimate, isFalse);
     });
   });
 }

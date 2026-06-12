@@ -257,6 +257,9 @@ class AssetLiabilityDebtRow {
   final bool billingConfirmed;
   final bool paid;
 
+  /// 家賃・通信費など毎月全額を支払う固定費型の負債。利率の概念を持たない。
+  final bool fullPaymentEstimate;
+
   const AssetLiabilityDebtRow({
     required this.id,
     required this.name,
@@ -285,6 +288,7 @@ class AssetLiabilityDebtRow {
     required this.paymentAmountEstimated,
     required this.billingConfirmed,
     required this.paid,
+    this.fullPaymentEstimate = false,
   });
 
   bool get isDirectCashflowTarget =>

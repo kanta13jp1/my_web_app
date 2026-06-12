@@ -37,7 +37,8 @@ class AssetLiabilityPlanningService {
       '請求先カードが未設定です';
   static const String cardBillingReviewRemovedBillingAccountAlert =
       '請求先カードが見つかりません';
-  static const String cardBillingReviewZeroAmountAlert = '金額が0円のため確認してください';
+  static const String cardBillingReviewZeroAmountAlert =
+      '金額が0円のため確認してください（請求が0円の月は今月支払予定額に0を入力すると確認対象外になります）';
   static const String cardStatementMissingImportAlert = 'カード明細の取り込みが未実施です';
   static const String cardStatementBillingAccountMissingAlert =
       '請求先カード口座が見つかりません';
@@ -623,6 +624,7 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : principal / liabilityTotal.abs(),
       priorityLabel: _priorityLabel(annualRate),
       paymentAmountEstimated: manualPayment == null,
+      fullPaymentEstimate: account.fullPaymentEstimate,
       billingConfirmed: _containsAccountKey(
         billingConfirmedAccountIds,
         account,
@@ -837,7 +839,8 @@ class AssetLiabilityPlanningService {
         alerts.add(cardBillingReviewRemovedBillingAccountAlert);
       }
     }
-    if (row.scheduledPaymentAmount <= 0) {
+    // 手入力の0円 (請求なし月) は正常値として許容し、推定値が0以下の場合のみ確認を促す。
+    if (row.scheduledPaymentAmount <= 0 && row.paymentAmountEstimated) {
       alerts.add(cardBillingReviewZeroAmountAlert);
     }
 
