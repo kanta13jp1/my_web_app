@@ -1119,7 +1119,11 @@ class AssetManagementInsightPromptBuilder {
     return buildDetailedAdvicePrompt(report);
   }
 
-  String buildDetailedAdvicePrompt(AssetManagementInsightReport report) {
+  String buildDetailedAdvicePrompt(
+    AssetManagementInsightReport report, {
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
+  }) {
     final severityCounts = _countBy(
       report.actionItems.map((item) => item.severity.name),
     );
@@ -1234,7 +1238,12 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('## 開発者向け改善提案候補')
       ..writeln('- 合計: ${report.developerRequests.length}')
       ..writeln('- 重要度別: ${_formatCounts(developerCounts)}')
-      ..write(_developerRequestLines(report.developerRequests));
+      ..write(
+        _developerRequestLines(
+          report.developerRequests,
+          existingDeveloperIssuesByTitle: existingDeveloperIssuesByTitle,
+        ),
+      );
     return buffer.toString();
   }
 
@@ -1511,13 +1520,25 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _developerRequestLines(
-    List<AssetManagementDeveloperRequest> requests,
-  ) {
+    List<AssetManagementDeveloperRequest> requests, {
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
+  }) {
     if (requests.isEmpty) {
       return '- 開発者向け改善提案候補はありません。\n';
     }
     final buffer = StringBuffer();
     for (final request in requests) {
+      final existingIssue = existingDeveloperIssuesByTitle[request.title];
+      if (existingIssue != null) {
+        // 起票済み候補は echo の材料を渡さず、再掲禁止だけ伝える。
+        buffer.writeln(
+          '- ${request.title}'
+          '（起票済み GitHub Issue #${existingIssue['number'] ?? '-'}。'
+          '本文・JSONとも再掲禁止）',
+        );
+        continue;
+      }
       buffer
         ..writeln('- ${request.title}')
         ..writeln('  - 重要度: ${request.severity.name}')

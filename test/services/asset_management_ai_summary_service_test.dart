@@ -449,8 +449,19 @@ void main() {
       expect(message.contains('"already_issued":true'), true);
       expect(message.contains('"number":3064'), true);
       expect(message.contains('既にGitHub Issue起票済み'), true);
-      expect(message.contains('既知提案の再掲・言い換えは禁止'), true);
+      expect(message.contains('本文にもJSONにも出力禁止'), true);
+      expect(
+        message.contains('新規提案なし（既知の提案はすべて起票済みです）'),
+        true,
+      );
+      expect(message.contains('起票済み。本文・JSONブロックとも再掲禁止。'), true);
       expect(message.contains('ai-new-proposals'), true);
+      // 起票済みテンプレートの本文 (echo の材料) はプロンプトへ渡さない。
+      expect(
+        message.contains(report.developerRequests.first.description),
+        false,
+      );
+      expect(message.contains('本文・JSONとも再掲禁止'), true);
     });
 
     test('extracts ai proposal block into issueable requests', () async {
