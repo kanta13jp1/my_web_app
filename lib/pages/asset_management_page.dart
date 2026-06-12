@@ -20,6 +20,7 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/models/user_profile.dart';
+import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
 import 'package:my_web_app/services/asset_liability_csv_restore_service.dart';
@@ -337,6 +338,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementDisplayModeStore.defaultMode;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
+  final AssetExpectedInflowStore _expectedInflowStore =
+      const AssetExpectedInflowStore();
+  List<AssetExpectedInflow> _expectedInflows = <AssetExpectedInflow>[];
+  String? _displayModeStatsLabel;
   DateTime _calendarMonth = DateTime.now();
   DateTime? _calendarSelectedDate;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
@@ -416,6 +421,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchSubscriptions();
     _fetchMustTasks();
     _loadDisplayMode();
+    _loadExpectedInflows();
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -7296,6 +7302,173 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _displayMode = mode;
       _sectionOverrides = overrides;
     });
+    unawaited(_refreshDisplayModeStats());
+  }
+
+  Future<void> _refreshDisplayModeStats() async {
+    final stats = await _displayModeStore.loadStats();
+    if (!mounted) {
+      return;
+    }
+    final hadData = stats.initialHadData == true ? '既存データあり' : '新規';
+    final initialLabel = stats.initialMode == null
+        ? '初期解決なし'
+        : '初期=${stats.initialMode}($hadData)';
+    setState(() {
+      _displayModeStatsLabel = '$initialLabel / 切替 ${stats.switchCount}回';
+    });
+  }
+
+  Future<void> _loadExpectedInflows() async {
+    final entries = await _expectedInflowStore.loadAll();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _expectedInflows = entries;
+    });
+  }
+
+  Future<void> _removeExpectedInflow(String id) async {
+    final entries = await _expectedInflowStore.remove(id);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _expectedInflows = entries;
+    });
+  }
+
+  void _prefillFlowDateFromCalendar(DateTime date) {
+    setState(() {
+      _selectedFlowDate = date;
+    });
+    final dateLabel = DateFormat('M月d日').format(date);
+    if (_isSectionShown(AssetManagementSectionId.flow)) {
+      _scrollTo(_keyFlow);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$dateLabelを記録日にセットしました')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$dateLabelを記録日にセットしました。収支セクション(標準/フル)で記録できます'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showAddExpectedInflowDialog(DateTime initialDate) async {
+    var selectedDate = initialDate;
+    final amountController = TextEditingController();
+    final labelController = TextEditingController();
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            title: const Text('入金予定を追加'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        DateFormat('yyyy/MM/dd').format(selectedDate),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: dialogContext,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2035),
+                        );
+                        if (picked == null) {
+                          return;
+                        }
+                        setDialogState(() {
+                          selectedDate = picked;
+                        });
+                      },
+                      child: const Text('日付変更'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: '金額(円)',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: labelController,
+                  decoration: const InputDecoration(
+                    labelText: 'メモ(例: 給料、フリマ売上)',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('追加'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (confirmed != true) {
+        return;
+      }
+      final amount = double.tryParse(
+        amountController.text.replaceAll(',', '').trim(),
+      );
+      if (amount == null || amount <= 0) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('金額を1円以上で入力してください')));
+        return;
+      }
+      final entries = await _expectedInflowStore.add(
+        date: selectedDate,
+        amount: amount,
+        label: labelController.text,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _expectedInflows = entries;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('入金予定を追加しました。見込み残高に反映されます')));
+    } finally {
+      amountController.dispose();
+      labelController.dispose();
+    }
   }
 
   Future<void> _setDisplayMode(AssetManagementDisplayMode mode) async {
@@ -7306,6 +7479,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _displayMode = mode;
     });
     await _displayModeStore.save(mode);
+    await _refreshDisplayModeStats();
   }
 
   Future<void> _resolveInitialDisplayMode({
@@ -7314,7 +7488,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final mode = await _displayModeStore.resolveInitialMode(
       hasExistingData: hasExistingData,
     );
-    if (!mounted || mode == _displayMode) {
+    if (!mounted) {
+      return;
+    }
+    unawaited(_refreshDisplayModeStats());
+    if (mode == _displayMode) {
       return;
     }
     setState(() {
@@ -7374,6 +7552,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (_displayModeStatsLabel != null) ...[
+                    Text(
+                      '実験ログ: $_displayModeStatsLabel',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
                   Text(
                     '「自動」は表示モード(ミニマム/標準/フル)に従います。「常に表示」「隠す」はモードより優先されます。',
                     style: TextStyle(
@@ -7527,6 +7716,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ],
       salaryDay: _salarySpendingSalaryDay,
       startingCashBalance: startingCashBalance,
+      expectedInflows: [
+        for (final inflow in AssetExpectedInflowStore.monthInflows(
+          _expectedInflows,
+          _calendarMonth,
+        ))
+          AssetCalendarInflowInput(
+            date: inflow.date,
+            amount: inflow.amount,
+            label: inflow.label,
+          ),
+      ],
     );
     final selectedDate = _calendarSelectedDate;
     final selectedDay =
@@ -7644,11 +7844,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '現金・預金 ${_formatYen(startingCashBalance ?? 0)} を起点に、返済予定と固定費だけを差し引いた保守的な見込みです。給料などの入金は含めていません。入金予定や返済日の調整を確認してください。',
+                      '現金・預金 ${_formatYen(startingCashBalance ?? 0)} と登録済み入金予定を起点に、返済予定と固定費を差し引いた見込みです。未登録の入金は含まれません。',
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).colorScheme.onSurface,
                         height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      key: const Key('asset_calendar_add_inflow_button'),
+                      onPressed: () => _showAddExpectedInflowDialog(
+                        calendar.firstShortfallDate!,
+                      ),
+                      icon: const Icon(Icons.savings, size: 16),
+                      label: const Text('入金予定を追加して再計算'),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '返済日の変更は「負債マスタ」の支払日設定から。給料日(25日)以降へ動かすとショートを避けやすくなります。',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -7690,8 +7908,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildCalendarLegendItem(const Color(0xFF9333EA), '固定費'),
                 _buildCalendarLegendItem(const Color(0xFF0D9488), '給料日'),
                 _buildCalendarLegendItem(const Color(0xFF2563EB), '収入'),
+                _buildCalendarLegendItem(const Color(0xFF0EA5E9), '入金予定'),
               ],
             ),
+            if (AssetExpectedInflowStore.monthInflows(
+              _expectedInflows,
+              _calendarMonth,
+            ).isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final inflow in AssetExpectedInflowStore.monthInflows(
+                    _expectedInflows,
+                    _calendarMonth,
+                  ))
+                    InputChip(
+                      key: Key('asset_inflow_chip_${inflow.id}'),
+                      label: Text(
+                        '${DateFormat('M/d').format(inflow.date)} ${inflow.label} ${_formatYen(inflow.amount)}',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      onDeleted: () => _removeExpectedInflow(inflow.id),
+                    ),
+                ],
+              ),
+            ],
             if (selectedDay != null) ...[
               const SizedBox(height: 10),
               Text(
@@ -7701,6 +7944,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   fontWeight: FontWeight.w700,
                   height: 1.5,
                 ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  OutlinedButton.icon(
+                    key: const Key('asset_calendar_prefill_flow_button'),
+                    onPressed: () =>
+                        _prefillFlowDateFromCalendar(selectedDay.date),
+                    icon: const Icon(Icons.edit_calendar, size: 16),
+                    label: const Text('この日に記録'),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('asset_calendar_day_inflow_button'),
+                    onPressed: () =>
+                        _showAddExpectedInflowDialog(selectedDay.date),
+                    icon: const Icon(Icons.savings, size: 16),
+                    label: const Text('入金予定'),
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
               if (!selectedDay.hasAnyEvent)
@@ -7775,6 +8039,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (day.hasDebtPayment) const Color(0xFFB91C1C),
       if (day.hasSubscription) const Color(0xFF9333EA),
       if (day.hasSalary) const Color(0xFF0D9488),
+      if (day.hasExpectedInflow) const Color(0xFF0EA5E9),
       if (day.hasIncome) const Color(0xFF2563EB),
     ];
 
@@ -7879,6 +8144,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     switch (kind) {
       case AssetCalendarEventKind.salary:
         return Icons.payments_outlined;
+      case AssetCalendarEventKind.expectedInflow:
+        return Icons.savings;
       case AssetCalendarEventKind.debtPayment:
         return Icons.account_balance_outlined;
       case AssetCalendarEventKind.subscription:
@@ -7894,6 +8161,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     switch (kind) {
       case AssetCalendarEventKind.salary:
         return const Color(0xFF0D9488);
+      case AssetCalendarEventKind.expectedInflow:
+        return const Color(0xFF0EA5E9);
       case AssetCalendarEventKind.debtPayment:
         return const Color(0xFFB91C1C);
       case AssetCalendarEventKind.subscription:

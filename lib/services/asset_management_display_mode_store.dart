@@ -139,9 +139,34 @@ extension AssetManagementSectionVisibilityOverrideLabel
   }
 }
 
+/// 表示モード実験の観測値(ローカル計測)。
+class AssetDisplayModeStats {
+  const AssetDisplayModeStats({
+    required this.initialMode,
+    required this.initialHadData,
+    required this.switchCount,
+    required this.lastChangedAt,
+  });
+
+  /// 初回解決で保存されたモード(未解決なら null)。
+  final String? initialMode;
+
+  /// 初回解決時に既存データがあったか(=既存ユーザー判定)。
+  final bool? initialHadData;
+
+  /// ユーザーが手動でモードを切り替えた回数。
+  final int switchCount;
+
+  final DateTime? lastChangedAt;
+}
+
 /// 表示モード・セクション上書きの永続化と可視判定。
 class AssetManagementDisplayModeStore {
-  const AssetManagementDisplayModeStore();
+  const AssetManagementDisplayModeStore({this.nowProvider});
+
+  final DateTime Function()? nowProvider;
+
+  DateTime _now() => nowProvider?.call() ?? DateTime.now();
 
   /// 既存ユーザーの体験を変えないため、未設定時はフル表示。
   static const AssetManagementDisplayMode defaultMode =
@@ -153,6 +178,8 @@ class AssetManagementDisplayModeStore {
 
   static const String _modeKey = 'asset_management_display_mode_v1';
   static const String _overridesKey = 'asset_management_section_overrides_v1';
+  static const String _eventsKey = 'asset_management_display_mode_events_v1';
+  static const int _maxEvents = 50;
 
   static bool isTierVisible({
     required AssetManagementSectionTier tier,
@@ -196,6 +223,11 @@ class AssetManagementDisplayModeStore {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     await store.setString(_modeKey, mode.storageId);
+    await _appendEvent(store, <String, dynamic>{
+      'type': 'switch',
+      'to': mode.storageId,
+      'at': _now().toUtc().toIso8601String(),
+    });
   }
 
   /// 初回起動時の既定モード解決。保存済みがあればそれを優先し、
@@ -211,7 +243,72 @@ class AssetManagementDisplayModeStore {
     }
     final resolved = hasExistingData ? defaultMode : newUserDefaultMode;
     await store.setString(_modeKey, resolved.storageId);
+    await _appendEvent(store, <String, dynamic>{
+      'type': 'initial',
+      'to': resolved.storageId,
+      'has_data': hasExistingData,
+      'at': _now().toUtc().toIso8601String(),
+    });
     return resolved;
+  }
+
+  /// 標準既定実験のローカル統計。サーバ集約は別 Issue で対応。
+  Future<AssetDisplayModeStats> loadStats({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final events = _decodeEvents(store.getString(_eventsKey));
+    String? initialMode;
+    bool? initialHadData;
+    var switchCount = 0;
+    DateTime? lastChangedAt;
+    for (final event in events) {
+      final type = event['type']?.toString();
+      if (type == 'initial' && initialMode == null) {
+        initialMode = event['to']?.toString();
+        initialHadData = event['has_data'] == true;
+      }
+      if (type == 'switch') {
+        switchCount += 1;
+      }
+      final at = DateTime.tryParse(event['at']?.toString() ?? '');
+      if (at != null) {
+        lastChangedAt = at.toLocal();
+      }
+    }
+    return AssetDisplayModeStats(
+      initialMode: initialMode,
+      initialHadData: initialHadData,
+      switchCount: switchCount,
+      lastChangedAt: lastChangedAt,
+    );
+  }
+
+  Future<void> _appendEvent(
+    SharedPreferences store,
+    Map<String, dynamic> event,
+  ) async {
+    final events = _decodeEvents(store.getString(_eventsKey))..add(event);
+    final trimmed = events.length <= _maxEvents
+        ? events
+        : events.sublist(events.length - _maxEvents);
+    await store.setString(_eventsKey, jsonEncode(trimmed));
+  }
+
+  List<Map<String, dynamic>> _decodeEvents(String? raw) {
+    if (raw == null || raw.isEmpty) {
+      return <Map<String, dynamic>>[];
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        return <Map<String, dynamic>>[];
+      }
+      return decoded
+          .whereType<Map>()
+          .map((entry) => Map<String, dynamic>.from(entry))
+          .toList();
+    } catch (_) {
+      return <Map<String, dynamic>>[];
+    }
   }
 
   Future<AssetManagementSectionOverrides> loadOverrides({
