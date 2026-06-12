@@ -235,6 +235,20 @@ void main() {
       expect(payPay.paymentAmountEstimated, isFalse);
     });
 
+    test('manual zero yen does not trigger card billing review alert', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        monthlyPaymentOverrides: const <String, double>{'PayPayカード': 0},
+      );
+
+      expect(
+        workbook.cardBillingReview.needsReviewItems
+            .where((item) => item.accountId == 'paypay_card'),
+        isEmpty,
+      );
+    });
+
     test('reflects manual and estimated sources in payment day risk', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
