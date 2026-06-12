@@ -194,5 +194,49 @@ void main() {
       final items = await store.loadAll();
       expect(items.single.label, 'x');
     });
+
+    test('union-merges only mirror rows that are missing locally', () async {
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 12, 9, 0),
+      );
+      final local = await store.add(
+        date: DateTime(2026, 6, 1),
+        amount: 100,
+        label: 'local',
+      );
+
+      final added = await store.mergeFromMirrorRows(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': local.single.id,
+          'kind': 'one_time',
+          'date': '2026-06-01',
+          'amount': 100,
+          'label': 'local',
+        },
+        <String, dynamic>{
+          'id': 'inflow_remote_new',
+          'kind': 'one_time',
+          'date': '2026-06-20',
+          'amount': 5000,
+          'label': '別端末分',
+        },
+        <String, dynamic>{
+          'id': 'rule_remote_new',
+          'kind': 'rule',
+          'day_of_month': 25,
+          'amount': 280000,
+          'label': '給料',
+        },
+      ]);
+
+      expect(added, 2);
+      expect(await store.loadAll(), hasLength(2));
+      expect((await store.loadRules()).single.id, 'rule_remote_new');
+
+      final secondRun = await store.mergeFromMirrorRows(
+        const <Map<String, dynamic>>[],
+      );
+      expect(secondRun, 0);
+    });
   });
 }
