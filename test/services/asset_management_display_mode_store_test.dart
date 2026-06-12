@@ -225,5 +225,37 @@ void main() {
       expect(stats.switchCount, 0);
       expect(await store.load(), AssetManagementDisplayMode.minimum);
     });
+
+    test('parseServerSummary builds label and weekly list', () {
+      final parsed = AssetManagementDisplayModeStore.parseServerSummary(
+        <String, dynamic>{
+          'initial_minimum': 1,
+          'initial_standard': 4,
+          'initial_full': 2,
+          'switch_total': 3,
+          'standard_retained': 3,
+          'weekly': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'week_start': '2026-06-08',
+              'initials': 5,
+              'initial_standard': 4,
+              'switches': 2,
+            },
+          ],
+        },
+      );
+
+      expect(parsed.summaryLabel, contains('標準維持率 75%'));
+      expect(parsed.summaryLabel, contains('06-08'));
+      expect(parsed.weekly, hasLength(1));
+    });
+
+    test('restore decline flag persists', () async {
+      const store = AssetManagementDisplayModeStore();
+
+      expect(await store.isRestoreDeclined(), isFalse);
+      await store.markRestoreDeclined();
+      expect(await store.isRestoreDeclined(), isTrue);
+    });
   });
 }

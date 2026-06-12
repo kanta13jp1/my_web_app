@@ -191,5 +191,59 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('shortfall warning appears and clears via expected inflow', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 10000,
+                'モビット': -300000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // モビット既定支払日15日の予定額が現金1万を超え、ショート警告が出る。
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_calendar_add_inflow_button')),
+      );
+      expect(find.textContaining('回避ライン'), findsOneWidget);
+      expect(
+        find.byKey(const Key('asset_shift_payment_mobit')),
+        findsOneWidget,
+      );
+
+      // 回避ライン額がプリフィルされた入金予定を登録すると警告が消える。
+      await tester.tap(
+        find.byKey(const Key('asset_calendar_add_inflow_button')),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('追加'),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_calendar_add_inflow_button')),
+        findsNothing,
+      );
+      expect(find.textContaining('回避ライン'), findsNothing);
+
+      await _unmount(tester);
+    });
   });
 }

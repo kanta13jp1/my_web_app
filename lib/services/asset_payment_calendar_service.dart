@@ -351,6 +351,96 @@ class AssetPaymentCalendarService {
     );
   }
 
+  /// [candidateIds] のうち、支払日を [shiftToDay] へ移すことでショートが
+  /// 解消する最小の部分集合を返す。同サイズ候補が複数ある場合は
+  /// **移動する予定支払額の合計が最小**の組合せを優先する。
+  /// 候補7件以上は組合せ爆発を避け全件移動のみ判定する。
+  static List<String>? findMinimalShiftSet({
+    required DateTime month,
+    required List<Map<String, dynamic>> flows,
+    required List<Map<String, dynamic>> subscriptions,
+    required List<AssetCalendarDebtInput> debts,
+    required List<String> candidateIds,
+    required int shiftToDay,
+    int? salaryDay,
+    double? startingCashBalance,
+    List<AssetCalendarInflowInput> expectedInflows =
+        const <AssetCalendarInflowInput>[],
+  }) {
+    bool clears(List<String> subset) {
+      final shifted = buildMonth(
+        month: month,
+        flows: flows,
+        subscriptions: subscriptions,
+        debts: [
+          for (final debt in debts)
+            if (subset.contains(debt.id))
+              AssetCalendarDebtInput(
+                id: debt.id,
+                name: debt.name,
+                balance: debt.balance,
+                paymentDay: shiftToDay,
+                scheduledPaymentAmount: debt.scheduledPaymentAmount,
+                isDirectCashflowTarget: debt.isDirectCashflowTarget,
+              )
+            else
+              debt,
+        ],
+        salaryDay: salaryDay,
+        startingCashBalance: startingCashBalance,
+        expectedInflows: expectedInflows,
+      );
+      return shifted.firstShortfallDate == null;
+    }
+
+    double subsetAmount(List<String> subset) {
+      var total = 0.0;
+      for (final debt in debts) {
+        if (subset.contains(debt.id)) {
+          total += debt.scheduledPaymentAmount;
+        }
+      }
+      return total;
+    }
+
+    if (candidateIds.length > 6) {
+      return clears(candidateIds) ? List<String>.from(candidateIds) : null;
+    }
+    final maskLimit = 1 << candidateIds.length;
+    for (var size = 2; size <= candidateIds.length; size++) {
+      List<String>? best;
+      var bestAmount = double.infinity;
+      for (var mask = 1; mask < maskLimit; mask++) {
+        var bits = 0;
+        for (var i = 0; i < candidateIds.length; i++) {
+          final bit = 1 << i;
+          if (mask & bit != 0) {
+            bits += 1;
+          }
+        }
+        if (bits != size) {
+          continue;
+        }
+        final subset = <String>[
+          for (var i = 0; i < candidateIds.length; i++)
+            if (mask & 1 << i != 0) candidateIds[i],
+        ];
+        if (!clears(subset)) {
+          continue;
+        }
+        final amount = subsetAmount(subset);
+        if (amount < bestAmount) {
+          best = subset;
+          bestAmount = amount;
+        }
+      }
+      if (best != null) {
+        return best;
+      }
+    }
+    return null;
+  }
+
   static List<AssetCalendarEvent> _sortEvents(List<AssetCalendarEvent> events) {
     final sorted = List<AssetCalendarEvent>.from(events);
     sorted.sort((a, b) => a.kind.index.compareTo(b.kind.index));
