@@ -344,6 +344,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetExpectedInflowRule> _expectedInflowRules =
       <AssetExpectedInflowRule>[];
   String? _displayModeStatsLabel;
+  String? _experimentServerSummary;
   DateTime _calendarMonth = DateTime.now();
   DateTime? _calendarSelectedDate;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
@@ -7335,6 +7336,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _removeExpectedInflowRule(String id) async {
     final rules = await _expectedInflowStore.removeRule(id);
+    unawaited(_deleteInflowMirror(id));
     if (!mounted) {
       return;
     }
@@ -7375,6 +7377,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _removeExpectedInflow(String id) async {
     final entries = await _expectedInflowStore.remove(id);
+    unawaited(_deleteInflowMirror(id));
     if (!mounted) {
       return;
     }
@@ -7522,6 +7525,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
       if (repeatMonthly) {
+        final beforeRuleIds =
+            _expectedInflowRules.map((rule) => rule.id).toSet();
         final rules = await _expectedInflowStore.addRule(
           dayOfMonth: selectedDate.day,
           amount: amount,
@@ -7533,11 +7538,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() {
           _expectedInflowRules = rules;
         });
+        for (final rule in rules) {
+          if (!beforeRuleIds.contains(rule.id)) {
+            unawaited(
+              _mirrorInflowToSupabase(<String, dynamic>{
+                'id': rule.id,
+                'kind': 'rule',
+                'day_of_month': rule.dayOfMonth,
+                'amount': rule.amount,
+                'label': rule.label,
+              }),
+            );
+          }
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('毎月${selectedDate.day}日の入金予定を登録しました')),
         );
         return;
       }
+      final beforeIds = _expectedInflows.map((entry) => entry.id).toSet();
       final entries = await _expectedInflowStore.add(
         date: selectedDate,
         amount: amount,
@@ -7549,6 +7568,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _expectedInflows = entries;
       });
+      for (final entry in entries) {
+        if (!beforeIds.contains(entry.id)) {
+          unawaited(
+            _mirrorInflowToSupabase(<String, dynamic>{
+              'id': entry.id,
+              'kind': 'one_time',
+              'date': DateFormat('yyyy-MM-dd').format(entry.date),
+              'amount': entry.amount,
+              'label': entry.label,
+            }),
+          );
+        }
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('入金予定を追加しました。見込み残高に反映されます')));
@@ -7611,6 +7643,146 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
   }
 
+  Future<void> _fetchExperimentSummary() async {
+    try {
+      final dynamic result =
+          await _supabase.rpc('display_mode_experiment_summary');
+      if (!mounted || result is! Map) {
+        return;
+      }
+      final data = Map<String, dynamic>.from(result);
+      int countOf(String key) => (data[key] as num?)?.toInt() ?? 0;
+      final standardInitial = countOf('initial_standard');
+      final retained = countOf('standard_retained');
+      final rate = standardInitial == 0
+          ? '-'
+          : '${(retained * 100 / standardInitial).round()}%';
+      setState(() {
+        _experimentServerSummary =
+            '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回';
+      });
+    } catch (e) {
+      debugPrint('experiment summary fetch failed: $e');
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _experimentServerSummary = '全体集計を取得できませんでした(ネットワーク/権限)';
+      });
+    }
+  }
+
+  Future<void> _mirrorInflowToSupabase(Map<String, dynamic> row) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase
+          .from('asset_expected_inflow_items')
+          .upsert(<String, dynamic>{...row, 'user_id': userId});
+    } catch (e) {
+      debugPrint('inflow mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _deleteInflowMirror(String id) async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_expected_inflow_items').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('inflow mirror delete failed: $e');
+    }
+  }
+
+  void _shiftDebtPaymentAfterSalary(
+    AssetLiabilityWorkbook? workbook,
+    String debtRowId,
+  ) {
+    final rows = workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
+    AssetLiabilityDebtRow? target;
+    for (final row in rows) {
+      if (row.id == debtRowId) {
+        target = row;
+      }
+    }
+    if (target == null) {
+      return;
+    }
+    const newDay = _salarySpendingSalaryDay + 1;
+    _setDebtPaymentDayOverride(target, newDay);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${target.name} の支払日を毎月$newDay日へ変更しました(負債マスタの支払日設定から戻せます)',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showInflowRulesDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('毎月の入金ルール'),
+          content: SizedBox(
+            width: 360,
+            child: _expectedInflowRules.isEmpty
+                ? const Text(
+                    'ルールはありません。入金予定ダイアログの「毎月この日に繰り返す」で登録できます。',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final rule in _expectedInflowRules)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '毎月${rule.dayOfMonth}日 ${rule.label} ${_formatYen(rule.amount)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.5,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                key: Key(
+                                  'asset_inflow_rule_delete_${rule.id}',
+                                ),
+                                tooltip: '削除',
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                ),
+                                onPressed: () async {
+                                  await _removeExpectedInflowRule(rule.id);
+                                  setDialogState(() {});
+                                },
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('閉じる'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionOverrideDropdown(
     AssetManagementSectionId section,
     void Function(void Function()) setDialogState,
@@ -7661,6 +7833,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 6),
                   ],
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _experimentServerSummary ?? '全体集計は未取得です。',
+                          style: const TextStyle(fontSize: 11, height: 1.5),
+                        ),
+                      ),
+                      TextButton(
+                        key: const Key('asset_experiment_summary_button'),
+                        onPressed: () async {
+                          await _fetchExperimentSummary();
+                          setDialogState(() {});
+                        },
+                        child: const Text('全体集計'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     '「自動」は表示モード(ミニマム/標準/フル)に従います。「常に表示」「隠す」はモードより優先されます。',
                     style: TextStyle(
@@ -7810,6 +8001,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debts: [
         for (final row in debtRows)
           AssetCalendarDebtInput(
+            id: row.id,
             name: row.name,
             balance: row.balance,
             paymentDay: row.paymentDay,
@@ -7832,6 +8024,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final selectedDay =
         selectedDate == null ? null : calendar.dayFor(selectedDate);
     final today = DateTime.now();
+    final shortfallDaySummary = calendar.firstShortfallDate == null
+        ? null
+        : calendar.dayFor(calendar.firstShortfallDate!);
+    final shortfallDebtEvents = <AssetCalendarEvent>[
+      if (shortfallDaySummary != null)
+        ...shortfallDaySummary.events.where(
+          (event) =>
+              event.kind == AssetCalendarEventKind.debtPayment &&
+              event.sourceId != null,
+        ),
+    ];
     const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
 
     return Card(
@@ -7980,6 +8183,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         height: 1.5,
                       ),
                     ),
+                    if (shortfallDebtEvents.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          for (final event in shortfallDebtEvents)
+                            OutlinedButton.icon(
+                              key: Key(
+                                'asset_shift_payment_${event.sourceId}',
+                              ),
+                              onPressed: () => _shiftDebtPaymentAfterSalary(
+                                workbook,
+                                event.sourceId!,
+                              ),
+                              icon: const Icon(
+                                Icons.schedule_send,
+                                size: 14,
+                              ),
+                              label: Text(
+                                '${event.label}を26日へ',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -8021,6 +8251,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildCalendarLegendItem(const Color(0xFF2563EB), '収入'),
                 _buildCalendarLegendItem(const Color(0xFF0EA5E9), '入金予定'),
               ],
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_inflow_rules_button'),
+                onPressed: _showInflowRulesDialog,
+                icon: const Icon(Icons.repeat, size: 16),
+                label: const Text('毎月の入金ルール'),
+              ),
             ),
             if (monthInflowEntries.isNotEmpty) ...[
               const SizedBox(height: 8),

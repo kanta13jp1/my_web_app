@@ -48,6 +48,7 @@ void main() {
         subscriptions: const <Map<String, dynamic>>[],
         debts: const <AssetCalendarDebtInput>[
           AssetCalendarDebtInput(
+            id: 'debt_card_loan',
             name: 'カードローン',
             balance: -300000,
             paymentDay: 31,
@@ -67,6 +68,7 @@ void main() {
       expect(day28!.hasDebtPayment, isTrue);
       expect(day28.events.single.label, 'カードローン 返済');
       expect(day28.events.single.amount, 15000);
+      expect(day28.events.single.sourceId, 'debt_card_loan');
       expect(calendar.dayFor(DateTime(2026, 2, 10))!.hasAnyEvent, isFalse);
       expect(calendar.dayFor(DateTime(2026, 2, 5))!.hasAnyEvent, isFalse);
     });
