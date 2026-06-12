@@ -296,27 +296,25 @@ class AssetManagementAiSummaryService {
         ),
         'note': '定型生成の既知提案。already_issued=true は既にGitHub Issue起票済みで、'
             'AIはこれらを繰り返さず未起票の新規提案だけを返す。',
-        'items': report.developerRequests
-            .map(
-              (request) {
-                final existingIssue = _existingIssueSummary(
-                  existingDeveloperIssuesByTitle[request.title],
-                );
-                if (existingIssue != null) {
-                  // 起票済み提案は echo の材料にならないよう本文を渡さない。
-                  return <String, dynamic>{
-                    'title': request.title,
-                    'already_issued': true,
-                    'existing_github_issue': existingIssue,
-                    'note': '起票済み。本文・JSONブロックとも再掲禁止。',
-                  };
-                }
-                return _developerRequestToJson(request)
-                  ..['already_issued'] = false
-                  ..['existing_github_issue'] = null;
-              },
-            )
-            .toList(growable: false),
+        'items': report.developerRequests.map(
+          (request) {
+            final existingIssue = _existingIssueSummary(
+              existingDeveloperIssuesByTitle[request.title],
+            );
+            if (existingIssue != null) {
+              // 起票済み提案は echo の材料にならないよう本文を渡さない。
+              return <String, dynamic>{
+                'title': request.title,
+                'already_issued': true,
+                'existing_github_issue': existingIssue,
+                'note': '起票済み。本文・JSONブロックとも再掲禁止。',
+              };
+            }
+            return _developerRequestToJson(request)
+              ..['already_issued'] = false
+              ..['existing_github_issue'] = null;
+          },
+        ).toList(growable: false),
         'required_output_contract': const <String>[
           '現状の痛み',
           '根拠データ',
