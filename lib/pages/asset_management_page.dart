@@ -20,6 +20,7 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/models/user_profile.dart';
+import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
@@ -500,6 +501,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingAssetManagementUserProfile = false;
       });
     }
+  }
+
+  bool _assetManagementProfileBasicsMissing(UserProfile? profile) {
+    if (profile == null) {
+      return true;
+    }
+    final occupation = profile.occupation?.trim() ?? '';
+    return occupation.isEmpty || profile.annualIncome == null;
+  }
+
+  Future<void> _openProfileSettingsForAssetManagement() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const ProfileSettingsPage()),
+    );
+    if (!mounted) {
+      return;
+    }
+    await _loadAssetManagementUserProfile();
   }
 
   List<String> _paymentSourceCandidates() {
@@ -12552,6 +12571,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 10),
           _buildAssetManagementAiSummaryPanel(report),
+          if (_assetManagementProfileBasicsMissing(report.userProfile)) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                onPressed: () =>
+                    unawaited(_openProfileSettingsForAssetManagement()),
+                icon: const Icon(Icons.badge_outlined, size: 16),
+                label: const Text('職業・年収をプロフィールに入力する'),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
