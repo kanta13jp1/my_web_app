@@ -13086,9 +13086,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         )
                       : const Icon(Icons.add_task_outlined, size: 16),
                   label: Text(
-                    _isSubmittingAllDeveloperIssues
-                        ? 'Issues登録中'
-                        : '改善提案をIssues登録',
+                    _developerIssuesBulkButtonLabel(
+                      issueableDeveloperRequests,
+                    ),
                   ),
                 ),
             ],
@@ -13940,6 +13940,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             )
             .toList(growable: false);
+    final existingIssueEntries =
+        <MapEntry<AssetManagementDeveloperRequest, Map<String, dynamic>>>[];
+    if (!_isCheckingExistingDeveloperRequestIssues) {
+      for (final request in requests) {
+        final issueKey = _developerRequestIssueKey(request);
+        final existing = _developerRequestExistingIssueResults[issueKey];
+        if (existing != null) {
+          existingIssueEntries.add(MapEntry(request, existing));
+        }
+      }
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -13948,6 +13959,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
         ),
         const SizedBox(height: 6),
+        if (_isCheckingExistingDeveloperRequestIssues)
+          Text(
+            '既存のGitHub Issueを確認しています...',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
         for (final request in visibleRequests.take(4))
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
@@ -14007,7 +14027,60 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           ),
+        if (existingIssueEntries.isNotEmpty) ...[
+          Text(
+            '登録済みの改善提案（既存Issueがあるため新規登録対象外）',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          for (final entry in existingIssueEntries)
+            _buildExistingDeveloperIssueLink(entry.key, entry.value),
+        ],
       ],
+    );
+  }
+
+  String _developerIssuesBulkButtonLabel(
+    List<AssetManagementDeveloperRequest> issueableRequests,
+  ) {
+    if (_isSubmittingAllDeveloperIssues) {
+      return 'Issues登録中';
+    }
+    if (_isCheckingExistingDeveloperRequestIssues) {
+      return '既存Issue確認中';
+    }
+    if (issueableRequests.isEmpty) {
+      return '改善提案はIssue登録済み';
+    }
+    return '改善提案をIssues登録';
+  }
+
+  Widget _buildExistingDeveloperIssueLink(
+    AssetManagementDeveloperRequest request,
+    Map<String, dynamic> existingIssue,
+  ) {
+    final issueUrl = existingIssue['html_url']?.toString() ?? '';
+    final issueNumber = existingIssue['number']?.toString() ?? '-';
+    final issueState = existingIssue['state']?.toString() ?? '-';
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        style: TextButton.styleFrom(
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+        ),
+        onPressed:
+            issueUrl.isEmpty ? null : () => web.window.open(issueUrl, '_blank'),
+        icon: const Icon(Icons.open_in_new, size: 14),
+        label: Text(
+          '${request.title}: 既存Issue #$issueNumber（$issueState）を開く',
+          style: const TextStyle(fontSize: 12, height: 1.4),
+        ),
+      ),
     );
   }
 
