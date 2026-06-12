@@ -616,6 +616,16 @@ function applyProviderGenerationOptions(
     };
   }
 
+  if (providerId === "openai") {
+    // OpenAI の新世代モデル (gpt-5 / o系) は max_tokens を拒否するため
+    // max_completion_tokens を使う (gpt-4o 系も同パラメータを受理する)。
+    // groq / deepinfra 等の OpenAI 互換プロバイダーは従来どおり max_tokens。
+    return {
+      ...requestBody,
+      max_completion_tokens: maxTokens,
+    };
+  }
+
   return {
     ...requestBody,
     max_tokens: maxTokens,
