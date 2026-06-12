@@ -7351,6 +7351,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _expectedInflows = entries;
       _expectedInflowRules = rules;
     });
+    if (entries.isEmpty && rules.isEmpty) {
+      unawaited(_restoreInflowsFromMirror());
+    }
   }
 
   Future<void> _removeExpectedInflowRule(String id) async {
@@ -7676,9 +7679,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final rate = standardInitial == 0
           ? '-'
           : '${(retained * 100 / standardInitial).round()}%';
+      final weekly = data['weekly'];
+      var trendLabel = '';
+      if (weekly is List && weekly.isNotEmpty) {
+        final parts = <String>[];
+        for (final raw in weekly.take(4)) {
+          if (raw is! Map) {
+            continue;
+          }
+          final week = Map<String, dynamic>.from(raw);
+          final start = week['week_start']?.toString() ?? '';
+          final label = start.length >= 10 ? start.substring(5, 10) : start;
+          final initials = (week['initials'] as num?)?.toInt() ?? 0;
+          final std = (week['initial_standard'] as num?)?.toInt() ?? 0;
+          final switches = (week['switches'] as num?)?.toInt() ?? 0;
+          parts.add('$label: 初期$initials(std$std)/切替$switches');
+        }
+        if (parts.isNotEmpty) {
+          trendLabel = ' | 週次 ${parts.join(' → ')}';
+        }
+      }
       setState(() {
         _experimentServerSummary =
-            '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回';
+            '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回$trendLabel';
       });
     } catch (e) {
       debugPrint('experiment summary fetch failed: $e');
@@ -7739,6 +7762,73 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
+  }
+
+  String _shiftPreviewLabel({
+    required AssetCalendarEvent event,
+    required AssetPaymentCalendarMonth calendar,
+    required List<AssetCalendarDebtInput> debts,
+    required List<Map<String, dynamic>> subscriptions,
+    required List<AssetCalendarInflowInput> inflows,
+    required double? startingCashBalance,
+  }) {
+    const newDay = _salarySpendingSalaryDay + 1;
+    final shifted = AssetPaymentCalendarService.buildMonth(
+      month: _calendarMonth,
+      flows: _recentFlows,
+      subscriptions: subscriptions,
+      debts: [
+        for (final debt in debts)
+          if (debt.id == event.sourceId)
+            AssetCalendarDebtInput(
+              id: debt.id,
+              name: debt.name,
+              balance: debt.balance,
+              paymentDay: newDay,
+              scheduledPaymentAmount: debt.scheduledPaymentAmount,
+              isDirectCashflowTarget: debt.isDirectCashflowTarget,
+            )
+          else
+            debt,
+      ],
+      salaryDay: _salarySpendingSalaryDay,
+      startingCashBalance: startingCashBalance,
+      expectedInflows: inflows,
+    );
+    final shiftedShortfall = shifted.firstShortfallDate;
+    if (shiftedShortfall == null) {
+      return '(回避できます)';
+    }
+    final currentShortfall = calendar.firstShortfallDate;
+    if (currentShortfall != null &&
+        shiftedShortfall.isAfter(currentShortfall)) {
+      return '(${DateFormat('M/d').format(shiftedShortfall)}へ後退)';
+    }
+    return '(単独では回避不可)';
+  }
+
+  Future<void> _restoreInflowsFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase.from('asset_expected_inflow_items').select();
+      final restored = await _expectedInflowStore.restoreFromMirrorRows(
+        List<Map<String, dynamic>>.from(rows),
+      );
+      if (!restored || !mounted) {
+        return;
+      }
+      await _loadExpectedInflows();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('入金予定をサーバのバックアップから復元しました')),
+      );
+    } catch (e) {
+      debugPrint('inflow mirror restore failed: $e');
+    }
   }
 
   Future<void> _showInflowRulesDialog() async {
@@ -8013,31 +8103,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       rules: _expectedInflowRules,
       month: _calendarMonth,
     );
+    final monthSubscriptions = _subscriptionsForMonth(_calendarMonth);
+    final debtInputs = <AssetCalendarDebtInput>[
+      for (final row in debtRows)
+        AssetCalendarDebtInput(
+          id: row.id,
+          name: row.name,
+          balance: row.balance,
+          paymentDay: row.paymentDay,
+          scheduledPaymentAmount: row.scheduledPaymentAmount,
+          isDirectCashflowTarget: row.isDirectCashflowTarget,
+        ),
+    ];
+    final inflowInputs = <AssetCalendarInflowInput>[
+      for (final inflow in monthInflowEntries)
+        AssetCalendarInflowInput(
+          date: inflow.date,
+          amount: inflow.amount,
+          label: inflow.label,
+        ),
+    ];
     final calendar = AssetPaymentCalendarService.buildMonth(
       month: _calendarMonth,
       flows: _recentFlows,
-      subscriptions: _subscriptionsForMonth(_calendarMonth),
-      debts: [
-        for (final row in debtRows)
-          AssetCalendarDebtInput(
-            id: row.id,
-            name: row.name,
-            balance: row.balance,
-            paymentDay: row.paymentDay,
-            scheduledPaymentAmount: row.scheduledPaymentAmount,
-            isDirectCashflowTarget: row.isDirectCashflowTarget,
-          ),
-      ],
+      subscriptions: monthSubscriptions,
+      debts: debtInputs,
       salaryDay: _salarySpendingSalaryDay,
       startingCashBalance: startingCashBalance,
-      expectedInflows: [
-        for (final inflow in monthInflowEntries)
-          AssetCalendarInflowInput(
-            date: inflow.date,
-            amount: inflow.amount,
-            label: inflow.label,
-          ),
-      ],
+      expectedInflows: inflowInputs,
     );
     final selectedDate = _calendarSelectedDate;
     final selectedDay =
@@ -8052,6 +8145,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           (event) =>
               event.kind == AssetCalendarEventKind.debtPayment &&
               event.sourceId != null,
+        ),
+    ];
+    final shiftCandidates = <MapEntry<AssetCalendarEvent, String>>[
+      for (final event in shortfallDebtEvents)
+        MapEntry(
+          event,
+          _shiftPreviewLabel(
+            event: event,
+            calendar: calendar,
+            debts: debtInputs,
+            subscriptions: monthSubscriptions,
+            inflows: inflowInputs,
+            startingCashBalance: startingCashBalance,
+          ),
         ),
     ];
     const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
@@ -8208,21 +8315,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         spacing: 8,
                         runSpacing: 6,
                         children: [
-                          for (final event in shortfallDebtEvents)
+                          for (final entry in shiftCandidates)
                             OutlinedButton.icon(
                               key: Key(
-                                'asset_shift_payment_${event.sourceId}',
+                                'asset_shift_payment_${entry.key.sourceId}',
                               ),
                               onPressed: () => _shiftDebtPaymentAfterSalary(
                                 workbook,
-                                event.sourceId!,
+                                entry.key.sourceId!,
                               ),
                               icon: const Icon(
                                 Icons.schedule_send,
                                 size: 14,
                               ),
                               label: Text(
-                                '${event.label}を26日へ',
+                                '${entry.key.label}を26日へ${entry.value}',
                                 style: const TextStyle(fontSize: 11),
                               ),
                             ),

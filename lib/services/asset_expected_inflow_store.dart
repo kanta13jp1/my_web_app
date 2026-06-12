@@ -208,6 +208,64 @@ class AssetExpectedInflowStore {
     }
   }
 
+  /// サーバミラー行からの復元 (#3246 v1)。安全側に倒し、ローカルが
+  /// 完全に空の場合のみ全置換する(既存ローカルがあれば何もしない)。
+  Future<bool> restoreFromMirrorRows(
+    List<Map<String, dynamic>> rows, {
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final localItems = _decode(store.getString(_key));
+    final localRules = _decodeRules(store.getString(_rulesKey));
+    if (localItems.isNotEmpty || localRules.isNotEmpty || rows.isEmpty) {
+      return false;
+    }
+    final items = <AssetExpectedInflow>[];
+    final rules = <AssetExpectedInflowRule>[];
+    for (final row in rows) {
+      final id = row['id']?.toString() ?? '';
+      final amount = (row['amount'] as num?)?.toDouble() ?? 0;
+      final label = row['label']?.toString() ?? '';
+      if (id.isEmpty || amount <= 0) {
+        continue;
+      }
+      if (row['kind']?.toString() == 'rule') {
+        final day = (row['day_of_month'] as num?)?.toInt() ?? 0;
+        if (day >= 1 && day <= 31) {
+          rules.add(
+            AssetExpectedInflowRule(
+              id: id,
+              dayOfMonth: day,
+              amount: amount,
+              label: label,
+            ),
+          );
+        }
+      } else {
+        final date =
+            DateTime.tryParse(row['date']?.toString() ?? '')?.toLocal();
+        if (date != null) {
+          items.add(
+            AssetExpectedInflow(
+              id: id,
+              date: DateTime(date.year, date.month, date.day),
+              amount: amount,
+              label: label,
+            ),
+          );
+        }
+      }
+    }
+    if (items.isEmpty && rules.isEmpty) {
+      return false;
+    }
+    items.sort((a, b) => a.date.compareTo(b.date));
+    rules.sort((a, b) => a.dayOfMonth.compareTo(b.dayOfMonth));
+    await _save(store, items);
+    await _saveRules(store, rules);
+    return true;
+  }
+
   Future<List<AssetExpectedInflow>> loadAll({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     return _decode(store.getString(_key));

@@ -143,5 +143,56 @@ void main() {
       expect(entries.last.sourceRuleId, 'r1');
       expect(entries.last.id, 'rule_r1_202602');
     });
+
+    test('restores mirror rows only into an empty local store', () async {
+      const store = AssetExpectedInflowStore();
+      final rows = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'inflow_a',
+          'kind': 'one_time',
+          'date': '2026-06-20',
+          'amount': 5000,
+          'label': '振込',
+        },
+        <String, dynamic>{
+          'id': 'rule_b',
+          'kind': 'rule',
+          'day_of_month': 25,
+          'amount': 280000,
+          'label': '給料',
+        },
+        <String, dynamic>{'id': '', 'kind': 'one_time', 'amount': 1},
+      ];
+
+      final restored = await store.restoreFromMirrorRows(rows);
+
+      expect(restored, isTrue);
+      final items = await store.loadAll();
+      final rules = await store.loadRules();
+      expect(items.single.id, 'inflow_a');
+      expect(items.single.date, DateTime(2026, 6, 20));
+      expect(rules.single.dayOfMonth, 25);
+    });
+
+    test('refuses mirror restore when local data already exists', () async {
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 12, 9, 0),
+      );
+      await store.add(date: DateTime(2026, 6, 1), amount: 100, label: 'x');
+
+      final restored = await store.restoreFromMirrorRows(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'inflow_remote',
+          'kind': 'one_time',
+          'date': '2026-06-21',
+          'amount': 999,
+          'label': 'remote',
+        },
+      ]);
+
+      expect(restored, isFalse);
+      final items = await store.loadAll();
+      expect(items.single.label, 'x');
+    });
   });
 }
