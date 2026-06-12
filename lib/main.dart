@@ -303,15 +303,12 @@ import 'package:my_web_app/widgets/global_header_clock_bar.dart';
 import 'utils/app_logger.dart';
 import 'utils/error_reporter.dart';
 
-SupabaseClient? _testSupabaseClient;
+import 'services/supabase_client_provider.dart';
+
+export 'services/supabase_client_provider.dart';
+
 final GrowthPresenceNavigatorObserver _growthPresenceObserver =
     GrowthPresenceNavigatorObserver();
-
-@visibleForTesting
-set supabaseClientForTesting(SupabaseClient client) =>
-    _testSupabaseClient = client;
-
-SupabaseClient get supabase => _testSupabaseClient ?? Supabase.instance.client;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

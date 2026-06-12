@@ -54,7 +54,9 @@ import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:web/web.dart' as web;
+import 'package:web/web.dart'
+    // ignore: uri_does_not_exist
+    if (dart.library.io) 'package:my_web_app/utils/web_stub.dart' as web;
 
 enum AssetManagementInitialFocus {
   overview,
@@ -346,6 +348,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <AssetExpectedInflowRule>[];
   String? _displayModeStatsLabel;
   String? _experimentServerSummary;
+  List<Map<String, dynamic>> _experimentWeekly = const <Map<String, dynamic>>[];
   DateTime _calendarMonth = DateTime.now();
   DateTime? _calendarSelectedDate;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
@@ -1076,6 +1079,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           await _assetLiabilityRepository.loadDefaultCardBillingAccounts();
       final debtPaymentDayOverrides =
           await _assetLiabilityRepository.loadDebtPaymentDayOverrides();
+      if (debtPaymentDayOverrides.isEmpty) {
+        unawaited(_restoreDebtPaymentDayOverridesFromMirror());
+      }
       final templates =
           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
@@ -7681,6 +7687,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           : '${(retained * 100 / standardInitial).round()}%';
       final weekly = data['weekly'];
       var trendLabel = '';
+      final weeklyMaps = <Map<String, dynamic>>[];
       if (weekly is List && weekly.isNotEmpty) {
         final parts = <String>[];
         for (final raw in weekly.take(4)) {
@@ -7688,6 +7695,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             continue;
           }
           final week = Map<String, dynamic>.from(raw);
+          weeklyMaps.add(week);
           final start = week['week_start']?.toString() ?? '';
           final label = start.length >= 10 ? start.substring(5, 10) : start;
           final initials = (week['initials'] as num?)?.toInt() ?? 0;
@@ -7702,6 +7710,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _experimentServerSummary =
             '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回$trendLabel';
+        _experimentWeekly = weeklyMaps;
       });
     } catch (e) {
       debugPrint('experiment summary fetch failed: $e');
@@ -7831,6 +7840,216 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  Future<void> _mirrorDebtPaymentDayOverrides(
+    Map<String, int> overrides,
+  ) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'debt_payment_day_overrides',
+        'value': overrides,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('pref mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _restoreDebtPaymentDayOverridesFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', 'debt_payment_day_overrides');
+      if (rows.isEmpty || !mounted) {
+        return;
+      }
+      final value = rows.first['value'];
+      if (value is! Map) {
+        return;
+      }
+      final restored = <String, int>{};
+      value.forEach((key, dynamic raw) {
+        final day = (raw as num?)?.toInt();
+        if (key is String && day != null && day >= 1 && day <= 31) {
+          restored[key] = day;
+        }
+      });
+      if (restored.isEmpty || _debtPaymentDayOverrides.isNotEmpty) {
+        return;
+      }
+      setState(() {
+        _debtPaymentDayOverrides = restored;
+      });
+      unawaited(_saveDebtPaymentDayOverrides());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('支払日設定をサーバのバックアップから復元しました')),
+      );
+    } catch (e) {
+      debugPrint('pref mirror restore failed: $e');
+    }
+  }
+
+  Future<void> _mergeInflowsFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase.from('asset_expected_inflow_items').select();
+      final added = await _expectedInflowStore.mergeFromMirrorRows(
+        List<Map<String, dynamic>>.from(rows),
+      );
+      if (!mounted) {
+        return;
+      }
+      if (added > 0) {
+        await _loadExpectedInflows();
+      }
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            added > 0 ? '$added件をサーバから統合しました' : 'サーバとの差分はありませんでした',
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('inflow mirror merge failed: $e');
+    }
+  }
+
+  AssetLiabilityDebtRow? _debtRowById(
+    AssetLiabilityWorkbook? workbook,
+    String debtRowId,
+  ) {
+    final rows = workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
+    for (final row in rows) {
+      if (row.id == debtRowId) {
+        return row;
+      }
+    }
+    return null;
+  }
+
+  void _shiftDebtPaymentsAfterSalaryCombo(
+    AssetLiabilityWorkbook? workbook,
+    List<String> debtRowIds,
+  ) {
+    const newDay = _salarySpendingSalaryDay + 1;
+    var shiftedCount = 0;
+    for (final id in debtRowIds) {
+      final target = _debtRowById(workbook, id);
+      if (target == null) {
+        continue;
+      }
+      _setDebtPaymentDayOverride(target, newDay);
+      shiftedCount += 1;
+    }
+    if (shiftedCount == 0) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$shiftedCount件の支払日を毎月$newDay日へまとめて変更しました(負債マスタから戻せます)',
+        ),
+      ),
+    );
+  }
+
+  String? _comboShiftPreviewLabel({
+    required List<String> ids,
+    required List<AssetCalendarDebtInput> debts,
+    required List<Map<String, dynamic>> subscriptions,
+    required List<AssetCalendarInflowInput> inflows,
+    required double? startingCashBalance,
+  }) {
+    const newDay = _salarySpendingSalaryDay + 1;
+    final shifted = AssetPaymentCalendarService.buildMonth(
+      month: _calendarMonth,
+      flows: _recentFlows,
+      subscriptions: subscriptions,
+      debts: [
+        for (final debt in debts)
+          if (ids.contains(debt.id))
+            AssetCalendarDebtInput(
+              id: debt.id,
+              name: debt.name,
+              balance: debt.balance,
+              paymentDay: newDay,
+              scheduledPaymentAmount: debt.scheduledPaymentAmount,
+              isDirectCashflowTarget: debt.isDirectCashflowTarget,
+            )
+          else
+            debt,
+      ],
+      salaryDay: _salarySpendingSalaryDay,
+      startingCashBalance: startingCashBalance,
+      expectedInflows: inflows,
+    );
+    return shifted.firstShortfallDate == null ? '(回避できます)' : null;
+  }
+
+  Widget _buildExperimentTrendBars() {
+    final weeks = _experimentWeekly.reversed.toList(growable: false);
+    var maxInitials = 1;
+    for (final week in weeks) {
+      final initials = (week['initials'] as num?)?.toInt() ?? 0;
+      if (initials > maxInitials) {
+        maxInitials = initials;
+      }
+    }
+    return SizedBox(
+      height: 60,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final week in weeks)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${(week['initials'] as num?)?.toInt() ?? 0}',
+                      style: const TextStyle(fontSize: 8, height: 1.2),
+                    ),
+                    Container(
+                      height: 4 +
+                          36 *
+                              ((week['initials'] as num?)?.toInt() ?? 0) /
+                              maxInitials,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      (week['week_start']?.toString() ?? '').length >= 10
+                          ? week['week_start'].toString().substring(5, 10)
+                          : '',
+                      style: const TextStyle(fontSize: 7, height: 1.2),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showInflowRulesDialog() async {
     await showDialog<void>(
       context: context,
@@ -7882,6 +8101,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
           ),
           actions: [
+            TextButton.icon(
+              key: const Key('asset_inflow_merge_button'),
+              onPressed: () async {
+                await _mergeInflowsFromMirror();
+                setDialogState(() {});
+              },
+              icon: const Icon(Icons.cloud_sync, size: 16),
+              label: const Text('サーバと統合'),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text('閉じる'),
@@ -7960,6 +8188,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                     ],
                   ),
+                  if (_experimentWeekly.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    _buildExperimentTrendBars(),
+                  ],
                   const SizedBox(height: 6),
                   Text(
                     '「自動」は表示モード(ミニマム/標準/フル)に従います。「常に表示」「隠す」はモードより優先されます。',
@@ -8161,6 +8393,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         ),
     ];
+    final comboIds = <String>[
+      for (final event in shortfallDebtEvents)
+        if (event.sourceId != null) event.sourceId!,
+    ];
+    final comboPreview = comboIds.length >= 2 &&
+            shiftCandidates.every(
+              (entry) => entry.value == '(単独では回避不可)',
+            )
+        ? _comboShiftPreviewLabel(
+            ids: comboIds,
+            debts: debtInputs,
+            subscriptions: monthSubscriptions,
+            inflows: inflowInputs,
+            startingCashBalance: startingCashBalance,
+          )
+        : null;
     const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
 
     return Card(
@@ -8334,6 +8582,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               ),
                             ),
                         ],
+                      ),
+                    ],
+                    if (comboPreview != null) ...[
+                      const SizedBox(height: 6),
+                      OutlinedButton.icon(
+                        key: const Key('asset_shift_payment_combo'),
+                        onPressed: () => _shiftDebtPaymentsAfterSalaryCombo(
+                          workbook,
+                          comboIds,
+                        ),
+                        icon: const Icon(Icons.double_arrow, size: 14),
+                        label: Text(
+                          'まとめて26日へ移動$comboPreview',
+                          style: const TextStyle(fontSize: 11),
+                        ),
                       ),
                     ],
                   ],
@@ -17873,6 +18136,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('Error saving debt payment day overrides: $e');
     }
+    unawaited(
+      _mirrorDebtPaymentDayOverrides(
+        Map<String, int>.from(_debtPaymentDayOverrides),
+      ),
+    );
   }
 
   Widget _buildDebtPaymentDayInput(AssetLiabilityDebtRow row) {
