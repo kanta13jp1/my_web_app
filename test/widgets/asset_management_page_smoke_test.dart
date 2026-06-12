@@ -330,5 +330,59 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('mirror update notice offers and applies remote prefs', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'minimum',
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugMirrorPrefsRows: <Map<String, dynamic>>[
+              <String, dynamic>{
+                'pref_key': 'display_mode',
+                'value': const <String, dynamic>{'mode': 'standard'},
+                'updated_at': DateTime.now()
+                    .add(const Duration(hours: 1))
+                    .toUtc()
+                    .toIso8601String(),
+              },
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('他端末で表示設定が更新されています'), findsOneWidget);
+      expect(
+        tester
+            .widget<ChoiceChip>(
+              find.byKey(const Key('asset_display_mode_minimum')),
+            )
+            .selected,
+        isTrue,
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('取り込む'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        tester
+            .widget<ChoiceChip>(
+              find.byKey(const Key('asset_display_mode_standard')),
+            )
+            .selected,
+        isTrue,
+      );
+
+      await _unmount(tester);
+    });
   });
 }
