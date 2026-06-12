@@ -952,6 +952,10 @@ class AssetManagementInsightService {
     if (row.annualRate > 0) {
       return false;
     }
+    // 家賃・通信費など全額支払い型の固定費は利率の概念がないため対象外。
+    if (row.fullPaymentEstimate) {
+      return false;
+    }
     return switch (row.kind) {
       AssetLiabilityAccountKind.cardLoan ||
       AssetLiabilityAccountKind.shoppingDebt ||

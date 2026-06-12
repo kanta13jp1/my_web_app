@@ -77,6 +77,36 @@ void main() {
       );
     });
 
+    test('does not require annual rate for full-payment fixed costs', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000},
+        baseDate: DateTime(2026, 5, 1),
+        includeDefaultFixedPayments: true,
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+
+      expect(
+        workbook.debtMasterRows.any(
+          (row) =>
+              row.id == AssetLiabilityPlanningService.rentAccountId &&
+              row.fullPaymentEstimate &&
+              row.annualRate == 0,
+        ),
+        true,
+      );
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type == AssetManagementInsightActionType.missingAnnualRate,
+        ),
+        false,
+      );
+    });
+
     test('marks missing payment source as an action item', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},

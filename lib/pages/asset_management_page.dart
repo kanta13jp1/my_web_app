@@ -17544,6 +17544,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildAnnualRateInputWithEvidence(AssetLiabilityDebtRow row) {
+    if (row.fullPaymentEstimate) {
+      return _buildTextStatusChip(
+        label: '固定費（利率なし）',
+        color: const Color(0xFF475569),
+      );
+    }
     final controller = _annualRateControllerFor(row);
     final hasOverride = _annualRateOverrides.containsKey(row.id);
     final evidence = _annualRateEvidences[row.id];
