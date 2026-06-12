@@ -259,6 +259,25 @@ void main() {
       );
     });
 
+    test('accepts explicit zero yen billing without configuration item', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 0},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+              AssetManagementInsightActionType.cardBillingConfiguration,
+        ),
+        false,
+      );
+    });
+
     test('builds prompt with deterministic calculated values', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{

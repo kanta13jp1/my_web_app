@@ -480,7 +480,8 @@ class AssetManagementInsightService {
               ? null
               : _paymentDateFromDay(workbook.baseDate, item.paymentDay!),
           paymentDay: item.paymentDay,
-          suggestedAction: 'カード請求に含める設定と請求先カードを確認してください。',
+          suggestedAction:
+              '負債マスタ（支払日順）の「支払い方式」でカード請求に含める設定と請求先カードを確認してください。請求額が0円の月は「今月支払予定額」に0を入力してください。',
         ),
       );
     }

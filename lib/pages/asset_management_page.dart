@@ -12789,6 +12789,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementInsightActionType.missingInput => '今月支払予定額を入力する',
       AssetManagementInsightActionType.missingAnnualRate => '利率を入力する',
       AssetManagementInsightActionType.missingPaymentSource => '支払原資口座を設定する',
+      AssetManagementInsightActionType.cardBillingConfiguration =>
+        '支払い方式と請求先カードを設定する',
+      AssetManagementInsightActionType.doubleCountingRisk => '支払い方式を整理する',
       _ => null,
     };
   }
