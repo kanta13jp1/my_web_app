@@ -130,6 +130,7 @@ class AssetManagementAiSummaryService {
         report: report,
         payload: detailedPayload,
         previousAnalyses: previousAnalyses,
+        existingDeveloperIssuesByTitle: existingDeveloperIssuesByTitle,
       );
       final response = route.routingEnabled
           ? await _sendRoutedSummary(prompt: prompt, route: route)
@@ -297,12 +298,23 @@ class AssetManagementAiSummaryService {
             'AIはこれらを繰り返さず未起票の新規提案だけを返す。',
         'items': report.developerRequests
             .map(
-              (request) => _developerRequestToJson(request)
-                ..['already_issued'] =
-                    existingDeveloperIssuesByTitle.containsKey(request.title)
-                ..['existing_github_issue'] = _existingIssueSummary(
+              (request) {
+                final existingIssue = _existingIssueSummary(
                   existingDeveloperIssuesByTitle[request.title],
-                ),
+                );
+                if (existingIssue != null) {
+                  // 起票済み提案は echo の材料にならないよう本文を渡さない。
+                  return <String, dynamic>{
+                    'title': request.title,
+                    'already_issued': true,
+                    'existing_github_issue': existingIssue,
+                    'note': '起票済み。本文・JSONブロックとも再掲禁止。',
+                  };
+                }
+                return _developerRequestToJson(request)
+                  ..['already_issued'] = false
+                  ..['existing_github_issue'] = null;
+              },
             )
             .toList(growable: false),
         'required_output_contract': const <String>[
@@ -450,9 +462,14 @@ class AssetManagementAiSummaryService {
     required Map<String, dynamic> payload,
     List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses =
         const <AssetManagementAiAnalysisHistoryEntry>[],
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
   }) {
     return [
-      _promptBuilder.buildDetailedAdvicePrompt(report),
+      _promptBuilder.buildDetailedAdvicePrompt(
+        report,
+        existingDeveloperIssuesByTitle: existingDeveloperIssuesByTitle,
+      ),
       '',
       '## AIに渡す詳細ペイロード',
       jsonEncode(payload),
@@ -465,7 +482,7 @@ class AssetManagementAiSummaryService {
       '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
       '履歴利用ルール: previous_ai_analyses がある場合は、前回までの指摘をただ繰り返さず、今回の金額・支払状況・未解決アクションとの差分を明示してください。前回から改善した点、悪化した点、まだ放置されている点を分けて、次に同じ分析をしたときに進捗確認できる言葉で書いてください。',
       '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. 最後にズバッと総評」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
-      '開発者向け改善提案の出力ルール: implementation_context を読んで現状の機能を実際にレビューしてから提案してください。developer_requests は定型生成の既知提案一覧で、already_issued が true のものは既にGitHub Issue起票済みです。既知提案の再掲・言い換えは禁止し、items の title と同一または類似のタイトルも新規提案として出力しないでください。まだ起票されていない新規の改善提案だけを最大3件返してください。各提案は「現状できること（機能レビュー）」「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
+      '開発者向け改善提案の出力ルール: implementation_context を読んで現状の機能を実際にレビューしてから提案してください。developer_requests は定型生成の既知提案一覧で、already_issued が true のものは既にGitHub Issue起票済みです。本文の「7. 開発者向け改善提案」にも既知提案・起票済み提案やその言い換えを書かないでください。items の title と同一または類似のタイトルは本文にもJSONにも出力禁止です。まだ起票されていない新規の改善提案だけを最大3件返し、新規提案が1件も無い場合は本文には「新規提案なし（既知の提案はすべて起票済みです）」と1行だけ書いてください。各提案は「現状できること（機能レビュー）」「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
       '新規改善提案の機械可読出力ルール: 応答の最後にコードブロックを1つだけ出力してください。コードブロックの開始行は必ず「```json ai-new-proposals」の1行とし、ai-new-proposals を次の行に分けないでください。中身は本文の「7. 開発者向け改善提案」と同じ新規提案を {"title","description","evidence":[],"implementation_steps":[],"acceptance_criteria":[],"source_references":[]} の配列で返し、evidence・implementation_steps・acceptance_criteria・source_references も本文と同じ内容で必ず埋めてください。タイトルは既存Issueと区別できる具体的な日本語にしてください。新規提案がない場合は空配列 [] だけを出力してください。',
     ].join('\n');
   }

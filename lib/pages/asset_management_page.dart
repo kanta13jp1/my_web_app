@@ -13661,6 +13661,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
       return;
     }
+    // 初回自動生成が既存Issue照合より先に走ると already_issued が
+    // 空のままAIへ渡り再掲抑止が効かないため、照合完了を待つ。
+    await _ensureExistingDeveloperIssuesLoaded(report.developerRequests);
+    if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+      return;
+    }
     final existingIssuesByTitle = <String, Map<String, dynamic>>{};
     for (final request in report.developerRequests) {
       final existing = _developerRequestExistingIssueResults[
@@ -13755,6 +13761,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _loadExistingDeveloperIssues(lookupKey: lookupKey, requests: payload),
       );
     });
+  }
+
+  /// 既存Issue照合の完了を待つ。未取得・取得中の場合はその場で照合を実行する。
+  /// AI要約生成前に already_issued 注釈を確実に揃えるために使う。
+  Future<void> _ensureExistingDeveloperIssuesLoaded(
+    List<AssetManagementDeveloperRequest> requests,
+  ) async {
+    if (_supabase.auth.currentUser == null || requests.isEmpty) {
+      return;
+    }
+    final payload = requests
+        .map(_developerRequestExistingIssuePayload)
+        .toList(growable: false);
+    final lookupKey = jsonEncode(payload);
+    if (_developerRequestExistingIssueLookupKey == lookupKey &&
+        !_isCheckingExistingDeveloperRequestIssues) {
+      return;
+    }
+    _developerRequestExistingIssueLookupKey = lookupKey;
+    _isCheckingExistingDeveloperRequestIssues = true;
+    await _loadExistingDeveloperIssues(lookupKey: lookupKey, requests: payload);
   }
 
   Map<String, String> _developerRequestExistingIssuePayload(
