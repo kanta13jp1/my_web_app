@@ -7323,6 +7323,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _loadDisplayMode() async {
     final mode = await _displayModeStore.load();
     final overrides = await _displayModeStore.loadOverrides();
+    final hadStored = await _displayModeStore.hasStoredMode();
     if (!mounted) {
       return;
     }
@@ -7331,6 +7332,110 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _sectionOverrides = overrides;
     });
     unawaited(_refreshDisplayModeStats());
+    if (!hadStored && overrides.isEmpty) {
+      unawaited(_restoreDisplayPrefsFromMirror());
+    }
+  }
+
+  Future<void> _mirrorDisplayPrefs() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final now = DateTime.now().toUtc().toIso8601String();
+      await _supabase.from('asset_pref_mirror').upsert(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'user_id': userId,
+          'pref_key': 'display_mode',
+          'value': <String, dynamic>{'mode': _displayMode.storageId},
+          'updated_at': now,
+        },
+        <String, dynamic>{
+          'user_id': userId,
+          'pref_key': 'section_overrides',
+          'value': <String, String>{
+            for (final entry in _sectionOverrides.entries)
+              entry.key.storageId: entry.value.storageId,
+          },
+          'updated_at': now,
+        },
+      ]);
+    } catch (e) {
+      debugPrint('display pref mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _restoreDisplayPrefsFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .inFilter('pref_key', <String>['display_mode', 'section_overrides']);
+      if (rows.isEmpty || !mounted) {
+        return;
+      }
+      var restoredAny = false;
+      for (final row in rows) {
+        final value = row['value'];
+        if (value is! Map) {
+          continue;
+        }
+        if (row['pref_key'] == 'display_mode') {
+          final raw = value['mode']?.toString();
+          for (final mode in AssetManagementDisplayMode.values) {
+            if (mode.storageId == raw && mode != _displayMode) {
+              setState(() {
+                _displayMode = mode;
+              });
+              await _displayModeStore.save(mode, recordEvent: false);
+              restoredAny = true;
+            }
+          }
+        }
+        if (row['pref_key'] == 'section_overrides') {
+          for (final entry in value.entries) {
+            AssetManagementSectionId? section;
+            for (final candidate in AssetManagementSectionId.values) {
+              if (candidate.storageId == entry.key.toString()) {
+                section = candidate;
+              }
+            }
+            AssetManagementSectionVisibilityOverride? override;
+            for (final candidate
+                in AssetManagementSectionVisibilityOverride.values) {
+              if (candidate.storageId == entry.value.toString()) {
+                override = candidate;
+              }
+            }
+            if (section == null ||
+                override == null ||
+                override == AssetManagementSectionVisibilityOverride.auto) {
+              continue;
+            }
+            final overrides =
+                await _displayModeStore.saveOverride(section, override);
+            if (!mounted) {
+              return;
+            }
+            setState(() {
+              _sectionOverrides = overrides;
+            });
+            restoredAny = true;
+          }
+        }
+      }
+      if (restoredAny && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('表示設定をサーバのバックアップから復元しました')),
+        );
+      }
+    } catch (e) {
+      debugPrint('display pref mirror restore failed: $e');
+    }
   }
 
   Future<void> _refreshDisplayModeStats() async {
@@ -7627,6 +7732,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     await _displayModeStore.save(mode);
     unawaited(_sendDisplayModeEvent(eventType: 'switch', mode: mode));
+    unawaited(_mirrorDisplayPrefs());
     await _refreshDisplayModeStats();
   }
 
@@ -7669,6 +7775,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     setState(() {
       _sectionOverrides = overrides;
     });
+    unawaited(_mirrorDisplayPrefs());
   }
 
   Future<void> _fetchExperimentSummary() async {
@@ -7966,7 +8073,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  String? _comboShiftPreviewLabel({
+  bool _shiftedMonthClears({
     required List<String> ids,
     required List<AssetCalendarDebtInput> debts,
     required List<Map<String, dynamic>> subscriptions,
@@ -7996,16 +8103,62 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       startingCashBalance: startingCashBalance,
       expectedInflows: inflows,
     );
-    return shifted.firstShortfallDate == null ? '(回避できます)' : null;
+    return shifted.firstShortfallDate == null;
+  }
+
+  /// ショート回避に必要な最小の移動セット(サイズ昇順で探索)。
+  /// 候補が7件以上の場合は組合せ爆発を避け全件移動のみ試す。
+  List<String>? _findMinimalShiftSet({
+    required List<String> ids,
+    required List<AssetCalendarDebtInput> debts,
+    required List<Map<String, dynamic>> subscriptions,
+    required List<AssetCalendarInflowInput> inflows,
+    required double? startingCashBalance,
+  }) {
+    bool clears(List<String> subset) => _shiftedMonthClears(
+          ids: subset,
+          debts: debts,
+          subscriptions: subscriptions,
+          inflows: inflows,
+          startingCashBalance: startingCashBalance,
+        );
+
+    if (ids.length > 6) {
+      return clears(ids) ? List<String>.from(ids) : null;
+    }
+    final maskLimit = 1 << ids.length;
+    for (var size = 2; size <= ids.length; size++) {
+      for (var mask = 1; mask < maskLimit; mask++) {
+        var bits = 0;
+        for (var i = 0; i < ids.length; i++) {
+          final bit = 1 << i;
+          if (mask & bit != 0) {
+            bits += 1;
+          }
+        }
+        if (bits != size) {
+          continue;
+        }
+        final subset = <String>[
+          for (var i = 0; i < ids.length; i++)
+            if (mask & 1 << i != 0) ids[i],
+        ];
+        if (clears(subset)) {
+          return subset;
+        }
+      }
+    }
+    return null;
   }
 
   Widget _buildExperimentTrendBars() {
     final weeks = _experimentWeekly.reversed.toList(growable: false);
-    var maxInitials = 1;
+    var maxTotal = 1;
     for (final week in weeks) {
       final initials = (week['initials'] as num?)?.toInt() ?? 0;
-      if (initials > maxInitials) {
-        maxInitials = initials;
+      final switches = (week['switches'] as num?)?.toInt() ?? 0;
+      if (initials + switches > maxTotal) {
+        maxTotal = initials + switches;
       }
     }
     return SizedBox(
@@ -8021,14 +8174,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
-                      '${(week['initials'] as num?)?.toInt() ?? 0}',
+                      '${(week['initials'] as num?)?.toInt() ?? 0}/${(week['switches'] as num?)?.toInt() ?? 0}',
                       style: const TextStyle(fontSize: 8, height: 1.2),
                     ),
                     Container(
-                      height: 4 +
-                          36 *
+                      height: 2 +
+                          30 *
+                              ((week['switches'] as num?)?.toInt() ?? 0) /
+                              maxTotal,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF97316),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Container(
+                      height: 2 +
+                          30 *
                               ((week['initials'] as num?)?.toInt() ?? 0) /
-                              maxInitials,
+                              maxTotal,
                       decoration: BoxDecoration(
                         color: const Color(0xFF6366F1),
                         borderRadius: BorderRadius.circular(2),
@@ -8191,6 +8355,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   if (_experimentWeekly.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     _buildExperimentTrendBars(),
+                    const SizedBox(height: 2),
+                    Wrap(
+                      spacing: 10,
+                      children: [
+                        _buildCalendarLegendItem(
+                          const Color(0xFF6366F1),
+                          '初期解決',
+                        ),
+                        _buildCalendarLegendItem(
+                          const Color(0xFFF97316),
+                          '切替',
+                        ),
+                      ],
+                    ),
                   ],
                   const SizedBox(height: 6),
                   Text(
@@ -8397,11 +8575,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       for (final event in shortfallDebtEvents)
         if (event.sourceId != null) event.sourceId!,
     ];
-    final comboPreview = comboIds.length >= 2 &&
+    final comboSuggestionIds = comboIds.length >= 2 &&
             shiftCandidates.every(
               (entry) => entry.value == '(単独では回避不可)',
             )
-        ? _comboShiftPreviewLabel(
+        ? _findMinimalShiftSet(
             ids: comboIds,
             debts: debtInputs,
             subscriptions: monthSubscriptions,
@@ -8409,6 +8587,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             startingCashBalance: startingCashBalance,
           )
         : null;
+    final comboSuggestionLabel = comboSuggestionIds == null
+        ? null
+        : shortfallDebtEvents
+            .where((event) => comboSuggestionIds.contains(event.sourceId))
+            .map((event) => event.label)
+            .join(' + ');
     const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
 
     return Card(
@@ -8584,17 +8768,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ],
                       ),
                     ],
-                    if (comboPreview != null) ...[
+                    if (comboSuggestionIds != null) ...[
                       const SizedBox(height: 6),
                       OutlinedButton.icon(
                         key: const Key('asset_shift_payment_combo'),
                         onPressed: () => _shiftDebtPaymentsAfterSalaryCombo(
                           workbook,
-                          comboIds,
+                          comboSuggestionIds,
                         ),
                         icon: const Icon(Icons.double_arrow, size: 14),
                         label: Text(
-                          'まとめて26日へ移動$comboPreview',
+                          '$comboSuggestionLabelを26日へ(回避できます)',
                           style: const TextStyle(fontSize: 11),
                         ),
                       ),

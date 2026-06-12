@@ -529,6 +529,103 @@ void main() {
       expect(result.text.contains('ai-new-proposals'), false);
       expect(result.text.contains('## 8. 最後にズバッと総評'), true);
     });
+
+    test('parses marker on the line after the fence', () async {
+      final response = [
+        '## 7. 開発者向け改善提案',
+        '- 新規提案: サンプル',
+        '',
+        '```json',
+        'ai-new-proposals',
+        '[{"title":"サンプル新規提案","description":"説明です。"}]',
+        '```',
+        '',
+        '## 8. 最後にズバッと総評',
+        '以上。',
+      ].join('\n');
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            return <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      final result = await service.generateSummary(report: _report());
+
+      expect(result.aiDeveloperRequests, hasLength(1));
+      expect(result.aiDeveloperRequests.single.title, 'サンプル新規提案');
+      expect(result.text.contains('ai-new-proposals'), false);
+      expect(result.text.contains('```json'), false);
+      expect(result.text.contains('## 8. 最後にズバッと総評'), true);
+    });
+
+    test('filters proposals that repeat known template titles', () async {
+      final report = _reportWithDeveloperRequests();
+      expect(report.developerRequests, isNotEmpty);
+      final knownTitle = report.developerRequests.first.title;
+      final response = [
+        '## 7. 開発者向け改善提案',
+        '提案本文です。',
+        '```json ai-new-proposals',
+        '[{"title":"$knownTitle","description":"既知提案の再掲です。"},'
+            '{"title":"全く新しい改善提案","description":"新規の提案です。"}]',
+        '```',
+        '## 8. 最後にズバッと総評',
+        '以上。',
+      ].join('\n');
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            return <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      final result = await service.generateSummary(report: report);
+
+      expect(result.aiDeveloperRequests, hasLength(1));
+      expect(result.aiDeveloperRequests.single.title, '全く新しい改善提案');
+    });
+
+    test('ignores prose mention of the marker without a block', () async {
+      final response = [
+        '## 7. 開発者向け改善提案',
+        '今回は ai-new-proposals に該当する新規提案はありません。',
+        '## 8. 最後にズバッと総評',
+        '以上。',
+      ].join('\n');
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: AiHubChatService(
+          invoker: (body) async {
+            return <String, dynamic>{
+              'success': true,
+              'text': response,
+              'provider': 'groq',
+            };
+          },
+        ),
+        now: () => DateTime(2026, 6, 12, 12),
+      );
+
+      final result = await service.generateSummary(report: _report());
+
+      expect(result.aiDeveloperRequests, isEmpty);
+      expect(result.text, response);
+    });
   });
 }
 
