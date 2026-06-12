@@ -12957,7 +12957,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ],
           const SizedBox(height: 12),
-          _buildAssetManagementDeveloperRequestList(report.developerRequests),
+          _buildAssetManagementDeveloperRequestList(
+            _combinedDeveloperRequests(report),
+          ),
         ],
       ),
     );
@@ -12970,7 +12972,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (enabled) {
       _requestAssetManagementAiSummaryIfNeeded(report);
     }
-    _requestExistingDeveloperIssuesIfNeeded(report.developerRequests);
+    final developerRequests = _combinedDeveloperRequests(report);
+    _requestExistingDeveloperIssuesIfNeeded(developerRequests);
     final result = _assetManagementAiSummaryResult ??
         (enabled
             ? _assetManagementAiSummaryService.buildWaitingForAiResult(report)
@@ -12986,7 +12989,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementAiSummaryStatus.disabled => 'AI無効',
     };
     final issueableDeveloperRequests = _issueableDeveloperRequests(
-      report.developerRequests,
+      developerRequests,
     );
     final canCopySummary = result.text.trim().isNotEmpty;
 
@@ -13069,14 +13072,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     : const Icon(Icons.auto_awesome_outlined, size: 16),
                 label: Text(enabled ? 'AI要約を更新' : 'AI要約は機能フラグで無効です'),
               ),
-              if (report.developerRequests.isNotEmpty)
+              if (developerRequests.isNotEmpty)
                 OutlinedButton.icon(
                   onPressed: _isSubmittingAllDeveloperIssues ||
                           _isCheckingExistingDeveloperRequestIssues ||
                           issueableDeveloperRequests.isEmpty
                       ? null
                       : () => _submitAssetManagementDeveloperIssues(
-                            report.developerRequests,
+                            developerRequests,
                           ),
                   icon: _isSubmittingAllDeveloperIssues
                       ? const SizedBox(
@@ -13211,9 +13214,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
       return;
     }
+    final existingIssuesByTitle = <String, Map<String, dynamic>>{};
+    for (final request in report.developerRequests) {
+      final existing = _developerRequestExistingIssueResults[
+          _developerRequestIssueKey(request)];
+      if (existing != null) {
+        existingIssuesByTitle[request.title] =
+            Map<String, dynamic>.from(existing);
+      }
+    }
     final result = await _assetManagementAiSummaryService.generateSummary(
       report: report,
       previousAnalyses: previousAnalyses,
+      existingDeveloperIssuesByTitle: existingIssuesByTitle,
     );
     if (result.usedExternalAi) {
       try {
@@ -13352,6 +13365,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isCheckingExistingDeveloperRequestIssues = false;
       });
     }
+  }
+
+  /// 定型生成の改善提案に、AI要約が返した未起票の新規提案を合流させる。
+  List<AssetManagementDeveloperRequest> _combinedDeveloperRequests(
+    AssetManagementInsightReport report,
+  ) {
+    final aiRequests = _assetManagementAiSummaryResult?.aiDeveloperRequests ??
+        const <AssetManagementDeveloperRequest>[];
+    if (aiRequests.isEmpty) {
+      return report.developerRequests;
+    }
+    final knownKeys =
+        report.developerRequests.map(_developerRequestIssueKey).toSet();
+    return <AssetManagementDeveloperRequest>[
+      ...report.developerRequests,
+      for (final request in aiRequests)
+        if (knownKeys.add(_developerRequestIssueKey(request))) request,
+    ];
+  }
+
+  bool _isAiGeneratedDeveloperRequest(
+    AssetManagementDeveloperRequest request,
+  ) {
+    final aiRequests = _assetManagementAiSummaryResult?.aiDeveloperRequests ??
+        const <AssetManagementDeveloperRequest>[];
+    if (aiRequests.isEmpty) {
+      return false;
+    }
+    final key = _developerRequestIssueKey(request);
+    return aiRequests.any(
+      (candidate) => _developerRequestIssueKey(candidate) == key,
+    );
   }
 
   List<AssetManagementDeveloperRequest> _issueableDeveloperRequests(
@@ -13968,7 +14013,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               height: 1.5,
             ),
           ),
-        for (final request in visibleRequests.take(4))
+        for (final request in visibleRequests.take(6))
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Container(
@@ -13991,6 +14036,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       height: 1.4,
                     ),
                   ),
+                  if (_isAiGeneratedDeveloperRequest(request)) ...[
+                    const SizedBox(height: 4),
+                    _buildTextStatusChip(
+                      label: 'AI新規提案（未起票のみ登録可）',
+                      color: const Color(0xFF7C3AED),
+                    ),
+                  ],
                   const SizedBox(height: 3),
                   Text(
                     request.description,
