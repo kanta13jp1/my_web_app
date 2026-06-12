@@ -13966,9 +13966,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           visualDensity: VisualDensity.compact,
           padding: const EdgeInsets.symmetric(horizontal: 8),
         ),
-        onPressed: issueUrl.isEmpty
-            ? null
-            : () => web.window.open(issueUrl, '_blank'),
+        onPressed:
+            issueUrl.isEmpty ? null : () => web.window.open(issueUrl, '_blank'),
         icon: const Icon(Icons.open_in_new, size: 14),
         label: Text(
           '${request.title}: 既存Issue #$issueNumber（$issueState）を開く',
