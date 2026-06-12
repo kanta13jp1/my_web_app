@@ -103,6 +103,7 @@ class AssetPaymentCalendarMonth {
     this.scheduledDebtPaymentTotal = 0,
     this.subscriptionTotal = 0,
     this.firstShortfallDate,
+    this.worstProjectedBalance,
   });
 
   final DateTime month;
@@ -117,6 +118,15 @@ class AssetPaymentCalendarMonth {
 
   /// 見込み残高が最初にマイナスへ落ちる日。資金リスクの早期警告。
   final DateTime? firstShortfallDate;
+
+  /// 月内の見込み残高の最小値(起点未指定なら null)。
+  final double? worstProjectedBalance;
+
+  /// ショート回避に必要な追加入金額(=最大不足幅)。ショートなしなら 0。
+  double get shortfallRecoveryAmount =>
+      worstProjectedBalance != null && worstProjectedBalance! < 0
+          ? -worstProjectedBalance!
+          : 0;
 
   double get scheduledOutflowTotal =>
       scheduledDebtPaymentTotal + subscriptionTotal;
@@ -291,6 +301,7 @@ class AssetPaymentCalendarService {
 
     var runningBalance = startingCashBalance;
     DateTime? firstShortfallDate;
+    double? worstProjectedBalance;
     final days = <AssetCalendarDaySummary>[];
     for (var day = 1; day <= lastDay; day++) {
       final outflow = outflowByDay[day] ?? 0;
@@ -303,6 +314,11 @@ class AssetPaymentCalendarService {
           runningBalance != null &&
           runningBalance < 0) {
         firstShortfallDate = date;
+      }
+      if (runningBalance != null &&
+          (worstProjectedBalance == null ||
+              runningBalance < worstProjectedBalance)) {
+        worstProjectedBalance = runningBalance;
       }
       days.add(
         AssetCalendarDaySummary(
@@ -323,6 +339,7 @@ class AssetPaymentCalendarService {
       scheduledDebtPaymentTotal: scheduledDebtPaymentTotal,
       subscriptionTotal: subscriptionTotal,
       firstShortfallDate: firstShortfallDate,
+      worstProjectedBalance: worstProjectedBalance,
     );
   }
 

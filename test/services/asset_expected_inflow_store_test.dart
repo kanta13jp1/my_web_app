@@ -85,5 +85,63 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    test('adds and removes monthly recurring rules', () async {
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 12, 9, 0),
+      );
+
+      final rules = await store.addRule(
+        dayOfMonth: 25,
+        amount: 280000,
+        label: '給料',
+      );
+      expect(rules.single.dayOfMonth, 25);
+      expect(await store.loadRules(), hasLength(1));
+
+      final cleared = await store.removeRule(rules.single.id);
+      expect(cleared, isEmpty);
+
+      await expectLater(
+        store.addRule(dayOfMonth: 0, amount: 100, label: 'x'),
+        throwsArgumentError,
+      );
+    });
+
+    test('materializes rules into a month with end-of-month clamping', () {
+      const rule = AssetExpectedInflowRule(
+        id: 'r1',
+        dayOfMonth: 31,
+        amount: 280000,
+        label: '給料',
+      );
+      final oneTime = <AssetExpectedInflow>[
+        AssetExpectedInflow(
+          id: 'a',
+          date: DateTime(2026, 2, 10),
+          amount: 5000,
+          label: '単発',
+        ),
+        AssetExpectedInflow(
+          id: 'b',
+          date: DateTime(2026, 3, 1),
+          amount: 9999,
+          label: '対象外',
+        ),
+      ];
+
+      final entries = AssetExpectedInflowStore.materializeMonth(
+        oneTime: oneTime,
+        rules: const <AssetExpectedInflowRule>[rule],
+        month: DateTime(2026, 2),
+      );
+
+      expect(entries, hasLength(2));
+      expect(entries.first.id, 'a');
+      expect(entries.first.sourceRuleId, isNull);
+      expect(entries.last.date, DateTime(2026, 2, 28));
+      expect(entries.last.sourceRuleId, 'r1');
+      expect(entries.last.id, 'rule_r1_202602');
+    });
   });
 }

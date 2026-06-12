@@ -217,6 +217,12 @@ class AssetManagementDisplayModeStore {
     return _storedMode(store) ?? defaultMode;
   }
 
+  /// 保存済みモードが存在するか(初期解決イベント送信の判定用)。
+  Future<bool> hasStoredMode({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return _storedMode(store) != null;
+  }
+
   Future<void> save(
     AssetManagementDisplayMode mode, {
     SharedPreferences? prefs,
