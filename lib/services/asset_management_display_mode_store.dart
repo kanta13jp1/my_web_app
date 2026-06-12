@@ -139,6 +139,17 @@ extension AssetManagementSectionVisibilityOverrideLabel
   }
 }
 
+/// サーバ全体集計 (display_mode_experiment_summary rpc) の整形結果。
+class AssetDisplayModeServerSummary {
+  const AssetDisplayModeServerSummary({
+    required this.summaryLabel,
+    required this.weekly,
+  });
+
+  final String summaryLabel;
+  final List<Map<String, dynamic>> weekly;
+}
+
 /// 表示モード実験の観測値(ローカル計測)。
 class AssetDisplayModeStats {
   const AssetDisplayModeStats({
@@ -176,6 +187,59 @@ class AssetManagementDisplayModeStore {
   static const AssetManagementDisplayMode newUserDefaultMode =
       AssetManagementDisplayMode.standard;
 
+  /// rpc 戻り値 (jsonb) を表示用ラベルと週次リストへ整形する。
+  /// asset_management_page と CFO 室カードで共用。
+  static AssetDisplayModeServerSummary parseServerSummary(
+    Map<String, dynamic> data,
+  ) {
+    int countOf(String key) => (data[key] as num?)?.toInt() ?? 0;
+    final standardInitial = countOf('initial_standard');
+    final retained = countOf('standard_retained');
+    final rate = standardInitial == 0
+        ? '-'
+        : '${(retained * 100 / standardInitial).round()}%';
+    final weekly = data['weekly'];
+    var trendLabel = '';
+    final weeklyMaps = <Map<String, dynamic>>[];
+    if (weekly is List && weekly.isNotEmpty) {
+      final parts = <String>[];
+      for (final raw in weekly.take(4)) {
+        if (raw is! Map) {
+          continue;
+        }
+        final week = Map<String, dynamic>.from(raw);
+        weeklyMaps.add(week);
+        final start = week['week_start']?.toString() ?? '';
+        final label = start.length >= 10 ? start.substring(5, 10) : start;
+        final initials = (week['initials'] as num?)?.toInt() ?? 0;
+        final std = (week['initial_standard'] as num?)?.toInt() ?? 0;
+        final switches = (week['switches'] as num?)?.toInt() ?? 0;
+        parts.add('$label: 初期$initials(std$std)/切替$switches');
+      }
+      if (parts.isNotEmpty) {
+        trendLabel = ' | 週次 ${parts.join(' → ')}';
+      }
+    }
+    return AssetDisplayModeServerSummary(
+      summaryLabel:
+          '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回$trendLabel',
+      weekly: weeklyMaps,
+    );
+  }
+
+  /// サーババックアップからの表示設定復元をユーザーが辞退したか。
+  Future<bool> isRestoreDeclined({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return store.getBool(_restoreDeclinedKey) ?? false;
+  }
+
+  Future<void> markRestoreDeclined({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    await store.setBool(_restoreDeclinedKey, true);
+  }
+
+  static const String _restoreDeclinedKey =
+      'asset_management_display_restore_declined_v1';
   static const String _modeKey = 'asset_management_display_mode_v1';
   static const String _overridesKey = 'asset_management_section_overrides_v1';
   static const String _eventsKey = 'asset_management_display_mode_events_v1';

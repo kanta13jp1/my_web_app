@@ -8,6 +8,7 @@ import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 import '../widgets/agent_workspace_panel.dart';
+import '../widgets/display_mode_experiment_card.dart';
 
 class CfoOfficePage extends StatefulWidget {
   const CfoOfficePage({super.key});
@@ -85,6 +86,8 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               workspace: _workspace,
               onProcessTask: _processTask,
             ),
+            const SizedBox(height: 16),
+            const DisplayModeExperimentCard(),
             const SizedBox(height: 16),
             _buildMenuCard(
               context,
