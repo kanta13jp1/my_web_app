@@ -205,6 +205,27 @@ class AssetLiabilityAccount {
   bool get isAsset => balance > 0;
   bool get isLiability => balance < 0;
   double get liabilityBalance => isLiability ? balance.abs() : 0;
+
+  AssetLiabilityAccount copyWith({int? paymentDay}) {
+    return AssetLiabilityAccount(
+      id: id,
+      name: name,
+      kind: kind,
+      balance: balance,
+      paymentDay: paymentDay ?? this.paymentDay,
+      paymentSourceAccountName: paymentSourceAccountName,
+      paymentMethod: paymentMethod,
+      paymentMethodLabel: paymentMethodLabel,
+      paymentMethodSettingSource: paymentMethodSettingSource,
+      billingAccountId: billingAccountId,
+      billingAccountName: billingAccountName,
+      includedInBillingAccount: includedInBillingAccount,
+      annualRate: annualRate,
+      minimumPaymentRate: minimumPaymentRate,
+      minimumPaymentFloor: minimumPaymentFloor,
+      fullPaymentEstimate: fullPaymentEstimate,
+    );
+  }
 }
 
 class AssetLiabilityDebtRow {
@@ -236,6 +257,9 @@ class AssetLiabilityDebtRow {
   final bool billingConfirmed;
   final bool paid;
 
+  /// 家賃・通信費など毎月全額を支払う固定費型の負債。利率の概念を持たない。
+  final bool fullPaymentEstimate;
+
   const AssetLiabilityDebtRow({
     required this.id,
     required this.name,
@@ -264,6 +288,7 @@ class AssetLiabilityDebtRow {
     required this.paymentAmountEstimated,
     required this.billingConfirmed,
     required this.paid,
+    this.fullPaymentEstimate = false,
   });
 
   bool get isDirectCashflowTarget =>

@@ -79,6 +79,8 @@ class AssetLiabilityMonthlyStateStore {
       'asset_liability_default_payment_source_accounts_v1';
   static const String defaultCardBillingPrefsKey =
       'asset_liability_default_card_billing_accounts_v1';
+  static const String debtPaymentDayPrefsKey =
+      'asset_liability_debt_payment_day_overrides_v1';
   static const String recurringIncomeTemplatePrefsKey =
       'asset_liability_recurring_income_templates_v1';
   static const String monthlySnapshotPrefsKey =
@@ -343,6 +345,21 @@ class AssetLiabilityMonthlyStateStore {
     );
   }
 
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    final prefs = await SharedPreferences.getInstance();
+    return decodeDebtPaymentDayOverrides(
+      prefs.getString(debtPaymentDayPrefsKey),
+    );
+  }
+
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      debtPaymentDayPrefsKey,
+      jsonEncode(sanitizeDebtPaymentDayOverrides(overrides)),
+    );
+  }
+
   Future<List<AssetLiabilityRecurringIncomeTemplate>>
       loadRecurringIncomeTemplates() async {
     final prefs = await SharedPreferences.getInstance();
@@ -554,6 +571,39 @@ class AssetLiabilityMonthlyStateStore {
         (key, value) => MapEntry(key.toString(), value.toString()),
       ),
     );
+  }
+
+  static Map<String, int> decodeDebtPaymentDayOverrides(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return <String, int>{};
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      return <String, int>{};
+    }
+
+    final overrides = <String, int>{};
+    for (final entry in decoded.entries) {
+      final key = entry.key.toString().trim();
+      final rawDay = entry.value;
+      final day = rawDay is num ? rawDay.toInt() : int.tryParse('$rawDay');
+      if (key.isNotEmpty && day != null && day >= 1 && day <= 31) {
+        overrides[key] = day;
+      }
+    }
+    return overrides;
+  }
+
+  static Map<String, int> sanitizeDebtPaymentDayOverrides(
+    Map<String, int> values,
+  ) {
+    return <String, int>{
+      for (final entry in values.entries)
+        if (entry.key.trim().isNotEmpty &&
+            entry.value >= 1 &&
+            entry.value <= 31)
+          entry.key.trim(): entry.value,
+    };
   }
 
   static Map<String, Map<String, double>> decodePaymentOverrides(String? raw) {

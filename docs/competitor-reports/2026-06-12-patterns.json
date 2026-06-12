@@ -1,0 +1,1373 @@
+{
+  "generated_at": "2026-06-11T22:37:02Z",
+  "source_files": [
+    "docs/competitor-reports/2026-06-12.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 45,
+  "filter_summary": {
+    "total": 45,
+    "by_verdict": {
+      "pass": 0,
+      "review": 45,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 45
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-5637c5793acb",
+        "title": "エグゼクティブサマリー (前回 6/11 比 — 新シグナルのみ)",
+        "text": "エグゼクティブサマリー (前回 6/11 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (前回 6/11 比 — 新シグナルのみ)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5637c5793acb",
+        "title": "エグゼクティブサマリー (前回 6/11 比 — 新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cf7d0d6416a8",
+        "title": "優先度",
+        "text": "優先度 優先度 競合 / 事象 新シグナル (delta) 自分株式会社 インパクト",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "優先度",
+          "url": "",
+          "status": "",
+          "summary": "優先度 競合 / 事象 新シグナル (delta) 自分株式会社 インパクト"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cf7d0d6416a8",
+        "title": "優先度",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2ef5f0818351",
+        "title": "🔴🔴 高",
+        "text": "🔴🔴 高 🔴🔴 高 **Anthropic 6/15「ダブルヒット」(T-3 day)** 課金分離 **+ 旧 Claude 4 モデル API 退役を同日確定** 自社 programmatic Claude (GHA cron 30+ / Schedule cron) 棚卸し最優先",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "🔴🔴 高",
+          "url": "",
+          "status": "",
+          "summary": "🔴🔴 高 **Anthropic 6/15「ダブルヒット」(T-3 day)** 課金分離 **+ 旧 Claude 4 モデル API 退役を同日確定** 自社 programmatic Claude (GHA cron 30+ / Schedule cron) 棚卸し最優先"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2ef5f0818351",
+        "title": "🔴🔴 高",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-60e0f96ee8a2",
+        "title": "🔴 高",
+        "text": "🔴 高 🔴 高 **Microsoft MAI-Code-1-Flash** 公式モデルカード公開 = 137B total sparse MoE / 256K ctx 6/16 discovery 第 1 候補の confidence ↑",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "🔴 高",
+          "url": "",
+          "status": "",
+          "summary": "🔴 高 **Microsoft MAI-Code-1-Flash** 公式モデルカード公開 = 137B total sparse MoE / 256K ctx 6/16 discovery 第 1 候補の confidence ↑"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-60e0f96ee8a2",
+        "title": "🔴 高",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ca7fd5be55db",
+        "title": "🟠 中",
+        "text": "🟠 中 🟠 中 **GitHub Copilot 従量課金** 6/1 GA 後「枠消費が想定より速い」backlash コスト意識ユーザー流入機会 = AI コーディング訴求 timing",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "🟠 中",
+          "url": "",
+          "status": "",
+          "summary": "🟠 中 **GitHub Copilot 従量課金** 6/1 GA 後「枠消費が想定より速い」backlash コスト意識ユーザー流入機会 = AI コーディング訴求 timing"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ca7fd5be55db",
+        "title": "🟠 中",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-be67cfc0dbd8",
+        "title": "⚪ 再確認",
+        "text": "⚪ 再確認 ⚪ 再確認 **MoneyForward AI Cowork** delta なし (7月 GA 維持) B/S 最大 overlap = 非対称防衛継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "⚪ 再確認",
+          "url": "",
+          "status": "",
+          "summary": "⚪ 再確認 **MoneyForward AI Cowork** delta なし (7月 GA 維持) B/S 最大 overlap = 非対称防衛継続"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-be67cfc0dbd8",
+        "title": "⚪ 再確認",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7cd0d86e929a",
+        "title": "1. ★★ Anthropic 6/15「ダブルヒット」確定 (T-3 day) 🔴🔴",
+        "text": "1. ★★ Anthropic 6/15「ダブルヒット」確定 (T-3 day) 🔴🔴",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "1. ★★ Anthropic 6/15「ダブルヒット」確定 (T-3 day) 🔴🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7cd0d86e929a",
+        "title": "1. ★★ Anthropic 6/15「ダブルヒット」確定 (T-3 day) 🔴🔴",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4a8d89c263f3",
+        "title": "Interactive Pool** (Claude.ai chat / 対話ターミナル Claude Code / Cowork) と **Agent SDK Credit Pool** (programmatic) の 2 本化。両プー",
+        "text": "Interactive Pool** (Claude.ai chat / 対話ターミナル Claude Code / Cowork) と **Agent SDK Credit Pool** (programmatic) の 2 本化。両プールは相互流用不可。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Interactive Pool** (Claude.ai chat / 対話ターミナル Claude Code / Cowork) と **Agent SDK Credit Pool** (programmatic) の 2 本化。両プールは相互流用不可。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4a8d89c263f3",
+        "title": "Interactive Pool** (Claude.ai chat / 対話ターミナル Claude Code / Cowork) と **Agent SDK Credit Pool** (programmatic) の 2 本化。両プー",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-140c6283a630",
+        "title": "対象 = Agent SDK / `claude -p` / **Claude Code GitHub Actions** / 第三者エージェント (本日明示: **OpenClaw / Conductor / Zed / Jean**)。",
+        "text": "対象 = Agent SDK / `claude -p` / **Claude Code GitHub Actions** / 第三者エージェント (本日明示: **OpenClaw / Conductor / Zed / Jean**)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "対象 = Agent SDK / `claude -p` / **Claude Code GitHub Actions** / 第三者エージェント (本日明示: **OpenClaw / Conductor / Zed / Jean**)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-140c6283a630",
+        "title": "対象 = Agent SDK / `claude -p` / **Claude Code GitHub Actions** / 第三者エージェント (本日明示: **OpenClaw / Conductor / Zed / Jean**)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2619c4d10c55",
+        "title": "クレジット = Pro **$20** / Max5x **$100** / Max20x **$200** / 月次・**繰越なし** / API list rate 課金。",
+        "text": "クレジット = Pro **$20** / Max5x **$100** / Max20x **$200** / 月次・**繰越なし** / API list rate 課金。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "クレジット = Pro **$20** / Max5x **$100** / Max20x **$200** / 月次・**繰越なし** / API list rate 課金。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2619c4d10c55",
+        "title": "クレジット = Pro **$20** / Max5x **$100** / Max20x **$200** / 月次・**繰越なし** / API list rate 課金。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5857c8b6f188",
+        "title": "CI/CD は committer ごと個別枠 = **チーム横断でクレジット集約不可**。",
+        "text": "CI/CD は committer ごと個別枠 = **チーム横断でクレジット集約不可**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "CI/CD は committer ごと個別枠 = **チーム横断でクレジット集約不可**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5857c8b6f188",
+        "title": "CI/CD は committer ごと個別枠 = **チーム横断でクレジット集約不可**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ebb3789e605d",
+        "title": "`claude-sonnet-4-20250514`** + **`claude-opus-4-20250514`** を 6/15 に API から退役。以降の呼び出しは **エラー (failover / 段階縮退なし)**。",
+        "text": "`claude-sonnet-4-20250514`** + **`claude-opus-4-20250514`** を 6/15 に API から退役。以降の呼び出しは **エラー (failover / 段階縮退なし)**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "`claude-sonnet-4-20250514`** + **`claude-opus-4-20250514`** を 6/15 に API から退役。以降の呼び出しは **エラー (failover / 段階縮退なし)**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ebb3789e605d",
+        "title": "`claude-sonnet-4-20250514`** + **`claude-opus-4-20250514`** を 6/15 に API から退役。以降の呼び出しは **エラー (failover / 段階縮退なし)**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-06ae05ba75f5",
+        "title": "代替 = **Claude Sonnet 4.6 / Claude Opus 4.8**。Anthropic は公開モデルに最低 60 日前通知。",
+        "text": "代替 = **Claude Sonnet 4.6 / Claude Opus 4.8**。Anthropic は公開モデルに最低 60 日前通知。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "代替 = **Claude Sonnet 4.6 / Claude Opus 4.8**。Anthropic は公開モデルに最低 60 日前通知。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-06ae05ba75f5",
+        "title": "代替 = **Claude Sonnet 4.6 / Claude Opus 4.8**。Anthropic は公開モデルに最低 60 日前通知。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-594cf09cf094",
+        "title": "[AI-TOOL-VERIFY] = 公式 `platform.claude.com/docs` model-deprecations + Make.com Help Center で裏取り済 (2 次メディア依拠ではない)。",
+        "text": "[AI-TOOL-VERIFY] = 公式 `platform.claude.com/docs` model-deprecations + Make.com Help Center で裏取り済 (2 次メディア依拠ではない)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[AI-TOOL-VERIFY] = 公式 `platform.claude.com/docs` model-deprecations + Make.com Help Center で裏取り済 (2 次メディア依拠ではない)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-594cf09cf094",
+        "title": "[AI-TOOL-VERIFY] = 公式 `platform.claude.com/docs` model-deprecations + Make.com Help Center で裏取り済 (2 次メディア依拠ではない)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a8eb785a9c28",
+        "title": "自社 GHA cron 30+ / Schedule cron / daily-development cron の **programmatic Claude が 6/15 以降クレジット枠消費**。overflow billing 手動",
+        "text": "自社 GHA cron 30+ / Schedule cron / daily-development cron の **programmatic Claude が 6/15 以降クレジット枠消費**。overflow billing 手動 ON 判断 or 非 Claude fallback ([`docs/AI_FALLBACK_RUNBOOK.md`](../AI_FALLBACK_RUNBOOK.md)) 確認を T-3 day で要決定。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社 GHA cron 30+ / Schedule cron / daily-development cron の **programmatic Claude が 6/15 以降クレジット枠消費**。overflow billing 手動 ON 判断 or 非 Claude fallback ([`docs/AI_FALLBACK_RUNBOOK.md`](../AI_FALLBACK_RUNBOOK.md)) 確認を T-3 day で要決定。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a8eb785a9c28",
+        "title": "自社 GHA cron 30+ / Schedule cron / daily-development cron の **programmatic Claude が 6/15 以降クレジット枠消費**。overflow billing 手動",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-19afc21ca75e",
+        "title": "退役 ID `20250514` のコードベース露出 = 本 run で **`.github/` `scripts/` はクリーン確認** (全リポ grep は build artifact で timeout → `lib/` `su",
+        "text": "退役 ID `20250514` のコードベース露出 = 本 run で **`.github/` `scripts/` はクリーン確認** (全リポ grep は build artifact で timeout → `lib/` `supabase/` 含む全域 sweep を follow-up 推奨)。自社は `claude-opus-4-8` / `claude-sonnet-4-6` を pin 済のため露出可能性は低いが要全域確認。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "退役 ID `20250514` のコードベース露出 = 本 run で **`.github/` `scripts/` はクリーン確認** (全リポ grep は build artifact で timeout → `lib/` `supabase/` 含む全域 sweep を follow-up 推奨)。自社は `claude-opus-4-8` / `claude-sonnet-4-6` を pin 済のため露出可能性は低いが要全域確認。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-19afc21ca75e",
+        "title": "退役 ID `20250514` のコードベース露出 = 本 run で **`.github/` `scripts/` はクリーン確認** (全リポ grep は build artifact で timeout → `lib/` `su",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8a390ff3e50c",
+        "title": "2. ★ Microsoft MAI-Code-1-Flash 公式モデルカード公開 🔴",
+        "text": "2. ★ Microsoft MAI-Code-1-Flash 公式モデルカード公開 🔴",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "2. ★ Microsoft MAI-Code-1-Flash 公式モデルカード公開 🔴"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8a390ff3e50c",
+        "title": "2. ★ Microsoft MAI-Code-1-Flash 公式モデルカード公開 🔴",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cbfa6f3a750d",
+        "title": "アーキ = **sparse Mixture-of-Experts / 総 137B パラメータ / 256K トークン context / 訓練 cutoff ~2026年5月**。6/11 report の「5B active para",
+        "text": "アーキ = **sparse Mixture-of-Experts / 総 137B パラメータ / 256K トークン context / 訓練 cutoff ~2026年5月**。6/11 report の「5B active params」と整合 (= sparse MoE は総 137B / アクティブ ~5B)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アーキ = **sparse Mixture-of-Experts / 総 137B パラメータ / 256K トークン context / 訓練 cutoff ~2026年5月**。6/11 report の「5B active params」と整合 (= sparse MoE は総 137B / アクティブ ~5B)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cbfa6f3a750d",
+        "title": "アーキ = **sparse Mixture-of-Experts / 総 137B パラメータ / 256K トークン context / 訓練 cutoff ~2026年5月**。6/11 report の「5B active para",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e0a93c0cf3be",
+        "title": "第三者モデルからの distillation なし** = clean / traceable / enterprise-grade data でゼロから訓練。**GitHub Copilot の本番 harness (ツール群・呼び出し・",
+        "text": "第三者モデルからの distillation なし** = clean / traceable / enterprise-grade data でゼロから訓練。**GitHub Copilot の本番 harness (ツール群・呼び出し・チェックの足場) 上で直接訓練** = agentic coding tool 連携をネイティブに学習。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "第三者モデルからの distillation なし** = clean / traceable / enterprise-grade data でゼロから訓練。**GitHub Copilot の本番 harness (ツール群・呼び出し・チェックの足場) 上で直接訓練** = agentic coding tool 連携をネイティブに学習。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e0a93c0cf3be",
+        "title": "第三者モデルからの distillation なし** = clean / traceable / enterprise-grade data でゼロから訓練。**GitHub Copilot の本番 harness (ツール群・呼び出し・",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f402c5a5356f",
+        "title": "rollout = Copilot **Free / Student / Pro / Pro+ / Max** に段階展開 (limited → 数週で拡大) / **VS Code の model picker** から選択可。",
+        "text": "rollout = Copilot **Free / Student / Pro / Pro+ / Max** に段階展開 (limited → 数週で拡大) / **VS Code の model picker** から選択可。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "rollout = Copilot **Free / Student / Pro / Pro+ / Max** に段階展開 (limited → 数週で拡大) / **VS Code の model picker** から選択可。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f402c5a5356f",
+        "title": "rollout = Copilot **Free / Student / Pro / Pro+ / Max** に段階展開 (limited → 数週で拡大) / **VS Code の model picker** から選択可。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-71cdc31a3f97",
+        "title": "評価 = 「同サイズ最高品質・軽量コーディング workflow 向け」。",
+        "text": "評価 = 「同サイズ最高品質・軽量コーディング workflow 向け」。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "評価 = 「同サイズ最高品質・軽量コーディング workflow 向け」。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-71cdc31a3f97",
+        "title": "評価 = 「同サイズ最高品質・軽量コーディング workflow 向け」。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b366dd250270",
+        "title": "6/16 採択判断**: 基準 b (MS 自社製 frontier coding model = 未カバー軸) + 基準 c (Build 2026 6/2 release) で confidence ↑。「OpenAI 依存終焉」nar",
+        "text": "6/16 採択判断**: 基準 b (MS 自社製 frontier coding model = 未カバー軸) + 基準 c (Build 2026 6/2 release) で confidence ↑。「OpenAI 依存終焉」narrative + Agent 365 SDK GA (Entra/Defender/Purview single control plane) と合わせ enterprise 統制軸も補強。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/16 採択判断**: 基準 b (MS 自社製 frontier coding model = 未カバー軸) + 基準 c (Build 2026 6/2 release) で confidence ↑。「OpenAI 依存終焉」narrative + Agent 365 SDK GA (Entra/Defender/Purview single control plane) と合わせ enterprise 統制軸も補強。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b366dd250270",
+        "title": "6/16 採択判断**: 基準 b (MS 自社製 frontier coding model = 未カバー軸) + 基準 c (Build 2026 6/2 release) で confidence ↑。「OpenAI 依存終焉」nar",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-16c01e343e73",
+        "title": "3. 🟠 GitHub Copilot 従量課金 backlash + AI dev tool fleet 統治継続",
+        "text": "3. 🟠 GitHub Copilot 従量課金 backlash + AI dev tool fleet 統治継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "3. 🟠 GitHub Copilot 従量課金 backlash + AI dev tool fleet 統治継続"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-16c01e343e73",
+        "title": "3. 🟠 GitHub Copilot 従量課金 backlash + AI dev tool fleet 統治継続",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-d7c1a5739fd9",
+        "title": "Copilot flex billing live (6/1)** + 新 **Copilot Max $100/mo** (20,000 credits ≒ $200 相当)。多くの dev が「割当を想定より速く消費」と報告 = **コ",
+        "text": "Copilot flex billing live (6/1)** + 新 **Copilot Max $100/mo** (20,000 credits ≒ $200 相当)。多くの dev が「割当を想定より速く消費」と報告 = **コスト意識ユーザーの代替需要**発生。自社の AI コーディング支援訴求 + `$0/run` 自前 gate narrative の timing。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Copilot flex billing live (6/1)** + 新 **Copilot Max $100/mo** (20,000 credits ≒ $200 相当)。多くの dev が「割当を想定より速く消費」と報告 = **コスト意識ユーザーの代替需要**発生。自社の AI コーディング支援訴求 + `$0/run` 自前 gate narrative の timing。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-d7c1a5739fd9",
+        "title": "Copilot flex billing live (6/1)** + 新 **Copilot Max $100/mo** (20,000 credits ≒ $200 相当)。多くの dev が「割当を想定より速く消費」と報告 = **コ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-15ba9127d00f",
+        "title": "fleet 統治 UI commoditize 継続 (既報の確定): **Windsurf → Devin Desktop rebrand (6/2)** + Agent Command Center default + ACP (Age",
+        "text": "fleet 統治 UI commoditize 継続 (既報の確定): **Windsurf → Devin Desktop rebrand (6/2)** + Agent Command Center default + ACP (Agent Client Protocol) / Cursor Composer 2.5 / Opus 4.8。3 強収斂 (Copilot=enterprise 防衛 / Cursor=IDE 中心 / Claude Code=agentic 標準)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "fleet 統治 UI commoditize 継続 (既報の確定): **Windsurf → Devin Desktop rebrand (6/2)** + Agent Command Center default + ACP (Agent Client Protocol) / Cursor Composer 2.5 / Opus 4.8。3 強収斂 (Copilot=enterprise 防衛 / Cursor=IDE 中心 / Claude Code=agentic 標準)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-15ba9127d00f",
+        "title": "fleet 統治 UI commoditize 継続 (既報の確定): **Windsurf → Devin Desktop rebrand (6/2)** + Agent Command Center default + ACP (Age",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-8b68671481c6",
+        "title": "自社 narrative pivot = 「並列できる」→「**並列を監査可能に統治する**」([SUBAGENT-GUARD] + 2 instance + worktree-isolation + cross-instance-pr 監",
+        "text": "自社 narrative pivot = 「並列できる」→「**並列を監査可能に統治する**」([SUBAGENT-GUARD] + 2 instance + worktree-isolation + cross-instance-pr 監査証跡) を継続強化。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社 narrative pivot = 「並列できる」→「**並列を監査可能に統治する**」([SUBAGENT-GUARD] + 2 instance + worktree-isolation + cross-instance-pr 監査証跡) を継続強化。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-8b68671481c6",
+        "title": "自社 narrative pivot = 「並列できる」→「**並列を監査可能に統治する**」([SUBAGENT-GUARD] + 2 instance + worktree-isolation + cross-instance-pr 監",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c8f3fda376e6",
+        "title": "4. ⚪ MoneyForward AI Cowork — delta なし (再確認)",
+        "text": "4. ⚪ MoneyForward AI Cowork — delta なし (再確認)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "4. ⚪ MoneyForward AI Cowork — delta なし (再確認)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c8f3fda376e6",
+        "title": "4. ⚪ MoneyForward AI Cowork — delta なし (再確認)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a7bc39e681a5",
+        "title": "2026年**7月 GA** 予定維持。経理 / 労務 / 法務 等バックオフィスを自然言語で自律遂行 (「今月の経理業務をまとめて処理して」)。",
+        "text": "2026年**7月 GA** 予定維持。経理 / 労務 / 法務 等バックオフィスを自然言語で自律遂行 (「今月の経理業務をまとめて処理して」)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "2026年**7月 GA** 予定維持。経理 / 労務 / 法務 等バックオフィスを自然言語で自律遂行 (「今月の経理業務をまとめて処理して」)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a7bc39e681a5",
+        "title": "2026年**7月 GA** 予定維持。経理 / 労務 / 法務 等バックオフィスを自然言語で自律遂行 (「今月の経理業務をまとめて処理して」)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ce1bc92b98a3",
+        "title": "Claude Agent SDK + MCP 基盤 / **MCP サーバ構築不要** / 3 safety = ガードレール (社内ルール自動コンプラ) + **Draft & Approve** (人間レビュー承認) + AI 監査ログ",
+        "text": "Claude Agent SDK + MCP 基盤 / **MCP サーバ構築不要** / 3 safety = ガードレール (社内ルール自動コンプラ) + **Draft & Approve** (人間レビュー承認) + AI 監査ログ。4/7 先行受付開始済 / 「2030年までに AI で 150 億円」target。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Claude Agent SDK + MCP 基盤 / **MCP サーバ構築不要** / 3 safety = ガードレール (社内ルール自動コンプラ) + **Draft & Approve** (人間レビュー承認) + AI 監査ログ。4/7 先行受付開始済 / 「2030年までに AI で 150 億円」target。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ce1bc92b98a3",
+        "title": "Claude Agent SDK + MCP 基盤 / **MCP サーバ構築不要** / 3 safety = ガードレール (社内ルール自動コンプラ) + **Draft & Approve** (人間レビュー承認) + AI 監査ログ",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-de21886e28c1",
+        "title": "自社 6 部署 + B/S narrative と最大 overlap → **非対称防衛 = 個人 lifestyle CEO ダッシュボード**を継続。GA まで 1ヶ月弱、戦略レビュー議題として継続監視。",
+        "text": "自社 6 部署 + B/S narrative と最大 overlap → **非対称防衛 = 個人 lifestyle CEO ダッシュボード**を継続。GA まで 1ヶ月弱、戦略レビュー議題として継続監視。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "自社 6 部署 + B/S narrative と最大 overlap → **非対称防衛 = 個人 lifestyle CEO ダッシュボード**を継続。GA まで 1ヶ月弱、戦略レビュー議題として継続監視。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-de21886e28c1",
+        "title": "自社 6 部署 + B/S narrative と最大 overlap → **非対称防衛 = 個人 lifestyle CEO ダッシュボード**を継続。GA まで 1ヶ月弱、戦略レビュー議題として継続監視。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5669854b3198",
+        "title": "Discovery (Step 3) — 本日 SKIP (cooldown)",
+        "text": "Discovery (Step 3) — 本日 SKIP (cooldown)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Discovery (Step 3) — 本日 SKIP (cooldown)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5669854b3198",
+        "title": "Discovery (Step 3) — 本日 SKIP (cooldown)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6dd2eacb43a8",
+        "title": "直近 discovery = **2026-06-09 Alibaba Qoder** 採択 / 3 day 経過 / 7-day cooldown 残 4 day → **次回解禁 2026-06-16**。",
+        "text": "直近 discovery = **2026-06-09 Alibaba Qoder** 採択 / 3 day 経過 / 7-day cooldown 残 4 day → **次回解禁 2026-06-16**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "直近 discovery = **2026-06-09 Alibaba Qoder** 採択 / 3 day 経過 / 7-day cooldown 残 4 day → **次回解禁 2026-06-16**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6dd2eacb43a8",
+        "title": "直近 discovery = **2026-06-09 Alibaba Qoder** 採択 / 3 day 経過 / 7-day cooldown 残 4 day → **次回解禁 2026-06-16**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1502361aa1e7",
+        "title": "6/16 第 1 候補 = Microsoft MAI-Code-1-Flash** (基準 b 未カバー [MS 自社製 frontier coding model] + 基準 c Build 2026 6/2 / 公式モデルカード裏取り",
+        "text": "6/16 第 1 候補 = Microsoft MAI-Code-1-Flash** (基準 b 未カバー [MS 自社製 frontier coding model] + 基準 c Build 2026 6/2 / 公式モデルカード裏取り済 / 解禁日初日採択を推奨 = Lovable 5/17・Bolt.new 5/24・Qoder 6/09 pattern 踏襲)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/16 第 1 候補 = Microsoft MAI-Code-1-Flash** (基準 b 未カバー [MS 自社製 frontier coding model] + 基準 c Build 2026 6/2 / 公式モデルカード裏取り済 / 解禁日初日採択を推奨 = Lovable 5/17・Bolt.new 5/24・Qoder 6/09 pattern 踏襲)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1502361aa1e7",
+        "title": "6/16 第 1 候補 = Microsoft MAI-Code-1-Flash** (基準 b 未カバー [MS 自社製 frontier coding model] + 基準 c Build 2026 6/2 / 公式モデルカード裏取り",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e60cae183595",
+        "title": "第 2 候補 = Warp (terminal-native agentic dev / 6/10 新規参入シグナル / 動向観察継続)。",
+        "text": "第 2 候補 = Warp (terminal-native agentic dev / 6/10 新規参入シグナル / 動向観察継続)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "第 2 候補 = Warp (terminal-native agentic dev / 6/10 新規参入シグナル / 動向観察継続)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e60cae183595",
+        "title": "第 2 候補 = Warp (terminal-native agentic dev / 6/10 新規参入シグナル / 動向観察継続)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0502a48aab5c",
+        "title": "競合数 = 22 / cap 50 (まだ 28 枠余裕)。",
+        "text": "競合数 = 22 / cap 50 (まだ 28 枠余裕)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "競合数 = 22 / cap 50 (まだ 28 枠余裕)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0502a48aab5c",
+        "title": "競合数 = 22 / cap 50 (まだ 28 枠余裕)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4b24779ac326",
+        "title": "[Anthropic splits billing again: Agent SDK gets separate credit pools — The New Stack](https://thenewstack.io/anthropic-",
+        "text": "[Anthropic splits billing again: Agent SDK gets separate credit pools — The New Stack](https://thenewstack.io/anthropic-agent-sdk-credits/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Anthropic splits billing again: Agent SDK gets separate credit pools — The New Stack](https://thenewstack.io/anthropic-agent-sdk-credits/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4b24779ac326",
+        "title": "[Anthropic splits billing again: Agent SDK gets separate credit pools — The New Stack](https://thenewstack.io/anthropic-",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a862e96e6e27",
+        "title": "[Two Claude Deadlines Hit June 15 — Enterprise DNA](https://enterprisedna.co/resources/news/anthropic-claude-june-15-ret",
+        "text": "[Two Claude Deadlines Hit June 15 — Enterprise DNA](https://enterprisedna.co/resources/news/anthropic-claude-june-15-retirements-billing-2026/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Two Claude Deadlines Hit June 15 — Enterprise DNA](https://enterprisedna.co/resources/news/anthropic-claude-june-15-retirements-billing-2026/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a862e96e6e27",
+        "title": "[Two Claude Deadlines Hit June 15 — Enterprise DNA](https://enterprisedna.co/resources/news/anthropic-claude-june-15-ret",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f231ae72bea1",
+        "title": "[Model deprecations — Claude API Docs (公式)](https://platform.claude.com/docs/en/about-claude/model-deprecations)",
+        "text": "[Model deprecations — Claude API Docs (公式)](https://platform.claude.com/docs/en/about-claude/model-deprecations)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Model deprecations — Claude API Docs (公式)](https://platform.claude.com/docs/en/about-claude/model-deprecations)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f231ae72bea1",
+        "title": "[Model deprecations — Claude API Docs (公式)](https://platform.claude.com/docs/en/about-claude/model-deprecations)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2180d705f008",
+        "title": "[Anthropic Claude model deprecations on June 15, 2026 — Make Help Center](https://help.make.com/anthropic-claude-model-d",
+        "text": "[Anthropic Claude model deprecations on June 15, 2026 — Make Help Center](https://help.make.com/anthropic-claude-model-deprecations-on-june-15-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Anthropic Claude model deprecations on June 15, 2026 — Make Help Center](https://help.make.com/anthropic-claude-model-deprecations-on-june-15-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2180d705f008",
+        "title": "[Anthropic Claude model deprecations on June 15, 2026 — Make Help Center](https://help.make.com/anthropic-claude-model-d",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-194955d6239e",
+        "title": "[Introducing MAI-Code-1-Flash — Microsoft AI (公式)](https://microsoft.ai/news/introducingmai-code-1-flash/)",
+        "text": "[Introducing MAI-Code-1-Flash — Microsoft AI (公式)](https://microsoft.ai/news/introducingmai-code-1-flash/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Introducing MAI-Code-1-Flash — Microsoft AI (公式)](https://microsoft.ai/news/introducingmai-code-1-flash/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-194955d6239e",
+        "title": "[Introducing MAI-Code-1-Flash — Microsoft AI (公式)](https://microsoft.ai/news/introducingmai-code-1-flash/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6cc68e1d7819",
+        "title": "[MAI-Code-1-Flash is now available for GitHub Copilot — GitHub Changelog](https://github.blog/changelog/2026-06-02-mai-c",
+        "text": "[MAI-Code-1-Flash is now available for GitHub Copilot — GitHub Changelog](https://github.blog/changelog/2026-06-02-mai-code-1-flash-is-now-available-for-github-copilot/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[MAI-Code-1-Flash is now available for GitHub Copilot — GitHub Changelog](https://github.blog/changelog/2026-06-02-mai-code-1-flash-is-now-available-for-github-copilot/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6cc68e1d7819",
+        "title": "[MAI-Code-1-Flash is now available for GitHub Copilot — GitHub Changelog](https://github.blog/changelog/2026-06-02-mai-c",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a50916cc5aa1",
+        "title": "[Money Forward to Launch \"Money Forward AI Cowork\" in July 2026 (公式)](https://corp.moneyforward.com/en/news/release/serv",
+        "text": "[Money Forward to Launch \"Money Forward AI Cowork\" in July 2026 (公式)](https://corp.moneyforward.com/en/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Money Forward to Launch \"Money Forward AI Cowork\" in July 2026 (公式)](https://corp.moneyforward.com/en/news/release/service/20260407-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a50916cc5aa1",
+        "title": "[Money Forward to Launch \"Money Forward AI Cowork\" in July 2026 (公式)](https://corp.moneyforward.com/en/news/release/serv",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cbbf39479f1d",
+        "title": "[AI Coding Tools Pricing: The June 2026 Reality Check — Developers Digest](https://www.developersdigest.tech/blog/ai-cod",
+        "text": "[AI Coding Tools Pricing: The June 2026 Reality Check — Developers Digest](https://www.developersdigest.tech/blog/ai-coding-tools-pricing-june-2026)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[AI Coding Tools Pricing: The June 2026 Reality Check — Developers Digest](https://www.developersdigest.tech/blog/ai-coding-tools-pricing-june-2026)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cbbf39479f1d",
+        "title": "[AI Coding Tools Pricing: The June 2026 Reality Check — Developers Digest](https://www.developersdigest.tech/blog/ai-cod",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

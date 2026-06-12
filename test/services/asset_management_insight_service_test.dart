@@ -32,6 +32,30 @@ void main() {
       );
     });
 
+    test('clears missing payment day item once an override is entered', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'Custom Card': -10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        paymentDayOverrides: const <String, int>{'Custom Card': 27},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type == AssetManagementInsightActionType.missingPaymentDay,
+        ),
+        false,
+      );
+    });
+
     test('marks missing annual rate as an action item', () {
       final workbook = _workbook(
         debtRows: <AssetLiabilityDebtRow>[
@@ -50,6 +74,36 @@ void main() {
               item.type == AssetManagementInsightActionType.missingAnnualRate,
         ),
         true,
+      );
+    });
+
+    test('does not require annual rate for full-payment fixed costs', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000},
+        baseDate: DateTime(2026, 5, 1),
+        includeDefaultFixedPayments: true,
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+
+      expect(
+        workbook.debtMasterRows.any(
+          (row) =>
+              row.id == AssetLiabilityPlanningService.rentAccountId &&
+              row.fullPaymentEstimate &&
+              row.annualRate == 0,
+        ),
+        true,
+      );
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type == AssetManagementInsightActionType.missingAnnualRate,
+        ),
+        false,
       );
     });
 
@@ -232,6 +286,25 @@ void main() {
               AssetManagementInsightActionType.cardBillingConfiguration,
         ),
         true,
+      );
+    });
+
+    test('accepts explicit zero yen billing without configuration item', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 0},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+              AssetManagementInsightActionType.cardBillingConfiguration,
+        ),
+        false,
       );
     });
 

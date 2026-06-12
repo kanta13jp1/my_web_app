@@ -359,7 +359,7 @@ class AssetManagementInsightService {
             relatedAccountId: row.id,
             dueDate: null,
             paymentDay: null,
-            suggestedAction: '契約画面または請求明細で支払日を確認して入力してください。',
+            suggestedAction: '契約画面または請求明細で支払日を確認し、負債マスタ（支払日順）の「支払日」欄に入力してください。',
           ),
         );
       }
@@ -480,7 +480,8 @@ class AssetManagementInsightService {
               ? null
               : _paymentDateFromDay(workbook.baseDate, item.paymentDay!),
           paymentDay: item.paymentDay,
-          suggestedAction: 'カード請求に含める設定と請求先カードを確認してください。',
+          suggestedAction:
+              '負債マスタ（支払日順）の「支払い方式」でカード請求に含める設定と請求先カードを確認してください。請求額が0円の月は「今月支払予定額」に0を入力してください。',
         ),
       );
     }
@@ -949,6 +950,10 @@ class AssetManagementInsightService {
 
   bool _needsAnnualRate(AssetLiabilityDebtRow row) {
     if (row.annualRate > 0) {
+      return false;
+    }
+    // 家賃・通信費など全額支払い型の固定費は利率の概念がないため対象外。
+    if (row.fullPaymentEstimate) {
       return false;
     }
     return switch (row.kind) {
