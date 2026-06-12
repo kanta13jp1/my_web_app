@@ -53,11 +53,7 @@ void main() {
             paymentDay: 31,
             scheduledPaymentAmount: 15000,
           ),
-          AssetCalendarDebtInput(
-            name: '完済済み',
-            balance: 0,
-            paymentDay: 10,
-          ),
+          AssetCalendarDebtInput(name: '完済済み', balance: 0, paymentDay: 10),
           AssetCalendarDebtInput(
             name: 'カード合算',
             balance: -5000,
@@ -156,6 +152,67 @@ void main() {
       expect(day.events[1].kind, AssetCalendarEventKind.debtPayment);
       expect(day.events[2].kind, AssetCalendarEventKind.subscription);
       expect(day.events[3].kind, AssetCalendarEventKind.expense);
+    });
+
+    test('sums scheduled outflow and projects the first shortfall day', () {
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 6),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'service_name': '家賃',
+            'price': 10000,
+            'due_date': '2026-06-10T00:00:00',
+          },
+        ],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            name: 'ローン',
+            balance: -300000,
+            paymentDay: 5,
+            scheduledPaymentAmount: 15000,
+          ),
+        ],
+        startingCashBalance: 20000,
+      );
+
+      expect(calendar.scheduledDebtPaymentTotal, 15000);
+      expect(calendar.subscriptionTotal, 10000);
+      expect(calendar.scheduledOutflowTotal, 25000);
+
+      final day5 = calendar.dayFor(DateTime(2026, 6, 5))!;
+      expect(day5.scheduledOutflow, 15000);
+      expect(day5.projectedBalance, 5000);
+      expect(day5.isShortfall, isFalse);
+
+      final day10 = calendar.dayFor(DateTime(2026, 6, 10))!;
+      expect(day10.projectedBalance, -5000);
+      expect(day10.isShortfall, isTrue);
+      expect(calendar.firstShortfallDate, DateTime(2026, 6, 10));
+
+      final day30 = calendar.dayFor(DateTime(2026, 6, 30))!;
+      expect(day30.projectedBalance, -5000);
+    });
+
+    test('keeps shortfall fields empty without a starting balance', () {
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 6),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            name: 'ローン',
+            balance: -300000,
+            paymentDay: 5,
+            scheduledPaymentAmount: 15000,
+          ),
+        ],
+      );
+
+      expect(calendar.firstShortfallDate, isNull);
+      final day5 = calendar.dayFor(DateTime(2026, 6, 5))!;
+      expect(day5.projectedBalance, isNull);
+      expect(day5.isShortfall, isFalse);
     });
   });
 }

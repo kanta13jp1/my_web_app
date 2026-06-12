@@ -95,5 +95,96 @@ void main() {
 
       expect(mode, AssetManagementDisplayMode.full);
     });
+
+    test('section overrides beat tier rules in both directions', () {
+      expect(
+        AssetManagementDisplayModeStore.isSectionVisible(
+          section: AssetManagementSectionId.chart,
+          mode: AssetManagementDisplayMode.minimum,
+          override: AssetManagementSectionVisibilityOverride.pinned,
+        ),
+        isTrue,
+      );
+      expect(
+        AssetManagementDisplayModeStore.isSectionVisible(
+          section: AssetManagementSectionId.debtPlanner,
+          mode: AssetManagementDisplayMode.full,
+          override: AssetManagementSectionVisibilityOverride.hidden,
+        ),
+        isFalse,
+      );
+      expect(
+        AssetManagementDisplayModeStore.isSectionVisible(
+          section: AssetManagementSectionId.workbookBoard,
+          mode: AssetManagementDisplayMode.minimum,
+        ),
+        isFalse,
+      );
+      expect(
+        AssetManagementDisplayModeStore.isSectionVisible(
+          section: AssetManagementSectionId.calendar,
+          mode: AssetManagementDisplayMode.minimum,
+        ),
+        isTrue,
+      );
+    });
+
+    test('persists overrides and clears them when reset to auto', () async {
+      const store = AssetManagementDisplayModeStore();
+
+      var overrides = await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+      overrides = await store.saveOverride(
+        AssetManagementSectionId.flow,
+        AssetManagementSectionVisibilityOverride.hidden,
+      );
+      expect(overrides, hasLength(2));
+
+      final loaded = await store.loadOverrides();
+      expect(
+        loaded[AssetManagementSectionId.chart],
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+      expect(
+        loaded[AssetManagementSectionId.flow],
+        AssetManagementSectionVisibilityOverride.hidden,
+      );
+
+      final cleared = await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.auto,
+      );
+      expect(cleared.containsKey(AssetManagementSectionId.chart), isFalse);
+      expect(cleared, hasLength(1));
+    });
+
+    test(
+      'resolveInitialMode picks standard only for brand-new users',
+      () async {
+        const store = AssetManagementDisplayModeStore();
+
+        final newUserMode = await store.resolveInitialMode(
+          hasExistingData: false,
+        );
+        expect(newUserMode, AssetManagementDisplayMode.standard);
+        expect(await store.load(), AssetManagementDisplayMode.standard);
+
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        final existingUserMode = await store.resolveInitialMode(
+          hasExistingData: true,
+        );
+        expect(existingUserMode, AssetManagementDisplayMode.full);
+
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1': 'minimum',
+        });
+        final storedWins = await store.resolveInitialMode(
+          hasExistingData: false,
+        );
+        expect(storedWins, AssetManagementDisplayMode.minimum);
+      },
+    );
   });
 }

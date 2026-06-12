@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 資産管理ページの表示モード。情報量を段階的に開示する。
@@ -6,6 +8,32 @@ enum AssetManagementDisplayMode { minimum, standard, full }
 /// 各セクションの重要度ティア。モードとの対応:
 /// minimum → essential のみ / standard → essential+standard / full → 全部。
 enum AssetManagementSectionTier { essential, standard, full }
+
+/// ページ内セクションの識別子(pin/hide カスタムの単位)。
+enum AssetManagementSectionId {
+  monthlyFlow,
+  calendar,
+  salaryBreakdown,
+  disposable,
+  quickActions,
+  wasteAi,
+  deadlines,
+  threeMonth,
+  debtPlanner,
+  workbookBoard,
+  assetLiability,
+  flow,
+  subscriptions,
+  mustTasks,
+  chart,
+}
+
+/// セクション単位の表示上書き。auto はティア×モードの既定に従う。
+enum AssetManagementSectionVisibilityOverride { auto, pinned, hidden }
+
+/// セクションID → 上書き設定のマップ。
+typedef AssetManagementSectionOverrides
+    = Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>;
 
 extension AssetManagementDisplayModeLabel on AssetManagementDisplayMode {
   String get label {
@@ -33,7 +61,85 @@ extension AssetManagementDisplayModeLabel on AssetManagementDisplayMode {
   String get storageId => name;
 }
 
-/// 表示モードの永続化と、ティア×モードの可視判定。
+extension AssetManagementSectionIdMeta on AssetManagementSectionId {
+  String get storageId => name;
+
+  String get label {
+    switch (this) {
+      case AssetManagementSectionId.monthlyFlow:
+        return '当月収支の概観';
+      case AssetManagementSectionId.calendar:
+        return 'マネーカレンダー';
+      case AssetManagementSectionId.salaryBreakdown:
+        return '給与消費内訳';
+      case AssetManagementSectionId.disposable:
+        return '裁量余資金';
+      case AssetManagementSectionId.quickActions:
+        return 'フロー記録ボタン';
+      case AssetManagementSectionId.wasteAi:
+        return '浪費抑制トレーニングAI';
+      case AssetManagementSectionId.deadlines:
+        return '締切チェックリスト';
+      case AssetManagementSectionId.threeMonth:
+        return '3ヶ月俯瞰';
+      case AssetManagementSectionId.debtPlanner:
+        return '借金返済プラン';
+      case AssetManagementSectionId.workbookBoard:
+        return '資産・負債ワークブックボード';
+      case AssetManagementSectionId.assetLiability:
+        return '資産負債(①②)';
+      case AssetManagementSectionId.flow:
+        return '収支(④)';
+      case AssetManagementSectionId.subscriptions:
+        return '固定費(③)';
+      case AssetManagementSectionId.mustTasks:
+        return '必須タスク(⑤)';
+      case AssetManagementSectionId.chart:
+        return 'グラフ';
+    }
+  }
+
+  AssetManagementSectionTier get defaultTier {
+    switch (this) {
+      case AssetManagementSectionId.monthlyFlow:
+      case AssetManagementSectionId.calendar:
+      case AssetManagementSectionId.disposable:
+      case AssetManagementSectionId.quickActions:
+      case AssetManagementSectionId.debtPlanner:
+        return AssetManagementSectionTier.essential;
+      case AssetManagementSectionId.salaryBreakdown:
+      case AssetManagementSectionId.deadlines:
+      case AssetManagementSectionId.threeMonth:
+      case AssetManagementSectionId.workbookBoard:
+      case AssetManagementSectionId.assetLiability:
+      case AssetManagementSectionId.flow:
+      case AssetManagementSectionId.subscriptions:
+      case AssetManagementSectionId.mustTasks:
+        return AssetManagementSectionTier.standard;
+      case AssetManagementSectionId.wasteAi:
+      case AssetManagementSectionId.chart:
+        return AssetManagementSectionTier.full;
+    }
+  }
+}
+
+extension AssetManagementSectionVisibilityOverrideLabel
+    on AssetManagementSectionVisibilityOverride {
+  String get storageId => name;
+
+  String get label {
+    switch (this) {
+      case AssetManagementSectionVisibilityOverride.auto:
+        return '自動';
+      case AssetManagementSectionVisibilityOverride.pinned:
+        return '常に表示';
+      case AssetManagementSectionVisibilityOverride.hidden:
+        return '隠す';
+    }
+  }
+}
+
+/// 表示モード・セクション上書きの永続化と可視判定。
 class AssetManagementDisplayModeStore {
   const AssetManagementDisplayModeStore();
 
@@ -41,7 +147,12 @@ class AssetManagementDisplayModeStore {
   static const AssetManagementDisplayMode defaultMode =
       AssetManagementDisplayMode.full;
 
+  /// 新規ユーザー(既存データなし)に提示する初期モード。
+  static const AssetManagementDisplayMode newUserDefaultMode =
+      AssetManagementDisplayMode.standard;
+
   static const String _modeKey = 'asset_management_display_mode_v1';
+  static const String _overridesKey = 'asset_management_section_overrides_v1';
 
   static bool isTierVisible({
     required AssetManagementSectionTier tier,
@@ -57,15 +168,26 @@ class AssetManagementDisplayModeStore {
     }
   }
 
+  /// pin/hide 上書き込みの最終可視判定。
+  static bool isSectionVisible({
+    required AssetManagementSectionId section,
+    required AssetManagementDisplayMode mode,
+    AssetManagementSectionVisibilityOverride override =
+        AssetManagementSectionVisibilityOverride.auto,
+  }) {
+    switch (override) {
+      case AssetManagementSectionVisibilityOverride.pinned:
+        return true;
+      case AssetManagementSectionVisibilityOverride.hidden:
+        return false;
+      case AssetManagementSectionVisibilityOverride.auto:
+        return isTierVisible(tier: section.defaultTier, mode: mode);
+    }
+  }
+
   Future<AssetManagementDisplayMode> load({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    final raw = store.getString(_modeKey);
-    for (final mode in AssetManagementDisplayMode.values) {
-      if (mode.storageId == raw) {
-        return mode;
-      }
-    }
-    return defaultMode;
+    return _storedMode(store) ?? defaultMode;
   }
 
   Future<void> save(
@@ -74,5 +196,100 @@ class AssetManagementDisplayModeStore {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     await store.setString(_modeKey, mode.storageId);
+  }
+
+  /// 初回起動時の既定モード解決。保存済みがあればそれを優先し、
+  /// なければ「既存データあり=フル / なし(新規)=標準」を保存して返す。
+  Future<AssetManagementDisplayMode> resolveInitialMode({
+    required bool hasExistingData,
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final stored = _storedMode(store);
+    if (stored != null) {
+      return stored;
+    }
+    final resolved = hasExistingData ? defaultMode : newUserDefaultMode;
+    await store.setString(_modeKey, resolved.storageId);
+    return resolved;
+  }
+
+  Future<AssetManagementSectionOverrides> loadOverrides({
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final raw = store.getString(_overridesKey);
+    final result =
+        <AssetManagementSectionId, AssetManagementSectionVisibilityOverride>{};
+    if (raw == null || raw.isEmpty) {
+      return result;
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) {
+        return result;
+      }
+      decoded.forEach((key, value) {
+        final section = _sectionFor(key?.toString());
+        final override = _overrideFor(value?.toString());
+        if (section == null || override == null) {
+          return;
+        }
+        if (override != AssetManagementSectionVisibilityOverride.auto) {
+          result[section] = override;
+        }
+      });
+      return result;
+    } catch (_) {
+      return result;
+    }
+  }
+
+  Future<AssetManagementSectionOverrides> saveOverride(
+    AssetManagementSectionId section,
+    AssetManagementSectionVisibilityOverride override, {
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final current = await loadOverrides(prefs: store);
+    if (override == AssetManagementSectionVisibilityOverride.auto) {
+      current.remove(section);
+    } else {
+      current[section] = override;
+    }
+    final encoded = <String, String>{
+      for (final entry in current.entries)
+        entry.key.storageId: entry.value.storageId,
+    };
+    await store.setString(_overridesKey, jsonEncode(encoded));
+    return current;
+  }
+
+  AssetManagementDisplayMode? _storedMode(SharedPreferences store) {
+    final raw = store.getString(_modeKey);
+    for (final mode in AssetManagementDisplayMode.values) {
+      if (mode.storageId == raw) {
+        return mode;
+      }
+    }
+    return null;
+  }
+
+  AssetManagementSectionId? _sectionFor(String? raw) {
+    for (final section in AssetManagementSectionId.values) {
+      if (section.storageId == raw) {
+        return section;
+      }
+    }
+    return null;
+  }
+
+  AssetManagementSectionVisibilityOverride? _overrideFor(String? raw) {
+    for (final value in AssetManagementSectionVisibilityOverride.values) {
+      if (value.storageId == raw) {
+        return value;
+      }
+    }
+    return null;
   }
 }

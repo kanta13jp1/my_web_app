@@ -335,6 +335,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementDisplayModeStore();
   AssetManagementDisplayMode _displayMode =
       AssetManagementDisplayModeStore.defaultMode;
+  Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
+      _sectionOverrides = {};
   DateTime _calendarMonth = DateTime.now();
   DateTime? _calendarSelectedDate;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
@@ -3698,9 +3700,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          enabled ? 'うどん縛りを開始しました。完済の日まで。' : 'うどん縛りを中断しました',
-        ),
+        content: Text(enabled ? 'うどん縛りを開始しました。完済の日まで。' : 'うどん縛りを中断しました'),
       ),
     );
   }
@@ -3787,10 +3787,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _konbiniUdonSnapshot = snapshot;
       _konbiniUdonLoadedForDebt = remainingDebt;
     });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(
-        const SnackBar(content: Text('うどん以外の食事を記録しました。明日また縛り直しです。')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('うどん以外の食事を記録しました。明日また縛り直しです。')),
+    );
   }
 
   Future<void> _showKonbiniUdonViolationDialog(double remainingDebt) async {
@@ -4032,10 +4031,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         value: 'avalanche',
                         child: Text('高金利優先（アバランチ）'),
                       ),
-                      DropdownMenuItem(
-                        value: 'dueDate',
-                        child: Text('支払日順'),
-                      ),
+                      DropdownMenuItem(value: 'dueDate', child: Text('支払日順')),
                       DropdownMenuItem(
                         value: 'hybrid',
                         child: Text('ハイブリッド（高金利×少額）'),
@@ -5930,6 +5926,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() {
           _recentFlows = List<Map<String, dynamic>>.from(data);
         });
+        unawaited(
+          _resolveInitialDisplayMode(
+            hasExistingData:
+                _recentFlows.isNotEmpty || _subscriptions.isNotEmpty,
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error fetching flows: $e');
@@ -7207,52 +7209,66 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             _buildDisplayModeSwitcher(),
             const SizedBox(height: 12),
-            _buildMonthlyFlowFirstCard(),
-            const SizedBox(height: 16),
-            _buildAssetCalendarCard(assetLiabilityWorkbook),
-            const SizedBox(height: 16),
-            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+            if (_isSectionShown(AssetManagementSectionId.monthlyFlow)) ...[
+              _buildMonthlyFlowFirstCard(),
+              const SizedBox(height: 16),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.calendar)) ...[
+              _buildAssetCalendarCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.salaryBreakdown)) ...[
               _buildSalarySpendingBreakdownCard(),
               const SizedBox(height: 16),
             ],
-            _buildDisposableBalanceCard(),
-            const SizedBox(height: 16),
-            _buildMonthlyFlowPrimaryActionBar(),
-            const SizedBox(height: 16),
-            if (_isTierVisible(AssetManagementSectionTier.full)) ...[
+            if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
+              _buildDisposableBalanceCard(),
+              const SizedBox(height: 16),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.quickActions)) ...[
+              _buildMonthlyFlowPrimaryActionBar(),
+              const SizedBox(height: 16),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.wasteAi)) ...[
               _buildWasteTrainingAiCard(),
               const SizedBox(height: 24),
             ],
-            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+            if (_isSectionShown(AssetManagementSectionId.deadlines)) ...[
               _buildDeadlineChecklistCard(), // 締切チェックリスト
               const SizedBox(height: 16),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.threeMonth)) ...[
               _buildThreeMonthOverviewCard(), // 3ヶ月俯瞰
               const SizedBox(height: 16),
             ],
-            _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
-            const SizedBox(height: 16),
-            if (_isTierVisible(AssetManagementSectionTier.standard)) ...[
+            if (_isSectionShown(AssetManagementSectionId.debtPlanner)) ...[
+              _buildDebtPlannerCard(assetLiabilityWorkbook), // 借金返済プラン
+              const SizedBox(height: 16),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.workbookBoard)) ...[
               _buildAssetLiabilityWorkbookBoard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.assetLiability)) ...[
               Container(
                 key: _keyStock,
                 child: _buildAssetLiabilityCard(),
               ), // ①②資産負債
               const SizedBox(height: 24),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.flow)) ...[
               Container(key: _keyFlow, child: _buildFlowCard()), // ④収支
               const SizedBox(height: 24),
-              Container(
-                key: _keySubs,
-                child: _buildSubscriptionCard(),
-              ), // ③固定費
-              const SizedBox(height: 24),
-              Container(
-                key: _keyMust,
-                child: _buildMustTasksCard(),
-              ), // ⑤必須タスク
+            ],
+            if (_isSectionShown(AssetManagementSectionId.subscriptions)) ...[
+              Container(key: _keySubs, child: _buildSubscriptionCard()), // ③固定費
               const SizedBox(height: 24),
             ],
-            if (_isTierVisible(AssetManagementSectionTier.full))
+            if (_isSectionShown(AssetManagementSectionId.mustTasks)) ...[
+              Container(key: _keyMust, child: _buildMustTasksCard()), // ⑤必須タスク
+              const SizedBox(height: 24),
+            ],
+            if (_isSectionShown(AssetManagementSectionId.chart))
               _buildChartCard(), // グラフ
           ],
         ),
@@ -7260,20 +7276,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  bool _isTierVisible(AssetManagementSectionTier tier) {
-    return AssetManagementDisplayModeStore.isTierVisible(
-      tier: tier,
+  bool _isSectionShown(AssetManagementSectionId section) {
+    final override = _sectionOverrides[section] ??
+        AssetManagementSectionVisibilityOverride.auto;
+    return AssetManagementDisplayModeStore.isSectionVisible(
+      section: section,
       mode: _displayMode,
+      override: override,
     );
   }
 
   Future<void> _loadDisplayMode() async {
     final mode = await _displayModeStore.load();
-    if (!mounted || mode == _displayMode) {
+    final overrides = await _displayModeStore.loadOverrides();
+    if (!mounted) {
       return;
     }
     setState(() {
       _displayMode = mode;
+      _sectionOverrides = overrides;
     });
   }
 
@@ -7285,6 +7306,117 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _displayMode = mode;
     });
     await _displayModeStore.save(mode);
+  }
+
+  Future<void> _resolveInitialDisplayMode({
+    required bool hasExistingData,
+  }) async {
+    final mode = await _displayModeStore.resolveInitialMode(
+      hasExistingData: hasExistingData,
+    );
+    if (!mounted || mode == _displayMode) {
+      return;
+    }
+    setState(() {
+      _displayMode = mode;
+    });
+  }
+
+  Future<void> _setSectionOverride(
+    AssetManagementSectionId section,
+    AssetManagementSectionVisibilityOverride override,
+  ) async {
+    final overrides = await _displayModeStore.saveOverride(section, override);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _sectionOverrides = overrides;
+    });
+  }
+
+  Widget _buildSectionOverrideDropdown(
+    AssetManagementSectionId section,
+    void Function(void Function()) setDialogState,
+  ) {
+    final current = _sectionOverrides[section] ??
+        AssetManagementSectionVisibilityOverride.auto;
+    return DropdownButton<AssetManagementSectionVisibilityOverride>(
+      key: Key('asset_section_override_${section.storageId}'),
+      value: current,
+      isDense: true,
+      items: [
+        for (final option in AssetManagementSectionVisibilityOverride.values)
+          DropdownMenuItem(
+            value: option,
+            child: Text(option.label, style: const TextStyle(fontSize: 12)),
+          ),
+      ],
+      onChanged: (value) async {
+        if (value == null) {
+          return;
+        }
+        await _setSectionOverride(section, value);
+        setDialogState(() {});
+      },
+    );
+  }
+
+  Future<void> _showSectionCustomizeDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('セクション表示のカスタマイズ'),
+          content: SizedBox(
+            width: 360,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '「自動」は表示モード(ミニマム/標準/フル)に従います。「常に表示」「隠す」はモードより優先されます。',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(
+                        dialogContext,
+                      ).colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final section in AssetManagementSectionId.values)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              section.label,
+                              style: const TextStyle(fontSize: 12, height: 1.4),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          _buildSectionOverrideDropdown(
+                            section,
+                            setDialogState,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('閉じる'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildDisplayModeSwitcher() {
@@ -7317,6 +7449,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       height: 1.4,
                     ),
                   ),
+                ),
+                TextButton.icon(
+                  key: const Key('asset_section_customize_button'),
+                  onPressed: _showSectionCustomizeDialog,
+                  icon: const Icon(Icons.playlist_add_check, size: 16),
+                  label: const Text('カスタマイズ'),
                 ),
               ],
             ),
@@ -7361,6 +7499,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetCalendarCard(AssetLiabilityWorkbook? workbook) {
     final debtRows =
         workbook?.debtMasterRows ?? const <AssetLiabilityDebtRow>[];
+    double? startingCashBalance;
+    if (workbook != null) {
+      var liquid = 0.0;
+      for (final account in workbook.accounts) {
+        final isLiquid = account.kind == AssetLiabilityAccountKind.cash ||
+            account.kind == AssetLiabilityAccountKind.deposit;
+        if (isLiquid && account.balance > 0) {
+          liquid += account.balance;
+        }
+      }
+      startingCashBalance = liquid;
+    }
     final calendar = AssetPaymentCalendarService.buildMonth(
       month: _calendarMonth,
       flows: _recentFlows,
@@ -7376,6 +7526,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
       ],
       salaryDay: _salarySpendingSalaryDay,
+      startingCashBalance: startingCashBalance,
     );
     final selectedDate = _calendarSelectedDate;
     final selectedDay =
@@ -7434,6 +7585,76 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 height: 1.5,
               ),
             ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildOverviewStatChip(
+                  label: '返済予定',
+                  value: _formatYen(calendar.scheduledDebtPaymentTotal),
+                  color: const Color(0xFFB91C1C),
+                ),
+                _buildOverviewStatChip(
+                  label: '固定費予定',
+                  value: _formatYen(calendar.subscriptionTotal),
+                  color: const Color(0xFF9333EA),
+                ),
+                _buildOverviewStatChip(
+                  label: '支払予定合計',
+                  value: _formatYen(calendar.scheduledOutflowTotal),
+                  color: const Color(0xFFC05621),
+                ),
+              ],
+            ),
+            if (calendar.firstShortfallDate != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                key: const Key('asset_calendar_shortfall_warning'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFECACA)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          size: 16,
+                          color: Color(0xFFB91C1C),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${DateFormat('M月d日').format(calendar.firstShortfallDate!)} に残高ショート見込み',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFFB91C1C),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '現金・預金 ${_formatYen(startingCashBalance ?? 0)} を起点に、返済予定と固定費だけを差し引いた保守的な見込みです。給料などの入金は含めていません。入金予定や返済日の調整を確認してください。',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             Row(
               children: [
@@ -7525,7 +7746,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             const SizedBox(height: 4),
             Text(
-              '支出・収入は記録済みフロー(直近取得分)に基づく概算です。',
+              '支出・収入は記録済みフロー(直近取得分)に基づく概算、残高ショート見込みは入金を含めない保守的試算です。',
               style: TextStyle(
                 fontSize: 10,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -7572,7 +7793,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF7C3AED).withValues(alpha: 0.14)
-              : null,
+              : day.isShortfall
+                  ? const Color(0xFFFEE2E2)
+                  : null,
           borderRadius: BorderRadius.circular(6),
           border: isToday
               ? Border.all(color: const Color(0xFF7C3AED), width: 1.5)
@@ -16825,15 +17048,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             isExpanded: true,
             isDense: true,
             items: [
-              const DropdownMenuItem<int?>(
-                value: null,
-                child: Text('未設定'),
-              ),
+              const DropdownMenuItem<int?>(value: null, child: Text('未設定')),
               for (var day = 1; day <= 31; day++)
-                DropdownMenuItem<int?>(
-                  value: day,
-                  child: Text('$day日'),
-                ),
+                DropdownMenuItem<int?>(value: day, child: Text('$day日')),
             ],
             onChanged: (value) => _setDebtPaymentDayOverride(row, value),
           ),
@@ -18440,8 +18657,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     : spot.barIndex == 1
                         ? const Color(0xFF2563EB)
                         : const Color(0xFFDC2626);
-                final date =
-                    DateFormat('yyyy/MM/dd').format(DateTime.parse(point.date));
+                final date = DateFormat(
+                  'yyyy/MM/dd',
+                ).format(DateTime.parse(point.date));
                 final prefix = spot == spots.first ? '$date\n' : '';
                 return LineTooltipItem(
                   '$prefix$label: ${_formatYen(spot.y)}',
@@ -18493,8 +18711,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 if (index < 0 || index >= points.length) {
                   return const SizedBox.shrink();
                 }
-                final date = DateFormat('M/d')
-                    .format(DateTime.parse(points[index].date));
+                final date = DateFormat(
+                  'M/d',
+                ).format(DateTime.parse(points[index].date));
                 return SideTitleWidget(
                   meta: meta,
                   child: Text(
@@ -18509,10 +18728,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               },
             ),
           ),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         lineBarsData: [
           line(
@@ -18670,9 +18891,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           onPressed: () => _toggleMinusForType(type),
           icon: const Icon(Icons.exposure_neg_1),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -18725,10 +18944,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (type != '現金')
           IconButton(
             tooltip: '削除',
-            icon: const Icon(
-              Icons.delete_outline,
-              color: Color(0xFF94A3B8),
-            ),
+            icon: const Icon(Icons.delete_outline, color: Color(0xFF94A3B8)),
             onPressed: () => _showRemoveAssetDialog(type),
           ),
       ],
