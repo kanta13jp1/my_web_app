@@ -105,6 +105,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, Map<String, double>>? debugInitialAssetData;
 
+  /// テスト専用: asset_pref_mirror 行を直接注入し、反映通知の判定を
+  /// ネットワークなしで検証する。null なら通常の select。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugMirrorPrefsRows;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -114,6 +119,7 @@ class AssetManagementPage extends StatefulWidget {
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
+    this.debugMirrorPrefsRows,
   });
 
   @override
@@ -7351,18 +7357,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  bool _sameSectionOverrides(AssetManagementSectionOverrides candidate) {
-    if (candidate.length != _sectionOverrides.length) {
-      return false;
-    }
-    for (final entry in candidate.entries) {
-      if (_sectionOverrides[entry.key] != entry.value) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   Future<void> _applyDisplayPrefs(
     AssetManagementDisplayMode? mode,
     AssetManagementSectionOverrides? overrides,
@@ -7390,81 +7384,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 他端末がミラーを更新していたら、自動適用せず通知して選ばせる。
-  /// 自端末の直近書き込み (lastChangedAt+10秒以内) は対象外。
+  /// 判定は AssetManagementDisplayModeStore.evaluateMirrorPrefRows に委譲。
   Future<void> _checkDisplayPrefsMirrorNewer() async {
-    if (_supabase.auth.currentUser == null) {
+    final debugRows = widget.debugMirrorPrefsRows;
+    if (_supabase.auth.currentUser == null && debugRows == null) {
       return;
     }
     try {
       final stats = await _displayModeStore.loadStats();
-      final localChangedAt = stats.lastChangedAt;
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .inFilter('pref_key', <String>['display_mode', 'section_overrides']);
+      final rows = debugRows ??
+          List<Map<String, dynamic>>.from(
+            await _supabase.from('asset_pref_mirror').select().inFilter(
+              'pref_key',
+              <String>['display_mode', 'section_overrides'],
+            ),
+          );
       if (rows.isEmpty || !mounted) {
         return;
       }
-      AssetManagementDisplayMode? newerMode;
-      AssetManagementSectionOverrides? newerOverrides;
-      for (final row in rows) {
-        final updatedAt =
-            DateTime.tryParse(row['updated_at']?.toString() ?? '')?.toLocal();
-        if (updatedAt == null) {
-          continue;
-        }
-        if (localChangedAt != null &&
-            !updatedAt.isAfter(
-              localChangedAt.add(const Duration(seconds: 10)),
-            )) {
-          continue;
-        }
-        final value = row['value'];
-        if (value is! Map) {
-          continue;
-        }
-        if (row['pref_key'] == 'display_mode') {
-          final raw = value['mode']?.toString();
-          for (final mode in AssetManagementDisplayMode.values) {
-            if (mode.storageId == raw && mode != _displayMode) {
-              newerMode = mode;
-            }
-          }
-        }
-        if (row['pref_key'] == 'section_overrides') {
-          final candidate = <AssetManagementSectionId,
-              AssetManagementSectionVisibilityOverride>{};
-          for (final entry in value.entries) {
-            for (final section in AssetManagementSectionId.values) {
-              if (section.storageId != entry.key.toString()) {
-                continue;
-              }
-              for (final override
-                  in AssetManagementSectionVisibilityOverride.values) {
-                if (override.storageId == entry.value.toString() &&
-                    override != AssetManagementSectionVisibilityOverride.auto) {
-                  candidate[section] = override;
-                }
-              }
-            }
-          }
-          if (!_sameSectionOverrides(candidate)) {
-            newerOverrides = candidate;
-          }
-        }
-      }
-      if ((newerMode == null && newerOverrides == null) || !mounted) {
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: rows,
+        currentMode: _displayMode,
+        currentOverrides: _sectionOverrides,
+        localChangedAt: stats.lastChangedAt,
+      );
+      if (diff.isEmpty || !mounted) {
         return;
       }
-      final mode = newerMode;
-      final overrides = newerOverrides;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 8),
           content: const Text('他端末で表示設定が更新されています'),
           action: SnackBarAction(
             label: '取り込む',
-            onPressed: () => unawaited(_applyDisplayPrefs(mode, overrides)),
+            onPressed: () =>
+                unawaited(_applyDisplayPrefs(diff.mode, diff.overrides)),
           ),
         ),
       );

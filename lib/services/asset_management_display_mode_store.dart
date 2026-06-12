@@ -145,6 +145,7 @@ class AssetDisplayModeServerSummary {
     required this.summaryLabel,
     required this.weekly,
     this.firstEventAt,
+    this.weeklyRetention = const <Map<String, dynamic>>[],
   });
 
   final String summaryLabel;
@@ -152,6 +153,19 @@ class AssetDisplayModeServerSummary {
 
   /// 実験の最初のイベント時刻 (= 実験開始)。イベント0件なら null。
   final DateTime? firstEventAt;
+
+  /// 週末時点 as-of の標準維持率% ({week_start, rate})。rate は null 可。
+  final List<Map<String, dynamic>> weeklyRetention;
+}
+
+/// ミラー上の表示設定がローカルより新しい場合の差分。
+class AssetMirrorPrefsDiff {
+  const AssetMirrorPrefsDiff({this.mode, this.overrides});
+
+  final AssetManagementDisplayMode? mode;
+  final AssetManagementSectionOverrides? overrides;
+
+  bool get isEmpty => mode == null && overrides == null;
 }
 
 /// 表示モード実験の観測値(ローカル計測)。
@@ -230,7 +244,81 @@ class AssetManagementDisplayModeStore {
       weekly: weeklyMaps,
       firstEventAt: DateTime.tryParse(data['first_event_at']?.toString() ?? '')
           ?.toLocal(),
+      weeklyRetention: data['weekly_retention'] is List
+          ? <Map<String, dynamic>>[
+              for (final raw in data['weekly_retention'] as List)
+                if (raw is Map) Map<String, dynamic>.from(raw),
+            ]
+          : const <Map<String, dynamic>>[],
     );
+  }
+
+  /// ミラー行 (asset_pref_mirror) を評価し、ローカル設定より新しく
+  /// かつ内容が異なる差分だけを返す。自端末の直近書込みは
+  /// [selfWriteMargin] 以内の updated_at として除外する。
+  static AssetMirrorPrefsDiff evaluateMirrorPrefRows({
+    required List<Map<String, dynamic>> rows,
+    required AssetManagementDisplayMode currentMode,
+    required AssetManagementSectionOverrides currentOverrides,
+    DateTime? localChangedAt,
+    Duration selfWriteMargin = const Duration(seconds: 10),
+  }) {
+    AssetManagementDisplayMode? newerMode;
+    AssetManagementSectionOverrides? newerOverrides;
+    for (final row in rows) {
+      final updatedAt =
+          DateTime.tryParse(row['updated_at']?.toString() ?? '')?.toLocal();
+      if (updatedAt == null) {
+        continue;
+      }
+      if (localChangedAt != null &&
+          !updatedAt.isAfter(localChangedAt.add(selfWriteMargin))) {
+        continue;
+      }
+      final value = row['value'];
+      if (value is! Map) {
+        continue;
+      }
+      if (row['pref_key'] == 'display_mode') {
+        final raw = value['mode']?.toString();
+        for (final mode in AssetManagementDisplayMode.values) {
+          if (mode.storageId == raw && mode != currentMode) {
+            newerMode = mode;
+          }
+        }
+      }
+      if (row['pref_key'] == 'section_overrides') {
+        final candidate = <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{};
+        for (final entry in value.entries) {
+          for (final section in AssetManagementSectionId.values) {
+            if (section.storageId != entry.key.toString()) {
+              continue;
+            }
+            for (final override
+                in AssetManagementSectionVisibilityOverride.values) {
+              if (override.storageId == entry.value.toString() &&
+                  override != AssetManagementSectionVisibilityOverride.auto) {
+                candidate[section] = override;
+              }
+            }
+          }
+        }
+        var same = candidate.length == currentOverrides.length;
+        if (same) {
+          for (final entry in candidate.entries) {
+            if (currentOverrides[entry.key] != entry.value) {
+              same = false;
+              break;
+            }
+          }
+        }
+        if (!same) {
+          newerOverrides = candidate;
+        }
+      }
+    }
+    return AssetMirrorPrefsDiff(mode: newerMode, overrides: newerOverrides);
   }
 
   /// サーババックアップからの表示設定復元をユーザーが辞退したか。
