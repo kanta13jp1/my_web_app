@@ -8,8 +8,11 @@ class AssetCalendarDebtInput {
     required this.paymentDay,
     this.scheduledPaymentAmount = 0,
     this.isDirectCashflowTarget = true,
+    this.id = '',
   });
 
+  /// workbook 行ID(支払日移動などのアクション連携用)。
+  final String id;
   final String name;
   final double balance;
   final int? paymentDay;
@@ -46,11 +49,15 @@ class AssetCalendarEvent {
     required this.kind,
     required this.label,
     this.amount,
+    this.sourceId,
   });
 
   final AssetCalendarEventKind kind;
   final String label;
   final double? amount;
+
+  /// 元データのID(debtPayment は workbook 行ID)。アクション連携用。
+  final String? sourceId;
 }
 
 /// 1日分のサマリ。支出/収入はフロー記録の合算。
@@ -234,6 +241,7 @@ class AssetPaymentCalendarService {
           kind: AssetCalendarEventKind.debtPayment,
           label: '${row.name} 返済',
           amount: amount,
+          sourceId: row.id.isEmpty ? null : row.id,
         ),
       );
     }
