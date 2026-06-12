@@ -20,10 +20,24 @@ class AssetCalendarDebtInput {
 /// カレンダーに載せる日次イベントの種別。
 enum AssetCalendarEventKind {
   salary,
+  expectedInflow,
   debtPayment,
   subscription,
   expense,
   income,
+}
+
+/// 入金予定の入力(ストアのモデルから必要項目だけ写す)。
+class AssetCalendarInflowInput {
+  const AssetCalendarInflowInput({
+    required this.date,
+    required this.amount,
+    required this.label,
+  });
+
+  final DateTime date;
+  final double amount;
+  final String label;
 }
 
 /// カレンダー1イベント。amount は不明な場合 null。
@@ -72,6 +86,8 @@ class AssetCalendarDaySummary {
   bool get hasDebtPayment => _has(AssetCalendarEventKind.debtPayment);
 
   bool get hasSubscription => _has(AssetCalendarEventKind.subscription);
+
+  bool get hasExpectedInflow => _has(AssetCalendarEventKind.expectedInflow);
 
   bool get hasIncome => incomeTotal > 0;
 
@@ -141,12 +157,15 @@ class AssetPaymentCalendarService {
     required List<AssetCalendarDebtInput> debts,
     int? salaryDay,
     double? startingCashBalance,
+    List<AssetCalendarInflowInput> expectedInflows =
+        const <AssetCalendarInflowInput>[],
   }) {
     final normalizedMonth = DateTime(month.year, month.month);
     final lastDay = DateTime(month.year, month.month + 1, 0).day;
     final expenseByDay = <int, double>{};
     final incomeByDay = <int, double>{};
     final outflowByDay = <int, double>{};
+    final inflowByDay = <int, double>{};
     final eventsByDay = <int, List<AssetCalendarEvent>>{};
     var scheduledDebtPaymentTotal = 0.0;
     var subscriptionTotal = 0.0;
@@ -161,6 +180,24 @@ class AssetPaymentCalendarService {
         const AssetCalendarEvent(
           kind: AssetCalendarEventKind.salary,
           label: '給料日',
+        ),
+      );
+    }
+
+    for (final inflow in expectedInflows) {
+      if (inflow.date.year != normalizedMonth.year ||
+          inflow.date.month != normalizedMonth.month ||
+          inflow.amount <= 0) {
+        continue;
+      }
+      inflowByDay[inflow.date.day] =
+          (inflowByDay[inflow.date.day] ?? 0) + inflow.amount;
+      addEvent(
+        inflow.date.day,
+        AssetCalendarEvent(
+          kind: AssetCalendarEventKind.expectedInflow,
+          label: inflow.label,
+          amount: inflow.amount,
         ),
       );
     }
@@ -257,8 +294,9 @@ class AssetPaymentCalendarService {
     final days = <AssetCalendarDaySummary>[];
     for (var day = 1; day <= lastDay; day++) {
       final outflow = outflowByDay[day] ?? 0;
+      final inflow = inflowByDay[day] ?? 0;
       if (runningBalance != null) {
-        runningBalance = runningBalance - outflow;
+        runningBalance = runningBalance + inflow - outflow;
       }
       final date = DateTime(normalizedMonth.year, normalizedMonth.month, day);
       if (firstShortfallDate == null &&

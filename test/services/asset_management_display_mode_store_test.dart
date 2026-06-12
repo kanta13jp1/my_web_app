@@ -186,5 +186,23 @@ void main() {
         expect(storedWins, AssetManagementDisplayMode.minimum);
       },
     );
+
+    test('records initial resolution and mode switches as local stats',
+        () async {
+      final store = AssetManagementDisplayModeStore(
+        nowProvider: () => DateTime(2026, 6, 12, 10, 0),
+      );
+
+      await store.resolveInitialMode(hasExistingData: false);
+      await store.save(AssetManagementDisplayMode.full);
+      await store.save(AssetManagementDisplayMode.minimum);
+
+      final stats = await store.loadStats();
+
+      expect(stats.initialMode, 'standard');
+      expect(stats.initialHadData, isFalse);
+      expect(stats.switchCount, 2);
+      expect(stats.lastChangedAt, isNotNull);
+    });
   });
 }

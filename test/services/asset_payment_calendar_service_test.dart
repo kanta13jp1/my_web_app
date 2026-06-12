@@ -214,5 +214,69 @@ void main() {
       expect(day5.projectedBalance, isNull);
       expect(day5.isShortfall, isFalse);
     });
+
+    test('expected inflows lift the projection and clear shortfalls', () {
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 6),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            name: 'ローン',
+            balance: -300000,
+            paymentDay: 5,
+            scheduledPaymentAmount: 15000,
+          ),
+        ],
+        startingCashBalance: 5000,
+        expectedInflows: <AssetCalendarInflowInput>[
+          AssetCalendarInflowInput(
+            date: DateTime(2026, 6, 3),
+            amount: 20000,
+            label: '振込',
+          ),
+          AssetCalendarInflowInput(
+            date: DateTime(2026, 7, 3),
+            amount: 99999,
+            label: '対象外の月',
+          ),
+        ],
+      );
+
+      expect(calendar.firstShortfallDate, isNull);
+      final day3 = calendar.dayFor(DateTime(2026, 6, 3))!;
+      expect(day3.hasExpectedInflow, isTrue);
+      expect(day3.projectedBalance, 25000);
+      final day5 = calendar.dayFor(DateTime(2026, 6, 5))!;
+      expect(day5.projectedBalance, 10000);
+      expect(day5.isShortfall, isFalse);
+    });
+
+    test('same-day inflow is applied before the payment', () {
+      final calendar = AssetPaymentCalendarService.buildMonth(
+        month: DateTime(2026, 6),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            name: 'ローン',
+            balance: -300000,
+            paymentDay: 25,
+            scheduledPaymentAmount: 15000,
+          ),
+        ],
+        startingCashBalance: 0,
+        expectedInflows: <AssetCalendarInflowInput>[
+          AssetCalendarInflowInput(
+            date: DateTime(2026, 6, 25),
+            amount: 15000,
+            label: '給料',
+          ),
+        ],
+      );
+
+      expect(calendar.firstShortfallDate, isNull);
+      expect(calendar.dayFor(DateTime(2026, 6, 25))!.projectedBalance, 0);
+    });
   });
 }
