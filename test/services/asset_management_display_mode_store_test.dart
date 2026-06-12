@@ -248,6 +248,20 @@ void main() {
       expect(parsed.summaryLabel, contains('標準維持率 75%'));
       expect(parsed.summaryLabel, contains('06-08'));
       expect(parsed.weekly, hasLength(1));
+      expect(parsed.firstEventAt, isNull);
+    });
+
+    test('parseServerSummary reads first_event_at when provided', () {
+      final parsed = AssetManagementDisplayModeStore.parseServerSummary(
+        <String, dynamic>{
+          'initial_standard': 0,
+          'first_event_at': '2026-06-01T00:00:00Z',
+          'weekly': <Map<String, dynamic>>[],
+        },
+      );
+
+      expect(parsed.firstEventAt, isNotNull);
+      expect(parsed.firstEventAt!.toUtc(), DateTime.utc(2026, 6, 1));
     });
 
     test('restore decline flag persists', () async {

@@ -144,10 +144,14 @@ class AssetDisplayModeServerSummary {
   const AssetDisplayModeServerSummary({
     required this.summaryLabel,
     required this.weekly,
+    this.firstEventAt,
   });
 
   final String summaryLabel;
   final List<Map<String, dynamic>> weekly;
+
+  /// 実験の最初のイベント時刻 (= 実験開始)。イベント0件なら null。
+  final DateTime? firstEventAt;
 }
 
 /// 表示モード実験の観測値(ローカル計測)。
@@ -224,6 +228,8 @@ class AssetManagementDisplayModeStore {
       summaryLabel:
           '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回$trendLabel',
       weekly: weeklyMaps,
+      firstEventAt: DateTime.tryParse(data['first_event_at']?.toString() ?? '')
+          ?.toLocal(),
     );
   }
 
