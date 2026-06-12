@@ -1425,5 +1425,27 @@ void main() {
       );
       expect(row.paymentDay, isNull);
     });
+
+    test('marks full-payment fixed costs on debt rows', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'cash': 50000, 'モビット': -100000},
+        baseDate: DateTime(2026, 5, 12),
+        includeDefaultFixedPayments: true,
+      );
+
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+      );
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'mobit',
+      );
+
+      expect(rent.fullPaymentEstimate, isTrue);
+      expect(kddi.fullPaymentEstimate, isTrue);
+      expect(mobit.fullPaymentEstimate, isFalse);
+    });
   });
 }

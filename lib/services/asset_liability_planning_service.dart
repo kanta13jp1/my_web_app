@@ -624,6 +624,7 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : principal / liabilityTotal.abs(),
       priorityLabel: _priorityLabel(annualRate),
       paymentAmountEstimated: manualPayment == null,
+      fullPaymentEstimate: account.fullPaymentEstimate,
       billingConfirmed: _containsAccountKey(
         billingConfirmedAccountIds,
         account,
