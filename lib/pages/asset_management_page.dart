@@ -100,6 +100,11 @@ class AssetManagementPage extends StatefulWidget {
   final String? entryLabel;
   final String? entryDescription;
 
+  /// テスト専用: 口座スナップショット ({yyyy-MM-dd: {口座名: 残高}}) を
+  /// 直接注入する (#3267)。null なら通常の Supabase 読込のみ。
+  @visibleForTesting
+  final Map<String, Map<String, double>>? debugInitialAssetData;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -108,6 +113,7 @@ class AssetManagementPage extends StatefulWidget {
     this.assetLiabilityRepository,
     this.entryLabel,
     this.entryDescription,
+    this.debugInitialAssetData,
   });
 
   @override
@@ -415,6 +421,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
+    final debugAssetData = widget.debugInitialAssetData;
+    if (debugAssetData != null) {
+      _assetData = <String, Map<String, double>>{
+        for (final entry in debugAssetData.entries)
+          entry.key: Map<String, double>.from(entry.value),
+      };
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -469,7 +482,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _cardStatementImportController.dispose();
     _assetCsvRestoreController.dispose();
     _repaymentSimulationExtraPaymentController.dispose();
-    _annualRateControllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
@@ -7370,6 +7382,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_supabase.auth.currentUser == null) {
       return;
     }
+    if (await _displayModeStore.isRestoreDeclined()) {
+      return;
+    }
     try {
       final rows = await _supabase
           .from('asset_pref_mirror')
@@ -7378,7 +7393,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (rows.isEmpty || !mounted) {
         return;
       }
-      var restoredAny = false;
+
+      AssetManagementDisplayMode? pendingMode;
+      final pendingOverrides = <AssetManagementSectionId,
+          AssetManagementSectionVisibilityOverride>{};
       for (final row in rows) {
         final value = row['value'];
         if (value is! Map) {
@@ -7388,11 +7406,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           final raw = value['mode']?.toString();
           for (final mode in AssetManagementDisplayMode.values) {
             if (mode.storageId == raw && mode != _displayMode) {
-              setState(() {
-                _displayMode = mode;
-              });
-              await _displayModeStore.save(mode, recordEvent: false);
-              restoredAny = true;
+              pendingMode = mode;
             }
           }
         }
@@ -7416,19 +7430,68 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 override == AssetManagementSectionVisibilityOverride.auto) {
               continue;
             }
-            final overrides =
-                await _displayModeStore.saveOverride(section, override);
-            if (!mounted) {
-              return;
-            }
-            setState(() {
-              _sectionOverrides = overrides;
-            });
-            restoredAny = true;
+            pendingOverrides[section] = override;
           }
         }
       }
-      if (restoredAny && mounted) {
+      if (pendingMode == null && pendingOverrides.isEmpty) {
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+
+      // 他端末の設定で不意に上書きしないよう、適用前に必ず確認する。
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('表示設定のバックアップ'),
+          content: Text(
+            'サーバに表示設定のバックアップがあります'
+            '${pendingMode == null ? '' : '(表示モード: ${pendingMode.label})'}。'
+            'この端末に適用しますか?適用しない場合、次回以降は確認しません。',
+          ),
+          actions: [
+            TextButton(
+              key: const Key('asset_display_restore_decline'),
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('適用しない'),
+            ),
+            ElevatedButton(
+              key: const Key('asset_display_restore_accept'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('適用する'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) {
+        await _displayModeStore.markRestoreDeclined();
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+
+      if (pendingMode != null) {
+        setState(() {
+          _displayMode = pendingMode!;
+        });
+        await _displayModeStore.save(pendingMode, recordEvent: false);
+      }
+      for (final entry in pendingOverrides.entries) {
+        final overrides = await _displayModeStore.saveOverride(
+          entry.key,
+          entry.value,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = overrides;
+        });
+      }
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('表示設定をサーバのバックアップから復元しました')),
         );
@@ -7786,38 +7849,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
       final data = Map<String, dynamic>.from(result);
-      int countOf(String key) => (data[key] as num?)?.toInt() ?? 0;
-      final standardInitial = countOf('initial_standard');
-      final retained = countOf('standard_retained');
-      final rate = standardInitial == 0
-          ? '-'
-          : '${(retained * 100 / standardInitial).round()}%';
-      final weekly = data['weekly'];
-      var trendLabel = '';
-      final weeklyMaps = <Map<String, dynamic>>[];
-      if (weekly is List && weekly.isNotEmpty) {
-        final parts = <String>[];
-        for (final raw in weekly.take(4)) {
-          if (raw is! Map) {
-            continue;
-          }
-          final week = Map<String, dynamic>.from(raw);
-          weeklyMaps.add(week);
-          final start = week['week_start']?.toString() ?? '';
-          final label = start.length >= 10 ? start.substring(5, 10) : start;
-          final initials = (week['initials'] as num?)?.toInt() ?? 0;
-          final std = (week['initial_standard'] as num?)?.toInt() ?? 0;
-          final switches = (week['switches'] as num?)?.toInt() ?? 0;
-          parts.add('$label: 初期$initials(std$std)/切替$switches');
-        }
-        if (parts.isNotEmpty) {
-          trendLabel = ' | 週次 ${parts.join(' → ')}';
-        }
-      }
+      final parsed = AssetManagementDisplayModeStore.parseServerSummary(data);
       setState(() {
-        _experimentServerSummary =
-            '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回$trendLabel';
-        _experimentWeekly = weeklyMaps;
+        _experimentServerSummary = parsed.summaryLabel;
+        _experimentWeekly = parsed.weekly;
       });
     } catch (e) {
       debugPrint('experiment summary fetch failed: $e');
@@ -8071,84 +8106,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
-  }
-
-  bool _shiftedMonthClears({
-    required List<String> ids,
-    required List<AssetCalendarDebtInput> debts,
-    required List<Map<String, dynamic>> subscriptions,
-    required List<AssetCalendarInflowInput> inflows,
-    required double? startingCashBalance,
-  }) {
-    const newDay = _salarySpendingSalaryDay + 1;
-    final shifted = AssetPaymentCalendarService.buildMonth(
-      month: _calendarMonth,
-      flows: _recentFlows,
-      subscriptions: subscriptions,
-      debts: [
-        for (final debt in debts)
-          if (ids.contains(debt.id))
-            AssetCalendarDebtInput(
-              id: debt.id,
-              name: debt.name,
-              balance: debt.balance,
-              paymentDay: newDay,
-              scheduledPaymentAmount: debt.scheduledPaymentAmount,
-              isDirectCashflowTarget: debt.isDirectCashflowTarget,
-            )
-          else
-            debt,
-      ],
-      salaryDay: _salarySpendingSalaryDay,
-      startingCashBalance: startingCashBalance,
-      expectedInflows: inflows,
-    );
-    return shifted.firstShortfallDate == null;
-  }
-
-  /// ショート回避に必要な最小の移動セット(サイズ昇順で探索)。
-  /// 候補が7件以上の場合は組合せ爆発を避け全件移動のみ試す。
-  List<String>? _findMinimalShiftSet({
-    required List<String> ids,
-    required List<AssetCalendarDebtInput> debts,
-    required List<Map<String, dynamic>> subscriptions,
-    required List<AssetCalendarInflowInput> inflows,
-    required double? startingCashBalance,
-  }) {
-    bool clears(List<String> subset) => _shiftedMonthClears(
-          ids: subset,
-          debts: debts,
-          subscriptions: subscriptions,
-          inflows: inflows,
-          startingCashBalance: startingCashBalance,
-        );
-
-    if (ids.length > 6) {
-      return clears(ids) ? List<String>.from(ids) : null;
-    }
-    final maskLimit = 1 << ids.length;
-    for (var size = 2; size <= ids.length; size++) {
-      for (var mask = 1; mask < maskLimit; mask++) {
-        var bits = 0;
-        for (var i = 0; i < ids.length; i++) {
-          final bit = 1 << i;
-          if (mask & bit != 0) {
-            bits += 1;
-          }
-        }
-        if (bits != size) {
-          continue;
-        }
-        final subset = <String>[
-          for (var i = 0; i < ids.length; i++)
-            if (mask & 1 << i != 0) ids[i],
-        ];
-        if (clears(subset)) {
-          return subset;
-        }
-      }
-    }
-    return null;
   }
 
   Widget _buildExperimentTrendBars() {
@@ -8579,12 +8536,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             shiftCandidates.every(
               (entry) => entry.value == '(単独では回避不可)',
             )
-        ? _findMinimalShiftSet(
-            ids: comboIds,
-            debts: debtInputs,
+        ? AssetPaymentCalendarService.findMinimalShiftSet(
+            month: _calendarMonth,
+            flows: _recentFlows,
             subscriptions: monthSubscriptions,
-            inflows: inflowInputs,
+            debts: debtInputs,
+            candidateIds: comboIds,
+            shiftToDay: _salarySpendingSalaryDay + 1,
+            salaryDay: _salarySpendingSalaryDay,
             startingCashBalance: startingCashBalance,
+            expectedInflows: inflowInputs,
           )
         : null;
     final comboSuggestionLabel = comboSuggestionIds == null

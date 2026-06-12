@@ -320,5 +320,86 @@ void main() {
       expect(calendar.worstProjectedBalance, 1000);
       expect(calendar.shortfallRecoveryAmount, 0);
     });
+
+    test('findMinimalShiftSet prefers the smallest total shifted amount', () {
+      const debts = <AssetCalendarDebtInput>[
+        AssetCalendarDebtInput(
+          id: 'a',
+          name: 'A',
+          balance: -100000,
+          paymentDay: 5,
+          scheduledPaymentAmount: 100,
+        ),
+        AssetCalendarDebtInput(
+          id: 'b',
+          name: 'B',
+          balance: -100000,
+          paymentDay: 5,
+          scheduledPaymentAmount: 50,
+        ),
+        AssetCalendarDebtInput(
+          id: 'c',
+          name: 'C',
+          balance: -100000,
+          paymentDay: 5,
+          scheduledPaymentAmount: 60,
+        ),
+      ];
+      final inflows = <AssetCalendarInflowInput>[
+        AssetCalendarInflowInput(
+          date: DateTime(2026, 6, 10),
+          amount: 120,
+          label: '入金',
+        ),
+      ];
+
+      final minimal = AssetPaymentCalendarService.findMinimalShiftSet(
+        month: DateTime(2026, 6),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: debts,
+        candidateIds: const <String>['a', 'b', 'c'],
+        shiftToDay: 26,
+        startingCashBalance: 100,
+        expectedInflows: inflows,
+      );
+
+      // 単独移動では5日の残額が現金100を超えるため不可。ペアでは
+      // {b,c}(残A=100)・{a,b}(残C=60)・{a,c}(残B=50)が全て成立し、
+      // 移動額合計が最小の {b,c}=110 が選ばれる。
+      expect(minimal, isNotNull);
+      expect(minimal!.toSet(), <String>{'b', 'c'});
+    });
+
+    test('findMinimalShiftSet returns null when no subset clears', () {
+      const debts = <AssetCalendarDebtInput>[
+        AssetCalendarDebtInput(
+          id: 'a',
+          name: 'A',
+          balance: -100000,
+          paymentDay: 5,
+          scheduledPaymentAmount: 500,
+        ),
+        AssetCalendarDebtInput(
+          id: 'b',
+          name: 'B',
+          balance: -100000,
+          paymentDay: 5,
+          scheduledPaymentAmount: 500,
+        ),
+      ];
+
+      final minimal = AssetPaymentCalendarService.findMinimalShiftSet(
+        month: DateTime(2026, 6),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: debts,
+        candidateIds: const <String>['a', 'b'],
+        shiftToDay: 26,
+        startingCashBalance: 100,
+      );
+
+      expect(minimal, isNull);
+    });
   });
 }
