@@ -32,6 +32,10 @@ class AssetManagementAiSummaryResult {
   final Map<String, dynamic>? providerRoute;
   final String? providerChoiceReason;
 
+  /// AIが応答末尾の機械可読ブロックで返した、既知テンプレートと重複しない
+  /// 新規改善提案。Issue登録フローへ合流させる。
+  final List<AssetManagementDeveloperRequest> aiDeveloperRequests;
+
   const AssetManagementAiSummaryResult({
     required this.status,
     required this.text,
@@ -41,10 +45,21 @@ class AssetManagementAiSummaryResult {
     required this.payload,
     this.providerRoute,
     this.providerChoiceReason,
+    this.aiDeveloperRequests = const <AssetManagementDeveloperRequest>[],
   });
 
   bool get usedExternalAi =>
       status == AssetManagementAiSummaryStatus.aiGenerated;
+}
+
+class AssetManagementAiProposalExtraction {
+  final String displayText;
+  final List<AssetManagementDeveloperRequest> requests;
+
+  const AssetManagementAiProposalExtraction({
+    required this.displayText,
+    required this.requests,
+  });
 }
 
 class AssetManagementAiSummaryService {
@@ -83,6 +98,8 @@ class AssetManagementAiSummaryService {
     required AssetManagementInsightReport report,
     List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses =
         const <AssetManagementAiAnalysisHistoryEntry>[],
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
   }) async {
     final payload = buildPayload(report);
     final route = _providerRouter.routeFor(
@@ -107,6 +124,7 @@ class AssetManagementAiSummaryService {
       final detailedPayload = buildAiDetailedPayload(
         report,
         previousAnalyses: previousAnalyses,
+        existingDeveloperIssuesByTitle: existingDeveloperIssuesByTitle,
       );
       final prompt = _buildPrompt(
         report: report,
@@ -135,15 +153,17 @@ class AssetManagementAiSummaryService {
       if (!_containsJapaneseText(response.text)) {
         throw const AiHubChatException('AI要約が日本語ではありませんでした');
       }
+      final proposals = extractAiDeveloperProposals(response.text);
       return AssetManagementAiSummaryResult(
         status: AssetManagementAiSummaryStatus.aiGenerated,
-        text: response.text.trim(),
+        text: proposals.displayText.trim(),
         source: response.source,
         errorMessage: null,
         generatedAt: _now(),
         payload: payload,
         providerRoute: route.toLogPayload(),
         providerChoiceReason: route.providerChoiceReason,
+        aiDeveloperRequests: proposals.requests,
       );
     } catch (error) {
       return AssetManagementAiSummaryResult(
@@ -195,6 +215,8 @@ class AssetManagementAiSummaryService {
     AssetManagementInsightReport report, {
     List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses =
         const <AssetManagementAiAnalysisHistoryEntry>[],
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
   }) {
     final workbook = report.workbook;
     return <String, dynamic>{
@@ -262,8 +284,17 @@ class AssetManagementAiSummaryService {
         'by_severity': _countBy(
           report.developerRequests.map((request) => request.severity.name),
         ),
+        'note': '定型生成の既知提案。already_issued=true は既にGitHub Issue起票済みで、'
+            'AIはこれらを繰り返さず未起票の新規提案だけを返す。',
         'items': report.developerRequests
-            .map(_developerRequestToJson)
+            .map(
+              (request) => _developerRequestToJson(request)
+                ..['already_issued'] =
+                    existingDeveloperIssuesByTitle.containsKey(request.title)
+                ..['existing_github_issue'] = _existingIssueSummary(
+                  existingDeveloperIssuesByTitle[request.title],
+                ),
+            )
             .toList(growable: false),
         'required_output_contract': const <String>[
           '現状の痛み',
@@ -425,8 +456,99 @@ class AssetManagementAiSummaryService {
       '出力ルール: FlutterのMarkdownプレビューで表示します。必ずGitHub Flavored Markdownで、## 見出し、- 箇条書き、**強調**を使ってください。見出し、箇条書き、ラベル、本文はすべて自然な日本語にし、英語の見出しや英語ラベルは使わないでください。プロフィールの生年月日、性別、職業、年収、住所、学歴、職歴、趣味、飲酒、喫煙、好きな食べ物を生活背景として引用し、口座名、残高、支払日、推定最低支払額、今月支払予定額、年利、月利息、元金返済見込み、負債割合と結びつけて具体的に助言してください。金額はDart計算値を正として扱い、追加計算は概算と明記してください。細木数子を彷彿とさせる、厳しめで愛情のある断言口調にしてください。曖昧にせず、今日・今週・今月にやることを具体的に言い切ってください。飢える、水だけで耐える、食事を抜くといった健康を害する提案はしないでください。食費、住居、医療、支払先への連絡、公的・地域の緊急支援を優先してください。',
       '履歴利用ルール: previous_ai_analyses がある場合は、前回までの指摘をただ繰り返さず、今回の金額・支払状況・未解決アクションとの差分を明示してください。前回から改善した点、悪化した点、まだ放置されている点を分けて、次に同じ分析をしたときに進捗確認できる言葉で書いてください。',
       '完結性ルール: 途中で切れないよう、各章は最大3〜5個の短い箇条書きに圧縮してください。必ず「8. 最後にズバッと総評」まで書き切り、最後の行を「以上。今日やることは、支払い確認、生活費確保、余剰支出停止。この3つよ。」で締めてください。長くなりそうな場合は、負債明細は利息負担の大きい上位5件と合計に絞ってください。',
-      '開発者向け改善提案の出力ルール: implementation_context と developer_requests を根拠にしてください。各提案は「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
+      '開発者向け改善提案の出力ルール: implementation_context を読んで現状の機能を実際にレビューしてから提案してください。developer_requests は定型生成の既知提案一覧で、already_issued が true のものは既にGitHub Issue起票済みです。既知提案の再掲・言い換えは禁止し、まだ起票されていない新規の改善提案だけを最大3件返してください。各提案は「現状できること（機能レビュー）」「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず含め、実装者がそのままGitHub Issueとして着手できる粒度にしてください。現実装にない機能を断言せず、推測は「追加調査」と明記してください。',
+      '新規改善提案の機械可読出力ルール: 応答の最後に「```json ai-new-proposals」で始まり「```」で終わるコードブロックを1つだけ出力し、本文の「7. 開発者向け改善提案」と同じ新規提案を {"title","description","evidence":[],"implementation_steps":[],"acceptance_criteria":[],"source_references":[]} の配列として返してください。タイトルは既存Issueと区別できる具体的な日本語にしてください。新規提案がない場合は空配列 [] だけを出力してください。',
     ].join('\n');
+  }
+
+  static const String aiProposalsFenceHeader = '```json ai-new-proposals';
+
+  /// 応答末尾の機械可読ブロックを取り出し、表示用テキストからは取り除く。
+  /// ブロックが無い・JSONが壊れている場合は提案なしとして扱う。
+  static AssetManagementAiProposalExtraction extractAiDeveloperProposals(
+    String text,
+  ) {
+    final startIndex = text.indexOf(aiProposalsFenceHeader);
+    if (startIndex < 0) {
+      return AssetManagementAiProposalExtraction(
+        displayText: text,
+        requests: const <AssetManagementDeveloperRequest>[],
+      );
+    }
+    final bodyStart = startIndex + aiProposalsFenceHeader.length;
+    final closeIndex = text.indexOf('```', bodyStart);
+    final rawJson = closeIndex < 0
+        ? text.substring(bodyStart)
+        : text.substring(bodyStart, closeIndex);
+    final blockEnd = closeIndex < 0 ? text.length : closeIndex + 3;
+    final displayText =
+        (text.substring(0, startIndex) + text.substring(blockEnd)).trim();
+    return AssetManagementAiProposalExtraction(
+      displayText: displayText,
+      requests: _parseAiProposals(rawJson),
+    );
+  }
+
+  static List<AssetManagementDeveloperRequest> _parseAiProposals(
+    String rawJson,
+  ) {
+    try {
+      final decoded = jsonDecode(rawJson.trim());
+      if (decoded is! List) {
+        return const <AssetManagementDeveloperRequest>[];
+      }
+      final requests = <AssetManagementDeveloperRequest>[];
+      for (final item in decoded.take(3)) {
+        if (item is! Map) {
+          continue;
+        }
+        final title = item['title']?.toString().trim() ?? '';
+        final description = item['description']?.toString().trim() ?? '';
+        if (title.isEmpty || description.isEmpty) {
+          continue;
+        }
+        requests.add(
+          AssetManagementDeveloperRequest(
+            title: title,
+            description: description,
+            severity: AssetManagementInsightSeverity.info,
+            evidence: _stringListOf(item['evidence']),
+            implementationSteps: _stringListOf(item['implementation_steps']),
+            acceptanceCriteria: _stringListOf(item['acceptance_criteria']),
+            sourceReferences: _stringListOf(item['source_references']),
+          ),
+        );
+      }
+      return requests;
+    } catch (_) {
+      return const <AssetManagementDeveloperRequest>[];
+    }
+  }
+
+  static List<String> _stringListOf(Object? source) {
+    if (source is! List) {
+      return const <String>[];
+    }
+    final values = <String>[];
+    for (final item in source.take(6)) {
+      final value = item.toString().trim();
+      if (value.isNotEmpty) {
+        values.add(value);
+      }
+    }
+    return values;
+  }
+
+  Map<String, dynamic>? _existingIssueSummary(Map<String, dynamic>? issue) {
+    if (issue == null) {
+      return null;
+    }
+    return <String, dynamic>{
+      'number': issue['number'],
+      'state': issue['state'],
+      'title': issue['title'],
+      'html_url': issue['html_url'],
+    };
   }
 
   Future<AiHubChatResponse> _sendRoutedSummary({
