@@ -5,6 +5,14 @@ CFO 室「表示モード実験 詳細グラフ」(折れ線=標準維持率 / �
 (label / value / liveRegion)を検証するが、**実 AT (支援技術) の読み上げ挙動は
 実機確認が必要**(自動テストでは代替できない)。
 
+## 現在ステータス (2026-06-13 / part 295 時点)
+
+- **自動側 (Semantics 契約) は完了**: CI widget テストが label / value / liveRegion /
+  矢印キー移動を継続検証(下記)。
+- **残るは実機 AT の音声確認のみ**: NVDA / VoiceOver / TalkBack の実読み上げは
+  自動化できず、リポジトリ自動化では実行不可。**実機を持つ担当者**が「実機チェック」
+  節の手順で実施し、「記録」節の表へ PASS/FAIL を追記する。
+
 ## 自動テストでカバー済み (CI)
 
 - `test/widgets/display_mode_experiment_card_test.dart`
