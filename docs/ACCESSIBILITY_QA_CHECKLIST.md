@@ -39,7 +39,12 @@ CFO 室「表示モード実験 詳細グラフ」(折れ線=標準維持率 / �
 ## 記録
 
 確認したら下表に日付/AT/ブラウザ/結果を追記する。
+**自動 (CI widget test)** 行は機械検証済み。**実 AT 行**は読み上げ音声の確認が
+必要で自動テストでは代替できないため、実機を持つ担当者が実施して追記する。
 
 | 日付 | AT | ブラウザ | 結果 | 備考 |
 |------|----|---------|------|------|
-| (未実施) | NVDA | Chrome | - | リリース前に実施 |
+| 2026-06-13 | 自動 (CI widget test) | flutter test | ✅ | `display_mode_experiment_card_test.dart`: 折れ線/面の両方で `Semantics.value` + `flagsCollection.isLiveRegion` を検証。矢印キー移動で value 更新も検証。 |
+| (未実施・要実機) | NVDA | Chrome/Edge | - | リリース前に担当者が実施 → 結果追記 |
+| (未実施・要実機) | VoiceOver | Safari | - | 同上 |
+| (未実施・要実機) | TalkBack | Chrome (Android) | - | 同上 |

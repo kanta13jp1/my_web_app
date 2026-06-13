@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -251,10 +252,15 @@ void main() {
             'label': '給料',
           },
         ]),
-        // 2020 年の古い削除記録 → maxAgeDays:10 で期限切れ。
+        // 2020 年の古い削除記録 → inflow は maxAgeDays:10、override は既定365日で
+        // どちらも期限切れ → 一括掃除で 2 件 (#part292)。
         'asset_expected_inflow_deleted_ids_v1':
             jsonEncode(<Map<String, String>>[
           <String, String>{'id': 'old1', 'at': '2020-01-01T00:00:00.000Z'},
+        ]),
+        'asset_management_section_override_deleted_v1':
+            jsonEncode(<Map<String, String>>[
+          <String, String>{'id': 'chart', 'at': '2020-01-01T00:00:00.000Z'},
         ]),
       });
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
@@ -284,7 +290,48 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.textContaining('古い削除記録を1件 掃除しました'), findsOneWidget);
+      // inflow(1) + override(1) = 2 件を一括掃除。
+      expect(find.textContaining('古い削除記録を2件 掃除しました'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('remote section-override tombstone removes local override', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_section_overrides_v1': jsonEncode(
+          <String, String>{'chart': 'hidden'},
+        ),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // 他端末で chart の上書きを削除した状態をミラー注入。
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            debugSectionOverrideDeletedMirror: <String, dynamic>{
+              'ids': <String>['chart'],
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // カスタマイズダイアログを開き、chart の上書きが「自動」に戻ったことを確認。
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_section_customize_button')),
+      );
+      await tester.tap(find.byKey(const Key('asset_section_customize_button')));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final dropdown = tester
+          .widget<DropdownButton<AssetManagementSectionVisibilityOverride>>(
+        find.byKey(const Key('asset_section_override_chart')),
+      );
+      expect(dropdown.value, AssetManagementSectionVisibilityOverride.auto);
 
       await _unmount(tester);
     });
