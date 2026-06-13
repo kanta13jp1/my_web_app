@@ -127,6 +127,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugSectionOverrideDeletedMirror;
 
+  /// テスト専用: 支払日上書き削除トゥームストーンのミラー値
+  /// (`{'ids': [...]}`) を注入し、削除伝播をネットワークなしで検証する (#part294)。
+  @visibleForTesting
+  final Map<String, dynamic>? debugDebtOverrideDeletedMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -140,6 +145,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInflowDeletedIdsMirror,
     this.debugTombstoneGcConfig,
     this.debugSectionOverrideDeletedMirror,
+    this.debugDebtOverrideDeletedMirror,
   });
 
   @override
@@ -481,8 +487,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
     unawaited(_initTombstoneGcAndPull());
-    // 他端末で削除されたセクション上書きを取り込む (#part292)。
+    // 他端末で削除されたセクション上書き / 支払日上書きを取り込む (#part292/294)。
     unawaited(_pullDeletedSectionIds());
+    unawaited(_pullDebtOverrideDeleted());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -7571,8 +7578,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'value': aggregated,
         'updated_at': now,
       });
+      // #part294: 集約済みなので legacy per-key 行を best-effort で掃除する
+      // (移行完了後に読みフォールバックを撤去するための前段。詳細は
+      // docs/MIRROR_PREF_AGGREGATION_MIGRATION.md)。
+      unawaited(_cleanupLegacyDisplayPrefRows());
     } catch (e) {
       debugPrint('display pref mirror upsert failed: $e');
+    }
+  }
+
+  /// 集約行へ移行済みの legacy per-key 行を削除する (best-effort / #part294)。
+  Future<void> _cleanupLegacyDisplayPrefRows() async {
+    try {
+      await _supabase.from('asset_pref_mirror').delete().inFilter(
+        'pref_key',
+        <String>[
+          'display_mode',
+          'section_overrides',
+          'section_override_deleted'
+        ],
+      );
+    } catch (e) {
+      debugPrint('legacy display pref cleanup failed: $e');
     }
   }
 
@@ -8343,21 +8370,45 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 削除トゥームストーンをサーバへ反映 (他端末の削除伝播用 / #part285)。
-  Future<void> _mirrorInflowDeletedIds() async {
+  /// 入金 pref を集約する 1 行 jsonb の pref_key (#part294)。
+  static const String _inflowPrefsAggregatedKey = 'asset_inflow_prefs_v1';
+
+  // 削除トゥームストーンと GC 設定の更新は同じ集約行へ書き込む (後方互換維持)。
+  Future<void> _mirrorInflowDeletedIds() => _mirrorInflowPrefs();
+
+  /// 入金 pref (削除トゥームストーン + GC 設定) を 1 行 jsonb へ集約 upsert
+  /// し、legacy per-key 行を best-effort で掃除する (#part294)。
+  Future<void> _mirrorInflowPrefs() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return;
     }
     try {
       final ids = await _expectedInflowStore.loadDeletedIds();
+      final value = AssetExpectedInflowStore.buildAggregatedInflowMirrorValue(
+        deletedIds: ids,
+        gcConfig: _tombstoneGcConfig,
+      );
       await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
         'user_id': userId,
-        'pref_key': 'inflow_deleted_ids',
-        'value': AssetExpectedInflowStore.encodeDeletedIdsMirror(ids),
+        'pref_key': _inflowPrefsAggregatedKey,
+        'value': value,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      unawaited(_cleanupLegacyInflowPrefRows());
     } catch (e) {
-      debugPrint('inflow tombstone mirror upsert failed: $e');
+      debugPrint('inflow pref mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _cleanupLegacyInflowPrefRows() async {
+    try {
+      await _supabase.from('asset_pref_mirror').delete().inFilter(
+        'pref_key',
+        <String>['inflow_deleted_ids', 'inflow_tombstone_gc'],
+      );
+    } catch (e) {
+      debugPrint('legacy inflow pref cleanup failed: $e');
     }
   }
 
@@ -8368,22 +8419,37 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      Map<String, dynamic>? value = debugMirror;
-      if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'inflow_deleted_ids');
-        if (rows.isEmpty) {
+      final List<String> ids;
+      if (debugMirror != null) {
+        ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(debugMirror);
+      } else {
+        // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
+        final rows =
+            await _supabase.from('asset_pref_mirror').select().inFilter(
+          'pref_key',
+          <String>[_inflowPrefsAggregatedKey, 'inflow_deleted_ids'],
+        );
+        Map<String, dynamic>? aggregated;
+        Map<String, dynamic>? legacy;
+        for (final row in rows) {
+          if (row['pref_key'] == _inflowPrefsAggregatedKey) {
+            aggregated = row;
+          } else if (row['pref_key'] == 'inflow_deleted_ids') {
+            legacy = row;
+          }
+        }
+        if (aggregated != null) {
+          ids = AssetExpectedInflowStore.aggregatedInflowDeletedIds(
+            aggregated['value'],
+          );
+        } else if (legacy != null && legacy['value'] is Map) {
+          ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(
+            Map<String, dynamic>.from(legacy['value'] as Map),
+          );
+        } else {
           return;
         }
-        final raw = rows.first['value'];
-        if (raw is! Map) {
-          return;
-        }
-        value = Map<String, dynamic>.from(raw);
       }
-      final ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(value);
       if (ids.isEmpty) {
         return;
       }
@@ -8424,16 +8490,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', 'inflow_tombstone_gc');
-      if (rows.isEmpty || !mounted) {
+      // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
+      final rows = await _supabase.from('asset_pref_mirror').select().inFilter(
+        'pref_key',
+        <String>[_inflowPrefsAggregatedKey, 'inflow_tombstone_gc'],
+      );
+      Map<String, dynamic>? aggregated;
+      Map<String, dynamic>? legacy;
+      for (final row in rows) {
+        if (row['pref_key'] == _inflowPrefsAggregatedKey) {
+          aggregated = row;
+        } else if (row['pref_key'] == 'inflow_tombstone_gc') {
+          legacy = row;
+        }
+      }
+      final AssetTombstoneGcConfig config;
+      if (aggregated != null) {
+        config = AssetExpectedInflowStore.aggregatedInflowGcConfig(
+          aggregated['value'],
+        );
+      } else if (legacy != null) {
+        config = AssetTombstoneGcConfig.fromMirrorValue(legacy['value']);
+      } else {
         return;
       }
-      final config = AssetTombstoneGcConfig.fromMirrorValue(
-        rows.first['value'],
-      );
+      if (!mounted) {
+        return;
+      }
       await AssetExpectedInflowStore.saveGcConfig(config);
       if (!mounted) {
         return;
@@ -8539,7 +8622,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
     });
     setOuterState(() {});
-    unawaited(_mirrorTombstoneGcConfig(config));
+    unawaited(_mirrorInflowPrefs());
     if (!mounted) {
       return;
     }
@@ -8550,23 +8633,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _mirrorTombstoneGcConfig(AssetTombstoneGcConfig config) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      return;
-    }
-    try {
-      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
-        'user_id': userId,
-        'pref_key': 'inflow_tombstone_gc',
-        'value': config.toMirrorValue(),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-    } catch (e) {
-      debugPrint('tombstone gc config upsert failed: $e');
-    }
   }
 
   Future<void> _mergeInflowsFromMirror() async {
@@ -19057,6 +19123,67 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _debtOverrideTombstones.addId(store, id);
     } else {
       await _debtOverrideTombstones.removeId(store, id);
+    }
+    unawaited(_mirrorDebtOverrideDeleted());
+  }
+
+  /// 支払日上書きの削除トゥームストーンをサーバへ反映 (他端末伝播 / #part294)。
+  Future<void> _mirrorDebtOverrideDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _debtOverrideTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'debt_payment_day_override_deleted',
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('debt override tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除された支払日上書きを取り込み、ローカルからも除去する。
+  Future<void> _pullDebtOverrideDeleted() async {
+    final debugMirror = widget.debugDebtOverrideDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'debt_payment_day_override_deleted');
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _debtOverrideTombstones.mergeRemoteIds(store, ids);
+      final before = _debtPaymentDayOverrides.length;
+      _debtPaymentDayOverrides.removeWhere((key, _) => incoming.contains(key));
+      if (_debtPaymentDayOverrides.length == before || !mounted) {
+        return;
+      }
+      setState(() {});
+      unawaited(_saveDebtPaymentDayOverrides());
+    } catch (e) {
+      debugPrint('debt override tombstone pull failed: $e');
     }
   }
 

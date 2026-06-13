@@ -583,5 +583,37 @@ void main() {
       expect(await store.pruneDeletedIds(), 1);
       expect(await store.loadDeletedIds(), isEmpty);
     });
+
+    test('aggregated inflow mirror build/parse round-trips', () {
+      final value = AssetExpectedInflowStore.buildAggregatedInflowMirrorValue(
+        deletedIds: <String>['a', '', 'b'],
+        gcConfig: const AssetTombstoneGcConfig(maxCount: 50, maxAgeDays: 90),
+      );
+      expect(value['deleted_ids'], <String, dynamic>{
+        'ids': <String>['a', 'b'],
+      });
+      expect(value['gc'], <String, dynamic>{
+        'max_count': 50,
+        'max_age_days': 90,
+      });
+
+      expect(
+        AssetExpectedInflowStore.aggregatedInflowDeletedIds(value),
+        <String>['a', 'b'],
+      );
+      final gc = AssetExpectedInflowStore.aggregatedInflowGcConfig(value);
+      expect(gc.maxCount, 50);
+      expect(gc.maxAgeDays, 90);
+
+      // 不正値は安全側 (空 / 既定)。
+      expect(
+        AssetExpectedInflowStore.aggregatedInflowDeletedIds('nope'),
+        isEmpty,
+      );
+      expect(
+        AssetExpectedInflowStore.aggregatedInflowGcConfig(null).maxCount,
+        const AssetTombstoneGcConfig().maxCount,
+      );
+    });
   });
 }
