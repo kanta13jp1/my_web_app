@@ -580,7 +580,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// AIコメントが指摘するカード明細の未取込・差分に対し、取り込み・照合
   /// パネルへ誘導するリンクの文言。確認が必要なカード名を織り込む。
-  String _cardStatementReconciliationLinkLabel(AssetLiabilityWorkbook workbook) {
+  String _cardStatementReconciliationLinkLabel(
+      AssetLiabilityWorkbook workbook) {
     final groups = workbook.cardStatementReconciliation.needsReviewGroups;
     if (groups.length == 1) {
       return '${groups.first.billingAccountName}の明細を取り込んで照合する';
@@ -9729,9 +9730,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 給料サイクル (先月25日〜今月24日) で集計する。暦月だと給料日前は
     // 収入0で赤字に見えてしまうため (給料日=25日基準)。
     final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(_now);
-    final cycleEndInclusive = AssetLiabilityMonthlyStateStore
-        .salaryCycleEndExclusive(_now)
-        .subtract(const Duration(days: 1));
+    final cycleEndInclusive =
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(_now)
+            .subtract(const Duration(days: 1));
     final cycleLabel =
         '${cycleStart.month}/${cycleStart.day}〜${cycleEndInclusive.month}/${cycleEndInclusive.day}';
     final flows = _flowsForSalaryCycle(_now);
