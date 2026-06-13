@@ -86,6 +86,11 @@ class AssetExpectedInflowStore {
   /// 「一度消した項目」がサーバ残存分から復活するのを抑止する (#part285)。
   static const String _deletedIdsKey = 'asset_expected_inflow_deleted_ids_v1';
 
+  /// トゥームストーンの保持上限と期限。SharedPreferences の肥大化を防ぐ
+  /// ため、書き込み・読み出し時に古い/超過分を破棄する (#part286)。
+  static const int _tombstoneMaxCount = 1000;
+  static const int _tombstoneMaxAgeDays = 365;
+
   final DateTime Function()? nowProvider;
 
   DateTime _now() => nowProvider?.call() ?? DateTime.now();
@@ -213,36 +218,88 @@ class AssetExpectedInflowStore {
     }
   }
 
-  /// 削除済み ID の集合を読み出す。
+  /// 削除済み ID の集合を読み出す (期限切れ・上限超過は除外)。
   Future<Set<String>> loadDeletedIds({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    return _decodeIds(store.getString(_deletedIdsKey));
+    return _decodeActiveIds(store.getString(_deletedIdsKey));
   }
 
   Future<void> _addDeletedId(SharedPreferences store, String id) async {
     if (id.isEmpty) {
       return;
     }
-    final ids = _decodeIds(store.getString(_deletedIdsKey))..add(id);
-    await store.setString(_deletedIdsKey, jsonEncode(ids.toList()));
+    final entries = _gcEntries(
+      _readDeletedEntries(store.getString(_deletedIdsKey)),
+    )..removeWhere((entry) => entry['id'] == id);
+    entries.add(<String, String>{
+      'id': id,
+      'at': _now().toUtc().toIso8601String(),
+    });
+    await _writeDeletedEntries(store, entries);
   }
 
-  Set<String> _decodeIds(String? raw) {
+  /// 後方互換読み込み: 旧形式 (["id",...]) と新形式 ([{"id","at"},...]) の
+  /// 双方を受け付ける。旧形式やタイムスタンプ欠落は現時刻を付与する
+  /// (= 既存トゥームストーンを即時に期限切れさせない)。
+  List<Map<String, String>> _readDeletedEntries(String? raw) {
     if (raw == null || raw.isEmpty) {
-      return <String>{};
+      return <Map<String, String>>[];
     }
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) {
-        return <String>{};
+        return <Map<String, String>>[];
       }
-      return decoded
-          .map((dynamic entry) => entry?.toString() ?? '')
-          .where((id) => id.isNotEmpty)
-          .toSet();
+      final nowIso = _now().toUtc().toIso8601String();
+      final entries = <Map<String, String>>[];
+      for (final entry in decoded) {
+        if (entry is String) {
+          if (entry.isNotEmpty) {
+            entries.add(<String, String>{'id': entry, 'at': nowIso});
+          }
+        } else if (entry is Map) {
+          final id = entry['id']?.toString() ?? '';
+          if (id.isNotEmpty) {
+            entries.add(<String, String>{
+              'id': id,
+              'at': entry['at']?.toString() ?? nowIso,
+            });
+          }
+        }
+      }
+      return entries;
     } catch (_) {
-      return <String>{};
+      return <Map<String, String>>[];
     }
+  }
+
+  /// 期限切れ (>_tombstoneMaxAgeDays) を捨て、件数超過分は新しい順に残す。
+  List<Map<String, String>> _gcEntries(List<Map<String, String>> entries) {
+    final now = _now();
+    final kept = <Map<String, String>>[];
+    for (final entry in entries) {
+      final at = DateTime.tryParse(entry['at'] ?? '');
+      if (at == null || now.difference(at).inDays <= _tombstoneMaxAgeDays) {
+        kept.add(entry);
+      }
+    }
+    if (kept.length > _tombstoneMaxCount) {
+      return kept.sublist(kept.length - _tombstoneMaxCount);
+    }
+    return kept;
+  }
+
+  Future<void> _writeDeletedEntries(
+    SharedPreferences store,
+    List<Map<String, String>> entries,
+  ) async {
+    await store.setString(_deletedIdsKey, jsonEncode(entries));
+  }
+
+  Set<String> _decodeActiveIds(String? raw) {
+    return <String>{
+      for (final entry in _gcEntries(_readDeletedEntries(raw))) entry['id']!,
+    };
   }
 
   /// 他端末由来のトゥームストーンを取り込み、該当するローカル項目を削除する。
@@ -256,9 +313,17 @@ class AssetExpectedInflowStore {
       return 0;
     }
     final store = prefs ?? await SharedPreferences.getInstance();
-    final tombstones = _decodeIds(store.getString(_deletedIdsKey))
-      ..addAll(incoming);
-    await store.setString(_deletedIdsKey, jsonEncode(tombstones.toList()));
+    final entries = _gcEntries(
+      _readDeletedEntries(store.getString(_deletedIdsKey)),
+    );
+    final existingIds = <String>{for (final entry in entries) entry['id']!};
+    final nowIso = _now().toUtc().toIso8601String();
+    for (final id in incoming) {
+      if (existingIds.add(id)) {
+        entries.add(<String, String>{'id': id, 'at': nowIso});
+      }
+    }
+    await _writeDeletedEntries(store, _gcEntries(entries));
 
     final items = _decode(store.getString(_key));
     final rules = _decodeRules(store.getString(_rulesKey));
@@ -287,7 +352,7 @@ class AssetExpectedInflowStore {
     if (localItems.isNotEmpty || localRules.isNotEmpty || rows.isEmpty) {
       return false;
     }
-    final deletedIds = _decodeIds(store.getString(_deletedIdsKey));
+    final deletedIds = _decodeActiveIds(store.getString(_deletedIdsKey));
     final items = <AssetExpectedInflow>[];
     final rules = <AssetExpectedInflowRule>[];
     for (final row in rows) {
@@ -344,7 +409,7 @@ class AssetExpectedInflowStore {
     final store = prefs ?? await SharedPreferences.getInstance();
     final items = _decode(store.getString(_key));
     final rules = _decodeRules(store.getString(_rulesKey));
-    final deletedIds = _decodeIds(store.getString(_deletedIdsKey));
+    final deletedIds = _decodeActiveIds(store.getString(_deletedIdsKey));
     final knownIds = <String>{
       for (final item in items) item.id,
       for (final rule in rules) rule.id,
@@ -410,7 +475,7 @@ class AssetExpectedInflowStore {
     final store = prefs ?? await SharedPreferences.getInstance();
     final items = _decode(store.getString(_key));
     final rules = _decodeRules(store.getString(_rulesKey));
-    final deletedIds = _decodeIds(store.getString(_deletedIdsKey));
+    final deletedIds = _decodeActiveIds(store.getString(_deletedIdsKey));
     final knownIds = <String>{
       for (final item in items) item.id,
       for (final rule in rules) rule.id,

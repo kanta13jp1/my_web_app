@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -396,6 +398,80 @@ void main() {
 
       final added = await store.mergeFromMirrorRows(rows);
       expect(added, preview.length);
+    });
+
+    test('expired tombstones are garbage-collected after the TTL', () async {
+      var clock = DateTime(2026, 1, 1, 9);
+      final store = AssetExpectedInflowStore(nowProvider: () => clock);
+      final added = await store.add(
+        date: DateTime(2026, 1, 5),
+        amount: 5000,
+        label: '消す',
+      );
+      final id = added.single.id;
+      await store.remove(id);
+      expect(await store.loadDeletedIds(), contains(id));
+
+      // TTL (365日) を超えると GC され、復活し得る状態に戻る。
+      clock = DateTime(2027, 1, 5, 9);
+      expect(await store.loadDeletedIds(), isNot(contains(id)));
+
+      final mergedBack = await store.mergeFromMirrorRows(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': id,
+          'kind': 'one_time',
+          'date': '2026-01-05',
+          'amount': 5000,
+          'label': '消す',
+        },
+      ]);
+      expect(mergedBack, 1);
+    });
+
+    test('tombstones are capped to the most recent entries', () async {
+      // 上限 (1000) を超える削除済み ID を直接シードし、GC で新しい順に
+      // 残ることを確認する (古い id0 は破棄)。
+      final seeded = <Map<String, String>>[
+        for (var i = 0; i < 1005; i++)
+          <String, String>{
+            'id': 'tomb_$i',
+            'at': DateTime(2026, 6, 13, 9).toUtc().toIso8601String(),
+          },
+      ];
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_expected_inflow_deleted_ids_v1': jsonEncode(seeded),
+      });
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 13, 9),
+      );
+
+      final ids = await store.loadDeletedIds();
+      expect(ids, hasLength(1000));
+      expect(ids, isNot(contains('tomb_0')));
+      expect(ids, contains('tomb_1004'));
+    });
+
+    test('legacy plain-string tombstones remain effective', () async {
+      // part 285 の旧形式 (["id",...]) を読み込めること。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_expected_inflow_deleted_ids_v1':
+            jsonEncode(<String>['legacy_id']),
+      });
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 13, 9),
+      );
+
+      expect(await store.loadDeletedIds(), contains('legacy_id'));
+      final added = await store.mergeFromMirrorRows(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'legacy_id',
+          'kind': 'one_time',
+          'date': '2026-06-01',
+          'amount': 100,
+          'label': '旧削除',
+        },
+      ]);
+      expect(added, 0);
     });
   });
 }

@@ -25,10 +25,11 @@ Usage: python scripts/check_duplicate_dispose.py [root]
 
 from __future__ import annotations
 
+import argparse
 import collections
 import pathlib
 import re
-import sys
+import time
 
 # 本体開始 `) [async] {`。`)` と `{` の間は空白/改行のみ許容 (多行シグネチャ可)。
 HEADER_RE = re.compile(r"\)[ \t\n]*(?:async\*?|sync\*?)?[ \t\n]*\{")
@@ -145,8 +146,23 @@ def find_duplicates(root: pathlib.Path):
 
 
 def main() -> int:
-    root = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".")
-    hits = find_duplicates(root)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("root", nargs="?", default=".")
+    parser.add_argument(
+        "--max-seconds",
+        type=float,
+        default=None,
+        help=(
+            "走査が指定秒数を超えたら exit 1 (正規表現の破滅的バックトラック "
+            "= part 286 で 49s→2.5s 化した回帰の再発を CI で検知する)。"
+        ),
+    )
+    args = parser.parse_args()
+
+    start = time.perf_counter()
+    hits = find_duplicates(pathlib.Path(args.root))
+    elapsed = time.perf_counter() - start
+
     if hits:
         print("Duplicate risky top-level statements found in method bodies:")
         for hit in hits:
@@ -156,9 +172,15 @@ def main() -> int:
             "二重フェッチ・二重再描画を招きます (part 280 実例)。重複行を削除してください。"
         )
         return 1
+    if args.max_seconds is not None and elapsed > args.max_seconds:
+        print(
+            f"check_duplicate_dispose: SLOW ({elapsed:.1f}s > "
+            f"{args.max_seconds:.1f}s) — 正規表現が線形時間でなくなった疑い。"
+        )
+        return 1
     print(
         "check_duplicate_dispose: CLEAN"
-        " (no duplicated risky top-level statements in method bodies)"
+        f" (no duplicates, {elapsed:.2f}s)"
     )
     return 0
 
