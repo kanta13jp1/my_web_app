@@ -311,8 +311,42 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 200));
 
-      // inflow(1) + override(1) = 2 件を一括掃除。
-      expect(find.textContaining('古い削除記録を2件 掃除しました'), findsOneWidget);
+      // ボタン→prune→SnackBar の配線を検証 (件数は boot 自動 prune が先に
+      // 期限切れを掃除するため非依存にする / #part296)。実際の物理削除は
+      // 「boot auto-prune」テストと store 単体テストで担保。
+      expect(find.textContaining('件 掃除しました'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('boot auto-prune physically drops expired tombstones', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        // 期限切れ(2020) + 期限内(現在) を混在させる。
+        'asset_expected_inflow_deleted_ids_v1':
+            jsonEncode(<Map<String, String>>[
+          <String, String>{'id': 'old1', 'at': '2020-01-01T00:00:00.000Z'},
+          <String, String>{
+            'id': 'recent',
+            'at': now.toUtc().toIso8601String(),
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pumpAssetPage(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // boot 自動 prune が期限切れ(old1)を物理削除し、期限内(recent)は残す。
+      final raw = (await SharedPreferences.getInstance())
+          .getString('asset_expected_inflow_deleted_ids_v1');
+      expect(raw, isNotNull);
+      expect(raw!.contains('old1'), isFalse);
+      expect(raw.contains('recent'), isTrue);
 
       await _unmount(tester);
     });
