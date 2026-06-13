@@ -448,6 +448,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     _loadDisplayMode();
     _loadExpectedInflows();
+    unawaited(_pullInflowDeletedIds());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -7659,6 +7660,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _removeExpectedInflowRule(String id) async {
     final rules = await _expectedInflowStore.removeRule(id);
     unawaited(_deleteInflowMirror(id));
+    unawaited(_mirrorInflowDeletedIds());
     if (!mounted) {
       return;
     }
@@ -7700,6 +7702,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _removeExpectedInflow(String id) async {
     final entries = await _expectedInflowStore.remove(id);
     unawaited(_deleteInflowMirror(id));
+    unawaited(_mirrorInflowDeletedIds());
     if (!mounted) {
       return;
     }
@@ -8165,30 +8168,143 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 入金予定のミラー取り込みプレビュー行を組み立てる。
+  String _inflowMergeRowLabel(Map<String, dynamic> row) {
+    final label = row['label']?.toString() ?? '入金予定';
+    final amount = (row['amount'] as num?)?.toDouble() ?? 0;
+    if (row['kind']?.toString() == 'rule') {
+      final day = (row['day_of_month'] as num?)?.toInt() ?? 0;
+      return '毎月$day日 $label  +${_formatYen(amount)}';
+    }
+    final date = DateTime.tryParse(row['date']?.toString() ?? '')?.toLocal();
+    final when = date == null ? '' : '${DateFormat('M/d').format(date)} ';
+    return '$when$label  +${_formatYen(amount)}';
+  }
+
+  /// 削除トゥームストーンをサーバへ反映 (他端末の削除伝播用 / #part285)。
+  Future<void> _mirrorInflowDeletedIds() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final ids = await _expectedInflowStore.loadDeletedIds();
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'inflow_deleted_ids',
+        'value': <String, dynamic>{'ids': ids.toList()},
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('inflow tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// サーバのトゥームストーンを取り込み、該当ローカル項目を削除する。
+  Future<void> _pullInflowDeletedIds() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', 'inflow_deleted_ids');
+      if (rows.isEmpty) {
+        return;
+      }
+      final value = rows.first['value'];
+      if (value is! Map) {
+        return;
+      }
+      final rawIds = value['ids'];
+      if (rawIds is! List) {
+        return;
+      }
+      final removed = await _expectedInflowStore.applyRemoteDeletedIds(
+        rawIds.map((dynamic id) => id?.toString() ?? ''),
+      );
+      if (removed > 0 && mounted) {
+        await _loadExpectedInflows();
+      }
+    } catch (e) {
+      debugPrint('inflow tombstone pull failed: $e');
+    }
+  }
+
   Future<void> _mergeInflowsFromMirror() async {
     if (_supabase.auth.currentUser == null) {
       return;
     }
     try {
-      final rows = await _supabase.from('asset_expected_inflow_items').select();
-      final added = await _expectedInflowStore.mergeFromMirrorRows(
-        List<Map<String, dynamic>>.from(rows),
+      // 先に他端末の削除を取り込み、復活候補から除外する。
+      await _pullInflowDeletedIds();
+      final rows = List<Map<String, dynamic>>.from(
+        await _supabase.from('asset_expected_inflow_items').select(),
       );
+      final additions = await _expectedInflowStore.previewMergeAdditions(rows);
       if (!mounted) {
         return;
       }
-      if (added > 0) {
+      if (additions.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('サーバとの差分はありませんでした')),
+        );
+        return;
+      }
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('サーバから取り込む入金予定'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '以下の${additions.length}件をローカルへ追加します(削除済みは復活しません)。',
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final row in additions)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '・${_inflowMergeRowLabel(row)}',
+                        style: const TextStyle(fontSize: 12, height: 1.4),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              key: const Key('asset_inflow_merge_apply'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('取り込む'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) {
+        return;
+      }
+      final added = await _expectedInflowStore.mergeFromMirrorRows(rows);
+      if (added > 0 && mounted) {
         await _loadExpectedInflows();
       }
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            added > 0 ? '$added件をサーバから統合しました' : 'サーバとの差分はありませんでした',
-          ),
-        ),
+        SnackBar(content: Text('$added件をサーバから統合しました')),
       );
     } catch (e) {
       debugPrint('inflow mirror merge failed: $e');
