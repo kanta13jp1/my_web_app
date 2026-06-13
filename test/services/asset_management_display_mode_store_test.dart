@@ -445,5 +445,82 @@ void main() {
         AssetManagementSectionVisibilityOverride.hidden,
       );
     });
+
+    test('encode/decode deleted section ids mirror round-trips', () async {
+      const store = AssetManagementDisplayModeStore();
+      await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+      await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.auto,
+      );
+
+      final mirror = await store.encodeDeletedSectionIdsMirror();
+      expect(
+        mirror['ids'],
+        contains(AssetManagementSectionId.chart.storageId),
+      );
+      expect(
+        AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(mirror),
+        contains(AssetManagementSectionId.chart.storageId),
+      );
+    });
+
+    test('applyRemoteDeletedSectionIds removes matching local overrides',
+        () async {
+      const store = AssetManagementDisplayModeStore();
+      await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.hidden,
+      );
+      await store.saveOverride(
+        AssetManagementSectionId.flow,
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+
+      // 他端末で chart 上書きが削除された → ローカルからも消える。
+      final removed = await store.applyRemoteDeletedSectionIds(
+        <String>[AssetManagementSectionId.chart.storageId],
+      );
+      expect(removed, 1);
+      final overrides = await store.loadOverrides();
+      expect(overrides.containsKey(AssetManagementSectionId.chart), isFalse);
+      expect(
+        overrides[AssetManagementSectionId.flow],
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+      expect(
+        await store.loadDeletedSectionIds(),
+        contains(AssetManagementSectionId.chart.storageId),
+      );
+
+      // 二度目は対象なし。
+      expect(
+        await store.applyRemoteDeletedSectionIds(
+          <String>[AssetManagementSectionId.chart.storageId],
+        ),
+        0,
+      );
+    });
+
+    test('pruneDeletedSectionIds clears expired override tombstones', () async {
+      var clock = DateTime(2026, 1, 1, 9);
+      final store = AssetManagementDisplayModeStore(nowProvider: () => clock);
+      await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+      await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.auto,
+      );
+      expect(await store.pruneDeletedSectionIds(), 0); // 期限内
+
+      clock = DateTime(2027, 6, 1, 9); // 既定 TTL 365 日超過
+      expect(await store.pruneDeletedSectionIds(), 1);
+      expect(await store.loadDeletedSectionIds(), isEmpty);
+    });
   });
 }

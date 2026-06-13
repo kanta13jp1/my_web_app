@@ -256,16 +256,28 @@ jobs:
         run: timeout 120 python scripts/check_duplicate_dispose.py --max-seconds 60
         continue-on-error: false
 
-      - name: Verify pre-commit hook stays healthy
-        # part 291: pre-commit hook の腐敗防止。構文 + 実行ビット + 監査スクリプト
-        # 参照を検証し、ローカル導入 (git config core.hooksPath .githooks) を促す。
+      - name: Verify git hooks stay healthy
+        # part 291: pre-commit hook の腐敗防止。part 292: .githooks/* 全体へ一般化
+        # (将来 hook を追加しても自動で対象 / *.md は除外)。構文 + 実行ビットを検証。
         run: |
-          bash -n .githooks/pre-commit
-          test -x .githooks/pre-commit || {
-            echo ".githooks/pre-commit must be executable (chmod +x)" >&2
+          shopt -s nullglob
+          found=0
+          for hook in .githooks/*; do
+            case "$hook" in
+              *.md) continue ;;
+            esac
+            found=$((found + 1))
+            echo "checking $hook"
+            bash -n "$hook"
+            test -x "$hook" || {
+              echo "$hook must be executable (chmod +x)" >&2
+              exit 1
+            }
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "no hooks found under .githooks/" >&2
             exit 1
-          }
-          grep -q 'check_duplicate_dispose.py' .githooks/pre-commit
+          fi
         continue-on-error: false
 
       - name: Check formatting

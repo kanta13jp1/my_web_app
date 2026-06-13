@@ -215,6 +215,49 @@ class AssetManagementDisplayModeStore {
     return _overrideTombstones.activeIds(store);
   }
 
+  /// 削除トゥームストーンをミラー upsert 用の値へ変換する (`{'ids': [...]}`)。
+  Future<Map<String, dynamic>> encodeDeletedSectionIdsMirror({
+    SharedPreferences? prefs,
+  }) async {
+    final ids = await loadDeletedSectionIds(prefs: prefs);
+    return MirrorTombstoneStore.encodeMirror(ids);
+  }
+
+  /// ミラー値 (`{'ids': [...]}`) から section storageId リストを取り出す。
+  static List<String> decodeDeletedSectionIdsMirror(Object? value) =>
+      MirrorTombstoneStore.decodeMirror(value);
+
+  /// 他端末由来の override 削除トゥームストーンを取り込み、該当するローカル
+  /// 上書きを削除する (端末間の削除伝播 / #part292)。削除した上書き数を返す。
+  Future<int> applyRemoteDeletedSectionIds(
+    Iterable<String> remoteIds, {
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final incoming = await _overrideTombstones.mergeRemoteIds(store, remoteIds);
+    if (incoming.isEmpty) {
+      return 0;
+    }
+    final current = await loadOverrides(prefs: store);
+    final before = current.length;
+    current.removeWhere((section, _) => incoming.contains(section.storageId));
+    final removed = before - current.length;
+    if (removed > 0) {
+      final encoded = <String, String>{
+        for (final entry in current.entries)
+          entry.key.storageId: entry.value.storageId,
+      };
+      await store.setString(_overridesKey, jsonEncode(encoded));
+    }
+    return removed;
+  }
+
+  /// 期限切れ・上限超過の override 削除トゥームストーンを掃除し件数を返す。
+  Future<int> pruneDeletedSectionIds({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return _overrideTombstones.prune(store);
+  }
+
   /// 既存ユーザーの体験を変えないため、未設定時はフル表示。
   static const AssetManagementDisplayMode defaultMode =
       AssetManagementDisplayMode.full;

@@ -121,6 +121,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final AssetTombstoneGcConfig? debugTombstoneGcConfig;
 
+  /// テスト専用: section override 削除トゥームストーンのミラー値
+  /// (`{'ids': [...]}`) を注入し、削除伝播をネットワークなしで検証する (#part292)。
+  @visibleForTesting
+  final Map<String, dynamic>? debugSectionOverrideDeletedMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -133,6 +138,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugMirrorPrefsRows,
     this.debugInflowDeletedIdsMirror,
     this.debugTombstoneGcConfig,
+    this.debugSectionOverrideDeletedMirror,
   });
 
   @override
@@ -472,6 +478,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
     unawaited(_initTombstoneGcAndPull());
+    // 他端末で削除されたセクション上書きを取り込む (#part292)。
+    unawaited(_pullDeletedSectionIds());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -7534,6 +7542,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     try {
       final now = DateTime.now().toUtc().toIso8601String();
+      final deletedMirror =
+          await _displayModeStore.encodeDeletedSectionIdsMirror();
       await _supabase.from('asset_pref_mirror').upsert(<Map<String, dynamic>>[
         <String, dynamic>{
           'user_id': userId,
@@ -7550,9 +7560,59 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           },
           'updated_at': now,
         },
+        <String, dynamic>{
+          'user_id': userId,
+          'pref_key': 'section_override_deleted',
+          'value': deletedMirror,
+          'updated_at': now,
+        },
       ]);
     } catch (e) {
       debugPrint('display pref mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で「自動へ戻した(削除した)」セクション上書きを取り込み、
+  /// ローカルからも除去する (削除伝播 / #part292)。
+  Future<void> _pullDeletedSectionIds() async {
+    final debugMirror = widget.debugSectionOverrideDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'section_override_deleted');
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
+        value,
+      );
+      if (ids.isEmpty) {
+        return;
+      }
+      final removed = await _displayModeStore.applyRemoteDeletedSectionIds(ids);
+      if (removed > 0 && mounted) {
+        final overrides = await _displayModeStore.loadOverrides();
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = overrides;
+        });
+      }
+    } catch (e) {
+      debugPrint('section override tombstone pull failed: $e');
     }
   }
 
@@ -8340,12 +8400,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// GC 設定 (上限/期限) の編集ダイアログ。保存でローカル+ミラーへ反映する。
   /// 手動 GC: 期限切れ・上限超過の削除記録を今すぐ掃除し、件数を SnackBar 表示。
   Future<void> _pruneTombstonesNow() async {
-    final removed = await _expectedInflowStore.pruneDeletedIds();
+    // 入金予定 + 表示設定 override の両トゥームストーンを一括掃除 (#part292)。
+    final removedInflow = await _expectedInflowStore.pruneDeletedIds();
+    final removedOverride = await _displayModeStore.pruneDeletedSectionIds();
     if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('古い削除記録を$removed件 掃除しました')),
+      SnackBar(
+        content: Text(
+          '古い削除記録を${removedInflow + removedOverride}件 掃除しました',
+        ),
+      ),
     );
   }
 
