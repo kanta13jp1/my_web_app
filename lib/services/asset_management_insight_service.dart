@@ -1445,6 +1445,21 @@ class AssetManagementInsightPromptBuilder {
       );
     }
     for (final group in reconciliation.groups) {
+      final revolving = group.revolvingBilling;
+      if (revolving != null) {
+        // リボ払いは請求額=設定額+限度超過分。明細合計との差は不一致ではない旨を明示する。
+        buffer.writeln(
+          '- 明細照合(リボ払い):${group.billingAccountName} / '
+          '請求額:${_formatAmount(revolving.billedAmount)}'
+          '(=リボ設定額${_formatAmount(revolving.monthlyAmount)}'
+          '+限度超過${_formatAmount(revolving.overLimitAmount)}) / '
+          'リボ残高:${_formatAmount(revolving.balance)} / '
+          '利用限度額:${_formatAmount(revolving.creditLimit)} / '
+          '取込明細合計(今月の新規利用):${_formatAmount(group.statementLineTotal)} / '
+          '注記:リボ払いのため請求額は明細合計と一致しないのが正常(不一致ではない)',
+        );
+        continue;
+      }
       buffer.writeln(
         '- 明細照合:${group.billingAccountName} / 請求額:${_formatAmount(group.billedAmount)} / '
         '設定内訳合計:${_formatAmount(group.configuredDetailTotal)} / '
