@@ -21,6 +21,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -91,9 +92,15 @@ def upsert_rows(rows: list[dict[str, Any]], supabase_url: str, key: str) -> None
             "Prefer": "resolution=merge-duplicates,return=minimal",
         },
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        if response.status >= 300:
-            raise RuntimeError(f"upsert failed: HTTP {response.status}")
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            response.read()
+    except urllib.error.HTTPError as error:
+        # PostgREST のエラー本文を残すと失敗時の調査が容易になる。
+        detail = error.read().decode("utf-8", errors="replace").strip()
+        raise RuntimeError(
+            f"upsert failed: HTTP {error.code} {error.reason} {detail}".strip()
+        ) from error
 
 
 def main() -> int:
