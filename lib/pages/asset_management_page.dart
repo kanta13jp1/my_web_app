@@ -1153,8 +1153,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           await _assetLiabilityRepository.loadDefaultPaymentSources();
       final defaultCardBillingAccounts =
           await _assetLiabilityRepository.loadDefaultCardBillingAccounts();
-      final debtPaymentDayOverrides =
+      // #part295: ロード時もトゥームストーン済み支払日上書きを除外する
+      // (pull とロードの順序に依らず「削除した上書き」を復活させない)。
+      final loadedDebtOverrides =
           await _assetLiabilityRepository.loadDebtPaymentDayOverrides();
+      final debtTombstones = _debtOverrideTombstones.activeIds(
+        await SharedPreferences.getInstance(),
+      );
+      final debtPaymentDayOverrides = <String, int>{
+        for (final entry in loadedDebtOverrides.entries)
+          if (!debtTombstones.contains(entry.key)) entry.key: entry.value,
+      };
+      if (debtPaymentDayOverrides.length != loadedDebtOverrides.length) {
+        unawaited(
+          _assetLiabilityRepository.saveDebtPaymentDayOverrides(
+            Map<String, int>.from(debtPaymentDayOverrides),
+          ),
+        );
+      }
       if (debtPaymentDayOverrides.isEmpty) {
         unawaited(_restoreDebtPaymentDayOverridesFromMirror());
       }

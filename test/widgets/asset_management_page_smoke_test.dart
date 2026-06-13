@@ -5,9 +5,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// 支払日上書きだけ差し替え可能なテスト用 repo (#part295 fake repo 足場)。
+/// 他のロード/保存は SharedPreferences 実装に委譲(テストでは空)。
+class _FakeDebtOverrideRepository
+    extends SharedPreferencesAssetLiabilityRepository {
+  _FakeDebtOverrideRepository(this._seed);
+
+  final Map<String, int> _seed;
+  Map<String, int>? savedDebtOverrides;
+
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    return Map<String, int>.from(_seed);
+  }
+
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {
+    savedDebtOverrides = Map<String, int>.from(overrides);
+  }
+}
 
 /// 資産管理ページの widget スモーク足場 (#3260)。
 /// 未ログイン (auth.currentUser == null) では Supabase フェッチ群が
@@ -332,6 +353,41 @@ void main() {
         find.byKey(const Key('asset_section_override_chart')),
       );
       expect(dropdown.value, AssetManagementSectionVisibilityOverride.auto);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('remote debt-override tombstone removes it via fake repo', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // fake repo が debt_1/debt_2 の支払日上書きを返す。他端末が debt_1 を削除した
+      // 状態をミラー注入 → boot pull + ロード除外で debt_1 が消え、repo へ保存される。
+      final repo = _FakeDebtOverrideRepository(<String, int>{
+        'debt_1': 27,
+        'debt_2': 5,
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repo,
+            debugDebtOverrideDeletedMirror: const <String, dynamic>{
+              'ids': <String>['debt_1'],
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 削除伝播の結果が repo へ保存される(debt_1 除外 / debt_2 維持)。
+      expect(repo.savedDebtOverrides, isNotNull);
+      expect(repo.savedDebtOverrides!.containsKey('debt_1'), isFalse);
+      expect(repo.savedDebtOverrides!['debt_2'], 5);
 
       await _unmount(tester);
     });

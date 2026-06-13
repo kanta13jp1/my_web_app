@@ -31,6 +31,49 @@
    実質ゼロ (sql で `count(*) where pref_key in (...)` を確認)。
 3. 旧クライアント (集約行を書けないバージョン) のアクティブ利用がない。
 
+## Phase 3 着手前チェック: legacy 行残存ゼロ確認 (SQL/手順)
+
+撤去条件 2「legacy per-key 行の残存が実質ゼロ」を Supabase SQL Editor で確認する。
+
+```sql
+-- (1) legacy pref_key の残存件数 (ゼロが理想 / 全 0 なら撤去可)。
+select pref_key, count(*) as rows, count(distinct user_id) as users,
+       max(updated_at) as latest
+from asset_pref_mirror
+where pref_key in (
+  'display_mode', 'section_overrides', 'section_override_deleted',
+  'inflow_deleted_ids', 'inflow_tombstone_gc'
+)
+group by pref_key
+order by rows desc;
+
+-- (2) 直近 28 日以内に legacy 行が更新されていないこと (= 旧クライアント不在)。
+--     0 行なら「最近 legacy を書く端末はいない」。
+select count(*) as recent_legacy_writes
+from asset_pref_mirror
+where pref_key in (
+  'display_mode', 'section_overrides', 'section_override_deleted',
+  'inflow_deleted_ids', 'inflow_tombstone_gc'
+)
+  and updated_at > now() - interval '28 days';
+
+-- (3) 集約行の普及率 (分母=何らかの pref を持つ user / 分子=集約行を持つ user)。
+with users_any as (
+  select distinct user_id from asset_pref_mirror
+),
+users_aggregated as (
+  select distinct user_id from asset_pref_mirror
+  where pref_key in ('asset_display_prefs_v1', 'asset_inflow_prefs_v1')
+)
+select (select count(*) from users_aggregated) as aggregated_users,
+       (select count(*) from users_any) as total_users;
+```
+
+判定: (1) が全 pref_key で 0、(2) が 0、(3) で aggregated≒total を確認できたら
+Phase 3(読みフォールバック撤去)へ進む。残存があれば、最終クリーンアップとして
+管理者が `delete from asset_pref_mirror where pref_key in (...)` を 1 度実行してよい
+(集約行が真実のためデータ損失なし)。
+
 ## ロールバック
 
 - Phase 2 は revert で「legacy delete を止める」だけ。集約行・読みフォールバックは
