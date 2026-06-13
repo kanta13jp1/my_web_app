@@ -768,6 +768,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }).toList();
   }
 
+  /// 給料サイクル (先月25日〜今月24日) の期間に発生したフローを返す。
+  /// 「収支を最優先で把握」カードは暦月ではなくこのサイクルで集計する
+  /// (給料日前は収入0で赤字に見えてしまうのを避けるため)。
+  List<Map<String, dynamic>> _flowsForSalaryCycle(DateTime reference) {
+    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(reference);
+    final endExclusive =
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(reference);
+    return _recentFlows.where((flow) {
+      final occurredAtRaw = flow['occurred_at']?.toString();
+      if (occurredAtRaw == null || occurredAtRaw.isEmpty) {
+        return false;
+      }
+      final occurredAt = DateTime.tryParse(occurredAtRaw)?.toLocal();
+      if (occurredAt == null) {
+        return false;
+      }
+      return !occurredAt.isBefore(start) && occurredAt.isBefore(endExclusive);
+    }).toList();
+  }
+
   Future<void> _pickFlowHistoryMonth() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -9690,9 +9710,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // -------------------------
 
   Widget _buildMonthlyFlowFirstCard() {
-    final currentMonth = DateTime(_now.year, _now.month, 1);
-    final monthLabel = _flowMonthLabel(currentMonth);
-    final flows = _flowsForMonth(currentMonth);
+    // 給料サイクル (先月25日〜今月24日) で集計する。暦月だと給料日前は
+    // 収入0で赤字に見えてしまうため (給料日=25日基準)。
+    final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(_now);
+    final cycleEndInclusive = AssetLiabilityMonthlyStateStore
+        .salaryCycleEndExclusive(_now)
+        .subtract(const Duration(days: 1));
+    final cycleLabel =
+        '${cycleStart.month}/${cycleStart.day}〜${cycleEndInclusive.month}/${cycleEndInclusive.day}';
+    final flows = _flowsForSalaryCycle(_now);
     var totalIncome = 0;
     var totalExpense = 0;
 
@@ -9708,8 +9734,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final net = totalIncome - totalExpense;
     final statusText = flows.isEmpty
-        ? 'まだ今月の収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
-        : '今月の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
+        ? 'まだこの給料サイクル ($cycleLabel) の収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
+        : 'この給料サイクル ($cycleLabel) の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -9749,7 +9775,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$monthLabelの収支を最優先で把握',
+                        '給料サイクル ($cycleLabel) の収支を最優先で把握',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,

@@ -43,6 +43,36 @@ void main() {
       );
     });
 
+    test('salaryCycleStart / EndExclusive give the 25th-to-24th window', () {
+      // 6/13 (給料日前) は 5/25〜6/24 サイクル。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 6, 13)),
+        DateTime(2026, 5, 25),
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+          DateTime(2026, 6, 13),
+        ),
+        DateTime(2026, 6, 25),
+      );
+      // 6/25 (給料日当日) は 6/25〜7/24 サイクルへ切替。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 6, 25)),
+        DateTime(2026, 6, 25),
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+          DateTime(2026, 6, 25),
+        ),
+        DateTime(2026, 7, 25),
+      );
+      // 1月始端の前サイクルは前年12/25。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 1, 5)),
+        DateTime(2025, 12, 25),
+      );
+    });
+
     test('saves and restores monthly paid statuses', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
