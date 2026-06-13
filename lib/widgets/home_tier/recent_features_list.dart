@@ -26,17 +26,22 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
       return;
     }
     try {
+      // dedup 前に十分な履歴を取得する。limit を dedup より先に効かせると、
+      // 多用機能(例: サイト案内AI)の連続タップが直近行を占有し、たまにしか
+      // 使わない機能(例: 統一地方選必達管理室)が窓から押し出されて
+      // 「最近使った機能」に出てこない。多めに取得してから distinct 上位を採る。
       final rows = await Supabase.instance.client
           .from('user_feature_usage')
           .select('feature_route, feature_label, tapped_at')
           .eq('user_id', user.id)
           .order('tapped_at', ascending: false)
-          .limit(8);
+          .limit(200);
       final seen = <String>{};
       final deduped = <Map<String, dynamic>>[];
       for (final row in rows) {
         final route = row['feature_route'] as String? ?? '';
         if (route.isNotEmpty && seen.add(route)) deduped.add(row);
+        if (deduped.length >= 10) break;
       }
       if (mounted) {
         setState(() {
