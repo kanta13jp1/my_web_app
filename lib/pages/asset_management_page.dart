@@ -174,6 +174,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyFlow = GlobalKey();
   final _keySubs = GlobalKey();
   final _keyMust = GlobalKey();
+  // カード明細取り込み・照合パネルへのスクロール用 (AIコメントからのジャンプ)。
+  final _keyCardStatementReconciliation = GlobalKey();
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
@@ -574,6 +576,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     await _loadAssetManagementUserProfile();
+  }
+
+  /// AIコメントが指摘するカード明細の未取込・差分に対し、取り込み・照合
+  /// パネルへ誘導するリンクの文言。確認が必要なカード名を織り込む。
+  String _cardStatementReconciliationLinkLabel(AssetLiabilityWorkbook workbook) {
+    final groups = workbook.cardStatementReconciliation.needsReviewGroups;
+    if (groups.length == 1) {
+      return '${groups.first.billingAccountName}の明細を取り込んで照合する';
+    }
+    return 'カード明細を取り込んで照合する（${groups.length}件）';
+  }
+
+  void _jumpToCardStatementReconciliation() {
+    _scrollTo(_keyCardStatementReconciliation);
   }
 
   List<String> _paymentSourceCandidates() {
@@ -9713,9 +9729,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 給料サイクル (先月25日〜今月24日) で集計する。暦月だと給料日前は
     // 収入0で赤字に見えてしまうため (給料日=25日基準)。
     final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(_now);
-    final cycleEndInclusive =
-        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(_now)
-            .subtract(const Duration(days: 1));
+    final cycleEndInclusive = AssetLiabilityMonthlyStateStore
+        .salaryCycleEndExclusive(_now)
+        .subtract(const Duration(days: 1));
     final cycleLabel =
         '${cycleStart.month}/${cycleStart.day}〜${cycleEndInclusive.month}/${cycleEndInclusive.day}';
     final flows = _flowsForSalaryCycle(_now);
@@ -13907,6 +13923,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           ],
+          if (report.workbook.cardStatementReconciliation.hasNeedsReview) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFD97706),
+                ),
+                onPressed: _jumpToCardStatementReconciliation,
+                icon: const Icon(Icons.receipt_long_outlined, size: 16),
+                label: Text(
+                  _cardStatementReconciliationLinkLabel(report.workbook),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           _buildMainAccountSelector(report.workbook),
           const SizedBox(height: 8),
@@ -15541,7 +15575,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 12),
           _buildCardBillingReviewGroups(review.cardBillingGroups),
           const SizedBox(height: 12),
-          _buildCardStatementReconciliationPanel(workbook),
+          KeyedSubtree(
+            key: _keyCardStatementReconciliation,
+            child: _buildCardStatementReconciliationPanel(workbook),
+          ),
         ],
       ),
     );
