@@ -58,7 +58,7 @@ void main() {
       expect(result.text, 'AIが生成した日本語要約です。');
       expect(capturedBody?['action'], 'provider.chat_auto');
       expect(capturedBody?['tier'], 'performance');
-      expect(capturedBody?['max_tokens'], 8000);
+      expect(capturedBody?['max_tokens'], 24000);
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
         capturedBody?['message'].toString().contains('AIに渡す詳細ペイロード'),
@@ -184,7 +184,7 @@ void main() {
         expect(calls.single['action'], 'provider.chat');
         expect(calls.single['provider'], 'anthropic');
         expect(calls.single['model'], 'claude-opus-4-7');
-        expect(calls.single['max_tokens'], 8000);
+        expect(calls.single['max_tokens'], 24000);
         expect(calls.single['routing_use_case'], 'summary');
         expect(
           calls.single['provider_choice_reason'],
@@ -331,6 +331,35 @@ void main() {
       expect(result.usedExternalAi, false);
       expect(result.errorMessage?.contains('boom'), true);
       expect(result.text.contains('Dartルール'), true);
+    });
+
+    test('routed summary passes a generous token budget for thinking models',
+        () async {
+      int? capturedMaxTokens;
+      final chatService = AiHubChatService(
+        invoker: (body) async {
+          capturedMaxTokens = body['max_tokens'] as int?;
+          return <String, dynamic>{
+            'success': true,
+            'text': 'これはAI要約のテスト本文です。',
+            'provider': 'anthropic',
+          };
+        },
+      );
+      final service = AssetManagementAiSummaryService(
+        aiEnabled: true,
+        chatService: chatService,
+        providerRouter: const AssetManagementAiProviderRouter(
+          routingEnabled: true,
+        ),
+        now: () => DateTime(2026, 6, 1, 12),
+      );
+
+      await service.generateSummary(report: _report());
+
+      // Gemini 3.1 Pro 等の thinking トークン + 長文要約に耐える予算であること。
+      expect(capturedMaxTokens, isNotNull);
+      expect(capturedMaxTokens! >= 16000, isTrue);
     });
 
     test('builds payload from calculated insights only', () {
