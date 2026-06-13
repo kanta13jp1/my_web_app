@@ -203,8 +203,7 @@ class AssetLiabilityCardStatementImportService {
               header.contains('description'))) {
         descriptionIndex = i;
       } else if (billingIndex == null &&
-          (header.contains('請求先id') ||
-              header.contains('billing_account'))) {
+          (header.contains('請求先id') || header.contains('billing_account'))) {
         billingIndex = i;
       }
     }
