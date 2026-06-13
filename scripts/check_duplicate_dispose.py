@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import argparse
 import collections
+import concurrent.futures
+import os
 import pathlib
 import re
 import time
@@ -125,23 +127,38 @@ def top_level_statements(body: str):
     return statements
 
 
-def find_duplicates(root: pathlib.Path):
+def scan_file(path: pathlib.Path):
+    """1 ファイルを走査して重複ヒット行のリストを返す (並列ワーカー単位)。"""
     hits = []
-    for path in sorted(root.glob("lib/**/*.dart")):
-        source = LINE_COMMENT_RE.sub(
-            "", path.read_text(encoding="utf-8", errors="replace")
-        )
-        for name, start_index, body in method_bodies(source):
-            counter = collections.Counter(top_level_statements(body))
-            lifecycle = name in LIFECYCLE_NAMES
-            for statement, count in counter.items():
-                if count <= 1:
-                    continue
-                if not lifecycle and not RISKY_RE.search(statement):
-                    continue
-                line = source.count("\n", 0, start_index) + 1
-                shown = statement[:100]
-                hits.append(f"{path.as_posix()}:{line} {name}() x{count}: {shown}")
+    source = LINE_COMMENT_RE.sub(
+        "", path.read_text(encoding="utf-8", errors="replace")
+    )
+    for name, start_index, body in method_bodies(source):
+        counter = collections.Counter(top_level_statements(body))
+        lifecycle = name in LIFECYCLE_NAMES
+        for statement, count in counter.items():
+            if count <= 1:
+                continue
+            if not lifecycle and not RISKY_RE.search(statement):
+                continue
+            line = source.count("\n", 0, start_index) + 1
+            shown = statement[:100]
+            hits.append(f"{path.as_posix()}:{line} {name}() x{count}: {shown}")
+    return hits
+
+
+def find_duplicates(root: pathlib.Path):
+    # cold disk I/O 律速 (fresh checkout で全 lib 読込) を ThreadPoolExecutor で
+    # 並列化する (#part287)。ファイル読込は GIL を解放するため I/O 待ちが重なる。
+    # executor.map は入力順を保つので、出力はパス順で決定的なまま。
+    paths = sorted(root.glob("lib/**/*.dart"))
+    if not paths:
+        return []
+    workers = min(16, (os.cpu_count() or 4) * 2)
+    hits = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        for file_hits in executor.map(scan_file, paths):
+            hits.extend(file_hits)
     return hits
 
 

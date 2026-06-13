@@ -1,5 +1,6 @@
 import '../models/asset_liability_workbook.dart';
 import '../models/user_profile.dart';
+import 'asset_management_available_money.dart';
 
 enum AssetManagementInsightActionType {
   missingInput,
@@ -266,33 +267,34 @@ class AssetManagementInsightService {
         AssetManagementImplementationContext.defaultAssetManagementContexts,
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
+    String? mainAccountId,
   }) {
+    final breakdown = _availableMoneyBreakdown(
+      workbook: workbook,
+      mainAccountId: mainAccountId,
+      minimumSafetyBalance: minimumSafetyBalance,
+    );
+    final today = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.today,
+      breakdown,
+      workbook.baseDate,
+    );
+    final week = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.week,
+      breakdown,
+      workbook.baseDate,
+    );
+    final month = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.month,
+      breakdown,
+      workbook.baseDate,
+    );
     final actions = _buildActionItems(
       workbook: workbook,
       upcomingPaymentWarningDays: upcomingPaymentWarningDays,
       minimumSafetyBalance: minimumSafetyBalance,
+      todayInsight: today,
     )..sort(_compareActionItems);
-    final today = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.today,
-      startDate: _dateOnly(workbook.baseDate),
-      endDate: _dateOnly(workbook.baseDate),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
-    final week = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.week,
-      startDate: _dateOnly(workbook.baseDate),
-      endDate: _dateOnly(workbook.baseDate).add(const Duration(days: 6)),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
-    final month = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.month,
-      startDate: DateTime(workbook.baseDate.year, workbook.baseDate.month),
-      endDate: DateTime(workbook.baseDate.year, workbook.baseDate.month + 1, 0),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
     final movementSuggestions = _buildMovementSuggestions(
       workbook: workbook,
       windows: <AssetManagementAvailableMoneyInsight>[today, week, month],
@@ -329,6 +331,7 @@ class AssetManagementInsightService {
     required AssetLiabilityWorkbook workbook,
     required int upcomingPaymentWarningDays,
     required double minimumSafetyBalance,
+    required AssetManagementAvailableMoneyInsight todayInsight,
   }) {
     final actions = <AssetManagementInsightActionItem>[];
     final today = _dateOnly(workbook.baseDate);
@@ -444,13 +447,6 @@ class AssetManagementInsightService {
       }
     }
 
-    final todayInsight = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.today,
-      startDate: today,
-      endDate: today,
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
     if (todayInsight.availableAmount < 0) {
       actions.add(
         AssetManagementInsightActionItem(
@@ -506,35 +502,62 @@ class AssetManagementInsightService {
     return actions;
   }
 
-  AssetManagementAvailableMoneyInsight _buildAvailableMoneyInsight({
+  AssetManagementAvailableMoneyBreakdown _availableMoneyBreakdown({
     required AssetLiabilityWorkbook workbook,
-    required AssetManagementInsightWindow window,
-    required DateTime startDate,
-    required DateTime endDate,
+    required String? mainAccountId,
     required double minimumSafetyBalance,
   }) {
-    final payments = _paymentTotalForWindow(
-      workbook: workbook,
-      startDate: startDate,
-      endDate: endDate,
+    final today = _dateOnly(workbook.baseDate);
+    final payday = AssetManagementAvailableMoney.nextPayday(today);
+    final remainingDays =
+        AssetManagementAvailableMoney.remainingDaysToPayday(today, payday);
+    final daysThisWeek = AssetManagementAvailableMoney.daysUntilWeekEnd(
+      today,
+      remainingDays: remainingDays,
     );
-    final income = _incomeTotalForWindow(
-      workbook: workbook,
-      startDate: startDate,
-      endDate: endDate,
+    return AssetManagementAvailableMoneyBreakdown(
+      availableAssets: AssetManagementAvailableMoney.availableAssets(
+        accounts: workbook.accounts,
+        mainAccountId: mainAccountId,
+      ),
+      unpaidUntilPayday: AssetManagementAvailableMoney.unpaidUntilPayday(
+        cashflowRows: workbook.cashflowRows,
+        payday: payday,
+      ),
+      minimumSafetyBalance: minimumSafetyBalance,
+      remainingDaysToPayday: remainingDays,
+      daysThisWeek: daysThisWeek,
+      payday: payday,
     );
-    final available =
-        workbook.cashLikeTotal + income - payments - minimumSafetyBalance;
+  }
+
+  AssetManagementAvailableMoneyInsight _availableInsightFromBreakdown(
+    AssetManagementInsightWindow window,
+    AssetManagementAvailableMoneyBreakdown breakdown,
+    DateTime baseDate,
+  ) {
+    final start = _dateOnly(baseDate);
+    final amount = switch (window) {
+      AssetManagementInsightWindow.today => breakdown.todayAvailable,
+      AssetManagementInsightWindow.week => breakdown.weekAvailable,
+      AssetManagementInsightWindow.month => breakdown.monthAvailable,
+    };
+    final end = switch (window) {
+      AssetManagementInsightWindow.today => start,
+      AssetManagementInsightWindow.week =>
+        start.add(Duration(days: breakdown.daysThisWeek - 1)),
+      AssetManagementInsightWindow.month => breakdown.payday,
+    };
     return AssetManagementAvailableMoneyInsight(
       window: window,
-      startDate: startDate,
-      endDate: endDate,
-      cashLikeTotal: workbook.cashLikeTotal,
-      unpaidPaymentTotal: payments,
-      unreceivedIncomeTotal: income,
-      minimumSafetyBalance: minimumSafetyBalance,
-      availableAmount: available,
-      summary: _availableSummary(window, available),
+      startDate: start,
+      endDate: end,
+      cashLikeTotal: breakdown.availableAssets,
+      unpaidPaymentTotal: breakdown.unpaidUntilPayday,
+      unreceivedIncomeTotal: 0,
+      minimumSafetyBalance: breakdown.minimumSafetyBalance,
+      availableAmount: amount,
+      summary: _availableSummary(window, amount),
     );
   }
 
@@ -910,42 +933,6 @@ class AssetManagementInsightService {
     }
     return rows.take(6).map((row) => row.name).join('、') +
         (rows.length > 6 ? ' ほか${rows.length - 6}件' : '');
-  }
-
-  double _paymentTotalForWindow({
-    required AssetLiabilityWorkbook workbook,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) {
-    return workbook.cashflowRows.fold<double>(0, (sum, row) {
-      if (!row.isPayment ||
-          !row.isDirectCashflowTarget ||
-          row.paid ||
-          row.paymentAmount <= 0) {
-        return sum;
-      }
-      final date = _dateOnly(row.paymentDate);
-      final inWindow = !date.isBefore(startDate) && !date.isAfter(endDate);
-      final overdueForWindow =
-          row.overdue && !endDate.isBefore(_dateOnly(workbook.baseDate));
-      return inWindow || overdueForWindow ? sum + row.paymentAmount : sum;
-    });
-  }
-
-  double _incomeTotalForWindow({
-    required AssetLiabilityWorkbook workbook,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) {
-    return workbook.cashflowRows.fold<double>(0, (sum, row) {
-      if (!row.isIncome || row.received || row.paymentAmount <= 0) {
-        return sum;
-      }
-      final date = _dateOnly(row.paymentDate);
-      return !date.isBefore(startDate) && !date.isAfter(endDate)
-          ? sum + row.paymentAmount
-          : sum;
-    });
   }
 
   bool _needsAnnualRate(AssetLiabilityDebtRow row) {

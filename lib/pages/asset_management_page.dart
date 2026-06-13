@@ -36,6 +36,7 @@ import 'package:my_web_app/services/asset_management_ai_analysis_history_service
 import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
@@ -116,6 +117,10 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugInflowDeletedIdsMirror;
 
+  /// テスト専用: トゥームストーン GC 設定の初期値を注入する (#part288)。
+  @visibleForTesting
+  final AssetTombstoneGcConfig? debugTombstoneGcConfig;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -127,6 +132,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInitialAssetData,
     this.debugMirrorPrefsRows,
     this.debugInflowDeletedIdsMirror,
+    this.debugTombstoneGcConfig,
   });
 
   @override
@@ -358,10 +364,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementDisplayModeStore();
   AssetManagementDisplayMode _displayMode =
       AssetManagementDisplayModeStore.defaultMode;
+  final AssetManagementMainAccountStore _mainAccountStore =
+      const AssetManagementMainAccountStore();
+  // 使用可能額の基準となるメインバンク口座ID。null は既定(最大預金口座)。
+  String? _assetManagementMainAccountId;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
-  final AssetExpectedInflowStore _expectedInflowStore =
+  // GC 設定をサーバ/ローカルから取得したら差し替えるため非 final (#part287/288)。
+  AssetExpectedInflowStore _expectedInflowStore =
       const AssetExpectedInflowStore();
+  AssetTombstoneGcConfig _tombstoneGcConfig = const AssetTombstoneGcConfig();
   List<AssetExpectedInflow> _expectedInflows = <AssetExpectedInflow>[];
   List<AssetExpectedInflowRule> _expectedInflowRules =
       <AssetExpectedInflowRule>[];
@@ -456,8 +468,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchSubscriptions();
     _fetchMustTasks();
     _loadDisplayMode();
+    _loadMainAccount();
     _loadExpectedInflows();
-    unawaited(_pullInflowDeletedIds());
+    // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
+    unawaited(_initTombstoneGcAndPull());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -7349,6 +7363,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Future<void> _loadMainAccount() async {
+    try {
+      final id = await _mainAccountStore.load();
+      if (!mounted || id == _assetManagementMainAccountId) {
+        return;
+      }
+      setState(() {
+        _assetManagementMainAccountId = id;
+      });
+    } catch (e) {
+      debugPrint('Error loading main account: $e');
+    }
+  }
+
+  Future<void> _setMainAccount(String? accountId) async {
+    setState(() {
+      _assetManagementMainAccountId = accountId;
+    });
+    try {
+      await _mainAccountStore.save(accountId);
+    } catch (e) {
+      debugPrint('Error saving main account: $e');
+    }
+  }
+
   Future<void> _loadDisplayMode() async {
     final mode = await _displayModeStore.load();
     final overrides = await _displayModeStore.loadOverrides();
@@ -8202,7 +8241,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
         'user_id': userId,
         'pref_key': 'inflow_deleted_ids',
-        'value': <String, dynamic>{'ids': ids.toList()},
+        'value': AssetExpectedInflowStore.encodeDeletedIdsMirror(ids),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
     } catch (e) {
@@ -8232,18 +8271,162 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         value = Map<String, dynamic>.from(raw);
       }
-      final rawIds = value['ids'];
-      if (rawIds is! List) {
+      final ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(value);
+      if (ids.isEmpty) {
         return;
       }
-      final removed = await _expectedInflowStore.applyRemoteDeletedIds(
-        rawIds.map((dynamic id) => id?.toString() ?? ''),
-      );
+      final removed = await _expectedInflowStore.applyRemoteDeletedIds(ids);
       if (removed > 0 && mounted) {
         await _loadExpectedInflows();
       }
     } catch (e) {
       debugPrint('inflow tombstone pull failed: $e');
+    }
+  }
+
+  /// トゥームストーン GC の上限/期限をサーバ (asset_pref_mirror) から取得し、
+  /// ストアへ反映する (#part287 リモート調整)。未設定なら既定のまま。
+  Future<void> _initTombstoneGcAndPull() async {
+    await _applyLocalTombstoneGcConfig();
+    await _loadTombstoneGcConfig();
+    await _pullInflowDeletedIds();
+  }
+
+  /// ローカル保存 (またはテスト注入) の GC 設定をストアへ反映する。
+  Future<void> _applyLocalTombstoneGcConfig() async {
+    final config = widget.debugTombstoneGcConfig ??
+        await AssetExpectedInflowStore.loadGcConfig();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tombstoneGcConfig = config;
+      _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+    });
+  }
+
+  Future<void> _loadTombstoneGcConfig() async {
+    // テスト注入時はサーバ取得を行わない (ネットワーク非依存)。
+    if (widget.debugTombstoneGcConfig != null ||
+        _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', 'inflow_tombstone_gc');
+      if (rows.isEmpty || !mounted) {
+        return;
+      }
+      final config = AssetTombstoneGcConfig.fromMirrorValue(
+        rows.first['value'],
+      );
+      await AssetExpectedInflowStore.saveGcConfig(config);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _tombstoneGcConfig = config;
+        _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+      });
+    } catch (e) {
+      debugPrint('tombstone gc config fetch failed: $e');
+    }
+  }
+
+  /// GC 設定 (上限/期限) の編集ダイアログ。保存でローカル+ミラーへ反映する。
+  Future<void> _showTombstoneGcSettings(
+    void Function(void Function()) setOuterState,
+  ) async {
+    final countController = TextEditingController(
+      text: '${_tombstoneGcConfig.maxCount}',
+    );
+    final ageController = TextEditingController(
+      text: '${_tombstoneGcConfig.maxAgeDays}',
+    );
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('削除履歴の保持設定'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '削除した入金予定の「復活防止」記録を、どれだけ保持するか。',
+              style: TextStyle(fontSize: 12, height: 1.5),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('asset_tombstone_gc_maxcount'),
+              controller: countController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '最大件数'),
+            ),
+            TextField(
+              key: const Key('asset_tombstone_gc_maxage'),
+              controller: ageController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '保持日数'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            key: const Key('asset_tombstone_gc_save'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    if (saved != true || !mounted) {
+      return;
+    }
+    final config = AssetTombstoneGcConfig.fromMirrorValue(<String, dynamic>{
+      'max_count': int.tryParse(countController.text.trim()),
+      'max_age_days': int.tryParse(ageController.text.trim()),
+    });
+    await AssetExpectedInflowStore.saveGcConfig(config);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tombstoneGcConfig = config;
+      _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+    });
+    setOuterState(() {});
+    unawaited(_mirrorTombstoneGcConfig(config));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '保持設定を更新しました(最大${config.maxCount}件 / ${config.maxAgeDays}日)',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _mirrorTombstoneGcConfig(AssetTombstoneGcConfig config) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'inflow_tombstone_gc',
+        'value': config.toMirrorValue(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('tombstone gc config upsert failed: $e');
     }
   }
 
@@ -8479,6 +8662,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
           ),
           actions: [
+            TextButton.icon(
+              key: const Key('asset_tombstone_gc_edit'),
+              onPressed: () => _showTombstoneGcSettings(setDialogState),
+              icon: const Icon(Icons.cleaning_services_outlined, size: 16),
+              label: Text(
+                '保持設定 '
+                '(${_tombstoneGcConfig.maxCount}件/${_tombstoneGcConfig.maxAgeDays}日)',
+              ),
+            ),
             TextButton.icon(
               key: const Key('asset_inflow_merge_button'),
               onPressed: () async {
@@ -12730,6 +12922,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final insightReport = _assetManagementInsightService.buildReport(
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
+      mainAccountId: _assetManagementMainAccountId,
     );
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
@@ -13600,6 +13793,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ],
           const SizedBox(height: 10),
+          _buildMainAccountSelector(report.workbook),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -14332,6 +14527,69 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return const <String, dynamic>{};
   }
 
+  Widget _buildMainAccountSelector(AssetLiabilityWorkbook workbook) {
+    // メインバンク候補 = 現金以外の口座(預金・証券・その他資産)。
+    final candidates = workbook.accounts
+        .where(
+          (account) =>
+              account.kind != AssetLiabilityAccountKind.cash && account.isAsset,
+        )
+        .toList()
+      ..sort((a, b) => b.balance.compareTo(a.balance));
+    if (candidates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final validSelected = candidates.any(
+      (account) => account.id == _assetManagementMainAccountId,
+    )
+        ? _assetManagementMainAccountId
+        : null;
+    return Row(
+      children: [
+        Icon(
+          Icons.account_balance_outlined,
+          size: 16,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          'メインバンク',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButton<String?>(
+            value: validSelected,
+            isExpanded: true,
+            isDense: true,
+            hint: const Text('既定（残高最大の口座）', style: TextStyle(fontSize: 12)),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('既定（残高最大の口座）', style: TextStyle(fontSize: 12)),
+              ),
+              for (final account in candidates)
+                DropdownMenuItem<String?>(
+                  value: account.id,
+                  child: Text(
+                    '${account.name}（${_formatManagementYen(account.balance)}）',
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (value) => unawaited(_setMainAccount(value)),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAssetManagementAvailableCard(
     AssetManagementAvailableMoneyInsight insight,
   ) {
@@ -14339,7 +14597,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? const Color(0xFFB91C1C)
         : const Color(0xFF0D9488);
     final subtitle =
-        '支払 ${_formatManagementYen(insight.unpaidPaymentTotal)} / 入金 ${_formatManagementYen(insight.unreceivedIncomeTotal)} / 安全残高 ${_formatManagementYen(insight.minimumSafetyBalance)}';
+        '利用可能資産 ${_formatManagementYen(insight.cashLikeTotal)} / 給料日まで支払 ${_formatManagementYen(insight.unpaidPaymentTotal)} / 安全余裕 ${_formatManagementYen(insight.minimumSafetyBalance)}';
 
     return Container(
       constraints: const BoxConstraints(minWidth: 210, maxWidth: 320),

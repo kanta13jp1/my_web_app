@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -469,73 +470,140 @@ double _xForIndex(int index, double width, double leftPad, int count) {
   return leftPad + chartW * index / (count - 1);
 }
 
-/// 標準維持率% の推移を折れ線+面で描く拡大ビュー用チャート。
-/// null の週は線を途切れさせる(欠測を埋めない)。hover/tap で点の値を表示。
-class _RetentionLineChart extends StatefulWidget {
-  const _RetentionLineChart({required this.retention, super.key});
+/// グラフ共通の操作レイヤ: hover/tap で最近接点を選択し、フォーカス時は
+/// 矢印キーで点を移動できる (アクセシビリティ #part287)。描画と
+/// ツールチップは呼び出し側のビルダーへ委譲する。
+class _InteractiveChart extends StatefulWidget {
+  const _InteractiveChart({
+    required this.count,
+    required this.leftPad,
+    required this.semanticLabel,
+    required this.painterBuilder,
+    required this.tooltipBuilder,
+    required this.valueBuilder,
+  });
 
-  final List<Map<String, dynamic>> retention;
+  final int count;
+  final double leftPad;
+  final String semanticLabel;
+  final CustomPainter Function(int? selected) painterBuilder;
+  final Widget Function(int selected, double width) tooltipBuilder;
+
+  /// 選択中データ点の読み上げ文 (Semantics value)。スクリーンリーダーは
+  /// liveRegion により選択変更のたびに読み上げる (#part288 a11y)。
+  final String Function(int selected) valueBuilder;
 
   @override
-  State<_RetentionLineChart> createState() => _RetentionLineChartState();
+  State<_InteractiveChart> createState() => _InteractiveChartState();
 }
 
-class _RetentionLineChartState extends State<_RetentionLineChart> {
+class _InteractiveChartState extends State<_InteractiveChart> {
   int? _selected;
+  late final FocusNode _focusNode = FocusNode(debugLabel: 'experiment_chart');
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _select(int? i) {
+    if (i != _selected) {
+      setState(() => _selected = i);
+    }
+  }
+
+  void _move(int delta) {
+    if (widget.count == 0) {
+      return;
+    }
+    final base = _selected ?? (delta > 0 ? -1 : widget.count);
+    _select((base + delta).clamp(0, widget.count - 1));
+  }
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent) {
+      return KeyEventResult.ignored;
+    }
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.arrowUp) {
+      _move(1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowDown) {
+      _move(-1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      _select(null);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final weeks = widget.retention.reversed.toList(growable: false);
-    const lineColor = Color(0xFF0D9488);
     return SizedBox(
       height: _kChartHeight,
       width: double.infinity,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
-          void onAt(Offset p) {
-            final i = _nearestIndex(
-              p.dx,
-              width,
-              _kRetentionLeftPad,
-              weeks.length,
-            );
-            if (i != _selected) {
-              setState(() => _selected = i);
-            }
-          }
-
-          return MouseRegion(
-            onHover: (event) => onAt(event.localPosition),
-            onExit: (_) {
-              if (_selected != null) {
-                setState(() => _selected = null);
-              }
-            },
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapDown: (details) => onAt(details.localPosition),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _RetentionLinePainter(
-                        weeks: weeks,
-                        selected: _selected,
-                        lineColor: lineColor,
-                        gridColor: Theme.of(context).colorScheme.outlineVariant,
-                        labelColor:
-                            Theme.of(context).colorScheme.onSurfaceVariant,
+          int? indexAt(double dx) =>
+              _nearestIndex(dx, width, widget.leftPad, widget.count);
+          final selectedValue = (_selected != null && _selected! < widget.count)
+              ? widget.valueBuilder(_selected!)
+              : null;
+          return Focus(
+            focusNode: _focusNode,
+            onKeyEvent: _onKey,
+            child: Semantics(
+              label: widget.semanticLabel,
+              value: selectedValue,
+              liveRegion: selectedValue != null,
+              child: MouseRegion(
+                onHover: (event) => _select(indexAt(event.localPosition.dx)),
+                onExit: (_) {
+                  if (!_focusNode.hasFocus) {
+                    _select(null);
+                  }
+                },
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (details) {
+                    _focusNode.requestFocus();
+                    _select(indexAt(details.localPosition.dx));
+                  },
+                  child: AnimatedBuilder(
+                    animation: _focusNode,
+                    builder: (context, _) => DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        border: _focusNode.hasFocus
+                            ? Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: 0.5),
+                              )
+                            : null,
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: widget.painterBuilder(_selected),
+                            ),
+                          ),
+                          if (_selected != null && _selected! < widget.count)
+                            widget.tooltipBuilder(_selected!, width),
+                        ],
                       ),
                     ),
                   ),
-                  if (_selected != null && _selected! < weeks.length)
-                    _ChartTooltip(
-                      text: _tooltipText(weeks[_selected!]),
-                      anchor: _anchor(weeks, _selected!, width),
-                      width: width,
-                    ),
-                ],
+                ),
               ),
             ),
           );
@@ -543,22 +611,64 @@ class _RetentionLineChartState extends State<_RetentionLineChart> {
       ),
     );
   }
+}
 
-  String _tooltipText(Map<String, dynamic> week) {
-    final rate = week['rate'];
-    return '${_weekShort(week['week_start'])}  '
-        '${rate == null ? '—' : '$rate%'}';
-  }
+/// 標準維持率% の推移を折れ線+面で描く拡大ビュー用チャート。
+/// null の週は線を途切れさせる(欠測を埋めない)。hover/tap/矢印キーで値を表示。
+class _RetentionLineChart extends StatelessWidget {
+  const _RetentionLineChart({required this.retention, super.key});
 
-  Offset _anchor(List<Map<String, dynamic>> weeks, int i, double width) {
-    const chartH = _kChartHeight - _kChartTopPad - _kChartBottomPad;
-    final x = _xForIndex(i, width, _kRetentionLeftPad, weeks.length);
-    final rate = (weeks[i]['rate'] as num?)?.toDouble();
-    final y = rate == null
-        ? _kChartTopPad
-        : _kChartTopPad + chartH * (1 - rate / 100);
-    return Offset(x, y);
+  final List<Map<String, dynamic>> retention;
+
+  @override
+  Widget build(BuildContext context) {
+    final weeks = retention.reversed.toList(growable: false);
+    final gridColor = Theme.of(context).colorScheme.outlineVariant;
+    final labelColor = Theme.of(context).colorScheme.onSurfaceVariant;
+    const lineColor = Color(0xFF0D9488);
+    return _InteractiveChart(
+      count: weeks.length,
+      leftPad: _kRetentionLeftPad,
+      semanticLabel: '標準維持率の推移グラフ。矢印キーで週を移動します。',
+      painterBuilder: (selected) => _RetentionLinePainter(
+        weeks: weeks,
+        selected: selected,
+        lineColor: lineColor,
+        gridColor: gridColor,
+        labelColor: labelColor,
+      ),
+      tooltipBuilder: (selected, width) => _ChartTooltip(
+        text: _retentionTooltipText(weeks[selected]),
+        anchor: _retentionAnchor(weeks, selected, width),
+        width: width,
+      ),
+      valueBuilder: (selected) {
+        final week = weeks[selected];
+        final rate = week['rate'];
+        return '${_weekShort(week['week_start'])} の標準維持率 '
+            '${rate == null ? '記録なし' : '$rate パーセント'}';
+      },
+    );
   }
+}
+
+String _retentionTooltipText(Map<String, dynamic> week) {
+  final rate = week['rate'];
+  return '${_weekShort(week['week_start'])}  '
+      '${rate == null ? '—' : '$rate%'}';
+}
+
+Offset _retentionAnchor(
+  List<Map<String, dynamic>> weeks,
+  int i,
+  double width,
+) {
+  const chartH = _kChartHeight - _kChartTopPad - _kChartBottomPad;
+  final x = _xForIndex(i, width, _kRetentionLeftPad, weeks.length);
+  final rate = (weeks[i]['rate'] as num?)?.toDouble();
+  final y =
+      rate == null ? _kChartTopPad : _kChartTopPad + chartH * (1 - rate / 100);
+  return Offset(x, y);
 }
 
 class _RetentionLinePainter extends CustomPainter {
@@ -715,21 +825,14 @@ class _RetentionLinePainter extends CustomPainter {
 
 /// 週次イベント(初期解決=藍 / 切替=橙)を積み上げ面で描く拡大ビュー用チャート。
 /// hover/tap でその週の初期解決/切替件数を表示。
-class _TrendAreaChart extends StatefulWidget {
+class _TrendAreaChart extends StatelessWidget {
   const _TrendAreaChart({required this.weekly, super.key});
 
   final List<Map<String, dynamic>> weekly;
 
   @override
-  State<_TrendAreaChart> createState() => _TrendAreaChartState();
-}
-
-class _TrendAreaChartState extends State<_TrendAreaChart> {
-  int? _selected;
-
-  @override
   Widget build(BuildContext context) {
-    final weeks = widget.weekly.reversed.toList(growable: false);
+    final weeks = weekly.reversed.toList(growable: false);
     var maxTotal = 1;
     for (final week in weeks) {
       final total = ((week['initials'] as num?)?.toInt() ?? 0) +
@@ -738,79 +841,55 @@ class _TrendAreaChartState extends State<_TrendAreaChart> {
         maxTotal = total;
       }
     }
-    return SizedBox(
-      height: _kChartHeight,
-      width: double.infinity,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          void onAt(Offset p) {
-            final i = _nearestIndex(p.dx, width, _kTrendLeftPad, weeks.length);
-            if (i != _selected) {
-              setState(() => _selected = i);
-            }
-          }
-
-          return MouseRegion(
-            onHover: (event) => onAt(event.localPosition),
-            onExit: (_) {
-              if (_selected != null) {
-                setState(() => _selected = null);
-              }
-            },
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapDown: (details) => onAt(details.localPosition),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _TrendAreaPainter(
-                        weeks: weeks,
-                        selected: _selected,
-                        maxTotal: maxTotal,
-                        initialsColor: const Color(0xFF6366F1),
-                        switchesColor: const Color(0xFFF97316),
-                        gridColor: Theme.of(context).colorScheme.outlineVariant,
-                        labelColor:
-                            Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  if (_selected != null && _selected! < weeks.length)
-                    _ChartTooltip(
-                      text: _tooltipText(weeks[_selected!]),
-                      anchor: _anchor(weeks, _selected!, width, maxTotal),
-                      width: width,
-                    ),
-                ],
-              ),
-            ),
-          );
-        },
+    final gridColor = Theme.of(context).colorScheme.outlineVariant;
+    final labelColor = Theme.of(context).colorScheme.onSurfaceVariant;
+    return _InteractiveChart(
+      count: weeks.length,
+      leftPad: _kTrendLeftPad,
+      semanticLabel: '週次イベントの推移グラフ。矢印キーで週を移動します。',
+      painterBuilder: (selected) => _TrendAreaPainter(
+        weeks: weeks,
+        selected: selected,
+        maxTotal: maxTotal,
+        initialsColor: const Color(0xFF6366F1),
+        switchesColor: const Color(0xFFF97316),
+        gridColor: gridColor,
+        labelColor: labelColor,
       ),
+      tooltipBuilder: (selected, width) => _ChartTooltip(
+        text: _trendTooltipText(weeks[selected]),
+        anchor: _trendAnchor(weeks, selected, width, maxTotal),
+        width: width,
+      ),
+      valueBuilder: (selected) {
+        final week = weeks[selected];
+        final initials = (week['initials'] as num?)?.toInt() ?? 0;
+        final switches = (week['switches'] as num?)?.toInt() ?? 0;
+        return '${_weekShort(week['week_start'])} '
+            '初期解決 $initials 件 切替 $switches 件';
+      },
     );
   }
+}
 
-  String _tooltipText(Map<String, dynamic> week) {
-    final initials = (week['initials'] as num?)?.toInt() ?? 0;
-    final switches = (week['switches'] as num?)?.toInt() ?? 0;
-    return '${_weekShort(week['week_start'])}  初期$initials/切替$switches';
-  }
+String _trendTooltipText(Map<String, dynamic> week) {
+  final initials = (week['initials'] as num?)?.toInt() ?? 0;
+  final switches = (week['switches'] as num?)?.toInt() ?? 0;
+  return '${_weekShort(week['week_start'])}  初期$initials/切替$switches';
+}
 
-  Offset _anchor(
-    List<Map<String, dynamic>> weeks,
-    int i,
-    double width,
-    int maxTotal,
-  ) {
-    const chartH = _kChartHeight - _kChartTopPad - _kChartBottomPad;
-    final x = _xForIndex(i, width, _kTrendLeftPad, weeks.length);
-    final total = ((weeks[i]['initials'] as num?)?.toInt() ?? 0) +
-        ((weeks[i]['switches'] as num?)?.toInt() ?? 0);
-    final y = _kChartTopPad + chartH * (1 - total / maxTotal);
-    return Offset(x, y);
-  }
+Offset _trendAnchor(
+  List<Map<String, dynamic>> weeks,
+  int i,
+  double width,
+  int maxTotal,
+) {
+  const chartH = _kChartHeight - _kChartTopPad - _kChartBottomPad;
+  final x = _xForIndex(i, width, _kTrendLeftPad, weeks.length);
+  final total = ((weeks[i]['initials'] as num?)?.toInt() ?? 0) +
+      ((weeks[i]['switches'] as num?)?.toInt() ?? 0);
+  final y = _kChartTopPad + chartH * (1 - total / maxTotal);
+  return Offset(x, y);
 }
 
 class _TrendAreaPainter extends CustomPainter {
