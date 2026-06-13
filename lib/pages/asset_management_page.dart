@@ -360,7 +360,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementDisplayModeStore.defaultMode;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
-  final AssetExpectedInflowStore _expectedInflowStore =
+  // GC 設定をサーバから取得したら差し替えるため非 final (#part287)。
+  AssetExpectedInflowStore _expectedInflowStore =
       const AssetExpectedInflowStore();
   List<AssetExpectedInflow> _expectedInflows = <AssetExpectedInflow>[];
   List<AssetExpectedInflowRule> _expectedInflowRules =
@@ -457,7 +458,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     _loadDisplayMode();
     _loadExpectedInflows();
-    unawaited(_pullInflowDeletedIds());
+    // GC 設定をサーバから取得してから削除トゥームストーンを取り込む。
+    unawaited(
+      _loadTombstoneGcConfig().then((_) => _pullInflowDeletedIds()),
+    );
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -8202,7 +8206,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
         'user_id': userId,
         'pref_key': 'inflow_deleted_ids',
-        'value': <String, dynamic>{'ids': ids.toList()},
+        'value': AssetExpectedInflowStore.encodeDeletedIdsMirror(ids),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
     } catch (e) {
@@ -8232,18 +8236,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         value = Map<String, dynamic>.from(raw);
       }
-      final rawIds = value['ids'];
-      if (rawIds is! List) {
+      final ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(value);
+      if (ids.isEmpty) {
         return;
       }
-      final removed = await _expectedInflowStore.applyRemoteDeletedIds(
-        rawIds.map((dynamic id) => id?.toString() ?? ''),
-      );
+      final removed = await _expectedInflowStore.applyRemoteDeletedIds(ids);
       if (removed > 0 && mounted) {
         await _loadExpectedInflows();
       }
     } catch (e) {
       debugPrint('inflow tombstone pull failed: $e');
+    }
+  }
+
+  /// トゥームストーン GC の上限/期限をサーバ (asset_pref_mirror) から取得し、
+  /// ストアへ反映する (#part287 リモート調整)。未設定なら既定のまま。
+  Future<void> _loadTombstoneGcConfig() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', 'inflow_tombstone_gc');
+      if (rows.isEmpty) {
+        return;
+      }
+      _expectedInflowStore = AssetExpectedInflowStore(
+        gcConfig: AssetTombstoneGcConfig.fromMirrorValue(rows.first['value']),
+      );
+    } catch (e) {
+      debugPrint('tombstone gc config fetch failed: $e');
     }
   }
 

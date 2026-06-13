@@ -473,5 +473,76 @@ void main() {
       ]);
       expect(added, 0);
     });
+
+    test('encode/decode deleted-ids mirror round-trips', () {
+      final mirror = AssetExpectedInflowStore.encodeDeletedIdsMirror(
+        <String>['a', '', 'b'],
+      );
+      expect(mirror, <String, dynamic>{
+        'ids': <String>['a', 'b'],
+      });
+      expect(
+        AssetExpectedInflowStore.decodeDeletedIdsMirror(mirror),
+        <String>['a', 'b'],
+      );
+      // 不正な形は空に倒す。
+      expect(
+        AssetExpectedInflowStore.decodeDeletedIdsMirror('nope'),
+        isEmpty,
+      );
+      expect(
+        AssetExpectedInflowStore.decodeDeletedIdsMirror(
+          <String, dynamic>{'ids': 'x'},
+        ),
+        isEmpty,
+      );
+    });
+
+    test('remote gc config tightens the cap and TTL', () async {
+      var clock = DateTime(2026, 1, 1, 9);
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => clock,
+        gcConfig: const AssetTombstoneGcConfig(maxCount: 2, maxAgeDays: 10),
+      );
+
+      // 3件削除 → 上限2で古い1件が破棄される。
+      // クロックを毎回進めて id 衝突 (同一 microsecond) を避ける。
+      for (var i = 0; i < 3; i++) {
+        clock = DateTime(2026, 1, 1, 9, 0, i);
+        final added = await store.add(
+          date: DateTime(2026, 1, 2 + i),
+          amount: 1000.0 + i,
+          label: 'x$i',
+        );
+        await store.remove(added.firstWhere((e) => e.label == 'x$i').id);
+      }
+      final ids = await store.loadDeletedIds();
+      expect(ids, hasLength(2));
+
+      // TTL=10日を超えると全て失効。
+      clock = DateTime(2026, 2, 1, 9);
+      expect(await store.loadDeletedIds(), isEmpty);
+    });
+
+    test('AssetTombstoneGcConfig.fromMirrorValue parses and clamps', () {
+      const fallback = AssetTombstoneGcConfig();
+      expect(
+        AssetTombstoneGcConfig.fromMirrorValue(null).maxCount,
+        fallback.maxCount,
+      );
+
+      final parsed = AssetTombstoneGcConfig.fromMirrorValue(
+        <String, dynamic>{'max_count': 50, 'max_age_days': 30},
+      );
+      expect(parsed.maxCount, 50);
+      expect(parsed.maxAgeDays, 30);
+
+      // 0 以下は最小1へクランプ。
+      final clamped = AssetTombstoneGcConfig.fromMirrorValue(
+        <String, dynamic>{'max_count': 0, 'max_age_days': -5},
+      );
+      expect(clamped.maxCount, 1);
+      expect(clamped.maxAgeDays, 1);
+    });
   });
 }

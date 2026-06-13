@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 本体の fake 化は auth セッション偽装が必要になるため採らない (part 283 判断)。
 
 const String _inflowItemsKey = 'asset_expected_inflows_v1';
+const String _inflowDeletedIdsKey = 'asset_expected_inflow_deleted_ids_v1';
 
 Future<SharedPreferences> _switchClient([
   Map<String, Object> seed = const <String, Object>{},
@@ -287,6 +288,87 @@ void main() {
 
       expect(await displayStore.load(prefs: prefsB), modeA);
       expect(await displayStore.loadOverrides(prefs: prefsB), overridesA);
+    });
+
+    test(
+        'full round trip: A deletes → server → B reflects → B re-uploads → '
+        'A keeps deletion', () async {
+      // 端末A: I1(給料)+I2(フリマ) を登録しサーバ行へ。
+      final prefsA1 = await _switchClient();
+      final storeA = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 13, 9),
+      );
+      await storeA.add(
+        date: DateTime(2026, 6, 25),
+        amount: 280000,
+        label: '給料',
+        prefs: prefsA1,
+      );
+      await storeA.add(
+        date: DateTime(2026, 6, 30),
+        amount: 12000,
+        label: 'フリマ売上',
+        prefs: prefsA1,
+      );
+      final serverInitial = _uploadInflows(
+        await storeA.loadAll(prefs: prefsA1),
+        const <AssetExpectedInflowRule>[],
+      );
+      final removedId = serverInitial
+          .firstWhere((row) => row['label'] == 'フリマ売上')['id']
+          .toString();
+
+      // 端末A: I2 をローカル削除 → トゥームストーンをミラー値 (encode) へ。
+      await storeA.remove(removedId, prefs: prefsA1);
+      final tombstoneMirror = AssetExpectedInflowStore.encodeDeletedIdsMirror(
+        await storeA.loadDeletedIds(prefs: prefsA1),
+      );
+      // A の削除後スナップショット (items + tombstone) を控える。
+      final aSnapshot = <String, Object>{
+        _inflowItemsKey: prefsA1.getString(_inflowItemsKey)!,
+        _inflowDeletedIdsKey: prefsA1.getString(_inflowDeletedIdsKey)!,
+      };
+
+      // 端末B: 削除前にサーバ同期済 (I1,I2) の状態を作る。
+      final prefsB = await _switchClient();
+      final storeB = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 14, 9),
+      );
+      await storeB.restoreFromMirrorRows(serverInitial, prefs: prefsB);
+      expect(await storeB.loadAll(prefs: prefsB), hasLength(2));
+
+      // 端末B: A のトゥームストーンミラーを decode→適用 → I2 が消える。
+      final incoming = AssetExpectedInflowStore.decodeDeletedIdsMirror(
+        tombstoneMirror,
+      );
+      final removedOnB = await storeB.applyRemoteDeletedIds(
+        incoming,
+        prefs: prefsB,
+      );
+      expect(removedOnB, 1);
+
+      // 端末B: I4(臨時) を追加して再アップロード。
+      await storeB.add(
+        date: DateTime(2026, 7, 5),
+        amount: 30000,
+        label: '臨時収入',
+        prefs: prefsB,
+      );
+      final serverFromB = _uploadInflows(
+        await storeB.loadAll(prefs: prefsB),
+        const <AssetExpectedInflowRule>[],
+      );
+      expect(serverFromB.map((row) => row['label']), isNot(contains('フリマ売上')));
+
+      // 端末Aへ戻り、B 由来のサーバ行をマージ → I2 は復活せず I4 が増える。
+      final prefsA2 = await _switchClient(aSnapshot);
+      final added =
+          await storeA.mergeFromMirrorRows(serverFromB, prefs: prefsA2);
+      final mergedA = await storeA.loadAll(prefs: prefsA2);
+
+      expect(added, 1); // I4 のみ (I1 は既知 / I2 はトゥームストーン)
+      expect(mergedA.map((e) => e.label), containsAll(<String>['給料', '臨時収入']));
+      expect(mergedA.map((e) => e.id), isNot(contains(removedId)));
     });
   });
 }
