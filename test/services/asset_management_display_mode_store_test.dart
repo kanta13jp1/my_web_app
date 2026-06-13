@@ -522,5 +522,64 @@ void main() {
       expect(await store.pruneDeletedSectionIds(), 1);
       expect(await store.loadDeletedSectionIds(), isEmpty);
     });
+
+    test('aggregated mirror build → rows round-trips through evaluate', () {
+      final aggregated =
+          AssetManagementDisplayModeStore.buildAggregatedMirrorValue(
+        mode: AssetManagementDisplayMode.standard,
+        overrides: const <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{
+          AssetManagementSectionId.chart:
+              AssetManagementSectionVisibilityOverride.pinned,
+        },
+        deletedIds: <String>['flow', ''],
+      );
+      expect(aggregated['mode'], 'standard');
+      expect(
+        aggregated['section_overrides'],
+        <String, String>{'chart': 'pinned'},
+      );
+      expect(aggregated['section_override_deleted'], <String>['flow']);
+
+      // 集約値 → per-key 行へ変換 → evaluate が解釈できる。
+      final rows = AssetManagementDisplayModeStore.aggregatedMirrorToRows(
+        aggregated,
+        updatedAt: DateTime(2026, 6, 13, 12).toUtc().toIso8601String(),
+      );
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: rows,
+        currentMode: AssetManagementDisplayMode.minimum,
+        currentOverrides: const <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{},
+        localChangedAt: DateTime(2026, 6, 13, 8),
+      );
+      expect(diff.mode, AssetManagementDisplayMode.standard);
+      expect(
+        diff.overrides?[AssetManagementSectionId.chart],
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+
+      // 削除トゥームストーン抽出。
+      expect(
+        AssetManagementDisplayModeStore.aggregatedDeletedSectionIds(aggregated),
+        <String>['flow'],
+      );
+    });
+
+    test('aggregated mirror helpers reject malformed values', () {
+      expect(
+        AssetManagementDisplayModeStore.aggregatedMirrorToRows(
+          'nope',
+          updatedAt: 'x',
+        ),
+        isEmpty,
+      );
+      expect(
+        AssetManagementDisplayModeStore.aggregatedDeletedSectionIds(
+          <String, dynamic>{'section_override_deleted': 'bad'},
+        ),
+        isEmpty,
+      );
+    });
   });
 }
