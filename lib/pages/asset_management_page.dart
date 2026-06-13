@@ -9713,9 +9713,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 給料サイクル (先月25日〜今月24日) で集計する。暦月だと給料日前は
     // 収入0で赤字に見えてしまうため (給料日=25日基準)。
     final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(_now);
-    final cycleEndInclusive = AssetLiabilityMonthlyStateStore
-        .salaryCycleEndExclusive(_now)
-        .subtract(const Duration(days: 1));
+    final cycleEndInclusive =
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(_now)
+            .subtract(const Duration(days: 1));
     final cycleLabel =
         '${cycleStart.month}/${cycleStart.day}〜${cycleEndInclusive.month}/${cycleEndInclusive.day}';
     final flows = _flowsForSalaryCycle(_now);
