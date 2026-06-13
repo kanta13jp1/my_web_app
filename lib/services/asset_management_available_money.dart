@@ -45,8 +45,10 @@ class AssetManagementAvailableMoney {
   static const int defaultSalaryDay = 25;
 
   /// 次の給料日。today.day が給料日より前なら当月、以降なら翌月。
-  static DateTime nextPayday(DateTime today,
-      {int salaryDay = defaultSalaryDay}) {
+  static DateTime nextPayday(
+    DateTime today, {
+    int salaryDay = defaultSalaryDay,
+  }) {
     final day = salaryDay.clamp(1, 28).toInt();
     final base = DateTime(today.year, today.month, today.day);
     if (base.day < day) {
