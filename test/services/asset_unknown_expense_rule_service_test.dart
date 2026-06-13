@@ -125,6 +125,58 @@ void main() {
         isTrue,
       );
     });
+
+    test('ファミペイ: マイナス圏からさらに減少も支出として記録 (新規)', () {
+      expect(
+        AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
+          assetType: 'ファミペイ',
+          previousAmount: -1000,
+          currentAmount: -3000,
+        ),
+        isTrue,
+      );
+    });
+
+    test('プリペイド: 0 からマイナスへの減少も対象', () {
+      expect(
+        AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
+          assetType: 'PayPay残高',
+          previousAmount: 0,
+          currentAmount: -500,
+        ),
+        isTrue,
+      );
+    });
+
+    test('ファミペイカード: 負債名はマイナス圏の減少を記録しない (二重計上防止)', () {
+      expect(
+        AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
+          assetType: 'ファミペイカード',
+          previousAmount: -1000,
+          currentAmount: -3000,
+        ),
+        isFalse,
+      );
+      expect(
+        AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
+          assetType: 'auPAYカード',
+          previousAmount: -50000,
+          currentAmount: -90000,
+        ),
+        isFalse,
+      );
+    });
+
+    test('プリペイド: マイナス圏での増加 (チャージ) は対象外', () {
+      expect(
+        AssetUnknownExpenseRuleService.shouldAutoRecordFromAssetDrop(
+          assetType: 'ファミペイ',
+          previousAmount: -3000,
+          currentAmount: -500,
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('type 判定ヘルパー', () {
@@ -146,6 +198,31 @@ void main() {
       );
       expect(
         AssetUnknownExpenseRuleService.isInvestmentLikeType('現金'),
+        isFalse,
+      );
+    });
+
+    test('isPrepaidLikeType', () {
+      expect(
+        AssetUnknownExpenseRuleService.isPrepaidLikeType('ファミペイ'),
+        isTrue,
+      );
+      expect(
+        AssetUnknownExpenseRuleService.isPrepaidLikeType('PayPay残高'),
+        isTrue,
+      );
+      expect(AssetUnknownExpenseRuleService.isPrepaidLikeType('Suica'), isTrue);
+      // カード/ローン等の負債名は除外。
+      expect(
+        AssetUnknownExpenseRuleService.isPrepaidLikeType('ファミペイカード'),
+        isFalse,
+      );
+      expect(
+        AssetUnknownExpenseRuleService.isPrepaidLikeType('PayPayカード'),
+        isFalse,
+      );
+      expect(
+        AssetUnknownExpenseRuleService.isPrepaidLikeType('三井住友銀行'),
         isFalse,
       );
     });

@@ -9,6 +9,60 @@ class AssetUnknownExpenseRuleService {
     return key.contains('現金') || key.contains('cash');
   }
 
+  /// プリペイド/電子マネー/QR決済の残高タイプ。ファミペイのように
+  /// 残高がマイナス(あと払い・チャージ不足)へさらに進む=支出なので、
+  /// 現金系と同様にマイナス圏の減少も自動記録の対象にする。
+  /// ただしカード/ローン等の負債名は除外(残高悪化=借入で、カード請求側と
+  /// 二重計上になるため)。
+  static bool isPrepaidLikeType(String assetType) {
+    final key = assetType.toLowerCase();
+    if (key.contains('カード') ||
+        key.contains('card') ||
+        key.contains('ローン') ||
+        key.contains('loan') ||
+        key.contains('クレジット') ||
+        key.contains('credit')) {
+      return false;
+    }
+    const keywords = <String>[
+      'ファミペイ',
+      'famipay',
+      'paypay',
+      'ペイペイ',
+      'aupay',
+      'au pay',
+      '楽天ペイ',
+      'rakuten pay',
+      'd払い',
+      'linepay',
+      'line pay',
+      'ラインペイ',
+      'メルペイ',
+      'merpay',
+      'suica',
+      'スイカ',
+      'pasmo',
+      'パスモ',
+      'icoca',
+      'nanaco',
+      'ナナコ',
+      'waon',
+      'ワオン',
+      'edy',
+      'エディ',
+      '電子マネー',
+      'プリペイド',
+      'prepaid',
+      'スマホ決済',
+    ];
+    for (final keyword in keywords) {
+      if (key.contains(keyword)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// 投資系タイプ。減少が評価損か出金か区別できないため自動記録の対象外。
   static bool isInvestmentLikeType(String assetType) {
     final key = assetType.toLowerCase();
@@ -26,8 +80,9 @@ class AssetUnknownExpenseRuleService {
   /// 自動記録の条件:
   /// - 減少幅が 1 円以上
   /// - 投資系タイプは対象外
-  /// - 残高がマイナス圏 (previousAmount <= 0) のときは現金系のみ対象。
-  ///   負の値で記録する負債系タイプの残高悪化を使途不明金と誤認しないため。
+  /// - 残高がマイナス圏 (previousAmount <= 0) のときは現金系・プリペイド系
+  ///   (ファミペイ等の電子マネー残高) のみ対象。負の値で記録する負債系
+  ///   タイプの残高悪化を使途不明金と誤認しないため。
   static bool shouldAutoRecordFromAssetDrop({
     required String assetType,
     required double previousAmount,
@@ -37,7 +92,9 @@ class AssetUnknownExpenseRuleService {
     if (drop < 1) {
       return false;
     }
-    if (previousAmount <= 0 && !isCashLikeType(assetType)) {
+    if (previousAmount <= 0 &&
+        !isCashLikeType(assetType) &&
+        !isPrepaidLikeType(assetType)) {
       return false;
     }
     if (isInvestmentLikeType(assetType)) {
