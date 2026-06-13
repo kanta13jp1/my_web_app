@@ -57,7 +57,7 @@ void main() {
       expect(result.text, 'AIが生成した日本語要約です。');
       expect(capturedBody?['action'], 'provider.chat_auto');
       expect(capturedBody?['tier'], 'performance');
-      expect(capturedBody?['max_tokens'], 3200);
+      expect(capturedBody?['max_tokens'], 8000);
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
         capturedBody?['message'].toString().contains('AIに渡す詳細ペイロード'),
@@ -183,7 +183,7 @@ void main() {
         expect(calls.single['action'], 'provider.chat');
         expect(calls.single['provider'], 'anthropic');
         expect(calls.single['model'], 'claude-opus-4-7');
-        expect(calls.single['max_tokens'], 3200);
+        expect(calls.single['max_tokens'], 8000);
         expect(calls.single['routing_use_case'], 'summary');
         expect(
           calls.single['provider_choice_reason'],
@@ -449,8 +449,19 @@ void main() {
       expect(message.contains('"already_issued":true'), true);
       expect(message.contains('"number":3064'), true);
       expect(message.contains('既にGitHub Issue起票済み'), true);
-      expect(message.contains('既知提案の再掲・言い換えは禁止'), true);
+      expect(message.contains('本文にもJSONにも出力禁止'), true);
+      expect(
+        message.contains('新規提案なし（既知の提案はすべて起票済みです）'),
+        true,
+      );
+      expect(message.contains('起票済み。本文・JSONブロックとも再掲禁止。'), true);
       expect(message.contains('ai-new-proposals'), true);
+      // 起票済みテンプレートの本文 (echo の材料) はプロンプトへ渡さない。
+      expect(
+        message.contains(report.developerRequests.first.description),
+        false,
+      );
+      expect(message.contains('本文・JSONとも再掲禁止'), true);
     });
 
     test('extracts ai proposal block into issueable requests', () async {

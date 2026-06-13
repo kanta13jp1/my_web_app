@@ -454,6 +454,21 @@ class AssetLiabilityMonthlyStateStore {
     return formatMonthKey(salaryCycleMonthFor(date, salaryDay: salaryDay));
   }
 
+  /// 給料サイクルの開始日 (= 当該サイクルの給料日)。
+  /// 例: salaryDay=25 で 6/13 を渡すと 5/25 を返す (5/25〜6/24 サイクル)。
+  static DateTime salaryCycleStart(DateTime date, {int salaryDay = 25}) {
+    final cycleMonth = salaryCycleMonthFor(date, salaryDay: salaryDay);
+    final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
+    return DateTime(cycleMonth.year, cycleMonth.month, normalizedSalaryDay);
+  }
+
+  /// 給料サイクルの終了 (排他: 次サイクルの開始日)。
+  /// 例: salaryDay=25 で 6/13 を渡すと 6/25 を返す ([5/25, 6/25) = 5/25〜6/24)。
+  static DateTime salaryCycleEndExclusive(DateTime date, {int salaryDay = 25}) {
+    final start = salaryCycleStart(date, salaryDay: salaryDay);
+    return DateTime(start.year, start.month + 1, start.day);
+  }
+
   static AssetLiabilityMonthlyState copyPreviousMonthState({
     required AssetLiabilityMonthlyState previousState,
     required DateTime targetMonth,

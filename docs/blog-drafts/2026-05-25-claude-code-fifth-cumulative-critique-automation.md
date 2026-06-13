@@ -1,7 +1,7 @@
 ---
 title: "同じ批判が 5 回繰り返されたら 6 回目の謝罪ではなく自動化を出荷する — Claude Code 5-累積 redundancy threshold pattern"
 tags: ClaudeCode,AI,自律エージェント,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # 同じ批判が 5 回繰り返されたら 6 回目の謝罪ではなく自動化を出荷する — Claude Code 5-累積 redundancy threshold pattern

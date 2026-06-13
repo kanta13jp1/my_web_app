@@ -1035,32 +1035,25 @@
 
     // Flutter Web occasionally surfaces non-fatal framework focus/hover races
     // as window-level "Uncaught Error" entries after the app has recovered.
-    // Keep this filter narrow: it only matches minified Flutter framework
-    // stacks for FocusTraversal RenderBox geometry and InkResponse hover.
+    // Known case (#3237): the engine delivers the initial ViewFocusEvent
+    // before the first layout pass, so the reading-order focus sort reads
+    // FocusNode.rect on render boxes that are not laid out yet and throws
+    // "Bad state: RenderBox was not laid out". The same traversal succeeds
+    // once layout completes (verified by TAB refocus), so these escapes are
+    // noise. Match on the stable Dart exception text via String(error) --
+    // minified stack symbols rotate every build, which is how the previous
+    // signature-based filter went stale.
     window.addEventListener('error', function(event) {
       var error = event && event.error;
       var stack = String((error && error.stack) || '');
       var message = String((event && event.message) || (error && error.message) || '');
       var isMainBundle = stack.indexOf('main.dart.js') !== -1;
-      var isFocusTraversalRenderBoxV1 =
+      var text = '';
+      try { text = String(error || ''); } catch (ignored) {}
+      var isFocusGeometryRace =
         isMainBundle &&
-        stack.indexOf('.gN') !== -1 &&
-        stack.indexOf('.gn') !== -1 &&
-        stack.indexOf('Object.e') !== -1 &&
-        stack.indexOf('Object.dy') !== -1 &&
-        stack.indexOf('.ak') !== -1 &&
-        stack.indexOf('a7') !== -1;
-      var isFocusTraversalRenderBoxV2 =
-        isMainBundle &&
-        stack.indexOf('.gn') !== -1 &&
-        stack.indexOf('.ge') !== -1 &&
-        stack.indexOf('Object.e') !== -1 &&
-        stack.indexOf('Object.d') !== -1 &&
-        (stack.indexOf('.aF') !== -1 || stack.indexOf('.aG') !== -1) &&
-        (stack.indexOf('.aU') !== -1 || stack.indexOf('.aV') !== -1) &&
-        stack.indexOf('.at') !== -1;
-      var isFocusTraversalRenderBox =
-        isFocusTraversalRenderBoxV1 || isFocusTraversalRenderBoxV2;
+        (text.indexOf('RenderBox was not laid out') !== -1 ||
+          message.indexOf('RenderBox was not laid out') !== -1);
       var isInkResponseNull =
         message.indexOf('Null check operator used on a null value') !== -1 &&
         isMainBundle &&
@@ -1070,8 +1063,12 @@
           stack.indexOf('MouseTracker') !== -1
         );
 
-      if (isFocusTraversalRenderBox || isInkResponseNull) {
+      if (isFocusGeometryRace || isInkResponseNull) {
         event.preventDefault();
+        console.info(
+          '[known-race] suppressed non-fatal Flutter framework error (#3237):',
+          text || message
+        );
       }
     }, true);
   </script>
