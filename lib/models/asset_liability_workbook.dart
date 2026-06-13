@@ -228,6 +228,67 @@ class AssetLiabilityAccount {
   }
 }
 
+/// リボ払いカードの設定。
+///
+/// 請求額 = [monthlyAmount] + max(0, リボ残高 − [creditLimit])。
+/// auPAY カードの「あらかじめリボ」などで、毎月の請求額が利用明細合計ではなく
+/// 設定額 + 限度額超過分で決まるカードを表す。
+class AssetLiabilityRevolvingCreditConfig {
+  /// リボ設定額 (毎月固定で請求される最低額)。
+  final double monthlyAmount;
+
+  /// 利用限度額。これを超えたリボ残高は当月に一括で上乗せ請求される。
+  final double creditLimit;
+
+  const AssetLiabilityRevolvingCreditConfig({
+    required this.monthlyAmount,
+    required this.creditLimit,
+  });
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'monthlyAmount': monthlyAmount,
+        'creditLimit': creditLimit,
+      };
+
+  factory AssetLiabilityRevolvingCreditConfig.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return AssetLiabilityRevolvingCreditConfig(
+      monthlyAmount: (json['monthlyAmount'] as num?)?.toDouble() ?? 0,
+      creditLimit: (json['creditLimit'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+/// リボ残高に対して算出した今月の請求内訳。
+class AssetLiabilityRevolvingCreditBilling {
+  /// リボ残高 (= 当月時点の負債残高)。
+  final double balance;
+
+  /// 利用限度額。
+  final double creditLimit;
+
+  /// リボ設定額。
+  final double monthlyAmount;
+
+  /// 限度額超過分 = max(0, [balance] − [creditLimit])。
+  final double overLimitAmount;
+
+  /// 今月請求額 = [monthlyAmount] + [overLimitAmount]。
+  final double billedAmount;
+
+  const AssetLiabilityRevolvingCreditBilling({
+    required this.balance,
+    required this.creditLimit,
+    required this.monthlyAmount,
+    required this.overLimitAmount,
+    required this.billedAmount,
+  });
+
+  /// 限度額を超過しているか (= 設定額に上乗せ請求が発生しているか)。
+  bool get isOverLimit => overLimitAmount > 0;
+}
+
 class AssetLiabilityDebtRow {
   final String id;
   final String name;
@@ -260,6 +321,10 @@ class AssetLiabilityDebtRow {
   /// 家賃・通信費など毎月全額を支払う固定費型の負債。利率の概念を持たない。
   final bool fullPaymentEstimate;
 
+  /// リボ払いカードの場合の今月請求内訳 (= 設定額 + 限度額超過分)。
+  /// null なら通常の負債 (請求額は手入力 or 推定)。
+  final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
+
   const AssetLiabilityDebtRow({
     required this.id,
     required this.name,
@@ -289,7 +354,11 @@ class AssetLiabilityDebtRow {
     required this.billingConfirmed,
     required this.paid,
     this.fullPaymentEstimate = false,
+    this.revolvingBilling,
   });
+
+  /// リボ払いカードか (= 請求額が設定額 + 限度額超過分で決まるか)。
+  bool get isRevolving => revolvingBilling != null;
 
   bool get isDirectCashflowTarget =>
       !includedInBillingAccount &&
@@ -793,6 +862,10 @@ class AssetLiabilityCardStatementReconciliationGroup {
   final List<AssetLiabilityCardStatementLine> statementLines;
   final List<String> alerts;
 
+  /// リボ払いカードの場合の今月請求内訳。null なら通常の一括払いカード。
+  /// リボ払いでは 請求額 ≠ 明細合計 が正常なため、不一致アラートは抑止する。
+  final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
+
   const AssetLiabilityCardStatementReconciliationGroup({
     required this.billingAccountId,
     required this.billingAccountName,
@@ -802,12 +875,16 @@ class AssetLiabilityCardStatementReconciliationGroup {
     required this.configuredItems,
     required this.statementLines,
     required this.alerts,
+    this.revolvingBilling,
   });
 
   double get statementDifference => statementLineTotal - billedAmount;
   double get configuredDifference => configuredDetailTotal - billedAmount;
   bool get hasStatementLines => statementLines.isNotEmpty;
   bool get needsReview => alerts.isNotEmpty;
+
+  /// リボ払いカードか。
+  bool get isRevolving => revolvingBilling != null;
 }
 
 class AssetLiabilityCardStatementReconciliationData {

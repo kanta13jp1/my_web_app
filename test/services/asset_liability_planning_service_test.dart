@@ -690,6 +690,66 @@ void main() {
       expect(workbook.cardBillingReview.hasDoubleCountingRisk, isFalse);
     });
 
+    test('リボ払いカードは請求額を式から算出し不一致アラートを抑止する', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'auPayカード': -530163,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_lemon',
+            billingAccountId: 'aupay_card',
+            billingAccountName: 'auPayカード',
+            postedAt: null,
+            description: 'レモンガス',
+            amount: 8066,
+          ),
+          AssetLiabilityCardStatementLine(
+            id: 'line_au',
+            billingAccountId: 'aupay_card',
+            billingAccountName: 'auPayカード',
+            postedAt: null,
+            description: 'au電話',
+            amount: 15116,
+          ),
+        ],
+      );
+
+      final debtRow = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'aupay_card',
+      );
+      // 請求額 = 設定額10000 + max(0, 530163 − 500000) = 40163。
+      expect(debtRow.scheduledPaymentAmount, 40163);
+      expect(debtRow.isRevolving, isTrue);
+      expect(debtRow.revolvingBilling!.overLimitAmount, 30163);
+      expect(debtRow.paymentAmountEstimated, isFalse);
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'aupay_card',
+      );
+      expect(group.isRevolving, isTrue);
+      expect(group.billedAmount, 40163);
+      // 明細合計(新規利用) 8066 + 15116 = 23182 は請求額と一致しないが正常。
+      expect(group.statementLineTotal, 23182);
+      expect(
+        group.alerts,
+        isNot(
+          contains(
+            AssetLiabilityPlanningService.cardStatementAmountMismatchAlert,
+          ),
+        ),
+      );
+      expect(group.revolvingBilling!.billedAmount, 40163);
+    });
+
     test(
       'marks monthly and default setting sources in card billing review',
       () {

@@ -37,6 +37,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
+import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
@@ -211,6 +212,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, String> _paymentDifferenceReasons = <String, String>{};
   Map<String, double> _annualRateOverrides = <String, double>{};
   Map<String, int> _debtPaymentDayOverrides = <String, int>{};
+  // リボ払いカードの設定 (負債IDごと)。v1 はローカル永続化のみ。
+  Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
+      <String, AssetLiabilityRevolvingCreditConfig>{};
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   Map<String, AssetLiabilityAnnualRateEvidence> _annualRateEvidences =
       <String, AssetLiabilityAnnualRateEvidence>{};
@@ -381,6 +385,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementDisplayModeStore.defaultMode;
   final AssetManagementMainAccountStore _mainAccountStore =
       const AssetManagementMainAccountStore();
+  final AssetRevolvingCreditConfigStore _revolvingConfigStore =
+      const AssetRevolvingCreditConfigStore();
   // 使用可能額の基準となるメインバンク口座ID。null は既定(最大預金口座)。
   String? _assetManagementMainAccountId;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
@@ -484,6 +490,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     _loadDisplayMode();
     _loadMainAccount();
+    unawaited(_loadRevolvingConfigs());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
     unawaited(_initTombstoneGcAndPull());
@@ -4294,6 +4301,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
       defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
       cardBillingAccountIds: _cardBillingAccountIds,
+      revolvingConfigs: _revolvingConfigs,
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
@@ -7306,6 +7314,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
       defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
       cardBillingAccountIds: _cardBillingAccountIds,
+      revolvingConfigs: _revolvingConfigs,
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
@@ -7437,6 +7446,83 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('Error saving main account: $e');
     }
+  }
+
+  Future<void> _loadRevolvingConfigs() async {
+    try {
+      final configs = await _revolvingConfigStore.load();
+      if (!mounted || configs.isEmpty) {
+        return;
+      }
+      setState(() {
+        _revolvingConfigs = configs;
+      });
+    } catch (e) {
+      debugPrint('Error loading revolving credit configs: $e');
+    }
+  }
+
+  void _persistRevolvingConfig(
+    String debtId,
+    AssetLiabilityRevolvingCreditConfig? config,
+  ) {
+    setState(() {
+      final next = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+        _revolvingConfigs,
+      );
+      if (config == null) {
+        next.remove(debtId);
+      } else {
+        next[debtId] = config;
+      }
+      _revolvingConfigs = next;
+    });
+    unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+  }
+
+  void _toggleRevolving(AssetLiabilityDebtRow row, bool enabled) {
+    if (!enabled) {
+      _persistRevolvingConfig(row.id, null);
+      return;
+    }
+    _persistRevolvingConfig(
+      row.id,
+      _revolvingConfigs[row.id] ??
+          const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 0,
+            creditLimit: 0,
+          ),
+    );
+  }
+
+  void _updateRevolvingMonthlyAmount(String debtId, double amount) {
+    final existing = _revolvingConfigs[debtId] ??
+        const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 0,
+          creditLimit: 0,
+        );
+    _persistRevolvingConfig(
+      debtId,
+      AssetLiabilityRevolvingCreditConfig(
+        monthlyAmount: amount < 0 ? 0 : amount,
+        creditLimit: existing.creditLimit,
+      ),
+    );
+  }
+
+  void _updateRevolvingCreditLimit(String debtId, double amount) {
+    final existing = _revolvingConfigs[debtId] ??
+        const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 0,
+          creditLimit: 0,
+        );
+    _persistRevolvingConfig(
+      debtId,
+      AssetLiabilityRevolvingCreditConfig(
+        monthlyAmount: existing.monthlyAmount,
+        creditLimit: amount < 0 ? 0 : amount,
+      ),
+    );
   }
 
   Future<void> _loadDisplayMode() async {
@@ -10180,6 +10266,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         defaultPaymentSourceAccountIds: _defaultPaymentSourceAccountIds,
         defaultCardBillingAccountIds: _defaultCardBillingAccountIds,
         cardBillingAccountIds: _cardBillingAccountIds,
+        revolvingConfigs: _revolvingConfigs,
         incomePlans: _monthlyIncomePlans,
         cardStatementLines: _cardStatementLines,
         transferTasks: _transferTasks,
@@ -16328,6 +16415,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 照合行の「確認事項」表示文。リボ払いカードは不一致アラートの代わりに
+  /// 請求内訳 (設定額 + 限度超過分) を説明し、明細合計との不一致が正常である旨を示す。
+  String _cardReconciliationNote(
+    AssetLiabilityCardStatementReconciliationGroup group,
+  ) {
+    final billing = group.revolvingBilling;
+    if (billing != null) {
+      return 'リボ払い: 設定額 ${_formatManagementYen(billing.monthlyAmount)}'
+          ' ＋ 限度超過 ${_formatManagementYen(billing.overLimitAmount)}'
+          ' ＝ 請求 ${_formatManagementYen(billing.billedAmount)}'
+          '（残高 ${_formatManagementYen(billing.balance)}'
+          ' / 限度額 ${_formatManagementYen(billing.creditLimit)}）。'
+          '明細合計は今月の新規利用のため請求額と一致しません。';
+    }
+    return group.alerts.isEmpty ? 'OK' : group.alerts.join(' / ');
+  }
+
   Widget _buildCardStatementReconciliationTable(
     AssetLiabilityCardStatementReconciliationData reconciliation,
   ) {
@@ -16368,15 +16472,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   Text(_formatManagementYen(group.configuredDetailTotal)),
                 ),
                 DataCell(
-                  Text(
-                    _formatManagementYen(group.statementDifference),
-                    style: TextStyle(
-                      color: group.needsReview
-                          ? const Color(0xFFD97706)
-                          : const Color(0xFF0D9488),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  group.isRevolving
+                      ? const Text('—')
+                      : Text(
+                          _formatManagementYen(group.statementDifference),
+                          style: TextStyle(
+                            color: group.needsReview
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFF0D9488),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 DataCell(
                   ConstrainedBox(
@@ -16384,7 +16490,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Text(
-                        group.alerts.isEmpty ? 'OK' : group.alerts.join(' / '),
+                        _cardReconciliationNote(group),
                         softWrap: true,
                         style: const TextStyle(height: 1.4),
                       ),
@@ -19414,6 +19520,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 child: _buildMonthlyPaymentInput(row),
               ),
               _buildDebtMasterControl(
+                label: 'リボ払い設定',
+                child: _buildRevolvingControl(row),
+                maxWidth: 260,
+              ),
+              _buildDebtMasterControl(
                 label: '支払額区分',
                 child: _buildPaymentAmountSourceChip(row),
                 maxWidth: 150,
@@ -19624,6 +19735,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _buildMonthlyPaymentInput(AssetLiabilityDebtRow row) {
+    if (row.isRevolving) {
+      // リボ払いは請求額を式から自動算出するため手入力欄は出さない。
+      final billing = row.revolvingBilling!;
+      return SizedBox(
+        width: 150,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _formatManagementYen(billing.billedAmount),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.3),
+            ),
+            const Text(
+              'リボ自動算出',
+              style: TextStyle(fontSize: 11, height: 1.3),
+            ),
+          ],
+        ),
+      );
+    }
     final controller = _monthlyPaymentControllerFor(row);
     return SizedBox(
       width: 150,
@@ -19645,6 +19777,105 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRevolvingControl(AssetLiabilityDebtRow row) {
+    final config = _revolvingConfigs[row.id];
+    final enabled = config != null;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                value: enabled,
+                onChanged: (value) => _toggleRevolving(row, value ?? false),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Flexible(
+              child: Text(
+                'リボ払い (請求=設定額+限度超過分)',
+                style: TextStyle(fontSize: 11, height: 1.3),
+              ),
+            ),
+          ],
+        ),
+        if (config != null) ...[
+          const SizedBox(height: 6),
+          _buildRevolvingField(
+            row: row,
+            label: 'リボ設定額',
+            hint: '例: 10000',
+            value: config.monthlyAmount,
+            onChanged: (amount) =>
+                _updateRevolvingMonthlyAmount(row.id, amount),
+          ),
+          const SizedBox(height: 6),
+          _buildRevolvingField(
+            row: row,
+            label: '利用限度額',
+            hint: '例: 500000',
+            value: config.creditLimit,
+            onChanged: (amount) => _updateRevolvingCreditLimit(row.id, amount),
+          ),
+          if (row.revolvingBilling != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              '今月請求 ${_formatManagementYen(row.revolvingBilling!.billedAmount)}',
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.3,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRevolvingField({
+    required AssetLiabilityDebtRow row,
+    required String label,
+    required String hint,
+    required double value,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 64,
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 11, height: 1.3),
+          ),
+        ),
+        Expanded(
+          child: TextFormField(
+            key: ValueKey('revolving:${row.id}:$label'),
+            initialValue: value > 0 ? value.toStringAsFixed(0) : '',
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+            ],
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(isDense: true, hintText: hint),
+            onChanged: (text) {
+              final normalized = text.replaceAll(',', '').trim();
+              final parsed =
+                  normalized.isEmpty ? 0.0 : double.tryParse(normalized) ?? 0.0;
+              onChanged(parsed);
+            },
+          ),
+        ),
+      ],
     );
   }
 

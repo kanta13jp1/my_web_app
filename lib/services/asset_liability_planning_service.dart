@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:my_web_app/services/debt_lockdown_service.dart';
+import 'package:my_web_app/services/asset_revolving_credit_service.dart';
 
 import '../models/asset_liability_workbook.dart';
 
@@ -88,6 +89,8 @@ class AssetLiabilityPlanningService {
         const <String, String>{},
     Map<String, String> defaultCardBillingAccountIds = const <String, String>{},
     Map<String, String> cardBillingAccountIds = const <String, String>{},
+    Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs =
+        const <String, AssetLiabilityRevolvingCreditConfig>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
     List<AssetLiabilityTransferTask> transferTasks =
@@ -183,6 +186,7 @@ class AssetLiabilityPlanningService {
             paymentSourceAccountIds: effectivePaymentSourceAccountIds,
             defaultCardBillingAccountIds: defaultCardBillingAccountIds,
             cardBillingAccountIds: cardBillingAccountIds,
+            revolvingConfigs: revolvingConfigs,
             accountsById: accountsById,
           ),
         )
@@ -554,6 +558,7 @@ class AssetLiabilityPlanningService {
     required Map<String, String> paymentSourceAccountIds,
     required Map<String, String> defaultCardBillingAccountIds,
     required Map<String, String> cardBillingAccountIds,
+    required Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs,
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
     final principal = account.liabilityBalance;
@@ -575,7 +580,20 @@ class AssetLiabilityPlanningService {
       account: account,
       monthlyPaymentOverrides: monthlyPaymentOverrides,
     );
-    final scheduledPayment = manualPayment ?? minimumPayment;
+    // リボ払いカードは 請求額 = 設定額 + max(0, リボ残高 − 利用限度額) で確定する。
+    // リボ残高は負債残高 (principal) を用い、手入力/推定額より優先する。
+    final revolvingConfig = _revolvingConfigFor(
+      account: account,
+      revolvingConfigs: revolvingConfigs,
+    );
+    final revolvingBilling = revolvingConfig == null
+        ? null
+        : const AssetRevolvingCreditService().computeBilling(
+            balance: principal,
+            config: revolvingConfig,
+          );
+    final scheduledPayment =
+        revolvingBilling?.billedAmount ?? manualPayment ?? minimumPayment;
     final actualPayment = _actualPaymentAmountFor(
       account: account,
       actualPaymentAmounts: actualPaymentAmounts,
@@ -623,8 +641,9 @@ class AssetLiabilityPlanningService {
       liabilityShare:
           liabilityTotal == 0 ? 0 : principal / liabilityTotal.abs(),
       priorityLabel: _priorityLabel(annualRate),
-      paymentAmountEstimated: manualPayment == null,
+      paymentAmountEstimated: revolvingBilling == null && manualPayment == null,
       fullPaymentEstimate: account.fullPaymentEstimate,
+      revolvingBilling: revolvingBilling,
       billingConfirmed: _containsAccountKey(
         billingConfirmedAccountIds,
         account,
@@ -984,6 +1003,11 @@ class AssetLiabilityPlanningService {
         0,
         (sum, line) => sum + line.amount,
       );
+      // リボ払いカードは 請求額 = 設定額 + 限度額超過分 で決まり、利用明細(新規利用)は
+      // リボ残高に積み増されるだけなので「明細合計 ≠ 請求額」が正常。一括払い前提の
+      // 不一致アラートは抑止し、内訳は revolvingBilling で表示する。
+      final revolvingBilling = billingRow?.revolvingBilling;
+      final isRevolving = revolvingBilling != null;
       final alerts = <String>[];
 
       if (billingRow == null) {
@@ -992,15 +1016,19 @@ class AssetLiabilityPlanningService {
       if (lines.isEmpty && group != null) {
         alerts.add(cardStatementMissingImportAlert);
       }
-      if (lines.isNotEmpty && _moneyDiffers(statementLineTotal, billedAmount)) {
+      if (!isRevolving &&
+          lines.isNotEmpty &&
+          _moneyDiffers(statementLineTotal, billedAmount)) {
         alerts.add(cardStatementAmountMismatchAlert);
       }
-      if (group != null &&
+      if (!isRevolving &&
+          group != null &&
           billingRow != null &&
           _moneyDiffers(configuredDetailTotal, billedAmount)) {
         alerts.add(cardStatementConfiguredMismatchAlert);
       }
-      if (lines.isNotEmpty &&
+      if (!isRevolving &&
+          lines.isNotEmpty &&
           group != null &&
           _moneyDiffers(statementLineTotal, configuredDetailTotal)) {
         alerts.add(cardStatementImportedConfiguredMismatchAlert);
@@ -1017,6 +1045,7 @@ class AssetLiabilityPlanningService {
               group?.items ?? const <AssetLiabilityCardBillingReviewItem>[],
           statementLines: lines,
           alerts: alerts,
+          revolvingBilling: revolvingBilling,
         ),
       );
     }
@@ -1748,6 +1777,19 @@ class AssetLiabilityPlanningService {
       return null;
     }
     return amount;
+  }
+
+  AssetLiabilityRevolvingCreditConfig? _revolvingConfigFor({
+    required AssetLiabilityAccount account,
+    required Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs,
+  }) {
+    if (revolvingConfigs.isEmpty) {
+      return null;
+    }
+    final trimmedName = account.name.trim();
+    return revolvingConfigs[account.id] ??
+        revolvingConfigs[trimmedName] ??
+        revolvingConfigs[account.name];
   }
 
   double? _actualPaymentAmountFor({
