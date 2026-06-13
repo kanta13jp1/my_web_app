@@ -64,9 +64,11 @@ class AssetManagementAiProposalExtraction {
 
 class AssetManagementAiSummaryService {
   // GPT-5 の reasoning トークンや Gemini の thinking トークンも
-  // この上限を消費するため、本文 (約3,000トークン) に思考分の余裕を足す。
-  // 3,200 では Gemini 3.1 Pro が本文出力前に MAX_TOKENS で途中終了した。
-  static const int _summaryMaxTokens = 8000;
+  // この上限 (maxOutputTokens) を消費するため、本文 (約3,000-4,000トークン) に
+  // 思考分の余裕を大きく足す。3,200→8,000 でも Gemini 3.1 Pro が thinking で
+  // 食い切り、本文出力前に MAX_TOKENS (outputLengthLimited) で途中終了したため、
+  // 24,000 へ引き上げる (思考に約20,000確保しても本文が収まる)。
+  static const int _summaryMaxTokens = 24000;
 
   final bool _aiEnabled;
   final AiHubChatService _chatService;
