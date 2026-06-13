@@ -123,6 +123,34 @@ class AssetExpectedInflowStore {
     await store.setString(_gcConfigKey, jsonEncode(config.toMirrorValue()));
   }
 
+  /// 入金 pref (削除トゥームストーン + GC 設定) を 1 行 jsonb へ集約する
+  /// (#part294 asset_inflow_prefs_v1 / upsert 行数削減)。
+  static Map<String, dynamic> buildAggregatedInflowMirrorValue({
+    required Iterable<String> deletedIds,
+    required AssetTombstoneGcConfig gcConfig,
+  }) {
+    return <String, dynamic>{
+      'deleted_ids': MirrorTombstoneStore.encodeMirror(deletedIds),
+      'gc': gcConfig.toMirrorValue(),
+    };
+  }
+
+  /// 集約 inflow pref 値から削除トゥームストーン ID を取り出す。
+  static List<String> aggregatedInflowDeletedIds(Object? value) {
+    if (value is! Map) {
+      return const <String>[];
+    }
+    return MirrorTombstoneStore.decodeMirror(value['deleted_ids']);
+  }
+
+  /// 集約 inflow pref 値から GC 設定を取り出す (欠落は既定)。
+  static AssetTombstoneGcConfig aggregatedInflowGcConfig(Object? value) {
+    if (value is! Map) {
+      return const AssetTombstoneGcConfig();
+    }
+    return AssetTombstoneGcConfig.fromMirrorValue(value['gc']);
+  }
+
   /// トゥームストーンの保持上限/期限 (#part286 GC / #part287 リモート調整可)。
   final AssetTombstoneGcConfig gcConfig;
 

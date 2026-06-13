@@ -473,5 +473,34 @@ void main() {
         AssetManagementSectionVisibilityOverride.pinned,
       );
     });
+
+    test('debt payment day override deletion propagates A → mirror → B',
+        () async {
+      // #part294: 支払日上書き削除トゥームストーンのミラー往復(page と同型ロジック)。
+      const key = 'debt_payment_day_override_deleted_v1';
+
+      // 端末A: debt_1 の支払日上書きを削除 → トゥームストーン化 → mirror へ encode。
+      final prefsA = await _switchClient();
+      const storeA = MirrorTombstoneStore(storageKey: key);
+      await storeA.addId(prefsA, 'debt_1');
+      final mirror = MirrorTombstoneStore.encodeMirror(
+        storeA.activeIds(prefsA),
+      );
+      expect(MirrorTombstoneStore.decodeMirror(mirror), contains('debt_1'));
+
+      // 端末B: debt_1 と debt_2 の上書きを保持。mirror を取り込むと debt_1 が消える。
+      final prefsB = await _switchClient();
+      const storeB = MirrorTombstoneStore(storageKey: key);
+      final overridesB = <String, int>{'debt_1': 27, 'debt_2': 5};
+      final incoming = await storeB.mergeRemoteIds(
+        prefsB,
+        MirrorTombstoneStore.decodeMirror(mirror),
+      );
+      overridesB.removeWhere((id, _) => incoming.contains(id));
+
+      expect(overridesB.containsKey('debt_1'), isFalse);
+      expect(overridesB['debt_2'], 5);
+      expect(storeB.activeIds(prefsB), contains('debt_1'));
+    });
   });
 }
