@@ -1,10 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../data/home_tool_catalog.dart';
 import '../services/home_tool_usage_service.dart';
-import '../utils/feature_tap_logger.dart';
 
 class WorkMenuPage extends StatefulWidget {
   const WorkMenuPage({
@@ -91,12 +88,8 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
       return;
     }
     await HomeToolUsageService.recordToolUse(entry.id);
-    // ホームの「最近使った機能 / よく使われる機能」は user_feature_usage を参照する。
-    // 業務メニューが主要な起動口なので、ローカル recent とは別に DB へも記録する。
-    final usageRoute = entry.routePath ??
-        (entry.id.startsWith('/') ? entry.id : '/${entry.id}');
-    unawaited(recordFeatureTap(usageRoute, entry.title));
     if (!mounted) return;
+    // entry.onOpen はカタログラッパー経由で user_feature_usage に記録される。
     await entry.onOpen(context);
     if (!mounted) return;
     setState(() {
