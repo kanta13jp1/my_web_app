@@ -490,6 +490,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 他端末で削除されたセクション上書き / 支払日上書きを取り込む (#part292/294)。
     unawaited(_pullDeletedSectionIds());
     unawaited(_pullDebtOverrideDeleted());
+    // 期限切れ・上限超過のトゥームストーンを自動掃除 (#part296 肥大化抑制)。
+    unawaited(_pruneTombstonesOnBoot());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -8549,19 +8551,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// GC 設定 (上限/期限) の編集ダイアログ。保存でローカル+ミラーへ反映する。
   /// 手動 GC: 期限切れ・上限超過の削除記録を今すぐ掃除し、件数を SnackBar 表示。
   Future<void> _pruneTombstonesNow() async {
-    // 入金予定 + 表示設定 override の両トゥームストーンを一括掃除 (#part292)。
-    final removedInflow = await _expectedInflowStore.pruneDeletedIds();
-    final removedOverride = await _displayModeStore.pruneDeletedSectionIds();
+    // 入金予定 + 表示設定 override + 支払日上書きの全トゥームストーンを一括掃除
+    // (#part292/296)。
+    final removed = await _pruneAllTombstones();
     if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '古い削除記録を${removedInflow + removedOverride}件 掃除しました',
-        ),
-      ),
+      SnackBar(content: Text('古い削除記録を$removed件 掃除しました')),
     );
+  }
+
+  /// 3 ドメインのトゥームストーンを掃除し、合算した削除件数を返す。
+  Future<int> _pruneAllTombstones() async {
+    final store = await SharedPreferences.getInstance();
+    final removedInflow = await _expectedInflowStore.pruneDeletedIds();
+    final removedOverride = await _displayModeStore.pruneDeletedSectionIds();
+    final removedDebt = await _debtOverrideTombstones.prune(store);
+    return removedInflow + removedOverride + removedDebt;
+  }
+
+  /// boot 時に期限切れ・上限超過のトゥームストーンを自動で掃除する
+  /// (SharedPreferences 肥大化の自動抑制 / #part296)。UI 通知はしない。
+  Future<void> _pruneTombstonesOnBoot() async {
+    try {
+      await _pruneAllTombstones();
+    } catch (e) {
+      debugPrint('boot tombstone prune failed: $e');
+    }
   }
 
   Future<void> _showTombstoneGcSettings(

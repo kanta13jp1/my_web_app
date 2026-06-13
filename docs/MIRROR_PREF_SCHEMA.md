@@ -38,3 +38,23 @@ best-effort delete される(Phase 2)。読みは集約行が無い場合のみ�
 1. 入金予定削除 → `asset_inflow_prefs_v1.deleted_ids`
 2. セクション上書き削除 → `asset_display_prefs_v1.section_override_deleted`
 3. 支払日上書き削除 → `debt_payment_day_override_deleted`
+
+## 入金予定実体 (`asset_expected_inflow_items` テーブル) の削除伝播 — 整理 (part 296)
+
+入金予定の**実体行**は別テーブル `asset_expected_inflow_items` にあるが、その
+**削除伝播は上記 tombstone #1 が既にカバーしている**ため、items 専用の追加
+ラウンドトリップは不要(結論)。具体的な流れ:
+
+- 端末A で削除 → `_deleteInflowMirror(id)` がサーバ行を削除 **かつ**
+  `_mirrorInflowPrefs` が `deleted_ids` に id を追加 (tombstone をミラー)。
+- 端末B の boot → `_pullInflowDeletedIds` が tombstone を取り込み
+  `applyRemoteDeletedIds` で**ローカルの該当 item を削除**(復活防止)。
+- `mergeFromMirrorRows` / `restoreFromMirrorRows` は tombstone 済み id を除外。
+
+`restoreFromMirrorRows` が「ローカル空のときだけ全復元」なのは安全側の初期復元
+専用であり、削除伝播はあくまで tombstone 経路で成立している(= 「復元のみ」では
+ない)。よって items に新規の削除ミラーは追加しない。
+
+> 強いて残る差分: items は `_mirrorInflowToSupabase` で**行ごと upsert** する一方、
+> tombstone は集約 1 行。行ごと upsert の集約化は別テーマ (実体データのため本 doc の
+> pref 集約とはスコープが異なる)。
