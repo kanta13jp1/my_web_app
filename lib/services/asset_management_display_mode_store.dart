@@ -227,6 +227,70 @@ class AssetManagementDisplayModeStore {
   static List<String> decodeDeletedSectionIdsMirror(Object? value) =>
       MirrorTombstoneStore.decodeMirror(value);
 
+  /// 表示設定 3 種 (mode / section_overrides / section_override_deleted) を
+  /// 1 行 jsonb へ集約する (#part293 upsert 回数削減)。
+  static Map<String, dynamic> buildAggregatedMirrorValue({
+    required AssetManagementDisplayMode mode,
+    required AssetManagementSectionOverrides overrides,
+    required Iterable<String> deletedIds,
+  }) {
+    return <String, dynamic>{
+      'mode': mode.storageId,
+      'section_overrides': <String, String>{
+        for (final entry in overrides.entries)
+          entry.key.storageId: entry.value.storageId,
+      },
+      'section_override_deleted': <String>[
+        for (final id in deletedIds)
+          if (id.isNotEmpty) id,
+      ],
+    };
+  }
+
+  /// 集約ミラー値を、既存の evaluateMirrorPrefRows が解釈できる per-key 行
+  /// (display_mode / section_overrides) へ変換する。形が不正なら空。
+  static List<Map<String, dynamic>> aggregatedMirrorToRows(
+    Object? value, {
+    required String updatedAt,
+  }) {
+    if (value is! Map) {
+      return const <Map<String, dynamic>>[];
+    }
+    final rows = <Map<String, dynamic>>[];
+    final mode = value['mode'];
+    if (mode != null) {
+      rows.add(<String, dynamic>{
+        'pref_key': 'display_mode',
+        'value': <String, dynamic>{'mode': mode.toString()},
+        'updated_at': updatedAt,
+      });
+    }
+    final overrides = value['section_overrides'];
+    if (overrides is Map) {
+      rows.add(<String, dynamic>{
+        'pref_key': 'section_overrides',
+        'value': Map<String, dynamic>.from(overrides),
+        'updated_at': updatedAt,
+      });
+    }
+    return rows;
+  }
+
+  /// 集約ミラー値から削除トゥームストーン (section storageId) を取り出す。
+  static List<String> aggregatedDeletedSectionIds(Object? value) {
+    if (value is! Map) {
+      return const <String>[];
+    }
+    final raw = value['section_override_deleted'];
+    if (raw is! List) {
+      return const <String>[];
+    }
+    return <String>[
+      for (final id in raw)
+        if ((id?.toString() ?? '').isNotEmpty) id.toString(),
+    ];
+  }
+
   /// 他端末由来の override 削除トゥームストーンを取り込み、該当するローカル
   /// 上書きを削除する (端末間の削除伝播 / #part292)。削除した上書き数を返す。
   Future<int> applyRemoteDeletedSectionIds(

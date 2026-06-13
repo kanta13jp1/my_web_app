@@ -54,6 +54,7 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart'
@@ -782,26 +783,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return false;
       }
       return occurredAt.year == target.year && occurredAt.month == target.month;
-    }).toList();
-  }
-
-  /// 給料サイクル (先月25日〜今月24日) の期間に発生したフローを返す。
-  /// 「収支を最優先で把握」カードは暦月ではなくこのサイクルで集計する
-  /// (給料日前は収入0で赤字に見えてしまうのを避けるため)。
-  List<Map<String, dynamic>> _flowsForSalaryCycle(DateTime reference) {
-    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(reference);
-    final endExclusive =
-        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(reference);
-    return _recentFlows.where((flow) {
-      final occurredAtRaw = flow['occurred_at']?.toString();
-      if (occurredAtRaw == null || occurredAtRaw.isEmpty) {
-        return false;
-      }
-      final occurredAt = DateTime.tryParse(occurredAtRaw)?.toLocal();
-      if (occurredAt == null) {
-        return false;
-      }
-      return !occurredAt.isBefore(start) && occurredAt.isBefore(endExclusive);
     }).toList();
   }
 
@@ -7488,13 +7469,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       final stats = await _displayModeStore.loadStats();
       final deletedSectionIds = await _displayModeStore.loadDeletedSectionIds();
-      final rows = debugRows ??
-          List<Map<String, dynamic>>.from(
-            await _supabase.from('asset_pref_mirror').select().inFilter(
-              'pref_key',
-              <String>['display_mode', 'section_overrides'],
-            ),
-          );
+      final rows = debugRows ?? await _fetchDisplayPrefRows();
       if (rows.isEmpty || !mounted) {
         return;
       }
@@ -7572,6 +7547,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 表示設定を集約する 1 行 jsonb の pref_key (#part293)。
+  static const String _displayPrefsAggregatedKey = 'asset_display_prefs_v1';
+
   Future<void> _mirrorDisplayPrefs() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
@@ -7579,34 +7557,49 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     try {
       final now = DateTime.now().toUtc().toIso8601String();
-      final deletedMirror =
-          await _displayModeStore.encodeDeletedSectionIdsMirror();
-      await _supabase.from('asset_pref_mirror').upsert(<Map<String, dynamic>>[
-        <String, dynamic>{
-          'user_id': userId,
-          'pref_key': 'display_mode',
-          'value': <String, dynamic>{'mode': _displayMode.storageId},
-          'updated_at': now,
-        },
-        <String, dynamic>{
-          'user_id': userId,
-          'pref_key': 'section_overrides',
-          'value': <String, String>{
-            for (final entry in _sectionOverrides.entries)
-              entry.key.storageId: entry.value.storageId,
-          },
-          'updated_at': now,
-        },
-        <String, dynamic>{
-          'user_id': userId,
-          'pref_key': 'section_override_deleted',
-          'value': deletedMirror,
-          'updated_at': now,
-        },
-      ]);
+      // #part293: display_mode / section_overrides / section_override_deleted を
+      // 1 行 jsonb (asset_display_prefs_v1) へ集約し upsert を 1 回に削減。
+      final aggregated =
+          AssetManagementDisplayModeStore.buildAggregatedMirrorValue(
+        mode: _displayMode,
+        overrides: _sectionOverrides,
+        deletedIds: await _displayModeStore.loadDeletedSectionIds(),
+      );
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _displayPrefsAggregatedKey,
+        'value': aggregated,
+        'updated_at': now,
+      });
     } catch (e) {
       debugPrint('display pref mirror upsert failed: $e');
     }
+  }
+
+  /// 集約行を優先し、無ければ legacy per-key 行を per-key 形へ正規化して返す。
+  Future<List<Map<String, dynamic>>> _fetchDisplayPrefRows() async {
+    final rows = List<Map<String, dynamic>>.from(
+      await _supabase.from('asset_pref_mirror').select().inFilter(
+        'pref_key',
+        <String>[
+          _displayPrefsAggregatedKey,
+          'display_mode',
+          'section_overrides',
+        ],
+      ),
+    );
+    for (final row in rows) {
+      if (row['pref_key'] == _displayPrefsAggregatedKey) {
+        return AssetManagementDisplayModeStore.aggregatedMirrorToRows(
+          row['value'],
+          updatedAt: row['updated_at']?.toString() ??
+              DateTime.now().toUtc().toIso8601String(),
+        );
+      }
+    }
+    return rows
+        .where((row) => row['pref_key'] != _displayPrefsAggregatedKey)
+        .toList();
   }
 
   /// 他端末で「自動へ戻した(削除した)」セクション上書きを取り込み、
@@ -7617,24 +7610,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      Map<String, dynamic>? value = debugMirror;
-      if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'section_override_deleted');
-        if (rows.isEmpty) {
+      final List<String> ids;
+      if (debugMirror != null) {
+        ids = AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
+          debugMirror,
+        );
+      } else {
+        // 集約行 (asset_display_prefs_v1) を優先、無ければ legacy 行。
+        final rows =
+            await _supabase.from('asset_pref_mirror').select().inFilter(
+          'pref_key',
+          <String>[_displayPrefsAggregatedKey, 'section_override_deleted'],
+        );
+        Map<String, dynamic>? aggregated;
+        Map<String, dynamic>? legacy;
+        for (final row in rows) {
+          if (row['pref_key'] == _displayPrefsAggregatedKey) {
+            aggregated = row;
+          } else if (row['pref_key'] == 'section_override_deleted') {
+            legacy = row;
+          }
+        }
+        if (aggregated != null) {
+          ids = AssetManagementDisplayModeStore.aggregatedDeletedSectionIds(
+            aggregated['value'],
+          );
+        } else if (legacy != null && legacy['value'] is Map) {
+          ids = AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
+            Map<String, dynamic>.from(legacy['value'] as Map),
+          );
+        } else {
           return;
         }
-        final raw = rows.first['value'];
-        if (raw is! Map) {
-          return;
-        }
-        value = Map<String, dynamic>.from(raw);
       }
-      final ids = AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
-        value,
-      );
       if (ids.isEmpty) {
         return;
       }
@@ -7661,10 +7669,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .inFilter('pref_key', <String>['display_mode', 'section_overrides']);
+      final rows = await _fetchDisplayPrefRows();
       if (rows.isEmpty || !mounted) {
         return;
       }
@@ -8294,14 +8299,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (value is! Map) {
         return;
       }
+      // 削除トゥームストーン済みの支払日上書きは復元しない (#part293 3例目)。
+      final tombstoned = _debtOverrideTombstones.activeIds(
+        await SharedPreferences.getInstance(),
+      );
       final restored = <String, int>{};
       value.forEach((key, dynamic raw) {
         final day = (raw as num?)?.toInt();
-        if (key is String && day != null && day >= 1 && day <= 31) {
+        if (key is String &&
+            day != null &&
+            day >= 1 &&
+            day <= 31 &&
+            !tombstoned.contains(key)) {
           restored[key] = day;
         }
       });
-      if (restored.isEmpty || _debtPaymentDayOverrides.isNotEmpty) {
+      if (restored.isEmpty || _debtPaymentDayOverrides.isNotEmpty || !mounted) {
         return;
       }
       setState(() {
@@ -9727,15 +9740,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // -------------------------
 
   Widget _buildMonthlyFlowFirstCard() {
-    // 給料サイクル (先月25日〜今月24日) で集計する。暦月だと給料日前は
-    // 収入0で赤字に見えてしまうため (給料日=25日基準)。
-    final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(_now);
-    final cycleEndInclusive =
-        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(_now)
-            .subtract(const Duration(days: 1));
-    final cycleLabel =
-        '${cycleStart.month}/${cycleStart.day}〜${cycleEndInclusive.month}/${cycleEndInclusive.day}';
-    final flows = _flowsForSalaryCycle(_now);
+    final currentMonth = DateTime(_now.year, _now.month, 1);
+    final monthLabel = _flowMonthLabel(currentMonth);
+    final flows = _flowsForMonth(currentMonth);
     var totalIncome = 0;
     var totalExpense = 0;
 
@@ -9751,8 +9758,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final net = totalIncome - totalExpense;
     final statusText = flows.isEmpty
-        ? 'まだこの給料サイクル ($cycleLabel) の収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
-        : 'この給料サイクル ($cycleLabel) の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
+        ? 'まだ今月の収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
+        : '今月の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -9792,7 +9799,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '給料サイクル ($cycleLabel) の収支を最優先で把握',
+                        '$monthLabelの収支を最優先で把握',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -19017,6 +19024,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
   }
 
+  /// 削除した支払日上書きのトゥームストーン (#part293: MirrorTombstoneStore 3例目)。
+  /// ミラー復元で「自動へ戻した支払日」が復活するのを防ぐ。
+  static const MirrorTombstoneStore _debtOverrideTombstones =
+      MirrorTombstoneStore(
+    storageKey: 'debt_payment_day_override_deleted_v1',
+  );
+
   void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
     setState(() {
       if (day == null) {
@@ -19025,7 +19039,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _debtPaymentDayOverrides[row.id] = day.clamp(1, 31).toInt();
       }
     });
+    if (day == null) {
+      // 削除はトゥームストーン化、再設定は解除 (ID 再利用ドメイン)。
+      unawaited(_recordDebtOverrideTombstone(row.id, deleted: true));
+    } else {
+      unawaited(_recordDebtOverrideTombstone(row.id, deleted: false));
+    }
     unawaited(_saveDebtPaymentDayOverrides());
+  }
+
+  Future<void> _recordDebtOverrideTombstone(
+    String id, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _debtOverrideTombstones.addId(store, id);
+    } else {
+      await _debtOverrideTombstones.removeId(store, id);
+    }
   }
 
   Future<void> _saveDebtPaymentDayOverrides() async {
