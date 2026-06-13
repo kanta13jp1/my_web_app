@@ -11,8 +11,10 @@ void main() {
     });
 
     test('未知ルートは slug を Title Case に整形してフォールバックする', () {
-      expect(featureLabelForRoute('/guitar-recording-studio'),
-          'Guitar Recording Studio');
+      expect(
+        featureLabelForRoute('/guitar-recording-studio'),
+        'Guitar Recording Studio',
+      );
       expect(featureLabelForRoute('/personality-test'), 'Personality Test');
     });
 
