@@ -78,5 +78,56 @@ void main() {
       );
       expect(tester.widget<IconButton>(expandButton).onPressed, isNull);
     });
+
+    testWidgets('tapping the retention chart shows a value tooltip', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(900, 1500));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: DisplayModeExperimentCard(
+                debugWeekly: <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'week_start': '2026-06-08',
+                    'initials': 5,
+                    'initial_standard': 4,
+                    'switches': 2,
+                  },
+                ],
+                debugWeeklyRetention: <Map<String, dynamic>>[
+                  <String, dynamic>{'week_start': '2026-06-08', 'rate': 80},
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('display_mode_experiment_expand')));
+      await tester.pumpAndSettle();
+
+      // 初期状態ではツールチップ非表示。
+      expect(
+        find.byKey(const Key('display_mode_chart_tooltip')),
+        findsNothing,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('display_mode_retention_line_chart')),
+      );
+      await tester.pumpAndSettle();
+
+      final tooltip = find.byKey(const Key('display_mode_chart_tooltip'));
+      expect(tooltip, findsOneWidget);
+      expect(
+        find.descendant(of: tooltip, matching: find.textContaining('%')),
+        findsOneWidget,
+      );
+    });
   });
 }

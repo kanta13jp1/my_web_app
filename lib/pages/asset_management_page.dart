@@ -111,6 +111,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<Map<String, dynamic>>? debugMirrorPrefsRows;
 
+  /// テスト専用: 入金トゥームストーンのミラー値 (`{'ids': [...]}`) を
+  /// 直接注入し、削除伝播 (pull→ローカル除去) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugInflowDeletedIdsMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -121,6 +126,7 @@ class AssetManagementPage extends StatefulWidget {
     this.entryDescription,
     this.debugInitialAssetData,
     this.debugMirrorPrefsRows,
+    this.debugInflowDeletedIdsMirror,
   });
 
   @override
@@ -8206,20 +8212,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// サーバのトゥームストーンを取り込み、該当ローカル項目を削除する。
   Future<void> _pullInflowDeletedIds() async {
-    if (_supabase.auth.currentUser == null) {
+    final debugMirror = widget.debugInflowDeletedIdsMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', 'inflow_deleted_ids');
-      if (rows.isEmpty) {
-        return;
-      }
-      final value = rows.first['value'];
-      if (value is! Map) {
-        return;
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'inflow_deleted_ids');
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
       }
       final rawIds = value['ids'];
       if (rawIds is! List) {

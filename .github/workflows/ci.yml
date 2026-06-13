@@ -250,8 +250,10 @@ jobs:
         continue-on-error: false
 
       - name: Check duplicate dispose statements
-        # part 280 実例 (二重 dispose → dispose 中断 → defunct setState) の再発防止
-        run: python scripts/check_duplicate_dispose.py
+        # part 280 実例 (二重 dispose → dispose 中断 → defunct setState) の再発防止。
+        # part 286: timeout でハング検知 + --max-seconds で線形時間 (正規表現の
+        # 破滅的バックトラック回帰) を CI でアサート。通常 ~2.5s なので 60s 上限。
+        run: timeout 120 python scripts/check_duplicate_dispose.py --max-seconds 60
         continue-on-error: false
 
       - name: Check formatting
