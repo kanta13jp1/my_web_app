@@ -306,9 +306,14 @@ void main() {
       expect(encoded.contains('is_revolving'), true);
       expect(encoded.contains('revolving_billing'), true);
       expect(encoded.contains('reconciliation_note'), true);
-      // リボ払いでは明細合計との差は不一致ではないため、誤解を招く差分は渡さない。
+      expect(encoded.contains('reference_only_not_billed'), true);
+      expect(encoded.contains('ok_revolving_no_action_needed'), true);
+      // リボ払いでは比較対象になる生の合計・差分を top-level に置かない
+      // (AI が請求額の隣で差を取り「不一致」と誤指摘するのを防ぐ)。
       expect(encoded.contains('configured_difference'), false);
       expect(encoded.contains('statement_difference'), false);
+      expect(encoded.contains('configured_detail_total'), false);
+      expect(encoded.contains('statement_line_total'), false);
     });
 
     test('falls back to deterministic text when ai-hub fails', () async {
