@@ -321,6 +321,39 @@ class AssetManagementDisplayModeStore {
     return AssetMirrorPrefsDiff(mode: newerMode, overrides: newerOverrides);
   }
 
+  /// 取り込み前プレビュー用の「旧 → 新」差分行を組み立てる。
+  static List<String> describeMirrorPrefsDiff({
+    required AssetManagementDisplayMode currentMode,
+    required AssetManagementSectionOverrides currentOverrides,
+    required AssetMirrorPrefsDiff diff,
+  }) {
+    final lines = <String>[];
+    final newMode = diff.mode;
+    if (newMode != null && newMode != currentMode) {
+      lines.add('表示モード: ${currentMode.label} → ${newMode.label}');
+    }
+    final newOverrides = diff.overrides;
+    if (newOverrides != null) {
+      final keys = <AssetManagementSectionId>{
+        ...currentOverrides.keys,
+        ...newOverrides.keys,
+      };
+      for (final section in AssetManagementSectionId.values) {
+        if (!keys.contains(section)) {
+          continue;
+        }
+        final before = currentOverrides[section] ??
+            AssetManagementSectionVisibilityOverride.auto;
+        final after = newOverrides[section] ??
+            AssetManagementSectionVisibilityOverride.auto;
+        if (before != after) {
+          lines.add('${section.label}: ${before.label} → ${after.label}');
+        }
+      }
+    }
+    return lines;
+  }
+
   /// サーババックアップからの表示設定復元をユーザーが辞退したか。
   Future<bool> isRestoreDeclined({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
