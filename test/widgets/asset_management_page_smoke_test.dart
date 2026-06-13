@@ -245,5 +245,144 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('recurring inflow before payday prevents the shortfall', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'r_cover',
+            'day_of_month': 14,
+            'amount': 100000,
+            'label': '給料前入金',
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 10000,
+                'モビット': -300000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // 14日の繰り返し入金が15日のモビット返済を覆い、警告は出ない。
+      expect(
+        find.byKey(const Key('asset_calendar_add_inflow_button')),
+        findsNothing,
+      );
+      expect(find.textContaining('回避ライン'), findsNothing);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('post-payday inflow keeps warning but shift previews clear', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'r_late',
+            'day_of_month': 20,
+            'amount': 100000,
+            'label': '後半入金',
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 10000,
+                'モビット': -300000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // 入金が返済日(15日)より後ろなので警告は残る。
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_calendar_add_inflow_button')),
+      );
+      expect(find.textContaining('回避ライン'), findsOneWidget);
+      // ただし26日へ移せば20日の入金で賄えるため、事前判定が「回避できます」。
+      expect(find.textContaining('を26日へ(回避できます)'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('mirror update notice offers and applies remote prefs', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_management_display_mode_v1': 'minimum',
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugMirrorPrefsRows: <Map<String, dynamic>>[
+              <String, dynamic>{
+                'pref_key': 'display_mode',
+                'value': const <String, dynamic>{'mode': 'standard'},
+                'updated_at': DateTime.now()
+                    .add(const Duration(hours: 1))
+                    .toUtc()
+                    .toIso8601String(),
+              },
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('他端末で表示設定が更新されています'), findsOneWidget);
+      expect(
+        tester
+            .widget<ChoiceChip>(
+              find.byKey(const Key('asset_display_mode_minimum')),
+            )
+            .selected,
+        isTrue,
+      );
+
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('取り込む'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        tester
+            .widget<ChoiceChip>(
+              find.byKey(const Key('asset_display_mode_standard')),
+            )
+            .selected,
+        isTrue,
+      );
+
+      await _unmount(tester);
+    });
   });
 }

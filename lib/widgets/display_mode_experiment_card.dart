@@ -15,7 +15,9 @@ class DisplayModeExperimentCard extends StatefulWidget {
 
 class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
   String? _summaryLabel;
+  String? _progressLabel;
   List<Map<String, dynamic>> _weekly = const <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _weeklyRetention = const <Map<String, dynamic>>[];
   bool _loading = false;
   String? _error;
 
@@ -49,6 +51,8 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
       setState(() {
         _summaryLabel = parsed.summaryLabel;
         _weekly = parsed.weekly;
+        _weeklyRetention = parsed.weeklyRetention;
+        _progressLabel = _buildProgressLabel(parsed);
       });
     } catch (e) {
       debugPrint('experiment card fetch failed: $e');
@@ -65,6 +69,39 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
         });
       }
     }
+  }
+
+  /// 「開始から N日・直近週 初期X(±Δ)/切替Y(±Δ)」を組み立てる。
+  /// weekly は新しい週が先頭 (rpc 側で desc ソート済み)。
+  String? _buildProgressLabel(AssetDisplayModeServerSummary parsed) {
+    final parts = <String>[];
+    final firstEventAt = parsed.firstEventAt;
+    if (firstEventAt != null) {
+      final days = DateTime.now().difference(firstEventAt).inDays + 1;
+      parts.add('開始から $days日目');
+    }
+    if (parsed.weekly.isNotEmpty) {
+      int countOf(Map<String, dynamic> week, String key) =>
+          (week[key] as num?)?.toInt() ?? 0;
+      String delta(int current, int previous) {
+        final diff = current - previous;
+        if (diff > 0) {
+          return '+$diff';
+        }
+        return diff == 0 ? '±0' : '$diff';
+      }
+
+      final latest = parsed.weekly.first;
+      final previous =
+          parsed.weekly.length >= 2 ? parsed.weekly[1] : <String, dynamic>{};
+      final initials = countOf(latest, 'initials');
+      final switches = countOf(latest, 'switches');
+      parts.add(
+        '直近週 初期$initials(${delta(initials, countOf(previous, 'initials'))})'
+        '/切替$switches(${delta(switches, countOf(previous, 'switches'))})',
+      );
+    }
+    return parts.isEmpty ? null : parts.join('・');
   }
 
   @override
@@ -113,12 +150,36 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
                 ),
               ),
             ],
-            if (_summaryLabel != null) ...[
+            if (_progressLabel != null) ...[
               const SizedBox(height: 8),
+              Text(
+                _progressLabel!,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+              ),
+            ],
+            if (_summaryLabel != null) ...[
+              const SizedBox(height: 6),
               Text(
                 _summaryLabel!,
                 style: const TextStyle(fontSize: 12, height: 1.6),
               ),
+            ],
+            if (_weeklyRetention.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text(
+                '標準維持率%の推移(週末時点)',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 4),
+              _RetentionBars(retention: _weeklyRetention),
             ],
             if (_weekly.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -189,6 +250,57 @@ class _TrendBars extends StatelessWidget {
                               maxTotal,
                       decoration: BoxDecoration(
                         color: const Color(0xFF6366F1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      (week['week_start']?.toString() ?? '').length >= 10
+                          ? week['week_start'].toString().substring(5, 10)
+                          : '',
+                      style: const TextStyle(fontSize: 7, height: 1.2),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RetentionBars extends StatelessWidget {
+  const _RetentionBars({required this.retention});
+
+  final List<Map<String, dynamic>> retention;
+
+  @override
+  Widget build(BuildContext context) {
+    final weeks = retention.reversed.toList(growable: false);
+    return SizedBox(
+      height: 56,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final week in weeks)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      week['rate'] == null
+                          ? '-'
+                          : '${(week['rate'] as num).toInt()}%',
+                      style: const TextStyle(fontSize: 8, height: 1.2),
+                    ),
+                    Container(
+                      height: 2 +
+                          30 * ((week['rate'] as num?)?.toDouble() ?? 0) / 100,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D9488),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),

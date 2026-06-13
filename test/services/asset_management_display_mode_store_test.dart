@@ -248,6 +248,20 @@ void main() {
       expect(parsed.summaryLabel, contains('標準維持率 75%'));
       expect(parsed.summaryLabel, contains('06-08'));
       expect(parsed.weekly, hasLength(1));
+      expect(parsed.firstEventAt, isNull);
+    });
+
+    test('parseServerSummary reads first_event_at when provided', () {
+      final parsed = AssetManagementDisplayModeStore.parseServerSummary(
+        <String, dynamic>{
+          'initial_standard': 0,
+          'first_event_at': '2026-06-01T00:00:00Z',
+          'weekly': <Map<String, dynamic>>[],
+        },
+      );
+
+      expect(parsed.firstEventAt, isNotNull);
+      expect(parsed.firstEventAt!.toUtc(), DateTime.utc(2026, 6, 1));
     });
 
     test('restore decline flag persists', () async {
@@ -256,6 +270,79 @@ void main() {
       expect(await store.isRestoreDeclined(), isFalse);
       await store.markRestoreDeclined();
       expect(await store.isRestoreDeclined(), isTrue);
+    });
+
+    test('parseServerSummary reads weekly retention series', () {
+      final parsed = AssetManagementDisplayModeStore.parseServerSummary(
+        <String, dynamic>{
+          'initial_standard': 0,
+          'weekly_retention': <Map<String, dynamic>>[
+            <String, dynamic>{'week_start': '2026-06-08', 'rate': 75},
+            <String, dynamic>{'week_start': '2026-06-01', 'rate': null},
+          ],
+        },
+      );
+
+      expect(parsed.weeklyRetention, hasLength(2));
+      expect(parsed.weeklyRetention.first['rate'], 75);
+      expect(parsed.weeklyRetention.last['rate'], isNull);
+    });
+
+    test('evaluateMirrorPrefRows reports only newer differing prefs', () {
+      final local = DateTime(2026, 6, 13, 10, 0);
+      final rows = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'pref_key': 'display_mode',
+          'value': <String, dynamic>{'mode': 'standard'},
+          'updated_at': DateTime(2026, 6, 13, 11, 0).toUtc().toIso8601String(),
+        },
+        <String, dynamic>{
+          'pref_key': 'section_overrides',
+          'value': <String, dynamic>{'chart': 'pinned'},
+          'updated_at': DateTime(2026, 6, 13, 11, 0).toUtc().toIso8601String(),
+        },
+      ];
+
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: rows,
+        currentMode: AssetManagementDisplayMode.minimum,
+        currentOverrides: const <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{},
+        localChangedAt: local,
+      );
+
+      expect(diff.mode, AssetManagementDisplayMode.standard);
+      expect(
+        diff.overrides?[AssetManagementSectionId.chart],
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+    });
+
+    test('evaluateMirrorPrefRows skips self-writes and same content', () {
+      final local = DateTime(2026, 6, 13, 10, 0);
+      final selfWrite = <String, dynamic>{
+        'pref_key': 'display_mode',
+        'value': <String, dynamic>{'mode': 'standard'},
+        'updated_at': DateTime(2026, 6, 13, 10, 0, 5).toUtc().toIso8601String(),
+      };
+      final sameContent = <String, dynamic>{
+        'pref_key': 'section_overrides',
+        'value': <String, dynamic>{'chart': 'pinned'},
+        'updated_at': DateTime(2026, 6, 13, 12, 0).toUtc().toIso8601String(),
+      };
+
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: <Map<String, dynamic>>[selfWrite, sameContent],
+        currentMode: AssetManagementDisplayMode.minimum,
+        currentOverrides: const <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{
+          AssetManagementSectionId.chart:
+              AssetManagementSectionVisibilityOverride.pinned,
+        },
+        localChangedAt: local,
+      );
+
+      expect(diff.isEmpty, isTrue);
     });
   });
 }

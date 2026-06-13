@@ -105,6 +105,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, Map<String, double>>? debugInitialAssetData;
 
+  /// テスト専用: asset_pref_mirror 行を直接注入し、反映通知の判定を
+  /// ネットワークなしで検証する。null なら通常の select。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugMirrorPrefsRows;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -114,6 +119,7 @@ class AssetManagementPage extends StatefulWidget {
     this.entryLabel,
     this.entryDescription,
     this.debugInitialAssetData,
+    this.debugMirrorPrefsRows,
   });
 
   @override
@@ -7346,6 +7352,78 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_refreshDisplayModeStats());
     if (!hadStored && overrides.isEmpty) {
       unawaited(_restoreDisplayPrefsFromMirror());
+    } else {
+      unawaited(_checkDisplayPrefsMirrorNewer());
+    }
+  }
+
+  Future<void> _applyDisplayPrefs(
+    AssetManagementDisplayMode? mode,
+    AssetManagementSectionOverrides? overrides,
+  ) async {
+    if (mode != null && mode != _displayMode) {
+      setState(() {
+        _displayMode = mode;
+      });
+      await _displayModeStore.save(mode, recordEvent: false);
+    }
+    if (overrides != null) {
+      for (final entry in overrides.entries) {
+        final saved = await _displayModeStore.saveOverride(
+          entry.key,
+          entry.value,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = saved;
+        });
+      }
+    }
+  }
+
+  /// 他端末がミラーを更新していたら、自動適用せず通知して選ばせる。
+  /// 判定は AssetManagementDisplayModeStore.evaluateMirrorPrefRows に委譲。
+  Future<void> _checkDisplayPrefsMirrorNewer() async {
+    final debugRows = widget.debugMirrorPrefsRows;
+    if (_supabase.auth.currentUser == null && debugRows == null) {
+      return;
+    }
+    try {
+      final stats = await _displayModeStore.loadStats();
+      final rows = debugRows ??
+          List<Map<String, dynamic>>.from(
+            await _supabase.from('asset_pref_mirror').select().inFilter(
+              'pref_key',
+              <String>['display_mode', 'section_overrides'],
+            ),
+          );
+      if (rows.isEmpty || !mounted) {
+        return;
+      }
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: rows,
+        currentMode: _displayMode,
+        currentOverrides: _sectionOverrides,
+        localChangedAt: stats.lastChangedAt,
+      );
+      if (diff.isEmpty || !mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 8),
+          content: const Text('他端末で表示設定が更新されています'),
+          action: SnackBarAction(
+            label: '取り込む',
+            onPressed: () =>
+                unawaited(_applyDisplayPrefs(diff.mode, diff.overrides)),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('display pref mirror check failed: $e');
     }
   }
 

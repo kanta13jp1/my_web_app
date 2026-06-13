@@ -600,6 +600,28 @@ function applyProviderGenerationOptions(
   options?: ProviderCallOptions,
 ): Record<string, unknown> {
   const maxTokens = options?.maxTokens;
+
+  if (providerId === "openai") {
+    // OpenAI の新世代モデル (gpt-5 / o系) は max_tokens パラメータ自体を
+    // 拒否するため、ベース body (OPENAI_COMPAT_BODY) の max_tokens: 512 を
+    // 取り除いた上で max_completion_tokens へ載せ替える。
+    // groq / deepinfra 等の OpenAI 互換プロバイダーは従来どおり max_tokens。
+    const body: Record<string, unknown> = { ...requestBody };
+    const legacyMaxTokens = body.max_tokens;
+    delete body.max_tokens;
+    const model = String(body.model ?? "");
+    if (model.startsWith("gpt-5") || /^o\d/.test(model)) {
+      // reasoning モデルは温度指定も拒否する (既定値のみ許容)。
+      delete body.temperature;
+    }
+    const budget = maxTokens ??
+      (typeof legacyMaxTokens === "number" ? legacyMaxTokens : undefined);
+    if (budget != null) {
+      body.max_completion_tokens = budget;
+    }
+    return body;
+  }
+
   if (!maxTokens) return requestBody;
 
   if (providerId === "google" || providerId === "google_flash_lite") {
