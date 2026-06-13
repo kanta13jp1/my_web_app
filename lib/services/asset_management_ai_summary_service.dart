@@ -1021,16 +1021,60 @@ class AssetManagementAiSummaryService {
   Map<String, dynamic> _cardStatementReconciliationGroupToJson(
     AssetLiabilityCardStatementReconciliationGroup group,
   ) {
-    final json = <String, dynamic>{
+    final revolving = group.revolvingBilling;
+    if (revolving != null) {
+      // リボ払い: 請求額は revolving_billing.billed_amount で確定する。設定内訳合計や
+      // 取込明細合計は請求額と比較しても無意味なため top-level の比較対象から外し、
+      // 「請求額の構成要素ではない参考値」として明示ラベル付きで渡す。
+      // (生の合計を請求額の隣に置くと AI が自前で差を取り「不一致」と誤指摘するため)
+      return <String, dynamic>{
+        'billing_account_id': group.billingAccountId,
+        'billing_account_name': group.billingAccountName,
+        'billed_amount': group.billedAmount,
+        'is_revolving': true,
+        'has_statement_lines': group.hasStatementLines,
+        'needs_review': group.needsReview,
+        'alerts': group.alerts,
+        'reconciliation_status': 'ok_revolving_no_action_needed',
+        'revolving_billing': <String, dynamic>{
+          'monthly_amount': revolving.monthlyAmount,
+          'credit_limit': revolving.creditLimit,
+          'balance': revolving.balance,
+          'over_limit_amount': revolving.overLimitAmount,
+          'billed_amount': revolving.billedAmount,
+        },
+        'reference_only_not_billed': <String, dynamic>{
+          'new_usage_this_month_total': group.statementLineTotal,
+          'debts_routed_to_card_total': group.configuredDetailTotal,
+          'note': 'これらは請求額の構成要素ではない参考値。リボ払いの請求額は '
+              'revolving_billing.billed_amount のみで確定する。これらとの差を'
+              '「不一致」「ズレ」として判断・指摘しないこと。',
+        },
+        'reconciliation_note': 'リボ払いカード。請求額=リボ設定額+max(0,リボ残高-利用限度額)で確定する。'
+            '取込明細(今月の新規利用)はリボ残高へ積み増される参考値、設定内訳は紐づけ管理用の参考値で、'
+            'いずれも請求額とは一致しないのが正常。不一致・要修正として扱わず、照合は完了とみなすこと。',
+        'configured_items':
+            group.configuredItems.map(_cardReviewItemToJson).toList(
+                  growable: false,
+                ),
+        'statement_lines':
+            group.statementLines.map(_statementLineToJson).toList(
+                  growable: false,
+                ),
+      };
+    }
+    return <String, dynamic>{
       'billing_account_id': group.billingAccountId,
       'billing_account_name': group.billingAccountName,
       'billed_amount': group.billedAmount,
       'configured_detail_total': group.configuredDetailTotal,
       'statement_line_total': group.statementLineTotal,
+      'configured_difference': group.configuredDifference,
+      'statement_difference': group.statementDifference,
       'has_statement_lines': group.hasStatementLines,
       'needs_review': group.needsReview,
       'alerts': group.alerts,
-      'is_revolving': group.isRevolving,
+      'is_revolving': false,
       'configured_items':
           group.configuredItems.map(_cardReviewItemToJson).toList(
                 growable: false,
@@ -1039,25 +1083,6 @@ class AssetManagementAiSummaryService {
             growable: false,
           ),
     };
-    final revolving = group.revolvingBilling;
-    if (revolving != null) {
-      // リボ払いは 請求額 = 設定額 + 限度超過分 で確定し、明細合計との差は不一致ではない。
-      // 誤解を招く configured_difference/statement_difference は渡さず、内訳と注記を渡す。
-      json['revolving_billing'] = <String, dynamic>{
-        'monthly_amount': revolving.monthlyAmount,
-        'credit_limit': revolving.creditLimit,
-        'balance': revolving.balance,
-        'over_limit_amount': revolving.overLimitAmount,
-        'billed_amount': revolving.billedAmount,
-      };
-      json['reconciliation_note'] = 'リボ払いカード。請求額=リボ設定額+max(0,リボ残高-利用限度額)で確定する。'
-          '取込明細(今月の新規利用)はリボ残高に積み増されるだけで請求額とは一致しないのが正常。'
-          '設定内訳合計や明細合計との差は不一致ではなく、是正・指摘の対象外。';
-    } else {
-      json['configured_difference'] = group.configuredDifference;
-      json['statement_difference'] = group.statementDifference;
-    }
-    return json;
   }
 
   Map<String, dynamic> _statementLineToJson(
