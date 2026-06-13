@@ -544,5 +544,24 @@ void main() {
       expect(clamped.maxCount, 1);
       expect(clamped.maxAgeDays, 1);
     });
+
+    test('loadGcConfig/saveGcConfig round-trips local config', () async {
+      expect(
+        (await AssetExpectedInflowStore.loadGcConfig()).maxCount,
+        const AssetTombstoneGcConfig().maxCount,
+      );
+
+      await AssetExpectedInflowStore.saveGcConfig(
+        const AssetTombstoneGcConfig(maxCount: 42, maxAgeDays: 90),
+      );
+      final loaded = await AssetExpectedInflowStore.loadGcConfig();
+      expect(loaded.maxCount, 42);
+      expect(loaded.maxAgeDays, 90);
+      expect(
+        const AssetTombstoneGcConfig(maxCount: 42, maxAgeDays: 90)
+            .toMirrorValue(),
+        <String, dynamic>{'max_count': 42, 'max_age_days': 90},
+      );
+    });
   });
 }

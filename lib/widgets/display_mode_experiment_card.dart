@@ -480,6 +480,7 @@ class _InteractiveChart extends StatefulWidget {
     required this.semanticLabel,
     required this.painterBuilder,
     required this.tooltipBuilder,
+    required this.valueBuilder,
   });
 
   final int count;
@@ -487,6 +488,10 @@ class _InteractiveChart extends StatefulWidget {
   final String semanticLabel;
   final CustomPainter Function(int? selected) painterBuilder;
   final Widget Function(int selected, double width) tooltipBuilder;
+
+  /// 選択中データ点の読み上げ文 (Semantics value)。スクリーンリーダーは
+  /// liveRegion により選択変更のたびに読み上げる (#part288 a11y)。
+  final String Function(int selected) valueBuilder;
 
   @override
   State<_InteractiveChart> createState() => _InteractiveChartState();
@@ -548,11 +553,16 @@ class _InteractiveChartState extends State<_InteractiveChart> {
           final width = constraints.maxWidth;
           int? indexAt(double dx) =>
               _nearestIndex(dx, width, widget.leftPad, widget.count);
+          final selectedValue = (_selected != null && _selected! < widget.count)
+              ? widget.valueBuilder(_selected!)
+              : null;
           return Focus(
             focusNode: _focusNode,
             onKeyEvent: _onKey,
             child: Semantics(
               label: widget.semanticLabel,
+              value: selectedValue,
+              liveRegion: selectedValue != null,
               child: MouseRegion(
                 onHover: (event) => _select(indexAt(event.localPosition.dx)),
                 onExit: (_) {
@@ -632,6 +642,12 @@ class _RetentionLineChart extends StatelessWidget {
         anchor: _retentionAnchor(weeks, selected, width),
         width: width,
       ),
+      valueBuilder: (selected) {
+        final week = weeks[selected];
+        final rate = week['rate'];
+        return '${_weekShort(week['week_start'])} の標準維持率 '
+            '${rate == null ? '記録なし' : '$rate パーセント'}';
+      },
     );
   }
 }
@@ -845,6 +861,13 @@ class _TrendAreaChart extends StatelessWidget {
         anchor: _trendAnchor(weeks, selected, width, maxTotal),
         width: width,
       ),
+      valueBuilder: (selected) {
+        final week = weeks[selected];
+        final initials = (week['initials'] as num?)?.toInt() ?? 0;
+        final switches = (week['switches'] as num?)?.toInt() ?? 0;
+        return '${_weekShort(week['week_start'])} '
+            '初期解決 $initials 件 切替 $switches 件';
+      },
     );
   }
 }
