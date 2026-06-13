@@ -16351,9 +16351,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Text(
-                        group.alerts.isEmpty
-                            ? 'OK'
-                            : group.alerts.join(' / '),
+                        group.alerts.isEmpty ? 'OK' : group.alerts.join(' / '),
                         softWrap: true,
                         style: const TextStyle(height: 1.4),
                       ),
