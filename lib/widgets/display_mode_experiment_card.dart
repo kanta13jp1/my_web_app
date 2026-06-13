@@ -104,6 +104,85 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
     return parts.isEmpty ? null : parts.join('・');
   }
 
+  /// タップ拡大: 大きいグラフ+週次の数値表を出す。
+  Future<void> _showExpandedCharts() async {
+    final retentionByWeek = <String, dynamic>{
+      for (final week in _weeklyRetention)
+        week['week_start']?.toString() ?? '': week['rate'],
+    };
+    String cell(Object? value) => value?.toString() ?? '-';
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('表示モード実験 詳細グラフ'),
+        content: SizedBox(
+          width: 460,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_weeklyRetention.isNotEmpty) ...[
+                  const Text(
+                    '標準維持率%の推移(週末時点)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _RetentionBars(retention: _weeklyRetention, expanded: true),
+                  const SizedBox(height: 12),
+                ],
+                if (_weekly.isNotEmpty) ...[
+                  const Text(
+                    '週次イベント(初期解決=藍 / 切替=橙)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _TrendBars(weekly: _weekly, expanded: true),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '週次の数値',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  for (final week in _weekly)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(
+                        '${cell(week['week_start'])}週: '
+                        '初期${cell(week['initials'])}'
+                        '(std${cell(week['initial_standard'])}) / '
+                        '切替${cell(week['switches'])} / '
+                        '維持率${cell(retentionByWeek[week['week_start']?.toString() ?? ''])}%',
+                        style: const TextStyle(fontSize: 11, height: 1.5),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -126,6 +205,14 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
                       height: 1.4,
                     ),
                   ),
+                ),
+                IconButton(
+                  key: const Key('display_mode_experiment_expand'),
+                  tooltip: 'グラフを拡大',
+                  icon: const Icon(Icons.zoom_out_map, size: 18),
+                  onPressed: _weekly.isEmpty && _weeklyRetention.isEmpty
+                      ? null
+                      : _showExpandedCharts,
                 ),
                 IconButton(
                   key: const Key('display_mode_experiment_refresh'),
@@ -201,9 +288,10 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
 }
 
 class _TrendBars extends StatelessWidget {
-  const _TrendBars({required this.weekly});
+  const _TrendBars({required this.weekly, this.expanded = false});
 
   final List<Map<String, dynamic>> weekly;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
@@ -216,8 +304,9 @@ class _TrendBars extends StatelessWidget {
         maxTotal = initials + switches;
       }
     }
+    final barScale = expanded ? 100.0 : 30.0;
     return SizedBox(
-      height: 60,
+      height: expanded ? 160 : 60,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -234,7 +323,7 @@ class _TrendBars extends StatelessWidget {
                     ),
                     Container(
                       height: 2 +
-                          30 *
+                          barScale *
                               ((week['switches'] as num?)?.toInt() ?? 0) /
                               maxTotal,
                       decoration: BoxDecoration(
@@ -245,7 +334,7 @@ class _TrendBars extends StatelessWidget {
                     const SizedBox(height: 1),
                     Container(
                       height: 2 +
-                          30 *
+                          barScale *
                               ((week['initials'] as num?)?.toInt() ?? 0) /
                               maxTotal,
                       decoration: BoxDecoration(
@@ -271,15 +360,17 @@ class _TrendBars extends StatelessWidget {
 }
 
 class _RetentionBars extends StatelessWidget {
-  const _RetentionBars({required this.retention});
+  const _RetentionBars({required this.retention, this.expanded = false});
 
   final List<Map<String, dynamic>> retention;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
     final weeks = retention.reversed.toList(growable: false);
+    final barScale = expanded ? 110.0 : 30.0;
     return SizedBox(
-      height: 56,
+      height: expanded ? 170 : 56,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -298,7 +389,9 @@ class _RetentionBars extends StatelessWidget {
                     ),
                     Container(
                       height: 2 +
-                          30 * ((week['rate'] as num?)?.toDouble() ?? 0) / 100,
+                          barScale *
+                              ((week['rate'] as num?)?.toDouble() ?? 0) /
+                              100,
                       decoration: BoxDecoration(
                         color: const Color(0xFF0D9488),
                         borderRadius: BorderRadius.circular(2),

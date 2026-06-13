@@ -7417,13 +7417,61 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           content: const Text('他端末で表示設定が更新されています'),
           action: SnackBarAction(
             label: '取り込む',
-            onPressed: () =>
-                unawaited(_applyDisplayPrefs(diff.mode, diff.overrides)),
+            onPressed: () => unawaited(_showMirrorDiffPreview(diff)),
           ),
         ),
       );
     } catch (e) {
       debugPrint('display pref mirror check failed: $e');
+    }
+  }
+
+  /// 取り込み前に「旧 → 新」を見せて確定させる差分プレビュー。
+  Future<void> _showMirrorDiffPreview(AssetMirrorPrefsDiff diff) async {
+    if (!mounted) {
+      return;
+    }
+    final lines = AssetManagementDisplayModeStore.describeMirrorPrefsDiff(
+      currentMode: _displayMode,
+      currentOverrides: _sectionOverrides,
+      diff: diff,
+    );
+    if (lines.isEmpty) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('表示設定の取り込みプレビュー'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  line,
+                  style: const TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            key: const Key('asset_mirror_diff_apply'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('適用する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _applyDisplayPrefs(diff.mode, diff.overrides);
     }
   }
 
