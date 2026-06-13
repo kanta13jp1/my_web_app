@@ -14,8 +14,15 @@
 | `asset_inflow_prefs_v1` | `{deleted_ids:{ids:[id]}, gc:{max_count,max_age_days}}` | 入金削除tombstone + GC設定(集約) | `_mirrorInflowPrefs` | `_pullInflowDeletedIds` / `_loadTombstoneGcConfig` |
 | `debt_payment_day_overrides` | `{debtId: day(1-31)}` | 負債ごとの支払日手動設定 | `_mirrorDebtPaymentDayOverrides` | `_restoreDebtPaymentDayOverridesFromMirror` |
 | `debt_payment_day_override_deleted` | `{ids:[debtId]}` | 支払日上書きの削除tombstone | `_mirrorDebtOverrideDeleted` | `_pullDebtOverrideDeleted` |
+| `revolving_credit_configs` | `{debtId: {monthlyAmount, creditLimit}}` | 負債(リボ払いカード)ごとのリボ設定額+利用限度額 | `_mirrorRevolvingConfigs` | `_restoreRevolvingConfigsFromMirror` |
 
 > 入金予定の実体は別テーブル `asset_expected_inflow_items`(本表の対象外)。
+
+> `revolving_credit_configs` は支払日上書きと同じく**削除トゥームストーン不要**。
+> 設定の有無は map のキー有無で表現し(リボOFF=キー削除)、空 map の upsert で
+> 全端末へ「設定なし」が伝播する。読みは集約ミラー優先・無ければローカル
+> (`asset_revolving_credit_configs_v1`)へフォールバックし、ローカルに既存設定が
+> ある端末はミラーで上書きしない(オフライン編集の握り潰し防止 / 安全側復元)。
 
 ## Legacy (読みフォールバックのみ / 書き込み停止済 / 撤去予定)
 

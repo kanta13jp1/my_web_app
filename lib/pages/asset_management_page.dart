@@ -133,6 +133,12 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugDebtOverrideDeletedMirror;
 
+  /// テスト専用: リボ払い設定の集約ミラー値
+  /// (`{debtId: {monthlyAmount, creditLimit}}`) を注入し、端末間同期
+  /// (起動時のミラー復元) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugRevolvingConfigsMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -147,6 +153,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugTombstoneGcConfig,
     this.debugSectionOverrideDeletedMirror,
     this.debugDebtOverrideDeletedMirror,
+    this.debugRevolvingConfigsMirror,
   });
 
   @override
@@ -7448,17 +7455,82 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// リボ設定の集約ミラー pref_key (1 行 jsonb / MIRROR_PREF_SCHEMA.md)。
+  static const String _revolvingConfigsMirrorKey = 'revolving_credit_configs';
+
   Future<void> _loadRevolvingConfigs() async {
     try {
       final configs = await _revolvingConfigStore.load();
-      if (!mounted || configs.isEmpty) {
+      if (mounted && configs.isNotEmpty) {
+        setState(() {
+          _revolvingConfigs = configs;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading revolving credit configs: $e');
+    }
+    // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
+    await _restoreRevolvingConfigsFromMirror();
+  }
+
+  /// リボ設定を `asset_pref_mirror` (pref_key: revolving_credit_configs) へ
+  /// 1 行 upsert する (支払日上書きと同じ集約方針 / #part293-295)。
+  Future<void> _mirrorRevolvingConfigs() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _revolvingConfigsMirrorKey,
+        'value': AssetRevolvingCreditConfigStore.encodeMirrorValue(
+          _revolvingConfigs,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('revolving config mirror upsert failed: $e');
+    }
+  }
+
+  /// サーバ集約ミラーからリボ設定を復元する (集約優先 + legacy local fallback)。
+  /// ローカルに既に設定がある場合は上書きしない (オフライン編集を握り潰さない
+  /// 安全側 / 支払日上書きの復元と同じ。削除トゥームストーンは設定の有無を
+  /// map のキー有無で表現するため不要)。
+  Future<void> _restoreRevolvingConfigsFromMirror() async {
+    final debugMirror = widget.debugRevolvingConfigsMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final Map<String, AssetLiabilityRevolvingCreditConfig> restored;
+      if (debugMirror != null) {
+        restored = AssetRevolvingCreditConfigStore.decodeMirrorValue(
+          debugMirror,
+        );
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _revolvingConfigsMirrorKey);
+        if (rows.isEmpty) {
+          return;
+        }
+        restored = AssetRevolvingCreditConfigStore.decodeMirrorValue(
+          rows.first['value'],
+        );
+      }
+      if (restored.isEmpty || _revolvingConfigs.isNotEmpty || !mounted) {
         return;
       }
       setState(() {
-        _revolvingConfigs = configs;
+        _revolvingConfigs = restored;
       });
+      // オフライン参照用にローカルへも書き戻す。
+      unawaited(_revolvingConfigStore.save(_revolvingConfigs));
     } catch (e) {
-      debugPrint('Error loading revolving credit configs: $e');
+      debugPrint('revolving config mirror restore failed: $e');
     }
   }
 
@@ -7478,6 +7550,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _revolvingConfigs = next;
     });
     unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+    unawaited(_mirrorRevolvingConfigs());
   }
 
   void _toggleRevolving(AssetLiabilityDebtRow row, bool enabled) {

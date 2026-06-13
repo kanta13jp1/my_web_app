@@ -6,8 +6,11 @@ import '../models/asset_liability_workbook.dart';
 
 /// リボ払いカードの設定 (リボ設定額・利用限度額) を負債IDごとに永続化する。
 ///
-/// v1 はローカル (SharedPreferences) のみ。複数端末同期は支払日上書きと同じく
-/// 段階的に進めるため、Supabase ミラー化は将来の別 Issue で扱う。
+/// ローカル (SharedPreferences) を一次ストアとし、端末間同期は資産管理ページが
+/// `asset_pref_mirror` (pref_key: `revolving_credit_configs`) へ 1 行 jsonb で
+/// ミラーする (支払日上書きと同じ集約方針 / MIRROR_PREF_SCHEMA.md)。
+/// [encodeMirrorValue] / [decodeMirrorValue] がローカルとミラー双方で使う
+/// 共通の往復ロジックで、保存形は `{debtId: {monthlyAmount, creditLimit}}`。
 class AssetRevolvingCreditConfigStore {
   static const String prefsKey = 'asset_revolving_credit_configs_v1';
 
@@ -22,19 +25,7 @@ class AssetRevolvingCreditConfigStore {
       return <String, AssetLiabilityRevolvingCreditConfig>{};
     }
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map) {
-        return <String, AssetLiabilityRevolvingCreditConfig>{};
-      }
-      final result = <String, AssetLiabilityRevolvingCreditConfig>{};
-      decoded.forEach((key, value) {
-        if (key is String && value is Map) {
-          result[key] = AssetLiabilityRevolvingCreditConfig.fromJson(
-            Map<String, dynamic>.from(value),
-          );
-        }
-      });
-      return result;
+      return decodeMirrorValue(jsonDecode(raw));
     } catch (_) {
       return <String, AssetLiabilityRevolvingCreditConfig>{};
     }
@@ -49,9 +40,35 @@ class AssetRevolvingCreditConfigStore {
       await store.remove(prefsKey);
       return;
     }
-    final encoded = jsonEncode(<String, dynamic>{
+    await store.setString(prefsKey, jsonEncode(encodeMirrorValue(configs)));
+  }
+
+  /// 設定マップを `asset_pref_mirror.value` (jsonb) 形へ変換する。
+  /// ローカル永続化とサーバミラーで同一の `{debtId: {...}}` 形を使う。
+  static Map<String, dynamic> encodeMirrorValue(
+    Map<String, AssetLiabilityRevolvingCreditConfig> configs,
+  ) {
+    return <String, dynamic>{
       for (final entry in configs.entries) entry.key: entry.value.toJson(),
+    };
+  }
+
+  /// `asset_pref_mirror.value` (jsonb) または保存済み JSON から設定マップへ
+  /// 復元する。不正なキー/値は黙って捨てる寛容なパース (前方/後方互換)。
+  static Map<String, AssetLiabilityRevolvingCreditConfig> decodeMirrorValue(
+    dynamic value,
+  ) {
+    final result = <String, AssetLiabilityRevolvingCreditConfig>{};
+    if (value is! Map) {
+      return result;
+    }
+    value.forEach((dynamic key, dynamic raw) {
+      if (key is String && raw is Map) {
+        result[key] = AssetLiabilityRevolvingCreditConfig.fromJson(
+          Map<String, dynamic>.from(raw),
+        );
+      }
     });
-    await store.setString(prefsKey, encoded);
+    return result;
   }
 }
