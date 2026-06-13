@@ -36,6 +36,7 @@ import 'package:my_web_app/services/asset_management_ai_analysis_history_service
 import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
@@ -358,6 +359,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementDisplayModeStore();
   AssetManagementDisplayMode _displayMode =
       AssetManagementDisplayModeStore.defaultMode;
+  final AssetManagementMainAccountStore _mainAccountStore =
+      const AssetManagementMainAccountStore();
+  // 使用可能額の基準となるメインバンク口座ID。null は既定(最大預金口座)。
+  String? _assetManagementMainAccountId;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
   final AssetExpectedInflowStore _expectedInflowStore =
@@ -456,6 +461,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchSubscriptions();
     _fetchMustTasks();
     _loadDisplayMode();
+    _loadMainAccount();
     _loadExpectedInflows();
     unawaited(_pullInflowDeletedIds());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -7349,6 +7355,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Future<void> _loadMainAccount() async {
+    try {
+      final id = await _mainAccountStore.load();
+      if (!mounted || id == _assetManagementMainAccountId) {
+        return;
+      }
+      setState(() {
+        _assetManagementMainAccountId = id;
+      });
+    } catch (e) {
+      debugPrint('Error loading main account: $e');
+    }
+  }
+
+  Future<void> _setMainAccount(String? accountId) async {
+    setState(() {
+      _assetManagementMainAccountId = accountId;
+    });
+    try {
+      await _mainAccountStore.save(accountId);
+    } catch (e) {
+      debugPrint('Error saving main account: $e');
+    }
+  }
+
   Future<void> _loadDisplayMode() async {
     final mode = await _displayModeStore.load();
     final overrides = await _displayModeStore.loadOverrides();
@@ -12730,6 +12761,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final insightReport = _assetManagementInsightService.buildReport(
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
+      mainAccountId: _assetManagementMainAccountId,
     );
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
@@ -13600,6 +13632,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
           ],
           const SizedBox(height: 10),
+          _buildMainAccountSelector(report.workbook),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -14332,6 +14366,70 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return const <String, dynamic>{};
   }
 
+  Widget _buildMainAccountSelector(AssetLiabilityWorkbook workbook) {
+    // メインバンク候補 = 現金以外の口座(預金・証券・その他資産)。
+    final candidates = workbook.accounts
+        .where(
+          (account) =>
+              account.kind != AssetLiabilityAccountKind.cash &&
+              account.isAsset,
+        )
+        .toList()
+      ..sort((a, b) => b.balance.compareTo(a.balance));
+    if (candidates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final validSelected = candidates.any(
+      (account) => account.id == _assetManagementMainAccountId,
+    )
+        ? _assetManagementMainAccountId
+        : null;
+    return Row(
+      children: [
+        Icon(
+          Icons.account_balance_outlined,
+          size: 16,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          'メインバンク',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButton<String?>(
+            value: validSelected,
+            isExpanded: true,
+            isDense: true,
+            hint: const Text('既定（残高最大の口座）', style: TextStyle(fontSize: 12)),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('既定（残高最大の口座）', style: TextStyle(fontSize: 12)),
+              ),
+              for (final account in candidates)
+                DropdownMenuItem<String?>(
+                  value: account.id,
+                  child: Text(
+                    '${account.name}（${_formatManagementYen(account.balance)}）',
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (value) => unawaited(_setMainAccount(value)),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAssetManagementAvailableCard(
     AssetManagementAvailableMoneyInsight insight,
   ) {
@@ -14339,7 +14437,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? const Color(0xFFB91C1C)
         : const Color(0xFF0D9488);
     final subtitle =
-        '支払 ${_formatManagementYen(insight.unpaidPaymentTotal)} / 入金 ${_formatManagementYen(insight.unreceivedIncomeTotal)} / 安全残高 ${_formatManagementYen(insight.minimumSafetyBalance)}';
+        '利用可能資産 ${_formatManagementYen(insight.cashLikeTotal)} / 給料日まで支払 ${_formatManagementYen(insight.unpaidPaymentTotal)} / 安全余裕 ${_formatManagementYen(insight.minimumSafetyBalance)}';
 
     return Container(
       constraints: const BoxConstraints(minWidth: 210, maxWidth: 320),
