@@ -242,10 +242,23 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final node = tester.getSemantics(
+      final retention = tester.getSemantics(
         find.bySemanticsLabel(RegExp('標準維持率の推移グラフ')),
       );
-      expect(node.value, contains('パーセント'));
+      expect(retention.value, contains('パーセント'));
+      // liveRegion=true で選択変更が AT に都度アナウンスされる前提。
+      expect(retention.flagsCollection.isLiveRegion, isTrue);
+
+      // 面グラフ(週次イベント)も同様に値を読み上げる。
+      await tester.tap(
+        find.byKey(const Key('display_mode_trend_area_chart')),
+      );
+      await tester.pumpAndSettle();
+      final trend = tester.getSemantics(
+        find.bySemanticsLabel(RegExp('週次イベントの推移グラフ')),
+      );
+      expect(trend.value, contains('初期解決'));
+      expect(trend.flagsCollection.isLiveRegion, isTrue);
 
       handle.dispose();
     });

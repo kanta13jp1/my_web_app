@@ -389,5 +389,61 @@ void main() {
 
       expect(lines, isEmpty);
     });
+
+    test('resetting an override to auto tombstones the section', () async {
+      const store = AssetManagementDisplayModeStore();
+      await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
+      // 自動へ戻す = 削除 → トゥームストーン化。
+      await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.auto,
+      );
+      expect(
+        await store.loadDeletedSectionIds(),
+        contains(AssetManagementSectionId.chart.storageId),
+      );
+
+      // 再設定すると意図的なのでトゥームストーン解除。
+      await store.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.hidden,
+      );
+      expect(
+        await store.loadDeletedSectionIds(),
+        isNot(contains(AssetManagementSectionId.chart.storageId)),
+      );
+    });
+
+    test('evaluateMirrorPrefRows excludes tombstoned sections', () {
+      final rows = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'pref_key': 'section_overrides',
+          'value': <String, dynamic>{'chart': 'pinned', 'flow': 'hidden'},
+          'updated_at': DateTime(2026, 6, 13, 11).toUtc().toIso8601String(),
+        },
+      ];
+
+      // chart は削除トゥームストーン済み → 復活させない。flow のみ採用。
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: rows,
+        currentMode: AssetManagementDisplayMode.full,
+        currentOverrides: const <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{},
+        localChangedAt: DateTime(2026, 6, 13, 9),
+        deletedSectionIds: <String>{AssetManagementSectionId.chart.storageId},
+      );
+
+      expect(
+        diff.overrides?.containsKey(AssetManagementSectionId.chart),
+        isFalse,
+      );
+      expect(
+        diff.overrides?[AssetManagementSectionId.flow],
+        AssetManagementSectionVisibilityOverride.hidden,
+      );
+    });
   });
 }

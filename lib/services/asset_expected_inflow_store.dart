@@ -266,6 +266,13 @@ class AssetExpectedInflowStore {
     return _tombstones.activeIds(store);
   }
 
+  /// 期限切れ・上限超過のトゥームストーンを今すぐ掃除し、削除件数を返す
+  /// (手動 GC ボタン用 / #part291)。
+  Future<int> pruneDeletedIds({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return _tombstones.prune(store);
+  }
+
   /// トゥームストーン ID 集合をミラー upsert 用の値へ変換する
   /// (`{'ids': [...]}`)。ページと統合テストで同一の形を共有する (#part287)。
   static Map<String, dynamic> encodeDeletedIdsMirror(Iterable<String> ids) =>

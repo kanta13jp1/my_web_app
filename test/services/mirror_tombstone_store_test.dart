@@ -84,5 +84,39 @@ void main() {
       final sp = await prefs();
       expect(store.activeIds(sp), contains('legacy'));
     });
+
+    test('removeId clears a tombstone (id reuse)', () async {
+      final store = MirrorTombstoneStore(
+        storageKey: 'k',
+        nowProvider: () => DateTime(2026, 6, 13, 9),
+      );
+      final sp = await prefs();
+      await store.addId(sp, 'chart');
+      expect(store.activeIds(sp), contains('chart'));
+
+      await store.removeId(sp, 'chart');
+      expect(store.activeIds(sp), isNot(contains('chart')));
+    });
+
+    test('prune removes expired entries and returns the count', () async {
+      var clock = DateTime(2026, 1, 1, 9);
+      final store = MirrorTombstoneStore(
+        storageKey: 'k',
+        gcConfig: const AssetTombstoneGcConfig(maxAgeDays: 10),
+        nowProvider: () => clock,
+      );
+      final sp = await prefs();
+      await store.addId(sp, 'old');
+      clock = DateTime(2026, 1, 1, 9, 0, 1);
+      await store.addId(sp, 'fresh-ish');
+
+      // 期限内なら掃除ゼロ。
+      expect(await store.prune(sp), 0);
+
+      // TTL 超過後は古い 2 件が掃除される。
+      clock = DateTime(2026, 1, 20, 9);
+      expect(await store.prune(sp), 2);
+      expect(store.activeIds(sp), isEmpty);
+    });
   });
 }

@@ -239,6 +239,56 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('manual prune button cleans expired tombstones', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'seeded_rule',
+            'day_of_month': 25,
+            'amount': 280000,
+            'label': '給料',
+          },
+        ]),
+        // 2020 年の古い削除記録 → maxAgeDays:10 で期限切れ。
+        'asset_expected_inflow_deleted_ids_v1':
+            jsonEncode(<Map<String, String>>[
+          <String, String>{'id': 'old1', 'at': '2020-01-01T00:00:00.000Z'},
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            debugTombstoneGcConfig: AssetTombstoneGcConfig(
+              maxCount: 1000,
+              maxAgeDays: 10,
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_inflow_rules_button')),
+      );
+      await tester.tap(find.byKey(const Key('asset_inflow_rules_button')));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.byKey(const Key('asset_tombstone_gc_edit')));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.tap(find.byKey(const Key('asset_tombstone_gc_prune')));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.textContaining('古い削除記録を1件 掃除しました'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
     testWidgets('remote inflow tombstone removes the matching local chip', (
       tester,
     ) async {

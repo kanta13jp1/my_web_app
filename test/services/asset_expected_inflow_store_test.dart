@@ -563,5 +563,25 @@ void main() {
         <String, dynamic>{'max_count': 42, 'max_age_days': 90},
       );
     });
+
+    test('pruneDeletedIds removes expired tombstones and returns count',
+        () async {
+      var clock = DateTime(2026, 1, 1, 9);
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => clock,
+        gcConfig: const AssetTombstoneGcConfig(maxAgeDays: 10),
+      );
+      final added = await store.add(
+        date: DateTime(2026, 1, 5),
+        amount: 5000,
+        label: '消す',
+      );
+      await store.remove(added.single.id);
+      expect(await store.pruneDeletedIds(), 0); // 期限内
+
+      clock = DateTime(2026, 2, 1, 9); // TTL 超過
+      expect(await store.pruneDeletedIds(), 1);
+      expect(await store.loadDeletedIds(), isEmpty);
+    });
   });
 }
