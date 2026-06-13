@@ -373,6 +373,20 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 200));
 
+      // 取り込み前に「旧 → 新」差分プレビューで確認させる。
+      expect(find.text('表示設定の取り込みプレビュー'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('表示モード: ミニマム → 標準'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('asset_mirror_diff_apply')));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
       expect(
         tester
             .widget<ChoiceChip>(

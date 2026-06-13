@@ -238,5 +238,164 @@ void main() {
       );
       expect(secondRun, 0);
     });
+
+    test('records a tombstone on remove and never resurrects it on merge',
+        () async {
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 12, 9, 0),
+      );
+      final added = await store.add(
+        date: DateTime(2026, 6, 20),
+        amount: 5000,
+        label: '消す予定',
+      );
+      final removedId = added.single.id;
+      await store.remove(removedId);
+
+      expect(await store.loadDeletedIds(), contains(removedId));
+
+      // サーバにまだ残っている削除済み行を統合しても復活しない。
+      final mergedCount =
+          await store.mergeFromMirrorRows(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': removedId,
+          'kind': 'one_time',
+          'date': '2026-06-20',
+          'amount': 5000,
+          'label': '消す予定',
+        },
+        <String, dynamic>{
+          'id': 'inflow_fresh',
+          'kind': 'one_time',
+          'date': '2026-06-22',
+          'amount': 1200,
+          'label': '新規分',
+        },
+      ]);
+
+      expect(mergedCount, 1);
+      final items = await store.loadAll();
+      expect(items.single.id, 'inflow_fresh');
+      expect(items.map((e) => e.id), isNot(contains(removedId)));
+    });
+
+    test('tombstoned ids are excluded from empty-store restore too', () async {
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 12, 9, 0),
+      );
+      final added = await store.add(
+        date: DateTime(2026, 6, 20),
+        amount: 5000,
+        label: '消す',
+      );
+      final removedId = added.single.id;
+      await store.remove(removedId);
+      // ローカルは空に戻った状態。
+      expect(await store.loadAll(), isEmpty);
+
+      final restored = await store.restoreFromMirrorRows(<Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': removedId,
+          'kind': 'one_time',
+          'date': '2026-06-20',
+          'amount': 5000,
+          'label': '消す',
+        },
+        <String, dynamic>{
+          'id': 'inflow_keep',
+          'kind': 'one_time',
+          'date': '2026-06-21',
+          'amount': 800,
+          'label': '残す',
+        },
+      ]);
+
+      expect(restored, isTrue);
+      final items = await store.loadAll();
+      expect(items.single.id, 'inflow_keep');
+    });
+
+    test(
+        'applyRemoteDeletedIds removes matching local items and adds tombstones',
+        () async {
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 12, 9, 0),
+      );
+      final added = await store.add(
+        date: DateTime(2026, 6, 20),
+        amount: 5000,
+        label: '他端末で削除',
+      );
+      final id = added.single.id;
+
+      final removed = await store.applyRemoteDeletedIds(<String>[id, '']);
+
+      expect(removed, 1);
+      expect(await store.loadAll(), isEmpty);
+      expect(await store.loadDeletedIds(), contains(id));
+
+      // 二度目は対象が無いので 0。
+      expect(await store.applyRemoteDeletedIds(<String>[id]), 0);
+    });
+
+    test('previewMergeAdditions count matches mergeFromMirrorRows result',
+        () async {
+      final store = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 12, 9, 0),
+      );
+      final local = await store.add(
+        date: DateTime(2026, 6, 1),
+        amount: 100,
+        label: 'local',
+      );
+      final removed = await store.add(
+        date: DateTime(2026, 6, 2),
+        amount: 200,
+        label: 'will-delete',
+      );
+      final removedId = removed.firstWhere((e) => e.label == 'will-delete').id;
+      await store.remove(removedId);
+
+      final rows = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': local.first.id,
+          'kind': 'one_time',
+          'date': '2026-06-01',
+          'amount': 100,
+          'label': 'local',
+        },
+        <String, dynamic>{
+          'id': removedId,
+          'kind': 'one_time',
+          'date': '2026-06-02',
+          'amount': 200,
+          'label': 'will-delete',
+        },
+        <String, dynamic>{
+          'id': 'inflow_new',
+          'kind': 'one_time',
+          'date': '2026-06-20',
+          'amount': 5000,
+          'label': '新規',
+        },
+        <String, dynamic>{
+          'id': 'rule_new',
+          'kind': 'rule',
+          'day_of_month': 25,
+          'amount': 280000,
+          'label': '給料',
+        },
+      ];
+
+      final preview = await store.previewMergeAdditions(rows);
+      // 既知(local)とトゥームストーン(will-delete)を除いた2件だけ。
+      expect(
+        preview.map((row) => row['id']),
+        <String>['inflow_new', 'rule_new'],
+      );
+
+      final added = await store.mergeFromMirrorRows(rows);
+      expect(added, preview.length);
+    });
   });
 }

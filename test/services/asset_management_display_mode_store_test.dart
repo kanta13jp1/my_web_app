@@ -344,5 +344,50 @@ void main() {
 
       expect(diff.isEmpty, isTrue);
     });
+
+    test('describeMirrorPrefsDiff renders old → new lines', () {
+      const diff = AssetMirrorPrefsDiff(
+        mode: AssetManagementDisplayMode.standard,
+        overrides: <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{
+          AssetManagementSectionId.chart:
+              AssetManagementSectionVisibilityOverride.pinned,
+        },
+      );
+
+      final lines = AssetManagementDisplayModeStore.describeMirrorPrefsDiff(
+        currentMode: AssetManagementDisplayMode.minimum,
+        currentOverrides: const <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{
+          AssetManagementSectionId.calendar:
+              AssetManagementSectionVisibilityOverride.pinned,
+        },
+        diff: diff,
+      );
+
+      expect(lines, contains('表示モード: ミニマム → 標準'));
+      expect(lines, contains('グラフ: 自動 → 常に表示'));
+      expect(lines, contains('マネーカレンダー: 常に表示 → 自動'));
+      expect(lines, hasLength(3));
+    });
+
+    test('describeMirrorPrefsDiff returns empty when nothing differs', () {
+      const overrides =
+          <AssetManagementSectionId, AssetManagementSectionVisibilityOverride>{
+        AssetManagementSectionId.chart:
+            AssetManagementSectionVisibilityOverride.pinned,
+      };
+
+      final lines = AssetManagementDisplayModeStore.describeMirrorPrefsDiff(
+        currentMode: AssetManagementDisplayMode.standard,
+        currentOverrides: overrides,
+        diff: const AssetMirrorPrefsDiff(
+          mode: AssetManagementDisplayMode.standard,
+          overrides: overrides,
+        ),
+      );
+
+      expect(lines, isEmpty);
+    });
   });
 }

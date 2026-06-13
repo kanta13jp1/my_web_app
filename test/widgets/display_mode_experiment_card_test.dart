@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/widgets/display_mode_experiment_card.dart';
+
+void main() {
+  group('DisplayModeExperimentCard', () {
+    testWidgets('expand opens dialog with line + area charts', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(900, 1500));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: DisplayModeExperimentCard(
+                debugWeekly: <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'week_start': '2026-06-08',
+                    'initials': 5,
+                    'initial_standard': 4,
+                    'switches': 2,
+                  },
+                  <String, dynamic>{
+                    'week_start': '2026-06-01',
+                    'initials': 3,
+                    'initial_standard': 1,
+                    'switches': 1,
+                  },
+                ],
+                debugWeeklyRetention: <Map<String, dynamic>>[
+                  <String, dynamic>{'week_start': '2026-06-08', 'rate': 80},
+                  <String, dynamic>{'week_start': '2026-06-01', 'rate': null},
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expandButton = find.byKey(
+        const Key('display_mode_experiment_expand'),
+      );
+      expect(expandButton, findsOneWidget);
+      expect(tester.widget<IconButton>(expandButton).onPressed, isNotNull);
+
+      await tester.tap(expandButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('表示モード実験 詳細グラフ'), findsOneWidget);
+      expect(
+        find.byKey(const Key('display_mode_retention_line_chart')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('display_mode_trend_area_chart')),
+        findsOneWidget,
+      );
+      // 週次の数値表も併記される。
+      expect(find.textContaining('維持率'), findsWidgets);
+    });
+
+    testWidgets('expand button is disabled without data', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: DisplayModeExperimentCard(
+              debugWeekly: <Map<String, dynamic>>[],
+              debugWeeklyRetention: <Map<String, dynamic>>[],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expandButton = find.byKey(
+        const Key('display_mode_experiment_expand'),
+      );
+      expect(tester.widget<IconButton>(expandButton).onPressed, isNull);
+    });
+  });
+}
