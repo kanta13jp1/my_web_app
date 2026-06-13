@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/home_feature_actions.dart';
 
 class NewFeaturesList extends StatefulWidget {
   const NewFeaturesList({super.key});
@@ -11,6 +12,7 @@ class NewFeaturesList extends StatefulWidget {
 class _NewFeaturesListState extends State<NewFeaturesList> {
   List<Map<String, dynamic>> _items = [];
   bool _loading = true;
+  bool _showingLatestFallback = false;
 
   @override
   void initState() {
@@ -20,7 +22,7 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
 
   Future<void> _load() async {
     try {
-      final rows = await Supabase.instance.client
+      var rows = await Supabase.instance.client
           .from('feature_releases')
           .select('feature_route, feature_label, description, released_at')
           .gte(
@@ -29,9 +31,20 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
           )
           .order('released_at', ascending: false)
           .limit(6);
+      var fallback = false;
+      if (rows.isEmpty) {
+        // 直近14日が空でもセクションが死なないよう、最新リリースを表示する
+        rows = await Supabase.instance.client
+            .from('feature_releases')
+            .select('feature_route, feature_label, description, released_at')
+            .order('released_at', ascending: false)
+            .limit(3);
+        fallback = rows.isNotEmpty;
+      }
       if (mounted) {
         setState(() {
           _items = List<Map<String, dynamic>>.from(rows);
+          _showingLatestFallback = fallback;
           _loading = false;
         });
       }
@@ -53,54 +66,71 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
         padding: EdgeInsets.all(16),
         child: Text(
           '直近14日間に追加された機能はありません。',
-          style: TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 13,
-            height: 1.5,
-          ),
+          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
         ),
       );
     }
     return Column(
-      children: _items.map((item) {
-        final label = item['feature_label'] as String? ?? '新機能';
-        final desc = item['description'] as String? ?? '';
-        final route = _normalizeRoute(item['feature_route'] as String? ?? '');
-        return ListTile(
-          dense: true,
-          leading: const Icon(
-            Icons.new_releases_outlined,
-            size: 18,
-            color: Color(0xFFFF6B35),
-          ),
-          title: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              height: 1.5,
+      children: [
+        if (_showingLatestFallback)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '直近14日間の追加はありません。最新の追加機能を表示しています。',
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
             ),
           ),
-          subtitle: desc.isNotEmpty
-              ? Text(
-                  desc,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF94A3B8),
-                    height: 1.5,
-                  ),
-                )
-              : null,
-          trailing: const Icon(
-            Icons.chevron_right,
-            size: 16,
-            color: Color(0xFF64748B),
-          ),
-          onTap:
-              route.isEmpty ? null : () => Navigator.pushNamed(context, route),
-        );
-      }).toList(),
+        ..._items.map((item) {
+          final label = item['feature_label'] as String? ?? '新機能';
+          final desc = item['description'] as String? ?? '';
+          final route = _normalizeRoute(item['feature_route'] as String? ?? '');
+          return ListTile(
+            dense: true,
+            leading: const Icon(
+              Icons.new_releases_outlined,
+              size: 18,
+              color: Color(0xFFFF6B35),
+            ),
+            title: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                height: 1.5,
+              ),
+            ),
+            subtitle: desc.isNotEmpty
+                ? Text(
+                    desc,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF94A3B8),
+                      height: 1.5,
+                    ),
+                  )
+                : null,
+            trailing: const Icon(
+              Icons.chevron_right,
+              size: 16,
+              color: Color(0xFF64748B),
+            ),
+            onTap: route.isEmpty
+                ? null
+                : () => openHomeFeature(context, route, label),
+            onLongPress: route.isEmpty
+                ? null
+                : () => pinHomeFeature(context, route, label),
+          );
+        }),
+      ],
     );
   }
 

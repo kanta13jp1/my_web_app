@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/home_feature_actions.dart';
 
 class AiRecommendedFeaturesList extends StatefulWidget {
   const AiRecommendedFeaturesList({super.key});
@@ -161,7 +162,10 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
             ),
             onTap: route.isEmpty
                 ? null
-                : () => Navigator.pushNamed(context, route),
+                : () => openHomeFeature(context, route, label),
+            onLongPress: route.isEmpty
+                ? null
+                : () => pinHomeFeature(context, route, label),
           );
         }),
       ],
