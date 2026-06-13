@@ -7442,6 +7442,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     try {
       final stats = await _displayModeStore.loadStats();
+      final deletedSectionIds = await _displayModeStore.loadDeletedSectionIds();
       final rows = debugRows ??
           List<Map<String, dynamic>>.from(
             await _supabase.from('asset_pref_mirror').select().inFilter(
@@ -7457,6 +7458,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         currentMode: _displayMode,
         currentOverrides: _sectionOverrides,
         localChangedAt: stats.lastChangedAt,
+        deletedSectionIds: deletedSectionIds,
       );
       if (diff.isEmpty || !mounted) {
         return;
@@ -8336,6 +8338,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// GC 設定 (上限/期限) の編集ダイアログ。保存でローカル+ミラーへ反映する。
+  /// 手動 GC: 期限切れ・上限超過の削除記録を今すぐ掃除し、件数を SnackBar 表示。
+  Future<void> _pruneTombstonesNow() async {
+    final removed = await _expectedInflowStore.pruneDeletedIds();
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('古い削除記録を$removed件 掃除しました')),
+    );
+  }
+
   Future<void> _showTombstoneGcSettings(
     void Function(void Function()) setOuterState,
   ) async {
@@ -8368,6 +8381,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               controller: ageController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: '保持日数'),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const Key('asset_tombstone_gc_prune'),
+                onPressed: () => unawaited(_pruneTombstonesNow()),
+                icon: const Icon(Icons.auto_delete_outlined, size: 16),
+                label: const Text('今すぐ古い記録を掃除'),
+              ),
             ),
           ],
         ),

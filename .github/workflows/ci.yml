@@ -256,6 +256,18 @@ jobs:
         run: timeout 120 python scripts/check_duplicate_dispose.py --max-seconds 60
         continue-on-error: false
 
+      - name: Verify pre-commit hook stays healthy
+        # part 291: pre-commit hook の腐敗防止。構文 + 実行ビット + 監査スクリプト
+        # 参照を検証し、ローカル導入 (git config core.hooksPath .githooks) を促す。
+        run: |
+          bash -n .githooks/pre-commit
+          test -x .githooks/pre-commit || {
+            echo ".githooks/pre-commit must be executable (chmod +x)" >&2
+            exit 1
+          }
+          grep -q 'check_duplicate_dispose.py' .githooks/pre-commit
+        continue-on-error: false
+
       - name: Check formatting
         # #1372: treat Dart formatting as a required static-analysis gate.
         run: dart format --output=none --set-exit-if-changed .

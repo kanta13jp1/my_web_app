@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:my_web_app/services/mirror_tombstone_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 資産管理ページの表示モード。情報量を段階的に開示する。
@@ -197,6 +198,23 @@ class AssetManagementDisplayModeStore {
 
   DateTime _now() => nowProvider?.call() ?? DateTime.now();
 
+  /// セクション上書きを「自動へ戻した(=削除した)」section の削除トゥームストーン。
+  /// ミラー取込時に、消したはずの上書きがサーバ残存分から復活するのを防ぐ
+  /// (#part291: MirrorTombstoneStore の 2 例目の消費者)。
+  static const String _overrideDeletedKey =
+      'asset_management_section_override_deleted_v1';
+
+  MirrorTombstoneStore get _overrideTombstones => MirrorTombstoneStore(
+        storageKey: _overrideDeletedKey,
+        nowProvider: nowProvider,
+      );
+
+  /// 削除トゥームストーン済み section の storageId 集合。
+  Future<Set<String>> loadDeletedSectionIds({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return _overrideTombstones.activeIds(store);
+  }
+
   /// 既存ユーザーの体験を変えないため、未設定時はフル表示。
   static const AssetManagementDisplayMode defaultMode =
       AssetManagementDisplayMode.full;
@@ -262,6 +280,7 @@ class AssetManagementDisplayModeStore {
     required AssetManagementSectionOverrides currentOverrides,
     DateTime? localChangedAt,
     Duration selfWriteMargin = const Duration(seconds: 10),
+    Set<String> deletedSectionIds = const <String>{},
   }) {
     AssetManagementDisplayMode? newerMode;
     AssetManagementSectionOverrides? newerOverrides;
@@ -291,6 +310,10 @@ class AssetManagementDisplayModeStore {
         final candidate = <AssetManagementSectionId,
             AssetManagementSectionVisibilityOverride>{};
         for (final entry in value.entries) {
+          // 削除トゥームストーン済み section は復活させない (#part291)。
+          if (deletedSectionIds.contains(entry.key.toString())) {
+            continue;
+          }
           for (final section in AssetManagementSectionId.values) {
             if (section.storageId != entry.key.toString()) {
               continue;
@@ -554,8 +577,12 @@ class AssetManagementDisplayModeStore {
     final current = await loadOverrides(prefs: store);
     if (override == AssetManagementSectionVisibilityOverride.auto) {
       current.remove(section);
+      // 削除をトゥームストーン化 → ミラー取込でこの section は復活しない。
+      await _overrideTombstones.addId(store, section.storageId);
     } else {
       current[section] = override;
+      // 再設定は意図的なので、過去の削除トゥームストーンを解除する。
+      await _overrideTombstones.removeId(store, section.storageId);
     }
     final encoded = <String, String>{
       for (final entry in current.entries)

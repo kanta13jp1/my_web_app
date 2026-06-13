@@ -109,6 +109,29 @@ class MirrorTombstoneStore {
     await _writeEntries(store, entries);
   }
 
+  /// ID のトゥームストーンを解除する (再追加を許す / #part291)。
+  /// 表示設定 override のように ID (= sectionId) が再利用されるドメイン向け。
+  Future<void> removeId(SharedPreferences store, String id) async {
+    final entries = _gcEntries(_readEntries(store.getString(storageKey)));
+    final before = entries.length;
+    entries.removeWhere((entry) => entry['id'] == id);
+    if (entries.length != before) {
+      await _writeEntries(store, entries);
+    }
+  }
+
+  /// 期限切れ・上限超過のトゥームストーンを今すぐ掃除し、削除件数を返す
+  /// (手動 GC / #part291)。読み出し時にも GC されるが、件数を見せる用途。
+  Future<int> prune(SharedPreferences store) async {
+    final entries = _readEntries(store.getString(storageKey));
+    final kept = _gcEntries(entries);
+    final removed = entries.length - kept.length;
+    if (removed > 0) {
+      await _writeEntries(store, kept);
+    }
+    return removed;
+  }
+
   /// 他端末由来の ID 群を取り込む。実際に取り込んだ (空でない) ID 集合を返す。
   /// ローカル項目の削除はドメイン側 (呼び出し元) が行う。
   Future<Set<String>> mergeRemoteIds(
