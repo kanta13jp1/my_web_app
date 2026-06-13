@@ -1,17 +1,14 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'feature_tap_logger.dart';
 
 /// ピン留めが変化したら increment され、お気に入りセクションが再読込する。
 final ValueNotifier<int> homePinnedFeaturesRevision = ValueNotifier<int>(0);
 
 /// home tier チップ/リスト共通の遷移処理。
-/// 利用履歴 (user_feature_usage) に記録してから named route へ遷移する。
+/// 利用履歴 (user_feature_usage) への記録は `MaterialApp.onGenerateRoute` の
+/// `recordFeatureRouteNavigation` が全 named route 遷移に対して一元的に行うため、
+/// ここでは named route へ遷移するだけでよい（二重計上を避ける）。
 Future<void> openHomeFeature(BuildContext context, String route, String label) {
-  unawaited(recordFeatureTap(route, label));
   return Navigator.pushNamed(context, route);
 }
 
