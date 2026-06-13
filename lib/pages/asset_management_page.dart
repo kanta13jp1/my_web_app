@@ -33,6 +33,7 @@ import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
+import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
@@ -369,7 +370,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
   String? _assetManagementAiSummaryInFlightKey;
-  final Set<String> _assetManagementAiSummaryAutoRequestedKeys = <String>{};
+  // 表示中サマリーが生成された時点のフィンガープリント。これと現在の
+  // レポートキーがずれたら自動再生成する (支払済みチェック等の反映)。
+  String? _assetManagementAiSummaryResultKey;
   List<AssetManagementAiAnalysisHistoryEntry>
       _assetManagementAiSummaryReferencedHistory =
       const <AssetManagementAiAnalysisHistoryEntry>[];
@@ -515,6 +518,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingAssetManagementUserProfile = false;
         _assetManagementAiSummaryRequestKey = null;
         _assetManagementAiSummaryResult = null;
+        _assetManagementAiSummaryResultKey = null;
       });
     } catch (_) {
       if (!mounted) {
@@ -13844,9 +13848,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     if (!force &&
-        _assetManagementAiSummaryAutoRequestedKeys.contains(key) &&
-        _assetManagementAiSummaryRequestKey == key &&
-        _assetManagementAiSummaryResult != null) {
+        !AssetManagementAiSummaryRefresh.isStale(
+          currentKey: key,
+          resultKey: _assetManagementAiSummaryResultKey,
+          hasResult: _assetManagementAiSummaryResult != null,
+        )) {
       return;
     }
     setState(() {
@@ -13903,6 +13909,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     setState(() {
       _assetManagementAiSummaryResult = result;
+      _assetManagementAiSummaryResultKey = key;
       _assetManagementAiSummaryReferencedHistory = previousAnalyses;
       _isGeneratingAssetManagementAiSummary = false;
       _assetManagementAiSummaryInFlightKey = null;
@@ -13919,12 +13926,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final key = _assetManagementAiSummaryKey(report);
     if (_assetManagementAiSummaryRequestKey == key ||
-        _assetManagementAiSummaryInFlightKey == key ||
-        _assetManagementAiSummaryAutoRequestedKeys.contains(key)) {
+        _assetManagementAiSummaryInFlightKey == key) {
+      return;
+    }
+    if (!AssetManagementAiSummaryRefresh.isStale(
+      currentKey: key,
+      resultKey: _assetManagementAiSummaryResultKey,
+      hasResult: _assetManagementAiSummaryResult != null,
+    )) {
       return;
     }
     _assetManagementAiSummaryRequestKey = key;
-    _assetManagementAiSummaryAutoRequestedKeys.add(key);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted ||
           !_assetManagementAiSummaryService.aiEnabled ||
