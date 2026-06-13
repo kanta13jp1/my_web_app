@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/home_feature_actions.dart';
 
 class RecentFeaturesList extends StatefulWidget {
   const RecentFeaturesList({super.key});
@@ -61,11 +62,7 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
         padding: EdgeInsets.all(16),
         child: Text(
           'まだ利用履歴がありません。',
-          style: TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 13,
-            height: 1.5,
-          ),
+          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
         ),
       );
     }
@@ -78,20 +75,25 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
           final route = _normalizeRoute(item['feature_route'] as String? ?? '');
           final label = item['feature_label'] as String? ??
               route.substring(1).replaceAll('-', ' ');
-          return ActionChip(
-            label: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFFE5E7EB),
-                height: 1.5,
-              ),
-            ),
-            backgroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: Color(0xFF2A2A2A)),
-            onPressed: route.isEmpty
+          return GestureDetector(
+            onLongPress: route.isEmpty
                 ? null
-                : () => Navigator.pushNamed(context, route),
+                : () => pinHomeFeature(context, route, label),
+            child: ActionChip(
+              label: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFFE5E7EB),
+                  height: 1.5,
+                ),
+              ),
+              backgroundColor: const Color(0xFF1A1A1A),
+              side: const BorderSide(color: Color(0xFF2A2A2A)),
+              onPressed: route.isEmpty
+                  ? null
+                  : () => openHomeFeature(context, route, label),
+            ),
           );
         }).toList(),
       ),

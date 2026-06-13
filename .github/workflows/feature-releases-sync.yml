@@ -1,0 +1,47 @@
+name: Feature Releases Sync
+
+# Issue #3279: ホーム「最近追加された機能」のデータ供給。
+# web/release-notes.json の category=feature な change を
+# Supabase feature_releases へ upsert する (on_conflict=source_id で冪等)。
+# Script: scripts/sync_feature_releases.py
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/release-notes.json"
+      - "scripts/sync_feature_releases.py"
+      - ".github/workflows/feature-releases-sync.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: feature-releases-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync feature_releases from release-notes.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Test sync script
+        run: |
+          python -m py_compile scripts/sync_feature_releases.py
+          PYTHONPATH=. python test/scripts/test_sync_feature_releases.py
+
+      - name: Sync feature_releases
+        run: python scripts/sync_feature_releases.py --input web/release-notes.json
