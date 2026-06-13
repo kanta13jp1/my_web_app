@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import '../data/home_system_fixed.dart';
-import '../data/home_tool_catalog.dart';
 import 'feature_tap_logger.dart';
 
 /// 「最近使った機能 / よく使われる機能」に集計しないルート。
@@ -15,32 +14,20 @@ const Set<String> _nonFeatureRoutes = <String>{
 };
 
 Map<String, String>? _labelCache;
-bool _catalogLoaded = false;
 
-/// route -> ラベルの参照表。
-/// `kHomeSystemFixed` と home ツールカタログから構築し、カタログ構築に
-/// 成功した時点でキャッシュする（Supabase 未初期化時は次回再試行）。
+/// route -> ラベルの参照表。`kHomeSystemFixed`(主要固定機能)から構築する。
+///
+/// home ツールカタログ由来の機能は `_runTrackedAction` 側が日本語タイトルで
+/// 既に利用記録しており、かつ `Navigator.push`(= `onGenerateRoute` を通らない)
+/// ため、ここでカタログを import する必要はない。重いページ群の import を避ける
+/// ことで VM テストでも安全に評価できる。
 Map<String, String> _featureRouteLabels() {
-  if (_catalogLoaded && _labelCache != null) return _labelCache!;
-  final map = <String, String>{
+  return _labelCache ??= <String, String>{
     for (final f in kHomeSystemFixed) f.route: f.label,
   };
-  try {
-    for (final entry in buildHomeToolCatalog()) {
-      final route = entry.routePath;
-      if (route != null && route.isNotEmpty) {
-        map.putIfAbsent(route, () => entry.title);
-      }
-    }
-    _catalogLoaded = true;
-  } catch (_) {
-    // カタログ構築失敗時は system-fixed 分とフォールバックで継続する。
-  }
-  _labelCache = map;
-  return map;
 }
 
-/// route からラベルを解決する。カタログに無ければ slug を整形して返す。
+/// route からラベルを解決する。固定機能に無ければ slug を整形して返す。
 String featureLabelForRoute(String route) {
   return _featureRouteLabels()[route] ?? _titleFromRoute(route);
 }
