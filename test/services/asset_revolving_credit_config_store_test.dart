@@ -54,5 +54,53 @@ void main() {
       final loaded = await store.load(prefs: prefs);
       expect(loaded, isEmpty);
     });
+
+    test('encode/decode mirror value round-trips (端末A→端末B 同期)', () {
+      final configs = <String, AssetLiabilityRevolvingCreditConfig>{
+        'aupay': const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 10000,
+          creditLimit: 500000,
+        ),
+        'rakuten': const AssetLiabilityRevolvingCreditConfig(
+          monthlyAmount: 5000,
+          creditLimit: 0,
+        ),
+      };
+
+      // encode (端末A の upload) → decode (端末B の boot 復元) で値が一致する。
+      final encoded =
+          AssetRevolvingCreditConfigStore.encodeMirrorValue(configs);
+      final decoded =
+          AssetRevolvingCreditConfigStore.decodeMirrorValue(encoded);
+
+      expect(decoded.keys, unorderedEquals(<String>['aupay', 'rakuten']));
+      expect(decoded['aupay']!.monthlyAmount, 10000);
+      expect(decoded['aupay']!.creditLimit, 500000);
+      expect(decoded['rakuten']!.monthlyAmount, 5000);
+      expect(decoded['rakuten']!.creditLimit, 0);
+    });
+
+    test('decodeMirrorValue ignores malformed input', () {
+      expect(
+        AssetRevolvingCreditConfigStore.decodeMirrorValue(null),
+        isEmpty,
+      );
+      expect(
+        AssetRevolvingCreditConfigStore.decodeMirrorValue('not a map'),
+        isEmpty,
+      );
+      // 不正な値 (Map でない) のエントリは捨て、正しいものだけ残す。
+      final decoded = AssetRevolvingCreditConfigStore.decodeMirrorValue(
+        <String, dynamic>{
+          'aupay': <String, dynamic>{
+            'monthlyAmount': 8000,
+            'creditLimit': 200000,
+          },
+          'broken': 'oops',
+        },
+      );
+      expect(decoded.keys, <String>['aupay']);
+      expect(decoded['aupay']!.monthlyAmount, 8000);
+    });
   });
 }

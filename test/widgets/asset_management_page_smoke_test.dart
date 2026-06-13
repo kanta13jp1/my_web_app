@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -422,6 +424,87 @@ void main() {
       expect(repo.savedDebtOverrides, isNotNull);
       expect(repo.savedDebtOverrides!.containsKey('debt_1'), isFalse);
       expect(repo.savedDebtOverrides!['debt_2'], 5);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('revolving config syncs from server mirror on a fresh device', (
+      tester,
+    ) async {
+      // 端末A が保存したリボ設定を集約ミラー値へエンコードする(端末A の upload 相当)。
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+
+      // 端末B はローカル空(別ブラウザ/別ログイン)で起動する。
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugRevolvingConfigsMirror: mirrorValue,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 起動時にミラーから復元され、端末B のローカルにも書き戻される。
+      final synced = await const AssetRevolvingCreditConfigStore().load();
+      expect(synced.keys, contains('aupay'));
+      expect(synced['aupay']!.monthlyAmount, 10000);
+      expect(synced['aupay']!.creditLimit, 500000);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('local revolving config is not clobbered by the mirror', (
+      tester,
+    ) async {
+      // 端末B が既にローカル設定を持つ場合、ミラーは上書きしない(安全側)。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetRevolvingCreditConfigStore.prefsKey: jsonEncode(
+          AssetRevolvingCreditConfigStore.encodeMirrorValue(
+            <String, AssetLiabilityRevolvingCreditConfig>{
+              'aupay': const AssetLiabilityRevolvingCreditConfig(
+                monthlyAmount: 3000,
+                creditLimit: 100000,
+              ),
+            },
+          ),
+        ),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugRevolvingConfigsMirror:
+                AssetRevolvingCreditConfigStore.encodeMirrorValue(
+              <String, AssetLiabilityRevolvingCreditConfig>{
+                'aupay': const AssetLiabilityRevolvingCreditConfig(
+                  monthlyAmount: 99999,
+                  creditLimit: 999999,
+                ),
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // ローカル値(3000)が維持され、ミラー値(99999)では上書きされない。
+      final local = await const AssetRevolvingCreditConfigStore().load();
+      expect(local['aupay']!.monthlyAmount, 3000);
 
       await _unmount(tester);
     });
