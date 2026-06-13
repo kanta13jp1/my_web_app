@@ -75,9 +75,45 @@ class AssetExpectedInflowRule {
   }
 }
 
+/// トゥームストーン GC の上限/期限。既定はローカル定数だが、サーバ
+/// (asset_pref_mirror) から取得した値で上書きできる (#part287 リモート調整)。
+class AssetTombstoneGcConfig {
+  const AssetTombstoneGcConfig({
+    this.maxCount = 1000,
+    this.maxAgeDays = 365,
+  });
+
+  final int maxCount;
+  final int maxAgeDays;
+
+  /// ミラー値 (`{'max_count': N, 'max_age_days': M}`) から構築する。
+  /// 欠落/不正値は既定を維持し、正の範囲にクランプする。
+  factory AssetTombstoneGcConfig.fromMirrorValue(Object? value) {
+    const fallback = AssetTombstoneGcConfig();
+    if (value is! Map) {
+      return fallback;
+    }
+    int pick(String key, int fallbackValue, int min, int max) {
+      final raw = (value[key] as num?)?.toInt();
+      if (raw == null) {
+        return fallbackValue;
+      }
+      return raw.clamp(min, max);
+    }
+
+    return AssetTombstoneGcConfig(
+      maxCount: pick('max_count', fallback.maxCount, 1, 100000),
+      maxAgeDays: pick('max_age_days', fallback.maxAgeDays, 1, 36500),
+    );
+  }
+}
+
 /// 入金予定の永続化ストア。
 class AssetExpectedInflowStore {
-  const AssetExpectedInflowStore({this.nowProvider});
+  const AssetExpectedInflowStore({
+    this.nowProvider,
+    this.gcConfig = const AssetTombstoneGcConfig(),
+  });
 
   static const String _key = 'asset_expected_inflows_v1';
   static const String _rulesKey = 'asset_expected_inflow_rules_v1';
@@ -86,10 +122,8 @@ class AssetExpectedInflowStore {
   /// 「一度消した項目」がサーバ残存分から復活するのを抑止する (#part285)。
   static const String _deletedIdsKey = 'asset_expected_inflow_deleted_ids_v1';
 
-  /// トゥームストーンの保持上限と期限。SharedPreferences の肥大化を防ぐ
-  /// ため、書き込み・読み出し時に古い/超過分を破棄する (#part286)。
-  static const int _tombstoneMaxCount = 1000;
-  static const int _tombstoneMaxAgeDays = 365;
+  /// トゥームストーンの保持上限/期限 (#part286 GC / #part287 リモート調整可)。
+  final AssetTombstoneGcConfig gcConfig;
 
   final DateTime Function()? nowProvider;
 
@@ -224,6 +258,32 @@ class AssetExpectedInflowStore {
     return _decodeActiveIds(store.getString(_deletedIdsKey));
   }
 
+  /// トゥームストーン ID 集合をミラー upsert 用の値へ変換する
+  /// (`{'ids': [...]}`)。ページと統合テストで同一の形を共有する (#part287)。
+  static Map<String, dynamic> encodeDeletedIdsMirror(Iterable<String> ids) {
+    return <String, dynamic>{
+      'ids': [
+        for (final id in ids)
+          if (id.isNotEmpty) id,
+      ],
+    };
+  }
+
+  /// ミラー値 (`{'ids': [...]}`) から ID リストを取り出す。形が不正なら空。
+  static List<String> decodeDeletedIdsMirror(Object? value) {
+    if (value is! Map) {
+      return const <String>[];
+    }
+    final rawIds = value['ids'];
+    if (rawIds is! List) {
+      return const <String>[];
+    }
+    return <String>[
+      for (final id in rawIds)
+        if ((id?.toString() ?? '').isNotEmpty) id.toString(),
+    ];
+  }
+
   Future<void> _addDeletedId(SharedPreferences store, String id) async {
     if (id.isEmpty) {
       return;
@@ -273,18 +333,19 @@ class AssetExpectedInflowStore {
     }
   }
 
-  /// 期限切れ (>_tombstoneMaxAgeDays) を捨て、件数超過分は新しい順に残す。
+  /// 期限切れ (>gcConfig.maxAgeDays) を捨て、件数超過分は新しい順に残す。
   List<Map<String, String>> _gcEntries(List<Map<String, String>> entries) {
     final now = _now();
+    final maxAgeDays = gcConfig.maxAgeDays;
     final kept = <Map<String, String>>[];
     for (final entry in entries) {
       final at = DateTime.tryParse(entry['at'] ?? '');
-      if (at == null || now.difference(at).inDays <= _tombstoneMaxAgeDays) {
+      if (at == null || now.difference(at).inDays <= maxAgeDays) {
         kept.add(entry);
       }
     }
-    if (kept.length > _tombstoneMaxCount) {
-      return kept.sublist(kept.length - _tombstoneMaxCount);
+    if (kept.length > gcConfig.maxCount) {
+      return kept.sublist(kept.length - gcConfig.maxCount);
     }
     return kept;
   }
