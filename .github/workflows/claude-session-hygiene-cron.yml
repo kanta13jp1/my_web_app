@@ -2,8 +2,9 @@ name: Claude Session Hygiene Cron
 
 on:
   schedule:
-    # Every 30 minutes from 06:00 JST through 02:30 JST next day.
-    - cron: "*/30 21-23,0-17 * * *"
+    # Every 60 minutes from 06:00 JST through 02:00 JST next day.
+    # (2026-06-12 ci-audit: 30分→60分, Windows 21runs/日削減 ~630min/day×3x節約)
+    - cron: "0 21-23,0-17 * * *"
   workflow_dispatch:
     inputs:
       apply:
@@ -21,7 +22,7 @@ permissions:
 
 concurrency:
   group: claude-session-hygiene-cron
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-13 ci-audit: Windows 42runs/日キュー積み上がり防止
 
 jobs:
   hygiene:

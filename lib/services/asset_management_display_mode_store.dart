@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:my_web_app/services/mirror_tombstone_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 資産管理ページの表示モード。情報量を段階的に開示する。
@@ -139,6 +140,35 @@ extension AssetManagementSectionVisibilityOverrideLabel
   }
 }
 
+/// サーバ全体集計 (display_mode_experiment_summary rpc) の整形結果。
+class AssetDisplayModeServerSummary {
+  const AssetDisplayModeServerSummary({
+    required this.summaryLabel,
+    required this.weekly,
+    this.firstEventAt,
+    this.weeklyRetention = const <Map<String, dynamic>>[],
+  });
+
+  final String summaryLabel;
+  final List<Map<String, dynamic>> weekly;
+
+  /// 実験の最初のイベント時刻 (= 実験開始)。イベント0件なら null。
+  final DateTime? firstEventAt;
+
+  /// 週末時点 as-of の標準維持率% ({week_start, rate})。rate は null 可。
+  final List<Map<String, dynamic>> weeklyRetention;
+}
+
+/// ミラー上の表示設定がローカルより新しい場合の差分。
+class AssetMirrorPrefsDiff {
+  const AssetMirrorPrefsDiff({this.mode, this.overrides});
+
+  final AssetManagementDisplayMode? mode;
+  final AssetManagementSectionOverrides? overrides;
+
+  bool get isEmpty => mode == null && overrides == null;
+}
+
 /// 表示モード実験の観測値(ローカル計測)。
 class AssetDisplayModeStats {
   const AssetDisplayModeStats({
@@ -168,6 +198,130 @@ class AssetManagementDisplayModeStore {
 
   DateTime _now() => nowProvider?.call() ?? DateTime.now();
 
+  /// セクション上書きを「自動へ戻した(=削除した)」section の削除トゥームストーン。
+  /// ミラー取込時に、消したはずの上書きがサーバ残存分から復活するのを防ぐ
+  /// (#part291: MirrorTombstoneStore の 2 例目の消費者)。
+  static const String _overrideDeletedKey =
+      'asset_management_section_override_deleted_v1';
+
+  MirrorTombstoneStore get _overrideTombstones => MirrorTombstoneStore(
+        storageKey: _overrideDeletedKey,
+        nowProvider: nowProvider,
+      );
+
+  /// 削除トゥームストーン済み section の storageId 集合。
+  Future<Set<String>> loadDeletedSectionIds({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return _overrideTombstones.activeIds(store);
+  }
+
+  /// 削除トゥームストーンをミラー upsert 用の値へ変換する (`{'ids': [...]}`)。
+  Future<Map<String, dynamic>> encodeDeletedSectionIdsMirror({
+    SharedPreferences? prefs,
+  }) async {
+    final ids = await loadDeletedSectionIds(prefs: prefs);
+    return MirrorTombstoneStore.encodeMirror(ids);
+  }
+
+  /// ミラー値 (`{'ids': [...]}`) から section storageId リストを取り出す。
+  static List<String> decodeDeletedSectionIdsMirror(Object? value) =>
+      MirrorTombstoneStore.decodeMirror(value);
+
+  /// 表示設定 3 種 (mode / section_overrides / section_override_deleted) を
+  /// 1 行 jsonb へ集約する (#part293 upsert 回数削減)。
+  static Map<String, dynamic> buildAggregatedMirrorValue({
+    required AssetManagementDisplayMode mode,
+    required AssetManagementSectionOverrides overrides,
+    required Iterable<String> deletedIds,
+  }) {
+    return <String, dynamic>{
+      'mode': mode.storageId,
+      'section_overrides': <String, String>{
+        for (final entry in overrides.entries)
+          entry.key.storageId: entry.value.storageId,
+      },
+      'section_override_deleted': <String>[
+        for (final id in deletedIds)
+          if (id.isNotEmpty) id,
+      ],
+    };
+  }
+
+  /// 集約ミラー値を、既存の evaluateMirrorPrefRows が解釈できる per-key 行
+  /// (display_mode / section_overrides) へ変換する。形が不正なら空。
+  static List<Map<String, dynamic>> aggregatedMirrorToRows(
+    Object? value, {
+    required String updatedAt,
+  }) {
+    if (value is! Map) {
+      return const <Map<String, dynamic>>[];
+    }
+    final rows = <Map<String, dynamic>>[];
+    final mode = value['mode'];
+    if (mode != null) {
+      rows.add(<String, dynamic>{
+        'pref_key': 'display_mode',
+        'value': <String, dynamic>{'mode': mode.toString()},
+        'updated_at': updatedAt,
+      });
+    }
+    final overrides = value['section_overrides'];
+    if (overrides is Map) {
+      rows.add(<String, dynamic>{
+        'pref_key': 'section_overrides',
+        'value': Map<String, dynamic>.from(overrides),
+        'updated_at': updatedAt,
+      });
+    }
+    return rows;
+  }
+
+  /// 集約ミラー値から削除トゥームストーン (section storageId) を取り出す。
+  static List<String> aggregatedDeletedSectionIds(Object? value) {
+    if (value is! Map) {
+      return const <String>[];
+    }
+    final raw = value['section_override_deleted'];
+    if (raw is! List) {
+      return const <String>[];
+    }
+    return <String>[
+      for (final id in raw)
+        if ((id?.toString() ?? '').isNotEmpty) id.toString(),
+    ];
+  }
+
+  /// 他端末由来の override 削除トゥームストーンを取り込み、該当するローカル
+  /// 上書きを削除する (端末間の削除伝播 / #part292)。削除した上書き数を返す。
+  Future<int> applyRemoteDeletedSectionIds(
+    Iterable<String> remoteIds, {
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final incoming = await _overrideTombstones.mergeRemoteIds(store, remoteIds);
+    if (incoming.isEmpty) {
+      return 0;
+    }
+    final current = await loadOverrides(prefs: store);
+    final before = current.length;
+    current.removeWhere((section, _) => incoming.contains(section.storageId));
+    final removed = before - current.length;
+    if (removed > 0) {
+      final encoded = <String, String>{
+        for (final entry in current.entries)
+          entry.key.storageId: entry.value.storageId,
+      };
+      await store.setString(_overridesKey, jsonEncode(encoded));
+    }
+    return removed;
+  }
+
+  /// 期限切れ・上限超過の override 削除トゥームストーンを掃除し件数を返す。
+  Future<int> pruneDeletedSectionIds({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return _overrideTombstones.prune(store);
+  }
+
   /// 既存ユーザーの体験を変えないため、未設定時はフル表示。
   static const AssetManagementDisplayMode defaultMode =
       AssetManagementDisplayMode.full;
@@ -176,6 +330,173 @@ class AssetManagementDisplayModeStore {
   static const AssetManagementDisplayMode newUserDefaultMode =
       AssetManagementDisplayMode.standard;
 
+  /// rpc 戻り値 (jsonb) を表示用ラベルと週次リストへ整形する。
+  /// asset_management_page と CFO 室カードで共用。
+  static AssetDisplayModeServerSummary parseServerSummary(
+    Map<String, dynamic> data,
+  ) {
+    int countOf(String key) => (data[key] as num?)?.toInt() ?? 0;
+    final standardInitial = countOf('initial_standard');
+    final retained = countOf('standard_retained');
+    final rate = standardInitial == 0
+        ? '-'
+        : '${(retained * 100 / standardInitial).round()}%';
+    final weekly = data['weekly'];
+    var trendLabel = '';
+    final weeklyMaps = <Map<String, dynamic>>[];
+    if (weekly is List && weekly.isNotEmpty) {
+      final parts = <String>[];
+      for (final raw in weekly.take(4)) {
+        if (raw is! Map) {
+          continue;
+        }
+        final week = Map<String, dynamic>.from(raw);
+        weeklyMaps.add(week);
+        final start = week['week_start']?.toString() ?? '';
+        final label = start.length >= 10 ? start.substring(5, 10) : start;
+        final initials = (week['initials'] as num?)?.toInt() ?? 0;
+        final std = (week['initial_standard'] as num?)?.toInt() ?? 0;
+        final switches = (week['switches'] as num?)?.toInt() ?? 0;
+        parts.add('$label: 初期$initials(std$std)/切替$switches');
+      }
+      if (parts.isNotEmpty) {
+        trendLabel = ' | 週次 ${parts.join(' → ')}';
+      }
+    }
+    return AssetDisplayModeServerSummary(
+      summaryLabel:
+          '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回$trendLabel',
+      weekly: weeklyMaps,
+      firstEventAt: DateTime.tryParse(data['first_event_at']?.toString() ?? '')
+          ?.toLocal(),
+      weeklyRetention: data['weekly_retention'] is List
+          ? <Map<String, dynamic>>[
+              for (final raw in data['weekly_retention'] as List)
+                if (raw is Map) Map<String, dynamic>.from(raw),
+            ]
+          : const <Map<String, dynamic>>[],
+    );
+  }
+
+  /// ミラー行 (asset_pref_mirror) を評価し、ローカル設定より新しく
+  /// かつ内容が異なる差分だけを返す。自端末の直近書込みは
+  /// [selfWriteMargin] 以内の updated_at として除外する。
+  static AssetMirrorPrefsDiff evaluateMirrorPrefRows({
+    required List<Map<String, dynamic>> rows,
+    required AssetManagementDisplayMode currentMode,
+    required AssetManagementSectionOverrides currentOverrides,
+    DateTime? localChangedAt,
+    Duration selfWriteMargin = const Duration(seconds: 10),
+    Set<String> deletedSectionIds = const <String>{},
+  }) {
+    AssetManagementDisplayMode? newerMode;
+    AssetManagementSectionOverrides? newerOverrides;
+    for (final row in rows) {
+      final updatedAt =
+          DateTime.tryParse(row['updated_at']?.toString() ?? '')?.toLocal();
+      if (updatedAt == null) {
+        continue;
+      }
+      if (localChangedAt != null &&
+          !updatedAt.isAfter(localChangedAt.add(selfWriteMargin))) {
+        continue;
+      }
+      final value = row['value'];
+      if (value is! Map) {
+        continue;
+      }
+      if (row['pref_key'] == 'display_mode') {
+        final raw = value['mode']?.toString();
+        for (final mode in AssetManagementDisplayMode.values) {
+          if (mode.storageId == raw && mode != currentMode) {
+            newerMode = mode;
+          }
+        }
+      }
+      if (row['pref_key'] == 'section_overrides') {
+        final candidate = <AssetManagementSectionId,
+            AssetManagementSectionVisibilityOverride>{};
+        for (final entry in value.entries) {
+          // 削除トゥームストーン済み section は復活させない (#part291)。
+          if (deletedSectionIds.contains(entry.key.toString())) {
+            continue;
+          }
+          for (final section in AssetManagementSectionId.values) {
+            if (section.storageId != entry.key.toString()) {
+              continue;
+            }
+            for (final override
+                in AssetManagementSectionVisibilityOverride.values) {
+              if (override.storageId == entry.value.toString() &&
+                  override != AssetManagementSectionVisibilityOverride.auto) {
+                candidate[section] = override;
+              }
+            }
+          }
+        }
+        var same = candidate.length == currentOverrides.length;
+        if (same) {
+          for (final entry in candidate.entries) {
+            if (currentOverrides[entry.key] != entry.value) {
+              same = false;
+              break;
+            }
+          }
+        }
+        if (!same) {
+          newerOverrides = candidate;
+        }
+      }
+    }
+    return AssetMirrorPrefsDiff(mode: newerMode, overrides: newerOverrides);
+  }
+
+  /// 取り込み前プレビュー用の「旧 → 新」差分行を組み立てる。
+  static List<String> describeMirrorPrefsDiff({
+    required AssetManagementDisplayMode currentMode,
+    required AssetManagementSectionOverrides currentOverrides,
+    required AssetMirrorPrefsDiff diff,
+  }) {
+    final lines = <String>[];
+    final newMode = diff.mode;
+    if (newMode != null && newMode != currentMode) {
+      lines.add('表示モード: ${currentMode.label} → ${newMode.label}');
+    }
+    final newOverrides = diff.overrides;
+    if (newOverrides != null) {
+      final keys = <AssetManagementSectionId>{
+        ...currentOverrides.keys,
+        ...newOverrides.keys,
+      };
+      for (final section in AssetManagementSectionId.values) {
+        if (!keys.contains(section)) {
+          continue;
+        }
+        final before = currentOverrides[section] ??
+            AssetManagementSectionVisibilityOverride.auto;
+        final after = newOverrides[section] ??
+            AssetManagementSectionVisibilityOverride.auto;
+        if (before != after) {
+          lines.add('${section.label}: ${before.label} → ${after.label}');
+        }
+      }
+    }
+    return lines;
+  }
+
+  /// サーババックアップからの表示設定復元をユーザーが辞退したか。
+  Future<bool> isRestoreDeclined({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return store.getBool(_restoreDeclinedKey) ?? false;
+  }
+
+  Future<void> markRestoreDeclined({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    await store.setBool(_restoreDeclinedKey, true);
+  }
+
+  static const String _restoreDeclinedKey =
+      'asset_management_display_restore_declined_v1';
   static const String _modeKey = 'asset_management_display_mode_v1';
   static const String _overridesKey = 'asset_management_section_overrides_v1';
   static const String _eventsKey = 'asset_management_display_mode_events_v1';
@@ -363,8 +684,12 @@ class AssetManagementDisplayModeStore {
     final current = await loadOverrides(prefs: store);
     if (override == AssetManagementSectionVisibilityOverride.auto) {
       current.remove(section);
+      // 削除をトゥームストーン化 → ミラー取込でこの section は復活しない。
+      await _overrideTombstones.addId(store, section.storageId);
     } else {
       current[section] = override;
+      // 再設定は意図的なので、過去の削除トゥームストーンを解除する。
+      await _overrideTombstones.removeId(store, section.storageId);
     }
     final encoded = <String, String>{
       for (final entry in current.entries)

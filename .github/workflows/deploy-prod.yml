@@ -656,6 +656,7 @@ jobs:
             --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true \
             --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true \
             --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true \
+            --dart-define=ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED=true \
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}

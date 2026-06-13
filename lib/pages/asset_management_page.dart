@@ -33,8 +33,10 @@ import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_ai_analysis_history_service.dart';
+import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
@@ -52,6 +54,7 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart'
@@ -100,6 +103,35 @@ class AssetManagementPage extends StatefulWidget {
   final String? entryLabel;
   final String? entryDescription;
 
+  /// テスト専用: 口座スナップショット ({yyyy-MM-dd: {口座名: 残高}}) を
+  /// 直接注入する (#3267)。null なら通常の Supabase 読込のみ。
+  @visibleForTesting
+  final Map<String, Map<String, double>>? debugInitialAssetData;
+
+  /// テスト専用: asset_pref_mirror 行を直接注入し、反映通知の判定を
+  /// ネットワークなしで検証する。null なら通常の select。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugMirrorPrefsRows;
+
+  /// テスト専用: 入金トゥームストーンのミラー値 (`{'ids': [...]}`) を
+  /// 直接注入し、削除伝播 (pull→ローカル除去) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugInflowDeletedIdsMirror;
+
+  /// テスト専用: トゥームストーン GC 設定の初期値を注入する (#part288)。
+  @visibleForTesting
+  final AssetTombstoneGcConfig? debugTombstoneGcConfig;
+
+  /// テスト専用: section override 削除トゥームストーンのミラー値
+  /// (`{'ids': [...]}`) を注入し、削除伝播をネットワークなしで検証する (#part292)。
+  @visibleForTesting
+  final Map<String, dynamic>? debugSectionOverrideDeletedMirror;
+
+  /// テスト専用: 支払日上書き削除トゥームストーンのミラー値
+  /// (`{'ids': [...]}`) を注入し、削除伝播をネットワークなしで検証する (#part294)。
+  @visibleForTesting
+  final Map<String, dynamic>? debugDebtOverrideDeletedMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -108,6 +140,12 @@ class AssetManagementPage extends StatefulWidget {
     this.assetLiabilityRepository,
     this.entryLabel,
     this.entryDescription,
+    this.debugInitialAssetData,
+    this.debugMirrorPrefsRows,
+    this.debugInflowDeletedIdsMirror,
+    this.debugTombstoneGcConfig,
+    this.debugSectionOverrideDeletedMirror,
+    this.debugDebtOverrideDeletedMirror,
   });
 
   @override
@@ -143,6 +181,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyFlow = GlobalKey();
   final _keySubs = GlobalKey();
   final _keyMust = GlobalKey();
+  // カード明細取り込み・照合パネルへのスクロール用 (AIコメントからのジャンプ)。
+  final _keyCardStatementReconciliation = GlobalKey();
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
@@ -339,10 +379,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementDisplayModeStore();
   AssetManagementDisplayMode _displayMode =
       AssetManagementDisplayModeStore.defaultMode;
+  final AssetManagementMainAccountStore _mainAccountStore =
+      const AssetManagementMainAccountStore();
+  // 使用可能額の基準となるメインバンク口座ID。null は既定(最大預金口座)。
+  String? _assetManagementMainAccountId;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
-  final AssetExpectedInflowStore _expectedInflowStore =
+  // GC 設定をサーバ/ローカルから取得したら差し替えるため非 final (#part287/288)。
+  AssetExpectedInflowStore _expectedInflowStore =
       const AssetExpectedInflowStore();
+  AssetTombstoneGcConfig _tombstoneGcConfig = const AssetTombstoneGcConfig();
   List<AssetExpectedInflow> _expectedInflows = <AssetExpectedInflow>[];
   List<AssetExpectedInflowRule> _expectedInflowRules =
       <AssetExpectedInflowRule>[];
@@ -357,7 +403,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   AssetManagementAiSummaryResult? _assetManagementAiSummaryResult;
   String? _assetManagementAiSummaryRequestKey;
   String? _assetManagementAiSummaryInFlightKey;
-  final Set<String> _assetManagementAiSummaryAutoRequestedKeys = <String>{};
+  // 表示中サマリーが生成された時点のフィンガープリント。これと現在の
+  // レポートキーがずれたら自動再生成する (支払済みチェック等の反映)。
+  String? _assetManagementAiSummaryResultKey;
   List<AssetManagementAiAnalysisHistoryEntry>
       _assetManagementAiSummaryReferencedHistory =
       const <AssetManagementAiAnalysisHistoryEntry>[];
@@ -415,6 +463,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
+    final debugAssetData = widget.debugInitialAssetData;
+    if (debugAssetData != null) {
+      _assetData = <String, Map<String, double>>{
+        for (final entry in debugAssetData.entries)
+          entry.key: Map<String, double>.from(entry.value),
+      };
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -428,7 +483,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchSubscriptions();
     _fetchMustTasks();
     _loadDisplayMode();
+    _loadMainAccount();
     _loadExpectedInflows();
+    // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
+    unawaited(_initTombstoneGcAndPull());
+    // 他端末で削除されたセクション上書き / 支払日上書きを取り込む (#part292/294)。
+    unawaited(_pullDeletedSectionIds());
+    unawaited(_pullDebtOverrideDeleted());
+    // 期限切れ・上限超過のトゥームストーンを自動掃除 (#part296 肥大化抑制)。
+    unawaited(_pruneTombstonesOnBoot());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -469,7 +532,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _cardStatementImportController.dispose();
     _assetCsvRestoreController.dispose();
     _repaymentSimulationExtraPaymentController.dispose();
-    _annualRateControllers.forEach((_, controller) => controller.dispose());
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
@@ -496,6 +558,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _isLoadingAssetManagementUserProfile = false;
         _assetManagementAiSummaryRequestKey = null;
         _assetManagementAiSummaryResult = null;
+        _assetManagementAiSummaryResultKey = null;
       });
     } catch (_) {
       if (!mounted) {
@@ -523,6 +586,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     await _loadAssetManagementUserProfile();
+  }
+
+  /// AIコメントが指摘するカード明細の未取込・差分に対し、取り込み・照合
+  /// パネルへ誘導するリンクの文言。確認が必要なカード名を織り込む。
+  String _cardStatementReconciliationLinkLabel(
+      AssetLiabilityWorkbook workbook) {
+    final groups = workbook.cardStatementReconciliation.needsReviewGroups;
+    if (groups.length == 1) {
+      return '${groups.first.billingAccountName}の明細を取り込んで照合する';
+    }
+    return 'カード明細を取り込んで照合する（${groups.length}件）';
+  }
+
+  void _jumpToCardStatementReconciliation() {
+    _scrollTo(_keyCardStatementReconciliation);
   }
 
   List<String> _paymentSourceCandidates() {
@@ -1077,8 +1155,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           await _assetLiabilityRepository.loadDefaultPaymentSources();
       final defaultCardBillingAccounts =
           await _assetLiabilityRepository.loadDefaultCardBillingAccounts();
-      final debtPaymentDayOverrides =
+      // #part295: ロード時もトゥームストーン済み支払日上書きを除外する
+      // (pull とロードの順序に依らず「削除した上書き」を復活させない)。
+      final loadedDebtOverrides =
           await _assetLiabilityRepository.loadDebtPaymentDayOverrides();
+      final debtTombstones = _debtOverrideTombstones.activeIds(
+        await SharedPreferences.getInstance(),
+      );
+      final debtPaymentDayOverrides = <String, int>{
+        for (final entry in loadedDebtOverrides.entries)
+          if (!debtTombstones.contains(entry.key)) entry.key: entry.value,
+      };
+      if (debtPaymentDayOverrides.length != loadedDebtOverrides.length) {
+        unawaited(
+          _assetLiabilityRepository.saveDebtPaymentDayOverrides(
+            Map<String, int>.from(debtPaymentDayOverrides),
+          ),
+        );
+      }
       if (debtPaymentDayOverrides.isEmpty) {
         unawaited(_restoreDebtPaymentDayOverridesFromMirror());
       }
@@ -7320,6 +7414,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  Future<void> _loadMainAccount() async {
+    try {
+      final id = await _mainAccountStore.load();
+      if (!mounted || id == _assetManagementMainAccountId) {
+        return;
+      }
+      setState(() {
+        _assetManagementMainAccountId = id;
+      });
+    } catch (e) {
+      debugPrint('Error loading main account: $e');
+    }
+  }
+
+  Future<void> _setMainAccount(String? accountId) async {
+    setState(() {
+      _assetManagementMainAccountId = accountId;
+    });
+    try {
+      await _mainAccountStore.save(accountId);
+    } catch (e) {
+      debugPrint('Error saving main account: $e');
+    }
+  }
+
   Future<void> _loadDisplayMode() async {
     final mode = await _displayModeStore.load();
     final overrides = await _displayModeStore.loadOverrides();
@@ -7334,8 +7453,127 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_refreshDisplayModeStats());
     if (!hadStored && overrides.isEmpty) {
       unawaited(_restoreDisplayPrefsFromMirror());
+    } else {
+      unawaited(_checkDisplayPrefsMirrorNewer());
     }
   }
+
+  Future<void> _applyDisplayPrefs(
+    AssetManagementDisplayMode? mode,
+    AssetManagementSectionOverrides? overrides,
+  ) async {
+    if (mode != null && mode != _displayMode) {
+      setState(() {
+        _displayMode = mode;
+      });
+      await _displayModeStore.save(mode, recordEvent: false);
+    }
+    if (overrides != null) {
+      for (final entry in overrides.entries) {
+        final saved = await _displayModeStore.saveOverride(
+          entry.key,
+          entry.value,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = saved;
+        });
+      }
+    }
+  }
+
+  /// 他端末がミラーを更新していたら、自動適用せず通知して選ばせる。
+  /// 判定は AssetManagementDisplayModeStore.evaluateMirrorPrefRows に委譲。
+  Future<void> _checkDisplayPrefsMirrorNewer() async {
+    final debugRows = widget.debugMirrorPrefsRows;
+    if (_supabase.auth.currentUser == null && debugRows == null) {
+      return;
+    }
+    try {
+      final stats = await _displayModeStore.loadStats();
+      final deletedSectionIds = await _displayModeStore.loadDeletedSectionIds();
+      final rows = debugRows ?? await _fetchDisplayPrefRows();
+      if (rows.isEmpty || !mounted) {
+        return;
+      }
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: rows,
+        currentMode: _displayMode,
+        currentOverrides: _sectionOverrides,
+        localChangedAt: stats.lastChangedAt,
+        deletedSectionIds: deletedSectionIds,
+      );
+      if (diff.isEmpty || !mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 8),
+          content: const Text('他端末で表示設定が更新されています'),
+          action: SnackBarAction(
+            label: '取り込む',
+            onPressed: () => unawaited(_showMirrorDiffPreview(diff)),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('display pref mirror check failed: $e');
+    }
+  }
+
+  /// 取り込み前に「旧 → 新」を見せて確定させる差分プレビュー。
+  Future<void> _showMirrorDiffPreview(AssetMirrorPrefsDiff diff) async {
+    if (!mounted) {
+      return;
+    }
+    final lines = AssetManagementDisplayModeStore.describeMirrorPrefsDiff(
+      currentMode: _displayMode,
+      currentOverrides: _sectionOverrides,
+      diff: diff,
+    );
+    if (lines.isEmpty) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('表示設定の取り込みプレビュー'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  line,
+                  style: const TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            key: const Key('asset_mirror_diff_apply'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('適用する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _applyDisplayPrefs(diff.mode, diff.overrides);
+    }
+  }
+
+  /// 表示設定を集約する 1 行 jsonb の pref_key (#part293)。
+  static const String _displayPrefsAggregatedKey = 'asset_display_prefs_v1';
 
   Future<void> _mirrorDisplayPrefs() async {
     final userId = _supabase.auth.currentUser?.id;
@@ -7344,25 +7582,127 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     try {
       final now = DateTime.now().toUtc().toIso8601String();
-      await _supabase.from('asset_pref_mirror').upsert(<Map<String, dynamic>>[
-        <String, dynamic>{
-          'user_id': userId,
-          'pref_key': 'display_mode',
-          'value': <String, dynamic>{'mode': _displayMode.storageId},
-          'updated_at': now,
-        },
-        <String, dynamic>{
-          'user_id': userId,
-          'pref_key': 'section_overrides',
-          'value': <String, String>{
-            for (final entry in _sectionOverrides.entries)
-              entry.key.storageId: entry.value.storageId,
-          },
-          'updated_at': now,
-        },
-      ]);
+      // #part293: display_mode / section_overrides / section_override_deleted を
+      // 1 行 jsonb (asset_display_prefs_v1) へ集約し upsert を 1 回に削減。
+      final aggregated =
+          AssetManagementDisplayModeStore.buildAggregatedMirrorValue(
+        mode: _displayMode,
+        overrides: _sectionOverrides,
+        deletedIds: await _displayModeStore.loadDeletedSectionIds(),
+      );
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _displayPrefsAggregatedKey,
+        'value': aggregated,
+        'updated_at': now,
+      });
+      // #part294: 集約済みなので legacy per-key 行を best-effort で掃除する
+      // (移行完了後に読みフォールバックを撤去するための前段。詳細は
+      // docs/MIRROR_PREF_AGGREGATION_MIGRATION.md)。
+      unawaited(_cleanupLegacyDisplayPrefRows());
     } catch (e) {
       debugPrint('display pref mirror upsert failed: $e');
+    }
+  }
+
+  /// 集約行へ移行済みの legacy per-key 行を削除する (best-effort / #part294)。
+  Future<void> _cleanupLegacyDisplayPrefRows() async {
+    try {
+      await _supabase.from('asset_pref_mirror').delete().inFilter(
+        'pref_key',
+        <String>[
+          'display_mode',
+          'section_overrides',
+          'section_override_deleted'
+        ],
+      );
+    } catch (e) {
+      debugPrint('legacy display pref cleanup failed: $e');
+    }
+  }
+
+  /// 集約行を優先し、無ければ legacy per-key 行を per-key 形へ正規化して返す。
+  Future<List<Map<String, dynamic>>> _fetchDisplayPrefRows() async {
+    final rows = List<Map<String, dynamic>>.from(
+      await _supabase.from('asset_pref_mirror').select().inFilter(
+        'pref_key',
+        <String>[
+          _displayPrefsAggregatedKey,
+          'display_mode',
+          'section_overrides',
+        ],
+      ),
+    );
+    for (final row in rows) {
+      if (row['pref_key'] == _displayPrefsAggregatedKey) {
+        return AssetManagementDisplayModeStore.aggregatedMirrorToRows(
+          row['value'],
+          updatedAt: row['updated_at']?.toString() ??
+              DateTime.now().toUtc().toIso8601String(),
+        );
+      }
+    }
+    return rows
+        .where((row) => row['pref_key'] != _displayPrefsAggregatedKey)
+        .toList();
+  }
+
+  /// 他端末で「自動へ戻した(削除した)」セクション上書きを取り込み、
+  /// ローカルからも除去する (削除伝播 / #part292)。
+  Future<void> _pullDeletedSectionIds() async {
+    final debugMirror = widget.debugSectionOverrideDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final List<String> ids;
+      if (debugMirror != null) {
+        ids = AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
+          debugMirror,
+        );
+      } else {
+        // 集約行 (asset_display_prefs_v1) を優先、無ければ legacy 行。
+        final rows =
+            await _supabase.from('asset_pref_mirror').select().inFilter(
+          'pref_key',
+          <String>[_displayPrefsAggregatedKey, 'section_override_deleted'],
+        );
+        Map<String, dynamic>? aggregated;
+        Map<String, dynamic>? legacy;
+        for (final row in rows) {
+          if (row['pref_key'] == _displayPrefsAggregatedKey) {
+            aggregated = row;
+          } else if (row['pref_key'] == 'section_override_deleted') {
+            legacy = row;
+          }
+        }
+        if (aggregated != null) {
+          ids = AssetManagementDisplayModeStore.aggregatedDeletedSectionIds(
+            aggregated['value'],
+          );
+        } else if (legacy != null && legacy['value'] is Map) {
+          ids = AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
+            Map<String, dynamic>.from(legacy['value'] as Map),
+          );
+        } else {
+          return;
+        }
+      }
+      if (ids.isEmpty) {
+        return;
+      }
+      final removed = await _displayModeStore.applyRemoteDeletedSectionIds(ids);
+      if (removed > 0 && mounted) {
+        final overrides = await _displayModeStore.loadOverrides();
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = overrides;
+        });
+      }
+    } catch (e) {
+      debugPrint('section override tombstone pull failed: $e');
     }
   }
 
@@ -7370,15 +7710,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_supabase.auth.currentUser == null) {
       return;
     }
+    if (await _displayModeStore.isRestoreDeclined()) {
+      return;
+    }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .inFilter('pref_key', <String>['display_mode', 'section_overrides']);
+      final rows = await _fetchDisplayPrefRows();
       if (rows.isEmpty || !mounted) {
         return;
       }
-      var restoredAny = false;
+
+      AssetManagementDisplayMode? pendingMode;
+      final pendingOverrides = <AssetManagementSectionId,
+          AssetManagementSectionVisibilityOverride>{};
       for (final row in rows) {
         final value = row['value'];
         if (value is! Map) {
@@ -7388,11 +7731,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           final raw = value['mode']?.toString();
           for (final mode in AssetManagementDisplayMode.values) {
             if (mode.storageId == raw && mode != _displayMode) {
-              setState(() {
-                _displayMode = mode;
-              });
-              await _displayModeStore.save(mode, recordEvent: false);
-              restoredAny = true;
+              pendingMode = mode;
             }
           }
         }
@@ -7416,19 +7755,68 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 override == AssetManagementSectionVisibilityOverride.auto) {
               continue;
             }
-            final overrides =
-                await _displayModeStore.saveOverride(section, override);
-            if (!mounted) {
-              return;
-            }
-            setState(() {
-              _sectionOverrides = overrides;
-            });
-            restoredAny = true;
+            pendingOverrides[section] = override;
           }
         }
       }
-      if (restoredAny && mounted) {
+      if (pendingMode == null && pendingOverrides.isEmpty) {
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+
+      // 他端末の設定で不意に上書きしないよう、適用前に必ず確認する。
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('表示設定のバックアップ'),
+          content: Text(
+            'サーバに表示設定のバックアップがあります'
+            '${pendingMode == null ? '' : '(表示モード: ${pendingMode.label})'}。'
+            'この端末に適用しますか?適用しない場合、次回以降は確認しません。',
+          ),
+          actions: [
+            TextButton(
+              key: const Key('asset_display_restore_decline'),
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('適用しない'),
+            ),
+            ElevatedButton(
+              key: const Key('asset_display_restore_accept'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('適用する'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) {
+        await _displayModeStore.markRestoreDeclined();
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+
+      if (pendingMode != null) {
+        setState(() {
+          _displayMode = pendingMode!;
+        });
+        await _displayModeStore.save(pendingMode, recordEvent: false);
+      }
+      for (final entry in pendingOverrides.entries) {
+        final overrides = await _displayModeStore.saveOverride(
+          entry.key,
+          entry.value,
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _sectionOverrides = overrides;
+        });
+      }
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('表示設定をサーバのバックアップから復元しました')),
         );
@@ -7470,6 +7858,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _removeExpectedInflowRule(String id) async {
     final rules = await _expectedInflowStore.removeRule(id);
     unawaited(_deleteInflowMirror(id));
+    unawaited(_mirrorInflowDeletedIds());
     if (!mounted) {
       return;
     }
@@ -7511,6 +7900,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _removeExpectedInflow(String id) async {
     final entries = await _expectedInflowStore.remove(id);
     unawaited(_deleteInflowMirror(id));
+    unawaited(_mirrorInflowDeletedIds());
     if (!mounted) {
       return;
     }
@@ -7786,38 +8176,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
       final data = Map<String, dynamic>.from(result);
-      int countOf(String key) => (data[key] as num?)?.toInt() ?? 0;
-      final standardInitial = countOf('initial_standard');
-      final retained = countOf('standard_retained');
-      final rate = standardInitial == 0
-          ? '-'
-          : '${(retained * 100 / standardInitial).round()}%';
-      final weekly = data['weekly'];
-      var trendLabel = '';
-      final weeklyMaps = <Map<String, dynamic>>[];
-      if (weekly is List && weekly.isNotEmpty) {
-        final parts = <String>[];
-        for (final raw in weekly.take(4)) {
-          if (raw is! Map) {
-            continue;
-          }
-          final week = Map<String, dynamic>.from(raw);
-          weeklyMaps.add(week);
-          final start = week['week_start']?.toString() ?? '';
-          final label = start.length >= 10 ? start.substring(5, 10) : start;
-          final initials = (week['initials'] as num?)?.toInt() ?? 0;
-          final std = (week['initial_standard'] as num?)?.toInt() ?? 0;
-          final switches = (week['switches'] as num?)?.toInt() ?? 0;
-          parts.add('$label: 初期$initials(std$std)/切替$switches');
-        }
-        if (parts.isNotEmpty) {
-          trendLabel = ' | 週次 ${parts.join(' → ')}';
-        }
-      }
+      final parsed = AssetManagementDisplayModeStore.parseServerSummary(data);
       setState(() {
-        _experimentServerSummary =
-            '全体: 初期 min ${countOf('initial_minimum')} / std $standardInitial / full ${countOf('initial_full')}・標準維持率 $rate・切替 ${countOf('switch_total')}回$trendLabel';
-        _experimentWeekly = weeklyMaps;
+        _experimentServerSummary = parsed.summaryLabel;
+        _experimentWeekly = parsed.weekly;
       });
     } catch (e) {
       debugPrint('experiment summary fetch failed: $e');
@@ -7982,14 +8344,22 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (value is! Map) {
         return;
       }
+      // 削除トゥームストーン済みの支払日上書きは復元しない (#part293 3例目)。
+      final tombstoned = _debtOverrideTombstones.activeIds(
+        await SharedPreferences.getInstance(),
+      );
       final restored = <String, int>{};
       value.forEach((key, dynamic raw) {
         final day = (raw as num?)?.toInt();
-        if (key is String && day != null && day >= 1 && day <= 31) {
+        if (key is String &&
+            day != null &&
+            day >= 1 &&
+            day <= 31 &&
+            !tombstoned.contains(key)) {
           restored[key] = day;
         }
       });
-      if (restored.isEmpty || _debtPaymentDayOverrides.isNotEmpty) {
+      if (restored.isEmpty || _debtPaymentDayOverrides.isNotEmpty || !mounted) {
         return;
       }
       setState(() {
@@ -8004,30 +8374,373 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 入金予定のミラー取り込みプレビュー行を組み立てる。
+  String _inflowMergeRowLabel(Map<String, dynamic> row) {
+    final label = row['label']?.toString() ?? '入金予定';
+    final amount = (row['amount'] as num?)?.toDouble() ?? 0;
+    if (row['kind']?.toString() == 'rule') {
+      final day = (row['day_of_month'] as num?)?.toInt() ?? 0;
+      return '毎月$day日 $label  +${_formatYen(amount)}';
+    }
+    final date = DateTime.tryParse(row['date']?.toString() ?? '')?.toLocal();
+    final when = date == null ? '' : '${DateFormat('M/d').format(date)} ';
+    return '$when$label  +${_formatYen(amount)}';
+  }
+
+  /// 削除トゥームストーンをサーバへ反映 (他端末の削除伝播用 / #part285)。
+  /// 入金 pref を集約する 1 行 jsonb の pref_key (#part294)。
+  static const String _inflowPrefsAggregatedKey = 'asset_inflow_prefs_v1';
+
+  // 削除トゥームストーンと GC 設定の更新は同じ集約行へ書き込む (後方互換維持)。
+  Future<void> _mirrorInflowDeletedIds() => _mirrorInflowPrefs();
+
+  /// 入金 pref (削除トゥームストーン + GC 設定) を 1 行 jsonb へ集約 upsert
+  /// し、legacy per-key 行を best-effort で掃除する (#part294)。
+  Future<void> _mirrorInflowPrefs() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final ids = await _expectedInflowStore.loadDeletedIds();
+      final value = AssetExpectedInflowStore.buildAggregatedInflowMirrorValue(
+        deletedIds: ids,
+        gcConfig: _tombstoneGcConfig,
+      );
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _inflowPrefsAggregatedKey,
+        'value': value,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      unawaited(_cleanupLegacyInflowPrefRows());
+    } catch (e) {
+      debugPrint('inflow pref mirror upsert failed: $e');
+    }
+  }
+
+  Future<void> _cleanupLegacyInflowPrefRows() async {
+    try {
+      await _supabase.from('asset_pref_mirror').delete().inFilter(
+        'pref_key',
+        <String>['inflow_deleted_ids', 'inflow_tombstone_gc'],
+      );
+    } catch (e) {
+      debugPrint('legacy inflow pref cleanup failed: $e');
+    }
+  }
+
+  /// サーバのトゥームストーンを取り込み、該当ローカル項目を削除する。
+  Future<void> _pullInflowDeletedIds() async {
+    final debugMirror = widget.debugInflowDeletedIdsMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final List<String> ids;
+      if (debugMirror != null) {
+        ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(debugMirror);
+      } else {
+        // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
+        final rows =
+            await _supabase.from('asset_pref_mirror').select().inFilter(
+          'pref_key',
+          <String>[_inflowPrefsAggregatedKey, 'inflow_deleted_ids'],
+        );
+        Map<String, dynamic>? aggregated;
+        Map<String, dynamic>? legacy;
+        for (final row in rows) {
+          if (row['pref_key'] == _inflowPrefsAggregatedKey) {
+            aggregated = row;
+          } else if (row['pref_key'] == 'inflow_deleted_ids') {
+            legacy = row;
+          }
+        }
+        if (aggregated != null) {
+          ids = AssetExpectedInflowStore.aggregatedInflowDeletedIds(
+            aggregated['value'],
+          );
+        } else if (legacy != null && legacy['value'] is Map) {
+          ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(
+            Map<String, dynamic>.from(legacy['value'] as Map),
+          );
+        } else {
+          return;
+        }
+      }
+      if (ids.isEmpty) {
+        return;
+      }
+      final removed = await _expectedInflowStore.applyRemoteDeletedIds(ids);
+      if (removed > 0 && mounted) {
+        await _loadExpectedInflows();
+      }
+    } catch (e) {
+      debugPrint('inflow tombstone pull failed: $e');
+    }
+  }
+
+  /// トゥームストーン GC の上限/期限をサーバ (asset_pref_mirror) から取得し、
+  /// ストアへ反映する (#part287 リモート調整)。未設定なら既定のまま。
+  Future<void> _initTombstoneGcAndPull() async {
+    await _applyLocalTombstoneGcConfig();
+    await _loadTombstoneGcConfig();
+    await _pullInflowDeletedIds();
+  }
+
+  /// ローカル保存 (またはテスト注入) の GC 設定をストアへ反映する。
+  Future<void> _applyLocalTombstoneGcConfig() async {
+    final config = widget.debugTombstoneGcConfig ??
+        await AssetExpectedInflowStore.loadGcConfig();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tombstoneGcConfig = config;
+      _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+    });
+  }
+
+  Future<void> _loadTombstoneGcConfig() async {
+    // テスト注入時はサーバ取得を行わない (ネットワーク非依存)。
+    if (widget.debugTombstoneGcConfig != null ||
+        _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
+      final rows = await _supabase.from('asset_pref_mirror').select().inFilter(
+        'pref_key',
+        <String>[_inflowPrefsAggregatedKey, 'inflow_tombstone_gc'],
+      );
+      Map<String, dynamic>? aggregated;
+      Map<String, dynamic>? legacy;
+      for (final row in rows) {
+        if (row['pref_key'] == _inflowPrefsAggregatedKey) {
+          aggregated = row;
+        } else if (row['pref_key'] == 'inflow_tombstone_gc') {
+          legacy = row;
+        }
+      }
+      final AssetTombstoneGcConfig config;
+      if (aggregated != null) {
+        config = AssetExpectedInflowStore.aggregatedInflowGcConfig(
+          aggregated['value'],
+        );
+      } else if (legacy != null) {
+        config = AssetTombstoneGcConfig.fromMirrorValue(legacy['value']);
+      } else {
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+      await AssetExpectedInflowStore.saveGcConfig(config);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _tombstoneGcConfig = config;
+        _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+      });
+    } catch (e) {
+      debugPrint('tombstone gc config fetch failed: $e');
+    }
+  }
+
+  /// GC 設定 (上限/期限) の編集ダイアログ。保存でローカル+ミラーへ反映する。
+  /// 手動 GC: 期限切れ・上限超過の削除記録を今すぐ掃除し、件数を SnackBar 表示。
+  Future<void> _pruneTombstonesNow() async {
+    // 入金予定 + 表示設定 override + 支払日上書きの全トゥームストーンを一括掃除
+    // (#part292/296)。
+    final removed = await _pruneAllTombstones();
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('古い削除記録を$removed件 掃除しました')),
+    );
+  }
+
+  /// 3 ドメインのトゥームストーンを掃除し、合算した削除件数を返す。
+  Future<int> _pruneAllTombstones() async {
+    final store = await SharedPreferences.getInstance();
+    final removedInflow = await _expectedInflowStore.pruneDeletedIds();
+    final removedOverride = await _displayModeStore.pruneDeletedSectionIds();
+    final removedDebt = await _debtOverrideTombstones.prune(store);
+    return removedInflow + removedOverride + removedDebt;
+  }
+
+  /// boot 時に期限切れ・上限超過のトゥームストーンを自動で掃除する
+  /// (SharedPreferences 肥大化の自動抑制 / #part296)。UI 通知はしない。
+  Future<void> _pruneTombstonesOnBoot() async {
+    try {
+      await _pruneAllTombstones();
+    } catch (e) {
+      debugPrint('boot tombstone prune failed: $e');
+    }
+  }
+
+  Future<void> _showTombstoneGcSettings(
+    void Function(void Function()) setOuterState,
+  ) async {
+    final countController = TextEditingController(
+      text: '${_tombstoneGcConfig.maxCount}',
+    );
+    final ageController = TextEditingController(
+      text: '${_tombstoneGcConfig.maxAgeDays}',
+    );
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('削除履歴の保持設定'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '削除した入金予定の「復活防止」記録を、どれだけ保持するか。',
+              style: TextStyle(fontSize: 12, height: 1.5),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('asset_tombstone_gc_maxcount'),
+              controller: countController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '最大件数'),
+            ),
+            TextField(
+              key: const Key('asset_tombstone_gc_maxage'),
+              controller: ageController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '保持日数'),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const Key('asset_tombstone_gc_prune'),
+                onPressed: () => unawaited(_pruneTombstonesNow()),
+                icon: const Icon(Icons.auto_delete_outlined, size: 16),
+                label: const Text('今すぐ古い記録を掃除'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            key: const Key('asset_tombstone_gc_save'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    if (saved != true || !mounted) {
+      return;
+    }
+    final config = AssetTombstoneGcConfig.fromMirrorValue(<String, dynamic>{
+      'max_count': int.tryParse(countController.text.trim()),
+      'max_age_days': int.tryParse(ageController.text.trim()),
+    });
+    await AssetExpectedInflowStore.saveGcConfig(config);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tombstoneGcConfig = config;
+      _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+    });
+    setOuterState(() {});
+    unawaited(_mirrorInflowPrefs());
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '保持設定を更新しました(最大${config.maxCount}件 / ${config.maxAgeDays}日)',
+        ),
+      ),
+    );
+  }
+
   Future<void> _mergeInflowsFromMirror() async {
     if (_supabase.auth.currentUser == null) {
       return;
     }
     try {
-      final rows = await _supabase.from('asset_expected_inflow_items').select();
-      final added = await _expectedInflowStore.mergeFromMirrorRows(
-        List<Map<String, dynamic>>.from(rows),
+      // 先に他端末の削除を取り込み、復活候補から除外する。
+      await _pullInflowDeletedIds();
+      final rows = List<Map<String, dynamic>>.from(
+        await _supabase.from('asset_expected_inflow_items').select(),
       );
+      final additions = await _expectedInflowStore.previewMergeAdditions(rows);
       if (!mounted) {
         return;
       }
-      if (added > 0) {
+      if (additions.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('サーバとの差分はありませんでした')),
+        );
+        return;
+      }
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('サーバから取り込む入金予定'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '以下の${additions.length}件をローカルへ追加します(削除済みは復活しません)。',
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final row in additions)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '・${_inflowMergeRowLabel(row)}',
+                        style: const TextStyle(fontSize: 12, height: 1.4),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              key: const Key('asset_inflow_merge_apply'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('取り込む'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) {
+        return;
+      }
+      final added = await _expectedInflowStore.mergeFromMirrorRows(rows);
+      if (added > 0 && mounted) {
         await _loadExpectedInflows();
       }
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            added > 0 ? '$added件をサーバから統合しました' : 'サーバとの差分はありませんでした',
-          ),
-        ),
+        SnackBar(content: Text('$added件をサーバから統合しました')),
       );
     } catch (e) {
       debugPrint('inflow mirror merge failed: $e');
@@ -8071,84 +8784,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
-  }
-
-  bool _shiftedMonthClears({
-    required List<String> ids,
-    required List<AssetCalendarDebtInput> debts,
-    required List<Map<String, dynamic>> subscriptions,
-    required List<AssetCalendarInflowInput> inflows,
-    required double? startingCashBalance,
-  }) {
-    const newDay = _salarySpendingSalaryDay + 1;
-    final shifted = AssetPaymentCalendarService.buildMonth(
-      month: _calendarMonth,
-      flows: _recentFlows,
-      subscriptions: subscriptions,
-      debts: [
-        for (final debt in debts)
-          if (ids.contains(debt.id))
-            AssetCalendarDebtInput(
-              id: debt.id,
-              name: debt.name,
-              balance: debt.balance,
-              paymentDay: newDay,
-              scheduledPaymentAmount: debt.scheduledPaymentAmount,
-              isDirectCashflowTarget: debt.isDirectCashflowTarget,
-            )
-          else
-            debt,
-      ],
-      salaryDay: _salarySpendingSalaryDay,
-      startingCashBalance: startingCashBalance,
-      expectedInflows: inflows,
-    );
-    return shifted.firstShortfallDate == null;
-  }
-
-  /// ショート回避に必要な最小の移動セット(サイズ昇順で探索)。
-  /// 候補が7件以上の場合は組合せ爆発を避け全件移動のみ試す。
-  List<String>? _findMinimalShiftSet({
-    required List<String> ids,
-    required List<AssetCalendarDebtInput> debts,
-    required List<Map<String, dynamic>> subscriptions,
-    required List<AssetCalendarInflowInput> inflows,
-    required double? startingCashBalance,
-  }) {
-    bool clears(List<String> subset) => _shiftedMonthClears(
-          ids: subset,
-          debts: debts,
-          subscriptions: subscriptions,
-          inflows: inflows,
-          startingCashBalance: startingCashBalance,
-        );
-
-    if (ids.length > 6) {
-      return clears(ids) ? List<String>.from(ids) : null;
-    }
-    final maskLimit = 1 << ids.length;
-    for (var size = 2; size <= ids.length; size++) {
-      for (var mask = 1; mask < maskLimit; mask++) {
-        var bits = 0;
-        for (var i = 0; i < ids.length; i++) {
-          final bit = 1 << i;
-          if (mask & bit != 0) {
-            bits += 1;
-          }
-        }
-        if (bits != size) {
-          continue;
-        }
-        final subset = <String>[
-          for (var i = 0; i < ids.length; i++)
-            if (mask & 1 << i != 0) ids[i],
-        ];
-        if (clears(subset)) {
-          return subset;
-        }
-      }
-    }
-    return null;
   }
 
   Widget _buildExperimentTrendBars() {
@@ -8265,6 +8900,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
           ),
           actions: [
+            TextButton.icon(
+              key: const Key('asset_tombstone_gc_edit'),
+              onPressed: () => _showTombstoneGcSettings(setDialogState),
+              icon: const Icon(Icons.cleaning_services_outlined, size: 16),
+              label: Text(
+                '保持設定 '
+                '(${_tombstoneGcConfig.maxCount}件/${_tombstoneGcConfig.maxAgeDays}日)',
+              ),
+            ),
             TextButton.icon(
               key: const Key('asset_inflow_merge_button'),
               onPressed: () async {
@@ -8579,12 +9223,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             shiftCandidates.every(
               (entry) => entry.value == '(単独では回避不可)',
             )
-        ? _findMinimalShiftSet(
-            ids: comboIds,
-            debts: debtInputs,
+        ? AssetPaymentCalendarService.findMinimalShiftSet(
+            month: _calendarMonth,
+            flows: _recentFlows,
             subscriptions: monthSubscriptions,
-            inflows: inflowInputs,
+            debts: debtInputs,
+            candidateIds: comboIds,
+            shiftToDay: _salarySpendingSalaryDay + 1,
+            salaryDay: _salarySpendingSalaryDay,
             startingCashBalance: startingCashBalance,
+            expectedInflows: inflowInputs,
           )
         : null;
     final comboSuggestionLabel = comboSuggestionIds == null
@@ -12512,6 +13160,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final insightReport = _assetManagementInsightService.buildReport(
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
+      mainAccountId: _assetManagementMainAccountId,
     );
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
@@ -13381,7 +14030,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ),
           ],
+          if (report.workbook.cardStatementReconciliation.hasNeedsReview) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFD97706),
+                ),
+                onPressed: _jumpToCardStatementReconciliation,
+                icon: const Icon(Icons.receipt_long_outlined, size: 16),
+                label: Text(
+                  _cardStatementReconciliationLinkLabel(report.workbook),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
+          _buildMainAccountSelector(report.workbook),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -13641,9 +14310,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     if (!force &&
-        _assetManagementAiSummaryAutoRequestedKeys.contains(key) &&
-        _assetManagementAiSummaryRequestKey == key &&
-        _assetManagementAiSummaryResult != null) {
+        !AssetManagementAiSummaryRefresh.isStale(
+          currentKey: key,
+          resultKey: _assetManagementAiSummaryResultKey,
+          hasResult: _assetManagementAiSummaryResult != null,
+        )) {
       return;
     }
     setState(() {
@@ -13658,6 +14329,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (_) {
       previousAnalyses = const <AssetManagementAiAnalysisHistoryEntry>[];
     }
+    if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+      return;
+    }
+    // 初回自動生成が既存Issue照合より先に走ると already_issued が
+    // 空のままAIへ渡り再掲抑止が効かないため、照合完了を待つ。
+    await _ensureExistingDeveloperIssuesLoaded(report.developerRequests);
     if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
       return;
     }
@@ -13694,6 +14371,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     setState(() {
       _assetManagementAiSummaryResult = result;
+      _assetManagementAiSummaryResultKey = key;
       _assetManagementAiSummaryReferencedHistory = previousAnalyses;
       _isGeneratingAssetManagementAiSummary = false;
       _assetManagementAiSummaryInFlightKey = null;
@@ -13710,12 +14388,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final key = _assetManagementAiSummaryKey(report);
     if (_assetManagementAiSummaryRequestKey == key ||
-        _assetManagementAiSummaryInFlightKey == key ||
-        _assetManagementAiSummaryAutoRequestedKeys.contains(key)) {
+        _assetManagementAiSummaryInFlightKey == key) {
+      return;
+    }
+    if (!AssetManagementAiSummaryRefresh.isStale(
+      currentKey: key,
+      resultKey: _assetManagementAiSummaryResultKey,
+      hasResult: _assetManagementAiSummaryResult != null,
+    )) {
       return;
     }
     _assetManagementAiSummaryRequestKey = key;
-    _assetManagementAiSummaryAutoRequestedKeys.add(key);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted ||
           !_assetManagementAiSummaryService.aiEnabled ||
@@ -13755,6 +14438,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _loadExistingDeveloperIssues(lookupKey: lookupKey, requests: payload),
       );
     });
+  }
+
+  /// 既存Issue照合の完了を待つ。未取得・取得中の場合はその場で照合を実行する。
+  /// AI要約生成前に already_issued 注釈を確実に揃えるために使う。
+  Future<void> _ensureExistingDeveloperIssuesLoaded(
+    List<AssetManagementDeveloperRequest> requests,
+  ) async {
+    if (_supabase.auth.currentUser == null || requests.isEmpty) {
+      return;
+    }
+    final payload = requests
+        .map(_developerRequestExistingIssuePayload)
+        .toList(growable: false);
+    final lookupKey = jsonEncode(payload);
+    if (_developerRequestExistingIssueLookupKey == lookupKey &&
+        !_isCheckingExistingDeveloperRequestIssues) {
+      return;
+    }
+    _developerRequestExistingIssueLookupKey = lookupKey;
+    _isCheckingExistingDeveloperRequestIssues = true;
+    await _loadExistingDeveloperIssues(lookupKey: lookupKey, requests: payload);
   }
 
   Map<String, String> _developerRequestExistingIssuePayload(
@@ -14079,6 +14783,69 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return const <String, dynamic>{};
   }
 
+  Widget _buildMainAccountSelector(AssetLiabilityWorkbook workbook) {
+    // メインバンク候補 = 現金以外の口座(預金・証券・その他資産)。
+    final candidates = workbook.accounts
+        .where(
+          (account) =>
+              account.kind != AssetLiabilityAccountKind.cash && account.isAsset,
+        )
+        .toList()
+      ..sort((a, b) => b.balance.compareTo(a.balance));
+    if (candidates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final validSelected = candidates.any(
+      (account) => account.id == _assetManagementMainAccountId,
+    )
+        ? _assetManagementMainAccountId
+        : null;
+    return Row(
+      children: [
+        Icon(
+          Icons.account_balance_outlined,
+          size: 16,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          'メインバンク',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButton<String?>(
+            value: validSelected,
+            isExpanded: true,
+            isDense: true,
+            hint: const Text('既定（残高最大の口座）', style: TextStyle(fontSize: 12)),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('既定（残高最大の口座）', style: TextStyle(fontSize: 12)),
+              ),
+              for (final account in candidates)
+                DropdownMenuItem<String?>(
+                  value: account.id,
+                  child: Text(
+                    '${account.name}（${_formatManagementYen(account.balance)}）',
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (value) => unawaited(_setMainAccount(value)),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAssetManagementAvailableCard(
     AssetManagementAvailableMoneyInsight insight,
   ) {
@@ -14086,7 +14853,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? const Color(0xFFB91C1C)
         : const Color(0xFF0D9488);
     final subtitle =
-        '支払 ${_formatManagementYen(insight.unpaidPaymentTotal)} / 入金 ${_formatManagementYen(insight.unreceivedIncomeTotal)} / 安全残高 ${_formatManagementYen(insight.minimumSafetyBalance)}';
+        '利用可能資産 ${_formatManagementYen(insight.cashLikeTotal)} / 給料日まで支払 ${_formatManagementYen(insight.unpaidPaymentTotal)} / 安全余裕 ${_formatManagementYen(insight.minimumSafetyBalance)}';
 
     return Container(
       constraints: const BoxConstraints(minWidth: 210, maxWidth: 320),
@@ -14915,7 +15682,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 12),
           _buildCardBillingReviewGroups(review.cardBillingGroups),
           const SizedBox(height: 12),
-          _buildCardStatementReconciliationPanel(workbook),
+          KeyedSubtree(
+            key: _keyCardStatementReconciliation,
+            child: _buildCardStatementReconciliationPanel(workbook),
+          ),
         ],
       ),
     );
@@ -15480,7 +16250,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'CSV行は「摘要,金額,日付」または「請求先ID,摘要,金額,日付」で貼り付けできます。取り込み合計をカード請求額と照合します。',
+            'CSV/TSV行は「摘要,金額,日付」または「請求先ID,摘要,金額,日付」で貼り付けできます。auPAY等の明細表（タブ区切り・「利用日/利用店名/利用金額」等の見出し付き）もそのまま貼り付け可能です。取り込み合計をカード請求額と照合します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
@@ -15577,7 +16347,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: DataTable(
         headingRowHeight: 34,
         dataRowMinHeight: 46,
-        dataRowMaxHeight: 64,
+        // 確認事項は長文になり得るため行高さを可変にし、セル側で折り返す。
+        dataRowMaxHeight: double.infinity,
         columns: const [
           DataColumn(label: Text('請求先カード')),
           DataColumn(label: Text('請求額'), numeric: true),
@@ -15608,7 +16379,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
                 DataCell(
-                  Text(group.alerts.isEmpty ? 'OK' : group.alerts.join(' / ')),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 280),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        group.alerts.isEmpty ? 'OK' : group.alerts.join(' / '),
+                        softWrap: true,
+                        style: const TextStyle(height: 1.4),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -18353,6 +19134,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
   }
 
+  /// 削除した支払日上書きのトゥームストーン (#part293: MirrorTombstoneStore 3例目)。
+  /// ミラー復元で「自動へ戻した支払日」が復活するのを防ぐ。
+  static const MirrorTombstoneStore _debtOverrideTombstones =
+      MirrorTombstoneStore(
+    storageKey: 'debt_payment_day_override_deleted_v1',
+  );
+
   void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
     setState(() {
       if (day == null) {
@@ -18361,7 +19149,86 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _debtPaymentDayOverrides[row.id] = day.clamp(1, 31).toInt();
       }
     });
+    if (day == null) {
+      // 削除はトゥームストーン化、再設定は解除 (ID 再利用ドメイン)。
+      unawaited(_recordDebtOverrideTombstone(row.id, deleted: true));
+    } else {
+      unawaited(_recordDebtOverrideTombstone(row.id, deleted: false));
+    }
     unawaited(_saveDebtPaymentDayOverrides());
+  }
+
+  Future<void> _recordDebtOverrideTombstone(
+    String id, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _debtOverrideTombstones.addId(store, id);
+    } else {
+      await _debtOverrideTombstones.removeId(store, id);
+    }
+    unawaited(_mirrorDebtOverrideDeleted());
+  }
+
+  /// 支払日上書きの削除トゥームストーンをサーバへ反映 (他端末伝播 / #part294)。
+  Future<void> _mirrorDebtOverrideDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _debtOverrideTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'debt_payment_day_override_deleted',
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('debt override tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除された支払日上書きを取り込み、ローカルからも除去する。
+  Future<void> _pullDebtOverrideDeleted() async {
+    final debugMirror = widget.debugDebtOverrideDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'debt_payment_day_override_deleted');
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _debtOverrideTombstones.mergeRemoteIds(store, ids);
+      final before = _debtPaymentDayOverrides.length;
+      _debtPaymentDayOverrides.removeWhere((key, _) => incoming.contains(key));
+      if (_debtPaymentDayOverrides.length == before || !mounted) {
+        return;
+      }
+      setState(() {});
+      unawaited(_saveDebtPaymentDayOverrides());
+    } catch (e) {
+      debugPrint('debt override tombstone pull failed: $e');
+    }
   }
 
   Future<void> _saveDebtPaymentDayOverrides() async {

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-11T21:58:01Z",
+  "generated_at": "2026-06-12T21:55:45Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-b9194d43e0d4",
+        "entry_id": "nf-783deb35bd41",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.173 / June 11, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.173 June 11, 2026 Fixed Fable 5 model names with a [1m] suffix not being normalized — Fable 5 includes 1M context by default, so the suffix is now stripped automatically...",
+        "text": "Claude Code changelog 2.1.175 / June 12, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.175 June 12, 2026 Added enforceAvailableModels managed setting — when enabled, the availableModels allowlist also constrains the Default model (a Default that would...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "4386a4d2f0ac081c7a4bbb3025d4327aac7cae2d0479526de69bea5923626c61",
+          "hash": "0398fe164b383dbd498432e526864adac61581f1f0846158867edfd8a45c328d",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.173 / June 11, 2026",
+          "latest_signal": "2.1.175 / June 12, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "eb0c3486b89712311cf699d8e5e2317192d1865c6ed1c8915878288cfa680a61",
+          "previous_hash": "4386a4d2f0ac081c7a4bbb3025d4327aac7cae2d0479526de69bea5923626c61",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.173 June 11, 2026 Fixed Fable 5 model names with a [1m] suffix not being normalized — Fable 5 includes 1M context by default, so the suffix is now stripped automatically..."
+            "​ 2.1.175 June 12, 2026 Added enforceAvailableModels managed setting — when enabled, the availableModels allowlist also constrains the Default model (a Default that would..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-b9194d43e0d4",
+        "entry_id": "nf-783deb35bd41",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,10 +115,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
+          "hash": "fcb7ea0e9daaae61315d7f8af0a669da18749537acc7078f191509a8d5842879",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -259,9 +259,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-8a9f3ca68c9d",
+        "entry_id": "nf-6c5e2f00649c",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-06-09 / Codex app 26.608 New features Added Migrate to Codex flows for importing supported setup fr Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Kept review diff ordering consistent with the file tree. 2026-06-09 ChatGPT for iOS 1.2026.153 New features Added support for choosing a branch, creating a worktree, and running an environment setup script for new threads.",
+        "text": "Codex changelog 2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Added Developer mode for Browser use in Chrome and the Codex in-app browser. Added the /init command to the app composer for creating project instructions with the same initialization workflow as the Codex CLI.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d487a4f24690ebd85de898a1736e72e78e1b89434c313af2107517a497c2581e",
+          "hash": "4586e44949378af30b7bbff81b216ccd631f0fde9f311c74e02ee27e666fcf6d",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,8 +285,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "SessionStart",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -295,11 +293,9 @@
               "Slack",
               "Linear",
               "GitHub",
-              "IDE extension",
-              "VSCode"
+              "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -316,22 +312,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-06-09 / Codex app 26.608 New features Added Migrate to Codex flows for importing supported setup fr",
+          "latest_signal": "2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "db59274bbb0dc5cbbf85b908d5404207d021ce5553d9a1e257356879c6b2eb88",
+          "previous_hash": "d487a4f24690ebd85de898a1736e72e78e1b89434c313af2107517a497c2581e",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "Kept review diff ordering consistent with the file tree.",
-            "2026-06-09 ChatGPT for iOS 1.2026.153 New features Added support for choosing a branch, creating a worktree, and running an environment setup script for new threads."
+            "Added Developer mode for Browser use in Chrome and the Codex in-app browser.",
+            "Added the /init command to the app composer for creating project instructions with the same initialization workflow as the Codex CLI."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-8a9f3ca68c9d",
+        "entry_id": "nf-6c5e2f00649c",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -357,7 +353,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "d1b543781224e2bca14ff137dac766f3344d633d06229650b7f58fa6d549b49d",
@@ -400,7 +396,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "690e28914bc21e5538f982e3d942c39ea9da41052e1f601eaa22689b214db392",
+          "previous_hash": "d1b543781224e2bca14ff137dac766f3344d633d06229650b7f58fa6d549b49d",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -544,7 +540,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "67cd8d6307d96059b6e534d4b15372ec1c26245b008d916506089185353523fd",
@@ -572,7 +568,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.85.0 / June 09, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "6bb1061a4f77e08bb509905c72c71050079bdd1b3b2ff78c9eeab09a676f4e96",
+          "previous_hash": "67cd8d6307d96059b6e534d4b15372ec1c26245b008d916506089185353523fd",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -610,7 +606,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "5766d6f6707808b1bafcdf1b93961c88dc238f5e7d3847db58ada56dc0d94324",
@@ -648,7 +644,7 @@
           "latest_signal": "June 10, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "a6b5738abc0fcc97c625c5a0600ed02212751a77bf96671ea5cb12bdc539d64a",
+          "previous_hash": "5766d6f6707808b1bafcdf1b93961c88dc238f5e7d3847db58ada56dc0d94324",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
@@ -679,10 +675,10 @@
   ],
   "patterns": [
     {
-      "id": "np-ac6cd8e89955",
+      "id": "np-87b9ab2ffe3c",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 7,
+      "entry_count": 8,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -690,8 +686,8 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Codex use cases",
-        "Cursor changelog"
+        "Codex changelog",
+        "Codex use cases"
       ],
       "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },
@@ -709,14 +705,28 @@
         "Claude Code GitHub Actions"
       ],
       "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
+    },
+    {
+      "id": "np-fdf5cccc858a",
+      "company": "openai",
+      "topic": "agentic-workflows",
+      "entry_count": 2,
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "Codex changelog",
+        "Codex use cases"
+      ],
+      "recommended_action": "Review openai movement for competitor-monitoring follow-up."
     }
   ],
   "issue_candidates": [
     {
-      "id": "np-ac6cd8e89955",
+      "id": "np-87b9ab2ffe3c",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 7,
+      "entry_count": 8,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -724,8 +734,8 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Codex use cases",
-        "Cursor changelog"
+        "Codex changelog",
+        "Codex use cases"
       ],
       "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },
