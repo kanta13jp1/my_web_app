@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -169,6 +170,71 @@ void main() {
       await tester.tap(find.byKey(const Key('asset_inflow_rules_button')));
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.textContaining('毎月25日 給料'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('tombstone GC settings dialog edits and saves the config', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'seeded_rule',
+            'day_of_month': 25,
+            'amount': 280000,
+            'label': '給料',
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            debugTombstoneGcConfig: AssetTombstoneGcConfig(
+              maxCount: 1000,
+              maxAgeDays: 365,
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_inflow_rules_button')),
+      );
+      await tester.tap(find.byKey(const Key('asset_inflow_rules_button')));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 現在値が保持設定ボタンに出ている。
+      expect(find.textContaining('保持設定 (1000件/365日)'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('asset_tombstone_gc_edit')));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.enterText(
+        find.byKey(const Key('asset_tombstone_gc_maxcount')),
+        '50',
+      );
+      await tester.enterText(
+        find.byKey(const Key('asset_tombstone_gc_maxage')),
+        '90',
+      );
+      await tester.tap(find.byKey(const Key('asset_tombstone_gc_save')));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // SnackBar で更新を通知し、ボタンラベルも新値へ更新される。
+      expect(find.textContaining('最大50件 / 90日'), findsOneWidget);
+      expect(find.textContaining('保持設定 (50件/90日)'), findsOneWidget);
+
+      // ローカルにも保存される。
+      expect(
+        (await AssetExpectedInflowStore.loadGcConfig()).maxCount,
+        50,
+      );
 
       await _unmount(tester);
     });

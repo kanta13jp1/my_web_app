@@ -117,6 +117,10 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugInflowDeletedIdsMirror;
 
+  /// テスト専用: トゥームストーン GC 設定の初期値を注入する (#part288)。
+  @visibleForTesting
+  final AssetTombstoneGcConfig? debugTombstoneGcConfig;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -128,6 +132,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInitialAssetData,
     this.debugMirrorPrefsRows,
     this.debugInflowDeletedIdsMirror,
+    this.debugTombstoneGcConfig,
   });
 
   @override
@@ -365,9 +370,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _assetManagementMainAccountId;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
-  // GC 設定をサーバから取得したら差し替えるため非 final (#part287)。
+  // GC 設定をサーバ/ローカルから取得したら差し替えるため非 final (#part287/288)。
   AssetExpectedInflowStore _expectedInflowStore =
       const AssetExpectedInflowStore();
+  AssetTombstoneGcConfig _tombstoneGcConfig = const AssetTombstoneGcConfig();
   List<AssetExpectedInflow> _expectedInflows = <AssetExpectedInflow>[];
   List<AssetExpectedInflowRule> _expectedInflowRules =
       <AssetExpectedInflowRule>[];
@@ -464,10 +470,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDisplayMode();
     _loadMainAccount();
     _loadExpectedInflows();
-    // GC 設定をサーバから取得してから削除トゥームストーンを取り込む。
-    unawaited(
-      _loadTombstoneGcConfig().then((_) => _pullInflowDeletedIds()),
-    );
+    // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
+    unawaited(_initTombstoneGcAndPull());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       final previousMonthKey = _assetLiabilityStateMonthKey(_now);
@@ -8282,8 +8286,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// トゥームストーン GC の上限/期限をサーバ (asset_pref_mirror) から取得し、
   /// ストアへ反映する (#part287 リモート調整)。未設定なら既定のまま。
+  Future<void> _initTombstoneGcAndPull() async {
+    await _applyLocalTombstoneGcConfig();
+    await _loadTombstoneGcConfig();
+    await _pullInflowDeletedIds();
+  }
+
+  /// ローカル保存 (またはテスト注入) の GC 設定をストアへ反映する。
+  Future<void> _applyLocalTombstoneGcConfig() async {
+    final config = widget.debugTombstoneGcConfig ??
+        await AssetExpectedInflowStore.loadGcConfig();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tombstoneGcConfig = config;
+      _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+    });
+  }
+
   Future<void> _loadTombstoneGcConfig() async {
-    if (_supabase.auth.currentUser == null) {
+    // テスト注入時はサーバ取得を行わない (ネットワーク非依存)。
+    if (widget.debugTombstoneGcConfig != null ||
+        _supabase.auth.currentUser == null) {
       return;
     }
     try {
@@ -8291,14 +8316,117 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .from('asset_pref_mirror')
           .select()
           .eq('pref_key', 'inflow_tombstone_gc');
-      if (rows.isEmpty) {
+      if (rows.isEmpty || !mounted) {
         return;
       }
-      _expectedInflowStore = AssetExpectedInflowStore(
-        gcConfig: AssetTombstoneGcConfig.fromMirrorValue(rows.first['value']),
+      final config = AssetTombstoneGcConfig.fromMirrorValue(
+        rows.first['value'],
       );
+      await AssetExpectedInflowStore.saveGcConfig(config);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _tombstoneGcConfig = config;
+        _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+      });
     } catch (e) {
       debugPrint('tombstone gc config fetch failed: $e');
+    }
+  }
+
+  /// GC 設定 (上限/期限) の編集ダイアログ。保存でローカル+ミラーへ反映する。
+  Future<void> _showTombstoneGcSettings(
+    void Function(void Function()) setOuterState,
+  ) async {
+    final countController = TextEditingController(
+      text: '${_tombstoneGcConfig.maxCount}',
+    );
+    final ageController = TextEditingController(
+      text: '${_tombstoneGcConfig.maxAgeDays}',
+    );
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('削除履歴の保持設定'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '削除した入金予定の「復活防止」記録を、どれだけ保持するか。',
+              style: TextStyle(fontSize: 12, height: 1.5),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('asset_tombstone_gc_maxcount'),
+              controller: countController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '最大件数'),
+            ),
+            TextField(
+              key: const Key('asset_tombstone_gc_maxage'),
+              controller: ageController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '保持日数'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            key: const Key('asset_tombstone_gc_save'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    if (saved != true || !mounted) {
+      return;
+    }
+    final config = AssetTombstoneGcConfig.fromMirrorValue(<String, dynamic>{
+      'max_count': int.tryParse(countController.text.trim()),
+      'max_age_days': int.tryParse(ageController.text.trim()),
+    });
+    await AssetExpectedInflowStore.saveGcConfig(config);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tombstoneGcConfig = config;
+      _expectedInflowStore = AssetExpectedInflowStore(gcConfig: config);
+    });
+    setOuterState(() {});
+    unawaited(_mirrorTombstoneGcConfig(config));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '保持設定を更新しました(最大${config.maxCount}件 / ${config.maxAgeDays}日)',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _mirrorTombstoneGcConfig(AssetTombstoneGcConfig config) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'inflow_tombstone_gc',
+        'value': config.toMirrorValue(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('tombstone gc config upsert failed: $e');
     }
   }
 
@@ -8534,6 +8662,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
           ),
           actions: [
+            TextButton.icon(
+              key: const Key('asset_tombstone_gc_edit'),
+              onPressed: () => _showTombstoneGcSettings(setDialogState),
+              icon: const Icon(Icons.cleaning_services_outlined, size: 16),
+              label: Text(
+                '保持設定 '
+                '(${_tombstoneGcConfig.maxCount}件/${_tombstoneGcConfig.maxAgeDays}日)',
+              ),
+            ),
             TextButton.icon(
               key: const Key('asset_inflow_merge_button'),
               onPressed: () async {
