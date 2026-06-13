@@ -16314,7 +16314,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: DataTable(
         headingRowHeight: 34,
         dataRowMinHeight: 46,
-        dataRowMaxHeight: 64,
+        // 確認事項は長文になり得るため行高さを可変にし、セル側で折り返す。
+        dataRowMaxHeight: double.infinity,
         columns: const [
           DataColumn(label: Text('請求先カード')),
           DataColumn(label: Text('請求額'), numeric: true),
@@ -16345,7 +16346,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
                 DataCell(
-                  Text(group.alerts.isEmpty ? 'OK' : group.alerts.join(' / ')),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 280),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        group.alerts.isEmpty ? 'OK' : group.alerts.join(' / '),
+                        softWrap: true,
+                        style: const TextStyle(height: 1.4),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
