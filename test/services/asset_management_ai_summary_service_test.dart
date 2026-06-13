@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/asset_management_ai_analysis_history.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
@@ -293,6 +294,22 @@ void main() {
         );
       },
     );
+
+    test('リボ払いカードはAIペイロードに内訳と注記を渡し差分を出さない', () {
+      final service = AssetManagementAiSummaryService(
+        now: () => DateTime(2026, 6, 1, 12),
+      );
+
+      final payload = service.buildAiDetailedPayload(_revolvingReport());
+      final encoded = payload.toString();
+
+      expect(encoded.contains('is_revolving'), true);
+      expect(encoded.contains('revolving_billing'), true);
+      expect(encoded.contains('reconciliation_note'), true);
+      // リボ払いでは明細合計との差は不一致ではないため、誤解を招く差分は渡さない。
+      expect(encoded.contains('configured_difference'), false);
+      expect(encoded.contains('statement_difference'), false);
+    });
 
     test('falls back to deterministic text when ai-hub fails', () async {
       final service = AssetManagementAiSummaryService(
@@ -678,6 +695,36 @@ AssetManagementInsightReport _emergencyReport() {
     baseDate: DateTime(2026, 5, 28),
     monthlyPaymentOverrides: const <String, double>{'paypay_card': 200000},
     paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
+  );
+  return insight.buildReport(
+    workbook: workbook,
+    userProfile: _userProfile(),
+    minimumSafetyBalance: 10000,
+  );
+}
+
+AssetManagementInsightReport _revolvingReport() {
+  const planner = AssetLiabilityPlanningService();
+  const insight = AssetManagementInsightService();
+  final workbook = planner.buildWorkbook(
+    latestSnapshot: const <String, double>{'cash': 50000, 'auPayカード': -530163},
+    baseDate: DateTime(2026, 6, 1),
+    revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+      'aupay_card': AssetLiabilityRevolvingCreditConfig(
+        monthlyAmount: 10000,
+        creditLimit: 500000,
+      ),
+    },
+    cardStatementLines: const <AssetLiabilityCardStatementLine>[
+      AssetLiabilityCardStatementLine(
+        id: 'l1',
+        billingAccountId: 'aupay_card',
+        billingAccountName: 'auPayカード',
+        postedAt: null,
+        description: 'レモンガス',
+        amount: 8066,
+      ),
+    ],
   );
   return insight.buildReport(
     workbook: workbook,
