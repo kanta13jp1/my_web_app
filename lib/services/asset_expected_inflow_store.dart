@@ -82,6 +82,10 @@ class AssetExpectedInflowStore {
   static const String _key = 'asset_expected_inflows_v1';
   static const String _rulesKey = 'asset_expected_inflow_rules_v1';
 
+  /// 削除済み ID のトゥームストーン。和集合マージやサーバ復元で
+  /// 「一度消した項目」がサーバ残存分から復活するのを抑止する (#part285)。
+  static const String _deletedIdsKey = 'asset_expected_inflow_deleted_ids_v1';
+
   final DateTime Function()? nowProvider;
 
   DateTime _now() => nowProvider?.call() ?? DateTime.now();
@@ -172,6 +176,7 @@ class AssetExpectedInflowStore {
     final rules = _decodeRules(store.getString(_rulesKey))
       ..removeWhere((rule) => rule.id == id);
     await _saveRules(store, rules);
+    await _addDeletedId(store, id);
     return rules;
   }
 
@@ -208,8 +213,70 @@ class AssetExpectedInflowStore {
     }
   }
 
+  /// 削除済み ID の集合を読み出す。
+  Future<Set<String>> loadDeletedIds({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return _decodeIds(store.getString(_deletedIdsKey));
+  }
+
+  Future<void> _addDeletedId(SharedPreferences store, String id) async {
+    if (id.isEmpty) {
+      return;
+    }
+    final ids = _decodeIds(store.getString(_deletedIdsKey))..add(id);
+    await store.setString(_deletedIdsKey, jsonEncode(ids.toList()));
+  }
+
+  Set<String> _decodeIds(String? raw) {
+    if (raw == null || raw.isEmpty) {
+      return <String>{};
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        return <String>{};
+      }
+      return decoded
+          .map((dynamic entry) => entry?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet();
+    } catch (_) {
+      return <String>{};
+    }
+  }
+
+  /// 他端末由来のトゥームストーンを取り込み、該当するローカル項目を削除する。
+  /// 端末Bでの削除を端末Aへ伝播させる用途。削除した件数を返す。
+  Future<int> applyRemoteDeletedIds(
+    Iterable<String> remoteIds, {
+    SharedPreferences? prefs,
+  }) async {
+    final incoming = remoteIds.where((id) => id.isNotEmpty).toSet();
+    if (incoming.isEmpty) {
+      return 0;
+    }
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final tombstones = _decodeIds(store.getString(_deletedIdsKey))
+      ..addAll(incoming);
+    await store.setString(_deletedIdsKey, jsonEncode(tombstones.toList()));
+
+    final items = _decode(store.getString(_key));
+    final rules = _decodeRules(store.getString(_rulesKey));
+    final beforeItems = items.length;
+    final beforeRules = rules.length;
+    items.removeWhere((item) => incoming.contains(item.id));
+    rules.removeWhere((rule) => incoming.contains(rule.id));
+    final removed = (beforeItems - items.length) + (beforeRules - rules.length);
+    if (removed > 0) {
+      await _save(store, items);
+      await _saveRules(store, rules);
+    }
+    return removed;
+  }
+
   /// サーバミラー行からの復元 (#3246 v1)。安全側に倒し、ローカルが
   /// 完全に空の場合のみ全置換する(既存ローカルがあれば何もしない)。
+  /// トゥームストーン済み ID は復元対象から除外する。
   Future<bool> restoreFromMirrorRows(
     List<Map<String, dynamic>> rows, {
     SharedPreferences? prefs,
@@ -220,13 +287,14 @@ class AssetExpectedInflowStore {
     if (localItems.isNotEmpty || localRules.isNotEmpty || rows.isEmpty) {
       return false;
     }
+    final deletedIds = _decodeIds(store.getString(_deletedIdsKey));
     final items = <AssetExpectedInflow>[];
     final rules = <AssetExpectedInflowRule>[];
     for (final row in rows) {
       final id = row['id']?.toString() ?? '';
       final amount = (row['amount'] as num?)?.toDouble() ?? 0;
       final label = row['label']?.toString() ?? '';
-      if (id.isEmpty || amount <= 0) {
+      if (id.isEmpty || amount <= 0 || deletedIds.contains(id)) {
         continue;
       }
       if (row['kind']?.toString() == 'rule') {
@@ -267,8 +335,8 @@ class AssetExpectedInflowStore {
   }
 
   /// ミラーとの手動統合: ローカルに無い ID のみ追加する和集合マージ。
-  /// 削除のトゥームストーンが無いため、ローカルで消した項目がサーバに
-  /// 残っていれば復活し得る(明示的なボタン操作でのみ実行する前提)。
+  /// トゥームストーン済み (ローカルで明示削除した) ID はスキップするため、
+  /// サーバに残っていても復活しない (#part285 本対策)。
   Future<int> mergeFromMirrorRows(
     List<Map<String, dynamic>> rows, {
     SharedPreferences? prefs,
@@ -276,6 +344,7 @@ class AssetExpectedInflowStore {
     final store = prefs ?? await SharedPreferences.getInstance();
     final items = _decode(store.getString(_key));
     final rules = _decodeRules(store.getString(_rulesKey));
+    final deletedIds = _decodeIds(store.getString(_deletedIdsKey));
     final knownIds = <String>{
       for (final item in items) item.id,
       for (final rule in rules) rule.id,
@@ -285,7 +354,10 @@ class AssetExpectedInflowStore {
       final id = row['id']?.toString() ?? '';
       final amount = (row['amount'] as num?)?.toDouble() ?? 0;
       final label = row['label']?.toString() ?? '';
-      if (id.isEmpty || amount <= 0 || knownIds.contains(id)) {
+      if (id.isEmpty ||
+          amount <= 0 ||
+          knownIds.contains(id) ||
+          deletedIds.contains(id)) {
         continue;
       }
       if (row['kind']?.toString() == 'rule') {
@@ -328,6 +400,44 @@ class AssetExpectedInflowStore {
     return added;
   }
 
+  /// 取り込み前プレビュー用: [mergeFromMirrorRows] と同じガード
+  /// (既知 ID / トゥームストーン / 不正値の除外) を通過して「実際に追加される」
+  /// 行だけを返す。保存はしない。件数は merge の戻り値と一致する。
+  Future<List<Map<String, dynamic>>> previewMergeAdditions(
+    List<Map<String, dynamic>> rows, {
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final items = _decode(store.getString(_key));
+    final rules = _decodeRules(store.getString(_rulesKey));
+    final deletedIds = _decodeIds(store.getString(_deletedIdsKey));
+    final knownIds = <String>{
+      for (final item in items) item.id,
+      for (final rule in rules) rule.id,
+    };
+    final additions = <Map<String, dynamic>>[];
+    for (final row in rows) {
+      final id = row['id']?.toString() ?? '';
+      final amount = (row['amount'] as num?)?.toDouble() ?? 0;
+      if (id.isEmpty ||
+          amount <= 0 ||
+          knownIds.contains(id) ||
+          deletedIds.contains(id)) {
+        continue;
+      }
+      if (row['kind']?.toString() == 'rule') {
+        final day = (row['day_of_month'] as num?)?.toInt() ?? 0;
+        if (day < 1 || day > 31) {
+          continue;
+        }
+      } else if (DateTime.tryParse(row['date']?.toString() ?? '') == null) {
+        continue;
+      }
+      additions.add(row);
+    }
+    return additions;
+  }
+
   Future<List<AssetExpectedInflow>> loadAll({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     return _decode(store.getString(_key));
@@ -366,6 +476,7 @@ class AssetExpectedInflowStore {
     final entries = _decode(store.getString(_key))
       ..removeWhere((entry) => entry.id == id);
     await _save(store, entries);
+    await _addDeletedId(store, id);
     return entries;
   }
 

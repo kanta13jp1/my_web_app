@@ -102,7 +102,7 @@ void main() {
 
     test(
         'client B addition merges into client A as union '
-        '(local deletion resurrects without tombstones)', () async {
+        '(tombstone prevents local-deletion resurrection)', () async {
       // 端末A: 2件登録してサーバへ反映。
       final prefsA1 = await _switchClient();
       final storeA = AssetExpectedInflowStore(
@@ -159,12 +159,63 @@ void main() {
       );
       final merged = await storeA.loadAll(prefs: prefsA2);
 
-      // 和集合マージ: B の追加分に加え、トゥームストーンが無いため
-      // ローカル削除済みの ID もサーバ残存分から復活する (仕様の明文化)。
-      expect(added, 2);
-      expect(merged, hasLength(3));
+      // 和集合マージ (#part285 本対策): B の追加分 (ボーナス) のみ取り込み、
+      // ローカル削除済みの ID はトゥームストーンにより復活しない。
+      expect(added, 1);
+      expect(merged, hasLength(2));
       expect(merged.map((item) => item.label), contains('ボーナス'));
-      expect(merged.map((item) => item.id), contains(removedId));
+      expect(merged.map((item) => item.id), isNot(contains(removedId)));
+    });
+
+    test('client A deletion propagates to client B via remote tombstones',
+        () async {
+      // 端末A: 2件登録 → サーバ行へ展開 (ID はサーバ行が保持する)。
+      final prefsA = await _switchClient();
+      final storeA = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 13, 9),
+      );
+      await storeA.add(
+        date: DateTime(2026, 6, 25),
+        amount: 280000,
+        label: '給料',
+        prefs: prefsA,
+      );
+      await storeA.add(
+        date: DateTime(2026, 6, 30),
+        amount: 12000,
+        label: 'フリマ売上',
+        prefs: prefsA,
+      );
+      final serverRows = _uploadInflows(
+        await storeA.loadAll(prefs: prefsA),
+        const <AssetExpectedInflowRule>[],
+      );
+      final removedId = serverRows
+          .firstWhere((row) => row['label'] == 'フリマ売上')['id']
+          .toString();
+      // 端末A でローカル削除 → トゥームストーン (= サーバへ上げる集合) を得る。
+      await storeA.remove(removedId, prefs: prefsA);
+      final tombstones = (await storeA.loadDeletedIds(prefs: prefsA)).toList();
+      expect(tombstones, contains(removedId));
+
+      // 端末B: サーバから復元すると A と同じ ID 集合を保持する。
+      final prefsB = await _switchClient();
+      final storeB = AssetExpectedInflowStore(
+        nowProvider: () => DateTime(2026, 6, 14, 9),
+      );
+      await storeB.restoreFromMirrorRows(serverRows, prefs: prefsB);
+      expect(await storeB.loadAll(prefs: prefsB), hasLength(2));
+
+      // 端末B がサーバ経由のトゥームストーンを取り込む → 同 ID が消える。
+      final removed = await storeB.applyRemoteDeletedIds(
+        tombstones,
+        prefs: prefsB,
+      );
+
+      expect(removed, 1);
+      final itemsB = await storeB.loadAll(prefs: prefsB);
+      expect(itemsB.single.label, '給料');
+      expect(itemsB.map((e) => e.id), isNot(contains(removedId)));
     });
 
     test('client B applies display prefs diff from client A rows', () async {

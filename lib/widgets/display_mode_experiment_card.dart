@@ -6,7 +6,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// rpc display_mode_experiment_summary を取得し、標準維持率と
 /// 週次トレンド(初期解決=藍 / 切替=橙)を表示する。
 class DisplayModeExperimentCard extends StatefulWidget {
-  const DisplayModeExperimentCard({super.key});
+  const DisplayModeExperimentCard({
+    super.key,
+    this.debugWeekly,
+    this.debugWeeklyRetention,
+  });
+
+  /// テスト専用: rpc を介さず週次データを直接注入する。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugWeekly;
+
+  /// テスト専用: rpc を介さず維持率データを直接注入する。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugWeeklyRetention;
 
   @override
   State<DisplayModeExperimentCard> createState() =>
@@ -24,6 +36,13 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
   @override
   void initState() {
     super.initState();
+    if (widget.debugWeekly != null || widget.debugWeeklyRetention != null) {
+      _weekly = widget.debugWeekly ?? const <Map<String, dynamic>>[];
+      _weeklyRetention =
+          widget.debugWeeklyRetention ?? const <Map<String, dynamic>>[];
+      _summaryLabel = 'テスト注入データ';
+      return;
+    }
     _fetch();
   }
 
@@ -132,7 +151,10 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  _RetentionBars(retention: _weeklyRetention, expanded: true),
+                  _RetentionLineChart(
+                    key: const Key('display_mode_retention_line_chart'),
+                    retention: _weeklyRetention,
+                  ),
                   const SizedBox(height: 12),
                 ],
                 if (_weekly.isNotEmpty) ...[
@@ -145,7 +167,10 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  _TrendBars(weekly: _weekly, expanded: true),
+                  _TrendAreaChart(
+                    key: const Key('display_mode_trend_area_chart'),
+                    weekly: _weekly,
+                  ),
                   const SizedBox(height: 12),
                   const Text(
                     '週次の数値',
@@ -288,10 +313,9 @@ class _DisplayModeExperimentCardState extends State<DisplayModeExperimentCard> {
 }
 
 class _TrendBars extends StatelessWidget {
-  const _TrendBars({required this.weekly, this.expanded = false});
+  const _TrendBars({required this.weekly});
 
   final List<Map<String, dynamic>> weekly;
-  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
@@ -304,9 +328,9 @@ class _TrendBars extends StatelessWidget {
         maxTotal = initials + switches;
       }
     }
-    final barScale = expanded ? 100.0 : 30.0;
+    const barScale = 30.0;
     return SizedBox(
-      height: expanded ? 160 : 60,
+      height: 60,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -360,17 +384,16 @@ class _TrendBars extends StatelessWidget {
 }
 
 class _RetentionBars extends StatelessWidget {
-  const _RetentionBars({required this.retention, this.expanded = false});
+  const _RetentionBars({required this.retention});
 
   final List<Map<String, dynamic>> retention;
-  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
     final weeks = retention.reversed.toList(growable: false);
-    final barScale = expanded ? 110.0 : 30.0;
+    const barScale = 30.0;
     return SizedBox(
-      height: expanded ? 170 : 56,
+      height: 56,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -412,6 +435,363 @@ class _RetentionBars extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 標準維持率% の推移を折れ線+面で描く拡大ビュー用チャート。
+/// null の週は線を途切れさせる(欠測を埋めない)。
+class _RetentionLineChart extends StatelessWidget {
+  const _RetentionLineChart({required this.retention, super.key});
+
+  final List<Map<String, dynamic>> retention;
+
+  @override
+  Widget build(BuildContext context) {
+    final weeks = retention.reversed.toList(growable: false);
+    return SizedBox(
+      height: 190,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _RetentionLinePainter(
+          weeks: weeks,
+          lineColor: const Color(0xFF0D9488),
+          gridColor: Theme.of(context).colorScheme.outlineVariant,
+          labelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+class _RetentionLinePainter extends CustomPainter {
+  _RetentionLinePainter({
+    required this.weeks,
+    required this.lineColor,
+    required this.gridColor,
+    required this.labelColor,
+  });
+
+  final List<Map<String, dynamic>> weeks;
+  final Color lineColor;
+  final Color gridColor;
+  final Color labelColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const topPad = 14.0;
+    const bottomPad = 18.0;
+    const leftPad = 28.0;
+    final chartW = size.width - leftPad;
+    final chartH = size.height - topPad - bottomPad;
+    if (chartW <= 0 || chartH <= 0 || weeks.isEmpty) {
+      return;
+    }
+
+    double yFor(double rate) => topPad + chartH * (1 - rate / 100);
+    double xFor(int index) {
+      if (weeks.length == 1) {
+        return leftPad + chartW / 2;
+      }
+      return leftPad + chartW * index / (weeks.length - 1);
+    }
+
+    // グリッド線 + 目盛り (0/50/100%)。
+    final gridPaint = Paint()
+      ..color = gridColor
+      ..strokeWidth = 1;
+    for (final pct in <int>[0, 50, 100]) {
+      final y = yFor(pct.toDouble());
+      canvas.drawLine(Offset(leftPad, y), Offset(size.width, y), gridPaint);
+      _drawText(canvas, '$pct', Offset(0, y - 6), labelColor, 9);
+    }
+
+    // 面 + 折れ線 (null は途切れ)。
+    final fillPaint = Paint()
+      ..color = lineColor.withValues(alpha: 0.15)
+      ..style = PaintingStyle.fill;
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round;
+    final dotPaint = Paint()..color = lineColor;
+
+    var segment = <Offset>[];
+    void flush() {
+      if (segment.length >= 2) {
+        final path = Path()..moveTo(segment.first.dx, segment.first.dy);
+        for (final p in segment.skip(1)) {
+          path.lineTo(p.dx, p.dy);
+        }
+        canvas.drawPath(path, linePaint);
+        final fill = Path()
+          ..moveTo(segment.first.dx, yFor(0))
+          ..lineTo(segment.first.dx, segment.first.dy);
+        for (final p in segment.skip(1)) {
+          fill.lineTo(p.dx, p.dy);
+        }
+        fill
+          ..lineTo(segment.last.dx, yFor(0))
+          ..close();
+        canvas.drawPath(fill, fillPaint);
+      }
+      for (final p in segment) {
+        canvas.drawCircle(p, 2.5, dotPaint);
+      }
+      segment = <Offset>[];
+    }
+
+    for (var i = 0; i < weeks.length; i++) {
+      final rate = (weeks[i]['rate'] as num?)?.toDouble();
+      if (rate == null) {
+        flush();
+        continue;
+      }
+      segment.add(Offset(xFor(i), yFor(rate)));
+    }
+    flush();
+
+    // x 軸ラベル (端のみ: 先頭と末尾の week_start)。
+    for (final i in <int>{0, weeks.length - 1}) {
+      final label = _weekShort(weeks[i]['week_start']);
+      if (label.isNotEmpty) {
+        _drawText(
+          canvas,
+          label,
+          Offset(xFor(i) - 14, size.height - bottomPad + 4),
+          labelColor,
+          8,
+        );
+      }
+    }
+  }
+
+  void _drawText(
+    Canvas canvas,
+    String text,
+    Offset offset,
+    Color color,
+    double fontSize,
+  ) {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(color: color, fontSize: fontSize),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, offset);
+  }
+
+  @override
+  bool shouldRepaint(_RetentionLinePainter oldDelegate) =>
+      oldDelegate.weeks != weeks ||
+      oldDelegate.lineColor != lineColor ||
+      oldDelegate.gridColor != gridColor;
+}
+
+/// 週次イベント(初期解決=藍 / 切替=橙)を積み上げ面で描く拡大ビュー用チャート。
+class _TrendAreaChart extends StatelessWidget {
+  const _TrendAreaChart({required this.weekly, super.key});
+
+  final List<Map<String, dynamic>> weekly;
+
+  @override
+  Widget build(BuildContext context) {
+    final weeks = weekly.reversed.toList(growable: false);
+    return SizedBox(
+      height: 190,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _TrendAreaPainter(
+          weeks: weeks,
+          initialsColor: const Color(0xFF6366F1),
+          switchesColor: const Color(0xFFF97316),
+          gridColor: Theme.of(context).colorScheme.outlineVariant,
+          labelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+class _TrendAreaPainter extends CustomPainter {
+  _TrendAreaPainter({
+    required this.weeks,
+    required this.initialsColor,
+    required this.switchesColor,
+    required this.gridColor,
+    required this.labelColor,
+  });
+
+  final List<Map<String, dynamic>> weeks;
+  final Color initialsColor;
+  final Color switchesColor;
+  final Color gridColor;
+  final Color labelColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const topPad = 14.0;
+    const bottomPad = 18.0;
+    const leftPad = 24.0;
+    final chartW = size.width - leftPad;
+    final chartH = size.height - topPad - bottomPad;
+    if (chartW <= 0 || chartH <= 0 || weeks.isEmpty) {
+      return;
+    }
+
+    var maxTotal = 1;
+    for (final week in weeks) {
+      final total = ((week['initials'] as num?)?.toInt() ?? 0) +
+          ((week['switches'] as num?)?.toInt() ?? 0);
+      if (total > maxTotal) {
+        maxTotal = total;
+      }
+    }
+
+    double yFor(double value) => topPad + chartH * (1 - value / maxTotal);
+    double xFor(int index) {
+      if (weeks.length == 1) {
+        return leftPad + chartW / 2;
+      }
+      return leftPad + chartW * index / (weeks.length - 1);
+    }
+
+    final gridPaint = Paint()
+      ..color = gridColor
+      ..strokeWidth = 1;
+    canvas.drawLine(
+      Offset(leftPad, yFor(0)),
+      Offset(size.width, yFor(0)),
+      gridPaint,
+    );
+    _drawText(canvas, '$maxTotal', const Offset(0, topPad - 4), labelColor, 9);
+    _drawText(canvas, '0', Offset(0, yFor(0) - 6), labelColor, 9);
+
+    final initialsPts = <Offset>[];
+    final totalPts = <Offset>[];
+    for (var i = 0; i < weeks.length; i++) {
+      final initials = (weeks[i]['initials'] as num?)?.toInt() ?? 0;
+      final switches = (weeks[i]['switches'] as num?)?.toInt() ?? 0;
+      initialsPts.add(Offset(xFor(i), yFor(initials.toDouble())));
+      totalPts.add(Offset(xFor(i), yFor((initials + switches).toDouble())));
+    }
+
+    // 下段(初期解決)の面。
+    _fillBand(
+      canvas,
+      initialsPts,
+      yFor(0),
+      initialsColor.withValues(alpha: 0.5),
+    );
+    // 上段(切替): initials 線と total 線の間。
+    _fillBetween(
+      canvas,
+      initialsPts,
+      totalPts,
+      switchesColor.withValues(alpha: 0.45),
+    );
+    _drawLine(canvas, totalPts, switchesColor, 2);
+    _drawLine(canvas, initialsPts, initialsColor, 2);
+
+    for (final i in <int>{0, weeks.length - 1}) {
+      final label = _weekShort(weeks[i]['week_start']);
+      if (label.isNotEmpty) {
+        _drawText(
+          canvas,
+          label,
+          Offset(xFor(i) - 14, size.height - bottomPad + 4),
+          labelColor,
+          8,
+        );
+      }
+    }
+  }
+
+  void _fillBand(Canvas canvas, List<Offset> top, double baseY, Color color) {
+    if (top.isEmpty) {
+      return;
+    }
+    final path = Path()
+      ..moveTo(top.first.dx, baseY)
+      ..lineTo(top.first.dx, top.first.dy);
+    for (final p in top.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    path
+      ..lineTo(top.last.dx, baseY)
+      ..close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  void _fillBetween(
+    Canvas canvas,
+    List<Offset> lower,
+    List<Offset> upper,
+    Color color,
+  ) {
+    if (lower.length != upper.length || lower.isEmpty) {
+      return;
+    }
+    final path = Path()..moveTo(lower.first.dx, lower.first.dy);
+    for (final p in lower.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    for (final p in upper.reversed) {
+      path.lineTo(p.dx, p.dy);
+    }
+    path.close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  void _drawLine(Canvas canvas, List<Offset> pts, Color color, double width) {
+    if (pts.length < 2) {
+      if (pts.length == 1) {
+        canvas.drawCircle(pts.first, 2.5, Paint()..color = color);
+      }
+      return;
+    }
+    final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+    for (final p in pts.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..strokeWidth = width
+        ..style = PaintingStyle.stroke
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  void _drawText(
+    Canvas canvas,
+    String text,
+    Offset offset,
+    Color color,
+    double fontSize,
+  ) {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(color: color, fontSize: fontSize),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, offset);
+  }
+
+  @override
+  bool shouldRepaint(_TrendAreaPainter oldDelegate) =>
+      oldDelegate.weeks != weeks ||
+      oldDelegate.initialsColor != initialsColor ||
+      oldDelegate.switchesColor != switchesColor;
+}
+
+String _weekShort(Object? weekStart) {
+  final value = weekStart?.toString() ?? '';
+  return value.length >= 10 ? value.substring(5, 10) : '';
 }
 
 class _LegendDot extends StatelessWidget {
