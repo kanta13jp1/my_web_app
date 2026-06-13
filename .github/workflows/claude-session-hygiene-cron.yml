@@ -22,7 +22,7 @@ permissions:
 
 concurrency:
   group: claude-session-hygiene-cron
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-13 ci-audit: Windows 42runs/日キュー積み上がり防止
 
 jobs:
   hygiene:

@@ -18,7 +18,7 @@ on:
 
 concurrency:
   group: health-monitor
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-13 ci-audit: 毎30分モニタリングのキュー積み防止
 
 permissions:
   contents: write
