@@ -118,5 +118,20 @@ void main() {
       expect(await store.prune(sp), 2);
       expect(store.activeIds(sp), isEmpty);
     });
+
+    test('works as 3rd consumer: debt payment day override key', () async {
+      // #part293: 入金/表示設定に続く 3 例目 = 支払日上書き削除トゥームストーン。
+      final store = MirrorTombstoneStore(
+        storageKey: 'debt_payment_day_override_deleted_v1',
+        nowProvider: () => DateTime(2026, 6, 13, 9),
+      );
+      final sp = await prefs();
+      await store.addId(sp, 'debt_row_1');
+      expect(store.activeIds(sp), contains('debt_row_1'));
+
+      // 支払日を再設定 → トゥームストーン解除。
+      await store.removeId(sp, 'debt_row_1');
+      expect(store.activeIds(sp), isNot(contains('debt_row_1')));
+    });
   });
 }

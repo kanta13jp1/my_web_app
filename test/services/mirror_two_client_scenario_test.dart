@@ -12,6 +12,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const String _inflowItemsKey = 'asset_expected_inflows_v1';
 const String _inflowDeletedIdsKey = 'asset_expected_inflow_deleted_ids_v1';
+const String _sectionOverridesKey = 'asset_management_section_overrides_v1';
+const String _sectionOverrideDeletedKey =
+    'asset_management_section_override_deleted_v1';
 
 Future<SharedPreferences> _switchClient([
   Map<String, Object> seed = const <String, Object>{},
@@ -369,6 +372,106 @@ void main() {
       expect(added, 1); // I4 のみ (I1 は既知 / I2 はトゥームストーン)
       expect(mergedA.map((e) => e.label), containsAll(<String>['給料', '臨時収入']));
       expect(mergedA.map((e) => e.id), isNot(contains(removedId)));
+    });
+
+    test(
+        'section override full round trip: A deletes → mirror → B reflects → '
+        'B re-uploads → A keeps deletion', () async {
+      const display = AssetManagementDisplayModeStore();
+
+      // 端末A: chart=hidden + flow=pinned を設定 → chart を自動へ戻す(削除)。
+      final prefsA1 = await _switchClient();
+      await display.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.hidden,
+        prefs: prefsA1,
+      );
+      await display.saveOverride(
+        AssetManagementSectionId.flow,
+        AssetManagementSectionVisibilityOverride.pinned,
+        prefs: prefsA1,
+      );
+      await display.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.auto,
+        prefs: prefsA1,
+      );
+      final aDeletedMirror = await display.encodeDeletedSectionIdsMirror(
+        prefs: prefsA1,
+      );
+      expect(
+        aDeletedMirror['ids'],
+        contains(AssetManagementSectionId.chart.storageId),
+      );
+      final aSnapshot = <String, Object>{
+        _sectionOverridesKey: prefsA1.getString(_sectionOverridesKey)!,
+        _sectionOverrideDeletedKey:
+            prefsA1.getString(_sectionOverrideDeletedKey)!,
+      };
+
+      // 端末B: 削除前の {chart:hidden, flow:pinned} を保持 → A の削除を取込む。
+      final prefsB = await _switchClient();
+      await display.saveOverride(
+        AssetManagementSectionId.chart,
+        AssetManagementSectionVisibilityOverride.hidden,
+        prefs: prefsB,
+      );
+      await display.saveOverride(
+        AssetManagementSectionId.flow,
+        AssetManagementSectionVisibilityOverride.pinned,
+        prefs: prefsB,
+      );
+      final removedOnB = await display.applyRemoteDeletedSectionIds(
+        AssetManagementDisplayModeStore.decodeDeletedSectionIdsMirror(
+          aDeletedMirror,
+        ),
+        prefs: prefsB,
+      );
+      expect(removedOnB, 1);
+      // 端末B が新たに calendar=hidden を追加して再アップロード。
+      await display.saveOverride(
+        AssetManagementSectionId.calendar,
+        AssetManagementSectionVisibilityOverride.hidden,
+        prefs: prefsB,
+      );
+      final overridesB = await display.loadOverrides(prefs: prefsB);
+      expect(overridesB.containsKey(AssetManagementSectionId.chart), isFalse);
+
+      // 端末Aへ戻る。サーバには stale な chart=hidden が残っていても、A の
+      // トゥームストーンが復活を防ぎ、B 由来の calendar のみ取り込む。
+      final prefsA2 = await _switchClient(aSnapshot);
+      final updatedAt = DateTime(2026, 6, 13, 12).toUtc().toIso8601String();
+      final serverRows = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'pref_key': 'section_overrides',
+          'value': <String, dynamic>{
+            'chart': 'hidden', // stale
+            'flow': 'pinned',
+            'calendar': 'hidden', // B の新規
+          },
+          'updated_at': updatedAt,
+        },
+      ];
+      final diff = AssetManagementDisplayModeStore.evaluateMirrorPrefRows(
+        rows: serverRows,
+        currentMode: await display.load(prefs: prefsA2),
+        currentOverrides: await display.loadOverrides(prefs: prefsA2),
+        localChangedAt: DateTime(2026, 6, 13, 8),
+        deletedSectionIds: await display.loadDeletedSectionIds(prefs: prefsA2),
+      );
+
+      expect(
+        diff.overrides?.containsKey(AssetManagementSectionId.chart),
+        isFalse,
+      );
+      expect(
+        diff.overrides?[AssetManagementSectionId.calendar],
+        AssetManagementSectionVisibilityOverride.hidden,
+      );
+      expect(
+        diff.overrides?[AssetManagementSectionId.flow],
+        AssetManagementSectionVisibilityOverride.pinned,
+      );
     });
   });
 }

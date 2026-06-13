@@ -45,6 +45,7 @@ CFO 室「表示モード実験 詳細グラフ」(折れ線=標準維持率 / �
 | 日付 | AT | ブラウザ | 結果 | 備考 |
 |------|----|---------|------|------|
 | 2026-06-13 | 自動 (CI widget test) | flutter test | ✅ | `display_mode_experiment_card_test.dart`: 折れ線/面の両方で `Semantics.value` + `flagsCollection.isLiveRegion` を検証。矢印キー移動で value 更新も検証。 |
-| (未実施・要実機) | NVDA | Chrome/Edge | - | リリース前に担当者が実施 → 結果追記 |
+| 2026-06-13 | 自動 (再検証 / part 293) | flutter test | ✅ | フル test スイートで上記 a11y 契約が引き続き green を確認(回帰なし)。**実 AT の音声確認はこの自動検証では代替不可**のため下記実機行は別途必要。 |
+| (未実施・要実機) | NVDA | Chrome/Edge | - | リリース前に担当者が実施 → 結果追記。手順は本書「実機チェック」節。 |
 | (未実施・要実機) | VoiceOver | Safari | - | 同上 |
 | (未実施・要実機) | TalkBack | Chrome (Android) | - | 同上 |
