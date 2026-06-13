@@ -16151,7 +16151,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'CSV行は「摘要,金額,日付」または「請求先ID,摘要,金額,日付」で貼り付けできます。取り込み合計をカード請求額と照合します。',
+            'CSV/TSV行は「摘要,金額,日付」または「請求先ID,摘要,金額,日付」で貼り付けできます。auPAY等の明細表（タブ区切り・「利用日/利用店名/利用金額」等の見出し付き）もそのまま貼り付け可能です。取り込み合計をカード請求額と照合します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
