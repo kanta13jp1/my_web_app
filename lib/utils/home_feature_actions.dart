@@ -30,11 +30,14 @@ Future<void> pinHomeFeature(
     return;
   }
   try {
-    await Supabase.instance.client.from('user_pinned_features').upsert({
-      'user_id': user.id,
-      'feature_route': route,
-      'feature_label': label,
-    }, onConflict: 'user_id,feature_route');
+    await Supabase.instance.client.from('user_pinned_features').upsert(
+      {
+        'user_id': user.id,
+        'feature_route': route,
+        'feature_label': label,
+      },
+      onConflict: 'user_id,feature_route',
+    );
     homePinnedFeaturesRevision.value++;
     messenger?.showSnackBar(
       SnackBar(content: Text('「$label」をお気に入り（ピン止め）に追加しました')),
