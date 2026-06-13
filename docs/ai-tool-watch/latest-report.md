@@ -1,14 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-12T21:55:41Z`
-- Previous check: `2026-06-11T21:57:59Z`
+- Checked at: `2026-06-13T21:42:59Z`
+- Previous check: `2026-06-12T21:55:41Z`
 - Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.175 / June 12, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Claude Code changelog: 2.1.176 / June 12, 2026
 - `changed` Codex changelog: 2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ
+- `changed` Devin release notes: June 12, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -20,7 +20,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.175 / June 12, 2026
+  - Latest signal: 2.1.176 / June 12, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -66,7 +66,7 @@
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: June 10, 2026
+  - Latest signal: June 12, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...
   - Short signal: Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...

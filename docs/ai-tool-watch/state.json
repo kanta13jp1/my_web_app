@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-06-12T21:55:41Z",
-      "hash": "0398fe164b383dbd498432e526864adac61581f1f0846158867edfd8a45c328d",
+      "checked_at": "2026-06-13T21:42:59Z",
+      "hash": "b23ac41f493eb4126da20e9c9d02245a7dae1cd23978c8be3e5818f79b04c70c",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.175 / June 12, 2026",
+      "latest_signal": "2.1.176 / June 12, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-06-12T21:55:41Z",
+      "checked_at": "2026-06-13T21:42:59Z",
       "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
       "keyword_groups": {
         "codex-runtime": [
@@ -89,7 +89,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-06-12T21:55:41Z",
+      "checked_at": "2026-06-13T21:42:59Z",
       "hash": "fcb7ea0e9daaae61315d7f8af0a669da18749537acc7078f191509a8d5842879",
       "keyword_groups": {
         "codex-runtime": [
@@ -130,8 +130,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-06-12T21:55:41Z",
-      "hash": "4586e44949378af30b7bbff81b216ccd631f0fde9f311c74e02ee27e666fcf6d",
+      "checked_at": "2026-06-13T21:42:59Z",
+      "hash": "caa14ddc856d2cd74a16f8b63715cb733c2572adcd3fcb0e8f13199cb461799e",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -146,6 +146,7 @@
         "hooks": [
           "hook",
           "hooks",
+          "SessionStart",
           "Stop"
         ],
         "integration": [
@@ -154,9 +155,11 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension"
+          "IDE extension",
+          "VSCode"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -179,7 +182,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-06-12T21:55:41Z",
+      "checked_at": "2026-06-13T21:42:59Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -188,7 +191,7 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-06-12T21:55:41Z",
+      "checked_at": "2026-06-13T21:42:59Z",
       "hash": "d1b543781224e2bca14ff137dac766f3344d633d06229650b7f58fa6d549b49d",
       "keyword_groups": {
         "codex-runtime": [
@@ -232,7 +235,7 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-06-12T21:55:41Z",
+      "checked_at": "2026-06-13T21:42:59Z",
       "hash": "e29025cfcfe697fcd062eba80bf5e9cc9784c9b7288cfa97d7b72063a9f8749a",
       "keyword_groups": {
         "codex-runtime": [
@@ -258,8 +261,8 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-06-12T21:55:41Z",
-      "hash": "5766d6f6707808b1bafcdf1b93961c88dc238f5e7d3847db58ada56dc0d94324",
+      "checked_at": "2026-06-13T21:42:59Z",
+      "hash": "89078ac775a89b9657d41a80c9bb9269c918a889b60ada537369a5411526409e",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -291,13 +294,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "June 10, 2026",
+      "latest_signal": "June 12, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-06-12T21:55:41Z",
+      "checked_at": "2026-06-13T21:42:59Z",
       "hash": "67cd8d6307d96059b6e534d4b15372ec1c26245b008d916506089185353523fd",
       "keyword_groups": {
         "hooks": [
@@ -326,5 +329,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-06-12T21:55:41Z"
+  "updated_at": "2026-06-13T21:42:59Z"
 }

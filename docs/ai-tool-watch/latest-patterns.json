@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-12T21:55:45Z",
+  "generated_at": "2026-06-13T21:43:02Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-783deb35bd41",
+        "entry_id": "nf-6434b46123c6",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.175 / June 12, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.175 June 12, 2026 Added enforceAvailableModels managed setting — when enabled, the availableModels allowlist also constrains the Default model (a Default that would...",
+        "text": "Claude Code changelog 2.1.176 / June 12, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.176 June 12, 2026 Session titles are now generated in the language of your conversation (set the language setting to pin a specific language) Added footerLinksRegexes...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "0398fe164b383dbd498432e526864adac61581f1f0846158867edfd8a45c328d",
+          "hash": "b23ac41f493eb4126da20e9c9d02245a7dae1cd23978c8be3e5818f79b04c70c",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.175 / June 12, 2026",
+          "latest_signal": "2.1.176 / June 12, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "4386a4d2f0ac081c7a4bbb3025d4327aac7cae2d0479526de69bea5923626c61",
+          "previous_hash": "0398fe164b383dbd498432e526864adac61581f1f0846158867edfd8a45c328d",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.175 June 12, 2026 Added enforceAvailableModels managed setting — when enabled, the availableModels allowlist also constrains the Default model (a Default that would..."
+            "​ 2.1.176 June 12, 2026 Session titles are now generated in the language of your conversation (set the language setting to pin a specific language) Added footerLinksRegexes..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-783deb35bd41",
+        "entry_id": "nf-6434b46123c6",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,7 +115,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "fcb7ea0e9daaae61315d7f8af0a669da18749537acc7078f191509a8d5842879",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "672a43ae5ae24a856382227f0aea6651499309239c34d55946d873e42a85d231",
+          "previous_hash": "fcb7ea0e9daaae61315d7f8af0a669da18749537acc7078f191509a8d5842879",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "4586e44949378af30b7bbff81b216ccd631f0fde9f311c74e02ee27e666fcf6d",
+          "hash": "caa14ddc856d2cd74a16f8b63715cb733c2572adcd3fcb0e8f13199cb461799e",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,6 +285,7 @@
             "hooks": [
               "hook",
               "hooks",
+              "SessionStart",
               "Stop"
             ],
             "integration": [
@@ -293,9 +294,11 @@
               "Slack",
               "Linear",
               "GitHub",
-              "IDE extension"
+              "IDE extension",
+              "VSCode"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -315,7 +318,7 @@
           "latest_signal": "2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "d487a4f24690ebd85de898a1736e72e78e1b89434c313af2107517a497c2581e",
+          "previous_hash": "4586e44949378af30b7bbff81b216ccd631f0fde9f311c74e02ee27e666fcf6d",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -598,18 +601,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-1cbad80c9151",
+        "entry_id": "nf-810e242ccef8",
         "title": "Devin release notes",
-        "text": "Devin release notes June 10, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... The PR Review API also reflects this with a new cancelled status on review objects.",
+        "text": "Devin release notes June 12, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... !ultra and !fast Mid-Session Toggles You can now start sessions on Devin Ultra directly from Slack with the !ultra command.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5766d6f6707808b1bafcdf1b93961c88dc238f5e7d3847db58ada56dc0d94324",
+          "hash": "89078ac775a89b9657d41a80c9bb9269c918a889b60ada537369a5411526409e",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -641,7 +644,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "June 10, 2026",
+          "latest_signal": "June 12, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "5766d6f6707808b1bafcdf1b93961c88dc238f5e7d3847db58ada56dc0d94324",
@@ -649,14 +652,14 @@
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
             "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-            "The PR Review API also reflects this with a new cancelled status on review objects."
+            "!ultra and !fast Mid-Session Toggles You can now start sessions on Devin Ultra directly from Slack with the !ultra command."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-1cbad80c9151",
+        "entry_id": "nf-810e242ccef8",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
