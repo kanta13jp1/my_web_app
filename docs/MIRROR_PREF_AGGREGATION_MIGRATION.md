@@ -33,6 +33,10 @@
 
 ## Phase 3 着手前チェック: legacy 行残存ゼロ確認 (SQL/手順)
 
+> 実行は **より厳格な dry-run runbook**[`PHASE3_LEGACY_ZERO_DRYRUN.md`](PHASE3_LEGACY_ZERO_DRYRUN.md) に従う
+> (RLS による false near-zero を防ぐ BYPASSRLS 自己ガード / 14-key 異常検知 / サブキー・tombstone 網羅 /
+> 2 スナップショット delta / backup-then-delete ロールバック)。下記はその簡易版。
+
 撤去条件 2「legacy per-key 行の残存が実質ゼロ」を Supabase SQL Editor で確認する。
 
 ```sql
