@@ -39,6 +39,7 @@ import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
@@ -50,6 +51,8 @@ import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
+import 'package:my_web_app/services/drink_challenge_service.dart';
+import 'package:my_web_app/services/drink_challenge_store.dart';
 import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
@@ -57,6 +60,7 @@ import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
+import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -157,6 +161,21 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final bool? debugMirrorReadsAuthoritative;
 
+  /// テスト専用: 支払日上書きの集約ミラー値 (`{debtId: day}`) を注入し、端末間同期
+  /// (union マージ) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugDebtOverridesMirror;
+
+  /// テスト専用: リボ設定の削除トゥームストーン値 (`{'ids': [...]}`) を注入し、
+  /// 削除伝播 (他端末で削除→ローカルから除去) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugRevolvingDeletedMirror;
+
+  /// テスト専用: ウォッチリストの削除トゥームストーン値 (`{'ids': [...]}`) を注入し、
+  /// 削除伝播をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugWatchlistDeletedMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -175,6 +194,9 @@ class AssetManagementPage extends StatefulWidget {
     this.debugMainAccountMirror,
     this.debugWatchlistMirror,
     this.debugMirrorReadsAuthoritative,
+    this.debugDebtOverridesMirror,
+    this.debugRevolvingDeletedMirror,
+    this.debugWatchlistDeletedMirror,
   });
 
   @override
@@ -482,6 +504,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementMainAccountStore();
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
+  // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
+  final DrinkChallengeStore _drinkChallengeStore = const DrinkChallengeStore();
+  Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
   // 使用可能額の基準となるメインバンク口座ID。null は既定(最大預金口座)。
   String? _assetManagementMainAccountId;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
@@ -586,12 +611,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDisplayMode();
     _loadMainAccount();
     unawaited(_loadRevolvingConfigs());
+    unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
     unawaited(_initTombstoneGcAndPull());
     // 他端末で削除されたセクション上書き / 支払日上書きを取り込む (#part292/294)。
     unawaited(_pullDeletedSectionIds());
     unawaited(_pullDebtOverrideDeleted());
+    // 他端末で削除されたリボ設定 / ウォッチリストを取り込む (clear 伝播)。
+    unawaited(_pullRevolvingDeleted());
+    unawaited(_pullWatchlistDeleted());
     // 期限切れ・上限超過のトゥームストーンを自動掃除 (#part296 肥大化抑制)。
     unawaited(_pruneTombstonesOnBoot());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -1275,9 +1304,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         );
       }
-      if (debtPaymentDayOverrides.isEmpty) {
-        unawaited(_restoreDebtPaymentDayOverridesFromMirror());
-      }
       final templates =
           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
@@ -1358,6 +1384,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _syncPaymentStateControllers();
       });
       unawaited(_refreshSyncSources());
+      // ローカル(_debtPaymentDayOverrides)反映後に呼ぶ。空でなくても union
+      // マージ/バックフィルするため常に実行する。
+      unawaited(_restoreDebtPaymentDayOverridesFromMirror());
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
       }
@@ -5251,6 +5280,88 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_refreshSyncSources());
   }
 
+  /// 削除したウォッチリスト項目のトゥームストーン (clear 伝播 / 復活防止)。
+  static const MirrorTombstoneStore _watchlistTombstones = MirrorTombstoneStore(
+    storageKey: 'watchlist_entries_deleted_v1',
+  );
+
+  Future<void> _recordWatchlistTombstone(
+    String assetType, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _watchlistTombstones.addId(store, assetType);
+    } else {
+      await _watchlistTombstones.removeId(store, assetType);
+    }
+    unawaited(_mirrorWatchlistDeleted());
+  }
+
+  /// ウォッチリストの削除トゥームストーンをサーバへ反映 (他端末伝播)。
+  Future<void> _mirrorWatchlistDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _watchlistTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'watchlist_entries_deleted',
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('watchlist tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除されたウォッチリスト項目を取り込み、ローカルからも除去する。
+  Future<void> _pullWatchlistDeleted() async {
+    final debugMirror = widget.debugWatchlistDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'watchlist_entries_deleted');
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _watchlistTombstones.mergeRemoteIds(store, ids);
+      final next = Map<String, AssetWatchlistEntry>.from(_watchlistByType);
+      final before = next.length;
+      next.removeWhere((key, _) => incoming.contains(key));
+      if (next.length == before || !mounted) {
+        return;
+      }
+      final mergedList = next.values.toList();
+      setState(() {
+        _setWatchlistEntries(mergedList);
+      });
+      unawaited(widget.watchlistService.replaceAll(mergedList));
+    } catch (e) {
+      debugPrint('watchlist tombstone pull failed: $e');
+    }
+  }
+
   /// サーバ集約ミラーからウォッチリストを復元する (集約優先 + legacy local fallback)。
   /// ローカルに既に項目がある場合は上書きしない (オフライン編集を握り潰さない安全側)。
   Future<void> _restoreWatchlistFromMirror() async {
@@ -5259,6 +5370,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final hasLocal = _watchlistByType.isNotEmpty;
+    // 削除トゥームストーン: 復活させない / バックフィルしない。
+    final tombstoned = _watchlistTombstones.activeIds(
+      await SharedPreferences.getInstance(),
+    );
     // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
     if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
       unawaited(
@@ -5278,6 +5393,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             .select()
             .eq('pref_key', _watchlistMirrorKey);
         if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル。
+          if (hasLocal) {
+            unawaited(_mirrorWatchlist());
+          }
           return;
         }
         value = rows.first['value'];
@@ -5285,29 +5404,61 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           rows.first['updated_at']?.toString() ?? '',
         );
       }
-      final restored = AssetWatchlistService.decodeMirrorValue(value);
-      if (restored.isEmpty || !mounted) {
+      final serverEntries = AssetWatchlistService.decodeMirrorValue(value);
+      if (serverEntries.isEmpty || !mounted) {
         return;
       }
-      final adopt = await _shouldAdoptMirror(
+      final adoptConflicts = await _shouldAdoptMirror(
         prefKey: _watchlistMirrorKey,
         hasLocal: hasLocal,
         mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      if (!adopt || !mounted) {
-        return;
-      }
-      setState(() {
-        _setWatchlistEntries(restored);
+      // union マージ: ローカルに無い assetType はサーバから追加 (他の項目は維持)。
+      final localTypes = _watchlistByType.keys.toSet();
+      final merged = Map<String, AssetWatchlistEntry>.from(_watchlistByType);
+      final serverTypes = <String>{};
+      var changed = false;
+      // 削除トゥームストーン済み項目はローカルからも除く (clear 伝播 / 復活防止)。
+      merged.removeWhere((key, _) {
+        if (tombstoned.contains(key)) {
+          changed = true;
+          return true;
+        }
+        return false;
       });
-      // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
-      unawaited(widget.watchlistService.replaceAll(restored));
-      unawaited(
-        _syncTimestampStore.markChanged(
-          _watchlistMirrorKey,
-          at: mirrorUpdatedAt,
-        ),
+      for (final entry in serverEntries) {
+        serverTypes.add(entry.assetType);
+        if (tombstoned.contains(entry.assetType)) {
+          continue;
+        }
+        if (!merged.containsKey(entry.assetType) || adoptConflicts) {
+          merged[entry.assetType] = entry;
+          changed = true;
+        }
+      }
+      if (changed && mounted) {
+        final mergedList = merged.values.toList();
+        setState(() {
+          _setWatchlistEntries(mergedList);
+        });
+        // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
+        unawaited(widget.watchlistService.replaceAll(mergedList));
+        if (adoptConflicts) {
+          unawaited(
+            _syncTimestampStore.markChanged(
+              _watchlistMirrorKey,
+              at: mirrorUpdatedAt,
+            ),
+          );
+        }
+      }
+      // ローカルにあってサーバに無い項目は、マージ結果をサーバへバックフィル。
+      final localHasExtra = localTypes.any(
+        (type) => !tombstoned.contains(type) && !serverTypes.contains(type),
       );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorWatchlist());
+      }
     } catch (e) {
       debugPrint('watchlist mirror restore failed: $e');
     }
@@ -5379,6 +5530,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   setState(() {
                     _setWatchlistEntries(entries);
                   });
+                  unawaited(_recordWatchlistTombstone(type, deleted: true));
                   unawaited(_mirrorWatchlist());
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
@@ -5407,6 +5559,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 setState(() {
                   _setWatchlistEntries(entries);
                 });
+                unawaited(_recordWatchlistTombstone(type, deleted: false));
                 unawaited(_mirrorWatchlist());
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
@@ -5743,6 +5896,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   _sortAssetTypes(); // ★ 削除時にも並び替え
                   _updateChartData();
                 });
+                unawaited(_recordWatchlistTombstone(type, deleted: true));
                 unawaited(_mirrorWatchlist());
               }
               if (context.mounted) Navigator.pop(context);
@@ -7706,6 +7860,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(AssetManagementSectionId.calendar)) ...[
               _buildAssetCalendarCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
+              _buildCashflowForecastCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(AssetManagementSectionId.salaryBreakdown)) ...[
               _buildSalarySpendingBreakdownCard(),
@@ -8029,6 +8184,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_refreshSyncSources());
   }
 
+  Future<void> _loadDrinkChallenge() async {
+    try {
+      final records = await _drinkChallengeStore.load();
+      if (mounted && records.isNotEmpty) {
+        setState(() {
+          _drinkRecords = records;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading drink challenge records: $e');
+    }
+  }
+
+  void _setDrinkRecord(DateTime date, DrinkRecordStatus? status) {
+    final key = DrinkChallengeService.dateKey(date);
+    setState(() {
+      final next = Map<String, DrinkRecordStatus>.from(_drinkRecords);
+      if (status == null) {
+        next.remove(key);
+      } else {
+        next[key] = status;
+      }
+      _drinkRecords = next;
+    });
+    unawaited(_drinkChallengeStore.save(_drinkRecords));
+  }
+
   /// リボ設定を `asset_pref_mirror` (pref_key: revolving_credit_configs) へ
   /// 1 行 upsert する (支払日上書きと同じ集約方針 / #part293-295)。
   Future<void> _mirrorRevolvingConfigs() async {
@@ -8065,6 +8247,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _revolvingConfigs,
     );
     final hasLocal = localBefore.isNotEmpty;
+    // 削除トゥームストーン: 復活させない / バックフィルしない。
+    final tombstoned = _revolvingConfigTombstones.activeIds(
+      await SharedPreferences.getInstance(),
+    );
     try {
       final Map<String, AssetLiabilityRevolvingCreditConfig> serverConfigs;
       final DateTime? mirrorUpdatedAt;
@@ -8109,7 +8295,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         localBefore,
       );
       var changed = false;
+      // 削除トゥームストーン済みキーはローカルからも除く (clear 伝播 / 復活防止)。
+      merged.removeWhere((key, _) {
+        if (tombstoned.contains(key)) {
+          changed = true;
+          return true;
+        }
+        return false;
+      });
       serverConfigs.forEach((key, config) {
+        if (tombstoned.contains(key)) {
+          return;
+        }
         if (!merged.containsKey(key) || adoptConflicts) {
           merged[key] = config;
           changed = true;
@@ -8132,7 +8329,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // ローカルにあってサーバに無い負債キーは、マージ結果をサーバへ
       // バックフィルし、サーバを全端末の和集合に保つ。
       final localHasExtra = localBefore.keys.any(
-        (key) => !serverConfigs.containsKey(key),
+        (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
       );
       if (localHasExtra && debugMirror == null) {
         unawaited(_mirrorRevolvingConfigs());
@@ -8141,6 +8338,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('revolving config mirror restore failed: $e');
     }
   }
+
+  /// 削除した (リボ OFF にした) リボ設定のトゥームストーン。union マージ/backfill
+  /// での復活を防ぎ、他端末へ削除を伝播する (debt 上書きと同じパターン)。
+  static const MirrorTombstoneStore _revolvingConfigTombstones =
+      MirrorTombstoneStore(
+    storageKey: 'revolving_credit_configs_deleted_v1',
+  );
 
   void _persistRevolvingConfig(
     String debtId,
@@ -8158,7 +8362,90 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _revolvingConfigs = next;
     });
     unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+    // 削除はトゥームストーン化、再設定は解除 (debtId 再利用ドメイン)。
+    unawaited(_recordRevolvingTombstone(debtId, deleted: config == null));
     unawaited(_mirrorRevolvingConfigs());
+  }
+
+  Future<void> _recordRevolvingTombstone(
+    String id, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _revolvingConfigTombstones.addId(store, id);
+    } else {
+      await _revolvingConfigTombstones.removeId(store, id);
+    }
+    unawaited(_mirrorRevolvingDeleted());
+  }
+
+  /// リボ設定の削除トゥームストーンをサーバへ反映 (他端末伝播)。
+  Future<void> _mirrorRevolvingDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _revolvingConfigTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'revolving_credit_configs_deleted',
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('revolving tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除されたリボ設定を取り込み、ローカルからも除去する。
+  Future<void> _pullRevolvingDeleted() async {
+    final debugMirror = widget.debugRevolvingDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'revolving_credit_configs_deleted');
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _revolvingConfigTombstones.mergeRemoteIds(
+        store,
+        ids,
+      );
+      final next = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+        _revolvingConfigs,
+      );
+      final before = next.length;
+      next.removeWhere((key, _) => incoming.contains(key));
+      if (next.length == before || !mounted) {
+        return;
+      }
+      setState(() {
+        _revolvingConfigs = next;
+      });
+      unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+    } catch (e) {
+      debugPrint('revolving tombstone pull failed: $e');
+    }
   }
 
   void _toggleRevolving(AssetLiabilityDebtRow row, bool enabled) {
@@ -9105,12 +9392,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _restoreDebtPaymentDayOverridesFromMirror() async {
-    if (_supabase.auth.currentUser == null) {
+    final debugMirror = widget.debugDebtOverridesMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
     final hasLocal = _debtPaymentDayOverrides.isNotEmpty;
     // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
-    if (!_mirrorReadsAuthoritative && hasLocal) {
+    if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
       unawaited(
         _backfillPrefIfServerMissing(
           'debt_payment_day_overrides',
@@ -9120,25 +9408,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', 'debt_payment_day_overrides');
-      if (rows.isEmpty || !mounted) {
+      final dynamic value;
+      final DateTime? mirrorUpdatedAt;
+      if (debugMirror != null) {
+        value = debugMirror;
+        mirrorUpdatedAt = DateTime.now().toUtc();
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'debt_payment_day_overrides');
+        if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル。
+          if (hasLocal) {
+            unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));
+          }
+          return;
+        }
+        value = rows.first['value'];
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
+      }
+      if (value is! Map || !mounted) {
         return;
       }
-      final value = rows.first['value'];
-      if (value is! Map) {
-        return;
-      }
-      final mirrorUpdatedAt = DateTime.tryParse(
-        rows.first['updated_at']?.toString() ?? '',
-      );
       // 削除トゥームストーン済みの支払日上書きは復元しない (#part293 3例目)。
       final tombstoned = _debtOverrideTombstones.activeIds(
         await SharedPreferences.getInstance(),
       );
-      final restored = <String, int>{};
+      final serverOverrides = <String, int>{};
       value.forEach((key, dynamic raw) {
         final day = (raw as num?)?.toInt();
         if (key is String &&
@@ -9146,35 +9445,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             day >= 1 &&
             day <= 31 &&
             !tombstoned.contains(key)) {
-          restored[key] = day;
+          serverOverrides[key] = day;
         }
       });
-      if (restored.isEmpty || !mounted) {
+      if (serverOverrides.isEmpty || !mounted) {
         return;
       }
-      final adopt = await _shouldAdoptMirror(
+      final adoptConflicts = await _shouldAdoptMirror(
         prefKey: 'debt_payment_day_overrides',
         hasLocal: hasLocal,
         mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      if (!adopt || !mounted) {
-        return;
-      }
-      setState(() {
-        _debtPaymentDayOverrides = restored;
+      // union マージ: ローカルに無い負債キーはサーバから追加 (他の上書きは維持)。
+      final localKeys = _debtPaymentDayOverrides.keys.toSet();
+      final merged = Map<String, int>.from(_debtPaymentDayOverrides);
+      var changed = false;
+      serverOverrides.forEach((key, day) {
+        if (!merged.containsKey(key) || adoptConflicts) {
+          merged[key] = day;
+          changed = true;
+        }
       });
-      unawaited(_saveDebtPaymentDayOverrides());
-      unawaited(
-        _syncTimestampStore.markChanged(
-          'debt_payment_day_overrides',
-          at: mirrorUpdatedAt,
-        ),
+      if (changed && mounted) {
+        setState(() {
+          _debtPaymentDayOverrides = merged;
+        });
+        unawaited(_saveDebtPaymentDayOverrides());
+        if (adoptConflicts) {
+          unawaited(
+            _syncTimestampStore.markChanged(
+              'debt_payment_day_overrides',
+              at: mirrorUpdatedAt,
+            ),
+          );
+        }
+        // 初回復元 (ローカル空) のときだけ通知。
+        if (!hasLocal) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('支払日設定をサーバのバックアップから復元しました')),
+          );
+        }
+      }
+      // ローカルにあってサーバに無い負債キーは、マージ結果をサーバへバックフィル。
+      final localHasExtra = localKeys.any(
+        (key) => !serverOverrides.containsKey(key),
       );
-      // 初回復元 (ローカル空) のときだけ通知。LWW での更新時は通知しない。
-      if (!hasLocal) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('支払日設定をサーバのバックアップから復元しました')),
-        );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));
       }
     } catch (e) {
       debugPrint('pref mirror restore failed: $e');
@@ -9369,18 +9686,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  /// 3 ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
-  Future<({int inflow, int override, int debt, int total})>
-      _pruneAllTombstones() async {
+  /// 各ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
+  Future<
+      ({
+        int inflow,
+        int override,
+        int debt,
+        int revolving,
+        int watchlist,
+        int total,
+      })> _pruneAllTombstones() async {
     final store = await SharedPreferences.getInstance();
     final inflow = await _expectedInflowStore.pruneDeletedIds();
     final override = await _displayModeStore.pruneDeletedSectionIds();
     final debt = await _debtOverrideTombstones.prune(store);
+    final revolving = await _revolvingConfigTombstones.prune(store);
+    final watchlist = await _watchlistTombstones.prune(store);
     return (
       inflow: inflow,
       override: override,
       debt: debt,
-      total: inflow + override + debt,
+      revolving: revolving,
+      watchlist: watchlist,
+      total: inflow + override + debt + revolving + watchlist,
     );
   }
 
@@ -9394,7 +9722,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         debugPrint(
           'boot tombstone prune: removed ${removed.total} '
           '(inflow=${removed.inflow} override=${removed.override} '
-          'debt=${removed.debt})',
+          'debt=${removed.debt} revolving=${removed.revolving} '
+          'watchlist=${removed.watchlist})',
         );
       }
     } catch (e) {
@@ -9956,6 +10285,110 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
       _calendarSelectedDate = null;
     });
+  }
+
+  AssetCashflowRecurringEntry? _subscriptionRecurringEntry(
+    Map<String, dynamic> subscription,
+  ) {
+    final price = (subscription['price'] as num?)?.toDouble();
+    if (price == null || price <= 0) {
+      return null;
+    }
+    final dueDate = DateTime.tryParse(
+      subscription['due_date']?.toString() ?? '',
+    );
+    final name = subscription['service_name']?.toString().trim() ?? '';
+    return AssetCashflowRecurringEntry(
+      dayOfMonth: dueDate?.day ?? 1,
+      amount: price,
+      label: name.isEmpty ? '固定費' : name,
+    );
+  }
+
+  /// 現金・預金を起点に、繰り返し収入・固定費・返済予定を毎月積み上げた
+  /// 今後の残高見込みカード。登録データが無ければ非表示。
+  Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    var startingBalance = 0.0;
+    for (final account in workbook.accounts) {
+      final isLiquid = account.kind == AssetLiabilityAccountKind.cash ||
+          account.kind == AssetLiabilityAccountKind.deposit;
+      if (isLiquid && account.balance > 0) {
+        startingBalance += account.balance;
+      }
+    }
+
+    final recurringIncome = <AssetCashflowRecurringEntry>[
+      for (final template in _recurringIncomeTemplates)
+        if (template.dayOfMonth > 0 && template.amount > 0)
+          AssetCashflowRecurringEntry(
+            dayOfMonth: template.dayOfMonth,
+            amount: template.amount,
+            label: template.name,
+          ),
+      for (final rule in _expectedInflowRules)
+        if (rule.dayOfMonth > 0 && rule.amount > 0)
+          AssetCashflowRecurringEntry(
+            dayOfMonth: rule.dayOfMonth,
+            amount: rule.amount,
+            label: rule.label,
+          ),
+    ];
+
+    final subscriptionOutflow = <AssetCashflowRecurringEntry>[];
+    for (final subscription in _subscriptions) {
+      final entry = _subscriptionRecurringEntry(subscription);
+      if (entry != null) {
+        subscriptionOutflow.add(entry);
+      }
+    }
+    final recurringOutflow = <AssetCashflowRecurringEntry>[
+      for (final row in workbook.debtMasterRows)
+        if (row.isDirectCashflowTarget &&
+            row.balance < 0 &&
+            (row.paymentDay ?? 0) > 0 &&
+            row.scheduledPaymentAmount > 0)
+          AssetCashflowRecurringEntry(
+            dayOfMonth: row.paymentDay!,
+            amount: row.scheduledPaymentAmount,
+            label: row.name,
+          ),
+      ...subscriptionOutflow,
+    ];
+
+    final oneTimeIncome = <AssetCashflowDatedEntry>[
+      for (final inflow in _expectedInflows)
+        if (inflow.amount > 0)
+          AssetCashflowDatedEntry(
+            date: inflow.date,
+            amount: inflow.amount,
+            label: inflow.label,
+          ),
+    ];
+
+    if (recurringIncome.isEmpty &&
+        recurringOutflow.isEmpty &&
+        oneTimeIncome.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final forecast = AssetCashflowForecastService.project(
+      asOf: DateTime.now(),
+      startingBalance: startingBalance,
+      recurringIncome: recurringIncome,
+      recurringOutflow: recurringOutflow,
+      oneTimeIncome: oneTimeIncome,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetCashflowForecastCard(
+        forecast: forecast,
+        currencyFormatter: _formatYen,
+      ),
+    );
   }
 
   Widget _buildAssetCalendarCard(AssetLiabilityWorkbook? workbook) {
@@ -14024,6 +14457,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 12),
             _buildAssetManagementAiAssistantSection(insightReport),
             const SizedBox(height: 12),
+            _buildDrinkChallengeCard(workbook),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -14771,6 +15206,222 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           height: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrinkChallengeCard(AssetLiabilityWorkbook workbook) {
+    const service = DrinkChallengeService();
+    final stats = service.computeStats(
+      records: _drinkRecords,
+      totalDebtYen: workbook.liabilityTotal,
+      baseDate: _now,
+    );
+    final occasions = service.occasionsBetween(
+      _now.subtract(const Duration(days: 7)),
+      _now.add(const Duration(days: 21)),
+    );
+    final projected = stats.projectedCompletionDate;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF7C3AED).withValues(alpha: 0.24),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.no_drinks_outlined,
+                color: Color(0xFF7C3AED),
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '禁酒で借金完済チャレンジ',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '金土日の夜・祝前日・祝日に飲みを我慢するたびに'
+            ' ${_formatManagementYen(stats.perSessionYen)} 節約。'
+            '${stats.targetCount}回我慢すれば完済です。',
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: stats.progressRatio,
+              minHeight: 10,
+              backgroundColor: const Color(0xFFE2E8F0),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF7C3AED),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildOverviewStatChip(
+                label: '我慢した回数',
+                value: '${stats.abstainedCount} / ${stats.targetCount}回',
+                color: const Color(0xFF7C3AED),
+              ),
+              _buildOverviewStatChip(
+                label: '節約できた額',
+                value: _formatManagementYen(stats.savedYen),
+                color: const Color(0xFF0D9488),
+              ),
+              _buildOverviewStatChip(
+                label: '完済まで残り',
+                value: '${stats.remainingCount}回',
+                color: const Color(0xFFB91C1C),
+              ),
+              if (projected != null)
+                _buildOverviewStatChip(
+                  label: '全部我慢すれば',
+                  value: '${projected.year}年${projected.month}月頃',
+                  color: const Color(0xFF2563EB),
+                ),
+              if (stats.drankCount > 0)
+                _buildOverviewStatChip(
+                  label: '我慢率',
+                  value: _formatManagementPercent(stats.abstentionRate),
+                  color: const Color(0xFF64748B),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '飲み機会（直近1週間〜今後3週間）— 各回をタップして記録',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 6),
+          for (final occasion in occasions) _buildDrinkOccasionRow(occasion),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrinkOccasionRow(DrinkOccasion occasion) {
+    final key = DrinkChallengeService.dateKey(occasion.date);
+    final status = _drinkRecords[key];
+    const weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+    final weekday = weekdays[occasion.date.weekday - 1];
+    final isToday = occasion.date.year == _now.year &&
+        occasion.date.month == _now.month &&
+        occasion.date.day == _now.day;
+    final isHoliday = occasion.reasons.contains(DrinkOccasionReason.holiday);
+    final isHolidayEve =
+        occasion.reasons.contains(DrinkOccasionReason.holidayEve);
+    final badge = isHoliday ? '祝' : (isHolidayEve ? '祝前' : '');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Text(
+            '${occasion.date.month}/${occasion.date.day}($weekday)',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+              color: isToday ? const Color(0xFF7C3AED) : null,
+            ),
+          ),
+          if (badge.isNotEmpty) ...[
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: const Color(0xFFB91C1C).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                badge,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFFB91C1C),
+                ),
+              ),
+            ),
+          ],
+          const Spacer(),
+          _buildDrinkChoiceButton(
+            label: '我慢した',
+            selected: status == DrinkRecordStatus.abstained,
+            selectedColor: const Color(0xFF0D9488),
+            onTap: () => _setDrinkRecord(
+              occasion.date,
+              status == DrinkRecordStatus.abstained
+                  ? null
+                  : DrinkRecordStatus.abstained,
+            ),
+          ),
+          const SizedBox(width: 6),
+          _buildDrinkChoiceButton(
+            label: '飲んだ',
+            selected: status == DrinkRecordStatus.drank,
+            selectedColor: const Color(0xFFB91C1C),
+            onTap: () => _setDrinkRecord(
+              occasion.date,
+              status == DrinkRecordStatus.drank
+                  ? null
+                  : DrinkRecordStatus.drank,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrinkChoiceButton({
+    required String label,
+    required bool selected,
+    required Color selectedColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? selectedColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: selected ? selectedColor : const Color(0xFFCBD5E1),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : const Color(0xFF64748B),
+          ),
         ),
       ),
     );

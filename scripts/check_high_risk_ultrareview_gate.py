@@ -87,6 +87,49 @@ EXCEPTION_PATTERNS = (
     r"ultrareview[- ]exception",
 )
 
+# Minimum length the cleaned exception reason must reach to count as visible.
+# Mirrors the threshold enforced in has_visible_exception_reason().
+EXCEPTION_REASON_MIN_LENGTH = 12
+
+
+def passing_exception_block(reason: str) -> str:
+    """Return a high-risk gate block that passes via the *exception* route.
+
+    This is the honest \u6b63\u653b\u6cd5 for an AI-authored PR that did not run
+    `/ultrareview`: it names Claude Code #1 as the review owner and records a
+    visible exception reason. Paste the output verbatim instead of rediscovering
+    the exact phrasing after a gate FAIL (editing a PR body does not re-run the
+    check, so the usual recovery is a wasteful close/reopen).
+
+    The ``reason`` must be at least EXCEPTION_REASON_MIN_LENGTH characters once
+    the ``High-Risk-Ultrareview-Exception`` label is stripped, or the gate will
+    not treat it as visible. The wording lives next to the pattern tables it
+    must satisfy and is pinned by a round-trip test so it cannot drift.
+    """
+    return (
+        "## High-risk Ultrareview Gate\n"
+        "- Reviewer: Claude Code #1\n"
+        f"- High-Risk-Ultrareview-Exception: {reason.strip()}\n"
+    )
+
+
+def passing_evidence_block(pr_ref: str = "this PR") -> str:
+    """Return a high-risk gate block that passes via the *evidence* route.
+
+    Use this only after Claude Code #1 has actually run `/ultrareview`; pasting
+    it without a real run would falsely claim review evidence. The perspective
+    list is derived from REQUIRED_PERSPECTIVES so it can never fall out of sync
+    with what the validator demands.
+    """
+    perspectives = ", ".join(REQUIRED_PERSPECTIVES)
+    return (
+        "## High-risk Ultrareview Gate\n"
+        "- Reviewer: Claude Code #1\n"
+        f"- Evidence: Claude ultrareview completed for {pr_ref}.\n"
+        f"- Perspectives covered: {perspectives}.\n"
+        "- Unresolved findings: none.\n"
+    )
+
 
 def normalize_path(path: str) -> str:
     path = path.replace("\ufeff", "").replace("\\", "/")
@@ -245,11 +288,37 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--event", help="GitHub event JSON path")
     parser.add_argument("--body-file", help="Local markdown file to validate")
     parser.add_argument("--changed-files", help="Newline-separated changed file list")
+    parser.add_argument(
+        "--emit-exception",
+        metavar="REASON",
+        help=(
+            "Print a high-risk gate block that passes via the exception route "
+            "(Claude Code #1 owner + visible reason), then exit. The honest "
+            "route when /ultrareview was not run."
+        ),
+    )
+    parser.add_argument(
+        "--emit-evidence",
+        action="store_true",
+        help=(
+            "Print a high-risk gate block that passes via the evidence route "
+            "(covers all required perspectives), then exit. Use only after a "
+            "real /ultrareview run."
+        ),
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
+
+    if args.emit_exception is not None:
+        print(passing_exception_block(args.emit_exception), end="")
+        return 0
+    if args.emit_evidence:
+        print(passing_evidence_block(), end="")
+        return 0
+
     payload = event_payload(args.event)
     body = pr_body(payload, args.body_file)
     title = pr_title(payload)
@@ -265,6 +334,27 @@ def main(argv: list[str]) -> int:
         print(f"- trigger: {reason}")
     for message in messages:
         print(f"- {message}")
+    if not ok:
+        print()
+        print(
+            "Recommended fix — paste this exception block into the PR body "
+            "(replace the reason), or re-run with "
+            '--emit-exception "<reason>":'
+        )
+        print("---8<--- snippet start ---8<---")
+        print(
+            passing_exception_block(
+                "<reason >= "
+                f"{EXCEPTION_REASON_MIN_LENGTH} chars; e.g. prose-only trigger, "
+                "no high-risk path touched>"
+            ),
+            end="",
+        )
+        print("---8<--- snippet end ---8<---")
+        print(
+            "If Claude Code #1 actually ran /ultrareview, use --emit-evidence "
+            "instead to record the perspective coverage."
+        )
     return 0 if ok else 1
 
 

@@ -21,6 +21,7 @@ import {
   type FeatureRequestIssueLike,
   matchExistingFeatureRequestIssues,
 } from "./feature_request_dedupe.ts";
+import { buildFeedbackIssue } from "./feedback_issue.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -542,6 +543,10 @@ function buildFeatureRequestBody(params: {
 async function createGitHubIssue(params: {
   title: string;
   body: string;
+  /** タイトル接頭辞。既定は追加要望フォーム互換の "[追加要望] "。 */
+  titlePrefix?: string;
+  /** Issue ラベル。既定は追加要望フォーム互換。 */
+  labels?: string[];
 }): Promise<Record<string, unknown>> {
   const token = Deno.env.get("GITHUB_PAT") ??
     Deno.env.get("GITHUB_TOKEN") ??
@@ -558,6 +563,9 @@ async function createGitHubIssue(params: {
     };
   }
 
+  const titlePrefix = params.titlePrefix ?? "[追加要望] ";
+  const labels = params.labels ?? ["enhancement", "追加要望", "wbs"];
+
   const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
     method: "POST",
     headers: {
@@ -568,9 +576,9 @@ async function createGitHubIssue(params: {
       "User-Agent": "jibun-app-feature-request-form",
     },
     body: JSON.stringify({
-      title: `[追加要望] ${params.title}`,
+      title: `${titlePrefix}${params.title}`,
       body: params.body,
-      labels: ["enhancement", "追加要望", "wbs"],
+      labels,
     }),
   });
   const data = await res.json().catch(() => ({}));
@@ -1586,12 +1594,80 @@ serve(async (req: Request) => {
 
       // ---- User feedback ----
       case "feedback.submit": {
+        const category = textValue(body.category, 80) || "other";
+        const message = textValue(body.message, 4000);
+        const createdAt = new Date().toISOString();
+
+        // 受付記録は従来どおり hub_data に残す。
         const item = await addItem(admin, "user_feedback", userId, {
-          message: body.message,
-          category: body.category ?? "general",
+          message,
+          category,
           rating: body.rating,
+          created_at: createdAt,
         });
-        return json({ success: true, item });
+
+        // フィードバックを GitHub Issue 化し、github-issue-fix レーン
+        // (draft PR 自動起票 → AI フリート対応) に確実に載せる。
+        let githubIssue: Record<string, unknown> = {
+          skipped: true,
+          reason: "message_too_short",
+        };
+        if (message.trim().length >= 3) {
+          const userEmail = await getUserEmail(admin, userId);
+          const draft = buildFeedbackIssue({
+            category,
+            message,
+            userEmail,
+            createdAt,
+          });
+          githubIssue = await createGitHubIssue({
+            title: draft.title,
+            titlePrefix: "",
+            body: draft.body,
+            labels: draft.labels,
+          });
+
+          // 投稿ありがとうメール (best-effort: 失敗しても投稿は成功扱い)。
+          const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
+          const issueNumber = typeof githubIssue.number === "number"
+            ? githubIssue.number
+            : null;
+          if (resendKey && userEmail) {
+            try {
+              await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${resendKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  from: "noreply@jibun.app",
+                  to: userEmail,
+                  subject: "【自分株式会社】ご意見・ご要望を受け付けました",
+                  html: [
+                    "<p>ご投稿ありがとうございます。内容を確認しました。</p>",
+                    issueNumber
+                      ? `<p>GitHub Issue #${issueNumber} として登録し、AIが対応に着手します。</p>`
+                      : "<p>GitHub Issue として登録し、AIが対応に着手します。</p>",
+                    "<p>進捗は対応完了時にあらためてお知らせします。</p>",
+                  ].join(""),
+                }),
+              });
+            } catch (_emailError) {
+              // 通知失敗は致命的ではないため握りつぶす。
+            }
+          }
+        }
+
+        const issueNumber = Number(githubIssue.number ?? 0) || null;
+        const issueUrl = textValue(githubIssue.html_url, 400);
+        return json({
+          success: true,
+          item,
+          githubIssue: issueNumber
+            ? { number: issueNumber, html_url: issueUrl }
+            : githubIssue,
+        });
       }
 
       // ---- Notify feature (email via Resend) ----

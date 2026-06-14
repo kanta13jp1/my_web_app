@@ -45,6 +45,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_minimal_e2e_gate_test.py"],
         ),
         GateCommand(
+            "high-risk ultrareview gate tests",
+            [python, "scripts/check_high_risk_ultrareview_gate_test.py"],
+        ),
+        GateCommand(
             "codex ui qa playbook tests",
             [python, "scripts/check_codex_ui_qa_playbook_test.py"],
         ),
