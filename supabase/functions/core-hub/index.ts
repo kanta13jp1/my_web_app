@@ -1597,62 +1597,89 @@ serve(async (req: Request) => {
         const category = textValue(body.category, 80) || "other";
         const message = textValue(body.message, 4000);
         const createdAt = new Date().toISOString();
+        // クライアントの自動エラー報告 (error_reporter) は Issue 化しない:
+        // 公開 Issue の乱発と AI レーン占有を防ぐため hub_data 記録のみに留める。
+        const isAutoErrorReport = body.source === "auto_error_report" ||
+          message.startsWith("[自動エラー報告]");
 
         // 受付記録は従来どおり hub_data に残す。
         const item = await addItem(admin, "user_feedback", userId, {
           message,
           category,
           rating: body.rating,
+          source: isAutoErrorReport ? "auto_error_report" : "feedback_form",
           created_at: createdAt,
         });
 
-        // フィードバックを GitHub Issue 化し、github-issue-fix レーン
-        // (draft PR 自動起票 → AI フリート対応) に確実に載せる。
+        // フィードバックを GitHub Issue 化し、github-issue-fix レーンに載せる。
+        // 自動エラー報告・短すぎる本文は Issue 化しない。
         let githubIssue: Record<string, unknown> = {
           skipped: true,
-          reason: "message_too_short",
+          reason: isAutoErrorReport ? "auto_error_report" : "message_too_short",
         };
-        if (message.trim().length >= 3) {
-          const userEmail = await getUserEmail(admin, userId);
+        if (!isAutoErrorReport && message.trim().length >= 3) {
           const draft = buildFeedbackIssue({
             category,
             message,
-            userEmail,
+            userId,
             createdAt,
           });
-          githubIssue = await createGitHubIssue({
-            title: draft.title,
-            titlePrefix: "",
-            body: draft.body,
-            labels: draft.labels,
-          });
 
-          // 投稿ありがとうメール (best-effort: 失敗しても投稿は成功扱い)。
-          const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
+          // 重複抑止: 同タイトルの open Issue が既にあれば再起票しない
+          // (連投・同一エラーによる公開 Issue 汚染を防ぐ)。
+          const repo = githubRepoName();
+          const existing = (await fetchGitHubIssuesByTitle(repo, draft.title))
+            .find((issue) =>
+              issue.state === "open" && issue.title === draft.title
+            );
+          if (existing) {
+            githubIssue = {
+              number: existing.number,
+              html_url: existing.html_url,
+              title: existing.title,
+              deduped: true,
+            };
+          } else {
+            githubIssue = await createGitHubIssue({
+              title: draft.title,
+              titlePrefix: "",
+              body: draft.body,
+              labels: draft.labels,
+            });
+          }
+
+          // 投稿ありがとうメール (best-effort)。Issue が実在するときのみ送る。
           const issueNumber = typeof githubIssue.number === "number"
             ? githubIssue.number
             : null;
+          const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
+          const userEmail = issueNumber ? await getUserEmail(admin, userId) : "";
+          const fromEmail = Deno.env.get("FEEDBACK_FROM_EMAIL") ??
+            "noreply@jibun.app";
           if (resendKey && userEmail) {
             try {
-              await fetch("https://api.resend.com/emails", {
+              const emailRes = await fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: {
                   Authorization: `Bearer ${resendKey}`,
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  from: "noreply@jibun.app",
+                  from: fromEmail,
                   to: userEmail,
                   subject: "【自分株式会社】ご意見・ご要望を受け付けました",
                   html: [
                     "<p>ご投稿ありがとうございます。内容を確認しました。</p>",
-                    issueNumber
-                      ? `<p>GitHub Issue #${issueNumber} として登録し、AIが対応に着手します。</p>`
-                      : "<p>GitHub Issue として登録し、AIが対応に着手します。</p>",
+                    `<p>GitHub Issue #${issueNumber} として登録し、AIが対応に着手します。</p>`,
                     "<p>進捗は対応完了時にあらためてお知らせします。</p>",
                   ].join(""),
                 }),
               });
+              if (!emailRes.ok) {
+                console.warn(
+                  `feedback ack email failed: ${emailRes.status}`,
+                );
+              }
             } catch (_emailError) {
               // 通知失敗は致命的ではないため握りつぶす。
             }
@@ -1661,8 +1688,14 @@ serve(async (req: Request) => {
 
         const issueNumber = Number(githubIssue.number ?? 0) || null;
         const issueUrl = textValue(githubIssue.html_url, 400);
+        const issueCreated = issueNumber !== null;
         return json({
+          // フィードバック自体は常に保存する。ただし「対応を追跡します」が
+          // 嘘にならないよう、Issue 化の成否を issueCreated で明示する。
           success: true,
+          issueCreated,
+          tracked: issueCreated,
+          autoErrorReport: isAutoErrorReport,
           item,
           githubIssue: issueNumber
             ? { number: issueNumber, html_url: issueUrl }

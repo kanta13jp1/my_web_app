@@ -67,11 +67,27 @@ export function buildFeedbackIssueTitle(
   return `${prefix} ${safeSummary}`;
 }
 
+/**
+ * ユーザー入力を GitHub Issue 本文へ安全に埋め込む。
+ *
+ * 公開リポジトリの Issue 本文では `@mention` が通知を飛ばし、画像 Markdown が
+ * トラッキングピクセルになり、HTML が描画されてしまう。フェンス済みコードブロック
+ * に包むとこれらが全て無効化される（コードブロック内の @mention は通知されない）。
+ * フェンスは本文中のバッククォート連続数より長くして「閉じ忘れ」による脱出を防ぐ。
+ */
+export function fencedUserContent(message: string): string {
+  const runs = message.match(/`+/g) ?? [];
+  const longest = runs.reduce((max, run) => Math.max(max, run.length), 0);
+  const fence = "`".repeat(Math.max(3, longest + 1));
+  return `${fence}text\n${message}\n${fence}`;
+}
+
 /** フィードバック投稿から GitHub Issue の下書きを生成する。 */
 export function buildFeedbackIssue(params: {
   category: string;
   message: string;
-  userEmail?: string;
+  /** 擬似匿名の user_id。公開 Issue にメール等の PII は載せない。 */
+  userId?: string;
   createdAt?: string;
 }): FeedbackIssueDraft {
   const config = feedbackCategoryConfig(params.category);
@@ -83,15 +99,17 @@ export function buildFeedbackIssue(params: {
     "",
     "### 内容",
     "",
-    trimmedMessage.length > 0 ? trimmedMessage : "(本文なし)",
+    // ユーザー入力はフェンスで包み、@mention 通知・画像/HTML 描画を無効化する。
+    trimmedMessage.length > 0
+      ? fencedUserContent(trimmedMessage)
+      : "(本文なし)",
     "",
     "### メタデータ",
     "",
     `- 種別: ${config.label} (${params.category})`,
-    `- 送信者: ${
-      params.userEmail && params.userEmail.length > 0
-        ? params.userEmail
-        : "(不明)"
+    // PII 保護: メールは公開 Issue 本文に載せず、識別は擬似匿名の user_id のみ。
+    `- 送信者ID: ${
+      params.userId && params.userId.length > 0 ? params.userId : "(不明)"
     }`,
   ];
   if (params.createdAt && params.createdAt.length > 0) {
@@ -101,7 +119,7 @@ export function buildFeedbackIssue(params: {
     "",
     "---",
     "このIssueは自分株式会社アプリの「ご意見・ご要望」フォームから自動起票されました。",
-    "`github-issue-fix` レーンが draft PR を起票し、Claude / Codex の AI フリートが対応に着手します。",
+    "`github-issue-fix` レーンが draft PR を起票し、対応に着手します。",
   );
 
   return { title, body: lines.join("\n"), labels: config.labels };

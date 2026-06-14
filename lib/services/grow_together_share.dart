@@ -17,8 +17,13 @@ class GrowTogetherShare {
 
   /// X 投稿の本文。URL は intent の `url` パラメータで別途付与するため含めない
   /// （X 側が t.co 短縮し、本文の文字数を圧迫しないようにするため）。
-  static const String shareText = 'ユーザーが機能追加要望や改善要望、不具合報告をすると、'
-      'AIが勝手にそれに対応してくれるアプリを作りました。\n\n'
+  ///
+  /// 文言は実態に合わせている: 送信内容を AI が自動で開発タスク(Issue)化して
+  /// 「対応に着手」するところまでが自動。完全自律でコード修正を完了させると
+  /// は約束しない（誇大広告を避け、共有文言が嘘にならないようにする）。
+  static const String shareText =
+      'ユーザーが機能追加要望や改善要望、不具合報告を送ると、'
+      'AIが自動で受け取り、開発タスク化して対応に着手してくれるアプリを作りました。\n\n'
       '使ってみてください。みんなでアプリを育てられます。\n\n'
       '自分株式会社';
 
@@ -41,15 +46,21 @@ class GrowTogetherShare {
   /// X の投稿画面を開く。Web では別タブ、その他では外部アプリで開く。
   ///
   /// 成功可否を返す（ポップアップブロック等で開けなかった場合は false）。
+  ///
+  /// Web ではポップアップ許可がユーザー操作と同一イベントループでの
+  /// `window.open` 呼び出しに依存する。`canLaunchUrl` を await すると
+  /// イベントループを跨いでジェスチャ判定が切れ、ポップアップブロックに
+  /// 弾かれるため、http/https の intent URL は事前チェックせず直接開く。
   static Future<bool> launchXShare() async {
     final uri = buildXIntentUrl();
-    if (!await canLaunchUrl(uri)) {
+    try {
+      return await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+        webOnlyWindowName: '_blank',
+      );
+    } catch (_) {
       return false;
     }
-    return launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-      webOnlyWindowName: '_blank',
-    );
   }
 }

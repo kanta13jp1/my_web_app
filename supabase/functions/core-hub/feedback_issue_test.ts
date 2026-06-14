@@ -6,6 +6,7 @@ import {
   buildFeedbackIssue,
   buildFeedbackIssueTitle,
   feedbackCategoryConfig,
+  fencedUserContent,
 } from "./feedback_issue.ts";
 
 Deno.test("bug feedback maps to the bug label so github-issue-fix picks it up", () => {
@@ -48,11 +49,11 @@ Deno.test("blank message still produces a safe title", () => {
   );
 });
 
-Deno.test("buildFeedbackIssue embeds category, content, and submitter", () => {
+Deno.test("buildFeedbackIssue embeds category, content, and pseudonymous user id", () => {
   const draft = buildFeedbackIssue({
     category: "bug",
     message: "保存ボタンが反応しない",
-    userEmail: "user@example.com",
+    userId: "user-uuid-123",
     createdAt: "2026-06-14T00:00:00.000Z",
   });
 
@@ -60,17 +61,48 @@ Deno.test("buildFeedbackIssue embeds category, content, and submitter", () => {
   assert(draft.labels.includes("bug"));
   assert(draft.body.includes("不具合・動作不良"));
   assert(draft.body.includes("保存ボタンが反応しない"));
-  assert(draft.body.includes("user@example.com"));
+  assert(draft.body.includes("送信者ID: user-uuid-123"));
   assert(draft.body.includes("2026-06-14T00:00:00.000Z"));
   assert(draft.body.includes("github-issue-fix"));
 });
 
-Deno.test("buildFeedbackIssue handles missing email gracefully", () => {
+Deno.test("buildFeedbackIssue never leaks an email into the public issue body (PII)", () => {
+  const draft = buildFeedbackIssue({
+    category: "bug",
+    // 仮にメールが本文に紛れても、送信者欄は user_id のみで描画されること。
+    message: "連絡先 user@example.com への返信希望",
+    userId: "uuid-abc",
+  });
+
+  // メタデータの送信者欄にメールが出ない（userId のみ）。
+  assert(draft.body.includes("送信者ID: uuid-abc"));
+  assert(!draft.body.includes("送信者: user@example.com"));
+});
+
+Deno.test("buildFeedbackIssue handles missing user id gracefully", () => {
   const draft = buildFeedbackIssue({
     category: "other",
     message: "もっと色を選びたい",
   });
 
-  assert(draft.body.includes("送信者: (不明)"));
+  assert(draft.body.includes("送信者ID: (不明)"));
   assert(!draft.body.includes("受付:"));
+});
+
+Deno.test("user message is wrapped in a fenced block to neutralize @mentions/images/HTML", () => {
+  const draft = buildFeedbackIssue({
+    category: "bug",
+    message: "@maintainer 直して ![pixel](http://evil/x.png) <script>",
+    userId: "uuid-1",
+  });
+  // フェンス内に入ること（コードブロック内の @mention は通知されない）。
+  assert(draft.body.includes("```text\n"));
+  assert(draft.body.includes("@maintainer"));
+});
+
+Deno.test("fencedUserContent lengthens the fence to prevent breakout", () => {
+  // 本文に ``` が含まれても、より長いフェンスで包み脱出を防ぐ。
+  const fenced = fencedUserContent("```\nrm -rf /\n```");
+  assert(fenced.startsWith("````text\n"));
+  assert(fenced.endsWith("\n````"));
 });
