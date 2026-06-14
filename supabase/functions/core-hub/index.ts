@@ -487,8 +487,8 @@ function buildFeatureRequestBody(params: {
   expectedOutcome: string;
   category: string;
   priority: string;
+  /** 擬似匿名の user_id。公開 Issue にメール等の PII は載せない。 */
   userId: string;
-  userEmail: string;
   createdAt: string;
   attachmentFileName?: string;
   attachmentAnalysis?: FeatureRequestAttachmentAnalysis | null;
@@ -505,7 +505,8 @@ function buildFeatureRequestBody(params: {
     "## 分類",
     `- カテゴリ: ${params.category}`,
     `- 優先度: ${params.priority}`,
-    `- 登録者: ${params.userEmail || params.userId}`,
+    // PII 保護: メールは公開 Issue 本文に載せず、識別は擬似匿名の user_id のみ。
+    `- 登録者ID: ${params.userId}`,
     `- 登録日時: ${params.createdAt}`,
   ];
   if (params.attachmentAnalysis) {
@@ -1489,7 +1490,6 @@ serve(async (req: Request) => {
           category,
           priority,
           userId,
-          userEmail,
           createdAt,
           attachmentFileName,
           attachmentAnalysis,
