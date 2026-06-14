@@ -1047,5 +1047,78 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('watchlist union-merge: server entry fills in, local kept', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'assetType': 'local_only',
+            'group': '',
+            'memo': '',
+            'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+              <AssetWatchlistEntry>[
+                AssetWatchlistEntry(
+                  assetType: 'server_only',
+                  group: 'invest',
+                  memo: '',
+                  addedAt: DateTime.utc(2026, 6, 14),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final merged = await const AssetWatchlistService().loadEntries();
+      expect(
+        merged.map((e) => e.assetType),
+        containsAll(<String>['local_only', 'server_only']),
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets('debt-override union-merge: server day fills in, local kept', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // ローカルは debt_a の支払日上書きを持ち、サーバは debt_b を持つ状態。
+      final repo = _FakeDebtOverrideRepository(<String, int>{'debt_a': 27});
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            assetLiabilityRepository: repo,
+            debugDebtOverridesMirror: const <String, dynamic>{'debt_b': 5},
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // union マージ: ローカルの debt_a を維持しつつサーバの debt_b を取り込み、repo へ保存。
+      expect(repo.savedDebtOverrides, isNotNull);
+      expect(repo.savedDebtOverrides!['debt_a'], 27);
+      expect(repo.savedDebtOverrides!['debt_b'], 5);
+
+      await _unmount(tester);
+    });
   });
 }

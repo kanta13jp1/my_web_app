@@ -157,6 +157,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final bool? debugMirrorReadsAuthoritative;
 
+  /// テスト専用: 支払日上書きの集約ミラー値 (`{debtId: day}`) を注入し、端末間同期
+  /// (union マージ) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugDebtOverridesMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -175,6 +180,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugMainAccountMirror,
     this.debugWatchlistMirror,
     this.debugMirrorReadsAuthoritative,
+    this.debugDebtOverridesMirror,
   });
 
   @override
@@ -1275,9 +1281,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
         );
       }
-      if (debtPaymentDayOverrides.isEmpty) {
-        unawaited(_restoreDebtPaymentDayOverridesFromMirror());
-      }
       final templates =
           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
@@ -1358,6 +1361,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _syncPaymentStateControllers();
       });
       unawaited(_refreshSyncSources());
+      // ローカル(_debtPaymentDayOverrides)反映後に呼ぶ。空でなくても union
+      // マージ/バックフィルするため常に実行する。
+      unawaited(_restoreDebtPaymentDayOverridesFromMirror());
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
       }
@@ -5278,6 +5284,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             .select()
             .eq('pref_key', _watchlistMirrorKey);
         if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル。
+          if (hasLocal) {
+            unawaited(_mirrorWatchlist());
+          }
           return;
         }
         value = rows.first['value'];
@@ -5285,29 +5295,50 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           rows.first['updated_at']?.toString() ?? '',
         );
       }
-      final restored = AssetWatchlistService.decodeMirrorValue(value);
-      if (restored.isEmpty || !mounted) {
+      final serverEntries = AssetWatchlistService.decodeMirrorValue(value);
+      if (serverEntries.isEmpty || !mounted) {
         return;
       }
-      final adopt = await _shouldAdoptMirror(
+      final adoptConflicts = await _shouldAdoptMirror(
         prefKey: _watchlistMirrorKey,
         hasLocal: hasLocal,
         mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      if (!adopt || !mounted) {
-        return;
+      // union マージ: ローカルに無い assetType はサーバから追加 (他の項目は維持)。
+      final localTypes = _watchlistByType.keys.toSet();
+      final merged = Map<String, AssetWatchlistEntry>.from(_watchlistByType);
+      final serverTypes = <String>{};
+      var changed = false;
+      for (final entry in serverEntries) {
+        serverTypes.add(entry.assetType);
+        if (!merged.containsKey(entry.assetType) || adoptConflicts) {
+          merged[entry.assetType] = entry;
+          changed = true;
+        }
       }
-      setState(() {
-        _setWatchlistEntries(restored);
-      });
-      // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
-      unawaited(widget.watchlistService.replaceAll(restored));
-      unawaited(
-        _syncTimestampStore.markChanged(
-          _watchlistMirrorKey,
-          at: mirrorUpdatedAt,
-        ),
+      if (changed && mounted) {
+        final mergedList = merged.values.toList();
+        setState(() {
+          _setWatchlistEntries(mergedList);
+        });
+        // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
+        unawaited(widget.watchlistService.replaceAll(mergedList));
+        if (adoptConflicts) {
+          unawaited(
+            _syncTimestampStore.markChanged(
+              _watchlistMirrorKey,
+              at: mirrorUpdatedAt,
+            ),
+          );
+        }
+      }
+      // ローカルにあってサーバに無い項目は、マージ結果をサーバへバックフィル。
+      final localHasExtra = localTypes.any(
+        (type) => !serverTypes.contains(type),
       );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorWatchlist());
+      }
     } catch (e) {
       debugPrint('watchlist mirror restore failed: $e');
     }
@@ -9105,12 +9136,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _restoreDebtPaymentDayOverridesFromMirror() async {
-    if (_supabase.auth.currentUser == null) {
+    final debugMirror = widget.debugDebtOverridesMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
     final hasLocal = _debtPaymentDayOverrides.isNotEmpty;
     // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
-    if (!_mirrorReadsAuthoritative && hasLocal) {
+    if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
       unawaited(
         _backfillPrefIfServerMissing(
           'debt_payment_day_overrides',
@@ -9120,25 +9152,36 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', 'debt_payment_day_overrides');
-      if (rows.isEmpty || !mounted) {
+      final dynamic value;
+      final DateTime? mirrorUpdatedAt;
+      if (debugMirror != null) {
+        value = debugMirror;
+        mirrorUpdatedAt = DateTime.now().toUtc();
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'debt_payment_day_overrides');
+        if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル。
+          if (hasLocal) {
+            unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));
+          }
+          return;
+        }
+        value = rows.first['value'];
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
+      }
+      if (value is! Map || !mounted) {
         return;
       }
-      final value = rows.first['value'];
-      if (value is! Map) {
-        return;
-      }
-      final mirrorUpdatedAt = DateTime.tryParse(
-        rows.first['updated_at']?.toString() ?? '',
-      );
       // 削除トゥームストーン済みの支払日上書きは復元しない (#part293 3例目)。
       final tombstoned = _debtOverrideTombstones.activeIds(
         await SharedPreferences.getInstance(),
       );
-      final restored = <String, int>{};
+      final serverOverrides = <String, int>{};
       value.forEach((key, dynamic raw) {
         final day = (raw as num?)?.toInt();
         if (key is String &&
@@ -9146,35 +9189,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             day >= 1 &&
             day <= 31 &&
             !tombstoned.contains(key)) {
-          restored[key] = day;
+          serverOverrides[key] = day;
         }
       });
-      if (restored.isEmpty || !mounted) {
+      if (serverOverrides.isEmpty || !mounted) {
         return;
       }
-      final adopt = await _shouldAdoptMirror(
+      final adoptConflicts = await _shouldAdoptMirror(
         prefKey: 'debt_payment_day_overrides',
         hasLocal: hasLocal,
         mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      if (!adopt || !mounted) {
-        return;
-      }
-      setState(() {
-        _debtPaymentDayOverrides = restored;
+      // union マージ: ローカルに無い負債キーはサーバから追加 (他の上書きは維持)。
+      final localKeys = _debtPaymentDayOverrides.keys.toSet();
+      final merged = Map<String, int>.from(_debtPaymentDayOverrides);
+      var changed = false;
+      serverOverrides.forEach((key, day) {
+        if (!merged.containsKey(key) || adoptConflicts) {
+          merged[key] = day;
+          changed = true;
+        }
       });
-      unawaited(_saveDebtPaymentDayOverrides());
-      unawaited(
-        _syncTimestampStore.markChanged(
-          'debt_payment_day_overrides',
-          at: mirrorUpdatedAt,
-        ),
+      if (changed && mounted) {
+        setState(() {
+          _debtPaymentDayOverrides = merged;
+        });
+        unawaited(_saveDebtPaymentDayOverrides());
+        if (adoptConflicts) {
+          unawaited(
+            _syncTimestampStore.markChanged(
+              'debt_payment_day_overrides',
+              at: mirrorUpdatedAt,
+            ),
+          );
+        }
+        // 初回復元 (ローカル空) のときだけ通知。
+        if (!hasLocal) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('支払日設定をサーバのバックアップから復元しました')),
+          );
+        }
+      }
+      // ローカルにあってサーバに無い負債キーは、マージ結果をサーバへバックフィル。
+      final localHasExtra = localKeys.any(
+        (key) => !serverOverrides.containsKey(key),
       );
-      // 初回復元 (ローカル空) のときだけ通知。LWW での更新時は通知しない。
-      if (!hasLocal) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('支払日設定をサーバのバックアップから復元しました')),
-        );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides));
       }
     } catch (e) {
       debugPrint('pref mirror restore failed: $e');
