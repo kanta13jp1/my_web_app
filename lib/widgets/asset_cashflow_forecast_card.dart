@@ -118,7 +118,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
           for (final months in availableHorizons)
             ChoiceChip(
               key: Key('asset_cashflow_forecast_horizon_$months'),
-              label: Text('${months}ヶ月'),
+              label: Text('$monthsヶ月'),
               selected: selected == months,
               onSelected: (_) => onHorizonChanged?.call(months),
             ),
