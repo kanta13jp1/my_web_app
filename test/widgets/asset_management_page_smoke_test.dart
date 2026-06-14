@@ -1121,5 +1121,49 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('revolving deletion tombstone removes local config', (
+      tester,
+    ) async {
+      // ローカルに aupay_card / keep_card のリボ設定がある。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetRevolvingCreditConfigStore.prefsKey: jsonEncode(
+          AssetRevolvingCreditConfigStore.encodeMirrorValue(
+            <String, AssetLiabilityRevolvingCreditConfig>{
+              'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+                monthlyAmount: 10000,
+                creditLimit: 500000,
+              ),
+              'keep_card': const AssetLiabilityRevolvingCreditConfig(
+                monthlyAmount: 3000,
+                creditLimit: 100000,
+              ),
+            },
+          ),
+        ),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // 他端末で aupay_card を削除した状態を削除トゥームストーンで注入。
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            debugRevolvingDeletedMirror: <String, dynamic>{
+              'ids': <String>['aupay_card'],
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 削除が伝播し aupay_card はローカルから消え、keep_card は残る。
+      final local = await const AssetRevolvingCreditConfigStore().load();
+      expect(local.keys, isNot(contains('aupay_card')));
+      expect(local.keys, contains('keep_card'));
+
+      await _unmount(tester);
+    });
   });
 }

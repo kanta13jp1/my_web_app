@@ -164,6 +164,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugDebtOverridesMirror;
 
+  /// テスト専用: リボ設定の削除トゥームストーン値 (`{'ids': [...]}`) を注入し、
+  /// 削除伝播 (他端末で削除→ローカルから除去) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugRevolvingDeletedMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -183,6 +188,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugWatchlistMirror,
     this.debugMirrorReadsAuthoritative,
     this.debugDebtOverridesMirror,
+    this.debugRevolvingDeletedMirror,
   });
 
   @override
@@ -604,6 +610,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 他端末で削除されたセクション上書き / 支払日上書きを取り込む (#part292/294)。
     unawaited(_pullDeletedSectionIds());
     unawaited(_pullDebtOverrideDeleted());
+    // 他端末で削除されたリボ設定を取り込む (clear 伝播)。
+    unawaited(_pullRevolvingDeleted());
     // 期限切れ・上限超過のトゥームストーンを自動掃除 (#part296 肥大化抑制)。
     unawaited(_pruneTombstonesOnBoot());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -8129,6 +8137,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _revolvingConfigs,
     );
     final hasLocal = localBefore.isNotEmpty;
+    // 削除トゥームストーン: 復活させない / バックフィルしない。
+    final tombstoned = _revolvingConfigTombstones.activeIds(
+      await SharedPreferences.getInstance(),
+    );
     try {
       final Map<String, AssetLiabilityRevolvingCreditConfig> serverConfigs;
       final DateTime? mirrorUpdatedAt;
@@ -8173,7 +8185,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         localBefore,
       );
       var changed = false;
+      // 削除トゥームストーン済みキーはローカルからも除く (clear 伝播 / 復活防止)。
+      merged.removeWhere((key, _) {
+        if (tombstoned.contains(key)) {
+          changed = true;
+          return true;
+        }
+        return false;
+      });
       serverConfigs.forEach((key, config) {
+        if (tombstoned.contains(key)) {
+          return;
+        }
         if (!merged.containsKey(key) || adoptConflicts) {
           merged[key] = config;
           changed = true;
@@ -8196,7 +8219,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // ローカルにあってサーバに無い負債キーは、マージ結果をサーバへ
       // バックフィルし、サーバを全端末の和集合に保つ。
       final localHasExtra = localBefore.keys.any(
-        (key) => !serverConfigs.containsKey(key),
+        (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
       );
       if (localHasExtra && debugMirror == null) {
         unawaited(_mirrorRevolvingConfigs());
@@ -8205,6 +8228,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('revolving config mirror restore failed: $e');
     }
   }
+
+  /// 削除した (リボ OFF にした) リボ設定のトゥームストーン。union マージ/backfill
+  /// での復活を防ぎ、他端末へ削除を伝播する (debt 上書きと同じパターン)。
+  static const MirrorTombstoneStore _revolvingConfigTombstones =
+      MirrorTombstoneStore(
+    storageKey: 'revolving_credit_configs_deleted_v1',
+  );
 
   void _persistRevolvingConfig(
     String debtId,
@@ -8222,7 +8252,90 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _revolvingConfigs = next;
     });
     unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+    // 削除はトゥームストーン化、再設定は解除 (debtId 再利用ドメイン)。
+    unawaited(_recordRevolvingTombstone(debtId, deleted: config == null));
     unawaited(_mirrorRevolvingConfigs());
+  }
+
+  Future<void> _recordRevolvingTombstone(
+    String id, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _revolvingConfigTombstones.addId(store, id);
+    } else {
+      await _revolvingConfigTombstones.removeId(store, id);
+    }
+    unawaited(_mirrorRevolvingDeleted());
+  }
+
+  /// リボ設定の削除トゥームストーンをサーバへ反映 (他端末伝播)。
+  Future<void> _mirrorRevolvingDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _revolvingConfigTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'revolving_credit_configs_deleted',
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('revolving tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除されたリボ設定を取り込み、ローカルからも除去する。
+  Future<void> _pullRevolvingDeleted() async {
+    final debugMirror = widget.debugRevolvingDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'revolving_credit_configs_deleted');
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _revolvingConfigTombstones.mergeRemoteIds(
+        store,
+        ids,
+      );
+      final next = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+        _revolvingConfigs,
+      );
+      final before = next.length;
+      next.removeWhere((key, _) => incoming.contains(key));
+      if (next.length == before || !mounted) {
+        return;
+      }
+      setState(() {
+        _revolvingConfigs = next;
+      });
+      unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+    } catch (e) {
+      debugPrint('revolving tombstone pull failed: $e');
+    }
   }
 
   void _toggleRevolving(AssetLiabilityDebtRow row, bool enabled) {
@@ -9464,17 +9577,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 3 ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
-  Future<({int inflow, int override, int debt, int total})>
+  Future<({int inflow, int override, int debt, int revolving, int total})>
       _pruneAllTombstones() async {
     final store = await SharedPreferences.getInstance();
     final inflow = await _expectedInflowStore.pruneDeletedIds();
     final override = await _displayModeStore.pruneDeletedSectionIds();
     final debt = await _debtOverrideTombstones.prune(store);
+    final revolving = await _revolvingConfigTombstones.prune(store);
     return (
       inflow: inflow,
       override: override,
       debt: debt,
-      total: inflow + override + debt,
+      revolving: revolving,
+      total: inflow + override + debt + revolving,
     );
   }
 
@@ -9488,7 +9603,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         debugPrint(
           'boot tombstone prune: removed ${removed.total} '
           '(inflow=${removed.inflow} override=${removed.override} '
-          'debt=${removed.debt})',
+          'debt=${removed.debt} revolving=${removed.revolving})',
         );
       }
     } catch (e) {
