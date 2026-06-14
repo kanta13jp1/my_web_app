@@ -27,8 +27,10 @@ class AssetCategoryBudgetStore {
     }
   }
 
-  Future<void> save(Map<String, double> budgets,
-      {SharedPreferences? prefs}) async {
+  Future<void> save(
+    Map<String, double> budgets, {
+    SharedPreferences? prefs,
+  }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     final sanitized = encodeMirrorValue(budgets);
     if (sanitized.isEmpty) {

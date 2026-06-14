@@ -80,10 +80,10 @@ class AssetCategoryBudgetCard extends StatelessWidget {
               ),
             const SizedBox(height: 8),
             if (!report.hasAnyBudget)
-              Padding(
-                key: const Key('asset_category_budget_empty'),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: const Text(
+              const Padding(
+                key: Key('asset_category_budget_empty'),
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
                   'カテゴリ別の予算を設定すると、今月の予算 vs 実績(予実)を表示します。',
                   style: TextStyle(fontSize: 12, height: 1.5),
                 ),
