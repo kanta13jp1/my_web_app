@@ -560,6 +560,25 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-15",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown 最終日 (= 2026-06-09 Alibaba Qoder 採択 / 6 day 経過 / cooldown 残 1 day / 次回 6/16 解禁 = 明日). 前回 AI 分析 report = 6/14. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/15 は WebSearch 主体で 6/14→6/15 delta = **『予告の着地日』** を集約. 新規シグナル = (1) **★★ Anthropic 6/15「ダブルヒット」本日 LIVE 🔴🔴** (= T-1 → 当日着地 / 課金分離 [Agent SDK / claude -p / Claude Code GitHub Actions / 第三者 OpenClaw・Conductor・Zed・Jean が Interactive Pool から分離 → Agent SDK Credit Pool / Pro $20・Max5x $100・Max20x $200 / 繰越なし / API list rate / 枯渇で停止・overflow billing 手動 ON のみ例外] + 旧 Claude 4 API 退役 [claude-opus-4-20250514 + claude-sonnet-4-20250514 が本日失敗・grace period なし・failover なし → Sonnet 4.6 / Opus 4.8 移行 / Agent SDK の明示 model 設定は自動 alias されない] が同日着地 / techtimes + thenewstack + enterprisedna『Two Claude Deadlines Hit June 15』+ platform.claude.com docs で当日確認 / 自社 programmatic Claude [GHA cron 30+ / Schedule cron / daily-development cron] の棚卸し + 退役 ID 20250514 全域 sweep は本日が deadline) / (2) **★ Salesforce Summer '26 フル GA = 本日 6/15 🔴** (= Agentforce Operations [文書抽出 / 計算 / 信用モデル更新 / コンプラ gap 検出を分単位で自律完遂] + Multi-Agent Orchestration が beta→GA / production wave 6/13 開始 / Email + Slack + Teams から起動 / Agent Fabric control plane [Guided Determinism + governance] / バックオフィス自律 AI 4 強 = MoneyForward + Anthropic verticals + Salesforce + Microsoft が出揃い = 自社 6 部署 + B/S narrative の正面 cluster / guarded subagent + 監査可能な並列統治 narrative を競合の言葉で補強 = 追い風) / (3) **★ 2 次波及 = MoneyForward AI Cowork も 6/15 課金変更の下流 🟠** (= AI Cowork の orchestrator は Claude Agent SDK = 本日の API list rate 課金へ移行する下流消費者 / 7月 GA 前に MF 自身のコスト構造が動く = B/S 競合の足元も同じ Anthropic 依存リスクを共有 = 非対称防衛の論点追加) / (4) **GitHub Copilot 従量課金 backlash → alternatives 流入波 🟠** (= Security Boulevard『11 Copilot Alternatives』+ CodingFleet『after the pricing reset』/ 6/1 usage-based billing 後のコスト意識ユーザー流出 = AI コーディング訴求 timing) / (5) **Microsoft MAI-Code-1-Flash 🟠** (= Copilot Free〜Max rollout 継続 + VS Code model picker + Auto picker routing / 6/16 第 1 候補 confidence MAX). **6/15 = エコシステム トリプル着地日 確定** (= Anthropic 課金分離 + Claude 4 退役 + Salesforce Summer '26 GA 同日着地). 6/16 採択 第 1 候補 = Microsoft MAI-Code-1-Flash (基準 b 未カバー [MS 自社製 frontier coding model] + 基準 c Build 2026 6/2 / 解禁日初日採択推奨) / 第 2 候補繰上げ = Salesforce Agentforce Operations (= 6/15 GA 着地で『動きのある会社』基準 c 該当 / バックオフィス自律 AI = 6 部署/B/S 正面で MAI-Code [coding agent] より戦略 overlap 高 → 6/16 以降サイクルで再 rank 検討). https://enterprisedna.co/resources/news/anthropic-claude-june-15-retirements-billing-2026/",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= 6/16 第 1 候補 confidence MAX / Copilot Free〜Max rollout + VS Code model picker + Auto picker routing / 137B sparse MoE / 5B active / 256K ctx / 公式 model card 裏取り済 / 基準 b+c 該当 / 解禁日初日採択推奨)",
+        "Salesforce Agentforce Operations (= 6/15 フル GA 着地 / バックオフィス自律 AI = 6 部署/B/S 正面で戦略 overlap 高 / production wave 6/13 / 6/16 以降サイクルで第 1 候補 re-rank 検討対象)",
+        "Claude Fable 5 (= Anthropic 新 Mythos モデル = 既存 Claude Code 競合の機能 delta / 新規 discovery 候補ではなくモデル層シグナル)",
+        "Warp (= terminal-native agentic dev / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
