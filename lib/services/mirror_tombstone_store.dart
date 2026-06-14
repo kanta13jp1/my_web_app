@@ -201,7 +201,20 @@ class MirrorTombstoneStore {
       }
     }
     if (kept.length > gcConfig.maxCount) {
-      return kept.sublist(kept.length - gcConfig.maxCount);
+      // 件数上限超過分は「挿入位置の末尾」ではなく実際の削除時刻('at')が
+      // 新しい順で残す。mergeRemoteIds はリモート ID を末尾に追記するため、
+      // 挿入順依存だと旧形式の混在やマージ順次第で新しいトゥームストーンを
+      // 取りこぼし得る(=削除済み項目が他端末から復活し得る)。'at' 降順で
+      // 決定的に最新側を残すことでこれを防ぐ。
+      final byNewest = List<Map<String, String>>.from(kept)
+        ..sort((a, b) {
+          final atA = DateTime.tryParse(a['at'] ?? '') ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final atB = DateTime.tryParse(b['at'] ?? '') ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          return atB.compareTo(atA);
+        });
+      return byNewest.sublist(0, gcConfig.maxCount);
     }
     return kept;
   }

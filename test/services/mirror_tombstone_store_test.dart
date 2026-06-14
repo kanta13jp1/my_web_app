@@ -73,6 +73,31 @@ void main() {
       expect(store.activeIds(sp), isEmpty);
     });
 
+    test('GC keeps the newest by timestamp, not by list position', () async {
+      // 上限超過時は「末尾(挿入位置)」ではなく削除時刻('at')の新しい順で残す。
+      // 保存順では newer が先・older が後だが、上限1なら newer が残るべき。
+      // 旧挙動(tail keep)だと末尾の older を残し、新しい newer を取りこぼした。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'k': jsonEncode(<Map<String, String>>[
+          {
+            'id': 'newer',
+            'at': DateTime(2026, 6, 13, 12).toUtc().toIso8601String(),
+          },
+          {
+            'id': 'older',
+            'at': DateTime(2026, 6, 13, 9).toUtc().toIso8601String(),
+          },
+        ]),
+      });
+      final store = MirrorTombstoneStore(
+        storageKey: 'k',
+        gcConfig: const AssetTombstoneGcConfig(maxCount: 1, maxAgeDays: 3650),
+        nowProvider: () => DateTime(2026, 6, 14, 9),
+      );
+      final sp = await prefs();
+      expect(store.activeIds(sp), <String>{'newer'});
+    });
+
     test('reads legacy plain-string format', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'k': jsonEncode(<String>['legacy']),
