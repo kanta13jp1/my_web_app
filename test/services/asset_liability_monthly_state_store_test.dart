@@ -43,6 +43,36 @@ void main() {
       );
     });
 
+    test('salaryCycleStart / EndExclusive give the 25th-to-24th window', () {
+      // 6/13 (給料日前) は 5/25〜6/24 サイクル。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 6, 13)),
+        DateTime(2026, 5, 25),
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+          DateTime(2026, 6, 13),
+        ),
+        DateTime(2026, 6, 25),
+      );
+      // 6/25 (給料日当日) は 6/25〜7/24 サイクルへ切替。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 6, 25)),
+        DateTime(2026, 6, 25),
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+          DateTime(2026, 6, 25),
+        ),
+        DateTime(2026, 7, 25),
+      );
+      // 1月始端の前サイクルは前年12/25。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 1, 5)),
+        DateTime(2025, 12, 25),
+      );
+    });
+
     test('saves and restores monthly paid statuses', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
@@ -610,6 +640,43 @@ void main() {
       expect(snapshots.single.positiveAssetTotal, 110000);
       expect(snapshots.single.monthlyPaidPaymentTotal, 130000);
       expect(snapshots.single.overduePaymentCount, 0);
+    });
+
+    test('saves and restores debt payment day overrides', () async {
+      await store.saveDebtPaymentDayOverrides(const <String, int>{
+        'famima_card': 27,
+        'paypay_card': 15,
+      });
+
+      final overrides = await store.loadDebtPaymentDayOverrides();
+
+      expect(overrides, <String, int>{'famima_card': 27, 'paypay_card': 15});
+    });
+
+    test('drops invalid debt payment day overrides on save and load', () async {
+      await store.saveDebtPaymentDayOverrides(const <String, int>{
+        'famima_card': 27,
+        'too_small': 0,
+        'too_large': 32,
+        '': 10,
+      });
+
+      final overrides = await store.loadDebtPaymentDayOverrides();
+
+      expect(overrides, <String, int>{'famima_card': 27});
+
+      expect(
+        AssetLiabilityMonthlyStateStore.decodeDebtPaymentDayOverrides(
+          '{"famima_card": 27, "junk": "abc", "out_of_range": 99}',
+        ),
+        <String, int>{'famima_card': 27},
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.decodeDebtPaymentDayOverrides(
+          '[1, 2, 3]',
+        ),
+        isEmpty,
+      );
     });
   });
 }

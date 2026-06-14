@@ -79,6 +79,8 @@ class AssetLiabilityMonthlyStateStore {
       'asset_liability_default_payment_source_accounts_v1';
   static const String defaultCardBillingPrefsKey =
       'asset_liability_default_card_billing_accounts_v1';
+  static const String debtPaymentDayPrefsKey =
+      'asset_liability_debt_payment_day_overrides_v1';
   static const String recurringIncomeTemplatePrefsKey =
       'asset_liability_recurring_income_templates_v1';
   static const String monthlySnapshotPrefsKey =
@@ -343,6 +345,21 @@ class AssetLiabilityMonthlyStateStore {
     );
   }
 
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    final prefs = await SharedPreferences.getInstance();
+    return decodeDebtPaymentDayOverrides(
+      prefs.getString(debtPaymentDayPrefsKey),
+    );
+  }
+
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      debtPaymentDayPrefsKey,
+      jsonEncode(sanitizeDebtPaymentDayOverrides(overrides)),
+    );
+  }
+
   Future<List<AssetLiabilityRecurringIncomeTemplate>>
       loadRecurringIncomeTemplates() async {
     final prefs = await SharedPreferences.getInstance();
@@ -435,6 +452,21 @@ class AssetLiabilityMonthlyStateStore {
 
   static String formatSalaryCycleMonthKey(DateTime date, {int salaryDay = 25}) {
     return formatMonthKey(salaryCycleMonthFor(date, salaryDay: salaryDay));
+  }
+
+  /// 給料サイクルの開始日 (= 当該サイクルの給料日)。
+  /// 例: salaryDay=25 で 6/13 を渡すと 5/25 を返す (5/25〜6/24 サイクル)。
+  static DateTime salaryCycleStart(DateTime date, {int salaryDay = 25}) {
+    final cycleMonth = salaryCycleMonthFor(date, salaryDay: salaryDay);
+    final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
+    return DateTime(cycleMonth.year, cycleMonth.month, normalizedSalaryDay);
+  }
+
+  /// 給料サイクルの終了 (排他: 次サイクルの開始日)。
+  /// 例: salaryDay=25 で 6/13 を渡すと 6/25 を返す ([5/25, 6/25) = 5/25〜6/24)。
+  static DateTime salaryCycleEndExclusive(DateTime date, {int salaryDay = 25}) {
+    final start = salaryCycleStart(date, salaryDay: salaryDay);
+    return DateTime(start.year, start.month + 1, start.day);
   }
 
   static AssetLiabilityMonthlyState copyPreviousMonthState({
@@ -554,6 +586,39 @@ class AssetLiabilityMonthlyStateStore {
         (key, value) => MapEntry(key.toString(), value.toString()),
       ),
     );
+  }
+
+  static Map<String, int> decodeDebtPaymentDayOverrides(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return <String, int>{};
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      return <String, int>{};
+    }
+
+    final overrides = <String, int>{};
+    for (final entry in decoded.entries) {
+      final key = entry.key.toString().trim();
+      final rawDay = entry.value;
+      final day = rawDay is num ? rawDay.toInt() : int.tryParse('$rawDay');
+      if (key.isNotEmpty && day != null && day >= 1 && day <= 31) {
+        overrides[key] = day;
+      }
+    }
+    return overrides;
+  }
+
+  static Map<String, int> sanitizeDebtPaymentDayOverrides(
+    Map<String, int> values,
+  ) {
+    return <String, int>{
+      for (final entry in values.entries)
+        if (entry.key.trim().isNotEmpty &&
+            entry.value >= 1 &&
+            entry.value <= 31)
+          entry.key.trim(): entry.value,
+    };
   }
 
   static Map<String, Map<String, double>> decodePaymentOverrides(String? raw) {

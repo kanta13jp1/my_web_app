@@ -600,6 +600,34 @@ function applyProviderGenerationOptions(
   options?: ProviderCallOptions,
 ): Record<string, unknown> {
   const maxTokens = options?.maxTokens;
+
+  if (providerId === "openai") {
+    // OpenAI の新世代モデル (gpt-5 / o系) は max_tokens パラメータ自体を
+    // 拒否するため、ベース body (OPENAI_COMPAT_BODY) の max_tokens: 512 を
+    // 取り除いた上で max_completion_tokens へ載せ替える。
+    // groq / deepinfra 等の OpenAI 互換プロバイダーは従来どおり max_tokens。
+    const body: Record<string, unknown> = { ...requestBody };
+    const legacyMaxTokens = body.max_tokens;
+    delete body.max_tokens;
+    const model = String(body.model ?? "");
+    if (model.startsWith("gpt-5") || /^o\d/.test(model)) {
+      // reasoning モデルは温度指定を拒否する (既定値のみ許容)。
+      delete body.temperature;
+      // reasoning_effort を下げないと、推論トークンが max_completion_tokens を
+      // 使い切り本文が 0 トークンになる (gpt-5 が text:"" を返す原因)。
+      // 金額計算は Dart 側で完了済みなので低 effort で十分。
+      if (body.reasoning_effort == null) {
+        body.reasoning_effort = "low";
+      }
+    }
+    const budget = maxTokens ??
+      (typeof legacyMaxTokens === "number" ? legacyMaxTokens : undefined);
+    if (budget != null) {
+      body.max_completion_tokens = budget;
+    }
+    return body;
+  }
+
   if (!maxTokens) return requestBody;
 
   if (providerId === "google" || providerId === "google_flash_lite") {
@@ -679,7 +707,7 @@ async function callSingleProvider(
     let fetchUrl = cfg.chatUrl;
     if (providerId === "anthropic") {
       authHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
-    } else if (providerId === "google") {
+    } else if (providerId === "google" || providerId === "google_flash_lite") {
       authHeaders = {};
       fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
     }
@@ -4626,7 +4654,9 @@ serve(async (req: Request) => {
               "x-api-key": apiKey,
               "anthropic-version": "2023-06-01",
             };
-          } else if (providerId === "google") {
+          } else if (
+            providerId === "google" || providerId === "google_flash_lite"
+          ) {
             authHeaders = {};
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
@@ -4753,22 +4783,30 @@ serve(async (req: Request) => {
           const modelUsed = pick(data, "model");
           const outputChars = content.length;
           const usedModel = String(modelUsed ?? requestedModel);
-          if (content && isProviderOutputLengthLimited(finishReason)) {
+          // 本文が空のレスポンスは成功扱いにしない。reasoning モデルが
+          // 推論で予算を使い切ると finish_reason=length かつ本文が空になり、
+          // 旧コードは success:true(空文字)で返してフォールバック連鎖を
+          // 止め、無駄なコストだけ計上していた。
+          const lengthLimited = isProviderOutputLengthLimited(finishReason);
+          if (!content.trim() || lengthLimited) {
+            const failureStatus = !content.trim()
+              ? "emptyOutput"
+              : "outputLengthLimited";
             await logProviderChat({
               success: false,
               statusCode: 502,
               model: usedModel,
               outputChars,
-              errorMessage: `outputLengthLimited: ${finishReason}`,
+              errorMessage: `${failureStatus}: ${finishReason ?? "no-content"}`,
             });
             return json({
               success: false,
-              status: "outputLengthLimited",
+              status: failureStatus,
               provider: providerId,
               model: usedModel,
               finish_reason: finishReason,
               message:
-                "AI応答が出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
+                "AI応答が空、または出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
             }, 502);
           }
           const estimatedCost = calculateApiCost(

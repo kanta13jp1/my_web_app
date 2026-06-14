@@ -235,6 +235,20 @@ void main() {
       expect(payPay.paymentAmountEstimated, isFalse);
     });
 
+    test('manual zero yen does not trigger card billing review alert', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        monthlyPaymentOverrides: const <String, double>{'PayPayカード': 0},
+      );
+
+      expect(
+        workbook.cardBillingReview.needsReviewItems
+            .where((item) => item.accountId == 'paypay_card'),
+        isEmpty,
+      );
+    });
+
     test('reflects manual and estimated sources in payment day risk', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -674,6 +688,66 @@ void main() {
         ),
       );
       expect(workbook.cardBillingReview.hasDoubleCountingRisk, isFalse);
+    });
+
+    test('リボ払いカードは請求額を式から算出し不一致アラートを抑止する', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'auPayカード': -530163,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_lemon',
+            billingAccountId: 'aupay_card',
+            billingAccountName: 'auPayカード',
+            postedAt: null,
+            description: 'レモンガス',
+            amount: 8066,
+          ),
+          AssetLiabilityCardStatementLine(
+            id: 'line_au',
+            billingAccountId: 'aupay_card',
+            billingAccountName: 'auPayカード',
+            postedAt: null,
+            description: 'au電話',
+            amount: 15116,
+          ),
+        ],
+      );
+
+      final debtRow = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'aupay_card',
+      );
+      // 請求額 = 設定額10000 + max(0, 530163 − 500000) = 40163。
+      expect(debtRow.scheduledPaymentAmount, 40163);
+      expect(debtRow.isRevolving, isTrue);
+      expect(debtRow.revolvingBilling!.overLimitAmount, 30163);
+      expect(debtRow.paymentAmountEstimated, isFalse);
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'aupay_card',
+      );
+      expect(group.isRevolving, isTrue);
+      expect(group.billedAmount, 40163);
+      // 明細合計(新規利用) 8066 + 15116 = 23182 は請求額と一致しないが正常。
+      expect(group.statementLineTotal, 23182);
+      expect(
+        group.alerts,
+        isNot(
+          contains(
+            AssetLiabilityPlanningService.cardStatementAmountMismatchAlert,
+          ),
+        ),
+      );
+      expect(group.revolvingBilling!.billedAmount, 40163);
     });
 
     test(
@@ -1355,6 +1429,83 @@ void main() {
       expect(kddiCashflow.paid, isTrue);
       expect(kddiCashflow.cashBeforePayment, kddiCashflow.cashAfterPayment);
       expect(workbook.monthlyUnpaidPaymentTotal, rent.scheduledPaymentAmount);
+    });
+
+    test('applies manual payment day override to unknown cards', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'ファミマカード': -25000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'ファミマカード': 27},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'ファミマカード',
+      );
+      expect(row.paymentDay, 27);
+      expect(
+        workbook.cashflowRows.any(
+          (cashflow) =>
+              cashflow.accountId == row.id && cashflow.paymentDate.day == 27,
+        ),
+        isTrue,
+      );
+    });
+
+    test('manual payment day override replaces the built-in default', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPayカード': -30000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'paypay_card': 15},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'paypay_card',
+      );
+      expect(row.paymentDay, 15);
+    });
+
+    test('ignores out-of-range payment day overrides', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'ファミマカード': -25000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'ファミマカード': 45},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'ファミマカード',
+      );
+      expect(row.paymentDay, isNull);
+    });
+
+    test('marks full-payment fixed costs on debt rows', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'cash': 50000, 'モビット': -100000},
+        baseDate: DateTime(2026, 5, 12),
+        includeDefaultFixedPayments: true,
+      );
+
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+      );
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'mobit',
+      );
+
+      expect(rent.fullPaymentEstimate, isTrue);
+      expect(kddi.fullPaymentEstimate, isTrue);
+      expect(mobit.fullPaymentEstimate, isFalse);
     });
   });
 }

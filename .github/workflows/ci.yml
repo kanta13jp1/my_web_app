@@ -249,6 +249,37 @@ jobs:
         run: python scripts/check_github_actions_python_inline.py
         continue-on-error: false
 
+      - name: Check duplicate dispose statements
+        # part 280 実例 (二重 dispose → dispose 中断 → defunct setState) の再発防止。
+        # part 286: timeout でハング検知 + --max-seconds で線形時間 (正規表現の
+        # 破滅的バックトラック回帰) を CI でアサート。通常 ~2.5s なので 60s 上限。
+        run: timeout 120 python scripts/check_duplicate_dispose.py --max-seconds 60
+        continue-on-error: false
+
+      - name: Verify git hooks stay healthy
+        # part 291: pre-commit hook の腐敗防止。part 292: .githooks/* 全体へ一般化
+        # (将来 hook を追加しても自動で対象 / *.md は除外)。構文 + 実行ビットを検証。
+        run: |
+          shopt -s nullglob
+          found=0
+          for hook in .githooks/*; do
+            case "$hook" in
+              *.md) continue ;;
+            esac
+            found=$((found + 1))
+            echo "checking $hook"
+            bash -n "$hook"
+            test -x "$hook" || {
+              echo "$hook must be executable (chmod +x)" >&2
+              exit 1
+            }
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "no hooks found under .githooks/" >&2
+            exit 1
+          fi
+        continue-on-error: false
+
       - name: Check formatting
         # #1372: treat Dart formatting as a required static-analysis gate.
         run: dart format --output=none --set-exit-if-changed .

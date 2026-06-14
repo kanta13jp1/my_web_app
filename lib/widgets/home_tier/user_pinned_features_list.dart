@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/home_feature_actions.dart';
 
 class UserPinnedFeaturesList extends StatefulWidget {
   const UserPinnedFeaturesList({super.key});
@@ -15,7 +16,14 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
   @override
   void initState() {
     super.initState();
+    homePinnedFeaturesRevision.addListener(_load);
     _load();
+  }
+
+  @override
+  void dispose() {
+    homePinnedFeaturesRevision.removeListener(_load);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -64,12 +72,8 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
       return const Padding(
         padding: EdgeInsets.all(16),
         child: Text(
-          '機能カードのピンを押すとここに表示されます。',
-          style: TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 13,
-            height: 1.5,
-          ),
+          '各セクションの機能チップを長押しすると、ここにお気に入りとして表示されます。',
+          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
         ),
       );
     }
@@ -97,7 +101,7 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
             onDeleted: route.isEmpty ? null : () => _unpin(route),
             onPressed: route.isEmpty
                 ? null
-                : () => Navigator.pushNamed(context, route),
+                : () => openHomeFeature(context, route, label),
           );
         }).toList(),
       ),

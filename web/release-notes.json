@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-06-11",
+    "date": "2026-06-10",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-06-11T00:00:00Z",
+  "generatedAt": "2026-06-10T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -26,101 +26,9 @@
       "category": "release",
       "changeCategories": [
         "automation",
-        "feature",
-        "fix"
+        "feature"
       ],
       "changes": [
-        {
-          "category": "automation",
-          "id": "pr-3227",
-          "links": [
-            {
-              "title": "PR #3227",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3227"
-            }
-          ],
-          "mergedAt": "2026-06-11T00:32:12Z",
-          "summary": "#3227 ci: guard multiline inline Python in workflows"
-        },
-        {
-          "category": "automation",
-          "id": "pr-3226",
-          "links": [
-            {
-              "title": "PR #3226",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3226"
-            }
-          ],
-          "mergedAt": "2026-06-10T23:21:44Z",
-          "summary": "#3226 ci: soften NotebookLM auth blocker runs"
-        },
-        {
-          "category": "automation",
-          "id": "pr-3224",
-          "links": [
-            {
-              "title": "PR #3224",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3224"
-            }
-          ],
-          "mergedAt": "2026-06-10T21:50:52Z",
-          "summary": "#3224 ci: finish workflow concurrency audit batch"
-        },
-        {
-          "category": "automation",
-          "id": "pr-3222",
-          "links": [
-            {
-              "title": "PR #3222",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3222"
-            }
-          ],
-          "mergedAt": "2026-06-10T20:26:10Z",
-          "summary": "#3222 ci: add audit workflow concurrency batch"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3221",
-          "links": [
-            {
-              "title": "PR #3221",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3221"
-            }
-          ],
-          "mergedAt": "2026-06-10T20:10:07Z",
-          "summary": "#3221 fix: tolerate missing PR merge refs in CI"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3218",
-          "links": [
-            {
-              "title": "PR #3218",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3218"
-            }
-          ],
-          "mergedAt": "2026-06-10T19:36:45Z",
-          "summary": "#3218 feat: add Discord secondary fallback notifications"
-        },
-        {
-          "category": "automation",
-          "id": "pr-3179",
-          "links": [
-            {
-              "title": "PR #3179",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3179"
-            }
-          ],
-          "mergedAt": "2026-06-10T18:36:00Z",
-          "summary": "#3179 [codex] reduce workflow schedule churn (#3175)"
-        },
         {
           "category": "automation",
           "id": "pr-3212",
@@ -419,12 +327,103 @@
           ],
           "mergedAt": "2026-06-09T14:56:08Z",
           "summary": "#3176 docs(release): リリースチェックリスト&ロールバック Runbook + complete WBS e601b30f (part 250)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3174",
+          "links": [
+            {
+              "title": "PR #3174",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3174"
+            }
+          ],
+          "mergedAt": "2026-06-09T14:27:36Z",
+          "summary": "#3174 [CI/CD自動最適化] concurrency 追加 2 件 2026-06-09"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3173",
+          "links": [
+            {
+              "title": "PR #3173",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3173"
+            }
+          ],
+          "mergedAt": "2026-06-09T13:58:57Z",
+          "summary": "#3173 docs(press): プレスリリース v1 + complete WBS 88d0ac29 (part 249)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3171",
+          "links": [
+            {
+              "title": "PR #3171",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3171"
+            }
+          ],
+          "mergedAt": "2026-06-09T12:56:41Z",
+          "summary": "#3171 docs(brand): ブランドガイドライン v1 + complete WBS dce3f86c (part 248)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3170",
+          "links": [
+            {
+              "title": "PR #3170",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3170"
+            }
+          ],
+          "mergedAt": "2026-06-09T12:21:45Z",
+          "summary": "#3170 docs(marketing): X 公式アカウント運用設計 v1 + complete WBS fd9616af (part 247)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3169",
+          "links": [
+            {
+              "title": "PR #3169",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3169"
+            }
+          ],
+          "mergedAt": "2026-06-09T12:06:08Z",
+          "summary": "#3169 docs(onboarding): カスタマーオンボーディング設計 v1 + complete WBS a7f97791 (part 246)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3168",
+          "links": [
+            {
+              "title": "PR #3168",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3168"
+            }
+          ],
+          "mergedAt": "2026-06-09T10:08:08Z",
+          "summary": "#3168 feat(ops): On-call / インシデント対応 SOP v1 + complete WBS 8830188a (part 245)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3159",
+          "links": [
+            {
+              "title": "PR #3159",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3159"
+            }
+          ],
+          "mergedAt": "2026-06-08T15:44:46Z",
+          "summary": "#3159 [CI/CD自動最適化] 2026-06-08: hourly → 4時間毎 (feature-review + edge-function-audit)"
         }
       ],
-      "date": "2026-06-11",
+      "date": "2026-06-10",
       "extensions": {
         "aiToolWatch": {
-          "changedSourceCount": 3,
+          "changedSourceCount": 5,
           "signalCount": 0,
           "source": "docs/ai-tool-watch/latest-report.json"
         }
