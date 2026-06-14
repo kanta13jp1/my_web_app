@@ -39,8 +39,10 @@ class AssetSyncTimestampStore {
     }
   }
 
-  Future<DateTime?> loadTimestamp(String prefKey,
-      {SharedPreferences? prefs}) async {
+  Future<DateTime?> loadTimestamp(
+    String prefKey, {
+    SharedPreferences? prefs,
+  }) async {
     final all = await loadAll(prefs: prefs);
     return all[prefKey];
   }
