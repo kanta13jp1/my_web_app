@@ -15,25 +15,36 @@
 | `debt_payment_day_overrides` | `{debtId: day(1-31)}` | 負債ごとの支払日手動設定 | `_mirrorDebtPaymentDayOverrides` | `_restoreDebtPaymentDayOverridesFromMirror` |
 | `debt_payment_day_override_deleted` | `{ids:[debtId]}` | 支払日上書きの削除tombstone | `_mirrorDebtOverrideDeleted` | `_pullDebtOverrideDeleted` |
 | `revolving_credit_configs` | `{debtId: {monthlyAmount, creditLimit}}` | 負債(リボ払いカード)ごとのリボ設定額+利用限度額 | `_mirrorRevolvingConfigs` | `_restoreRevolvingConfigsFromMirror` |
+| `revolving_credit_configs_deleted` | `{ids:[debtId]}` | リボ設定(リボOFF)の削除tombstone(clear伝播 / union マージ・backfill での復活防止) | `_mirrorRevolvingDeleted` | `_pullRevolvingDeleted` |
 | `main_account_id` | `{id: '<accountId>'}` | 使用可能額の基準となるメインバンク口座ID | `_mirrorMainAccount` | `_restoreMainAccountFromMirror` |
 | `watchlist_entries` | `{entries: [{assetType, group, memo, addedAt}]}` | ウォッチリスト項目(注目資産+グループ+メモ) | `_mirrorWatchlist` | `_restoreWatchlistFromMirror` |
+| `watchlist_entries_deleted` | `{ids:[assetType]}` | ウォッチリスト項目の削除tombstone(clear伝播 / union マージでの復活防止) | `_mirrorWatchlistDeleted` | `_pullWatchlistDeleted` |
 
 > 入金予定の実体は別テーブル `asset_expected_inflow_items`(本表の対象外)。
 
-> `main_account_id` / `watchlist_entries` も削除トゥームストーン不要(スカラ/全件置換)。
-> 読みは集約ミラー優先・無ければローカル(`asset_management_main_account_id_v1` /
-> `asset_watchlist_entries_v1`)へフォールバックし、ローカルに既存値がある端末は
-> ミラーで上書きしない(安全側復元)。メイン口座は `{id:''}`、ウォッチリストは空
-> `entries` の upsert で「未設定/全削除」を全端末へ伝播する。
+> `main_account_id` はスカラのため削除トゥームストーン不要(`{id:''}` の upsert で
+> 「未設定」を全端末へ伝播)。読みは集約ミラー優先・無ければローカル
+> (`asset_management_main_account_id_v1`)へフォールバックし、ローカルに既存値が
+> ある端末はミラーで上書きしない(安全側復元)。
+> `watchlist_entries` は当初「空 `entries` の全件置換で削除も伝播」する想定で
+> トゥームストーン不要としていたが、クロスデバイス復活対策で復元を **union マージ**
+> (additive)へ変えたため全件置換が成立しなくなり、PR #3402 で削除トゥームストーン
+> `watchlist_entries_deleted` を追加(`asset_watchlist_entries_v1` フォールバックは
+> 維持)。詳細は下記「tombstone (削除伝播) の構成」を参照。
 > なお表示モードの実験ログ(`display_mode_events` テーブル)と復元辞退フラグ
 > (`asset_management_restore_declined_v1`)は意図的に端末ローカルのまま
 > (前者は専用サーバテーブルへ別途記録済 / 後者は端末ごとの UX 状態)。
 
-> `revolving_credit_configs` は支払日上書きと同じく**削除トゥームストーン不要**。
-> 設定の有無は map のキー有無で表現し(リボOFF=キー削除)、空 map の upsert で
-> 全端末へ「設定なし」が伝播する。読みは集約ミラー優先・無ければローカル
-> (`asset_revolving_credit_configs_v1`)へフォールバックし、ローカルに既存設定が
-> ある端末はミラーで上書きしない(オフライン編集の握り潰し防止 / 安全側復元)。
+> `revolving_credit_configs` は当初、設定の有無を map のキー有無で表現し(リボOFF=
+> キー削除)、空 map の upsert で「設定なし」を全端末へ伝播できるとして削除
+> トゥームストーン不要としていた。しかしクロスデバイス復活対策で復元を **union
+> マージ + backfill** に変えた結果、additive マージはキー削除を表現できず backfill が
+> 削除済み設定を復活させてしまうため、PR #3400 で削除トゥームストーン
+> `revolving_credit_configs_deleted` を追加(削除サイトで `addId` / リボ再設定で
+> `removeId` し、union 復元を tombstone-aware 化)。読みは集約ミラー優先・無ければ
+> ローカル(`asset_revolving_credit_configs_v1`)へフォールバックし、ローカルに
+> 既存設定がある端末はミラーで上書きしない(オフライン編集の握り潰し防止 /
+> 安全側復元)。詳細は下記「tombstone (削除伝播) の構成」を参照。
 
 ## Legacy (読みフォールバックのみ / 書き込み停止済 / 撤去予定)
 
@@ -51,11 +62,21 @@ best-effort delete される(Phase 2)。読みは集約行が無い場合のみ�
 ## tombstone (削除伝播) の構成
 
 「一度消したものを他端末/サーバ残存から復活させない」ため、削除 ID 集合を
-`MirrorTombstoneStore`(GC 付き)で管理し mirror 往復する。3 ドメイン:
+`MirrorTombstoneStore`(GC 付き)で管理し mirror 往復する。5 ドメイン:
 
 1. 入金予定削除 → `asset_inflow_prefs_v1.deleted_ids`
 2. セクション上書き削除 → `asset_display_prefs_v1.section_override_deleted`
 3. 支払日上書き削除 → `debt_payment_day_override_deleted`
+4. ウォッチリスト項目削除 → `watchlist_entries_deleted`(PR #3402)
+5. リボ設定削除 → `revolving_credit_configs_deleted`(PR #3400)
+
+#4 / #5 はいずれも復元を「ローカル空のときだけ全置換/全件置換」から **union マージ**
+へ変えた副作用で追加されたもの。additive な union は単体ではキー/項目の削除を
+表現できず、backfill(サーバに無くローカルに有る値の再 upload)が削除済みデータを
+復活させてしまうため、削除サイトで `addId`・再追加で `removeId` するトゥームストーン
+を mirror 往復し、union 復元/backfill を tombstone-aware 化している(支払日上書き #3 と
+同じパターン)。各削除トゥームストーンは boot 時に取り込み(`_pullWatchlistDeleted` /
+`_pullRevolvingDeleted`)、`mergeRemoteIds` で他端末の削除を反映してローカルからも除去する。
 
 ## 入金予定実体 (`asset_expected_inflow_items` テーブル) の削除伝播 — 整理 (part 296)
 
