@@ -1512,6 +1512,58 @@ void main() {
       expect(gas.scheduledPaymentAmount, 5800);
     });
 
+    test(
+      'positive-balance accounts sharing a substring do not suppress defaults',
+      () {
+        // 「家賃保証金」「KDDIポイント」「ガスト」は名前に家賃/kddi/ガスを含むが
+        // 資産(正残高)であり、既定固定費(家賃/KDDI/ガス)を抑止してはならない。
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'メインバンク': 200000,
+            '家賃保証金': 500000,
+            'KDDIポイント': 1200,
+            'ガスト': 3000,
+          },
+          baseDate: DateTime(2026, 6, 14),
+          includeDefaultFixedPayments: true,
+        );
+        bool hasDefault(String id) =>
+            workbook.debtMasterRows.any((row) => row.id == id);
+        expect(hasDefault(AssetLiabilityPlanningService.rentAccountId), isTrue);
+        expect(
+          hasDefault(AssetLiabilityPlanningService.kddiProviderAccountId),
+          isTrue,
+        );
+        expect(
+          hasDefault(AssetLiabilityPlanningService.gasBillAccountId),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'a real liability sharing the rent id still suppresses the default rent',
+      () {
+        // ユーザーが実際の家賃を負債として登録している場合は二重計上せず、
+        // 既定63,000円ではなくユーザーの実額を優先する。
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'メインバンク': 200000,
+            '家賃': -58000,
+          },
+          baseDate: DateTime(2026, 6, 14),
+          includeDefaultFixedPayments: true,
+        );
+        final rentRows = workbook.debtMasterRows
+            .where(
+              (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+            )
+            .toList();
+        expect(rentRows.length, 1);
+        expect(rentRows.first.balance, -58000);
+      },
+    );
+
     test('treats paid KDDI provider payment as reflected in cashflow', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{'cash': 50000, 'au': -32152},
