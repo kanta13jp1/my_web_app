@@ -645,6 +645,10 @@ class AssetManagementAiSummaryService {
   Map<String, dynamic> _workbookToDetailedJson(
     AssetLiabilityWorkbook workbook,
   ) {
+    final revolvingBillingAccountIds = <String>{
+      for (final row in workbook.debtMasterRows)
+        if (row.isRevolving) row.id,
+    };
     return <String, dynamic>{
       'base_date': workbook.baseDate.toIso8601String(),
       'totals': <String, dynamic>{
@@ -718,7 +722,10 @@ class AssetManagementAiSummaryService {
             .map(_cardReviewItemToJson)
             .toList(growable: false),
         'card_billing_groups': workbook.cardBillingReview.cardBillingGroups
-            .map(_cardBillingGroupToJson)
+            .map(
+              (group) =>
+                  _cardBillingGroupToJson(group, revolvingBillingAccountIds),
+            )
             .toList(growable: false),
         'missing_billing_account_items': workbook
             .cardBillingReview.missingBillingAccountItems
@@ -1011,13 +1018,23 @@ class AssetManagementAiSummaryService {
 
   Map<String, dynamic> _cardBillingGroupToJson(
     AssetLiabilityCardBillingGroup group,
+    Set<String> revolvingBillingAccountIds,
   ) {
-    return <String, dynamic>{
+    final json = <String, dynamic>{
       'billing_account_id': group.billingAccountId,
       'billing_account_name': group.billingAccountName,
       'total_amount': group.totalAmount,
       'items': group.items.map(_cardReviewItemToJson).toList(growable: false),
     };
+    if (revolvingBillingAccountIds.contains(group.billingAccountId)) {
+      // リボ払いカードに紐づけた負債合計は「リボ残高に含まれる紐づけ負債」であり、
+      // その月の請求額(リボ確定額)ではない。AI が請求額と比較して不一致と誤指摘
+      // しないよう明示する。
+      json['is_revolving_card'] = true;
+      json['note'] = 'このカードはリボ払い。下記内訳はリボ残高に含まれる紐づけ負債で、'
+          '今月の請求額(リボ確定額)ではない。請求額と比較して不一致と判断しないこと。';
+    }
+    return json;
   }
 
   Map<String, dynamic> _cardStatementReconciliationGroupToJson(

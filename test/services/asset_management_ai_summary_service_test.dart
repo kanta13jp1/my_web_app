@@ -308,6 +308,8 @@ void main() {
       expect(encoded.contains('reconciliation_note'), true);
       expect(encoded.contains('reference_only_not_billed'), true);
       expect(encoded.contains('ok_revolving_no_action_needed'), true);
+      // カード請求グループ(au等の紐づけ負債)もリボ払いと明示し、請求額と比較させない。
+      expect(encoded.contains('is_revolving_card'), true);
       // リボ払いでは比較対象になる生の合計・差分を top-level に置かない
       // (AI が請求額の隣で差を取り「不一致」と誤指摘するのを防ぐ)。
       expect(encoded.contains('configured_difference'), false);
@@ -741,7 +743,11 @@ AssetManagementInsightReport _revolvingReport() {
   const planner = AssetLiabilityPlanningService();
   const insight = AssetManagementInsightService();
   final workbook = planner.buildWorkbook(
-    latestSnapshot: const <String, double>{'cash': 50000, 'auPayカード': -530163},
+    latestSnapshot: const <String, double>{
+      'cash': 50000,
+      'auPayカード': -530163,
+      'au': -32152,
+    },
     baseDate: DateTime(2026, 6, 1),
     revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
       'aupay_card': AssetLiabilityRevolvingCreditConfig(
@@ -749,6 +755,7 @@ AssetManagementInsightReport _revolvingReport() {
         creditLimit: 500000,
       ),
     },
+    cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
     cardStatementLines: const <AssetLiabilityCardStatementLine>[
       AssetLiabilityCardStatementLine(
         id: 'l1',

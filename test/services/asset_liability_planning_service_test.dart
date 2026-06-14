@@ -750,6 +750,39 @@ void main() {
       expect(group.revolvingBilling!.billedAmount, 40163);
     });
 
+    test('リボ払いカードは明細未取込でも催促アラートを出さない', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'auPayカード': -530163,
+          'au': -32152,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
+        // 明細(cardStatementLines)は未取込。
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'aupay_card',
+      );
+      expect(group.isRevolving, isTrue);
+      // リボ払いは明細取込が不要なので「明細未取込」を催促しない。
+      expect(
+        group.alerts,
+        isNot(
+          contains(
+            AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+          ),
+        ),
+      );
+    });
+
     test(
       'marks monthly and default setting sources in card billing review',
       () {
