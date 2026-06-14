@@ -40,7 +40,9 @@ import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
+import 'package:my_web_app/services/asset_mirror_read_policy.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
+import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
@@ -150,6 +152,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugWatchlistMirror;
 
+  /// テスト専用: ミラー読み取りを Supabase 正本化 (LWW) する Phase B フラグを上書きする。
+  /// null なら [AssetMirrorReadPolicy.authoritative] (ビルド時フラグ / 既定 false)。
+  @visibleForTesting
+  final bool? debugMirrorReadsAuthoritative;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -167,6 +174,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugRevolvingConfigsMirror,
     this.debugMainAccountMirror,
     this.debugWatchlistMirror,
+    this.debugMirrorReadsAuthoritative,
   });
 
   @override
@@ -232,6 +240,35 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         loggedIn: _supabase.auth.currentUser != null,
         sources: _syncSources,
       );
+
+  /// 集約 pref ドメインのローカル最終変更時刻 (LWW 判定用 / Phase B)。
+  final AssetSyncTimestampStore _syncTimestampStore =
+      const AssetSyncTimestampStore();
+
+  /// ミラー読み取りを Supabase 正本化 (LWW) するか。テスト注入優先・既定はビルド時フラグ。
+  bool get _mirrorReadsAuthoritative =>
+      widget.debugMirrorReadsAuthoritative ??
+      AssetMirrorReadPolicy.authoritative;
+
+  /// 集約 pref ミラー行を採用すべきか判定する。フラグ ON 時は last-write-wins
+  /// (ローカル最終変更 vs ミラー `updated_at`)、OFF 時は従来「ローカル空のときだけ」。
+  Future<bool> _shouldAdoptMirror({
+    required String prefKey,
+    required bool hasLocal,
+    required DateTime? mirrorUpdatedAt,
+  }) async {
+    if (!_mirrorReadsAuthoritative) {
+      return !hasLocal;
+    }
+    final localUpdatedAt = await _syncTimestampStore.loadTimestamp(prefKey);
+    return resolveMirrorRead(
+          hasLocal: hasLocal,
+          hasMirror: true,
+          localUpdatedAt: localUpdatedAt,
+          mirrorUpdatedAt: mirrorUpdatedAt,
+        ) ==
+        AssetMirrorAdoption.adoptMirror;
+  }
 
   // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
@@ -5170,6 +5207,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// ウォッチリストを `asset_pref_mirror` (pref_key: watchlist_entries) へ
   /// 1 行 upsert する (リボ設定と同じ集約方針 / #3352)。
   Future<void> _mirrorWatchlist() async {
+    unawaited(_syncTimestampStore.markChanged(_watchlistMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return;
@@ -5196,13 +5234,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
-    if (_watchlistByType.isNotEmpty) {
+    final hasLocal = _watchlistByType.isNotEmpty;
+    if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
       return;
     }
     try {
       final dynamic value;
+      final DateTime? mirrorUpdatedAt;
       if (debugMirror != null) {
         value = debugMirror;
+        mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
         final rows = await _supabase
             .from('asset_pref_mirror')
@@ -5212,16 +5253,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           return;
         }
         value = rows.first['value'];
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
       }
       final restored = AssetWatchlistService.decodeMirrorValue(value);
-      if (restored.isEmpty || _watchlistByType.isNotEmpty || !mounted) {
+      if (restored.isEmpty || !mounted) {
+        return;
+      }
+      final adopt = await _shouldAdoptMirror(
+        prefKey: _watchlistMirrorKey,
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
+      );
+      if (!adopt || !mounted) {
         return;
       }
       setState(() {
         _setWatchlistEntries(restored);
       });
-      // オフライン参照用にローカルへも書き戻す。
+      // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
       unawaited(widget.watchlistService.replaceAll(restored));
+      unawaited(
+        _syncTimestampStore.markChanged(
+          _watchlistMirrorKey,
+          at: mirrorUpdatedAt,
+        ),
+      );
     } catch (e) {
       debugPrint('watchlist mirror restore failed: $e');
     }
@@ -7712,6 +7770,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// メイン口座IDを `asset_pref_mirror` (pref_key: main_account_id) へ
   /// 1 行 upsert する (リボ設定と同じ集約方針 / #3352)。
   Future<void> _mirrorMainAccount() async {
+    unawaited(_syncTimestampStore.markChanged(_mainAccountMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return;
@@ -7738,13 +7797,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
-    if (_assetManagementMainAccountId != null) {
+    final hasLocal = _assetManagementMainAccountId != null;
+    // フラグ OFF かつローカルに値がある場合は従来どおり何もしない (ネットワーク省略)。
+    if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
       return;
     }
     try {
       final dynamic value;
+      final DateTime? mirrorUpdatedAt;
       if (debugMirror != null) {
         value = debugMirror;
+        mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
         final rows = await _supabase
             .from('asset_pref_mirror')
@@ -7754,18 +7817,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           return;
         }
         value = rows.first['value'];
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
       }
       final restored = AssetManagementMainAccountStore.decodeMirrorValue(value);
-      if (restored == null ||
-          _assetManagementMainAccountId != null ||
-          !mounted) {
+      if (restored == null || !mounted) {
+        return;
+      }
+      final adopt = await _shouldAdoptMirror(
+        prefKey: _mainAccountMirrorKey,
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
+      );
+      if (!adopt || !mounted) {
         return;
       }
       setState(() {
         _assetManagementMainAccountId = restored;
       });
-      // オフライン参照用にローカルへも書き戻す。
+      // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
       unawaited(_mainAccountStore.save(restored));
+      unawaited(
+        _syncTimestampStore.markChanged(
+          _mainAccountMirrorKey,
+          at: mirrorUpdatedAt,
+        ),
+      );
     } catch (e) {
       debugPrint('main account mirror restore failed: $e');
     }
@@ -7923,6 +8001,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// リボ設定を `asset_pref_mirror` (pref_key: revolving_credit_configs) へ
   /// 1 行 upsert する (支払日上書きと同じ集約方針 / #part293-295)。
   Future<void> _mirrorRevolvingConfigs() async {
+    unawaited(_syncTimestampStore.markChanged(_revolvingConfigsMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return;
@@ -7951,12 +8030,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
+    final hasLocal = _revolvingConfigs.isNotEmpty;
+    if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
+      return;
+    }
     try {
       final Map<String, AssetLiabilityRevolvingCreditConfig> restored;
+      final DateTime? mirrorUpdatedAt;
       if (debugMirror != null) {
         restored = AssetRevolvingCreditConfigStore.decodeMirrorValue(
           debugMirror,
         );
+        mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
         final rows = await _supabase
             .from('asset_pref_mirror')
@@ -7968,15 +8053,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         restored = AssetRevolvingCreditConfigStore.decodeMirrorValue(
           rows.first['value'],
         );
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
       }
-      if (restored.isEmpty || _revolvingConfigs.isNotEmpty || !mounted) {
+      if (restored.isEmpty || !mounted) {
+        return;
+      }
+      final adopt = await _shouldAdoptMirror(
+        prefKey: _revolvingConfigsMirrorKey,
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
+      );
+      if (!adopt || !mounted) {
         return;
       }
       setState(() {
         _revolvingConfigs = restored;
       });
-      // オフライン参照用にローカルへも書き戻す。
+      // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
       unawaited(_revolvingConfigStore.save(_revolvingConfigs));
+      unawaited(
+        _syncTimestampStore.markChanged(
+          _revolvingConfigsMirrorKey,
+          at: mirrorUpdatedAt,
+        ),
+      );
     } catch (e) {
       debugPrint('revolving config mirror restore failed: $e');
     }
@@ -8927,6 +9029,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _mirrorDebtPaymentDayOverrides(
     Map<String, int> overrides,
   ) async {
+    unawaited(_syncTimestampStore.markChanged('debt_payment_day_overrides'));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return;
@@ -8947,6 +9050,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (_supabase.auth.currentUser == null) {
       return;
     }
+    final hasLocal = _debtPaymentDayOverrides.isNotEmpty;
+    if (!_mirrorReadsAuthoritative && hasLocal) {
+      return;
+    }
     try {
       final rows = await _supabase
           .from('asset_pref_mirror')
@@ -8959,6 +9066,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (value is! Map) {
         return;
       }
+      final mirrorUpdatedAt = DateTime.tryParse(
+        rows.first['updated_at']?.toString() ?? '',
+      );
       // 削除トゥームストーン済みの支払日上書きは復元しない (#part293 3例目)。
       final tombstoned = _debtOverrideTombstones.activeIds(
         await SharedPreferences.getInstance(),
@@ -8974,16 +9084,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           restored[key] = day;
         }
       });
-      if (restored.isEmpty || _debtPaymentDayOverrides.isNotEmpty || !mounted) {
+      if (restored.isEmpty || !mounted) {
+        return;
+      }
+      final adopt = await _shouldAdoptMirror(
+        prefKey: 'debt_payment_day_overrides',
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
+      );
+      if (!adopt || !mounted) {
         return;
       }
       setState(() {
         _debtPaymentDayOverrides = restored;
       });
       unawaited(_saveDebtPaymentDayOverrides());
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('支払日設定をサーバのバックアップから復元しました')),
+      unawaited(
+        _syncTimestampStore.markChanged(
+          'debt_payment_day_overrides',
+          at: mirrorUpdatedAt,
+        ),
       );
+      // 初回復元 (ローカル空) のときだけ通知。LWW での更新時は通知しない。
+      if (!hasLocal) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('支払日設定をサーバのバックアップから復元しました')),
+        );
+      }
     } catch (e) {
       debugPrint('pref mirror restore failed: $e');
     }
