@@ -337,6 +337,8 @@ void main() {
           .buildDetailedAdvicePrompt(report);
 
       expect(prompt.contains('Dart側で完了'), true);
+      // リボ払いカードの照合不一致を指摘させない明示指示が含まれること。
+      expect(prompt.contains('リボ払いカードの扱い'), true);
       expect(prompt.contains('本日'), true);
       expect(prompt.contains('プロフィール詳細'), true);
       expect(prompt.contains('職業: 会社員'), true);
