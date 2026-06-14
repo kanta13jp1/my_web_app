@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: edge-function-audit
-  cancel-in-progress: false
+  cancel-in-progress: true  # ci-cost-audit 2026-06-14: manual dispatch と schedule 競合防止
 
 permissions:
   contents: read
@@ -56,11 +56,11 @@ jobs:
             if [ -n "$REF" ]; then
               COVERED=$((COVERED + 1))
               echo "| $FUNC | ✅ | $REF |" >> /tmp/audit_report.txt
-              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":true,\"caller_file\":\"${REF}\",\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"},"
+              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":true,\"caller_file\":\"${REF}\",\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
             else
               MISSING="${MISSING}${FUNC}\n"
               echo "| $FUNC | ❌ 未接続 | - |" >> /tmp/audit_report.txt
-              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":false,\"caller_file\":null,\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"},"
+              UPSERT_PAYLOAD="${UPSERT_PAYLOAD}{\"function_name\":\"${FUNC}\",\"has_ui_caller\":false,\"caller_file\":null,\"last_checked\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
             fi
           done
 
