@@ -998,5 +998,54 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('revolving union-merge: server card fills in, local card kept',
+        (
+      tester,
+    ) async {
+      // 端末B はローカルに別カードのリボ設定だけ持つ (auPAY は未設定)。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetRevolvingCreditConfigStore.prefsKey: jsonEncode(
+          AssetRevolvingCreditConfigStore.encodeMirrorValue(
+            <String, AssetLiabilityRevolvingCreditConfig>{
+              'other_card': const AssetLiabilityRevolvingCreditConfig(
+                monthlyAmount: 3000,
+                creditLimit: 100000,
+              ),
+            },
+          ),
+        ),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // 端末A が auPAY のリボ設定をサーバへ保存済みの状態をミラー注入。
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugRevolvingConfigsMirror:
+                AssetRevolvingCreditConfigStore.encodeMirrorValue(
+              <String, AssetLiabilityRevolvingCreditConfig>{
+                'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+                  monthlyAmount: 10000,
+                  creditLimit: 500000,
+                ),
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // union マージ: サーバの auPAY が反映され、かつローカルの別カードも維持。
+      final merged = await const AssetRevolvingCreditConfigStore().load();
+      expect(merged.keys, containsAll(<String>['other_card', 'aupay_card']));
+      expect(merged['aupay_card']!.monthlyAmount, 10000);
+      expect(merged['aupay_card']!.creditLimit, 500000);
+      expect(merged['other_card']!.monthlyAmount, 3000);
+
+      await _unmount(tester);
+    });
   });
 }
