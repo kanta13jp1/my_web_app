@@ -50,6 +50,8 @@ import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/disposable_balance_asset_liability_adapter.dart';
 import 'package:my_web_app/services/disposable_balance_service.dart';
+import 'package:my_web_app/services/drink_challenge_service.dart';
+import 'package:my_web_app/services/drink_challenge_store.dart';
 import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/services/profile_service.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
@@ -482,6 +484,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementMainAccountStore();
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
+  // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
+  final DrinkChallengeStore _drinkChallengeStore = const DrinkChallengeStore();
+  Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
   // 使用可能額の基準となるメインバンク口座ID。null は既定(最大預金口座)。
   String? _assetManagementMainAccountId;
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
@@ -586,6 +591,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDisplayMode();
     _loadMainAccount();
     unawaited(_loadRevolvingConfigs());
+    unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
     unawaited(_initTombstoneGcAndPull());
@@ -8029,6 +8035,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_refreshSyncSources());
   }
 
+  Future<void> _loadDrinkChallenge() async {
+    try {
+      final records = await _drinkChallengeStore.load();
+      if (mounted && records.isNotEmpty) {
+        setState(() {
+          _drinkRecords = records;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading drink challenge records: $e');
+    }
+  }
+
+  void _setDrinkRecord(DateTime date, DrinkRecordStatus? status) {
+    final key = DrinkChallengeService.dateKey(date);
+    setState(() {
+      final next = Map<String, DrinkRecordStatus>.from(_drinkRecords);
+      if (status == null) {
+        next.remove(key);
+      } else {
+        next[key] = status;
+      }
+      _drinkRecords = next;
+    });
+    unawaited(_drinkChallengeStore.save(_drinkRecords));
+  }
+
   /// リボ設定を `asset_pref_mirror` (pref_key: revolving_credit_configs) へ
   /// 1 行 upsert する (支払日上書きと同じ集約方針 / #part293-295)。
   Future<void> _mirrorRevolvingConfigs() async {
@@ -14024,6 +14057,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 12),
             _buildAssetManagementAiAssistantSection(insightReport),
             const SizedBox(height: 12),
+            _buildDrinkChallengeCard(workbook),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -14771,6 +14806,222 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           height: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrinkChallengeCard(AssetLiabilityWorkbook workbook) {
+    const service = DrinkChallengeService();
+    final stats = service.computeStats(
+      records: _drinkRecords,
+      totalDebtYen: workbook.liabilityTotal,
+      baseDate: _now,
+    );
+    final occasions = service.occasionsBetween(
+      _now.subtract(const Duration(days: 7)),
+      _now.add(const Duration(days: 21)),
+    );
+    final projected = stats.projectedCompletionDate;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF7C3AED).withValues(alpha: 0.24),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.no_drinks_outlined,
+                color: Color(0xFF7C3AED),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '禁酒で借金完済チャレンジ',
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '金土日の夜・祝前日・祝日に飲みを我慢するたびに'
+            ' ${_formatManagementYen(stats.perSessionYen)} 節約。'
+            '${stats.targetCount}回我慢すれば完済です。',
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: stats.progressRatio,
+              minHeight: 10,
+              backgroundColor: const Color(0xFFE2E8F0),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF7C3AED),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildOverviewStatChip(
+                label: '我慢した回数',
+                value: '${stats.abstainedCount} / ${stats.targetCount}回',
+                color: const Color(0xFF7C3AED),
+              ),
+              _buildOverviewStatChip(
+                label: '節約できた額',
+                value: _formatManagementYen(stats.savedYen),
+                color: const Color(0xFF0D9488),
+              ),
+              _buildOverviewStatChip(
+                label: '完済まで残り',
+                value: '${stats.remainingCount}回',
+                color: const Color(0xFFB91C1C),
+              ),
+              if (projected != null)
+                _buildOverviewStatChip(
+                  label: '全部我慢すれば',
+                  value: '${projected.year}年${projected.month}月頃',
+                  color: const Color(0xFF2563EB),
+                ),
+              if (stats.drankCount > 0)
+                _buildOverviewStatChip(
+                  label: '我慢率',
+                  value: _formatManagementPercent(stats.abstentionRate),
+                  color: const Color(0xFF64748B),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '飲み機会（直近1週間〜今後3週間）— 各回をタップして記録',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 6),
+          for (final occasion in occasions) _buildDrinkOccasionRow(occasion),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrinkOccasionRow(DrinkOccasion occasion) {
+    final key = DrinkChallengeService.dateKey(occasion.date);
+    final status = _drinkRecords[key];
+    const weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+    final weekday = weekdays[occasion.date.weekday - 1];
+    final isToday = occasion.date.year == _now.year &&
+        occasion.date.month == _now.month &&
+        occasion.date.day == _now.day;
+    final isHoliday = occasion.reasons.contains(DrinkOccasionReason.holiday);
+    final isHolidayEve =
+        occasion.reasons.contains(DrinkOccasionReason.holidayEve);
+    final badge = isHoliday ? '祝' : (isHolidayEve ? '祝前' : '');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Text(
+            '${occasion.date.month}/${occasion.date.day}($weekday)',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+              color: isToday ? const Color(0xFF7C3AED) : null,
+            ),
+          ),
+          if (badge.isNotEmpty) ...[
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: const Color(0xFFB91C1C).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                badge,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFFB91C1C),
+                ),
+              ),
+            ),
+          ],
+          const Spacer(),
+          _buildDrinkChoiceButton(
+            label: '我慢した',
+            selected: status == DrinkRecordStatus.abstained,
+            selectedColor: const Color(0xFF0D9488),
+            onTap: () => _setDrinkRecord(
+              occasion.date,
+              status == DrinkRecordStatus.abstained
+                  ? null
+                  : DrinkRecordStatus.abstained,
+            ),
+          ),
+          const SizedBox(width: 6),
+          _buildDrinkChoiceButton(
+            label: '飲んだ',
+            selected: status == DrinkRecordStatus.drank,
+            selectedColor: const Color(0xFFB91C1C),
+            onTap: () => _setDrinkRecord(
+              occasion.date,
+              status == DrinkRecordStatus.drank
+                  ? null
+                  : DrinkRecordStatus.drank,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrinkChoiceButton({
+    required String label,
+    required bool selected,
+    required Color selectedColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? selectedColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: selected ? selectedColor : const Color(0xFFCBD5E1),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : const Color(0xFF64748B),
+          ),
         ),
       ),
     );
