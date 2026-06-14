@@ -852,5 +852,62 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('sync status banner shows logged-out state', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pumpAssetPage(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 未ログイン (スモークは未認証) → 全体バナーが「この端末のみ」を明示。
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_sync_status_chip')),
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('asset_sync_status_chip')),
+          matching: find.textContaining('この端末にのみ保存'),
+        ),
+        findsOneWidget,
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets('unsynced badge appears for local-only watchlist', (
+      tester,
+    ) async {
+      // ローカルにのみウォッチリストがある (未認証 = サーバ未同期) 状態。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'assetType': 'gold',
+            'group': 'invest',
+            'memo': 'hedge',
+            'addedAt': DateTime.utc(2026, 6, 14).toIso8601String(),
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pumpAssetPage(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // ウォッチリストが localOnly → 未同期バッジが出る。
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_unsynced_badge_row')),
+      );
+      expect(
+        find.byKey(const Key('asset_unsynced_badge_watchlist')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('ウォッチリスト 未同期'), findsOneWidget);
+
+      await _unmount(tester);
+    });
   });
 }

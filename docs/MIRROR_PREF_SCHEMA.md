@@ -76,3 +76,22 @@ best-effort delete される(Phase 2)。読みは集約行が無い場合のみ�
 > 強いて残る差分: items は `_mirrorInflowToSupabase` で**行ごと upsert** する一方、
 > tombstone は集約 1 行。行ごと upsert の集約化は別テーマ (実体データのため本 doc の
 > pref 集約とはスコープが異なる)。
+
+## 同期ステータス指標 (未同期 = この端末のみ の可視化)
+
+ローカル優先で読む構成のため「サーバ未同期 = 他端末に出ない」状態を画面で可視化する
+(`lib/services/asset_sync_status.dart` の `AssetSyncStatusSummary` / page の
+`_refreshSyncSources`)。各データ領域の出所 (`AssetSyncSource`: synced / localOnly / empty)
+を判定:
+
+- **pref 系** (`main_account_id` / `watchlist_entries` / `revolving_credit_configs` /
+  `debt_payment_day_overrides`): boot/保存時に `asset_pref_mirror` を 1 回 select し、
+  当該 pref_key 行があれば synced。
+- **入金** (`inflow`): `asset_expected_inflow_items` の存在で判定。
+- **月次state** (`monthlyState`): `AssetLiabilityRepository.supabaseWritesEnabled` ＋
+  `_assetLiabilitySyncStatus` から判定。
+- **未ログイン時**: 何も同期されないため、データのある領域はすべて localOnly。
+
+UI = 全体ステータスバナー (`Key('asset_sync_status_chip')`) ＋ 未同期バッジ列
+(`Key('asset_unsynced_badge_row')` / 各 `Key('asset_unsynced_badge_<domain>')`)。
+将来の正本化計画は [`LOCAL_PERSISTENCE_RETIREMENT_ROADMAP.md`](LOCAL_PERSISTENCE_RETIREMENT_ROADMAP.md)。
