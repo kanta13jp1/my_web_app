@@ -40,6 +40,8 @@ import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
+import 'package:my_web_app/services/asset_category_budget_service.dart';
+import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
@@ -61,6 +63,7 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
+import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -363,6 +366,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // リボ払いカードの設定 (負債IDごと)。v1 はローカル永続化のみ。
   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
       <String, AssetLiabilityRevolvingCreditConfig>{};
+  // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
+  Map<String, double> _categoryBudgets = <String, double>{};
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
   Map<String, AssetLiabilityAnnualRateEvidence> _annualRateEvidences =
       <String, AssetLiabilityAnnualRateEvidence>{};
@@ -535,6 +540,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementMainAccountStore();
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
+  final AssetCategoryBudgetStore _categoryBudgetStore =
+      const AssetCategoryBudgetStore();
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
   final DrinkChallengeStore _drinkChallengeStore = const DrinkChallengeStore();
   Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
@@ -642,6 +649,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDisplayMode();
     _loadMainAccount();
     unawaited(_loadRevolvingConfigs());
+    unawaited(_loadCategoryBudgets());
     unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
@@ -7902,6 +7910,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(AssetManagementSectionId.salaryBreakdown)) ...[
               _buildSalarySpendingBreakdownCard(),
               const SizedBox(height: 16),
+              _buildCategoryBudgetCard(),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
@@ -8204,6 +8213,85 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// リボ設定の集約ミラー pref_key (1 行 jsonb / MIRROR_PREF_SCHEMA.md)。
   static const String _revolvingConfigsMirrorKey = 'revolving_credit_configs';
+  static const String _categoryBudgetsMirrorKey = 'category_budgets';
+
+  Future<void> _loadCategoryBudgets() async {
+    try {
+      final budgets = await _categoryBudgetStore.load();
+      if (mounted && budgets.isNotEmpty) {
+        setState(() {
+          _categoryBudgets = budgets;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading category budgets: $e');
+    }
+    await _restoreCategoryBudgetsFromMirror();
+  }
+
+  /// カテゴリ別予算を `asset_pref_mirror` (pref_key: category_budgets) へ
+  /// 1 行 upsert する (revolving_credit_configs と同じ集約方針 / 削除は空 map で表現)。
+  Future<void> _mirrorCategoryBudgets() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _categoryBudgetsMirrorKey,
+        'value': AssetCategoryBudgetStore.encodeMirrorValue(_categoryBudgets),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('category budget mirror upsert failed: $e');
+    }
+  }
+
+  /// サーバ集約ミラーからカテゴリ別予算を復元する。ローカルに既に設定がある場合は
+  /// 上書きしない (オフライン編集を握り潰さない安全側)。サーバ行が無ければ初回
+  /// バックフィルする。設定の有無は map のキー有無で表すため削除トゥームストーン不要。
+  Future<void> _restoreCategoryBudgetsFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    final hasLocal = _categoryBudgets.isNotEmpty;
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _categoryBudgetsMirrorKey);
+      if (rows.isEmpty) {
+        if (hasLocal) {
+          unawaited(_mirrorCategoryBudgets());
+        }
+        return;
+      }
+      if (hasLocal) {
+        return;
+      }
+      final serverBudgets = AssetCategoryBudgetStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (serverBudgets.isEmpty || !mounted) {
+        return;
+      }
+      setState(() {
+        _categoryBudgets = serverBudgets;
+      });
+      unawaited(_categoryBudgetStore.save(serverBudgets));
+    } catch (e) {
+      debugPrint('category budget mirror restore failed: $e');
+    }
+  }
+
+  Future<void> _saveCategoryBudgets(Map<String, double> budgets) async {
+    setState(() {
+      _categoryBudgets = budgets;
+    });
+    await _categoryBudgetStore.save(budgets);
+    unawaited(_mirrorCategoryBudgets());
+  }
 
   Future<void> _loadRevolvingConfigs() async {
     try {
@@ -12036,6 +12124,133 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return '動画';
     }
     return group.isEmpty ? '対象' : group;
+  }
+
+  /// 予算/カテゴリ予実カード。給料サイクルのカテゴリ別実支出(既存 breakdown)に
+  /// ユーザー設定の月次予算を重ねて表示する。支出も予算も無ければ非表示。
+  Widget _buildCategoryBudgetCard() {
+    final breakdown = _buildSalarySpendingBreakdown();
+    if (breakdown.expenseEntryCount == 0 && _categoryBudgets.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final actualByCategory = <String, double>{
+      for (final section in breakdown.sections)
+        section.category: section.amount,
+    };
+    final report = AssetCategoryBudgetService.build(
+      actualByCategory: actualByCategory,
+      budgets: _categoryBudgets,
+    );
+    final start = breakdown.periodStart;
+    final end = breakdown.periodEndInclusive;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetCategoryBudgetCard(
+        report: report,
+        currencyFormatter: _formatYen,
+        periodLabel:
+            '${start.month}/${start.day}〜${end.month}/${end.day}(給料サイクル)',
+        onEditBudgets: () => _showCategoryBudgetEditor(actualByCategory),
+      ),
+    );
+  }
+
+  /// カテゴリ別の月次予算を編集するダイアログ。既定カテゴリ + 実支出/既存予算に
+  /// 現れたカテゴリへ数値入力し、保存でローカル永続 + ミラーする。
+  Future<void> _showCategoryBudgetEditor(
+    Map<String, double> actualByCategory,
+  ) async {
+    final categories = <String>[
+      ...SalarySpendingBreakdownService.categoryLabels,
+      for (final category in actualByCategory.keys)
+        if (!SalarySpendingBreakdownService.categoryLabels.contains(category))
+          category,
+      for (final category in _categoryBudgets.keys)
+        if (!SalarySpendingBreakdownService.categoryLabels.contains(category) &&
+            !actualByCategory.containsKey(category))
+          category,
+    ];
+    final controllers = <String, TextEditingController>{
+      for (final category in categories)
+        category: TextEditingController(
+          text: (_categoryBudgets[category] ?? 0) > 0
+              ? (_categoryBudgets[category] ?? 0).round().toString()
+              : '',
+        ),
+    };
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('カテゴリ別の月次予算'),
+        content: SizedBox(
+          width: 420,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '給料サイクル(25日始まり)あたりの予算を入力します。空欄は予算なし。',
+                  style: TextStyle(fontSize: 12, height: 1.5),
+                ),
+                const SizedBox(height: 8),
+                for (final category in categories)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            category,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 130,
+                          child: TextField(
+                            controller: controllers[category],
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              prefixText: '¥',
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            key: const Key('asset_category_budget_save'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    if (saved == true && mounted) {
+      final next = <String, double>{};
+      controllers.forEach((category, controller) {
+        final parsed = double.tryParse(
+          controller.text.replaceAll(',', '').trim(),
+        );
+        if (parsed != null && parsed > 0) {
+          next[category] = parsed;
+        }
+      });
+      await _saveCategoryBudgets(next);
+    }
+    for (final controller in controllers.values) {
+      controller.dispose();
+    }
   }
 
   Widget _buildSalarySpendingBreakdownCard() {
