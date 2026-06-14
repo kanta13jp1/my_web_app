@@ -40,6 +40,7 @@ import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
+import 'package:my_web_app/services/asset_sync_status.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
@@ -217,6 +218,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
   bool _isImportingSmbcCsv = false;
+
+  /// 各データ領域の同期出所 (provenance)。サーバ未同期 (= この端末のみ) を
+  /// 画面上で可視化するために保持する。`_refreshSyncSources` で更新。
+  final Map<AssetSyncDomain, AssetSyncSource> _syncSources =
+      <AssetSyncDomain, AssetSyncSource>{};
+
+  // 起動時の複数ロードからの同時呼び出しを 1 回に集約する再入ガード。
+  bool _syncRefreshInFlight = false;
+  bool _syncRefreshDirty = false;
+
+  AssetSyncStatusSummary get _syncSummary => AssetSyncStatusSummary(
+        loggedIn: _supabase.auth.currentUser != null,
+        sources: _syncSources,
+      );
 
   // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
@@ -1281,6 +1296,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _loadedAssetLiabilityMonthKey = monthKey;
         _syncPaymentStateControllers();
       });
+      unawaited(_refreshSyncSources());
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
       }
@@ -5148,6 +5164,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
     await _restoreWatchlistFromMirror();
+    unawaited(_refreshSyncSources());
   }
 
   /// ウォッチリストを `asset_pref_mirror` (pref_key: watchlist_entries) へ
@@ -5169,6 +5186,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('watchlist mirror upsert failed: $e');
     }
+    unawaited(_refreshSyncSources());
   }
 
   /// サーバ集約ミラーからウォッチリストを復元する (集約優先 + legacy local fallback)。
@@ -7409,6 +7427,165 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 全体の同期ステータス バナー。未同期 (= この端末のみ) を可視化する。
+  /// タップで未同期データの一覧ダイアログを開く。
+  Widget _buildSyncStatusBanner() {
+    final summary = _syncSummary;
+    const warnBg = Color(0xFFFEF3C7);
+    const warnFg = Color(0xFF92400E);
+    const okBg = Color(0xFFDCFCE7);
+    const okFg = Color(0xFF166534);
+
+    late final Color background;
+    late final Color foreground;
+    late final IconData icon;
+    late final String text;
+    switch (summary.level) {
+      case AssetSyncLevel.loggedOut:
+        background = warnBg;
+        foreground = warnFg;
+        icon = Icons.cloud_off;
+        text = '未ログイン：データはこの端末にのみ保存（他端末に出ません）';
+      case AssetSyncLevel.partialLocal:
+        background = warnBg;
+        foreground = warnFg;
+        icon = Icons.sync_problem;
+        text = '未同期 ${summary.localOnlyCount} 項目（この端末のみ）';
+      case AssetSyncLevel.allSynced:
+        background = okBg;
+        foreground = okFg;
+        icon = Icons.cloud_done;
+        text = 'サーバ同期済み';
+    }
+    final tappable = summary.level != AssetSyncLevel.allSynced;
+    return InkWell(
+      key: const Key('asset_sync_status_chip'),
+      onTap: tappable ? _showSyncStatusDetails : null,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: foreground),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: foreground),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 12.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (tappable)
+              Icon(Icons.chevron_right, size: 18, color: foreground),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 未同期データ領域を示すバッジ列。localOnly の領域ごとに「<領域> 未同期」チップを
+  /// バナー直下に並べ、どのデータが他端末に出ないかを一目で分かるようにする。
+  Widget _buildUnsyncedBadgeRow() {
+    final domains = _syncSummary.localOnlyDomains;
+    if (domains.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      key: const Key('asset_unsynced_badge_row'),
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: <Widget>[
+          for (final domain in domains) _buildUnsyncedBadge(domain),
+        ],
+      ),
+    );
+  }
+
+  /// 1 領域分の「<領域> 未同期」チップ。
+  Widget _buildUnsyncedBadge(AssetSyncDomain domain) {
+    return Container(
+      key: Key('asset_unsynced_badge_${domain.name}'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFF92400E)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off, size: 12, color: Color(0xFF92400E)),
+          const SizedBox(width: 4),
+          Text(
+            '${domain.label} 未同期',
+            style: const TextStyle(
+              fontSize: 10.5,
+              color: Color(0xFF92400E),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSyncStatusDetails() {
+    final summary = _syncSummary;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('同期ステータス'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (summary.isLoggedOut)
+              const Text(
+                '未ログインのため、資産管理のデータはこの端末にのみ保存されます。\n'
+                'ログインするとサーバに同期され、スマホなど他の端末でも参照できます。',
+                style: TextStyle(fontSize: 13, height: 1.4),
+              )
+            else ...[
+              const Text(
+                '次のデータはまだサーバに同期されていません（この端末のみ）:',
+                style: TextStyle(fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 8),
+              for (final domain in summary.localOnlyDomains)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.cloud_off, size: 16),
+                      const SizedBox(width: 6),
+                      Text(domain.label),
+                    ],
+                  ),
+                ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCompact = _isCompact;
@@ -7431,6 +7608,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildUnifiedEntryBanner(),
               const SizedBox(height: 16),
             ],
+            _buildSyncStatusBanner(),
+            _buildUnsyncedBadgeRow(),
+            const SizedBox(height: 12),
             _buildDisplayModeSwitcher(),
             const SizedBox(height: 12),
             if (_isSectionShown(AssetManagementSectionId.monthlyFlow)) ...[
@@ -7526,6 +7706,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
     await _restoreMainAccountFromMirror();
+    unawaited(_refreshSyncSources());
   }
 
   /// メイン口座IDを `asset_pref_mirror` (pref_key: main_account_id) へ
@@ -7547,6 +7728,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('main account mirror upsert failed: $e');
     }
+    unawaited(_refreshSyncSources());
   }
 
   /// サーバ集約ミラーからメイン口座IDを復元する (集約優先 + legacy local fallback)。
@@ -7589,6 +7771,124 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 各データ領域の同期出所を再計算する。サーバに該当データがあれば synced、
+  /// ローカルのみなら localOnly、何も無ければ empty。未ログイン時は同期されない
+  /// ため、データのある領域はすべて localOnly になる。
+  ///
+  /// 起動時の複数ロードや保存後から繰り返し呼ばれるため、再入は 1 回に集約する。
+  Future<void> _refreshSyncSources() async {
+    if (_syncRefreshInFlight) {
+      _syncRefreshDirty = true;
+      return;
+    }
+    _syncRefreshInFlight = true;
+    try {
+      final user = _supabase.auth.currentUser;
+      final presentPrefKeys = <String>{};
+      var hasInflowOnServer = false;
+      if (user != null) {
+        try {
+          final rows = await _supabase
+              .from('asset_pref_mirror')
+              .select('pref_key')
+              .eq('user_id', user.id);
+          for (final row in rows) {
+            final key = row['pref_key'];
+            if (key is String) {
+              presentPrefKeys.add(key);
+            }
+          }
+        } catch (e) {
+          debugPrint('sync sources: pref mirror fetch failed: $e');
+        }
+        try {
+          final inflowRows = await _supabase
+              .from('asset_expected_inflow_items')
+              .select('id')
+              .eq('user_id', user.id)
+              .limit(1);
+          hasInflowOnServer = inflowRows.isNotEmpty;
+        } catch (e) {
+          debugPrint('sync sources: inflow items fetch failed: $e');
+        }
+      }
+
+      AssetSyncSource prefSource(String prefKey, {required bool hasLocal}) {
+        if (user != null && presentPrefKeys.contains(prefKey)) {
+          return AssetSyncSource.synced;
+        }
+        return hasLocal ? AssetSyncSource.localOnly : AssetSyncSource.empty;
+      }
+
+      final next = <AssetSyncDomain, AssetSyncSource>{
+        AssetSyncDomain.mainAccount: prefSource(
+          'main_account_id',
+          hasLocal: _assetManagementMainAccountId != null,
+        ),
+        AssetSyncDomain.watchlist: prefSource(
+          'watchlist_entries',
+          hasLocal: _watchlistByType.isNotEmpty,
+        ),
+        AssetSyncDomain.revolving: prefSource(
+          'revolving_credit_configs',
+          hasLocal: _revolvingConfigs.isNotEmpty,
+        ),
+        AssetSyncDomain.debtOverrides: prefSource(
+          'debt_payment_day_overrides',
+          hasLocal: _debtPaymentDayOverrides.isNotEmpty,
+        ),
+        AssetSyncDomain.inflow: _inflowSyncSource(
+          loggedIn: user != null,
+          hasInflowOnServer: hasInflowOnServer,
+        ),
+        AssetSyncDomain.monthlyState: _monthlyStateSyncSource(
+          loggedIn: user != null,
+        ),
+      };
+
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _syncSources
+          ..clear()
+          ..addAll(next);
+      });
+    } finally {
+      _syncRefreshInFlight = false;
+      if (_syncRefreshDirty) {
+        _syncRefreshDirty = false;
+        unawaited(_refreshSyncSources());
+      }
+    }
+  }
+
+  AssetSyncSource _inflowSyncSource({
+    required bool loggedIn,
+    required bool hasInflowOnServer,
+  }) {
+    final hasLocal =
+        _expectedInflows.isNotEmpty || _expectedInflowRules.isNotEmpty;
+    if (loggedIn && hasInflowOnServer) {
+      return AssetSyncSource.synced;
+    }
+    return hasLocal ? AssetSyncSource.localOnly : AssetSyncSource.empty;
+  }
+
+  AssetSyncSource _monthlyStateSyncSource({required bool loggedIn}) {
+    final hasLocal = !_currentAssetLiabilityMonthlyState().isEmpty;
+    if (!hasLocal) {
+      return AssetSyncSource.empty;
+    }
+    // リモート書込が無効 / 未ログイン / 直近同期が失敗ならローカルのみ。
+    if (!loggedIn ||
+        !_assetLiabilityRepository.supabaseWritesEnabled ||
+        _assetLiabilitySyncStatus == AssetLiabilityManualSyncStatus.failure) {
+      return AssetSyncSource.localOnly;
+    }
+    return AssetSyncSource.synced;
+  }
+
   Future<void> _setMainAccount(String? accountId) async {
     setState(() {
       _assetManagementMainAccountId = accountId;
@@ -7617,6 +7917,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
     await _restoreRevolvingConfigsFromMirror();
+    unawaited(_refreshSyncSources());
   }
 
   /// リボ設定を `asset_pref_mirror` (pref_key: revolving_credit_configs) へ
@@ -7638,6 +7939,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('revolving config mirror upsert failed: $e');
     }
+    unawaited(_refreshSyncSources());
   }
 
   /// サーバ集約ミラーからリボ設定を復元する (集約優先 + legacy local fallback)。
@@ -8158,6 +8460,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (entries.isEmpty && rules.isEmpty) {
       unawaited(_restoreInflowsFromMirror());
     }
+    unawaited(_refreshSyncSources());
   }
 
   Future<void> _removeExpectedInflowRule(String id) async {
