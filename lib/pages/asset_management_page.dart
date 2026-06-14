@@ -8366,19 +8366,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() {
           _expectedInflowRules = rules;
         });
-        for (final rule in rules) {
-          if (!beforeRuleIds.contains(rule.id)) {
-            unawaited(
-              _mirrorInflowToSupabase(<String, dynamic>{
-                'id': rule.id,
-                'kind': 'rule',
-                'day_of_month': rule.dayOfMonth,
-                'amount': rule.amount,
-                'label': rule.label,
-              }),
-            );
-          }
-        }
+        unawaited(
+          _mirrorInflowsToSupabase(<Map<String, dynamic>>[
+            for (final rule in rules)
+              if (!beforeRuleIds.contains(rule.id))
+                <String, dynamic>{
+                  'id': rule.id,
+                  'kind': 'rule',
+                  'day_of_month': rule.dayOfMonth,
+                  'amount': rule.amount,
+                  'label': rule.label,
+                },
+          ]),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('毎月${selectedDate.day}日の入金予定を登録しました')),
         );
@@ -8396,19 +8396,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _expectedInflows = entries;
       });
-      for (final entry in entries) {
-        if (!beforeIds.contains(entry.id)) {
-          unawaited(
-            _mirrorInflowToSupabase(<String, dynamic>{
-              'id': entry.id,
-              'kind': 'one_time',
-              'date': DateFormat('yyyy-MM-dd').format(entry.date),
-              'amount': entry.amount,
-              'label': entry.label,
-            }),
-          );
-        }
-      }
+      unawaited(
+        _mirrorInflowsToSupabase(<Map<String, dynamic>>[
+          for (final entry in entries)
+            if (!beforeIds.contains(entry.id))
+              <String, dynamic>{
+                'id': entry.id,
+                'kind': 'one_time',
+                'date': DateFormat('yyyy-MM-dd').format(entry.date),
+                'amount': entry.amount,
+                'label': entry.label,
+              },
+        ]),
+      );
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('入金予定を追加しました。見込み残高に反映されます')));
@@ -8497,7 +8497,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
-  Future<void> _mirrorInflowToSupabase(Map<String, dynamic> row) async {
+  /// 複数の入金実体行を 1 回の upsert でまとめてミラーする (#part297 バッチ化)。
+  /// 行ごとに upsert を呼ぶと N 往復になるため、追加分はまとめて送る。
+  Future<void> _mirrorInflowsToSupabase(List<Map<String, dynamic>> rows) async {
+    if (rows.isEmpty) {
+      return;
+    }
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return;
@@ -8505,7 +8510,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       await _supabase
           .from('asset_expected_inflow_items')
-          .upsert(<String, dynamic>{...row, 'user_id': userId});
+          .upsert(<Map<String, dynamic>>[
+        for (final row in rows) <String, dynamic>{...row, 'user_id': userId},
+      ]);
     } catch (e) {
       debugPrint('inflow mirror upsert failed: $e');
     }
@@ -8863,24 +8870,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('古い削除記録を$removed件 掃除しました')),
+      SnackBar(content: Text('古い削除記録を${removed.total}件 掃除しました')),
     );
   }
 
-  /// 3 ドメインのトゥームストーンを掃除し、合算した削除件数を返す。
-  Future<int> _pruneAllTombstones() async {
+  /// 3 ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
+  Future<({int inflow, int override, int debt, int total})>
+      _pruneAllTombstones() async {
     final store = await SharedPreferences.getInstance();
-    final removedInflow = await _expectedInflowStore.pruneDeletedIds();
-    final removedOverride = await _displayModeStore.pruneDeletedSectionIds();
-    final removedDebt = await _debtOverrideTombstones.prune(store);
-    return removedInflow + removedOverride + removedDebt;
+    final inflow = await _expectedInflowStore.pruneDeletedIds();
+    final override = await _displayModeStore.pruneDeletedSectionIds();
+    final debt = await _debtOverrideTombstones.prune(store);
+    return (
+      inflow: inflow,
+      override: override,
+      debt: debt,
+      total: inflow + override + debt,
+    );
   }
 
   /// boot 時に期限切れ・上限超過のトゥームストーンを自動で掃除する
-  /// (SharedPreferences 肥大化の自動抑制 / #part296)。UI 通知はしない。
+  /// (SharedPreferences 肥大化の自動抑制 / #part296)。UI 通知はせず、
+  /// 掃除件数を debug ログに出して肥大化を観測する (#part297)。
   Future<void> _pruneTombstonesOnBoot() async {
     try {
-      await _pruneAllTombstones();
+      final removed = await _pruneAllTombstones();
+      if (removed.total > 0) {
+        debugPrint(
+          'boot tombstone prune: removed ${removed.total} '
+          '(inflow=${removed.inflow} override=${removed.override} '
+          'debt=${removed.debt})',
+        );
+      }
     } catch (e) {
       debugPrint('boot tombstone prune failed: $e');
     }

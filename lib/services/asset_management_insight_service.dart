@@ -1426,6 +1426,10 @@ class AssetManagementInsightPromptBuilder {
   String _cardBillingLines(AssetLiabilityWorkbook workbook) {
     final review = workbook.cardBillingReview;
     final reconciliation = workbook.cardStatementReconciliation;
+    final revolvingBillingAccountIds = <String>{
+      for (final row in workbook.debtMasterRows)
+        if (row.isRevolving) row.id,
+    };
     final buffer = StringBuffer();
     if (review.directPaymentItems.isEmpty &&
         review.cardBillingGroups.isEmpty &&
@@ -1439,9 +1443,13 @@ class AssetManagementInsightPromptBuilder {
       );
     }
     for (final group in review.cardBillingGroups) {
+      final revolvingNote =
+          revolvingBillingAccountIds.contains(group.billingAccountId)
+              ? ' / 注記:リボ払いのため下記内訳はリボ残高の紐づけ負債で、今月の請求額ではない'
+              : '';
       buffer.writeln(
         '- カード請求グループ:${group.billingAccountName} / 合計:${_formatAmount(group.totalAmount)} / '
-        '内訳:${group.items.map((item) => '${item.accountName} ${_formatAmount(item.amount)}').join('、')}',
+        '内訳:${group.items.map((item) => '${item.accountName} ${_formatAmount(item.amount)}').join('、')}$revolvingNote',
       );
     }
     for (final group in reconciliation.groups) {

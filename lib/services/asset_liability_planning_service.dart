@@ -1013,7 +1013,7 @@ class AssetLiabilityPlanningService {
       if (billingRow == null) {
         alerts.add(cardStatementBillingAccountMissingAlert);
       }
-      if (lines.isEmpty && group != null) {
+      if (!isRevolving && lines.isEmpty && group != null) {
         alerts.add(cardStatementMissingImportAlert);
       }
       if (!isRevolving &&
