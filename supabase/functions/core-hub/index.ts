@@ -1653,7 +1653,9 @@ serve(async (req: Request) => {
             ? githubIssue.number
             : null;
           const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
-          const userEmail = issueNumber ? await getUserEmail(admin, userId) : "";
+          const userEmail = issueNumber
+            ? await getUserEmail(admin, userId)
+            : "";
           const fromEmail = Deno.env.get("FEEDBACK_FROM_EMAIL") ??
             "noreply@jibun.app";
           if (resendKey && userEmail) {
