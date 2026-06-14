@@ -39,6 +39,7 @@ import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
@@ -59,6 +60,7 @@ import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
+import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7858,6 +7860,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(AssetManagementSectionId.calendar)) ...[
               _buildAssetCalendarCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
+              _buildCashflowForecastCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(AssetManagementSectionId.salaryBreakdown)) ...[
               _buildSalarySpendingBreakdownCard(),
@@ -10282,6 +10285,110 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
       _calendarSelectedDate = null;
     });
+  }
+
+  AssetCashflowRecurringEntry? _subscriptionRecurringEntry(
+    Map<String, dynamic> subscription,
+  ) {
+    final price = (subscription['price'] as num?)?.toDouble();
+    if (price == null || price <= 0) {
+      return null;
+    }
+    final dueDate = DateTime.tryParse(
+      subscription['due_date']?.toString() ?? '',
+    );
+    final name = subscription['service_name']?.toString().trim() ?? '';
+    return AssetCashflowRecurringEntry(
+      dayOfMonth: dueDate?.day ?? 1,
+      amount: price,
+      label: name.isEmpty ? '固定費' : name,
+    );
+  }
+
+  /// 現金・預金を起点に、繰り返し収入・固定費・返済予定を毎月積み上げた
+  /// 今後の残高見込みカード。登録データが無ければ非表示。
+  Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    var startingBalance = 0.0;
+    for (final account in workbook.accounts) {
+      final isLiquid = account.kind == AssetLiabilityAccountKind.cash ||
+          account.kind == AssetLiabilityAccountKind.deposit;
+      if (isLiquid && account.balance > 0) {
+        startingBalance += account.balance;
+      }
+    }
+
+    final recurringIncome = <AssetCashflowRecurringEntry>[
+      for (final template in _recurringIncomeTemplates)
+        if (template.dayOfMonth > 0 && template.amount > 0)
+          AssetCashflowRecurringEntry(
+            dayOfMonth: template.dayOfMonth,
+            amount: template.amount,
+            label: template.name,
+          ),
+      for (final rule in _expectedInflowRules)
+        if (rule.dayOfMonth > 0 && rule.amount > 0)
+          AssetCashflowRecurringEntry(
+            dayOfMonth: rule.dayOfMonth,
+            amount: rule.amount,
+            label: rule.label,
+          ),
+    ];
+
+    final subscriptionOutflow = <AssetCashflowRecurringEntry>[];
+    for (final subscription in _subscriptions) {
+      final entry = _subscriptionRecurringEntry(subscription);
+      if (entry != null) {
+        subscriptionOutflow.add(entry);
+      }
+    }
+    final recurringOutflow = <AssetCashflowRecurringEntry>[
+      for (final row in workbook.debtMasterRows)
+        if (row.isDirectCashflowTarget &&
+            row.balance < 0 &&
+            (row.paymentDay ?? 0) > 0 &&
+            row.scheduledPaymentAmount > 0)
+          AssetCashflowRecurringEntry(
+            dayOfMonth: row.paymentDay!,
+            amount: row.scheduledPaymentAmount,
+            label: row.name,
+          ),
+      ...subscriptionOutflow,
+    ];
+
+    final oneTimeIncome = <AssetCashflowDatedEntry>[
+      for (final inflow in _expectedInflows)
+        if (inflow.amount > 0)
+          AssetCashflowDatedEntry(
+            date: inflow.date,
+            amount: inflow.amount,
+            label: inflow.label,
+          ),
+    ];
+
+    if (recurringIncome.isEmpty &&
+        recurringOutflow.isEmpty &&
+        oneTimeIncome.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final forecast = AssetCashflowForecastService.project(
+      asOf: DateTime.now(),
+      startingBalance: startingBalance,
+      recurringIncome: recurringIncome,
+      recurringOutflow: recurringOutflow,
+      oneTimeIncome: oneTimeIncome,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetCashflowForecastCard(
+        forecast: forecast,
+        currencyFormatter: _formatYen,
+      ),
+    );
   }
 
   Widget _buildAssetCalendarCard(AssetLiabilityWorkbook? workbook) {
