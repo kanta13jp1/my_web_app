@@ -17,8 +17,7 @@ class GrowTogetherShare {
 
   /// X 投稿の本文。URL は intent の `url` パラメータで別途付与するため含めない
   /// （X 側が t.co 短縮し、本文の文字数を圧迫しないようにするため）。
-  static const String shareText =
-      'ユーザーが機能追加要望や改善要望、不具合報告をすると、'
+  static const String shareText = 'ユーザーが機能追加要望や改善要望、不具合報告をすると、'
       'AIが勝手にそれに対応してくれるアプリを作りました。\n\n'
       '使ってみてください。みんなでアプリを育てられます。\n\n'
       '自分株式会社';
