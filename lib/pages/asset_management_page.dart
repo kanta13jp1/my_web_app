@@ -274,6 +274,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 集約 pref ミラー行を採用すべきか判定する。フラグ ON 時は last-write-wins
   /// (ローカル最終変更 vs ミラー `updated_at`)、OFF 時は従来「ローカル空のときだけ」。
+  ///
+  /// ⚠️ 既知の制限 (#3415 / authoritative reads を有効化する前に per-key LWW 必須):
+  /// 戻り値はドメイン全体の単一タイムスタンプ比較に基づく bool。複数キーの Map
+  /// ドメイン (revolving_credit_configs / watchlist_entries /
+  /// debt_payment_day_overrides) では、別キーの編集でミラーの updated_at が新しく
+  /// なると、ローカルで新しく編集した別キーまで巻き添えでサーバ値に上書きされ、
+  /// 無音のデータ喪失が起こり得る。フラグ OFF (本番既定) では発火しない。有効化前に
+  /// 各衝突キーを resolveMirrorRead で個別解決する per-key LWW へ要改修。
   Future<bool> _shouldAdoptMirror({
     required String prefKey,
     required bool hasLocal,
@@ -5431,6 +5439,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (tombstoned.contains(entry.assetType)) {
           continue;
         }
+        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
+        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
         if (!merged.containsKey(entry.assetType) || adoptConflicts) {
           merged[entry.assetType] = entry;
           changed = true;
@@ -8307,6 +8317,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (tombstoned.contains(key)) {
           return;
         }
+        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
+        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
         if (!merged.containsKey(key) || adoptConflicts) {
           merged[key] = config;
           changed = true;
@@ -9461,6 +9473,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final merged = Map<String, int>.from(_debtPaymentDayOverrides);
       var changed = false;
       serverOverrides.forEach((key, day) {
+        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
+        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
         if (!merged.containsKey(key) || adoptConflicts) {
           merged[key] = day;
           changed = true;
