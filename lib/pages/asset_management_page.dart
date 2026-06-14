@@ -8887,17 +8887,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _restoreDisplayPrefsFromMirror() async {
-    if (_supabase.auth.currentUser == null) {
+    final debugRows = widget.debugMirrorPrefsRows;
+    if (_supabase.auth.currentUser == null && debugRows == null) {
       return;
     }
     if (await _displayModeStore.isRestoreDeclined()) {
       return;
     }
     try {
-      final rows = await _fetchDisplayPrefRows();
+      final rows = debugRows ?? await _fetchDisplayPrefRows();
       if (rows.isEmpty || !mounted) {
         return;
       }
+      // 他端末で削除されたセクション上書きは復元候補から除外する (削除伝播)。
+      // 通知フロー (evaluateMirrorPrefRows) と同じく storageId 文字列で照合する。
+      final deletedSectionIds = await _displayModeStore.loadDeletedSectionIds();
 
       AssetManagementDisplayMode? pendingMode;
       final pendingOverrides = <AssetManagementSectionId,
@@ -8917,6 +8921,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         if (row['pref_key'] == 'section_overrides') {
           for (final entry in value.entries) {
+            // 削除トゥームストーン済みのセクションは再提案しない (復活防止)。
+            if (deletedSectionIds.contains(entry.key.toString())) {
+              continue;
+            }
             AssetManagementSectionId? section;
             for (final candidate in AssetManagementSectionId.values) {
               if (candidate.storageId == entry.key.toString()) {
