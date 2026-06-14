@@ -1,7 +1,7 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/6/13 (JST)_
-_Active user tasks: 46_
+_Generated: 2026/6/14 (JST)_
+_Active user tasks: 64_
 
 ## 概要
 
@@ -19,7 +19,7 @@ NotebookLM に source として追加し、「具体的手順」「詰まりポ�
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -27,18 +27,33 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2604 / Author: kan
 
 ---
 
-### 🟡 ⏳ [Issue #1321] [追加要望] 付箋（コメント）のステータス管理（解決済み・アーカイブ）機能
+### 🟡 ⏳ [Issue #1239] [追加要望] CSVファイルを用いたデータ一括登録機能
 
-- **id**: `43ad8384-7e02-494f-a30e-e8a8afd2b35f`
+- **id**: `d87a697c-ba10-404a-bbf8-29fd5fcdd380`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:10:40Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1239 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T15:58:30Z
+
+---
+
+### 🟡 ⏳ [Issue #2737] [notebooklm:54b6f2f2:2] 非構造化データからの構造化JSON抽出とSupabase自動登録パイプライン
+
+- **id**: `c8923a4a-33ce-4bcf-b230-dbba869b2d2d`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-13
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2737 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:13:11Z
 
 ---
 
@@ -49,7 +64,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -64,7 +79,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1840 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -79,7 +94,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1228 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -94,7 +109,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1322 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -109,11 +124,41 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2601 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2703 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T02:58:47Z
+
+---
+
+### 🟡 ⏳ [Issue #1926] [PS#1 S26] NotebookLM未確認 notebooks Issue登録 — 2eb9f737/0829f536/d89ae1f5/b74e9ada 等11本
+
+- **id**: `8588c618-0ae9-4b3c-9e10-bf68667f083d`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-13
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1926 / Author: kanta13jp1 / Labels: 追加要望 / GitHub updated: 2026-05-03T13:53:04Z
+
+---
+
+### 🟡 ⏳ [Issue #2659] [notebooklm:2eb9f737:3] 人間のフィードバック（RLHF）に基づくGitHub Issue自動起票ワークフロー
+
+- **id**: `cef90435-7f6f-4b7b-b365-42e3a41ced1b`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-13
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2659 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T02:46:18Z
 
 ---
 
@@ -124,7 +169,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2703 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -139,7 +184,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2735 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -147,33 +192,18 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1289 / Author: kan
 
 ---
 
-### 🟡 ⏳ [Issue #1288] [追加要望] セキュアなデータベースID管理とデータ取得エンドポイントの最適化
+### 🟡 ⏳ [Issue #2712] [notebooklm:b74e9ada:2] 「Architectural Safety Checkpoints」に基づく自律エージェントの承認フロー構築
 
-- **id**: `9d79b0cd-a146-4ef5-bb4a-8a6f4231162f`
+- **id**: `11031204-e451-4b38-a94e-fc53662d9bd9`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1288 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:03:24Z
-
----
-
-### 🟡 ⏳ [Issue #1926] [PS#1 S26] NotebookLM未確認 notebooks Issue登録 — 2eb9f737/0829f536/d89ae1f5/b74e9ada 等11本
-
-- **id**: `8588c618-0ae9-4b3c-9e10-bf68667f083d`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-12
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1926 / Author: kanta13jp1 / Labels: 追加要望 / GitHub updated: 2026-05-03T13:53:04Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2712 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:01:21Z
 
 ---
 
@@ -184,7 +214,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1926 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -192,18 +222,18 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2743 / Author: kan
 
 ---
 
-### 🟡 ⏳ [Issue #2925] [追加要望][P2][NotebookLM] d420e53f:1 法人口座審査向けコーポレートサイト要件チェック及び簡易生成機能
+### 🟡 ⏳ [Issue #1321] [追加要望] 付箋（コメント）のステータス管理（解決済み・アーカイブ）機能
 
-- **id**: `6a10127b-d4d6-462e-8aba-d911745634d7`
+- **id**: `43ad8384-7e02-494f-a30e-e8a8afd2b35f`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2925 / Author: kanta13jp1 / Labels: enhancement, priority:medium, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T15:49:36Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:10:40Z
 
 ---
 
@@ -214,7 +244,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2925 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -229,7 +259,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2880 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -244,7 +274,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2705 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -252,33 +282,18 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2593 / Author: kan
 
 ---
 
-### 🟡 ⏳ [Issue #2737] [notebooklm:54b6f2f2:2] 非構造化データからの構造化JSON抽出とSupabase自動登録パイプライン
+### 🟡 ⏳ [Issue #2925] [追加要望][P2][NotebookLM] d420e53f:1 法人口座審査向けコーポレートサイト要件チェック及び簡易生成機能
 
-- **id**: `c8923a4a-33ce-4bcf-b230-dbba869b2d2d`
+- **id**: `6a10127b-d4d6-462e-8aba-d911745634d7`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2737 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:13:11Z
-
----
-
-### 🟡 ⏳ [Issue #2659] [notebooklm:2eb9f737:3] 人間のフィードバック（RLHF）に基づくGitHub Issue自動起票ワークフロー
-
-- **id**: `cef90435-7f6f-4b7b-b365-42e3a41ced1b`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-06-12
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2659 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T02:46:18Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2925 / Author: kanta13jp1 / Labels: enhancement, priority:medium, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T15:49:36Z
 
 ---
 
@@ -289,7 +304,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2659 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -297,48 +312,138 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2815 / Author: kan
 
 ---
 
-### 🟡 ⏳ [Issue #1239] [追加要望] CSVファイルを用いたデータ一括登録機能
+### 🟡 ⏳ [Issue #1288] [追加要望] セキュアなデータベースID管理とデータ取得エンドポイントの最適化
 
-- **id**: `d87a697c-ba10-404a-bbf8-29fd5fcdd380`
+- **id**: `9d79b0cd-a146-4ef5-bb4a-8a6f4231162f`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1239 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T15:58:30Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1288 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:03:24Z
 
 ---
 
-### 🟡 ⏳ [Issue #2712] [notebooklm:b74e9ada:2] 「Architectural Safety Checkpoints」に基づく自律エージェントの承認フロー構築
+### 🟡 ⏳ [Issue #3357] [追加要望] [資産管理] 支払原資口座の枯渇ウォッチに基づく自動口座移動提案の生成
 
-- **id**: `11031204-e451-4b38-a94e-fc53662d9bd9`
+- **id**: `4a2dffb4-f624-4e8c-9d1d-86e6795cb853`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-14
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2712 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:01:21Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3357 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T20:36:43Z
 
 ---
 
-### 🟡 ⏳ [Issue #1894] [NotebookLM][未適用7本] cookie再認証後に適用: ML Systems/Notion Comments/Claude Design/Gemini RN/Notion DB/Competitor/GCA Quotas
+### 🟡 ⏳ [Issue #3343] [追加要望] [資産管理] 支払原資口座の『見込み残高ショート』からの自動口座移動提案生成
 
-- **id**: `cf733cfa-e7e8-4122-b40c-0ef4bc6f5df6`
+- **id**: `40ebedb5-ab95-4ea7-9e4a-16e527f4b6f9`
 - **category**: GitHub Issue / Feature Request
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-15
+- **deadline**: 2026-06-14
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1894 / Author: kanta13jp1 / Labels: enhancement / GitHub updated: 2026-05-03T12:57:22Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3343 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T20:37:23Z
+
+---
+
+### 🟡 ⏳ [Issue #3326] [追加要望] [資産管理] カード明細取り込み失敗時の手動明細入力ウィザードと整合チェック
+
+- **id**: `f9251537-2599-423f-81b1-798db41886d0`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-14
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3326 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T13:14:19Z
+
+---
+
+### 🟡 ⏳ [Issue #3291] [追加要望] [資産管理] 入金予定ウィザードと必須チェック（給料日テンプレ即登録）
+
+- **id**: `88c21306-1b5f-4398-8518-c5003ed217a6`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-14
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3291 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T04:54:53Z
+
+---
+
+### 🟡 ⏳ [Issue #3349] [追加要望] [資産管理] カード明細照合の差分を『仮内訳』として即時登録できるUI追加
+
+- **id**: `a95eb43d-5749-4fa3-9008-08d2d81c82f0`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-14
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3349 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T19:56:01Z
+
+---
+
+### 🟡 ⏳ [Issue #3328] [追加要望] [資産管理] 口座見込み残高が安全残高を下回る際の赤帯アラートと即時振替起票ボタン
+
+- **id**: `9291ac7b-cdb3-4505-99fb-f6f706627817`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-14
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3328 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T13:22:40Z
+
+---
+
+### 🟡 ⏳ [Issue #3329] [追加要望] [資産管理] カード明細未取り込みの専用バナーと手動照合ウィザード追加
+
+- **id**: `cb2bd1e3-949a-4a22-9066-4e1b1eb62c3c`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-14
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3329 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T13:22:41Z
+
+---
+
+### 🟡 ⏳ [Issue #3354] [追加要望] [資産管理] 支払原資口座の優先順位ルールと自動口座移動起票
+
+- **id**: `a674fa34-c866-4181-a139-717a9b9500f5`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-14
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3354 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T20:28:30Z
 
 ---
 
@@ -357,6 +462,21 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3147 / Author: kan
 
 ---
 
+### 🟡 ⏳ [Issue #1894] [NotebookLM][未適用7本] cookie再認証後に適用: ML Systems/Notion Comments/Claude Design/Gemini RN/Notion DB/Competitor/GCA Quotas
+
+- **id**: `cf733cfa-e7e8-4122-b40c-0ef4bc6f5df6`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-06-16
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1894 / Author: kanta13jp1 / Labels: enhancement / GitHub updated: 2026-05-03T12:57:22Z
+
+---
+
 ### 🟡 ⏳ [Issue #2492] [追加要望][P2][資産管理][第2弾G] 確定申告export (CSV+e-Tax形式)
 
 - **id**: `c188e792-6c81-4973-b667-396a7ddcb046`
@@ -372,21 +492,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2492 / Author: kan
 
 ---
 
-### 🟡 ⏳ 商標出願 (自分株式会社 / Logo)
-
-- **id**: `debfb353-935a-4419-9733-5f3096b982e8`
-- **category**: business-legal
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-10-02
-
-**説明**:
-
-弁理士経由で日本商標出願 → 米国 + EU 展開検討
-
----
-
 ### 🟡 ⏳ 会計ソフト導入 (freee or マネフォ)
 
 - **id**: `8faaec7c-6f22-4fef-bb4c-9721981e5bb6`
@@ -399,6 +504,21 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2492 / Author: kan
 **説明**:
 
 freee / MoneyForward Cloud 比較 → 契約
+
+---
+
+### 🟡 ⏳ 商標出願 (自分株式会社 / Logo)
+
+- **id**: `debfb353-935a-4419-9733-5f3096b982e8`
+- **category**: business-legal
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-10-02
+
+**説明**:
+
+弁理士経由で日本商標出願 → 米国 + EU 展開検討
 
 ---
 
@@ -439,7 +559,7 @@ Tokyo 1 等地 / 登記住所 / 郵便受取
 - **progress**: 99%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2026-12-06
+- **deadline**: 2026-12-11
 
 **説明**:
 
@@ -454,7 +574,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1287 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-07-02
+- **deadline**: 2027-07-16
 
 **説明**:
 
@@ -477,7 +597,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2939
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-07-02
+- **deadline**: 2027-07-16
 
 **説明**:
 
@@ -500,7 +620,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2941
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -515,7 +635,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1731 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-06-12
+- **deadline**: 2026-06-13
 
 **説明**:
 
@@ -530,7 +650,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2235 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-06-15
+- **deadline**: 2026-06-16
 
 **説明**:
 
@@ -545,11 +665,429 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1728 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-09-26
+- **deadline**: 2026-09-27
 
 **説明**:
 
 渋谷 or 六本木 / 100 坪 / 5 年契約
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] 支払原資口座の『見込み残高ショート』からの自動口座移動提案生成
+
+- **id**: `0ad2f504-51d7-4003-b7ed-6bc039c3aa55`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-07-18
+
+**説明**:
+
+account_cashflow_summariesのprojected_balanceとupcoming_paymentsを用い、ショート予測時にtransfer_suggestionsを自動生成。『口座移動の提案』パネルからワンクリックでtransfer_tasksを作成可能にする。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- workbook.account_cashflow_summaries: 三井住友銀行大塚支店 current_balance=63539, upcoming_payments=40000, projected_balance=23539 (risk: watch)
+- workbook.transfer_suggestions: 空配列
+
+## 変更候補ファイル
+- lib/services/asset_liability_planning_service.dart
+- lib/pages/asset_management_page.dart
+
+## 実装手順
+- lib/services/asset_liability_planning_service.dart: projected_balance < minimum_safety_balance または upcoming_payments > current_balance のとき不足額を算出し、余力のある他口座からTransferSuggestionを生成。
+- lib/pages/asset_management_page.dart: 『口座移動の提案』パネルを追加し、提案からtransfer_tasksを作成保存できるUIを実装。
+
+## 受け入れ条件
+- 不足が検出されるとtransfer_suggestionsに具体案が出現し、ボタン一つでtransfer_tasksへ登録できること。
+- 登録後、画面再表示でtransfer_tasksに反映されること。
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3343
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] 支払原資口座の枯渇ウォッチに基づく自動口座移動提案の生成
+
+- **id**: `23c94c9f-3a64-45e4-a56e-0b7fede6f841`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-07-20
+
+**説明**:
+
+account_cashflow_summaries の projected_balance と risk_level を用いて、安全閾値（例: 1万円）未満が見込まれる口座に対し、余力口座からの補填 movement_suggestions を自動生成し、UIからワンクリックで口座移動タスクを作成できるようにする。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- account_cashflow_summaries: 三井住友銀行大塚支店 current 63,539円 / upcoming 40,000円 → projected 23,539円 (risk:watch)
+- movement_suggestions: 現状 count=0
+- transfer_tasks: 過去に 80,000円の移動タスク履歴あり（実績）
+
+## 変更候補ファイル
+- lib/services/asset_liability_planning_service.dart
+- lib/pages/asset_management_page.dart
+- docs/asset-management-wbs-plan.md
+
+## 実装手順
+- lib/services/asset_liability_planning_service.dart: projected_balance < safety_threshold かつ他口座に余力がある場合、movement_suggestions を自動生成（from/to/金額/期限）。
+- 安全閾値は定数化し docs に明記。履歴 transfer_tasks から推奨ルートを優先選択。
+- lib/pages/asset_management_page.dart: movement_suggestions をカード表示し、「提案を採用→口座移動タスク作成」導線を追加。
+
+## 受け入れ条件
+- watch/caution の口座があり、他口座に余力がある場合、少なくとも1件の movement_suggestions が表示されること。
+- 提案金額は余力口座の projected_balance − safety_threshold を超えないこと。
+- 作成された口座移動タスクが transfer_tasks に反映され、見込み残高が更新されること。
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3357
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] カード明細照合の差分を『仮内訳』として即時登録できるUI追加
+
+- **id**: `2df11e2b-9b42-46cc-ad63-a43d77d2457a`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-07-22
+
+**説明**:
+
+カード請求の請求額と内訳/取込明細に差分がある場合、その差分金額をワンタップで『仮内訳』として保存し、後で正式内訳に昇格/削除できる導線を提供する。三重不一致の放置を防ぐ。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- auPAYカード: billed=40,163 / configured=32,152 / statement_total=23,182
+- configured_difference=-8,011 / statement_difference=-16,981 / needs_review=true
+
+## 変更候補ファイル
+- lib/services/asset_liability_planning_service.dart
+- lib/pages/asset_management_page.dart
+- docs/asset-management-wbs-plan.md
+
+## 実装手順
+- lib/services/asset_liability_planning_service.dart: Workbookにprovisional_billing_details(List)を追加（billing_account_id, amount, memo, created_at）。
+- lib/pages/asset_management_page.dart: 照合差分の横に『仮内訳として追加』ボタンを実装。差分金額をそのままprovisionalに保存し、メモ入力ダイアログを表示。
+- 照合表示で仮内訳を薄色・バッジ付きで並べ、昇格/削除操作を実装。計算集計には含めない（ダブルカウント防止）。
+- docs/asset-management-wbs-plan.md: 仮内訳の運用フロー、翌月繰越時の要確認バッジ付与を明記。
+
+## 受け入れ条件
+- auPAYカードの差分-8,011円をボタン1回で仮内訳として登録し、画面に表示できること。
+- 仮内訳は正式内訳合計には含まれず視覚的に区別されること。
+- 仮内訳を削除/正式内訳へ昇格できること。
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3349
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] 支払原資口座の優先順位ルールと自動口座移動起票
+
+- **id**: `3d679e4c-382e-45c8-824b-24bcec32352d`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-07-23
+
+**説明**:
+
+支払原資の優先順位（口座ごとの優先配列・最低残高・除外）を設定し、自動で支払原資を割当。不足が見込まれる場合は transferSuggestions を生成して口座移動タスクをワンクリック起票できるようにする。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- account_cashflow_summaries: 三井住友銀行大塚支店 現在残高63,539円/今後支払40,000円/見込み23,539円（watch）
+- transfer_tasks: 手動での口座移動完了履歴あり（自動化余地）
+- debtMasterRows: payment_source_account_name が一部未設定・任意設定
+
+## 変更候補ファイル
+- lib/services/asset_liability_planning_service.dart
+- lib/services/asset_management_insight_service.dart
+- lib/pages/asset_management_page.dart
+- docs/asset-management-wbs-plan.md
+
+## 実装手順
+- lib/services/asset_liability_planning_service.dart に PaymentFundingRule モデルを追加し、支払いごとに source を自動割当。
+- 不足が出る場合は transferSuggestions を生成（from/to・金額・期限）。
+- lib/services/asset_management_insight_service.dart で不足時の移動提案を表示する文言を追加。
+- lib/pages/asset_management_page.dart に『口座移動起票』ボタンを追加し、transfer_tasks に登録する導線を実装。
+
+## 受け入れ条件
+- 支払前に不足が見込まれる場合、自動で具体的な口座移動提案が表示され、1操作でタスク登録できる。
+- FundingRule の編集がUIから行え、保存即時に割当結果へ反映される。
+- 重複起票が発生しない（dedupe_key により同一提案の再起票を防止）。
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3354
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] 入金予定ウィザードと必須チェック（給料日テンプレ即登録）
+
+- **id**: `4d15bd44-dbce-4f0b-8c2c-89194d5547f1`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-07-24
+
+**説明**:
+
+income_plansが未登録のまま支払確定へ進めてしまう問題に対し、給料日・金額・入金口座を一括登録するウィザードを追加し、未登録時は確認ダイアログで抑止。登録後にキャッシュフローを即再計算して不足額と期日別リスクを更新する。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- available_money.month.available_amount=-236,690円の不足
+- income_plans=[]（入金予定なし）
+- priority_situation_cardsに入金登録を促す助言あり
+
+## 変更候補ファイル
+- lib/pages/asset_management_page.dart
+- lib/services/asset_liability_planning_service.dart
+- lib/services/asset_management_insight_service.dart
+- docs/asset-management-wbs-plan.md
+
+## 実装手順
+- lib/pages/asset_management_page.dart に入金未登録バナーと『入金予定を登録』ボタンを追加
+- lib/services/asset_liability_planning_service.dart にincome_plansの保存・検証処理を実装
+- lib/services/asset_management_insight_service.dart で入金未登録時のcritical表示と支払確定前の確認ダイアログを追加
+- docs/asset-management-wbs-plan.md に入金必須フローの仕様を追記
+
+## 受け入れ条件
+- income_plans未設定時に警告バナーと登録ウィザードが表示される
+- 登録完了後、available_moneyとpayment_day_risksが即時更新される
+- 未設定のまま支払確定を押すと確認ダイアログが表示される（キャンセル可能）
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3291
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] カード明細取り込み失敗時の手動明細入力ウィザードと整合チェック
+
+- **id**: `60bee610-f25c-401f-85ac-2b8ea7075c25`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-07-25
+
+**説明**:
+
+カード請求の明細取り込みが無い/失敗した場合に、手動で明細行（日時・金額・摘要・カテゴリ）を入力できるウィザードを提供。入力後にconfigured_detail_totalとbilled_amountの一致を検証し、差分が0ならアラートを自動解消する。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- auPAYカード: billed_amount=40,163円 / configured_detail_total=32,152円 / has_statement_lines=false / 差分=8,011円（アラート）
+
+## 変更候補ファイル
+- lib/pages/asset_management_page.dart
+- lib/services/asset_liability_planning_service.dart
+- lib/services/asset_management_ai_summary_service.dart
+
+## 実装手順
+- lib/pages/asset_management_page.dart: 『手動で明細を追加』モーダルを実装（複数行入力・合計表示）。
+- lib/services/asset_liability_planning_service.dart: manual statement_linesを受け取り、configured_detail_totalとの整合チェックを実装。差分をcard_statement_reconciliationに反映。
+- lib/services/asset_management_ai_summary_service.dart: payloadにmanual_statement_pendingフラグを追加し、AI要約に完了促進の文面を出せるようにする。
+
+## 受け入れ条件
+- 手動で8,011円の1行を追加すると、auPAYカードの請求と内訳が一致し、アラートが消えること。
+- 一致しない場合は保存ブロックまたは警告が表示されること。
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3326
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] 口座見込み残高が安全残高を下回る際の赤帯アラートと即時振替起票ボタン
+
+- **id**: `85cb6e45-eee2-46cb-9d0c-083a09ce8091`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-07-28
+
+**説明**:
+
+account_cashflow_summaries の projected_balance と safety_balance を比較し、不足口座に赤帯アラートと「振替起票」ボタンを表示。押下で transfer_tasks を自動生成し、即時に資金手当てを促す。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- workbook.account_cashflow_summaries: 三井住友銀行大塚支店 projected_balance=23,539, risk_level=watch
+- workbook.transfer_suggestions: []（提案ゼロで手当て遅延の恐れ）
+
+## 変更候補ファイル
+- lib/pages/asset_management_page.dart
+- lib/services/asset_management_insight_service.dart
+- lib/services/asset_liability_planning_service.dart
+- docs/asset-management-wbs-plan.md
+
+## 実装手順
+- lib/services/asset_liability_planning_service.dart に safety_balance 比較の不足検出（shortfall_detail）を追加
+- lib/services/asset_management_insight_service.dart で不足口座向け transfer_suggestions を自動生成（金額=不足額）
+- lib/pages/asset_management_page.dart に赤帯アラートと「振替起票」ボタンを追加し、押下で transfer_task を作成・保存
+- docs/asset-management-wbs-plan.md に安全残高ポリシーとUX方針を追記
+
+## 受け入れ条件
+- projected_balance < safety_balance の口座に赤帯とボタンが表示されること
+- ボタン押下で transfer_tasks に1件追加され、画面更新で見込み残高が改善表示に変わること
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3328
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] カード明細未取り込みの専用バナーと手動照合ウィザード追加
+
+- **id**: `b10b88c0-0298-467c-84f8-94f450e16ea2`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-07-30
+
+**説明**:
+
+card_statement_reconciliation.needs_review がある場合、画面上部に専用バナーを表示し、3ステップの手動照合ウィザード（請求額確認→差分入力→保存）で configured_items を整合させる。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- card_statement_reconciliation.groups[0].alerts: 「カード明細の取り込みが未実施です」「設定済みカード内訳合計が請求額と一致しません」
+- billed_amount=40,163 / configured_detail_total=32,152 / 差分=8,011
+
+## 変更候補ファイル
+- lib/pages/asset_management_page.dart
+- lib/services/asset_management_insight_service.dart
+- docs/asset-management-wbs-plan.md
+
+## 実装手順
+- lib/services/asset_management_insight_service.dart で needs_review をUI用フラグに昇格
+- lib/pages/asset_management_page.dart にバナーと『手動照合を開始』ボタンを追加、モーダルウィザードで差分入力→保存を提供
+- docs/asset-management-wbs-plan.md に照合フローと保存仕様（暫定は月次オーバーライド）を追記（追加調査を明記）
+
+## 受け入れ条件
+- needs_review=true のときのみバナーが表示されること
+- ウィザード完了後、configured_detail_total が billed_amount と一致し、バナーが消えること
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3329
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] 口座見込み残高のショート予兆に対する自動口座移動提案とワンクリック作成
+
+- **id**: `e4658da1-2bcd-4786-8cba-6b6f89074dcf`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-08-01
+
+**説明**:
+
+account_cashflow_summariesでwatch/cautionまたは不足見込みの口座を検出し、他口座の余剰から移動候補（from/to/金額）を自動算出。画面で『提案から作成』ボタンを押すだけでtransferTasksに1件追加できるようにする。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- 三井住友銀行大塚支店: 現在63,539円 / 今後支払40,000円 / 見込み23,539円（watch）
+
+## 変更候補ファイル
+- lib/services/asset_liability_planning_service.dart
+- lib/pages/asset_management_page.dart
+
+## 実装手順
+- lib/services/asset_liability_planning_service.dart: transfer_suggestionsの生成ロジックを追加（不足/予兆口座へ余剰口座からの候補算出）。
+- lib/pages/asset_management_page.dart: 提案一覧を表示し、『提案から口座移動タスクを作成』ボタンでtransferTasksに反映。
+
+## 受け入れ条件
+- watch/caution口座があるとき、最低1件の移動提案が表示されること。
+- 『提案から作成』操作でtransferTasksに新規タスクが追加され、見込み残高が更新表示されること。
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3325
+
+---
+
+### 🟢 ⏳ [追加要望] [資産管理] 口座見込み残高の安全割れ検知と『差替え口座移動』ワンタップ提案
+
+- **id**: `f21e5bd3-939b-4f01-97cd-df9145cfed1d`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-08-02
+
+**説明**:
+
+account_cashflow_summariesでprojected_balanceが安全残高を下回る口座を検知し、余力口座からの補填移動を自動提案。1タップでtransfer_tasksに下書き登録できるUIを追加する。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- account_cashflow_summaries: 三井住友銀行大塚支店 projected_balance=23,539 (risk_level:watch)
+- transfer_tasks: 過去に大塚→じぶん 80,000円は完了済。今後の不足に対する自動提案は無い。
+
+## 変更候補ファイル
+- lib/services/asset_management_insight_service.dart
+- lib/pages/asset_management_page.dart
+- docs/asset-management-wbs-plan.md
+
+## 実装手順
+- lib/services/asset_management_insight_service.dart: _buildMovementSuggestionsで projected_balance < minimum_safety_balance*1.5 を検知し、余力口座からの補填金額を提案（Dart計算値）。
+- lib/pages/asset_management_page.dart: 『差替え口座移動を提案』カードを追加し、採用→transfer_tasksに下書き保存する導線を追加。
+- docs/asset-management-wbs-plan.md: 安全残高ポリシーと差替え提案の仕様を追記。
+
+## 受け入れ条件
+- 本データで大塚支店に対し、じぶん銀行→大塚支店の補填提案が表示され、1タップでtransfer_tasksに登録される。
+- 提案はユーザー承認なしに自動実行されない。
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3318
 
 ---
 
@@ -560,11 +1098,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1728 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-06-13
+- **deadline**: 2026-06-14
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kanta13jp1 / Labels: enhancement, priority:high, automation, triage:done, 追加要望, wbs, notebooklm / GitHub updated: 2026-06-12T22:47:10Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kanta13jp1 / Labels: enhancement, priority:high, automation, triage:done, 追加要望, wbs, notebooklm / GitHub updated: 2026-06-13T22:38:10Z
 
 ---
 
@@ -598,21 +1136,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kan
 
 ---
 
-### 🔴 ⏳ 株式会社設立登記
-
-- **id**: `be8c9faa-6cb1-495a-9695-d0a95b8043af`
-- **category**: business-legal
-- **progress**: 0%
-- **status**: pending
-- **priority**: high
-- **deadline**: 2026-08-30
-
-**説明**:
-
-定款認証 → 設立登記 → 印鑑証明
-
----
-
 ### 🔴 ⏳ 司法書士・税理士契約
 
 - **id**: `bada5e2d-53da-46d0-b823-df68d5bef83d`
@@ -625,6 +1148,21 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kan
 **説明**:
 
 法人設立 + 顧問税理士 2 社相見積り
+
+---
+
+### 🔴 ⏳ 株式会社設立登記
+
+- **id**: `be8c9faa-6cb1-495a-9695-d0a95b8043af`
+- **category**: business-legal
+- **progress**: 0%
+- **status**: pending
+- **priority**: high
+- **deadline**: 2026-08-30
+
+**説明**:
+
+定款認証 → 設立登記 → 印鑑証明
 
 ---
 
