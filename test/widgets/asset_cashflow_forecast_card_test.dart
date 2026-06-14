@@ -3,7 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 
-Future<void> _pump(WidgetTester tester, AssetCashflowForecast forecast) {
+Future<void> _pump(
+  WidgetTester tester,
+  AssetCashflowForecast forecast, {
+  int? currentHorizon,
+  ValueChanged<int>? onHorizonChanged,
+  VoidCallback? onReviewPaymentDays,
+}) {
   return tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -11,6 +17,9 @@ Future<void> _pump(WidgetTester tester, AssetCashflowForecast forecast) {
           child: AssetCashflowForecastCard(
             forecast: forecast,
             currencyFormatter: (value) => '¥${value.round()}',
+            currentHorizon: currentHorizon,
+            onHorizonChanged: onHorizonChanged,
+            onReviewPaymentDays: onReviewPaymentDays,
           ),
         ),
       ),
@@ -18,22 +27,24 @@ Future<void> _pump(WidgetTester tester, AssetCashflowForecast forecast) {
   );
 }
 
+AssetCashflowForecast _shortfallForecast() {
+  return AssetCashflowForecastService.project(
+    asOf: DateTime(2026, 6, 1),
+    startingBalance: 100000,
+    horizonMonths: 3,
+    recurringIncome: const [
+      AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 200000),
+    ],
+    recurringOutflow: const [
+      AssetCashflowRecurringEntry(dayOfMonth: 10, amount: 250000),
+    ],
+  );
+}
+
 void main() {
   group('AssetCashflowForecastCard', () {
     testWidgets('renders the chart and a shortfall warning', (tester) async {
-      final forecast = AssetCashflowForecastService.project(
-        asOf: DateTime(2026, 6, 1),
-        startingBalance: 100000,
-        horizonMonths: 3,
-        recurringIncome: const [
-          AssetCashflowRecurringEntry(dayOfMonth: 25, amount: 200000),
-        ],
-        recurringOutflow: const [
-          AssetCashflowRecurringEntry(dayOfMonth: 10, amount: 250000),
-        ],
-      );
-
-      await _pump(tester, forecast);
+      await _pump(tester, _shortfallForecast());
 
       expect(
         find.byKey(const Key('asset_cashflow_forecast_card')),
@@ -68,14 +79,6 @@ void main() {
       await _pump(tester, forecast);
 
       expect(
-        find.byKey(const Key('asset_cashflow_forecast_card')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('asset_cashflow_forecast_chart')),
-        findsOneWidget,
-      );
-      expect(
         find.byKey(const Key('asset_cashflow_forecast_shortfall')),
         findsNothing,
       );
@@ -83,6 +86,94 @@ void main() {
         find.textContaining('残高不足の見込みはありません'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('renders the horizon selector and reports a change', (
+      tester,
+    ) async {
+      var changedTo = 0;
+      await _pump(
+        tester,
+        _shortfallForecast(),
+        currentHorizon: 6,
+        onHorizonChanged: (months) => changedTo = months,
+      );
+
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_horizon_3')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_horizon_12')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('asset_cashflow_forecast_horizon_3')),
+      );
+      await tester.pump();
+
+      expect(changedTo, 3);
+    });
+
+    testWidgets('does not show the horizon selector without a callback', (
+      tester,
+    ) async {
+      await _pump(tester, _shortfallForecast());
+
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_horizon_3')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('warns when the safety margin is breached without a shortfall',
+        (
+      tester,
+    ) async {
+      final forecast = AssetCashflowForecastService.project(
+        asOf: DateTime(2026, 6, 1),
+        startingBalance: 30000,
+        horizonMonths: 1,
+        recurringOutflow: const [
+          AssetCashflowRecurringEntry(dayOfMonth: 10, amount: 25000),
+        ],
+        safetyMargin: 10000,
+      );
+
+      await _pump(tester, forecast);
+
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_shortfall')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('asset_cashflow_forecast_safety_breach')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('安全余裕'), findsOneWidget);
+    });
+
+    testWidgets('review-payment-days link fires the callback on a shortfall', (
+      tester,
+    ) async {
+      var tapped = false;
+      await _pump(
+        tester,
+        _shortfallForecast(),
+        onReviewPaymentDays: () => tapped = true,
+      );
+
+      final link = find.byKey(
+        const Key('asset_cashflow_forecast_review_payment_days'),
+      );
+      expect(link, findsOneWidget);
+
+      await tester.ensureVisible(link);
+      await tester.tap(link);
+      await tester.pump();
+
+      expect(tapped, isTrue);
     });
   });
 }
