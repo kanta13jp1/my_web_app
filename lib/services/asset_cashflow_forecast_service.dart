@@ -91,8 +91,7 @@ class AssetCashflowForecast {
   bool get hasShortfall => firstShortfallDate != null;
 
   /// ショート回避に必要な追加資金(=最大不足幅)。ショートなしなら 0。
-  double get shortfallRecoveryAmount =>
-      worstBalance < 0 ? -worstBalance : 0;
+  double get shortfallRecoveryAmount => worstBalance < 0 ? -worstBalance : 0;
 
   /// 安全余裕を割り込む不足額(安全線維持に必要な額)。ショートなしでも > 0 になりうる。
   double get safetyShortfallAmount =>

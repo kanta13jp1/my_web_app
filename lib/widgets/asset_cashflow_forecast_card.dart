@@ -242,9 +242,8 @@ class _ForecastChartPainter extends CustomPainter {
       final value = series[i];
       final isShortfall = i > 0 && forecast.months[i - 1].isShortfall;
       final pointPaint = Paint()
-        ..color = isShortfall
-            ? const Color(0xFFDC2626)
-            : const Color(0xFF4F46E5)
+        ..color =
+            isShortfall ? const Color(0xFFDC2626) : const Color(0xFF4F46E5)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(xFor(i), yFor(value)), 3, pointPaint);
     }
