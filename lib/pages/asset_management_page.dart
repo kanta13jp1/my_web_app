@@ -139,6 +139,16 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugRevolvingConfigsMirror;
 
+  /// テスト専用: メイン口座IDの集約ミラー値 (`{'id': '...'}`) を注入し、
+  /// 端末間同期 (起動時のミラー復元) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugMainAccountMirror;
+
+  /// テスト専用: ウォッチリストの集約ミラー値 (`{'entries': [...]}`) を注入し、
+  /// 端末間同期 (起動時のミラー復元) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugWatchlistMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -154,6 +164,8 @@ class AssetManagementPage extends StatefulWidget {
     this.debugSectionOverrideDeletedMirror,
     this.debugDebtOverrideDeletedMirror,
     this.debugRevolvingConfigsMirror,
+    this.debugMainAccountMirror,
+    this.debugWatchlistMirror,
   });
 
   @override
@@ -5124,12 +5136,77 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return entries;
   }
 
+  /// ウォッチリストの集約ミラー pref_key (1 行 jsonb / MIRROR_PREF_SCHEMA.md)。
+  static const String _watchlistMirrorKey = 'watchlist_entries';
+
   Future<void> _loadWatchlistEntries() async {
     final entries = await widget.watchlistService.loadEntries();
-    if (!mounted) return;
-    setState(() {
-      _setWatchlistEntries(entries);
-    });
+    if (mounted) {
+      setState(() {
+        _setWatchlistEntries(entries);
+      });
+    }
+    // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
+    await _restoreWatchlistFromMirror();
+  }
+
+  /// ウォッチリストを `asset_pref_mirror` (pref_key: watchlist_entries) へ
+  /// 1 行 upsert する (リボ設定と同じ集約方針 / #3352)。
+  Future<void> _mirrorWatchlist() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _watchlistMirrorKey,
+        'value': AssetWatchlistService.encodeMirrorValue(
+          _watchlistByType.values.toList(),
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('watchlist mirror upsert failed: $e');
+    }
+  }
+
+  /// サーバ集約ミラーからウォッチリストを復元する (集約優先 + legacy local fallback)。
+  /// ローカルに既に項目がある場合は上書きしない (オフライン編集を握り潰さない安全側)。
+  Future<void> _restoreWatchlistFromMirror() async {
+    final debugMirror = widget.debugWatchlistMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    if (_watchlistByType.isNotEmpty) {
+      return;
+    }
+    try {
+      final dynamic value;
+      if (debugMirror != null) {
+        value = debugMirror;
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _watchlistMirrorKey);
+        if (rows.isEmpty) {
+          return;
+        }
+        value = rows.first['value'];
+      }
+      final restored = AssetWatchlistService.decodeMirrorValue(value);
+      if (restored.isEmpty || _watchlistByType.isNotEmpty || !mounted) {
+        return;
+      }
+      setState(() {
+        _setWatchlistEntries(restored);
+      });
+      // オフライン参照用にローカルへも書き戻す。
+      unawaited(widget.watchlistService.replaceAll(restored));
+    } catch (e) {
+      debugPrint('watchlist mirror restore failed: $e');
+    }
   }
 
   void _jumpToAssetType(String type) {
@@ -5198,6 +5275,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   setState(() {
                     _setWatchlistEntries(entries);
                   });
+                  unawaited(_mirrorWatchlist());
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
@@ -5225,6 +5303,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 setState(() {
                   _setWatchlistEntries(entries);
                 });
+                unawaited(_mirrorWatchlist());
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
                 }
@@ -5560,6 +5639,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   _sortAssetTypes(); // ★ 削除時にも並び替え
                   _updateChartData();
                 });
+                unawaited(_mirrorWatchlist());
               }
               if (context.mounted) Navigator.pop(context);
             },
@@ -7430,17 +7510,82 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// メイン口座IDの集約ミラー pref_key (1 行 jsonb / MIRROR_PREF_SCHEMA.md)。
+  static const String _mainAccountMirrorKey = 'main_account_id';
+
   Future<void> _loadMainAccount() async {
     try {
       final id = await _mainAccountStore.load();
-      if (!mounted || id == _assetManagementMainAccountId) {
+      if (mounted && id != _assetManagementMainAccountId) {
+        setState(() {
+          _assetManagementMainAccountId = id;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading main account: $e');
+    }
+    // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
+    await _restoreMainAccountFromMirror();
+  }
+
+  /// メイン口座IDを `asset_pref_mirror` (pref_key: main_account_id) へ
+  /// 1 行 upsert する (リボ設定と同じ集約方針 / #3352)。
+  Future<void> _mirrorMainAccount() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _mainAccountMirrorKey,
+        'value': AssetManagementMainAccountStore.encodeMirrorValue(
+          _assetManagementMainAccountId,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('main account mirror upsert failed: $e');
+    }
+  }
+
+  /// サーバ集約ミラーからメイン口座IDを復元する (集約優先 + legacy local fallback)。
+  /// ローカルに既に設定がある場合は上書きしない (オフライン編集を握り潰さない安全側)。
+  Future<void> _restoreMainAccountFromMirror() async {
+    final debugMirror = widget.debugMainAccountMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    if (_assetManagementMainAccountId != null) {
+      return;
+    }
+    try {
+      final dynamic value;
+      if (debugMirror != null) {
+        value = debugMirror;
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _mainAccountMirrorKey);
+        if (rows.isEmpty) {
+          return;
+        }
+        value = rows.first['value'];
+      }
+      final restored = AssetManagementMainAccountStore.decodeMirrorValue(value);
+      if (restored == null ||
+          _assetManagementMainAccountId != null ||
+          !mounted) {
         return;
       }
       setState(() {
-        _assetManagementMainAccountId = id;
+        _assetManagementMainAccountId = restored;
       });
+      // オフライン参照用にローカルへも書き戻す。
+      unawaited(_mainAccountStore.save(restored));
     } catch (e) {
-      debugPrint('Error loading main account: $e');
+      debugPrint('main account mirror restore failed: $e');
     }
   }
 
@@ -7453,6 +7598,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('Error saving main account: $e');
     }
+    unawaited(_mirrorMainAccount());
   }
 
   /// リボ設定の集約ミラー pref_key (1 行 jsonb / MIRROR_PREF_SCHEMA.md)。
