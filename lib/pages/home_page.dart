@@ -21,6 +21,7 @@ import '../services/feature_strategy_ai_review_service.dart';
 import '../services/feature_strategy_focus_action_service.dart';
 import '../services/feature_strategy_monitor_service.dart';
 import '../services/feature_strategy_report_snapshot_service.dart';
+import '../services/grow_together_share.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/life_waste_elimination_service.dart';
 import '../services/personality_test_service.dart';
@@ -53,6 +54,7 @@ import '../widgets/ga_readiness_gate_panel.dart';
 import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
+import '../widgets/grow_together_share_card.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
 import '../widgets/referral_share_card.dart';
@@ -6693,7 +6695,7 @@ abstinence_slip_details: $slipDetailsText
       );
     }
 
-    return Card(
+    final formCard = Card(
       elevation: 0,
       color: isDark ? const Color(0xFF111827) : Colors.white,
       shape: RoundedRectangleBorder(
@@ -6896,6 +6898,56 @@ abstinence_slip_details: $slipDetailsText
                           label: const Text('Issue URLコピー'),
                         ),
                       ],
+                      const SizedBox(height: 10),
+                      const Divider(height: 1, color: Color(0x33047857)),
+                      const SizedBox(height: 10),
+                      const Text(
+                        '要望をありがとうございます。あなたの一言がそのまま開発タスクになります。'
+                        'この仕組みをXで広めて、一緒にアプリを育てる仲間を増やしませんか？',
+                        style: TextStyle(
+                          color: Color(0xFF065F46),
+                          fontSize: 12,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.icon(
+                          key: const Key(
+                            'feature_request_share_x_button',
+                          ),
+                          onPressed: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            final opened =
+                                await GrowTogetherShare.launchXShare();
+                            if (!mounted || opened) return;
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Xの投稿画面を開けませんでした。本文をコピーして共有してください。',
+                                ),
+                              ),
+                            );
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF000000),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Text(
+                            '𝕏',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          label: const Text('Xでシェアして仲間を増やす'),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -6904,6 +6956,15 @@ abstinence_slip_details: $slipDetailsText
           ),
         ),
       ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        formCard,
+        const SizedBox(height: 16),
+        GrowTogetherShareCard(isDark: isDark, isCompact: isCompact),
+      ],
     );
   }
 
