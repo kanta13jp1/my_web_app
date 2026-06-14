@@ -324,6 +324,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// union マージでローカルデータが変化した後、ローカル更新時刻をミラー版
+  /// ([mirrorUpdatedAt]) へ揃える。additive 追加や tombstone 除去でも整合させ、
+  /// 次回 LWW で「この端末は古い」と誤判定されるのを防ぐ。ローカルの方が新しい
+  /// 場合は退行させない (max を採用 / review #2)。
+  Future<void> _realignMirrorTimestamp(
+    String prefKey,
+    DateTime? mirrorUpdatedAt,
+  ) async {
+    if (mirrorUpdatedAt == null) {
+      return;
+    }
+    final localUpdatedAt = await _syncTimestampStore.loadTimestamp(prefKey);
+    if (localUpdatedAt != null && localUpdatedAt.isAfter(mirrorUpdatedAt)) {
+      return;
+    }
+    await _syncTimestampStore.markChanged(prefKey, at: mirrorUpdatedAt);
+  }
+
   // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
   List<String> _assetTypes = ['現金'];
@@ -626,9 +644,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 他端末で削除されたセクション上書き / 支払日上書きを取り込む (#part292/294)。
     unawaited(_pullDeletedSectionIds());
     unawaited(_pullDebtOverrideDeleted());
-    // 他端末で削除されたリボ設定 / ウォッチリストを取り込む (clear 伝播)。
-    unawaited(_pullRevolvingDeleted());
-    unawaited(_pullWatchlistDeleted());
+    // リボ設定 / ウォッチリストの削除トゥームストーンは restore と同一フューチャ内で
+    // pull→restore の順に直列化する (_loadRevolvingConfigs / _loadWatchlistEntries
+    // 内 / review #1 restore↔pull レース対策)。
     // 期限切れ・上限超過のトゥームストーンを自動掃除 (#part296 肥大化抑制)。
     unawaited(_pruneTombstonesOnBoot());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -5260,6 +5278,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _setWatchlistEntries(entries);
       });
     }
+    // 先に他端末の削除トゥームストーンを取込んでから復元する。restore より前に
+    // pull を直列化し、stale な tombstone での削除項目の復活/backfill を防ぐ
+    // (review #1 restore↔pull レース)。
+    await _pullWatchlistDeleted();
     // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
     await _restoreWatchlistFromMirror();
     unawaited(_refreshSyncSources());
@@ -5453,14 +5475,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
         // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
         unawaited(widget.watchlistService.replaceAll(mergedList));
-        if (adoptConflicts) {
-          unawaited(
-            _syncTimestampStore.markChanged(
-              _watchlistMirrorKey,
-              at: mirrorUpdatedAt,
-            ),
-          );
-        }
+        // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
+        // (review #2 / ローカルが新しければ退行しない)。
+        unawaited(
+          _realignMirrorTimestamp(_watchlistMirrorKey, mirrorUpdatedAt),
+        );
       }
       // ローカルにあってサーバに無い項目は、マージ結果をサーバへバックフィル。
       final localHasExtra = localTypes.any(
@@ -8189,6 +8208,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('Error loading revolving credit configs: $e');
     }
+    // 先に他端末の削除トゥームストーンを取込んでから復元する (review #1 直列化)。
+    await _pullRevolvingDeleted();
     // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
     await _restoreRevolvingConfigsFromMirror();
     unawaited(_refreshSyncSources());
@@ -8329,14 +8350,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _revolvingConfigs = merged;
         });
         unawaited(_revolvingConfigStore.save(merged));
-        if (adoptConflicts) {
-          unawaited(
-            _syncTimestampStore.markChanged(
-              _revolvingConfigsMirrorKey,
-              at: mirrorUpdatedAt,
-            ),
-          );
-        }
+        // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
+        // (review #2 / ローカルが新しければ退行しない)。
+        unawaited(
+          _realignMirrorTimestamp(_revolvingConfigsMirrorKey, mirrorUpdatedAt),
+        );
       }
       // ローカルにあってサーバに無い負債キーは、マージ結果をサーバへ
       // バックフィルし、サーバを全端末の和集合に保つ。
@@ -9485,14 +9503,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _debtPaymentDayOverrides = merged;
         });
         unawaited(_saveDebtPaymentDayOverrides());
-        if (adoptConflicts) {
-          unawaited(
-            _syncTimestampStore.markChanged(
-              'debt_payment_day_overrides',
-              at: mirrorUpdatedAt,
-            ),
-          );
-        }
+        // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
+        // (review #2 / ローカルが新しければ退行しない)。
+        unawaited(
+          _realignMirrorTimestamp(
+            'debt_payment_day_overrides',
+            mirrorUpdatedAt,
+          ),
+        );
         // 初回復元 (ローカル空) のときだけ通知。
         if (!hasLocal) {
           ScaffoldMessenger.of(context).showSnackBar(
