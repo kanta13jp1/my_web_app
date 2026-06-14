@@ -910,15 +910,16 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('Phase B flag on: mirror overrides non-empty local (LWW)', (
+    testWidgets('Phase B flag on: same-key conflict adopts server (LWW)', (
       tester,
     ) async {
-      // 端末B はローカルに古いウォッチリストを持つ (タイムスタンプ未記録 = legacy)。
+      // ローカルに gold(group=old / タイムスタンプ未記録) があり、サーバに同じ
+      // gold(group=new) がある衝突状態。union マージでは衝突キーの採否のみフラグで変わる。
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
           <String, dynamic>{
-            'assetType': 'old_local',
-            'group': '',
+            'assetType': 'gold',
+            'group': 'old',
             'memo': '',
             'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
           },
@@ -934,8 +935,8 @@ void main() {
             debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
               <AssetWatchlistEntry>[
                 AssetWatchlistEntry(
-                  assetType: 'server_new',
-                  group: 'invest',
+                  assetType: 'gold',
+                  group: 'new',
                   memo: '',
                   addedAt: DateTime.utc(2026, 6, 14),
                 ),
@@ -947,22 +948,22 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // フラグ ON の LWW でサーバ値が採用され、ローカルへ書き戻される。
+      // フラグ ON: 衝突キー gold はサーバ値 (group=new) が採用される。
       final synced = await const AssetWatchlistService().loadEntries();
-      expect(synced.map((e) => e.assetType), contains('server_new'));
-      expect(synced.map((e) => e.assetType), isNot(contains('old_local')));
+      final gold = synced.firstWhere((e) => e.assetType == 'gold');
+      expect(gold.group, 'new');
 
       await _unmount(tester);
     });
 
-    testWidgets('Phase B flag off (default): mirror does not clobber local', (
+    testWidgets('Phase B flag off (default): same-key conflict keeps local', (
       tester,
     ) async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
           <String, dynamic>{
-            'assetType': 'kept_local',
-            'group': '',
+            'assetType': 'gold',
+            'group': 'old',
             'memo': '',
             'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
           },
@@ -978,8 +979,8 @@ void main() {
             debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
               <AssetWatchlistEntry>[
                 AssetWatchlistEntry(
-                  assetType: 'server_value',
-                  group: '',
+                  assetType: 'gold',
+                  group: 'new',
                   memo: '',
                   addedAt: DateTime.utc(2026, 6, 14),
                 ),
@@ -991,10 +992,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 300));
 
-      // フラグ OFF なので非空ローカルは維持される (従来挙動)。
+      // フラグ OFF: 衝突キー gold はローカル値 (group=old) を維持。
       final local = await const AssetWatchlistService().loadEntries();
-      expect(local.map((e) => e.assetType), contains('kept_local'));
-      expect(local.map((e) => e.assetType), isNot(contains('server_value')));
+      final gold = local.firstWhere((e) => e.assetType == 'gold');
+      expect(gold.group, 'old');
 
       await _unmount(tester);
     });
