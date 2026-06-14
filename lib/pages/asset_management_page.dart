@@ -169,6 +169,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugRevolvingDeletedMirror;
 
+  /// テスト専用: ウォッチリストの削除トゥームストーン値 (`{'ids': [...]}`) を注入し、
+  /// 削除伝播をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugWatchlistDeletedMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -189,6 +194,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugMirrorReadsAuthoritative,
     this.debugDebtOverridesMirror,
     this.debugRevolvingDeletedMirror,
+    this.debugWatchlistDeletedMirror,
   });
 
   @override
@@ -610,8 +616,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 他端末で削除されたセクション上書き / 支払日上書きを取り込む (#part292/294)。
     unawaited(_pullDeletedSectionIds());
     unawaited(_pullDebtOverrideDeleted());
-    // 他端末で削除されたリボ設定を取り込む (clear 伝播)。
+    // 他端末で削除されたリボ設定 / ウォッチリストを取り込む (clear 伝播)。
     unawaited(_pullRevolvingDeleted());
+    unawaited(_pullWatchlistDeleted());
     // 期限切れ・上限超過のトゥームストーンを自動掃除 (#part296 肥大化抑制)。
     unawaited(_pruneTombstonesOnBoot());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -5271,6 +5278,88 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_refreshSyncSources());
   }
 
+  /// 削除したウォッチリスト項目のトゥームストーン (clear 伝播 / 復活防止)。
+  static const MirrorTombstoneStore _watchlistTombstones = MirrorTombstoneStore(
+    storageKey: 'watchlist_entries_deleted_v1',
+  );
+
+  Future<void> _recordWatchlistTombstone(
+    String assetType, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _watchlistTombstones.addId(store, assetType);
+    } else {
+      await _watchlistTombstones.removeId(store, assetType);
+    }
+    unawaited(_mirrorWatchlistDeleted());
+  }
+
+  /// ウォッチリストの削除トゥームストーンをサーバへ反映 (他端末伝播)。
+  Future<void> _mirrorWatchlistDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _watchlistTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'watchlist_entries_deleted',
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('watchlist tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除されたウォッチリスト項目を取り込み、ローカルからも除去する。
+  Future<void> _pullWatchlistDeleted() async {
+    final debugMirror = widget.debugWatchlistDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', 'watchlist_entries_deleted');
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _watchlistTombstones.mergeRemoteIds(store, ids);
+      final next = Map<String, AssetWatchlistEntry>.from(_watchlistByType);
+      final before = next.length;
+      next.removeWhere((key, _) => incoming.contains(key));
+      if (next.length == before || !mounted) {
+        return;
+      }
+      final mergedList = next.values.toList();
+      setState(() {
+        _setWatchlistEntries(mergedList);
+      });
+      unawaited(widget.watchlistService.replaceAll(mergedList));
+    } catch (e) {
+      debugPrint('watchlist tombstone pull failed: $e');
+    }
+  }
+
   /// サーバ集約ミラーからウォッチリストを復元する (集約優先 + legacy local fallback)。
   /// ローカルに既に項目がある場合は上書きしない (オフライン編集を握り潰さない安全側)。
   Future<void> _restoreWatchlistFromMirror() async {
@@ -5279,6 +5368,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final hasLocal = _watchlistByType.isNotEmpty;
+    // 削除トゥームストーン: 復活させない / バックフィルしない。
+    final tombstoned = _watchlistTombstones.activeIds(
+      await SharedPreferences.getInstance(),
+    );
     // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
     if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
       unawaited(
@@ -5323,8 +5416,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final merged = Map<String, AssetWatchlistEntry>.from(_watchlistByType);
       final serverTypes = <String>{};
       var changed = false;
+      // 削除トゥームストーン済み項目はローカルからも除く (clear 伝播 / 復活防止)。
+      merged.removeWhere((key, _) {
+        if (tombstoned.contains(key)) {
+          changed = true;
+          return true;
+        }
+        return false;
+      });
       for (final entry in serverEntries) {
         serverTypes.add(entry.assetType);
+        if (tombstoned.contains(entry.assetType)) {
+          continue;
+        }
         if (!merged.containsKey(entry.assetType) || adoptConflicts) {
           merged[entry.assetType] = entry;
           changed = true;
@@ -5348,7 +5452,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       // ローカルにあってサーバに無い項目は、マージ結果をサーバへバックフィル。
       final localHasExtra = localTypes.any(
-        (type) => !serverTypes.contains(type),
+        (type) => !tombstoned.contains(type) && !serverTypes.contains(type),
       );
       if (localHasExtra && debugMirror == null) {
         unawaited(_mirrorWatchlist());
@@ -5424,6 +5528,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   setState(() {
                     _setWatchlistEntries(entries);
                   });
+                  unawaited(_recordWatchlistTombstone(type, deleted: true));
                   unawaited(_mirrorWatchlist());
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
@@ -5452,6 +5557,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 setState(() {
                   _setWatchlistEntries(entries);
                 });
+                unawaited(_recordWatchlistTombstone(type, deleted: false));
                 unawaited(_mirrorWatchlist());
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
@@ -5788,6 +5894,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   _sortAssetTypes(); // ★ 削除時にも並び替え
                   _updateChartData();
                 });
+                unawaited(_recordWatchlistTombstone(type, deleted: true));
                 unawaited(_mirrorWatchlist());
               }
               if (context.mounted) Navigator.pop(context);
@@ -9576,20 +9683,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  /// 3 ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
-  Future<({int inflow, int override, int debt, int revolving, int total})>
-      _pruneAllTombstones() async {
+  /// 各ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
+  Future<
+      ({
+        int inflow,
+        int override,
+        int debt,
+        int revolving,
+        int watchlist,
+        int total,
+      })> _pruneAllTombstones() async {
     final store = await SharedPreferences.getInstance();
     final inflow = await _expectedInflowStore.pruneDeletedIds();
     final override = await _displayModeStore.pruneDeletedSectionIds();
     final debt = await _debtOverrideTombstones.prune(store);
     final revolving = await _revolvingConfigTombstones.prune(store);
+    final watchlist = await _watchlistTombstones.prune(store);
     return (
       inflow: inflow,
       override: override,
       debt: debt,
       revolving: revolving,
-      total: inflow + override + debt + revolving,
+      watchlist: watchlist,
+      total: inflow + override + debt + revolving + watchlist,
     );
   }
 
@@ -9603,7 +9719,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         debugPrint(
           'boot tombstone prune: removed ${removed.total} '
           '(inflow=${removed.inflow} override=${removed.override} '
-          'debt=${removed.debt} revolving=${removed.revolving})',
+          'debt=${removed.debt} revolving=${removed.revolving} '
+          'watchlist=${removed.watchlist})',
         );
       }
     } catch (e) {
