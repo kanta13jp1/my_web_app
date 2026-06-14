@@ -270,6 +270,30 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetMirrorAdoption.adoptMirror;
   }
 
+  /// サーバに当該 pref 行が無く、ローカルに値がある場合だけローカルをアップロード
+  /// する初回バックフィル。旧端末で mirror 化前に設定した値がサーバ未保存のまま
+  /// 他端末へ同期されない問題を解消する。
+  Future<void> _backfillPrefIfServerMissing(
+    String prefKey,
+    Future<void> Function() uploadLocal,
+  ) async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select('pref_key')
+          .eq('pref_key', prefKey)
+          .limit(1);
+      if (rows.isEmpty) {
+        await uploadLocal();
+      }
+    } catch (e) {
+      debugPrint('pref backfill check failed ($prefKey): $e');
+    }
+  }
+
   // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
   List<String> _assetTypes = ['現金'];
@@ -5235,7 +5259,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final hasLocal = _watchlistByType.isNotEmpty;
+    // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
     if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
+      unawaited(
+        _backfillPrefIfServerMissing(_watchlistMirrorKey, _mirrorWatchlist),
+      );
       return;
     }
     try {
@@ -7798,8 +7826,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final hasLocal = _assetManagementMainAccountId != null;
-    // フラグ OFF かつローカルに値がある場合は従来どおり何もしない (ネットワーク省略)。
+    // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
     if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
+      unawaited(
+        _backfillPrefIfServerMissing(_mainAccountMirrorKey, _mirrorMainAccount),
+      );
       return;
     }
     try {
@@ -8030,15 +8061,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
-    final hasLocal = _revolvingConfigs.isNotEmpty;
-    if (!_mirrorReadsAuthoritative && hasLocal && debugMirror == null) {
-      return;
-    }
+    final localBefore = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+      _revolvingConfigs,
+    );
+    final hasLocal = localBefore.isNotEmpty;
     try {
-      final Map<String, AssetLiabilityRevolvingCreditConfig> restored;
+      final Map<String, AssetLiabilityRevolvingCreditConfig> serverConfigs;
       final DateTime? mirrorUpdatedAt;
       if (debugMirror != null) {
-        restored = AssetRevolvingCreditConfigStore.decodeMirrorValue(
+        serverConfigs = AssetRevolvingCreditConfigStore.decodeMirrorValue(
           debugMirror,
         );
         mirrorUpdatedAt = DateTime.now().toUtc();
@@ -8048,37 +8079,64 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             .select()
             .eq('pref_key', _revolvingConfigsMirrorKey);
         if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル (旧端末で設定済みの
+          // リボ設定をサーバへ上げ、他端末へ同期させる)。
+          if (hasLocal) {
+            unawaited(_mirrorRevolvingConfigs());
+          }
           return;
         }
-        restored = AssetRevolvingCreditConfigStore.decodeMirrorValue(
+        serverConfigs = AssetRevolvingCreditConfigStore.decodeMirrorValue(
           rows.first['value'],
         );
         mirrorUpdatedAt = DateTime.tryParse(
           rows.first['updated_at']?.toString() ?? '',
         );
       }
-      if (restored.isEmpty || !mounted) {
+      if (!mounted) {
         return;
       }
-      final adopt = await _shouldAdoptMirror(
+      // 衝突キー (ローカルとサーバ両方にある負債) をサーバ採用するかは LWW
+      // (フラグ ON のみ。OFF はローカル維持)。
+      final adoptConflicts = await _shouldAdoptMirror(
         prefKey: _revolvingConfigsMirrorKey,
         hasLocal: hasLocal,
         mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      if (!adopt || !mounted) {
-        return;
-      }
-      setState(() {
-        _revolvingConfigs = restored;
-      });
-      // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
-      unawaited(_revolvingConfigStore.save(_revolvingConfigs));
-      unawaited(
-        _syncTimestampStore.markChanged(
-          _revolvingConfigsMirrorKey,
-          at: mirrorUpdatedAt,
-        ),
+      // union マージ: ローカルに無い負債キーはサーバから追加 (additive・安全)。
+      // これで「他端末で設定したカードのリボ設定」がこの端末にも反映される。
+      final merged = Map<String, AssetLiabilityRevolvingCreditConfig>.from(
+        localBefore,
       );
+      var changed = false;
+      serverConfigs.forEach((key, config) {
+        if (!merged.containsKey(key) || adoptConflicts) {
+          merged[key] = config;
+          changed = true;
+        }
+      });
+      if (changed && mounted) {
+        setState(() {
+          _revolvingConfigs = merged;
+        });
+        unawaited(_revolvingConfigStore.save(merged));
+        if (adoptConflicts) {
+          unawaited(
+            _syncTimestampStore.markChanged(
+              _revolvingConfigsMirrorKey,
+              at: mirrorUpdatedAt,
+            ),
+          );
+        }
+      }
+      // ローカルにあってサーバに無い負債キーは、マージ結果をサーバへ
+      // バックフィルし、サーバを全端末の和集合に保つ。
+      final localHasExtra = localBefore.keys.any(
+        (key) => !serverConfigs.containsKey(key),
+      );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorRevolvingConfigs());
+      }
     } catch (e) {
       debugPrint('revolving config mirror restore failed: $e');
     }
@@ -9051,7 +9109,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     final hasLocal = _debtPaymentDayOverrides.isNotEmpty;
+    // フラグ OFF + ローカル値あり: サーバに無ければ初回バックフィルして終了。
     if (!_mirrorReadsAuthoritative && hasLocal) {
+      unawaited(
+        _backfillPrefIfServerMissing(
+          'debt_payment_day_overrides',
+          () => _mirrorDebtPaymentDayOverrides(_debtPaymentDayOverrides),
+        ),
+      );
       return;
     }
     try {
