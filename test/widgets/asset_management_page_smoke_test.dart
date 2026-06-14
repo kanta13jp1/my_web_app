@@ -10,6 +10,7 @@ import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
+import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -1209,5 +1210,125 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'tombstoned entry is not resurfaced when the server mirror still '
+      'contains it (review #1)',
+      (tester) async {
+        // ローカルに gold / btc。サーバ集約ミラーは依然 gold を含む状態でも、
+        // 削除トゥームストーンを先に取込む (pull→restore 直列化) ので、union
+        // マージが gold を復活させないことを保証する。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
+            <String, dynamic>{
+              'assetType': 'gold',
+              'group': '',
+              'memo': '',
+              'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+            },
+            <String, dynamic>{
+              'assetType': 'btc',
+              'group': '',
+              'memo': '',
+              'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+            },
+          ]),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              // サーバミラーはまだ gold を持つ (復活ベクタ)。
+              debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'gold',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                  AssetWatchlistEntry(
+                    assetType: 'btc',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                ],
+              ),
+              // 同時に gold の削除トゥームストーンが届く。
+              debugWatchlistDeletedMirror: const <String, dynamic>{
+                'ids': <String>['gold'],
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final local = await const AssetWatchlistService().loadEntries();
+        expect(local.map((e) => e.assetType), isNot(contains('gold')));
+        expect(local.map((e) => e.assetType), contains('btc'));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'additive merge realigns the local LWW timestamp even with flag off '
+      '(review #2)',
+      (tester) async {
+        // ローカルは 'shared' のみ。サーバは 'shared' + 'extra' を持つので、
+        // additive 追加のみ (localHasExtra=false → バックフィル無し) になる。
+        // この経路は旧実装だと adoptConflicts=false で markChanged されず、
+        // ローカル更新時刻が null のまま据え置かれていた。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
+            <String, dynamic>{
+              'assetType': 'shared',
+              'group': '',
+              'memo': '',
+              'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+            },
+          ]),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'shared',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                  AssetWatchlistEntry(
+                    assetType: 'extra',
+                    group: 'invest',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 6, 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // additive マージでもローカル更新時刻が整合される。
+        final ts = await const AssetSyncTimestampStore().loadTimestamp(
+          'watchlist_entries',
+        );
+        expect(ts, isNotNull);
+
+        await _unmount(tester);
+      },
+    );
   });
 }
