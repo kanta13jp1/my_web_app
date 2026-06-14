@@ -432,8 +432,9 @@ class WbsTask {
       };
 
   String get activeInstanceKey => _activeWbsInstanceKey(instance);
-  String get activeOwnerKey =>
-      _activeWbsInstanceKey(ownerInstance.isEmpty ? instance : ownerInstance);
+  String get activeOwnerKey => _activeWbsInstanceKey(
+        ownerInstance.isEmpty ? _kWbsUnassignedOwnerKey : ownerInstance,
+      );
   String get activeInstanceLabel => _activeWbsInstanceLabel(activeInstanceKey);
   String get activeOwnerLabel => _activeWbsInstanceLabel(activeOwnerKey);
   Color get activeInstanceColor => _activeWbsInstanceColor(activeInstanceKey);
@@ -681,6 +682,22 @@ String wbsOwnerStorageValue(String ownerKey) => _activeWbsInstanceKey(ownerKey);
 WbsTask reassignWbsTaskOwner(WbsTask task, String ownerKey) =>
     task.copyWith(ownerInstance: wbsOwnerStorageValue(ownerKey));
 
+List<WbsTask> filterWbsTasksForAssignmentBoard(
+  List<WbsTask> tasks, {
+  String? filterMilestone,
+  bool hideCompleted = false,
+}) {
+  return tasks.where((task) {
+    if (filterMilestone != null && task.milestoneCode != filterMilestone) {
+      return false;
+    }
+    if (hideCompleted && task.isEffectivelyCompleted) {
+      return false;
+    }
+    return true;
+  }).toList();
+}
+
 class ProjectGanttPage extends StatefulWidget {
   const ProjectGanttPage({super.key});
 
@@ -840,7 +857,10 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
     if (!canMoveWbsTaskToOwner(task, ownerKey)) return;
 
     final targetOwner = wbsOwnerStorageValue(ownerKey);
-    final before = List<WbsTask>.of(_tasks);
+    final originalTask = _tasks.firstWhere(
+      (current) => current.id == task.id,
+      orElse: () => task,
+    );
     final updatedTask = reassignWbsTaskOwner(task, targetOwner);
 
     setState(() {
@@ -864,7 +884,14 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _tasks = before);
+      setState(() {
+        _tasks = _tasks.map((current) {
+          if (current.id != task.id) return current;
+          if (current.ownerInstance != targetOwner) return current;
+          return originalTask;
+        }).toList()
+          ..sort(_compareWbsTasks);
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('WBS owner update failed: $e')),
       );
@@ -1107,6 +1134,11 @@ class _WbsTab extends StatelessWidget {
     // part 156: hideCompleted ON 時は filter 後タスクで進捗 + 件数算出
     // (= GitHub Issue close 反映が visible になる)
     final progressBase = hideCompleted ? _filtered : tasks;
+    final assignmentTasks = filterWbsTasksForAssignmentBoard(
+      tasks,
+      filterMilestone: filterMilestone,
+      hideCompleted: hideCompleted,
+    );
     final overallProgress = _overallProgress(progressBase);
 
     return ListView(
@@ -1190,7 +1222,7 @@ class _WbsTab extends StatelessWidget {
 
         // ── カテゴリ別タスク ───────────────────────────────────────────────
         _WbsAssignmentBoard(
-          tasks: _filtered,
+          tasks: assignmentTasks,
           onMoveTaskOwner: onMoveTaskOwner,
         ),
         const SizedBox(height: 16),
@@ -1404,7 +1436,10 @@ class _WbsOwnerDropLane extends StatelessWidget {
                 ...tasks.take(6).map(
                       (task) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
-                        child: _DraggableWbsTaskChip(task: task),
+                        child: _DraggableWbsTaskChip(
+                          task: task,
+                          onMoveTaskOwner: onMoveTaskOwner,
+                        ),
                       ),
                     ),
               if (tasks.length > 6)
@@ -1426,19 +1461,30 @@ class _WbsOwnerDropLane extends StatelessWidget {
 
 class _DraggableWbsTaskChip extends StatelessWidget {
   final WbsTask task;
+  final void Function(WbsTask task, String ownerKey) onMoveTaskOwner;
 
-  const _DraggableWbsTaskChip({required this.task});
+  const _DraggableWbsTaskChip({
+    required this.task,
+    required this.onMoveTaskOwner,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final child = _WbsTaskAssignmentChip(task: task);
+    final child = _WbsTaskAssignmentChip(
+      task: task,
+      onMoveTaskOwner: onMoveTaskOwner,
+    );
     return Draggable<WbsTask>(
       data: task,
       feedback: Material(
         color: Colors.transparent,
         child: SizedBox(
           width: 300,
-          child: _WbsTaskAssignmentChip(task: task, dragging: true),
+          child: _WbsTaskAssignmentChip(
+            task: task,
+            dragging: true,
+            onMoveTaskOwner: onMoveTaskOwner,
+          ),
         ),
       ),
       childWhenDragging: Opacity(opacity: 0.35, child: child),
@@ -1450,9 +1496,11 @@ class _DraggableWbsTaskChip extends StatelessWidget {
 class _WbsTaskAssignmentChip extends StatelessWidget {
   final WbsTask task;
   final bool dragging;
+  final void Function(WbsTask task, String ownerKey) onMoveTaskOwner;
 
   const _WbsTaskAssignmentChip({
     required this.task,
+    required this.onMoveTaskOwner,
     this.dragging = false,
   });
 
@@ -1502,6 +1550,33 @@ class _WbsTaskAssignmentChip extends StatelessWidget {
               fontWeight: FontWeight.w800,
               height: 1.5,
             ),
+          ),
+          const SizedBox(width: 2),
+          PopupMenuButton<String>(
+            tooltip: 'Change WBS owner',
+            enabled: !task.isEffectivelyCompleted,
+            icon: Icon(
+              Icons.more_vert,
+              size: 16,
+              color: ownerColor,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 160),
+            onSelected: (ownerKey) {
+              if (canMoveWbsTaskToOwner(task, ownerKey)) {
+                onMoveTaskOwner(task, ownerKey);
+              }
+            },
+            itemBuilder: (context) {
+              return const [
+                PopupMenuItem(value: 'claude', child: Text('Claude Code')),
+                PopupMenuItem(value: 'codex', child: Text('Codex')),
+                PopupMenuItem(value: 'user', child: Text('User')),
+                PopupMenuItem(value: 'automation', child: Text('Automation')),
+                PopupMenuDivider(),
+                PopupMenuItem(value: 'unassigned', child: Text('Unassigned')),
+              ];
+            },
           ),
         ],
       ),
