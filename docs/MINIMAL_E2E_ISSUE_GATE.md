@@ -19,6 +19,37 @@ Recommended cases:
 - Error path: invalid input, missing auth, or unavailable service is handled.
 - Recovery path: retry, empty state, or fallback keeps the user moving.
 
+## Ready-to-paste snippet
+
+AI authors create PR bodies with `gh pr create --body`, which bypasses
+`.github/PULL_REQUEST_TEMPLATE.md`, so the three commitment phrases are easy to
+forget. A forgotten phrase fails the gate, and because editing a PR body does
+not re-run the check, the usual recovery is a wasteful close/reopen. To avoid
+that, emit the canonical block straight from the checker and paste it verbatim:
+
+```bash
+# Docs/tooling change, or any PR that ships an integration_test/ or test/e2e/ file:
+python scripts/check_minimal_e2e_gate.py --emit-snippet
+
+# App-code change with no E2E file (>= 8 chars of reason after the label):
+python scripts/check_minimal_e2e_gate.py --emit-snippet \
+  --exception "manual verification: <what you checked and how>"
+```
+
+The emitted wording lives in `passing_snippet()` next to the pattern tables it
+must satisfy, and a round-trip test in `check_minimal_e2e_gate_test.py` pins it
+so it can never drift out of sync with the validator. When a local pre-flight
+check (`--body-file`) FAILs, the same block is printed under a
+`snippet start/end` banner so the fix is one copy away.
+
+Always pre-flight the body locally before opening the PR:
+
+```bash
+python scripts/check_minimal_e2e_gate.py \
+  --body-file pr-body.md \
+  --changed-files <(git diff --name-only origin/main...HEAD)
+```
+
 ## Automation
 
 `.github/workflows/minimal-e2e-gate.yml` runs on pull requests and provides two
