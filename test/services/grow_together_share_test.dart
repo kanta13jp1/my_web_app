@@ -6,13 +6,15 @@ void main() {
     test('shareText keeps the canonical message verbatim', () {
       expect(
         GrowTogetherShare.shareText,
-        'ユーザーが機能追加要望や改善要望、不具合報告をすると、'
-        'AIが勝手にそれに対応してくれるアプリを作りました。\n\n'
+        'ユーザーが機能追加要望や改善要望、不具合報告を送ると、'
+        'AIが自動で受け取り、開発タスク化して対応に着手してくれるアプリを作りました。\n\n'
         '使ってみてください。みんなでアプリを育てられます。\n\n'
         '自分株式会社',
       );
       // 本文に URL を二重で含めない（intent の url パラメータ側で付与する）。
       expect(GrowTogetherShare.shareText.contains('http'), isFalse);
+      // 完全自律の誇張表現を含めない（「勝手に」「自動修正」等は不可）。
+      expect(GrowTogetherShare.shareText.contains('勝手に'), isFalse);
     });
 
     test('fullShareMessage appends the production URL for clipboard use', () {

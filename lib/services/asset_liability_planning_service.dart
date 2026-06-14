@@ -1810,28 +1810,30 @@ class AssetLiabilityPlanningService {
     return result;
   }
 
-  bool _hasKddiProvider(Map<String, double> snapshot) {
-    return snapshot.keys.any(
-      (name) => _accountIdForName(name) == kddiProviderAccountId,
+  // 同名の資産口座(例: 「家賃保証金」「KDDIポイント」「ガスト」)が既定固定費を
+  // 誤って抑止しないよう、実際に負債(残高<0)の口座だけを「既存の請求あり」とみなす。
+  // _accountIdForName の名寄せは部分一致で語境界を持たないため、残高の符号で
+  // 本物の請求口座に限定する。既定固定費(家賃/KDDI/水道/ガス)は負債として計上される。
+  bool _hasLiabilityAccountFor(Map<String, double> snapshot, String accountId) {
+    return snapshot.entries.any(
+      (entry) => entry.value < 0 && _accountIdForName(entry.key) == accountId,
     );
+  }
+
+  bool _hasKddiProvider(Map<String, double> snapshot) {
+    return _hasLiabilityAccountFor(snapshot, kddiProviderAccountId);
   }
 
   bool _hasRent(Map<String, double> snapshot) {
-    return snapshot.keys.any(
-      (name) => _accountIdForName(name) == rentAccountId,
-    );
+    return _hasLiabilityAccountFor(snapshot, rentAccountId);
   }
 
   bool _hasWaterBill(Map<String, double> snapshot) {
-    return snapshot.keys.any(
-      (name) => _accountIdForName(name) == waterBillAccountId,
-    );
+    return _hasLiabilityAccountFor(snapshot, waterBillAccountId);
   }
 
   bool _hasGasBill(Map<String, double> snapshot) {
-    return snapshot.keys.any(
-      (name) => _accountIdForName(name) == gasBillAccountId,
-    );
+    return _hasLiabilityAccountFor(snapshot, gasBillAccountId);
   }
 
   String _fallbackAccountId(String name) {
