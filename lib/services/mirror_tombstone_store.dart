@@ -201,20 +201,25 @@ class MirrorTombstoneStore {
       }
     }
     if (kept.length > gcConfig.maxCount) {
-      // 件数上限超過分は「挿入位置の末尾」ではなく実際の削除時刻('at')が
-      // 新しい順で残す。mergeRemoteIds はリモート ID を末尾に追記するため、
-      // 挿入順依存だと旧形式の混在やマージ順次第で新しいトゥームストーンを
-      // 取りこぼし得る(=削除済み項目が他端末から復活し得る)。'at' 降順で
-      // 決定的に最新側を残すことでこれを防ぐ。
-      final byNewest = List<Map<String, String>>.from(kept)
-        ..sort((a, b) {
-          final atA = DateTime.tryParse(a['at'] ?? '') ??
+      // 件数上限超過分は実際の削除時刻('at')が新しい順で残す。
+      // mergeRemoteIds はリモート ID を末尾に追記するため、純粋な挿入順依存
+      // (旧 sublist)だと旧形式の混在やマージ順次第で新しいトゥームストーンを
+      // 取りこぼし得る(=削除済み項目が他端末から復活し得る)。
+      // 同時刻('at' が等しい)場合は挿入が新しい方(末尾)を優先し、従来の
+      // 「最古の挿入を捨てる」挙動を保つ(固定クロック下での安定性)。
+      final order = <MapEntry<int, Map<String, String>>>[
+        for (var i = 0; i < kept.length; i++) MapEntry(i, kept[i]),
+      ]..sort((a, b) {
+          final atA = DateTime.tryParse(a.value['at'] ?? '') ??
               DateTime.fromMillisecondsSinceEpoch(0);
-          final atB = DateTime.tryParse(b['at'] ?? '') ??
+          final atB = DateTime.tryParse(b.value['at'] ?? '') ??
               DateTime.fromMillisecondsSinceEpoch(0);
-          return atB.compareTo(atA);
+          final byAt = atB.compareTo(atA);
+          return byAt != 0 ? byAt : b.key.compareTo(a.key);
         });
-      return byNewest.sublist(0, gcConfig.maxCount);
+      return <Map<String, String>>[
+        for (final entry in order.take(gcConfig.maxCount)) entry.value,
+      ];
     }
     return kept;
   }
