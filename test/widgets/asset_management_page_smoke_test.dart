@@ -909,5 +909,94 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('Phase B flag on: mirror overrides non-empty local (LWW)', (
+      tester,
+    ) async {
+      // 端末B はローカルに古いウォッチリストを持つ (タイムスタンプ未記録 = legacy)。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'assetType': 'old_local',
+            'group': '',
+            'memo': '',
+            'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugMirrorReadsAuthoritative: true,
+            debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+              <AssetWatchlistEntry>[
+                AssetWatchlistEntry(
+                  assetType: 'server_new',
+                  group: 'invest',
+                  memo: '',
+                  addedAt: DateTime.utc(2026, 6, 14),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // フラグ ON の LWW でサーバ値が採用され、ローカルへ書き戻される。
+      final synced = await const AssetWatchlistService().loadEntries();
+      expect(synced.map((e) => e.assetType), contains('server_new'));
+      expect(synced.map((e) => e.assetType), isNot(contains('old_local')));
+
+      await _unmount(tester);
+    });
+
+    testWidgets('Phase B flag off (default): mirror does not clobber local', (
+      tester,
+    ) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'assetType': 'kept_local',
+            'group': '',
+            'memo': '',
+            'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            // debugMirrorReadsAuthoritative 未指定 = 既定 OFF。
+            debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+              <AssetWatchlistEntry>[
+                AssetWatchlistEntry(
+                  assetType: 'server_value',
+                  group: '',
+                  memo: '',
+                  addedAt: DateTime.utc(2026, 6, 14),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // フラグ OFF なので非空ローカルは維持される (従来挙動)。
+      final local = await const AssetWatchlistService().loadEntries();
+      expect(local.map((e) => e.assetType), contains('kept_local'));
+      expect(local.map((e) => e.assetType), isNot(contains('server_value')));
+
+      await _unmount(tester);
+    });
   });
 }
