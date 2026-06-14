@@ -3,7 +3,7 @@ title: "Split one fuzzy user request into 3 coherent issues — the past/now/fut
 emoji: "🧩"
 type: "tech"
 topics: ["githubissues", "productmanagement", "triage", "workflow", "indiedev"]
-published: false
+published: true
 ---
 
 ## TL;DR
