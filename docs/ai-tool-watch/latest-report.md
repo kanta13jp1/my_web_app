@@ -1,14 +1,13 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-13T21:42:59Z`
-- Previous check: `2026-06-12T21:55:41Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-06-14T21:45:19Z`
+- Previous check: `2026-06-13T21:42:59Z`
+- Changed/new official sources: `2`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.176 / June 12, 2026
 - `changed` Codex changelog: 2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ
-- `changed` Devin release notes: June 12, 2026
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.

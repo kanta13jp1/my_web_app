@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-13T21:43:02Z",
+  "generated_at": "2026-06-14T21:45:25Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -27,7 +27,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "b23ac41f493eb4126da20e9c9d02245a7dae1cd23978c8be3e5818f79b04c70c",
@@ -77,7 +77,7 @@
           "latest_signal": "2.1.176 / June 12, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "0398fe164b383dbd498432e526864adac61581f1f0846158867edfd8a45c328d",
+          "previous_hash": "b23ac41f493eb4126da20e9c9d02245a7dae1cd23978c8be3e5818f79b04c70c",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "caa14ddc856d2cd74a16f8b63715cb733c2572adcd3fcb0e8f13199cb461799e",
+          "hash": "43c413be34750d1e3ea65e70751da9558cc8ce942e694649ca56ad0a871ec117",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -318,7 +318,7 @@
           "latest_signal": "2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "4586e44949378af30b7bbff81b216ccd631f0fde9f311c74e02ee27e666fcf6d",
+          "previous_hash": "caa14ddc856d2cd74a16f8b63715cb733c2572adcd3fcb0e8f13199cb461799e",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -356,10 +356,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d1b543781224e2bca14ff137dac766f3344d633d06229650b7f58fa6d549b49d",
+          "hash": "2cf0b91dcb3da2a5802c5c47eed7169b97b4a3e3e067e55eb4e29c4ff68fba28",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -609,7 +609,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "89078ac775a89b9657d41a80c9bb9269c918a889b60ada537369a5411526409e",
@@ -647,7 +647,7 @@
           "latest_signal": "June 12, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "5766d6f6707808b1bafcdf1b93961c88dc238f5e7d3847db58ada56dc0d94324",
+          "previous_hash": "89078ac775a89b9657d41a80c9bb9269c918a889b60ada537369a5411526409e",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
