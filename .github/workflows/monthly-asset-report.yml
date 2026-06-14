@@ -4,7 +4,8 @@ on:
   schedule:
     # Month-end 24:00 JST is 15:00 UTC. The script gates daily runs to
     # the JST month rollover because GitHub cron has no last-day syntax.
-    - cron: "0 15 * * *"
+    # ci-cost-audit 2026-06-14: 毎日→月末4日のみ (days 28-31), ~89% 削減 (~324 runs/年)
+    - cron: "0 15 28-31 * *"
   workflow_dispatch:
     inputs:
       year_month:
