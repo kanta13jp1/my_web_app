@@ -854,6 +854,43 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+      'display-prefs restore does not re-propose a deleted section override',
+      (tester) async {
+        // ローカルは表示設定なし (= restore 経路: !hadStored && overrides.isEmpty)
+        // だが、'chart' セクション上書きを過去に削除した削除トゥームストーンを持つ。
+        // サーバには 'chart' の上書きがまだ残っている状態を注入する。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_section_override_deleted_v1': jsonEncode(
+            <String>['chart'],
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: AssetManagementPage(
+              debugMirrorPrefsRows: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'pref_key': 'section_overrides',
+                  'value': <String, dynamic>{'chart': 'hidden'},
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // 削除済みの上書きしか無いので、復元提案ダイアログは出ない
+        // (修正前はトゥームストーンを参照せず復活提案していた)。
+        expect(find.text('表示設定のバックアップ'), findsNothing);
+
+        await _unmount(tester);
+      },
+    );
+
     testWidgets('sync status banner shows logged-out state', (tester) async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
