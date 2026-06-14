@@ -232,6 +232,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyFlow = GlobalKey();
   final _keySubs = GlobalKey();
   final _keyMust = GlobalKey();
+  // 将来CF予測カードの「支払日を見直す」からマネーカレンダーへスクロールする。
+  final _keyCalendar = GlobalKey();
+  // 将来CF予測の安全余裕(見込み残高がこれを下回る時期に注意表示)。
+  static const double _assetForecastSafetyMargin = 10000;
+  int _forecastHorizonMonths = 6;
   // カード明細取り込み・照合パネルへのスクロール用 (AIコメントからのジャンプ)。
   final _keyCardStatementReconciliation = GlobalKey();
 
@@ -7868,7 +7873,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.calendar)) ...[
-              _buildAssetCalendarCard(assetLiabilityWorkbook),
+              KeyedSubtree(
+                key: _keyCalendar,
+                child: _buildAssetCalendarCard(assetLiabilityWorkbook),
+              ),
               const SizedBox(height: 16),
               _buildCashflowForecastCard(assetLiabilityWorkbook),
             ],
@@ -10391,9 +10399,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final forecast = AssetCashflowForecastService.project(
       asOf: DateTime.now(),
       startingBalance: startingBalance,
+      horizonMonths: _forecastHorizonMonths,
       recurringIncome: recurringIncome,
       recurringOutflow: recurringOutflow,
       oneTimeIncome: oneTimeIncome,
+      safetyMargin: _assetForecastSafetyMargin,
     );
 
     return Padding(
@@ -10401,6 +10411,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: AssetCashflowForecastCard(
         forecast: forecast,
         currencyFormatter: _formatYen,
+        currentHorizon: _forecastHorizonMonths,
+        onHorizonChanged: (months) =>
+            setState(() => _forecastHorizonMonths = months),
+        onReviewPaymentDays: () => _scrollTo(_keyCalendar),
       ),
     );
   }

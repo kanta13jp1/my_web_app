@@ -14,6 +14,10 @@ class AssetCashflowForecastCard extends StatelessWidget {
     super.key,
     required this.forecast,
     this.currencyFormatter,
+    this.currentHorizon,
+    this.availableHorizons = const [3, 6, 12],
+    this.onHorizonChanged,
+    this.onReviewPaymentDays,
   });
 
   final AssetCashflowForecast forecast;
@@ -21,8 +25,21 @@ class AssetCashflowForecastCard extends StatelessWidget {
   /// 金額整形(ページの `_formatYen` を渡す)。null なら簡易整形。
   final String Function(double value)? currencyFormatter;
 
+  /// 現在の予測期間(月数)。null + onHorizonChanged null で切替 UI を出さない。
+  final int? currentHorizon;
+
+  /// 切替の選択肢(月数)。
+  final List<int> availableHorizons;
+
+  /// 予測期間が切り替えられたとき。null なら切替 UI を出さない。
+  final ValueChanged<int>? onHorizonChanged;
+
+  /// 「支払日を見直す」リンク。null ならリンクを出さない。
+  final VoidCallback? onReviewPaymentDays;
+
   static const Color _accent = Color(0xFF4F46E5);
   static const Color _danger = Color(0xFFDC2626);
+  static const Color _warn = Color(0xFFD97706);
   static const Color _safe = Color(0xFF059669);
 
   String _yen(double value) {
@@ -62,6 +79,7 @@ class AssetCashflowForecastCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (onHorizonChanged != null) _buildHorizonSelector(),
             const SizedBox(height: 4),
             if (forecast.isEmpty)
               const Padding(
@@ -90,40 +108,49 @@ class AssetCashflowForecastCard extends StatelessWidget {
     );
   }
 
+  Widget _buildHorizonSelector() {
+    final selected = currentHorizon ?? forecast.months.length;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(
+        spacing: 8,
+        children: [
+          for (final months in availableHorizons)
+            ChoiceChip(
+              key: Key('asset_cashflow_forecast_horizon_$months'),
+              label: Text('${months}ヶ月'),
+              selected: selected == months,
+              onSelected: (_) => onHorizonChanged?.call(months),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummary(BuildContext context) {
     final shortfallDate = forecast.firstShortfallDate;
+    final hasSafetyBreach =
+        shortfallDate == null && forecast.safetyShortfallAmount > 0;
     final last = forecast.months.isEmpty ? null : forecast.months.last;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (shortfallDate != null)
-          Container(
-            key: const Key('asset_cashflow_forecast_shortfall'),
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _danger.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.warning_amber, color: _danger, size: 18),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
-                    '回避には ${_yen(forecast.shortfallRecoveryAmount)} の追加資金が必要です。',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.5,
-                      color: _danger,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          _buildAlert(
+            alertKey: const Key('asset_cashflow_forecast_shortfall'),
+            color: _danger,
+            icon: Icons.warning_amber,
+            message:
+                '${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
+                '回避には ${_yen(forecast.shortfallRecoveryAmount)} の追加資金が必要です。',
+          )
+        else if (hasSafetyBreach)
+          _buildAlert(
+            alertKey: const Key('asset_cashflow_forecast_safety_breach'),
+            color: _warn,
+            icon: Icons.info_outline,
+            message: '残高不足は回避できる見込みですが、安全余裕 ${_yen(forecast.safetyMargin)} を'
+                '割り込む時期があります(最小見込み残高 ${_yen(forecast.worstBalance)})。',
           )
         else
           Row(
@@ -138,6 +165,17 @@ class AssetCashflowForecastCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        if ((shortfallDate != null || hasSafetyBreach) &&
+            onReviewPaymentDays != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const Key('asset_cashflow_forecast_review_payment_days'),
+              onPressed: onReviewPaymentDays,
+              icon: const Icon(Icons.event_repeat, size: 16),
+              label: const Text('支払日を見直す(マネーカレンダー)'),
+            ),
           ),
         const SizedBox(height: 8),
         if (last != null)
@@ -160,6 +198,41 @@ class AssetCashflowForecastCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAlert({
+    required Key alertKey,
+    required Color color,
+    required IconData icon,
+    required String message,
+  }) {
+    return Container(
+      key: alertKey,
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
