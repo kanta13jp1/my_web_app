@@ -1,0 +1,256 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+import '../services/asset_cashflow_forecast_service.dart';
+
+/// 将来 N ヶ月の月末残高予測カード。
+///
+/// 純関数 [AssetCashflowForecastService] の結果([AssetCashflowForecast])を
+/// 受け取り、残高カーブ + ショート警告 + 前提サマリを描画する自己完結ウィジェット。
+/// ページ状態へ依存しないためウィジェットテストで単体検証できる。
+class AssetCashflowForecastCard extends StatelessWidget {
+  const AssetCashflowForecastCard({
+    super.key,
+    required this.forecast,
+    this.currencyFormatter,
+  });
+
+  final AssetCashflowForecast forecast;
+
+  /// 金額整形(ページの `_formatYen` を渡す)。null なら簡易整形。
+  final String Function(double value)? currencyFormatter;
+
+  static const Color _accent = Color(0xFF4F46E5);
+  static const Color _danger = Color(0xFFDC2626);
+  static const Color _safe = Color(0xFF059669);
+
+  String _yen(double value) {
+    final formatter = currencyFormatter;
+    if (formatter != null) {
+      return formatter(value);
+    }
+    return '¥${value.round()}';
+  }
+
+  String _monthLabel(DateTime month) => '${month.month}月';
+
+  @override
+  Widget build(BuildContext context) {
+    final months = forecast.months;
+    return Card(
+      key: const Key('asset_cashflow_forecast_card'),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.timeline, color: _accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '将来残高予測(今後${months.length}ヶ月)',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            if (forecast.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  '繰り返し収入・固定費・返済予定を登録すると、今後の残高見込みを表示します。',
+                  style: TextStyle(fontSize: 12, height: 1.5),
+                ),
+              )
+            else ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 160,
+                width: double.infinity,
+                child: CustomPaint(
+                  key: const Key('asset_cashflow_forecast_chart'),
+                  painter: _ForecastChartPainter(forecast: forecast),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildSummary(context),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummary(BuildContext context) {
+    final shortfallDate = forecast.firstShortfallDate;
+    final last = forecast.months.isEmpty ? null : forecast.months.last;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (shortfallDate != null)
+          Container(
+            key: const Key('asset_cashflow_forecast_shortfall'),
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _danger.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.warning_amber, color: _danger, size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '${shortfallDate.month}/${shortfallDate.day} 頃に残高が不足する見込みです。'
+                    '回避には ${_yen(forecast.shortfallRecoveryAmount)} の追加資金が必要です。',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                      color: _danger,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Row(
+            children: [
+              const Icon(Icons.check_circle, color: _safe, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '今後${forecast.months.length}ヶ月は残高不足の見込みはありません'
+                  '(最小見込み残高 ${_yen(forecast.worstBalance)})。',
+                  style: const TextStyle(fontSize: 12, height: 1.5),
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: 8),
+        if (last != null)
+          Text(
+            '${_monthLabel(last.month)}末の見込み残高: ${_yen(last.closingBalance)}',
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        const SizedBox(height: 2),
+        Text(
+          '現金・預金 ${_yen(forecast.startingBalance)} を起点に、繰り返し収入・固定費・返済予定を'
+          '毎月積み上げた見込みです。未登録の入出金は含まれません。',
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.5,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ForecastChartPainter extends CustomPainter {
+  const _ForecastChartPainter({required this.forecast});
+
+  final AssetCashflowForecast forecast;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final closings = forecast.months
+        .map((month) => month.closingBalance)
+        .toList(growable: false);
+    final series = <double>[forecast.startingBalance, ...closings];
+    if (series.length < 2) {
+      return;
+    }
+
+    final reference = <double>[0, forecast.safetyMargin];
+    var minValue = [...series, ...reference].reduce(min);
+    var maxValue = [...series, ...reference].reduce(max);
+    if ((maxValue - minValue).abs() < 1) {
+      maxValue += 1;
+      minValue -= 1;
+    }
+    final range = maxValue - minValue;
+
+    const leftPad = 8.0;
+    const rightPad = 8.0;
+    const topPad = 8.0;
+    const bottomPad = 8.0;
+    final chartWidth = size.width - leftPad - rightPad;
+    final chartHeight = size.height - topPad - bottomPad;
+
+    double xFor(int index) =>
+        leftPad + chartWidth * index / (series.length - 1);
+    double yFor(double value) =>
+        topPad + chartHeight * (1 - (value - minValue) / range);
+
+    // 0 円ライン。
+    final zeroPaint = Paint()
+      ..color = const Color(0xFF9CA3AF)
+      ..strokeWidth = 1;
+    final zeroY = yFor(0);
+    canvas.drawLine(
+      Offset(leftPad, zeroY),
+      Offset(size.width - rightPad, zeroY),
+      zeroPaint,
+    );
+
+    // 安全線(0 と異なる場合のみ)。
+    if (forecast.safetyMargin.abs() >= 1) {
+      final safePaint = Paint()
+        ..color = const Color(0xFF059669)
+        ..strokeWidth = 1;
+      final safeY = yFor(forecast.safetyMargin);
+      for (double x = leftPad; x < size.width - rightPad; x += 8) {
+        canvas.drawLine(
+          Offset(x, safeY),
+          Offset(min(x + 4, size.width - rightPad), safeY),
+          safePaint,
+        );
+      }
+    }
+
+    // 残高ポリライン。
+    final linePaint = Paint()
+      ..color = const Color(0xFF4F46E5)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    final path = Path()..moveTo(xFor(0), yFor(series.first));
+    for (var i = 1; i < series.length; i++) {
+      path.lineTo(xFor(i), yFor(series[i]));
+    }
+    canvas.drawPath(path, linePaint);
+
+    // 各点(ショート月は赤)。
+    for (var i = 0; i < series.length; i++) {
+      final value = series[i];
+      final isShortfall = i > 0 && forecast.months[i - 1].isShortfall;
+      final pointPaint = Paint()
+        ..color = isShortfall
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF4F46E5)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(xFor(i), yFor(value)), 3, pointPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ForecastChartPainter oldDelegate) =>
+      oldDelegate.forecast != forecast;
+}
