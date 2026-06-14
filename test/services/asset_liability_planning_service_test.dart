@@ -1434,6 +1434,38 @@ void main() {
       );
     });
 
+    test('adds the bimonthly water bill only on even months', () {
+      final june = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+        baseDate: DateTime(2026, 6, 14),
+        includeDefaultFixedPayments: true,
+      );
+      final water = june.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.waterBillAccountId,
+      );
+      expect(water.name, AssetLiabilityPlanningService.waterBillAccountName);
+      expect(water.kind, AssetLiabilityAccountKind.utility);
+      expect(water.paymentDay, 22);
+      expect(water.scheduledPaymentAmount, 2400);
+      expect(
+        water.paymentSourceAccountId,
+        AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+      );
+
+      // 奇数月(7月)は水道代を計上しない。
+      final july = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+        baseDate: DateTime(2026, 7, 14),
+        includeDefaultFixedPayments: true,
+      );
+      expect(
+        july.debtMasterRows.any(
+          (row) => row.id == AssetLiabilityPlanningService.waterBillAccountId,
+        ),
+        isFalse,
+      );
+    });
+
     test('treats paid KDDI provider payment as reflected in cashflow', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{'cash': 50000, 'au': -32152},
