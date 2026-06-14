@@ -23,7 +23,9 @@ class GrowTogetherShare {
       '自分株式会社';
 
   /// クリップボードへコピーする用の、URL を含む完全な共有文。
-  static String get fullShareMessage => '$shareText\n$appUrl';
+  /// `shareText` と `appUrl` がともに const のため、これ自体も const にできる
+  /// （const ClipboardData などの const コンテキストで利用するため）。
+  static const String fullShareMessage = '$shareText\n$appUrl';
 
   /// X の投稿 intent URL を生成する純関数。
   ///
