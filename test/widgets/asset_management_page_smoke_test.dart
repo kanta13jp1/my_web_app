@@ -1165,5 +1165,49 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets('watchlist deletion tombstone removes local entry', (
+      tester,
+    ) async {
+      // ローカルに gold / btc のウォッチリスト項目がある。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'assetType': 'gold',
+            'group': '',
+            'memo': '',
+            'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+          },
+          <String, dynamic>{
+            'assetType': 'btc',
+            'group': '',
+            'memo': '',
+            'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // 他端末で gold を削除した状態を削除トゥームストーンで注入。
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            debugWatchlistDeletedMirror: <String, dynamic>{
+              'ids': <String>['gold'],
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 削除が伝播し gold はローカルから消え、btc は残る。
+      final local = await const AssetWatchlistService().loadEntries();
+      expect(local.map((e) => e.assetType), isNot(contains('gold')));
+      expect(local.map((e) => e.assetType), contains('btc'));
+
+      await _unmount(tester);
+    });
   });
 }
