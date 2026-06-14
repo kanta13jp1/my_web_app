@@ -15,8 +15,19 @@
 | `debt_payment_day_overrides` | `{debtId: day(1-31)}` | 負債ごとの支払日手動設定 | `_mirrorDebtPaymentDayOverrides` | `_restoreDebtPaymentDayOverridesFromMirror` |
 | `debt_payment_day_override_deleted` | `{ids:[debtId]}` | 支払日上書きの削除tombstone | `_mirrorDebtOverrideDeleted` | `_pullDebtOverrideDeleted` |
 | `revolving_credit_configs` | `{debtId: {monthlyAmount, creditLimit}}` | 負債(リボ払いカード)ごとのリボ設定額+利用限度額 | `_mirrorRevolvingConfigs` | `_restoreRevolvingConfigsFromMirror` |
+| `main_account_id` | `{id: '<accountId>'}` | 使用可能額の基準となるメインバンク口座ID | `_mirrorMainAccount` | `_restoreMainAccountFromMirror` |
+| `watchlist_entries` | `{entries: [{assetType, group, memo, addedAt}]}` | ウォッチリスト項目(注目資産+グループ+メモ) | `_mirrorWatchlist` | `_restoreWatchlistFromMirror` |
 
 > 入金予定の実体は別テーブル `asset_expected_inflow_items`(本表の対象外)。
+
+> `main_account_id` / `watchlist_entries` も削除トゥームストーン不要(スカラ/全件置換)。
+> 読みは集約ミラー優先・無ければローカル(`asset_management_main_account_id_v1` /
+> `asset_watchlist_entries_v1`)へフォールバックし、ローカルに既存値がある端末は
+> ミラーで上書きしない(安全側復元)。メイン口座は `{id:''}`、ウォッチリストは空
+> `entries` の upsert で「未設定/全削除」を全端末へ伝播する。
+> なお表示モードの実験ログ(`display_mode_events` テーブル)と復元辞退フラグ
+> (`asset_management_restore_declined_v1`)は意図的に端末ローカルのまま
+> (前者は専用サーバテーブルへ別途記録済 / 後者は端末ごとの UX 状態)。
 
 > `revolving_credit_configs` は支払日上書きと同じく**削除トゥームストーン不要**。
 > 設定の有無は map のキー有無で表現し(リボOFF=キー削除)、空 map の upsert で

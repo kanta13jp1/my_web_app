@@ -28,5 +28,43 @@ void main() {
       await store.save('   ');
       expect(await store.load(), isNull);
     });
+
+    test('encode/decode mirror value round-trips (端末A→端末B 同期)', () {
+      final encoded = AssetManagementMainAccountStore.encodeMirrorValue(
+        'smbc_otsuka',
+      );
+      expect(encoded, <String, dynamic>{'id': 'smbc_otsuka'});
+      expect(
+        AssetManagementMainAccountStore.decodeMirrorValue(encoded),
+        'smbc_otsuka',
+      );
+    });
+
+    test('encodeMirrorValue of null is empty id (未設定を全端末へ伝播)', () {
+      expect(
+        AssetManagementMainAccountStore.encodeMirrorValue(null),
+        <String, dynamic>{'id': ''},
+      );
+    });
+
+    test('decodeMirrorValue treats empty/invalid as null', () {
+      expect(
+        AssetManagementMainAccountStore.decodeMirrorValue(
+          <String, dynamic>{'id': ''},
+        ),
+        isNull,
+      );
+      expect(
+        AssetManagementMainAccountStore.decodeMirrorValue(
+          <String, dynamic>{'id': '   '},
+        ),
+        isNull,
+      );
+      expect(AssetManagementMainAccountStore.decodeMirrorValue(null), isNull);
+      expect(
+        AssetManagementMainAccountStore.decodeMirrorValue('not a map'),
+        isNull,
+      );
+    });
   });
 }

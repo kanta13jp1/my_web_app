@@ -8,7 +8,9 @@ import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
+import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -505,6 +507,70 @@ void main() {
       // ローカル値(3000)が維持され、ミラー値(99999)では上書きされない。
       final local = await const AssetRevolvingCreditConfigStore().load();
       expect(local['aupay']!.monthlyAmount, 3000);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('main account syncs from server mirror on a fresh device', (
+      tester,
+    ) async {
+      // 端末B はローカル空(別ブラウザ/別ログイン)で起動する。
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AssetManagementPage(
+            debugMainAccountMirror: <String, dynamic>{'id': 'smbc_otsuka'},
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 端末A のメイン口座IDが起動時に復元され、ローカルへも書き戻される。
+      expect(
+        await const AssetManagementMainAccountStore().load(),
+        'smbc_otsuka',
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets('watchlist syncs from server mirror on a fresh device', (
+      tester,
+    ) async {
+      // 端末A が保存したウォッチリストを集約ミラー値へエンコードする。
+      final mirrorValue = AssetWatchlistService.encodeMirrorValue(
+        <AssetWatchlistEntry>[
+          AssetWatchlistEntry(
+            assetType: 'gold',
+            group: 'invest',
+            memo: 'hedge',
+            addedAt: DateTime.utc(2026, 6, 14),
+          ),
+        ],
+      );
+
+      // 端末B はローカル空で起動する。
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugWatchlistMirror: mirrorValue,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 起動時にミラーから復元され、端末B のローカルにも書き戻される。
+      final synced = await const AssetWatchlistService().loadEntries();
+      expect(synced.map((e) => e.assetType), contains('gold'));
 
       await _unmount(tester);
     });
