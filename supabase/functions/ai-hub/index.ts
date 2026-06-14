@@ -707,7 +707,7 @@ async function callSingleProvider(
     let fetchUrl = cfg.chatUrl;
     if (providerId === "anthropic") {
       authHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
-    } else if (providerId === "google") {
+    } else if (providerId === "google" || providerId === "google_flash_lite") {
       authHeaders = {};
       fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
     }
@@ -4654,7 +4654,9 @@ serve(async (req: Request) => {
               "x-api-key": apiKey,
               "anthropic-version": "2023-06-01",
             };
-          } else if (providerId === "google") {
+          } else if (
+            providerId === "google" || providerId === "google_flash_lite"
+          ) {
             authHeaders = {};
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
