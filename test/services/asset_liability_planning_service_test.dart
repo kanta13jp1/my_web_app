@@ -1377,6 +1377,9 @@ void main() {
       final rent = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
       );
+      final gas = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.gasBillAccountId,
+      );
       final kddiCashflow = workbook.cashflowRows.firstWhere(
         (row) =>
             row.accountId ==
@@ -1428,7 +1431,9 @@ void main() {
       expect(
         workbook.monthlyUnpaidPaymentTotal,
         closeTo(
-          kddi.scheduledPaymentAmount + rent.scheduledPaymentAmount,
+          kddi.scheduledPaymentAmount +
+              rent.scheduledPaymentAmount +
+              gas.scheduledPaymentAmount,
           0.001,
         ),
       );
@@ -1466,6 +1471,47 @@ void main() {
       );
     });
 
+    test('adds the monthly gas bill every month including odd months', () {
+      AssetLiabilityDebtRow gasRowFor(int month) {
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+          baseDate: DateTime(2026, month, 14),
+          includeDefaultFixedPayments: true,
+        );
+        return workbook.debtMasterRows.firstWhere(
+          (row) => row.id == AssetLiabilityPlanningService.gasBillAccountId,
+        );
+      }
+
+      // 偶数月(6月)・奇数月(7月)いずれもガス代を計上する。
+      for (final month in const <int>[6, 7]) {
+        final gas = gasRowFor(month);
+        expect(gas.name, AssetLiabilityPlanningService.gasBillAccountName);
+        expect(gas.kind, AssetLiabilityAccountKind.utility);
+        expect(gas.paymentDay, 12);
+        expect(gas.scheduledPaymentAmount, 4500);
+        expect(
+          gas.paymentSourceAccountId,
+          AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+        );
+      }
+    });
+
+    test('lets a manual override replace the default monthly gas bill', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+        baseDate: DateTime(2026, 7, 14),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.gasBillAccountId: 5800,
+        },
+        includeDefaultFixedPayments: true,
+      );
+      final gas = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.gasBillAccountId,
+      );
+      expect(gas.scheduledPaymentAmount, 5800);
+    });
+
     test('treats paid KDDI provider payment as reflected in cashflow', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{'cash': 50000, 'au': -32152},
@@ -1483,6 +1529,9 @@ void main() {
       final rent = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
       );
+      final gas = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.gasBillAccountId,
+      );
       final kddiCashflow = workbook.cashflowRows.firstWhere(
         (row) =>
             row.accountId ==
@@ -1493,7 +1542,13 @@ void main() {
       expect(kddi.paid, isTrue);
       expect(kddiCashflow.paid, isTrue);
       expect(kddiCashflow.cashBeforePayment, kddiCashflow.cashAfterPayment);
-      expect(workbook.monthlyUnpaidPaymentTotal, rent.scheduledPaymentAmount);
+      expect(
+        workbook.monthlyUnpaidPaymentTotal,
+        closeTo(
+          rent.scheduledPaymentAmount + gas.scheduledPaymentAmount,
+          0.001,
+        ),
+      );
     });
 
     test('applies manual payment day override to unknown cards', () {

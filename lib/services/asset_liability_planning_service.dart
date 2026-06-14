@@ -62,6 +62,12 @@ class AssetLiabilityPlanningService {
   static const String waterBillAccountName = '\u6c34\u9053\u4ee3';
   static const double waterBillBimonthlyPaymentAmount = 2400;
   static const int waterBillPaymentDay = 22;
+  // ガス代: 毎月12日 / 三井住友銀行大塚支店から口座振替。使用量で変動するため
+  // 概算4,500円(3,000〜6,000円の中央値 / 今月支払予定額の手入力で上書き可)。
+  static const String gasBillAccountId = 'gas_bill';
+  static const String gasBillAccountName = 'ガス代';
+  static const double gasBillMonthlyPaymentAmount = 4500;
+  static const int gasBillPaymentDay = 12;
   static const String acomShoppingAccountId = 'acom_shopping';
   static const String anthropicAcomShoppingPaymentId =
       'anthropic_acom_shopping_repayment';
@@ -113,14 +119,19 @@ class AssetLiabilityPlanningService {
     final shouldIncludeDefaultWaterBill = includeDefaultFixedPayments &&
         baseDate.month.isEven &&
         !_hasWaterBill(latestSnapshot);
+    // ガス代は毎月12日。未計上時のみ既定で計上する。
+    final shouldIncludeDefaultGasBill =
+        includeDefaultFixedPayments && !_hasGasBill(latestSnapshot);
     final effectiveSnapshot = shouldIncludeDefaultKddiProvider ||
             shouldIncludeDefaultRent ||
-            shouldIncludeDefaultWaterBill
+            shouldIncludeDefaultWaterBill ||
+            shouldIncludeDefaultGasBill
         ? _withDefaultFixedPayments(
             latestSnapshot,
             includeKddiProvider: shouldIncludeDefaultKddiProvider,
             includeRent: shouldIncludeDefaultRent,
             includeWaterBill: shouldIncludeDefaultWaterBill,
+            includeGasBill: shouldIncludeDefaultGasBill,
           )
         : latestSnapshot;
     final effectiveMonthlyPaymentOverrides = _withDefaultFixedPaymentOverrides(
@@ -128,6 +139,7 @@ class AssetLiabilityPlanningService {
       includeDefaultKddiProvider: shouldIncludeDefaultKddiProvider,
       includeDefaultRent: shouldIncludeDefaultRent,
       includeDefaultWaterBill: shouldIncludeDefaultWaterBill,
+      includeDefaultGasBill: shouldIncludeDefaultGasBill,
     );
     final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
@@ -160,9 +172,11 @@ class AssetLiabilityPlanningService {
       accountsById: accountsById,
     );
     final effectivePaymentSourceAccountIds = <String, String>{
-      // 水道代の既定振替元は三井住友銀行大塚支店(ユーザー設定があれば下で上書き)。
+      // 水道代・ガス代の既定振替元は三井住友銀行大塚支店(ユーザー設定があれば下で上書き)。
       if (shouldIncludeDefaultWaterBill)
         waterBillAccountId: smbcOtsukaBranchAccountId,
+      if (shouldIncludeDefaultGasBill)
+        gasBillAccountId: smbcOtsukaBranchAccountId,
       ...defaultPaymentSourceAccountIds,
       ...paymentSourceAccountIds,
     };
@@ -448,6 +462,18 @@ class AssetLiabilityPlanningService {
         balance: balance,
         kind: AssetLiabilityAccountKind.utility,
         paymentDay: waterBillPaymentDay,
+        annualRate: 0,
+        minimumPaymentRate: 1,
+        minimumPaymentFloor: balance.abs(),
+        fullPaymentEstimate: true,
+      );
+    }
+    if (_accountIdForName(name) == gasBillAccountId) {
+      return _liability(
+        name: name,
+        balance: balance,
+        kind: AssetLiabilityAccountKind.utility,
+        paymentDay: gasBillPaymentDay,
         annualRate: 0,
         minimumPaymentRate: 1,
         minimumPaymentFloor: balance.abs(),
@@ -1708,6 +1734,9 @@ class AssetLiabilityPlanningService {
     if (_containsAny(key, const <String>['水道', 'すいどう', 'water'])) {
       return waterBillAccountId;
     }
+    if (_containsAny(key, const <String>['ガス', 'gas'])) {
+      return gasBillAccountId;
+    }
     if (key == 'au' || _containsAny(key, const <String>['通信', '携帯'])) {
       return 'au';
     }
@@ -1732,6 +1761,7 @@ class AssetLiabilityPlanningService {
     required bool includeKddiProvider,
     required bool includeRent,
     required bool includeWaterBill,
+    required bool includeGasBill,
   }) {
     final result = Map<String, double>.from(latestSnapshot);
     if (includeKddiProvider && !_hasKddiProvider(result)) {
@@ -1743,6 +1773,9 @@ class AssetLiabilityPlanningService {
     if (includeWaterBill && !_hasWaterBill(result)) {
       result[waterBillAccountName] = -waterBillBimonthlyPaymentAmount;
     }
+    if (includeGasBill && !_hasGasBill(result)) {
+      result[gasBillAccountName] = -gasBillMonthlyPaymentAmount;
+    }
     return result;
   }
 
@@ -1751,6 +1784,7 @@ class AssetLiabilityPlanningService {
     required bool includeDefaultKddiProvider,
     required bool includeDefaultRent,
     required bool includeDefaultWaterBill,
+    required bool includeDefaultGasBill,
   }) {
     final result = <String, double>{...monthlyPaymentOverrides};
     if (includeDefaultKddiProvider &&
@@ -1767,6 +1801,11 @@ class AssetLiabilityPlanningService {
         !result.containsKey(waterBillAccountId) &&
         !result.containsKey(waterBillAccountName)) {
       result[waterBillAccountId] = waterBillBimonthlyPaymentAmount;
+    }
+    if (includeDefaultGasBill &&
+        !result.containsKey(gasBillAccountId) &&
+        !result.containsKey(gasBillAccountName)) {
+      result[gasBillAccountId] = gasBillMonthlyPaymentAmount;
     }
     return result;
   }
@@ -1786,6 +1825,12 @@ class AssetLiabilityPlanningService {
   bool _hasWaterBill(Map<String, double> snapshot) {
     return snapshot.keys.any(
       (name) => _accountIdForName(name) == waterBillAccountId,
+    );
+  }
+
+  bool _hasGasBill(Map<String, double> snapshot) {
+    return snapshot.keys.any(
+      (name) => _accountIdForName(name) == gasBillAccountId,
     );
   }
 
