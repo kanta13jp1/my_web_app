@@ -14837,15 +14837,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.no_drinks_outlined,
                 color: Color(0xFF7C3AED),
                 size: 20,
               ),
-              const SizedBox(width: 8),
-              const Expanded(
+              SizedBox(width: 8),
+              Expanded(
                 child: Text(
                   '禁酒で借金完済チャレンジ',
                   style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
