@@ -33,7 +33,7 @@ void main() {
       final uri = GrowTogetherShare.buildXIntentUrl();
 
       expect(uri.scheme, 'https');
-      expect(uri.host, 'x.com');
+      expect(uri.host, 'twitter.com');
       expect(uri.path, '/intent/tweet');
       expect(uri.queryParameters['text'], GrowTogetherShare.shareText);
       expect(uri.queryParameters['url'], GrowTogetherShare.appUrl);
@@ -44,7 +44,7 @@ void main() {
       // 混入していないことを確認する（intent URL として壊れないこと）。
       final encoded = GrowTogetherShare.buildXIntentUrl().toString();
 
-      expect(encoded.startsWith('https://x.com/intent/tweet?'), isTrue);
+      expect(encoded.startsWith('https://twitter.com/intent/tweet?'), isTrue);
       expect(encoded.contains('\n'), isFalse);
       expect(encoded.contains('text='), isTrue);
       expect(encoded.contains('url='), isTrue);
