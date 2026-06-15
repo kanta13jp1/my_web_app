@@ -35,6 +35,30 @@ class _FakeDebtOverrideRepository
   }
 }
 
+/// ローカル保存 (replaceAll) が必ず失敗するウォッチリストサービス。
+/// 復元時の保存失敗が無音にならず (catchError でログ)、かつページを
+/// クラッシュさせないことを検証する (review medium / silent save)。
+class _ThrowingWatchlistService extends AssetWatchlistService {
+  _ThrowingWatchlistService(this._seed);
+
+  final List<AssetWatchlistEntry> _seed;
+
+  @override
+  Future<List<AssetWatchlistEntry>> loadEntries({
+    SharedPreferences? prefs,
+  }) async {
+    return List<AssetWatchlistEntry>.from(_seed);
+  }
+
+  @override
+  Future<List<AssetWatchlistEntry>> replaceAll(
+    List<AssetWatchlistEntry> entries, {
+    SharedPreferences? prefs,
+  }) async {
+    throw Exception('simulated disk failure');
+  }
+}
+
 /// 資産管理ページの widget スモーク足場 (#3260)。
 /// 未ログイン (auth.currentUser == null) では Supabase フェッチ群が
 /// 早期 return する性質を利用し、ネットワークなしで UI 契約だけを検証する。
@@ -1363,6 +1387,57 @@ void main() {
           'watchlist_entries',
         );
         expect(ts, isNotNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'restore tolerates a failing local save without crashing (review medium)',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        // ローカルは 'gold' のみ。サーバは 'gold' + 'extra' なので additive
+        // マージ → replaceAll 保存が走るが、その保存を必ず失敗させる。
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              watchlistService: _ThrowingWatchlistService(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'gold',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                ],
+              ),
+              debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'gold',
+                    group: '',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 1, 1),
+                  ),
+                  AssetWatchlistEntry(
+                    assetType: 'extra',
+                    group: 'invest',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 6, 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // 保存 future の失敗は catchError でログのみ → 未捕捉例外でクラッシュしない。
+        expect(tester.takeException(), isNull);
 
         await _unmount(tester);
       },
