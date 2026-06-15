@@ -315,7 +315,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String prefKey,
     Future<void> Function() uploadLocal,
   ) async {
-    if (_supabase.auth.currentUser == null) {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
       return;
     }
     try {
@@ -324,6 +325,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .select('pref_key')
           .eq('pref_key', prefKey)
           .limit(1);
+      // select の間にログアウト/別アカウントへ切替わっていないか再確認する。
+      // 前アカウントのローカル値を新しい user_id で誤アップロードしない (review medium)。
+      if (_supabase.auth.currentUser?.id != userId) {
+        return;
+      }
       if (rows.isEmpty) {
         await uploadLocal();
       }
@@ -343,11 +349,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (mirrorUpdatedAt == null) {
       return;
     }
-    final localUpdatedAt = await _syncTimestampStore.loadTimestamp(prefKey);
-    if (localUpdatedAt != null && localUpdatedAt.isAfter(mirrorUpdatedAt)) {
-      return;
+    try {
+      final localUpdatedAt = await _syncTimestampStore.loadTimestamp(prefKey);
+      if (localUpdatedAt != null && localUpdatedAt.isAfter(mirrorUpdatedAt)) {
+        return;
+      }
+      await _syncTimestampStore.markChanged(prefKey, at: mirrorUpdatedAt);
+    } catch (e) {
+      // 時刻整合の失敗は致命的でないが、無音にせずログする (review medium)。
+      debugPrint('mirror timestamp realign failed ($prefKey): $e');
     }
-    await _syncTimestampStore.markChanged(prefKey, at: mirrorUpdatedAt);
+  }
+
+  /// unawaited な保存 future の失敗を握り潰さずログする。setState 後の
+  /// SharedPreferences 永続化が落ちても無音にならないようにする (review medium)。
+  /// 戻り値型に依存しないよう then(onError:) で受ける (catchError だと非 void
+  /// future を null で完了させ TypeError になるため)。
+  void _persistInBackground<T>(Future<T> future, String label) {
+    unawaited(
+      future.then<void>(
+        (_) {},
+        onError: (Object e) => debugPrint('$label failed: $e'),
+      ),
+    );
   }
 
   // --- 資産・負債（ストック）用変数 ---
@@ -5399,7 +5423,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       setState(() {
         _setWatchlistEntries(mergedList);
       });
-      unawaited(widget.watchlistService.replaceAll(mergedList));
+      _persistInBackground(
+        widget.watchlistService.replaceAll(mergedList),
+        'watchlist pull save',
+      );
     } catch (e) {
       debugPrint('watchlist tombstone pull failed: $e');
     }
@@ -5487,7 +5514,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           _setWatchlistEntries(mergedList);
         });
         // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
-        unawaited(widget.watchlistService.replaceAll(mergedList));
+        _persistInBackground(
+          widget.watchlistService.replaceAll(mergedList),
+          'watchlist restore save',
+        );
         // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
         // (review #2 / ローカルが新しければ退行しない)。
         unawaited(
@@ -8069,12 +8099,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         _assetManagementMainAccountId = restored;
       });
       // オフライン参照用にローカルへ書き戻し、ローカル更新時刻をミラーへ揃える。
-      unawaited(_mainAccountStore.save(restored));
-      unawaited(
+      _persistInBackground(
+        _mainAccountStore.save(restored),
+        'main account restore save',
+      );
+      _persistInBackground(
         _syncTimestampStore.markChanged(
           _mainAccountMirrorKey,
           at: mirrorUpdatedAt,
         ),
+        'main account timestamp',
       );
     } catch (e) {
       debugPrint('main account mirror restore failed: $e');
@@ -8445,7 +8479,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() {
           _revolvingConfigs = merged;
         });
-        unawaited(_revolvingConfigStore.save(merged));
+        _persistInBackground(
+          _revolvingConfigStore.save(merged),
+          'revolving restore save',
+        );
         // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
         // (review #2 / ローカルが新しければ退行しない)。
         unawaited(
@@ -9606,7 +9643,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         setState(() {
           _debtPaymentDayOverrides = merged;
         });
-        unawaited(_saveDebtPaymentDayOverrides());
+        _persistInBackground(
+          _saveDebtPaymentDayOverrides(),
+          'debt override restore save',
+        );
         // additive 追加 / tombstone 除去でもデータが変化したので時刻を整合させる
         // (review #2 / ローカルが新しければ退行しない)。
         unawaited(
