@@ -54,6 +54,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-feature-review-${{ hashFiles('**/requirements*.txt') }}-anthropic-playwright-requests
+          restore-keys: |
+            ${{ runner.os }}-pip-feature-review-
+
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
