@@ -175,5 +175,28 @@ void main() {
 
       expect(tapped, isTrue);
     });
+
+    testWidgets('exposes a live-region alert and a labelled chart for a11y', (
+      tester,
+    ) async {
+      await _pump(tester, _shortfallForecast());
+
+      // 警告は liveRegion(出現/変化をスクリーンリーダーが読み上げる)。
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && (widget.properties.liveRegion ?? false),
+        ),
+        findsWidgets,
+      );
+      // グラフは視覚に依らない label/value を持つ。
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && widget.properties.label == '将来残高予測グラフ',
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }
