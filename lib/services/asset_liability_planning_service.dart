@@ -1152,6 +1152,12 @@ class AssetLiabilityPlanningService {
       if (day == null) {
         continue;
       }
+      // 支払済みは当月分の支払いが完了済みのため、支払日別リスク(期限超過/要支払い)
+      // からは物理除外する。アクションアイテム層が overdue を !row.paid で判定するのと
+      // 整合させ、AI ナラティブが支払済みの負債を「期限超過」として指摘しないようにする。
+      if (row.paid) {
+        continue;
+      }
       byDay.putIfAbsent(day, () => <AssetLiabilityDebtRow>[]).add(row);
     }
 
