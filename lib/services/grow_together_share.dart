@@ -33,17 +33,17 @@ class GrowTogetherShare {
 
   /// X の投稿 intent URL を生成する純関数。
   ///
-  /// host は `twitter.com` を使う（ログイン済みなら x.com の作成画面へ
-  /// リダイレクトされる）。`x.com/intent/tweet` を直接開くと作成画面が
-  /// 描画されず真っ白になる事象が報告されているため、従来から安定して
-  /// 動作する `twitter.com/intent/tweet` を採用する。
+  /// host は `twitter.com`（ログイン済みなら x.com の作成画面へリダイレクト）。
+  /// `x.com/intent/tweet` を直接開くと作成画面が真っ白になる事象がある。
   ///
-  /// `text`（本文）と `url`（リンク）を分けて渡すことで、X が URL を自動で
-  /// t.co 短縮し、本文の文字数超過を避ける。副作用を持たないためテスト容易。
+  /// URL は **`text` パラメータ内に本文と一緒に含める**（別の `url` パラメータは
+  /// 使わない）。`text`+`url` の2パラメータ構成だと、X が full app の作成画面へ
+  /// リダイレクトする際に本文が反映されず空欄になる事象が実機で確認された。
+  /// 本リポジトリの他の共有導線(app_share_service / viral_ad_generator)と同じく
+  /// 単一 `text` 構成にすることで本文が確実に prefill される。
   static Uri buildXIntentUrl() {
     return Uri.https('twitter.com', '/intent/tweet', <String, String>{
-      'text': shareText,
-      'url': appUrl,
+      'text': fullShareMessage,
     });
   }
 
