@@ -10532,14 +10532,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (workbook == null) {
       return const SizedBox.shrink();
     }
-    final pending = const AssetAutoDebitConfirmationService()
-        .pendingConfirmations(workbook);
+    final details = const AssetAutoDebitConfirmationService()
+        .pendingConfirmationDetails(workbook);
     final entries =
-        <MapEntry<AssetLiabilityCashflowRow, AssetLiabilityDebtRow>>[];
-    for (final row in pending) {
+        <MapEntry<AssetAutoDebitConfirmation, AssetLiabilityDebtRow>>[];
+    for (final detail in details) {
       for (final debt in workbook.debtMasterRows) {
-        if (debt.id == row.accountId) {
-          entries.add(MapEntry(row, debt));
+        if (debt.id == detail.row.accountId) {
+          entries.add(MapEntry(detail, debt));
           break;
         }
       }
@@ -10593,18 +10593,46 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              entry.key.accountName,
+                              entry.key.row.accountName,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: scheme.onTertiaryContainer,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             Text(
-                              _autoDebitConfirmationSubtitle(entry.key),
+                              _autoDebitConfirmationSubtitle(entry.key.row),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: scheme.onTertiaryContainer,
                               ),
                             ),
+                            if (entry.key.sourceBalanceInsufficient)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      size: 16,
+                                      color: scheme.error,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        '振替元の残高'
+                                        '(${_formatManagementYen(entry.key.sourceAccountBalance!)})'
+                                        'が支払額を下回っています。引落が失敗している'
+                                        '可能性があるため、残高をご確認のうえ操作してください。',
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: scheme.error,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),
