@@ -94,9 +94,12 @@ class AssetCashflowForecastCard extends StatelessWidget {
               SizedBox(
                 height: 160,
                 width: double.infinity,
+                // image + container + 単一 label で graphic として確実に読ませる
+                // (Flutter Web の role=img の alt として全文を読み上げ)。
                 child: Semantics(
-                  label: '将来残高予測グラフ',
-                  value: _chartA11yValue(),
+                  container: true,
+                  image: true,
+                  label: '将来残高予測グラフ。${_chartA11yValue()}',
                   child: ExcludeSemantics(
                     child: CustomPaint(
                       key: const Key('asset_cashflow_forecast_chart'),
@@ -233,35 +236,39 @@ class AssetCashflowForecastCard extends StatelessWidget {
     required IconData icon,
     required String message,
   }) {
-    // liveRegion: 警告の出現/変化をスクリーンリーダーが読み上げる。
+    // liveRegion + 明示 label: 警告の出現/変化を本文そのままで読み上げる
+    // (内側 Text は ExcludeSemantics で重複排除し、アナウンス内容を固定)。
     return Semantics(
       liveRegion: true,
       container: true,
-      child: Container(
-        key: alertKey,
-        width: double.infinity,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                message,
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.5,
-                  color: color,
-                  fontWeight: FontWeight.w700,
+      label: message,
+      child: ExcludeSemantics(
+        child: Container(
+          key: alertKey,
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

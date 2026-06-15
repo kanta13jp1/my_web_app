@@ -181,19 +181,23 @@ void main() {
     ) async {
       await _pump(tester, _shortfallForecast());
 
-      // 警告は liveRegion(出現/変化をスクリーンリーダーが読み上げる)。
+      // 警告は liveRegion かつ本文を label に持つ(出現/変化を読み上げる)。
       expect(
         find.byWidgetPredicate(
           (widget) =>
-              widget is Semantics && (widget.properties.liveRegion ?? false),
+              widget is Semantics &&
+              (widget.properties.liveRegion ?? false) &&
+              (widget.properties.label ?? '').contains('残高が不足'),
         ),
-        findsWidgets,
+        findsOneWidget,
       );
-      // グラフは視覚に依らない label/value を持つ。
+      // グラフは graphic(image)ロール + 要約を含む単一 label を持つ。
       expect(
         find.byWidgetPredicate(
           (widget) =>
-              widget is Semantics && widget.properties.label == '将来残高予測グラフ',
+              widget is Semantics &&
+              (widget.properties.image ?? false) &&
+              (widget.properties.label ?? '').startsWith('将来残高予測グラフ'),
         ),
         findsOneWidget,
       );
