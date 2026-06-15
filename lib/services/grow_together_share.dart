@@ -33,10 +33,15 @@ class GrowTogetherShare {
 
   /// X の投稿 intent URL を生成する純関数。
   ///
+  /// host は `twitter.com` を使う（ログイン済みなら x.com の作成画面へ
+  /// リダイレクトされる）。`x.com/intent/tweet` を直接開くと作成画面が
+  /// 描画されず真っ白になる事象が報告されているため、従来から安定して
+  /// 動作する `twitter.com/intent/tweet` を採用する。
+  ///
   /// `text`（本文）と `url`（リンク）を分けて渡すことで、X が URL を自動で
   /// t.co 短縮し、本文の文字数超過を避ける。副作用を持たないためテスト容易。
   static Uri buildXIntentUrl() {
-    return Uri.https('x.com', '/intent/tweet', <String, String>{
+    return Uri.https('twitter.com', '/intent/tweet', <String, String>{
       'text': shareText,
       'url': appUrl,
     });
