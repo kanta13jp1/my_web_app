@@ -8876,13 +8876,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<List<Map<String, dynamic>>> _fetchDisplayPrefRows() async {
     final rows = List<Map<String, dynamic>>.from(
       await _supabase.from('asset_pref_mirror').select().inFilter(
-        'pref_key',
-        <String>[
-          _displayPrefsAggregatedKey,
-          'display_mode',
-          'section_overrides',
-        ],
-      ),
+            'pref_key',
+            AssetMirrorReadPolicy.readPrefKeys(
+              aggregatedKey: _displayPrefsAggregatedKey,
+              legacyKeys: const <String>['display_mode', 'section_overrides'],
+            ),
+          ),
     );
     for (final row in rows) {
       if (row['pref_key'] == _displayPrefsAggregatedKey) {
@@ -8915,9 +8914,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         // 集約行 (asset_display_prefs_v1) を優先、無ければ legacy 行。
         final rows =
             await _supabase.from('asset_pref_mirror').select().inFilter(
-          'pref_key',
-          <String>[_displayPrefsAggregatedKey, 'section_override_deleted'],
-        );
+                  'pref_key',
+                  AssetMirrorReadPolicy.readPrefKeys(
+                    aggregatedKey: _displayPrefsAggregatedKey,
+                    legacyKeys: const <String>['section_override_deleted'],
+                  ),
+                );
         Map<String, dynamic>? aggregated;
         Map<String, dynamic>? legacy;
         for (final row in rows) {
@@ -9786,9 +9788,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
         final rows =
             await _supabase.from('asset_pref_mirror').select().inFilter(
-          'pref_key',
-          <String>[_inflowPrefsAggregatedKey, 'inflow_deleted_ids'],
-        );
+                  'pref_key',
+                  AssetMirrorReadPolicy.readPrefKeys(
+                    aggregatedKey: _inflowPrefsAggregatedKey,
+                    legacyKeys: const <String>['inflow_deleted_ids'],
+                  ),
+                );
         Map<String, dynamic>? aggregated;
         Map<String, dynamic>? legacy;
         for (final row in rows) {
@@ -9852,9 +9857,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
       final rows = await _supabase.from('asset_pref_mirror').select().inFilter(
-        'pref_key',
-        <String>[_inflowPrefsAggregatedKey, 'inflow_tombstone_gc'],
-      );
+            'pref_key',
+            AssetMirrorReadPolicy.readPrefKeys(
+              aggregatedKey: _inflowPrefsAggregatedKey,
+              legacyKeys: const <String>['inflow_tombstone_gc'],
+            ),
+          );
       Map<String, dynamic>? aggregated;
       Map<String, dynamic>? legacy;
       for (final row in rows) {

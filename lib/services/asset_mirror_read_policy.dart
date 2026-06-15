@@ -16,6 +16,39 @@ class AssetMirrorReadPolicy {
     flagName,
     defaultValue: false,
   );
+
+  /// Phase 3: legacy per-key 行の読みフォールバックを撤去するビルド時フラグ。
+  ///
+  /// 既定 false (= legacy 行も読む現行挙動 / プロダクション無変更)。true で
+  /// `asset_pref_mirror` の読みを集約行のみに絞る。本番有効化は dart-define で行い、
+  /// 既定 false なので削除するだけで即時ロールバックできる。
+  ///
+  /// **有効化の前提**: docs/PHASE3_LEGACY_ZERO_DRYRUN.md の dry-run が全 PASS
+  /// (legacy 残存ゼロ + 旧クライアント不在) を確認できた後にのみ true にする。
+  static const String legacyReadDisabledFlag =
+      'ASSET_LEGACY_PREF_READ_DISABLED';
+
+  static const bool legacyReadDisabled = bool.fromEnvironment(
+    legacyReadDisabledFlag,
+    defaultValue: false,
+  );
+
+  /// `asset_pref_mirror` 読みの `inFilter('pref_key', ...)` に渡すキー一覧を返す
+  /// 純関数。[legacyReadDisabled] が true なら集約キーのみ(legacy フォールバック
+  /// 撤去)、false なら集約 + legacy キー(現行)。
+  ///
+  /// [legacyDisabled] はテスト用の上書き。省略時はビルド時フラグを使う。
+  static List<String> readPrefKeys({
+    required String aggregatedKey,
+    required List<String> legacyKeys,
+    bool? legacyDisabled,
+  }) {
+    final disabled = legacyDisabled ?? legacyReadDisabled;
+    if (disabled) {
+      return <String>[aggregatedKey];
+    }
+    return <String>[aggregatedKey, ...legacyKeys];
+  }
 }
 
 /// LWW 解決の結果: サーバ行を採用するか、ローカルを維持するか。

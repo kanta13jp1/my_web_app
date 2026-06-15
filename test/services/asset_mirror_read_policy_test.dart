@@ -94,4 +94,32 @@ void main() {
       expect(AssetMirrorReadPolicy.authoritative, isFalse);
     });
   });
+
+  group('readPrefKeys (Phase 3 legacy fallback flag)', () {
+    test('legacy enabled (default) → aggregated + legacy keys', () {
+      expect(
+        AssetMirrorReadPolicy.readPrefKeys(
+          aggregatedKey: 'asset_display_prefs_v1',
+          legacyKeys: const <String>['display_mode', 'section_overrides'],
+          legacyDisabled: false,
+        ),
+        <String>['asset_display_prefs_v1', 'display_mode', 'section_overrides'],
+      );
+    });
+
+    test('legacy disabled → aggregated key only (fallback retired)', () {
+      expect(
+        AssetMirrorReadPolicy.readPrefKeys(
+          aggregatedKey: 'asset_inflow_prefs_v1',
+          legacyKeys: const <String>['inflow_deleted_ids'],
+          legacyDisabled: true,
+        ),
+        <String>['asset_inflow_prefs_v1'],
+      );
+    });
+
+    test('the Phase 3 build flag defaults to OFF (production unchanged)', () {
+      expect(AssetMirrorReadPolicy.legacyReadDisabled, isFalse);
+    });
+  });
 }
