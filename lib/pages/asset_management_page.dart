@@ -21,6 +21,7 @@ import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
+import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
@@ -7922,6 +7923,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             _buildSyncStatusBanner(),
             _buildUnsyncedBadgeRow(),
+            _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
             _buildDisplayModeSwitcher(),
             const SizedBox(height: 12),
@@ -10483,6 +10485,119 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 現金・預金を起点に、繰り返し収入・固定費・返済予定を毎月積み上げた
   /// 今後の残高見込みカード。登録データが無ければ非表示。
+  // 支払日を過ぎた自動振替・固定費の「引落確認待ち」カード。引落済みなら
+  // ユーザーが確認 → 支払済み(現在残高に反映済み)扱いにし、見込み残高の
+  // 二重控除を防ぐ。引落失敗の可能性があるため自動では支払済みにしない。
+  Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    final pending = const AssetAutoDebitConfirmationService()
+        .pendingConfirmations(workbook);
+    final entries =
+        <MapEntry<AssetLiabilityCashflowRow, AssetLiabilityDebtRow>>[];
+    for (final row in pending) {
+      for (final debt in workbook.debtMasterRows) {
+        if (debt.id == row.accountId) {
+          entries.add(MapEntry(row, debt));
+          break;
+        }
+      }
+    }
+    if (entries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: scheme.tertiaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.help_outline, color: scheme.onTertiaryContainer),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '引落の確認待ち (${entries.length}件)',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: scheme.onTertiaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '支払日を過ぎた自動振替・固定費です。引落が完了していれば「引落済み」を'
+                '押してください。現在の口座残高に反映済みとして扱い、見込み残高の'
+                '二重控除を防ぎます。引落が失敗している場合は押さないでください。',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onTertiaryContainer,
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (final entry in entries)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              entry.key.accountName,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onTertiaryContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              _autoDebitConfirmationSubtitle(entry.key),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onTertiaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.tonal(
+                        onPressed: () {
+                          unawaited(
+                            _toggleMonthlyPaymentPaid(entry.value, true),
+                          );
+                        },
+                        child: const Text('引落済み'),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _autoDebitConfirmationSubtitle(AssetLiabilityCashflowRow row) {
+    final buffer = StringBuffer(
+      '${row.paymentDay}日 / ${_formatManagementYen(row.paymentAmount)}',
+    );
+    final source = row.paymentSourceAccountName;
+    if (source != null && source.isNotEmpty) {
+      buffer.write(' / $source');
+    }
+    return buffer.toString();
+  }
+
   Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
