@@ -45,6 +45,7 @@ import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
+import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
@@ -275,6 +276,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 集約 pref ドメインのローカル最終変更時刻 (LWW 判定用 / Phase B)。
   final AssetSyncTimestampStore _syncTimestampStore =
       const AssetSyncTimestampStore();
+
+  /// ローカル編集済みで未同期のキー集合 (authoritative reads の巻き添え上書き
+  /// 防止 / #3415 保守的 per-key ガード)。
+  final AssetSyncDirtyKeysStore _syncDirtyKeysStore =
+      const AssetSyncDirtyKeysStore();
 
   /// ミラー読み取りを Supabase 正本化 (LWW) するか。テスト注入優先・既定はビルド時フラグ。
   bool get _mirrorReadsAuthoritative =>
@@ -5342,6 +5348,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain(_watchlistMirrorKey);
     } catch (e) {
       debugPrint('watchlist mirror upsert failed: $e');
     }
@@ -5497,14 +5505,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         return false;
       });
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _watchlistMirrorKey,
+      );
       for (final entry in serverEntries) {
         serverTypes.add(entry.assetType);
         if (tombstoned.contains(entry.assetType)) {
           continue;
         }
-        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
-        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
-        if (!merged.containsKey(entry.assetType) || adoptConflicts) {
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+        // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+        // フラグ OFF はここに来ても merged が local 由来 (空) なので
+        // !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(entry.assetType) ||
+            (adoptConflicts && !dirtyKeys.contains(entry.assetType))) {
           merged[entry.assetType] = entry;
           changed = true;
         }
@@ -5633,6 +5647,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   _setWatchlistEntries(entries);
                 });
                 unawaited(_recordWatchlistTombstone(type, deleted: false));
+                // ローカル編集を dirty 記録 (巻き添え上書き防止)。
+                unawaited(
+                  _syncDirtyKeysStore.markDirty(_watchlistMirrorKey, type),
+                );
                 unawaited(_mirrorWatchlist());
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
@@ -8391,6 +8409,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain(_revolvingConfigsMirrorKey);
     } catch (e) {
       debugPrint('revolving config mirror upsert failed: $e');
     }
@@ -8466,13 +8486,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         return false;
       });
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _revolvingConfigsMirrorKey,
+      );
       serverConfigs.forEach((key, config) {
         if (tombstoned.contains(key)) {
           return;
         }
-        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
-        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
-        if (!merged.containsKey(key) || adoptConflicts) {
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+        // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+        // フラグ OFF はここに来ても merged が local 由来 (空) なので
+        // !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
           merged[key] = config;
           changed = true;
         }
@@ -8529,6 +8555,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_revolvingConfigStore.save(_revolvingConfigs));
     // 削除はトゥームストーン化、再設定は解除 (debtId 再利用ドメイン)。
     unawaited(_recordRevolvingTombstone(debtId, deleted: config == null));
+    if (config != null) {
+      // ローカル編集を dirty 記録 (authoritative reads の巻き添え上書き防止)。
+      unawaited(
+        _syncDirtyKeysStore.markDirty(_revolvingConfigsMirrorKey, debtId),
+      );
+    }
     unawaited(_mirrorRevolvingConfigs());
   }
 
@@ -9559,6 +9591,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'value': overrides,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain('debt_payment_day_overrides');
     } catch (e) {
       debugPrint('pref mirror upsert failed: $e');
     }
@@ -9633,10 +9667,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final localKeys = _debtPaymentDayOverrides.keys.toSet();
       final merged = Map<String, int>.from(_debtPaymentDayOverrides);
       var changed = false;
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        'debt_payment_day_overrides',
+      );
       serverOverrides.forEach((key, day) {
-        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
-        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
-        if (!merged.containsKey(key) || adoptConflicts) {
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+        // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+        // フラグ OFF はここに来ても merged が local 由来 (空) なので
+        // !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
           merged[key] = day;
           changed = true;
         }
@@ -21070,6 +21110,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       unawaited(_recordDebtOverrideTombstone(row.id, deleted: true));
     } else {
       unawaited(_recordDebtOverrideTombstone(row.id, deleted: false));
+      // ローカル編集を dirty 記録 (巻き添え上書き防止)。
+      unawaited(
+        _syncDirtyKeysStore.markDirty('debt_payment_day_overrides', row.id),
+      );
     }
     unawaited(_saveDebtPaymentDayOverrides());
   }

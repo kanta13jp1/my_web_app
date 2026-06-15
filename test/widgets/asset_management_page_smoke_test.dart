@@ -1018,6 +1018,166 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+      'Phase B flag on: dirty watchlist key keeps local, clean key adopts '
+      'server (#3415 per-key guard)',
+      (tester) async {
+        // gold はローカル編集済み(dirty) / silver は未編集。サーバは両方別値。
+        // フラグ ON でも dirty な gold は巻き添え上書きされず、silver のみ採用。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_watchlist_entries_v1': jsonEncode(<Map<String, dynamic>>[
+            <String, dynamic>{
+              'assetType': 'gold',
+              'group': 'local_gold',
+              'memo': '',
+              'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+            },
+            <String, dynamic>{
+              'assetType': 'silver',
+              'group': 'local_silver',
+              'memo': '',
+              'addedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+            },
+          ]),
+          'asset_sync_dirty_keys_v1': jsonEncode(<String, dynamic>{
+            'watchlist_entries': <String>['gold'],
+          }),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugMirrorReadsAuthoritative: true,
+              debugWatchlistMirror: AssetWatchlistService.encodeMirrorValue(
+                <AssetWatchlistEntry>[
+                  AssetWatchlistEntry(
+                    assetType: 'gold',
+                    group: 'server_gold',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 6, 14),
+                  ),
+                  AssetWatchlistEntry(
+                    assetType: 'silver',
+                    group: 'server_silver',
+                    memo: '',
+                    addedAt: DateTime.utc(2026, 6, 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final synced = await const AssetWatchlistService().loadEntries();
+        final gold = synced.firstWhere((e) => e.assetType == 'gold');
+        final silver = synced.firstWhere((e) => e.assetType == 'silver');
+        expect(gold.group, 'local_gold'); // dirty → 保護
+        expect(silver.group, 'server_silver'); // clean → サーバ採用
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Phase B flag on: dirty revolving key keeps local, clean key adopts '
+      'server (#3415 per-key guard)',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRevolvingCreditConfigStore.prefsKey: jsonEncode(
+            AssetRevolvingCreditConfigStore.encodeMirrorValue(
+              <String, AssetLiabilityRevolvingCreditConfig>{
+                'dirty_card': const AssetLiabilityRevolvingCreditConfig(
+                  monthlyAmount: 1000,
+                  creditLimit: 500000,
+                ),
+                'clean_card': const AssetLiabilityRevolvingCreditConfig(
+                  monthlyAmount: 2000,
+                  creditLimit: 500000,
+                ),
+              },
+            ),
+          ),
+          'asset_sync_dirty_keys_v1': jsonEncode(<String, dynamic>{
+            'revolving_credit_configs': <String>['dirty_card'],
+          }),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugMirrorReadsAuthoritative: true,
+              debugRevolvingConfigsMirror:
+                  AssetRevolvingCreditConfigStore.encodeMirrorValue(
+                <String, AssetLiabilityRevolvingCreditConfig>{
+                  'dirty_card': const AssetLiabilityRevolvingCreditConfig(
+                    monthlyAmount: 9000,
+                    creditLimit: 500000,
+                  ),
+                  'clean_card': const AssetLiabilityRevolvingCreditConfig(
+                    monthlyAmount: 8000,
+                    creditLimit: 500000,
+                  ),
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final local = await const AssetRevolvingCreditConfigStore().load();
+        expect(local['dirty_card']!.monthlyAmount, 1000); // dirty → 保護
+        expect(local['clean_card']!.monthlyAmount, 8000); // clean → サーバ採用
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'Phase B flag on: dirty debt-override key keeps local, clean key adopts '
+      'server (#3415 per-key guard)',
+      (tester) async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_sync_dirty_keys_v1': jsonEncode(<String, dynamic>{
+            'debt_payment_day_overrides': <String>['dirty_debt'],
+          }),
+        });
+        final repo = _FakeDebtOverrideRepository(<String, int>{
+          'dirty_debt': 10,
+          'clean_debt': 11,
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              assetLiabilityRepository: repo,
+              debugMirrorReadsAuthoritative: true,
+              debugDebtOverridesMirror: const <String, dynamic>{
+                'dirty_debt': 20,
+                'clean_debt': 21,
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(repo.savedDebtOverrides, isNotNull);
+        expect(repo.savedDebtOverrides!['dirty_debt'], 10); // dirty → 保護
+        expect(repo.savedDebtOverrides!['clean_debt'], 21); // clean → サーバ採用
+
+        await _unmount(tester);
+      },
+    );
+
     testWidgets('Phase B flag off (default): same-key conflict keeps local', (
       tester,
     ) async {
