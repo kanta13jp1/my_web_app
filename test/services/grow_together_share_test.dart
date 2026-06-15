@@ -28,8 +28,7 @@ void main() {
       );
     });
 
-    test('buildXIntentUrl puts the full message (incl URL) in a single text '
-        'param', () {
+    test('buildXIntentUrl embeds the URL in a single text param', () {
       final uri = GrowTogetherShare.buildXIntentUrl();
 
       expect(uri.scheme, 'https');
@@ -39,10 +38,7 @@ void main() {
       // リダイレクトで本文が空欄になる事象を避けるため）。
       expect(uri.queryParameters['text'], GrowTogetherShare.fullShareMessage);
       expect(uri.queryParameters.containsKey('url'), isFalse);
-      expect(
-        uri.queryParameters['text'],
-        contains(GrowTogetherShare.appUrl),
-      );
+      expect(uri.queryParameters['text'], contains(GrowTogetherShare.appUrl));
     });
 
     test('buildXIntentUrl percent-encodes newlines and Japanese text', () {
