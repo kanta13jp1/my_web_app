@@ -353,6 +353,7 @@ class AssetManagementAiSummaryService {
         'must_not_invent_unknown_profile_fields': true,
         'must_not_recommend_starvation_or_water_only': true,
         'must_prioritize_food_shelter_health_and_contacting_creditors': true,
+        'must_not_flag_paid_items_as_overdue_or_unpaid': true,
       },
     };
   }
@@ -422,6 +423,7 @@ class AssetManagementAiSummaryService {
         'must_not_invent_unknown_profile_fields': true,
         'must_not_recommend_starvation_or_water_only': true,
         'must_prioritize_food_shelter_health_and_contacting_creditors': true,
+        'must_not_flag_paid_items_as_overdue_or_unpaid': true,
       },
     };
   }

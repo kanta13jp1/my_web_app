@@ -305,6 +305,47 @@ void main() {
       );
     });
 
+    test('excludes paid debts from payment day risks but keeps unpaid', () {
+      // モビット・横浜銀行ともに支払日15。基準日を支払日経過後にし、
+      // モビットだけ支払済みにする。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          '財布': 50000,
+          'モビット': -20000,
+          '横浜銀行': -30000,
+        },
+        baseDate: DateTime(2026, 5, 20),
+        paidAccountNames: const <String>{'モビット'},
+      );
+
+      final risk15 = workbook.paymentDayRisks
+          .where((risk) => risk.paymentDay == 15)
+          .toList();
+
+      // 未払いの横浜銀行が残るのでリスク行自体は存在する。
+      expect(risk15, hasLength(1));
+      // 支払済みのモビットは期限超過リスク(AIナラティブ入力)から物理除外される。
+      expect(risk15.single.accountNames, contains('横浜銀行'));
+      expect(risk15.single.accountNames, isNot(contains('モビット')));
+    });
+
+    test('drops payment day risk entirely when every debt is paid', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          '財布': 50000,
+          'モビット': -20000,
+        },
+        baseDate: DateTime(2026, 5, 20),
+        paidAccountNames: const <String>{'モビット'},
+      );
+
+      // その支払日の負債が全て支払済みなら、支払日リスク行は出ない。
+      expect(
+        workbook.paymentDayRisks.any((risk) => risk.paymentDay == 15),
+        isFalse,
+      );
+    });
+
     test('uses actual paid amount for paid rows and keeps unpaid planned', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
