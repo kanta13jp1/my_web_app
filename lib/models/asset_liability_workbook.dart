@@ -260,6 +260,138 @@ class AssetLiabilityRevolvingCreditConfig {
   }
 }
 
+/// 定期固定費の発生周期。
+enum AssetRecurringFixedCostCadence {
+  /// 毎月。
+  monthly,
+
+  /// 隔月 (偶数月のみ / 例: 水道代)。
+  bimonthlyEvenMonth,
+
+  /// 隔月 (奇数月のみ)。
+  bimonthlyOddMonth,
+}
+
+/// UI から登録できる定期固定費 (家賃・光熱費・通信費など毎月/隔月の口座振替)。
+///
+/// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) と同様に、資金繰りへ
+/// 「全額支払いの負債 (utility)」として計上される。`buildWorkbook` の
+/// `recurringFixedCosts` で渡し、`asset_pref_mirror` で端末間同期する。
+/// 保存形は `{id: {name, amount, paymentDay, cadence, sourceAccountId}}`。
+class AssetRecurringFixedCost {
+  /// 安定した一意 ID (編集・削除のキー)。
+  final String id;
+
+  /// 表示名 (例: 電気代)。
+  final String name;
+
+  /// 月額の概算 (今月分は手入力の支払額上書きで変更可)。
+  final double amount;
+
+  /// 振替日 (1-31)。
+  final int paymentDay;
+
+  /// 発生周期 (毎月 / 隔月偶数月 / 隔月奇数月)。
+  final AssetRecurringFixedCostCadence cadence;
+
+  /// 引落の振替元口座 ID (任意)。
+  final String? sourceAccountId;
+
+  const AssetRecurringFixedCost({
+    required this.id,
+    required this.name,
+    required this.amount,
+    required this.paymentDay,
+    this.cadence = AssetRecurringFixedCostCadence.monthly,
+    this.sourceAccountId,
+  });
+
+  /// 指定した月 (1-12) にこの固定費が発生するか (隔月は偶数/奇数月のみ計上)。
+  bool appliesToMonth(int month) {
+    switch (cadence) {
+      case AssetRecurringFixedCostCadence.monthly:
+        return true;
+      case AssetRecurringFixedCostCadence.bimonthlyEvenMonth:
+        return month.isEven;
+      case AssetRecurringFixedCostCadence.bimonthlyOddMonth:
+        return month.isOdd;
+    }
+  }
+
+  AssetRecurringFixedCost copyWith({
+    String? id,
+    String? name,
+    double? amount,
+    int? paymentDay,
+    AssetRecurringFixedCostCadence? cadence,
+    String? sourceAccountId,
+    bool clearSourceAccountId = false,
+  }) {
+    return AssetRecurringFixedCost(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      amount: amount ?? this.amount,
+      paymentDay: paymentDay ?? this.paymentDay,
+      cadence: cadence ?? this.cadence,
+      sourceAccountId: clearSourceAccountId
+          ? null
+          : (sourceAccountId ?? this.sourceAccountId),
+    );
+  }
+
+  /// ID をキーにする保存形のため、JSON には id を含めない。
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'name': name,
+      'amount': amount,
+      'paymentDay': paymentDay,
+      'cadence': cadence.name,
+      if (sourceAccountId != null && sourceAccountId!.isNotEmpty)
+        'sourceAccountId': sourceAccountId,
+    };
+  }
+
+  /// 不正な値 (空名 / 金額<=0 / 振替日範囲外) は null を返す寛容なパース。
+  static AssetRecurringFixedCost? fromJson(
+    String id,
+    Map<String, dynamic> json,
+  ) {
+    final trimmedId = id.trim();
+    if (trimmedId.isEmpty) {
+      return null;
+    }
+    final name = json['name']?.toString().trim() ?? '';
+    if (name.isEmpty) {
+      return null;
+    }
+    final amount = (json['amount'] as num?)?.toDouble() ??
+        double.tryParse(json['amount']?.toString() ?? '');
+    if (amount == null || amount <= 0) {
+      return null;
+    }
+    final paymentDay = (json['paymentDay'] as num?)?.toInt() ??
+        int.tryParse(json['paymentDay']?.toString() ?? '');
+    if (paymentDay == null || paymentDay < 1 || paymentDay > 31) {
+      return null;
+    }
+    final cadenceName = json['cadence']?.toString();
+    final cadence = AssetRecurringFixedCostCadence.values.firstWhere(
+      (value) => value.name == cadenceName,
+      orElse: () => AssetRecurringFixedCostCadence.monthly,
+    );
+    final rawSource = json['sourceAccountId']?.toString().trim();
+    return AssetRecurringFixedCost(
+      id: trimmedId,
+      name: name,
+      amount: amount,
+      paymentDay: paymentDay,
+      cadence: cadence,
+      sourceAccountId:
+          rawSource == null || rawSource.isEmpty ? null : rawSource,
+    );
+  }
+}
+
 /// リボ残高に対して算出した今月の請求内訳。
 class AssetLiabilityRevolvingCreditBilling {
   /// リボ残高 (= 当月時点の負債残高)。
