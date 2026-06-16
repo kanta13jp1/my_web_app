@@ -39,6 +39,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
+import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
@@ -66,6 +67,8 @@ import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -181,6 +184,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugWatchlistDeletedMirror;
 
+  /// テスト専用: 定期固定費の初期リストを注入し、UI 表示や計上を Supabase なしで
+  /// 検証する。null なら通常のローカル/ミラー読込のみ。
+  @visibleForTesting
+  final List<AssetRecurringFixedCost>? debugInitialRecurringFixedCosts;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -202,6 +210,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugDebtOverridesMirror,
     this.debugRevolvingDeletedMirror,
     this.debugWatchlistDeletedMirror,
+    this.debugInitialRecurringFixedCosts,
   });
 
   @override
@@ -397,6 +406,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // リボ払いカードの設定 (負債IDごと)。v1 はローカル永続化のみ。
   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
       <String, AssetLiabilityRevolvingCreditConfig>{};
+  // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
+  List<AssetRecurringFixedCost> _recurringFixedCosts =
+      <AssetRecurringFixedCost>[];
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
@@ -571,6 +583,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementMainAccountStore();
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
+  final AssetRecurringFixedCostStore _recurringFixedCostStore =
+      const AssetRecurringFixedCostStore();
+  static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
   final AssetCategoryBudgetStore _categoryBudgetStore =
       const AssetCategoryBudgetStore();
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
@@ -665,6 +680,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           entry.key: Map<String, double>.from(entry.value),
       };
     }
+    final debugRecurring = widget.debugInitialRecurringFixedCosts;
+    if (debugRecurring != null) {
+      _recurringFixedCosts = List<AssetRecurringFixedCost>.from(debugRecurring);
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -681,6 +700,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadMainAccount();
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
+    unawaited(_loadRecurringFixedCosts());
     unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
@@ -7754,6 +7774,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
+      recurringFixedCosts: _recurringFixedCosts,
       includeDefaultFixedPayments: true,
     );
   }
@@ -7961,6 +7982,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildSalarySpendingBreakdownCard(),
               const SizedBox(height: 16),
               _buildCategoryBudgetCard(),
+              const SizedBox(height: 16),
+              _buildRecurringFixedCostCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
@@ -8363,6 +8386,178 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
     await _restoreRevolvingConfigsFromMirror();
     unawaited(_refreshSyncSources());
+  }
+
+  // --- 定期固定費 (UI 登録) の読み書き・端末間同期 ---
+
+  /// 起動時にローカルから読み、空ならサーバ集約ミラーから復元する。
+  Future<void> _loadRecurringFixedCosts() async {
+    if (widget.debugInitialRecurringFixedCosts != null) {
+      // テスト注入時はネットワーク読込をスキップ (initState で設定済み)。
+      return;
+    }
+    try {
+      final costs = await _recurringFixedCostStore.load();
+      if (mounted && costs.isNotEmpty) {
+        setState(() => _recurringFixedCosts = costs);
+      }
+    } catch (e) {
+      debugPrint('Error loading recurring fixed costs: $e');
+    }
+    await _restoreRecurringFixedCostsFromMirror();
+  }
+
+  /// サーバ集約ミラー (pref_key: recurring_fixed_costs) から復元する。ローカルに
+  /// 既に登録があれば上書きしない (オフライン編集を握り潰さない安全側 / 削除の
+  /// クロス端末伝播は将来 tombstone 化で対応 / リボ設定 v1 と同方針)。
+  Future<void> _restoreRecurringFixedCostsFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    if (_recurringFixedCosts.isNotEmpty) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _recurringFixedCostsMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final serverCosts = AssetRecurringFixedCostStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || serverCosts.isEmpty) {
+        return;
+      }
+      setState(() => _recurringFixedCosts = serverCosts);
+      _persistInBackground(
+        _recurringFixedCostStore.save(serverCosts),
+        'recurring fixed cost restore save',
+      );
+    } catch (e) {
+      debugPrint('recurring fixed cost mirror restore failed: $e');
+    }
+  }
+
+  /// 定期固定費の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorRecurringFixedCosts() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _recurringFixedCostsMirrorKey,
+        'value': AssetRecurringFixedCostStore.encodeMirrorValue(
+          _recurringFixedCosts,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('recurring fixed cost mirror upsert failed: $e');
+    }
+  }
+
+  void _saveRecurringFixedCost(AssetRecurringFixedCost cost) {
+    setState(() {
+      final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
+      final index = next.indexWhere((existing) => existing.id == cost.id);
+      if (index >= 0) {
+        next[index] = cost;
+      } else {
+        next.add(cost);
+      }
+      next.sort((a, b) {
+        final byDay = a.paymentDay.compareTo(b.paymentDay);
+        return byDay != 0 ? byDay : a.name.compareTo(b.name);
+      });
+      _recurringFixedCosts = next;
+    });
+    _persistInBackground(
+      _recurringFixedCostStore.save(_recurringFixedCosts),
+      'recurring fixed cost save',
+    );
+    unawaited(_mirrorRecurringFixedCosts());
+  }
+
+  void _deleteRecurringFixedCost(AssetRecurringFixedCost cost) {
+    setState(() {
+      _recurringFixedCosts = _recurringFixedCosts
+          .where((existing) => existing.id != cost.id)
+          .toList();
+    });
+    _persistInBackground(
+      _recurringFixedCostStore.save(_recurringFixedCosts),
+      'recurring fixed cost delete',
+    );
+    unawaited(_mirrorRecurringFixedCosts());
+  }
+
+  Future<void> _openRecurringFixedCostEditor({
+    AssetRecurringFixedCost? existing,
+    required List<RecurringFixedCostSourceOption> sourceOptions,
+  }) async {
+    final result = await showRecurringFixedCostEditor(
+      context,
+      existing: existing,
+      sourceAccounts: sourceOptions,
+    );
+    if (result != null) {
+      _saveRecurringFixedCost(result);
+    }
+  }
+
+  Future<void> _confirmDeleteRecurringFixedCost(
+    AssetRecurringFixedCost cost,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('定期固定費を削除'),
+        content: Text('「${cost.name}」を削除しますか?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      _deleteRecurringFixedCost(cost);
+    }
+  }
+
+  Widget _buildRecurringFixedCostCard(AssetLiabilityWorkbook? workbook) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    final sourceOptions = <RecurringFixedCostSourceOption>[
+      for (final account in accounts)
+        if (account.balance > 0) (id: account.id, name: account.name),
+    ];
+    final sourceNames = <String, String>{
+      for (final account in accounts) account.id: account.name,
+    };
+    return RecurringFixedCostCard(
+      costs: _recurringFixedCosts,
+      sourceAccountNames: sourceNames,
+      onAdd: () => unawaited(
+        _openRecurringFixedCostEditor(sourceOptions: sourceOptions),
+      ),
+      onEdit: (cost) => unawaited(
+        _openRecurringFixedCostEditor(
+          existing: cost,
+          sourceOptions: sourceOptions,
+        ),
+      ),
+      onDelete: (cost) => unawaited(_confirmDeleteRecurringFixedCost(cost)),
+    );
   }
 
   Future<void> _loadDrinkChallenge() async {
@@ -11811,6 +12006,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         incomePlans: _monthlyIncomePlans,
         cardStatementLines: _cardStatementLines,
         transferTasks: _transferTasks,
+        recurringFixedCosts: _recurringFixedCosts,
         includeDefaultFixedPayments: true,
       );
       final assetLiabilityInputs =

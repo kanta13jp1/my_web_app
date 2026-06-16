@@ -604,6 +604,24 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-17",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-16 Microsoft MAI-Code-1-Flash 採択 / 1 day 経過 / cooldown 残 6 day / 次回 6/23 解禁). 前回 report = 6/16. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/17 は WebSearch 主体で 6/16→6/17 delta 集約. 最大シグナル = ★★ Anthropic 6/15 課金分離は『着地』でなく『一時停止 (paused)』が確定 🔴🔴 (= 6/16 report 訂正 / Help Center「Nothing changes for now」/ Agent SDK・claude -p・Claude Code GitHub Actions は従来 subscription 枠継続 / 理由=実利用パターンに合致させる調整中 / 背景=OpenAI 値下げ price war + IPO 前顧客離反回避 + 米政府 Fable5/Mythos5 規制摩擦 / 当初案 12x-175x 実効値上げで反発 → 自社 programmatic Claude のクレジット枠消費・棚卸し緊急度 MAX は撤回=緊急度ダウングレード / ただし pause=再導入余地で fallback 経路点検は予防継続 / 旧 Claude4 退役 ID 20250514 は別トラックで pause 免除されず sweep 継続). 他 = Salesforce Agentforce Multi-Agent Orchestration GA 翌日詳細 🔴 (Atlas Reasoning Engine 3.0 は description 駆動 routing=品質依存 / ARR $800M +169%YoY / 次回 discovery 第1候補 re-rank 最有力) + MAI-Code-1-Flash 初回フルスキャン 🟢 (Claude Haiku4.5 超え SWE-Bench Pro +16pt 51.2% vs 35.2% / frontier 上位未到達=軽量低コスト枠) + 価格戦争メータリング収斂加速 🟠 (Copilot usage-based flex billing $100 Max / Cursor $500M ARR). 6/23 採択 第 1 候補 = Salesforce Agentforce Operations (基準 a+c). https://the-decoder.com/anthropic-backs-off-unpopular-billing-overhaul-as-price-war-with-openai-looms/",
+      "skipped_candidates": [
+        "Salesforce Agentforce Operations (= 6/23 第 1 候補 / 6/15 Summer '26 GA 着地 / B/S overlap 最大 / 基準 a 正面競合 + 基準 c 過去 30 日重大リリース該当 / re-rank 最有力)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 シグナル / 動向観察 1 月)",
+        "Claude Fable 5 (= モデル層 delta / discovery 対象外 / Anthropic 既収載派生)",
+        "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
