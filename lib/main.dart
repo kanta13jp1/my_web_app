@@ -313,6 +313,12 @@ final GrowthPresenceNavigatorObserver _growthPresenceObserver =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // アクセシビリティを起動時から常時 ON にする。Flutter Web は既定で
+  // 「アクセシビリティを有効にする(Enable accessibility)」プレースホルダを
+  // 押すまでセマンティクスツリーを出さないため、スクリーンリーダー利用者は
+  // 最初から全要素を読める。返り値の SemanticsHandle は dispose しないので
+  // アプリ生存期間 ON を維持する(docs/ACCESSIBILITY_QA_CHECKLIST.md)。
+  WidgetsBinding.instance.ensureSemantics();
   GoogleFonts.config.allowRuntimeFetching = false;
   usePathUrlStrategy();
 
