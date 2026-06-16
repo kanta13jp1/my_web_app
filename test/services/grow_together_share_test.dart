@@ -28,15 +28,17 @@ void main() {
       );
     });
 
-    test('buildXIntentUrl targets the X tweet intent with text + url params',
-        () {
+    test('buildXIntentUrl embeds the URL in a single text param', () {
       final uri = GrowTogetherShare.buildXIntentUrl();
 
       expect(uri.scheme, 'https');
-      expect(uri.host, 'x.com');
+      expect(uri.host, 'twitter.com');
       expect(uri.path, '/intent/tweet');
-      expect(uri.queryParameters['text'], GrowTogetherShare.shareText);
-      expect(uri.queryParameters['url'], GrowTogetherShare.appUrl);
+      // URL は text 内に含める。別の url パラメータは使わない（full app への
+      // リダイレクトで本文が空欄になる事象を避けるため）。
+      expect(uri.queryParameters['text'], GrowTogetherShare.fullShareMessage);
+      expect(uri.queryParameters.containsKey('url'), isFalse);
+      expect(uri.queryParameters['text'], contains(GrowTogetherShare.appUrl));
     });
 
     test('buildXIntentUrl percent-encodes newlines and Japanese text', () {
@@ -44,10 +46,9 @@ void main() {
       // 混入していないことを確認する（intent URL として壊れないこと）。
       final encoded = GrowTogetherShare.buildXIntentUrl().toString();
 
-      expect(encoded.startsWith('https://x.com/intent/tweet?'), isTrue);
+      expect(encoded.startsWith('https://twitter.com/intent/tweet?'), isTrue);
       expect(encoded.contains('\n'), isFalse);
       expect(encoded.contains('text='), isTrue);
-      expect(encoded.contains('url='), isTrue);
     });
   });
 }

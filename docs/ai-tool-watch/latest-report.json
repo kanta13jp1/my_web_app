@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "43c413be34750d1e3ea65e70751da9558cc8ce942e694649ca56ad0a871ec117",
+      "hash": "67c97cf6364df4dc1dd96232a2f395d0e5bb748dffe6e02b22d244a661b5a65a",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -26,7 +26,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
           "Stop"
         ],
         "integration": [
@@ -35,11 +34,9 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode"
+          "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -59,7 +56,7 @@
       "latest_signal": "2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "caa14ddc856d2cd74a16f8b63715cb733c2572adcd3fcb0e8f13199cb461799e",
+      "previous_hash": "43c413be34750d1e3ea65e70751da9558cc8ce942e694649ca56ad0a871ec117",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -73,58 +70,43 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2cf0b91dcb3da2a5802c5c47eed7169b97b4a3e3e067e55eb4e29c4ff68fba28",
+      "hash": "1c669ca84a8544884d9197d7b5c672ce51e72abca25aa005e640689068924a0c",
       "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "in-app browser",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
         "hooks": [
-          "hook",
-          "hooks"
+          "Stop"
         ],
         "integration": [
           "MCP",
-          "connector",
-          "Slack",
-          "Linear",
           "GitHub",
-          "IDE extension"
+          "IDE extension",
+          "VSCode"
         ],
         "quality-cost": [
           "cost",
-          "rate limit",
-          "sandbox",
+          "quota",
           "permission",
           "review",
           "CI"
         ],
         "schedule": [
-          "automation",
-          "automations",
-          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
-      "name": "Codex use cases",
-      "owner": "Codex",
-      "previous_hash": "d1b543781224e2bca14ff137dac766f3344d633d06229650b7f58fa6d549b49d",
-      "slug": "codex-use-cases",
+      "latest_signal": "VS Code Gemini Code Assist 2.86.0 / June 15, 2026",
+      "name": "Gemini Code Assist release notes",
+      "owner": "Gemini Code Assist",
+      "previous_hash": "67cd8d6307d96059b6e534d4b15372ec1c26245b008d916506089185353523fd",
+      "slug": "gemini-code-assist-release-notes",
       "snippets": [
-        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
-        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
+        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
+        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
+        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
       ],
       "status": 200,
-      "url": "https://developers.openai.com/codex/use-cases/"
+      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   ],
-  "checked_at": "2026-06-14T21:45:19Z",
+  "checked_at": "2026-06-15T22:05:25Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -176,7 +158,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-13T21:42:59Z",
+  "previous_checked_at": "2026-06-14T21:45:19Z",
   "sources": [
     {
       "changed": false,
@@ -341,7 +323,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "43c413be34750d1e3ea65e70751da9558cc8ce942e694649ca56ad0a871ec117",
+      "hash": "67c97cf6364df4dc1dd96232a2f395d0e5bb748dffe6e02b22d244a661b5a65a",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -356,7 +338,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
           "Stop"
         ],
         "integration": [
@@ -365,11 +346,9 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode"
+          "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -389,7 +368,7 @@
       "latest_signal": "2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "caa14ddc856d2cd74a16f8b63715cb733c2572adcd3fcb0e8f13199cb461799e",
+      "previous_hash": "43c413be34750d1e3ea65e70751da9558cc8ce942e694649ca56ad0a871ec117",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -400,7 +379,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "2cf0b91dcb3da2a5802c5c47eed7169b97b4a3e3e067e55eb4e29c4ff68fba28",
@@ -443,7 +422,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "d1b543781224e2bca14ff137dac766f3344d633d06229650b7f58fa6d549b49d",
+      "previous_hash": "2cf0b91dcb3da2a5802c5c47eed7169b97b4a3e3e067e55eb4e29c4ff68fba28",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -505,10 +484,10 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "67cd8d6307d96059b6e534d4b15372ec1c26245b008d916506089185353523fd",
+      "hash": "1c669ca84a8544884d9197d7b5c672ce51e72abca25aa005e640689068924a0c",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -530,7 +509,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.85.0 / June 09, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.86.0 / June 15, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
       "previous_hash": "67cd8d6307d96059b6e534d4b15372ec1c26245b008d916506089185353523fd",

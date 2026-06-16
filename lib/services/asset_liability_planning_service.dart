@@ -109,6 +109,8 @@ class AssetLiabilityPlanningService {
         const <AssetLiabilityTransferTask>[],
     List<AssetLiabilityCardStatementLine> cardStatementLines =
         const <AssetLiabilityCardStatementLine>[],
+    List<AssetRecurringFixedCost> recurringFixedCosts =
+        const <AssetRecurringFixedCost>[],
     bool includeDefaultFixedPayments = false,
   }) {
     final shouldIncludeDefaultKddiProvider =
@@ -154,6 +156,27 @@ class AssetLiabilityPlanningService {
         )
         .toList()
       ..sort(_compareAccounts);
+    // UI 登録の定期固定費を負債 (全額支払いの utility) として計上する。既定固定費
+    // (家賃/KDDI/水道/ガス) と同じ扱いで、当月に該当する周期かつ同名/同IDの口座が
+    // まだ無いものだけを追加する (手動計上や既定との二重計上を防ぐ)。
+    final injectedFixedCosts = _buildRecurringFixedCostInjections(
+      recurringFixedCosts: recurringFixedCosts,
+      existingAccounts: accounts,
+      baseDate: baseDate,
+    );
+    if (injectedFixedCosts.isNotEmpty) {
+      accounts
+        ..addAll(injectedFixedCosts.map((injected) => injected.account))
+        ..sort(_compareAccounts);
+      // 利用者が金額を入力済み = 推定ではない (請求確認待ちにしない)。今月の手入力
+      // 上書きがある場合はそれを優先する。
+      for (final injected in injectedFixedCosts) {
+        effectiveMonthlyPaymentOverrides.putIfAbsent(
+          injected.account.id,
+          () => injected.account.balance.abs(),
+        );
+      }
+    }
     final accountsById = <String, AssetLiabilityAccount>{
       for (final account in accounts) account.id: account,
     };
@@ -177,6 +200,11 @@ class AssetLiabilityPlanningService {
         waterBillAccountId: smbcOtsukaBranchAccountId,
       if (shouldIncludeDefaultGasBill)
         gasBillAccountId: smbcOtsukaBranchAccountId,
+      // UI 登録の定期固定費の振替元 (任意 / ユーザー個別設定があれば下で上書き)。
+      for (final injected in injectedFixedCosts)
+        if (injected.sourceAccountId != null &&
+            injected.sourceAccountId!.isNotEmpty)
+          injected.account.id: injected.sourceAccountId!,
       ...defaultPaymentSourceAccountIds,
       ...paymentSourceAccountIds,
     };
@@ -1152,6 +1180,12 @@ class AssetLiabilityPlanningService {
       if (day == null) {
         continue;
       }
+      // 支払済みは当月分の支払いが完了済みのため、支払日別リスク(期限超過/要支払い)
+      // からは物理除外する。アクションアイテム層が overdue を !row.paid で判定するのと
+      // 整合させ、AI ナラティブが支払済みの負債を「期限超過」として指摘しないようにする。
+      if (row.paid) {
+        continue;
+      }
       byDay.putIfAbsent(day, () => <AssetLiabilityDebtRow>[]).add(row);
     }
 
@@ -1754,6 +1788,53 @@ class AssetLiabilityPlanningService {
     }
 
     return _fallbackAccountId(name);
+  }
+
+  /// UI 登録の定期固定費を、計上対象の負債口座 (+ 振替元口座 ID) へ変換する。
+  ///
+  /// 当月に該当する周期 (毎月/隔月) かつ金額>0 で、まだ同名/同IDの口座が無いものだけ
+  /// を返す。`_liability` 経由で既定固定費 (水道/ガス) と同じ全額支払いの utility 負債
+  /// として作る。振替元は呼び出し側で `effectivePaymentSourceAccountIds` に反映する。
+  List<({AssetLiabilityAccount account, String? sourceAccountId})>
+      _buildRecurringFixedCostInjections({
+    required List<AssetRecurringFixedCost> recurringFixedCosts,
+    required List<AssetLiabilityAccount> existingAccounts,
+    required DateTime baseDate,
+  }) {
+    if (recurringFixedCosts.isEmpty) {
+      return const <({
+        AssetLiabilityAccount account,
+        String? sourceAccountId
+      })>[];
+    }
+    final takenIds = existingAccounts.map((account) => account.id).toSet();
+    final takenNames =
+        existingAccounts.map((account) => _normalize(account.name)).toSet();
+    final result =
+        <({AssetLiabilityAccount account, String? sourceAccountId})>[];
+    for (final cost in recurringFixedCosts) {
+      if (cost.amount <= 0 || !cost.appliesToMonth(baseDate.month)) {
+        continue;
+      }
+      final account = _liability(
+        name: cost.name,
+        balance: -cost.amount,
+        kind: AssetLiabilityAccountKind.utility,
+        paymentDay: cost.paymentDay,
+        annualRate: 0,
+        minimumPaymentRate: 1,
+        minimumPaymentFloor: cost.amount,
+        fullPaymentEstimate: true,
+      );
+      if (takenIds.contains(account.id) ||
+          takenNames.contains(_normalize(account.name))) {
+        continue;
+      }
+      takenIds.add(account.id);
+      takenNames.add(_normalize(account.name));
+      result.add((account: account, sourceAccountId: cost.sourceAccountId));
+    }
+    return result;
   }
 
   Map<String, double> _withDefaultFixedPayments(

@@ -175,5 +175,32 @@ void main() {
 
       expect(tapped, isTrue);
     });
+
+    testWidgets('exposes a live-region alert and a labelled chart for a11y', (
+      tester,
+    ) async {
+      await _pump(tester, _shortfallForecast());
+
+      // 警告は liveRegion かつ本文を label に持つ(出現/変化を読み上げる)。
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              (widget.properties.liveRegion ?? false) &&
+              (widget.properties.label ?? '').contains('残高が不足'),
+        ),
+        findsOneWidget,
+      );
+      // グラフは graphic(image)ロール + 要約を含む単一 label を持つ。
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              (widget.properties.image ?? false) &&
+              (widget.properties.label ?? '').startsWith('将来残高予測グラフ'),
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }

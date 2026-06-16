@@ -313,6 +313,12 @@ final GrowthPresenceNavigatorObserver _growthPresenceObserver =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // アクセシビリティを起動時から常時 ON にする。Flutter Web は既定で
+  // 「アクセシビリティを有効にする(Enable accessibility)」プレースホルダを
+  // 押すまでセマンティクスツリーを出さないため、スクリーンリーダー利用者は
+  // 最初から全要素を読める。返り値の SemanticsHandle は dispose しないので
+  // アプリ生存期間 ON を維持する(docs/ACCESSIBILITY_QA_CHECKLIST.md)。
+  WidgetsBinding.instance.ensureSemantics();
   GoogleFonts.config.allowRuntimeFetching = false;
   usePathUrlStrategy();
 
@@ -443,7 +449,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _versionCheckService = VersionCheckService();
@@ -452,13 +458,23 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _versionCheckService.startPolling(() {
       if (mounted) setState(() => _showUpdateBanner = true);
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 背面のタブに復帰した時に再確認 (バックグラウンド中にデプロイされた場合を検知)。
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_versionCheckService.checkNow());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _versionCheckService.dispose();
     super.dispose();
   }

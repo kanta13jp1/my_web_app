@@ -94,9 +94,18 @@ class AssetCashflowForecastCard extends StatelessWidget {
               SizedBox(
                 height: 160,
                 width: double.infinity,
-                child: CustomPaint(
-                  key: const Key('asset_cashflow_forecast_chart'),
-                  painter: _ForecastChartPainter(forecast: forecast),
+                // image + container + 単一 label で graphic として確実に読ませる
+                // (Flutter Web の role=img の alt として全文を読み上げ)。
+                child: Semantics(
+                  container: true,
+                  image: true,
+                  label: '将来残高予測グラフ。${_chartA11yValue()}',
+                  child: ExcludeSemantics(
+                    child: CustomPaint(
+                      key: const Key('asset_cashflow_forecast_chart'),
+                      painter: _ForecastChartPainter(forecast: forecast),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -106,6 +115,26 @@ class AssetCashflowForecastCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// スクリーンリーダー向けにグラフ内容を文章化する(視覚に依らない要約)。
+  String _chartA11yValue() {
+    final months = forecast.months;
+    final last = months.isEmpty ? null : months.last;
+    final buffer = StringBuffer('今後${months.length}ヶ月の月末残高見込み。');
+    if (last != null) {
+      buffer.write('${_monthLabel(last.month)}末は${_yen(last.closingBalance)}。');
+    }
+    buffer.write('最小見込み残高は${_yen(forecast.worstBalance)}。');
+    final shortfallDate = forecast.firstShortfallDate;
+    if (shortfallDate != null) {
+      buffer.write('${shortfallDate.month}月${shortfallDate.day}日頃に残高不足の見込み。');
+    } else if (forecast.safetyShortfallAmount > 0) {
+      buffer.write('安全余裕を割り込む時期があります。');
+    } else {
+      buffer.write('残高不足の見込みはありません。');
+    }
+    return buffer.toString();
   }
 
   Widget _buildHorizonSelector() {
@@ -207,31 +236,40 @@ class AssetCashflowForecastCard extends StatelessWidget {
     required IconData icon,
     required String message,
   }) {
-    return Container(
-      key: alertKey,
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.5,
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+    // liveRegion + 明示 label: 警告の出現/変化を本文そのままで読み上げる
+    // (内側 Text は ExcludeSemantics で重複排除し、アナウンス内容を固定)。
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      label: message,
+      child: ExcludeSemantics(
+        child: Container(
+          key: alertKey,
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ],
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

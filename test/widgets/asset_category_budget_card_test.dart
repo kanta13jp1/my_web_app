@@ -79,5 +79,27 @@ void main() {
 
       expect(tapped, isTrue);
     });
+
+    testWidgets('marks the over-budget total as a live region for a11y', (
+      tester,
+    ) async {
+      final report = AssetCategoryBudgetService.build(
+        actualByCategory: <String, double>{'食費': 60000},
+        budgets: <String, double>{'食費': 50000},
+      );
+
+      await _pump(tester, report);
+
+      // 予算超過の合計は liveRegion(変化をスクリーンリーダーが読み上げる)。
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics && (widget.properties.liveRegion ?? false),
+        ),
+        findsWidgets,
+      );
+      // 各行は MergeSemantics で1ノードに統合(断片的な読み上げを防ぐ)。
+      expect(find.byType(MergeSemantics), findsWidgets);
+    });
   });
 }

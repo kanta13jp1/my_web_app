@@ -1,13 +1,13 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-14T21:45:19Z`
-- Previous check: `2026-06-13T21:42:59Z`
+- Checked at: `2026-06-15T22:05:25Z`
+- Previous check: `2026-06-14T21:45:19Z`
 - Changed/new official sources: `2`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
 - `changed` Codex changelog: 2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ
-- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.86.0 / June 15, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -59,7 +59,7 @@
   - Short signal: Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
-  - Latest signal: VS Code Gemini Code Assist 2.85.0 / June 09, 2026
+  - Latest signal: VS Code Gemini Code Assist 2.86.0 / June 15, 2026
   - Keyword groups: hooks, schedule, integration, quality-cost
   - Short signal: Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).

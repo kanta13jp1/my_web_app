@@ -21,6 +21,7 @@ import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
+import 'package:my_web_app/services/asset_auto_debit_confirmation_service.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_annual_rate_evidence_service.dart';
 import 'package:my_web_app/services/asset_liability_card_statement_import_service.dart';
@@ -38,12 +39,14 @@ import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
+import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
 import 'package:my_web_app/services/asset_mirror_read_policy.dart';
+import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_status.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
@@ -64,6 +67,8 @@ import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -179,6 +184,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugWatchlistDeletedMirror;
 
+  /// テスト専用: 定期固定費の初期リストを注入し、UI 表示や計上を Supabase なしで
+  /// 検証する。null なら通常のローカル/ミラー読込のみ。
+  @visibleForTesting
+  final List<AssetRecurringFixedCost>? debugInitialRecurringFixedCosts;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -200,6 +210,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugDebtOverridesMirror,
     this.debugRevolvingDeletedMirror,
     this.debugWatchlistDeletedMirror,
+    this.debugInitialRecurringFixedCosts,
   });
 
   @override
@@ -274,6 +285,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 集約 pref ドメインのローカル最終変更時刻 (LWW 判定用 / Phase B)。
   final AssetSyncTimestampStore _syncTimestampStore =
       const AssetSyncTimestampStore();
+
+  /// ローカル編集済みで未同期のキー集合 (authoritative reads の巻き添え上書き
+  /// 防止 / #3415 保守的 per-key ガード)。
+  final AssetSyncDirtyKeysStore _syncDirtyKeysStore =
+      const AssetSyncDirtyKeysStore();
 
   /// ミラー読み取りを Supabase 正本化 (LWW) するか。テスト注入優先・既定はビルド時フラグ。
   bool get _mirrorReadsAuthoritative =>
@@ -390,6 +406,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // リボ払いカードの設定 (負債IDごと)。v1 はローカル永続化のみ。
   Map<String, AssetLiabilityRevolvingCreditConfig> _revolvingConfigs =
       <String, AssetLiabilityRevolvingCreditConfig>{};
+  // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
+  List<AssetRecurringFixedCost> _recurringFixedCosts =
+      <AssetRecurringFixedCost>[];
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
@@ -564,6 +583,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetManagementMainAccountStore();
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
+  final AssetRecurringFixedCostStore _recurringFixedCostStore =
+      const AssetRecurringFixedCostStore();
+  static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
   final AssetCategoryBudgetStore _categoryBudgetStore =
       const AssetCategoryBudgetStore();
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
@@ -658,6 +680,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           entry.key: Map<String, double>.from(entry.value),
       };
     }
+    final debugRecurring = widget.debugInitialRecurringFixedCosts;
+    if (debugRecurring != null) {
+      _recurringFixedCosts = List<AssetRecurringFixedCost>.from(debugRecurring);
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -674,6 +700,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadMainAccount();
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
+    unawaited(_loadRecurringFixedCosts());
     unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
@@ -5341,6 +5368,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain(_watchlistMirrorKey);
     } catch (e) {
       debugPrint('watchlist mirror upsert failed: $e');
     }
@@ -5496,14 +5525,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         return false;
       });
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _watchlistMirrorKey,
+      );
       for (final entry in serverEntries) {
         serverTypes.add(entry.assetType);
         if (tombstoned.contains(entry.assetType)) {
           continue;
         }
-        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
-        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
-        if (!merged.containsKey(entry.assetType) || adoptConflicts) {
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+        // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+        // フラグ OFF はここに来ても merged が local 由来 (空) なので
+        // !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(entry.assetType) ||
+            (adoptConflicts && !dirtyKeys.contains(entry.assetType))) {
           merged[entry.assetType] = entry;
           changed = true;
         }
@@ -5632,6 +5667,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   _setWatchlistEntries(entries);
                 });
                 unawaited(_recordWatchlistTombstone(type, deleted: false));
+                // ローカル編集を dirty 記録 (巻き添え上書き防止)。
+                unawaited(
+                  _syncDirtyKeysStore.markDirty(_watchlistMirrorKey, type),
+                );
                 unawaited(_mirrorWatchlist());
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
@@ -7735,6 +7774,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
+      recurringFixedCosts: _recurringFixedCosts,
       includeDefaultFixedPayments: true,
     );
   }
@@ -7922,6 +7962,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             _buildSyncStatusBanner(),
             _buildUnsyncedBadgeRow(),
+            _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
             _buildDisplayModeSwitcher(),
             const SizedBox(height: 12),
@@ -7941,6 +7982,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildSalarySpendingBreakdownCard(),
               const SizedBox(height: 16),
               _buildCategoryBudgetCard(),
+              const SizedBox(height: 16),
+              _buildRecurringFixedCostCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
@@ -8345,6 +8388,178 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_refreshSyncSources());
   }
 
+  // --- 定期固定費 (UI 登録) の読み書き・端末間同期 ---
+
+  /// 起動時にローカルから読み、空ならサーバ集約ミラーから復元する。
+  Future<void> _loadRecurringFixedCosts() async {
+    if (widget.debugInitialRecurringFixedCosts != null) {
+      // テスト注入時はネットワーク読込をスキップ (initState で設定済み)。
+      return;
+    }
+    try {
+      final costs = await _recurringFixedCostStore.load();
+      if (mounted && costs.isNotEmpty) {
+        setState(() => _recurringFixedCosts = costs);
+      }
+    } catch (e) {
+      debugPrint('Error loading recurring fixed costs: $e');
+    }
+    await _restoreRecurringFixedCostsFromMirror();
+  }
+
+  /// サーバ集約ミラー (pref_key: recurring_fixed_costs) から復元する。ローカルに
+  /// 既に登録があれば上書きしない (オフライン編集を握り潰さない安全側 / 削除の
+  /// クロス端末伝播は将来 tombstone 化で対応 / リボ設定 v1 と同方針)。
+  Future<void> _restoreRecurringFixedCostsFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    if (_recurringFixedCosts.isNotEmpty) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _recurringFixedCostsMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final serverCosts = AssetRecurringFixedCostStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || serverCosts.isEmpty) {
+        return;
+      }
+      setState(() => _recurringFixedCosts = serverCosts);
+      _persistInBackground(
+        _recurringFixedCostStore.save(serverCosts),
+        'recurring fixed cost restore save',
+      );
+    } catch (e) {
+      debugPrint('recurring fixed cost mirror restore failed: $e');
+    }
+  }
+
+  /// 定期固定費の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorRecurringFixedCosts() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _recurringFixedCostsMirrorKey,
+        'value': AssetRecurringFixedCostStore.encodeMirrorValue(
+          _recurringFixedCosts,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('recurring fixed cost mirror upsert failed: $e');
+    }
+  }
+
+  void _saveRecurringFixedCost(AssetRecurringFixedCost cost) {
+    setState(() {
+      final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
+      final index = next.indexWhere((existing) => existing.id == cost.id);
+      if (index >= 0) {
+        next[index] = cost;
+      } else {
+        next.add(cost);
+      }
+      next.sort((a, b) {
+        final byDay = a.paymentDay.compareTo(b.paymentDay);
+        return byDay != 0 ? byDay : a.name.compareTo(b.name);
+      });
+      _recurringFixedCosts = next;
+    });
+    _persistInBackground(
+      _recurringFixedCostStore.save(_recurringFixedCosts),
+      'recurring fixed cost save',
+    );
+    unawaited(_mirrorRecurringFixedCosts());
+  }
+
+  void _deleteRecurringFixedCost(AssetRecurringFixedCost cost) {
+    setState(() {
+      _recurringFixedCosts = _recurringFixedCosts
+          .where((existing) => existing.id != cost.id)
+          .toList();
+    });
+    _persistInBackground(
+      _recurringFixedCostStore.save(_recurringFixedCosts),
+      'recurring fixed cost delete',
+    );
+    unawaited(_mirrorRecurringFixedCosts());
+  }
+
+  Future<void> _openRecurringFixedCostEditor({
+    AssetRecurringFixedCost? existing,
+    required List<RecurringFixedCostSourceOption> sourceOptions,
+  }) async {
+    final result = await showRecurringFixedCostEditor(
+      context,
+      existing: existing,
+      sourceAccounts: sourceOptions,
+    );
+    if (result != null) {
+      _saveRecurringFixedCost(result);
+    }
+  }
+
+  Future<void> _confirmDeleteRecurringFixedCost(
+    AssetRecurringFixedCost cost,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('定期固定費を削除'),
+        content: Text('「${cost.name}」を削除しますか?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      _deleteRecurringFixedCost(cost);
+    }
+  }
+
+  Widget _buildRecurringFixedCostCard(AssetLiabilityWorkbook? workbook) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    final sourceOptions = <RecurringFixedCostSourceOption>[
+      for (final account in accounts)
+        if (account.balance > 0) (id: account.id, name: account.name),
+    ];
+    final sourceNames = <String, String>{
+      for (final account in accounts) account.id: account.name,
+    };
+    return RecurringFixedCostCard(
+      costs: _recurringFixedCosts,
+      sourceAccountNames: sourceNames,
+      onAdd: () => unawaited(
+        _openRecurringFixedCostEditor(sourceOptions: sourceOptions),
+      ),
+      onEdit: (cost) => unawaited(
+        _openRecurringFixedCostEditor(
+          existing: cost,
+          sourceOptions: sourceOptions,
+        ),
+      ),
+      onDelete: (cost) => unawaited(_confirmDeleteRecurringFixedCost(cost)),
+    );
+  }
+
   Future<void> _loadDrinkChallenge() async {
     try {
       final records = await _drinkChallengeStore.load();
@@ -8389,6 +8604,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain(_revolvingConfigsMirrorKey);
     } catch (e) {
       debugPrint('revolving config mirror upsert failed: $e');
     }
@@ -8464,13 +8681,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         }
         return false;
       });
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _revolvingConfigsMirrorKey,
+      );
       serverConfigs.forEach((key, config) {
         if (tombstoned.contains(key)) {
           return;
         }
-        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
-        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
-        if (!merged.containsKey(key) || adoptConflicts) {
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+        // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+        // フラグ OFF はここに来ても merged が local 由来 (空) なので
+        // !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
           merged[key] = config;
           changed = true;
         }
@@ -8527,6 +8750,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_revolvingConfigStore.save(_revolvingConfigs));
     // 削除はトゥームストーン化、再設定は解除 (debtId 再利用ドメイン)。
     unawaited(_recordRevolvingTombstone(debtId, deleted: config == null));
+    if (config != null) {
+      // ローカル編集を dirty 記録 (authoritative reads の巻き添え上書き防止)。
+      unawaited(
+        _syncDirtyKeysStore.markDirty(_revolvingConfigsMirrorKey, debtId),
+      );
+    }
     unawaited(_mirrorRevolvingConfigs());
   }
 
@@ -8842,13 +9071,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<List<Map<String, dynamic>>> _fetchDisplayPrefRows() async {
     final rows = List<Map<String, dynamic>>.from(
       await _supabase.from('asset_pref_mirror').select().inFilter(
-        'pref_key',
-        <String>[
-          _displayPrefsAggregatedKey,
-          'display_mode',
-          'section_overrides',
-        ],
-      ),
+            'pref_key',
+            AssetMirrorReadPolicy.readPrefKeys(
+              aggregatedKey: _displayPrefsAggregatedKey,
+              legacyKeys: const <String>['display_mode', 'section_overrides'],
+            ),
+          ),
     );
     for (final row in rows) {
       if (row['pref_key'] == _displayPrefsAggregatedKey) {
@@ -8881,9 +9109,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         // 集約行 (asset_display_prefs_v1) を優先、無ければ legacy 行。
         final rows =
             await _supabase.from('asset_pref_mirror').select().inFilter(
-          'pref_key',
-          <String>[_displayPrefsAggregatedKey, 'section_override_deleted'],
-        );
+                  'pref_key',
+                  AssetMirrorReadPolicy.readPrefKeys(
+                    aggregatedKey: _displayPrefsAggregatedKey,
+                    legacyKeys: const <String>['section_override_deleted'],
+                  ),
+                );
         Map<String, dynamic>? aggregated;
         Map<String, dynamic>? legacy;
         for (final row in rows) {
@@ -9557,6 +9788,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         'value': overrides,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      // 全量 upsert 成功 = 全キー同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain('debt_payment_day_overrides');
     } catch (e) {
       debugPrint('pref mirror upsert failed: $e');
     }
@@ -9631,10 +9864,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final localKeys = _debtPaymentDayOverrides.keys.toSet();
       final merged = Map<String, int>.from(_debtPaymentDayOverrides);
       var changed = false;
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        'debt_payment_day_overrides',
+      );
       serverOverrides.forEach((key, day) {
-        // ⚠️ #3415: adoptConflicts はドメイン全体 ts 由来。authoritative reads
-        // (フラグ ON) 時のみ多キー巻き添え上書きの恐れ。per-key LWW へ要改修。
-        if (!merged.containsKey(key) || adoptConflicts) {
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) キーは、ドメイン
+        // 全体 adopt の巻き添えで上書きしない (同一キー衝突はローカル優先)。
+        // フラグ OFF はここに来ても merged が local 由来 (空) なので
+        // !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
           merged[key] = day;
           changed = true;
         }
@@ -9744,9 +9983,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
         final rows =
             await _supabase.from('asset_pref_mirror').select().inFilter(
-          'pref_key',
-          <String>[_inflowPrefsAggregatedKey, 'inflow_deleted_ids'],
-        );
+                  'pref_key',
+                  AssetMirrorReadPolicy.readPrefKeys(
+                    aggregatedKey: _inflowPrefsAggregatedKey,
+                    legacyKeys: const <String>['inflow_deleted_ids'],
+                  ),
+                );
         Map<String, dynamic>? aggregated;
         Map<String, dynamic>? legacy;
         for (final row in rows) {
@@ -9810,9 +10052,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
       final rows = await _supabase.from('asset_pref_mirror').select().inFilter(
-        'pref_key',
-        <String>[_inflowPrefsAggregatedKey, 'inflow_tombstone_gc'],
-      );
+            'pref_key',
+            AssetMirrorReadPolicy.readPrefKeys(
+              aggregatedKey: _inflowPrefsAggregatedKey,
+              legacyKeys: const <String>['inflow_tombstone_gc'],
+            ),
+          );
       Map<String, dynamic>? aggregated;
       Map<String, dynamic>? legacy;
       for (final row in rows) {
@@ -10483,6 +10728,147 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 現金・預金を起点に、繰り返し収入・固定費・返済予定を毎月積み上げた
   /// 今後の残高見込みカード。登録データが無ければ非表示。
+  // 支払日を過ぎた自動振替・固定費の「引落確認待ち」カード。引落済みなら
+  // ユーザーが確認 → 支払済み(現在残高に反映済み)扱いにし、見込み残高の
+  // 二重控除を防ぐ。引落失敗の可能性があるため自動では支払済みにしない。
+  Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    final details = const AssetAutoDebitConfirmationService()
+        .pendingConfirmationDetails(workbook);
+    final entries =
+        <MapEntry<AssetAutoDebitConfirmation, AssetLiabilityDebtRow>>[];
+    for (final detail in details) {
+      for (final debt in workbook.debtMasterRows) {
+        if (debt.id == detail.row.accountId) {
+          entries.add(MapEntry(detail, debt));
+          break;
+        }
+      }
+    }
+    if (entries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: scheme.tertiaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.help_outline, color: scheme.onTertiaryContainer),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '引落の確認待ち (${entries.length}件)',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: scheme.onTertiaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '支払日を過ぎた自動振替・固定費です。引落が完了していれば「引落済み」を'
+                '押してください。現在の口座残高に反映済みとして扱い、見込み残高の'
+                '二重控除を防ぎます。引落が失敗している場合は押さないでください。',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onTertiaryContainer,
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (final entry in entries)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              entry.key.row.accountName,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onTertiaryContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              _autoDebitConfirmationSubtitle(entry.key.row),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onTertiaryContainer,
+                              ),
+                            ),
+                            if (entry.key.sourceBalanceInsufficient)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      size: 16,
+                                      color: scheme.error,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        '振替元の残高'
+                                        '(${_formatManagementYen(entry.key.sourceAccountBalance!)})'
+                                        'が支払額を下回っています。引落が失敗している'
+                                        '可能性があるため、残高をご確認のうえ操作してください。',
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: scheme.error,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.tonal(
+                        onPressed: () {
+                          unawaited(
+                            _toggleMonthlyPaymentPaid(entry.value, true),
+                          );
+                        },
+                        child: const Text('引落済み'),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _autoDebitConfirmationSubtitle(AssetLiabilityCashflowRow row) {
+    final buffer = StringBuffer(
+      '${row.paymentDay}日 / ${_formatManagementYen(row.paymentAmount)}',
+    );
+    final source = row.paymentSourceAccountName;
+    if (source != null && source.isNotEmpty) {
+      buffer.write(' / $source');
+    }
+    return buffer.toString();
+  }
+
   Widget _buildCashflowForecastCard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
@@ -11620,6 +12006,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         incomePlans: _monthlyIncomePlans,
         cardStatementLines: _cardStatementLines,
         transferTasks: _transferTasks,
+        recurringFixedCosts: _recurringFixedCosts,
         includeDefaultFixedPayments: true,
       );
       final assetLiabilityInputs =
@@ -20955,6 +21342,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       unawaited(_recordDebtOverrideTombstone(row.id, deleted: true));
     } else {
       unawaited(_recordDebtOverrideTombstone(row.id, deleted: false));
+      // ローカル編集を dirty 記録 (巻き添え上書き防止)。
+      unawaited(
+        _syncDirtyKeysStore.markDirty('debt_payment_day_overrides', row.id),
+      );
     }
     unawaited(_saveDebtPaymentDayOverrides());
   }

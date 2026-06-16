@@ -104,58 +104,65 @@ class AssetCategoryBudgetCard extends StatelessWidget {
     final value = report.totalBudget > 0
         ? (report.totalActual / report.totalBudget).clamp(0.0, 1.0).toDouble()
         : 0.0;
-    return Container(
-      key: const Key('asset_category_budget_total'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: (over ? _danger : _accent).withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Semantics(
+      container: true,
+      liveRegion: over,
+      child: MergeSemantics(
+        child: Container(
+          key: const Key('asset_category_budget_total'),
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: (over ? _danger : _accent).withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
-                child: Text(
-                  '合計',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '合計',
+                      style:
+                          TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Text(
+                    '${_yen(report.totalActual)} / ${_yen(report.totalBudget)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: over ? _danger : null,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: value,
+                  minHeight: 8,
+                  backgroundColor: _track,
+                  color: over ? _danger : _accent,
                 ),
               ),
+              const SizedBox(height: 4),
               Text(
-                '${_yen(report.totalActual)} / ${_yen(report.totalBudget)}',
+                over
+                    ? '予算を ${_yen(report.totalActual - report.totalBudget)} 超過しています'
+                    : '残り予算 ${_yen(report.totalRemaining)}',
                 style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: over ? _danger : null,
+                  fontSize: 12,
+                  height: 1.4,
+                  color: over ? _danger : _muted,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: value,
-              minHeight: 8,
-              backgroundColor: _track,
-              color: over ? _danger : _accent,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            over
-                ? '予算を ${_yen(report.totalActual - report.totalBudget)} 超過しています'
-                : '残り予算 ${_yen(report.totalRemaining)}',
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.4,
-              color: over ? _danger : _muted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -163,62 +170,64 @@ class AssetCategoryBudgetCard extends StatelessWidget {
   Widget _buildCategoryRow(CategoryBudgetRow row) {
     final ratio = row.ratio;
     final over = row.isOver;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (over) ...[
-                const Icon(Icons.warning_amber, color: _danger, size: 14),
-                const SizedBox(width: 3),
-              ],
-              Expanded(
-                child: Text(
-                  row.category,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+    return MergeSemantics(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (over) ...[
+                  const Icon(Icons.warning_amber, color: _danger, size: 14),
+                  const SizedBox(width: 3),
+                ],
+                Expanded(
+                  child: Text(
+                    row.category,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
+                Text(
+                  row.hasBudget
+                      ? '${_yen(row.actual)} / ${_yen(row.budget)}'
+                      : '${_yen(row.actual)}(予算未設定)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: over ? _danger : _muted,
+                  ),
+                ),
+              ],
+            ),
+            if (ratio != null) ...[
+              const SizedBox(height: 4),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: ratio.clamp(0.0, 1.0).toDouble(),
+                  minHeight: 6,
+                  backgroundColor: _track,
+                  color: over ? _danger : _accent,
+                ),
               ),
+              const SizedBox(height: 2),
               Text(
-                row.hasBudget
-                    ? '${_yen(row.actual)} / ${_yen(row.budget)}'
-                    : '${_yen(row.actual)}(予算未設定)',
+                over
+                    ? '予算を ${_yen(-row.remaining)} 超過'
+                    : '残り ${_yen(row.remaining)}',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  height: 1.4,
                   color: over ? _danger : _muted,
                 ),
               ),
             ],
-          ),
-          if (ratio != null) ...[
-            const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: ratio.clamp(0.0, 1.0).toDouble(),
-                minHeight: 6,
-                backgroundColor: _track,
-                color: over ? _danger : _accent,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              over
-                  ? '予算を ${_yen(-row.remaining)} 超過'
-                  : '残り ${_yen(row.remaining)}',
-              style: TextStyle(
-                fontSize: 11,
-                height: 1.4,
-                color: over ? _danger : _muted,
-              ),
-            ),
           ],
-        ],
+        ),
       ),
     );
   }
