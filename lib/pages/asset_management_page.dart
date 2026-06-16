@@ -41,6 +41,7 @@ import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
@@ -10708,26 +10709,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
   }
 
-  AssetCashflowRecurringEntry? _subscriptionRecurringEntry(
-    Map<String, dynamic> subscription,
-  ) {
-    final price = (subscription['price'] as num?)?.toDouble();
-    if (price == null || price <= 0) {
-      return null;
-    }
-    final dueDate = DateTime.tryParse(
-      subscription['due_date']?.toString() ?? '',
-    );
-    final name = subscription['service_name']?.toString().trim() ?? '';
-    return AssetCashflowRecurringEntry(
-      dayOfMonth: dueDate?.day ?? 1,
-      amount: price,
-      label: name.isEmpty ? '固定費' : name,
-    );
-  }
-
-  /// 現金・預金を起点に、繰り返し収入・固定費・返済予定を毎月積み上げた
-  /// 今後の残高見込みカード。登録データが無ければ非表示。
   // 支払日を過ぎた自動振替・固定費の「引落確認待ち」カード。引落済みなら
   // ユーザーが確認 → 支払済み(現在残高に反映済み)扱いにし、見込み残高の
   // 二重控除を防ぐ。引落失敗の可能性があるため自動では支払済みにしない。
@@ -10873,76 +10854,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (workbook == null) {
       return const SizedBox.shrink();
     }
-    var startingBalance = 0.0;
-    for (final account in workbook.accounts) {
-      final isLiquid = account.kind == AssetLiabilityAccountKind.cash ||
-          account.kind == AssetLiabilityAccountKind.deposit;
-      if (isLiquid && account.balance > 0) {
-        startingBalance += account.balance;
-      }
-    }
-
-    final recurringIncome = <AssetCashflowRecurringEntry>[
-      for (final template in _recurringIncomeTemplates)
-        if (template.dayOfMonth > 0 && template.amount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: template.dayOfMonth,
-            amount: template.amount,
-            label: template.name,
-          ),
-      for (final rule in _expectedInflowRules)
-        if (rule.dayOfMonth > 0 && rule.amount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: rule.dayOfMonth,
-            amount: rule.amount,
-            label: rule.label,
-          ),
-    ];
-
-    final subscriptionOutflow = <AssetCashflowRecurringEntry>[];
-    for (final subscription in _subscriptions) {
-      final entry = _subscriptionRecurringEntry(subscription);
-      if (entry != null) {
-        subscriptionOutflow.add(entry);
-      }
-    }
-    final recurringOutflow = <AssetCashflowRecurringEntry>[
-      for (final row in workbook.debtMasterRows)
-        if (row.isDirectCashflowTarget &&
-            row.balance < 0 &&
-            (row.paymentDay ?? 0) > 0 &&
-            row.scheduledPaymentAmount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: row.paymentDay!,
-            amount: row.scheduledPaymentAmount,
-            label: row.name,
-          ),
-      ...subscriptionOutflow,
-    ];
-
-    final oneTimeIncome = <AssetCashflowDatedEntry>[
-      for (final inflow in _expectedInflows)
-        if (inflow.amount > 0)
-          AssetCashflowDatedEntry(
-            date: inflow.date,
-            amount: inflow.amount,
-            label: inflow.label,
-          ),
-    ];
-
-    if (recurringIncome.isEmpty &&
-        recurringOutflow.isEmpty &&
-        oneTimeIncome.isEmpty) {
+    final inputs = AssetCashflowForecastInputs.fromAssetData(
+      accounts: workbook.accounts,
+      debtRows: workbook.debtMasterRows,
+      recurringIncomeTemplates: _recurringIncomeTemplates,
+      inflowRules: _expectedInflowRules,
+      oneTimeInflows: _expectedInflows,
+      subscriptions: _subscriptions,
+    );
+    if (!inputs.hasData) {
       return const SizedBox.shrink();
     }
 
     final forecast = AssetCashflowForecastService.project(
       asOf: DateTime.now(),
-      startingBalance: startingBalance,
+      startingBalance: inputs.startingBalance,
       horizonMonths: _forecastHorizonMonths,
-      recurringIncome: recurringIncome,
-      recurringOutflow: recurringOutflow,
-      oneTimeIncome: oneTimeIncome,
+      recurringIncome: inputs.recurringIncome,
+      recurringOutflow: inputs.recurringOutflow,
+      oneTimeIncome: inputs.oneTimeIncome,
       safetyMargin: _assetForecastSafetyMargin,
     );
 
