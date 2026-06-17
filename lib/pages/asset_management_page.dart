@@ -61,6 +61,7 @@ import 'package:my_web_app/services/drink_challenge_service.dart';
 import 'package:my_web_app/services/drink_challenge_store.dart';
 import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/services/profile_service.dart';
+import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
@@ -11703,138 +11704,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   SalarySpendingBreakdown _buildSalarySpendingBreakdown() {
-    final expenses = <SalarySpendingEntry>[];
-    final incomes = <SalaryIncomeEntry>[];
-    final cardBillingMarkers = <String>{};
-
-    bool hasIncomeEntry(DateTime date, double amount) {
-      final rowKey = '${_dateOnly(date)}:${amount.round()}';
-      return incomes.any(
-        (entry) => '${_dateOnly(entry.date)}:${entry.amount.round()}' == rowKey,
-      );
-    }
-
-    void addIncomeEntry({
-      required DateTime date,
-      required double amount,
-      required String description,
-    }) {
-      if (amount <= 0 || hasIncomeEntry(date, amount)) {
-        return;
-      }
-      incomes.add(
-        SalaryIncomeEntry(
-          date: date,
-          amount: amount,
-          description: description.trim().isEmpty ? '収入' : description.trim(),
-        ),
-      );
-    }
-
-    for (final line in _cardStatementLines) {
-      final postedAt = line.postedAt;
-      if (postedAt == null) {
-        continue;
-      }
-      final billingName = line.billingAccountName?.trim();
-      if (billingName != null && billingName.isNotEmpty) {
-        cardBillingMarkers.add(billingName.toLowerCase());
-      }
-      cardBillingMarkers.add(line.billingAccountId.toLowerCase());
-      final billingLabel = billingName != null && billingName.isNotEmpty
-          ? billingName
-          : line.billingAccountId;
-      expenses.add(
-        SalarySpendingEntry(
-          date: postedAt,
-          amount: line.amount,
-          description: line.description,
-          sourceLabel: billingLabel,
-        ),
-      );
-    }
-
-    for (final flow in _recentFlows) {
-      final actionType = flow['action_type']?.toString() ?? '';
-      if (_isTransferActionType(actionType)) {
-        continue;
-      }
-      final occurredAt = DateTime.tryParse(
-        flow['occurred_at']?.toString() ?? '',
-      )?.toLocal();
-      final amount = (flow['amount'] as num?)?.toDouble() ?? 0;
-      if (occurredAt == null || amount <= 0) {
-        continue;
-      }
-      final description = flow['description']?.toString() ?? '';
-      final displayTitle = _flowDisplayTitle(flow);
-      if (_isExpenseActionType(actionType)) {
-        final lowerDescription = description.toLowerCase();
-        final representedByCardDetail = cardBillingMarkers.any(
-          (marker) => marker.isNotEmpty && lowerDescription.contains(marker),
-        );
-        if (representedByCardDetail) {
-          continue;
-        }
-        expenses.add(
-          SalarySpendingEntry(
-            date: occurredAt,
-            amount: amount,
-            description: displayTitle.isEmpty ? description : displayTitle,
-            sourceLabel: _actionTypeToFlowLabel(actionType),
-          ),
-        );
-      } else if (_isIncomeActionType(actionType)) {
-        incomes.add(
-          SalaryIncomeEntry(
-            date: occurredAt,
-            amount: amount,
-            description: displayTitle.isEmpty ? description : displayTitle,
-          ),
-        );
-      }
-    }
-
-    for (final plan in _monthlyIncomePlans) {
-      addIncomeEntry(
-        date: plan.date,
-        amount: plan.amount,
-        description: plan.name,
-      );
-    }
-
-    for (final row in _payslipSalaryIncomes) {
-      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
-      final amount = _numberFromDynamic(row['amount']);
-      if (payDate == null || amount <= 0) {
-        continue;
-      }
-      final description = row['description']?.toString().trim() ?? '';
-      addIncomeEntry(
-        date: payDate,
-        amount: amount,
-        description: description.isEmpty ? '給与明細' : '給与明細: $description',
-      );
-    }
-
-    for (final row in _payslipRows) {
-      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
-      final amount = _numberFromDynamic(row['net_amount']);
-      if (payDate == null || amount <= 0) {
-        continue;
-      }
-      final companyName = row['company_name']?.toString().trim() ?? '';
-      addIncomeEntry(
-        date: payDate,
-        amount: amount,
-        description: companyName.isEmpty ? '給与明細' : '給与明細: $companyName',
-      );
-    }
-
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: _cardStatementLines,
+      recentFlows: _recentFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+    );
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,
-      expenses: expenses,
-      incomes: incomes,
+      expenses: entries.expenses,
+      incomes: entries.incomes,
       salaryDay: _salarySpendingSalaryDay,
     );
   }
