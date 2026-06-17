@@ -138,7 +138,8 @@ void main() {
         report: _report(),
         previousAnalyses: <AssetManagementAiAnalysisHistoryEntry>[
           _historyEntry(
-            summaryText: '前回は支払い確認と生活費確保を最優先にした分析です。',
+            summaryText: '前回は支払い確認と生活費確保を最優先にした分析です。'
+                '本日使用可能額は-27337円で安全残高未満、横浜銀行が期限超過で未払いよ。',
           ),
         ],
       );
@@ -147,7 +148,14 @@ void main() {
       expect(result.status, AssetManagementAiSummaryStatus.aiGenerated);
       expect(message.contains('previous_ai_analyses'), true);
       expect(message.contains('これまでのAI分析履歴'), true);
-      expect(message.contains('前回は支払い確認と生活費確保'), true);
+      // 過去分析の本文(prose)は LLM へ渡さない (= 当時の期限超過/負の値を
+      // 現在として再生産させないための物理除外)。
+      expect(message.contains('前回は支払い確認と生活費確保'), false);
+      expect(message.contains('横浜銀行が期限超過で未払い'), false);
+      // 代わりにトレンド比較用の数値スナップショットだけを渡す。
+      expect(message.contains('metrics_snapshot'), true);
+      expect(message.contains('-7261960'), true);
+      expect(message.contains('現在データ優先ルール'), true);
       expect(message.contains('履歴利用ルール'), true);
     });
 
@@ -809,6 +817,20 @@ AssetManagementAiAnalysisHistoryEntry _historyEntry({
     reportBaseDate: DateTime(2026, 4, 30),
     providerChoiceReason: 'test route',
     providerRoute: const <String, dynamic>{'provider': 'openai'},
-    inputPayload: const <String, dynamic>{'sample': true},
+    inputPayload: const <String, dynamic>{
+      'workbook': <String, dynamic>{
+        'totals': <String, dynamic>{
+          'net_worth': -7261960,
+          'liability_total': -7412535,
+          'monthly_unpaid_payment_total': 356052,
+          'monthly_actual_payment_total': 0,
+        },
+      },
+      'available_money': <String, dynamic>{
+        'today': <String, dynamic>{'available_amount': -27337},
+        'week': <String, dynamic>{'available_amount': -20000},
+        'month': <String, dynamic>{'available_amount': -10000},
+      },
+    },
   );
 }
