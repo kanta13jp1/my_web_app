@@ -622,6 +622,25 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-18",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-16 Microsoft MAI-Code-1-Flash 採択 / 2 day 経過 / cooldown 残 5 day / 次回 6/23 解禁). 前回 AI 分析 report = 6/17. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/18 は WebSearch 主体で 6/17→6/18 delta 集約. 最大シグナル = ★★ Microsoft Copilot Cowork 全世界 GA 6/16 🔴🔴 (= 従量課金 [Copilot Credit $0.01 / model use+context retrieval+tool calls+runtime の 4 入力算定] + multi-model 選択 [DeepSeek option] + browser task 実行 + 画像生成 + 中央 IT ガバナンス / Copilot Cowork は Claude 上で動作=Anthropic Claude Cowork と同一モデル / M365 connector 経由で Claude Cowork より 30-40% 安 / Fortune500 過半+Accenture+Zurich / **MoneyForward が Copilot Cowork の coming soon plugin** = Anthropic Claude Cowork [1月 standalone desktop] + Microsoft Copilot Cowork [6/16 GA M365] + MoneyForward AI Cowork [7月 GA 経理] の三つ巴が相互接続 / 自社含意=back-office agent が同一 Claude モデル上で commoditize → 差別化は model でなく『統合の単位』= 個人単位 6 部署+B/S 統合 lifestyle CEO dashboard [enterprise 法人部門でなく] = 非対称防衛の輪郭明確化). 他 = ★ Claude Fable 5/Mythos 5 全世界 suspension 6/12 確定詳細 🔴 (= 米商務省 export-control directive [ECRA 2018 dual-use] / AI モデル自体への輸出規制適用は史上初 [チップでなく model] / jailbreak 懸念+中国グループ access 報道 / 国籍 real-time 検証不可で全顧客 global 無効化 / **Opus 4.8・Sonnet 4.6・Haiku 4.5 は影響なし=Win Claude #132 fleet 継続可** / frontier 単一ベンダー依存+地政学リスク顕在化=6/2 障害+6/15 課金分離 pause に続く運用シグナル 3 連 / TechCrunch/Fortune/CNBC/Tom's Hardware/Snyk 裏取り / [AI-TOOL-VERIFY] 当事者間で見解相違ある点は断定回避) + MAI-Code-1-Flash rollout 継続 🟢 (VS Code Copilot individual 段階展開+Auto picker routing / GitHub Copilot CLI v1.0.63 6/16 vision 改善+agent 管理) + 価格戦争メータリング収斂継続 🟠 (Copilot Cowork per-task 従量 = back-office agent 層へ収斂到達). 6/23 採択 第 1 候補 = Salesforce Agentforce Operations 維持 (基準 a+c). 新規ウォッチ = Microsoft Copilot Cowork (back-office 三つ巴中核だが Microsoft は MAI-Code-1-Flash で 6/16 既収載=同一ベンダー連続追加回避で monitor). https://www.microsoft.com/en-us/microsoft-365/blog/2026/06/16/copilot-cowork-is-now-generally-available/",
+      "skipped_candidates": [
+        "Salesforce Agentforce Operations (= 6/23 第 1 候補維持 / 6/15 Summer '26 GA 着地 / バックオフィス自律 AI = 6 部署/B/S 正面で戦略 overlap 最大 / 基準 a 正面競合 + 基準 c 該当 / re-rank 最有力)",
+        "Microsoft Copilot Cowork (= 6/16 全世界 GA / back-office agent 三つ巴の中核 / Claude 上で動作 + MoneyForward plugin 相互接続 / ただし Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加は diversification 上回避 / back-office 軸で monitor 継続 / Salesforce 採択後の将来サイクルで re-rank 候補)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 シグナル / 動向観察 1 月)",
+        "Claude Fable 5 / Mythos 5 (= モデル層 + 規制シグナル / discovery 対象外 / Anthropic 既収載派生)",
+        "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
