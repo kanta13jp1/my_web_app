@@ -61,6 +61,7 @@ import 'package:my_web_app/services/drink_challenge_service.dart';
 import 'package:my_web_app/services/drink_challenge_store.dart';
 import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/services/profile_service.dart';
+import 'package:my_web_app/services/asset_flow_description_service.dart';
 import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
@@ -923,7 +924,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       '${description.trim()} [auto_asset_delta:$importKey]';
 
   String _sourceLabel(String source) =>
-      source.replaceAll('[', '').replaceAll(']', '').trim();
+      AssetFlowDescriptionService.sourceLabel(source);
 
   List<String> _transferDestinationOptions(String source, {String? include}) {
     final options = [
@@ -6864,36 +6865,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _flowDisplayTitle(Map<String, dynamic> flow) {
-    final actionType = flow['action_type']?.toString() ?? '';
-    final parsed = _parseFlowDescription(
-      flow['description']?.toString() ?? '',
-      actionType: actionType,
+    return AssetFlowDescriptionService.displayTitle(
+      _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ),
     );
-    if (parsed.isTransfer) {
-      final fromLabel = _sourceLabel(parsed.source);
-      final toLabel = _sourceLabel(parsed.destination);
-      final routeParts = [
-        fromLabel,
-        toLabel,
-      ].where((part) => part.trim().isNotEmpty).toList();
-      final routeLabel = routeParts.join(' → ');
-      if (routeLabel.isEmpty) {
-        return parsed.memo;
-      }
-      if (parsed.memo.isEmpty) {
-        return routeLabel;
-      }
-      return '$routeLabel ・ ${parsed.memo}';
-    }
-
-    final sourceLabel = _sourceLabel(parsed.source);
-    if (sourceLabel.isEmpty) {
-      return parsed.memo;
-    }
-    if (parsed.memo.isEmpty) {
-      return sourceLabel;
-    }
-    return '$sourceLabel ・ ${parsed.memo}';
   }
 
   String _flowLabelToActionType(String label) {
