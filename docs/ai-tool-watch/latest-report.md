@@ -1,13 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-15T22:05:25Z`
-- Previous check: `2026-06-14T21:45:19Z`
-- Changed/new official sources: `2`
+- Checked at: `2026-06-17T21:57:40Z`
+- Previous check: `2026-06-16T22:02:47Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Codex changelog: 2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.86.0 / June 15, 2026
+- `changed` Claude Code changelog: 2.1.179 / June 16, 2026
+- `changed` Codex changelog: 2026-06-16 / Codex app features are available in the EEA, UK, and Switzerland More Codex app capabilitie
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+- `changed` Cursor changelog: 3.7 / Jun 17, 2026
+- `changed` Devin release notes: June 12, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -19,7 +22,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.176 / June 12, 2026
+  - Latest signal: 2.1.179 / June 16, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -37,10 +40,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ
+  - Latest signal: 2026-06-16 / Codex app features are available in the EEA, UK, and Switzerland More Codex app capabilitie
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: Added Developer mode for Browser use in Chrome and the Codex in-app browser.
+  - Short signal: Memories can remember useful preferences, recurring workflows, tech stacks, and repository conventions when enabled.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -53,10 +56,10 @@
   - Keyword groups: none
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
-  - Latest signal: 3.7 / Jun 5, 2026
+  - Latest signal: 3.7 / Jun 17, 2026
   - Keyword groups: schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
-  - Short signal: Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run.
+  - Short signal: You can watch the agent's progress in a shared terminal session as it handles setup tasks like installing dependencies.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.86.0 / June 15, 2026

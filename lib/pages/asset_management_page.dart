@@ -41,6 +41,7 @@ import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
@@ -60,6 +61,8 @@ import 'package:my_web_app/services/drink_challenge_service.dart';
 import 'package:my_web_app/services/drink_challenge_store.dart';
 import 'package:my_web_app/services/konbini_udon_challenge_service.dart';
 import 'package:my_web_app/services/profile_service.dart';
+import 'package:my_web_app/services/asset_flow_description_service.dart';
+import 'package:my_web_app/services/asset_salary_spending_entries.dart';
 import 'package:my_web_app/services/salary_spending_breakdown_service.dart';
 import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
@@ -921,7 +924,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       '${description.trim()} [auto_asset_delta:$importKey]';
 
   String _sourceLabel(String source) =>
-      source.replaceAll('[', '').replaceAll(']', '').trim();
+      AssetFlowDescriptionService.sourceLabel(source);
 
   List<String> _transferDestinationOptions(String source, {String? include}) {
     final options = [
@@ -6862,36 +6865,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   String _flowDisplayTitle(Map<String, dynamic> flow) {
-    final actionType = flow['action_type']?.toString() ?? '';
-    final parsed = _parseFlowDescription(
-      flow['description']?.toString() ?? '',
-      actionType: actionType,
+    return AssetFlowDescriptionService.displayTitle(
+      _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: flow['action_type']?.toString() ?? '',
+      ),
     );
-    if (parsed.isTransfer) {
-      final fromLabel = _sourceLabel(parsed.source);
-      final toLabel = _sourceLabel(parsed.destination);
-      final routeParts = [
-        fromLabel,
-        toLabel,
-      ].where((part) => part.trim().isNotEmpty).toList();
-      final routeLabel = routeParts.join(' → ');
-      if (routeLabel.isEmpty) {
-        return parsed.memo;
-      }
-      if (parsed.memo.isEmpty) {
-        return routeLabel;
-      }
-      return '$routeLabel ・ ${parsed.memo}';
-    }
-
-    final sourceLabel = _sourceLabel(parsed.source);
-    if (sourceLabel.isEmpty) {
-      return parsed.memo;
-    }
-    if (parsed.memo.isEmpty) {
-      return sourceLabel;
-    }
-    return '$sourceLabel ・ ${parsed.memo}';
   }
 
   String _flowLabelToActionType(String label) {
@@ -10708,26 +10687,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     });
   }
 
-  AssetCashflowRecurringEntry? _subscriptionRecurringEntry(
-    Map<String, dynamic> subscription,
-  ) {
-    final price = (subscription['price'] as num?)?.toDouble();
-    if (price == null || price <= 0) {
-      return null;
-    }
-    final dueDate = DateTime.tryParse(
-      subscription['due_date']?.toString() ?? '',
-    );
-    final name = subscription['service_name']?.toString().trim() ?? '';
-    return AssetCashflowRecurringEntry(
-      dayOfMonth: dueDate?.day ?? 1,
-      amount: price,
-      label: name.isEmpty ? '固定費' : name,
-    );
-  }
-
-  /// 現金・預金を起点に、繰り返し収入・固定費・返済予定を毎月積み上げた
-  /// 今後の残高見込みカード。登録データが無ければ非表示。
   // 支払日を過ぎた自動振替・固定費の「引落確認待ち」カード。引落済みなら
   // ユーザーが確認 → 支払済み(現在残高に反映済み)扱いにし、見込み残高の
   // 二重控除を防ぐ。引落失敗の可能性があるため自動では支払済みにしない。
@@ -10873,76 +10832,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (workbook == null) {
       return const SizedBox.shrink();
     }
-    var startingBalance = 0.0;
-    for (final account in workbook.accounts) {
-      final isLiquid = account.kind == AssetLiabilityAccountKind.cash ||
-          account.kind == AssetLiabilityAccountKind.deposit;
-      if (isLiquid && account.balance > 0) {
-        startingBalance += account.balance;
-      }
-    }
-
-    final recurringIncome = <AssetCashflowRecurringEntry>[
-      for (final template in _recurringIncomeTemplates)
-        if (template.dayOfMonth > 0 && template.amount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: template.dayOfMonth,
-            amount: template.amount,
-            label: template.name,
-          ),
-      for (final rule in _expectedInflowRules)
-        if (rule.dayOfMonth > 0 && rule.amount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: rule.dayOfMonth,
-            amount: rule.amount,
-            label: rule.label,
-          ),
-    ];
-
-    final subscriptionOutflow = <AssetCashflowRecurringEntry>[];
-    for (final subscription in _subscriptions) {
-      final entry = _subscriptionRecurringEntry(subscription);
-      if (entry != null) {
-        subscriptionOutflow.add(entry);
-      }
-    }
-    final recurringOutflow = <AssetCashflowRecurringEntry>[
-      for (final row in workbook.debtMasterRows)
-        if (row.isDirectCashflowTarget &&
-            row.balance < 0 &&
-            (row.paymentDay ?? 0) > 0 &&
-            row.scheduledPaymentAmount > 0)
-          AssetCashflowRecurringEntry(
-            dayOfMonth: row.paymentDay!,
-            amount: row.scheduledPaymentAmount,
-            label: row.name,
-          ),
-      ...subscriptionOutflow,
-    ];
-
-    final oneTimeIncome = <AssetCashflowDatedEntry>[
-      for (final inflow in _expectedInflows)
-        if (inflow.amount > 0)
-          AssetCashflowDatedEntry(
-            date: inflow.date,
-            amount: inflow.amount,
-            label: inflow.label,
-          ),
-    ];
-
-    if (recurringIncome.isEmpty &&
-        recurringOutflow.isEmpty &&
-        oneTimeIncome.isEmpty) {
+    final inputs = AssetCashflowForecastInputs.fromAssetData(
+      accounts: workbook.accounts,
+      debtRows: workbook.debtMasterRows,
+      recurringIncomeTemplates: _recurringIncomeTemplates,
+      inflowRules: _expectedInflowRules,
+      oneTimeInflows: _expectedInflows,
+      subscriptions: _subscriptions,
+    );
+    if (!inputs.hasData) {
       return const SizedBox.shrink();
     }
 
     final forecast = AssetCashflowForecastService.project(
       asOf: DateTime.now(),
-      startingBalance: startingBalance,
+      startingBalance: inputs.startingBalance,
       horizonMonths: _forecastHorizonMonths,
-      recurringIncome: recurringIncome,
-      recurringOutflow: recurringOutflow,
-      oneTimeIncome: oneTimeIncome,
+      recurringIncome: inputs.recurringIncome,
+      recurringOutflow: inputs.recurringOutflow,
+      oneTimeIncome: inputs.oneTimeIncome,
       safetyMargin: _assetForecastSafetyMargin,
     );
 
@@ -11773,138 +11681,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   SalarySpendingBreakdown _buildSalarySpendingBreakdown() {
-    final expenses = <SalarySpendingEntry>[];
-    final incomes = <SalaryIncomeEntry>[];
-    final cardBillingMarkers = <String>{};
-
-    bool hasIncomeEntry(DateTime date, double amount) {
-      final rowKey = '${_dateOnly(date)}:${amount.round()}';
-      return incomes.any(
-        (entry) => '${_dateOnly(entry.date)}:${entry.amount.round()}' == rowKey,
-      );
-    }
-
-    void addIncomeEntry({
-      required DateTime date,
-      required double amount,
-      required String description,
-    }) {
-      if (amount <= 0 || hasIncomeEntry(date, amount)) {
-        return;
-      }
-      incomes.add(
-        SalaryIncomeEntry(
-          date: date,
-          amount: amount,
-          description: description.trim().isEmpty ? '収入' : description.trim(),
-        ),
-      );
-    }
-
-    for (final line in _cardStatementLines) {
-      final postedAt = line.postedAt;
-      if (postedAt == null) {
-        continue;
-      }
-      final billingName = line.billingAccountName?.trim();
-      if (billingName != null && billingName.isNotEmpty) {
-        cardBillingMarkers.add(billingName.toLowerCase());
-      }
-      cardBillingMarkers.add(line.billingAccountId.toLowerCase());
-      final billingLabel = billingName != null && billingName.isNotEmpty
-          ? billingName
-          : line.billingAccountId;
-      expenses.add(
-        SalarySpendingEntry(
-          date: postedAt,
-          amount: line.amount,
-          description: line.description,
-          sourceLabel: billingLabel,
-        ),
-      );
-    }
-
-    for (final flow in _recentFlows) {
-      final actionType = flow['action_type']?.toString() ?? '';
-      if (_isTransferActionType(actionType)) {
-        continue;
-      }
-      final occurredAt = DateTime.tryParse(
-        flow['occurred_at']?.toString() ?? '',
-      )?.toLocal();
-      final amount = (flow['amount'] as num?)?.toDouble() ?? 0;
-      if (occurredAt == null || amount <= 0) {
-        continue;
-      }
-      final description = flow['description']?.toString() ?? '';
-      final displayTitle = _flowDisplayTitle(flow);
-      if (_isExpenseActionType(actionType)) {
-        final lowerDescription = description.toLowerCase();
-        final representedByCardDetail = cardBillingMarkers.any(
-          (marker) => marker.isNotEmpty && lowerDescription.contains(marker),
-        );
-        if (representedByCardDetail) {
-          continue;
-        }
-        expenses.add(
-          SalarySpendingEntry(
-            date: occurredAt,
-            amount: amount,
-            description: displayTitle.isEmpty ? description : displayTitle,
-            sourceLabel: _actionTypeToFlowLabel(actionType),
-          ),
-        );
-      } else if (_isIncomeActionType(actionType)) {
-        incomes.add(
-          SalaryIncomeEntry(
-            date: occurredAt,
-            amount: amount,
-            description: displayTitle.isEmpty ? description : displayTitle,
-          ),
-        );
-      }
-    }
-
-    for (final plan in _monthlyIncomePlans) {
-      addIncomeEntry(
-        date: plan.date,
-        amount: plan.amount,
-        description: plan.name,
-      );
-    }
-
-    for (final row in _payslipSalaryIncomes) {
-      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
-      final amount = _numberFromDynamic(row['amount']);
-      if (payDate == null || amount <= 0) {
-        continue;
-      }
-      final description = row['description']?.toString().trim() ?? '';
-      addIncomeEntry(
-        date: payDate,
-        amount: amount,
-        description: description.isEmpty ? '給与明細' : '給与明細: $description',
-      );
-    }
-
-    for (final row in _payslipRows) {
-      final payDate = DateTime.tryParse(row['pay_date']?.toString() ?? '');
-      final amount = _numberFromDynamic(row['net_amount']);
-      if (payDate == null || amount <= 0) {
-        continue;
-      }
-      final companyName = row['company_name']?.toString().trim() ?? '';
-      addIncomeEntry(
-        date: payDate,
-        amount: amount,
-        description: companyName.isEmpty ? '給与明細' : '給与明細: $companyName',
-      );
-    }
-
+    final entries = AssetSalarySpendingEntries.build(
+      cardStatementLines: _cardStatementLines,
+      recentFlows: _recentFlows,
+      monthlyIncomePlans: _monthlyIncomePlans,
+      payslipSalaryIncomes: _payslipSalaryIncomes,
+      payslipRows: _payslipRows,
+      flowDisplayTitle: _flowDisplayTitle,
+    );
     return _salarySpendingBreakdownService.build(
       referenceDate: _now,
-      expenses: expenses,
-      incomes: incomes,
+      expenses: entries.expenses,
+      incomes: entries.incomes,
       salaryDay: _salarySpendingSalaryDay,
     );
   }

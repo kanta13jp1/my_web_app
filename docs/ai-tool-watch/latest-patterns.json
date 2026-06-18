@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-15T22:05:28Z",
+  "generated_at": "2026-06-17T21:57:42Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,18 +19,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-6434b46123c6",
+        "entry_id": "nf-d35a5a59fdbc",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.176 / June 12, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.176 June 12, 2026 Session titles are now generated in the language of your conversation (set the language setting to pin a specific language) Added footerLinksRegexes...",
+        "text": "Claude Code changelog 2.1.179 / June 16, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.179 June 16, 2026 Fixed mid-stream connection drops: partial responses are now preserved instead of showing a raw error, and the spinner no longer gets stuck at “running...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "b23ac41f493eb4126da20e9c9d02245a7dae1cd23978c8be3e5818f79b04c70c",
+          "hash": "ac3e2c6b7fc2eab0f1a639b58e38f9c49b70c493cda4684a9734ae227604e4de",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.176 / June 12, 2026",
+          "latest_signal": "2.1.179 / June 16, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "b23ac41f493eb4126da20e9c9d02245a7dae1cd23978c8be3e5818f79b04c70c",
+          "previous_hash": "cbed8c9514f3e9ebc4cb6830f1cd3231783c6923b847b7e467081c480c62e757",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.176 June 12, 2026 Session titles are now generated in the language of your conversation (set the language setting to pin a specific language) Added footerLinksRegexes..."
+            "​ 2.1.179 June 16, 2026 Fixed mid-stream connection drops: partial responses are now preserved instead of showing a raw error, and the spinner no longer gets stuck at “running..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-6434b46123c6",
+        "entry_id": "nf-d35a5a59fdbc",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -118,7 +118,7 @@
           "changed": false,
           "error": null,
           "first_seen": false,
-          "hash": "fcb7ea0e9daaae61315d7f8af0a669da18749537acc7078f191509a8d5842879",
+          "hash": "f65a250c161f1ed575ca7f2c3f5a2cf039f4f2503fe9ca07fde01ea0e039bf8f",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "fcb7ea0e9daaae61315d7f8af0a669da18749537acc7078f191509a8d5842879",
+          "previous_hash": "f65a250c161f1ed575ca7f2c3f5a2cf039f4f2503fe9ca07fde01ea0e039bf8f",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -259,9 +259,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-6c5e2f00649c",
+        "entry_id": "nf-9041029c642b",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Added Developer mode for Browser use in Chrome and the Codex in-app browser. Added the /init command to the app composer for creating project instructions with the same initialization workflow as the Codex CLI.",
+        "text": "Codex changelog 2026-06-16 / Codex app features are available in the EEA, UK, and Switzerland More Codex app capabilitie Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Memories can remember useful preferences, recurring workflows, tech stacks, and repository conventions when enabled. Chronicle is available as an opt-in research preview for ChatGPT Pro subscribers on macOS, helping Codex build memories from recent screen context.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "67c97cf6364df4dc1dd96232a2f395d0e5bb748dffe6e02b22d244a661b5a65a",
+          "hash": "b4685ed9ed0bcaf1a8b83edbed5497a1817cf4396000c8e7713095cb7320ae4b",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -285,6 +285,7 @@
             "hooks": [
               "hook",
               "hooks",
+              "SessionStart",
               "Stop"
             ],
             "integration": [
@@ -293,9 +294,11 @@
               "Slack",
               "Linear",
               "GitHub",
-              "IDE extension"
+              "IDE extension",
+              "VSCode"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -312,22 +315,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-06-11 / Codex app 26.609 New features Added rate-limit reset banking for Plus and Pro users, includ",
+          "latest_signal": "2026-06-16 / Codex app features are available in the EEA, UK, and Switzerland More Codex app capabilitie",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "43c413be34750d1e3ea65e70751da9558cc8ce942e694649ca56ad0a871ec117",
+          "previous_hash": "915d54f495db24cae9468b563d8914d0aa613e39d00476b6ea3c9864a6f6abd3",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "Added Developer mode for Browser use in Chrome and the Codex in-app browser.",
-            "Added the /init command to the app composer for creating project instructions with the same initialization workflow as the Codex CLI."
+            "Memories can remember useful preferences, recurring workflows, tech stacks, and repository conventions when enabled.",
+            "Chronicle is available as an opt-in research preview for ChatGPT Pro subscribers on macOS, helping Codex build memories from recent screen context."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-6c5e2f00649c",
+        "entry_id": "nf-9041029c642b",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -353,10 +356,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "2cf0b91dcb3da2a5802c5c47eed7169b97b4a3e3e067e55eb4e29c4ff68fba28",
+          "hash": "b79a522858b79ca9c82e7df6c4c300cd73b43827e37a7fbf4b85067f48498e7e",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -469,18 +472,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-2d93748cd3df",
+        "entry_id": "nf-68fc26805990",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.7 / Jun 5, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run. # Run Bugbot before you push You can now run Bugbot and Security Review with /review before pushing code.",
+        "text": "Cursor changelog 3.7 / Jun 17, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... You can watch the agent's progress in a shared terminal session as it handles setup tasks like installing dependencies. # Cloud subagents with /in-cloud Use /in-cloud to spin up a cloud subagent in its own VM to work on the next task you submit.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "e29025cfcfe697fcd062eba80bf5e9cc9784c9b7288cfa97d7b72063a9f8749a",
+          "hash": "3deb9159afcf3cb92a0ad99b3cec79c94f78c55c74c9fdae6c610b4ca1d493e6",
           "keyword_groups": {
             "codex-runtime": [
               "subagents"
@@ -499,22 +502,22 @@
               "automation"
             ]
           },
-          "latest_signal": "3.7 / Jun 5, 2026",
+          "latest_signal": "3.7 / Jun 17, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
           "previous_hash": "e29025cfcfe697fcd062eba80bf5e9cc9784c9b7288cfa97d7b72063a9f8749a",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run.",
-            "# Run Bugbot before you push You can now run Bugbot and Security Review with /review before pushing code."
+            "You can watch the agent's progress in a shared terminal session as it handles setup tasks like installing dependencies.",
+            "# Cloud subagents with /in-cloud Use /in-cloud to spin up a cloud subagent in its own VM to work on the next task you submit."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-2d93748cd3df",
+        "entry_id": "nf-68fc26805990",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -540,7 +543,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "1c669ca84a8544884d9197d7b5c672ce51e72abca25aa005e640689068924a0c",
@@ -568,7 +571,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.86.0 / June 15, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "67cd8d6307d96059b6e534d4b15372ec1c26245b008d916506089185353523fd",
+          "previous_hash": "1c669ca84a8544884d9197d7b5c672ce51e72abca25aa005e640689068924a0c",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -606,10 +609,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "89078ac775a89b9657d41a80c9bb9269c918a889b60ada537369a5411526409e",
+          "hash": "6606da1ecbadbbb73db0d7b5b5babc03de0f14ad2f45ab09dddb37781f7a08e4",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -675,10 +678,10 @@
   ],
   "patterns": [
     {
-      "id": "np-87b9ab2ffe3c",
+      "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 8,
+      "entry_count": 7,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -686,8 +689,8 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Codex changelog",
-        "Codex use cases"
+        "Codex use cases",
+        "Cursor changelog"
       ],
       "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },
@@ -707,26 +710,44 @@
       "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
     },
     {
-      "id": "np-fdf5cccc858a",
+      "id": "np-633b3c99949c",
       "company": "openai",
-      "topic": "agentic-workflows",
+      "topic": "mcp-integration",
       "entry_count": 2,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
+      "average_confidence": 0.85,
+      "risk_level": "review",
+      "risk_flags": [
+        "source_http_problem"
+      ],
       "evidence_titles": [
         "Codex changelog",
-        "Codex use cases"
+        "Codex overview"
       ],
-      "recommended_action": "Review openai movement for competitor-monitoring follow-up."
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
+    },
+    {
+      "id": "np-8d8df4ba6ed1",
+      "company": "multi-source",
+      "topic": "mcp-integration",
+      "entry_count": 2,
+      "average_confidence": 0.85,
+      "risk_level": "review",
+      "risk_flags": [
+        "source_http_problem"
+      ],
+      "evidence_titles": [
+        "Codex changelog",
+        "Codex overview"
+      ],
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
     }
   ],
   "issue_candidates": [
     {
-      "id": "np-87b9ab2ffe3c",
+      "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 8,
+      "entry_count": 7,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -734,8 +755,8 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Codex changelog",
-        "Codex use cases"
+        "Codex use cases",
+        "Cursor changelog"
       ],
       "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },
