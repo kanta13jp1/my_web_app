@@ -41,11 +41,20 @@ void main() {
       expect(find.textContaining('¥8,000'), findsOneWidget);
       expect(find.textContaining('振替元: 三井住友銀行大塚支店'), findsOneWidget);
 
+      // 各行は名称 + 内訳を 1 つの semantics ラベルへまとめて読み上げる。
+      final rowSemantics = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            (widget.properties.label?.contains('電気代') ?? false) &&
+            (widget.properties.label?.contains('¥8,000') ?? false),
+      );
+      expect(rowSemantics, findsOneWidget);
+
       await tester.tap(find.text('追加'));
       expect(addPressed, isTrue);
-      await tester.tap(find.byTooltip('編集'));
+      await tester.tap(find.byTooltip('電気代 を編集'));
       expect(edited?.id, 'fc_denki');
-      await tester.tap(find.byTooltip('削除'));
+      await tester.tap(find.byTooltip('電気代 を削除'));
       expect(deleted?.id, 'fc_denki');
     });
 
