@@ -205,7 +205,7 @@ class AssetLiabilityRepaymentSimulationService {
     }
 
     if (monthlyPaymentBudget <= _epsilon) {
-      warnings.add('monthly payment budget is zero');
+      warnings.add('毎月返済額が0円です');
       return AssetLiabilityRepaymentSimulationPlan(
         strategy: strategy,
         startingBalanceTotal: startingBalanceTotal,
@@ -312,10 +312,10 @@ class AssetLiabilityRepaymentSimulationService {
     }
 
     if (budgetShortfallDetected) {
-      warnings.add('monthly budget is below scheduled payment total');
+      warnings.add('毎月返済額が今月の支払予定額を下回っています');
     }
     if (estimatedPayoffMonths == null) {
-      warnings.add('not paid off within $maxMonths months');
+      warnings.add('$maxMonthsか月以内に完済できません');
     }
 
     return AssetLiabilityRepaymentSimulationPlan(

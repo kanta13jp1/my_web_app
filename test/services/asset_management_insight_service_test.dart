@@ -32,6 +32,30 @@ void main() {
       );
     });
 
+    test('clears missing payment day item once an override is entered', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'Custom Card': -10000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        paymentDayOverrides: const <String, int>{'Custom Card': 27},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type == AssetManagementInsightActionType.missingPaymentDay,
+        ),
+        false,
+      );
+    });
+
     test('marks missing annual rate as an action item', () {
       final workbook = _workbook(
         debtRows: <AssetLiabilityDebtRow>[
@@ -50,6 +74,36 @@ void main() {
               item.type == AssetManagementInsightActionType.missingAnnualRate,
         ),
         true,
+      );
+    });
+
+    test('does not require annual rate for full-payment fixed costs', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000},
+        baseDate: DateTime(2026, 5, 1),
+        includeDefaultFixedPayments: true,
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        userProfile: _userProfile(),
+      );
+
+      expect(
+        workbook.debtMasterRows.any(
+          (row) =>
+              row.id == AssetLiabilityPlanningService.rentAccountId &&
+              row.fullPaymentEstimate &&
+              row.annualRate == 0,
+        ),
+        true,
+      );
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type == AssetManagementInsightActionType.missingAnnualRate,
+        ),
+        false,
       );
     });
 
@@ -123,17 +177,25 @@ void main() {
         minimumSafetyBalance: 10000,
       );
 
-      expect(report.todayAvailable.availableAmount, 40000);
-      expect(report.weekAvailable.availableAmount, 45000);
-      expect(report.monthAvailable.availableAmount, 25000);
+      // 新式: 今月 = 利用可能資産(bank 50000) − 給料日(5/25)までの未払い(0:
+      // paypay は 5/27 で給料日後) − 安全余裕(10000) = 40000。
+      // 本日 = 今月 ÷ 残日数(5/1→5/25=24)。今週 = 本日 × 今週末までの日数。
+      // 2026-05-01 は金曜 → 今週末(日)まで 3 日。
+      expect(report.monthAvailable.availableAmount, 40000);
+      expect(report.todayAvailable.availableAmount, closeTo(40000 / 24, 0.001));
+      expect(
+        report.weekAvailable.availableAmount,
+        closeTo(40000 / 24 * 3, 0.001),
+      );
     });
 
     test('generates movement suggestions from accounts with surplus', () {
+      // モビット(支払日15)は給料日(5/25)までに期日が来るので未払いに計上される。
       final workbook = planner.buildWorkbook(
-        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -45000},
+        latestSnapshot: const <String, double>{'bank': 50000, 'モビット': -45000},
         baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{'paypay_card': 45000},
-        paymentSourceAccountIds: const <String, String>{'paypay_card': 'bank'},
+        monthlyPaymentOverrides: const <String, double>{'mobit': 45000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'bank'},
       );
 
       final report = service.buildReport(
@@ -141,6 +203,7 @@ void main() {
         minimumSafetyBalance: 10000,
       );
 
+      // 今月 = 50000 − 45000 − 10000 = -5000。
       expect(report.monthAvailable.availableAmount, -5000);
       expect(report.movementSuggestions.isNotEmpty, true);
       expect(report.movementSuggestions.first.fromAccountId, 'custom_bank');
@@ -174,7 +237,10 @@ void main() {
         minimumSafetyBalance: 10000,
       );
 
-      expect(report.todayAvailable.availableAmount, -160000);
+      // 今月 = bank 50000 − 未払い(paypay 200000, 5/27<給料日6/25) − 10000
+      //      = -160000。本日はその日割りで負。
+      expect(report.monthAvailable.availableAmount, closeTo(-160000, 0.001));
+      expect(report.todayAvailable.availableAmount, lessThan(0));
       expect(report.emergencyAdvices.isNotEmpty, true);
       expect(report.emergencyAdvices.first.title, contains('今日の食費'));
       expect(report.emergencyAdvices.first.description, contains('水だけ'));
@@ -235,6 +301,25 @@ void main() {
       );
     });
 
+    test('accepts explicit zero yen billing without configuration item', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 0},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+              AssetManagementInsightActionType.cardBillingConfiguration,
+        ),
+        false,
+      );
+    });
+
     test('builds prompt with deterministic calculated values', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
@@ -252,6 +337,8 @@ void main() {
           .buildDetailedAdvicePrompt(report);
 
       expect(prompt.contains('Dart側で完了'), true);
+      // リボ払いカードの照合不一致を指摘させない明示指示が含まれること。
+      expect(prompt.contains('リボ払いカードの扱い'), true);
       expect(prompt.contains('本日'), true);
       expect(prompt.contains('プロフィール詳細'), true);
       expect(prompt.contains('職業: 会社員'), true);
@@ -347,6 +434,7 @@ AssetLiabilityDebtRow _debtRow({
     liabilityShare: 1,
     priorityLabel: 'test',
     paymentAmountEstimated: false,
+    billingConfirmed: true,
     paid: false,
   );
 }

@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
+import 'package:my_web_app/utils/feature_route_labels.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/self_touch_tracker_page.dart';
@@ -103,6 +104,7 @@ import 'package:my_web_app/pages/memo_reactions_page.dart';
 import 'package:my_web_app/pages/note_comments_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
 import 'package:my_web_app/pages/enterprise_page.dart';
+import 'package:my_web_app/pages/corporate_bank_account_simulator_page.dart';
 import 'package:my_web_app/pages/ai_secretary_page.dart';
 import 'package:my_web_app/pages/api_playground_page.dart';
 import 'package:my_web_app/pages/categories_page.dart';
@@ -302,18 +304,21 @@ import 'package:my_web_app/widgets/global_header_clock_bar.dart';
 import 'utils/app_logger.dart';
 import 'utils/error_reporter.dart';
 
-SupabaseClient? _testSupabaseClient;
+import 'services/supabase_client_provider.dart';
+
+export 'services/supabase_client_provider.dart';
+
 final GrowthPresenceNavigatorObserver _growthPresenceObserver =
     GrowthPresenceNavigatorObserver();
 
-@visibleForTesting
-set supabaseClientForTesting(SupabaseClient client) =>
-    _testSupabaseClient = client;
-
-SupabaseClient get supabase => _testSupabaseClient ?? Supabase.instance.client;
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // アクセシビリティを起動時から常時 ON にする。Flutter Web は既定で
+  // 「アクセシビリティを有効にする(Enable accessibility)」プレースホルダを
+  // 押すまでセマンティクスツリーを出さないため、スクリーンリーダー利用者は
+  // 最初から全要素を読める。返り値の SemanticsHandle は dispose しないので
+  // アプリ生存期間 ON を維持する(docs/ACCESSIBILITY_QA_CHECKLIST.md)。
+  WidgetsBinding.instance.ensureSemantics();
   GoogleFonts.config.allowRuntimeFetching = false;
   usePathUrlStrategy();
 
@@ -321,7 +326,7 @@ Future<void> main() async {
 
   await Supabase.initialize(
     url: 'https://smmkxxavexumewbfaqpy.supabase.co',
-    anonKey:
+    publishableKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
   );
 
@@ -423,6 +428,17 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
   }
 }
 
+String _initialRouteName() {
+  final uri = Uri.base;
+  if (uri.path.isNotEmpty && uri.path != '/') {
+    return uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path;
+  }
+  if (uri.fragment.startsWith('/')) {
+    return uri.fragment;
+  }
+  return Navigator.defaultRouteName;
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -433,7 +449,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _versionCheckService = VersionCheckService();
@@ -442,13 +458,23 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _versionCheckService.startPolling(() {
       if (mounted) setState(() => _showUpdateBanner = true);
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 背面のタブに復帰した時に再確認 (バックグラウンド中にデプロイされた場合を検知)。
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_versionCheckService.checkNow());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _versionCheckService.dispose();
     super.dispose();
   }
@@ -462,6 +488,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _scaffoldMessengerKey,
       navigatorKey: _navigatorKey,
+      initialRoute: _initialRouteName(),
       theme: themeService.overrideTheme ?? themeService.getLightTheme(),
       darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
       themeMode: themeService.overrideTheme != null
@@ -502,6 +529,10 @@ class _MyAppState extends State<MyApp> {
       ],
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '/');
+        // 全ての named route 遷移を利用履歴に記録する単一チョークポイント。
+        // 主要導線の直叩き pushNamed が記録されず、最近使った / よく使われる
+        // 機能が「サイト案内AI」しか並ばなかった機能不全 (#3279) を解消する。
+        recordFeatureRouteNavigation(settings.name);
 
         switch (uri.path) {
           case '/':
@@ -887,6 +918,10 @@ class _MyAppState extends State<MyApp> {
             );
           case '/enterprise':
             return MaterialPageRoute(builder: (_) => const EnterprisePage());
+          case '/corporate-bank-account-cost':
+            return MaterialPageRoute(
+              builder: (_) => const CorporateBankAccountSimulatorPage(),
+            );
           case '/ai-secretary':
             return MaterialPageRoute(builder: (_) => const AISecretaryPage());
           case '/team-workspace':

@@ -150,6 +150,20 @@
       "category": "AI dev tool / agentic coding CLI / multi-agent + Arena Mode",
       "added": "discovery",
       "added_date": "2026-06-02"
+    },
+    {
+      "name": "Alibaba Qoder",
+      "url": "https://qoder.com",
+      "category": "AI agentic coding platform / China frontier / Quest Mode + Repo Wiki + Qwen-Coder-Qoder",
+      "added": "discovery",
+      "added_date": "2026-06-09"
+    },
+    {
+      "name": "Microsoft MAI-Code-1-Flash",
+      "url": "https://microsoft.ai/news/introducingmai-code-1-flash/",
+      "category": "AI coding model / MS first in-house frontier coding model / Copilot-native / 137B sparse MoE",
+      "added": "discovery",
+      "added_date": "2026-06-16"
     }
   ],
   "discovery_history": [
@@ -422,6 +436,205 @@
         "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / adjacent 軸遠い / monitor)",
         "Google Jules / Antigravity 2.0 (= 1 month cooldown / 6/24 再評価)",
         "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-05",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 3 day 経過 / cooldown 残 ~4 day / 次回 6/09 解禁). 前回 report = 6/03 (6/04 run なし / 2 day delta 集約). 本日 6/03→6/05 新規 2 戦略級シグナル = (1) **★ Anthropic 6/15 課金分離確定 🔴** (= Claude サブスクが interactive pool と programmatic pool に分離 / Agent SDK + `claude -p` + Claude Code GitHub Actions + 第三者エージェント (OpenClaw) が月次クレジット枠 Pro $20 / Max5x $100 / Max20x $200 / 繰越なし へ移行 / 対話ターミナル Claude Code + Cowork は不変 / 自社 GHA cron 30+ + Schedule cron + daily-development cron の programmatic Claude 利用が 6/15 以降クレジット消費 = 6/2 障害に続く運用シグナル 2 連続 / 棚卸し最優先) / (2) **★ Claude Code Dynamic Workflows + ultracode 🔴** (= 1 コマンドで数十〜数百 agent orchestrate + xhigh effort 設定 + Opus 4.8 Fast 3× 安 / 自社 [SUBAGENT-GUARD] + 2 instance fleet narrative の標準機能内蔵化 = Cursor Build in Parallel + xAI 8 並列 + Devin Command Center と合わせ並列 orchestrate commoditize / narrative pivot 「並列できる」→「並列を監査可能に統治」). + 中国軸具体化 = Alibaba **Qoder** (agentic coding platform / NTUC 6 月 token 配布) + **Qwen3.7-Plus** 6/02 Bailian → 6/09 第 1 候補を「Qwen (model)」→「Qoder (product)」へ精緻化. 6/09 採択 第 1 候補 = Alibaba Qoder (基準 a 正面競合 + 基準 b 中国 frontier 未カバー + 基準 c Qwen3.7-Plus 6/02). https://devtoolpicks.com/blog/anthropic-splits-claude-subscriptions-agent-sdk-credit-june-2026",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / agentic coding platform / 6/03 「Qwen model」から製品名精緻化 / 基準 a+b+c 該当)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-07",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 5 day 経過 / cooldown 残 2 day / 次回 6/09 解禁). 前回 report = 6/06 (GHA static-template 可用性 + Notion/Slack/GitHub WebSearch 補遺) / 本 6/07 は WebSearch 主体で 6/05→6/07 delta 集約. 新規 6 シグナル = (1) **★ Cognition Devin Desktop 6/2 🔴** (= Windsurf rebrand / Agent Command Center = local+cloud 全 agent 1 Kanban 統治 + Devin Local Rust 化 subagent 並列 +30% token 効率 + 6/3 personal automations / 自社 2 instance fleet + cross-instance-pr 手動監視に対し UI 統治先取り = narrative pivot「並列 → 監査可能な並列統治」緊急度上昇) / (2) **★ Replit super-app 越境 6/1-6/4 🔴** (= Shopify storefront prompt→受注10分 + SEO Agent + Growth dashboard + Microsoft Fabric / vibe coding が ecommerce+集客+enterprise governance へ拡張 = 自社 LP+動画+AI大学+B/S 統合戦略へ接近 / 🟠→🔴 昇格) / (3) **★ Anthropic Dynamic Workflows GA + ultracode 🔴** (= 並列探索→所見ごと独立検証 = 自社 judge-panel/adversarial-verify/loop-until-dry 思想の標準コマンド化 + rate limit 2x / 6/15 課金分離 既報) / (4) **Cursor Design Mode for canvases 🟠** (= UI 直接注釈 = design-skills+Figma MCP 正面接近 + Context Usage Report token 内訳 = prompt-caching コスト可視化軸 + Organizations Enterprise GA) / (5) **xAI Grok Build worktrees 対応 🟠** (= subagent 並列ブランチ = 自社 [WORKDIR-ISOLATION] commoditize 加速 / 差別化は worktree 運用ルール側へ移行 + Connectors 7 service+自前MCP) / (6) **MoneyForward AI Cowork 7月 GA 確定再確認 🔴** (= Claude Agent SDK+API+MCP / 経理労務法務6業務 / 自社 6部署+B/S narrative 最大 overlap / 非対称防衛=個人 lifestyle CEO ダッシュボード). 新候補=Microsoft MAI-Code-1-Flash (Build 2026 / MS 初自社製 coding model / Agent 365 統合監視). 6/09 採択 第 1 候補 = Alibaba Qoder (= 事前スキャン済 / Qwen-Coder-Qoder 60.51% vs Opus 4.5 64.86% / code graph+project memory+self-orchestration / 基準 a+b+c 該当). https://www.digitalapplied.com/blog/windsurf-becomes-devin-desktop-ide-migration-2026",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / 事前スキャン済 / Qwen-Coder-Qoder 60.51% task resolution / code graph + project memory + self-orchestration / 基準 a+b+c 該当 / 解禁日初日採択推奨)",
+        "Microsoft MAI-Code-1-Flash (= Build 2026 新 / MS 初自社製 coding model / Microsoft Agent 365 統合監視 / 動向観察)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-08",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-02 xAI Grok Build 採択 / 6 day 経過 / cooldown 残 1 day / 次回 6/09 解禁 = 明日). 前回 report = 6/07 (GHA static-template 可用性 + Win Claude WebSearch merged). 本 6/08 は WebSearch 主体で 6/07→6/08 delta 集約. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 新規シグナル = (1) **★ Anthropic Opus 4.8 default 化 + Claude Code 6月更新 🔴** (= Opus 4.8 を Max/Team Premium/Enterprise PAYG/API default 化 + Fast mode → Opus 4.8 $10/$50 [2x 料金 2.5x 速度] + `/reload-skills` + `.claude/skills` 自動ロード + `!` background job + Enterprise custom role connector 権限 / competitor というより自社 Win Claude #132 fleet 中核の直接 dogfood 対象 = `.claude/skills` 多数手動 skill 運用に直結) / (2) **★ GitHub Copilot SDK GA + Copilot App desktop 6/2 🔴** (= agentic engine 埋込 SDK GA [custom tools + MCP + OpenTelemetry] + Copilot App 'My Work' で複数 agent session 1 画面統治 + Slack から cloud agent 起動→PR / 6/2 同日 Devin Agent Command Center と fleet 統治 UI commoditize 確定 = narrative pivot「並列 → 監査可能な並列統治」緊急度上昇) / (3) **Cursor 3.6 Auto-review classifier subagent 5/29 🟠** (= Shell/MCP/Fetch ごと小型 reasoning agent が allow/retry/ask 判断 / 公式が「best-effort convenience, NOT a security boundary」明言 = 自社 [SUBAGENT-GUARD] deny-by-default + [MCP-AUTH-27] narrative を競合自身の言葉で補強 = 追い風) / (4) **MoneyForward AI Cowork 7月 GA 確定 delta なし 🔴** (= 経理労務法務 6 業務 / 複数 AI エージェント並列自律 / Claude Agent SDK + API / B/S 中核最大脅威 / GA まで 1ヶ月弱). 6/09 採択 第 1 候補 = Alibaba Qoder (= pre-scan 有効 / June delta なし [最新 2026/2 Qwen-Coder-Qoder 60.51% vs Opus 4.5 64.86%] / 基準 a+b+c 該当 / 解禁日初日採択推奨 / [AI-TOOL-VERIFY] qoder.com 公式裏取り必須). https://github.blog/changelog/2026-06-02-copilot-sdk-is-now-generally-available/",
+      "skipped_candidates": [
+        "Alibaba Qoder (= 6/09 第 1 候補 / pre-scan 有効 / agentic coding platform / Qwen-Coder-Qoder 60.51% task resolution / code graph + project memory + self-orchestration / 基準 a+b+c 該当 / 解禁日初日採択推奨)",
+        "Microsoft MAI-Code-1-Flash (= Build 2026 / MS 初自社製 coding model / Microsoft Agent 365 統合監視 / 動向観察)",
+        "Sierra (= $950M Series E / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-09",
+      "name": "Alibaba Qoder",
+      "category": "AI agentic coding platform / China frontier / Quest Mode + Repo Wiki",
+      "reason": "6/02 xAI Grok Build 採択以降 cooldown 明け (6/03〜6/08 で 5 サイクル連続第 1 候補 pre-scan / 7 day 経過) → 解禁日初日採択 (Lovable 5/17 + Bolt.new 5/24 pattern 踏襲). 採択理由 = (1) 基準 a (差別化軸直接競合) = Quest Mode の Spec 自動生成→自律実装が自社 PRD→Roadmap→MVP 三部作 (part 241-244) と同軸 + Repo Wiki が Karpathy wiki_compile.py (docs/concepts/ + INDEX.md 自動生成) と正面 + long-term memory が consolidate-memory + [MEMORY-DECAY] と同軸. (2) 基準 b (未カバー領域) = 中国 frontier coding の空白軸充足 = 「Anthropic / OpenAI / Google(間接) / xAI」4 frontier lab に Alibaba 追加. (3) 基準 c (過去 30 日重大リリース) = 6月 Qwen3.7-Max 搭載 (全ユーザー 200 calls/day free 期間限定) + Custom Commands + @databases context. モデル性能 = Qwen-Coder-Qoder (2026/2 自社学習) task resolution 60.51% vs Claude 4.5 Opus 64.86% に肉薄. Community Edition + BYOK 2026-04-30. [AI-TOOL-VERIFY] = 公式 qoder.com changelog + JetBrains Marketplace plugin で実在・機能裏取り済 (2 次メディア依拠ではない). https://qoder.com/en/changelog",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= Build 2026 / MS 初自社製 coding model / 次回 6/16 第 1 候補 / Microsoft Agent 365 統合監視)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-11",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-09 Alibaba Qoder 採択 / 2 day 経過 / cooldown 残 5 day / 次回 6/16 解禁). 前回 report = 6/10 (GHA static-template 可用性 + WEB版 Schedule Agent WebSearch deep-dive). EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/11 は WebSearch 主体で 6/09→6/11 delta 集約. 新規 5 シグナル = (1) **★ Anthropic 6/15 課金分離 T-4 day 確定詳細 🔴🔴** (= Interactive Pool + Agent SDK Credit Pool 2 本化 / Pro $20 / Max5x $100 / Max20x $200 / Team Standard $20-seat / Premium $100 / full API rate [Sonnet 4.6 $3/$15・Opus 4.8 $5/$25] = 従来 15-30x 補助撤廃 / 繰越なし・自動 fallback なし → クレジット枯渇で programmatic 停止 [overflow billing 手動 ON のみ例外] / 対象 = Agent SDK + `claude -p` + Claude Code GitHub Actions + 第三者 agent [OpenClaw] / 対話 Claude Code + Cowork は不変 / 自社 GHA cron 30+ + Schedule cron + daily-development cron の programmatic Claude が 6/15 以降クレジット枠消費 = 棚卸し最優先 T-4 day) / (2) **★ MoneyForward AI Cowork 7月 GA 確定再々確認 🔴** (= 経理/税務/財務/労務/法務 6 業務 / 『2030年までに AI で 150 億円』 revenue target / Claude Agent SDK + MCP 基盤 / 3 safety = ガードレール自動コンプラ + Draft & Approve + AI 監査ログ / 4/7 先行受付開始済 / 自社 6 部署 + B/S narrative 最大 overlap = 非対称防衛 = 個人 lifestyle CEO ダッシュボード) / (3) **★ Microsoft MAI-Code-1-Flash 公式裏取り完了 🔴** (= microsoft.ai 公式 = 5B active params agentic coding model / 第三者モデル distillation なし enterprise-grade clean data / GitHub Copilot + VS Code + MS stack 深統合 / Haiku 並み性能で割安 / ~10% individual user rollout / Agent 365 SDK GA = Entra+Defender+Purview single control plane / 『OpenAI 依存終焉』narrative + Build 2026 7 MAI model / 6/16 第 1 候補維持・基準 b+c 該当 [AI-TOOL-VERIFY] 2 次メディアではなく公式裏取り済) / (4) **AI dev tool fleet 統治 UI commoditize 継続 🟠** (= Windsurf→Devin Desktop rebrand 6/2 + Agent Command Center default + ACP [Agent Client Protocol] / GitHub Copilot usage-based flex billing live 6/1 + $100 Max / Cursor Teams seat pricing 刷新 + >$500M ARR / MarkTechPost 6/10 に Warp 新規参入シグナル / narrative pivot『並列 → 監査可能な並列統治』継続) / (5) **自社 dogfood = Opus 4.8 + Dynamic Workflows 🟢** (= same price + コード欠陥見逃し 4x 減 + 数百 parallel subagent 1 session + Fast mode 2.5x 速 3x 安 / Win Claude #132 fleet 中核 + [SUBAGENT-GUARD] 直接 dogfood 対象). 6/16 採択 第 1 候補 = Microsoft MAI-Code-1-Flash (= 公式裏取り完了 / 基準 b 未カバー [MS 自社製 frontier model] + 基準 c Build 2026 6/2). https://microsoft.ai/news/introducingmai-code-1-flash/",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= 6/16 第 1 候補 / microsoft.ai 公式裏取り完了 / 5B active params / 第三者 distillation なし / GitHub Copilot + VS Code 深統合 / Agent 365 SDK GA / 基準 b+c 該当 / 解禁日初日採択推奨)",
+        "Warp (= MarkTechPost 6/10 新規参入シグナル / terminal-native agentic dev / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-12",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-09 Alibaba Qoder 採択 / 3 day 経過 / cooldown 残 4 day / 次回 6/16 解禁). 前回 report = 6/11. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/12 は WebSearch 主体で 6/11→6/12 delta 集約. 新規シグナル = (1) **★★ Anthropic 6/15「ダブルヒット」確定 T-3 day 🔴🔴** (= 課金分離 [Agent SDK / claude -p / Claude Code GitHub Actions / 第三者 OpenClaw・Conductor・Zed・Jean が Interactive Pool から分離 → Agent SDK Credit Pool / Pro $20・Max5x $100・Max20x $200 / 月次繰越なし / API list rate / CI/CD は committer 個別枠集約不可] + **同日旧モデル API 退役** [claude-sonnet-4-20250514 + claude-opus-4-20250514 を 6/15 退役 / failover なし / 代替 Sonnet 4.6・Opus 4.8 / 公式 platform.claude.com docs + Make Help Center 裏取り済] / 自社 programmatic Claude [GHA cron 30+ / Schedule cron / daily-development cron] 棚卸し最優先 + 退役 ID 20250514 全域 sweep [本 run で .github/ scripts/ クリーン確認 / lib・supabase 全域 follow-up 推奨]) / (2) **★ Microsoft MAI-Code-1-Flash 公式モデルカード公開 🔴** (= 137B total sparse MoE / 256K ctx / 訓練 cutoff ~2026/5 / 第三者 distillation なし enterprise-grade clean data / Copilot 本番 harness 直接訓練 / Copilot Free–Max 段階 rollout + VS Code model picker / 6/11「5B active params」と整合 [sparse MoE 総 137B / active ~5B] / 6/16 第 1 候補 confidence ↑) / (3) **GitHub Copilot 従量課金 backlash 🟠** (= 6/1 flex billing GA + Copilot Max $100/20K credits ≒$200 / dev が想定より速く枠消費 = コスト意識ユーザー流入機会 = AI コーディング訴求 timing) / (4) **MoneyForward AI Cowork delta なし再確認** (= 7月 GA 維持 / 経理労務法務 6 業務 / Claude Agent SDK + MCP / Draft & Approve + ガードレール + 監査ログ / B/S 最大 overlap = 非対称防衛継続). 6/16 採択 第 1 候補 = Microsoft MAI-Code-1-Flash (= 公式裏取り完了 / 基準 b 未カバー [MS 自社製 frontier coding model] + 基準 c Build 2026 6/2 / 解禁日初日採択推奨). https://platform.claude.com/docs/en/about-claude/model-deprecations",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= 6/16 第 1 候補 / microsoft.ai 公式モデルカード公開 / 137B total sparse MoE / 256K ctx / 第三者 distillation なし / Copilot 本番 harness 直接訓練 / VS Code model picker / 基準 b+c 該当 / 解禁日初日採択推奨)",
+        "Warp (= MarkTechPost 6/10 新規参入シグナル / terminal-native agentic dev / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "Salesforce Agentforce Operations (= 6/15 GA 後採択検討)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-14",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-09 Alibaba Qoder 採択 / 5 day 経過 / cooldown 残 2 day / 次回 6/16 解禁). 前回 AI 分析 report = 6/12 (6/13 は GHA static-template 可用性のみ). 本 6/14 は WebSearch 主体で 6/12→6/14 delta 集約. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 新規シグナル = (1) **★★ Anthropic 6/15「ダブルヒット」T-1 day 🔴🔴** (= 課金分離 [Agent SDK Credit Pool / Pro $20・Max5x $100・Max20x $200 / 繰越なし / API list rate / overflow billing 手動 ON のみ例外] + 旧 Claude 4 API 退役 [claude-opus-4-20250514 + claude-sonnet-4-20250514 が 6/15 失敗・failover なし] が明日同日着地 / thenewstack + usagebox『Double Hit』+ platform.claude.com docs で再確認 / 自社 programmatic Claude [GHA cron 30+ / Schedule cron / daily-development cron] readiness は本日が最終日 + 退役 ID 20250514 全域 sweep) / (2) **★ NEW Claude Fable 5 6/9 🔴** (= Anthropic 初の一般公開 Mythos クラスモデル claude-fable-5 / Claude Code + GitHub Copilot 両対応 / $10/$50 per M tokens / モデル層 cross-vendor 配布の常態化 = 差別化が『どのモデルか』→『どう統治・並列化するか』へシフト / Win Claude #132 fleet dogfood 候補 / [AI-TOOL-VERIFY] Anthropic 公式 model card 裏取り推奨・環境メタに ID 実在確認) / (3) **★ Salesforce Agentforce Operations Multi-Agent Orchestration GA 6/15 🔴** (= beta→GA 6/15 / production wave 6/13 開始 / orchestrator + 専門 subagent 群 + Agent Fabric control plane [Guided Determinism + governance] / 自社 SUBAGENT_ORCHESTRATION_POLICY.md guarded subagents + deny-by-default narrative を競合自身の言葉で補強 = 追い風) / (4) **Microsoft MAI-Code-1-Flash 🟠** (= Copilot rollout 段階拡大継続 Free〜Max + VS Code model picker / 6/16 第 1 候補維持) / (5) **MoneyForward AI Cowork delta なし** (= 7月 GA 維持 / Claude Agent SDK + MCP / B/S 最大 overlap). **6/15 = エコシステム トリプル着地日** (= Anthropic 課金分離 + Claude 4 退役 + Salesforce Agentforce GA 同日). 6/16 採択 第 1 候補 = Microsoft MAI-Code-1-Flash (基準 b+c 該当 / 解禁日初日採択推奨) / 第 2 候補繰上げ検討 = Salesforce Agentforce Operations (6/15 GA 着地後). https://usagebox.com/articles/anthropic-june-15-agent-sdk-credit-split-claude-4-retirement",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= 6/16 第 1 候補 / Copilot rollout 段階拡大 + VS Code model picker / 137B sparse MoE / 5B active / 256K ctx / 基準 b+c 該当 / 解禁日初日採択推奨)",
+        "Salesforce Agentforce Operations (= 6/15 Multi-Agent Orchestration GA 着地 / orchestrator+subagent / 6/16 第 2 候補繰上げ検討 / ただし enterprise CX 寄りで MAI-Code に次ぐ)",
+        "Claude Fable 5 (= Anthropic 新モデル = 既存 Claude Code 競合の機能 delta / 新規 discovery 候補ではなくモデル層シグナル)",
+        "Warp (= terminal-native agentic dev / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-15",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown 最終日 (= 2026-06-09 Alibaba Qoder 採択 / 6 day 経過 / cooldown 残 1 day / 次回 6/16 解禁 = 明日). 前回 AI 分析 report = 6/14. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/15 は WebSearch 主体で 6/14→6/15 delta = **『予告の着地日』** を集約. 新規シグナル = (1) **★★ Anthropic 6/15「ダブルヒット」本日 LIVE 🔴🔴** (= T-1 → 当日着地 / 課金分離 [Agent SDK / claude -p / Claude Code GitHub Actions / 第三者 OpenClaw・Conductor・Zed・Jean が Interactive Pool から分離 → Agent SDK Credit Pool / Pro $20・Max5x $100・Max20x $200 / 繰越なし / API list rate / 枯渇で停止・overflow billing 手動 ON のみ例外] + 旧 Claude 4 API 退役 [claude-opus-4-20250514 + claude-sonnet-4-20250514 が本日失敗・grace period なし・failover なし → Sonnet 4.6 / Opus 4.8 移行 / Agent SDK の明示 model 設定は自動 alias されない] が同日着地 / techtimes + thenewstack + enterprisedna『Two Claude Deadlines Hit June 15』+ platform.claude.com docs で当日確認 / 自社 programmatic Claude [GHA cron 30+ / Schedule cron / daily-development cron] の棚卸し + 退役 ID 20250514 全域 sweep は本日が deadline) / (2) **★ Salesforce Summer '26 フル GA = 本日 6/15 🔴** (= Agentforce Operations [文書抽出 / 計算 / 信用モデル更新 / コンプラ gap 検出を分単位で自律完遂] + Multi-Agent Orchestration が beta→GA / production wave 6/13 開始 / Email + Slack + Teams から起動 / Agent Fabric control plane [Guided Determinism + governance] / バックオフィス自律 AI 4 強 = MoneyForward + Anthropic verticals + Salesforce + Microsoft が出揃い = 自社 6 部署 + B/S narrative の正面 cluster / guarded subagent + 監査可能な並列統治 narrative を競合の言葉で補強 = 追い風) / (3) **★ 2 次波及 = MoneyForward AI Cowork も 6/15 課金変更の下流 🟠** (= AI Cowork の orchestrator は Claude Agent SDK = 本日の API list rate 課金へ移行する下流消費者 / 7月 GA 前に MF 自身のコスト構造が動く = B/S 競合の足元も同じ Anthropic 依存リスクを共有 = 非対称防衛の論点追加) / (4) **GitHub Copilot 従量課金 backlash → alternatives 流入波 🟠** (= Security Boulevard『11 Copilot Alternatives』+ CodingFleet『after the pricing reset』/ 6/1 usage-based billing 後のコスト意識ユーザー流出 = AI コーディング訴求 timing) / (5) **Microsoft MAI-Code-1-Flash 🟠** (= Copilot Free〜Max rollout 継続 + VS Code model picker + Auto picker routing / 6/16 第 1 候補 confidence MAX). **6/15 = エコシステム トリプル着地日 確定** (= Anthropic 課金分離 + Claude 4 退役 + Salesforce Summer '26 GA 同日着地). 6/16 採択 第 1 候補 = Microsoft MAI-Code-1-Flash (基準 b 未カバー [MS 自社製 frontier coding model] + 基準 c Build 2026 6/2 / 解禁日初日採択推奨) / 第 2 候補繰上げ = Salesforce Agentforce Operations (= 6/15 GA 着地で『動きのある会社』基準 c 該当 / バックオフィス自律 AI = 6 部署/B/S 正面で MAI-Code [coding agent] より戦略 overlap 高 → 6/16 以降サイクルで再 rank 検討). https://enterprisedna.co/resources/news/anthropic-claude-june-15-retirements-billing-2026/",
+      "skipped_candidates": [
+        "Microsoft MAI-Code-1-Flash (= 6/16 第 1 候補 confidence MAX / Copilot Free〜Max rollout + VS Code model picker + Auto picker routing / 137B sparse MoE / 5B active / 256K ctx / 公式 model card 裏取り済 / 基準 b+c 該当 / 解禁日初日採択推奨)",
+        "Salesforce Agentforce Operations (= 6/15 フル GA 着地 / バックオフィス自律 AI = 6 部署/B/S 正面で戦略 overlap 高 / production wave 6/13 / 6/16 以降サイクルで第 1 候補 re-rank 検討対象)",
+        "Claude Fable 5 (= Anthropic 新 Mythos モデル = 既存 Claude Code 競合の機能 delta / 新規 discovery 候補ではなくモデル層シグナル)",
+        "Warp (= terminal-native agentic dev / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-16",
+      "name": "Microsoft MAI-Code-1-Flash",
+      "category": "AI coding model / MS first in-house frontier coding model / Copilot-native",
+      "reason": "6/09 Alibaba Qoder 採択以降 cooldown 明け (6/11+6/12+6/14+6/15 で 5 サイクル連続第 1 候補 pre-scan / 7 day 経過) → 解禁日初日採択 (Lovable 5/17 + Bolt.new 5/24 + Qoder 6/09 pattern 踏襲). 採択理由 = (1) 基準 b (未カバー領域) = Microsoft 初の完全自社製 (OpenAI 非依存) frontier coding model = vendor カバレッジに『MS 自社モデル層』空白を充足 / 既存 frontier lab は Anthropic / OpenAI / Google(間接) / xAI / Alibaba の 5 社 → Microsoft 追加で 6 lab 網羅 (= GitHub Copilot は製品として既収載だが、その背後の MS 自社製 model layer は別軸の新規対象). (2) 基準 c (過去 30 日重大リリース) = Build 2026 6/2 発表 + 6 月 Copilot Free/Student/Pro/Pro+/Max 段階 rollout 進行 + VS Code model picker 統合. (3) 基準 a (差別化軸直接競合) = GitHub Copilot 本番 harness で直接訓練 + 同等問題を最大 60% 少ない token で解決 = 自社 prompt-caching コスト削減 narrative ([PROMPT_CACHING_OPUS47_COST_GUIDE.md]) + AI 大学『モデル経済』軸の比較対象 ideal. 仕様 = 137B total sparse MoE / ~5B active / 256K ctx / $0.75 input・$4.50 output per M tokens / 訓練 cutoff ~2026/5 / 第三者 distillation なし enterprise-grade clean data. [AI-TOOL-VERIFY] = microsoft.ai 公式 news + github.blog changelog 2026-06-02 で実在・仕様・rollout 裏取り済 (2 次メディア依拠ではない). https://microsoft.ai/news/introducingmai-code-1-flash/ + https://github.blog/changelog/2026-06-02-mai-code-1-flash-is-now-available-for-github-copilot/",
+      "skipped_candidates": [
+        "Salesforce Agentforce Operations (= 6/15 Summer '26 Multi-Agent Orchestration beta→GA 着地 + Atlas Reasoning Engine 3.0 + $800M ARR +169% YoY + 29,000 deals + IT Service Domain Pack 50 prebuilt agents / バックオフィス自律 AI = 6 部署/B/S 正面で戦略 overlap 最大 / 次回サイクル第 1 候補 re-rank 最有力)",
+        "Claude Fable 5 (= 6/9 Anthropic 初 Mythos クラス公開モデル claude-fable-5 / Claude Code + GitHub Copilot 両対応 $10/$50 / 既存 Claude Code 競合の model 層 delta = discovery 候補ではなくモデルシグナル)",
+        "Warp (= terminal-native agentic dev / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-17",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-16 Microsoft MAI-Code-1-Flash 採択 / 1 day 経過 / cooldown 残 6 day / 次回 6/23 解禁). 前回 report = 6/16. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/17 は WebSearch 主体で 6/16→6/17 delta 集約. 最大シグナル = ★★ Anthropic 6/15 課金分離は『着地』でなく『一時停止 (paused)』が確定 🔴🔴 (= 6/16 report 訂正 / Help Center「Nothing changes for now」/ Agent SDK・claude -p・Claude Code GitHub Actions は従来 subscription 枠継続 / 理由=実利用パターンに合致させる調整中 / 背景=OpenAI 値下げ price war + IPO 前顧客離反回避 + 米政府 Fable5/Mythos5 規制摩擦 / 当初案 12x-175x 実効値上げで反発 → 自社 programmatic Claude のクレジット枠消費・棚卸し緊急度 MAX は撤回=緊急度ダウングレード / ただし pause=再導入余地で fallback 経路点検は予防継続 / 旧 Claude4 退役 ID 20250514 は別トラックで pause 免除されず sweep 継続). 他 = Salesforce Agentforce Multi-Agent Orchestration GA 翌日詳細 🔴 (Atlas Reasoning Engine 3.0 は description 駆動 routing=品質依存 / ARR $800M +169%YoY / 次回 discovery 第1候補 re-rank 最有力) + MAI-Code-1-Flash 初回フルスキャン 🟢 (Claude Haiku4.5 超え SWE-Bench Pro +16pt 51.2% vs 35.2% / frontier 上位未到達=軽量低コスト枠) + 価格戦争メータリング収斂加速 🟠 (Copilot usage-based flex billing $100 Max / Cursor $500M ARR). 6/23 採択 第 1 候補 = Salesforce Agentforce Operations (基準 a+c). https://the-decoder.com/anthropic-backs-off-unpopular-billing-overhaul-as-price-war-with-openai-looms/",
+      "skipped_candidates": [
+        "Salesforce Agentforce Operations (= 6/23 第 1 候補 / 6/15 Summer '26 GA 着地 / B/S overlap 最大 / 基準 a 正面競合 + 基準 c 過去 30 日重大リリース該当 / re-rank 最有力)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 シグナル / 動向観察 1 月)",
+        "Claude Fable 5 (= モデル層 delta / discovery 対象外 / Anthropic 既収載派生)",
+        "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-18",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-16 Microsoft MAI-Code-1-Flash 採択 / 2 day 経過 / cooldown 残 5 day / 次回 6/23 解禁). 前回 AI 分析 report = 6/17. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/18 は WebSearch 主体で 6/17→6/18 delta 集約. 最大シグナル = ★★ Microsoft Copilot Cowork 全世界 GA 6/16 🔴🔴 (= 従量課金 [Copilot Credit $0.01 / model use+context retrieval+tool calls+runtime の 4 入力算定] + multi-model 選択 [DeepSeek option] + browser task 実行 + 画像生成 + 中央 IT ガバナンス / Copilot Cowork は Claude 上で動作=Anthropic Claude Cowork と同一モデル / M365 connector 経由で Claude Cowork より 30-40% 安 / Fortune500 過半+Accenture+Zurich / **MoneyForward が Copilot Cowork の coming soon plugin** = Anthropic Claude Cowork [1月 standalone desktop] + Microsoft Copilot Cowork [6/16 GA M365] + MoneyForward AI Cowork [7月 GA 経理] の三つ巴が相互接続 / 自社含意=back-office agent が同一 Claude モデル上で commoditize → 差別化は model でなく『統合の単位』= 個人単位 6 部署+B/S 統合 lifestyle CEO dashboard [enterprise 法人部門でなく] = 非対称防衛の輪郭明確化). 他 = ★ Claude Fable 5/Mythos 5 全世界 suspension 6/12 確定詳細 🔴 (= 米商務省 export-control directive [ECRA 2018 dual-use] / AI モデル自体への輸出規制適用は史上初 [チップでなく model] / jailbreak 懸念+中国グループ access 報道 / 国籍 real-time 検証不可で全顧客 global 無効化 / **Opus 4.8・Sonnet 4.6・Haiku 4.5 は影響なし=Win Claude #132 fleet 継続可** / frontier 単一ベンダー依存+地政学リスク顕在化=6/2 障害+6/15 課金分離 pause に続く運用シグナル 3 連 / TechCrunch/Fortune/CNBC/Tom's Hardware/Snyk 裏取り / [AI-TOOL-VERIFY] 当事者間で見解相違ある点は断定回避) + MAI-Code-1-Flash rollout 継続 🟢 (VS Code Copilot individual 段階展開+Auto picker routing / GitHub Copilot CLI v1.0.63 6/16 vision 改善+agent 管理) + 価格戦争メータリング収斂継続 🟠 (Copilot Cowork per-task 従量 = back-office agent 層へ収斂到達). 6/23 採択 第 1 候補 = Salesforce Agentforce Operations 維持 (基準 a+c). 新規ウォッチ = Microsoft Copilot Cowork (back-office 三つ巴中核だが Microsoft は MAI-Code-1-Flash で 6/16 既収載=同一ベンダー連続追加回避で monitor). https://www.microsoft.com/en-us/microsoft-365/blog/2026/06/16/copilot-cowork-is-now-generally-available/",
+      "skipped_candidates": [
+        "Salesforce Agentforce Operations (= 6/23 第 1 候補維持 / 6/15 Summer '26 GA 着地 / バックオフィス自律 AI = 6 部署/B/S 正面で戦略 overlap 最大 / 基準 a 正面競合 + 基準 c 該当 / re-rank 最有力)",
+        "Microsoft Copilot Cowork (= 6/16 全世界 GA / back-office agent 三つ巴の中核 / Claude 上で動作 + MoneyForward plugin 相互接続 / ただし Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加は diversification 上回避 / back-office 軸で monitor 継続 / Salesforce 採択後の将来サイクルで re-rank 候補)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 シグナル / 動向観察 1 月)",
+        "Claude Fable 5 / Mythos 5 (= モデル層 + 規制シグナル / discovery 対象外 / Anthropic 既収載派生)",
+        "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
         "ServiceNow Build Agent (= 動向観察 1 月)",
         "Prime Intellect Lab (= 動向観察 1 月)",
         "Manus AI (= 協調軸組込継続)",

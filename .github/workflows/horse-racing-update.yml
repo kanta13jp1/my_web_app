@@ -2,8 +2,8 @@ name: Horse Racing Auto Update
 
 on:
   schedule:
-    # 毎時00分 (UTC) = 毎時09分 JST — 出走表+AI予想+結果を1時間毎に更新
-    - cron: "0 * * * *"
+    # 2時間ごと00分 (UTC) — 2026-06-11 ci-audit: 毎時→2時間, 360runs/月削減 (~1,500分/月)
+    - cron: "0 */2 * * *"
   workflow_dispatch:
     inputs:
       mode:

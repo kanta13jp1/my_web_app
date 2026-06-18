@@ -5,6 +5,10 @@ on:
     - cron: '0 0 * * *'  # daily 09:00 JST
   workflow_dispatch:
 
+concurrency:
+  group: codex-backlog-check-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   issues: write
   contents: read

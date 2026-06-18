@@ -39,6 +39,7 @@ npm run quality:fast
 npm run quality:full
 npm run quality:browser
 npm run quality:no-verify
+python scripts/impossible_task_degradation_check.py
 ```
 
 `quality:fast` is the normal pre-commit path. `quality:full` is intentionally
@@ -51,6 +52,10 @@ browser runner remains stable:
 $env:CODEX_INCLUDE_BROWSER_SMOKE = '1'
 npm run quality:full
 ```
+
+`impossible_task_degradation_check.py` covers three deliberately impossible AI
+tasks and writes a JSON report. CI uploads that report and blocks the build if
+the safe-degradation pass rate drops below 95%.
 
 ## No-Verify Policy
 

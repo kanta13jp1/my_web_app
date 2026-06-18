@@ -48,10 +48,18 @@
 
 ## Session ritual
 
-- **開始**: `~/.claude/projects/.../memory/MEMORY.md` 参照 + `notebooklm use jibun-master-brain` で過去判断確認
+- **開始**: `~/.claude/projects/.../memory/MEMORY.md` 参照 + `notebooklm use ea6cff25` (= jibun-master-brain / use は ID prefix のみ) で過去判断確認 (= NotebookLM は **kanta13jp@gmail.com 側** / `NOTEBOOKLM_HOME=~/.notebooklm-gmail` を settings.json env で自動適用。default `~/.notebooklm` = ml-mightylink 側 / 他プロジェクト用。詳細 [`docs/NOTEBOOKLM_GUIDE.md`](docs/NOTEBOOKLM_GUIDE.md))
 - **終了**: `/wrap-up` skill (= memory + NotebookLM 蓄積 + 次回 candidate 3-5 件 必須)
 - **手動 skill**: `/session-start-check` `/rule17-wf-health` `/blog-publish-cleanup` `/wrap-up`
 - **自動化**: 5 daily cron (= ai-tool-watch / safety / residuals / crosscheck / wiki-compile) + 30+ workflow
+
+### Claude Code v2.1.126 session aids
+
+- Run `/recap` when resuming a stale or handed-off session; disable away summaries with `CLAUDE_CODE_ENABLE_AWAY_SUMMARY=0` only when the summary itself is noisy.
+- Use `/focus` during parallel fleet work to reduce transcript clutter; keep task state in the issue, PR, or WBS entry so the focus view does not become the source of truth.
+- Use mobile push notifications only for actionable remote-control events such as CI completion, blocked secrets, or schedule tasks that need the user's decision.
+- If `ANTHROPIC_BASE_URL` points at a gateway with `/v1/models`, prefer the `/model` picker over hard-coded model names.
+- Before removing an abandoned worktree/session, run `claude project purge [path]` only after git status and pushed branch/PR state are verified.
 
 ## Quota fallback
 

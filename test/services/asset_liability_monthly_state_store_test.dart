@@ -43,12 +43,43 @@ void main() {
       );
     });
 
+    test('salaryCycleStart / EndExclusive give the 25th-to-24th window', () {
+      // 6/13 (給料日前) は 5/25〜6/24 サイクル。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 6, 13)),
+        DateTime(2026, 5, 25),
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+          DateTime(2026, 6, 13),
+        ),
+        DateTime(2026, 6, 25),
+      );
+      // 6/25 (給料日当日) は 6/25〜7/24 サイクルへ切替。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 6, 25)),
+        DateTime(2026, 6, 25),
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+          DateTime(2026, 6, 25),
+        ),
+        DateTime(2026, 7, 25),
+      );
+      // 1月始端の前サイクルは前年12/25。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 1, 5)),
+        DateTime(2025, 12, 25),
+      );
+    });
+
     test('saves and restores monthly paid statuses', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
         state: AssetLiabilityMonthlyState(
           paymentOverrides: const <String, double>{'モビット': 70000},
           paidAccountNames: const <String>{'auPayカード'},
+          billingConfirmedAccountIds: const <String>{'paypay_card'},
           actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
           paymentDifferenceReasons: const <String, String>{
             'aupay_card': 'late fee',
@@ -114,6 +145,7 @@ void main() {
 
       expect(loadedMay.paymentOverrides['モビット'], 70000);
       expect(loadedMay.paidAccountNames, contains('auPayカード'));
+      expect(loadedMay.billingConfirmedAccountIds, contains('paypay_card'));
       expect(loadedMay.actualPaymentAmounts['aupay_card'], 6200);
       expect(loadedMay.paymentDifferenceReasons['aupay_card'], 'late fee');
       expect(loadedMay.annualRateOverrides['mobit'], 0.175);
@@ -141,6 +173,7 @@ void main() {
       expect(loadedJune.annualRateOverrides, isEmpty);
       expect(loadedJune.annualRateEvidences, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
+      expect(loadedJune.billingConfirmedAccountIds, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
       expect(loadedJune.cardStatementLines, isEmpty);
@@ -210,6 +243,58 @@ void main() {
       expect(decoded['PayPayカード'], 0);
       expect(decoded['モビット'], 70000);
     });
+
+    test(
+      'drops annual rates above the 20 percent registration block',
+      () async {
+        await store.saveMonth(
+          month: DateTime(2026, 5, 13),
+          state: AssetLiabilityMonthlyState(
+            annualRateOverrides: const <String, double>{
+              'legal': 0.20,
+              'blocked': 0.205,
+            },
+            annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+              'legal': AssetLiabilityAnnualRateEvidence(
+                accountId: 'legal',
+                fileName: 'legal.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.20,
+                detectedAnnualRate: 0.20,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20%',
+                source: 'test',
+              ),
+              'blocked': AssetLiabilityAnnualRateEvidence(
+                accountId: 'blocked',
+                fileName: 'blocked.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.205,
+                detectedAnnualRate: 0.205,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20.5%',
+                source: 'test',
+              ),
+            },
+          ),
+        );
+
+        final loaded = await store.loadMonth(DateTime(2026, 5, 13));
+        expect(loaded.annualRateOverrides, <String, double>{'legal': 0.20});
+        expect(loaded.annualRateEvidences.keys, contains('legal'));
+        expect(loaded.annualRateEvidences.keys, isNot(contains('blocked')));
+
+        const raw = '{"2026-05":{"legal":0.2,"blocked":0.205}}';
+        final decoded =
+            AssetLiabilityMonthlyStateStore.annualRateOverridesForMonth(
+          raw,
+          '2026-05',
+        );
+        expect(decoded, <String, double>{'legal': 0.2});
+      },
+    );
 
     test(
       'falls back to estimated payment after manual amount is cleared',
@@ -555,6 +640,43 @@ void main() {
       expect(snapshots.single.positiveAssetTotal, 110000);
       expect(snapshots.single.monthlyPaidPaymentTotal, 130000);
       expect(snapshots.single.overduePaymentCount, 0);
+    });
+
+    test('saves and restores debt payment day overrides', () async {
+      await store.saveDebtPaymentDayOverrides(const <String, int>{
+        'famima_card': 27,
+        'paypay_card': 15,
+      });
+
+      final overrides = await store.loadDebtPaymentDayOverrides();
+
+      expect(overrides, <String, int>{'famima_card': 27, 'paypay_card': 15});
+    });
+
+    test('drops invalid debt payment day overrides on save and load', () async {
+      await store.saveDebtPaymentDayOverrides(const <String, int>{
+        'famima_card': 27,
+        'too_small': 0,
+        'too_large': 32,
+        '': 10,
+      });
+
+      final overrides = await store.loadDebtPaymentDayOverrides();
+
+      expect(overrides, <String, int>{'famima_card': 27});
+
+      expect(
+        AssetLiabilityMonthlyStateStore.decodeDebtPaymentDayOverrides(
+          '{"famima_card": 27, "junk": "abc", "out_of_range": 99}',
+        ),
+        <String, int>{'famima_card': 27},
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.decodeDebtPaymentDayOverrides(
+          '[1, 2, 3]',
+        ),
+        isEmpty,
+      );
     });
   });
 }

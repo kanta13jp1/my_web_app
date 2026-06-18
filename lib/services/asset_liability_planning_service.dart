@@ -1,5 +1,8 @@
 import 'dart:math';
 
+import 'package:my_web_app/services/debt_lockdown_service.dart';
+import 'package:my_web_app/services/asset_revolving_credit_service.dart';
+
 import '../models/asset_liability_workbook.dart';
 
 class AssetLiabilityPlanningService {
@@ -35,17 +38,16 @@ class AssetLiabilityPlanningService {
       '請求先カードが未設定です';
   static const String cardBillingReviewRemovedBillingAccountAlert =
       '請求先カードが見つかりません';
-  static const String cardBillingReviewZeroAmountAlert = '金額が0円のため確認してください';
-  static const String cardStatementMissingImportAlert =
-      'card statement detail import is missing';
+  static const String cardBillingReviewZeroAmountAlert =
+      '金額が0円のため確認してください（請求が0円の月は今月支払予定額に0を入力すると確認対象外になります）';
+  static const String cardStatementMissingImportAlert = 'カード明細の取り込みが未実施です';
   static const String cardStatementBillingAccountMissingAlert =
-      'billing card account is missing';
-  static const String cardStatementAmountMismatchAlert =
-      'card statement total does not match billed amount';
+      '請求先カード口座が見つかりません';
+  static const String cardStatementAmountMismatchAlert = 'カード明細合計が請求額と一致しません';
   static const String cardStatementConfiguredMismatchAlert =
-      'configured card-billed detail total does not match billed amount';
+      '設定済みカード内訳合計が請求額と一致しません';
   static const String cardStatementImportedConfiguredMismatchAlert =
-      'imported statement total does not match configured detail total';
+      '取り込み明細合計が設定済み内訳合計と一致しません';
   static const String auCardBillingNotice =
       'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
@@ -54,6 +56,18 @@ class AssetLiabilityPlanningService {
   static const String rentAccountId = 'rent';
   static const String rentAccountName = '\u5bb6\u8cc3';
   static const double rentMonthlyPaymentAmount = 63000;
+  // \u6c34\u9053\u4ee3: 2\u30f6\u6708\u306b1\u56de(\u5076\u6570\u6708\u306e22\u65e5 / \u4e09\u4e95\u4f4f\u53cb\u9280\u884c\u5927\u585a\u652f\u5e97\u304b\u3089\u53e3\u5ea7\u632f\u66ff)\u3002
+  // \u4f7f\u7528\u91cf\u3067\u5909\u52d5\u3059\u308b\u305f\u3081\u6982\u7b972,400\u5186(\u4eca\u6708\u652f\u6255\u4e88\u5b9a\u984d\u306e\u624b\u5165\u529b\u3067\u4e0a\u66f8\u304d\u53ef)\u3002
+  static const String waterBillAccountId = 'water_bill';
+  static const String waterBillAccountName = '\u6c34\u9053\u4ee3';
+  static const double waterBillBimonthlyPaymentAmount = 2400;
+  static const int waterBillPaymentDay = 22;
+  // ガス代: 毎月12日 / 三井住友銀行大塚支店から口座振替。使用量で変動するため
+  // 概算4,500円(3,000〜6,000円の中央値 / 今月支払予定額の手入力で上書き可)。
+  static const String gasBillAccountId = 'gas_bill';
+  static const String gasBillAccountName = 'ガス代';
+  static const double gasBillMonthlyPaymentAmount = 4500;
+  static const int gasBillPaymentDay = 12;
   static const String acomShoppingAccountId = 'acom_shopping';
   static const String anthropicAcomShoppingPaymentId =
       'anthropic_acom_shopping_repayment';
@@ -79,47 +93,90 @@ class AssetLiabilityPlanningService {
     Map<String, double> actualPaymentAmounts = const <String, double>{},
     Map<String, String> paymentDifferenceReasons = const <String, String>{},
     Map<String, double> annualRateOverrides = const <String, double>{},
+    Map<String, int> paymentDayOverrides = const <String, int>{},
     Set<String> paidAccountNames = const <String>{},
+    Set<String> billingConfirmedAccountIds = const <String>{},
     Map<String, String> paymentSourceAccountIds = const <String, String>{},
     Map<String, String> defaultPaymentSourceAccountIds =
         const <String, String>{},
     Map<String, String> defaultCardBillingAccountIds = const <String, String>{},
     Map<String, String> cardBillingAccountIds = const <String, String>{},
+    Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs =
+        const <String, AssetLiabilityRevolvingCreditConfig>{},
     List<AssetLiabilityIncomePlan> incomePlans =
         const <AssetLiabilityIncomePlan>[],
     List<AssetLiabilityTransferTask> transferTasks =
         const <AssetLiabilityTransferTask>[],
     List<AssetLiabilityCardStatementLine> cardStatementLines =
         const <AssetLiabilityCardStatementLine>[],
+    List<AssetRecurringFixedCost> recurringFixedCosts =
+        const <AssetRecurringFixedCost>[],
     bool includeDefaultFixedPayments = false,
   }) {
     final shouldIncludeDefaultKddiProvider =
         includeDefaultFixedPayments && !_hasKddiProvider(latestSnapshot);
     final shouldIncludeDefaultRent =
         includeDefaultFixedPayments && !_hasRent(latestSnapshot);
-    final effectiveSnapshot =
-        shouldIncludeDefaultKddiProvider || shouldIncludeDefaultRent
-            ? _withDefaultFixedPayments(
-                latestSnapshot,
-                includeKddiProvider: shouldIncludeDefaultKddiProvider,
-                includeRent: shouldIncludeDefaultRent,
-              )
-            : latestSnapshot;
+    // 水道代は2ヶ月に1回(偶数月の22日)。偶数月のみ既定で計上する。
+    final shouldIncludeDefaultWaterBill = includeDefaultFixedPayments &&
+        baseDate.month.isEven &&
+        !_hasWaterBill(latestSnapshot);
+    // ガス代は毎月12日。未計上時のみ既定で計上する。
+    final shouldIncludeDefaultGasBill =
+        includeDefaultFixedPayments && !_hasGasBill(latestSnapshot);
+    final effectiveSnapshot = shouldIncludeDefaultKddiProvider ||
+            shouldIncludeDefaultRent ||
+            shouldIncludeDefaultWaterBill ||
+            shouldIncludeDefaultGasBill
+        ? _withDefaultFixedPayments(
+            latestSnapshot,
+            includeKddiProvider: shouldIncludeDefaultKddiProvider,
+            includeRent: shouldIncludeDefaultRent,
+            includeWaterBill: shouldIncludeDefaultWaterBill,
+            includeGasBill: shouldIncludeDefaultGasBill,
+          )
+        : latestSnapshot;
     final effectiveMonthlyPaymentOverrides = _withDefaultFixedPaymentOverrides(
       monthlyPaymentOverrides: monthlyPaymentOverrides,
       includeDefaultKddiProvider: shouldIncludeDefaultKddiProvider,
       includeDefaultRent: shouldIncludeDefaultRent,
+      includeDefaultWaterBill: shouldIncludeDefaultWaterBill,
+      includeDefaultGasBill: shouldIncludeDefaultGasBill,
     );
     final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
         .map(
-          (entry) => _classifyAccount(
-            name: entry.key.trim(),
-            balance: entry.value,
+          (entry) => _applyPaymentDayOverride(
+            account: _classifyAccount(
+              name: entry.key.trim(),
+              balance: entry.value,
+            ),
+            paymentDayOverrides: paymentDayOverrides,
           ),
         )
         .toList()
       ..sort(_compareAccounts);
+    // UI 登録の定期固定費を負債 (全額支払いの utility) として計上する。既定固定費
+    // (家賃/KDDI/水道/ガス) と同じ扱いで、当月に該当する周期かつ同名/同IDの口座が
+    // まだ無いものだけを追加する (手動計上や既定との二重計上を防ぐ)。
+    final injectedFixedCosts = _buildRecurringFixedCostInjections(
+      recurringFixedCosts: recurringFixedCosts,
+      existingAccounts: accounts,
+      baseDate: baseDate,
+    );
+    if (injectedFixedCosts.isNotEmpty) {
+      accounts
+        ..addAll(injectedFixedCosts.map((injected) => injected.account))
+        ..sort(_compareAccounts);
+      // 利用者が金額を入力済み = 推定ではない (請求確認待ちにしない)。今月の手入力
+      // 上書きがある場合はそれを優先する。
+      for (final injected in injectedFixedCosts) {
+        effectiveMonthlyPaymentOverrides.putIfAbsent(
+          injected.account.id,
+          () => injected.account.balance.abs(),
+        );
+      }
+    }
     final accountsById = <String, AssetLiabilityAccount>{
       for (final account in accounts) account.id: account,
     };
@@ -138,6 +195,16 @@ class AssetLiabilityPlanningService {
       accountsById: accountsById,
     );
     final effectivePaymentSourceAccountIds = <String, String>{
+      // 水道代・ガス代の既定振替元は三井住友銀行大塚支店(ユーザー設定があれば下で上書き)。
+      if (shouldIncludeDefaultWaterBill)
+        waterBillAccountId: smbcOtsukaBranchAccountId,
+      if (shouldIncludeDefaultGasBill)
+        gasBillAccountId: smbcOtsukaBranchAccountId,
+      // UI 登録の定期固定費の振替元 (任意 / ユーザー個別設定があれば下で上書き)。
+      for (final injected in injectedFixedCosts)
+        if (injected.sourceAccountId != null &&
+            injected.sourceAccountId!.isNotEmpty)
+          injected.account.id: injected.sourceAccountId!,
       ...defaultPaymentSourceAccountIds,
       ...paymentSourceAccountIds,
     };
@@ -173,9 +240,11 @@ class AssetLiabilityPlanningService {
             paymentDifferenceReasons: paymentDifferenceReasons,
             annualRateOverrides: annualRateOverrides,
             paidAccountNames: paidAccountNames,
+            billingConfirmedAccountIds: billingConfirmedAccountIds,
             paymentSourceAccountIds: effectivePaymentSourceAccountIds,
             defaultCardBillingAccountIds: defaultCardBillingAccountIds,
             cardBillingAccountIds: cardBillingAccountIds,
+            revolvingConfigs: revolvingConfigs,
             accountsById: accountsById,
           ),
         )
@@ -298,6 +367,22 @@ class AssetLiabilityPlanningService {
     );
   }
 
+  AssetLiabilityAccount _applyPaymentDayOverride({
+    required AssetLiabilityAccount account,
+    required Map<String, int> paymentDayOverrides,
+  }) {
+    if (!account.isLiability) {
+      return account;
+    }
+    final override = paymentDayOverrides[account.id] ??
+        paymentDayOverrides[account.name.trim()] ??
+        paymentDayOverrides[account.name];
+    if (override == null || override < 1 || override > 31) {
+      return account;
+    }
+    return account.copyWith(paymentDay: override);
+  }
+
   AssetLiabilityAccount _classifyAccount({
     required String name,
     required double balance,
@@ -393,6 +478,30 @@ class AssetLiabilityPlanningService {
         balance: balance,
         kind: AssetLiabilityAccountKind.otherLiability,
         paymentDay: 25,
+        annualRate: 0,
+        minimumPaymentRate: 1,
+        minimumPaymentFloor: balance.abs(),
+        fullPaymentEstimate: true,
+      );
+    }
+    if (_accountIdForName(name) == waterBillAccountId) {
+      return _liability(
+        name: name,
+        balance: balance,
+        kind: AssetLiabilityAccountKind.utility,
+        paymentDay: waterBillPaymentDay,
+        annualRate: 0,
+        minimumPaymentRate: 1,
+        minimumPaymentFloor: balance.abs(),
+        fullPaymentEstimate: true,
+      );
+    }
+    if (_accountIdForName(name) == gasBillAccountId) {
+      return _liability(
+        name: name,
+        balance: balance,
+        kind: AssetLiabilityAccountKind.utility,
+        paymentDay: gasBillPaymentDay,
         annualRate: 0,
         minimumPaymentRate: 1,
         minimumPaymentFloor: balance.abs(),
@@ -527,9 +636,11 @@ class AssetLiabilityPlanningService {
     required Map<String, String> paymentDifferenceReasons,
     required Map<String, double> annualRateOverrides,
     required Set<String> paidAccountNames,
+    required Set<String> billingConfirmedAccountIds,
     required Map<String, String> paymentSourceAccountIds,
     required Map<String, String> defaultCardBillingAccountIds,
     required Map<String, String> cardBillingAccountIds,
+    required Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs,
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
     final principal = account.liabilityBalance;
@@ -551,7 +662,20 @@ class AssetLiabilityPlanningService {
       account: account,
       monthlyPaymentOverrides: monthlyPaymentOverrides,
     );
-    final scheduledPayment = manualPayment ?? minimumPayment;
+    // リボ払いカードは 請求額 = 設定額 + max(0, リボ残高 − 利用限度額) で確定する。
+    // リボ残高は負債残高 (principal) を用い、手入力/推定額より優先する。
+    final revolvingConfig = _revolvingConfigFor(
+      account: account,
+      revolvingConfigs: revolvingConfigs,
+    );
+    final revolvingBilling = revolvingConfig == null
+        ? null
+        : const AssetRevolvingCreditService().computeBilling(
+            balance: principal,
+            config: revolvingConfig,
+          );
+    final scheduledPayment =
+        revolvingBilling?.billedAmount ?? manualPayment ?? minimumPayment;
     final actualPayment = _actualPaymentAmountFor(
       account: account,
       actualPaymentAmounts: actualPaymentAmounts,
@@ -599,11 +723,26 @@ class AssetLiabilityPlanningService {
       liabilityShare:
           liabilityTotal == 0 ? 0 : principal / liabilityTotal.abs(),
       priorityLabel: _priorityLabel(annualRate),
-      paymentAmountEstimated: manualPayment == null,
+      paymentAmountEstimated: revolvingBilling == null && manualPayment == null,
+      fullPaymentEstimate: account.fullPaymentEstimate,
+      revolvingBilling: revolvingBilling,
+      billingConfirmed: _containsAccountKey(
+        billingConfirmedAccountIds,
+        account,
+      ),
       paid: paidAccountNames.contains(account.id) ||
           paidAccountNames.contains(account.name.trim()) ||
           paidAccountNames.contains(account.name),
     );
+  }
+
+  bool _containsAccountKey(
+    Set<String> accountKeys,
+    AssetLiabilityAccount account,
+  ) {
+    return accountKeys.contains(account.id) ||
+        accountKeys.contains(account.name.trim()) ||
+        accountKeys.contains(account.name);
   }
 
   double _annualRateFor({
@@ -611,15 +750,16 @@ class AssetLiabilityPlanningService {
     required Map<String, double> annualRateOverrides,
   }) {
     final byId = annualRateOverrides[account.id];
-    if (byId != null && byId >= 0) {
+    if (byId != null && DebtLockdownService.isRegistrableAnnualRate(byId)) {
       return byId;
     }
     final byTrimmedName = annualRateOverrides[account.name.trim()];
-    if (byTrimmedName != null && byTrimmedName >= 0) {
+    if (byTrimmedName != null &&
+        DebtLockdownService.isRegistrableAnnualRate(byTrimmedName)) {
       return byTrimmedName;
     }
     final byName = annualRateOverrides[account.name];
-    if (byName != null && byName >= 0) {
+    if (byName != null && DebtLockdownService.isRegistrableAnnualRate(byName)) {
       return byName;
     }
     return account.annualRate;
@@ -800,7 +940,8 @@ class AssetLiabilityPlanningService {
         alerts.add(cardBillingReviewRemovedBillingAccountAlert);
       }
     }
-    if (row.scheduledPaymentAmount <= 0) {
+    // 手入力の0円 (請求なし月) は正常値として許容し、推定値が0以下の場合のみ確認を促す。
+    if (row.scheduledPaymentAmount <= 0 && row.paymentAmountEstimated) {
       alerts.add(cardBillingReviewZeroAmountAlert);
     }
 
@@ -818,6 +959,7 @@ class AssetLiabilityPlanningService {
       billingAccountName: row.billingAccountName,
       includedInBillingAccount: row.includedInBillingAccount,
       directCashflowTarget: row.isDirectCashflowTarget,
+      paid: row.paid,
       alerts: alerts,
     );
   }
@@ -943,23 +1085,32 @@ class AssetLiabilityPlanningService {
         0,
         (sum, line) => sum + line.amount,
       );
+      // リボ払いカードは 請求額 = 設定額 + 限度額超過分 で決まり、利用明細(新規利用)は
+      // リボ残高に積み増されるだけなので「明細合計 ≠ 請求額」が正常。一括払い前提の
+      // 不一致アラートは抑止し、内訳は revolvingBilling で表示する。
+      final revolvingBilling = billingRow?.revolvingBilling;
+      final isRevolving = revolvingBilling != null;
       final alerts = <String>[];
 
       if (billingRow == null) {
         alerts.add(cardStatementBillingAccountMissingAlert);
       }
-      if (lines.isEmpty && group != null) {
+      if (!isRevolving && lines.isEmpty && group != null) {
         alerts.add(cardStatementMissingImportAlert);
       }
-      if (lines.isNotEmpty && _moneyDiffers(statementLineTotal, billedAmount)) {
+      if (!isRevolving &&
+          lines.isNotEmpty &&
+          _moneyDiffers(statementLineTotal, billedAmount)) {
         alerts.add(cardStatementAmountMismatchAlert);
       }
-      if (group != null &&
+      if (!isRevolving &&
+          group != null &&
           billingRow != null &&
           _moneyDiffers(configuredDetailTotal, billedAmount)) {
         alerts.add(cardStatementConfiguredMismatchAlert);
       }
-      if (lines.isNotEmpty &&
+      if (!isRevolving &&
+          lines.isNotEmpty &&
           group != null &&
           _moneyDiffers(statementLineTotal, configuredDetailTotal)) {
         alerts.add(cardStatementImportedConfiguredMismatchAlert);
@@ -976,6 +1127,7 @@ class AssetLiabilityPlanningService {
               group?.items ?? const <AssetLiabilityCardBillingReviewItem>[],
           statementLines: lines,
           alerts: alerts,
+          revolvingBilling: revolvingBilling,
         ),
       );
     }
@@ -1026,6 +1178,12 @@ class AssetLiabilityPlanningService {
     for (final row in rows) {
       final day = row.paymentDay;
       if (day == null) {
+        continue;
+      }
+      // 支払済みは当月分の支払いが完了済みのため、支払日別リスク(期限超過/要支払い)
+      // からは物理除外する。アクションアイテム層が overdue を !row.paid で判定するのと
+      // 整合させ、AI ナラティブが支払済みの負債を「期限超過」として指摘しないようにする。
+      if (row.paid) {
         continue;
       }
       byDay.putIfAbsent(day, () => <AssetLiabilityDebtRow>[]).add(row);
@@ -1382,8 +1540,10 @@ class AssetLiabilityPlanningService {
       return transferTasks;
     }
 
-    final fromAccount =
-        _findCashLikeAccountById(accounts, smbcOtsukaBranchAccountId);
+    final fromAccount = _findCashLikeAccountById(
+      accounts,
+      smbcOtsukaBranchAccountId,
+    );
     final toAccount = _findCashLikeAccountById(accounts, jibunBankAccountId);
     if (fromAccount == null || toAccount == null) {
       return transferTasks;
@@ -1605,6 +1765,12 @@ class AssetLiabilityPlanningService {
     if (key == 'rent' || _containsAny(key, const <String>['家賃'])) {
       return rentAccountId;
     }
+    if (_containsAny(key, const <String>['水道', 'すいどう', 'water'])) {
+      return waterBillAccountId;
+    }
+    if (_containsAny(key, const <String>['ガス', 'gas'])) {
+      return gasBillAccountId;
+    }
     if (key == 'au' || _containsAny(key, const <String>['通信', '携帯'])) {
       return 'au';
     }
@@ -1624,10 +1790,59 @@ class AssetLiabilityPlanningService {
     return _fallbackAccountId(name);
   }
 
+  /// UI 登録の定期固定費を、計上対象の負債口座 (+ 振替元口座 ID) へ変換する。
+  ///
+  /// 当月に該当する周期 (毎月/隔月) かつ金額>0 で、まだ同名/同IDの口座が無いものだけ
+  /// を返す。`_liability` 経由で既定固定費 (水道/ガス) と同じ全額支払いの utility 負債
+  /// として作る。振替元は呼び出し側で `effectivePaymentSourceAccountIds` に反映する。
+  List<({AssetLiabilityAccount account, String? sourceAccountId})>
+      _buildRecurringFixedCostInjections({
+    required List<AssetRecurringFixedCost> recurringFixedCosts,
+    required List<AssetLiabilityAccount> existingAccounts,
+    required DateTime baseDate,
+  }) {
+    if (recurringFixedCosts.isEmpty) {
+      return const <({
+        AssetLiabilityAccount account,
+        String? sourceAccountId
+      })>[];
+    }
+    final takenIds = existingAccounts.map((account) => account.id).toSet();
+    final takenNames =
+        existingAccounts.map((account) => _normalize(account.name)).toSet();
+    final result =
+        <({AssetLiabilityAccount account, String? sourceAccountId})>[];
+    for (final cost in recurringFixedCosts) {
+      if (cost.amount <= 0 || !cost.appliesToMonth(baseDate.month)) {
+        continue;
+      }
+      final account = _liability(
+        name: cost.name,
+        balance: -cost.amount,
+        kind: AssetLiabilityAccountKind.utility,
+        paymentDay: cost.paymentDay,
+        annualRate: 0,
+        minimumPaymentRate: 1,
+        minimumPaymentFloor: cost.amount,
+        fullPaymentEstimate: true,
+      );
+      if (takenIds.contains(account.id) ||
+          takenNames.contains(_normalize(account.name))) {
+        continue;
+      }
+      takenIds.add(account.id);
+      takenNames.add(_normalize(account.name));
+      result.add((account: account, sourceAccountId: cost.sourceAccountId));
+    }
+    return result;
+  }
+
   Map<String, double> _withDefaultFixedPayments(
     Map<String, double> latestSnapshot, {
     required bool includeKddiProvider,
     required bool includeRent,
+    required bool includeWaterBill,
+    required bool includeGasBill,
   }) {
     final result = Map<String, double>.from(latestSnapshot);
     if (includeKddiProvider && !_hasKddiProvider(result)) {
@@ -1636,6 +1851,12 @@ class AssetLiabilityPlanningService {
     if (includeRent && !_hasRent(result)) {
       result[rentAccountName] = -rentMonthlyPaymentAmount;
     }
+    if (includeWaterBill && !_hasWaterBill(result)) {
+      result[waterBillAccountName] = -waterBillBimonthlyPaymentAmount;
+    }
+    if (includeGasBill && !_hasGasBill(result)) {
+      result[gasBillAccountName] = -gasBillMonthlyPaymentAmount;
+    }
     return result;
   }
 
@@ -1643,10 +1864,10 @@ class AssetLiabilityPlanningService {
     required Map<String, double> monthlyPaymentOverrides,
     required bool includeDefaultKddiProvider,
     required bool includeDefaultRent,
+    required bool includeDefaultWaterBill,
+    required bool includeDefaultGasBill,
   }) {
-    final result = <String, double>{
-      ...monthlyPaymentOverrides,
-    };
+    final result = <String, double>{...monthlyPaymentOverrides};
     if (includeDefaultKddiProvider &&
         !result.containsKey(kddiProviderAccountId) &&
         !result.containsKey(kddiProviderAccountName)) {
@@ -1657,18 +1878,43 @@ class AssetLiabilityPlanningService {
         !result.containsKey(rentAccountName)) {
       result[rentAccountId] = rentMonthlyPaymentAmount;
     }
+    if (includeDefaultWaterBill &&
+        !result.containsKey(waterBillAccountId) &&
+        !result.containsKey(waterBillAccountName)) {
+      result[waterBillAccountId] = waterBillBimonthlyPaymentAmount;
+    }
+    if (includeDefaultGasBill &&
+        !result.containsKey(gasBillAccountId) &&
+        !result.containsKey(gasBillAccountName)) {
+      result[gasBillAccountId] = gasBillMonthlyPaymentAmount;
+    }
     return result;
   }
 
-  bool _hasKddiProvider(Map<String, double> snapshot) {
-    return snapshot.keys.any(
-      (name) => _accountIdForName(name) == kddiProviderAccountId,
+  // 同名の資産口座(例: 「家賃保証金」「KDDIポイント」「ガスト」)が既定固定費を
+  // 誤って抑止しないよう、実際に負債(残高<0)の口座だけを「既存の請求あり」とみなす。
+  // _accountIdForName の名寄せは部分一致で語境界を持たないため、残高の符号で
+  // 本物の請求口座に限定する。既定固定費(家賃/KDDI/水道/ガス)は負債として計上される。
+  bool _hasLiabilityAccountFor(Map<String, double> snapshot, String accountId) {
+    return snapshot.entries.any(
+      (entry) => entry.value < 0 && _accountIdForName(entry.key) == accountId,
     );
   }
 
+  bool _hasKddiProvider(Map<String, double> snapshot) {
+    return _hasLiabilityAccountFor(snapshot, kddiProviderAccountId);
+  }
+
   bool _hasRent(Map<String, double> snapshot) {
-    return snapshot.keys
-        .any((name) => _accountIdForName(name) == rentAccountId);
+    return _hasLiabilityAccountFor(snapshot, rentAccountId);
+  }
+
+  bool _hasWaterBill(Map<String, double> snapshot) {
+    return _hasLiabilityAccountFor(snapshot, waterBillAccountId);
+  }
+
+  bool _hasGasBill(Map<String, double> snapshot) {
+    return _hasLiabilityAccountFor(snapshot, gasBillAccountId);
   }
 
   String _fallbackAccountId(String name) {
@@ -1706,6 +1952,19 @@ class AssetLiabilityPlanningService {
       return null;
     }
     return amount;
+  }
+
+  AssetLiabilityRevolvingCreditConfig? _revolvingConfigFor({
+    required AssetLiabilityAccount account,
+    required Map<String, AssetLiabilityRevolvingCreditConfig> revolvingConfigs,
+  }) {
+    if (revolvingConfigs.isEmpty) {
+      return null;
+    }
+    final trimmedName = account.name.trim();
+    return revolvingConfigs[account.id] ??
+        revolvingConfigs[trimmedName] ??
+        revolvingConfigs[account.name];
   }
 
   double? _actualPaymentAmountFor({
