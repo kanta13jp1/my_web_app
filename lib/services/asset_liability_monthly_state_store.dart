@@ -21,6 +21,11 @@ class AssetLiabilityMonthlyState {
   final List<AssetLiabilityIncomePlan> incomePlans;
   final List<AssetLiabilityTransferTask> transferTasks;
 
+  /// この月次stateを最後に編集した時刻 (端末ローカルの wall-clock)。
+  /// 端末間マージで last-write-wins (新しい方の状態を採用) する基準。
+  /// null は timestamp 未記録 (= 旧データ) を意味し、その場合は union マージへ退避する。
+  final DateTime? updatedAt;
+
   const AssetLiabilityMonthlyState({
     this.paymentOverrides = const <String, double>{},
     this.actualPaymentAmounts = const <String, double>{},
@@ -35,6 +40,7 @@ class AssetLiabilityMonthlyState {
     this.cardStatementLines = const <AssetLiabilityCardStatementLine>[],
     this.incomePlans = const <AssetLiabilityIncomePlan>[],
     this.transferTasks = const <AssetLiabilityTransferTask>[],
+    this.updatedAt,
   });
 
   bool get isEmpty =>
@@ -129,7 +135,15 @@ class AssetLiabilityMonthlyState {
         other.transferTasks,
         (task) => task.id,
       ),
+      updatedAt: laterUpdatedAt(updatedAt, other.updatedAt),
     );
+  }
+
+  /// 2つの updatedAt のうち新しい方 (null は最古扱い) を返す。
+  static DateTime? laterUpdatedAt(DateTime? a, DateTime? b) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return a.isAfter(b) ? a : b;
   }
 
   /// ローカルの要素を保持しつつ、[remote] のうちローカルに無い id の要素だけ追加する
@@ -182,9 +196,45 @@ class AssetLiabilityMonthlyStateStore {
       'asset_liability_monthly_snapshots_v1';
   static const String syncAuditLogPrefsKey =
       'asset_liability_sync_audit_logs_v1';
+  static const String stateUpdatedAtPrefsKey =
+      'asset_liability_state_updated_at_v1';
   static const int maxSyncAuditLogCount = 50;
 
   const AssetLiabilityMonthlyStateStore();
+
+  /// `{monthKey: ISO8601}` 形式の updatedAt マップから対象月の時刻を読む。
+  static DateTime? updatedAtForMonth(String? raw, String monthKey) {
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        final value = decoded[monthKey];
+        if (value is String && value.isNotEmpty) {
+          return DateTime.tryParse(value);
+        }
+      }
+    } catch (_) {
+      // 破損データは無視 (timestamp 無し扱い → union マージへ退避)。
+    }
+    return null;
+  }
+
+  static Map<String, String> _decodeUpdatedAtMap(String? raw) {
+    if (raw == null || raw.isEmpty) return <String, String>{};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        return <String, String>{
+          for (final entry in decoded.entries)
+            if (entry.value is String)
+              entry.key.toString(): entry.value as String,
+        };
+      }
+    } catch (_) {
+      // 破損は空扱い。
+    }
+    return <String, String>{};
+  }
 
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
     final prefs = await SharedPreferences.getInstance();
@@ -236,6 +286,10 @@ class AssetLiabilityMonthlyStateStore {
       ),
       transferTasks: transferTasksForMonth(
         prefs.getString(transferTaskPrefsKey),
+        monthKey,
+      ),
+      updatedAt: updatedAtForMonth(
+        prefs.getString(stateUpdatedAtPrefsKey),
         monthKey,
       ),
     );
@@ -410,6 +464,16 @@ class AssetLiabilityMonthlyStateStore {
       transferTaskPrefsKey,
       jsonEncode(_encodeTransferTasks(allTransferTasks)),
     );
+
+    final allUpdatedAt = _decodeUpdatedAtMap(
+      prefs.getString(stateUpdatedAtPrefsKey),
+    );
+    if (state.updatedAt == null) {
+      allUpdatedAt.remove(monthKey);
+    } else {
+      allUpdatedAt[monthKey] = state.updatedAt!.toUtc().toIso8601String();
+    }
+    await prefs.setString(stateUpdatedAtPrefsKey, jsonEncode(allUpdatedAt));
   }
 
   Future<Map<String, String>> loadDefaultPaymentSources() async {

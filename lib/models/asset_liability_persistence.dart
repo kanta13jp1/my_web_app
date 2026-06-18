@@ -89,6 +89,11 @@ class AssetLiabilityMonthlyStatePayload {
   final List<AssetLiabilityIncomePlan> incomePlans;
   final List<AssetLiabilityTransferTask> transferTasks;
 
+  /// クライアントが編集時刻を刻む last-write-wins 用タイムスタンプ。
+  /// サーバ側の `updated_at` カラム (= upsert 時刻) とは別物で、payload jsonb に
+  /// `state_updated_at` として保存・復元する。
+  final DateTime? updatedAt;
+
   const AssetLiabilityMonthlyStatePayload({
     required this.monthKey,
     required this.paymentOverrides,
@@ -103,6 +108,7 @@ class AssetLiabilityMonthlyStatePayload {
     required this.cardStatementLines,
     required this.incomePlans,
     required this.transferTasks,
+    this.updatedAt,
   });
 
   factory AssetLiabilityMonthlyStatePayload.fromState({
@@ -137,6 +143,7 @@ class AssetLiabilityMonthlyStatePayload {
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(state.incomePlans),
       transferTasks: List<AssetLiabilityTransferTask>.from(state.transferTasks),
+      updatedAt: state.updatedAt,
     );
   }
 
@@ -188,6 +195,8 @@ class AssetLiabilityMonthlyStatePayload {
       transferTasks: _readTransferTasks(json, 'transfer_tasks') ??
           _readTransferTasks(json, 'transferTasks') ??
           const <AssetLiabilityTransferTask>[],
+      updatedAt: _readDateTime(json, 'state_updated_at') ??
+          _readDateTime(json, 'stateUpdatedAt'),
     );
   }
 
@@ -213,6 +222,7 @@ class AssetLiabilityMonthlyStatePayload {
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(incomePlans),
       transferTasks: List<AssetLiabilityTransferTask>.from(transferTasks),
+      updatedAt: updatedAt,
     );
   }
 
@@ -251,6 +261,10 @@ class AssetLiabilityMonthlyStatePayload {
         for (final task in transferTasks) _encodeTransferTask(task),
       ],
       if (timestamp != null) 'updated_at': timestamp,
+      // クライアント編集時刻 (LWW 用)。サーバ upsert 時刻の updated_at とは別に
+      // payload jsonb へ保存し、別端末ロード時の last-write-wins 判定に使う。
+      if (this.updatedAt != null)
+        'state_updated_at': this.updatedAt!.toUtc().toIso8601String(),
     };
   }
 }
@@ -777,6 +791,12 @@ Set<String>? _readStringSet(Map<String, Object?> json, String key) {
 
 String? _readString(Map<String, Object?> json, String key) {
   return _cleanString(json[key]);
+}
+
+DateTime? _readDateTime(Map<String, Object?> json, String key) {
+  final raw = _cleanString(json[key]);
+  if (raw == null || raw.isEmpty) return null;
+  return DateTime.tryParse(raw);
 }
 
 double? _readDouble(Map<String, Object?> json, String key) {

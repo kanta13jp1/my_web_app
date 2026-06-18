@@ -550,6 +550,115 @@ void main() {
     });
 
     test(
+      'loadMonth adopts the newer state so a cross-device uncheck propagates',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+
+        // この端末は古い時刻にモビットを支払済みにした。
+        await local.saveMonth(
+          month: month,
+          state: AssetLiabilityMonthlyState(
+            paidAccountNames: const <String>{'mobit'},
+            updatedAt: DateTime(2026, 5, 20, 9),
+          ),
+        );
+        // 別端末はより新しい時刻にチェックを外した (paid 空 / 状態は非空)。
+        remote.seedMonth(
+          month,
+          AssetLiabilityMonthlyState(
+            paymentOverrides: const <String, double>{'mobit': 1},
+            updatedAt: DateTime(2026, 5, 20, 10),
+          ),
+        );
+
+        final resolved = await repository.loadMonth(month);
+
+        // 新しい方 (= チェック解除) が採用され、union のように mobit を復活させない。
+        expect(resolved.paidAccountNames, isNot(contains('mobit')));
+        final localAfter = await local.loadMonth(month);
+        expect(localAfter.paidAccountNames, isNot(contains('mobit')));
+      },
+    );
+
+    test('loadMonth keeps the newer local state over an older remote',
+        () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+
+      await local.saveMonth(
+        month: month,
+        state: AssetLiabilityMonthlyState(
+          paidAccountNames: const <String>{'mobit'},
+          updatedAt: DateTime(2026, 5, 20, 10),
+        ),
+      );
+      remote.seedMonth(
+        month,
+        AssetLiabilityMonthlyState(
+          paidAccountNames: const <String>{'yokohama_bank'},
+          updatedAt: DateTime(2026, 5, 20, 9),
+        ),
+      );
+
+      final resolved = await repository.loadMonth(month);
+
+      // 新しいローカルが状態全体として勝ち、古いリモートの paid は採用しない。
+      expect(resolved.paidAccountNames, contains('mobit'));
+      expect(resolved.paidAccountNames, isNot(contains('yokohama_bank')));
+    });
+
+    test('loadMonth falls back to union when timestamps are absent', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+
+      // 旧データ (updatedAt 無し) 同士は union で取りこぼさない (#3474 の挙動)。
+      await local.saveMonth(
+        month: month,
+        state: const AssetLiabilityMonthlyState(
+          paidAccountNames: <String>{'mobit'},
+        ),
+      );
+      remote.seedMonth(
+        month,
+        const AssetLiabilityMonthlyState(
+          paidAccountNames: <String>{'yokohama_bank'},
+        ),
+      );
+
+      final resolved = await repository.loadMonth(month);
+
+      expect(
+        resolved.paidAccountNames,
+        containsAll(<String>{'mobit', 'yokohama_bank'}),
+      );
+    });
+
+    test(
       'sync on keeps production writes disabled unless write flag is enabled',
       () async {
         final local = _FakeAssetLiabilityRepository();
@@ -1307,6 +1416,7 @@ void main() {
             cancellationReason: 'Paid from salary account directly.',
           ),
         ],
+        updatedAt: DateTime.utc(2026, 5, 19, 8),
       );
 
       final payload = AssetLiabilityMonthlyStatePayload.fromState(
@@ -1330,6 +1440,9 @@ void main() {
       expect(restored.annualRateEvidences['mobit']?.verified, isTrue);
       expect(row['annual_rate_evidences'], isA<Map<String, Object?>>());
       expect(restored.paidAccountNames, contains('kddi_provider'));
+      // クライアント編集時刻 (LWW 用) が payload 経由で round-trip する。
+      expect(row['state_updated_at'], '2026-05-19T08:00:00.000Z');
+      expect(restored.updatedAt?.toUtc(), DateTime.utc(2026, 5, 19, 8));
       expect(restored.billingConfirmedAccountIds, contains('mobit'));
       expect(restored.paymentSourceAccountIds['mobit'], 'smbc_otsuka');
       expect(restored.cardBillingAccountIds['kddi_provider'], 'paypay_card');
