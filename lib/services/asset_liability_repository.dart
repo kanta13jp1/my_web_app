@@ -513,7 +513,21 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return remoteState;
     }
 
-    return local;
+    // 双方に入力がある場合は union マージする。旧実装は無条件に local を返し、
+    // 別端末で付けた「支払済み」等を無視した上に、その local をサーバへ保存し直して
+    // リモートの入力を上書き消去していた (= PC で支払済みにしてもスマホで未払いに戻る)。
+    // union は monotonic なので、両端末の入力を取りこぼさず収束する。
+    final merged = local.mergeWith(remoteState);
+    if (merged.totalEntryCount > local.totalEntryCount) {
+      await localRepository.saveMonth(month: month, state: merged);
+    }
+    if (supabaseWritesEnabled &&
+        merged.totalEntryCount > remoteState.totalEntryCount) {
+      await _tryRemote(
+        () => remote.saveMonth(userId: userId, month: month, state: merged),
+      );
+    }
+    return merged;
   }
 
   @override

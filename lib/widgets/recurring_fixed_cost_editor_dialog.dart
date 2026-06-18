@@ -9,9 +9,14 @@ typedef RecurringFixedCostSourceOption = ({String id, String name});
 
 /// 定期固定費の追加/編集ダイアログを開き、保存された [AssetRecurringFixedCost] を返す。
 /// キャンセル時は null。
+///
+/// [prefill] を渡すと(かつ [existing] が null のとき)、各フィールドを prefill 値で
+/// 初期化した「追加」モードで開く(定期取引の自動検出からの登録用)。保存時は
+/// 新しい id を採番するため、prefill の id は使われない。
 Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
   BuildContext context, {
   AssetRecurringFixedCost? existing,
+  AssetRecurringFixedCost? prefill,
   List<RecurringFixedCostSourceOption> sourceAccounts =
       const <RecurringFixedCostSourceOption>[],
 }) {
@@ -19,6 +24,7 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
     context: context,
     builder: (context) => RecurringFixedCostEditorDialog(
       existing: existing,
+      prefill: prefill,
       sourceAccounts: sourceAccounts,
     ),
   );
@@ -30,10 +36,14 @@ class RecurringFixedCostEditorDialog extends StatefulWidget {
   const RecurringFixedCostEditorDialog({
     super.key,
     this.existing,
+    this.prefill,
     this.sourceAccounts = const <RecurringFixedCostSourceOption>[],
   });
 
   final AssetRecurringFixedCost? existing;
+
+  /// 追加モードの初期値(検出結果からの登録用)。[existing] があれば無視される。
+  final AssetRecurringFixedCost? prefill;
   final List<RecurringFixedCostSourceOption> sourceAccounts;
 
   @override
@@ -53,18 +63,19 @@ class _RecurringFixedCostEditorDialogState
   @override
   void initState() {
     super.initState();
-    final existing = widget.existing;
-    _nameController = TextEditingController(text: existing?.name ?? '');
+    // existing(編集)優先。なければ prefill(検出結果からの追加)を初期値に使う。
+    final initial = widget.existing ?? widget.prefill;
+    _nameController = TextEditingController(text: initial?.name ?? '');
     _amountController = TextEditingController(
-      text: existing == null ? '' : existing.amount.toStringAsFixed(0),
+      text: initial == null ? '' : initial.amount.toStringAsFixed(0),
     );
     _dayController = TextEditingController(
-      text: existing == null ? '' : existing.paymentDay.toString(),
+      text: initial == null ? '' : initial.paymentDay.toString(),
     );
-    _cadence = existing?.cadence ?? AssetRecurringFixedCostCadence.monthly;
+    _cadence = initial?.cadence ?? AssetRecurringFixedCostCadence.monthly;
     // 渡された候補に無い振替元IDは保持しない (古い参照を残さない)。
     final ids = widget.sourceAccounts.map((option) => option.id).toSet();
-    final source = existing?.sourceAccountId;
+    final source = initial?.sourceAccountId;
     _sourceAccountId = source != null && ids.contains(source) ? source : null;
   }
 

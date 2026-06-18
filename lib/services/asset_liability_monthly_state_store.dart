@@ -50,6 +50,101 @@ class AssetLiabilityMonthlyState {
       cardStatementLines.isEmpty &&
       incomePlans.isEmpty &&
       transferTasks.isEmpty;
+
+  /// マップ/セット/リストの総エントリ数 (= 端末間マージで「増えたか」判定に使う)。
+  int get totalEntryCount =>
+      paymentOverrides.length +
+      actualPaymentAmounts.length +
+      paymentDifferenceReasons.length +
+      annualRateOverrides.length +
+      annualRateEvidences.length +
+      paidAccountNames.length +
+      billingConfirmedAccountIds.length +
+      paymentSourceAccountIds.length +
+      cardBillingAccountIds.length +
+      cardStatementLines.length +
+      incomePlans.length +
+      transferTasks.length;
+
+  /// 端末間同期の競合解決: ローカルと [other] (別端末で保存された状態) の入力を
+  /// 両方保持する union マージ。スカラ値の衝突は this(ローカル) を優先し、
+  /// [other] にしか無いキー/要素 (= 別端末で付けた支払済み等) を補完する。
+  ///
+  /// 旧実装は競合時に無条件でローカルを返し、別端末で付けた「支払済み」を取りこぼした上、
+  /// それをサーバへ保存し直して上書き消去していた。union は monotonic (追加のみ) なので
+  /// データ消失や重複が無く、並行マージしても収束する。
+  ///
+  /// 注意: 削除 (支払済みのチェック解除) の伝播はしない。removal の端末間伝播は
+  /// 既存の tombstone パターン (リボ/ウォッチリスト等で実績) を別途適用する将来課題。
+  AssetLiabilityMonthlyState mergeWith(AssetLiabilityMonthlyState other) {
+    return AssetLiabilityMonthlyState(
+      paymentOverrides: <String, double>{
+        ...other.paymentOverrides,
+        ...paymentOverrides,
+      },
+      actualPaymentAmounts: <String, double>{
+        ...other.actualPaymentAmounts,
+        ...actualPaymentAmounts,
+      },
+      paymentDifferenceReasons: <String, String>{
+        ...other.paymentDifferenceReasons,
+        ...paymentDifferenceReasons,
+      },
+      annualRateOverrides: <String, double>{
+        ...other.annualRateOverrides,
+        ...annualRateOverrides,
+      },
+      annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+        ...other.annualRateEvidences,
+        ...annualRateEvidences,
+      },
+      paidAccountNames: <String>{
+        ...other.paidAccountNames,
+        ...paidAccountNames,
+      },
+      billingConfirmedAccountIds: <String>{
+        ...other.billingConfirmedAccountIds,
+        ...billingConfirmedAccountIds,
+      },
+      paymentSourceAccountIds: <String, String>{
+        ...other.paymentSourceAccountIds,
+        ...paymentSourceAccountIds,
+      },
+      cardBillingAccountIds: <String, String>{
+        ...other.cardBillingAccountIds,
+        ...cardBillingAccountIds,
+      },
+      cardStatementLines: _mergeById(
+        cardStatementLines,
+        other.cardStatementLines,
+        (line) => line.id,
+      ),
+      incomePlans: _mergeById(
+        incomePlans,
+        other.incomePlans,
+        (plan) => plan.id,
+      ),
+      transferTasks: _mergeById(
+        transferTasks,
+        other.transferTasks,
+        (task) => task.id,
+      ),
+    );
+  }
+
+  /// ローカルの要素を保持しつつ、[remote] のうちローカルに無い id の要素だけ追加する
+  /// (id による重複排除付き union)。
+  static List<T> _mergeById<T>(
+    List<T> local,
+    List<T> remote,
+    String Function(T) idOf,
+  ) {
+    final localIds = local.map(idOf).toSet();
+    return <T>[
+      ...local,
+      ...remote.where((element) => !localIds.contains(idOf(element))),
+    ];
+  }
 }
 
 class AssetLiabilityMonthlyStateStore {
