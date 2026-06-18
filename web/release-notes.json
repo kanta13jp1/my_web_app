@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-06-17",
+    "date": "2026-06-18",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-06-17T00:00:00Z",
+  "generatedAt": "2026-06-18T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -30,6 +30,32 @@
         "fix"
       ],
       "changes": [
+        {
+          "category": "feature",
+          "id": "pr-3468",
+          "links": [
+            {
+              "title": "PR #3468",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3468"
+            }
+          ],
+          "mergedAt": "2026-06-17T23:47:31Z",
+          "summary": "#3468 refactor: extract flow display-title logic into a pure service"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3463",
+          "links": [
+            {
+              "title": "PR #3463",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3463"
+            }
+          ],
+          "mergedAt": "2026-06-17T12:02:40Z",
+          "summary": "#3463 fix(asset): AI分析が過去履歴の期限超過/負の値を現在として再生産する問題を是正"
+        },
         {
           "category": "feature",
           "id": "pr-3460",
@@ -393,38 +419,12 @@
           ],
           "mergedAt": "2026-06-14T19:36:44Z",
           "summary": "#3414 docs: add Phase 3 legacy-zero dry-run runbook for asset_pref_mirror"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3411",
-          "links": [
-            {
-              "title": "PR #3411",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3411"
-            }
-          ],
-          "mergedAt": "2026-06-14T19:35:30Z",
-          "summary": "#3411 fix: tombstone GC を挿入位置順から削除時刻順へ (audit hardening)"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3409",
-          "links": [
-            {
-              "title": "PR #3409",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3409"
-            }
-          ],
-          "mergedAt": "2026-06-14T18:58:00Z",
-          "summary": "#3409 fix: 同名資産口座による既定固定費の誤抑止を修正"
         }
       ],
-      "date": "2026-06-17",
+      "date": "2026-06-18",
       "extensions": {
         "aiToolWatch": {
-          "changedSourceCount": 2,
+          "changedSourceCount": 5,
           "signalCount": 0,
           "source": "docs/ai-tool-watch/latest-report.json"
         }
