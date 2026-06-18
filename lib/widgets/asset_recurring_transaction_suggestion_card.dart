@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/asset_recurring_transaction_detector.dart';
+import 'recurring_fixed_cost_card.dart';
 
 /// 定期取引の自動検出カード。
 ///
@@ -85,7 +86,10 @@ class AssetRecurringTransactionSuggestionCard extends StatelessWidget {
     final isHigh = detected.confidence == RecurringTransactionConfidence.high;
     final confidenceLabel = isHigh ? '確度 高' : '確度 中';
     final confidenceColor = isHigh ? _high : _medium;
-    final summary = '${detected.label}、毎月${detected.typicalPaymentDay}日頃、約'
+    final scheduleLabel =
+        '${RecurringFixedCostCard.cadenceLabel(detected.cadence)}'
+        '${detected.typicalPaymentDay}日頃';
+    final summary = '${detected.label}、$scheduleLabel、約'
         '${_yen(detected.typicalAmount)}、$confidenceLabel、'
         '直近${detected.monthsObserved}ヶ月分を検出';
     return Semantics(
@@ -110,7 +114,7 @@ class AssetRecurringTransactionSuggestionCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '毎月${detected.typicalPaymentDay}日頃',
+                    scheduleLabel,
                     style: const TextStyle(
                       fontSize: 12,
                       color: _muted,

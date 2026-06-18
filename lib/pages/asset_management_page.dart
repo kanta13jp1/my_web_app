@@ -8581,6 +8581,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           label: label,
           amount: amount,
           occurredAt: occurredAt,
+          sourceName: AssetRecurringTransactionDetector.stripAccountBrackets(
+            parsed.source,
+          ),
         ),
       );
     }
@@ -8618,15 +8621,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       value.replaceAll(RegExp(r'\s+'), '').toLowerCase();
 
   /// 検出された定期取引を `prefill` として固定費登録ダイアログを開く。
+  /// 周期(毎月/隔月)と最頻の引落元口座も初期値に反映する。
   Future<void> _registerDetectedRecurringTransaction(
     DetectedRecurringTransaction detected, {
     required List<RecurringFixedCostSourceOption> sourceOptions,
   }) {
+    final suggestedSource = detected.suggestedSourceName;
+    String? sourceAccountId;
+    if (suggestedSource != null) {
+      for (final option in sourceOptions) {
+        if (option.name == suggestedSource) {
+          sourceAccountId = option.id;
+          break;
+        }
+      }
+    }
     final draft = AssetRecurringFixedCost(
       id: 'fc_suggestion',
       name: detected.label,
       amount: detected.typicalAmount.toDouble(),
       paymentDay: detected.typicalPaymentDay,
+      cadence: detected.cadence,
+      sourceAccountId: sourceAccountId,
     );
     return _openRecurringFixedCostEditor(
       prefill: draft,
