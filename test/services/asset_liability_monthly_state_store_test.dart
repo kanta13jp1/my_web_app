@@ -678,6 +678,23 @@ void main() {
         isEmpty,
       );
     });
+
+    test('saves and restores the updatedAt timestamp by month', () async {
+      final timestamp = DateTime.utc(2026, 5, 20, 10, 30);
+      await store.saveMonth(
+        month: DateTime(2026, 5),
+        state: AssetLiabilityMonthlyState(
+          paidAccountNames: const <String>{'mobit'},
+          updatedAt: timestamp,
+        ),
+      );
+
+      final restored = await store.loadMonth(DateTime(2026, 5));
+      expect(restored.updatedAt?.toUtc(), timestamp);
+      // 別月には漏れない。
+      final other = await store.loadMonth(DateTime(2026, 6));
+      expect(other.updatedAt, isNull);
+    });
   });
 
   group('AssetLiabilityMonthlyState.mergeWith', () {
@@ -710,6 +727,20 @@ void main() {
       );
 
       expect(local.mergeWith(remote).paymentOverrides['mobit'], 70000);
+    });
+
+    test('carries the later updatedAt into the merged result', () {
+      final older = AssetLiabilityMonthlyState(
+        paidAccountNames: const <String>{'mobit'},
+        updatedAt: DateTime(2026, 5, 20, 9),
+      );
+      final newer = AssetLiabilityMonthlyState(
+        paidAccountNames: const <String>{'yokohama_bank'},
+        updatedAt: DateTime(2026, 5, 20, 10),
+      );
+
+      expect(older.mergeWith(newer).updatedAt, DateTime(2026, 5, 20, 10));
+      expect(newer.mergeWith(older).updatedAt, DateTime(2026, 5, 20, 10));
     });
 
     test('unions list entries by id without duplicating shared ids', () {

@@ -1572,6 +1572,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
       transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
+      // 端末間 last-write-wins 用に、保存(=編集)時刻を毎回刻む。
+      updatedAt: DateTime.now(),
     );
   }
 

@@ -513,9 +513,29 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return remoteState;
     }
 
-    // 双方に入力がある場合は union マージする。旧実装は無条件に local を返し、
-    // 別端末で付けた「支払済み」等を無視した上に、その local をサーバへ保存し直して
-    // リモートの入力を上書き消去していた (= PC で支払済みにしてもスマホで未払いに戻る)。
+    // 双方に編集時刻 (updatedAt) があり差があるなら last-write-wins =
+    // 新しい方の状態全体を採用する。union と違い「支払済みのチェック解除 (削除)」も
+    // 新しい端末の状態として伝播する。
+    final localUpdatedAt = local.updatedAt;
+    final remoteUpdatedAt = remoteState.updatedAt;
+    if (localUpdatedAt != null &&
+        remoteUpdatedAt != null &&
+        !localUpdatedAt.isAtSameMomentAs(remoteUpdatedAt)) {
+      if (remoteUpdatedAt.isAfter(localUpdatedAt)) {
+        await localRepository.saveMonth(month: month, state: remoteState);
+        return remoteState;
+      }
+      if (supabaseWritesEnabled) {
+        await _tryRemote(
+          () => remote.saveMonth(userId: userId, month: month, state: local),
+        );
+      }
+      return local;
+    }
+
+    // timestamp が無い/同時刻 (旧データを含む) ときは union マージへ退避する。
+    // 旧実装は無条件に local を返し、別端末で付けた「支払済み」等を無視した上に、
+    // その local をサーバへ保存し直してリモートの入力を上書き消去していた。
     // union は monotonic なので、両端末の入力を取りこぼさず収束する。
     final merged = local.mergeWith(remoteState);
     if (merged.totalEntryCount > local.totalEntryCount) {
@@ -1817,6 +1837,7 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
         'payment_source_account_ids': row['payment_source_account_ids'],
         'card_billing_account_ids': row['card_billing_account_ids'],
         'card_statement_lines': row['card_statement_lines'],
+        'state_updated_at': row['state_updated_at'],
       },
     );
     await _upsertPayloadRow(
