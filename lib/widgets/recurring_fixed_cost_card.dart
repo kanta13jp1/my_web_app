@@ -110,31 +110,38 @@ class RecurringFixedCostCard extends StatelessWidget {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                cost.name,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                          // 名称 + 内訳を 1 ノードへまとめて読み上げる。
+                          child: Semantics(
+                            container: true,
+                            label: '${cost.name}、${_subtitle(cost)}',
+                            child: MergeSemantics(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    cost.name,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    _subtitle(cost),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                _subtitle(cost),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                         IconButton(
-                          tooltip: '編集',
+                          tooltip: '${cost.name} を編集',
                           icon: const Icon(Icons.edit_outlined),
                           onPressed: () => onEdit(cost),
                         ),
                         IconButton(
-                          tooltip: '削除',
+                          tooltip: '${cost.name} を削除',
                           icon: const Icon(Icons.delete_outline),
                           onPressed: () => onDelete(cost),
                         ),

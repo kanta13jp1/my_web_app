@@ -85,6 +85,39 @@ CFO 室「表示モード実験 詳細グラフ」(折れ線=標準維持率 / �
   警告の `liveRegion` + label を `find.byWidgetPredicate` で検証。
 - `test/widgets/asset_category_budget_card_test.dart`: 超過合計の `liveRegion`、行の `MergeSemantics` を検証。
 
+## 資産管理カード(定期固定費 / 定期取引の自動検出)の a11y — part 301 / #3475 #3478 #3479
+
+定期固定費カード(`RecurringFixedCostCard`)と定期取引の自動検出カード
+(`AssetRecurringTransactionSuggestionCard`)の Semantics 確認手順。両カードとも各行の
+**情報(名称・周期・金額・引落元)を `MergeSemantics` で 1 ノードに集約**し、**操作ボタンは
+集約の外**に置いて各々が独立した操作ノードになるよう実装している。
+
+### 確認手順(NVDA / Chrome・Edge / 前提は上記「Enable accessibility」と同じ)
+
+1. `Tab`/`↓` で定期固定費カードへ。各行が「**<名称>、毎月/隔月(偶数月)N日 / ¥金額 / 振替元: X**」と
+   1 まとまりで読まれる。続けて「**<名称> を編集 ボタン**」「**<名称> を削除 ボタン**」が個別に読まれ操作できる。
+2. `↓` で定期取引の自動検出カードへ。各候補が「**<名称>、毎月/隔月(偶数月)N日頃、約¥金額、確度 高/中、
+   直近Mヶ月分を検出**」と 1 文で読まれる。続けて「**無視 ボタン**」「**固定費に登録 ボタン**」が個別に読まれる。
+
+### VoiceOver (macOS / Safari) / TalkBack (Android / Chrome)
+
+1. VoiceOver: VO+矢印 / TalkBack: スワイプ で各行へ移動 → 上記の集約ラベルが 1 まとまりで読まれる。
+2. 操作ボタン(編集/削除 / 無視/固定費に登録)へ移動 → 名称を含む文脈付きラベルが読まれ、ダブルタップで実行。
+
+### 合否基準(part 301 カード)
+
+- [ ] 各行の名称 + 内訳が断片化せず 1 文で読まれる(MergeSemantics)。
+- [ ] 操作ボタンが「<名称> を編集/削除」「無視 / 固定費に登録」と**個別に**読まれ操作できる
+      (情報の集約ノードに飲み込まれていない)。
+- [ ] 検出カードの確度バッジ(高/中)が行ラベルに含まれて読まれる。
+
+### 自動テスト(CI)
+
+- `test/widgets/recurring_fixed_cost_card_test.dart`: 行の集約 `Semantics`(label に名称 + ¥金額)と
+  文脈付きツールチップ(`<名称> を編集/削除`)を検証。
+- `test/widgets/asset_recurring_transaction_suggestion_card_test.dart`: 行の集約 `Semantics`(label に
+  名称 + 確度)、無視/登録ボタンのコールバックを検証。
+
 ## 記録
 
 確認したら下表に日付/AT/ブラウザ/結果を追記する。実機担当者は下の
@@ -102,6 +135,7 @@ CFO 室「表示モード実験 詳細グラフ」(折れ線=標準維持率 / �
 | 2026-06-13 | 自動 (CI widget test) | flutter test | ✅ | `display_mode_experiment_card_test.dart`: 折れ線/面の両方で `Semantics.value` + `flagsCollection.isLiveRegion` を検証。矢印キー移動で value 更新も検証。 |
 | 2026-06-13 | 自動 (再検証 / part 293) | flutter test | ✅ | フル test スイートで上記 a11y 契約が引き続き green を確認(回帰なし)。**実 AT の音声確認はこの自動検証では代替不可**のため下記実機行は別途必要。 |
 | 2026-06-16 | NVDA (実機) | Chrome (build 4526) | ✅ PASS | **将来残高予測カード (#3447)**: グラフが role=img で「将来残高予測グラフ。今後3ヶ月…最小見込み残高は−¥579,277。6/27頃に残高不足の見込み。グラフィック」+ 警告が liveRegion で「6/27 頃に残高が不足する見込みです。回避には ¥579,277…」+「支払日を見直す(マネーカレンダー) ボタン」を実機読み上げ確認。※「Enable accessibility」を Enter で有効化 → 矢印移動で確認(クリックでは無音)。 |
+| 2026-06-19 | 自動 (CI widget test / part 301) | flutter test | ✅ | **定期固定費 / 定期取引検出カード**: 行の集約 `Semantics`(名称 + ¥金額 / 名称 + 確度)+ 文脈付きツールチップ(`<名称> を編集/削除`)+ 無視/登録ボタンを検証。実 AT 音声は下記実機行で別途確認。 |
 | (未実施・要実機) | NVDA | Chrome/Edge | - | リリース前に担当者が実施 → 結果追記。手順は本書「実機チェック」節。 |
 | (未実施・要実機) | VoiceOver | Safari | - | 同上 |
 | (未実施・要実機) | TalkBack | Chrome (Android) | - | 同上 |
