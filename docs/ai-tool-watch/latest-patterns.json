@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-16T22:02:50Z",
+  "generated_at": "2026-06-17T21:57:42Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "cbed8c9514f3e9ebc4cb6830f1cd3231783c6923b847b7e467081c480c62e757",
+          "hash": "ac3e2c6b7fc2eab0f1a639b58e38f9c49b70c493cda4684a9734ae227604e4de",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -77,7 +77,7 @@
           "latest_signal": "2.1.179 / June 16, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "b23ac41f493eb4126da20e9c9d02245a7dae1cd23978c8be3e5818f79b04c70c",
+          "previous_hash": "cbed8c9514f3e9ebc4cb6830f1cd3231783c6923b847b7e467081c480c62e757",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -115,7 +115,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "f65a250c161f1ed575ca7f2c3f5a2cf039f4f2503fe9ca07fde01ea0e039bf8f",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "fcb7ea0e9daaae61315d7f8af0a669da18749537acc7078f191509a8d5842879",
+          "previous_hash": "f65a250c161f1ed575ca7f2c3f5a2cf039f4f2503fe9ca07fde01ea0e039bf8f",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -270,7 +270,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "915d54f495db24cae9468b563d8914d0aa613e39d00476b6ea3c9864a6f6abd3",
+          "hash": "b4685ed9ed0bcaf1a8b83edbed5497a1817cf4396000c8e7713095cb7320ae4b",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -318,7 +318,7 @@
           "latest_signal": "2026-06-16 / Codex app features are available in the EEA, UK, and Switzerland More Codex app capabilitie",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "67c97cf6364df4dc1dd96232a2f395d0e5bb748dffe6e02b22d244a661b5a65a",
+          "previous_hash": "915d54f495db24cae9468b563d8914d0aa613e39d00476b6ea3c9864a6f6abd3",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -356,10 +356,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "2cf0b91dcb3da2a5802c5c47eed7169b97b4a3e3e067e55eb4e29c4ff68fba28",
+          "hash": "b79a522858b79ca9c82e7df6c4c300cd73b43827e37a7fbf4b85067f48498e7e",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -472,18 +472,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-2d93748cd3df",
+        "entry_id": "nf-68fc26805990",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.7 / Jun 5, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run. # Run Bugbot before you push You can now run Bugbot and Security Review with /review before pushing code.",
+        "text": "Cursor changelog 3.7 / Jun 17, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... You can watch the agent's progress in a shared terminal session as it handles setup tasks like installing dependencies. # Cloud subagents with /in-cloud Use /in-cloud to spin up a cloud subagent in its own VM to work on the next task you submit.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "e29025cfcfe697fcd062eba80bf5e9cc9784c9b7288cfa97d7b72063a9f8749a",
+          "hash": "3deb9159afcf3cb92a0ad99b3cec79c94f78c55c74c9fdae6c610b4ca1d493e6",
           "keyword_groups": {
             "codex-runtime": [
               "subagents"
@@ -502,22 +502,22 @@
               "automation"
             ]
           },
-          "latest_signal": "3.7 / Jun 5, 2026",
+          "latest_signal": "3.7 / Jun 17, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
           "previous_hash": "e29025cfcfe697fcd062eba80bf5e9cc9784c9b7288cfa97d7b72063a9f8749a",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "Bugbot also finds 10% more bugs per review on average — 0.62, up from 0.56 — and costs ~22% less per run.",
-            "# Run Bugbot before you push You can now run Bugbot and Security Review with /review before pushing code."
+            "You can watch the agent's progress in a shared terminal session as it handles setup tasks like installing dependencies.",
+            "# Cloud subagents with /in-cloud Use /in-cloud to spin up a cloud subagent in its own VM to work on the next task you submit."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-2d93748cd3df",
+        "entry_id": "nf-68fc26805990",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -609,10 +609,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "89078ac775a89b9657d41a80c9bb9269c918a889b60ada537369a5411526409e",
+          "hash": "6606da1ecbadbbb73db0d7b5b5babc03de0f14ad2f45ab09dddb37781f7a08e4",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
