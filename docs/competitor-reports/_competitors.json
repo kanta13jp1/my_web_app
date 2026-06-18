@@ -641,6 +641,25 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-19",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-16 Microsoft MAI-Code-1-Flash 採択 / 3 day 経過 / cooldown 残 4 day / 次回 6/23 解禁). 前回 AI 分析 report = 6/18. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/19 は WebSearch 主体で 6/18→6/19 delta 集約 (= 当日 delta は薄く継続スレッドの未解決確認が中心). 継続シグナル = (1) ★ Claude Fable 5/Mythos 5 全世界 suspension 未解決継続 🔴 (= 6/12 米商務省 export-control directive 後 / Anthropic は 6/15-16 に米当局と協議も復旧日提示なし / 影響顧客へ返金開始 / Anthropic は『争点は narrow・政府見解の詳細な書面根拠は未受領』と表明し見解相違 / Opus 4.8・Sonnet 4.6・Haiku 4.5 は引き続き影響なし=Win Claude #132 fleet 継続可 / 運用シグナル 3 連 [6/2 障害 + 6/12 Fable suspension + 6/15 課金分離 pause] の単一ベンダー依存+地政学リスクは『未解決のまま据え置き』=fallback 経路点検の予防継続根拠) / (2) ★ Salesforce Agentforce Operations = 6/23 第 1 候補維持・pre-scan 🟢 (= 4/29 GA 済 + Slack/Microsoft Teams 統合が 6 月 rollout 進行中 / cycle time -50〜70%・手入力 -80% 訴求 / バックオフィス自律 AI = 6 部署/B/S 正面 overlap 最大 / 基準 a 正面競合 + 基準 c 該当で 6/23 採択 viability 確認) / (3) MoneyForward AI Cowork 7月 GA 接近 🔴 (= T-約12日 / Claude Agent SDK + API + MCP 基盤 / 経理労務法務 6 業務 / GA 前 narrative sharpening timing) / (4) 価格戦争メータリング収斂継続 🟠 (= GitHub Copilot usage-based credits + Cursor Pro+ $60/Ultra $200 + Copilot Cowork per-task 従量). [NOTE] 本 run は 6/12 以来初の実 Claude 駆動 run (6/13 は GHA static-template のみ / 6/14-6/18 の MAI 採択含む履歴は origin/main が正本 = stale codex branch [codex/issue-1215-hitl / 519 behind] の作業ツリーは参照せず origin/main worktree で実装). 6/23 採択 第 1 候補 = Salesforce Agentforce Operations 維持 (基準 a+c). https://natlawreview.com/article/ai-company-anthropic-suspends-access-claude-fable-5-claude-mythos-5-following-us",
+      "skipped_candidates": [
+        "Salesforce Agentforce Operations (= 6/23 第 1 候補維持 / 4/29 GA 済 + Slack/Teams 統合 6 月 rollout / バックオフィス自律 AI = 6 部署/B/S overlap 最大 / 基準 a+c 該当 / re-rank 最有力)",
+        "Microsoft Copilot Cowork (= 6/16 全世界 GA / back-office 三つ巴中核 / Claude 上で動作 + MoneyForward plugin / ただし Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加回避で monitor / Salesforce 採択後 re-rank 候補)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 シグナル / 動向観察 1 月)",
+        "Claude Fable 5 / Mythos 5 (= モデル層 + 規制シグナル / discovery 対象外 / Anthropic 既収載派生)",
+        "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
