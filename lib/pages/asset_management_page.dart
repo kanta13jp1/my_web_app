@@ -40,6 +40,7 @@ import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
@@ -414,6 +415,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
   List<AssetRecurringFixedCost> _recurringFixedCosts =
       <AssetRecurringFixedCost>[];
+  // 定期取引の自動検出で「無視」した正規化ラベル(再提案しない)。
+  Set<String> _ignoredRecurringLabels = <String>{};
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
@@ -591,6 +594,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final AssetRecurringFixedCostStore _recurringFixedCostStore =
       const AssetRecurringFixedCostStore();
   static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
+  final AssetRecurringSuggestionIgnoreStore _recurringIgnoreStore =
+      const AssetRecurringSuggestionIgnoreStore();
+  static const String _recurringIgnoredMirrorKey =
+      'recurring_suggestion_ignored';
   final AssetCategoryBudgetStore _categoryBudgetStore =
       const AssetCategoryBudgetStore();
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
@@ -706,6 +713,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
+    unawaited(_loadRecurringIgnored());
     unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
@@ -8444,6 +8452,92 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 起動時に「無視」集合をローカルから読み、サーバミラーと union する。
+  Future<void> _loadRecurringIgnored() async {
+    try {
+      final ignored = await _recurringIgnoreStore.load();
+      if (mounted && ignored.isNotEmpty) {
+        setState(() => _ignoredRecurringLabels = ignored);
+      }
+    } catch (e) {
+      debugPrint('Error loading recurring ignored: $e');
+    }
+    await _restoreRecurringIgnoredFromMirror();
+  }
+
+  /// サーバミラー (pref_key: recurring_suggestion_ignored) を取り込み、ローカル集合と
+  /// union する(無視は単調増加なので union が安全)。
+  Future<void> _restoreRecurringIgnoredFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _recurringIgnoredMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final serverIgnored =
+          AssetRecurringSuggestionIgnoreStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || serverIgnored.isEmpty) {
+        return;
+      }
+      final merged = <String>{..._ignoredRecurringLabels, ...serverIgnored};
+      if (merged.length == _ignoredRecurringLabels.length) {
+        return; // サーバに新規無視なし。
+      }
+      setState(() => _ignoredRecurringLabels = merged);
+      _persistInBackground(
+        _recurringIgnoreStore.save(merged),
+        'recurring ignored restore save',
+      );
+    } catch (e) {
+      debugPrint('recurring ignored mirror restore failed: $e');
+    }
+  }
+
+  /// 「無視」集合の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorRecurringIgnored() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _recurringIgnoredMirrorKey,
+        'value': AssetRecurringSuggestionIgnoreStore.encodeMirrorValue(
+          _ignoredRecurringLabels,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('recurring ignored mirror upsert failed: $e');
+    }
+  }
+
+  /// 検出候補を「無視」集合へ追加して再提案を止める(永続化 + ミラー)。
+  void _ignoreDetectedRecurringTransaction(
+    DetectedRecurringTransaction detected,
+  ) {
+    final label = _normalizeRecurringLabel(detected.label);
+    if (label.isEmpty || _ignoredRecurringLabels.contains(label)) {
+      return;
+    }
+    setState(() {
+      _ignoredRecurringLabels = <String>{..._ignoredRecurringLabels, label};
+    });
+    _persistInBackground(
+      _recurringIgnoreStore.save(_ignoredRecurringLabels),
+      'recurring ignored save',
+    );
+    unawaited(_mirrorRecurringIgnored());
+  }
+
   void _saveRecurringFixedCost(AssetRecurringFixedCost cost) {
     setState(() {
       final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
@@ -8590,13 +8684,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return observations;
   }
 
-  /// 定期取引を検出し、すでに固定費登録済みのものは除外する。
+  /// 定期取引を検出し、登録済み固定費と「無視」した候補を除外する。
   List<DetectedRecurringTransaction> _detectRecurringTransactions() {
     final detected = AssetRecurringTransactionDetector.detect(
       observations: _buildRecurringTransactionObservations(),
       asOf: _now,
     );
-    if (detected.isEmpty || _recurringFixedCosts.isEmpty) {
+    if (detected.isEmpty) {
       return detected;
     }
     final registered = <String>{
@@ -8607,6 +8701,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final label = _normalizeRecurringLabel(item.label);
       if (label.isEmpty) {
         return true;
+      }
+      if (_ignoredRecurringLabels.contains(label)) {
+        return false;
       }
       for (final name in registered) {
         if (label.contains(name) || name.contains(label)) {
@@ -8667,6 +8764,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           sourceOptions: sourceOptions,
         ),
       ),
+      onIgnore: _ignoreDetectedRecurringTransaction,
     );
   }
 

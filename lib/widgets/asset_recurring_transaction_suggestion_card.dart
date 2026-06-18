@@ -15,6 +15,7 @@ class AssetRecurringTransactionSuggestionCard extends StatelessWidget {
     super.key,
     required this.suggestions,
     required this.onRegister,
+    required this.onIgnore,
     this.currencyFormatter,
   });
 
@@ -22,6 +23,9 @@ class AssetRecurringTransactionSuggestionCard extends StatelessWidget {
 
   /// 「固定費に登録」押下時のコールバック。
   final void Function(DetectedRecurringTransaction detected) onRegister;
+
+  /// 「無視」押下時のコールバック(検出結果から除外して永続化する)。
+  final void Function(DetectedRecurringTransaction detected) onIgnore;
 
   /// 金額整形(ページの `_formatYen` を渡す)。null なら簡易整形。
   final String Function(double value)? currencyFormatter;
@@ -92,83 +96,101 @@ class AssetRecurringTransactionSuggestionCard extends StatelessWidget {
     final summary = '${detected.label}、$scheduleLabel、約'
         '${_yen(detected.typicalAmount)}、$confidenceLabel、'
         '直近${detected.monthsObserved}ヶ月分を検出';
-    return Semantics(
-      container: true,
-      label: summary,
-      child: MergeSemantics(
-        child: Padding(
-          key: Key('asset_recurring_suggestion_$index'),
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    return Padding(
+      key: Key('asset_recurring_suggestion_$index'),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 情報部分は 1 ノードへまとめて読み上げる。操作ボタンは別ノードに分離。
+          Semantics(
+            container: true,
+            label: summary,
+            child: MergeSemantics(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      detected.label,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          detected.label,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    ),
+                      Text(
+                        scheduleLabel,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: _muted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    scheduleLabel,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: _muted,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        '約${_yen(detected.typicalAmount)}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: confidenceColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          confidenceLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: confidenceColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '直近${detected.monthsObserved}ヶ月分',
+                          style: const TextStyle(fontSize: 11, color: _muted),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Text(
-                    '約${_yen(detected.typicalAmount)}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: confidenceColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      confidenceLabel,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: confidenceColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '直近${detected.monthsObserved}ヶ月分',
-                      style: const TextStyle(fontSize: 11, color: _muted),
-                    ),
-                  ),
-                  TextButton(
-                    key: Key('asset_recurring_suggestion_register_$index'),
-                    onPressed: () => onRegister(detected),
-                    child: const Text('固定費に登録'),
-                  ),
-                ],
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                key: Key('asset_recurring_suggestion_ignore_$index'),
+                onPressed: () => onIgnore(detected),
+                style: TextButton.styleFrom(foregroundColor: _muted),
+                child: const Text('無視'),
+              ),
+              const SizedBox(width: 4),
+              TextButton(
+                key: Key('asset_recurring_suggestion_register_$index'),
+                onPressed: () => onRegister(detected),
+                child: const Text('固定費に登録'),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }

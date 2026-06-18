@@ -31,6 +31,7 @@ void main() {
           body: AssetRecurringTransactionSuggestionCard(
             suggestions: const [],
             onRegister: (_) {},
+            onIgnore: (_) {},
           ),
         ),
       ),
@@ -50,6 +51,7 @@ void main() {
           body: AssetRecurringTransactionSuggestionCard(
             suggestions: [make('電気代'), make('家賃')],
             onRegister: (detected) => tapped = detected,
+            onIgnore: (_) {},
           ),
         ),
       ),
@@ -72,6 +74,32 @@ void main() {
     expect(tapped!.label, '電気代');
   });
 
+  testWidgets('fires onIgnore when the ignore button is tapped',
+      (tester) async {
+    DetectedRecurringTransaction? ignored;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AssetRecurringTransactionSuggestionCard(
+            suggestions: [make('電気代'), make('家賃')],
+            onRegister: (_) {},
+            onIgnore: (detected) => ignored = detected,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('無視'), findsNWidgets(2));
+
+    await tester.tap(
+      find.byKey(const Key('asset_recurring_suggestion_ignore_1')),
+    );
+    await tester.pump();
+
+    expect(ignored, isNotNull);
+    expect(ignored!.label, '家賃');
+  });
+
   testWidgets('shows the cadence label (monthly vs bimonthly)', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -85,6 +113,7 @@ void main() {
               ),
             ],
             onRegister: (_) {},
+            onIgnore: (_) {},
           ),
         ),
       ),
@@ -101,6 +130,7 @@ void main() {
           body: AssetRecurringTransactionSuggestionCard(
             suggestions: [make('電気代')],
             onRegister: (_) {},
+            onIgnore: (_) {},
           ),
         ),
       ),
