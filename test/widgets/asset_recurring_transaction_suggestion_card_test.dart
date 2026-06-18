@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 
@@ -8,6 +9,8 @@ void main() {
     String label, {
     RecurringTransactionConfidence confidence =
         RecurringTransactionConfidence.high,
+    AssetRecurringFixedCostCadence cadence =
+        AssetRecurringFixedCostCadence.monthly,
   }) {
     return DetectedRecurringTransaction(
       label: label,
@@ -16,6 +19,7 @@ void main() {
       occurrenceCount: 4,
       monthsObserved: 4,
       confidence: confidence,
+      cadence: cadence,
       lastSeen: DateTime(2026, 6, 15),
     );
   }
@@ -66,6 +70,28 @@ void main() {
 
     expect(tapped, isNotNull);
     expect(tapped!.label, '電気代');
+  });
+
+  testWidgets('shows the cadence label (monthly vs bimonthly)', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AssetRecurringTransactionSuggestionCard(
+            suggestions: [
+              make('電気代'),
+              make(
+                '水道代',
+                cadence: AssetRecurringFixedCostCadence.bimonthlyEvenMonth,
+              ),
+            ],
+            onRegister: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('毎月15日頃'), findsOneWidget);
+    expect(find.text('隔月(偶数月)15日頃'), findsOneWidget);
   });
 
   testWidgets('exposes a semantics label per suggestion', (tester) async {
