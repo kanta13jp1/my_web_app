@@ -93,9 +93,7 @@ class AssetRecurringTransactionDetector {
 
     final detected = <DetectedRecurringTransaction>[];
     grouped.forEach((label, group) {
-      final months = <int>{
-        for (final obs in group) _monthIndex(obs.occurredAt)
-      };
+      final months = group.map((obs) => _monthIndex(obs.occurredAt)).toSet();
       if (months.length < minMonthlyOccurrences) {
         return;
       }
