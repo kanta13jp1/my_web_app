@@ -1,6 +1,11 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:web/web.dart' as web;
+
+// Web のみ package:web を使ってサイズ付きポップアップを開く。VM(flutter test)では
+// dart:js_interop が無いため、条件付き import で非Web用スタブに切り替える。
+import 'grow_together_share_opener_io.dart'
+    if (dart.library.js_interop) 'grow_together_share_opener_web.dart'
+    as share_opener;
 
 /// 「みんなでアプリを育てる」X (旧 Twitter) シェア用の正本テキストとリンク生成。
 ///
@@ -62,12 +67,7 @@ class GrowTogetherShare {
   static Future<bool> launchXShare() async {
     final uri = buildXIntentUrl();
     if (kIsWeb) {
-      web.window.open(
-        uri.toString(),
-        'jibun-x-share',
-        'width=600,height=680,menubar=no,toolbar=no,location=no,status=no',
-      );
-      return true;
+      return share_opener.openXSharePopup(uri.toString());
     }
     try {
       return await launchUrl(uri, mode: LaunchMode.externalApplication);
