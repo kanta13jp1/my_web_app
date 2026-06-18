@@ -54,6 +54,7 @@ import 'package:my_web_app/services/asset_sync_status.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
+import 'package:my_web_app/services/asset_waste_training_snapshot_inputs.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
@@ -1141,52 +1142,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   AssetWasteTrainingSnapshot _buildWasteTrainingSnapshot() {
-    final currentMonth = _monthStart(_now);
-    final flows = _flowsForMonth(currentMonth);
-    var totalExpense = 0;
-    var wasteExpense = 0;
-    var expenseEntryCount = 0;
-    var wasteEntryCount = 0;
-    final wasteDateKeys = <String>{};
-
-    for (final item in flows) {
-      final actionType = item['action_type']?.toString() ?? '';
-      if (!_isExpenseActionType(actionType)) {
-        continue;
-      }
-      final amount = ((item['amount'] as num?)?.toDouble() ?? 0).abs().round();
-      totalExpense += amount;
-      expenseEntryCount += 1;
-
-      final description = item['description']?.toString() ?? '';
-      final parsed = _parseFlowDescription(description, actionType: actionType);
-      if (parsed.wasteCategory == null) {
-        continue;
-      }
-
-      wasteExpense += amount;
-      wasteEntryCount += 1;
-      final occurredAt = DateTime.tryParse(
-        item['occurred_at']?.toString() ?? '',
-      )?.toLocal();
-      if (occurredAt != null) {
-        wasteDateKeys.add(_dateOnly(occurredAt));
-      }
-    }
-
-    final elapsedDays = _isSameMonth(currentMonth, _now)
-        ? _now.day
-        : DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
     final lockdown = _debtLockdownSnapshot;
-    return AssetWasteTrainingSnapshot(
-      month: currentMonth,
-      monitoredAt: _now,
-      totalExpense: totalExpense,
-      wasteExpense: wasteExpense,
-      expenseEntryCount: expenseEntryCount,
-      wasteEntryCount: wasteEntryCount,
-      noWasteDays: max(0, elapsedDays - wasteDateKeys.length),
-      elapsedDays: max(1, elapsedDays),
+    return AssetWasteTrainingSnapshotInputs.build(
+      monthFlows: _flowsForMonth(_monthStart(_now)),
+      now: _now,
+      isExpense: _isExpenseActionType,
+      wasteCategoryOf: (description, actionType) => _parseFlowDescription(
+        description,
+        actionType: actionType,
+      ).wasteCategory,
       ruleCompletedCount: lockdown?.completedRuleCount ?? 0,
       ruleTargetCount:
           lockdown?.rules.length ?? DebtLockdownService.builtinRules.length,
