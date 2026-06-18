@@ -679,4 +679,82 @@ void main() {
       );
     });
   });
+
+  group('AssetLiabilityMonthlyState.mergeWith', () {
+    test('unions paid sets and fills gaps from the other device', () {
+      const local = AssetLiabilityMonthlyState(
+        paidAccountNames: <String>{'mobit'},
+        actualPaymentAmounts: <String, double>{'mobit': 61024},
+      );
+      const remote = AssetLiabilityMonthlyState(
+        paidAccountNames: <String>{'yokohama_bank'},
+        actualPaymentAmounts: <String, double>{'yokohama_bank': 4846},
+      );
+
+      final merged = local.mergeWith(remote);
+
+      expect(
+        merged.paidAccountNames,
+        containsAll(<String>{'mobit', 'yokohama_bank'}),
+      );
+      expect(merged.actualPaymentAmounts['mobit'], 61024);
+      expect(merged.actualPaymentAmounts['yokohama_bank'], 4846);
+    });
+
+    test('keeps local value when a scalar key conflicts', () {
+      const local = AssetLiabilityMonthlyState(
+        paymentOverrides: <String, double>{'mobit': 70000},
+      );
+      const remote = AssetLiabilityMonthlyState(
+        paymentOverrides: <String, double>{'mobit': 60000},
+      );
+
+      expect(local.mergeWith(remote).paymentOverrides['mobit'], 70000);
+    });
+
+    test('unions list entries by id without duplicating shared ids', () {
+      final local = AssetLiabilityMonthlyState(
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'shared',
+            fromAccountId: 'a',
+            fromAccountName: 'A',
+            toAccountId: 'b',
+            toAccountName: 'B',
+            amount: 1000,
+            dueDate: DateTime(2026, 5, 18),
+          ),
+        ],
+      );
+      final remote = AssetLiabilityMonthlyState(
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'shared',
+            fromAccountId: 'a',
+            fromAccountName: 'A',
+            toAccountId: 'b',
+            toAccountName: 'B',
+            amount: 1000,
+            dueDate: DateTime(2026, 5, 18),
+          ),
+          AssetLiabilityTransferTask(
+            id: 'remote_only',
+            fromAccountId: 'c',
+            fromAccountName: 'C',
+            toAccountId: 'd',
+            toAccountName: 'D',
+            amount: 2000,
+            dueDate: DateTime(2026, 5, 20),
+          ),
+        ],
+      );
+
+      final merged = local.mergeWith(remote);
+
+      expect(merged.transferTasks.map((task) => task.id), <String>[
+        'shared',
+        'remote_only',
+      ]);
+    });
+  });
 }
