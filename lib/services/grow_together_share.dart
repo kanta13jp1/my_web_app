@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:web/web.dart' as web;
 
 /// 「みんなでアプリを育てる」X (旧 Twitter) シェア用の正本テキストとリンク生成。
 ///
@@ -47,22 +49,28 @@ class GrowTogetherShare {
     });
   }
 
-  /// X の投稿画面を開く。Web では別タブ、その他では外部アプリで開く。
+  /// X の投稿画面を開く。Web では**サイズ付きポップアップ**で開く。
   ///
-  /// 成功可否を返す（ポップアップブロック等で開けなかった場合は false）。
+  /// 🔴 Web で `window.open(url, '_blank')`（フルタブ）だと、X が full app の
+  /// 作成画面へリダイレクトする過程で本文が脱落し空欄になる（実機確認済み）。
+  /// サイズ指定付きの `window.open(url, name, 'width=...,height=...')` で開くと
+  /// X の専用 intent 作成画面が表示され、本文が確実に prefill される
+  /// （一般的な「Xでシェア」ボタンと同じ定石）。
   ///
-  /// Web ではポップアップ許可がユーザー操作と同一イベントループでの
-  /// `window.open` 呼び出しに依存する。`canLaunchUrl` を await すると
-  /// イベントループを跨いでジェスチャ判定が切れ、ポップアップブロックに
-  /// 弾かれるため、http/https の intent URL は事前チェックせず直接開く。
+  /// 同期的に `window.open` を呼ぶことでユーザー操作のジェスチャを維持し、
+  /// ポップアップブロックを避ける。
   static Future<bool> launchXShare() async {
     final uri = buildXIntentUrl();
-    try {
-      return await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-        webOnlyWindowName: '_blank',
+    if (kIsWeb) {
+      web.window.open(
+        uri.toString(),
+        'jibun-x-share',
+        'width=600,height=680,menubar=no,toolbar=no,location=no,status=no',
       );
+      return true;
+    }
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       return false;
     }
