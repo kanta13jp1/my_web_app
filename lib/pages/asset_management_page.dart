@@ -40,6 +40,7 @@ import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
@@ -72,6 +73,7 @@ import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
+import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7963,6 +7965,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildCategoryBudgetCard(),
               const SizedBox(height: 16),
               _buildRecurringFixedCostCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+              _buildRecurringTransactionSuggestionCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
@@ -8477,11 +8481,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _openRecurringFixedCostEditor({
     AssetRecurringFixedCost? existing,
+    AssetRecurringFixedCost? prefill,
     required List<RecurringFixedCostSourceOption> sourceOptions,
   }) async {
     final result = await showRecurringFixedCostEditor(
       context,
       existing: existing,
+      prefill: prefill,
       sourceAccounts: sourceOptions,
     );
     if (result != null) {
@@ -8536,6 +8542,131 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
       onDelete: (cost) => unawaited(_confirmDeleteRecurringFixedCost(cost)),
+    );
+  }
+
+  /// `_recentFlows`(複数月分の収支履歴)から、支出のみを description パースして
+  /// 定期取引検出用の観測列を作る。
+  List<RecurringTransactionObservation>
+      _buildRecurringTransactionObservations() {
+    final observations = <RecurringTransactionObservation>[];
+    for (final flow in _recentFlows) {
+      final actionType = flow['action_type']?.toString() ?? '';
+      if (!_isExpenseActionType(actionType)) {
+        continue;
+      }
+      final occurredAt = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
+      if (occurredAt == null) {
+        continue;
+      }
+      final amount = ((flow['amount'] as num?)?.toDouble() ?? 0).abs().round();
+      if (amount <= 0) {
+        continue;
+      }
+      final parsed = _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: actionType,
+      );
+      final label = AssetRecurringTransactionDetector.buildLabel(
+        source: parsed.source,
+        memo: parsed.memo,
+      );
+      if (label.isEmpty) {
+        continue;
+      }
+      observations.add(
+        RecurringTransactionObservation(
+          label: label,
+          amount: amount,
+          occurredAt: occurredAt,
+          sourceName: AssetRecurringTransactionDetector.stripAccountBrackets(
+            parsed.source,
+          ),
+        ),
+      );
+    }
+    return observations;
+  }
+
+  /// 定期取引を検出し、すでに固定費登録済みのものは除外する。
+  List<DetectedRecurringTransaction> _detectRecurringTransactions() {
+    final detected = AssetRecurringTransactionDetector.detect(
+      observations: _buildRecurringTransactionObservations(),
+      asOf: _now,
+    );
+    if (detected.isEmpty || _recurringFixedCosts.isEmpty) {
+      return detected;
+    }
+    final registered = <String>{
+      for (final cost in _recurringFixedCosts)
+        _normalizeRecurringLabel(cost.name),
+    }..removeWhere((name) => name.isEmpty);
+    return detected.where((item) {
+      final label = _normalizeRecurringLabel(item.label);
+      if (label.isEmpty) {
+        return true;
+      }
+      for (final name in registered) {
+        if (label.contains(name) || name.contains(label)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  String _normalizeRecurringLabel(String value) =>
+      value.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+
+  /// 検出された定期取引を `prefill` として固定費登録ダイアログを開く。
+  /// 周期(毎月/隔月)と最頻の引落元口座も初期値に反映する。
+  Future<void> _registerDetectedRecurringTransaction(
+    DetectedRecurringTransaction detected, {
+    required List<RecurringFixedCostSourceOption> sourceOptions,
+  }) {
+    final suggestedSource = detected.suggestedSourceName;
+    String? sourceAccountId;
+    if (suggestedSource != null) {
+      for (final option in sourceOptions) {
+        if (option.name == suggestedSource) {
+          sourceAccountId = option.id;
+          break;
+        }
+      }
+    }
+    final draft = AssetRecurringFixedCost(
+      id: 'fc_suggestion',
+      name: detected.label,
+      amount: detected.typicalAmount.toDouble(),
+      paymentDay: detected.typicalPaymentDay,
+      cadence: detected.cadence,
+      sourceAccountId: sourceAccountId,
+    );
+    return _openRecurringFixedCostEditor(
+      prefill: draft,
+      sourceOptions: sourceOptions,
+    );
+  }
+
+  Widget _buildRecurringTransactionSuggestionCard(
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    final sourceOptions = <RecurringFixedCostSourceOption>[
+      for (final account in accounts)
+        if (account.balance > 0) (id: account.id, name: account.name),
+    ];
+    return AssetRecurringTransactionSuggestionCard(
+      suggestions: _detectRecurringTransactions(),
+      currencyFormatter: _formatYen,
+      onRegister: (detected) => unawaited(
+        _registerDetectedRecurringTransaction(
+          detected,
+          sourceOptions: sourceOptions,
+        ),
+      ),
     );
   }
 

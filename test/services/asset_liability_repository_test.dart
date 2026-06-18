@@ -471,6 +471,85 @@ void main() {
     });
 
     test(
+      'loadMonth unions local and remote so cross-device paid is not lost',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+
+        // この端末(ローカル)はモビットだけ支払済み。
+        await local.saveMonth(
+          month: month,
+          state: const AssetLiabilityMonthlyState(
+            paidAccountNames: <String>{'mobit'},
+          ),
+        );
+        // 別端末(リモート)は横浜銀行を支払済み(実支払額付き)。
+        remote.seedMonth(
+          month,
+          const AssetLiabilityMonthlyState(
+            paidAccountNames: <String>{'yokohama_bank'},
+            actualPaymentAmounts: <String, double>{'yokohama_bank': 4846},
+          ),
+        );
+
+        final merged = await repository.loadMonth(month);
+
+        // 双方の支払済みが取りこぼされず union される (= 端末間で paid が消えない)。
+        expect(
+          merged.paidAccountNames,
+          containsAll(<String>{'mobit', 'yokohama_bank'}),
+        );
+        expect(merged.actualPaymentAmounts['yokohama_bank'], 4846);
+        // 収束のためローカル/リモート双方へマージ結果を保存する。
+        final localAfter = await local.loadMonth(month);
+        expect(localAfter.paidAccountNames, contains('yokohama_bank'));
+        expect(
+          remote.monthState('2026-05')?.paidAccountNames,
+          contains('mobit'),
+        );
+        expect(remote.calls, contains('saveMonth:user-1:2026-05'));
+      },
+    );
+
+    test('loadMonth keeps local value when scalar fields conflict', () async {
+      final local = _FakeAssetLiabilityRepository();
+      final remote = _RecordingAssetLiabilityRemoteStore();
+      final repository = FeatureFlaggedAssetLiabilityRepository(
+        localRepository: local,
+        remoteStore: remote,
+        syncEnabled: true,
+        remoteWritesEnabled: true,
+        userIdProvider: () => 'user-1',
+      );
+      final month = DateTime(2026, 5);
+      await local.saveMonth(
+        month: month,
+        state: const AssetLiabilityMonthlyState(
+          paymentOverrides: <String, double>{'mobit': 70000},
+        ),
+      );
+      remote.seedMonth(
+        month,
+        const AssetLiabilityMonthlyState(
+          paymentOverrides: <String, double>{'mobit': 60000},
+        ),
+      );
+
+      final merged = await repository.loadMonth(month);
+
+      // 同一キーの衝突は this(ローカル) を優先する。
+      expect(merged.paymentOverrides['mobit'], 70000);
+    });
+
+    test(
       'sync on keeps production writes disabled unless write flag is enabled',
       () async {
         final local = _FakeAssetLiabilityRepository();
