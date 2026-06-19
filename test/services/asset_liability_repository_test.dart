@@ -519,6 +519,83 @@ void main() {
       },
     );
 
+    test(
+      'loadMonth unions billing confirmations and transfer tasks across '
+      'devices',
+      () async {
+        final local = _FakeAssetLiabilityRepository();
+        final remote = _RecordingAssetLiabilityRemoteStore();
+        final repository = FeatureFlaggedAssetLiabilityRepository(
+          localRepository: local,
+          remoteStore: remote,
+          syncEnabled: true,
+          remoteWritesEnabled: true,
+          userIdProvider: () => 'user-1',
+        );
+        final month = DateTime(2026, 5);
+
+        // この端末はモビットのカード請求を確認済み + 自端末の口座移動タスク。
+        await local.saveMonth(
+          month: month,
+          state: AssetLiabilityMonthlyState(
+            billingConfirmedAccountIds: const <String>{'mobit'},
+            transferTasks: <AssetLiabilityTransferTask>[
+              AssetLiabilityTransferTask(
+                id: 'transfer_local',
+                fromAccountId: 'custom_cash',
+                fromAccountName: 'Cash',
+                toAccountId: 'smbc_otsuka',
+                toAccountName: 'SMBC Otsuka',
+                amount: 10000,
+                dueDate: DateTime(2026, 5, 18),
+              ),
+            ],
+          ),
+        );
+        // 別端末はPayPayカードを確認済み + 別の口座移動タスク。
+        remote.seedMonth(
+          month,
+          AssetLiabilityMonthlyState(
+            billingConfirmedAccountIds: const <String>{'paypay_card'},
+            transferTasks: <AssetLiabilityTransferTask>[
+              AssetLiabilityTransferTask(
+                id: 'transfer_remote',
+                fromAccountId: 'smbc_otsuka',
+                fromAccountName: 'SMBC Otsuka',
+                toAccountId: 'rakuten_bank',
+                toAccountName: 'Rakuten Bank',
+                amount: 20000,
+                dueDate: DateTime(2026, 5, 20),
+              ),
+            ],
+          ),
+        );
+
+        final merged = await repository.loadMonth(month);
+
+        // 双方の請求確認フラグ・口座移動タスクが取りこぼされず union される。
+        expect(
+          merged.billingConfirmedAccountIds,
+          containsAll(<String>{'mobit', 'paypay_card'}),
+        );
+        expect(
+          merged.transferTasks.map((task) => task.id),
+          containsAll(<String>{'transfer_local', 'transfer_remote'}),
+        );
+        // 収束のためローカル/リモート双方へマージ結果を保存する。
+        final localAfter = await local.loadMonth(month);
+        expect(
+          localAfter.billingConfirmedAccountIds,
+          contains('paypay_card'),
+        );
+        expect(
+          remote.monthState('2026-05')?.billingConfirmedAccountIds,
+          contains('mobit'),
+        );
+        expect(remote.calls, contains('saveMonth:user-1:2026-05'));
+      },
+    );
+
     test('loadMonth keeps local value when scalar fields conflict', () async {
       final local = _FakeAssetLiabilityRepository();
       final remote = _RecordingAssetLiabilityRemoteStore();
@@ -1461,6 +1538,119 @@ void main() {
         restored.transferTasks.single.cancellationReason,
         'Paid from salary account directly.',
       );
+    });
+
+    test(
+        'monthly_states remote payload carries billing confirmations and '
+        'transfer tasks', () {
+      // 回帰: 以前 saveMonth の subset マップが billing_confirmed_account_ids と
+      // transfer_tasks を取りこぼし、リモートへ一切書かれず端末間で同期されなかった
+      // (= paid_account_ids と同型の潜在バグ)。
+      final state = AssetLiabilityMonthlyState(
+        paidAccountNames: const <String>{'kddi_provider'},
+        billingConfirmedAccountIds: const <String>{'mobit', 'paypay_card'},
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_bank_topup',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'Cash',
+            toAccountId: 'smbc_otsuka',
+            toAccountName: 'SMBC Otsuka',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 18),
+          ),
+        ],
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary',
+            date: DateTime(2026, 5, 25),
+            name: 'Salary',
+            amount: 250000,
+            destinationAccountId: 'smbc_otsuka',
+            destinationAccountName: 'SMBC Otsuka',
+            received: false,
+          ),
+        ],
+        updatedAt: DateTime.utc(2026, 5, 19, 8),
+      );
+      final row = AssetLiabilityMonthlyStatePayload.fromState(
+        monthKey: '2026-05',
+        state: state,
+      ).toSupabaseJson(userId: 'user-1');
+
+      final payload = AssetLiabilitySupabaseRemoteStore.buildMonthlyStatesPayload(
+        row,
+      );
+
+      // 取りこぼしていた 2 キーが monthly_states payload に含まれること。
+      expect(payload.containsKey('billing_confirmed_account_ids'), isTrue);
+      expect(payload.containsKey('transfer_tasks'), isTrue);
+      expect(
+        payload['billing_confirmed_account_ids'],
+        containsAll(<String>['mobit', 'paypay_card']),
+      );
+      expect((payload['transfer_tasks']! as List<Object?>).length, 1);
+      // LWW 用のクライアント編集時刻も同梱される。
+      expect(payload['state_updated_at'], '2026-05-19T08:00:00.000Z');
+      // income_plans は別テーブルへ保存するため monthly_states には含めない。
+      expect(payload.containsKey('income_plans'), isFalse);
+      // 識別子カラムは _upsertPayloadRow が個別に付与するため payload には含めない。
+      expect(payload.containsKey('user_id'), isFalse);
+      expect(payload.containsKey('month_key'), isFalse);
+    });
+
+    test(
+        'save split and load merge round-trip preserves billing confirmations '
+        'and transfer tasks across the two tables', () {
+      final state = AssetLiabilityMonthlyState(
+        billingConfirmedAccountIds: const <String>{'mobit'},
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'transfer_bank_topup',
+            fromAccountId: 'custom_cash',
+            fromAccountName: 'Cash',
+            toAccountId: 'smbc_otsuka',
+            toAccountName: 'SMBC Otsuka',
+            amount: 10000,
+            dueDate: DateTime(2026, 5, 18),
+          ),
+        ],
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary',
+            date: DateTime(2026, 5, 25),
+            name: 'Salary',
+            amount: 250000,
+            destinationAccountId: 'smbc_otsuka',
+            destinationAccountName: 'SMBC Otsuka',
+            received: false,
+          ),
+        ],
+      );
+      final row = AssetLiabilityMonthlyStatePayload.fromState(
+        monthKey: '2026-05',
+        state: state,
+      ).toSupabaseJson(userId: 'user-1');
+
+      // saveMonth が 2 テーブルへ分割書き込みする 2 つの payload 行を再現する。
+      final monthlyRow =
+          AssetLiabilitySupabaseRemoteStore.buildMonthlyStatesPayload(row);
+      final incomeRow = <String, Object?>{'income_plans': row['income_plans']};
+
+      // loadMonth はこの 2 行の payload を合体して fromSupabaseJson に渡す。
+      final mergedPayload = <String, Object?>{
+        ...monthlyRow,
+        ...incomeRow,
+        'month_key': '2026-05',
+      };
+      final restored = AssetLiabilityMonthlyStatePayload.fromSupabaseJson(
+        mergedPayload,
+      ).toState();
+
+      expect(restored.billingConfirmedAccountIds, contains('mobit'));
+      expect(restored.transferTasks.single.id, 'transfer_bank_topup');
+      expect(restored.transferTasks.single.amount, 10000);
+      expect(restored.incomePlans.single.id, 'salary');
     });
 
     test('round-trips settings and snapshot payloads', () {

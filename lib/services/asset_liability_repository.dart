@@ -1827,18 +1827,7 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
       AssetLiabilitySupabaseTablePlan.monthlyStatesTable,
       userId: userId,
       monthKey: monthKey,
-      payload: <String, Object?>{
-        'payment_overrides': row['payment_overrides'],
-        'actual_payment_amounts': row['actual_payment_amounts'],
-        'payment_difference_reasons': row['payment_difference_reasons'],
-        'annual_rate_overrides': row['annual_rate_overrides'],
-        'annual_rate_evidences': row['annual_rate_evidences'],
-        'paid_account_ids': row['paid_account_ids'],
-        'payment_source_account_ids': row['payment_source_account_ids'],
-        'card_billing_account_ids': row['card_billing_account_ids'],
-        'card_statement_lines': row['card_statement_lines'],
-        'state_updated_at': row['state_updated_at'],
-      },
+      payload: buildMonthlyStatesPayload(row),
     );
     await _upsertPayloadRow(
       AssetLiabilitySupabaseTablePlan.incomePlansTable,
@@ -1846,6 +1835,36 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
       monthKey: monthKey,
       payload: <String, Object?>{'income_plans': row['income_plans']},
     );
+  }
+
+  /// `monthly_states` テーブルへ書き込む payload を [row]
+  /// (= [AssetLiabilityMonthlyStatePayload.toSupabaseJson] の出力) から構築する。
+  ///
+  /// `billing_confirmed_account_ids` と `transfer_tasks` は月次状態の一部だが、
+  /// 以前この subset から漏れていたためリモートへ一切書き込まれず、端末間で
+  /// 同期されなかった (= `paid_account_ids` と同型の潜在バグ)。`fromSupabaseJson`
+  /// は両キーを読むので、書き込みさえ揃えば [loadMonth] の union / LWW マージで収束する。
+  ///
+  /// `income_plans` は別テーブル ([AssetLiabilitySupabaseTablePlan.incomePlansTable])
+  /// へ保存するため、ここでは含めない。
+  @visibleForTesting
+  static Map<String, Object?> buildMonthlyStatesPayload(
+    Map<String, Object?> row,
+  ) {
+    return <String, Object?>{
+      'payment_overrides': row['payment_overrides'],
+      'actual_payment_amounts': row['actual_payment_amounts'],
+      'payment_difference_reasons': row['payment_difference_reasons'],
+      'annual_rate_overrides': row['annual_rate_overrides'],
+      'annual_rate_evidences': row['annual_rate_evidences'],
+      'paid_account_ids': row['paid_account_ids'],
+      'billing_confirmed_account_ids': row['billing_confirmed_account_ids'],
+      'payment_source_account_ids': row['payment_source_account_ids'],
+      'card_billing_account_ids': row['card_billing_account_ids'],
+      'card_statement_lines': row['card_statement_lines'],
+      'transfer_tasks': row['transfer_tasks'],
+      'state_updated_at': row['state_updated_at'],
+    };
   }
 
   @override
