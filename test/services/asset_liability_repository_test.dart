@@ -1578,7 +1578,8 @@ void main() {
         state: state,
       ).toSupabaseJson(userId: 'user-1');
 
-      final payload = AssetLiabilitySupabaseRemoteStore.buildMonthlyStatesPayload(
+      final payload =
+          AssetLiabilitySupabaseRemoteStore.buildMonthlyStatesPayload(
         row,
       );
 
@@ -1597,6 +1598,25 @@ void main() {
       // 識別子カラムは _upsertPayloadRow が個別に付与するため payload には含めない。
       expect(payload.containsKey('user_id'), isFalse);
       expect(payload.containsKey('month_key'), isFalse);
+      // キー集合を厳密に固定する。toSupabaseJson に状態フィールドが増えたら
+      // ここが落ちて「リモートへ同期すべきか」を必ず判断させる (= 書き忘れ防止)。
+      expect(
+        payload.keys.toSet(),
+        <String>{
+          'payment_overrides',
+          'actual_payment_amounts',
+          'payment_difference_reasons',
+          'annual_rate_overrides',
+          'annual_rate_evidences',
+          'paid_account_ids',
+          'billing_confirmed_account_ids',
+          'payment_source_account_ids',
+          'card_billing_account_ids',
+          'card_statement_lines',
+          'transfer_tasks',
+          'state_updated_at',
+        },
+      );
     });
 
     test(
