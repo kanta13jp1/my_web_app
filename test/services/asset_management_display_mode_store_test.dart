@@ -129,6 +129,40 @@ void main() {
       );
     });
 
+    test('recurring fixed cost is a standard-tier dedicated section', () {
+      // 給与内訳と同じ standard tier = 標準/フルで表示・ミニマムで非表示。
+      expect(
+        AssetManagementDisplayModeStore.isSectionVisible(
+          section: AssetManagementSectionId.recurringFixedCost,
+          mode: AssetManagementDisplayMode.standard,
+        ),
+        isTrue,
+      );
+      expect(
+        AssetManagementDisplayModeStore.isSectionVisible(
+          section: AssetManagementSectionId.recurringFixedCost,
+          mode: AssetManagementDisplayMode.full,
+        ),
+        isTrue,
+      );
+      expect(
+        AssetManagementDisplayModeStore.isSectionVisible(
+          section: AssetManagementSectionId.recurringFixedCost,
+          mode: AssetManagementDisplayMode.minimum,
+        ),
+        isFalse,
+      );
+      // 給与内訳から独立して hidden 上書きできる (相乗り解消)。
+      expect(
+        AssetManagementDisplayModeStore.isSectionVisible(
+          section: AssetManagementSectionId.recurringFixedCost,
+          mode: AssetManagementDisplayMode.full,
+          override: AssetManagementSectionVisibilityOverride.hidden,
+        ),
+        isFalse,
+      );
+    });
+
     test('persists overrides and clears them when reset to auto', () async {
       const store = AssetManagementDisplayModeStore();
 
