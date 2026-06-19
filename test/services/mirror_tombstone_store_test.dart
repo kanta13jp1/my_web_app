@@ -159,17 +159,14 @@ void main() {
       expect(store.activeIds(sp), isNot(contains('debt_row_1')));
     });
 
-    test('serializes concurrent add/remove without losing effects', () async {
-      // 各削除/編集サイトと同様 await を挟まず並行発火する RMW。直列化ロックが
-      // あれば後発の write が先発の setString を踏み潰す lost-update が起きず、
-      // 全操作の効果 (追加された tombstone・解除された tombstone) が保たれる。
-      //
-      // 注: legacy SharedPreferences は cache を setString 内で同期更新し、本
-      // ストアは read→write 間に await が無いため、ロック未導入でも back-to-back
-      // 発火では実際には取りこぼさない。本テストはその不変条件の回帰ガードで、
-      // read/write 間に await が入る将来の改修や SharedPreferencesAsync 移行で
-      // race が顕在化した際に直列化の欠落を検出する (姉妹
-      // AssetSyncDirtyKeysStore の並行 write テストと同型)。
+    test('concurrent add/remove stays atomic (no lost update)', () async {
+      // 不変条件ガード: 各 write は同期 getString 読み→計算→setString 書きで
+      // read↔write 間に await が無く、legacy SharedPreferences は setString 時
+      // 点で cache を同期更新する。よって await を挟まず並行発火 (= 各削除/編集
+      // サイトの unawaited パターン) しても各 RMW は同期区間で原子的に完了し、
+      // 先発の効果を後発が踏み潰す lost-update は起きない (= 書き込み直列化ロック
+      // 不要)。read↔write 間に await が入る将来の改修や SharedPreferencesAsync
+      // (同期 cache 無し) 移行でこの原子性が崩れたら本テストが落ちる。
       final store = MirrorTombstoneStore(
         storageKey: 'revolving_credit_deleted_v1',
         nowProvider: () => DateTime(2026, 6, 19, 9),
@@ -190,12 +187,11 @@ void main() {
       expect(store.activeIds(sp), <String>{'rev_a', 'rev_b'});
     });
 
-    test('serializes concurrent non-void writes and propagates results',
+    test('concurrent non-void writes stay atomic and return correct results',
         () async {
-      // generic _runLocked は非 void 戻り値 (prune=Future<int> /
-      // mergeRemoteIds=Future<Set>) も直列化しつつ、各結果/例外を呼び出し元へ
-      // 正しく伝播する (= catchError でなく then<void>((_) {}, onError:) を
-      // 使う理由)。3 操作を await を挟まず同時にロック鎖へ投入する。
+      // 非 void 戻り値 (prune=Future<int> / mergeRemoteIds=Future<Set>) も
+      // 同じ同期原子性ガード下にある: 並行発火しても取りこぼさず、各呼び出し元へ
+      // 正しい結果が返る。3 操作を await を挟まず同時に発火する。
       final store = MirrorTombstoneStore(
         storageKey: 'watchlist_entries_deleted_v1',
         nowProvider: () => DateTime(2026, 6, 19, 9),
@@ -212,7 +208,7 @@ void main() {
 
       expect(merged, <String>{'w_remote'}); // 取り込んだ非空 ID 集合
       expect(pruned, 0); // 期限内・上限内なので掃除ゼロ
-      // 全 tombstone が直列化され取りこぼし無し。
+      // 全 tombstone が取りこぼされず残る。
       expect(store.activeIds(sp), <String>{'w_seed', 'w_new', 'w_remote'});
     });
   });

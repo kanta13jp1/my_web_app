@@ -48,6 +48,24 @@ class AssetTombstoneGcConfig {
 /// 保存形式は `[{"id": ..., "at": <iso>}, ...]`。part 285 の旧プレーン配列
 /// (`["id", ...]`) も後方互換で読み込む。書き込み・読み出し時に期限切れ
 /// (gcConfig.maxAgeDays) と件数超過 (gcConfig.maxCount) を破棄する。
+///
+/// 並行安全性 (= write 直列化は不要): 各 write メソッド (addId / removeId /
+/// prune / mergeRemoteIds) は同期 `getString` で読み、計算し、`setString` で
+/// 書く。read と write の間に `await` は無く、legacy `SharedPreferences` は
+/// `setString` の呼び出し時点で in-memory cache を **同期更新** する
+/// (platform への永続化のみ非同期)。よって unawaited で連続発火しても各
+/// read-modify-write は同期区間内で原子的に完了し、後発の read は先発の cache
+/// 更新を必ず観測する → 単一 blob でも lost-update は起きない。姉妹
+/// [AssetSyncDirtyKeysStore] は `await _loadAll` を read↔write 間に挟むため
+/// process-wide ロックが要るが、本ストアは構造上不要。
+///
+/// 🔴 将来 RMW 間に `await` を入れる / `SharedPreferencesAsync` (同期 cache
+/// 無し) へ移行する場合は、この原子性が崩れるため write 直列化ロックが必須に
+/// なる。`const` コンストラクタを維持するならロックは `static` にせざるを得ず、
+/// その static future は `testWidgets` の FakeAsync zone を跨いで orphan 化し
+/// 既存の page smoke suite を壊す (検証済み) ので、その時はインスタンス設計と
+/// テスト戦略を併せて見直すこと。本不変条件は
+/// `test/services/mirror_tombstone_store_test.dart` の並行テストでガードする。
 class MirrorTombstoneStore {
   const MirrorTombstoneStore({
     required this.storageKey,
@@ -60,34 +78,6 @@ class MirrorTombstoneStore {
   final DateTime Function()? nowProvider;
 
   DateTime _now() => nowProvider?.call() ?? DateTime.now();
-
-  /// 全 write 系メソッド (addId / removeId / prune / mergeRemoteIds) の
-  /// read-modify-write を process-wide で直列化するロック。単一 pref blob への
-  /// RMW が並行 (= 各呼び出しサイトが unawaited で発火) で交錯すると、後発の
-  /// write が先発の `setString` 着地前に古い blob を読み、相手の変更を
-  /// 取りこぼす lost-update が起こり得る (= stale tombstone 残存 → 他端末へ
-  /// 誤伝播)。読み取り (`activeIds` / `decodeMirror`) はスナップショットで
-  /// 十分なためロック不要。
-  ///
-  /// 防御的ハードニング: 現行の legacy `SharedPreferences` は cache を
-  /// `setString` 内で同期更新し、本ストアの read→write 間に await を挟まない
-  /// ため back-to-back の発火では実際には取りこぼさない。だが
-  /// `SharedPreferencesAsync` への移行や read/write 間に await が入る将来の
-  /// 改修では race が顕在化する。同期レイヤの姉妹 [AssetSyncDirtyKeysStore]
-  /// (#3415) と同型のガードを横展開し、その回帰を構造的に封じる。
-  /// `const` コンストラクタとは両立する (static はインスタンス state でない)。
-  static Future<void> _writeLock = Future<void>.value();
-
-  /// [action] を前の write 完了後に直列実行し、その結果/例外を呼び出し元へ
-  /// 伝播する。ロック鎖自体は失敗で途切れさせない (onError で吸収)。
-  /// `catchError` は非 void future を null 完了させ TypeError になり得るため、
-  /// `prune` (Future<int>) / `mergeRemoteIds` (Future<Set>) にも対応できるよう
-  /// `then<void>((_) {}, onError:)` でロック鎖を void 化する。
-  Future<T> _runLocked<T>(Future<T> Function() action) {
-    final run = _writeLock.then((_) => action());
-    _writeLock = run.then<void>((_) {}, onError: (_) {});
-    return run;
-  }
 
   /// トゥームストーン ID 集合をミラー upsert 用の値へ変換する
   /// (`{'ids': [...]}`)。ページと統合テストで同一の形を共有する (#part287)。
@@ -124,74 +114,62 @@ class MirrorTombstoneStore {
   }
 
   /// ID を 1 件トゥームストーン化する (タイムスタンプ付きで追記し GC)。
-  /// read-modify-write を [_runLocked] で直列化する。
-  Future<void> addId(SharedPreferences store, String id) {
+  Future<void> addId(SharedPreferences store, String id) async {
     if (id.isEmpty) {
-      return Future<void>.value();
+      return;
     }
-    return _runLocked(() async {
-      final entries = _gcEntries(_readEntries(store.getString(storageKey)))
-        ..removeWhere((entry) => entry['id'] == id);
-      entries.add(<String, String>{
-        'id': id,
-        'at': _now().toUtc().toIso8601String(),
-      });
-      await _writeEntries(store, entries);
+    final entries = _gcEntries(_readEntries(store.getString(storageKey)))
+      ..removeWhere((entry) => entry['id'] == id);
+    entries.add(<String, String>{
+      'id': id,
+      'at': _now().toUtc().toIso8601String(),
     });
+    await _writeEntries(store, entries);
   }
 
   /// ID のトゥームストーンを解除する (再追加を許す / #part291)。
   /// 表示設定 override のように ID (= sectionId) が再利用されるドメイン向け。
-  /// read-modify-write を [_runLocked] で直列化する。
-  Future<void> removeId(SharedPreferences store, String id) {
-    return _runLocked(() async {
-      final entries = _gcEntries(_readEntries(store.getString(storageKey)));
-      final before = entries.length;
-      entries.removeWhere((entry) => entry['id'] == id);
-      if (entries.length != before) {
-        await _writeEntries(store, entries);
-      }
-    });
+  Future<void> removeId(SharedPreferences store, String id) async {
+    final entries = _gcEntries(_readEntries(store.getString(storageKey)));
+    final before = entries.length;
+    entries.removeWhere((entry) => entry['id'] == id);
+    if (entries.length != before) {
+      await _writeEntries(store, entries);
+    }
   }
 
   /// 期限切れ・上限超過のトゥームストーンを今すぐ掃除し、削除件数を返す
   /// (手動 GC / #part291)。読み出し時にも GC されるが、件数を見せる用途。
-  /// read-modify-write を [_runLocked] で直列化する。
-  Future<int> prune(SharedPreferences store) {
-    return _runLocked(() async {
-      final entries = _readEntries(store.getString(storageKey));
-      final kept = _gcEntries(entries);
-      final removed = entries.length - kept.length;
-      if (removed > 0) {
-        await _writeEntries(store, kept);
-      }
-      return removed;
-    });
+  Future<int> prune(SharedPreferences store) async {
+    final entries = _readEntries(store.getString(storageKey));
+    final kept = _gcEntries(entries);
+    final removed = entries.length - kept.length;
+    if (removed > 0) {
+      await _writeEntries(store, kept);
+    }
+    return removed;
   }
 
   /// 他端末由来の ID 群を取り込む。実際に取り込んだ (空でない) ID 集合を返す。
   /// ローカル項目の削除はドメイン側 (呼び出し元) が行う。
-  /// read-modify-write を [_runLocked] で直列化する。
   Future<Set<String>> mergeRemoteIds(
     SharedPreferences store,
     Iterable<String> remoteIds,
-  ) {
+  ) async {
     final incoming = remoteIds.where((id) => id.isNotEmpty).toSet();
     if (incoming.isEmpty) {
-      return Future<Set<String>>.value(incoming);
-    }
-    return _runLocked(() async {
-      final entries = _gcEntries(_readEntries(store.getString(storageKey)));
-      final existingIds = <String>{for (final entry in entries) entry['id']!};
-      final nowIso = _now().toUtc().toIso8601String();
-      for (final id in incoming) {
-        if (existingIds.add(id)) {
-          entries.add(<String, String>{'id': id, 'at': nowIso});
-        }
-      }
-      await _writeEntries(store, _gcEntries(entries));
       return incoming;
-    });
+    }
+    final entries = _gcEntries(_readEntries(store.getString(storageKey)));
+    final existingIds = <String>{for (final entry in entries) entry['id']!};
+    final nowIso = _now().toUtc().toIso8601String();
+    for (final id in incoming) {
+      if (existingIds.add(id)) {
+        entries.add(<String, String>{'id': id, 'at': nowIso});
+      }
+    }
+    await _writeEntries(store, _gcEntries(entries));
+    return incoming;
   }
 
   /// 後方互換読み込み: 旧形式 (["id",...]) と新形式 ([{"id","at"},...]) の
@@ -264,11 +242,6 @@ class MirrorTombstoneStore {
     return kept;
   }
 
-  /// 実際の blob 書き込みプリミティブ。呼び出しは必ず [_runLocked] のロック
-  /// 区間 *内* からのみ行うこと (= 各 write 系メソッド経由)。ここで再度
-  /// [_runLocked] を取得すると、外側のロック区間が本 write の完了を待ち、本
-  /// write が同じロック鎖の解放を待つ self-deadlock になるため、本メソッド
-  /// 自体はロックを取らない。
   Future<void> _writeEntries(
     SharedPreferences store,
     List<Map<String, String>> entries,
