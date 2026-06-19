@@ -41,6 +41,7 @@ import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
+import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
@@ -241,7 +242,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
   static const String _smbcSheetGid = '0';
   static const List<String> _jibunCandidateSheetGids = <String>['0'];
-  static const int _salarySpendingSalaryDay = 25;
+  // 給料日(資産管理の月次サイクル基準日 / 設定で変更可 / clamp 1-28)。
+  // AssetSalaryDayStore で永続化 + asset_pref_mirror(salary_day)で端末間同期。
+  int _salaryDay = AssetSalaryDayStore.defaultSalaryDay;
   static const List<Color> _salarySpendingChartColors = <Color>[
     Color(0xFF0F766E),
     Color(0xFF2563EB),
@@ -604,6 +607,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementDisplayModeStore.defaultMode;
   final AssetManagementMainAccountStore _mainAccountStore =
       const AssetManagementMainAccountStore();
+  final AssetSalaryDayStore _salaryDayStore = const AssetSalaryDayStore();
+  static const String _salaryDayMirrorKey = 'salary_day';
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
   final AssetRecurringFixedCostStore _recurringFixedCostStore =
@@ -733,6 +738,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _fetchMustTasks();
     _loadDisplayMode();
     _loadMainAccount();
+    unawaited(_loadSalaryDay());
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
@@ -893,7 +899,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   DateTime _assetLiabilityStateMonth(DateTime dt) {
     return AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
       dt,
-      salaryDay: _salarySpendingSalaryDay,
+      salaryDay: _salaryDay,
     );
   }
 
@@ -6477,7 +6483,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         body: <String, dynamic>{
           'action': 'asset.disposable_balance.compute',
           'as_of_date': _dateOnly(_now),
-          'salary_day': _salarySpendingSalaryDay,
+          'salary_day': _salaryDay,
           'enable_ai_actions': enableAiActions,
           'trace_id': 'asset-disposable-balance',
         },
@@ -8023,6 +8029,148 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // ローカル読込後にサーバ集約ミラーから復元する (端末間同期 / 集約優先)。
     await _restoreMainAccountFromMirror();
     unawaited(_refreshSyncSources());
+  }
+
+  /// 給料日(月次サイクル基準日)を起動時にローカルから読み、サーバミラーで上書きする。
+  Future<void> _loadSalaryDay() async {
+    try {
+      final day = await _salaryDayStore.load();
+      if (mounted && day != _salaryDay) {
+        setState(() => _salaryDay = day);
+      }
+    } catch (e) {
+      debugPrint('Error loading salary day: $e');
+    }
+    await _restoreSalaryDayFromMirror();
+  }
+
+  /// サーバミラー (pref_key: salary_day) があれば採用する(設定は稀更新 +
+  /// AI 計算へは毎回 payload で渡すため scalar は集約優先で実害小)。
+  Future<void> _restoreSalaryDayFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _salaryDayMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final restored = AssetSalaryDayStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || restored == _salaryDay) {
+        return;
+      }
+      setState(() => _salaryDay = restored);
+      _persistInBackground(
+        _salaryDayStore.save(restored),
+        'salary day restore save',
+      );
+      // サイクル基準が変わるため月次stateを読み直す。
+      unawaited(_loadAssetLiabilityMonthlyState());
+    } catch (e) {
+      debugPrint('salary day mirror restore failed: $e');
+    }
+  }
+
+  /// 給料日を `asset_pref_mirror` (pref_key: salary_day) へ 1 行 upsert する。
+  Future<void> _mirrorSalaryDay() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _salaryDayMirrorKey,
+        'value': AssetSalaryDayStore.encodeMirrorValue(_salaryDay),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('salary day mirror upsert failed: $e');
+    }
+  }
+
+  /// 給料日を更新して永続化 + ミラー + 月次state再読込(サイクル基準が変わる)。
+  Future<void> _setSalaryDay(int day) async {
+    final clamped = AssetSalaryDayStore.clampDay(day);
+    if (clamped == _salaryDay) {
+      return;
+    }
+    setState(() => _salaryDay = clamped);
+    _persistInBackground(_salaryDayStore.save(clamped), 'salary day save');
+    unawaited(_mirrorSalaryDay());
+    unawaited(_loadAssetLiabilityMonthlyState());
+  }
+
+  /// 給料日(月次サイクル基準日)を設定するダイアログ。
+  Future<void> _showSalaryDayDialog() async {
+    final controller = TextEditingController(text: _salaryDay.toString());
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        String? errorText;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('給料日(月次サイクル基準)'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '資産管理は給料日から翌給料日の前日までを1サイクルとして集計します'
+                    '(支払済みチェックもこのサイクルで自動リセット)。',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: '給料日 (1〜28)',
+                      errorText: errorText,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '※ 給料日を変えると当月の支払済みチェックが新しいサイクル基準で'
+                    '読み直されます。',
+                    style: TextStyle(fontSize: 11, height: 1.4),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('キャンセル'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final day = int.tryParse(controller.text.trim());
+                    if (day == null ||
+                        day < AssetSalaryDayStore.minSalaryDay ||
+                        day > AssetSalaryDayStore.maxSalaryDay) {
+                      setDialogState(
+                        () => errorText = '1〜28 の日付を入力してください',
+                      );
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop();
+                    unawaited(_setSalaryDay(day));
+                  },
+                  child: const Text('保存'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   /// メイン口座IDを `asset_pref_mirror` (pref_key: main_account_id) へ
@@ -9890,11 +10038,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   DateTime _nextSalaryDate() {
     final now = DateTime.now();
-    final thisMonth = DateTime(now.year, now.month, _salarySpendingSalaryDay);
+    final thisMonth = DateTime(now.year, now.month, _salaryDay);
     if (!now.isAfter(thisMonth)) {
       return thisMonth;
     }
-    return DateTime(now.year, now.month + 1, _salarySpendingSalaryDay);
+    return DateTime(now.year, now.month + 1, _salaryDay);
   }
 
   Future<void> _sendDisplayModeEvent({
@@ -10259,7 +10407,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (target == null) {
       return;
     }
-    const newDay = _salarySpendingSalaryDay + 1;
+    final newDay = _salaryDay + 1;
     _setDebtPaymentDayOverride(target, newDay);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -10278,7 +10426,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required List<AssetCalendarInflowInput> inflows,
     required double? startingCashBalance,
   }) {
-    const newDay = _salarySpendingSalaryDay + 1;
+    final newDay = _salaryDay + 1;
     final shifted = AssetPaymentCalendarService.buildMonth(
       month: _calendarMonth,
       flows: _recentFlows,
@@ -10297,7 +10445,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           else
             debt,
       ],
-      salaryDay: _salarySpendingSalaryDay,
+      salaryDay: _salaryDay,
       startingCashBalance: startingCashBalance,
       expectedInflows: inflows,
     );
@@ -10899,7 +11047,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityWorkbook? workbook,
     List<String> debtRowIds,
   ) {
-    const newDay = _salarySpendingSalaryDay + 1;
+    final newDay = _salaryDay + 1;
     var shiftedCount = 0;
     for (final id in debtRowIds) {
       final target = _debtRowById(workbook, id);
@@ -11497,7 +11645,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       flows: _recentFlows,
       subscriptions: monthSubscriptions,
       debts: debtInputs,
-      salaryDay: _salarySpendingSalaryDay,
+      salaryDay: _salaryDay,
       startingCashBalance: startingCashBalance,
       expectedInflows: inflowInputs,
     );
@@ -11544,8 +11692,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             subscriptions: monthSubscriptions,
             debts: debtInputs,
             candidateIds: comboIds,
-            shiftToDay: _salarySpendingSalaryDay + 1,
-            salaryDay: _salarySpendingSalaryDay,
+            shiftToDay: _salaryDay + 1,
+            salaryDay: _salaryDay,
             startingCashBalance: startingCashBalance,
             expectedInflows: inflowInputs,
           )
@@ -12278,7 +12426,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       referenceDate: _now,
       expenses: entries.expenses,
       incomes: entries.incomes,
-      salaryDay: _salarySpendingSalaryDay,
+      salaryDay: _salaryDay,
     );
   }
 
@@ -12308,11 +12456,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final nextPayday = _disposableBalanceService.nextPaydayFor(
       asOfDate: _now,
-      salaryDay: _salarySpendingSalaryDay,
+      salaryDay: _salaryDay,
     );
     final cycleStart = _disposableBalanceService.salaryCycleStartFor(
       asOfDate: _now,
-      salaryDay: _salarySpendingSalaryDay,
+      salaryDay: _salaryDay,
     );
     final cycleStartOnly = DateTime(
       cycleStart.year,
@@ -12402,7 +12550,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       payslips: payslips,
       recurringExpenses: recurringExpenses,
       debts: debts,
-      salaryDay: _salarySpendingSalaryDay,
+      salaryDay: _salaryDay,
     );
   }
 
@@ -19940,6 +20088,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 runSpacing: 4,
                 alignment: WrapAlignment.end,
                 children: [
+                  TextButton.icon(
+                    onPressed: () => unawaited(_showSalaryDayDialog()),
+                    icon: const Icon(Icons.event_available_outlined),
+                    label: Text('給料日 $_salaryDay日'),
+                  ),
                   TextButton.icon(
                     onPressed: _copyPreviousMonthSettings,
                     icon: const Icon(Icons.copy_all_outlined),
