@@ -13,6 +13,7 @@ import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -1560,6 +1561,34 @@ void main() {
           local.map((c) => c.id),
           containsAll(<String>['fc_denki', 'fc_gym']),
         );
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'recurring fixed cost card survives hiding the salary-breakdown section',
+      (tester) async {
+        // 給与内訳セクションを hidden にしても、固定費カードは専用セクションとして
+        // 残る (salaryBreakdown 相乗りの解消 = 候補#5)。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+          'asset_management_section_overrides_v1': jsonEncode(<String, String>{
+            AssetManagementSectionId.salaryBreakdown.storageId:
+                AssetManagementSectionVisibilityOverride.hidden.storageId,
+          }),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(home: AssetManagementPage()),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(RecurringFixedCostCard), findsOneWidget);
 
         await _unmount(tester);
       },
