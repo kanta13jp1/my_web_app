@@ -5,6 +5,39 @@ import 'package:my_web_app/services/asset_revolving_credit_service.dart';
 
 import '../models/asset_liability_workbook.dart';
 
+/// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) をデータ駆動で表す内部記述子。
+///
+/// 金額/口座ID/名称は [AssetLiabilityPlanningService] の `static const` を単一の
+/// 真実源として参照する。kind と既定の支払日 (25/25/22/12) は引き続き
+/// `_classifyAccount` 側に置く (ユーザー手入力の同名口座も同じ経路で分類するため)。
+class _BuiltInRecurringFixedCost {
+  final String accountId;
+  final String accountName;
+  final double monthlyAmount;
+  final AssetRecurringFixedCostCadence cadence;
+  final String? sourceAccountId;
+
+  const _BuiltInRecurringFixedCost({
+    required this.accountId,
+    required this.accountName,
+    required this.monthlyAmount,
+    this.cadence = AssetRecurringFixedCostCadence.monthly,
+    this.sourceAccountId,
+  });
+
+  /// 指定した月 (1-12) にこの既定固定費が発生するか (隔月は偶数/奇数月のみ)。
+  bool appliesToMonth(int month) {
+    switch (cadence) {
+      case AssetRecurringFixedCostCadence.monthly:
+        return true;
+      case AssetRecurringFixedCostCadence.bimonthlyEvenMonth:
+        return month.isEven;
+      case AssetRecurringFixedCostCadence.bimonthlyOddMonth:
+        return month.isOdd;
+    }
+  }
+}
+
 class AssetLiabilityPlanningService {
   static const String directPaymentMethodId = 'direct';
   static const String directPaymentLabel = '直接支払い';
@@ -84,6 +117,36 @@ class AssetLiabilityPlanningService {
   static const int auPayCardFundingTransferDay = 26;
   static const double auPayCardFundingTransferAmount = 80000;
 
+  /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) のデータ駆動定義。
+  /// `buildWorkbook(includeDefaultFixedPayments: true)` で当月該当かつ未計上の
+  /// ものだけを既定計上する。各値は上の `static const` を参照 (重複記述なし)。
+  static const List<_BuiltInRecurringFixedCost> _builtInRecurringFixedCosts =
+      <_BuiltInRecurringFixedCost>[
+    _BuiltInRecurringFixedCost(
+      accountId: kddiProviderAccountId,
+      accountName: kddiProviderAccountName,
+      monthlyAmount: kddiProviderMonthlyPaymentAmount,
+    ),
+    _BuiltInRecurringFixedCost(
+      accountId: rentAccountId,
+      accountName: rentAccountName,
+      monthlyAmount: rentMonthlyPaymentAmount,
+    ),
+    _BuiltInRecurringFixedCost(
+      accountId: waterBillAccountId,
+      accountName: waterBillAccountName,
+      monthlyAmount: waterBillBimonthlyPaymentAmount,
+      cadence: AssetRecurringFixedCostCadence.bimonthlyEvenMonth,
+      sourceAccountId: smbcOtsukaBranchAccountId,
+    ),
+    _BuiltInRecurringFixedCost(
+      accountId: gasBillAccountId,
+      accountName: gasBillAccountName,
+      monthlyAmount: gasBillMonthlyPaymentAmount,
+      sourceAccountId: smbcOtsukaBranchAccountId,
+    ),
+  ];
+
   const AssetLiabilityPlanningService();
 
   AssetLiabilityWorkbook buildWorkbook({
@@ -113,35 +176,27 @@ class AssetLiabilityPlanningService {
         const <AssetRecurringFixedCost>[],
     bool includeDefaultFixedPayments = false,
   }) {
-    final shouldIncludeDefaultKddiProvider =
-        includeDefaultFixedPayments && !_hasKddiProvider(latestSnapshot);
-    final shouldIncludeDefaultRent =
-        includeDefaultFixedPayments && !_hasRent(latestSnapshot);
-    // 水道代は2ヶ月に1回(偶数月の22日)。偶数月のみ既定で計上する。
-    final shouldIncludeDefaultWaterBill = includeDefaultFixedPayments &&
-        baseDate.month.isEven &&
-        !_hasWaterBill(latestSnapshot);
-    // ガス代は毎月12日。未計上時のみ既定で計上する。
-    final shouldIncludeDefaultGasBill =
-        includeDefaultFixedPayments && !_hasGasBill(latestSnapshot);
-    final effectiveSnapshot = shouldIncludeDefaultKddiProvider ||
-            shouldIncludeDefaultRent ||
-            shouldIncludeDefaultWaterBill ||
-            shouldIncludeDefaultGasBill
-        ? _withDefaultFixedPayments(
+    // 既定固定費 (家賃/KDDI/水道/ガス) を当月該当の周期かつ未計上 (残高<0 の同 ID
+    // 負債が無い) のものだけ抽出する。残高<0 限定の判定で正残高の同名資産
+    // (家賃保証金/KDDIポイント/ガスト 等) が既定を誤抑止しないようにする。
+    final applicableDefaultFixedCosts = includeDefaultFixedPayments
+        ? _builtInRecurringFixedCosts
+            .where(
+              (cost) =>
+                  cost.appliesToMonth(baseDate.month) &&
+                  !_hasLiabilityAccountFor(latestSnapshot, cost.accountId),
+            )
+            .toList(growable: false)
+        : const <_BuiltInRecurringFixedCost>[];
+    final effectiveSnapshot = applicableDefaultFixedCosts.isEmpty
+        ? latestSnapshot
+        : _withDefaultFixedPayments(
             latestSnapshot,
-            includeKddiProvider: shouldIncludeDefaultKddiProvider,
-            includeRent: shouldIncludeDefaultRent,
-            includeWaterBill: shouldIncludeDefaultWaterBill,
-            includeGasBill: shouldIncludeDefaultGasBill,
-          )
-        : latestSnapshot;
+            applicableDefaultFixedCosts,
+          );
     final effectiveMonthlyPaymentOverrides = _withDefaultFixedPaymentOverrides(
       monthlyPaymentOverrides: monthlyPaymentOverrides,
-      includeDefaultKddiProvider: shouldIncludeDefaultKddiProvider,
-      includeDefaultRent: shouldIncludeDefaultRent,
-      includeDefaultWaterBill: shouldIncludeDefaultWaterBill,
-      includeDefaultGasBill: shouldIncludeDefaultGasBill,
+      applicableDefaults: applicableDefaultFixedCosts,
     );
     final accounts = effectiveSnapshot.entries
         .where((entry) => entry.key.trim().isNotEmpty && entry.value != 0)
@@ -195,11 +250,9 @@ class AssetLiabilityPlanningService {
       accountsById: accountsById,
     );
     final effectivePaymentSourceAccountIds = <String, String>{
-      // 水道代・ガス代の既定振替元は三井住友銀行大塚支店(ユーザー設定があれば下で上書き)。
-      if (shouldIncludeDefaultWaterBill)
-        waterBillAccountId: smbcOtsukaBranchAccountId,
-      if (shouldIncludeDefaultGasBill)
-        gasBillAccountId: smbcOtsukaBranchAccountId,
+      // 既定固定費 (水道/ガス) の既定振替元は三井住友銀行大塚支店(ユーザー設定があれば下で上書き)。
+      for (final cost in applicableDefaultFixedCosts)
+        if (cost.sourceAccountId != null) cost.accountId: cost.sourceAccountId!,
       // UI 登録の定期固定費の振替元 (任意 / ユーザー個別設定があれば下で上書き)。
       for (final injected in injectedFixedCosts)
         if (injected.sourceAccountId != null &&
@@ -1838,55 +1891,28 @@ class AssetLiabilityPlanningService {
   }
 
   Map<String, double> _withDefaultFixedPayments(
-    Map<String, double> latestSnapshot, {
-    required bool includeKddiProvider,
-    required bool includeRent,
-    required bool includeWaterBill,
-    required bool includeGasBill,
-  }) {
+    Map<String, double> latestSnapshot,
+    List<_BuiltInRecurringFixedCost> applicableDefaults,
+  ) {
     final result = Map<String, double>.from(latestSnapshot);
-    if (includeKddiProvider && !_hasKddiProvider(result)) {
-      result[kddiProviderAccountName] = -kddiProviderMonthlyPaymentAmount;
-    }
-    if (includeRent && !_hasRent(result)) {
-      result[rentAccountName] = -rentMonthlyPaymentAmount;
-    }
-    if (includeWaterBill && !_hasWaterBill(result)) {
-      result[waterBillAccountName] = -waterBillBimonthlyPaymentAmount;
-    }
-    if (includeGasBill && !_hasGasBill(result)) {
-      result[gasBillAccountName] = -gasBillMonthlyPaymentAmount;
+    for (final cost in applicableDefaults) {
+      result[cost.accountName] = -cost.monthlyAmount;
     }
     return result;
   }
 
   Map<String, double> _withDefaultFixedPaymentOverrides({
     required Map<String, double> monthlyPaymentOverrides,
-    required bool includeDefaultKddiProvider,
-    required bool includeDefaultRent,
-    required bool includeDefaultWaterBill,
-    required bool includeDefaultGasBill,
+    required List<_BuiltInRecurringFixedCost> applicableDefaults,
   }) {
     final result = <String, double>{...monthlyPaymentOverrides};
-    if (includeDefaultKddiProvider &&
-        !result.containsKey(kddiProviderAccountId) &&
-        !result.containsKey(kddiProviderAccountName)) {
-      result[kddiProviderAccountId] = kddiProviderMonthlyPaymentAmount;
-    }
-    if (includeDefaultRent &&
-        !result.containsKey(rentAccountId) &&
-        !result.containsKey(rentAccountName)) {
-      result[rentAccountId] = rentMonthlyPaymentAmount;
-    }
-    if (includeDefaultWaterBill &&
-        !result.containsKey(waterBillAccountId) &&
-        !result.containsKey(waterBillAccountName)) {
-      result[waterBillAccountId] = waterBillBimonthlyPaymentAmount;
-    }
-    if (includeDefaultGasBill &&
-        !result.containsKey(gasBillAccountId) &&
-        !result.containsKey(gasBillAccountName)) {
-      result[gasBillAccountId] = gasBillMonthlyPaymentAmount;
+    for (final cost in applicableDefaults) {
+      // ID キーでも名称キーでもユーザー上書きが無いときだけ既定額を補う
+      // (名称キー上書きを既定額で shadow しないための両キーガード)。
+      if (!result.containsKey(cost.accountId) &&
+          !result.containsKey(cost.accountName)) {
+        result[cost.accountId] = cost.monthlyAmount;
+      }
     }
     return result;
   }
@@ -1899,22 +1925,6 @@ class AssetLiabilityPlanningService {
     return snapshot.entries.any(
       (entry) => entry.value < 0 && _accountIdForName(entry.key) == accountId,
     );
-  }
-
-  bool _hasKddiProvider(Map<String, double> snapshot) {
-    return _hasLiabilityAccountFor(snapshot, kddiProviderAccountId);
-  }
-
-  bool _hasRent(Map<String, double> snapshot) {
-    return _hasLiabilityAccountFor(snapshot, rentAccountId);
-  }
-
-  bool _hasWaterBill(Map<String, double> snapshot) {
-    return _hasLiabilityAccountFor(snapshot, waterBillAccountId);
-  }
-
-  bool _hasGasBill(Map<String, double> snapshot) {
-    return _hasLiabilityAccountFor(snapshot, gasBillAccountId);
   }
 
   String _fallbackAccountId(String name) {
