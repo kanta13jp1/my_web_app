@@ -21,6 +21,19 @@ void main() {
     expect(await store.load(prefs: prefs), isEmpty);
   });
 
+  test('distinct prefsKey isolates expense and income ignore sets', () async {
+    final prefs = await SharedPreferences.getInstance();
+    const incomeStore = AssetRecurringSuggestionIgnoreStore(
+      prefsKey: 'asset_recurring_income_ignored_v1',
+    );
+
+    await store.save(<String>{'電気代'}, prefs: prefs);
+    await incomeStore.save(<String>{'給料'}, prefs: prefs);
+
+    expect(await store.load(prefs: prefs), <String>{'電気代'});
+    expect(await incomeStore.load(prefs: prefs), <String>{'給料'});
+  });
+
   test('encodeMirrorValue sorts and drops blank labels', () {
     expect(
       AssetRecurringSuggestionIgnoreStore.encodeMirrorValue(<String>{

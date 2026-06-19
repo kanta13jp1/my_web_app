@@ -416,8 +416,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
   List<AssetRecurringFixedCost> _recurringFixedCosts =
       <AssetRecurringFixedCost>[];
-  // 定期取引の自動検出で「無視」した正規化ラベル(再提案しない)。
+  // 定期取引の自動検出で「無視」した正規化ラベル(再提案しない / 支出側)。
   Set<String> _ignoredRecurringLabels = <String>{};
+  // 定期入金の自動検出で「無視」した正規化ラベル(再提案しない / 収入側)。
+  Set<String> _ignoredRecurringIncomeLabels = <String>{};
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
@@ -599,6 +601,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       const AssetRecurringSuggestionIgnoreStore();
   static const String _recurringIgnoredMirrorKey =
       'recurring_suggestion_ignored';
+  final AssetRecurringSuggestionIgnoreStore _recurringIncomeIgnoreStore =
+      const AssetRecurringSuggestionIgnoreStore(
+    prefsKey: 'asset_recurring_income_ignored_v1',
+  );
+  static const String _recurringIncomeIgnoredMirrorKey =
+      'recurring_income_suggestion_ignored';
   final AssetCategoryBudgetStore _categoryBudgetStore =
       const AssetCategoryBudgetStore();
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
@@ -715,6 +723,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
     unawaited(_loadRecurringIgnored());
+    unawaited(_loadRecurringIncomeIgnored());
     unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
@@ -8477,6 +8486,96 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_mirrorRecurringIgnored());
   }
 
+  /// 起動時に収入の「無視」集合をローカルから読み、サーバミラーと union する。
+  Future<void> _loadRecurringIncomeIgnored() async {
+    try {
+      final ignored = await _recurringIncomeIgnoreStore.load();
+      if (mounted && ignored.isNotEmpty) {
+        setState(() => _ignoredRecurringIncomeLabels = ignored);
+      }
+    } catch (e) {
+      debugPrint('Error loading recurring income ignored: $e');
+    }
+    await _restoreRecurringIncomeIgnoredFromMirror();
+  }
+
+  /// サーバミラー (pref_key: recurring_income_suggestion_ignored) を取り込み、
+  /// ローカル集合と union する(無視は単調増加なので union が安全)。
+  Future<void> _restoreRecurringIncomeIgnoredFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _recurringIncomeIgnoredMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final serverIgnored =
+          AssetRecurringSuggestionIgnoreStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || serverIgnored.isEmpty) {
+        return;
+      }
+      final merged = <String>{
+        ..._ignoredRecurringIncomeLabels,
+        ...serverIgnored,
+      };
+      if (merged.length == _ignoredRecurringIncomeLabels.length) {
+        return; // サーバに新規無視なし。
+      }
+      setState(() => _ignoredRecurringIncomeLabels = merged);
+      _persistInBackground(
+        _recurringIncomeIgnoreStore.save(merged),
+        'recurring income ignored restore save',
+      );
+    } catch (e) {
+      debugPrint('recurring income ignored mirror restore failed: $e');
+    }
+  }
+
+  /// 収入の「無視」集合の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorRecurringIncomeIgnored() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _recurringIncomeIgnoredMirrorKey,
+        'value': AssetRecurringSuggestionIgnoreStore.encodeMirrorValue(
+          _ignoredRecurringIncomeLabels,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('recurring income ignored mirror upsert failed: $e');
+    }
+  }
+
+  /// 検出された定期入金を「無視」集合へ追加して再提案を止める(永続化 + ミラー)。
+  void _ignoreDetectedRecurringIncome(DetectedRecurringTransaction detected) {
+    final label = _normalizeRecurringLabel(detected.label);
+    if (label.isEmpty || _ignoredRecurringIncomeLabels.contains(label)) {
+      return;
+    }
+    setState(() {
+      _ignoredRecurringIncomeLabels = <String>{
+        ..._ignoredRecurringIncomeLabels,
+        label,
+      };
+    });
+    _persistInBackground(
+      _recurringIncomeIgnoreStore.save(_ignoredRecurringIncomeLabels),
+      'recurring income ignored save',
+    );
+    unawaited(_mirrorRecurringIncomeIgnored());
+  }
+
   void _saveRecurringFixedCost(AssetRecurringFixedCost cost) {
     setState(() {
       final next = List<AssetRecurringFixedCost>.from(_recurringFixedCosts);
@@ -8769,6 +8868,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (label.isEmpty) {
         return true;
       }
+      if (_ignoredRecurringIncomeLabels.contains(label)) {
+        return false;
+      }
       for (final name in registered) {
         if (label.contains(name) || name.contains(label)) {
           return false;
@@ -8821,6 +8923,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       onRegister: (detected) => unawaited(
         _registerDetectedRecurringIncome(detected, workbook),
       ),
+      onIgnore: _ignoreDetectedRecurringIncome,
     );
   }
 
