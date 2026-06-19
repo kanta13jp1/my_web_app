@@ -3,7 +3,7 @@ title: "1 ユーザー要望を 3 Issue に分解して 1 セッションで配�
 emoji: "🧩"
 type: "tech"
 topics: ["githubissues", "productmanagement", "triage", "workflow", "indiedev"]
-published: false
+published: true
 ---
 
 ## TL;DR
