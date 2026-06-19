@@ -1553,6 +1553,24 @@ void main() {
       expect(gas.scheduledPaymentAmount, 5800);
     });
 
+    test('honors a name-keyed override for a default fixed cost', () {
+      // 名称キー (口座ID ではなく口座名) の今月上書きでも既定額で shadow せず
+      // ユーザー額を採用する。データ駆動化後も両キーガードを保つ回帰ピン。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'メインバンク': 200000},
+        baseDate: DateTime(2026, 6, 14),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.rentAccountName: 70000,
+        },
+        includeDefaultFixedPayments: true,
+      );
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+      );
+      expect(rent.scheduledPaymentAmount, 70000);
+      expect(rent.paymentAmountEstimated, isFalse);
+    });
+
     test(
       'positive-balance accounts sharing a substring do not suppress defaults',
       () {

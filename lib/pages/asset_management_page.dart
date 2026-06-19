@@ -40,6 +40,7 @@ import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
+import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
@@ -53,6 +54,7 @@ import 'package:my_web_app/services/asset_sync_status.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_unknown_expense_rule_service.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
+import 'package:my_web_app/services/asset_waste_training_snapshot_inputs.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
@@ -194,6 +196,16 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<AssetRecurringFixedCost>? debugInitialRecurringFixedCosts;
 
+  /// テスト専用: 定期固定費の集約ミラー値 (`{id: {...}}`) を注入し、端末間同期
+  /// (起動時の union マージ復元) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugRecurringFixedCostsMirror;
+
+  /// テスト専用: 定期固定費の削除トゥームストーン値 (`{'ids': [...]}`) を注入し、
+  /// 削除伝播 (他端末で削除→ローカルから除去) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugRecurringFixedCostsDeletedMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -216,6 +228,8 @@ class AssetManagementPage extends StatefulWidget {
     this.debugRevolvingDeletedMirror,
     this.debugWatchlistDeletedMirror,
     this.debugInitialRecurringFixedCosts,
+    this.debugRecurringFixedCostsMirror,
+    this.debugRecurringFixedCostsDeletedMirror,
   });
 
   @override
@@ -414,6 +428,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
   List<AssetRecurringFixedCost> _recurringFixedCosts =
       <AssetRecurringFixedCost>[];
+  // 定期取引の自動検出で「無視」した正規化ラベル(再提案しない / 支出側)。
+  Set<String> _ignoredRecurringLabels = <String>{};
+  // 定期入金の自動検出で「無視」した正規化ラベル(再提案しない / 収入側)。
+  Set<String> _ignoredRecurringIncomeLabels = <String>{};
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
@@ -591,6 +609,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final AssetRecurringFixedCostStore _recurringFixedCostStore =
       const AssetRecurringFixedCostStore();
   static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
+  static const String _recurringFixedCostsDeletedMirrorKey =
+      'recurring_fixed_costs_deleted';
+  final AssetRecurringSuggestionIgnoreStore _recurringIgnoreStore =
+      const AssetRecurringSuggestionIgnoreStore();
+  static const String _recurringIgnoredMirrorKey =
+      'recurring_suggestion_ignored';
+  final AssetRecurringSuggestionIgnoreStore _recurringIncomeIgnoreStore =
+      const AssetRecurringSuggestionIgnoreStore(
+    prefsKey: 'asset_recurring_income_ignored_v1',
+  );
+  static const String _recurringIncomeIgnoredMirrorKey =
+      'recurring_income_suggestion_ignored';
   final AssetCategoryBudgetStore _categoryBudgetStore =
       const AssetCategoryBudgetStore();
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
@@ -706,6 +736,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
+    unawaited(_loadRecurringIgnored());
+    unawaited(_loadRecurringIncomeIgnored());
     unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
@@ -1133,52 +1165,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   AssetWasteTrainingSnapshot _buildWasteTrainingSnapshot() {
-    final currentMonth = _monthStart(_now);
-    final flows = _flowsForMonth(currentMonth);
-    var totalExpense = 0;
-    var wasteExpense = 0;
-    var expenseEntryCount = 0;
-    var wasteEntryCount = 0;
-    final wasteDateKeys = <String>{};
-
-    for (final item in flows) {
-      final actionType = item['action_type']?.toString() ?? '';
-      if (!_isExpenseActionType(actionType)) {
-        continue;
-      }
-      final amount = ((item['amount'] as num?)?.toDouble() ?? 0).abs().round();
-      totalExpense += amount;
-      expenseEntryCount += 1;
-
-      final description = item['description']?.toString() ?? '';
-      final parsed = _parseFlowDescription(description, actionType: actionType);
-      if (parsed.wasteCategory == null) {
-        continue;
-      }
-
-      wasteExpense += amount;
-      wasteEntryCount += 1;
-      final occurredAt = DateTime.tryParse(
-        item['occurred_at']?.toString() ?? '',
-      )?.toLocal();
-      if (occurredAt != null) {
-        wasteDateKeys.add(_dateOnly(occurredAt));
-      }
-    }
-
-    final elapsedDays = _isSameMonth(currentMonth, _now)
-        ? _now.day
-        : DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
     final lockdown = _debtLockdownSnapshot;
-    return AssetWasteTrainingSnapshot(
-      month: currentMonth,
-      monitoredAt: _now,
-      totalExpense: totalExpense,
-      wasteExpense: wasteExpense,
-      expenseEntryCount: expenseEntryCount,
-      wasteEntryCount: wasteEntryCount,
-      noWasteDays: max(0, elapsedDays - wasteDateKeys.length),
-      elapsedDays: max(1, elapsedDays),
+    return AssetWasteTrainingSnapshotInputs.build(
+      monthFlows: _flowsForMonth(_monthStart(_now)),
+      now: _now,
+      isExpense: _isExpenseActionType,
+      wasteCategoryOf: (description, actionType) => _parseFlowDescription(
+        description,
+        actionType: actionType,
+      ).wasteCategory,
       ruleCompletedCount: lockdown?.completedRuleCount ?? 0,
       ruleTargetCount:
           lockdown?.rules.length ?? DebtLockdownService.builtinRules.length,
@@ -1564,6 +1559,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
       incomePlans: List<AssetLiabilityIncomePlan>.from(_monthlyIncomePlans),
       transferTasks: List<AssetLiabilityTransferTask>.from(_transferTasks),
+      // 端末間 last-write-wins 用に、保存(=編集)時刻を毎回刻む。
+      updatedAt: DateTime.now(),
     );
   }
 
@@ -3586,16 +3583,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _showRecurringIncomeTemplateDialog(
     AssetLiabilityWorkbook workbook, {
     AssetLiabilityRecurringIncomeTemplate? existing,
+    AssetLiabilityRecurringIncomeTemplate? prefill,
   }) async {
-    final nameController = TextEditingController(text: existing?.name ?? '');
+    // existing(編集)優先。なければ prefill(検出結果からの追加)を初期値に使う。
+    final initial = existing ?? prefill;
+    final nameController = TextEditingController(text: initial?.name ?? '');
     final amountController = TextEditingController(
-      text: existing == null ? '' : existing.amount.round().toString(),
+      text: initial == null ? '' : initial.amount.round().toString(),
     );
     final dayController = TextEditingController(
-      text: existing == null ? '' : existing.dayOfMonth.toString(),
+      text: initial == null ? '' : initial.dayOfMonth.toString(),
     );
-    var selectedDestinationId = existing?.destinationAccountId;
     final destinationOptions = _paymentSourceAccountOptions(workbook);
+    // 候補に無い入金先IDは保持しない(Dropdown の値整合を保つ)。
+    final destinationIds = destinationOptions.map((a) => a.id).toSet();
+    var selectedDestinationId =
+        destinationIds.contains(initial?.destinationAccountId)
+            ? initial?.destinationAccountId
+            : null;
 
     await showDialog<void>(
       context: context,
@@ -6816,53 +6821,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return WasteTrackingService.attachWasteCategory(description, wasteCategory);
   }
 
-  ({
-    String source,
-    String destination,
-    String memo,
-    String? wasteCategory,
-    bool isTransfer,
-  }) _parseFlowDescription(String description, {String? actionType}) {
+  FlowDescriptionParts _parseFlowDescription(
+    String description, {
+    String? actionType,
+  }) {
+    // メタデータマーカー除去だけページ固有正規表現に依存するため残し、
+    // パース本体は純関数サービスへ委譲する(振る舞い不変)。
     final normalizedDescription = _stripFlowMetadataMarkers(description.trim());
-    final isExpense = _isExpenseActionType(actionType ?? '');
-    final wasteCategory = isExpense
-        ? WasteTrackingService.extractWasteCategory(normalizedDescription)
-        : null;
-    final normalized = isExpense
-        ? WasteTrackingService.stripWasteMarker(normalizedDescription)
-        : normalizedDescription;
-    if (_isTransferActionType(actionType ?? '')) {
-      final transferMatch = RegExp(
-        r'^(\[[^\]]+\])\s*->\s*(\[[^\]]+\])(?:\s+(.*))?$',
-      ).firstMatch(normalized);
-      if (transferMatch != null) {
-        return (
-          source: transferMatch.group(1)?.trim() ?? '',
-          destination: transferMatch.group(2)?.trim() ?? '',
-          memo: transferMatch.group(3)?.trim() ?? '',
-          wasteCategory: wasteCategory,
-          isTransfer: true,
-        );
-      }
-    }
-
-    final match = RegExp(r'^(\[[^\]]+\])\s*(.*)$').firstMatch(normalized);
-    if (match != null) {
-      return (
-        source: match.group(1)?.trim() ?? '',
-        destination: '',
-        memo: match.group(2)?.trim() ?? '',
-        wasteCategory: wasteCategory,
-        isTransfer: _isTransferActionType(actionType ?? ''),
-      );
-    }
-
-    return (
-      source: '',
-      destination: '',
-      memo: normalized,
-      wasteCategory: wasteCategory,
-      isTransfer: _isTransferActionType(actionType ?? ''),
+    return AssetFlowDescriptionService.parse(
+      normalizedDescription,
+      actionType: actionType,
     );
   }
 
@@ -7967,6 +7935,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildRecurringFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
               _buildRecurringTransactionSuggestionCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+              _buildRecurringIncomeSuggestionCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
@@ -8375,50 +8345,130 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 起動時にローカルから読み、空ならサーバ集約ミラーから復元する。
   Future<void> _loadRecurringFixedCosts() async {
-    if (widget.debugInitialRecurringFixedCosts != null) {
-      // テスト注入時はネットワーク読込をスキップ (initState で設定済み)。
-      return;
-    }
-    try {
-      final costs = await _recurringFixedCostStore.load();
-      if (mounted && costs.isNotEmpty) {
-        setState(() => _recurringFixedCosts = costs);
+    if (widget.debugInitialRecurringFixedCosts == null) {
+      try {
+        final costs = await _recurringFixedCostStore.load();
+        if (mounted && costs.isNotEmpty) {
+          setState(() => _recurringFixedCosts = costs);
+        }
+      } catch (e) {
+        debugPrint('Error loading recurring fixed costs: $e');
       }
-    } catch (e) {
-      debugPrint('Error loading recurring fixed costs: $e');
     }
+    // 先に他端末の削除トゥームストーンを取込んでから復元する (review #1 直列化)。
+    await _pullRecurringFixedCostDeleted();
     await _restoreRecurringFixedCostsFromMirror();
   }
 
-  /// サーバ集約ミラー (pref_key: recurring_fixed_costs) から復元する。ローカルに
-  /// 既に登録があれば上書きしない (オフライン編集を握り潰さない安全側 / 削除の
-  /// クロス端末伝播は将来 tombstone 化で対応 / リボ設定 v1 と同方針)。
+  /// サーバ集約ミラー (pref_key: recurring_fixed_costs) から復元する。リボ設定と
+  /// 同じ tombstone-aware union マージ: ローカルに無い id はサーバから追加 (additive)、
+  /// 削除トゥームストーン済み id は復活させず、衝突 id はフラグ既定 OFF ならローカル
+  /// 優先 (LWW フラグ ON 時のみサーバ採用・dirty キーは保護)。
   Future<void> _restoreRecurringFixedCostsFromMirror() async {
-    if (_supabase.auth.currentUser == null) {
+    final debugMirror = widget.debugRecurringFixedCostsMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
-    if (_recurringFixedCosts.isNotEmpty) {
-      return;
-    }
+    final localBefore = <String, AssetRecurringFixedCost>{
+      for (final cost in _recurringFixedCosts) cost.id: cost,
+    };
+    final hasLocal = localBefore.isNotEmpty;
+    // 削除トゥームストーン: 復活させない / バックフィルしない。
+    final tombstoned = _recurringFixedCostTombstones.activeIds(
+      await SharedPreferences.getInstance(),
+    );
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _recurringFixedCostsMirrorKey);
-      if (rows.isEmpty) {
+      final List<AssetRecurringFixedCost> serverList;
+      final DateTime? mirrorUpdatedAt;
+      if (debugMirror != null) {
+        serverList =
+            AssetRecurringFixedCostStore.decodeMirrorValue(debugMirror);
+        mirrorUpdatedAt = DateTime.now().toUtc();
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _recurringFixedCostsMirrorKey);
+        if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル (他端末へ同期させる)。
+          if (hasLocal) {
+            unawaited(_mirrorRecurringFixedCosts());
+          }
+          return;
+        }
+        serverList = AssetRecurringFixedCostStore.decodeMirrorValue(
+          rows.first['value'],
+        );
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
+      }
+      if (!mounted) {
         return;
       }
-      final serverCosts = AssetRecurringFixedCostStore.decodeMirrorValue(
-        rows.first['value'],
+      final serverConfigs = <String, AssetRecurringFixedCost>{
+        for (final cost in serverList) cost.id: cost,
+      };
+      final adoptConflicts = await _shouldAdoptMirror(
+        prefKey: _recurringFixedCostsMirrorKey,
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      if (!mounted || serverCosts.isEmpty) {
-        return;
+      final merged = Map<String, AssetRecurringFixedCost>.from(localBefore);
+      var changed = false;
+      // 削除トゥームストーン済み id はローカルからも除く (clear 伝播 / 復活防止)。
+      merged.removeWhere((key, _) {
+        if (tombstoned.contains(key)) {
+          changed = true;
+          return true;
+        }
+        return false;
+      });
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _recurringFixedCostsMirrorKey,
+      );
+      serverConfigs.forEach((key, cost) {
+        if (tombstoned.contains(key)) {
+          return;
+        }
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) id は、ドメイン全体
+        // adopt の巻き添えで上書きしない (同一 id 衝突はローカル優先)。フラグ OFF は
+        // merged が local 由来なので !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
+          merged[key] = cost;
+          changed = true;
+        }
+      });
+      if (changed && mounted) {
+        final nextList = merged.values.toList()
+          ..sort((a, b) {
+            final byDay = a.paymentDay.compareTo(b.paymentDay);
+            return byDay != 0 ? byDay : a.name.compareTo(b.name);
+          });
+        setState(() {
+          _recurringFixedCosts = nextList;
+        });
+        _persistInBackground(
+          _recurringFixedCostStore.save(nextList),
+          'recurring fixed cost restore save',
+        );
+        // additive 追加 / tombstone 除去でも時刻を整合 (ローカルが新しければ退行なし)。
+        unawaited(
+          _realignMirrorTimestamp(
+            _recurringFixedCostsMirrorKey,
+            mirrorUpdatedAt,
+          ),
+        );
       }
-      setState(() => _recurringFixedCosts = serverCosts);
-      _persistInBackground(
-        _recurringFixedCostStore.save(serverCosts),
-        'recurring fixed cost restore save',
+      // ローカルにあってサーバに無い id は、マージ結果をサーバへバックフィルし、
+      // サーバを全端末の和集合に保つ。
+      final localHasExtra = localBefore.keys.any(
+        (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
       );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorRecurringFixedCosts());
+      }
     } catch (e) {
       debugPrint('recurring fixed cost mirror restore failed: $e');
     }
@@ -8426,6 +8476,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 定期固定費の全量を `asset_pref_mirror` へ 1 行 upsert する。
   Future<void> _mirrorRecurringFixedCosts() async {
+    unawaited(_syncTimestampStore.markChanged(_recurringFixedCostsMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return;
@@ -8439,9 +8490,277 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      // 全量 upsert 成功 = 全 id 同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain(_recurringFixedCostsMirrorKey);
     } catch (e) {
       debugPrint('recurring fixed cost mirror upsert failed: $e');
     }
+  }
+
+  /// 削除した定期固定費のトゥームストーン。union マージ/backfill での復活を防ぎ、
+  /// 他端末へ削除を伝播する (リボ設定と同じパターン)。
+  static const MirrorTombstoneStore _recurringFixedCostTombstones =
+      MirrorTombstoneStore(
+    storageKey: 'recurring_fixed_costs_deleted_v1',
+  );
+
+  /// 削除はトゥームストーン化、再追加 (同 id) は解除する。
+  Future<void> _recordRecurringFixedCostTombstone(
+    String id, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _recurringFixedCostTombstones.addId(store, id);
+    } else {
+      await _recurringFixedCostTombstones.removeId(store, id);
+    }
+    unawaited(_mirrorRecurringFixedCostsDeleted());
+  }
+
+  /// 定期固定費の削除トゥームストーンをサーバへ反映 (他端末伝播)。
+  Future<void> _mirrorRecurringFixedCostsDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _recurringFixedCostTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _recurringFixedCostsDeletedMirrorKey,
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('recurring fixed cost tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除された定期固定費を取り込み、ローカルからも除去する。
+  Future<void> _pullRecurringFixedCostDeleted() async {
+    final debugMirror = widget.debugRecurringFixedCostsDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _recurringFixedCostsDeletedMirrorKey);
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _recurringFixedCostTombstones.mergeRemoteIds(
+        store,
+        ids,
+      );
+      final next = _recurringFixedCosts
+          .where((cost) => !incoming.contains(cost.id))
+          .toList();
+      if (next.length == _recurringFixedCosts.length || !mounted) {
+        return;
+      }
+      setState(() {
+        _recurringFixedCosts = next;
+      });
+      _persistInBackground(
+        _recurringFixedCostStore.save(next),
+        'recurring fixed cost tombstone pull save',
+      );
+    } catch (e) {
+      debugPrint('recurring fixed cost tombstone pull failed: $e');
+    }
+  }
+
+  /// 起動時に「無視」集合をローカルから読み、サーバミラーと union する。
+  Future<void> _loadRecurringIgnored() async {
+    try {
+      final ignored = await _recurringIgnoreStore.load();
+      if (mounted && ignored.isNotEmpty) {
+        setState(() => _ignoredRecurringLabels = ignored);
+      }
+    } catch (e) {
+      debugPrint('Error loading recurring ignored: $e');
+    }
+    await _restoreRecurringIgnoredFromMirror();
+  }
+
+  /// サーバミラー (pref_key: recurring_suggestion_ignored) を取り込み、ローカル集合と
+  /// union する(無視は単調増加なので union が安全)。
+  Future<void> _restoreRecurringIgnoredFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _recurringIgnoredMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final serverIgnored =
+          AssetRecurringSuggestionIgnoreStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || serverIgnored.isEmpty) {
+        return;
+      }
+      final merged = <String>{..._ignoredRecurringLabels, ...serverIgnored};
+      if (merged.length == _ignoredRecurringLabels.length) {
+        return; // サーバに新規無視なし。
+      }
+      setState(() => _ignoredRecurringLabels = merged);
+      _persistInBackground(
+        _recurringIgnoreStore.save(merged),
+        'recurring ignored restore save',
+      );
+    } catch (e) {
+      debugPrint('recurring ignored mirror restore failed: $e');
+    }
+  }
+
+  /// 「無視」集合の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorRecurringIgnored() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _recurringIgnoredMirrorKey,
+        'value': AssetRecurringSuggestionIgnoreStore.encodeMirrorValue(
+          _ignoredRecurringLabels,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('recurring ignored mirror upsert failed: $e');
+    }
+  }
+
+  /// 検出候補を「無視」集合へ追加して再提案を止める(永続化 + ミラー)。
+  void _ignoreDetectedRecurringTransaction(
+    DetectedRecurringTransaction detected,
+  ) {
+    final label = _normalizeRecurringLabel(detected.label);
+    if (label.isEmpty || _ignoredRecurringLabels.contains(label)) {
+      return;
+    }
+    setState(() {
+      _ignoredRecurringLabels = <String>{..._ignoredRecurringLabels, label};
+    });
+    _persistInBackground(
+      _recurringIgnoreStore.save(_ignoredRecurringLabels),
+      'recurring ignored save',
+    );
+    unawaited(_mirrorRecurringIgnored());
+  }
+
+  /// 起動時に収入の「無視」集合をローカルから読み、サーバミラーと union する。
+  Future<void> _loadRecurringIncomeIgnored() async {
+    try {
+      final ignored = await _recurringIncomeIgnoreStore.load();
+      if (mounted && ignored.isNotEmpty) {
+        setState(() => _ignoredRecurringIncomeLabels = ignored);
+      }
+    } catch (e) {
+      debugPrint('Error loading recurring income ignored: $e');
+    }
+    await _restoreRecurringIncomeIgnoredFromMirror();
+  }
+
+  /// サーバミラー (pref_key: recurring_income_suggestion_ignored) を取り込み、
+  /// ローカル集合と union する(無視は単調増加なので union が安全)。
+  Future<void> _restoreRecurringIncomeIgnoredFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _recurringIncomeIgnoredMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final serverIgnored =
+          AssetRecurringSuggestionIgnoreStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || serverIgnored.isEmpty) {
+        return;
+      }
+      final merged = <String>{
+        ..._ignoredRecurringIncomeLabels,
+        ...serverIgnored,
+      };
+      if (merged.length == _ignoredRecurringIncomeLabels.length) {
+        return; // サーバに新規無視なし。
+      }
+      setState(() => _ignoredRecurringIncomeLabels = merged);
+      _persistInBackground(
+        _recurringIncomeIgnoreStore.save(merged),
+        'recurring income ignored restore save',
+      );
+    } catch (e) {
+      debugPrint('recurring income ignored mirror restore failed: $e');
+    }
+  }
+
+  /// 収入の「無視」集合の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorRecurringIncomeIgnored() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _recurringIncomeIgnoredMirrorKey,
+        'value': AssetRecurringSuggestionIgnoreStore.encodeMirrorValue(
+          _ignoredRecurringIncomeLabels,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('recurring income ignored mirror upsert failed: $e');
+    }
+  }
+
+  /// 検出された定期入金を「無視」集合へ追加して再提案を止める(永続化 + ミラー)。
+  void _ignoreDetectedRecurringIncome(DetectedRecurringTransaction detected) {
+    final label = _normalizeRecurringLabel(detected.label);
+    if (label.isEmpty || _ignoredRecurringIncomeLabels.contains(label)) {
+      return;
+    }
+    setState(() {
+      _ignoredRecurringIncomeLabels = <String>{
+        ..._ignoredRecurringIncomeLabels,
+        label,
+      };
+    });
+    _persistInBackground(
+      _recurringIncomeIgnoreStore.save(_ignoredRecurringIncomeLabels),
+      'recurring income ignored save',
+    );
+    unawaited(_mirrorRecurringIncomeIgnored());
   }
 
   void _saveRecurringFixedCost(AssetRecurringFixedCost cost) {
@@ -8463,6 +8782,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _recurringFixedCostStore.save(_recurringFixedCosts),
       'recurring fixed cost save',
     );
+    // 編集/再追加は id 再利用解除 (tombstone 除去) + ローカル編集を dirty 記録。
+    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: false));
+    unawaited(
+      _syncDirtyKeysStore.markDirty(_recurringFixedCostsMirrorKey, cost.id),
+    );
     unawaited(_mirrorRecurringFixedCosts());
   }
 
@@ -8476,6 +8800,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _recurringFixedCostStore.save(_recurringFixedCosts),
       'recurring fixed cost delete',
     );
+    // 削除をトゥームストーン化して他端末へ伝播 (union/backfill で復活させない)。
+    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: true));
     unawaited(_mirrorRecurringFixedCosts());
   }
 
@@ -8590,13 +8916,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return observations;
   }
 
-  /// 定期取引を検出し、すでに固定費登録済みのものは除外する。
+  /// 定期取引を検出し、登録済み固定費と「無視」した候補を除外する。
   List<DetectedRecurringTransaction> _detectRecurringTransactions() {
     final detected = AssetRecurringTransactionDetector.detect(
       observations: _buildRecurringTransactionObservations(),
       asOf: _now,
     );
-    if (detected.isEmpty || _recurringFixedCosts.isEmpty) {
+    if (detected.isEmpty) {
       return detected;
     }
     final registered = <String>{
@@ -8607,6 +8933,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final label = _normalizeRecurringLabel(item.label);
       if (label.isEmpty) {
         return true;
+      }
+      if (_ignoredRecurringLabels.contains(label)) {
+        return false;
       }
       for (final name in registered) {
         if (label.contains(name) || name.contains(label)) {
@@ -8667,6 +8996,128 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           sourceOptions: sourceOptions,
         ),
       ),
+      onIgnore: _ignoreDetectedRecurringTransaction,
+    );
+  }
+
+  /// `_recentFlows` の入金(action_type == 'conquer')を定期取引検出用の観測列にする。
+  List<RecurringTransactionObservation> _buildRecurringIncomeObservations() {
+    final observations = <RecurringTransactionObservation>[];
+    for (final flow in _recentFlows) {
+      final actionType = flow['action_type']?.toString() ?? '';
+      if (!_isIncomeActionType(actionType)) {
+        continue;
+      }
+      final occurredAt = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
+      if (occurredAt == null) {
+        continue;
+      }
+      final amount = ((flow['amount'] as num?)?.toDouble() ?? 0).abs().round();
+      if (amount <= 0) {
+        continue;
+      }
+      final parsed = _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: actionType,
+      );
+      final label = AssetRecurringTransactionDetector.buildLabel(
+        source: parsed.source,
+        memo: parsed.memo,
+      );
+      if (label.isEmpty) {
+        continue;
+      }
+      observations.add(
+        RecurringTransactionObservation(
+          label: label,
+          amount: amount,
+          occurredAt: occurredAt,
+          // 入金の `[口座名]` は入金先口座 → destination prefill に使う。
+          sourceName: AssetRecurringTransactionDetector.stripAccountBrackets(
+            parsed.source,
+          ),
+        ),
+      );
+    }
+    return observations;
+  }
+
+  /// 定期入金を検出し、登録済みの定期収入テンプレと一致するものは除外する。
+  List<DetectedRecurringTransaction> _detectRecurringIncome() {
+    final detected = AssetRecurringTransactionDetector.detect(
+      observations: _buildRecurringIncomeObservations(),
+      asOf: _now,
+    );
+    if (detected.isEmpty) {
+      return detected;
+    }
+    final registered = <String>{
+      for (final template in _recurringIncomeTemplates)
+        _normalizeRecurringLabel(template.name),
+    }..removeWhere((name) => name.isEmpty);
+    return detected.where((item) {
+      final label = _normalizeRecurringLabel(item.label);
+      if (label.isEmpty) {
+        return true;
+      }
+      if (_ignoredRecurringIncomeLabels.contains(label)) {
+        return false;
+      }
+      for (final name in registered) {
+        if (label.contains(name) || name.contains(label)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  /// 検出された定期入金を `prefill` として定期収入テンプレ追加ダイアログを開く。
+  /// 最頻の入金先口座を destination に反映する。
+  Future<void> _registerDetectedRecurringIncome(
+    DetectedRecurringTransaction detected,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final suggestedSource = detected.suggestedSourceName;
+    String? destinationAccountId;
+    String? destinationAccountName;
+    if (suggestedSource != null) {
+      for (final account in _paymentSourceAccountOptions(workbook)) {
+        if (account.name == suggestedSource) {
+          destinationAccountId = account.id;
+          destinationAccountName = account.name;
+          break;
+        }
+      }
+    }
+    final draft = AssetLiabilityRecurringIncomeTemplate(
+      id: 'income_template_suggestion',
+      dayOfMonth: detected.typicalPaymentDay,
+      name: detected.label,
+      amount: detected.typicalAmount.toDouble(),
+      destinationAccountId: destinationAccountId,
+      destinationAccountName: destinationAccountName,
+    );
+    return _showRecurringIncomeTemplateDialog(workbook, prefill: draft);
+  }
+
+  Widget _buildRecurringIncomeSuggestionCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    return AssetRecurringTransactionSuggestionCard(
+      keyPrefix: 'asset_recurring_income',
+      title: '定期収入の自動検出',
+      description: '過去の入金から繰り返しを検出しました。定期収入に登録すると将来予測に反映されます。',
+      registerLabel: '定期収入に登録',
+      suggestions: _detectRecurringIncome(),
+      currencyFormatter: _formatYen,
+      onRegister: (detected) => unawaited(
+        _registerDetectedRecurringIncome(detected, workbook),
+      ),
+      onIgnore: _ignoreDetectedRecurringIncome,
     );
   }
 

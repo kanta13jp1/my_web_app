@@ -9,6 +9,7 @@ import 'package:my_web_app/services/asset_expected_inflow_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
+import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
@@ -1387,6 +1388,182 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'recurring fixed cost deletion tombstone removes local cost',
+      (tester) async {
+        // ローカルに電気代 / Netflix の定期固定費がある。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'fc_denki',
+                  name: '電気代',
+                  amount: 8000,
+                  paymentDay: 27,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'fc_netflix',
+                  name: 'Netflix',
+                  amount: 1980,
+                  paymentDay: 5,
+                ),
+              ],
+            ),
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        // 他端末で fc_denki を削除した状態を削除トゥームストーンで注入。
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: AssetManagementPage(
+              debugRecurringFixedCostsDeletedMirror: <String, dynamic>{
+                'ids': <String>['fc_denki'],
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // 削除が伝播し fc_denki はローカルから消え、fc_netflix は残る。
+        final local = await const AssetRecurringFixedCostStore().load();
+        expect(local.map((c) => c.id), isNot(contains('fc_denki')));
+        expect(local.map((c) => c.id), contains('fc_netflix'));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'tombstoned recurring fixed cost is not resurfaced when the server '
+      'mirror still contains it',
+      (tester) async {
+        // ローカルに電気代 / Netflix。サーバ集約ミラーは依然 fc_denki を含む状態でも、
+        // 削除トゥームストーンを先に取込む (pull→restore 直列化) ので、union マージが
+        // fc_denki を復活させない。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'fc_denki',
+                  name: '電気代',
+                  amount: 8000,
+                  paymentDay: 27,
+                ),
+                AssetRecurringFixedCost(
+                  id: 'fc_netflix',
+                  name: 'Netflix',
+                  amount: 1980,
+                  paymentDay: 5,
+                ),
+              ],
+            ),
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              // サーバミラーはまだ fc_denki を持つ (復活ベクタ)。
+              debugRecurringFixedCostsMirror:
+                  AssetRecurringFixedCostStore.encodeMirrorValue(
+                const <AssetRecurringFixedCost>[
+                  AssetRecurringFixedCost(
+                    id: 'fc_denki',
+                    name: '電気代',
+                    amount: 8000,
+                    paymentDay: 27,
+                  ),
+                  AssetRecurringFixedCost(
+                    id: 'fc_netflix',
+                    name: 'Netflix',
+                    amount: 1980,
+                    paymentDay: 5,
+                  ),
+                ],
+              ),
+              // 同時に fc_denki の削除トゥームストーンが届く。
+              debugRecurringFixedCostsDeletedMirror: const <String, dynamic>{
+                'ids': <String>['fc_denki'],
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final local = await const AssetRecurringFixedCostStore().load();
+        expect(local.map((c) => c.id), isNot(contains('fc_denki')));
+        expect(local.map((c) => c.id), contains('fc_netflix'));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'recurring fixed cost merges additively from the server mirror',
+      (tester) async {
+        // ローカルは fc_denki のみ。サーバは fc_denki + fc_gym を持つので、
+        // additive union で fc_gym が反映され fc_denki も維持される (フラグ OFF)。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetRecurringFixedCostStore.prefsKey: jsonEncode(
+            AssetRecurringFixedCostStore.encodeMirrorValue(
+              const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'fc_denki',
+                  name: '電気代',
+                  amount: 8000,
+                  paymentDay: 27,
+                ),
+              ],
+            ),
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugRecurringFixedCostsMirror:
+                  AssetRecurringFixedCostStore.encodeMirrorValue(
+                const <AssetRecurringFixedCost>[
+                  AssetRecurringFixedCost(
+                    id: 'fc_denki',
+                    name: '電気代',
+                    amount: 8000,
+                    paymentDay: 27,
+                  ),
+                  AssetRecurringFixedCost(
+                    id: 'fc_gym',
+                    name: 'ジム',
+                    amount: 7000,
+                    paymentDay: 1,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final local = await const AssetRecurringFixedCostStore().load();
+        expect(
+          local.map((c) => c.id),
+          containsAll(<String>['fc_denki', 'fc_gym']),
+        );
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('watchlist deletion tombstone removes local entry', (
       tester,

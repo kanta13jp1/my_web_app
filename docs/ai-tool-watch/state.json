@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-06-17T21:57:40Z",
-      "hash": "ac3e2c6b7fc2eab0f1a639b58e38f9c49b70c493cda4684a9734ae227604e4de",
+      "checked_at": "2026-06-18T21:58:29Z",
+      "hash": "199e0a3185aad7a88dfbcb5ce70e8aabbe4e92be4b78e00da0e42901a00ab415",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.179 / June 16, 2026",
+      "latest_signal": "2.1.181 / June 17, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-06-17T21:57:40Z",
+      "checked_at": "2026-06-18T21:58:29Z",
       "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
       "keyword_groups": {
         "codex-runtime": [
@@ -89,7 +89,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-06-17T21:57:40Z",
+      "checked_at": "2026-06-18T21:58:29Z",
       "hash": "f65a250c161f1ed575ca7f2c3f5a2cf039f4f2503fe9ca07fde01ea0e039bf8f",
       "keyword_groups": {
         "codex-runtime": [
@@ -130,8 +130,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-06-17T21:57:40Z",
-      "hash": "b4685ed9ed0bcaf1a8b83edbed5497a1817cf4396000c8e7713095cb7320ae4b",
+      "checked_at": "2026-06-18T21:58:29Z",
+      "hash": "80bf8848a0ab5f58b517ff402178bccaf472ff711f500fd9f0526882ca0f2299",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -146,7 +146,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
           "Stop"
         ],
         "integration": [
@@ -155,11 +154,9 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode"
+          "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -176,13 +173,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-06-16 / Codex app features are available in the EEA, UK, and Switzerland More Codex app capabilitie",
+      "latest_signal": "2026-06-18 / Codex app 26.616 New features Added Record",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-06-17T21:57:40Z",
+      "checked_at": "2026-06-18T21:58:29Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -191,8 +188,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-06-17T21:57:40Z",
-      "hash": "b79a522858b79ca9c82e7df6c4c300cd73b43827e37a7fbf4b85067f48498e7e",
+      "checked_at": "2026-06-18T21:58:29Z",
+      "hash": "9b7038281b17489fd74ff231f6c1a2f76fdc5f175ff843f32aa563cd36d9c3b8",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -235,14 +232,16 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-06-17T21:57:40Z",
-      "hash": "3deb9159afcf3cb92a0ad99b3cec79c94f78c55c74c9fdae6c610b4ca1d493e6",
+      "checked_at": "2026-06-18T21:58:29Z",
+      "hash": "e2f0070ce2cde1750f8658126f6ab4f15faa24ae3ea3156aa035d8662f399644",
       "keyword_groups": {
         "codex-runtime": [
+          "computer use",
           "subagents"
         ],
         "integration": [
           "MCP",
+          "Slack",
           "GitHub"
         ],
         "quality-cost": [
@@ -252,7 +251,10 @@
           "CI"
         ],
         "schedule": [
-          "automation"
+          "automation",
+          "automations",
+          "GitHub Actions",
+          "workflow"
         ]
       },
       "latest_signal": "3.7 / Jun 17, 2026",
@@ -261,8 +263,8 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-06-17T21:57:40Z",
-      "hash": "6606da1ecbadbbb73db0d7b5b5babc03de0f14ad2f45ab09dddb37781f7a08e4",
+      "checked_at": "2026-06-18T21:58:29Z",
+      "hash": "5e3329178273cb19db579b9ac84b83a927a1624a9320e508d9d21057a2ed41cb",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -294,14 +296,14 @@
           "workflow"
         ]
       },
-      "latest_signal": "June 12, 2026",
+      "latest_signal": "June 17, 2026",
       "name": "Devin release notes",
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-06-17T21:57:40Z",
-      "hash": "1c669ca84a8544884d9197d7b5c672ce51e72abca25aa005e640689068924a0c",
+      "checked_at": "2026-06-18T21:58:29Z",
+      "hash": "844d33b7c371271ad3f1a6e24a6764f34eafb16017a3c85a80baec5ad0f20806",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -329,5 +331,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-06-17T21:57:40Z"
+  "updated_at": "2026-06-18T21:58:29Z"
 }
