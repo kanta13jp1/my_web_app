@@ -3560,16 +3560,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _showRecurringIncomeTemplateDialog(
     AssetLiabilityWorkbook workbook, {
     AssetLiabilityRecurringIncomeTemplate? existing,
+    AssetLiabilityRecurringIncomeTemplate? prefill,
   }) async {
-    final nameController = TextEditingController(text: existing?.name ?? '');
+    // existing(編集)優先。なければ prefill(検出結果からの追加)を初期値に使う。
+    final initial = existing ?? prefill;
+    final nameController = TextEditingController(text: initial?.name ?? '');
     final amountController = TextEditingController(
-      text: existing == null ? '' : existing.amount.round().toString(),
+      text: initial == null ? '' : initial.amount.round().toString(),
     );
     final dayController = TextEditingController(
-      text: existing == null ? '' : existing.dayOfMonth.toString(),
+      text: initial == null ? '' : initial.dayOfMonth.toString(),
     );
-    var selectedDestinationId = existing?.destinationAccountId;
     final destinationOptions = _paymentSourceAccountOptions(workbook);
+    // 候補に無い入金先IDは保持しない(Dropdown の値整合を保つ)。
+    final destinationIds = destinationOptions.map((a) => a.id).toSet();
+    var selectedDestinationId =
+        destinationIds.contains(initial?.destinationAccountId)
+            ? initial?.destinationAccountId
+            : null;
 
     await showDialog<void>(
       context: context,
@@ -7904,6 +7912,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildRecurringFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
               _buildRecurringTransactionSuggestionCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+              _buildRecurringIncomeSuggestionCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
@@ -8694,6 +8704,123 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
       onIgnore: _ignoreDetectedRecurringTransaction,
+    );
+  }
+
+  /// `_recentFlows` の入金(action_type == 'conquer')を定期取引検出用の観測列にする。
+  List<RecurringTransactionObservation> _buildRecurringIncomeObservations() {
+    final observations = <RecurringTransactionObservation>[];
+    for (final flow in _recentFlows) {
+      final actionType = flow['action_type']?.toString() ?? '';
+      if (!_isIncomeActionType(actionType)) {
+        continue;
+      }
+      final occurredAt = DateTime.tryParse(
+        flow['occurred_at']?.toString() ?? '',
+      )?.toLocal();
+      if (occurredAt == null) {
+        continue;
+      }
+      final amount = ((flow['amount'] as num?)?.toDouble() ?? 0).abs().round();
+      if (amount <= 0) {
+        continue;
+      }
+      final parsed = _parseFlowDescription(
+        flow['description']?.toString() ?? '',
+        actionType: actionType,
+      );
+      final label = AssetRecurringTransactionDetector.buildLabel(
+        source: parsed.source,
+        memo: parsed.memo,
+      );
+      if (label.isEmpty) {
+        continue;
+      }
+      observations.add(
+        RecurringTransactionObservation(
+          label: label,
+          amount: amount,
+          occurredAt: occurredAt,
+          // 入金の `[口座名]` は入金先口座 → destination prefill に使う。
+          sourceName: AssetRecurringTransactionDetector.stripAccountBrackets(
+            parsed.source,
+          ),
+        ),
+      );
+    }
+    return observations;
+  }
+
+  /// 定期入金を検出し、登録済みの定期収入テンプレと一致するものは除外する。
+  List<DetectedRecurringTransaction> _detectRecurringIncome() {
+    final detected = AssetRecurringTransactionDetector.detect(
+      observations: _buildRecurringIncomeObservations(),
+      asOf: _now,
+    );
+    if (detected.isEmpty) {
+      return detected;
+    }
+    final registered = <String>{
+      for (final template in _recurringIncomeTemplates)
+        _normalizeRecurringLabel(template.name),
+    }..removeWhere((name) => name.isEmpty);
+    return detected.where((item) {
+      final label = _normalizeRecurringLabel(item.label);
+      if (label.isEmpty) {
+        return true;
+      }
+      for (final name in registered) {
+        if (label.contains(name) || name.contains(label)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  /// 検出された定期入金を `prefill` として定期収入テンプレ追加ダイアログを開く。
+  /// 最頻の入金先口座を destination に反映する。
+  Future<void> _registerDetectedRecurringIncome(
+    DetectedRecurringTransaction detected,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final suggestedSource = detected.suggestedSourceName;
+    String? destinationAccountId;
+    String? destinationAccountName;
+    if (suggestedSource != null) {
+      for (final account in _paymentSourceAccountOptions(workbook)) {
+        if (account.name == suggestedSource) {
+          destinationAccountId = account.id;
+          destinationAccountName = account.name;
+          break;
+        }
+      }
+    }
+    final draft = AssetLiabilityRecurringIncomeTemplate(
+      id: 'income_template_suggestion',
+      dayOfMonth: detected.typicalPaymentDay,
+      name: detected.label,
+      amount: detected.typicalAmount.toDouble(),
+      destinationAccountId: destinationAccountId,
+      destinationAccountName: destinationAccountName,
+    );
+    return _showRecurringIncomeTemplateDialog(workbook, prefill: draft);
+  }
+
+  Widget _buildRecurringIncomeSuggestionCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null) {
+      return const SizedBox.shrink();
+    }
+    return AssetRecurringTransactionSuggestionCard(
+      keyPrefix: 'asset_recurring_income',
+      title: '定期収入の自動検出',
+      description: '過去の入金から繰り返しを検出しました。定期収入に登録すると将来予測に反映されます。',
+      registerLabel: '定期収入に登録',
+      suggestions: _detectRecurringIncome(),
+      currencyFormatter: _formatYen,
+      onRegister: (detected) => unawaited(
+        _registerDetectedRecurringIncome(detected, workbook),
+      ),
     );
   }
 

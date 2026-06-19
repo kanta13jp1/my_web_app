@@ -189,6 +189,27 @@ void main() {
     });
   });
 
+  group('AssetRecurringTransactionDetector.detect (income usage)', () {
+    test('detects a stable monthly salary with its destination account', () {
+      final result = AssetRecurringTransactionDetector.detect(
+        observations: [
+          for (var m = 1; m <= 6; m++)
+            obs('給料', 280000, m, day: 25, sourceName: '給与口座'),
+        ],
+        asOf: asOf,
+      );
+
+      expect(result.length, 1);
+      final detected = result.single;
+      expect(detected.label, '給料');
+      expect(detected.cadence, AssetRecurringFixedCostCadence.monthly);
+      expect(detected.typicalAmount, 280000);
+      expect(detected.typicalPaymentDay, 25);
+      expect(detected.confidence, RecurringTransactionConfidence.high);
+      expect(detected.suggestedSourceName, '給与口座');
+    });
+  });
+
   group('AssetRecurringTransactionDetector.buildLabel', () {
     test('strips date and number fragments from the memo', () {
       expect(
