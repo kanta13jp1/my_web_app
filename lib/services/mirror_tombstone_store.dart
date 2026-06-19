@@ -48,6 +48,24 @@ class AssetTombstoneGcConfig {
 /// 保存形式は `[{"id": ..., "at": <iso>}, ...]`。part 285 の旧プレーン配列
 /// (`["id", ...]`) も後方互換で読み込む。書き込み・読み出し時に期限切れ
 /// (gcConfig.maxAgeDays) と件数超過 (gcConfig.maxCount) を破棄する。
+///
+/// 並行安全性 (= write 直列化は不要): 各 write メソッド (addId / removeId /
+/// prune / mergeRemoteIds) は同期 `getString` で読み、計算し、`setString` で
+/// 書く。read と write の間に `await` は無く、legacy `SharedPreferences` は
+/// `setString` の呼び出し時点で in-memory cache を **同期更新** する
+/// (platform への永続化のみ非同期)。よって unawaited で連続発火しても各
+/// read-modify-write は同期区間内で原子的に完了し、後発の read は先発の cache
+/// 更新を必ず観測する → 単一 blob でも lost-update は起きない。姉妹
+/// [AssetSyncDirtyKeysStore] は `await _loadAll` を read↔write 間に挟むため
+/// process-wide ロックが要るが、本ストアは構造上不要。
+///
+/// 🔴 将来 RMW 間に `await` を入れる / `SharedPreferencesAsync` (同期 cache
+/// 無し) へ移行する場合は、この原子性が崩れるため write 直列化ロックが必須に
+/// なる。`const` コンストラクタを維持するならロックは `static` にせざるを得ず、
+/// その static future は `testWidgets` の FakeAsync zone を跨いで orphan 化し
+/// 既存の page smoke suite を壊す (検証済み) ので、その時はインスタンス設計と
+/// テスト戦略を併せて見直すこと。本不変条件は
+/// `test/services/mirror_tombstone_store_test.dart` の並行テストでガードする。
 class MirrorTombstoneStore {
   const MirrorTombstoneStore({
     required this.storageKey,

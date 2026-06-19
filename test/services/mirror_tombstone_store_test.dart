@@ -158,5 +158,58 @@ void main() {
       await store.removeId(sp, 'debt_row_1');
       expect(store.activeIds(sp), isNot(contains('debt_row_1')));
     });
+
+    test('concurrent add/remove stays atomic (no lost update)', () async {
+      // 不変条件ガード: 各 write は同期 getString 読み→計算→setString 書きで
+      // read↔write 間に await が無く、legacy SharedPreferences は setString 時
+      // 点で cache を同期更新する。よって await を挟まず並行発火 (= 各削除/編集
+      // サイトの unawaited パターン) しても各 RMW は同期区間で原子的に完了し、
+      // 先発の効果を後発が踏み潰す lost-update は起きない (= 書き込み直列化ロック
+      // 不要)。read↔write 間に await が入る将来の改修や SharedPreferencesAsync
+      // (同期 cache 無し) 移行でこの原子性が崩れたら本テストが落ちる。
+      final store = MirrorTombstoneStore(
+        storageKey: 'revolving_credit_deleted_v1',
+        nowProvider: () => DateTime(2026, 6, 19, 9),
+      );
+      final sp = await prefs();
+      await store.addId(sp, 'keep'); // 既存トゥームストーン
+
+      // delete→addId と edit→removeId を別 future で同時発火する
+      // (asset_management_page の _recordRevolvingTombstone /
+      // _recordWatchlistTombstone と同じ unawaited パターン)。
+      await Future.wait(<Future<void>>[
+        store.addId(sp, 'rev_a'),
+        store.addId(sp, 'rev_b'),
+        store.removeId(sp, 'keep'),
+      ]);
+
+      // 'keep' は解除され 'rev_a'/'rev_b' は両方残る (= 取りこぼし無し)。
+      expect(store.activeIds(sp), <String>{'rev_a', 'rev_b'});
+    });
+
+    test('concurrent non-void writes stay atomic and return correct results',
+        () async {
+      // 非 void 戻り値 (prune=Future<int> / mergeRemoteIds=Future<Set>) も
+      // 同じ同期原子性ガード下にある: 並行発火しても取りこぼさず、各呼び出し元へ
+      // 正しい結果が返る。3 操作を await を挟まず同時に発火する。
+      final store = MirrorTombstoneStore(
+        storageKey: 'watchlist_entries_deleted_v1',
+        nowProvider: () => DateTime(2026, 6, 19, 9),
+      );
+      final sp = await prefs();
+      await store.addId(sp, 'w_seed');
+
+      final addFuture = store.addId(sp, 'w_new');
+      final mergeFuture = store.mergeRemoteIds(sp, <String>['w_remote', '']);
+      final pruneFuture = store.prune(sp);
+      await addFuture;
+      final merged = await mergeFuture;
+      final pruned = await pruneFuture;
+
+      expect(merged, <String>{'w_remote'}); // 取り込んだ非空 ID 集合
+      expect(pruned, 0); // 期限内・上限内なので掃除ゼロ
+      // 全 tombstone が取りこぼされず残る。
+      expect(store.activeIds(sp), <String>{'w_seed', 'w_new', 'w_remote'});
+    });
   });
 }
