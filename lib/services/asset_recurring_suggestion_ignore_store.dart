@@ -5,13 +5,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 定期取引の自動検出で「この候補を無視」したラベル(正規化済み)を永続化する。
 ///
 /// ローカル (SharedPreferences) を一次ストアとし、端末間同期は資産管理ページが
-/// `asset_pref_mirror` (pref_key: `recurring_suggestion_ignored`) へ 1 行 jsonb
-/// 配列でミラーする。無視集合は単調増加(union)前提のため tombstone は不要
-/// (再表示はローカル操作で対応)。保存形は文字列の JSON 配列。
+/// `asset_pref_mirror` へ 1 行 jsonb 配列でミラーする。無視集合は単調増加(union)
+/// 前提のため tombstone は不要(再表示はローカル操作で対応)。保存形は文字列の JSON 配列。
+///
+/// [prefsKey] を差し替えることで支出用・収入用など複数の無視集合を別々に永続化できる
+/// (既定は支出側の `asset_recurring_ignored_v1`)。
 class AssetRecurringSuggestionIgnoreStore {
-  static const String prefsKey = 'asset_recurring_ignored_v1';
+  const AssetRecurringSuggestionIgnoreStore({
+    this.prefsKey = 'asset_recurring_ignored_v1',
+  });
 
-  const AssetRecurringSuggestionIgnoreStore();
+  final String prefsKey;
 
   Future<Set<String>> load({SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
