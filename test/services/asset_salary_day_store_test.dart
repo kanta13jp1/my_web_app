@@ -40,10 +40,14 @@ void main() {
   });
 
   test('decodeMirrorValue parses, clamps, and falls back to default', () {
-    expect(AssetSalaryDayStore.decodeMirrorValue(<String, dynamic>{'day': 10}),
-        10);
-    expect(AssetSalaryDayStore.decodeMirrorValue(<String, dynamic>{'day': 99}),
-        28);
+    expect(
+      AssetSalaryDayStore.decodeMirrorValue(<String, dynamic>{'day': 10}),
+      10,
+    );
+    expect(
+      AssetSalaryDayStore.decodeMirrorValue(<String, dynamic>{'day': 99}),
+      28,
+    );
     expect(
       AssetSalaryDayStore.decodeMirrorValue('nope'),
       AssetSalaryDayStore.defaultSalaryDay,
