@@ -6790,53 +6790,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return WasteTrackingService.attachWasteCategory(description, wasteCategory);
   }
 
-  ({
-    String source,
-    String destination,
-    String memo,
-    String? wasteCategory,
-    bool isTransfer,
-  }) _parseFlowDescription(String description, {String? actionType}) {
+  FlowDescriptionParts _parseFlowDescription(
+    String description, {
+    String? actionType,
+  }) {
+    // メタデータマーカー除去だけページ固有正規表現に依存するため残し、
+    // パース本体は純関数サービスへ委譲する(振る舞い不変)。
     final normalizedDescription = _stripFlowMetadataMarkers(description.trim());
-    final isExpense = _isExpenseActionType(actionType ?? '');
-    final wasteCategory = isExpense
-        ? WasteTrackingService.extractWasteCategory(normalizedDescription)
-        : null;
-    final normalized = isExpense
-        ? WasteTrackingService.stripWasteMarker(normalizedDescription)
-        : normalizedDescription;
-    if (_isTransferActionType(actionType ?? '')) {
-      final transferMatch = RegExp(
-        r'^(\[[^\]]+\])\s*->\s*(\[[^\]]+\])(?:\s+(.*))?$',
-      ).firstMatch(normalized);
-      if (transferMatch != null) {
-        return (
-          source: transferMatch.group(1)?.trim() ?? '',
-          destination: transferMatch.group(2)?.trim() ?? '',
-          memo: transferMatch.group(3)?.trim() ?? '',
-          wasteCategory: wasteCategory,
-          isTransfer: true,
-        );
-      }
-    }
-
-    final match = RegExp(r'^(\[[^\]]+\])\s*(.*)$').firstMatch(normalized);
-    if (match != null) {
-      return (
-        source: match.group(1)?.trim() ?? '',
-        destination: '',
-        memo: match.group(2)?.trim() ?? '',
-        wasteCategory: wasteCategory,
-        isTransfer: _isTransferActionType(actionType ?? ''),
-      );
-    }
-
-    return (
-      source: '',
-      destination: '',
-      memo: normalized,
-      wasteCategory: wasteCategory,
-      isTransfer: _isTransferActionType(actionType ?? ''),
+    return AssetFlowDescriptionService.parse(
+      normalizedDescription,
+      actionType: actionType,
     );
   }
 
