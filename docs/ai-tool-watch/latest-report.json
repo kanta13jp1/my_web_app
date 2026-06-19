@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "199e0a3185aad7a88dfbcb5ce70e8aabbe4e92be4b78e00da0e42901a00ab415",
+      "hash": "ebf2b7cc70db7d6b65bc743e27cc94e53b25d0301e26fcdf0f4b1eaa8b915a0c",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.181 / June 17, 2026",
+      "latest_signal": "2.1.183 / June 19, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "ac3e2c6b7fc2eab0f1a639b58e38f9c49b70c493cda4684a9734ae227604e4de",
+      "previous_hash": "199e0a3185aad7a88dfbcb5ce70e8aabbe4e92be4b78e00da0e42901a00ab415",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "/config thinking=false ) — works in interactive, -p , and Remote Control Added sandbox.allowAppleEvents opt-in setting that lets sandboxed commands send Apple Events on macOS..."
+        ", git clean -fd , git stash drop ) are now blocked when you didn’t ask to discard local work, git commit --amend is blocked when the commit wasn’t made by the agent this..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,7 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "80bf8848a0ab5f58b517ff402178bccaf472ff711f500fd9f0526882ca0f2299",
+      "hash": "96729dfb552664f4495620395a7c13e19d647fc36b5eab62a091081e1e1972c3",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -87,6 +87,8 @@
         "hooks": [
           "hook",
           "hooks",
+          "SessionStart",
+          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -95,9 +97,11 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension"
+          "IDE extension",
+          "VSCode"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -117,7 +121,7 @@
       "latest_signal": "2026-06-18 / Codex app 26.616 New features Added Record",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "b4685ed9ed0bcaf1a8b83edbed5497a1817cf4396000c8e7713095cb7320ae4b",
+      "previous_hash": "80bf8848a0ab5f58b517ff402178bccaf472ff711f500fd9f0526882ca0f2299",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -131,7 +135,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9b7038281b17489fd74ff231f6c1a2f76fdc5f175ff843f32aa563cd36d9c3b8",
+      "hash": "7500c570daf6a0bca472ca0f8ba33709827e62b8bb0f3979553d2cecf19a381c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -171,7 +175,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "b79a522858b79ca9c82e7df6c4c300cd73b43827e37a7fbf4b85067f48498e7e",
+      "previous_hash": "9b7038281b17489fd74ff231f6c1a2f76fdc5f175ff843f32aa563cd36d9c3b8",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -185,7 +189,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "e2f0070ce2cde1750f8658126f6ab4f15faa24ae3ea3156aa035d8662f399644",
+      "hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -209,10 +213,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "3.7 / Jun 17, 2026",
+      "latest_signal": "3.8 / Jun 18, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "3deb9159afcf3cb92a0ad99b3cec79c94f78c55c74c9fdae6c610b4ca1d493e6",
+      "previous_hash": "e2f0070ce2cde1750f8658126f6ab4f15faa24ae3ea3156aa035d8662f399644",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
@@ -221,97 +225,9 @@
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "844d33b7c371271ad3f1a6e24a6764f34eafb16017a3c85a80baec5ad0f20806",
-      "keyword_groups": {
-        "hooks": [
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "GitHub",
-          "IDE extension",
-          "VSCode"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "workflow"
-        ]
-      },
-      "latest_signal": "VS Code Gemini Code Assist 2.86.0 / June 15, 2026",
-      "name": "Gemini Code Assist release notes",
-      "owner": "Gemini Code Assist",
-      "previous_hash": "1c669ca84a8544884d9197d7b5c672ce51e72abca25aa005e640689068924a0c",
-      "slug": "gemini-code-assist-release-notes",
-      "snippets": [
-        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
-        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
-        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
-      ],
-      "status": 200,
-      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "5e3329178273cb19db579b9ac84b83a927a1624a9320e508d9d21057a2ed41cb",
-      "keyword_groups": {
-        "codex-runtime": [
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "June 17, 2026",
-      "name": "Devin release notes",
-      "owner": "Devin",
-      "previous_hash": "6606da1ecbadbbb73db0d7b5b5babc03de0f14ad2f45ab09dddb37781f7a08e4",
-      "slug": "devin-release-notes",
-      "snippets": [
-        "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
-        "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-        "Automations Sidebar Automations now appear in the main navigation sidebar for quicker access to your configured automation rules."
-      ],
-      "status": 200,
-      "url": "https://docs.devin.ai/release-notes"
     }
   ],
-  "checked_at": "2026-06-18T21:58:29Z",
+  "checked_at": "2026-06-19T21:42:50Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -363,13 +279,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-17T21:57:40Z",
+  "previous_checked_at": "2026-06-18T21:58:29Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "199e0a3185aad7a88dfbcb5ce70e8aabbe4e92be4b78e00da0e42901a00ab415",
+      "hash": "ebf2b7cc70db7d6b65bc743e27cc94e53b25d0301e26fcdf0f4b1eaa8b915a0c",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -413,15 +329,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.181 / June 17, 2026",
+      "latest_signal": "2.1.183 / June 19, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "ac3e2c6b7fc2eab0f1a639b58e38f9c49b70c493cda4684a9734ae227604e4de",
+      "previous_hash": "199e0a3185aad7a88dfbcb5ce70e8aabbe4e92be4b78e00da0e42901a00ab415",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "/config thinking=false ) — works in interactive, -p , and Remote Control Added sandbox.allowAppleEvents opt-in setting that lets sandboxed commands send Apple Events on macOS..."
+        ", git clean -fd , git stash drop ) are now blocked when you didn’t ask to discard local work, git commit --amend is blocked when the commit wasn’t made by the agent this..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -528,7 +444,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "80bf8848a0ab5f58b517ff402178bccaf472ff711f500fd9f0526882ca0f2299",
+      "hash": "96729dfb552664f4495620395a7c13e19d647fc36b5eab62a091081e1e1972c3",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -543,6 +459,8 @@
         "hooks": [
           "hook",
           "hooks",
+          "SessionStart",
+          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -551,9 +469,11 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension"
+          "IDE extension",
+          "VSCode"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -573,7 +493,7 @@
       "latest_signal": "2026-06-18 / Codex app 26.616 New features Added Record",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "b4685ed9ed0bcaf1a8b83edbed5497a1817cf4396000c8e7713095cb7320ae4b",
+      "previous_hash": "80bf8848a0ab5f58b517ff402178bccaf472ff711f500fd9f0526882ca0f2299",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -587,7 +507,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9b7038281b17489fd74ff231f6c1a2f76fdc5f175ff843f32aa563cd36d9c3b8",
+      "hash": "7500c570daf6a0bca472ca0f8ba33709827e62b8bb0f3979553d2cecf19a381c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -627,7 +547,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "b79a522858b79ca9c82e7df6c4c300cd73b43827e37a7fbf4b85067f48498e7e",
+      "previous_hash": "9b7038281b17489fd74ff231f6c1a2f76fdc5f175ff843f32aa563cd36d9c3b8",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -656,7 +576,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "e2f0070ce2cde1750f8658126f6ab4f15faa24ae3ea3156aa035d8662f399644",
+      "hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -680,10 +600,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "3.7 / Jun 17, 2026",
+      "latest_signal": "3.8 / Jun 18, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "3deb9159afcf3cb92a0ad99b3cec79c94f78c55c74c9fdae6c610b4ca1d493e6",
+      "previous_hash": "e2f0070ce2cde1750f8658126f6ab4f15faa24ae3ea3156aa035d8662f399644",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
@@ -694,7 +614,7 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "844d33b7c371271ad3f1a6e24a6764f34eafb16017a3c85a80baec5ad0f20806",
@@ -722,7 +642,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.86.0 / June 15, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "1c669ca84a8544884d9197d7b5c672ce51e72abca25aa005e640689068924a0c",
+      "previous_hash": "844d33b7c371271ad3f1a6e24a6764f34eafb16017a3c85a80baec5ad0f20806",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -733,7 +653,7 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "5e3329178273cb19db579b9ac84b83a927a1624a9320e508d9d21057a2ed41cb",
@@ -771,7 +691,7 @@
       "latest_signal": "June 17, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "6606da1ecbadbbb73db0d7b5b5babc03de0f14ad2f45ab09dddb37781f7a08e4",
+      "previous_hash": "5e3329178273cb19db579b9ac84b83a927a1624a9320e508d9d21057a2ed41cb",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",

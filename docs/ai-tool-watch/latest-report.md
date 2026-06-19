@@ -1,17 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-18T21:58:29Z`
-- Previous check: `2026-06-17T21:57:40Z`
-- Changed/new official sources: `6`
+- Checked at: `2026-06-19T21:42:50Z`
+- Previous check: `2026-06-18T21:58:29Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.181 / June 17, 2026
+- `changed` Claude Code changelog: 2.1.183 / June 19, 2026
 - `changed` Codex changelog: 2026-06-18 / Codex app 26.616 New features Added Record
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Cursor changelog: 3.7 / Jun 17, 2026
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.86.0 / June 15, 2026
-- `changed` Devin release notes: June 17, 2026
+- `changed` Cursor changelog: 3.8 / Jun 18, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -23,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.181 / June 17, 2026
+  - Latest signal: 2.1.183 / June 19, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -57,7 +55,7 @@
   - Keyword groups: none
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
-  - Latest signal: 3.7 / Jun 17, 2026
+  - Latest signal: 3.8 / Jun 18, 2026
   - Keyword groups: schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
   - Short signal: This release introduces the /automate skill, new triggers for GitHub and Slack, and support for computer use.
