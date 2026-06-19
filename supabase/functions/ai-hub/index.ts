@@ -66,6 +66,7 @@ import {
   MarketPriceActionError,
   type MarketPriceDb,
 } from "./market_price.ts";
+import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -592,62 +593,6 @@ function normalizeMaxTokens(value: unknown): number | undefined {
   const raw = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(raw) || raw <= 0) return undefined;
   return Math.max(64, Math.min(8192, Math.round(raw)));
-}
-
-function applyProviderGenerationOptions(
-  providerId: string,
-  requestBody: Record<string, unknown>,
-  options?: ProviderCallOptions,
-): Record<string, unknown> {
-  const maxTokens = options?.maxTokens;
-
-  if (providerId === "openai") {
-    // OpenAI の新世代モデル (gpt-5 / o系) は max_tokens パラメータ自体を
-    // 拒否するため、ベース body (OPENAI_COMPAT_BODY) の max_tokens: 512 を
-    // 取り除いた上で max_completion_tokens へ載せ替える。
-    // groq / deepinfra 等の OpenAI 互換プロバイダーは従来どおり max_tokens。
-    const body: Record<string, unknown> = { ...requestBody };
-    const legacyMaxTokens = body.max_tokens;
-    delete body.max_tokens;
-    const model = String(body.model ?? "");
-    if (model.startsWith("gpt-5") || /^o\d/.test(model)) {
-      // reasoning モデルは温度指定を拒否する (既定値のみ許容)。
-      delete body.temperature;
-      // reasoning_effort を下げないと、推論トークンが max_completion_tokens を
-      // 使い切り本文が 0 トークンになる (gpt-5 が text:"" を返す原因)。
-      // 金額計算は Dart 側で完了済みなので低 effort で十分。
-      if (body.reasoning_effort == null) {
-        body.reasoning_effort = "low";
-      }
-    }
-    const budget = maxTokens ??
-      (typeof legacyMaxTokens === "number" ? legacyMaxTokens : undefined);
-    if (budget != null) {
-      body.max_completion_tokens = budget;
-    }
-    return body;
-  }
-
-  if (!maxTokens) return requestBody;
-
-  if (providerId === "google" || providerId === "google_flash_lite") {
-    const generationConfig = requestBody.generationConfig &&
-        typeof requestBody.generationConfig === "object"
-      ? requestBody.generationConfig as Record<string, unknown>
-      : {};
-    return {
-      ...requestBody,
-      generationConfig: {
-        ...generationConfig,
-        maxOutputTokens: maxTokens,
-      },
-    };
-  }
-
-  return {
-    ...requestBody,
-    max_tokens: maxTokens,
-  };
 }
 
 function providerFinishReason(data: unknown): string | null {
