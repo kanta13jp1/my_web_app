@@ -196,6 +196,16 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<AssetRecurringFixedCost>? debugInitialRecurringFixedCosts;
 
+  /// テスト専用: 定期固定費の集約ミラー値 (`{id: {...}}`) を注入し、端末間同期
+  /// (起動時の union マージ復元) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugRecurringFixedCostsMirror;
+
+  /// テスト専用: 定期固定費の削除トゥームストーン値 (`{'ids': [...]}`) を注入し、
+  /// 削除伝播 (他端末で削除→ローカルから除去) をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugRecurringFixedCostsDeletedMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -218,6 +228,8 @@ class AssetManagementPage extends StatefulWidget {
     this.debugRevolvingDeletedMirror,
     this.debugWatchlistDeletedMirror,
     this.debugInitialRecurringFixedCosts,
+    this.debugRecurringFixedCostsMirror,
+    this.debugRecurringFixedCostsDeletedMirror,
   });
 
   @override
@@ -597,6 +609,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final AssetRecurringFixedCostStore _recurringFixedCostStore =
       const AssetRecurringFixedCostStore();
   static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
+  static const String _recurringFixedCostsDeletedMirrorKey =
+      'recurring_fixed_costs_deleted';
   final AssetRecurringSuggestionIgnoreStore _recurringIgnoreStore =
       const AssetRecurringSuggestionIgnoreStore();
   static const String _recurringIgnoredMirrorKey =
@@ -8331,50 +8345,130 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 起動時にローカルから読み、空ならサーバ集約ミラーから復元する。
   Future<void> _loadRecurringFixedCosts() async {
-    if (widget.debugInitialRecurringFixedCosts != null) {
-      // テスト注入時はネットワーク読込をスキップ (initState で設定済み)。
-      return;
-    }
-    try {
-      final costs = await _recurringFixedCostStore.load();
-      if (mounted && costs.isNotEmpty) {
-        setState(() => _recurringFixedCosts = costs);
+    if (widget.debugInitialRecurringFixedCosts == null) {
+      try {
+        final costs = await _recurringFixedCostStore.load();
+        if (mounted && costs.isNotEmpty) {
+          setState(() => _recurringFixedCosts = costs);
+        }
+      } catch (e) {
+        debugPrint('Error loading recurring fixed costs: $e');
       }
-    } catch (e) {
-      debugPrint('Error loading recurring fixed costs: $e');
     }
+    // 先に他端末の削除トゥームストーンを取込んでから復元する (review #1 直列化)。
+    await _pullRecurringFixedCostDeleted();
     await _restoreRecurringFixedCostsFromMirror();
   }
 
-  /// サーバ集約ミラー (pref_key: recurring_fixed_costs) から復元する。ローカルに
-  /// 既に登録があれば上書きしない (オフライン編集を握り潰さない安全側 / 削除の
-  /// クロス端末伝播は将来 tombstone 化で対応 / リボ設定 v1 と同方針)。
+  /// サーバ集約ミラー (pref_key: recurring_fixed_costs) から復元する。リボ設定と
+  /// 同じ tombstone-aware union マージ: ローカルに無い id はサーバから追加 (additive)、
+  /// 削除トゥームストーン済み id は復活させず、衝突 id はフラグ既定 OFF ならローカル
+  /// 優先 (LWW フラグ ON 時のみサーバ採用・dirty キーは保護)。
   Future<void> _restoreRecurringFixedCostsFromMirror() async {
-    if (_supabase.auth.currentUser == null) {
+    final debugMirror = widget.debugRecurringFixedCostsMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
-    if (_recurringFixedCosts.isNotEmpty) {
-      return;
-    }
+    final localBefore = <String, AssetRecurringFixedCost>{
+      for (final cost in _recurringFixedCosts) cost.id: cost,
+    };
+    final hasLocal = localBefore.isNotEmpty;
+    // 削除トゥームストーン: 復活させない / バックフィルしない。
+    final tombstoned = _recurringFixedCostTombstones.activeIds(
+      await SharedPreferences.getInstance(),
+    );
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _recurringFixedCostsMirrorKey);
-      if (rows.isEmpty) {
+      final List<AssetRecurringFixedCost> serverList;
+      final DateTime? mirrorUpdatedAt;
+      if (debugMirror != null) {
+        serverList =
+            AssetRecurringFixedCostStore.decodeMirrorValue(debugMirror);
+        mirrorUpdatedAt = DateTime.now().toUtc();
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _recurringFixedCostsMirrorKey);
+        if (rows.isEmpty) {
+          // サーバ行が無い: ローカルにあれば初回バックフィル (他端末へ同期させる)。
+          if (hasLocal) {
+            unawaited(_mirrorRecurringFixedCosts());
+          }
+          return;
+        }
+        serverList = AssetRecurringFixedCostStore.decodeMirrorValue(
+          rows.first['value'],
+        );
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
+      }
+      if (!mounted) {
         return;
       }
-      final serverCosts = AssetRecurringFixedCostStore.decodeMirrorValue(
-        rows.first['value'],
+      final serverConfigs = <String, AssetRecurringFixedCost>{
+        for (final cost in serverList) cost.id: cost,
+      };
+      final adoptConflicts = await _shouldAdoptMirror(
+        prefKey: _recurringFixedCostsMirrorKey,
+        hasLocal: hasLocal,
+        mirrorUpdatedAt: mirrorUpdatedAt,
       );
-      if (!mounted || serverCosts.isEmpty) {
-        return;
+      final merged = Map<String, AssetRecurringFixedCost>.from(localBefore);
+      var changed = false;
+      // 削除トゥームストーン済み id はローカルからも除く (clear 伝播 / 復活防止)。
+      merged.removeWhere((key, _) {
+        if (tombstoned.contains(key)) {
+          changed = true;
+          return true;
+        }
+        return false;
+      });
+      final dirtyKeys = await _syncDirtyKeysStore.loadDirty(
+        _recurringFixedCostsMirrorKey,
+      );
+      serverConfigs.forEach((key, cost) {
+        if (tombstoned.contains(key)) {
+          return;
+        }
+        // #3415 保守的 per-key ガード: ローカル編集済み (dirty) id は、ドメイン全体
+        // adopt の巻き添えで上書きしない (同一 id 衝突はローカル優先)。フラグ OFF は
+        // merged が local 由来なので !containsKey が先に成立し no-op (本番無変更)。
+        if (!merged.containsKey(key) ||
+            (adoptConflicts && !dirtyKeys.contains(key))) {
+          merged[key] = cost;
+          changed = true;
+        }
+      });
+      if (changed && mounted) {
+        final nextList = merged.values.toList()
+          ..sort((a, b) {
+            final byDay = a.paymentDay.compareTo(b.paymentDay);
+            return byDay != 0 ? byDay : a.name.compareTo(b.name);
+          });
+        setState(() {
+          _recurringFixedCosts = nextList;
+        });
+        _persistInBackground(
+          _recurringFixedCostStore.save(nextList),
+          'recurring fixed cost restore save',
+        );
+        // additive 追加 / tombstone 除去でも時刻を整合 (ローカルが新しければ退行なし)。
+        unawaited(
+          _realignMirrorTimestamp(
+            _recurringFixedCostsMirrorKey,
+            mirrorUpdatedAt,
+          ),
+        );
       }
-      setState(() => _recurringFixedCosts = serverCosts);
-      _persistInBackground(
-        _recurringFixedCostStore.save(serverCosts),
-        'recurring fixed cost restore save',
+      // ローカルにあってサーバに無い id は、マージ結果をサーバへバックフィルし、
+      // サーバを全端末の和集合に保つ。
+      final localHasExtra = localBefore.keys.any(
+        (key) => !tombstoned.contains(key) && !serverConfigs.containsKey(key),
       );
+      if (localHasExtra && debugMirror == null) {
+        unawaited(_mirrorRecurringFixedCosts());
+      }
     } catch (e) {
       debugPrint('recurring fixed cost mirror restore failed: $e');
     }
@@ -8382,6 +8476,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 定期固定費の全量を `asset_pref_mirror` へ 1 行 upsert する。
   Future<void> _mirrorRecurringFixedCosts() async {
+    unawaited(_syncTimestampStore.markChanged(_recurringFixedCostsMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       return;
@@ -8395,8 +8490,100 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
+      // 全量 upsert 成功 = 全 id 同期済み → dirty クリア。
+      await _syncDirtyKeysStore.clearDomain(_recurringFixedCostsMirrorKey);
     } catch (e) {
       debugPrint('recurring fixed cost mirror upsert failed: $e');
+    }
+  }
+
+  /// 削除した定期固定費のトゥームストーン。union マージ/backfill での復活を防ぎ、
+  /// 他端末へ削除を伝播する (リボ設定と同じパターン)。
+  static const MirrorTombstoneStore _recurringFixedCostTombstones =
+      MirrorTombstoneStore(
+    storageKey: 'recurring_fixed_costs_deleted_v1',
+  );
+
+  /// 削除はトゥームストーン化、再追加 (同 id) は解除する。
+  Future<void> _recordRecurringFixedCostTombstone(
+    String id, {
+    required bool deleted,
+  }) async {
+    final store = await SharedPreferences.getInstance();
+    if (deleted) {
+      await _recurringFixedCostTombstones.addId(store, id);
+    } else {
+      await _recurringFixedCostTombstones.removeId(store, id);
+    }
+    unawaited(_mirrorRecurringFixedCostsDeleted());
+  }
+
+  /// 定期固定費の削除トゥームストーンをサーバへ反映 (他端末伝播)。
+  Future<void> _mirrorRecurringFixedCostsDeleted() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final store = await SharedPreferences.getInstance();
+      final ids = _recurringFixedCostTombstones.activeIds(store);
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _recurringFixedCostsDeletedMirrorKey,
+        'value': MirrorTombstoneStore.encodeMirror(ids),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('recurring fixed cost tombstone mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末で削除された定期固定費を取り込み、ローカルからも除去する。
+  Future<void> _pullRecurringFixedCostDeleted() async {
+    final debugMirror = widget.debugRecurringFixedCostsDeletedMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      Map<String, dynamic>? value = debugMirror;
+      if (value == null) {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _recurringFixedCostsDeletedMirrorKey);
+        if (rows.isEmpty) {
+          return;
+        }
+        final raw = rows.first['value'];
+        if (raw is! Map) {
+          return;
+        }
+        value = Map<String, dynamic>.from(raw);
+      }
+      final ids = MirrorTombstoneStore.decodeMirror(value);
+      if (ids.isEmpty) {
+        return;
+      }
+      final store = await SharedPreferences.getInstance();
+      final incoming = await _recurringFixedCostTombstones.mergeRemoteIds(
+        store,
+        ids,
+      );
+      final next = _recurringFixedCosts
+          .where((cost) => !incoming.contains(cost.id))
+          .toList();
+      if (next.length == _recurringFixedCosts.length || !mounted) {
+        return;
+      }
+      setState(() {
+        _recurringFixedCosts = next;
+      });
+      _persistInBackground(
+        _recurringFixedCostStore.save(next),
+        'recurring fixed cost tombstone pull save',
+      );
+    } catch (e) {
+      debugPrint('recurring fixed cost tombstone pull failed: $e');
     }
   }
 
@@ -8595,6 +8782,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _recurringFixedCostStore.save(_recurringFixedCosts),
       'recurring fixed cost save',
     );
+    // 編集/再追加は id 再利用解除 (tombstone 除去) + ローカル編集を dirty 記録。
+    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: false));
+    unawaited(
+      _syncDirtyKeysStore.markDirty(_recurringFixedCostsMirrorKey, cost.id),
+    );
     unawaited(_mirrorRecurringFixedCosts());
   }
 
@@ -8608,6 +8800,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _recurringFixedCostStore.save(_recurringFixedCosts),
       'recurring fixed cost delete',
     );
+    // 削除をトゥームストーン化して他端末へ伝播 (union/backfill で復活させない)。
+    unawaited(_recordRecurringFixedCostTombstone(cost.id, deleted: true));
     unawaited(_mirrorRecurringFixedCosts());
   }
 
