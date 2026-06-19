@@ -7932,11 +7932,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 16),
               _buildCategoryBudgetCard(),
               const SizedBox(height: 16),
-              _buildRecurringFixedCostCard(assetLiabilityWorkbook),
-              const SizedBox(height: 16),
               _buildRecurringTransactionSuggestionCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
               _buildRecurringIncomeSuggestionCard(assetLiabilityWorkbook),
+            ],
+            if (_isSectionShown(
+                AssetManagementSectionId.recurringFixedCost)) ...[
+              _buildRecurringFixedCostCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
