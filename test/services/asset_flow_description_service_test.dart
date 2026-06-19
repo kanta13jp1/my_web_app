@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_flow_description_service.dart';
+import 'package:my_web_app/services/waste_tracking_service.dart';
 
 FlowDescriptionParts _parts({
   String source = '',
@@ -60,6 +61,62 @@ void main() {
         AssetFlowDescriptionService.displayTitle(_parts(memo: 'コンビニ')),
         'コンビニ',
       );
+    });
+  });
+
+  group('AssetFlowDescriptionService.parse', () {
+    test('parses an expense with source and memo', () {
+      final parts = AssetFlowDescriptionService.parse(
+        '[財布] ランチ',
+        actionType: 'expense',
+      );
+      expect(parts.source, '[財布]');
+      expect(parts.memo, 'ランチ');
+      expect(parts.isTransfer, isFalse);
+    });
+
+    test('parses a transfer route with memo', () {
+      final parts = AssetFlowDescriptionService.parse(
+        '[A] -> [B] 引越し資金',
+        actionType: 'transfer',
+      );
+      expect(parts.source, '[A]');
+      expect(parts.destination, '[B]');
+      expect(parts.memo, '引越し資金');
+      expect(parts.isTransfer, isTrue);
+    });
+
+    test('falls back to memo-only when there is no bracket', () {
+      final parts = AssetFlowDescriptionService.parse(
+        '給料',
+        actionType: 'income',
+      );
+      expect(parts.source, '');
+      expect(parts.memo, '給料');
+      expect(parts.isTransfer, isFalse);
+    });
+
+    test('extracts and strips the waste marker only for expenses', () {
+      final category = WasteTrackingService.categoryLabels.first;
+      final described = WasteTrackingService.attachWasteCategory(
+        '[セブン] コーヒー',
+        category,
+      );
+
+      final expense = AssetFlowDescriptionService.parse(
+        described,
+        actionType: 'expense',
+      );
+      expect(expense.source, '[セブン]');
+      expect(expense.memo, 'コーヒー'); // 浪費マーカーは除去
+      expect(expense.wasteCategory, category);
+
+      final income = AssetFlowDescriptionService.parse(
+        described,
+        actionType: 'income',
+      );
+      expect(income.wasteCategory, isNull);
+      expect(income.memo, contains('[浪費:')); // 非支出はマーカー保持
     });
   });
 }
