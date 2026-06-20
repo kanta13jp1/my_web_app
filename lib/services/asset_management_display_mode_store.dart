@@ -72,7 +72,7 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
   String get label {
     switch (this) {
       case AssetManagementSectionId.monthlyFlow:
-        return '当月収支の概観';
+        return '当サイクルの収支の概観';
       case AssetManagementSectionId.calendar:
         return 'マネーカレンダー';
       case AssetManagementSectionId.proposals:
