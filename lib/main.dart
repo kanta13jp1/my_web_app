@@ -285,6 +285,9 @@ import 'package:my_web_app/pages/poll_survey_page.dart';
 import 'package:my_web_app/pages/notification_digest_page.dart';
 import 'package:my_web_app/pages/ai_university_badges_page.dart';
 import 'package:my_web_app/pages/ai_university_streaks_page.dart';
+import 'package:my_web_app/pages/english_reading_curriculum_page.dart';
+import 'package:my_web_app/pages/english_reading_practice_page.dart';
+import 'package:my_web_app/pages/english_reading_dashboard_page.dart';
 import 'package:my_web_app/pages/ai_workflow_automation_page.dart';
 import 'package:my_web_app/pages/ab_testing_manager_page.dart';
 import 'package:my_web_app/pages/habit_tracker_page.dart';
@@ -1560,6 +1563,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           case '/ai-university-streaks':
             return MaterialPageRoute(
               builder: (_) => const AiUniversityStreaksPage(),
+            );
+          case '/english-reading-curriculum':
+            return MaterialPageRoute(
+              builder: (_) => const EnglishReadingCurriculumPage(),
+            );
+          case '/english-reading-practice':
+            final args = settings.arguments as Map<String, dynamic>?;
+            return MaterialPageRoute(
+              builder: (_) => EnglishReadingPracticePage(
+                lessonCode: args?['lesson_code'] as String?,
+                mode: args?['mode'] as String? ?? 'measure',
+              ),
+            );
+          case '/english-reading-dashboard':
+            return MaterialPageRoute(
+              builder: (_) => const EnglishReadingDashboardPage(),
             );
           case '/ai-workflow-automation':
             return MaterialPageRoute(
