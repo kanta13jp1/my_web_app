@@ -7,6 +7,25 @@ import 'recurring_fixed_cost_card.dart';
 /// 振替元ドロップダウンに渡す口座 (ID + 表示名)。
 typedef RecurringFixedCostSourceOption = ({String id, String name});
 
+/// 振替元/請求先に選べる口座を組み立てる。
+///
+/// 既定は資産口座 (残高>0) のみ。サブスク等カードへ請求される費用では
+/// [includeCards] = true で**残高の符号によらず**クレジット/プリペイドカード
+/// (例: ファミペイ バーチャルカード) も含める。FamiPay は後払い/残高0だと
+/// `balance > 0` だけのフィルタでは選べないため、請求先カードとして拾えるようにする。
+List<RecurringFixedCostSourceOption> recurringFixedCostSourceOptions(
+  Iterable<AssetLiabilityAccount> accounts, {
+  bool includeCards = false,
+}) {
+  return <RecurringFixedCostSourceOption>[
+    for (final account in accounts)
+      if (account.balance > 0 ||
+          (includeCards &&
+              account.kind == AssetLiabilityAccountKind.creditCard))
+        (id: account.id, name: account.name),
+  ];
+}
+
 /// 定期固定費の追加/編集ダイアログを開き、保存された [AssetRecurringFixedCost] を返す。
 /// キャンセル時は null。
 ///
