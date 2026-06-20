@@ -7,6 +7,15 @@
 // 本文用にこのトークン数を確保し、残りを thinkingBudget で上限化する。
 export const GEMINI_OUTPUT_TOKEN_RESERVE = 8000;
 
+// gemini-2.5-flash / flash-lite が受け付ける thinkingBudget の範囲。
+// 呼び出し側の maxTokens は index.ts の normalizeMaxTokens で 8192 上限に
+// クランプされるため、旧実装の (maxTokens - 8000) は本番で常に 192 となり、
+// Gemini の下限 512 を下回って 400 INVALID_ARGUMENT
+// ("thinking budget 192 is invalid. choose 512-24576") を返していた。
+// 算出値をこの範囲にクランプして回避する。
+export const GEMINI_MIN_THINKING_BUDGET = 512;
+export const GEMINI_MAX_THINKING_BUDGET = 24576;
+
 export function applyProviderGenerationOptions(
   providerId: string,
   requestBody: Record<string, unknown>,
@@ -52,15 +61,22 @@ export function applyProviderGenerationOptions(
       ...generationConfig,
       maxOutputTokens: maxTokens,
     };
-    // 呼び出し側が thinkingConfig を明示していない & 本文確保枠より大きい予算のときだけ
-    // thinking を上限化する。残り (maxTokens - reserve) を thinking に割り当て、
-    // 本文用に最低 GEMINI_OUTPUT_TOKEN_RESERVE を必ず残す。
+    // 呼び出し側が thinkingConfig を明示していないときだけ thinking を上限化する。
+    // 本文用に GEMINI_OUTPUT_TOKEN_RESERVE を確保した残りを thinking に割り当てるが、
+    // Gemini が許容する [GEMINI_MIN_THINKING_BUDGET, GEMINI_MAX_THINKING_BUDGET] に
+    // クランプする。maxTokens は 8192 上限のため実際は下限 512 になり、本文に 7680
+    // 以上を残しつつ 400 (192 invalid) を回避する。maxTokens が下限以下の極小
+    // リクエストでは thinking を設定せず Gemini 既定に委ねる。
     if (
       generationConfig.thinkingConfig == null &&
-      maxTokens > GEMINI_OUTPUT_TOKEN_RESERVE
+      maxTokens > GEMINI_MIN_THINKING_BUDGET
     ) {
+      const desiredBudget = maxTokens - GEMINI_OUTPUT_TOKEN_RESERVE;
       nextGenerationConfig.thinkingConfig = {
-        thinkingBudget: maxTokens - GEMINI_OUTPUT_TOKEN_RESERVE,
+        thinkingBudget: Math.min(
+          GEMINI_MAX_THINKING_BUDGET,
+          Math.max(GEMINI_MIN_THINKING_BUDGET, desiredBudget),
+        ),
       };
     }
     return {
