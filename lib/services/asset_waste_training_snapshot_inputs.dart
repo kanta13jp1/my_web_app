@@ -11,7 +11,11 @@ import 'asset_waste_training_ai_service.dart';
 class AssetWasteTrainingSnapshotInputs {
   const AssetWasteTrainingSnapshotInputs();
 
-  /// [monthFlows] は対象月に絞り込み済みの収支フロー。
+  /// [monthFlows] は対象期間に絞り込み済みの収支フロー。
+  ///
+  /// [cycleStart] / [cycleEndExclusive] を両方渡すと、集計窓・経過日数を給料日
+  /// サイクル `[cycleStart, cycleEndExclusive)` で扱う(資産管理の「今月 = 給料日
+  /// サイクル」統一)。どちらか欠けると従来どおり [now] の暦月で扱う(後方互換)。
   static AssetWasteTrainingSnapshot build({
     required List<Map<String, dynamic>> monthFlows,
     required DateTime now,
@@ -23,8 +27,13 @@ class AssetWasteTrainingSnapshotInputs {
     required int todayViolationCount,
     required int compliantStreakDays,
     required bool lockdownActive,
+    DateTime? cycleStart,
+    DateTime? cycleEndExclusive,
   }) {
-    final currentMonth = DateTime(now.year, now.month, 1);
+    final usingCycle = cycleStart != null && cycleEndExclusive != null;
+    final periodStart = usingCycle
+        ? DateTime(cycleStart.year, cycleStart.month, cycleStart.day)
+        : DateTime(now.year, now.month, 1);
     var totalExpense = 0;
     var wasteExpense = 0;
     var expenseEntryCount = 0;
@@ -57,14 +66,25 @@ class AssetWasteTrainingSnapshotInputs {
       }
     }
 
-    final isCurrentMonth =
-        currentMonth.year == now.year && currentMonth.month == now.month;
-    final elapsedDays = isCurrentMonth
-        ? now.day
-        : DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
+    final int elapsedDays;
+    if (usingCycle) {
+      // サイクル内なら開始日からの経過日数、終了済みサイクルなら全日数。
+      final nowWithinCycle =
+          !now.isBefore(cycleStart) && now.isBefore(cycleEndExclusive);
+      final fullCycleDays = cycleEndExclusive.difference(periodStart).inDays;
+      elapsedDays = nowWithinCycle
+          ? now.difference(periodStart).inDays + 1
+          : fullCycleDays;
+    } else {
+      final isCurrentMonth =
+          periodStart.year == now.year && periodStart.month == now.month;
+      elapsedDays = isCurrentMonth
+          ? now.day
+          : DateTime(periodStart.year, periodStart.month + 1, 0).day;
+    }
 
     return AssetWasteTrainingSnapshot(
-      month: currentMonth,
+      month: periodStart,
       monitoredAt: now,
       totalExpense: totalExpense,
       wasteExpense: wasteExpense,
