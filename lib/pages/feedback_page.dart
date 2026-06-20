@@ -49,10 +49,16 @@ class _FeedbackPageState extends State<FeedbackPage> {
       }
 
       if (!mounted) return;
+      // 「対応を追跡します」が嘘にならないよう、実際に Issue 化できたかで出し分ける。
+      final issueCreated = data?['issueCreated'] == true;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('フィードバックを受け付けました。ありがとうございます。'),
-          backgroundColor: Color(0xFF4CAF50),
+        SnackBar(
+          content: Text(
+            issueCreated
+                ? 'フィードバックを受け付けました。AIが対応に着手します。ありがとうございます。'
+                : 'フィードバックを受け付け、内容を保存しました。ありがとうございます。',
+          ),
+          backgroundColor: const Color(0xFF4CAF50),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -121,8 +127,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        '送信後は投稿ありがとうメールをお送りします。あわせて GitHub Issue に登録し、'
-                        'Claude Managed Agents と github-issue-fix キューで対応を追跡します。',
+                        '送信内容は保存し、可能な場合は GitHub Issue に登録して '
+                        'github-issue-fix キューで対応に着手します（登録できない場合も内容は保存されます）。'
+                        'ご登録のメールアドレスがある場合は受付メールをお送りします。',
                         style: TextStyle(
                           color: colorScheme.onPrimaryContainer,
                           fontSize: 13,

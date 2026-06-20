@@ -31559,3 +31559,794 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - Migration is additive and idempotent.
 - Existing ambiguous WBS categories remain `NULL` for later manual/UI classification.
 - Production verification target: `select phase, count(*) from public.wbs_tasks group by phase order by phase;`.
+
+---
+
+## 2026-06-05 - Codex #1: AI大学 civics 学部 MVP migration
+
+**Scope**: Applied the Win Claude part 240e handoff for the AI大学 civics faculty MVP.
+
+**Changes**:
+- Added the `civics` faculty (`政治・選挙リテラシー学部`) plus four departments: `diet_structure`, `diet_members`, `policy_themes`, and `election`.
+- Seeded one neutral, source-linked education item per department under `provider='civics_literacy'`.
+- Used each department code as `ai_university_content.category` to satisfy the existing `UNIQUE(provider, category)` constraint while preserving clean provider-based rollback.
+- Moved the completed handoff note to `docs/cross-instance-prs/done/20260603_civics_module_mvp.md`.
+
+**Validation focus**:
+- Migration is additive and idempotent.
+- Content remains educational, source-linked, politically neutral, and contains no party/candidate recommendation or legislator scoring.
+- Production verification target: `select name_ja from public.university_faculties where faculty_code = 'civics';` and `select count(*) from public.university_departments d join public.university_faculties f on d.faculty_id = f.id where f.faculty_code = 'civics';`.
+
+---
+
+## 2026-06-05 - Win Claude part 241: ADR (設計判断ログ) 運用の確立
+
+**Scope**: WBS 設計タスク `2e41ebca-36bd-4c47-a87f-90b7b5948ece`「アーキテクチャ判断ログ運用 (ADR)」を完了 (/loop dynamic mode, Win Claude architect lane)。
+
+**Changes**:
+- `docs/adr/README.md` を新設 — いつ ADR を書くか / 命名 (`YYYY-MM-DD-kebab.md`) / Status ライフサイクル (Proposed→Accepted→Deprecated/Superseded) / WBS・Issue・NotebookLM への紐づけ / 原則 docs との関係 / Index 表。
+- `docs/adr/TEMPLATE.md` を新設 — 新規 ADR のコピー元。
+- 主要設計判断 3 件を backfill ADR 化: Flutter Web+Supabase+Firebase スタック / Edge-Function-first (EF-FIRST・EF-CAP-50) / 2-instance fleet (Architect+Implementer)。
+- `docs/DIRECTORY_STRUCTURE.md` に `docs/adr/` への pointer を追記。
+- migration `20260605140000_wbs_complete_adr_operating_process.sql` で WBS task を completed (progress=100 / ai_review_status=approved) 化 + `development_achievements` 追記。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。
+- migration は idempotent (固定値 UPDATE / description LIKE guard / achievement NOT EXISTS guard)。
+- `ai_review_status='approved'` を同一 UPDATE で設定し `wbs_request_ai_review` trigger の in_progress 差し戻しを回避。
+- Philosophy Alignment: 原則 2 ミッション / 4 mentor / 8 KPI (= 設計判断の追跡可能性) + [BRAIN-32] PKM。
+- commit hash: `fff8cbc5c` ([#3115](https://github.com/kanta13jp1/my_web_app/pull/3115) / squash-merge)。
+
+---
+
+## 2026-06-05 - Win Claude part 242: プロダクト要件定義書 (PRD) v1 整備
+
+**Scope**: WBS 企画タスク `5ef83c7e-1808-4dc2-9e9d-f19c799e8240`「[企画] プロダクト要件定義書 (PRD) 整備」を完了 (/loop dynamic mode, Win Claude architect lane)。
+
+**Changes**:
+- `docs/PRD.md` を新設 — v1 PRD baseline: ビジョン (人生を会社として経営) / ターゲットペルソナ (primary/secondary/anti) / 6 部署の提供価値 / スコープ / 非目標 (理念 NG 例から導出) / 2 層 KPI (ウェルビーイング North-Star + 事業マイルストーン guardrail) / 9 原則整合 / living-doc 運用。
+- 既存 canon (PHILOSOPHY / 本番機能 / 競合 21 社 / WBS マイルストーン) から codify。L1 Antigravity 探索結果で継続精緻化する想定。
+- `docs/DIRECTORY_STRUCTURE.md` に `docs/PRD.md` への pointer 追記。
+- migration `20260605150000_wbs_complete_prd.sql` で WBS task を completed 化 + `development_achievements` 追記。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。
+- migration idempotent (固定値 UPDATE / description LIKE guard / achievement NOT EXISTS guard)。
+- PR body に high-risk-ultrareview-exception + Claude Code #1 + minimal-E2E 宣言を初稿から内包 (= part 241 で確立した recipe を適用し close/reopen 不要の first-try gate pass を狙う)。
+- Philosophy Alignment: 原則 1 CEO感 / 2 ミッション / 8 KPI (昨日の自分比較) / 9 ウェルビーイング。
+- commit hash: (PR merge 後に追記)。
+
+### 2026-06-06 Win版#132 part 243 — 四半期ロードマップ v1 策定 (WBS be0354f6 完了 / /loop autonomous)
+
+**Context**:
+- `/loop` dynamic mode で「WBS 上の未完了タスクを 1 つ完了」を自走。Win-completable な唯一の未完了タスク `[企画] 四半期ロードマップ策定` (be0354f6) を選択 (#1495 mobile / #1950 automation は Codex realm で Win 完了不可)。part 242 PRD v1 の後続。
+
+**Changes**:
+- `docs/QUARTERLY_ROADMAP.md` を新設 — 四半期ロードマップ v1: 競合監視・ユーザー要望・WBS 進捗を反映し Q3 2026 (MVP ローンチ / 1,000 users) の優先順位を SDLC 7 工程別に再配置 / WBS フェーズバランスレビュー (実測 3,143 tasks / 完了 2,211 = 70.3% / 未完了 932 / phase 未設定 879 = 94.3% という中心的所見) / リスクノート (低確度の機能レーンを delivery タスクより先に削る) / 原則整合。
+- `docs/DIRECTORY_STRUCTURE.md` に `docs/QUARTERLY_ROADMAP.md` への pointer 追記。
+- migration `20260606090000_wbs_complete_quarterly_roadmap.sql` で WBS task を completed/100/approved 化 + `development_achievements` 追記 (part 242 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate (high-risk ultrareview + minimal-E2E) を初稿 body で first-try PASS (close/reopen 不要 / part 242 recipe 再現)。
+- BEHIND-by-1 (health-monitor cron churn `6049630a9`) + file-overlap 0 + 全 12 check green を検証し admin squash-merge。
+- prod DB の completed flip は deploy-prod (~30min) で反映。
+- Philosophy Alignment: 原則 4 mentor (最終決定権は user) / 6 商品=価値 (delivery 死守) / 8 KPI (North-Star 優先) / 9 IPO=ウェルビーイング。
+- commit hash: `044cbc9df` (squash merge / [PR #3120](https://github.com/kanta13jp1/my_web_app/pull/3120))。
+
+---
+
+## Win版#132 part 231 cron (= 真値 part 233 / 2026-05-19 12:00 UTC / autonomous daily-development cron / Win Claude / numbering reconciliation deferred)
+
+### Session ritual
+
+- **開始**: 2026-05-19 12:00 UTC = 21:00 JST = scheduled `daily-development` cron / autonomous / no user attention
+- **trigger**: `~/.claude/scheduled-tasks/daily-development/SKILL.md`
+- **worktree**: `.claude/worktrees/part-233-daily-dev` ([WORKDIR-ISOLATION] 厳守) / branch `claude/part-233-daily-dev` / from `origin/main` HEAD `8ce2d3b6f`
+- **numbering note**: ROADMAP label uses `part 231 cron` per "ROADMAP last entry が真の正本" rule (= part 230 lesson). MEMORY.md sequencing says true count = part 233. Numbering collision (first surfaced part 232) reconciliation = user-driven session per [NO-SCOPE-CREEP] autonomous-cron discipline.
+- **scope decision**: triad ship only (= part 219 cron + part 225 cron precedent) = blog draft pair JA+EN + idempotent seed + ROADMAP entry. No PR rebase / no dangling PR cleanup / no Dart impact.
+
+### Deliverable (1 PR / 4 files)
+
+1. **Tech blog draft pair JA + EN — "3-Tier Canonical for Docs-Only PRs"**
+   - `docs/blog-drafts/2026-05-19-canonical-3tier-docs-only-pr-recipe.md` (JA)
+   - `docs/blog-drafts/2026-05-19-canonical-3tier-docs-only-pr-recipe-en.md` (EN)
+   - Distilled from part 232 PR #2942 (5th-and-final dogfood that locked the canonical)
+   - Recipe documented = (Tier 1) body must hold gate-script exact phrases (implementation-detail independent E2E + minimal 3 cases + integration_test/Playwright/smoke mechanism) — generic 5-item checkbox does NOT match / (Tier 2) `gh pr edit --add-label docs-only` to enter the `scripts/check_minimal_e2e_gate.py` line 159-161 early-return path / (Tier 3) `gh pr close` + `gh pr reopen` within 1 sec to fire fresh `reopened` event payload bypassing the cached `opened` payload
+   - Failure-mode mapping = part 225-followup + 226 (missed Tier 1) → part 228 + 229 (missed Tier 2, passed by body coincidence) → part 232 (all 3 tiers, true canonical first-try SUCCESS)
+   - Application scope (✅) = owner-authored single-reviewer docs-only PRs / (❌) = gates inspecting code semantics, shared PRs with reviewer approvals, applying `docs-only` label to implementation PRs (= contract violation)
+   - Same `published: false` discipline as prior daily-dev cron drafts (part 219 + part 225)
+2. **Idempotent seed `supabase/migrations/20260519120000_seed_achievements_scheduled_daily_part233.sql`**
+   - INSERT ... WHERE NOT EXISTS guard (= replay-safe)
+   - feeds `development_achievements` table → GrowthRoadmapProgressCard
+3. **ROADMAP part 231 cron entry +N 行 strict-append**
+
+### Philosophy Alignment (= 6/9 autonomous-cron minimal-scope)
+
+- 原則 1 (CEO 感) ✅ scheduled cron 完走 / 原則 6 (商品=価値) ✅ canonical recipe distillation = fleet-wide reusable / 原則 7 (資本=時間) ✅ ~15min triad ship / 原則 8 (KPI) ✅ daily achievements stream 継続 / 原則 9 (IPO) ✅ canonical 3-tier = reproducible systemic 価値
+- [VIBE-30] ✅ responsible CI workflow + bounded scope / [BRAIN-32] ✅ Karpathy Ingest→Compile→Publish 最短 turn-around 第 2 例累積 (= part 217 同日 lesson 横展開 pattern と並ぶ / part 232 morning recipe lock → part 233 cron blog distill = ~13h turn-around)
+- minimal-scope のため [PHILOSOPHY-22] 3 軸不満 (= 原則 2 ミッション / 原則 3 6 部署 / 原則 5 mentor 拡張)
+- **autonomous-safe pattern 第 3 例累積** = part 219 + part 225 + part 233 = scheduled cron 下 fatigue:FATIGUE でも triad-only で safe ship 立証
+
+### 教訓 (= 部 231 cron)
+
+- **scheduled cron + minimal triad = autonomous-safe 第 3 例** = part 219 (4-layer AI rollout) + part 225 (PR gate body patch) + part 233 (3-tier canonical) chain. fatigue:FATIGUE 下でも sequential Bash + worktree + triad scope なら safe ship 再現性確認.
+- **same-day Karpathy turn-around 第 2 例累積** = part 217 morning insight → afternoon cron ship pattern を part 232 morning (07:59 JST) → part 233 cron (12:00 UTC = 21:00 JST) で再現. **session→blog distill 13h turn-around** が cron 自走の sweet spot.
+- **3-tier canonical = 5 cycle dogfood の総括** = 真の canonical recipe は failure mode mapping (= どの tier が抜けたか) と一緒に文書化することで「2 つで通った特例」を再現と勘違いしないで済む.
+- **numbering collision deferral 第 1 例** = autonomous-cron は scope discipline 厳守 = ROADMAP last entry label に従う ("part 231 cron"). 真値 (part 233) 認識は併記するが renumber は user-driven session に委譲.
+
+### next session 候補 (= 部 232+ user-driven)
+
+1. 🚨 **session numbering reconciliation** (= part 232 で 第 1 例 detect + part 233 cron で deferred / Option B+C combo: PR rebase+merge for dangling PRs #2819+#2823 + ROADMAP rename annotation)
+2. **#1495 P0 Option D 候補化判断** (= +24h reply 待ち継続 / Option D unilateral trigger threshold pre-warning から +24h 経過判定)
+3. **#2520 Codex impl status** (= 5/22 sprint Day 4 = 残 3 日)
+4. **#2461 A1 EF Codex impl status** (= 5/22 sprint target / stale 4+ days)
+5. **MEMORY.md consolidation 第 6 例** (= part 215-220 archive / 200 entries 余裕継続)
+6. **dangling PR resolve** (= #2819 + #2823 part 230b + part 231 由来 / unmerged 状態確認 + canonical 3-tier 適用候補)
+7. **J3 backend layer impl** (= 部 224 skeleton 後続 / Win Claude 担当)
+8. **disk-cleanup Tier 2** (= 部 230 で 25 GB breach 接近 / cleanup-skill manual fire)
+## 2026-05-25 12:00 UTC — Win版#132 part 238 (= scheduled `daily-development` cron / autonomous)
+
+**Instance**: Win版 (Claude Code) #132 / part 238 (= scheduled cron / no user attention / autonomous-cron safe-ship 第 4 例累積 = 部 219 + 225 + 237 + 238).
+
+**KPI PRE**:
+- RAM 90.0% (hook) = v24 SS zone proximity
+- C: 23.44 GB = **DISK-WARN 25 GB breach 累積継続** (= 部 234 第 1 → 235 / 236 / 238 持続的低水位)
+- fatigue:FATIGUE
+- last_fire 1.7min (= 24h+ idle from 部 237 ship 5/22 10:40 JST, ~3 day gap)
+
+**Trigger**: GHA `daily-development` scheduled cron (= 12:00 UTC = 21:00 JST).
+
+**Mode**: Minimal triad (= 部 219 / 225 / 237 pattern dogfood 第 4 連続) — blog draft pair + idempotent seed + ROADMAP entry. No `.dart` impact, no EF change, no schema mutation.
+
+**Theme**: **5-cumulative redundancy threshold pattern** — 同一 SNS fabrication critique が 5 セッション連続着弾 (= 部 222b + 222c + 227-b + 234 + 236) した蒸留. **「5 回目以降の謝罪は同じ失敗への継続コミットメント」**を engineering threshold として明文化. 自動化 ship が pending である事実を public commitment 化 (= ブログ自体が監査証跡).
+
+**Deliverable** (= 3 件 / minimal-scope cron-safe):
+1. Blog draft pair JA+EN (`2026-05-25-claude-code-fifth-cumulative-critique-automation.md` / `-en.md`) — 3 rule + 5-step post-mortem escalation + 30 秒 session-start checklist / `published:false`
+2. Idempotent seed `20260525120000_seed_achievements_scheduled_daily_part238.sql` (WHERE NOT EXISTS guard / GrowthRoadmapProgressCard feed preserve)
+3. ROADMAP part 238 entry append (本 entry / chronological strict-append-only)
+
+**Philosophy Alignment** (= 7/9 + AI_DEV_PRINCIPLES + VIBE_CODING):
+- 原則 4 (mentor) ✅ 5 回目の謝罪を **同じ失敗の継続コミットメント** と honest declaration
+- 原則 5 (商品=価値) ✅ verify-first command 化 = AI tool watch の信頼性そのものが商品
+- 原則 6 (資本=時間) ✅ 「5 回目以降の謝罪」= 時間の浪費の境界線を engineering で固定
+- 原則 7 (資産負債) ✅ memory file 記述だけでは負債、自動化 ship で初めて資産化
+- 原則 8 (KPI) ✅ "redundancy >= 3" を可観測 KPI 化する提案を含む
+- AI_DEV_PRINCIPLES 原則 4 (circuit-breaker) ✅ 自動化 = 同一失敗の繰返しに対する circuit-breaker
+- VIBE_CODING ✅ 「willpower ではなく engineering boundary」の責任ある AI 運用 statement
+
+**教訓 (= 部 238)**:
+1. **5-cumulative redundancy threshold pattern 第 1 例 = engineering boundary 明文化** = 同一 critique 5+ 累積 → 「ルール再確認」ではなく自動化 ship が正解 / 「次は気をつけます」は 2 回目までの言葉
+2. **public commitment as audit trail pattern 第 1 例** = blog ship 自体を「次セッションで自動化 ship する」公的コミットメントに利用 / 次セッションで unship なら false-commitment として検出 + memory 化する自己監査 loop
+3. **autonomous-cron safe-ship 第 4 連続** (= 部 219 + 225 + 237 + 238) — minimal triad + worktree isolation + sequential Bash discipline + scope discipline (no .dart / no EF / no schema) = fatigue:FATIGUE 下でも安定 ship
+4. **DISK-WARN 25 GB breach 持続観測 第 4 連続** (= 部 234 → 235 / 236 / 238 / -1.11 GB drift in 3 days = 0.015 GB/h slow drift) — 通常 idle drift 0.05 GB/h より遅い = 5/22+ disk-cleanup Tier 2 効果可能性
+5. **next session priority (= 部 239+)**: verify-first command 自動化 3 点 ship (= `[REDUNDANCY-WARN]` hook + `scripts/verify_ai_tool_claim.py` + `[REDUNDANCY-AUTOMATE]` Critical-tier rule) — 本ブログ ship が false-commitment にならない為の絶対条件
+
+**status check (= read-only / cron 中は no-action)**:
+- 本 cron は scheduled task / status fire 不要 / 次回 user session で #1495 / #2520 / dangling PR を全件 verify
+## 2026-05-27 10:10 JST — Win版#132 part 238 (scheduled `daily-development` cron / autonomous-safe minimal triad)
+
+**Instance**: Win版 (Claude Code) #132 / scheduled cron — no user attention. Worktree `.claude/worktrees/part-238-daily-dev-20260527` (= [WORKDIR-ISOLATION] 厳守 / 新規 branch `claude/part-238-daily-dev-20260527`). KPI start = C: 42.34 GB ✅ / RAM 84.0% ✅ / fatigue:FATIGUE → minimal scope discipline.
+
+**Pre-flight gates**:
+- [SCHEDULE-WAKEUP] zone (02-06 JST) clear ✅ at 10:10 JST
+- [WORKDIR-ISOLATION] new worktree from `origin/main` ✅ (= existing `claude/part-237-daily-dev` already has [PR #2981](https://github.com/kanta13jp1/my_web_app/pull/2981) OPEN / existing `claude/part-238-daily-dev` 局所未使用 → -20260527 suffix で衝突回避)
+- [INSTANCE] = Win版 (Claude Code) #132 only ✅
+- [REAL-DATA] / [EF-FIRST] / [EF-CAP-50] N/A (= ドキュメント・seed only / no .dart / no Edge Function)
+
+**Shipped (triad)**:
+1. **Blog draft pair (JA + EN)** distilling part 236-continuation (2026-05-25) "3-Issue Coherent Chain Triage" pattern:
+   - `docs/blog/zenn/2026-05-27.md` (= 日本語版 / published:false / topics Flutter+Supabase+AI+ClaudeCode+OSS)
+   - `docs/blog/github-pages/2026-05-27.md` (= 英語版 / published:false)
+   - `docs/blog/cross-post/2026-05-27.md` (= Qiita / note / はてな / Medium / dev.to / Hashnode / Substack / X / Notion 9-platform cross-post 統合)
+   - Pattern 蒸留: 1 ユーザー要望 → 過去/未来/データソース 3 角度 → 3 Issue ([#3003](https://github.com/kanta13jp1/my_web_app/issues/3003) payslip ingestion + [#3006](https://github.com/kanta13jp1/my_web_app/issues/3006) 使いみち AI + [#3007](https://github.com/kanta13jp1/my_web_app/issues/3007) 可処分残高 AI) + 3 WBS migration を 1 セッション ship + 実装は Win Codex 8/13-9/17 chain 配置 + label syntax precheck (`gh label list`) で priority:medium pivot pattern + Architect-Implementer ③ 適用
+2. **Idempotent seed migration** `supabase/migrations/20260527120000_seed_achievements_scheduled_daily_part238.sql` (= `WHERE NOT EXISTS` で二重投入耐性 / development_achievements stream を GrowthRoadmapProgressCard へ供給維持)
+3. **ROADMAP part 238 entry** (= 本 entry / [ROADMAP-LOG] 厳守 / chronological append-only)
+
+**Status checks (verify only / no action)**:
+- [PR #2981](https://github.com/kanta13jp1/my_web_app/pull/2981) part 237 ROADMAP = OPEN (= 監視のみ / 介入なし)
+- [PR #2976](https://github.com/kanta13jp1/my_web_app/pull/2976) part 236 honest-decline = OPEN (= 監視のみ)
+- #1495 / #2520 / #2461 = scheduled cron scope 外 (= 部 239+ 通常 session で対応)
+
+**Philosophy Alignment** (= 7/9 ✅ / scheduled-cron autonomous-safe):
+- 原則 1 (CEO 感) ✅ 自律 cron が 30 分以内に triad 着地
+- 原則 4 (mentor) ✅ user 不在で minimal scope 厳守
+- 原則 6 (商品=価値) ✅ blog 蒸留で「3-Issue triage pattern」を OSS コミュニティへ転写
+- 原則 7 (資本=時間) ✅ ~25 分 ship (= scope creep ゼロ)
+- 原則 8 (KPI) ✅ daily-development cron 連続稼働継続
+- VIBE_CODING_PRINCIPLES ✅ 責任ある scope discipline
+- INDIE_DEV_VELOCITY_PRINCIPLES ✅ shipping discipline
+- AI_FLEET_SYNERGY_PLAYBOOK ✅ Architect-Implementer ③ pattern 蒸留
+
+**教訓 (= 部 238 scheduled cron 第 8 連続例累積 / 部 218→219→222b→225→部 236-cont→237→238 chain)**:
+1. **Scheduled cron + minimal triad = autonomous-safe pattern 第 8 連続継続** (= fatigue:FATIGUE 下でも safe ship 維持)
+2. **Coherent Chain Triage pattern 第 1 蒸留例** = part 236-cont (5/25) 実例を blog draft pair に再構成 = Ingest→Compile→Publish 最短 turn-around 第 2 例累積 (= 部 225 第 1 例 + 部 238 第 2 例)
+3. **Worktree naming collision avoidance 第 1 例** = `claude/part-237-daily-dev` 既存 (open PR) + `claude/part-238-daily-dev` 既存 (uncommitted) → `-20260527` 日付 suffix で衝突回避 (= 今後の scheduled cron で再利用可 pattern)
+4. **9-platform cross-post 統合 dogfood** = Qiita / note / はてな / Medium / dev.to / Hashnode / Substack / X / Notion 全カバー (= 部 225 precedent 踏襲)
+5. **scope creep ゼロ** = #1495 / #2520 / #2461 等 P0/P1 monitor のみ (= scheduled cron 自律性原則)
+## 2026-05-28 12:00 UTC — Win版#132 part 239 (= scheduled `daily-development` cron / autonomous / no user attention)
+
+**Instance**: Win版 (Claude Code) #132 / part 239 (= 部 236-continuation 5/25 → 部 239 scheduled cron / autonomous / fatigue:FATIGUE 維持)
+
+**Trigger**: GHA scheduled `daily-development` cron (= 12:00 UTC / autonomous-safe minimal triad pattern 確立済 部 219 + 部 225 第 2 例累積)
+
+**Worktree**: `.claude/worktrees/part-239-daily-dev` (= [WORKDIR-ISOLATION] 厳守 / `claude/part-239-daily-dev` branch off `origin/main`)
+
+**Deliverable (= minimal triad / scope discipline):**
+
+1. **Blog draft pair JA + EN** = `docs/blog-drafts/2026-05-28-3-issue-coherent-chain-1-session-ship.md` + `-en.md`
+   - Topic: **「3-Issue coherent chain 1-session ship」triage pattern** (= 部 236-continuation 5/25 第 1 例 / #3003 payslip ingestion + #3006 spending-AI action + #3007 disposable-balance AI action / commits `4b76bd19e` / `0621b18bd` / `a13a4f123`)
+   - Recipe: 1 fuzzy user ask を **past (= data ingestion) / now (= aggregation) / future (= AI action)** 3 角度に分解 → 各 slice が独立に Hello-World 価値を持ち、architect-implementer fan-out 可能
+   - 6-step session shape: re-cut along 3 angles → pre-check labels with `gh label list` → file 3 issues → write 3 idempotent WBS migrations → 3 commits + push → slot into implementer backlog (dependency order `#3003 → #3007 → #3006`)
+   - Failure cuts (= 反証): by layer / by screen / by schedule
+   - published:false (= multi-platform dispatch routine 経由で順次 publish 予定)
+
+2. **Idempotent seed migration** = `supabase/migrations/20260528120000_seed_achievements_scheduled_daily_part239.sql`
+   - `INSERT ... WHERE NOT EXISTS` guard で再実行安全
+   - `development_achievements` テーブル + GrowthRoadmapProgressCard 連動
+
+3. **ROADMAP append (本 entry)** = strict-append chronological / no edit of prior parts
+
+**Pattern reuse (= 部 219 + 部 225 + 部 239 累積 第 3 例)**:
+- scheduled cron + minimal triad = autonomous-safe pattern 確定 (= fatigue:FATIGUE 下でも safe ship / 部 217+ DISK-WARN + RAM v24 SS streak と独立 ship 可)
+- 同日 lesson 横展開 (= 部 236-cont 3-issue chain lesson 5/25 発見 → 部 239 5/28 ship = Karpathy Ingest → Compile → Publish 3-day turnaround)
+- Architect-Implementer ③ pattern dogfood (= 振分 schema + プロンプト = Win Claude / 実装 = Win Codex / 配信は 3 commit 順次 push)
+
+**Philosophy Alignment** (= 7/9 ✅ / 部 225 並 第 2 例 cron 系過去最高):
+- 原則 1 (CEO 感) ✅ — minimal triad で session ROI 最大化
+- 原則 3 (mentor) ✅ — user 期待 (= triad ship) 厳守 / scope creep なし
+- 原則 4 (6 部署) ✅ — architect (Win Claude) と implementer (Win Codex) 分離 dogfood
+- 原則 5 (商品=価値) ✅ — 配信した lesson は indie dev の triage 即適用可
+- 原則 6 (資本=時間) ✅ — 1 session 30min 想定 (worktree create + 4 file + commit + push)
+- 原則 7 (資産負債) ✅ — blog draft + seed + ROADMAP = 永続資産 / 負債 0
+- 原則 8 (KPI) ✅ — development_achievements row +1 / blog draft +2 / ROADMAP entry +1
+
+**Cross-references**:
+- 部 236-continuation entry = [[project_20260525_win132_part236_continuation]] / [[feedback_success_20260525_3issue_chain_triage_pattern]]
+- AGENT_ORCHESTRATION_PATTERNS.md = Architect-Implementer pattern #3
+- INDIE_DEV_VELOCITY_PRINCIPLES.md = smallest-unit-of-value shipping discipline
+- AI_FLEET_SYNERGY_PLAYBOOK.md = Win Claude + Win Codex 2-instance fan-out
+
+### 2026-06-08 Win版#132 part 244 — MVP 機能スコープ v1 確定 (WBS 2c710eb1 完了 / /loop autonomous)
+
+**Context**:
+- `/loop` dynamic mode で「WBS 上の未完了タスクを 1 つ完了」を自走。Win-owned 未完了 2 件 (#1495 mobile / #1950 automation) は Codex realm で Win 完了不可 → [DYNAMIC-CLAIM] で business-product の `MVP feature scope 確定` (2c710eb1 / owner codex→win 是正) を引き取り。part 242 PRD v1 → part 243 四半期ロードマップ v1 → 本 MVP スコープ v1 の planning 三部作。
+
+**Changes**:
+- `docs/MVP_SCOPE.md` を新設 — MVP 機能スコープ v1: PRD §4 In-Scope をコア 5 機能 (本社=ダッシュボード / 人事=健康 最優先 / R&D=AI大学+ノート / 財務=家計簿 / 横断=AI mentor) へ絞り込み + Deferred (SNS フル / モバイル同時リリース #1495 / 課金 Stripe / チーム機能) + keep (比較ページ等) + 遅延時の削減順 + GA gate 関係 (旧 closed Draft #1661 を supersede)。cut-line 最終確定は CEO 判断待ちの v1 叩き台。
+- migration `20260608080000_wbs_complete_mvp_scope.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-243 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate (high-risk ultrareview + minimal-E2E) を push 前に local script で確証 → 初稿 body で first-try PASS を狙う (part 241-243 recipe 再現)。
+- BEHIND は merge-base 基準で overlap 判定 (part 243 落とし穴訂正)。file-overlap 0 + 全 check green で admin squash-merge。
+- prod DB の completed flip は deploy-prod (~30min) で反映 → deferred wake で verify。
+- Philosophy Alignment: 原則 1 CEO感 (最終決定権は user) / 4 mentor / 8 KPI (North-Star = 昨日の自分比較) / 9 IPO=ウェルビーイング。
+- commit hash: (PR merge 後に追記)。
+
+
+
+### 2026-06-09 Win版#132 part 245 — On-call / インシデント対応 SOP v1 確立 (WBS 8830188a 完了 / /loop autonomous)
+
+**Context**:
+- `/loop` dynamic mode で「WBS 上の未完了タスクを 1 つ完了」を自走。deploy-prod は part 244 blocker (#3162 / dart format) 解消済で GREEN 復帰確認 → 実成果物タスク完了が再び可能に。Win-owned 未完了の非 Issue タスクから [DYNAMIC-CLAIM] で business-product / milestone `mvp-launch` の `On-call / インシデント対応 SOP` (8830188a / owner codex→win 是正) を引き取り。part 242 PRD → part 243 四半期ロードマップ → part 244 MVP スコープ に続く運用設計シリーズ第 5 弾。
+
+**Changes**:
+- `docs/ONCALL_INCIDENT_SOP.md` を新設 — MVP ローンチ版 umbrella 障害対応 SOP v1: Sev 分類 (SEV1-3) + solo founder/AI fleet on-call モデル (GHA cron + Sentry 検知 → Slack webhook/GitHub Issue → mobile push エスカレーション / [SCHEDULE-WAKEUP] 夜間帯尊重) + 検知 source 表 (health-monitor / infra-health-check / quota-monitor / workflow-failure-handler 等の実在 workflow + Sentry) + 6 ステップ一次対応フロー (Detect/Classify→Contain→Communicate→Recover→Postmortem / mcp-auth-incident-runbook と同骨格) + 既存 domain runbook への dispatch 表 (front door) + 通信プロトコル (GitHub Issue 恒久 + Slack 時限 + mobile push / 秘密情報禁止) + blameless postmortem テンプレ。成熟版 (RACI / PagerDuty 実席 / SLA / MTTR) は paying-100 task `3cb3aa46` へ意図的に deferred。
+- migration `20260609020000_wbs_complete_oncall_incident_sop.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-244 idempotent パターン: 同一 UPDATE で ai_review_status=approved → trigger 回避 / description LIKE guard / achievement NOT EXISTS guard)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate (high-risk ultrareview + minimal-E2E) を push 前に local script で確証 → 初稿 body first-try PASS を狙う (part 241-244 recipe 再現)。
+- BEHIND は merge-base 基準で overlap 判定。file-overlap 0 + 全 check green で admin squash-merge。
+- prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。
+- Philosophy Alignment: 原則 1 CEO感 (夜間 SEV1 のみ人を起こし最終判断は CEO に残す) / 原則 4 (6 部署 = 本社の運用即応性) / 原則 8 (KPI = MTTR を将来 North-Star 候補)。
+- commit hash: (PR merge 後に追記)。
+
+
+
+### 2026-06-09 Win版#132 part 246 — カスタマーオンボーディング設計 v1 確立 (WBS a7f97791 完了 / /loop)
+
+**Context**:
+- `/loop` dynamic mode で「WBS 上の未完了タスクを 1 つ完了」を自走。部 245 の oncall SOP は [PR #3168](https://github.com/kanta13jp1/my_web_app/pull/3168) として既に main merge 済 (`c5ea87997`) を fetch で確認。milestone `mvp-launch` の未完了から [DYNAMIC-CLAIM] で **`カスタマーオンボーディング設計`** (a7f97791 / owner codex→win 是正 / 2027 へ park 済を前倒し) を引き取り。business-legal (プライバシーポリシー/利用規約/特商法) は [DYNAMIC-CLAIM] 禁止レーンのため除外し、product-light の設計 docs を選択。part 242 PRD → part 243 四半期ロードマップ → part 244 MVP スコープ → part 245 oncall SOP に続く MVP ローンチ準備設計シリーズ第 6 弾。
+
+**Changes**:
+- `docs/CUSTOMER_ONBOARDING_DESIGN.md` を新設 — 初回 7 日間ジャーニー + アクティベーション基準の v1 baseline。コア 5 機能 (MVP_SCOPE §2) と「自分経営ループ」(入力→俯瞰→提案→ユーザー決定) を初回体験へ翻訳: アクティベーション定義 5 条件 (着任 A / 人事に実データ 1 件 B / 前日比の俯瞰 C / AI mentor 提案への決定 D / 別日再訪 E = 最小で #1 本社 +#2 人事 +#5 mentor に到達) + 指標と v1 目標仮説 (TTV<10 分 / Activation 30-40% / D1 40-50% / D7 20-30% = CEO 確認待ち) + 0-10 分の着任セッション + 1 日 1 部署を人事ファーストで増築し Day7 取締役会 (週次レビュー) で定着させる 7 日ジャーニー + 敬意ベースのエンプティステート/ナッジ (中毒性/監視/他人比較の回避) + 7 ステップ計測ファネル (イベント定義は本書 / 実装は L2) + Beta-50 (`e548b4b9`)/GA (`ea87d61a`) 接続 + Deferred (フロー A/B・パーソナライズ・通知/コーチマーク実装を下流 task `0e631085` オンボーディング最適化 へ明示引き継ぎ)。
+- migration `20260609103000_wbs_complete_onboarding_design.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-245 idempotent パターン: 同一 UPDATE で ai_review_status=approved → trigger 回避 / description LIKE guard / achievement NOT EXISTS guard)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate (high-risk ultrareview + minimal-E2E) を push 前に local script で確証 → 初稿 body で first-try PASS を狙う (part 241-245 recipe 再現)。
+- 下流の codex in_progress `0e631085` オンボーディング最適化 (beta) とはレーン分離 (本書=設計 baseline / 最適化=実装フェーズ) + ファイル非競合 ([FLEET-OPS])。
+- prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。
+- Philosophy Alignment: 原則 1 CEO感 (着任メタファー + mentor 提案の実行可否は常にユーザー / 閾値確定も CEO) / 原則 3-4 (優しい mentor + 人事ファースト段階開示) / 原則 8 (KPI = 昨日の自分 / 前日比・週次レビューを中核) / 原則 9 (IPO = ウェルビーイング / 連続記録強制・FOMO 回避)。7+/9 ✅。
+- commit hash: `79e1d6ffb` ([PR #3169](https://github.com/kanta13jp1/my_web_app/pull/3169) MERGED)。
+
+
+
+### 2026-06-09 Win版#132 part 247 — X 公式アカウント運用設計 v1 確立 (WBS fd9616af 完了 / /loop)
+
+**Context**:
+- `/loop` dynamic mode の同一セッション iteration 2 ([DYNAMIC-CLAIM] 上限 2 件/session の 2 件目 = 本 session で打ち止め)。part 246 オンボーディング設計を [PR #3169](https://github.com/kanta13jp1/my_web_app/pull/3169) として merge (`79e1d6ffb`) 後、milestone `mvp-launch` 残りから [DYNAMIC-CLAIM] で marketing レーンの **`X 公式アカウント運用設計`** (fd9616af / owner codex→win 是正) を引き取り。business-legal は禁止レーンで除外。集客面の設計として MVP ローンチ準備設計シリーズ第 7 弾。
+
+**Changes**:
+- `docs/X_ACCOUNT_OPERATIONS_DESIGN.md` を新設 — X 公式アカウント運用 baseline v1。位置づけ (build-in-public × 多社 AI × 6 部署) + コンテンツ 4 柱 + 既存資産転用 (T-1 dispatch / ブログ / ROADMAP / AI大学) + 週 5 投稿カデンス + ハッシュタグ + **トーン/ガードレール (🔴 検証ファースト = AI ツール/競合主張は [AI-TOOL-VERIFY] 一次情報確認後のみ投稿し誇張・捏造を恒久禁止 / [AUTO-REPLY] 自己ループ禁止 / 秘密情報禁止)** + engagement KPI (主指標=サイト流入/Beta 寄与 / vanity 回避 / v1 目標仮説 CEO 確認待ち) + Beta-50 (`e548b4b9`)/GA (`ea87d61a`) 接続 + Deferred (投稿自動化実装/有料広告/他 PF を下流へ)。SNS 誇張・捏造の累積指摘を運用ルール化したのが本 doc の固有価値。
+- migration `20260609120000_wbs_complete_x_account_design.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-246 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ (コード/EF/スキーマ変更なし)。両 gate を push 前に local script で確証 → 初稿 body first-try PASS を狙う (part 241-246 recipe 再現)。
+- 投稿自動化の実装は L2 (Codex) 範疇 (本書=戦略/カデンス/KPI 定義まで) + ファイル非競合 ([FLEET-OPS])。
+- prod DB の completed flip は deploy-prod 反映後に verify (deferred wake / 夜間帯回避)。part 246 (a7f97791) も同 deploy で flip 確認。
+- Philosophy Alignment: 原則 1 CEO感 (公開メッセージング最終決定は CEO) / 原則 3-4 (SNS でも穏やか mentor トーン / 煽らない) / 原則 8 (KPI 主指標=流入/Beta 寄与 / vanity 回避) / 原則 9 (射幸性・FOMO 回避) + [AI-TOOL-VERIFY] 検証ファースト恒久化。7+/9 ✅。
+- commit hash: `c980fc211` ([PR #3170](https://github.com/kanta13jp1/my_web_app/pull/3170) MERGED)。
+
+
+
+### 2026-06-09 Win版#132 part 248 — ブランドガイドライン v1 確立 (WBS dce3f86c 完了 / /loop user 再起動)
+
+**Context**:
+- `/loop` を **user が明示的に再起動** (前 turn で 2-cap 到達 stop 済 → 新規 user 指示)。autonomous [DYNAMIC-CLAIM] 2-cap を超える 3 件目は **user 明示指示が根拠** (user instruction > autonomous guardrail)。milestone `mvp-launch` の marketing/design レーンから **`ブランドガイドライン v1`** (dce3f86c / owner codex→win 是正) を引き取り。part 246/247 が個別に触れた「声・トーン」をブランド層で正本化。MVP ローンチ準備設計シリーズ第 8 弾。両 prior task (a7f97791 / fd9616af) は prod flip completed 確認済。
+
+**Changes**:
+- `docs/BRAND_GUIDELINE.md` を新設 — ブランドのアイデンティティ層 v1。**DESIGN.md (UI トークン正本) と重複せず**その上位を定義: ブランド約束 (AI と人生を会社のように経営 / 昨日の自分基準) + パーソナリティ (穏やか mentor × 生命力 × 誠実) + **ボイス&トーン 5 原則 (246 アプリ内 + 247 SNS の声を正本化 / 検証ファースト・誇張禁止内包)** + ロゴ運用 v1 + 色の意味 (hex は DESIGN.md 参照) + タイポ (実値は DESIGN.md) + 適用マトリクス + ブランド NG + Deferred (ロゴ実アセット/商標は外)。
+- migration `20260609130000_wbs_complete_brand_guideline.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-247 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → first-try PASS 狙い (part 241-247 recipe)。
+- DESIGN.md と非重複 (UI トークンは DESIGN.md 参照のみ / ブランド層は本書) = 役割分担明示で冗長回避。
+- prod DB の completed flip は deploy-prod 反映後に verify。
+- Philosophy Alignment: 原則 1 (ブランド最終決定は CEO) / 原則 2 (ミッション駆動) / 原則 3-4 (mentor) / 原則 8 (昨日の自分基準 / 他人比較しない) / 原則 9 (煽らない)。7+/9 ✅。
+- commit hash: (PR merge 後に追記)。
+
+---
+
+### 2026-06-09 Win版#132 part 249 — プレスリリース v1 起草 (WBS 88d0ac29 完了 / /loop autonomous)
+
+**Summary**:
+- `/loop` autonomous WBS — milestone `mvp-launch` の **marketing/docs レーン**から **`PR Times プレスリリース v1`** (88d0ac29 / 「MVP 公開 PR / メディア配信先 50 社」/ owner codex→win 是正) を [DYNAMIC-CLAIM] で claim。MVP ローンチ準備設計シリーズ第 9 弾 (対外発信面)。part 243-248 (roadmap/MVP/ADR/PRD/oncall/onboarding/X/brand) の流れを継ぐ。依存なし (depends_on 空) を確認して着手。
+
+**Changes**:
+- `docs/PRESS_RELEASE_V1.md` を新設 — プレスリリース v1 ドラフト + 配信戦略。(1) 配信用文面 v1 (タイトル/リード/背景/特長 5/サービス概要/代表コメント書式例/問い合わせ) で発行体・配信日・CEO コメント・実績数値は `【CEO確認】` プレースホルダ (**未検証数値・誇張・最上級を一切書かない** = BRAND_GUIDELINE §7 + 景表法配慮 + [REAL-DATA])。(2) 「メディア配信先 50 社」を **PR Times 主配信 + 重点 6 カテゴリ taxonomy** に reframe し、個別 50 件リスト・実入稿・発行体の法的確定は CEO/business-legal へ defer (フライング配信しない)。(3) アセット checklist + honesty ガードレール + Deferred + Philosophy 整合。MVP_SCOPE のコア 5 機能を価値訴求へ翻訳 / BRAND_GUIDELINE §2 ボイス準拠。
+- migration `20260609140000_wbs_complete_press_release.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-248 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate (high-risk-ultrareview / minimal-e2e) を push 前 local 確認 → docs-only label で first-try PASS 狙い (part 241-248 recipe)。
+- 完了の定義 = プレス文面 v1 + 配信戦略の「起草」。実配信・PR Times 入稿・発行体の法的確定は CEO/business-legal の別アクション (本 migration では完了扱いにしない / honest scope)。
+- prod DB の completed flip は deploy-prod 反映後に verify。
+- Philosophy Alignment: 原則 1 (発行体・文言の最終決定は CEO) / 原則 2 (ミッション訴求) / 原則 4 (mentor トーン) / 原則 6 (商品=価値) / 原則 8 (昨日の自分基準 / 他人比較しない) / 原則 9 (煽らない見出し)。7+/9 ✅。
+- commit hash: (PR merge 後に追記)。
+
+---
+
+### 2026-06-09 Win版#132 part 250 — リリースチェックリスト & ロールバック Runbook 整備 (WBS e601b30f 完了 / /loop user 再起動)
+
+**Summary**:
+- `/loop` を **user が明示的に再起動** (前 turn で part 249 完了 → 新規 user 指示 = 本 session 2 件目 / user instruction > autonomous 2-cap)。mvp-launch の claimable docs タスクが枯渇 → [DYNAMIC-CLAIM] で全 milestone を探索し、`リリース` カテゴリの **`[リリース] リリースチェックリストとロールバック整備`** (e601b30f / high / owner codex→win) を引き取り。release SOP / rollback runbook の設計・文書化は L3 architect/ops-docs レーン。part 249 (プレスリリース) は merge `5fae817bd` + deploy-prod success + prod DB completed flip 確認済。
+
+**Changes**:
+- `docs/RELEASE_CHECKLIST_ROLLBACK.md` を新設 — 毎回の本番リリースを安全に回す反復手順 SSOT。**実 deploy-prod.yml を正確に記述** (ci→deploy→notify / 自動採番 / `supabase db push` + migration repair / EF 22 本 hub デプロイ / Flutter build / Firebase Hosting 原子入替 / `version.json` commit 反映検証 / 並行 `cancel-in-progress:false`)。リリース前チェックリスト + リリース後スモーク (**canary 基盤不在を正直に明記**し staging+スモーク+高速ロールバックで代替) + **rollback runbook** (Firebase 復帰 / `git revert`・migration **前進専用** / `reset --hard`+force-push **禁止** = 旧 archived `DEPLOYMENT_GUIDE.md` の危険手順を置換) + バージョン検証 + gotchas + 役割。
+- 既存 docs と**非重複**: `GA_LAUNCH_READINESS_GATE_SPEC.md` (一度きりの GA 可否) / `ONCALL_INCIDENT_SOP.md` (障害発生後) と境界明示し相互参照。
+- migration `20260609150000_wbs_complete_release_checklist.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-249 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → docs-only label で first-try PASS 狙い (part 241-249 recipe / minimal-E2E は close+reopen 再発火が必要なら実施)。
+- 完了の定義 = リリース手順 + runbook の「設計・文書化」。deploy-prod.yml 実装変更・canary 基盤構築は L2/Codex の別アクション (honest scope)。
+- 内容は実 deploy-prod.yml read で grounding (fabrication なし / 旧 stale DEPLOYMENT_GUIDE の force-push 手順は明示的に禁止へ是正)。
+- Philosophy Alignment: 原則 1 (重大リリース go は CEO) / 3-4 (mentor / チェックリスト) / 6 (時間=復旧時間短縮) / 7 (安定運用=資産) / 8 (成功率・MTTR KPI) / 9 (無人帯リリース回避)。7+/9 ✅。
+- commit hash: (PR merge 後に追記)。
+
+---
+
+### 2026-06-09 Win版#132 part 251 — 本番監視 & 定常運用 Runbook 整備 (WBS 2e8be6a7 完了 / /loop user 再起動 / ops 三部作 完成)
+
+**Summary**:
+- `/loop` を **user が明示的に再起動** (part 250 完了後 / 本 session 3 件目 / user instruction > autonomous 2-cap)。mvp-launch claimable 枯渇 → 全 milestone 探索で `運用` カテゴリの **`[運用] 本番監視・インシデント対応 runbook`** (2e8be6a7 / high / no deps / owner codex→win) を引き取り。ONCALL_INCIDENT_SOP (part 245) との重複を verify し、**監視 (緑の道) は未整備の gap** と確認して着手。part 250 merge `2b0840902` + deploy-prod success + prod DB completed flip 確認済。
+
+**Changes**:
+- `docs/PRODUCTION_MONITORING_RUNBOOK.md` を新設 — 本番監視の定常運用 (緑の道) SSOT。**実 GHA cron 群** (health-monitor / infra-health-check / quota-monitor / daily-report-freshness / config-size / mcp-audit-anomaly / wbs-staleness-audit / edge-function-audit / competitor-monitoring / cs-check) + claude.ai Routine (ci-cd-cost-audit) + Sentry + deploy-prod 状態を cadence/健全vs異常/出力先で整理。定常運用 cadence (毎セッション/日次/定期/障害時/週次) を **WBS/Issue 接続規律**付きで定義 (定常は cron / 異常・改善のみ Issue 化)。健全性証跡 + escalation (緑→赤は Sev 判定して ONCALL_INCIDENT_SOP へ dispatch) + 役割 + Deferred。
+- **ops 三部作 完成**: 監視 (本書) / 対応 ([`ONCALL_INCIDENT_SOP.md`]) / リリース ([`RELEASE_CHECKLIST_ROLLBACK.md`] part 250) を境界明示で非重複 (SOP の検知 source 表を運用 cadence 視点で展開)。
+- migration `20260609160000_wbs_complete_monitoring_runbook.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-250 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → docs-only label + close+reopen 先制で first-try PASS 狙い (part 241-250 recipe)。
+- 完了の定義 = 監視運用手順 + escalation の「設計・文書化」。監視 workflow / Sentry 連携実装は L2/Codex の別アクション (honest scope)。
+- 既存 doc read で gap 確認 (ONCALL_INCIDENT_SOP は赤の道 / 本書は緑の道 = 非重複) + 実 workflow 名を glob 実在確認で grounding (fabrication なし)。
+- Philosophy Alignment: 原則 1 (夜間 SEV1 のみ CEO) / 3-4 (mentor / 運用即応) / 6 (時間=確認時間最小化) / 7 (安定運用=資産・過剰監視=負債) / 8 (健全率・検知遅延 KPI) / 9 (夜間負荷抑制)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 250 = 2b0840902)。
+
+---
+
+### 2026-06-10 Win版#132 part 252 — 法人プラン提案資料 v1 整備 (WBS e12e02c2 完了 / /loop autonomous)
+
+**Summary**:
+- `/loop` autonomous WBS — [DYNAMIC-CLAIM] で全 807 未完了タスクから「成果物が本質的に文書」のタスクを探索し、milestone `paying-100` の **`法人プラン提案資料 v1`** (e12e02c2 / high / no deps / category business-sales / owner codex→win) を claim。タスク定義 = 「B2B 営業 deck / 価格表 / セキュリティ FAQ」の 3 点 = sales enablement docs (L3 docs レーン / 禁止カテゴリ business-legal/urgent/IPO に非該当)。part 251 merge `161172257` + deploy-prod success 確認済。
+- **PRD §5 整合 verify-first**: 「⏸ 法人向け SaaS・チーム機能 = 保留」との衝突を着手前に検出 → **B2B2C ライセンス一括導入** (チーム機能・雇用主閲覧を作らない / 福利厚生モデル) として矛盾なく positioning。アンチ監視 (原則 1・3) を法人向けセールスポイントに反転。
+
+**Changes**:
+- `docs/B2B_PROPOSAL_V1.md` を新設 — 法人プラン提案の社内正本 (SSOT)。(1) **B2B 営業 deck 構成 10 スライド** (key message + PRD/MVP_SCOPE 出典 grounding / 実績ゼロを正直に「βパートナー募集」と表現)。(2) **価格表ドラフト** (シート段階制 S/M/L / 全数値【CEO確定】placeholder = 料金プラン v1.0 確定 dd9f690b 連動 / MVP 期間無料 = MVP_SCOPE §3)。(3) **セキュリティ FAQ 10 問** (実在事実のみ: Supabase Auth + RLS 有効化 migration 103 件 + HTTPS + ops 三部作 runbook + CI gates + Sentry / SOC2・ISO **未取得を正直回答** / 不明点は【確認事項】で断定禁止)。+ objection handling + Deferred 7 タスク表 + Philosophy 8/9。
+- migration `20260610010000_wbs_complete_b2b_proposal.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-251 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → docs-only label + close+reopen 先制で first-try PASS 狙い (part 241-251 recipe)。
+- 完了の定義 = deck 構成・価格構造・FAQ の「設計・文書化」(part 249 press release と同じ marketing/対外タスクの honest 完成定義)。価格確定 (dd9f690b/CEO) / 営業実行 (f3cd4740) / Stripe (ca38e2d2) / セキュリティポリシー (bd345cfa) / SOC2 (9a564512) は Deferred 明記で完了扱いにしない。社外配布は CEO 承認後のみ。
+- 参照 doc 8 件 (PRD / MVP_SCOPE / PRESS_RELEASE / BRAND_GUIDELINE / ops 三部作 / AI_DEV_PRINCIPLES) は filename 実在確認済み (fabrication なし)。
+- Philosophy Alignment: 原則 1 (雇用主閲覧不可 / 価格は CEO 決裁) / 3 (監視型を恒久排除) / 4 (6 部署 = deck 価値構造) / 5 (機能差でなく価値で法人プラン定義) / 6 (営業説明の SSOT 化) / 7 (正直 FAQ = 信頼資産) / 8 (paying-100 KPI 布石) / 9 (ウェルビーイング非毀損)。8/9 ✅。
+- commit hash: (PR merge 後に追記 / part 251 = 161172257)。
+
+---
+
+### 2026-06-10 Win版#132 part 253 — IT セキュリティポリシー v1 策定 (WBS bd345cfa 完了 / /loop user 再起動)
+
+**Summary**:
+- `/loop` を **user が明示的に再起動** (part 252 merge `86a8d0638` + deploy-prod success + prod DB completed flip 確認後 / 本 session 2 件目 = [DYNAMIC-CLAIM] 2-cap 内)。[DYNAMIC-CLAIM] で `business-ops` カテゴリの **`IT セキュリティポリシー v1`** (bd345cfa / medium / no deps / milestone paying-100 / owner codex→win / 定義 = パスワード管理・端末暗号化・VPN) を引き取り。part 252 B2B_PROPOSAL §4 セキュリティ FAQ の**正本化として自然な続き** (設計シリーズ第 13 弾)。
+- near-duplicate verify: 既存 MCP_AUTH_SECURITY_PRINCIPLES (MCP 公開技術 10 原則) / AI_DEV_PRINCIPLES (開発設計原則) と**軸分け** — 本書は「人と端末とアカウント」の組織運用規程で非重複。
+
+**Changes**:
+- `docs/IT_SECURITY_POLICY_V1.md` を新設 — 組織レベル IT セキュリティ規程の正本 (SSOT / CEO 承認で発効)。タスク定義 3 軸: §1 アカウント・パスワード管理 (パスワードマネージャー + 2FA 必須 + 共有アカウント禁止 + **dormant 旧 12 instance クレデンシャル棚卸し**) / §3 端末セキュリティ (**実機 Windows 11 Home に合わせ Device Encryption (BitLocker 相当) を必須**と正確に記述) / §4 ネットワーク・VPN (公衆 Wi-Fi は VPN またはテザリング / **製品選定は【CEO確定】placeholder = vendor 捏造しない**)。+ 組織固有: §2 鍵管理 (**anon key は公開前提で RLS が守る設計の明文化** / service_role 級は server-side のみ / 露出疑い時 即ローテ) / §5 AI エージェント運用 (deny-by-default + [SUBAGENT-GUARD] + MCP 10 原則 pointer) / §7 四半期棚卸し cadence / §8 incident は ONCALL_INCIDENT_SOP へ dispatch / §10 Deferred (SOC2=9a564512 / MDM は採用時 / 物理オフィスは契約後)。
+- migration `20260610023000_wbs_complete_it_security_policy.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-252 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate を push 前 local script で確証 → docs-only label + close+reopen 先制 + E2E 3-phrase belt+suspenders (part 252 確立) で first-try PASS 狙い。
+- 完了の定義 = 規程の「策定・文書化」(CEO 承認で発効)。実端末への設定適用は CEO 運用アクション (§7 点検で確認) / SOC2 gap 分析は 9a564512 の別タスク (honest scope)。
+- opsec 配慮: 個別の鍵露出事案の詳細は public repo に書かず、§2-5「露出疑い時 即ローテ」の一般規程として吸収。
+- Philosophy Alignment: 原則 1 (権限・例外・VPN 選定は CEO 決裁) / 3 (規程=予防の道具・例外は追記管理) / 5 (顧客への安全の約束を規程で裏付け) / 6 (事故対応時間最小化) / 7 (放置クレデンシャル=負債→棚卸し) / 8 (paying-100 信頼基盤) / 9 (J-SOX/IPO 内部統制布石)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 252 = 86a8d0638)。
+
+---
+
+### 2026-06-10 Win版#132 part 254 — SDLC 工程×WBS カバレッジ監査 v1 + 重複 1 件解消 (user 標準セッション要求への verify 済み回答)
+
+**Summary**:
+- user 標準セッションプロンプト (3 レーン / 24 社 docs / 毎セッション 1 タスク / stale 削除 / WBS 工程 gap 追加) を **verify-first で実データ照合** (part 237 stale-prompt pattern)。本 session 3 round 目 (= #3180 法人提案 + #3181 IT セキュリティ規程 + 本 PR / user 明示指示で 2-cap override)。
+- **SDLC 7 工程×WBS カバレッジ監査 実施**: 総 3,159 / 未完了 807 / phase tagged 123 (3.9%) を実測。**全 7 工程に open タスク実在 → 「不足タスク追加 0 件」が正答** (機械的一括追加は [WBS-DEDUP] cartesian 事故の再発)。thin 工程 watch = planning 1 / maintenance 2。
+- **user 指定 24 社リスト = AI_DRIVEN_DEV_OPERATING_MODEL §4 ローテ対象と完全一致を確認** (差分 0 / 層 A per-task verify-first + 層 B 週次 digest が現実版 canonical / 最新 digest 2026-06-07 実在)。
+
+**Changes**:
+- `docs/SDLC_WBS_COVERAGE_AUDIT.md` を新設 — 再実行可能な監査手順 (PostgREST count + phase 集計 + category/title proxy) + 工程別 open 実在表 (実 id 付き) + 是正事項 + 次回発火条件 (living doc)。
+- **重複 1 件解消**: `3cb3aa46` インシデント対応プロセス (4/25 起票 / Runbook+RACI+Postmortem) は part 245 `8830188a` 成果物 ONCALL_INCIDENT_SOP.md (§5 dispatch 表 / §7 Postmortem / §2+§6 役割) が充足 → migration `20260610040000` で **completed-by-reference** 化 (新規成果物なしのため achievement INSERT なし / 形式 RACI は必要時 SOP 改訂で別起票)。
+- **stale 参照 1 件修正**: AI_DRIVEN_DEV_OPERATING_MODEL §7 の phase handoff link が `done/` 移動済みで dead → 実態 (列追加済 / backfill 3.9%) と監査 doc への pointer に更新。
+- ROADMAP part 254 エントリ (本欄 / part 253 merge hash `584b190f6` 補記)。
+
+**Validation focus**:
+- docs-only + dedup 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-253 recipe)。
+- honest 監査原則: 「追加しない」判断を根拠 (全工程 open 実在 + WBS-DEDUP 教訓) 付きで文書化 — user 要求に「追加ゼロ」で答えるのは怠慢ではなく正答であることを検証可能にした。stale docs 大規模削除は §5 手順 (verify-first + inbound grep) が必要なため本 round 未実施 (COMPRESSED_PROMPT_V3 は flag 維持)。
+- Philosophy Alignment: 原則 1 (タスク追加/削除の最終判断材料を CEO へ提示) / 4 (mentor = 過剰タスク生成せず) / 6 (重複作業ゼロ = 時間資本保全) / 7 (重複タスク=負債の解消) / 8 (KPI = 工程カバレッジ実測) / 9 (プロセス健全性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 253 = 584b190f6)。
+
+---
+
+### 2026-06-10 Win版#132 part 255 — 機能リリースサイクル方針 (隔週) 確立 (WBS 39b30ef2 完了 / /loop user 再起動 4 round 目)
+
+**Summary**:
+- `/loop` を **user が明示的に再起動** (part 254 merge `cf5e32b8a` 確認後 / 本 session 4 round 目 / fatigue OK 回復)。[DYNAMIC-CLAIM] で `business-product` の **`機能 release cycle 確立 (隔週)`** (39b30ef2 / medium / no deps / paying-100 / 定義 = 隔週 release note / changelog page / owner codex→win) を引き取り (設計シリーズ第 14 弾)。
+- **候補 skip の honest 判断**: 第一候補 `6781722f` CS/Onboarding playbook は定義に「動画 5 本」を含む → docs のみでの完了 = overclaim となるため **skip** (part 249 honesty 基準 / 制作系は完了主張しない)。
+- **verify-first の重要発見**: description の 2 artifact は既存 — release note は `generate_release_notes.py` で自動生成済み (PR/Releases/deploy metadata から決定的生成) + `release_notes_page` / `changelog_manager_page` / development_achievements ページも実装済み。**欠けていたのは「隔週リズムと編纂規律」のみ** → 新規アプリ開発ゼロで方針確立。
+
+**Changes**:
+- `docs/RELEASE_CYCLE_POLICY.md` を新設 — 隔週リリースサイクル方針の正本 (SSOT / CEO 承認で発効)。3 層整合 (四半期 QUARTERLY_ROADMAP = 何を / **隔週 = 本書 = 今 2 週で何を出しどう伝えるか** / 毎リリース RELEASE_CHECKLIST_ROLLBACK = どう安全に) + **技術は継続デプロイ維持・隔週は対外コミュニケーション編纂のリズム**という軸分け (デプロイ貯め込みはリスク集中 = しない) + cycle 定義 (計画 Day1 / soft cut Day12 / 編纂 Day13-14 / 公開 Day14 / 5 分ふりかえり) + 編纂規律 (自動生成 JSON = 事実の正本 / highlights ≤5 / 障害も隠さない / [REAL-DATA]) + 3 レーン役割 + **発効条件 = Cycle #1 note 公開 (起点日【CEO確定】/ 案 2026-06-19)** + 最小計測 (既存監視値参照のみ) + 3 cycle 周期見直し条項 + Deferred。
+- migration `20260610060000_wbs_complete_release_cycle.sql` で WBS task を completed/100/approved 化 + owner codex→win 是正 + `development_achievements` 追記 (part 242-254 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-254 recipe)。
+- 完了の定義 = cadence 方針の「設計・文書化」。**隔週運行の実績はまだ無いと doc 内で明言** (発効 = Cycle #1 公開 / 方針の存在 ≠ 運用実績の honest 区別)。
+- Philosophy Alignment: 原則 1 (scope/公開/起点日 = CEO) / 4 (マーケ営業部の定常発信に接続) / 5 (note は利用者価値のみ) / 6 (既存自動化の上にリズムだけ / 重い儀式なし) / 7 (継続デプロイ維持 = リスク分散 / 正直 note = 信頼資産) / 8 (出荷数・成功率は既存監視参照) / 9 (持続可能リズム + 見直し条項)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 254 = cf5e32b8a)。
+
+---
+
+### 2026-06-10 Win版#132 part 256 — ADR 系重複タスク 2 件解消 + handoff 必須化 1 行 (WBS 3e984213 + 99785f1a 完了 / /loop user 再起動 5 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 5 round 目** (part 255 merge `82b34ac05` + 39b30ef2 prod flip ✅ 確認後)。docs 系 pending を再 scan し、**ADR 系の重複 2 件**を検出: `3e984213` [Issue #1847] ADR directory 確立 + `99785f1a` [Issue #1736] ADR 文書化運用導入 — いずれも実体は **part 241 の `docs/adr/`** (README 運用ガイド + TEMPLATE + ADR 4 本 / Issue 文言の `docs/adrs/` は naming variant) で完了済みと verify。
+- #1736 の残 gap 「cross-instance-pr 必須化」のみ未明文化 → README に 1 行追記して充足させた上で両タスクを completed-by-reference 化 (part 254 dedup 規律の再適用)。
+
+**Changes**:
+- `docs/adr/README.md` に **他レーン handoff 必須ルール 1 行追記** (= ADR の Decision が L1/L2 実装を生む場合は `docs/cross-instance-prs/` handoff 起票必須 + ADR Links 記載 / AI_FLEET_SYNERGY 原則 2 の接続 / Issue #1736 の残要素充足)。
+- migration `20260610080000_wbs_complete_adr_dedup.sql` で 2 タスクを completed/100/approved 化 (completed-by-reference / 新規成果物は README 1 行のみのため achievement INSERT なし / idempotent)。
+- GitHub Issue #1847 / #1736 は **PR merge 後に根拠コメント付き close** ([ISSUE-PRECHECK] 整合 / L3 triage lane)。
+- ROADMAP part 256 エントリ (本欄 / part 255 merge hash `82b34ac05` 補記)。
+
+**Validation focus**:
+- docs-only (README 1 行 + ROADMAP) + dedup 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-255 recipe)。
+- honest dedup 原則: 重複と断定する前に **deliverable 実在 + 内容充足を per-要素 verify** (#1847 = dir+初回 entries+原則2適用 ✅ / #1736 = 運用導入 ✅ + 必須化 gap → 追記で充足してから complete / gap を無視した close はしない)。
+- Philosophy Alignment: 原則 1 (Issue close 判断根拠を可視化) / 4 (mentor = 重複作業させない) / 6 (重複再実装ゼロ = 時間資本保全) / 7 (open のまま放置された stale Issue = 負債の解消) / 8 (WBS 健全性) / 9 (プロセス持続性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 255 = 82b34ac05)。
+
+---
+
+### 2026-06-10 Win版#132 part 257 — リファラル / 紹介プログラム設計 v1 (WBS c9a3e346 完了 / 実装 f0fd0b22 と 2 層分担)
+
+**Summary**:
+- part 252-256 の次 session (user 標準 WBS プロンプト)。冒頭 verify: 39b30ef2 prod flip ✅ (completed/100) + deploy-prod 3 連続 green ✅ + part-255-cycle worktree 残骸削除 ✅。
+- ⚠️ **session numbering collision 第 2 例を即時解決**: 本 session は当初 part 256 として作業したが、並行 session の [PR #3188](https://github.com/kanta13jp1/my_web_app/pull/3188) (ADR dedup) が「part 256」+ migration timestamp `20260610080000` を先着 merge (`756632369`) → 先着優先で本 session を **part 257** に改番 + migration を `20260610100000` に改番 + rebase で ROADMAP 衝突解消 (内容重複はゼロ / c9a3e346 とは無関係)。
+- [DYNAMIC-CLAIM] で `business-marketing` の **`リファラル / 紹介プログラム`** (c9a3e346 / medium / no deps / paying-100 / 定義 = Refer-a-friend → 1 ヶ月無料 / owner codex→win) を引き取り (設計シリーズ第 15 弾)。前 session 申し送りの「f0fd0b22 進捗 verify 必須」を実施してから着手。
+- **verify-first の重要発見**: 実装土台は f0fd0b22 (in_progress 25% / codex) で大半実在 — referral_codes/referrals/referral_tracking テーブル + growth-hub referral action 群 (self-referral guard / 冪等) + /referral 画面 + UTM 招待リンク + funnel signal。**欠けていたのは設計の正本**: 「1 ヶ月無料」offer と実装 (500pt 固定・sign-up 即 completed) の不整合 / 課金前 fulfillment / activation 条件 / 規約 / KPI。さらに `referrals.status` が最初から pending|completed|expired 想定 → **activation 2 段階化は schema 変更ゼロ**で実装可能と特定。
+
+**Changes**:
+- `docs/REFERRAL_PROGRAM_DESIGN.md` を新設 — 紹介プログラム設計の正本 (SSOT)。実在実装 verify 一覧 (§1 出典 file 付き) + **give-get offer + 課金前クレジット累積方式** (500pt = Pro 1 ヶ月無料へ課金開始時に交換 / 「今すぐ無料」と書かない = 履行できない約束をしない / 全数値【CEO確定】= dd9f690b 連動) (§2) + activation 2 段階化 (signed_up → activated / 既存 enum 流用) (§3) + 不正対策 6 項 (実装済 2 + 設計 4 / multi-account 機械検出は月間 activated 100 件超まで意図的 defer) (§4) + 規約骨子 8 項 (被紹介者の利用内容は紹介者に非開示 = PRD 原則整合の §5-7 含む) (§5) + K-factor 計測 = 既存 signal 流用のみ (§6) + **f0fd0b22 への実装残 7 件 handoff (着手順付き)** (§7) + 発効 4 条件 (§8) + Deferred (§9)。
+- migration `20260610100000_wbs_complete_referral_design.sql` で c9a3e346 を completed/100/approved 化 + owner codex→win 是正 + **f0fd0b22 の remaining_work へ設計 SSOT pointer append (status/owner 不変 = codex 継続)** + `development_achievements` 追記 (part 242-256 idempotent パターン)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-256 recipe)。
+- 完了の定義 = 紹介プログラムの「設計・文書化」。**運用開始・報酬履行は claim しない** (発効 = §8 の 4 条件 / CEO 数値確定 + 規約承認 + activation 実装後)。設計/実装の 2 層分担: c9a3e346 (設計 = 本 session 完了) / f0fd0b22 (実装 = codex in_progress 継続) — Architect-Implementer ③ パターン。
+- Philosophy Alignment: 原則 1 (報酬数値・規約・公開 = CEO) / 4 (mentor = 履行できない約束を文言設計で禁止) / 5 (give-get = 双方に価値 / 利用内容非開示) / 6 (既存実装 verify → 新規開発ゼロ / 既存 signal 流用 = 時間資本保全) / 7 (sign-up 即 completed の abuse 脆弱性 = 負債を activation 設計で解消) / 8 (K-factor 定義) / 9 (cap + 規約 + 発効条件で持続可能設計)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 256 = 756632369)。
+
+---
+
+### 2026-06-10 Win版#132 part 258 — SPOF リスク評価 & フェイルオーバー戦略 v1 (WBS aa08e69f 完了 / /loop user 再起動 7 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 7 round 目**。並行セッション (part 257 = リファラル設計 / PR #3190 `8a7e946e4`) の merge 完了を確認し **part 258 へ改番** (numbering collision 第 2 例の回避継続)。先方は migration timestamp も自主 rename 済み (`20260610100000`) → 当方は `20260610110000` を使用 (衝突回避)。
+- [DYNAMIC-CLAIM] で **`aa08e69f`** ([Issue #2599] SPOF リスク評価とマルチリージョン・フェイルオーバー戦略の策定 / owner schedule→win) を引き取り。タスク本質 = 「評価 + 策定」(設計 / L3)。比較候補 #2647 (CLAUDE.md×DB スキーマ CI) は L2 実装 + 前提 stale (CLAUDE.md は part 133 以降 schema 非掲載) のため skip (次回 triage 候補)。
+- 設計シリーズ第 15 弾 / 本 session 7 PR 目。
+
+**Changes**:
+- `docs/SPOF_FAILOVER_STRATEGY.md` を新設 — **実在構成のみから** SPOF 台帳 (S1 Supabase データ = 最優先 / S2 GHA / S3 Firebase / S4 AI API / S5 人的) を評価。(1) **バックアップ・復元設計** (migrations=スキーマ SSOT / `supabase db dump` 手動手順 / 別プロジェクト復元 6 ステップ / **PITR・自動バックアップは plan 依存のため【確認事項】= 確認まで「ある」と言わない** / **restore drill 未実施を明記** = 実証済みと主張しない)。(2) **GHA 障害時の代替手動デプロイ手順** (実 deploy-prod.yml L530-705 から導出 / part 244 の local-CI バージョン不一致罠を注記)。(3) **縮退運転モード段階設計** (現状 verify: Sentry+ErrorReporter+auth-graceful 実装済・オフラインキャッシュ未実装 → Phase A/B 設計 / 実装 = L2)。(4) **マルチリージョン判断 = コールドスタンバイが v1 の正** (現規模で常時冗長は過剰 / 再評価 = paying-100 or 有償 SLA)。
+- migration `20260610110000_wbs_complete_spof_failover.sql` で WBS task を completed/100/approved 化 + owner schedule→win 是正 + `development_achievements` 追記 (idempotent)。
+- **Issue #2599 は close しない** — 受入基準 1-2 は本 doc で充足 / 基準 3 (Flutter 縮退の**実装**) が残るため open 維持 = L2 handoff (merge 後に criteria 状況 comment)。Issue 内の外部数値 (GHA 障害 57 回/12mo 等) は未検証として判断根拠から除外 ([AI-TOOL-VERIFY])。
+- ROADMAP part 258 エントリ (本欄 / part 257 merge hash `8a7e946e4` 補記)。
+
+**Validation focus**:
+- docs-only + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (part 252-256 recipe / 第 14 連続狙い)。
+- honest 区別 3 点: 復元手順は「設計」であって「実証済み」ではない (drill 未実施明記) / バックアップ実在は dashboard 確認まで断定しない / Issue は基準 3 実装まで close しない (タスク完了 ≠ Issue 完了の分離を migration 内に文書化)。
+- Philosophy Alignment: 原則 1 (PITR 加入・drill 日程・保管先 = CEO) / 4 (全部署データの土台) / 6 (現規模に過剰な常時冗長を避ける) / 7 (データ=取り返せない資産 / 未実証を実証と言わない) / 8 (drill 成否・バックアップ鮮度 KPI) / 9 (持続可能運用)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 257 = 8a7e946e4)。
+
+---
+
+### 2026-06-10 Win版#132 part 259 — stale-premise タスク triage (WBS 2c4d2f03 cancelled) + COMPRESSED_PROMPT_V3 精査確定 (/loop user 再起動 8 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 8 round 目** (part 258 merge `28e831825` + aa08e69f prod flip ✅ 確認後)。RAM 91% / FATIGUE のため hygiene 最小 scope。
+- **stale-premise triage 第 1 例**: `2c4d2f03` ([Issue #2647] CLAUDE.md×実 DB スキーマ自動整合 CI) — 前提「CLAUDE.md にスキーマ定義あり」が **part 133 (80 行 pointer hub 化) 以降 false** → 受入基準が記述のまま実装不能。実需 (スキーマ乖離検知) は migrations SSOT + PR CI (DB+Edge smoke / timestamp collision) が既に担う → **cancelled** (completed と主張しない = 要求された CI は存在しないため / dedup 第 3 類型: completed-by-reference / gap 充足 close / **stale-premise cancel**)。
+- **COMPRESSED_PROMPT_V3 精査確定 (運用モデル §7 flag 解消)**: 削除候補 flag は**誤り** — `two-instance-audit.yml` + scripts 3 本 (うち `update_cv3_instances.py` が自動更新) が参照する **automation-managed artifact** = 削除不可。inbound grep が削除判断を反転させた第 1 例 (§5 手順の有効性実証)。
+
+**Changes**:
+- migration `20260610120000_wbs_cancel_stale_schema_ci_task.sql` — 2c4d2f03 を **cancelled** 化 (progress 不変 = trigger 非発火 / achievement INSERT なし / 再起票条件を description に明記)。
+- `docs/AI_DRIVEN_DEV_OPERATING_MODEL.md` §7 — COMPRESSED_PROMPT_V3 行を「stale 候補」→「精査済み: automation-managed / 削除・手動編集禁止 / 3 レーン化は automation 改修 (L2) とセット」へ更新。
+- GitHub Issue #2647 は **PR merge 後に根拠コメント付き close** (再起票ガイダンス: スキーマ実記載 doc を対象化したとき / L2 レーン)。
+- ROADMAP part 259 エントリ (本欄 / part 258 merge hash `28e831825` 補記)。
+
+**Validation focus**:
+- docs 1 行更新 + cancel migration のみの最小 hygiene。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (recipe 第 15 連続狙い)。
+- honest triage 3 類型の確立: ① completed-by-reference (実体あり = 3cb3aa46/#1847) ② gap 充足後 complete (#1736) ③ **stale-premise cancel (実体なし・前提崩壊 = 本件)** — 「completed と cancelled の使い分け = 要求成果物が存在するか」で判定。
+- Philosophy Alignment: 原則 1 (cancel 判断根拠を可視化) / 4 (mentor = 実装不能タスクを放置しない) / 6 (実装不能タスクの調査時間を将来分まで削減) / 7 (zombie タスク = 負債解消 / 偽 completed を作らない = 信頼) / 8 (WBS 健全性) / 9 (持続性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 258 = 28e831825)。
+
+---
+
+### 2026-06-10 Win版#132 part 260 — 階層的クリーンアップ運用の正本化 (WBS cbfe0326 完了 / /loop user 再起動 9 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 9 round 目** (part 259 merge `9be0f3fbc` + Issue #2647 close 確認後)。NotebookLM 系設計 Issue 3 件 (#2710/#2694/#2686) を body verify で比較 — #2694 (基準 2/3 = monitoring 実装+アラート実装) と #2686 (テーブル+sanitize+自動テスト = 全部実装) は **L2 実装が過半のため skip**。**#2710 (`cbfe0326`) を選択**: 受入基準 3 点が既存システムでほぼ充足済みと verify (triage 類型 ② = gap 充足後 complete)。
+- verify 結果: ① 静的 docs 独立管理 = CLAUDE.md pointer hub + 原則 12 軸 + inject-rules (SECOND_BRAIN 原則 1) ✅ / ② セッション開始時の静的+動的 別ファイルロード = CLAUDE.md + MEMORY.md + auto-capture log の実挙動 ✅ / ③ 昇格・破棄手順 = **実装は既存** (consolidate-memory 月 1 + --lint 3 検出器 / [MEMORY-DECAY] / vault lint 週次 / wrap-up) **だが一枚正本が無い = 唯一の gap**。
+
+**Changes**:
+- `docs/SECOND_BRAIN_PRINCIPLES.md` に **「階層的クリーンアップ運用」節を追記** (= Issue #2710 正本): 2 階層 mapping 表 (静的 = CLAUDE.md/docs/inject-rules / 動的 = MEMORY.md/memory files/auto-capture) + **昇格 3 step** (学び → memory 化 → 2-3 回再現で rule/doc/concepts へ昇格 → memory 側 pointer 化 = 二重管理禁止) + **破棄 cadence 4 行表** (毎セッション wrap-up / 月 1 consolidate-memory / MEMORY-DECAY 随時 / 週次 vault lint) + 禁止事項。**全て既存実装への pointer = 新規機構ゼロ**。
+- migration `20260610130000_wbs_complete_memory_cleanup_ops.sql` で WBS task を completed/100/approved 化 + owner schedule→win 是正 + `development_achievements` 追記 (idempotent)。
+- GitHub Issue #2710 は **merge 後に基準 ①②③ の evidence 付き close**。
+- ROADMAP part 260 エントリ (本欄 / part 259 merge hash `9be0f3fbc` 補記)。
+
+**Validation focus**:
+- docs 1 節追記 + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (recipe 第 16 連続狙い)。
+- 完了の定義 = 既存実装の verify + 唯一の gap (一枚正本) の充足。新規 cleanup 機構は作らない (既存 cadence が回っている事実を doc 化 / 原則 6)。[BRAIN-32] 7/7 整合。
+- Philosophy Alignment: 原則 1 (記憶統治の最終形を CEO が一覧可能に) / 3 (mentor = 記憶負債で AI を誤作動させない) / 6 (既存実装 pointer 化 = 新規機構ゼロ) / 7 (記憶の技術的負債への標準対処 = 資産) / 8 (lint report / Health Score 既存 KPI 接続) / 9 (持続可能な知識運用)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 259 = 9be0f3fbc)。
+
+---
+
+### 2026-06-10 Win版#132 part 261 — モデルルーティング戦略 (コスト tier) 策定 (WBS 9e44b388 完了 / /loop user 再起動 10 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 10 round 目** (part 260 merge `0fe6d21c7` + Issue #2710 close 確認後)。**`9e44b388`** ([Issue #2694] AI ツール従量課金化に伴うモデルルーティング戦略と推論コスト最適化 / owner schedule→win) を claim — タスク本質 = 戦略「策定」(L3)。part 258 確立の **split 型** 適用 (基準 1 = 策定 → 完了 / 基準 2-3 = 可視化・アラート実装 → L2 = Issue open 維持)。
+- near-duplicate verify: DEV_PROCESS_MULTI_AI.md が Routing Matrix の正本 (§1 instance 振分 / §4 EF provider routing) — **コスト軸の節が gap** → 同 doc へ追記 (新 doc を作らない)。
+- ⚠️ part 259 後日談を記録: Issue-linked タスクの cancelled は WBS Sync cron が completed に上書き (2c4d2f03 実測) — automation と migration で戦わない方針 (意図は description/notes に永続記録済み)。
+
+**Changes**:
+- `docs/DEV_PROCESS_MULTI_AI.md` に **「コスト tier ルーティング」節を追記** (= Issue #2694 基準 1 正本): **モデル名を表に固定せず tier (役割) で定義** (世代交代耐性 / tier→実モデルは `/model` picker + AI_FALLBACK_RUNBOOK へ委譲 = [AI-TOOL-VERIFY] 整合) + 難易度→tier 4 行表 (定型=低 / 中規模実装=中=L2 既定 / 複雑設計・障害調査=高=L3 / リサーチ=**ゼロトークン経路優先**) + 「迷ったら 1 tier 下から (コスト超過は静かに進行する)」原則 + 既存ガードレール (quota-monitor / ci-cd-cost-audit / [AUTO-REPLY] cap) と**未実装 2 点 (モデル別消費集計 / コスト上限+ループ検知アラート) の正直な区別**。Issue 中の特定モデル名 (Composer 2 等) は未検証ベンダー主張として不採用。
+- migration `20260610140000_wbs_complete_model_routing.sql` で WBS task を completed/100/approved 化 + owner schedule→win 是正 + `development_achievements` 追記 (idempotent)。
+- **Issue #2694 は close しない** — 基準 2-3 (実装) の L2 handoff として open 維持 (merge 後に criteria 状況 comment / part 258 #2599 と同型)。
+- ROADMAP part 261 エントリ (本欄 / part 260 merge hash `0fe6d21c7` 補記)。
+
+**Validation focus**:
+- docs 1 節追記 + WBS 完了 migration のみ。両 gate local PASS → docs-only label + close+reopen + E2E 3-phrase (recipe 第 17 連続狙い)。
+- honest 区別: 「策定 = 完了」と「実装 = 未」の分離を doc 内・migration 内・Issue comment の 3 か所で一貫させる。モデル名の腐敗対策として tier 抽象を採用 (本表は世代交代で陳腐化しない)。
+- Philosophy Alignment: 原則 1 (tier 選択の最終判断は使用者 / CEO がコスト方針を一覧可能) / 4 (mentor = コスト不安なく使える基準) / 6 (資本=時間とコストの最適配分 = 本節の主題) / 7 (静かに進行するコスト超過 = 負債への防波堤) / 8 (quota/cost 監視 KPI 接続) / 9 (持続可能な AI 利用)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 260 = 0fe6d21c7)。
+
+---
+
+### 2026-06-10 Win版#132 part 262 — L3 claimable 枯渇の honest 宣言 + L2 実装 handoff 3 件起票 (/loop user 再起動 11 round 目)
+
+**Summary**:
+- `/loop` **user 明示再起動 11 round 目** (part 261 merge `d0628d389` 確認後 / RAM 95% = v24 SS zone → 最小 scope)。残候補 `c83ff238` (#2847 インフラ構成ドキュメント自動生成) を verify → **受入基準 3 点すべて自動化 pipeline 実装 = L2 本体タスク** (手書き doc では基準を満たさない = split 不能) → skip。
+- **honest 宣言: L3 (設計/docs/triage) が完了主張できる WBS タスクは本日 12 round で枯渇** (docs 系/dedup 系/split 系/監査系を消化済み)。完了を捏造せず、本 round は **WBS タスク完了なし** — 代わりに本日 split で積んだ L2 実装残 3 件を Codex が拾える形に正式化 ([INSTANCE-ROLES] L3 正規 lane = Architect-Implementer ③)。
+- 本日 session 総計: parts 252-262 で **WBS 12 タスク解消 / 11 PR merged / Issue 4 close + 2 handoff comment / gate recipe 17 連続 first-try**。
+
+**Changes**:
+- **新規** `docs/cross-instance-prs/20260610_l2_impl_handoff_3items.md` — L2 (Win Codex) 実装 handoff 集約: ① #2599 縮退 Phase A/B (設計 = SPOF_FAILOVER_STRATEGY §5) ② #2694 コスト可視化+暴走アラート (設計 = DEV_PROCESS_MULTI_AI コスト tier 節 / 既存 quota-monitor・Slack webhook 流用指定) ③ #2847 構成ドキュメント自動生成 pipeline (wiki_compile 統合を先に検討 = 既存基盤優先)。各完了条件 + done/ 移動時の inbound grep 注意 (part 254 教訓) 付き。
+- ROADMAP part 262 エントリ (本欄 / part 261 merge hash `d0628d389` 補記)。
+- **migration なし** (完了した WBS タスクが無いため — 偽 completed を作らない / part 259 確立の honesty 原則)。
+
+**Validation focus**:
+- docs-only 2 file。両 gate local PASS → docs-only label + close+reopen (recipe 第 18 連続狙い)。
+- 「タスク完了 0」を正直に記録することが本 round の品質 — /loop の字義 (1 つ完了) より honesty を優先 (部 234 DEFER / 部 255 skip の系譜)。次の完了可能性: L2 が handoff 3 件を実装した後の L3 レビュー / L1 (Antigravity) 探索成果の設計化 / 新規 Issue 流入。
+- Philosophy Alignment: 原則 1 (リソース配分の判断材料を CEO へ = L2 セッション起動の提案) / 4 (mentor = できない約束をしない) / 6 (枯渇状態での無理な捻出 = 時間浪費を回避) / 7 (偽 completed = 負債を作らない) / 8 (session 実績の正確な計上) / 9 (持続可能なループ運用 = 健全な停止)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 261 = d0628d389)。
+
+---
+
+### 2026-06-10 Win版#132 part 263 — ブログ/ニュース配信 本番E2E検証完了 (WBS f02d5e49 / Issue #1950 close / smoke regex bitrot 修正)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 262 枯渇宣言後の新セッション / 21:28 JST)。新規流入ゼロ (6/9 以降 +1 件のみ = #3175 gha-owned / Codex draft 済) を確認後、win-owned in_progress の **`f02d5e49` ([Issue #1950] ブログ/ニュース配信の本番E2Eと完全自動化仕上げ)** を per-要素 verify → 残作業 5 項目の大半が後続自動化 (blog-news-prod-smoke / blog-publish / blog-engagement / blog-publish-orphan-cleanup / ai-tool-watch #1559) で充足済みと立証 → gap 2 件 (Runbook 実運用反映 + smoke regex bitrot) を充足して完了。part 261 残の prod flip (9e44b388 = completed 11:39 UTC) も verify 済み。
+- **verify が実バグを検出**: `lib/main.dart` の `anonKey:` → `publishableKey:` rename (supabase_flutter API 移行) で smoke の RSS live チェックが CI で warn-skip に退化していた (silent degradation)。regex を両対応に修正 + regression test 追加 → local 実行で `rss_fetch_latest: pass` 復活を確認。
+- **RSS 部分失敗耐性をライブ実証**: tools-hub `rss.fetch_latest` に正常 feed 1 + 死活 domain 1 を投げ、正常側の items 2 件が構造化 payload で返ることを確認 (CORS 非依存 + partial success)。
+
+**Changes**:
+- `scripts/blog_news_prod_smoke.py` — anon key 読み取り regex を `(?:anonKey|publishableKey)` に拡張。
+- `test/scripts/test_blog_news_prod_smoke.py` — publishableKey ケースの regression test 追加 (5 tests OK)。
+- `docs/BLOG_NEWS_AUTOMATION_RUNBOOK.md` — 「Production Verification Results (2026-06-10)」節を新設 (= Issue #1950 完了条件 4「Runbook が実運用結果で更新される」の充足)。run streak / RLS policy 根拠 / Qiita cooldown 正直記載 / 部分失敗ライブ検証を記録。Last updated 2026-06-10 化。
+- migration `20260610215000_wbs_complete_blog_news_e2e.sql` — f02d5e49 を completed/100/approved 化 + development_achievements 追記 (part 242-251 idempotent パターン)。
+
+**Validation focus**:
+- 完了の定義 = Issue #1950 完了条件 4 点の per-要素 verify (部 256「gap 無視 close 禁止」準拠): ① 本番 URL 公開閲覧 = smoke 4× green (6/10 単日) + local pass ② 外部投稿/engagement = daily green streak (Qiita は cooldown 制約を正直記載 / dev.to 正系) ③ RSS CORS 非依存+部分失敗 = live 実証 ④ Runbook 実運用反映 = 本 PR で充足。
+- RSS 拡張「候補」群 (cache/AI要約等) は Issue 原文どおり候補 = Follow-Up Ideas 維持 (overclaim なし)。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 19 連続狙い / scripts+test+docs+migration = 非 app-code 構成)。
+- Philosophy Alignment: 原則 3-4 (mentor / verify-first が silent degradation を検出 = 部 237 系譜) / 6 (資本=時間: 既存自動化の成果を計上し重複作業回避) / 7 (regex bitrot = 負債解消) / 8 (E2E 完了 KPI) / 9 (無人運用の信頼性回復)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 262 = 0d0961645)。
+
+---
+
+### 2026-06-10 Win版#132 part 264 — GitHub Actions Node.js 20 廃止対応 (保守工程 WBS 追加→同一セッション完了 第 1 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 263 直後 / 同夜)。part 263 の deploy-prod annotation で検出した **GitHub Actions Node.js 20 deprecation (2026-06-16 強制 Node 24 切替 / 6 日前)** を、user 標準指示「企画〜保守の全工程で WBS 不足タスクをゼロに」に基づき**保守工程の不足タスクとして WBS へ追加し、同一セッションで完了**。
+- **inventory が好状態を立証**: 全 .github/ grep で Node 20 残存は composite action `setup-flutter-sdk/action.yml` の `actions/cache@v4` **1 箇所のみ** (third-party action ゼロ方針 + 他 action は checkout@v6 / setup-python@v6 / upload-artifact@v7 / github-script@v9 等すべて Node 24 系 major)。ci.yml は cache@v5 移行済だった = composite 内の取り残し。
+- **GitHub 公式 releases を read して根拠確認** (vendor docs 毎回 read の現実版): v5 = Node.js 24 runtime / runner >= 2.327.1 / with: API 不変 → @v5 bump (1 行)。既存 Issue/PR 重複なしを確認済 (Codex #3179 は無関係)。
+
+**Changes**:
+- `.github/actions/setup-flutter-sdk/action.yml` — `actions/cache@v4` → `@v5` (1 行)。
+- migration `20260610223000_wbs_add_complete_node24_actions.sql` — WBS 保守タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。
+- ROADMAP part 264 エントリ (本欄 / part 263 merge hash `34e38aca2` 補記)。
+
+**Validation focus**:
+- 「追加→即完了」の honesty: 期限 6 日前の 1 行保守を分割しない判断を migration コメントに明記 (偽の planning overhead を作らない)。
+- in-repo 実証 (ci.yml cache@v5 green 稼働) + 公式 releases 確認の 2 点 grounding で「動くはず」を排除。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 20 連続狙い / .github+migration = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = 期限付きリスクの先回り) / 6 (資本=時間: 6/16 強制切替後の障害調査コストを 1 行 bump で回避) / 7 (platform deprecation = 放置すると負債) / 8 (CI 健全性 KPI) / 9 (無人 cron 群の持続稼働)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 263 = 34e38aca2)。
+
+## Win版#132 part 216 — minimum session → v26 disk+RAM dual-channel spec ship 第 1 例 (2026-05-14 木 19:28-19:50 JST)
+
+### Summary
+
+- **Instance**: Win版 (Claude Code) part 216 (= 149 part 連続 過去最長 update)
+- **Trigger**: user direct ask 第 7 例累積 (= 「メモリ/HDD 枯渇 必ず」+「毎セッション必ず圧縮」要求)
+- **post-wrap-up escalation 第 11 例累積 過去最重 risk band 越え update**
+- **iterative ask 累積 25 layer 過去最高 update** (= v25 24 → v26 25)
+
+### Ship (= 4 件)
+
+1. **v26 disk+RAM dual-channel mandatory compression spec ship 第 1 例** (= 5 new layer YY-CCC 累積 58)
+   - Layer YY: disk-aware SessionStart hard exit (= C: < 10 GB hard exit)
+   - Layer ZZ: dev_cache multi-source 並列 cron (= Flutter pub + npm + pnpm + Dart + gradle + IDE + memory backups)
+   - Layer AAA: session disk-delta enforce (= +0.3 GB minimum / v19 disk extension)
+   - Layer BBB: worktree pruning automation (= weekly cron / 35 → 25 → 20 worktrees)
+   - Layer CCC: archive offload monthly (= memory file aging + session-delta archive)
+2. **#1495 P0 day-of FINAL ALERT ping** (= comment 4450421809 / 残 ~4h22min / extend +1d 推奨 + Codex 5/22 sprint pickup 振分)
+3. **WBS triage TOP 5 期限近順** (= #1495 P0 + #1564 P1 claim + #1724 P1 + #1950 P1 + #1640 P1 / 2-instance 振分反映)
+4. **memory file** (= project_20260514_win132_part216.md + feedback_success_20260514_part216_v26_disk_ram_dual_channel.md + MEMORY.md index)
+
+### Key proofs (= part 216 で取得した一次データ)
+
+1. **fatigue:FATIGUE → OK 自然 reset 第 1 例確証** (= ~10h gap で reset / 部 215 仮説 VERIFIED)
+2. **RAM 自然 GC 連鎖 第 1 例実証** (= 97.0→89.0→86.25% in ~15min / -10.75 pt / 揺れ range 過去最大 update **-3.58 ~ +13.0 pt/h**)
+3. **v25 Layer TT cron freshness dogfood 第 1 例確証** (= Win Task Scheduler claude* 0 matches / C: 13.22 GB CRITICAL = effectiveness <500 MB/cycle 緊急性立証)
+4. **session-delta.csv auto-firing 第 X 例累積** (= 276 rows / pretooluse 71.7 MB reclaim / fatigue OK)
+5. **partial breach 第 7 例累積** (= 86.25% / 部 213-216 連続 pattern)
+6. **POST RAM 94.11% build-up 第 X 例** (= +7.86 pt in ~4min / partial breach 強化)
+
+### Codex 5/22 sprint queue update (= 累積 62 deliverable / 3.88 件/day pace)
+
+| Day | Date | New v26 layer |
+|-----|------|---------------|
+| Day 1 | 5/22 (金) | YY (disk-aware SS) |
+| Day 2 | 5/23 (土) | ZZ (multi-source cron) |
+| Day 3 | 5/24 (日) | AAA (disk-delta enforce) |
+| Day 4 | 5/25 (月) | BBB (worktree pruning) |
+| Day 5 | 5/26 (火) | CCC (monthly archive) |
+
+### next session 候補 (= part 217+)
+
+1. **5/14 22:00+ JST OR 5/15 02:00+ JST 厳守** (= user gate / [SCHEDULE-WAKEUP] 02-06 zone 注意)
+2. RAM PRE check 第 1 (= > 90% で v24 Layer SS hard exit MUST)
+3. **#1495 P0 post-mortem comment** (= 期限到達 5/15 00:00 後 / 7d Codex 0 progress root cause)
+4. **#1495 milestone shift OR extend +1d label apply**
+5. v26 Codex impl monitor (= 5/22 sprint Day 1-5 distribution / 62 deliverable)
+6. **DISK_HYGIENE §17.26-§17.30 5 章 batch backfill 第 3 例 過去最大** (= 既存 doc 章追加 第 21-25 例 / heavy write / RAM 安全時)
+7. MEMORY.md consolidation 第 5 例 trigger (= ~30 KB 突破 / 5-step pattern 第 5 適用)
+8. UI verify [UI-VERIFY] backlog ~8 day overdue (= Playwright MCP / 4 page / RAM ≤ 85% 安全時)
+
+### Lesson
+
+- **user direct ask 月内 4 連続 = paradigm 進化 trigger 確立 pattern** (= 部 213/214/215/216)
+- **v25 cron-only paradigm の disk side 弱点 verified** (= 部 216 C: 13.22 GB CRITICAL dogfood)
+- **iterative ask 25 layer 過去最高** (= 月内 4-day interval / 100% ship rate)
+- **partial breach 第 7 例累積下 spec ship 第 1 例** = text-only spec design は heavy task 外 verified
+- **disk side full coverage 達成** = v15-v26 累積 58 layer で RAM/disk 両軸 cover
+
+### Philosophy Alignment (Win#132 part 216)
+
+- ✅ **CEO 感** (1/9): user direct ask 即応 + paradigm 進化 leadership
+- ✅ **ミッション** (2/9): v26 = Codex 5/22 sprint pipeline 強化 = mobile UAT + 動画 + AI 大学 sustainability 担保
+- ✅ **mentor** (3/9): user 「必ず」要求 文字通り respect + immediate spec ship
+- ✅ **6 部署** (4/9): architect role = 全 spec design + 2-instance hand-off 第 12 例累積
+- ✅ **商品=価値** (5/9): memory file + v26 spec = 圧縮 paradigm 強化 価値
+- ✅ **資本=時間** (6/9): text-only spec / heavy task 回避 = RAM 87% partial breach 下安全 fire
+- ✅ **KPI** (8/9): 5 deliverable + Codex sprint 累積 62 件 / 3.88 件/day pace
+- ✅ **IPO** (9/9): part 216 = 149 part 連続 過去最長 update
+- ⚠️ **資産負債** (7/9): RAM 87% + C: 13.32 GB CRITICAL = liability accumulating / v26 impl で resolution 期待
+
+**Score: 8/9 ✅** (= [PHILOSOPHY-22] threshold 7+ ✅)
+
+---
+
+### 2026-06-11 Win版#132 part 265 — dependabot pub group 週次CI失敗の恒久解消 (flutter_native_splash ignore / 保守 WBS 追加→同一セッション完了 第 2 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 264 直後 / 02:08 JST)。WBS fresh query (REST 直読) で win-owned incomplete = #1495 のみ (巨大 L2 型) を確認後、**新規流入の保守シグナル 2 件 (Issue #3209 = dependabot PR #3208 CI fail / Issue #3211 = CI Auto-Fix の pub get fail on main context)** を triage — part 262 枯渇宣言の「次の補充源 = 新規 Issue 流入」が初めて実際に発火した形。
+- **annotation (= part 233 ID-correction 系譜)**: 本 entry 直前の part 216 verbose block は、セッション開始 3 分前 (02:05 JST) に stale session 残骸 [PR #3213](https://github.com/kanta13jp1/my_web_app/pull/3213) が merge され時系列外位置 (= part 264 の後 / 2026-05-14 の内容) へ混入したもの。正本 = line 30797 付近の既存 part 216 compact entry + memory 2 file (`project_20260514_win132_part216` 系)。append-only 原則に従い削除せず本 annotation で記録し、本 PR の rebase で衝突解消。
+- **root cause を log 全文で確証**: flutter_native_splash 2.4.8 が meta ^1.18.0 を要求 vs CI Flutter stable (3.38.10) の flutter_test が meta 1.17.0 を pin → group 全体の version solving fail (PR #3208 job 80577000469)。同じ失敗が CI Auto-Fix (run 27281548713) に伝播し #3211 を生成 = **2 Issue は同一根本原因**。2026-06-02 #3057 と同一パターンの週次再発 (2 回目) → 都度対応でなく恒久対応へ。
+- **GitHub 公式 docs を verify-first** (dependabot options reference + comment commands): config file ignore が auditable な正攻法 / `@dependabot close` は同 update の再作成まで block する副作用 → 不採用 / merge 後 `@dependabot recreate` で ignore 適用後の group PR を再生成、を確認してから実装。
+
+**Changes**:
+- `.github/dependabot.yml` — pub ecosystem に ignore (flutter_native_splash `>=2.4.8`) 追加。解除条件 (CI Flutter stable が meta >=1.18.0 同梱) を YAML コメントに明記。
+- migration `20260611021500_wbs_add_complete_dependabot_pub_ignore.sql` — 保守 WBS タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。症状チケット側 WBS 2 件 (9339a406/3b5fec8d) は issue-linked のため migration では触らず Issue close → sync cron の自然 lifecycle に委ねる (part 260 準拠)。
+- ROADMAP part 265 エントリ (本欄 / part 264 merge hash `7773200e4` 補記)。
+
+**Validation focus**:
+- 「恒久」の定義: ignore は無期限放置にしない — 解除条件を dependabot.yml 内コメントで正本化し、WBS remaining_work にも followup を明記 (見えない hidden state の `@dependabot ignore` コメントコマンドを避けた理由も migration に記録)。
+- 道連れ解消の実利: supabase / supabase_flutter / test の正常 bump 3 件が次回 group PR で green になる見込み (merge 後 #3208 へ recreate コメント)。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 21 連続狙い / .github+migration+docs = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = 週次ノイズ源の根絶を先回り) / 6 (資本=時間: 毎週の workflow-failure triage コスト削減) / 7 (壊れ bump の放置 = 負債) / 8 (CI 健全性 KPI) / 9 (無人 dependabot 運用の信頼性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 264 = 7773200e4)。
+---
+
+### 2026-06-11 Win版#132 part 266 — CI Setup Deno の deno.land 一時503耐性化 (retry+backoff / 保守 WBS 追加→同一セッション完了 第 3 例)
+
+**Summary**:
+- user 標準プロンプト再起動 (part 265 終了 02:40 JST の直後 / 02:50 JST)。session-start fetch 儀式 (part 265 教訓) 適用後、**新規流入 Issue #3215 ([workflow-failure] Deploy to Production (main) deno-lint)** を triage — part 265 で確立した「補充源 = 新規 workflow-failure Issue 流入」の第 2 連続発火。
+- **誤分類を実ログで是正**: handler の「deno-lint」分類に対し、run 27293741687 (part 265 merge commit `407cdc9e4`) の job 80620889988 log 確証 = `curl: (22) The requested URL returned error: 503` → 真因は ci.yml「Setup Deno」の素の `curl -fsSL https://deno.land/install.sh | sh` が deno.land 一時 503 で fail (lint エラー不在 / 直前 commit `da667bc5d` の deploy は success)。reusable ci.yml fail → deploy job skip → **part 265 の WBS migration 本番未適用が滞留**、まで波及確認。
+- **2 段対応**: ① 即時復旧 = `gh run rerun 27293741687 --failed` (一時障害仮説の検証込み / green 化で handler recovery rule が #3215 自動 close + part 265 migration 適用回復) ② 恒久対応 = Setup Deno へ retry+backoff (3 attempts / 20s,40s / curl --retry 併用)。installer を一時ファイル経由に変更し、stdout パイプ直結で curl --retry が rewind 不能 → truncated script が sh に流れる潜在ハザードも同時解消。
+- **公式 docs verify-first**: 代替案 denoland/setup-deno@v2 の action.yml (main) で `runs.using: node24` を確認 (part 264 の Node20 廃止 sweep と矛盾しない) — ただし真因 (一時 503) には retry が strict superset の最小修正であり、deploy lane への新規依存追加を避けて defer (月 2 回以上再発で L2 移行検討 / WBS remaining_work に正本化)。
+
+**Changes**:
+- `.github/workflows/ci.yml` — Setup Deno step に retry+backoff loop (deploy-prod.yml `deploy_function` と同一 repo idiom) + 一時ファイル経由インストール。
+- migration `20260611030000_wbs_add_complete_ci_deno_retry.sql` — 保守 WBS タスク INSERT (completed / win / インフラ・CI/CD / alpha) + development_achievements (idempotent)。症状チケット #3215 は handler recovery rule 管理のため WBS 化せず (part 265 委譲準拠)。
+- ROADMAP part 266 エントリ (本欄 / part 265 merge hash `407cdc9e4` 補記)。
+
+**Validation focus**:
+- 「耐性化」の範囲: 一時障害 (数十秒〜分オーダー) は CI 内で自己回復 / 持続障害 (3 attempts 超) は fail して rerun に委ねる — 無限 retry で障害を隠蔽しない。
+- SDLC 7 工程 gap 監査: part 254 方法論 + part 265 結論を再確認 — 全工程 open 実在 / 今回の不足 = 保守工程の本タスク 1 件 (追加→同一セッション完了)。stale docs 棚卸しは part 265 (<24h 前) の「削除 0 件が正答」維持。
+- 両 gate push 前 local script 確証 + no-e2e-needed label + close+reopen 先制 (recipe 第 22 連続狙い / .github+migration+docs = 非 app-code)。
+- Philosophy Alignment: 原則 4 (mentor = deploy lane の単一 flaky 依存を先回り根絶) / 6 (資本=時間: 503 一発で rerun 人手対応するコストの削減) / 7 (deploy skip = migration 滞留という隠れ負債の検出と回復) / 8 (deploy-prod 成功率100%維持 KPI) / 9 (無人 main push 運用の信頼性)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 265 = 407cdc9e4)。
+---
+
+### 2026-06-11 Win版#132 part 266b — NotebookLM 2 アカウント分離運用 (NOTEBOOKLM_HOME / user 訂正起点)
+
+**Summary**:
+- part 266 wrap-up の「jibun-master-brain 不存在 = CLAUDE.md stale」誤結論を **user が訂正** — 真因 = CLI login アカウント違い (CLI = k-umezawa@ml-mightylink.com / jibun-master-brain は kanta13jp@gmail.com 側に実在)。誤着地 source は `source delete -y` で除去し、memory を是正 (feedback_correction_20260611_notebooklm_account_mismatch)。
+- user 要件「両アカウント併用 (本プロジェクト = gmail / 他プロジェクト = ml-mightylink)」に対し、CLI `paths.py` を verify-first で読み **`NOTEBOOKLM_HOME` env による丸ごと分離** (storage_state.json + context.json + browser_profile) を採用。`--storage` 単独は context.json が共有され cross-contamination footgun のため不採用。
+- 構成: default `~/.notebooklm` = ml-mightylink (**無傷で維持** / env 未設定の他プロジェクトは自動的にこちら) / 新設 `~/.notebooklm-gmail` = gmail (`.claude/settings.json` env で本プロジェクトに自動適用)。
+- 実測で判明した CLI の罠 2 件を GUIDE に正本化: ① `status`/`auth check` とも login アカウント非表示 → 「notebook 不存在」はまず account 指紋 (`list`) を疑う ② `use` fail 後の `source add` は現行 context へ着地 → use 成功 verify 必須。
+
+**Changes**:
+- `.claude/settings.json` — env に `NOTEBOOKLM_HOME` 追加 (本プロジェクトの全セッションへ ambient 適用 / skill 群は無修正で済む)。
+- `CLAUDE.md` — Session ritual 行にアカウント注記 + GUIDE への pointer。
+- `docs/NOTEBOOKLM_GUIDE.md` — 「アカウント運用 — 2 アカウント分離」節新設 (分離表 + 罠 2 件 + GHA `NOTEBOOKLM_AUTH_JSON` secret の account 監査は別タスクと明記)。
+
+**Validation focus**:
+- merge 前実測: gmail home で `list` に jibun-master-brain 実在 → `use` 成功 → part 266 memory source add 成功 / default home の context (ml-mightylink notebook) 無傷。
+- 初回 login の教訓: 対話式 login (browser → ENTER) を background 実行中に hard-kill すると session 未 flush で消失 → **auto-ENTER 遅延窓 (sleep N; echo) 方式**で CLI 自身に保存させる。
+- Philosophy Alignment: 原則 3 (mentor = user 訂正の即時反映と仕組み化) / 6 (資本=時間: account 誤認 triage の再発防止) / 7 (誤着地 source = 負債の即時除去) / 8 (儀式の信頼性 KPI)。7+/9 ✅。
+- commit hash: (PR merge 後に追記 / part 266 = b2a9cf648)。
+---

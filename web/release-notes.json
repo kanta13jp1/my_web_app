@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-05-19",
+    "date": "2026-06-18",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-05-19T00:00:00Z",
+  "generatedAt": "2026-06-18T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -25,406 +25,406 @@
       "build": "1",
       "category": "release",
       "changeCategories": [
-        "automation",
+        "docs",
         "feature",
         "fix"
       ],
       "changes": [
         {
-          "category": "automation",
-          "id": "pr-2951",
-          "links": [
-            {
-              "title": "PR #2951",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2951"
-            }
-          ],
-          "mergedAt": "2026-05-19T03:11:11Z",
-          "summary": "#2951 ci: add monthly asset report cron (#2462)"
-        },
-        {
           "category": "feature",
-          "id": "pr-2950",
+          "id": "pr-3468",
           "links": [
             {
-              "title": "PR #2950",
+              "title": "PR #3468",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2950"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3468"
             }
           ],
-          "mergedAt": "2026-05-19T01:54:35Z",
-          "summary": "#2950 feat(asset): generate monthly asset reports (#2461)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2943",
-          "links": [
-            {
-              "title": "PR #2943",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2943"
-            }
-          ],
-          "mergedAt": "2026-05-18T23:45:43Z",
-          "summary": "#2943 feat(asset): add CSV restore preview (#2455)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2942",
-          "links": [
-            {
-              "title": "PR #2942",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2942"
-            }
-          ],
-          "mergedAt": "2026-05-18T23:17:00Z",
-          "summary": "#2942 docs(roadmap): Win版#132 part 230 — #1495 P0 +6 day FINAL fire"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2934",
-          "links": [
-            {
-              "title": "PR #2934",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2934"
-            }
-          ],
-          "mergedAt": "2026-05-18T16:41:55Z",
-          "summary": "#2934 feat(asset): add repayment simulation (#2454)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2828",
-          "links": [
-            {
-              "title": "PR #2828",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2828"
-            }
-          ],
-          "mergedAt": "2026-05-18T15:52:00Z",
-          "summary": "#2828 feat(asset): add payment reminder candidates (#2453)"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2826",
-          "links": [
-            {
-              "title": "PR #2826",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2826"
-            }
-          ],
-          "mergedAt": "2026-05-18T14:28:23Z",
-          "summary": "#2826 ci: add AI model telemetry review (#2522)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2824",
-          "links": [
-            {
-              "title": "PR #2824",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2824"
-            }
-          ],
-          "mergedAt": "2026-05-18T14:17:51Z",
-          "summary": "#2824 資産管理の改善提案からGitHub Issueを発行"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2822",
-          "links": [
-            {
-              "title": "PR #2822",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2822"
-            }
-          ],
-          "mergedAt": "2026-05-18T11:47:34Z",
-          "summary": "#2822 ci: make AI bench source recheck report-only (#2520)"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2820",
-          "links": [
-            {
-              "title": "PR #2820",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2820"
-            }
-          ],
-          "mergedAt": "2026-05-18T11:17:23Z",
-          "summary": "#2820 ci: add AI bench source recheck (#2520)"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2818",
-          "links": [
-            {
-              "title": "PR #2818",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2818"
-            }
-          ],
-          "mergedAt": "2026-05-18T10:31:53Z",
-          "summary": "#2818 ci: stabilize knowledge vault lint health (#2742)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2720",
-          "links": [
-            {
-              "title": "PR #2720",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2720"
-            }
-          ],
-          "mergedAt": "2026-05-18T03:10:58Z",
-          "summary": "#2720 docs(roadmap): Win版#132 part 229 — PR #2580 merge + canonical 4th first-try SUCCESS"
+          "mergedAt": "2026-06-17T23:47:31Z",
+          "summary": "#3468 refactor: extract flow display-title logic into a pure service"
         },
         {
           "category": "fix",
-          "id": "pr-2580",
+          "id": "pr-3463",
           "links": [
             {
-              "title": "PR #2580",
+              "title": "PR #3463",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2580"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3463"
             }
           ],
-          "mergedAt": "2026-05-18T02:58:57Z",
-          "summary": "#2580 docs(roadmap): Win版#132 part 228 — canonical fix 3rd dogfood SUCCESS"
+          "mergedAt": "2026-06-17T12:02:40Z",
+          "summary": "#3463 fix(asset): AI分析が過去履歴の期限超過/負の値を現在として再生産する問題を是正"
         },
         {
-          "category": "automation",
-          "id": "pr-2638",
+          "category": "feature",
+          "id": "pr-3460",
           "links": [
             {
-              "title": "PR #2638",
+              "title": "PR #3460",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2638"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3460"
             }
           ],
-          "mergedAt": "2026-05-18T02:58:48Z",
-          "summary": "#2638 ci: add NotebookLM requirement issue automation (#1963)"
+          "mergedAt": "2026-06-17T00:30:55Z",
+          "summary": "#3460 refactor: extract salary spending entry assembly into a pure service"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3459",
+          "links": [
+            {
+              "title": "PR #3459",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3459"
+            }
+          ],
+          "mergedAt": "2026-06-16T23:59:52Z",
+          "summary": "#3459 refactor: extract cashflow forecast input derivation into a pure service"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3457",
+          "links": [
+            {
+              "title": "PR #3457",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3457"
+            }
+          ],
+          "mergedAt": "2026-06-16T16:08:27Z",
+          "summary": "#3457 feat: 定期固定費のUI登録カードと端末間ミラー同期を追加"
+        },
+        {
+          "category": "docs",
+          "id": "pr-3425",
+          "links": [
+            {
+              "title": "PR #3425",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3425"
+            }
+          ],
+          "mergedAt": "2026-06-16T15:57:49Z",
+          "summary": "#3425 docs: weekly dependency audit 2026-06-15 (no vulnerabilities)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3456",
+          "links": [
+            {
+              "title": "PR #3456",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3456"
+            }
+          ],
+          "mergedAt": "2026-06-16T14:20:45Z",
+          "summary": "#3456 [CI/CD自動最適化] deploy-dev/staging npm cache 追加 2026-06-16"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3454",
+          "links": [
+            {
+              "title": "PR #3454",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3454"
+            }
+          ],
+          "mergedAt": "2026-06-16T04:12:12Z",
+          "summary": "#3454 feat: enable Flutter semantics at startup (no Enable-accessibility step)"
+        },
+        {
+          "category": "docs",
+          "id": "pr-3453",
+          "links": [
+            {
+              "title": "PR #3453",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3453"
+            }
+          ],
+          "mergedAt": "2026-06-16T04:04:03Z",
+          "summary": "#3453 docs: record NVDA pass and add new asset cards to a11y checklist"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3452",
+          "links": [
+            {
+              "title": "PR #3452",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3452"
+            }
+          ],
+          "mergedAt": "2026-06-16T04:01:21Z",
+          "summary": "#3452 feat: 定期固定費のデータ駆動モデルと資金繰り計上を追加 (UI登録の土台)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3451",
+          "links": [
+            {
+              "title": "PR #3451",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3451"
+            }
+          ],
+          "mergedAt": "2026-06-16T02:21:35Z",
+          "summary": "#3451 feat: 更新バナーを起動直後と前面復帰時にも確認して反映漏れを防止"
         },
         {
           "category": "fix",
-          "id": "pr-2569",
+          "id": "pr-3447",
           "links": [
             {
-              "title": "PR #2569",
+              "title": "PR #3447",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2569"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3447"
             }
           ],
-          "mergedAt": "2026-05-17T23:45:17Z",
-          "summary": "#2569 fix: sync inject rules guard count (#2568)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2566",
-          "links": [
-            {
-              "title": "PR #2566",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2566"
-            }
-          ],
-          "mergedAt": "2026-05-17T17:24:39Z",
-          "summary": "#2566 Make asset assistant Japanese and support pasted rate evidence"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2565",
-          "links": [
-            {
-              "title": "PR #2565",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2565"
-            }
-          ],
-          "mergedAt": "2026-05-17T16:51:03Z",
-          "summary": "#2565 ci: add AI bench provider manifest (#2520)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2564",
-          "links": [
-            {
-              "title": "PR #2564",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2564"
-            }
-          ],
-          "mergedAt": "2026-05-17T15:20:55Z",
-          "summary": "#2564 feat(asset): add AI provider routing (#2521)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2563",
-          "links": [
-            {
-              "title": "PR #2563",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2563"
-            }
-          ],
-          "mergedAt": "2026-05-17T14:16:04Z",
-          "summary": "#2563 docs(roadmap): part 225-followup-2 — /goal re-issue verify (既処理確認 / no re-ship)"
+          "mergedAt": "2026-06-15T22:20:57Z",
+          "summary": "#3447 fix: make the forecast chart and alert reliably readable by screen readers"
         },
         {
           "category": "fix",
-          "id": "pr-2562",
+          "id": "pr-3445",
           "links": [
             {
-              "title": "PR #2562",
+              "title": "PR #3445",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2562"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3445"
             }
           ],
-          "mergedAt": "2026-05-17T13:51:43Z",
-          "summary": "#2562 docs(roadmap): part 225-followup — 3 PR merge wave + ultrareview gate canonical fix + #1495 Option C trigger"
+          "mergedAt": "2026-06-15T22:09:22Z",
+          "summary": "#3445 fix(asset): 支払済み負債をAI分析が「期限超過/未払い」と誤指摘しないよう是正"
         },
         {
           "category": "feature",
-          "id": "pr-2544",
+          "id": "pr-3439",
           "links": [
             {
-              "title": "PR #2544",
+              "title": "PR #3439",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2544"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3439"
             }
           ],
-          "mergedAt": "2026-05-17T13:44:13Z",
-          "summary": "#2544 feat(project-gantt): session-hygiene tab skeleton (#2508 J3)"
+          "mergedAt": "2026-06-15T20:35:59Z",
+          "summary": "#3439 feat: a11y semantics for the cashflow forecast and budget cards"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3437",
+          "links": [
+            {
+              "title": "PR #3437",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3437"
+            }
+          ],
+          "mergedAt": "2026-06-15T20:35:29Z",
+          "summary": "#3437 fix(share): Xシェアの本文が空欄になる問題を修正 (単一textパラメータ化)"
         },
         {
           "category": "feature",
-          "id": "pr-2543",
+          "id": "pr-3436",
           "links": [
             {
-              "title": "PR #2543",
+              "title": "PR #3436",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2543"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3436"
             }
           ],
-          "mergedAt": "2026-05-17T13:41:48Z",
-          "summary": "#2543 docs(roadmap): part 223 + 7-part backfill batch (= 過去最大 scope 解消)"
+          "mergedAt": "2026-06-15T20:34:08Z",
+          "summary": "#3436 feat: 自動振替の引落確認カードに振替元残高不足の早期警告を追加"
         },
         {
           "category": "feature",
-          "id": "pr-2552",
+          "id": "pr-3435",
           "links": [
             {
-              "title": "PR #2552",
+              "title": "PR #3435",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2552"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3435"
             }
           ],
-          "mergedAt": "2026-05-17T13:39:12Z",
-          "summary": "#2552 docs(blog): part 225 PR gate body declaration + close/reopen pattern + daily achievement seed"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2560",
-          "links": [
-            {
-              "title": "PR #2560",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2560"
-            }
-          ],
-          "mergedAt": "2026-05-17T13:35:21Z",
-          "summary": "#2560 ci: add official AI model bench harness (#2520)"
+          "mergedAt": "2026-06-15T20:28:21Z",
+          "summary": "#3435 feat: Phase 3 Layer-1 flag to retire legacy pref read fallback"
         },
         {
           "category": "feature",
-          "id": "pr-2561",
+          "id": "pr-3434",
           "links": [
             {
-              "title": "PR #2561",
+              "title": "PR #3434",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2561"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3434"
             }
           ],
-          "mergedAt": "2026-05-17T13:35:02Z",
-          "summary": "#2561 Require APR evidence and add rent payment to asset board"
+          "mergedAt": "2026-06-15T19:58:48Z",
+          "summary": "#3434 feat: per-key guard for authoritative mirror reads (#3415)"
         },
         {
           "category": "feature",
-          "id": "pr-2559",
+          "id": "pr-3433",
           "links": [
             {
-              "title": "PR #2559",
+              "title": "PR #3433",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2559"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3433"
             }
           ],
-          "mergedAt": "2026-05-17T12:02:15Z",
-          "summary": "#2559 docs(asset): add QA operations runbook (#2456)"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2558",
-          "links": [
-            {
-              "title": "PR #2558",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2558"
-            }
-          ],
-          "mergedAt": "2026-05-17T11:41:02Z",
-          "summary": "#2558 Enable asset management Supabase sync and AI summary"
+          "mergedAt": "2026-06-15T14:21:55Z",
+          "summary": "#3433 [CI/CD自動最適化] 2026-06-15"
         },
         {
           "category": "feature",
-          "id": "pr-2556",
+          "id": "pr-3429",
           "links": [
             {
-              "title": "PR #2556",
+              "title": "PR #3429",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2556"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3429"
             }
           ],
-          "mergedAt": "2026-05-17T11:16:19Z",
-          "summary": "#2556 feat(asset): manage account transfer tasks (#2452)"
+          "mergedAt": "2026-06-15T01:15:28Z",
+          "summary": "#3429 feat: 自動振替の引落確認待ちカードで見込み残高の二重控除を解消"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3428",
+          "links": [
+            {
+              "title": "PR #3428",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3428"
+            }
+          ],
+          "mergedAt": "2026-06-15T01:13:10Z",
+          "summary": "#3428 fix(share): Xでシェアが真っ白になる問題を修正 (x.com→twitter.com intent)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3426",
+          "links": [
+            {
+              "title": "PR #3426",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3426"
+            }
+          ],
+          "mergedAt": "2026-06-15T00:21:48Z",
+          "summary": "#3426 fix: harden sync restore — backfill auth-switch guard + non-silent save failures"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3422",
+          "links": [
+            {
+              "title": "PR #3422",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3422"
+            }
+          ],
+          "mergedAt": "2026-06-14T20:57:17Z",
+          "summary": "#3422 fix: 表示設定 restore で削除済みセクション上書きを除外 (削除伝播)"
         },
         {
           "category": "feature",
-          "id": "pr-2548",
+          "id": "pr-3421",
           "links": [
             {
-              "title": "PR #2548",
+              "title": "PR #3421",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2548"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3421"
             }
           ],
-          "mergedAt": "2026-05-16T23:06:30Z",
-          "summary": "#2548 feat(asset): reconcile card statement lines (#2451)"
+          "mergedAt": "2026-06-14T20:56:47Z",
+          "summary": "#3421 feat: budget vs actual by category (予算/カテゴリ予実)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3418",
+          "links": [
+            {
+              "title": "PR #3418",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3418"
+            }
+          ],
+          "mergedAt": "2026-06-14T20:04:38Z",
+          "summary": "#3418 fix: sync review findings — restore/pull race, LWW timestamp, GC order"
         },
         {
           "category": "feature",
-          "id": "pr-2547",
+          "id": "pr-3419",
           "links": [
             {
-              "title": "PR #2547",
+              "title": "PR #3419",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2547"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3419"
             }
           ],
-          "mergedAt": "2026-05-16T22:05:51Z",
-          "summary": "#2547 Persist debt master settings"
+          "mergedAt": "2026-06-14T20:03:48Z",
+          "summary": "#3419 feat: cashflow forecast card v2 (horizon switch, safety line, review link)"
+        },
+        {
+          "category": "docs",
+          "id": "pr-3417",
+          "links": [
+            {
+              "title": "PR #3417",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3417"
+            }
+          ],
+          "mergedAt": "2026-06-14T19:54:01Z",
+          "summary": "#3417 docs: MIRROR_PREF_SCHEMA に watchlist/revolving 削除tombstone を追記 (5ドメイン化)"
+        },
+        {
+          "category": "docs",
+          "id": "pr-3416",
+          "links": [
+            {
+              "title": "PR #3416",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3416"
+            }
+          ],
+          "mergedAt": "2026-06-14T19:42:43Z",
+          "summary": "#3416 docs: authoritative mirror reads の多キー巻き添え上書きにガードコメント (#3415)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3413",
+          "links": [
+            {
+              "title": "PR #3413",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3413"
+            }
+          ],
+          "mergedAt": "2026-06-14T19:36:51Z",
+          "summary": "#3413 fix: 公開 Issue 本文の追加要望 送信者メール(PII)を擬似匿名 user_id へ (#3408 同型)"
+        },
+        {
+          "category": "docs",
+          "id": "pr-3414",
+          "links": [
+            {
+              "title": "PR #3414",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3414"
+            }
+          ],
+          "mergedAt": "2026-06-14T19:36:44Z",
+          "summary": "#3414 docs: add Phase 3 legacy-zero dry-run runbook for asset_pref_mirror"
         }
       ],
-      "date": "2026-05-19",
+      "date": "2026-06-18",
       "extensions": {
         "aiToolWatch": {
-          "changedSourceCount": 3,
+          "changedSourceCount": 5,
           "signalCount": 0,
           "source": "docs/ai-tool-watch/latest-report.json"
         }

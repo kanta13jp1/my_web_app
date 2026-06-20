@@ -1,0 +1,206 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
+
+void main() {
+  const prefill = AssetRecurringFixedCost(
+    id: 'fc_suggestion',
+    name: '電気代',
+    amount: 8050,
+    paymentDay: 15,
+  );
+
+  testWidgets('prefill initializes the add form in add mode', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: RecurringFixedCostEditorDialog(prefill: prefill)),
+      ),
+    );
+
+    expect(find.text('定期固定費を追加'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, '電気代'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, '8050'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, '15'), findsOneWidget);
+  });
+
+  testWidgets('saving a prefilled form returns a cost with a fresh id', (
+    tester,
+  ) async {
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                saved = await showRecurringFixedCostEditor(
+                  context,
+                  prefill: prefill,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isNotNull);
+    expect(saved!.name, '電気代');
+    expect(saved!.amount, 8050);
+    expect(saved!.paymentDay, 15);
+    expect(saved!.id, isNot('fc_suggestion')); // 新規 id を採番
+  });
+
+  testWidgets('subscription prefill shows subscription title', (tester) async {
+    const subPrefill = AssetRecurringFixedCost(
+      id: 'sub_preset_anthropic',
+      name: 'Anthropic (Claude)',
+      amount: 3000,
+      paymentDay: 1,
+      category: AssetRecurringFixedCostCategory.subscription,
+    );
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: RecurringFixedCostEditorDialog(prefill: subPrefill),
+        ),
+      ),
+    );
+
+    expect(find.text('サブスクを追加'), findsOneWidget);
+    expect(
+      find.widgetWithText(TextFormField, 'Anthropic (Claude)'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('category param defaults the add form to subscription', (
+    tester,
+  ) async {
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                saved = await showRecurringFixedCostEditor(
+                  context,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('サブスクを追加'), findsOneWidget);
+
+    // 区分は DropdownButtonFormField のため TextFormField の並びは name/amount/day。
+    await tester.enterText(find.byType(TextFormField).at(0), 'Supabase');
+    await tester.enterText(find.byType(TextFormField).at(1), '3800');
+    await tester.enterText(find.byType(TextFormField).at(2), '5');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isNotNull);
+    expect(saved!.name, 'Supabase');
+    expect(saved!.category, AssetRecurringFixedCostCategory.subscription);
+  });
+
+  testWidgets('editing an existing subscription preserves its category', (
+    tester,
+  ) async {
+    const existing = AssetRecurringFixedCost(
+      id: 'sub_existing',
+      name: 'Notion',
+      amount: 1650,
+      paymentDay: 5,
+      category: AssetRecurringFixedCostCategory.subscription,
+    );
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                saved = await showRecurringFixedCostEditor(
+                  context,
+                  existing: existing,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('サブスクを編集'), findsOneWidget);
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isNotNull);
+    expect(saved!.id, 'sub_existing'); // 既存 id を保持
+    expect(saved!.category, AssetRecurringFixedCostCategory.subscription);
+  });
+
+  testWidgets('区分ドロップダウンで utility→subscription に切り替えて保存できる', (
+    tester,
+  ) async {
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                // 既定 (utility) の追加モードで開く。
+                saved = await showRecurringFixedCostEditor(context);
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('定期固定費を追加'), findsOneWidget);
+
+    // 区分ドロップダウンを開いて「サブスク」を選ぶ (onChanged→setState の配線を検証)。
+    await tester.tap(
+      find.byType(DropdownButtonFormField<AssetRecurringFixedCostCategory>),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('サブスク').last);
+    await tester.pumpAndSettle();
+    // タイトルが追従して切り替わる。
+    expect(find.text('サブスクを追加'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Cursor');
+    await tester.enterText(find.byType(TextFormField).at(1), '3000');
+    await tester.enterText(find.byType(TextFormField).at(2), '10');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isNotNull);
+    expect(saved!.name, 'Cursor');
+    expect(saved!.category, AssetRecurringFixedCostCategory.subscription);
+  });
+}

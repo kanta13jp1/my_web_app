@@ -133,6 +133,20 @@ void main() {
       expect(mobit.priorityLabel, isNotEmpty);
     });
 
+    test('ignores annual rate overrides above the 20 percent block line', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        annualRateOverrides: const <String, double>{'mobit': 0.205},
+      );
+
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+
+      expect(mobit.annualRate, 0.18);
+    });
+
     test('uses the estimated minimum payment when manual input is absent', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: snapshot,
@@ -160,10 +174,7 @@ void main() {
 
     test('exposes debt control review targets and payment split totals', () {
       final workbook = service.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 50000,
-          'PayPay': -20000,
-        },
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
         baseDate: DateTime(2026, 5, 1),
       );
 
@@ -185,15 +196,20 @@ void main() {
         closeTo(workbook.monthlyScheduledPaymentTotal, 0.001),
       );
 
-      final reviewed = service.buildWorkbook(
-        latestSnapshot: const <String, double>{
-          'bank': 50000,
-          'PayPay': -20000,
-        },
+      final billingConfirmed = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
         baseDate: DateTime(2026, 5, 1),
-        monthlyPaymentOverrides: const <String, double>{
-          'paypay_card': 20000,
-        },
+        billingConfirmedAccountIds: const <String>{'paypay_card'},
+      );
+
+      expect(billingConfirmed.debtMasterRows.single.billingConfirmed, isTrue);
+      expect(billingConfirmed.billingConfirmationPendingRows, isEmpty);
+      expect(billingConfirmed.paymentSourceMissingRows.length, 1);
+
+      final reviewed = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
         paymentSourceAccountIds: const <String, String>{
           'paypay_card': 'custom_bank',
         },
@@ -217,6 +233,20 @@ void main() {
       expect(payPay.manualPaymentAmount, 0);
       expect(payPay.scheduledPaymentAmount, 0);
       expect(payPay.paymentAmountEstimated, isFalse);
+    });
+
+    test('manual zero yen does not trigger card billing review alert', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        monthlyPaymentOverrides: const <String, double>{'PayPayカード': 0},
+      );
+
+      expect(
+        workbook.cardBillingReview.needsReviewItems
+            .where((item) => item.accountId == 'paypay_card'),
+        isEmpty,
+      );
     });
 
     test('reflects manual and estimated sources in payment day risk', () {
@@ -272,6 +302,47 @@ void main() {
       expect(
         workbook.monthlyUnpaidPaymentTotal,
         workbook.monthlyScheduledPaymentTotal - auPay.scheduledPaymentAmount,
+      );
+    });
+
+    test('excludes paid debts from payment day risks but keeps unpaid', () {
+      // モビット・横浜銀行ともに支払日15。基準日を支払日経過後にし、
+      // モビットだけ支払済みにする。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          '財布': 50000,
+          'モビット': -20000,
+          '横浜銀行': -30000,
+        },
+        baseDate: DateTime(2026, 5, 20),
+        paidAccountNames: const <String>{'モビット'},
+      );
+
+      final risk15 = workbook.paymentDayRisks
+          .where((risk) => risk.paymentDay == 15)
+          .toList();
+
+      // 未払いの横浜銀行が残るのでリスク行自体は存在する。
+      expect(risk15, hasLength(1));
+      // 支払済みのモビットは期限超過リスク(AIナラティブ入力)から物理除外される。
+      expect(risk15.single.accountNames, contains('横浜銀行'));
+      expect(risk15.single.accountNames, isNot(contains('モビット')));
+    });
+
+    test('drops payment day risk entirely when every debt is paid', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          '財布': 50000,
+          'モビット': -20000,
+        },
+        baseDate: DateTime(2026, 5, 20),
+        paidAccountNames: const <String>{'モビット'},
+      );
+
+      // その支払日の負債が全て支払済みなら、支払日リスク行は出ない。
+      expect(
+        workbook.paymentDayRisks.any((risk) => risk.paymentDay == 15),
+        isFalse,
       );
     });
 
@@ -660,6 +731,99 @@ void main() {
       expect(workbook.cardBillingReview.hasDoubleCountingRisk, isFalse);
     });
 
+    test('リボ払いカードは請求額を式から算出し不一致アラートを抑止する', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'auPayカード': -530163,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_lemon',
+            billingAccountId: 'aupay_card',
+            billingAccountName: 'auPayカード',
+            postedAt: null,
+            description: 'レモンガス',
+            amount: 8066,
+          ),
+          AssetLiabilityCardStatementLine(
+            id: 'line_au',
+            billingAccountId: 'aupay_card',
+            billingAccountName: 'auPayカード',
+            postedAt: null,
+            description: 'au電話',
+            amount: 15116,
+          ),
+        ],
+      );
+
+      final debtRow = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'aupay_card',
+      );
+      // 請求額 = 設定額10000 + max(0, 530163 − 500000) = 40163。
+      expect(debtRow.scheduledPaymentAmount, 40163);
+      expect(debtRow.isRevolving, isTrue);
+      expect(debtRow.revolvingBilling!.overLimitAmount, 30163);
+      expect(debtRow.paymentAmountEstimated, isFalse);
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'aupay_card',
+      );
+      expect(group.isRevolving, isTrue);
+      expect(group.billedAmount, 40163);
+      // 明細合計(新規利用) 8066 + 15116 = 23182 は請求額と一致しないが正常。
+      expect(group.statementLineTotal, 23182);
+      expect(
+        group.alerts,
+        isNot(
+          contains(
+            AssetLiabilityPlanningService.cardStatementAmountMismatchAlert,
+          ),
+        ),
+      );
+      expect(group.revolvingBilling!.billedAmount, 40163);
+    });
+
+    test('リボ払いカードは明細未取込でも催促アラートを出さない', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'auPayカード': -530163,
+          'au': -32152,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
+        // 明細(cardStatementLines)は未取込。
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'aupay_card',
+      );
+      expect(group.isRevolving, isTrue);
+      // リボ払いは明細取込が不要なので「明細未取込」を催促しない。
+      expect(
+        group.alerts,
+        isNot(
+          contains(
+            AssetLiabilityPlanningService.cardStatementMissingImportAlert,
+          ),
+        ),
+      );
+    });
+
     test(
       'marks monthly and default setting sources in card billing review',
       () {
@@ -859,10 +1023,10 @@ void main() {
         anthropicPayment.destinationAccountId,
         AssetLiabilityPlanningService.acomShoppingAccountId,
       );
-      expect(
-        workbook.cashflowRows.map((row) => row.paymentDay).toList(),
-        <int>[8, 26],
-      );
+      expect(workbook.cashflowRows.map((row) => row.paymentDay).toList(), <int>[
+        8,
+        26,
+      ]);
       expect(workbook.monthlyScheduledPaymentTotal, 108000);
       expect(workbook.monthlyUnpaidPaymentTotal, 108000);
       expect(workbook.cashAfterScheduledPayments, -8000);
@@ -1254,6 +1418,9 @@ void main() {
       final rent = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
       );
+      final gas = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.gasBillAccountId,
+      );
       final kddiCashflow = workbook.cashflowRows.firstWhere(
         (row) =>
             row.accountId ==
@@ -1305,11 +1472,156 @@ void main() {
       expect(
         workbook.monthlyUnpaidPaymentTotal,
         closeTo(
-          kddi.scheduledPaymentAmount + rent.scheduledPaymentAmount,
+          kddi.scheduledPaymentAmount +
+              rent.scheduledPaymentAmount +
+              gas.scheduledPaymentAmount,
           0.001,
         ),
       );
     });
+
+    test('adds the bimonthly water bill only on even months', () {
+      final june = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+        baseDate: DateTime(2026, 6, 14),
+        includeDefaultFixedPayments: true,
+      );
+      final water = june.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.waterBillAccountId,
+      );
+      expect(water.name, AssetLiabilityPlanningService.waterBillAccountName);
+      expect(water.kind, AssetLiabilityAccountKind.utility);
+      expect(water.paymentDay, 22);
+      expect(water.scheduledPaymentAmount, 2400);
+      expect(
+        water.paymentSourceAccountId,
+        AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+      );
+
+      // 奇数月(7月)は水道代を計上しない。
+      final july = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+        baseDate: DateTime(2026, 7, 14),
+        includeDefaultFixedPayments: true,
+      );
+      expect(
+        july.debtMasterRows.any(
+          (row) => row.id == AssetLiabilityPlanningService.waterBillAccountId,
+        ),
+        isFalse,
+      );
+    });
+
+    test('adds the monthly gas bill every month including odd months', () {
+      AssetLiabilityDebtRow gasRowFor(int month) {
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+          baseDate: DateTime(2026, month, 14),
+          includeDefaultFixedPayments: true,
+        );
+        return workbook.debtMasterRows.firstWhere(
+          (row) => row.id == AssetLiabilityPlanningService.gasBillAccountId,
+        );
+      }
+
+      // 偶数月(6月)・奇数月(7月)いずれもガス代を計上する。
+      for (final month in const <int>[6, 7]) {
+        final gas = gasRowFor(month);
+        expect(gas.name, AssetLiabilityPlanningService.gasBillAccountName);
+        expect(gas.kind, AssetLiabilityAccountKind.utility);
+        expect(gas.paymentDay, 12);
+        expect(gas.scheduledPaymentAmount, 4500);
+        expect(
+          gas.paymentSourceAccountId,
+          AssetLiabilityPlanningService.smbcOtsukaBranchAccountId,
+        );
+      }
+    });
+
+    test('lets a manual override replace the default monthly gas bill', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+        baseDate: DateTime(2026, 7, 14),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.gasBillAccountId: 5800,
+        },
+        includeDefaultFixedPayments: true,
+      );
+      final gas = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.gasBillAccountId,
+      );
+      expect(gas.scheduledPaymentAmount, 5800);
+    });
+
+    test('honors a name-keyed override for a default fixed cost', () {
+      // 名称キー (口座ID ではなく口座名) の今月上書きでも既定額で shadow せず
+      // ユーザー額を採用する。データ駆動化後も両キーガードを保つ回帰ピン。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'メインバンク': 200000},
+        baseDate: DateTime(2026, 6, 14),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.rentAccountName: 70000,
+        },
+        includeDefaultFixedPayments: true,
+      );
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+      );
+      expect(rent.scheduledPaymentAmount, 70000);
+      expect(rent.paymentAmountEstimated, isFalse);
+    });
+
+    test(
+      'positive-balance accounts sharing a substring do not suppress defaults',
+      () {
+        // 「家賃保証金」「KDDIポイント」「ガスト」は名前に家賃/kddi/ガスを含むが
+        // 資産(正残高)であり、既定固定費(家賃/KDDI/ガス)を抑止してはならない。
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'メインバンク': 200000,
+            '家賃保証金': 500000,
+            'KDDIポイント': 1200,
+            'ガスト': 3000,
+          },
+          baseDate: DateTime(2026, 6, 14),
+          includeDefaultFixedPayments: true,
+        );
+        bool hasDefault(String id) =>
+            workbook.debtMasterRows.any((row) => row.id == id);
+        expect(hasDefault(AssetLiabilityPlanningService.rentAccountId), isTrue);
+        expect(
+          hasDefault(AssetLiabilityPlanningService.kddiProviderAccountId),
+          isTrue,
+        );
+        expect(
+          hasDefault(AssetLiabilityPlanningService.gasBillAccountId),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'a real liability sharing the rent id still suppresses the default rent',
+      () {
+        // ユーザーが実際の家賃を負債として登録している場合は二重計上せず、
+        // 既定63,000円ではなくユーザーの実額を優先する。
+        final workbook = service.buildWorkbook(
+          latestSnapshot: const <String, double>{
+            'メインバンク': 200000,
+            '家賃': -58000,
+          },
+          baseDate: DateTime(2026, 6, 14),
+          includeDefaultFixedPayments: true,
+        );
+        final rentRows = workbook.debtMasterRows
+            .where(
+              (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+            )
+            .toList();
+        expect(rentRows.length, 1);
+        expect(rentRows.first.balance, -58000);
+      },
+    );
 
     test('treats paid KDDI provider payment as reflected in cashflow', () {
       final workbook = service.buildWorkbook(
@@ -1328,6 +1640,9 @@ void main() {
       final rent = workbook.debtMasterRows.firstWhere(
         (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
       );
+      final gas = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.gasBillAccountId,
+      );
       final kddiCashflow = workbook.cashflowRows.firstWhere(
         (row) =>
             row.accountId ==
@@ -1338,7 +1653,189 @@ void main() {
       expect(kddi.paid, isTrue);
       expect(kddiCashflow.paid, isTrue);
       expect(kddiCashflow.cashBeforePayment, kddiCashflow.cashAfterPayment);
-      expect(workbook.monthlyUnpaidPaymentTotal, rent.scheduledPaymentAmount);
+      expect(
+        workbook.monthlyUnpaidPaymentTotal,
+        closeTo(
+          rent.scheduledPaymentAmount + gas.scheduledPaymentAmount,
+          0.001,
+        ),
+      );
+    });
+
+    test('applies manual payment day override to unknown cards', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'ファミマカード': -25000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'ファミマカード': 27},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'ファミマカード',
+      );
+      expect(row.paymentDay, 27);
+      expect(
+        workbook.cashflowRows.any(
+          (cashflow) =>
+              cashflow.accountId == row.id && cashflow.paymentDate.day == 27,
+        ),
+        isTrue,
+      );
+    });
+
+    test('manual payment day override replaces the built-in default', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'PayPayカード': -30000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'paypay_card': 15},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'paypay_card',
+      );
+      expect(row.paymentDay, 15);
+    });
+
+    test('ignores out-of-range payment day overrides', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 50000,
+          'ファミマカード': -25000,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        paymentDayOverrides: const <String, int>{'ファミマカード': 45},
+      );
+
+      final row = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'ファミマカード',
+      );
+      expect(row.paymentDay, isNull);
+    });
+
+    test('marks full-payment fixed costs on debt rows', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{'cash': 50000, 'モビット': -100000},
+        baseDate: DateTime(2026, 5, 12),
+        includeDefaultFixedPayments: true,
+      );
+
+      final rent = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.rentAccountId,
+      );
+      final kddi = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+      final mobit = workbook.debtMasterRows.firstWhere(
+        (row) => row.id == 'mobit',
+      );
+
+      expect(rent.fullPaymentEstimate, isTrue);
+      expect(kddi.fullPaymentEstimate, isTrue);
+      expect(mobit.fullPaymentEstimate, isFalse);
+    });
+  });
+
+  group('AssetLiabilityPlanningService.buildWorkbook (salary cycle)', () {
+    const service = AssetLiabilityPlanningService();
+    final snapshot = <String, double>{
+      '三井住友銀行大塚支店': 25677,
+      'アコムショッピング': -2234106, // 支払日 8 / 特別行は 26
+      'モビット': -1553260, // 支払日 15 (直接対象)
+      '横浜銀行': -161437,
+    };
+
+    test(
+        'payment day >= salaryDay lands in the first cycle month, < in the '
+        'second', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 6, 26), // サイクル 6/25〜7/24
+        salaryDay: 25,
+      );
+      final payments =
+          workbook.cashflowRows.where((row) => row.isPayment).toList();
+      expect(payments, isNotEmpty);
+      for (final row in payments) {
+        final day = row.paymentDay;
+        expect(row.paymentDate.year, 2026);
+        if (day >= 25) {
+          expect(row.paymentDate.month, 6, reason: '${row.accountName} d=$day');
+        } else {
+          expect(row.paymentDate.month, 7, reason: '${row.accountName} d=$day');
+        }
+      }
+    });
+
+    test(
+        'a pre-salaryDay payment is overdue under calendar but not under '
+        'the salary cycle (払ったのに未払い 逆戻りの根治)', () {
+      final base = DateTime(2026, 6, 26);
+      final calendar = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: base,
+      );
+      final cycle = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: base,
+        salaryDay: 25,
+      );
+      final calRows = calendar.cashflowRows
+          .where(
+            (row) =>
+                row.isPayment &&
+                row.paymentDay < 25 &&
+                row.isDirectCashflowTarget &&
+                !row.paid,
+          )
+          .toList();
+      expect(calRows, isNotEmpty);
+      final calRow = calRows.first;
+      final cycRow = cycle.cashflowRows.firstWhere(
+        (row) => row.accountId == calRow.accountId,
+      );
+
+      // 暦月: 当月(6月)の支払日 <= 6/26 → 期限超過。
+      expect(calRow.paymentDate.month, 6);
+      expect(calRow.overdue, isTrue);
+      // サイクル: 第2暦月(7月)→ 6/26 より後 → 期限超過でない。
+      expect(cycRow.paymentDate.month, 7);
+      expect(cycRow.overdue, isFalse);
+    });
+
+    test('without salaryDay, payment dates stay in the calendar month', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 6, 26),
+      );
+      for (final row in workbook.cashflowRows.where((row) => row.isPayment)) {
+        expect(row.paymentDate.month, 6, reason: row.accountName);
+      }
+    });
+
+    test('bimonthly water bill applies based on its cycle calendar month', () {
+      // 水道代(22日/偶数月)。salaryDay 25, baseDate 6/10 → サイクル 5/25〜6/24、
+      // 22<25 → 第2暦月=6月(偶数)→ 計上。
+      final included = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 6, 10),
+        salaryDay: 25,
+        includeDefaultFixedPayments: true,
+      );
+      expect(included.accounts.any((a) => a.name.contains('水道')), isTrue);
+
+      // baseDate 6/26 → サイクル 6/25〜7/24、22<25 → 第2暦月=7月(奇数)→ 非計上。
+      final excluded = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 6, 26),
+        salaryDay: 25,
+        includeDefaultFixedPayments: true,
+      );
+      expect(excluded.accounts.any((a) => a.name.contains('水道')), isFalse);
     });
   });
 }

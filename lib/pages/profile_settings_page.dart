@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart'; // ファイル選択のために必要
 import 'package:mime/mime.dart';
-import '../main.dart';
+import 'package:my_web_app/services/supabase_client_provider.dart';
 import '../models/user_profile.dart';
 import '../services/profile_service.dart';
 

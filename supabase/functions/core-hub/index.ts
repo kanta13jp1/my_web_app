@@ -7,12 +7,21 @@ import {
   type MemoReactionAction,
 } from "./memo_reactions.ts";
 import {
+  sendDiscordWebhook,
+  wantsDiscordSecondary,
+} from "./notification_channels.ts";
+import {
+  externalSaasGateReason,
+  SAAS_APPROVAL_REQUEST_SOURCE,
+} from "../_shared/saas_human_approval.ts";
+import {
   type ExistingFeatureRequestIssue,
   type FeatureRequestCandidate,
   featureRequestCandidateKey,
   type FeatureRequestIssueLike,
   matchExistingFeatureRequestIssues,
 } from "./feature_request_dedupe.ts";
+import { buildFeedbackIssue } from "./feedback_issue.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,6 +100,45 @@ async function deleteItem(
 
 function textValue(value: unknown, maxLength = 4000): string {
   return String(value ?? "").trim().slice(0, maxLength);
+}
+
+function coreRequestedScopes(body: Record<string, unknown>): string[] {
+  if (Array.isArray(body.requested_scopes)) {
+    return body.requested_scopes.map((item) => textValue(item, 80)).filter(
+      Boolean,
+    );
+  }
+  return ["send", "external_share"];
+}
+
+async function enqueueCoreSaasApprovalRequest(
+  admin: SupabaseClient,
+  userId: string,
+  input: {
+    provider: string;
+    actionKey: string;
+    actionLabel: string;
+    teamId: string;
+    preview: Record<string, unknown>;
+    payload: Record<string, unknown>;
+    requestedScopes: string[];
+  },
+) {
+  const now = new Date().toISOString();
+  return await addItem(admin, SAAS_APPROVAL_REQUEST_SOURCE, userId, {
+    provider: input.provider,
+    action_key: input.actionKey,
+    action_label: input.actionLabel,
+    team_id: input.teamId || "default",
+    status: "pending",
+    preview: input.preview,
+    payload: input.payload,
+    requested_scopes: input.requestedScopes,
+    source_action: input.actionKey,
+    created_by: "core-hub",
+    created_at: now,
+    updated_at: now,
+  });
 }
 
 function normalizePriority(value: unknown): "high" | "medium" | "low" {
@@ -439,8 +487,8 @@ function buildFeatureRequestBody(params: {
   expectedOutcome: string;
   category: string;
   priority: string;
+  /** 擬似匿名の user_id。公開 Issue にメール等の PII は載せない。 */
   userId: string;
-  userEmail: string;
   createdAt: string;
   attachmentFileName?: string;
   attachmentAnalysis?: FeatureRequestAttachmentAnalysis | null;
@@ -457,7 +505,8 @@ function buildFeatureRequestBody(params: {
     "## 分類",
     `- カテゴリ: ${params.category}`,
     `- 優先度: ${params.priority}`,
-    `- 登録者: ${params.userEmail || params.userId}`,
+    // PII 保護: メールは公開 Issue 本文に載せず、識別は擬似匿名の user_id のみ。
+    `- 登録者ID: ${params.userId}`,
     `- 登録日時: ${params.createdAt}`,
   ];
   if (params.attachmentAnalysis) {
@@ -495,6 +544,10 @@ function buildFeatureRequestBody(params: {
 async function createGitHubIssue(params: {
   title: string;
   body: string;
+  /** タイトル接頭辞。既定は追加要望フォーム互換の "[追加要望] "。 */
+  titlePrefix?: string;
+  /** Issue ラベル。既定は追加要望フォーム互換。 */
+  labels?: string[];
 }): Promise<Record<string, unknown>> {
   const token = Deno.env.get("GITHUB_PAT") ??
     Deno.env.get("GITHUB_TOKEN") ??
@@ -511,6 +564,9 @@ async function createGitHubIssue(params: {
     };
   }
 
+  const titlePrefix = params.titlePrefix ?? "[追加要望] ";
+  const labels = params.labels ?? ["enhancement", "追加要望", "wbs"];
+
   const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
     method: "POST",
     headers: {
@@ -521,8 +577,9 @@ async function createGitHubIssue(params: {
       "User-Agent": "jibun-app-feature-request-form",
     },
     body: JSON.stringify({
-      title: `[追加要望] ${params.title}`,
+      title: `${titlePrefix}${params.title}`,
       body: params.body,
+      labels,
     }),
   });
   const data = await res.json().catch(() => ({}));
@@ -763,6 +820,7 @@ serve(async (req: Request) => {
       "notification.broadcast_release",
       "system.proactive_diagnostics",
       "slack.notify",
+      "discord.notify",
     ]);
     // Anonymous-allowed actions (no auth required / page-specific cache)
     const anonymousActions = new Set(["page.share_generate"]);
@@ -1059,6 +1117,66 @@ serve(async (req: Request) => {
           return json({ error: "text or blocks required" }, 400);
         }
 
+        const actorType = textValue(body.actor_type, 40).toLowerCase();
+        const explicitApprovalGate = body.human_approval_required === true ||
+          body.approval_required === true ||
+          actorType === "ai" ||
+          actorType === "agent" ||
+          Array.isArray(body.requested_scopes);
+        if (explicitApprovalGate) {
+          const gateReason = externalSaasGateReason({
+            connectorEnabled: body.connector_enabled !== false,
+            humanApprovalRequired: body.human_approval_required === true ||
+              body.approval_required === true,
+            actorType,
+            requestedScopes: coreRequestedScopes(body),
+          });
+          if (gateReason === "connector_disabled") {
+            return json({
+              success: false,
+              error: "Slack connector is disabled for this team",
+              connector: "slack",
+            }, 403);
+          }
+          if (gateReason === "approval_required") {
+            const ownerUserId = textValue(
+              body.user_id ?? body.owner_user_id ?? body.approver_user_id,
+              120,
+            );
+            if (!ownerUserId) {
+              return json({
+                success: false,
+                approval_required: true,
+                error:
+                  "owner_user_id is required to queue an approval-gated Slack action",
+              }, 202);
+            }
+            const approval = await enqueueCoreSaasApprovalRequest(
+              admin,
+              ownerUserId,
+              {
+                provider: "slack",
+                actionKey: "slack.notify",
+                actionLabel: "Send Slack notification",
+                teamId: textValue(body.team_id, 120) || "default",
+                preview: {
+                  channel,
+                  text,
+                  has_blocks: blocks !== null,
+                },
+                payload: { channel, text, blocks },
+                requestedScopes: coreRequestedScopes(body),
+              },
+            );
+            return json({
+              success: false,
+              approval_required: true,
+              status: "pending",
+              approval,
+            }, 202);
+          }
+        }
+
         const webhookEnvMap: Record<string, string> = {
           "default": "SLACK_WEBHOOK_URL",
           "quota": "SLACK_WEBHOOK_QUOTA",
@@ -1088,15 +1206,61 @@ serve(async (req: Request) => {
 
         if (!resp.ok) {
           const errBody = await resp.text();
+          const discord = await sendDiscordWebhook({
+            enabled: wantsDiscordSecondary(body),
+            webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
+            text: text || `Slack ${channel} notification failed.`,
+            username: body.discord_username ?? body.username,
+            channel,
+          });
           return json({
             error: `slack webhook failed: ${resp.status}`,
             detail: errBody.slice(0, 500),
             channel,
             envKey,
+            discord,
           }, 502);
         }
 
-        return json({ success: true, channel, envKey, status: resp.status });
+        const discord = await sendDiscordWebhook({
+          enabled: wantsDiscordSecondary(body),
+          webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
+          text: text || `Slack ${channel} notification mirrored to Discord.`,
+          username: body.discord_username ?? body.username,
+          channel,
+        });
+
+        return json({
+          success: true,
+          channel,
+          envKey,
+          status: resp.status,
+          discord,
+        });
+      }
+
+      case "discord.notify": {
+        const text = typeof body.text === "string"
+          ? body.text.trim()
+          : typeof body.message === "string"
+          ? body.message.trim()
+          : "";
+        if (!text) {
+          return json({ error: "text or message required" }, 400);
+        }
+
+        const discord = await sendDiscordWebhook({
+          enabled: true,
+          webhookUrl: Deno.env.get("DISCORD_WEBHOOK_URL") ?? "",
+          text,
+          username: body.discord_username ?? body.username,
+          channel: typeof body.channel === "string" ? body.channel : undefined,
+        });
+
+        return json(
+          { success: discord.success, discord },
+          discord.success || discord.skipped ? 200 : 502,
+        );
       }
 
       // ---- User profile ----
@@ -1326,7 +1490,6 @@ serve(async (req: Request) => {
           category,
           priority,
           userId,
-          userEmail,
           createdAt,
           attachmentFileName,
           attachmentAnalysis,
@@ -1431,12 +1594,115 @@ serve(async (req: Request) => {
 
       // ---- User feedback ----
       case "feedback.submit": {
+        const category = textValue(body.category, 80) || "other";
+        const message = textValue(body.message, 4000);
+        const createdAt = new Date().toISOString();
+        // クライアントの自動エラー報告 (error_reporter) は Issue 化しない:
+        // 公開 Issue の乱発と AI レーン占有を防ぐため hub_data 記録のみに留める。
+        const isAutoErrorReport = body.source === "auto_error_report" ||
+          message.startsWith("[自動エラー報告]");
+
+        // 受付記録は従来どおり hub_data に残す。
         const item = await addItem(admin, "user_feedback", userId, {
-          message: body.message,
-          category: body.category ?? "general",
+          message,
+          category,
           rating: body.rating,
+          source: isAutoErrorReport ? "auto_error_report" : "feedback_form",
+          created_at: createdAt,
         });
-        return json({ success: true, item });
+
+        // フィードバックを GitHub Issue 化し、github-issue-fix レーンに載せる。
+        // 自動エラー報告・短すぎる本文は Issue 化しない。
+        let githubIssue: Record<string, unknown> = {
+          skipped: true,
+          reason: isAutoErrorReport ? "auto_error_report" : "message_too_short",
+        };
+        if (!isAutoErrorReport && message.trim().length >= 3) {
+          const draft = buildFeedbackIssue({
+            category,
+            message,
+            userId,
+            createdAt,
+          });
+
+          // 重複抑止: 同タイトルの open Issue が既にあれば再起票しない
+          // (連投・同一エラーによる公開 Issue 汚染を防ぐ)。
+          const repo = githubRepoName();
+          const existing = (await fetchGitHubIssuesByTitle(repo, draft.title))
+            .find((issue) =>
+              issue.state === "open" && issue.title === draft.title
+            );
+          if (existing) {
+            githubIssue = {
+              number: existing.number,
+              html_url: existing.html_url,
+              title: existing.title,
+              deduped: true,
+            };
+          } else {
+            githubIssue = await createGitHubIssue({
+              title: draft.title,
+              titlePrefix: "",
+              body: draft.body,
+              labels: draft.labels,
+            });
+          }
+
+          // 投稿ありがとうメール (best-effort)。Issue が実在するときのみ送る。
+          const issueNumber = typeof githubIssue.number === "number"
+            ? githubIssue.number
+            : null;
+          const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
+          const userEmail = issueNumber
+            ? await getUserEmail(admin, userId)
+            : "";
+          const fromEmail = Deno.env.get("FEEDBACK_FROM_EMAIL") ??
+            "noreply@jibun.app";
+          if (resendKey && userEmail) {
+            try {
+              const emailRes = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${resendKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  from: fromEmail,
+                  to: userEmail,
+                  subject: "【自分株式会社】ご意見・ご要望を受け付けました",
+                  html: [
+                    "<p>ご投稿ありがとうございます。内容を確認しました。</p>",
+                    `<p>GitHub Issue #${issueNumber} として登録し、AIが対応に着手します。</p>`,
+                    "<p>進捗は対応完了時にあらためてお知らせします。</p>",
+                  ].join(""),
+                }),
+              });
+              if (!emailRes.ok) {
+                console.warn(
+                  `feedback ack email failed: ${emailRes.status}`,
+                );
+              }
+            } catch (_emailError) {
+              // 通知失敗は致命的ではないため握りつぶす。
+            }
+          }
+        }
+
+        const issueNumber = Number(githubIssue.number ?? 0) || null;
+        const issueUrl = textValue(githubIssue.html_url, 400);
+        const issueCreated = issueNumber !== null;
+        return json({
+          // フィードバック自体は常に保存する。ただし「対応を追跡します」が
+          // 嘘にならないよう、Issue 化の成否を issueCreated で明示する。
+          success: true,
+          issueCreated,
+          tracked: issueCreated,
+          autoErrorReport: isAutoErrorReport,
+          item,
+          githubIssue: issueNumber
+            ? { number: issueNumber, html_url: issueUrl }
+            : githubIssue,
+        });
       }
 
       // ---- Notify feature (email via Resend) ----

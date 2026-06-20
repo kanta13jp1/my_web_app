@@ -45,6 +45,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_minimal_e2e_gate_test.py"],
         ),
         GateCommand(
+            "high-risk ultrareview gate tests",
+            [python, "scripts/check_high_risk_ultrareview_gate_test.py"],
+        ),
+        GateCommand(
             "codex ui qa playbook tests",
             [python, "scripts/check_codex_ui_qa_playbook_test.py"],
         ),
@@ -71,6 +75,10 @@ def base_commands() -> list[GateCommand]:
         GateCommand(
             "no-verify sentinel tests",
             [python, "scripts/no_verify_sentinel_test.py"],
+        ),
+        GateCommand(
+            "deterministic PR CI gate tests",
+            [python, "scripts/check_pr_deterministic_ci_test.py"],
         ),
         GateCommand(
             "edge function import check",

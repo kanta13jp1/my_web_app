@@ -1,5 +1,6 @@
 import '../models/asset_liability_workbook.dart';
 import '../models/user_profile.dart';
+import 'asset_management_available_money.dart';
 
 enum AssetManagementInsightActionType {
   missingInput,
@@ -266,33 +267,34 @@ class AssetManagementInsightService {
         AssetManagementImplementationContext.defaultAssetManagementContexts,
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
+    String? mainAccountId,
   }) {
+    final breakdown = _availableMoneyBreakdown(
+      workbook: workbook,
+      mainAccountId: mainAccountId,
+      minimumSafetyBalance: minimumSafetyBalance,
+    );
+    final today = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.today,
+      breakdown,
+      workbook.baseDate,
+    );
+    final week = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.week,
+      breakdown,
+      workbook.baseDate,
+    );
+    final month = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.month,
+      breakdown,
+      workbook.baseDate,
+    );
     final actions = _buildActionItems(
       workbook: workbook,
       upcomingPaymentWarningDays: upcomingPaymentWarningDays,
       minimumSafetyBalance: minimumSafetyBalance,
+      todayInsight: today,
     )..sort(_compareActionItems);
-    final today = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.today,
-      startDate: _dateOnly(workbook.baseDate),
-      endDate: _dateOnly(workbook.baseDate),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
-    final week = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.week,
-      startDate: _dateOnly(workbook.baseDate),
-      endDate: _dateOnly(workbook.baseDate).add(const Duration(days: 6)),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
-    final month = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.month,
-      startDate: DateTime(workbook.baseDate.year, workbook.baseDate.month),
-      endDate: DateTime(workbook.baseDate.year, workbook.baseDate.month + 1, 0),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
     final movementSuggestions = _buildMovementSuggestions(
       workbook: workbook,
       windows: <AssetManagementAvailableMoneyInsight>[today, week, month],
@@ -329,6 +331,7 @@ class AssetManagementInsightService {
     required AssetLiabilityWorkbook workbook,
     required int upcomingPaymentWarningDays,
     required double minimumSafetyBalance,
+    required AssetManagementAvailableMoneyInsight todayInsight,
   }) {
     final actions = <AssetManagementInsightActionItem>[];
     final today = _dateOnly(workbook.baseDate);
@@ -359,7 +362,7 @@ class AssetManagementInsightService {
             relatedAccountId: row.id,
             dueDate: null,
             paymentDay: null,
-            suggestedAction: '契約画面または請求明細で支払日を確認して入力してください。',
+            suggestedAction: '契約画面または請求明細で支払日を確認し、負債マスタ（支払日順）の「支払日」欄に入力してください。',
           ),
         );
       }
@@ -444,13 +447,6 @@ class AssetManagementInsightService {
       }
     }
 
-    final todayInsight = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.today,
-      startDate: today,
-      endDate: today,
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
     if (todayInsight.availableAmount < 0) {
       actions.add(
         AssetManagementInsightActionItem(
@@ -480,7 +476,8 @@ class AssetManagementInsightService {
               ? null
               : _paymentDateFromDay(workbook.baseDate, item.paymentDay!),
           paymentDay: item.paymentDay,
-          suggestedAction: 'カード請求に含める設定と請求先カードを確認してください。',
+          suggestedAction:
+              '負債マスタ（支払日順）の「支払い方式」でカード請求に含める設定と請求先カードを確認してください。請求額が0円の月は「今月支払予定額」に0を入力してください。',
         ),
       );
     }
@@ -505,35 +502,62 @@ class AssetManagementInsightService {
     return actions;
   }
 
-  AssetManagementAvailableMoneyInsight _buildAvailableMoneyInsight({
+  AssetManagementAvailableMoneyBreakdown _availableMoneyBreakdown({
     required AssetLiabilityWorkbook workbook,
-    required AssetManagementInsightWindow window,
-    required DateTime startDate,
-    required DateTime endDate,
+    required String? mainAccountId,
     required double minimumSafetyBalance,
   }) {
-    final payments = _paymentTotalForWindow(
-      workbook: workbook,
-      startDate: startDate,
-      endDate: endDate,
+    final today = _dateOnly(workbook.baseDate);
+    final payday = AssetManagementAvailableMoney.nextPayday(today);
+    final remainingDays =
+        AssetManagementAvailableMoney.remainingDaysToPayday(today, payday);
+    final daysThisWeek = AssetManagementAvailableMoney.daysUntilWeekEnd(
+      today,
+      remainingDays: remainingDays,
     );
-    final income = _incomeTotalForWindow(
-      workbook: workbook,
-      startDate: startDate,
-      endDate: endDate,
+    return AssetManagementAvailableMoneyBreakdown(
+      availableAssets: AssetManagementAvailableMoney.availableAssets(
+        accounts: workbook.accounts,
+        mainAccountId: mainAccountId,
+      ),
+      unpaidUntilPayday: AssetManagementAvailableMoney.unpaidUntilPayday(
+        cashflowRows: workbook.cashflowRows,
+        payday: payday,
+      ),
+      minimumSafetyBalance: minimumSafetyBalance,
+      remainingDaysToPayday: remainingDays,
+      daysThisWeek: daysThisWeek,
+      payday: payday,
     );
-    final available =
-        workbook.cashLikeTotal + income - payments - minimumSafetyBalance;
+  }
+
+  AssetManagementAvailableMoneyInsight _availableInsightFromBreakdown(
+    AssetManagementInsightWindow window,
+    AssetManagementAvailableMoneyBreakdown breakdown,
+    DateTime baseDate,
+  ) {
+    final start = _dateOnly(baseDate);
+    final amount = switch (window) {
+      AssetManagementInsightWindow.today => breakdown.todayAvailable,
+      AssetManagementInsightWindow.week => breakdown.weekAvailable,
+      AssetManagementInsightWindow.month => breakdown.monthAvailable,
+    };
+    final end = switch (window) {
+      AssetManagementInsightWindow.today => start,
+      AssetManagementInsightWindow.week =>
+        start.add(Duration(days: breakdown.daysThisWeek - 1)),
+      AssetManagementInsightWindow.month => breakdown.payday,
+    };
     return AssetManagementAvailableMoneyInsight(
       window: window,
-      startDate: startDate,
-      endDate: endDate,
-      cashLikeTotal: workbook.cashLikeTotal,
-      unpaidPaymentTotal: payments,
-      unreceivedIncomeTotal: income,
-      minimumSafetyBalance: minimumSafetyBalance,
-      availableAmount: available,
-      summary: _availableSummary(window, available),
+      startDate: start,
+      endDate: end,
+      cashLikeTotal: breakdown.availableAssets,
+      unpaidPaymentTotal: breakdown.unpaidUntilPayday,
+      unreceivedIncomeTotal: 0,
+      minimumSafetyBalance: breakdown.minimumSafetyBalance,
+      availableAmount: amount,
+      summary: _availableSummary(window, amount),
     );
   }
 
@@ -911,44 +935,12 @@ class AssetManagementInsightService {
         (rows.length > 6 ? ' ほか${rows.length - 6}件' : '');
   }
 
-  double _paymentTotalForWindow({
-    required AssetLiabilityWorkbook workbook,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) {
-    return workbook.cashflowRows.fold<double>(0, (sum, row) {
-      if (!row.isPayment ||
-          !row.isDirectCashflowTarget ||
-          row.paid ||
-          row.paymentAmount <= 0) {
-        return sum;
-      }
-      final date = _dateOnly(row.paymentDate);
-      final inWindow = !date.isBefore(startDate) && !date.isAfter(endDate);
-      final overdueForWindow =
-          row.overdue && !endDate.isBefore(_dateOnly(workbook.baseDate));
-      return inWindow || overdueForWindow ? sum + row.paymentAmount : sum;
-    });
-  }
-
-  double _incomeTotalForWindow({
-    required AssetLiabilityWorkbook workbook,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) {
-    return workbook.cashflowRows.fold<double>(0, (sum, row) {
-      if (!row.isIncome || row.received || row.paymentAmount <= 0) {
-        return sum;
-      }
-      final date = _dateOnly(row.paymentDate);
-      return !date.isBefore(startDate) && !date.isAfter(endDate)
-          ? sum + row.paymentAmount
-          : sum;
-    });
-  }
-
   bool _needsAnnualRate(AssetLiabilityDebtRow row) {
     if (row.annualRate > 0) {
+      return false;
+    }
+    // 家賃・通信費など全額支払い型の固定費は利率の概念がないため対象外。
+    if (row.fullPaymentEstimate) {
       return false;
     }
     return switch (row.kind) {
@@ -1114,7 +1106,11 @@ class AssetManagementInsightPromptBuilder {
     return buildDetailedAdvicePrompt(report);
   }
 
-  String buildDetailedAdvicePrompt(AssetManagementInsightReport report) {
+  String buildDetailedAdvicePrompt(
+    AssetManagementInsightReport report, {
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
+  }) {
     final severityCounts = _countBy(
       report.actionItems.map((item) => item.severity.name),
     );
@@ -1144,6 +1140,28 @@ class AssetManagementInsightPromptBuilder {
       ..writeln(
         '重要: 金額計算はDart側で完了しています。下記の詳細データを正として、口座名・残高・支払日・支払額・利率・月利息・負債割合を具体的に引用してください。'
         '再計算する場合は「概算」と明記し、Dart計算値と矛盾する断定はしないでください。',
+      )
+      ..writeln(
+        'リボ払いカードの扱い: リボ払いカード(is_revolving が true / revolving_billing を持つカード)の請求額は'
+        '「リボ設定額＋利用限度額の超過分」で確定します。請求額と「カード請求内訳(紐づけ負債の合計)」'
+        '「取込明細合計(今月の新規利用)」は一致しないのが正常です。これらの差を「照合不一致」「ズレ」'
+        '「要修正」「今日中に直せ」等として指摘しないでください。リボ払いカードの照合は完了済みとして扱い、'
+        '明細の取り込みも催促しないでください。',
+      )
+      ..writeln(
+        '支払済みの扱い: 「支払済み:はい」または「期限超過:いいえ」の負債・支払いは、今月分の支払いが'
+        '完了済みです。これらを「未払い」「滞納」「期限超過」「延滞」「今すぐ払え」「期限を過ぎている」等として'
+        '指摘・督促してはいけません。支払済みの負債は「今月の支払いと利息」での利息・元金の説明にのみ用い、'
+        '未払い合計・期限超過・今日中に払うべき支払いの文脈からは必ず除外してください。'
+        '「支払日別リスク」に載っていない負債は期限超過ではありません。',
+      )
+      ..writeln(
+        '残高と支払額の区別: 各負債の「残高」は総借入残高であり、今月の延滞額・今月や今日に'
+        '支払うべき額ではありません。「期限超過」「延滞」「今月/今日払うべき額」「不足額」を述べるときは、'
+        '必ず月次の「支払額」「推定最低支払額」または「支払日別リスク」の金額を使い、'
+        '「残高」を延滞額・今月の支払額として並べてはいけません。残高は「総借入残高」「負債総額」'
+        'としてのみ言及してください。特に「8. 最後にズバッと総評」で、残高の数値を'
+        '期限超過・延滞・今月支払う額のリストとして提示しないでください。',
       )
       ..writeln(
         '開発者向け改善提案: 現実装コンテキスト、関連ソース、候補タスク、根拠、実装手順、受け入れ条件を使い、'
@@ -1229,7 +1247,12 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('## 開発者向け改善提案候補')
       ..writeln('- 合計: ${report.developerRequests.length}')
       ..writeln('- 重要度別: ${_formatCounts(developerCounts)}')
-      ..write(_developerRequestLines(report.developerRequests));
+      ..write(
+        _developerRequestLines(
+          report.developerRequests,
+          existingDeveloperIssuesByTitle: existingDeveloperIssuesByTitle,
+        ),
+      );
     return buffer.toString();
   }
 
@@ -1425,6 +1448,10 @@ class AssetManagementInsightPromptBuilder {
   String _cardBillingLines(AssetLiabilityWorkbook workbook) {
     final review = workbook.cardBillingReview;
     final reconciliation = workbook.cardStatementReconciliation;
+    final revolvingBillingAccountIds = <String>{
+      for (final row in workbook.debtMasterRows)
+        if (row.isRevolving) row.id,
+    };
     final buffer = StringBuffer();
     if (review.directPaymentItems.isEmpty &&
         review.cardBillingGroups.isEmpty &&
@@ -1438,12 +1465,31 @@ class AssetManagementInsightPromptBuilder {
       );
     }
     for (final group in review.cardBillingGroups) {
+      final revolvingNote =
+          revolvingBillingAccountIds.contains(group.billingAccountId)
+              ? ' / 注記:リボ払いのため下記内訳はリボ残高の紐づけ負債で、今月の請求額ではない'
+              : '';
       buffer.writeln(
         '- カード請求グループ:${group.billingAccountName} / 合計:${_formatAmount(group.totalAmount)} / '
-        '内訳:${group.items.map((item) => '${item.accountName} ${_formatAmount(item.amount)}').join('、')}',
+        '内訳:${group.items.map((item) => '${item.accountName} ${_formatAmount(item.amount)}').join('、')}$revolvingNote',
       );
     }
     for (final group in reconciliation.groups) {
+      final revolving = group.revolvingBilling;
+      if (revolving != null) {
+        // リボ払いは請求額=設定額+限度超過分。明細合計との差は不一致ではない旨を明示する。
+        buffer.writeln(
+          '- 明細照合(リボ払い):${group.billingAccountName} / '
+          '請求額:${_formatAmount(revolving.billedAmount)}'
+          '(=リボ設定額${_formatAmount(revolving.monthlyAmount)}'
+          '+限度超過${_formatAmount(revolving.overLimitAmount)}) / '
+          'リボ残高:${_formatAmount(revolving.balance)} / '
+          '利用限度額:${_formatAmount(revolving.creditLimit)} / '
+          '取込明細合計(今月の新規利用):${_formatAmount(group.statementLineTotal)} / '
+          '注記:リボ払いのため請求額は明細合計と一致しないのが正常(不一致ではない)',
+        );
+        continue;
+      }
       buffer.writeln(
         '- 明細照合:${group.billingAccountName} / 請求額:${_formatAmount(group.billedAmount)} / '
         '設定内訳合計:${_formatAmount(group.configuredDetailTotal)} / '
@@ -1506,13 +1552,25 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _developerRequestLines(
-    List<AssetManagementDeveloperRequest> requests,
-  ) {
+    List<AssetManagementDeveloperRequest> requests, {
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
+  }) {
     if (requests.isEmpty) {
       return '- 開発者向け改善提案候補はありません。\n';
     }
     final buffer = StringBuffer();
     for (final request in requests) {
+      final existingIssue = existingDeveloperIssuesByTitle[request.title];
+      if (existingIssue != null) {
+        // 起票済み候補は echo の材料を渡さず、再掲禁止だけ伝える。
+        buffer.writeln(
+          '- ${request.title}'
+          '（起票済み GitHub Issue #${existingIssue['number'] ?? '-'}。'
+          '本文・JSONとも再掲禁止）',
+        );
+        continue;
+      }
       buffer
         ..writeln('- ${request.title}')
         ..writeln('  - 重要度: ${request.severity.name}')

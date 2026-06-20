@@ -43,12 +43,72 @@ void main() {
       );
     });
 
+    test('salaryCycleStart / EndExclusive give the 25th-to-24th window', () {
+      // 6/13 (給料日前) は 5/25〜6/24 サイクル。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 6, 13)),
+        DateTime(2026, 5, 25),
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+          DateTime(2026, 6, 13),
+        ),
+        DateTime(2026, 6, 25),
+      );
+      // 6/25 (給料日当日) は 6/25〜7/24 サイクルへ切替。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 6, 25)),
+        DateTime(2026, 6, 25),
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+          DateTime(2026, 6, 25),
+        ),
+        DateTime(2026, 7, 25),
+      );
+      // 1月始端の前サイクルは前年12/25。
+      expect(
+        AssetLiabilityMonthlyStateStore.salaryCycleStart(DateTime(2026, 1, 5)),
+        DateTime(2025, 12, 25),
+      );
+    });
+
+    test('salaryCyclePaymentDayRank orders days from the salary day', () {
+      int rank(int? day, {int salaryDay = 25}) =>
+          AssetLiabilityMonthlyStateStore.salaryCyclePaymentDayRank(
+            day,
+            salaryDay: salaryDay,
+          );
+      // salaryDay=25: 25→0, 26→1, 31→6, 1→7, 24→30 の順 (給料日起点)。
+      expect(rank(25), 0);
+      expect(rank(26), 1);
+      expect(rank(31), 6);
+      expect(rank(1), 7);
+      expect(rank(24), 30);
+      // 給料日以降が必ず給料日前より前に来る (連続・単調)。
+      final ordered = [for (var d = 1; d <= 31; d++) d]
+        ..sort((a, b) => rank(a).compareTo(rank(b)));
+      expect(ordered.first, 25);
+      expect(ordered.last, 24);
+      // 未設定は末尾。
+      expect(rank(null), greaterThan(rank(24)));
+      // salaryDay を変えると起点も動く。
+      expect(rank(1, salaryDay: 1), 0);
+      expect(rank(28, salaryDay: 1), 27);
+      expect(rank(10, salaryDay: 10), 0);
+      expect(rank(9, salaryDay: 10), 30);
+      // clamp 境界 (paymentDay 0/32 は 1/31 扱い)。
+      expect(rank(0), rank(1));
+      expect(rank(32), rank(31));
+    });
+
     test('saves and restores monthly paid statuses', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
         state: AssetLiabilityMonthlyState(
           paymentOverrides: const <String, double>{'モビット': 70000},
           paidAccountNames: const <String>{'auPayカード'},
+          billingConfirmedAccountIds: const <String>{'paypay_card'},
           actualPaymentAmounts: const <String, double>{'aupay_card': 6200},
           paymentDifferenceReasons: const <String, String>{
             'aupay_card': 'late fee',
@@ -114,6 +174,7 @@ void main() {
 
       expect(loadedMay.paymentOverrides['モビット'], 70000);
       expect(loadedMay.paidAccountNames, contains('auPayカード'));
+      expect(loadedMay.billingConfirmedAccountIds, contains('paypay_card'));
       expect(loadedMay.actualPaymentAmounts['aupay_card'], 6200);
       expect(loadedMay.paymentDifferenceReasons['aupay_card'], 'late fee');
       expect(loadedMay.annualRateOverrides['mobit'], 0.175);
@@ -141,6 +202,7 @@ void main() {
       expect(loadedJune.annualRateOverrides, isEmpty);
       expect(loadedJune.annualRateEvidences, isEmpty);
       expect(loadedJune.paidAccountNames, isEmpty);
+      expect(loadedJune.billingConfirmedAccountIds, isEmpty);
       expect(loadedJune.paymentSourceAccountIds, isEmpty);
       expect(loadedJune.cardBillingAccountIds, isEmpty);
       expect(loadedJune.cardStatementLines, isEmpty);
@@ -210,6 +272,58 @@ void main() {
       expect(decoded['PayPayカード'], 0);
       expect(decoded['モビット'], 70000);
     });
+
+    test(
+      'drops annual rates above the 20 percent registration block',
+      () async {
+        await store.saveMonth(
+          month: DateTime(2026, 5, 13),
+          state: AssetLiabilityMonthlyState(
+            annualRateOverrides: const <String, double>{
+              'legal': 0.20,
+              'blocked': 0.205,
+            },
+            annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+              'legal': AssetLiabilityAnnualRateEvidence(
+                accountId: 'legal',
+                fileName: 'legal.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.20,
+                detectedAnnualRate: 0.20,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20%',
+                source: 'test',
+              ),
+              'blocked': AssetLiabilityAnnualRateEvidence(
+                accountId: 'blocked',
+                fileName: 'blocked.png',
+                mimeType: 'image/png',
+                submittedAt: DateTime(2026, 5, 13),
+                submittedAnnualRate: 0.205,
+                detectedAnnualRate: 0.205,
+                status: AssetLiabilityAnnualRateEvidenceStatus.verified,
+                summary: '20.5%',
+                source: 'test',
+              ),
+            },
+          ),
+        );
+
+        final loaded = await store.loadMonth(DateTime(2026, 5, 13));
+        expect(loaded.annualRateOverrides, <String, double>{'legal': 0.20});
+        expect(loaded.annualRateEvidences.keys, contains('legal'));
+        expect(loaded.annualRateEvidences.keys, isNot(contains('blocked')));
+
+        const raw = '{"2026-05":{"legal":0.2,"blocked":0.205}}';
+        final decoded =
+            AssetLiabilityMonthlyStateStore.annualRateOverridesForMonth(
+          raw,
+          '2026-05',
+        );
+        expect(decoded, <String, double>{'legal': 0.2});
+      },
+    );
 
     test(
       'falls back to estimated payment after manual amount is cleared',
@@ -555,6 +669,152 @@ void main() {
       expect(snapshots.single.positiveAssetTotal, 110000);
       expect(snapshots.single.monthlyPaidPaymentTotal, 130000);
       expect(snapshots.single.overduePaymentCount, 0);
+    });
+
+    test('saves and restores debt payment day overrides', () async {
+      await store.saveDebtPaymentDayOverrides(const <String, int>{
+        'famima_card': 27,
+        'paypay_card': 15,
+      });
+
+      final overrides = await store.loadDebtPaymentDayOverrides();
+
+      expect(overrides, <String, int>{'famima_card': 27, 'paypay_card': 15});
+    });
+
+    test('drops invalid debt payment day overrides on save and load', () async {
+      await store.saveDebtPaymentDayOverrides(const <String, int>{
+        'famima_card': 27,
+        'too_small': 0,
+        'too_large': 32,
+        '': 10,
+      });
+
+      final overrides = await store.loadDebtPaymentDayOverrides();
+
+      expect(overrides, <String, int>{'famima_card': 27});
+
+      expect(
+        AssetLiabilityMonthlyStateStore.decodeDebtPaymentDayOverrides(
+          '{"famima_card": 27, "junk": "abc", "out_of_range": 99}',
+        ),
+        <String, int>{'famima_card': 27},
+      );
+      expect(
+        AssetLiabilityMonthlyStateStore.decodeDebtPaymentDayOverrides(
+          '[1, 2, 3]',
+        ),
+        isEmpty,
+      );
+    });
+
+    test('saves and restores the updatedAt timestamp by month', () async {
+      final timestamp = DateTime.utc(2026, 5, 20, 10, 30);
+      await store.saveMonth(
+        month: DateTime(2026, 5),
+        state: AssetLiabilityMonthlyState(
+          paidAccountNames: const <String>{'mobit'},
+          updatedAt: timestamp,
+        ),
+      );
+
+      final restored = await store.loadMonth(DateTime(2026, 5));
+      expect(restored.updatedAt?.toUtc(), timestamp);
+      // 別月には漏れない。
+      final other = await store.loadMonth(DateTime(2026, 6));
+      expect(other.updatedAt, isNull);
+    });
+  });
+
+  group('AssetLiabilityMonthlyState.mergeWith', () {
+    test('unions paid sets and fills gaps from the other device', () {
+      const local = AssetLiabilityMonthlyState(
+        paidAccountNames: <String>{'mobit'},
+        actualPaymentAmounts: <String, double>{'mobit': 61024},
+      );
+      const remote = AssetLiabilityMonthlyState(
+        paidAccountNames: <String>{'yokohama_bank'},
+        actualPaymentAmounts: <String, double>{'yokohama_bank': 4846},
+      );
+
+      final merged = local.mergeWith(remote);
+
+      expect(
+        merged.paidAccountNames,
+        containsAll(<String>{'mobit', 'yokohama_bank'}),
+      );
+      expect(merged.actualPaymentAmounts['mobit'], 61024);
+      expect(merged.actualPaymentAmounts['yokohama_bank'], 4846);
+    });
+
+    test('keeps local value when a scalar key conflicts', () {
+      const local = AssetLiabilityMonthlyState(
+        paymentOverrides: <String, double>{'mobit': 70000},
+      );
+      const remote = AssetLiabilityMonthlyState(
+        paymentOverrides: <String, double>{'mobit': 60000},
+      );
+
+      expect(local.mergeWith(remote).paymentOverrides['mobit'], 70000);
+    });
+
+    test('carries the later updatedAt into the merged result', () {
+      final older = AssetLiabilityMonthlyState(
+        paidAccountNames: const <String>{'mobit'},
+        updatedAt: DateTime(2026, 5, 20, 9),
+      );
+      final newer = AssetLiabilityMonthlyState(
+        paidAccountNames: const <String>{'yokohama_bank'},
+        updatedAt: DateTime(2026, 5, 20, 10),
+      );
+
+      expect(older.mergeWith(newer).updatedAt, DateTime(2026, 5, 20, 10));
+      expect(newer.mergeWith(older).updatedAt, DateTime(2026, 5, 20, 10));
+    });
+
+    test('unions list entries by id without duplicating shared ids', () {
+      final local = AssetLiabilityMonthlyState(
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'shared',
+            fromAccountId: 'a',
+            fromAccountName: 'A',
+            toAccountId: 'b',
+            toAccountName: 'B',
+            amount: 1000,
+            dueDate: DateTime(2026, 5, 18),
+          ),
+        ],
+      );
+      final remote = AssetLiabilityMonthlyState(
+        transferTasks: <AssetLiabilityTransferTask>[
+          AssetLiabilityTransferTask(
+            id: 'shared',
+            fromAccountId: 'a',
+            fromAccountName: 'A',
+            toAccountId: 'b',
+            toAccountName: 'B',
+            amount: 1000,
+            dueDate: DateTime(2026, 5, 18),
+          ),
+          AssetLiabilityTransferTask(
+            id: 'remote_only',
+            fromAccountId: 'c',
+            fromAccountName: 'C',
+            toAccountId: 'd',
+            toAccountName: 'D',
+            amount: 2000,
+            dueDate: DateTime(2026, 5, 20),
+          ),
+        ],
+      );
+
+      final merged = local.mergeWith(remote);
+
+      expect(merged.transferTasks.map((task) => task.id), <String>[
+        'shared',
+        'remote_only',
+      ]);
     });
   });
 }

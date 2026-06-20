@@ -103,6 +103,7 @@ jobs:
           --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true
           --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true
           --dart-define=ASSET_MANAGEMENT_AI_SUMMARY_ENABLED=true
+          --dart-define=ASSET_MANAGEMENT_AI_PROVIDER_ROUTING_ENABLED=true
         env:
           # 修正: シークレット名を _STAGING に変更
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
@@ -116,6 +117,12 @@ jobs:
           fi
           echo "Build successful!"
           ls -la build/web
+
+      - name: Setup Node for Firebase CLI
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
 
       # Deploy to Firebase Hosting (CLI) - サフィックスを抽出するロジックに統一
       - name: Deploy to Firebase Hosting (CLI)

@@ -4,7 +4,7 @@ on:
   issues:
     types: [opened, edited, closed, reopened, labeled, unlabeled]
   schedule:
-    - cron: "25 */4 * * *"  # hourly→4h: issues events handle real-time sync; cron is safety net
+    - cron: "25 */4 * * *"  # 4h safety net; issue events handle real-time sync
   workflow_dispatch:
     inputs:
       recent_only:

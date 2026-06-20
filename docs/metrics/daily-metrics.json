@@ -1,13 +1,13 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-06-03",
+    "date": "2026-06-19",
     "users": {
       "total": 37
     },
     "featureRequests": {
       "newToday": 0,
-      "openCount": 54,
+      "openCount": 107,
       "newTodayList": [],
       "topOpen": [
         {
@@ -34,27 +34,27 @@
     },
     "recentAchievements": [
       {
-        "title": "Codex #1: WBS SDLC phase axis migration",
-        "completed_at": "2026-06-03T19:05:55.027242+00:00"
+        "title": "CI Setup Deno の deno.land 一時503耐性化 (retry+backoff)",
+        "completed_at": "2026-06-10T18:24:04.736707+00:00"
       },
       {
-        "title": "Scheduled Daily part 239: scheduled-agent append-only discipline + verify-first detection blog draft (JA+EN)",
-        "completed_at": "2026-05-30T00:00:00+00:00"
+        "title": "dependabot pub group 週次CI失敗の恒久解消 (flutter_native_splash ignore)",
+        "completed_at": "2026-06-10T18:03:21.222368+00:00"
       },
       {
-        "title": "Win Claude #1: WBS task 給与明細 PDF AI 取込 (Issue #3003)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
+        "title": "GitHub Actions Node.js 20 廃止対応完了 (actions/cache v5 化)",
+        "completed_at": "2026-06-10T13:45:31.202955+00:00"
       },
       {
-        "title": "Win Claude #1: WBS task 前回給料の使いみち AI 連携 (Issue #3006)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
+        "title": "ブログ/ニュース配信 本番E2E検証完了 (Issue #1950 close)",
+        "completed_at": "2026-06-10T13:05:19.536047+00:00"
       },
       {
-        "title": "Win Claude #1: WBS task 給料日サイクル可処分残高 AI (Issue #3007)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
+        "title": "モデルルーティング戦略 (コスト tier) 策定 — 従量課金時代の使い分けガイドライン",
+        "completed_at": "2026-06-10T04:56:13.94377+00:00"
       }
     ]
   },
-  "fetched_at": "2026-06-04T08:12:50+09:00",
-  "report_date": "2026-06-04"
+  "fetched_at": "2026-06-20T07:49:35+09:00",
+  "report_date": "2026-06-20"
 }

@@ -39,10 +39,23 @@ jobs:
       ENABLE_WRITE_CONFIRMATION_PROBE: ${{ inputs.enable_write_confirmation_probe || false }}
 
     steps:
+      - name: Preflight scheduled credentials
+        id: preflight
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ] && [ -z "${MCP_BEARER_TOKEN:-}" ]; then
+            echo "::notice::TOOLS_HUB_MCP_BEARER_TOKEN is missing; skip scheduled smoke."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.preflight.outputs.skip != 'true'
         uses: actions/checkout@v6
 
       - name: Resolve smoke target
+        if: steps.preflight.outputs.skip != 'true'
         shell: pwsh
         run: |
           $baseUrl = "${{ inputs.base_url || '' }}"
@@ -72,6 +85,7 @@ jobs:
           "Smoke target: $baseUrl"
 
       - name: Run tools-hub MCP smoke
+        if: steps.preflight.outputs.skip != 'true'
         id: smoke
         continue-on-error: true
         shell: pwsh
@@ -98,6 +112,7 @@ jobs:
             echo "| Field | Value |"
             echo "| --- | --- |"
             echo "| Target | \`${TOOLS_HUB_MCP_URL}\` |"
+            echo "| Skipped | \`${{ steps.preflight.outputs.skip }}\` |"
             echo "| Outcome | \`${{ steps.smoke.outcome }}\` |"
             echo "| Auth token configured | \`${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}\` |"
             echo "| DCR redirect URI configured | \`${{ inputs.registration_redirect_uri != '' }}\` |"
@@ -105,7 +120,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Record schedule run
-        if: always()
+        if: always() && steps.preflight.outputs.skip != 'true'
         shell: bash
         env:
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
@@ -139,7 +154,7 @@ jobs:
             --max-time 10 || true
 
       - name: Fail on smoke error
-        if: steps.smoke.outcome != 'success'
+        if: steps.preflight.outputs.skip != 'true' && steps.smoke.outcome != 'success'
         shell: bash
         run: |
           echo "tools-hub MCP smoke failed"

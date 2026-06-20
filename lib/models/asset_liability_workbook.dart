@@ -205,6 +205,246 @@ class AssetLiabilityAccount {
   bool get isAsset => balance > 0;
   bool get isLiability => balance < 0;
   double get liabilityBalance => isLiability ? balance.abs() : 0;
+
+  AssetLiabilityAccount copyWith({int? paymentDay}) {
+    return AssetLiabilityAccount(
+      id: id,
+      name: name,
+      kind: kind,
+      balance: balance,
+      paymentDay: paymentDay ?? this.paymentDay,
+      paymentSourceAccountName: paymentSourceAccountName,
+      paymentMethod: paymentMethod,
+      paymentMethodLabel: paymentMethodLabel,
+      paymentMethodSettingSource: paymentMethodSettingSource,
+      billingAccountId: billingAccountId,
+      billingAccountName: billingAccountName,
+      includedInBillingAccount: includedInBillingAccount,
+      annualRate: annualRate,
+      minimumPaymentRate: minimumPaymentRate,
+      minimumPaymentFloor: minimumPaymentFloor,
+      fullPaymentEstimate: fullPaymentEstimate,
+    );
+  }
+}
+
+/// リボ払いカードの設定。
+///
+/// 請求額 = [monthlyAmount] + max(0, リボ残高 − [creditLimit])。
+/// auPAY カードの「あらかじめリボ」などで、毎月の請求額が利用明細合計ではなく
+/// 設定額 + 限度額超過分で決まるカードを表す。
+class AssetLiabilityRevolvingCreditConfig {
+  /// リボ設定額 (毎月固定で請求される最低額)。
+  final double monthlyAmount;
+
+  /// 利用限度額。これを超えたリボ残高は当月に一括で上乗せ請求される。
+  final double creditLimit;
+
+  const AssetLiabilityRevolvingCreditConfig({
+    required this.monthlyAmount,
+    required this.creditLimit,
+  });
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'monthlyAmount': monthlyAmount,
+        'creditLimit': creditLimit,
+      };
+
+  factory AssetLiabilityRevolvingCreditConfig.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return AssetLiabilityRevolvingCreditConfig(
+      monthlyAmount: (json['monthlyAmount'] as num?)?.toDouble() ?? 0,
+      creditLimit: (json['creditLimit'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+/// 定期固定費の発生周期。
+enum AssetRecurringFixedCostCadence {
+  /// 毎月。
+  monthly,
+
+  /// 隔月 (偶数月のみ / 例: 水道代)。
+  bimonthlyEvenMonth,
+
+  /// 隔月 (奇数月のみ)。
+  bimonthlyOddMonth,
+}
+
+/// 定期固定費の区分。資金繰りへの計上は区分に依らず同じ (全額支払いの utility 負債)
+/// だが、UI 上の表示セクションと既定アイコンを切り替えるためだけに使う。
+enum AssetRecurringFixedCostCategory {
+  /// 家賃・光熱費・通信費など従来の定期固定費 (既定)。
+  utility,
+
+  /// AI/クラウド等の月額サブスク (Anthropic / OpenAI / Gemini / GCP / Supabase /
+  /// Notion など)。資金繰りでは固定費として同様に計上される。
+  subscription,
+}
+
+/// UI から登録できる定期固定費 (家賃・光熱費・通信費など毎月/隔月の口座振替)。
+///
+/// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) と同様に、資金繰りへ
+/// 「全額支払いの負債 (utility)」として計上される。`buildWorkbook` の
+/// `recurringFixedCosts` で渡し、`asset_pref_mirror` で端末間同期する。
+/// 保存形は `{id: {name, amount, paymentDay, cadence, sourceAccountId}}`。
+class AssetRecurringFixedCost {
+  /// 安定した一意 ID (編集・削除のキー)。
+  final String id;
+
+  /// 表示名 (例: 電気代)。
+  final String name;
+
+  /// 月額の概算 (今月分は手入力の支払額上書きで変更可)。
+  final double amount;
+
+  /// 振替日 (1-31)。
+  final int paymentDay;
+
+  /// 発生周期 (毎月 / 隔月偶数月 / 隔月奇数月)。
+  final AssetRecurringFixedCostCadence cadence;
+
+  /// 引落の振替元口座 ID (任意)。
+  final String? sourceAccountId;
+
+  /// 区分 (固定費 / サブスク)。既定は utility で、表示セクションの振り分けにのみ使う。
+  final AssetRecurringFixedCostCategory category;
+
+  const AssetRecurringFixedCost({
+    required this.id,
+    required this.name,
+    required this.amount,
+    required this.paymentDay,
+    this.cadence = AssetRecurringFixedCostCadence.monthly,
+    this.sourceAccountId,
+    this.category = AssetRecurringFixedCostCategory.utility,
+  });
+
+  /// 指定した月 (1-12) にこの固定費が発生するか (隔月は偶数/奇数月のみ計上)。
+  bool appliesToMonth(int month) {
+    switch (cadence) {
+      case AssetRecurringFixedCostCadence.monthly:
+        return true;
+      case AssetRecurringFixedCostCadence.bimonthlyEvenMonth:
+        return month.isEven;
+      case AssetRecurringFixedCostCadence.bimonthlyOddMonth:
+        return month.isOdd;
+    }
+  }
+
+  AssetRecurringFixedCost copyWith({
+    String? id,
+    String? name,
+    double? amount,
+    int? paymentDay,
+    AssetRecurringFixedCostCadence? cadence,
+    String? sourceAccountId,
+    bool clearSourceAccountId = false,
+    AssetRecurringFixedCostCategory? category,
+  }) {
+    return AssetRecurringFixedCost(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      amount: amount ?? this.amount,
+      paymentDay: paymentDay ?? this.paymentDay,
+      cadence: cadence ?? this.cadence,
+      sourceAccountId: clearSourceAccountId
+          ? null
+          : (sourceAccountId ?? this.sourceAccountId),
+      category: category ?? this.category,
+    );
+  }
+
+  /// ID をキーにする保存形のため、JSON には id を含めない。
+  /// 区分は既定 (utility) のときは出力しない (既存ペイロードと互換を保つ)。
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'name': name,
+      'amount': amount,
+      'paymentDay': paymentDay,
+      'cadence': cadence.name,
+      if (sourceAccountId != null && sourceAccountId!.isNotEmpty)
+        'sourceAccountId': sourceAccountId,
+      if (category != AssetRecurringFixedCostCategory.utility)
+        'category': category.name,
+    };
+  }
+
+  /// 不正な値 (空名 / 金額<=0 / 振替日範囲外) は null を返す寛容なパース。
+  static AssetRecurringFixedCost? fromJson(
+    String id,
+    Map<String, dynamic> json,
+  ) {
+    final trimmedId = id.trim();
+    if (trimmedId.isEmpty) {
+      return null;
+    }
+    final name = json['name']?.toString().trim() ?? '';
+    if (name.isEmpty) {
+      return null;
+    }
+    final amount = (json['amount'] as num?)?.toDouble() ??
+        double.tryParse(json['amount']?.toString() ?? '');
+    if (amount == null || amount <= 0) {
+      return null;
+    }
+    final paymentDay = (json['paymentDay'] as num?)?.toInt() ??
+        int.tryParse(json['paymentDay']?.toString() ?? '');
+    if (paymentDay == null || paymentDay < 1 || paymentDay > 31) {
+      return null;
+    }
+    final cadenceName = json['cadence']?.toString();
+    final cadence = AssetRecurringFixedCostCadence.values.firstWhere(
+      (value) => value.name == cadenceName,
+      orElse: () => AssetRecurringFixedCostCadence.monthly,
+    );
+    final rawSource = json['sourceAccountId']?.toString().trim();
+    final categoryName = json['category']?.toString();
+    final category = AssetRecurringFixedCostCategory.values.firstWhere(
+      (value) => value.name == categoryName,
+      orElse: () => AssetRecurringFixedCostCategory.utility,
+    );
+    return AssetRecurringFixedCost(
+      id: trimmedId,
+      name: name,
+      amount: amount,
+      paymentDay: paymentDay,
+      cadence: cadence,
+      sourceAccountId:
+          rawSource == null || rawSource.isEmpty ? null : rawSource,
+      category: category,
+    );
+  }
+}
+
+/// リボ残高に対して算出した今月の請求内訳。
+class AssetLiabilityRevolvingCreditBilling {
+  /// リボ残高 (= 当月時点の負債残高)。
+  final double balance;
+
+  /// 利用限度額。
+  final double creditLimit;
+
+  /// リボ設定額。
+  final double monthlyAmount;
+
+  /// 限度額超過分 = max(0, [balance] − [creditLimit])。
+  final double overLimitAmount;
+
+  /// 今月請求額 = [monthlyAmount] + [overLimitAmount]。
+  final double billedAmount;
+
+  const AssetLiabilityRevolvingCreditBilling({
+    required this.balance,
+    required this.creditLimit,
+    required this.monthlyAmount,
+    required this.overLimitAmount,
+    required this.billedAmount,
+  });
+
+  /// 限度額を超過しているか (= 設定額に上乗せ請求が発生しているか)。
+  bool get isOverLimit => overLimitAmount > 0;
 }
 
 class AssetLiabilityDebtRow {
@@ -233,7 +473,15 @@ class AssetLiabilityDebtRow {
   final double liabilityShare;
   final String priorityLabel;
   final bool paymentAmountEstimated;
+  final bool billingConfirmed;
   final bool paid;
+
+  /// 家賃・通信費など毎月全額を支払う固定費型の負債。利率の概念を持たない。
+  final bool fullPaymentEstimate;
+
+  /// リボ払いカードの場合の今月請求内訳 (= 設定額 + 限度額超過分)。
+  /// null なら通常の負債 (請求額は手入力 or 推定)。
+  final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
 
   const AssetLiabilityDebtRow({
     required this.id,
@@ -261,8 +509,14 @@ class AssetLiabilityDebtRow {
     required this.liabilityShare,
     required this.priorityLabel,
     required this.paymentAmountEstimated,
+    required this.billingConfirmed,
     required this.paid,
+    this.fullPaymentEstimate = false,
+    this.revolvingBilling,
   });
+
+  /// リボ払いカードか (= 請求額が設定額 + 限度額超過分で決まるか)。
+  bool get isRevolving => revolvingBilling != null;
 
   bool get isDirectCashflowTarget =>
       !includedInBillingAccount &&
@@ -653,6 +907,7 @@ class AssetLiabilityCardBillingReviewItem {
   final String? billingAccountName;
   final bool includedInBillingAccount;
   final bool directCashflowTarget;
+  final bool paid;
   final List<String> alerts;
 
   const AssetLiabilityCardBillingReviewItem({
@@ -667,6 +922,7 @@ class AssetLiabilityCardBillingReviewItem {
     required this.billingAccountName,
     required this.includedInBillingAccount,
     required this.directCashflowTarget,
+    required this.paid,
     this.alerts = const <String>[],
   });
 
@@ -764,6 +1020,10 @@ class AssetLiabilityCardStatementReconciliationGroup {
   final List<AssetLiabilityCardStatementLine> statementLines;
   final List<String> alerts;
 
+  /// リボ払いカードの場合の今月請求内訳。null なら通常の一括払いカード。
+  /// リボ払いでは 請求額 ≠ 明細合計 が正常なため、不一致アラートは抑止する。
+  final AssetLiabilityRevolvingCreditBilling? revolvingBilling;
+
   const AssetLiabilityCardStatementReconciliationGroup({
     required this.billingAccountId,
     required this.billingAccountName,
@@ -773,12 +1033,16 @@ class AssetLiabilityCardStatementReconciliationGroup {
     required this.configuredItems,
     required this.statementLines,
     required this.alerts,
+    this.revolvingBilling,
   });
 
   double get statementDifference => statementLineTotal - billedAmount;
   double get configuredDifference => configuredDetailTotal - billedAmount;
   bool get hasStatementLines => statementLines.isNotEmpty;
   bool get needsReview => alerts.isNotEmpty;
+
+  /// リボ払いカードか。
+  bool get isRevolving => revolvingBilling != null;
 }
 
 class AssetLiabilityCardStatementReconciliationData {
@@ -952,6 +1216,7 @@ class AssetLiabilityWorkbook {
           (row) =>
               row.isDirectCashflowTarget &&
               row.paymentAmountEstimated &&
+              !row.billingConfirmed &&
               row.scheduledPaymentAmount > 0 &&
               !row.paid,
         )

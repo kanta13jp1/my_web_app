@@ -47,10 +47,18 @@ jobs:
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
             ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+            if ! git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"; then
+              echo "::warning::PR merge ref ${ref} is unavailable; falling back to PR head SHA."
+              git fetch --depth=1 \
+                "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+                "${{ github.event.pull_request.head.sha }}"
+              git checkout --force FETCH_HEAD
+              exit 0
+            fi
           else
             ref="${GITHUB_REF}"
+            git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           fi
-          git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           git checkout --force refs/remotes/origin/checkout
 
       - name: Setup Flutter
@@ -60,6 +68,14 @@ jobs:
 
       - name: Get Flutter version
         run: flutter --version
+
+      - name: Cache Flutter pub
+        uses: actions/cache@v5
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Install dependencies
         run: flutter pub get
@@ -75,7 +91,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSL https://deno.land/install.sh | sh
+          # deno.land は一時的な 5xx を返すことがあり、素の curl|sh だと main の
+          # deploy-prod ごと fail する (2026-06-10 run 27293741687 = 503 → exit 22 /
+          # Issue #3215)。deploy-prod.yml の deploy_function と同じ retry+backoff
+          # idiom で吸収する。一時ファイル経由にする理由: stdout パイプ直結だと
+          # curl --retry が rewind できず、切断時に途中までのスクリプトが sh に
+          # 流れる危険があるため。installer 内部の DL 失敗は外側 loop が拾う。
+          # 持続障害 (3 回 fail) は rerun に委ねる。
+          installer="$(mktemp)"
+          trap 'rm -f "$installer"' EXIT
+          for attempt in 1 2 3; do
+            if curl -fsSL --retry 3 --retry-delay 5 --retry-all-errors \
+                 -o "$installer" https://deno.land/install.sh \
+               && sh "$installer"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Deno install failed after ${attempt} attempts (deno.land transient error)"
+              exit 1
+            fi
+            echo "::warning::Deno install attempt ${attempt} failed; retrying in $((attempt * 20))s"
+            sleep $((attempt * 20))
+          done
           echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
           "$HOME/.deno/bin/deno" --version
 
@@ -84,6 +121,17 @@ jobs:
 
       - name: Check CI/CD docs-only path filters
         run: python scripts/check_cicd_path_filters.py
+
+      - name: Impossible task safe degradation gate
+        run: python scripts/impossible_task_degradation_check.py --artifact .ci-logs/impossible-task-degradation.json
+
+      - name: Upload impossible task degradation report
+        if: always() && hashFiles('.ci-logs/impossible-task-degradation.json') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: impossible-task-degradation-report
+          path: .ci-logs/impossible-task-degradation.json
+          if-no-files-found: ignore
 
       - name: Deno lint (Edge Functions)
         id: deno_lint
@@ -164,23 +212,27 @@ jobs:
           # bash quoting pattern '"'"' が SQL ファイルに混入すると SQLSTATE 42601 で deploy-prod が失敗する
           FOUND=$(grep -rl "'\"\\'\"'" supabase/migrations/ 2>/dev/null || true)
           # シングルクォートのアーティファクトパターン: ' + " + ' + " + '
-          FOUND2=$(python3 -c "
-          import os, sys
+          FOUND2=$(python3 <<'PY' 2>&1
+          import os
+          import sys
+
           found = []
-          mig_dir = 'supabase/migrations'
+          mig_dir = "supabase/migrations"
           if os.path.isdir(mig_dir):
-              for f in os.listdir(mig_dir):
-                  if f.endswith('.sql'):
-                      path = os.path.join(mig_dir, f)
-                      content = open(path, encoding='utf-8', errors='replace').read()
-                      if \"'\\\"'\\\"'\" in content:
+              for filename in os.listdir(mig_dir):
+                  if filename.endswith(".sql"):
+                      path = os.path.join(mig_dir, filename)
+                      content = open(path, encoding="utf-8", errors="replace").read()
+                      if "'\"'\"'" in content:
                           found.append(path)
+
           if found:
-              print('FOUND: ' + ', '.join(found))
+              print("FOUND: " + ", ".join(found))
               sys.exit(1)
-          else:
-              print('OK: no shell quoting artifacts in migrations')
-          " 2>&1)
+
+          print("OK: no shell quoting artifacts in migrations")
+          PY
+          )
           echo "$FOUND2"
           if echo "$FOUND2" | grep -q "^FOUND:"; then
             echo "❌ bash quoting artifact '\"'\"' detected in SQL migration files"
@@ -191,6 +243,41 @@ jobs:
 
       - name: Check GitHub Actions Node runtime floor
         run: python scripts/check_github_actions_node_runtime.py
+        continue-on-error: false
+
+      - name: Check GitHub Actions inline Python safety
+        run: python scripts/check_github_actions_python_inline.py
+        continue-on-error: false
+
+      - name: Check duplicate dispose statements
+        # part 280 実例 (二重 dispose → dispose 中断 → defunct setState) の再発防止。
+        # part 286: timeout でハング検知 + --max-seconds で線形時間 (正規表現の
+        # 破滅的バックトラック回帰) を CI でアサート。通常 ~2.5s なので 60s 上限。
+        run: timeout 120 python scripts/check_duplicate_dispose.py --max-seconds 60
+        continue-on-error: false
+
+      - name: Verify git hooks stay healthy
+        # part 291: pre-commit hook の腐敗防止。part 292: .githooks/* 全体へ一般化
+        # (将来 hook を追加しても自動で対象 / *.md は除外)。構文 + 実行ビットを検証。
+        run: |
+          shopt -s nullglob
+          found=0
+          for hook in .githooks/*; do
+            case "$hook" in
+              *.md) continue ;;
+            esac
+            found=$((found + 1))
+            echo "checking $hook"
+            bash -n "$hook"
+            test -x "$hook" || {
+              echo "$hook must be executable (chmod +x)" >&2
+              exit 1
+            }
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "no hooks found under .githooks/" >&2
+            exit 1
+          fi
         continue-on-error: false
 
       - name: Check formatting
@@ -268,10 +355,18 @@ jobs:
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
             ref="refs/pull/${{ github.event.pull_request.number }}/merge"
+            if ! git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"; then
+              echo "::warning::PR merge ref ${ref} is unavailable; falling back to PR head SHA."
+              git fetch --depth=1 \
+                "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" \
+                "${{ github.event.pull_request.head.sha }}"
+              git checkout --force FETCH_HEAD
+              exit 0
+            fi
           else
             ref="${GITHUB_REF}"
+            git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           fi
-          git fetch --depth=1 origin "+${ref}:refs/remotes/origin/checkout"
           git checkout --force refs/remotes/origin/checkout
 
       - name: Run security audit

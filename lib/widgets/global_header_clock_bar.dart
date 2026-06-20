@@ -4,13 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core/app_version.dart';
+import '../pages/release_notes_page.dart';
 
 class GlobalHeaderClockShell extends StatelessWidget {
   final Widget child;
 
+  /// アプリ直下の Navigator を指す key。本シェルは `MaterialApp.builder` で
+  /// Navigator より上に置かれるため、`Navigator.of(context)` は祖先 Navigator を
+  /// 見つけられず release ビルドで null-check 例外になる。バージョンバッジ等の
+  /// 遷移はこの key を使う。
+  final GlobalKey<NavigatorState>? navigatorKey;
+
   const GlobalHeaderClockShell({
     super.key,
     required this.child,
+    this.navigatorKey,
   });
 
   @override
@@ -19,7 +27,7 @@ class GlobalHeaderClockShell extends StatelessWidget {
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
-          const GlobalHeaderClockBar(),
+          GlobalHeaderClockBar(navigatorKey: navigatorKey),
           Expanded(
             child: MediaQuery.removePadding(
               context: context,
@@ -34,7 +42,10 @@ class GlobalHeaderClockShell extends StatelessWidget {
 }
 
 class GlobalHeaderClockBar extends StatefulWidget {
-  const GlobalHeaderClockBar({super.key});
+  const GlobalHeaderClockBar({super.key, this.navigatorKey});
+
+  /// アプリ直下の Navigator を指す key(リリースノート等の遷移に使う)。
+  final GlobalKey<NavigatorState>? navigatorKey;
 
   @override
   State<GlobalHeaderClockBar> createState() => _GlobalHeaderClockBarState();
@@ -61,6 +72,20 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  /// リリースノート画面へ遷移する。本バーは `MaterialApp.builder` で Navigator より
+  /// 上に置かれるため、`Navigator.of(context)`(release で `navigator!` の null-check
+  /// 例外)を避け、アプリ直下の [GlobalHeaderClockBar.navigatorKey] を優先して使う。
+  /// key 未指定時のみ `Navigator.maybeOf`(無ければ no-op)へフォールバック。
+  void _openReleaseNotes() {
+    // 本バーは Navigator より上(MaterialApp.builder)にあるため、ダイアログは
+    // アプリ直下 Navigator を含む navigatorKey の context 上で開く。未指定時のみ
+    // ローカル context へフォールバック(Navigator が無ければ何もしない)。
+    final dialogContext = widget.navigatorKey?.currentContext ??
+        (Navigator.maybeOf(context) != null ? context : null);
+    if (dialogContext == null) return;
+    showReleaseNotesDialog(dialogContext);
   }
 
   @override
@@ -142,8 +167,7 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
                           child: InkWell(
                             key: const Key('global_header_version_badge'),
                             borderRadius: BorderRadius.circular(10),
-                            onTap: () => Navigator.of(context)
-                                .pushNamed('/release-notes'),
+                            onTap: _openReleaseNotes,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_sync_audit_log.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
+import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AssetLiabilityMonthlyState {
@@ -13,11 +14,17 @@ class AssetLiabilityMonthlyState {
   final Map<String, double> annualRateOverrides;
   final Map<String, AssetLiabilityAnnualRateEvidence> annualRateEvidences;
   final Set<String> paidAccountNames;
+  final Set<String> billingConfirmedAccountIds;
   final Map<String, String> paymentSourceAccountIds;
   final Map<String, String> cardBillingAccountIds;
   final List<AssetLiabilityCardStatementLine> cardStatementLines;
   final List<AssetLiabilityIncomePlan> incomePlans;
   final List<AssetLiabilityTransferTask> transferTasks;
+
+  /// この月次stateを最後に編集した時刻 (端末ローカルの wall-clock)。
+  /// 端末間マージで last-write-wins (新しい方の状態を採用) する基準。
+  /// null は timestamp 未記録 (= 旧データ) を意味し、その場合は union マージへ退避する。
+  final DateTime? updatedAt;
 
   const AssetLiabilityMonthlyState({
     this.paymentOverrides = const <String, double>{},
@@ -27,11 +34,13 @@ class AssetLiabilityMonthlyState {
     this.annualRateEvidences =
         const <String, AssetLiabilityAnnualRateEvidence>{},
     this.paidAccountNames = const <String>{},
+    this.billingConfirmedAccountIds = const <String>{},
     this.paymentSourceAccountIds = const <String, String>{},
     this.cardBillingAccountIds = const <String, String>{},
     this.cardStatementLines = const <AssetLiabilityCardStatementLine>[],
     this.incomePlans = const <AssetLiabilityIncomePlan>[],
     this.transferTasks = const <AssetLiabilityTransferTask>[],
+    this.updatedAt,
   });
 
   bool get isEmpty =>
@@ -41,11 +50,115 @@ class AssetLiabilityMonthlyState {
       annualRateOverrides.isEmpty &&
       annualRateEvidences.isEmpty &&
       paidAccountNames.isEmpty &&
+      billingConfirmedAccountIds.isEmpty &&
       paymentSourceAccountIds.isEmpty &&
       cardBillingAccountIds.isEmpty &&
       cardStatementLines.isEmpty &&
       incomePlans.isEmpty &&
       transferTasks.isEmpty;
+
+  /// マップ/セット/リストの総エントリ数 (= 端末間マージで「増えたか」判定に使う)。
+  int get totalEntryCount =>
+      paymentOverrides.length +
+      actualPaymentAmounts.length +
+      paymentDifferenceReasons.length +
+      annualRateOverrides.length +
+      annualRateEvidences.length +
+      paidAccountNames.length +
+      billingConfirmedAccountIds.length +
+      paymentSourceAccountIds.length +
+      cardBillingAccountIds.length +
+      cardStatementLines.length +
+      incomePlans.length +
+      transferTasks.length;
+
+  /// 端末間同期の競合解決: ローカルと [other] (別端末で保存された状態) の入力を
+  /// 両方保持する union マージ。スカラ値の衝突は this(ローカル) を優先し、
+  /// [other] にしか無いキー/要素 (= 別端末で付けた支払済み等) を補完する。
+  ///
+  /// 旧実装は競合時に無条件でローカルを返し、別端末で付けた「支払済み」を取りこぼした上、
+  /// それをサーバへ保存し直して上書き消去していた。union は monotonic (追加のみ) なので
+  /// データ消失や重複が無く、並行マージしても収束する。
+  ///
+  /// 注意: 削除 (支払済みのチェック解除) の伝播はしない。removal の端末間伝播は
+  /// 既存の tombstone パターン (リボ/ウォッチリスト等で実績) を別途適用する将来課題。
+  AssetLiabilityMonthlyState mergeWith(AssetLiabilityMonthlyState other) {
+    return AssetLiabilityMonthlyState(
+      paymentOverrides: <String, double>{
+        ...other.paymentOverrides,
+        ...paymentOverrides,
+      },
+      actualPaymentAmounts: <String, double>{
+        ...other.actualPaymentAmounts,
+        ...actualPaymentAmounts,
+      },
+      paymentDifferenceReasons: <String, String>{
+        ...other.paymentDifferenceReasons,
+        ...paymentDifferenceReasons,
+      },
+      annualRateOverrides: <String, double>{
+        ...other.annualRateOverrides,
+        ...annualRateOverrides,
+      },
+      annualRateEvidences: <String, AssetLiabilityAnnualRateEvidence>{
+        ...other.annualRateEvidences,
+        ...annualRateEvidences,
+      },
+      paidAccountNames: <String>{
+        ...other.paidAccountNames,
+        ...paidAccountNames,
+      },
+      billingConfirmedAccountIds: <String>{
+        ...other.billingConfirmedAccountIds,
+        ...billingConfirmedAccountIds,
+      },
+      paymentSourceAccountIds: <String, String>{
+        ...other.paymentSourceAccountIds,
+        ...paymentSourceAccountIds,
+      },
+      cardBillingAccountIds: <String, String>{
+        ...other.cardBillingAccountIds,
+        ...cardBillingAccountIds,
+      },
+      cardStatementLines: _mergeById(
+        cardStatementLines,
+        other.cardStatementLines,
+        (line) => line.id,
+      ),
+      incomePlans: _mergeById(
+        incomePlans,
+        other.incomePlans,
+        (plan) => plan.id,
+      ),
+      transferTasks: _mergeById(
+        transferTasks,
+        other.transferTasks,
+        (task) => task.id,
+      ),
+      updatedAt: laterUpdatedAt(updatedAt, other.updatedAt),
+    );
+  }
+
+  /// 2つの updatedAt のうち新しい方 (null は最古扱い) を返す。
+  static DateTime? laterUpdatedAt(DateTime? a, DateTime? b) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return a.isAfter(b) ? a : b;
+  }
+
+  /// ローカルの要素を保持しつつ、[remote] のうちローカルに無い id の要素だけ追加する
+  /// (id による重複排除付き union)。
+  static List<T> _mergeById<T>(
+    List<T> local,
+    List<T> remote,
+    String Function(T) idOf,
+  ) {
+    final localIds = local.map(idOf).toSet();
+    return <T>[
+      ...local,
+      ...remote.where((element) => !localIds.contains(idOf(element))),
+    ];
+  }
 }
 
 class AssetLiabilityMonthlyStateStore {
@@ -60,6 +173,8 @@ class AssetLiabilityMonthlyStateStore {
   static const String annualRateEvidencePrefsKey =
       'asset_liability_monthly_annual_rate_evidences_v1';
   static const String paidPrefsKey = 'asset_liability_paid_accounts_v1';
+  static const String billingConfirmedPrefsKey =
+      'asset_liability_billing_confirmed_accounts_v1';
   static const String paymentSourcePrefsKey =
       'asset_liability_payment_source_accounts_v1';
   static const String cardBillingPrefsKey =
@@ -73,15 +188,53 @@ class AssetLiabilityMonthlyStateStore {
       'asset_liability_default_payment_source_accounts_v1';
   static const String defaultCardBillingPrefsKey =
       'asset_liability_default_card_billing_accounts_v1';
+  static const String debtPaymentDayPrefsKey =
+      'asset_liability_debt_payment_day_overrides_v1';
   static const String recurringIncomeTemplatePrefsKey =
       'asset_liability_recurring_income_templates_v1';
   static const String monthlySnapshotPrefsKey =
       'asset_liability_monthly_snapshots_v1';
   static const String syncAuditLogPrefsKey =
       'asset_liability_sync_audit_logs_v1';
+  static const String stateUpdatedAtPrefsKey =
+      'asset_liability_state_updated_at_v1';
   static const int maxSyncAuditLogCount = 50;
 
   const AssetLiabilityMonthlyStateStore();
+
+  /// `{monthKey: ISO8601}` 形式の updatedAt マップから対象月の時刻を読む。
+  static DateTime? updatedAtForMonth(String? raw, String monthKey) {
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        final value = decoded[monthKey];
+        if (value is String && value.isNotEmpty) {
+          return DateTime.tryParse(value);
+        }
+      }
+    } catch (_) {
+      // 破損データは無視 (timestamp 無し扱い → union マージへ退避)。
+    }
+    return null;
+  }
+
+  static Map<String, String> _decodeUpdatedAtMap(String? raw) {
+    if (raw == null || raw.isEmpty) return <String, String>{};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        return <String, String>{
+          for (final entry in decoded.entries)
+            if (entry.value is String)
+              entry.key.toString(): entry.value as String,
+        };
+      }
+    } catch (_) {
+      // 破損は空扱い。
+    }
+    return <String, String>{};
+  }
 
   Future<AssetLiabilityMonthlyState> loadMonth(DateTime month) async {
     final prefs = await SharedPreferences.getInstance();
@@ -111,6 +264,10 @@ class AssetLiabilityMonthlyStateStore {
         prefs.getString(paidPrefsKey),
         monthKey,
       ),
+      billingConfirmedAccountIds: billingConfirmedAccountsForMonth(
+        prefs.getString(billingConfirmedPrefsKey),
+        monthKey,
+      ),
       paymentSourceAccountIds: paymentSourceAccountsForMonth(
         prefs.getString(paymentSourcePrefsKey),
         monthKey,
@@ -129,6 +286,10 @@ class AssetLiabilityMonthlyStateStore {
       ),
       transferTasks: transferTasksForMonth(
         prefs.getString(transferTaskPrefsKey),
+        monthKey,
+      ),
+      updatedAt: updatedAtForMonth(
+        prefs.getString(stateUpdatedAtPrefsKey),
         monthKey,
       ),
     );
@@ -189,25 +350,26 @@ class AssetLiabilityMonthlyStateStore {
     final allAnnualRates = decodePaymentOverrides(
       prefs.getString(annualRatePrefsKey),
     );
-    if (state.annualRateOverrides.isEmpty) {
+    final sanitizedAnnualRateOverrides = sanitizeAnnualRateOverrides(
+      state.annualRateOverrides,
+    );
+    if (sanitizedAnnualRateOverrides.isEmpty) {
       allAnnualRates.remove(monthKey);
     } else {
-      allAnnualRates[monthKey] = Map<String, double>.from(
-        state.annualRateOverrides,
-      );
+      allAnnualRates[monthKey] = sanitizedAnnualRateOverrides;
     }
     await prefs.setString(annualRatePrefsKey, jsonEncode(allAnnualRates));
 
     final allAnnualRateEvidences = decodeAnnualRateEvidences(
       prefs.getString(annualRateEvidencePrefsKey),
     );
-    if (state.annualRateEvidences.isEmpty) {
+    final sanitizedAnnualRateEvidences = sanitizeAnnualRateEvidences(
+      state.annualRateEvidences,
+    );
+    if (sanitizedAnnualRateEvidences.isEmpty) {
       allAnnualRateEvidences.remove(monthKey);
     } else {
-      allAnnualRateEvidences[monthKey] =
-          Map<String, AssetLiabilityAnnualRateEvidence>.from(
-        state.annualRateEvidences,
-      );
+      allAnnualRateEvidences[monthKey] = sanitizedAnnualRateEvidences;
     }
     await prefs.setString(
       annualRateEvidencePrefsKey,
@@ -217,6 +379,21 @@ class AssetLiabilityMonthlyStateStore {
     await prefs.setString(
       paidPrefsKey,
       jsonEncode(_encodePaid(allPaidAccounts)),
+    );
+
+    final allBillingConfirmedAccounts = decodePaidAccounts(
+      prefs.getString(billingConfirmedPrefsKey),
+    );
+    if (state.billingConfirmedAccountIds.isEmpty) {
+      allBillingConfirmedAccounts.remove(monthKey);
+    } else {
+      allBillingConfirmedAccounts[monthKey] = Set<String>.from(
+        state.billingConfirmedAccountIds,
+      );
+    }
+    await prefs.setString(
+      billingConfirmedPrefsKey,
+      jsonEncode(_encodePaid(allBillingConfirmedAccounts)),
     );
 
     final allPaymentSources = decodePaymentSourceAccounts(
@@ -287,6 +464,16 @@ class AssetLiabilityMonthlyStateStore {
       transferTaskPrefsKey,
       jsonEncode(_encodeTransferTasks(allTransferTasks)),
     );
+
+    final allUpdatedAt = _decodeUpdatedAtMap(
+      prefs.getString(stateUpdatedAtPrefsKey),
+    );
+    if (state.updatedAt == null) {
+      allUpdatedAt.remove(monthKey);
+    } else {
+      allUpdatedAt[monthKey] = state.updatedAt!.toUtc().toIso8601String();
+    }
+    await prefs.setString(stateUpdatedAtPrefsKey, jsonEncode(allUpdatedAt));
   }
 
   Future<Map<String, String>> loadDefaultPaymentSources() async {
@@ -314,6 +501,21 @@ class AssetLiabilityMonthlyStateStore {
     await prefs.setString(
       defaultCardBillingPrefsKey,
       jsonEncode(_cleanStringMap(accounts)),
+    );
+  }
+
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    final prefs = await SharedPreferences.getInstance();
+    return decodeDebtPaymentDayOverrides(
+      prefs.getString(debtPaymentDayPrefsKey),
+    );
+  }
+
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      debtPaymentDayPrefsKey,
+      jsonEncode(sanitizeDebtPaymentDayOverrides(overrides)),
     );
   }
 
@@ -399,10 +601,7 @@ class AssetLiabilityMonthlyStateStore {
     return DateFormat('yyyy-MM').format(month);
   }
 
-  static DateTime salaryCycleMonthFor(
-    DateTime date, {
-    int salaryDay = 25,
-  }) {
+  static DateTime salaryCycleMonthFor(DateTime date, {int salaryDay = 25}) {
     final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
     if (date.day >= normalizedSalaryDay) {
       return DateTime(date.year, date.month);
@@ -410,13 +609,36 @@ class AssetLiabilityMonthlyStateStore {
     return DateTime(date.year, date.month - 1);
   }
 
-  static String formatSalaryCycleMonthKey(
-    DateTime date, {
-    int salaryDay = 25,
-  }) {
-    return formatMonthKey(
-      salaryCycleMonthFor(date, salaryDay: salaryDay),
-    );
+  static String formatSalaryCycleMonthKey(DateTime date, {int salaryDay = 25}) {
+    return formatMonthKey(salaryCycleMonthFor(date, salaryDay: salaryDay));
+  }
+
+  /// 給料サイクルの開始日 (= 当該サイクルの給料日)。
+  /// 例: salaryDay=25 で 6/13 を渡すと 5/25 を返す (5/25〜6/24 サイクル)。
+  static DateTime salaryCycleStart(DateTime date, {int salaryDay = 25}) {
+    final cycleMonth = salaryCycleMonthFor(date, salaryDay: salaryDay);
+    final normalizedSalaryDay = salaryDay.clamp(1, 28).toInt();
+    return DateTime(cycleMonth.year, cycleMonth.month, normalizedSalaryDay);
+  }
+
+  /// 給料サイクルの終了 (排他: 次サイクルの開始日)。
+  /// 例: salaryDay=25 で 6/13 を渡すと 6/25 を返す ([5/25, 6/25) = 5/25〜6/24)。
+  static DateTime salaryCycleEndExclusive(DateTime date, {int salaryDay = 25}) {
+    final start = salaryCycleStart(date, salaryDay: salaryDay);
+    return DateTime(start.year, start.month + 1, start.day);
+  }
+
+  /// 支払日 [paymentDay] を給料日サイクル内の並び順 (0 起点) へ写像する。
+  /// salaryDay を起点に「給料日以降→翌給料日前日」を 0..30 で表すので、
+  /// salaryDay=25 なら 25 日→0, 31 日→6, 1 日→7, 24 日→30 の順になる。
+  /// null (未設定) は末尾へ送るため十分大きい値を返す。
+  static int salaryCyclePaymentDayRank(int? paymentDay, {int salaryDay = 25}) {
+    if (paymentDay == null) {
+      return 1000;
+    }
+    final anchor = salaryDay.clamp(1, 28).toInt();
+    final day = paymentDay.clamp(1, 31).toInt();
+    return day >= anchor ? day - anchor : day - anchor + 31;
   }
 
   static AssetLiabilityMonthlyState copyPreviousMonthState({
@@ -536,6 +758,39 @@ class AssetLiabilityMonthlyStateStore {
         (key, value) => MapEntry(key.toString(), value.toString()),
       ),
     );
+  }
+
+  static Map<String, int> decodeDebtPaymentDayOverrides(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return <String, int>{};
+    }
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      return <String, int>{};
+    }
+
+    final overrides = <String, int>{};
+    for (final entry in decoded.entries) {
+      final key = entry.key.toString().trim();
+      final rawDay = entry.value;
+      final day = rawDay is num ? rawDay.toInt() : int.tryParse('$rawDay');
+      if (key.isNotEmpty && day != null && day >= 1 && day <= 31) {
+        overrides[key] = day;
+      }
+    }
+    return overrides;
+  }
+
+  static Map<String, int> sanitizeDebtPaymentDayOverrides(
+    Map<String, int> values,
+  ) {
+    return <String, int>{
+      for (final entry in values.entries)
+        if (entry.key.trim().isNotEmpty &&
+            entry.value >= 1 &&
+            entry.value <= 31)
+          entry.key.trim(): entry.value,
+    };
   }
 
   static Map<String, Map<String, double>> decodePaymentOverrides(String? raw) {
@@ -1082,20 +1337,48 @@ class AssetLiabilityMonthlyStateStore {
     String? raw,
     String monthKey,
   ) {
-    return Map<String, double>.from(
-      decodePaymentOverrides(raw)[monthKey] ?? const <String, double>{},
+    return sanitizeAnnualRateOverrides(
+      Map<String, double>.from(
+        decodePaymentOverrides(raw)[monthKey] ?? const <String, double>{},
+      ),
     );
   }
 
   static Map<String, AssetLiabilityAnnualRateEvidence>
-      annualRateEvidencesForMonth(
-    String? raw,
-    String monthKey,
-  ) {
-    return Map<String, AssetLiabilityAnnualRateEvidence>.from(
-      decodeAnnualRateEvidences(raw)[monthKey] ??
-          const <String, AssetLiabilityAnnualRateEvidence>{},
+      annualRateEvidencesForMonth(String? raw, String monthKey) {
+    return sanitizeAnnualRateEvidences(
+      Map<String, AssetLiabilityAnnualRateEvidence>.from(
+        decodeAnnualRateEvidences(raw)[monthKey] ??
+            const <String, AssetLiabilityAnnualRateEvidence>{},
+      ),
     );
+  }
+
+  static Map<String, double> sanitizeAnnualRateOverrides(
+    Map<String, double> values,
+  ) {
+    return <String, double>{
+      for (final entry in values.entries)
+        if (DebtLockdownService.isRegistrableAnnualRate(entry.value))
+          entry.key: entry.value,
+    };
+  }
+
+  static Map<String, AssetLiabilityAnnualRateEvidence>
+      sanitizeAnnualRateEvidences(
+    Map<String, AssetLiabilityAnnualRateEvidence> values,
+  ) {
+    return <String, AssetLiabilityAnnualRateEvidence>{
+      for (final entry in values.entries)
+        if (DebtLockdownService.isRegistrableAnnualRate(
+              entry.value.submittedAnnualRate,
+            ) &&
+            (entry.value.detectedAnnualRate == null ||
+                DebtLockdownService.isRegistrableAnnualRate(
+                  entry.value.detectedAnnualRate!,
+                )))
+          entry.key: entry.value,
+    };
   }
 
   static Map<String, String> paymentDifferenceReasonsForMonth(
@@ -1108,6 +1391,15 @@ class AssetLiabilityMonthlyStateStore {
   }
 
   static Set<String> paidAccountsForMonth(String? raw, String monthKey) {
+    return Set<String>.from(
+      decodePaidAccounts(raw)[monthKey] ?? const <String>{},
+    );
+  }
+
+  static Set<String> billingConfirmedAccountsForMonth(
+    String? raw,
+    String monthKey,
+  ) {
     return Set<String>.from(
       decodePaidAccounts(raw)[monthKey] ?? const <String>{},
     );
@@ -1192,6 +1484,9 @@ class AssetLiabilityMonthlyStateStore {
 
     final migratedAnnualRates = <String, double>{};
     for (final entry in state.annualRateOverrides.entries) {
+      if (!DebtLockdownService.isRegistrableAnnualRate(entry.value)) {
+        continue;
+      }
       final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
       if (legacyKeyToAccountId.containsKey(entry.key)) {
         migratedAnnualRates.putIfAbsent(migratedKey, () => entry.value);
@@ -1203,14 +1498,31 @@ class AssetLiabilityMonthlyStateStore {
     final migratedAnnualRateEvidences =
         <String, AssetLiabilityAnnualRateEvidence>{};
     for (final entry in state.annualRateEvidences.entries) {
+      if (!DebtLockdownService.isRegistrableAnnualRate(
+            entry.value.submittedAnnualRate,
+          ) ||
+          (entry.value.detectedAnnualRate != null &&
+              !DebtLockdownService.isRegistrableAnnualRate(
+                entry.value.detectedAnnualRate!,
+              ))) {
+        continue;
+      }
       final migratedKey = legacyKeyToAccountId[entry.key] ?? entry.key;
-      migratedAnnualRateEvidences[migratedKey] =
-          entry.value.copyWith(accountId: migratedKey);
+      migratedAnnualRateEvidences[migratedKey] = entry.value.copyWith(
+        accountId: migratedKey,
+      );
     }
 
     final migratedPaidAccounts = <String>{};
     for (final accountKey in state.paidAccountNames) {
       migratedPaidAccounts.add(legacyKeyToAccountId[accountKey] ?? accountKey);
+    }
+
+    final migratedBillingConfirmedAccounts = <String>{};
+    for (final accountKey in state.billingConfirmedAccountIds) {
+      migratedBillingConfirmedAccounts.add(
+        legacyKeyToAccountId[accountKey] ?? accountKey,
+      );
     }
 
     final migratedPaymentSources = <String, String>{};
@@ -1271,6 +1583,7 @@ class AssetLiabilityMonthlyStateStore {
       annualRateOverrides: migratedAnnualRates,
       annualRateEvidences: migratedAnnualRateEvidences,
       paidAccountNames: migratedPaidAccounts,
+      billingConfirmedAccountIds: migratedBillingConfirmedAccounts,
       paymentSourceAccountIds: migratedPaymentSources,
       cardBillingAccountIds: migratedCardBillingAccounts,
       cardStatementLines: migratedCardStatementLines,

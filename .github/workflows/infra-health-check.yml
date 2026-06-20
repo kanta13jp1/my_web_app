@@ -3,7 +3,7 @@ name: Infra Health Check (インフラ監視)
 # 毎時 + 手動実行
 on:
   schedule:
-    - cron: "37 * * * *"  # 毎時37分
+    - cron: "37 */2 * * *"  # 2時間ごと37分
   workflow_dispatch:
 
 concurrency:

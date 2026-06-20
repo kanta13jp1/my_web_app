@@ -303,6 +303,13 @@ abstract class AssetLiabilityRepository {
 
   Future<void> saveDefaultCardBillingAccounts(Map<String, String> accounts);
 
+  /// 負債ごとの支払日 (1-31) 手動設定。契約属性のため月をまたいで共有する。
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() async {
+    return const <String, int>{};
+  }
+
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) async {}
+
   Future<List<AssetLiabilityRecurringIncomeTemplate>>
       loadRecurringIncomeTemplates();
 
@@ -506,7 +513,41 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
       return remoteState;
     }
 
-    return local;
+    // 双方に編集時刻 (updatedAt) があり差があるなら last-write-wins =
+    // 新しい方の状態全体を採用する。union と違い「支払済みのチェック解除 (削除)」も
+    // 新しい端末の状態として伝播する。
+    final localUpdatedAt = local.updatedAt;
+    final remoteUpdatedAt = remoteState.updatedAt;
+    if (localUpdatedAt != null &&
+        remoteUpdatedAt != null &&
+        !localUpdatedAt.isAtSameMomentAs(remoteUpdatedAt)) {
+      if (remoteUpdatedAt.isAfter(localUpdatedAt)) {
+        await localRepository.saveMonth(month: month, state: remoteState);
+        return remoteState;
+      }
+      if (supabaseWritesEnabled) {
+        await _tryRemote(
+          () => remote.saveMonth(userId: userId, month: month, state: local),
+        );
+      }
+      return local;
+    }
+
+    // timestamp が無い/同時刻 (旧データを含む) ときは union マージへ退避する。
+    // 旧実装は無条件に local を返し、別端末で付けた「支払済み」等を無視した上に、
+    // その local をサーバへ保存し直してリモートの入力を上書き消去していた。
+    // union は monotonic なので、両端末の入力を取りこぼさず収束する。
+    final merged = local.mergeWith(remoteState);
+    if (merged.totalEntryCount > local.totalEntryCount) {
+      await localRepository.saveMonth(month: month, state: merged);
+    }
+    if (supabaseWritesEnabled &&
+        merged.totalEntryCount > remoteState.totalEntryCount) {
+      await _tryRemote(
+        () => remote.saveMonth(userId: userId, month: month, state: merged),
+      );
+    }
+    return merged;
   }
 
   @override
@@ -623,6 +664,17 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
         ),
       );
     }
+  }
+
+  // 支払日手動設定はローカル保存のみ (リモート同期は将来対応)。
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() {
+    return localRepository.loadDebtPaymentDayOverrides();
+  }
+
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) {
+    return localRepository.saveDebtPaymentDayOverrides(overrides);
   }
 
   @override
@@ -1458,6 +1510,10 @@ class FeatureFlaggedAssetLiabilityRepository extends AssetLiabilityRepository {
           remote.annualRateEvidences,
         ) &&
         _stringSetEquals(local.paidAccountNames, remote.paidAccountNames) &&
+        _stringSetEquals(
+          local.billingConfirmedAccountIds,
+          remote.billingConfirmedAccountIds,
+        ) &&
         _stringMapEquals(
           local.paymentSourceAccountIds,
           remote.paymentSourceAccountIds,
@@ -1771,17 +1827,7 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
       AssetLiabilitySupabaseTablePlan.monthlyStatesTable,
       userId: userId,
       monthKey: monthKey,
-      payload: <String, Object?>{
-        'payment_overrides': row['payment_overrides'],
-        'actual_payment_amounts': row['actual_payment_amounts'],
-        'payment_difference_reasons': row['payment_difference_reasons'],
-        'annual_rate_overrides': row['annual_rate_overrides'],
-        'annual_rate_evidences': row['annual_rate_evidences'],
-        'paid_account_ids': row['paid_account_ids'],
-        'payment_source_account_ids': row['payment_source_account_ids'],
-        'card_billing_account_ids': row['card_billing_account_ids'],
-        'card_statement_lines': row['card_statement_lines'],
-      },
+      payload: buildMonthlyStatesPayload(row),
     );
     await _upsertPayloadRow(
       AssetLiabilitySupabaseTablePlan.incomePlansTable,
@@ -1789,6 +1835,34 @@ class AssetLiabilitySupabaseRemoteStore extends AssetLiabilityRemoteStore {
       monthKey: monthKey,
       payload: <String, Object?>{'income_plans': row['income_plans']},
     );
+  }
+
+  /// `monthly_states` テーブルへ書き込む payload を [row]
+  /// (= [AssetLiabilityMonthlyStatePayload.toSupabaseJson] の出力) から構築する。
+  ///
+  /// 明示的な allowlist で詰め替えると、以前のように新フィールドを書き忘れて
+  /// リモートへ届かない事故 (= `billing_confirmed_account_ids` /
+  /// `transfer_tasks` が漏れ、端末間で同期されず LWW でローカルを消去していた
+  /// `paid_account_ids` と同型の潜在バグ) が起こる。これを構造的に防ぐため、
+  /// [row] から「monthly_states に属さないキーだけ」を除外して導出する:
+  ///
+  /// - `user_id` / `month_key`: 識別子カラムは [_upsertPayloadRow] が個別に付与する。
+  /// - `income_plans`: 別テーブル
+  ///   ([AssetLiabilitySupabaseTablePlan.incomePlansTable]) へ保存する。
+  /// - `updated_at`: サーバ upsert 時刻のカラム用。payload には載せない
+  ///   (クライアント編集時刻は `state_updated_at` として別に保持する)。
+  ///
+  /// こうすることで `toSupabaseJson` に新キーが増えても自動的にリモートへ同期され、
+  /// `fromSupabaseJson` 側の読み込みと取りこぼしなく対応する。
+  @visibleForTesting
+  static Map<String, Object?> buildMonthlyStatesPayload(
+    Map<String, Object?> row,
+  ) {
+    return Map<String, Object?>.from(row)
+      ..remove('user_id')
+      ..remove('month_key')
+      ..remove('income_plans')
+      ..remove('updated_at');
   }
 
   @override
@@ -2123,6 +2197,16 @@ class SharedPreferencesAssetLiabilityRepository
   @override
   Future<void> saveDefaultCardBillingAccounts(Map<String, String> accounts) {
     return store.saveDefaultCardBillingAccounts(accounts);
+  }
+
+  @override
+  Future<Map<String, int>> loadDebtPaymentDayOverrides() {
+    return store.loadDebtPaymentDayOverrides();
+  }
+
+  @override
+  Future<void> saveDebtPaymentDayOverrides(Map<String, int> overrides) {
+    return store.saveDebtPaymentDayOverrides(overrides);
   }
 
   @override

@@ -60,6 +60,13 @@ import {
   DisposableBalanceError,
   handleDisposableBalanceAction,
 } from "./disposable_balance.ts";
+import {
+  handleMarketPriceAction,
+  isMarketPriceLiveFetchEnabled,
+  MarketPriceActionError,
+  type MarketPriceDb,
+} from "./market_price.ts";
+import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -588,34 +595,6 @@ function normalizeMaxTokens(value: unknown): number | undefined {
   return Math.max(64, Math.min(8192, Math.round(raw)));
 }
 
-function applyProviderGenerationOptions(
-  providerId: string,
-  requestBody: Record<string, unknown>,
-  options?: ProviderCallOptions,
-): Record<string, unknown> {
-  const maxTokens = options?.maxTokens;
-  if (!maxTokens) return requestBody;
-
-  if (providerId === "google" || providerId === "google_flash_lite") {
-    const generationConfig = requestBody.generationConfig &&
-        typeof requestBody.generationConfig === "object"
-      ? requestBody.generationConfig as Record<string, unknown>
-      : {};
-    return {
-      ...requestBody,
-      generationConfig: {
-        ...generationConfig,
-        maxOutputTokens: maxTokens,
-      },
-    };
-  }
-
-  return {
-    ...requestBody,
-    max_tokens: maxTokens,
-  };
-}
-
 function providerFinishReason(data: unknown): string | null {
   const raw = pick(data, "choices", 0, "finish_reason") ??
     pick(data, "candidates", 0, "finishReason") ??
@@ -673,7 +652,7 @@ async function callSingleProvider(
     let fetchUrl = cfg.chatUrl;
     if (providerId === "anthropic") {
       authHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
-    } else if (providerId === "google") {
+    } else if (providerId === "google" || providerId === "google_flash_lite") {
       authHeaders = {};
       fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
     }
@@ -2954,6 +2933,9 @@ serve(async (req: Request) => {
       "quiz.evaluate",
       "quiz.explain",
       "kpi.monthly_summary",
+      "asset.market_price.fetch",
+      "asset.investment.market_price.fetch",
+      "ai_hub.fetch_market_price",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
       "payslip.parse",
@@ -4443,6 +4425,18 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "asset.market_price.fetch":
+      case "asset.investment.market_price.fetch":
+      case "ai_hub.fetch_market_price": {
+        const result = await handleMarketPriceAction({
+          db: admin as unknown as MarketPriceDb,
+          body,
+          userId: userId ?? "",
+          liveFetchEnabled: isMarketPriceLiveFetchEnabled(body),
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.monthly_report.generate":
       case "asset_liability.monthly_report.generate": {
         const aiSummaryEnabled = isMonthlyAssetReportAiSummaryEnabled(body);
@@ -4605,7 +4599,9 @@ serve(async (req: Request) => {
               "x-api-key": apiKey,
               "anthropic-version": "2023-06-01",
             };
-          } else if (providerId === "google") {
+          } else if (
+            providerId === "google" || providerId === "google_flash_lite"
+          ) {
             authHeaders = {};
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
@@ -4732,22 +4728,30 @@ serve(async (req: Request) => {
           const modelUsed = pick(data, "model");
           const outputChars = content.length;
           const usedModel = String(modelUsed ?? requestedModel);
-          if (content && isProviderOutputLengthLimited(finishReason)) {
+          // 本文が空のレスポンスは成功扱いにしない。reasoning モデルが
+          // 推論で予算を使い切ると finish_reason=length かつ本文が空になり、
+          // 旧コードは success:true(空文字)で返してフォールバック連鎖を
+          // 止め、無駄なコストだけ計上していた。
+          const lengthLimited = isProviderOutputLengthLimited(finishReason);
+          if (!content.trim() || lengthLimited) {
+            const failureStatus = !content.trim()
+              ? "emptyOutput"
+              : "outputLengthLimited";
             await logProviderChat({
               success: false,
               statusCode: 502,
               model: usedModel,
               outputChars,
-              errorMessage: `outputLengthLimited: ${finishReason}`,
+              errorMessage: `${failureStatus}: ${finishReason ?? "no-content"}`,
             });
             return json({
               success: false,
-              status: "outputLengthLimited",
+              status: failureStatus,
               provider: providerId,
               model: usedModel,
               finish_reason: finishReason,
               message:
-                "AI応答が出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
+                "AI応答が空、または出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
             }, 502);
           }
           const estimatedCost = calculateApiCost(
@@ -5618,6 +5622,9 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof DisposableBalanceError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof MarketPriceActionError) {
       return json({ error: err.message }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);
