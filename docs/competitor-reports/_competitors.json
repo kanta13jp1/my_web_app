@@ -660,6 +660,26 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-20",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-16 Microsoft MAI-Code-1-Flash 採択 / 4 day 経過 / cooldown 残 3 day / 次回 6/23 解禁). 前回 AI 分析 report = 6/19. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/20 は WebSearch 主体で 6/19→6/20 delta 集約. 最大シグナル = ★★ Agent Client Protocol (ACP) のデファクト標準化が前景化 🔴🔴 (= 6/2 Windsurf→Devin Desktop rebrand の IDE が ACP [Apache 2.0 / JSON-RPC 2.0 over stdin/stdout] 採用 / Codex・Claude Agent・OpenCode・Junie・Gemini CLI が単一 IDE 内 first-class / 6 月時点 JetBrains・Google・GitHub + 25+ agents 採用 = LSP の coding-agent 版 / 自社含意=AI dev tool が単一 vendor lock→protocol 互換 multi-agent へ収斂 / 自社 fleet 協調 [cross-instance-pr md doc + git log audit] は独自プロトコル=将来 ACP 互換 vs 思想差別化の論点 / Devin 既収載=discovery 候補でなく signal 層). 他 = 🟢 Microsoft MAI-Code-1-Flash 6/18 全 surface 展開完了 (= Copilot CLI/app/Chat[github.com]/Visual Studio/全 toolchain + Fireworks AI・Baseten・OpenRouter 経由で Copilot UI 外提供 = 自社 AI 振り分け matrix 組込可能な低コスト枠増 / Claude Haiku4.5 を price-perf で上回る / 6/16 採択社の健全進捗) + 🟢 Salesforce Agentforce Operations 6/23 第1候補 pre-scan (= Slack/Teams 統合 6 月 rollout + Instant Blueprints [非構造化ドキュメント/ホワイトボード→稼働ワークフロー数分生成] / 基準 a B/S・6 部署 overlap 最大 + 基準 c) + 🔴 MoneyForward AI Cowork 7月 GA T-約11日 (= 2030年 AI 売上150億円 + AIカンパニー転換 pivot 明示 / MCP server 運用不要訴求 / 経理労務法務 6 業務) + 🔴 Claude Fable 5/Mythos 5 suspension 未解決据え置き delta なし (= Opus4.8/Sonnet4.6/Haiku4.5 非影響継続=Win Claude #132 fleet 継続可 / Snyk 等がガバナンス教訓化=fallback 予防継続根拠) + 🟠 価格メータリング収斂 'unlimited era is over' (= Cursor/GitHub Copilot/Devin Desktop が数日内に従量課金再構築 / prompt-caching + self-hosted gate TCO narrative timing). 6/23 採択 第 1 候補 = Salesforce Agentforce Operations 維持 (基準 a+c). https://aicoderscope.com/blog/windsurf-devin-desktop-rebrand-acp-2026/ + https://windowsnews.ai/article/microsofts-speedy-mai-code-1-flash-model-lands-in-copilot-cli-visual-studio-and-everywhere-else.428003",
+      "skipped_candidates": [
+        "Salesforce Agentforce Operations (= 6/23 第 1 候補維持 / 4/29 GA + Slack/Teams 6 月 rollout + Instant Blueprints / バックオフィス自律 AI = 6 部署/B/S overlap 最大 / 基準 a+c 該当 / re-rank 最有力)",
+        "Microsoft Copilot Cowork (= 6/16 全世界 GA / back-office 三つ巴中核 / Claude 上で動作 + MoneyForward plugin / ただし Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加回避で monitor / Salesforce 採択後 re-rank 候補)",
+        "Devin Desktop / ACP (= 6/2 Windsurf rebrand + ACP デファクト標準化 = signal 層 / Devin 既収載で discovery 対象外)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 シグナル / 動向観察 1 月)",
+        "Claude Fable 5 / Mythos 5 (= モデル層 + 規制シグナル / discovery 対象外 / Anthropic 既収載派生)",
+        "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {
