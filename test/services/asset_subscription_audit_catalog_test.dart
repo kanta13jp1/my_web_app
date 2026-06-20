@@ -198,4 +198,99 @@ void main() {
       expect(totals.length, 2);
     });
   });
+
+  group('AssetSubscriptionAuditCatalog.gatewayCardBreakdownBySourceId', () {
+    SubscriptionGatewayInput sub(
+      AssetSubscriptionBillingGateway gateway,
+      double amount,
+      String? sourceAccountId,
+    ) {
+      return (
+        gateway: gateway,
+        amount: amount,
+        sourceAccountId: sourceAccountId,
+      );
+    }
+
+    test('splits an Apple gateway across funding cards, sorted by total', () {
+      final subs = <SubscriptionGatewayInput>[
+        sub(AssetSubscriptionBillingGateway.apple, 30000, 'famipay'),
+        sub(AssetSubscriptionBillingGateway.apple, 1500, 'famipay'),
+        sub(AssetSubscriptionBillingGateway.apple, 240, 'paypay'),
+        sub(AssetSubscriptionBillingGateway.apple, 590, 'paypay'),
+        sub(AssetSubscriptionBillingGateway.direct, 2900, 'paypay'),
+      ];
+      final breakdown =
+          AssetSubscriptionAuditCatalog.gatewayCardBreakdownBySourceId(
+        subscriptions: subs,
+      );
+      final apple = breakdown[AssetSubscriptionAuditCatalog.appleSourceId]!;
+      // ファミペイ (31,500) → PayPay (830) の降順。
+      final cardIds = apple.map((c) => c.fundingAccountId).toList();
+      expect(cardIds, <String?>['famipay', 'paypay']);
+      expect(apple[0].total, 31500);
+      expect(apple[0].count, 2);
+      expect(apple[1].total, 830);
+      // direct は対象外なので Apple ソースのみ。
+      expect(breakdown.length, 1);
+    });
+
+    test('unset funding card groups under null and sorts to the end', () {
+      final subs = <SubscriptionGatewayInput>[
+        sub(AssetSubscriptionBillingGateway.apple, 1000, null),
+        sub(AssetSubscriptionBillingGateway.apple, 5000, 'famipay'),
+        sub(AssetSubscriptionBillingGateway.apple, 200, ''),
+      ];
+      final breakdown =
+          AssetSubscriptionAuditCatalog.gatewayCardBreakdownBySourceId(
+        subscriptions: subs,
+      );
+      final apple = breakdown[AssetSubscriptionAuditCatalog.appleSourceId]!;
+      expect(apple.map((c) => c.fundingAccountId), <String?>['famipay', null]);
+      // null グループは 1000 + 200 (空文字も未設定扱い)。
+      expect(apple.last.fundingAccountId, isNull);
+      expect(apple.last.total, 1200);
+    });
+
+    test('normalizeFundingCard keeps known ids; unknown/empty/null → null', () {
+      const known = <String>{'famipay', 'paypay'};
+      final keep =
+          AssetSubscriptionAuditCatalog.normalizeFundingCard('famipay', known);
+      expect(keep, 'famipay');
+      expect(
+        AssetSubscriptionAuditCatalog.normalizeFundingCard('deleted', known),
+        isNull,
+      );
+      expect(
+        AssetSubscriptionAuditCatalog.normalizeFundingCard('', known),
+        isNull,
+      );
+      expect(
+        AssetSubscriptionAuditCatalog.normalizeFundingCard(null, known),
+        isNull,
+      );
+    });
+
+    test('unknown card ids merge into the unset group after normalize', () {
+      const known = <String>{'famipay'};
+      String? norm(String? id) {
+        return AssetSubscriptionAuditCatalog.normalizeFundingCard(id, known);
+      }
+
+      final subs = <SubscriptionGatewayInput>[
+        sub(AssetSubscriptionBillingGateway.apple, 1000, norm('deleted_card')),
+        sub(AssetSubscriptionBillingGateway.apple, 200, norm(null)),
+        sub(AssetSubscriptionBillingGateway.apple, 5000, norm('famipay')),
+      ];
+      final breakdown =
+          AssetSubscriptionAuditCatalog.gatewayCardBreakdownBySourceId(
+        subscriptions: subs,
+      );
+      final apple = breakdown[AssetSubscriptionAuditCatalog.appleSourceId]!;
+      // famipay (5000) と 未設定 (1000+200) の 2 グループ。削除済みは未設定へ統合。
+      expect(apple.length, 2);
+      expect(apple.last.fundingAccountId, isNull);
+      expect(apple.last.total, 1200);
+    });
+  });
 }

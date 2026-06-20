@@ -8958,6 +8958,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       lastCheckedAt: _subscriptionAuditState,
       unregisteredCountBySourceId: _unregisteredCountBySourceId(workbook),
       registeredByGatewaySourceId: gatewayTotals,
+      cardBreakdownBySourceId: _subscriptionGatewayCardBreakdown(accounts),
       now: _now,
       onMarkChecked: _markSubscriptionSourceChecked,
       onRegisterSubscription: (source) => unawaited(
@@ -8971,6 +8972,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
       ),
     );
+  }
+
+  /// 登録済みサブスクを「経由ソース × 請求先カード」で集計し、カード名ラベルへ解決する。
+  /// 同じ Apple経由でも請求先カードが分かれる場合に、各カードの集約請求と突き合わせる。
+  Map<String, List<GatewayCardBreakdownLine>> _subscriptionGatewayCardBreakdown(
+      List<AssetLiabilityAccount> accounts) {
+    final accountNames = <String, String>{
+      for (final account in accounts) account.id: account.name,
+    };
+    final knownIds = accountNames.keys.toSet();
+    final inputs = <SubscriptionGatewayInput>[];
+    for (final cost in _recurringFixedCosts) {
+      if (cost.category != AssetRecurringFixedCostCategory.subscription) {
+        continue;
+      }
+      // 未知/削除済みカードは未設定 (null) へ寄せ、内訳の重複表示を防ぐ。
+      final fundingCard = AssetSubscriptionAuditCatalog.normalizeFundingCard(
+        cost.sourceAccountId,
+        knownIds,
+      );
+      inputs.add((
+        gateway: cost.billingGateway,
+        amount: cost.amount,
+        sourceAccountId: fundingCard,
+      ));
+    }
+    final raw = AssetSubscriptionAuditCatalog.gatewayCardBreakdownBySourceId(
+      subscriptions: inputs,
+    );
+    final result = <String, List<GatewayCardBreakdownLine>>{};
+    raw.forEach((sourceId, cards) {
+      result[sourceId] = <GatewayCardBreakdownLine>[
+        for (final card in cards)
+          (
+            label: _fundingCardLabel(card.fundingAccountId, accountNames),
+            count: card.count,
+            total: card.total,
+          ),
+      ];
+    });
+    return result;
+  }
+
+  String _fundingCardLabel(String? id, Map<String, String> accountNames) {
+    if (id == null) {
+      return '請求先カード未設定';
+    }
+    return accountNames[id] ?? '請求先カード未設定';
   }
 
   /// 削除した定期固定費のトゥームストーン。union マージ/backfill での復活を防ぎ、

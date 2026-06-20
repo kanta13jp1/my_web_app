@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 
 import '../services/asset_subscription_audit_catalog.dart';
 
+/// 棚卸しの請求先カード別内訳 1 行 (表示名 + 件数 + 月額合計)。
+typedef GatewayCardBreakdownLine = ({String label, int count, double total});
+
 /// サブスク棚卸しの確認状況。
 enum SubscriptionAuditStatus {
   /// 一度も確認していない。
@@ -33,6 +36,8 @@ class SubscriptionAuditCard extends StatelessWidget {
     this.unregisteredCountBySourceId = const <String, int>{},
     this.registeredByGatewaySourceId =
         const <String, ({int count, double total})>{},
+    this.cardBreakdownBySourceId =
+        const <String, List<GatewayCardBreakdownLine>>{},
     this.staleDays = AssetSubscriptionAuditCatalog.staleDays,
   });
 
@@ -48,6 +53,11 @@ class SubscriptionAuditCard extends StatelessWidget {
   /// manual ソース (Apple/au/Google) に登録済みのサブスク件数・月額合計。
   /// 「この合計が明細の集約請求 (APPLE.COM/BILL 等) と一致するか」の突き合わせに使う。
   final Map<String, ({int count, double total})> registeredByGatewaySourceId;
+
+  /// manual ソースの「請求先カード別」内訳 (ラベル + 件数 + 合計 / 合計降順)。
+  /// 同じ Apple経由でも請求先カードが 2 つ以上に分かれる場合だけ、各カードの集約請求
+  /// と突き合わせられるよう内訳行を出す (カードが 1 つなら合計行で十分なので出さない)。
+  final Map<String, List<GatewayCardBreakdownLine>> cardBreakdownBySourceId;
 
   /// ステータス判定の基準時刻 (テスト決定性のため注入)。
   final DateTime now;
@@ -168,6 +178,8 @@ class SubscriptionAuditCard extends StatelessWidget {
                   unregisteredCount:
                       unregisteredCountBySourceId[source.id] ?? 0,
                   registered: registeredByGatewaySourceId[source.id],
+                  cardBreakdown: cardBreakdownBySourceId[source.id] ??
+                      const <GatewayCardBreakdownLine>[],
                   onMarkChecked: () => onMarkChecked(source),
                   onRegister: () => onRegisterSubscription(source),
                 ),
@@ -187,6 +199,7 @@ class _SourceTile extends StatelessWidget {
     required this.statusLabel,
     required this.unregisteredCount,
     required this.registered,
+    required this.cardBreakdown,
     required this.onMarkChecked,
     required this.onRegister,
   });
@@ -198,6 +211,9 @@ class _SourceTile extends StatelessWidget {
 
   /// この manual ソースに登録済みのサブスク件数・月額合計 (無ければ null)。
   final ({int count, double total})? registered;
+
+  /// 請求先カード別の内訳 (合計降順)。2 件以上のときだけ内訳行を出す。
+  final List<GatewayCardBreakdownLine> cardBreakdown;
   final VoidCallback onMarkChecked;
   final VoidCallback onRegister;
 
@@ -290,6 +306,19 @@ class _SourceTile extends StatelessWidget {
                 ),
               ),
             ),
+          // 請求先カードが 2 つ以上に分かれる場合だけ、カード別の内訳を出す
+          // (各カードの集約請求と個別に突き合わせられるように)。
+          if (isManual && cardBreakdown.length >= 2)
+            for (final card in cardBreakdown)
+              Padding(
+                padding: const EdgeInsets.only(top: 2, left: 8),
+                child: Text(
+                  '・${card.label} ¥${_yen.format(card.total)}（${card.count}件）',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
           if (isManual && source.checkSteps.isNotEmpty)
             Theme(
               // ExpansionTile の区切り線を消してリスト内に馴染ませる。

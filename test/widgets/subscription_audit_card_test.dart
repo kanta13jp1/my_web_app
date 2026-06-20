@@ -56,6 +56,8 @@ void main() {
     Map<String, int> counts = const <String, int>{},
     Map<String, ({int count, double total})> registered =
         const <String, ({int count, double total})>{},
+    Map<String, List<GatewayCardBreakdownLine>> cardBreakdown =
+        const <String, List<GatewayCardBreakdownLine>>{},
     required void Function(SubscriptionAuditSource) onMarkChecked,
     required void Function(SubscriptionAuditSource) onRegister,
   }) {
@@ -67,6 +69,7 @@ void main() {
             lastCheckedAt: lastCheckedAt,
             unregisteredCountBySourceId: counts,
             registeredByGatewaySourceId: registered,
+            cardBreakdownBySourceId: cardBreakdown,
             now: now,
             onMarkChecked: onMarkChecked,
             onRegisterSubscription: onRegister,
@@ -151,5 +154,53 @@ void main() {
     expect(find.textContaining('登録済み 3件'), findsOneWidget);
     expect(find.textContaining('¥32,480'), findsOneWidget);
     expect(find.textContaining('APPLE.COM/BILL'), findsOneWidget);
+  });
+
+  testWidgets('manual row breaks down by funding card when 2+ cards', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        registered: const <String, ({int count, double total})>{
+          'apple_id': (count: 5, total: 33700),
+        },
+        cardBreakdown: const <String, List<GatewayCardBreakdownLine>>{
+          'apple_id': <GatewayCardBreakdownLine>[
+            (label: 'ファミペイ', count: 3, total: 32770),
+            (label: 'PayPayカード', count: 2, total: 930),
+          ],
+        },
+        onMarkChecked: (_) {},
+        onRegister: (_) {},
+      ),
+    );
+
+    // 合計行に加え、請求先カード別の内訳行が出る。
+    expect(find.textContaining('登録済み 5件'), findsOneWidget);
+    expect(find.textContaining('・ファミペイ ¥32,770（3件）'), findsOneWidget);
+    expect(find.textContaining('・PayPayカード ¥930（2件）'), findsOneWidget);
+  });
+
+  testWidgets('single funding card shows no per-card breakdown', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        registered: const <String, ({int count, double total})>{
+          'apple_id': (count: 3, total: 32770),
+        },
+        cardBreakdown: const <String, List<GatewayCardBreakdownLine>>{
+          'apple_id': <GatewayCardBreakdownLine>[
+            (label: 'ファミペイ', count: 3, total: 32770),
+          ],
+        },
+        onMarkChecked: (_) {},
+        onRegister: (_) {},
+      ),
+    );
+
+    // カードが 1 つなら内訳行は出さない (合計行で十分)。
+    expect(find.textContaining('登録済み 3件'), findsOneWidget);
+    expect(find.textContaining('・ファミペイ'), findsNothing);
   });
 }
