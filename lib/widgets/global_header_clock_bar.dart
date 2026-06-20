@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core/app_version.dart';
+import '../pages/release_notes_page.dart';
 
 class GlobalHeaderClockShell extends StatelessWidget {
   final Widget child;
@@ -78,9 +79,13 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
   /// 例外)を避け、アプリ直下の [GlobalHeaderClockBar.navigatorKey] を優先して使う。
   /// key 未指定時のみ `Navigator.maybeOf`(無ければ no-op)へフォールバック。
   void _openReleaseNotes() {
-    final navigator =
-        widget.navigatorKey?.currentState ?? Navigator.maybeOf(context);
-    navigator?.pushNamed('/release-notes');
+    // 本バーは Navigator より上(MaterialApp.builder)にあるため、ダイアログは
+    // アプリ直下 Navigator を含む navigatorKey の context 上で開く。未指定時のみ
+    // ローカル context へフォールバック(Navigator が無ければ何もしない)。
+    final dialogContext = widget.navigatorKey?.currentContext ??
+        (Navigator.maybeOf(context) != null ? context : null);
+    if (dialogContext == null) return;
+    showReleaseNotesDialog(dialogContext);
   }
 
   @override
