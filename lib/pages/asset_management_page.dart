@@ -8901,10 +8901,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildSubscriptionAuditCard(AssetLiabilityWorkbook? workbook) {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
-    final sourceOptions = <RecurringFixedCostSourceOption>[
-      for (final account in accounts)
-        if (account.balance > 0) (id: account.id, name: account.name),
-    ];
+    // サブスクはカード (ファミペイ等) へ請求されることが多いため、残高<=0 のカードも
+    // 請求先として選べるようにする。
+    final sourceOptions =
+        recurringFixedCostSourceOptions(accounts, includeCards: true);
     final gatewayTotals = AssetSubscriptionAuditCatalog.gatewayTotalsBySourceId(
       subscriptions: [
         for (final cost in _recurringFixedCosts)
@@ -9287,10 +9287,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildRecurringFixedCostCard(AssetLiabilityWorkbook? workbook) {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
-    final sourceOptions = <RecurringFixedCostSourceOption>[
-      for (final account in accounts)
-        if (account.balance > 0) (id: account.id, name: account.name),
-    ];
+    final sourceOptions = recurringFixedCostSourceOptions(accounts);
     final sourceNames = <String, String>{
       for (final account in accounts) account.id: account.name,
     };
@@ -9317,10 +9314,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildSubscriptionFixedCostCard(AssetLiabilityWorkbook? workbook) {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
-    final sourceOptions = <RecurringFixedCostSourceOption>[
-      for (final account in accounts)
-        if (account.balance > 0) (id: account.id, name: account.name),
-    ];
+    // サブスクはカード (ファミペイ等) へ請求されることが多いため、残高<=0 のカードも
+    // 請求先として選べるようにする。
+    final sourceOptions =
+        recurringFixedCostSourceOptions(accounts, includeCards: true);
     final sourceNames = <String, String>{
       for (final account in accounts) account.id: account.name,
     };
@@ -9468,10 +9465,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityWorkbook? workbook,
   ) {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
-    final sourceOptions = <RecurringFixedCostSourceOption>[
-      for (final account in accounts)
-        if (account.balance > 0) (id: account.id, name: account.name),
-    ];
+    final sourceOptions = recurringFixedCostSourceOptions(accounts);
     return AssetRecurringTransactionSuggestionCard(
       suggestions: _detectRecurringTransactions(),
       currencyFormatter: _formatYen,

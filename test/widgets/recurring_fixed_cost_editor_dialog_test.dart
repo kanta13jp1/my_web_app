@@ -4,6 +4,51 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 
 void main() {
+  group('recurringFixedCostSourceOptions', () {
+    AssetLiabilityAccount acct(
+      String id,
+      String name,
+      AssetLiabilityAccountKind kind,
+      double balance,
+    ) {
+      return AssetLiabilityAccount(
+        id: id,
+        name: name,
+        kind: kind,
+        balance: balance,
+      );
+    }
+
+    final accounts = <AssetLiabilityAccount>[
+      acct('smbc', '三井住友銀行', AssetLiabilityAccountKind.deposit, 100000),
+      acct('aupay', 'auPayカード', AssetLiabilityAccountKind.creditCard, 5000),
+      acct('famipay', 'ファミペイカード', AssetLiabilityAccountKind.creditCard, 0),
+      acct('mobit', 'モビット', AssetLiabilityAccountKind.cardLoan, -50000),
+    ];
+
+    test('default excludes non-positive cards (banks/positive cards only)', () {
+      final ids =
+          recurringFixedCostSourceOptions(accounts).map((o) => o.id).toList();
+      // 残高>0 の銀行と auPay は出る。残高0のファミペイと負債のモビットは出ない。
+      expect(ids, containsAll(<String>['smbc', 'aupay']));
+      expect(ids, isNot(contains('famipay')));
+      expect(ids, isNot(contains('mobit')));
+    });
+
+    test('includeCards surfaces zero/negative-balance credit cards', () {
+      final ids = recurringFixedCostSourceOptions(
+        accounts,
+        includeCards: true,
+      ).map((o) => o.id).toList();
+      // ファミペイ (creditCard / 残高0) が選べるようになる。
+      expect(ids, containsAll(<String>['smbc', 'aupay', 'famipay']));
+      // クレカでない負債 (cardLoan) は含めない。
+      expect(ids, isNot(contains('mobit')));
+      // 重複しない (auPay は1回だけ)。
+      expect(ids.where((id) => id == 'aupay').length, 1);
+    });
+  });
+
   const prefill = AssetRecurringFixedCost(
     id: 'fc_suggestion',
     name: '電気代',
