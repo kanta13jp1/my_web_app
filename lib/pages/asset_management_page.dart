@@ -46,6 +46,7 @@ import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart
 import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
+import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
@@ -82,6 +83,7 @@ import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 import 'package:my_web_app/widgets/subscription_audit_card.dart';
+import 'package:my_web_app/widgets/subscription_duplicate_alert_card.dart';
 import 'package:my_web_app/widgets/subscription_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
@@ -448,6 +450,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, DateTime> _subscriptionAuditState = <String, DateTime>{};
   // 定期取引の自動検出で「無視」した正規化ラベル(再提案しない / 支出側)。
   Set<String> _ignoredRecurringLabels = <String>{};
+  Set<String> _ignoredDuplicateProviders = <String>{};
   // 定期入金の自動検出で「無視」した正規化ラベル(再提案しない / 収入側)。
   Set<String> _ignoredRecurringIncomeLabels = <String>{};
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
@@ -653,6 +656,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   );
   static const String _recurringIncomeIgnoredMirrorKey =
       'recurring_income_suggestion_ignored';
+  final AssetRecurringSuggestionIgnoreStore _duplicateIgnoreStore =
+      const AssetRecurringSuggestionIgnoreStore(
+    prefsKey: 'asset_subscription_duplicate_ignored_v1',
+  );
+  static const String _duplicateIgnoredMirrorKey =
+      'subscription_duplicate_ignored';
   final AssetCategoryBudgetStore _categoryBudgetStore =
       const AssetCategoryBudgetStore();
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
@@ -772,6 +781,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadSubscriptionAudit());
     unawaited(_loadRecurringIgnored());
     unawaited(_loadRecurringIncomeIgnored());
+    unawaited(_loadDuplicateIgnored());
     unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
@@ -8024,6 +8034,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (_isSectionShown(
               AssetManagementSectionId.subscriptionFixedCost,
             )) ...[
+              SubscriptionDuplicateAlertCard(
+                groups: _detectSubscriptionDuplicates(),
+                onIgnore: _ignoreDuplicateGroup,
+              ),
               _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
@@ -9104,6 +9118,107 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'recurring ignored save',
     );
     unawaited(_mirrorRecurringIgnored());
+  }
+
+  /// 起動時に「重複ではない」とした提供元集合をローカルから読み、ミラーと union する。
+  Future<void> _loadDuplicateIgnored() async {
+    try {
+      final ignored = await _duplicateIgnoreStore.load();
+      if (mounted && ignored.isNotEmpty) {
+        setState(() => _ignoredDuplicateProviders = ignored);
+      }
+    } catch (e) {
+      debugPrint('Error loading duplicate ignored: $e');
+    }
+    await _restoreDuplicateIgnoredFromMirror();
+  }
+
+  /// サーバミラー (pref_key: subscription_duplicate_ignored) を取り込み、ローカル集合と
+  /// union する(無視は単調増加なので union が安全)。
+  Future<void> _restoreDuplicateIgnoredFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _duplicateIgnoredMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final serverIgnored =
+          AssetRecurringSuggestionIgnoreStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || serverIgnored.isEmpty) {
+        return;
+      }
+      final merged = <String>{..._ignoredDuplicateProviders, ...serverIgnored};
+      if (merged.length == _ignoredDuplicateProviders.length) {
+        return; // サーバに新規無視なし。
+      }
+      setState(() => _ignoredDuplicateProviders = merged);
+      _persistInBackground(
+        _duplicateIgnoreStore.save(merged),
+        'duplicate ignored restore save',
+      );
+    } catch (e) {
+      debugPrint('duplicate ignored mirror restore failed: $e');
+    }
+  }
+
+  /// 「重複ではない」集合の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorDuplicateIgnored() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _duplicateIgnoredMirrorKey,
+        'value': AssetRecurringSuggestionIgnoreStore.encodeMirrorValue(
+          _ignoredDuplicateProviders,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('duplicate ignored mirror upsert failed: $e');
+    }
+  }
+
+  /// 提供元グループを「重複ではない」として今後の提示から除外する(永続化 + ミラー)。
+  void _ignoreDuplicateGroup(SubscriptionDuplicateGroup group) {
+    final key = group.providerKey;
+    if (key.isEmpty || _ignoredDuplicateProviders.contains(key)) {
+      return;
+    }
+    setState(() {
+      _ignoredDuplicateProviders = <String>{..._ignoredDuplicateProviders, key};
+    });
+    _persistInBackground(
+      _duplicateIgnoreStore.save(_ignoredDuplicateProviders),
+      'duplicate ignored save',
+    );
+    unawaited(_mirrorDuplicateIgnored());
+  }
+
+  /// 登録済みサブスクから「同じ提供元の複数契約 = 重複の可能性」を検出する。
+  List<SubscriptionDuplicateGroup> _detectSubscriptionDuplicates() {
+    return AssetSubscriptionDuplicateDetector.detect(
+      <SubscriptionDuplicateMember>[
+        for (final cost in _recurringFixedCosts)
+          if (cost.category == AssetRecurringFixedCostCategory.subscription)
+            (
+              id: cost.id,
+              name: cost.name,
+              amount: cost.amount,
+              gateway: cost.billingGateway,
+            ),
+      ],
+      ignoredProviderKeys: _ignoredDuplicateProviders,
+    );
   }
 
   /// 起動時に収入の「無視」集合をローカルから読み、サーバミラーと union する。
