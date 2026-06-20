@@ -43,13 +43,11 @@ const AiUniversityGenreEntry kLegalAiGenre = AiUniversityGenreEntry(
 
 const AiUniversityGenreEntry kFintechTradingAiGenre = AiUniversityGenreEntry(
   id: 'fintech_trading_ai',
-  title: 'FinTech/Trading AI',
-  headline: 'Decompose institutional finance workflows with low-cost AI',
-  description:
-      'Compare professional terminals with Claude Pro, Cursor, and the '
-      'Jibun Company signal-to-action pipeline. The learning path covers raw '
-      'news capture, confidence scoring, fake-news filters, and human final '
-      'review.',
+  title: '金融・トレーディングAI',
+  headline: '機関投資家の金融ワークフローを低コストAIで分解する',
+  description: '専門端末を Claude Pro・Cursor・自分株式会社のシグナル→アクション '
+      'パイプラインと比較します。学習の流れは、生ニュースの取得・確信度スコアリング・'
+      'フェイクニュース判定・人による最終確認までをカバーします。',
   providerIds: [
     'bloomberg_terminal',
     'refinitiv_eikon',
@@ -61,10 +59,10 @@ const AiUniversityGenreEntry kFintechTradingAiGenre = AiUniversityGenreEntry(
     'cursor_jibun_finance',
   ],
   focusAreas: [
-    'market intelligence',
-    'signal detection',
-    'source confidence',
-    'cost discipline',
+    '市場インテリジェンス',
+    'シグナル検出',
+    '情報源の信頼度',
+    'コスト規律',
   ],
   accentColor: Color(0xFF0F766E),
   launchProviderId: 'claude_pro_finance',

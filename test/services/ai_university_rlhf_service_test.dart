@@ -57,7 +57,7 @@ void main() {
       expect(snapshot.readyForFineTune, isFalse);
       expect(
         snapshot.nextAction,
-        'Collect at least 20 preference signals before tuning.',
+        'チューニング前に、まず選好シグナルを20件以上集めましょう。',
       );
     });
 
@@ -77,7 +77,7 @@ void main() {
       expect(snapshot.qualityScore, 100);
       expect(
         snapshot.nextAction,
-        'Dataset is ready for fine-tuning or evaluation batches.',
+        'データセットは微調整・評価バッチに利用できる状態です。',
       );
     });
   });

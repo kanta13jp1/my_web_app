@@ -2196,12 +2196,12 @@ function rlhfQualityScore(
 
 function rlhfNextAction(totalSignals: number, qualityScore: number): string {
   if (totalSignals < 20) {
-    return "Collect at least 20 preference signals before tuning.";
+    return "チューニング前に、まず選好シグナルを20件以上集めましょう。";
   }
   if (qualityScore < 70) {
-    return "Review low-rated lessons and regenerate weak explanations.";
+    return "低評価のレッスンを見直し、弱い解説を再生成しましょう。";
   }
-  return "Dataset is ready for fine-tuning or evaluation batches.";
+  return "データセットは微調整・評価バッチに利用できる状態です。";
 }
 
 function buildRlhfSnapshot(
@@ -2325,10 +2325,10 @@ function buildUserDataFineTuneReadiness(
     sourceCoverage >= 2;
   const piiRisk = commentRows > 0 || judgmentTotal > 0 ? "medium" : "low";
   const nextAction = readyForFineTune
-    ? "Freeze a de-identified JSONL training set and run an offline evaluation before any fine-tune job."
+    ? "匿名化済みの JSONL 学習セットを確定し、微調整ジョブの前にオフライン評価を実施しましょう。"
     : readyForEvalBatch
-    ? "Create an evaluation batch first; keep collecting preference pairs until 100+ eligible records."
-    : "Collect more explicit Useful/Needs fix feedback and daily judgment outcomes before tuning.";
+    ? "まず評価バッチを作成し、有効レコードが100件以上になるまで選好ペアを集め続けましょう。"
+    : "チューニング前に、「役に立った／改善が必要」の明示的なフィードバックと日々の判断結果をさらに集めましょう。";
 
   return {
     method: "scale_egp_first_party_data_engine_v1",
@@ -2352,7 +2352,7 @@ function buildUserDataFineTuneReadiness(
       review_judgments: reviewJudgments,
     },
     kgi:
-      "Use first-party product data to improve AI answer quality without unsafe raw-data fine-tuning.",
+      "安全でない生データの微調整に頼らず、自社プロダクトのデータでAIの回答品質を高めます。",
     csf: [
       "Consent-aware first-party signal collection",
       "De-identification before export",
@@ -3995,7 +3995,10 @@ serve(async (req: Request) => {
         if (!geminiKey) {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);
         }
-        const level = Math.min(Math.max(Math.round(asNumber(body.level, 3)), 1), 6);
+        const level = Math.min(
+          Math.max(Math.round(asNumber(body.level, 3)), 1),
+          6,
+        );
         // ユーザー入力 topic はプロンプト注入面を絞るため空白正規化 + 80 字上限。
         const topic = asString(body.topic).replace(/\s+/g, " ").slice(0, 80)
           .trim();
@@ -4090,8 +4093,9 @@ serve(async (req: Request) => {
           );
         }
 
-        const wordCount =
-          passage.trim().split(/\s+/).filter((w) => w.length > 0).length;
+        const wordCount = passage.trim().split(/\s+/).filter((w) =>
+          w.length > 0
+        ).length;
         const lessonCode = `AI-L${level}-${userId.slice(0, 8)}-${Date.now()}`;
         const title = asString(parsed.title) || `AI Lesson (Level ${level})`;
         const topicOut = asString(parsed.topic) || topic || "general";
@@ -4122,7 +4126,10 @@ serve(async (req: Request) => {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const lessonCode = asString(body.lesson_code);
         const lessonId = asString(body.lesson_id);
-        const level = Math.min(Math.max(Math.round(asNumber(body.level, 1)), 1), 6);
+        const level = Math.min(
+          Math.max(Math.round(asNumber(body.level, 1)), 1),
+          6,
+        );
         const mode = asString(body.mode) === "rsvp" ? "rsvp" : "measure";
         const wordCount = Math.max(0, Math.round(asNumber(body.word_count, 0)));
         const elapsedMs = Math.max(0, Math.round(asNumber(body.elapsed_ms, 0)));
@@ -4140,9 +4147,7 @@ serve(async (req: Request) => {
         const wpm = wordCount > 0 && minutes > 0
           ? Math.round(wordCount / minutes)
           : 0;
-        const ratio = total > 0
-          ? Math.min(Math.max(correct / total, 0), 1)
-          : 1;
+        const ratio = total > 0 ? Math.min(Math.max(correct / total, 0), 1) : 1;
         const effectiveWpm = wpm > 0 ? Math.round(wpm * ratio) : 0;
 
         const insertRow: Record<string, unknown> = {

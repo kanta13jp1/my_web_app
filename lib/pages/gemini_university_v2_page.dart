@@ -6491,7 +6491,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'RLHF quality loop',
+                    'RLHF 品質ループ',
                     style: TextStyle(
                       color: Color(0xFFE5E7EB),
                       fontWeight: FontWeight.w800,
@@ -6521,7 +6521,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             ),
             const SizedBox(height: 10),
             Text(
-              'Learner reactions are stored as preference data, scored like a Scale-style feedback set, and used to decide what to improve next.',
+              '学習者の反応を選好データとして蓄積し、Scale 社流のフィードバックのようにスコア化して、次に改善すべき点の判断に使います。',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.74),
                 fontSize: 12,
@@ -6533,18 +6533,18 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildRlhfMetricChip('Signals', '${snapshot.totalSignals}'),
+                _buildRlhfMetricChip('シグナル', '${snapshot.totalSignals}'),
                 _buildRlhfMetricChip(
-                  'Provider',
+                  'このAI',
                   providerSignals.toString(),
                 ),
                 _buildRlhfMetricChip(
-                  'Avg',
+                  '平均',
                   snapshot.averageRating.toStringAsFixed(1),
                 ),
                 _buildRlhfMetricChip(
-                  'Ready',
-                  snapshot.readyForFineTune ? 'Yes' : 'No',
+                  '微調整',
+                  snapshot.readyForFineTune ? '可' : '未',
                 ),
               ],
             ),
@@ -6573,7 +6573,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                       helpful: true,
                     ),
                     icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
-                    label: const Text('Useful'),
+                    label: const Text('役に立った'),
                     style: FilledButton.styleFrom(
                       backgroundColor: m.color,
                       foregroundColor: Colors.white,
@@ -6585,7 +6585,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                       helpful: false,
                     ),
                     icon: const Icon(Icons.report_problem_outlined, size: 16),
-                    label: const Text('Needs fix'),
+                    label: const Text('改善が必要'),
                   ),
                 ],
               ),
@@ -6616,7 +6616,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  'First-party data tuning readiness',
+                  '自社データ調整の準備度',
                   style: TextStyle(
                     color: Color(0xFFE5E7EB),
                     fontSize: 13,
@@ -6661,19 +6661,19 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             runSpacing: 8,
             children: [
               _buildRlhfMetricChip(
-                'Eligible',
+                '有効',
                 '${snapshot.eligibleRecords}/${snapshot.eligibleTarget}',
               ),
-              _buildRlhfMetricChip('Total', '${snapshot.totalRecords}'),
-              _buildRlhfMetricChip('Blocked', '${snapshot.blockedRecords}'),
-              _buildRlhfMetricChip('PII', snapshot.piiRisk),
+              _buildRlhfMetricChip('総数', '${snapshot.totalRecords}'),
+              _buildRlhfMetricChip('除外', '${snapshot.blockedRecords}'),
+              _buildRlhfMetricChip('個人情報', _jaPiiRisk(snapshot.piiRisk)),
               _buildRlhfMetricChip(
-                'Eval',
-                snapshot.readyForEvalBatch ? 'Ready' : 'No',
+                '評価',
+                snapshot.readyForEvalBatch ? '可' : '未',
               ),
               _buildRlhfMetricChip(
-                'Tune',
-                snapshot.readyForFineTune ? 'Ready' : 'No',
+                '微調整',
+                snapshot.readyForFineTune ? '可' : '未',
               ),
             ],
           ),
@@ -6689,6 +6689,19 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         ],
       ),
     );
+  }
+
+  String _jaPiiRisk(String risk) {
+    switch (risk) {
+      case 'low':
+        return '低';
+      case 'medium':
+        return '中';
+      case 'high':
+        return '高';
+      default:
+        return '不明';
+    }
   }
 
   Widget _buildRlhfMetricChip(String label, String value) {

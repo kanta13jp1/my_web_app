@@ -30,15 +30,14 @@ class UserDataFineTuneReadinessSnapshot {
       piiRisk: 'low',
       sourceCounts: {},
       signalSummary: {},
-      kgi: 'Use first-party product data to improve AI answer quality.',
+      kgi: '自社プロダクトのデータでAIの回答品質を高めます。',
       csf: [
         'Collect consent-aware feedback',
         'De-identify before export',
         'Evaluate before fine-tuning',
       ],
       kpi: {},
-      nextAction:
-          'Collect more explicit Useful/Needs fix feedback before tuning.',
+      nextAction: 'チューニング前に、「役に立った／改善が必要」の明示的なフィードバックをさらに集めましょう。',
     );
   }
 
