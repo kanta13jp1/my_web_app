@@ -952,6 +952,36 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+        'a revolving credit card trips the no-new-debt discipline monitor',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      // ファミペイに残高（最低返済のみ＝リボ繰越）→ 「カードは全額一括」違反。
+      await tester.binding.setSurfaceSize(const Size(1200, 3000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 500000,
+                'ファミペイ': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.textContaining('借金しない宣言モニター'), findsOneWidget);
+      expect(find.textContaining('カードは全額一括: 違反'), findsWidgets);
+
+      await _unmount(tester);
+    });
+
     testWidgets('mirror update notice offers and applies remote prefs', (
       tester,
     ) async {
