@@ -819,6 +819,48 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('revolving balance growth surfaces the monthly debt trend card',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final priorMonth = DateTime(now.year, now.month - 1, 1);
+      final priorKey = '${priorMonth.year.toString().padLeft(4, '0')}-'
+          '${priorMonth.month.toString().padLeft(2, '0')}';
+      // 前月末のモビット残高 3 万円を履歴に仕込み、今月 30 万へ増加させる。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_account_balance_history_v1': jsonEncode(<String, dynamic>{
+          priorKey: <String, dynamic>{'mobit': 30000},
+        }),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 3000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 500000,
+                'モビット': -300000,
+              },
+            },
+          ),
+        ),
+      );
+      // 履歴の非同期ロード → setState → 再描画を待つ。
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.textContaining('今月の問題点と翌月の改善（負債トレンド）'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('残高が先月より増加'), findsWidgets);
+
+      await _unmount(tester);
+    });
+
     testWidgets('mirror update notice offers and applies remote prefs', (
       tester,
     ) async {
