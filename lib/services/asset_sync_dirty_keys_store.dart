@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 集約 pref ドメインごとに「ローカルで編集したがまだサーバへ同期できていない
@@ -26,7 +27,32 @@ class AssetSyncDirtyKeysStore {
   /// 全ての write (markDirty / clearDomain) を直列化する process-wide ロック。
   /// 単一 pref blob への read-modify-write が並行 (= 各サイト unawaited) で
   /// 交錯し、別ドメイン/別キーの dirty マークを取りこぼす lost-update を防ぐ。
+  /// 姉妹の MirrorTombstoneStore と異なり本ストアは read↔write 間に
+  /// `await _loadAll` を挟む (= RMW が原子的でない) ため、このロックは
+  /// production では必須であり撤去できない。
+  ///
+  /// 🔴 testWidgets での注意 (= FakeAsync zone-orphan): production は単一の
+  /// root zone で走るため static でも正しく直列化されるが、`testWidgets` は
+  /// 各テストを個別の FakeAsync zone で実行する。あるテスト (zone A) の write が
+  /// `_writeLock` に未完了 future を残したまま zone A が破棄されると、次のテスト
+  /// (zone B) の `_writeLock.then(...)` は死んだ zone A の future に連結されて
+  /// 永久に完了せず hang する (= 単体 pass / 全 suite fail という cross-test
+  /// static state の典型症状。MirrorTombstoneStore へ同型ロックを移植した際に
+  /// 実証済み)。よって write 経路を踏む widget テストは setUp で
+  /// [resetWriteLockForTest] を呼び lock を現在の zone で再初期化すること。
+  ///
+  /// 現状の資産管理 page smoke は未ログイン (`auth.currentUser == null`) で
+  /// mirror upsert が早期 return し write 経路 (markDirty/clearDomain) を踏まない
+  /// ため dormant (= 安全) だが、将来ログイン状態の編集 smoke を足す場合に備え
+  /// 既に smoke の setUp で reset 済み。
   static Future<void> _writeLock = Future<void>.value();
+
+  /// [_writeLock] を現在の zone の完了済み future に再初期化する (テスト専用)。
+  /// FakeAsync zone を跨いだ static future の orphan-hang を防ぐ (上記参照)。
+  @visibleForTesting
+  static void resetWriteLockForTest() {
+    _writeLock = Future<void>.value();
+  }
 
   /// [action] を前の write 完了後に直列実行する。action の結果/例外は戻り値の
   /// future へ伝播するが、ロック鎖は失敗で途切れさせない。

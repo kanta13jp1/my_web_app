@@ -66,5 +66,29 @@ void main() {
       ]);
       expect(await store.loadDirty('keep', prefs: sp), <String>{'k1', 'k2'});
     });
+
+    test('resetWriteLockForTest leaves the lock usable for a fresh write',
+        () async {
+      final sp = await prefs();
+      // FakeAsync zone 跨ぎ対策の reset hook。reset 後も write が完了し読み戻せる
+      // (= lock を壊さない) ことを担保する。
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      await store.markDirty('domA', 'k1', prefs: sp);
+      expect(await store.loadDirty('domA', prefs: sp), <String>{'k1'});
+    });
+
+    test('serialization invariant holds after resetWriteLockForTest', () async {
+      final sp = await prefs();
+      AssetSyncDirtyKeysStore.resetWriteLockForTest();
+      // reset 直後でも並行 unawaited write が交錯せず全マークが残る。
+      await Future.wait(<Future<void>>[
+        store.markDirty('domA', 'a', prefs: sp),
+        store.markDirty('domB', 'b', prefs: sp),
+        store.markDirty('domC', 'c', prefs: sp),
+      ]);
+      expect(await store.loadDirty('domA', prefs: sp), <String>{'a'});
+      expect(await store.loadDirty('domB', prefs: sp), <String>{'b'});
+      expect(await store.loadDirty('domC', prefs: sp), <String>{'c'});
+    });
   });
 }

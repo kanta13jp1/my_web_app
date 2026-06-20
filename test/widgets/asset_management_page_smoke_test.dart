@@ -11,6 +11,7 @@ import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
+import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
@@ -89,6 +90,10 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
+    // 各テストを個別の FakeAsync zone で開始するため、前テストが残し得る
+    // static write-lock future を現在の zone の完了済み future へ再初期化する
+    // (= 将来ログイン状態の編集 smoke が write 経路を踏んでも orphan-hang しない)。
+    AssetSyncDirtyKeysStore.resetWriteLockForTest();
   });
 
   group('AssetManagementPage smoke', () {
