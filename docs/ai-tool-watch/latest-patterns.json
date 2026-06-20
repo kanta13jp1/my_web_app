@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-19T21:42:53Z",
+  "generated_at": "2026-06-20T21:43:46Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,9 +20,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-36b7530313b0",
+        "entry_id": "nf-e1497ee0e65f",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.183 / June 19, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . , git clean -fd , git stash drop ) are now blocked when you didn’t ask to discard local work, git commit --amend is blocked when the commit wasn’t made by the agent this...",
+        "text": "Claude Code changelog 2.1.185 / June 20, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . , git clean -fd , git stash drop ) are now blocked when you didn’t ask to discard local work, git commit --amend is blocked when the commit wasn’t made by the agent this...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ebf2b7cc70db7d6b65bc743e27cc94e53b25d0301e26fcdf0f4b1eaa8b915a0c",
+          "hash": "ca073ba045efa85ce1dbcc48c4c906e646832985230fbbbb3fd08385efbc3ee7",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,10 +75,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.183 / June 19, 2026",
+          "latest_signal": "2.1.185 / June 20, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "199e0a3185aad7a88dfbcb5ce70e8aabbe4e92be4b78e00da0e42901a00ab415",
+          "previous_hash": "ebf2b7cc70db7d6b65bc743e27cc94e53b25d0301e26fcdf0f4b1eaa8b915a0c",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -90,7 +90,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-36b7530313b0",
+        "entry_id": "nf-e1497ee0e65f",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -271,7 +271,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "96729dfb552664f4495620395a7c13e19d647fc36b5eab62a091081e1e1972c3",
+          "hash": "9370b945659180f6dd5c9e0c3528409663476d7aa250cc5fb0991822cf7f71ea",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -320,7 +320,7 @@
           "latest_signal": "2026-06-18 / Codex app 26.616 New features Added Record",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "80bf8848a0ab5f58b517ff402178bccaf472ff711f500fd9f0526882ca0f2299",
+          "previous_hash": "96729dfb552664f4495620395a7c13e19d647fc36b5eab62a091081e1e1972c3",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -358,7 +358,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "7500c570daf6a0bca472ca0f8ba33709827e62b8bb0f3979553d2cecf19a381c",
@@ -401,7 +401,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "9b7038281b17489fd74ff231f6c1a2f76fdc5f175ff843f32aa563cd36d9c3b8",
+          "previous_hash": "7500c570daf6a0bca472ca0f8ba33709827e62b8bb0f3979553d2cecf19a381c",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -482,7 +482,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
@@ -512,7 +512,7 @@
           "latest_signal": "3.8 / Jun 18, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "e2f0070ce2cde1750f8658126f6ab4f15faa24ae3ea3156aa035d8662f399644",
+          "previous_hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
@@ -611,18 +611,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-1257ffc3f188",
+        "entry_id": "nf-28081656f51c",
         "title": "Devin release notes",
-        "text": "Devin release notes June 17, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Automations Sidebar Automations now appear in the main navigation sidebar for quicker access to your configured automation rules.",
+        "text": "Devin release notes June 19, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... 42 previously-beta MCPs have graduated to general availability.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5e3329178273cb19db579b9ac84b83a927a1624a9320e508d9d21057a2ed41cb",
+          "hash": "28e83c1d680b49a10b1536b987c4cff23b5b83d4f5d5b3c87a403bfac4470d85",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -654,7 +654,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "June 17, 2026",
+          "latest_signal": "June 19, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "5e3329178273cb19db579b9ac84b83a927a1624a9320e508d9d21057a2ed41cb",
@@ -662,14 +662,14 @@
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
             "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-            "Automations Sidebar Automations now appear in the main navigation sidebar for quicker access to your configured automation rules."
+            "42 previously-beta MCPs have graduated to general availability."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-1257ffc3f188",
+        "entry_id": "nf-28081656f51c",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
