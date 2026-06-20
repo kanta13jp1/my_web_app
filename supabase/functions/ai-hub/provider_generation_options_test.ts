@@ -1,6 +1,8 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   applyProviderGenerationOptions,
+  GEMINI_MAX_THINKING_BUDGET,
+  GEMINI_MIN_THINKING_BUDGET,
   GEMINI_OUTPUT_TOKEN_RESERVE,
 } from "./provider_generation_options.ts";
 
@@ -39,14 +41,52 @@ Deno.test("gemini flash-lite also gets a thinking budget", () => {
   );
 });
 
-Deno.test("gemini does not set a thinking budget for small max tokens", () => {
+Deno.test(
+  "gemini clamps the thinking budget to the valid minimum for the 8192 cap " +
+    "(regression: production maxTokens=8192 produced 192 -> 400)",
+  () => {
+    // index.ts の normalizeMaxTokens は maxTokens を 8192 上限へクランプするため、
+    // 資産要約のような大きな要求は常に 8192 で届く。旧実装は 8192-8000=192 を
+    // thinkingBudget に渡し Gemini の 400 ("192 invalid, choose 512-24576") を招いた。
+    const body = applyProviderGenerationOptions(
+      "google_flash_lite",
+      { contents: [] },
+      { maxTokens: 8192 },
+    );
+    const generationConfig = body.generationConfig as Record<string, unknown>;
+    assertEquals(generationConfig.maxOutputTokens, 8192);
+    const thinkingConfig = generationConfig.thinkingConfig as Record<
+      string,
+      unknown
+    >;
+    assertEquals(thinkingConfig.thinkingBudget, GEMINI_MIN_THINKING_BUDGET);
+  },
+);
+
+Deno.test("gemini never exceeds the maximum thinking budget", () => {
   const body = applyProviderGenerationOptions(
     "google",
     { contents: [] },
-    { maxTokens: GEMINI_OUTPUT_TOKEN_RESERVE },
+    {
+      maxTokens: GEMINI_MAX_THINKING_BUDGET + GEMINI_OUTPUT_TOKEN_RESERVE + 100,
+    },
   );
   const generationConfig = body.generationConfig as Record<string, unknown>;
-  assertEquals(generationConfig.maxOutputTokens, GEMINI_OUTPUT_TOKEN_RESERVE);
+  const thinkingConfig = generationConfig.thinkingConfig as Record<
+    string,
+    unknown
+  >;
+  assertEquals(thinkingConfig.thinkingBudget, GEMINI_MAX_THINKING_BUDGET);
+});
+
+Deno.test("gemini does not set a thinking budget for tiny max tokens", () => {
+  const body = applyProviderGenerationOptions(
+    "google",
+    { contents: [] },
+    { maxTokens: GEMINI_MIN_THINKING_BUDGET },
+  );
+  const generationConfig = body.generationConfig as Record<string, unknown>;
+  assertEquals(generationConfig.maxOutputTokens, GEMINI_MIN_THINKING_BUDGET);
   assertEquals(generationConfig.thinkingConfig, undefined);
 });
 
