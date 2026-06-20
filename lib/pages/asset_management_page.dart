@@ -41,6 +41,8 @@ import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
+import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
+import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
@@ -77,6 +79,7 @@ import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
+import 'package:my_web_app/widgets/subscription_audit_card.dart';
 import 'package:my_web_app/widgets/subscription_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
@@ -209,6 +212,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugRecurringFixedCostsDeletedMirror;
 
+  /// テスト専用: サブスク棚卸しの確認状況ミラー値 (`{sourceId: iso8601}`) を注入し、
+  /// 端末間 MAX マージ復元をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugSubscriptionAuditMirror;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -233,6 +241,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInitialRecurringFixedCosts,
     this.debugRecurringFixedCostsMirror,
     this.debugRecurringFixedCostsDeletedMirror,
+    this.debugSubscriptionAuditMirror,
   });
 
   @override
@@ -433,6 +442,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
   List<AssetRecurringFixedCost> _recurringFixedCosts =
       <AssetRecurringFixedCost>[];
+  // サブスク棚卸し: 支払い元ごとの最終確認日時 (sourceId → UTC)。
+  Map<String, DateTime> _subscriptionAuditState = <String, DateTime>{};
   // 定期取引の自動検出で「無視」した正規化ラベル(再提案しない / 支出側)。
   Set<String> _ignoredRecurringLabels = <String>{};
   // 定期入金の自動検出で「無視」した正規化ラベル(再提案しない / 収入側)。
@@ -618,6 +629,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
   static const String _recurringFixedCostsDeletedMirrorKey =
       'recurring_fixed_costs_deleted';
+  final AssetSubscriptionAuditStore _subscriptionAuditStore =
+      const AssetSubscriptionAuditStore();
+  static const String _subscriptionAuditMirrorKey = 'subscription_audit_state';
   final AssetRecurringSuggestionIgnoreStore _recurringIgnoreStore =
       const AssetRecurringSuggestionIgnoreStore();
   static const String _recurringIgnoredMirrorKey =
@@ -744,6 +758,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
+    unawaited(_loadSubscriptionAudit());
     unawaited(_loadRecurringIgnored());
     unawaited(_loadRecurringIncomeIgnored());
     unawaited(_loadDrinkChallenge());
@@ -7996,6 +8011,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
+            if (_isSectionShown(
+                AssetManagementSectionId.subscriptionAudit)) ...[
+              _buildSubscriptionAuditCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+            ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
               const SizedBox(height: 16),
@@ -8695,6 +8715,192 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('recurring fixed cost mirror upsert failed: $e');
     }
+  }
+
+  // --- サブスク棚卸し (支払い元ごとの確認状況) ---
+
+  Future<void> _loadSubscriptionAudit() async {
+    try {
+      final state = await _subscriptionAuditStore.load();
+      if (mounted && state.isNotEmpty) {
+        setState(() => _subscriptionAuditState = state);
+      }
+    } catch (e) {
+      debugPrint('Error loading subscription audit: $e');
+    }
+    await _restoreSubscriptionAuditFromMirror();
+  }
+
+  /// サーバ集約ミラー (pref_key: subscription_audit_state) から復元する。
+  /// 「確認した」は単調なので、tombstone/dirty/LWW ではなく MAX マージで統合する。
+  Future<void> _restoreSubscriptionAuditFromMirror() async {
+    final debugMirror = widget.debugSubscriptionAuditMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    final localBefore = Map<String, DateTime>.from(_subscriptionAuditState);
+    try {
+      final Map<String, DateTime> serverState;
+      final DateTime? mirrorUpdatedAt;
+      if (debugMirror != null) {
+        serverState =
+            AssetSubscriptionAuditStore.decodeMirrorValue(debugMirror);
+        mirrorUpdatedAt = DateTime.now().toUtc();
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _subscriptionAuditMirrorKey);
+        if (rows.isEmpty) {
+          // サーバ行無し: ローカルにあれば初回バックフィル。
+          if (localBefore.isNotEmpty) {
+            unawaited(_mirrorSubscriptionAudit());
+          }
+          return;
+        }
+        serverState = AssetSubscriptionAuditStore.decodeMirrorValue(
+          rows.first['value'],
+        );
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
+      }
+      if (!mounted) {
+        return;
+      }
+      // 取込み中に「確認した」が入っても失わないよう、localBefore ではなく現在の
+      // in-memory state とマージする (MAX は単調なので新しい確認を消さない)。
+      final current = _subscriptionAuditState;
+      final merged = AssetSubscriptionAuditStore.mergeMax(current, serverState);
+      if (!_sameSubscriptionAuditState(current, merged)) {
+        setState(() => _subscriptionAuditState = merged);
+        _persistInBackground(
+          _subscriptionAuditStore.save(merged),
+          'subscription audit restore save',
+        );
+        unawaited(
+          _realignMirrorTimestamp(_subscriptionAuditMirrorKey, mirrorUpdatedAt),
+        );
+      }
+      // ローカルにサーバより新しい確認があればサーバへ反映 (和集合維持)。
+      final localHasNewer = localBefore.entries.any((entry) {
+        final server = serverState[entry.key];
+        return server == null || entry.value.isAfter(server);
+      });
+      if (localHasNewer && debugMirror == null) {
+        unawaited(_mirrorSubscriptionAudit());
+      }
+    } catch (e) {
+      debugPrint('subscription audit mirror restore failed: $e');
+    }
+  }
+
+  bool _sameSubscriptionAuditState(
+    Map<String, DateTime> a,
+    Map<String, DateTime> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// 確認状況の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorSubscriptionAudit() async {
+    unawaited(_syncTimestampStore.markChanged(_subscriptionAuditMirrorKey));
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _subscriptionAuditMirrorKey,
+        'value': AssetSubscriptionAuditStore.encodeMirrorValue(
+          _subscriptionAuditState,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('subscription audit mirror upsert failed: $e');
+    }
+  }
+
+  void _markSubscriptionSourceChecked(SubscriptionAuditSource source) {
+    final next = Map<String, DateTime>.from(_subscriptionAuditState);
+    next[source.id] = DateTime.now().toUtc();
+    setState(() => _subscriptionAuditState = next);
+    _persistInBackground(
+      _subscriptionAuditStore.save(next),
+      'subscription audit save',
+    );
+    unawaited(_mirrorSubscriptionAudit());
+  }
+
+  /// 棚卸し対象の支払い元: manual (Apple/au/Google) + 銀行 + カード別 (口座から導出)。
+  List<SubscriptionAuditSource> _subscriptionAuditSources(
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    final sources = <SubscriptionAuditSource>[
+      ...AssetSubscriptionAuditCatalog.manualSources,
+      AssetSubscriptionAuditCatalog.bankSource,
+    ];
+    if (workbook != null) {
+      for (final account in _cardBillingAccountOptions(workbook)) {
+        sources.add(
+          SubscriptionAuditSource(
+            id: AssetSubscriptionAuditCatalog.cardSourceId(account.id),
+            name: account.name,
+            kind: SubscriptionAuditSourceKind.autoAssisted,
+          ),
+        );
+      }
+    }
+    return sources;
+  }
+
+  /// 未登録の定期支出を支払い元 (sourceId) ごとに集計する。検出は登録済み・無視済みを
+  /// 減算済みの `_detectRecurringTransactions()` を流用 (提案カードと二重計上しない)。
+  Map<String, int> _unregisteredCountBySourceId(
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    final detected = _detectRecurringTransactions();
+    if (detected.isEmpty) {
+      return const <String, int>{};
+    }
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    return AssetSubscriptionAuditCatalog.bucketUnregisteredCounts(
+      accounts: accounts.map(
+        (account) => (id: account.id, name: account.name, kind: account.kind),
+      ),
+      suggestedSourceNames: detected.map((item) => item.suggestedSourceName),
+    );
+  }
+
+  Widget _buildSubscriptionAuditCard(AssetLiabilityWorkbook? workbook) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    final sourceOptions = <RecurringFixedCostSourceOption>[
+      for (final account in accounts)
+        if (account.balance > 0) (id: account.id, name: account.name),
+    ];
+    return SubscriptionAuditCard(
+      sources: _subscriptionAuditSources(workbook),
+      lastCheckedAt: _subscriptionAuditState,
+      unregisteredCountBySourceId: _unregisteredCountBySourceId(workbook),
+      now: _now,
+      onMarkChecked: _markSubscriptionSourceChecked,
+      onRegisterSubscription: (source) => unawaited(
+        _openRecurringFixedCostEditor(
+          sourceOptions: sourceOptions,
+          category: AssetRecurringFixedCostCategory.subscription,
+        ),
+      ),
+    );
   }
 
   /// 削除した定期固定費のトゥームストーン。union マージ/backfill での復活を防ぎ、

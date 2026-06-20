@@ -11,6 +11,7 @@ import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
+import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
@@ -1567,6 +1568,76 @@ void main() {
           local.map((c) => c.id),
           containsAll(<String>['fc_denki', 'fc_gym']),
         );
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'subscription audit syncs check state from the server mirror',
+      (tester) async {
+        // ローカルは空。新端末がサーバミラーから確認状況を取り込む。
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugSubscriptionAuditMirror:
+                  AssetSubscriptionAuditStore.encodeMirrorValue(
+                <String, DateTime>{'apple_id': DateTime.utc(2026, 6, 1)},
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final state = await const AssetSubscriptionAuditStore().load();
+        expect(state['apple_id'], DateTime.utc(2026, 6, 1));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'subscription audit MAX-merges and never clobbers a newer check',
+      (tester) async {
+        // apple_id: local 古 + mirror 新 → 新。au_kantan: local 新 + mirror 古 → 新。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetSubscriptionAuditStore.prefsKey: jsonEncode(
+            AssetSubscriptionAuditStore.encodeMirrorValue(
+              <String, DateTime>{
+                'apple_id': DateTime.utc(2026, 6, 1),
+                'au_kantan': DateTime.utc(2026, 6, 10),
+              },
+            ),
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugSubscriptionAuditMirror:
+                  AssetSubscriptionAuditStore.encodeMirrorValue(
+                <String, DateTime>{
+                  'apple_id': DateTime.utc(2026, 6, 10),
+                  'au_kantan': DateTime.utc(2026, 6, 1),
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final state = await const AssetSubscriptionAuditStore().load();
+        // どちらの方向でも新しい確認が残る (MAX マージ)。
+        expect(state['apple_id'], DateTime.utc(2026, 6, 10));
+        expect(state['au_kantan'], DateTime.utc(2026, 6, 10));
 
         await _unmount(tester);
       },
