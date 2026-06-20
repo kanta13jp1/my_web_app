@@ -38,6 +38,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_account_balance_history_store.dart';
+import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
@@ -17316,6 +17317,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementMonthlyDebtTrendList(report.debtTrendInsights),
             const SizedBox(height: 12),
           ],
+          if (report.disciplineReport?.isRelevant ?? false) ...[
+            _buildAssetManagementDisciplineCard(report.disciplineReport!),
+            const SizedBox(height: 12),
+          ],
           _buildAssetManagementAssistantActionList(report.actionItems),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -18154,6 +18159,207 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetDebtTrendSeverity.warning => const Color(0xFFD97706),
       AssetDebtTrendSeverity.critical => const Color(0xFFB91C1C),
     };
+  }
+
+  String _assetDisciplineTypeLabel(AssetDebtDisciplineViolationType type) {
+    return switch (type) {
+      AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
+      AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括（リボ/分割）',
+    };
+  }
+
+  /// 「借金しない宣言」の遵守状況（達成は緑で称賛、違反は赤で具体指摘）を描画する。
+  Widget _buildAssetManagementDisciplineCard(
+    AssetDebtDisciplineReport report,
+  ) {
+    final compliant = report.isCompliant;
+    final headerColor =
+        compliant ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
+    final bgColor =
+        compliant ? const Color(0xFFECFDF5) : const Color(0xFFFFF1F2);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: headerColor.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                compliant ? Icons.verified_outlined : Icons.gpp_maybe_outlined,
+                color: headerColor,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '借金しない宣言モニター',
+                  style: TextStyle(
+                    color: headerColor,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _buildAssetDisciplinePledgeChip(
+                '① 追加借入ゼロ',
+                achieved: report.zeroNewBorrowingAchieved,
+                evaluated: report.hasPriorMonthData,
+              ),
+              _buildAssetDisciplinePledgeChip(
+                '② カードは全額一括',
+                achieved: report.lumpSumAchieved,
+                evaluated: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (compliant)
+            Text(
+              report.hasPriorMonthData
+                  ? '🎉 今月は「追加借入ゼロ」と「カードは全額一括」をどちらも達成しています。この調子を続けましょう。'
+                  : '今のところカードの繰越（リボ/分割）はありません。新規利用の判定は来月以降の履歴蓄積後に有効化されます。',
+              style: const TextStyle(fontSize: 12, height: 1.5),
+            )
+          else
+            for (final violation in report.allViolations.take(6))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _buildAssetDisciplineViolationTile(violation),
+              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetDisciplinePledgeChip(
+    String label, {
+    required bool achieved,
+    required bool evaluated,
+  }) {
+    final color = !evaluated
+        ? const Color(0xFF6B7280)
+        : (achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C));
+    final status = !evaluated ? '判定保留' : (achieved ? '達成' : '違反');
+    final icon = !evaluated
+        ? Icons.hourglass_empty
+        : (achieved ? Icons.check_circle_outline : Icons.cancel_outlined);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.32)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            '$label: $status',
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetDisciplineViolationTile(
+    AssetDebtDisciplineViolation violation,
+  ) {
+    final color = _assetDebtTrendSeverityColor(violation.severity);
+    final amountLabel =
+        violation.type == AssetDebtDisciplineViolationType.newBorrowing
+            ? '新規利用'
+            : '繰越額';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${violation.accountName}（${_assetDisciplineTypeLabel(violation.type)}）',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            violation.problem,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.arrow_forward, color: color, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    violation.action,
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _buildAssetLiabilitySyncChip(
+                label: amountLabel,
+                value: _formatManagementYen(violation.amount),
+                color: color,
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '残高',
+                value: _formatManagementYen(violation.currentBalance),
+                color: const Color(0xFF6B7280),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   String _assetDebtTrendCategoryLabel(AssetDebtTrendCategory category) {

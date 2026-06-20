@@ -1,5 +1,6 @@
 import '../models/asset_liability_workbook.dart';
 import '../models/user_profile.dart';
+import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
 
@@ -229,6 +230,9 @@ class AssetManagementInsightReport {
   /// 月をまたいだ負債トレンド（リボ複利・残高増加・超長期完済）の指摘。
   final List<AssetDebtTrendInsight> debtTrendInsights;
 
+  /// 「借金しない宣言」モニターの月次評価（追加借入ゼロ／カード一括）。null=未評価。
+  final AssetDebtDisciplineReport? disciplineReport;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -242,6 +246,7 @@ class AssetManagementInsightReport {
     this.implementationContexts =
         const <AssetManagementImplementationContext>[],
     this.debtTrendInsights = const <AssetDebtTrendInsight>[],
+    this.disciplineReport,
   });
 
   bool get hasDebtTrendInsights => debtTrendInsights.isNotEmpty;
@@ -285,6 +290,8 @@ class AssetManagementInsightService {
     String? mainAccountId,
     Map<String, double> priorMonthAccountBalances = const <String, double>{},
     AssetDebtTrendAnalyzer debtTrendAnalyzer = const AssetDebtTrendAnalyzer(),
+    AssetDebtDisciplineMonitor disciplineMonitor =
+        const AssetDebtDisciplineMonitor(),
   }) {
     final breakdown = _availableMoneyBreakdown(
       workbook: workbook,
@@ -333,6 +340,10 @@ class AssetManagementInsightService {
       workbook: workbook,
       priorBalancesByAccountId: priorMonthAccountBalances,
     );
+    final disciplineReport = disciplineMonitor.evaluate(
+      workbook: workbook,
+      priorBalancesByAccountId: priorMonthAccountBalances,
+    );
 
     return AssetManagementInsightReport(
       workbook: workbook,
@@ -346,6 +357,7 @@ class AssetManagementInsightService {
       developerRequests: developerRequests,
       implementationContexts: implementationContexts,
       debtTrendInsights: debtTrendInsights,
+      disciplineReport: disciplineReport,
     );
   }
 
@@ -1202,6 +1214,11 @@ class AssetManagementInsightPromptBuilder {
         '「今月いくら増えたか」「このままだと何年で完済か/一生終わらないか」「翌月いくら返済すべきか（具体額）」を断言してください。'
         '該当データが無い月だけ、そのカテゴリには触れなくて構いません。',
       )
+      ..writeln(
+        '下記「借金しない宣言モニター」は本人の固い誓約です。違反（追加借入の発生・カードの非一括/リボ）があれば、'
+        'どの口座でいくらかを具体的に挙げ、「次はこうする」を断言してください。'
+        '逆に両誓約を守れている月は、必ず明確に褒めて継続を後押ししてください（締めの総評でも触れる）。',
+      )
       ..writeln()
       ..writeln('## 総合サマリー')
       ..writeln('- 基準日: ${_formatDate(workbook.baseDate)}')
@@ -1258,6 +1275,9 @@ class AssetManagementInsightPromptBuilder {
       ..writeln()
       ..writeln('## 今月の問題点と翌月の改善（負債トレンド）')
       ..write(_debtTrendLines(report))
+      ..writeln()
+      ..writeln('## 借金しない宣言モニター（追加借入ゼロ／カード一括）')
+      ..write(_disciplineLines(report))
       ..writeln()
       ..writeln('## アクション件数')
       ..writeln('- 合計: ${report.actionItems.length}')
@@ -1577,6 +1597,43 @@ class AssetManagementInsightPromptBuilder {
       AssetDebtTrendCategory.negativeAmortization => 'リボ複利(返済が利息以下)',
       AssetDebtTrendCategory.balanceIncreasing => '残高増加(新規利用過多)',
       AssetDebtTrendCategory.slowPayoff => '超長期完済',
+    };
+  }
+
+  String _disciplineLines(AssetManagementInsightReport report) {
+    final discipline = report.disciplineReport;
+    if (discipline == null) {
+      return '- 規律モニター未評価。\n';
+    }
+    final buffer = StringBuffer()
+      ..writeln('- 誓約①「追加の借金をしない」: '
+          '${discipline.zeroNewBorrowingAchieved ? '達成' : '違反あり'}'
+          '${discipline.hasPriorMonthData ? '' : '（前月データ未蓄積のため判定保留）'}')
+      ..writeln('- 誓約②「カードは必ず一括返済」: '
+          '${discipline.lumpSumAchieved ? '達成' : '違反あり'}')
+      ..writeln('- 今月の新規借入推定合計: ${_formatAmount(discipline.totalNewBorrowing)}')
+      ..writeln('- リボ/分割で翌月へ繰り越す残高合計: '
+          '${_formatAmount(discipline.totalCarriedOver)}');
+    if (discipline.isCompliant) {
+      buffer.writeln('- 今月は両誓約を守れています。AIはこの達成を必ず褒め、継続を後押ししてください。');
+      return buffer.toString();
+    }
+    for (final violation in discipline.allViolations) {
+      buffer
+        ..writeln('- [${violation.severity.name}] '
+            '${_disciplineTypeLabel(violation.type)} / ${violation.accountName} / '
+            '金額:${_formatAmount(violation.amount)} / '
+            '残高:${_formatAmount(violation.currentBalance)}')
+        ..writeln('  - 問題点: ${violation.problem}')
+        ..writeln('  - 対応: ${violation.action}');
+    }
+    return buffer.toString();
+  }
+
+  String _disciplineTypeLabel(AssetDebtDisciplineViolationType type) {
+    return switch (type) {
+      AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
+      AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括(リボ/分割)',
     };
   }
 
