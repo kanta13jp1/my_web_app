@@ -65,7 +65,7 @@ class AssetSubscriptionAuditCatalog {
   static const List<SubscriptionAuditSource> manualSources =
       <SubscriptionAuditSource>[
     SubscriptionAuditSource(
-      id: 'apple_id',
+      id: appleSourceId,
       name: 'Apple (iOS) サブスク',
       kind: SubscriptionAuditSourceKind.manualCheck,
       checkSteps: <String>[
@@ -76,7 +76,7 @@ class AssetSubscriptionAuditCatalog {
       ],
     ),
     SubscriptionAuditSource(
-      id: 'au_kantan',
+      id: auKantanSourceId,
       name: 'auかんたん決済',
       kind: SubscriptionAuditSourceKind.manualCheck,
       checkSteps: <String>[
@@ -87,7 +87,7 @@ class AssetSubscriptionAuditCatalog {
       ],
     ),
     SubscriptionAuditSource(
-      id: 'google_play',
+      id: googlePlaySourceId,
       name: 'Google Play 定期購入',
       kind: SubscriptionAuditSourceKind.manualCheck,
       checkSteps: <String>[
@@ -109,6 +109,62 @@ class AssetSubscriptionAuditCatalog {
   /// 口座 ID からカード別ソースの安定 ID を作る。
   static String cardSourceId(String accountId) =>
       '$cardSourceIdPrefix$accountId';
+
+  /// 各 manual ソースの安定 ID (請求経路との対応に使う / リネーム不可)。
+  static const String appleSourceId = 'apple_id';
+  static const String googlePlaySourceId = 'google_play';
+  static const String auKantanSourceId = 'au_kantan';
+
+  /// サブスクの請求経路 → 対応する棚卸し manual ソース ID。direct は対応なし (null)。
+  static String? sourceIdForGateway(AssetSubscriptionBillingGateway gateway) {
+    switch (gateway) {
+      case AssetSubscriptionBillingGateway.direct:
+        return null;
+      case AssetSubscriptionBillingGateway.apple:
+        return appleSourceId;
+      case AssetSubscriptionBillingGateway.googlePlay:
+        return googlePlaySourceId;
+      case AssetSubscriptionBillingGateway.auKantan:
+        return auKantanSourceId;
+    }
+  }
+
+  /// 棚卸し manual ソース ID → 対応する請求経路 (登録ダイアログの既定経路に使う)。
+  static AssetSubscriptionBillingGateway? gatewayForSourceId(String sourceId) {
+    switch (sourceId) {
+      case appleSourceId:
+        return AssetSubscriptionBillingGateway.apple;
+      case googlePlaySourceId:
+        return AssetSubscriptionBillingGateway.googlePlay;
+      case auKantanSourceId:
+        return AssetSubscriptionBillingGateway.auKantan;
+      default:
+        return null;
+    }
+  }
+
+  /// 登録済みサブスク (請求経路 + 月額) を、経由ソース ID ごとに件数・合計額へ集計する
+  /// 純関数。direct (経由なし) は集計対象外。棚卸しで「Apple 経由の合計」を集約請求
+  /// (例 `APPLE.COM/BILL`) と突き合わせるための表示に使う。
+  static Map<String, ({int count, double total})> gatewayTotalsBySourceId({
+    required Iterable<
+            ({AssetSubscriptionBillingGateway gateway, double amount})>
+        subscriptions,
+  }) {
+    final result = <String, ({int count, double total})>{};
+    for (final sub in subscriptions) {
+      final sourceId = sourceIdForGateway(sub.gateway);
+      if (sourceId == null || sub.amount <= 0) {
+        continue;
+      }
+      final existing = result[sourceId];
+      result[sourceId] = (
+        count: (existing?.count ?? 0) + 1,
+        total: (existing?.total ?? 0) + sub.amount,
+      );
+    }
+    return result;
+  }
 
   /// 検出した定期支出 ([suggestedSourceNames] = 各検出の引落元口座名) を支払い元
   /// ソース ID ごとに集計する純関数。

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../services/asset_subscription_audit_catalog.dart';
 
@@ -30,6 +31,8 @@ class SubscriptionAuditCard extends StatelessWidget {
     required this.onMarkChecked,
     required this.onRegisterSubscription,
     this.unregisteredCountBySourceId = const <String, int>{},
+    this.registeredByGatewaySourceId =
+        const <String, ({int count, double total})>{},
     this.staleDays = AssetSubscriptionAuditCatalog.staleDays,
   });
 
@@ -41,6 +44,10 @@ class SubscriptionAuditCard extends StatelessWidget {
 
   /// autoAssisted ソースの未登録定期支出件数 (情報表示用)。
   final Map<String, int> unregisteredCountBySourceId;
+
+  /// manual ソース (Apple/au/Google) に登録済みのサブスク件数・月額合計。
+  /// 「この合計が明細の集約請求 (APPLE.COM/BILL 等) と一致するか」の突き合わせに使う。
+  final Map<String, ({int count, double total})> registeredByGatewaySourceId;
 
   /// ステータス判定の基準時刻 (テスト決定性のため注入)。
   final DateTime now;
@@ -160,6 +167,7 @@ class SubscriptionAuditCard extends StatelessWidget {
                   ),
                   unregisteredCount:
                       unregisteredCountBySourceId[source.id] ?? 0,
+                  registered: registeredByGatewaySourceId[source.id],
                   onMarkChecked: () => onMarkChecked(source),
                   onRegister: () => onRegisterSubscription(source),
                 ),
@@ -178,6 +186,7 @@ class _SourceTile extends StatelessWidget {
     required this.status,
     required this.statusLabel,
     required this.unregisteredCount,
+    required this.registered,
     required this.onMarkChecked,
     required this.onRegister,
   });
@@ -186,8 +195,13 @@ class _SourceTile extends StatelessWidget {
   final SubscriptionAuditStatus status;
   final String statusLabel;
   final int unregisteredCount;
+
+  /// この manual ソースに登録済みのサブスク件数・月額合計 (無ければ null)。
+  final ({int count, double total})? registered;
   final VoidCallback onMarkChecked;
   final VoidCallback onRegister;
+
+  static final NumberFormat _yen = NumberFormat('#,###');
 
   Color _statusColor(ColorScheme scheme) {
     switch (status) {
@@ -265,6 +279,17 @@ class _SourceTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           header,
+          if (isManual && registered != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '登録済み ${registered!.count}件 / 月 ¥${_yen.format(registered!.total)}'
+                ' — 明細の集約請求 (例 APPLE.COM/BILL) と一致するか確認',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
           if (isManual && source.checkSteps.isNotEmpty)
             Theme(
               // ExpansionTile の区切り線を消してリスト内に馴染ませる。

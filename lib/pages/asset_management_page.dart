@@ -883,7 +883,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// AIコメントが指摘するカード明細の未取込・差分に対し、取り込み・照合
   /// パネルへ誘導するリンクの文言。確認が必要なカード名を織り込む。
   String _cardStatementReconciliationLinkLabel(
-      AssetLiabilityWorkbook workbook) {
+    AssetLiabilityWorkbook workbook,
+  ) {
     final groups = workbook.cardStatementReconciliation.needsReviewGroups;
     if (groups.length == 1) {
       return '${groups.first.billingAccountName}の明細を取り込んで照合する';
@@ -8015,17 +8016,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildCategoryBudgetCard(),
             ],
             if (_isSectionShown(
-                AssetManagementSectionId.recurringFixedCost)) ...[
+              AssetManagementSectionId.recurringFixedCost,
+            )) ...[
               _buildRecurringFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(
-                AssetManagementSectionId.subscriptionFixedCost)) ...[
+              AssetManagementSectionId.subscriptionFixedCost,
+            )) ...[
               _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(
-                AssetManagementSectionId.subscriptionAudit)) ...[
+              AssetManagementSectionId.subscriptionAudit,
+            )) ...[
               _buildSubscriptionAuditCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
@@ -8237,9 +8241,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     if (day == null ||
                         day < AssetSalaryDayStore.minSalaryDay ||
                         day > AssetSalaryDayStore.maxSalaryDay) {
-                      setDialogState(
-                        () => errorText = '1〜28 の日付を入力してください',
-                      );
+                      setDialogState(() => errorText = '1〜28 の日付を入力してください');
                       return;
                     }
                     Navigator.of(dialogContext).pop();
@@ -8614,8 +8616,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final List<AssetRecurringFixedCost> serverList;
       final DateTime? mirrorUpdatedAt;
       if (debugMirror != null) {
-        serverList =
-            AssetRecurringFixedCostStore.decodeMirrorValue(debugMirror);
+        serverList = AssetRecurringFixedCostStore.decodeMirrorValue(
+          debugMirror,
+        );
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
         final rows = await _supabase
@@ -8756,8 +8759,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final Map<String, DateTime> serverState;
       final DateTime? mirrorUpdatedAt;
       if (debugMirror != null) {
-        serverState =
-            AssetSubscriptionAuditStore.decodeMirrorValue(debugMirror);
+        serverState = AssetSubscriptionAuditStore.decodeMirrorValue(
+          debugMirror,
+        );
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
         final rows = await _supabase
@@ -8901,16 +8905,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       for (final account in accounts)
         if (account.balance > 0) (id: account.id, name: account.name),
     ];
+    final gatewayTotals = AssetSubscriptionAuditCatalog.gatewayTotalsBySourceId(
+      subscriptions: [
+        for (final cost in _recurringFixedCosts)
+          if (cost.category == AssetRecurringFixedCostCategory.subscription)
+            (gateway: cost.billingGateway, amount: cost.amount),
+      ],
+    );
     return SubscriptionAuditCard(
       sources: _subscriptionAuditSources(workbook),
       lastCheckedAt: _subscriptionAuditState,
       unregisteredCountBySourceId: _unregisteredCountBySourceId(workbook),
+      registeredByGatewaySourceId: gatewayTotals,
       now: _now,
       onMarkChecked: _markSubscriptionSourceChecked,
       onRegisterSubscription: (source) => unawaited(
         _openRecurringFixedCostEditor(
           sourceOptions: sourceOptions,
           category: AssetRecurringFixedCostCategory.subscription,
+          // Apple/au/Google 行から登録するときは請求経路を既定で合わせる。
+          gateway:
+              AssetSubscriptionAuditCatalog.gatewayForSourceId(source.id) ??
+                  AssetSubscriptionBillingGateway.direct,
         ),
       ),
     );
@@ -8919,9 +8935,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 削除した定期固定費のトゥームストーン。union マージ/backfill での復活を防ぎ、
   /// 他端末へ削除を伝播する (リボ設定と同じパターン)。
   static const MirrorTombstoneStore _recurringFixedCostTombstones =
-      MirrorTombstoneStore(
-    storageKey: 'recurring_fixed_costs_deleted_v1',
-  );
+      MirrorTombstoneStore(storageKey: 'recurring_fixed_costs_deleted_v1');
 
   /// 削除はトゥームストーン化、再追加 (同 id) は解除する。
   Future<void> _recordRecurringFixedCostTombstone(
@@ -9230,6 +9244,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required List<RecurringFixedCostSourceOption> sourceOptions,
     AssetRecurringFixedCostCategory category =
         AssetRecurringFixedCostCategory.utility,
+    AssetSubscriptionBillingGateway gateway =
+        AssetSubscriptionBillingGateway.direct,
   }) async {
     final result = await showRecurringFixedCostEditor(
       context,
@@ -9237,6 +9253,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       prefill: prefill,
       sourceAccounts: sourceOptions,
       category: category,
+      gateway: gateway,
     );
     if (result != null) {
       _saveRecurringFixedCost(result);
@@ -9582,9 +9599,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       registerLabel: '定期収入に登録',
       suggestions: _detectRecurringIncome(),
       currencyFormatter: _formatYen,
-      onRegister: (detected) => unawaited(
-        _registerDetectedRecurringIncome(detected, workbook),
-      ),
+      onRegister: (detected) =>
+          unawaited(_registerDetectedRecurringIncome(detected, workbook)),
       onIgnore: _ignoreDetectedRecurringIncome,
     );
   }
@@ -9757,9 +9773,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 削除した (リボ OFF にした) リボ設定のトゥームストーン。union マージ/backfill
   /// での復活を防ぎ、他端末へ削除を伝播する (debt 上書きと同じパターン)。
   static const MirrorTombstoneStore _revolvingConfigTombstones =
-      MirrorTombstoneStore(
-    storageKey: 'revolving_credit_configs_deleted_v1',
-  );
+      MirrorTombstoneStore(storageKey: 'revolving_credit_configs_deleted_v1');
 
   void _persistRevolvingConfig(
     String debtId,
@@ -10088,7 +10102,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         <String>[
           'display_mode',
           'section_overrides',
-          'section_override_deleted'
+          'section_override_deleted',
         ],
       );
     } catch (e) {
@@ -10402,14 +10416,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final dateLabel = DateFormat('M月d日').format(date);
     if (_isSectionShown(AssetManagementSectionId.flow)) {
       _scrollTo(_keyFlow);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$dateLabelを記録日にセットしました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$dateLabelを記録日にセットしました')));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$dateLabelを記録日にセットしました。収支セクション(標準/フル)で記録できます'),
-        ),
+        SnackBar(content: Text('$dateLabelを記録日にセットしました。収支セクション(標準/フル)で記録できます')),
       );
     }
   }
@@ -10656,8 +10668,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _fetchExperimentSummary() async {
     try {
-      final dynamic result =
-          await _supabase.rpc('display_mode_experiment_summary');
+      final dynamic result = await _supabase.rpc(
+        'display_mode_experiment_summary',
+      );
       if (!mounted || result is! Map) {
         return;
       }
@@ -10689,11 +10702,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      await _supabase
-          .from('asset_expected_inflow_items')
-          .upsert(<Map<String, dynamic>>[
-        for (final row in rows) <String, dynamic>{...row, 'user_id': userId},
-      ]);
+      await _supabase.from('asset_expected_inflow_items').upsert(
+        <Map<String, dynamic>>[
+          for (final row in rows) <String, dynamic>{...row, 'user_id': userId},
+        ],
+      );
     } catch (e) {
       debugPrint('inflow mirror upsert failed: $e');
     }
@@ -10794,9 +10807,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('入金予定をサーバのバックアップから復元しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('入金予定をサーバのバックアップから復元しました')));
     } catch (e) {
       debugPrint('inflow mirror restore failed: $e');
     }
@@ -11194,9 +11207,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('古い削除記録を${removed.total}件 掃除しました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('古い削除記録を${removed.total}件 掃除しました')));
   }
 
   /// 各ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
@@ -11346,9 +11359,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
       if (additions.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('サーバとの差分はありませんでした')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('サーバとの差分はありませんでした')));
         return;
       }
       final confirmed = await showDialog<bool>(
@@ -11402,9 +11415,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$added件をサーバから統合しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$added件をサーバから統合しました')));
     } catch (e) {
       debugPrint('inflow mirror merge failed: $e');
     }
@@ -11442,9 +11455,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          '$shiftedCount件の支払日を毎月$newDay日へまとめて変更しました(負債マスタから戻せます)',
-        ),
+        content: Text('$shiftedCount件の支払日を毎月$newDay日へまとめて変更しました(負債マスタから戻せます)'),
       ),
     );
   }
@@ -11543,9 +11554,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 ),
                               ),
                               IconButton(
-                                key: Key(
-                                  'asset_inflow_rule_delete_${rule.id}',
-                                ),
+                                key: Key('asset_inflow_rule_delete_${rule.id}'),
                                 tooltip: '削除',
                                 icon: const Icon(
                                   Icons.delete_outline,
@@ -11670,10 +11679,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           const Color(0xFF6366F1),
                           '初期解決',
                         ),
-                        _buildCalendarLegendItem(
-                          const Color(0xFFF97316),
-                          '切替',
-                        ),
+                        _buildCalendarLegendItem(const Color(0xFFF97316), '切替'),
                       ],
                     ),
                   ],
@@ -12063,9 +12069,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (event.sourceId != null) event.sourceId!,
     ];
     final comboSuggestionIds = comboIds.length >= 2 &&
-            shiftCandidates.every(
-              (entry) => entry.value == '(単独では回避不可)',
-            )
+            shiftCandidates.every((entry) => entry.value == '(単独では回避不可)')
         ? AssetPaymentCalendarService.findMinimalShiftSet(
             month: _calendarMonth,
             flows: _recentFlows,
@@ -12247,10 +12251,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 workbook,
                                 entry.key.sourceId!,
                               ),
-                              icon: const Icon(
-                                Icons.schedule_send,
-                                size: 14,
-                              ),
+                              icon: const Icon(Icons.schedule_send, size: 14),
                               label: Text(
                                 '${entry.key.label}を26日へ${entry.value}',
                                 style: const TextStyle(fontSize: 11),
@@ -17001,8 +17002,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         occasion.date.month == _now.month &&
         occasion.date.day == _now.day;
     final isHoliday = occasion.reasons.contains(DrinkOccasionReason.holiday);
-    final isHolidayEve =
-        occasion.reasons.contains(DrinkOccasionReason.holidayEve);
+    final isHolidayEve = occasion.reasons.contains(
+      DrinkOccasionReason.holidayEve,
+    );
     final badge = isHoliday ? '祝' : (isHolidayEve ? '祝前' : '');
 
     return Padding(
@@ -17027,10 +17029,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               child: Text(
                 badge,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Color(0xFFB91C1C),
-                ),
+                style: const TextStyle(fontSize: 10, color: Color(0xFFB91C1C)),
               ),
             ),
           ],
@@ -17348,9 +17347,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         )
                       : const Icon(Icons.add_task_outlined, size: 16),
                   label: Text(
-                    _developerIssuesBulkButtonLabel(
-                      issueableDeveloperRequests,
-                    ),
+                    _developerIssuesBulkButtonLabel(issueableDeveloperRequests),
                   ),
                 ),
             ],
@@ -17483,11 +17480,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final existingIssuesByTitle = <String, Map<String, dynamic>>{};
     for (final request in report.developerRequests) {
-      final existing = _developerRequestExistingIssueResults[
-          _developerRequestIssueKey(request)];
+      final existing =
+          _developerRequestExistingIssueResults[_developerRequestIssueKey(
+        request,
+      )];
       if (existing != null) {
-        existingIssuesByTitle[request.title] =
-            Map<String, dynamic>.from(existing);
+        existingIssuesByTitle[request.title] = Map<String, dynamic>.from(
+          existing,
+        );
       }
     }
     final result = await _assetManagementAiSummaryService.generateSummary(
@@ -17679,9 +17679,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ];
   }
 
-  bool _isAiGeneratedDeveloperRequest(
-    AssetManagementDeveloperRequest request,
-  ) {
+  bool _isAiGeneratedDeveloperRequest(AssetManagementDeveloperRequest request) {
     final aiRequests = _assetManagementAiSummaryResult?.aiDeveloperRequests ??
         const <AssetManagementDeveloperRequest>[];
     if (aiRequests.isEmpty) {
@@ -17938,11 +17936,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (candidates.isEmpty) {
       return const SizedBox.shrink();
     }
-    final validSelected = candidates.any(
-      (account) => account.id == _assetManagementMainAccountId,
-    )
-        ? _assetManagementMainAccountId
-        : null;
+    final validSelected =
+        candidates.any((account) => account.id == _assetManagementMainAccountId)
+            ? _assetManagementMainAccountId
+            : null;
     return Row(
       children: [
         Icon(
@@ -22481,9 +22478,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 削除した支払日上書きのトゥームストーン (#part293: MirrorTombstoneStore 3例目)。
   /// ミラー復元で「自動へ戻した支払日」が復活するのを防ぐ。
   static const MirrorTombstoneStore _debtOverrideTombstones =
-      MirrorTombstoneStore(
-    storageKey: 'debt_payment_day_override_deleted_v1',
-  );
+      MirrorTombstoneStore(storageKey: 'debt_payment_day_override_deleted_v1');
 
   void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
     setState(() {
@@ -22998,10 +22993,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _formatManagementYen(billing.billedAmount),
               style: const TextStyle(fontWeight: FontWeight.bold, height: 1.3),
             ),
-            const Text(
-              'リボ自動算出',
-              style: TextStyle(fontSize: 11, height: 1.3),
-            ),
+            const Text('リボ自動算出', style: TextStyle(fontSize: 11, height: 1.3)),
           ],
         ),
       );
@@ -23102,10 +23094,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       children: [
         SizedBox(
           width: 64,
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 11, height: 1.3),
-          ),
+          child: Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),
         ),
         Expanded(
           child: TextFormField(
