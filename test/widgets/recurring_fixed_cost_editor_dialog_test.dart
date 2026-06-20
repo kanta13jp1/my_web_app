@@ -4,6 +4,51 @@ import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
 
 void main() {
+  group('recurringFixedCostSourceOptions', () {
+    AssetLiabilityAccount acct(
+      String id,
+      String name,
+      AssetLiabilityAccountKind kind,
+      double balance,
+    ) {
+      return AssetLiabilityAccount(
+        id: id,
+        name: name,
+        kind: kind,
+        balance: balance,
+      );
+    }
+
+    final accounts = <AssetLiabilityAccount>[
+      acct('smbc', '三井住友銀行', AssetLiabilityAccountKind.deposit, 100000),
+      acct('aupay', 'auPayカード', AssetLiabilityAccountKind.creditCard, 5000),
+      acct('famipay', 'ファミペイカード', AssetLiabilityAccountKind.creditCard, 0),
+      acct('mobit', 'モビット', AssetLiabilityAccountKind.cardLoan, -50000),
+    ];
+
+    test('default excludes non-positive cards (banks/positive cards only)', () {
+      final ids =
+          recurringFixedCostSourceOptions(accounts).map((o) => o.id).toList();
+      // 残高>0 の銀行と auPay は出る。残高0のファミペイと負債のモビットは出ない。
+      expect(ids, containsAll(<String>['smbc', 'aupay']));
+      expect(ids, isNot(contains('famipay')));
+      expect(ids, isNot(contains('mobit')));
+    });
+
+    test('includeCards surfaces zero/negative-balance credit cards', () {
+      final ids = recurringFixedCostSourceOptions(
+        accounts,
+        includeCards: true,
+      ).map((o) => o.id).toList();
+      // ファミペイ (creditCard / 残高0) が選べるようになる。
+      expect(ids, containsAll(<String>['smbc', 'aupay', 'famipay']));
+      // クレカでない負債 (cardLoan) は含めない。
+      expect(ids, isNot(contains('mobit')));
+      // 重複しない (auPay は1回だけ)。
+      expect(ids.where((id) => id == 'aupay').length, 1);
+    });
+  });
+
   const prefill = AssetRecurringFixedCost(
     id: 'fc_suggestion',
     name: '電気代',
@@ -202,5 +247,101 @@ void main() {
     expect(saved, isNotNull);
     expect(saved!.name, 'Cursor');
     expect(saved!.category, AssetRecurringFixedCostCategory.subscription);
+  });
+
+  testWidgets('請求経路ドロップダウンはサブスク時に表示され apple を保存できる', (
+    tester,
+  ) async {
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                saved = await showRecurringFixedCostEditor(
+                  context,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                  gateway: AssetSubscriptionBillingGateway.apple,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    // 請求経路ドロップダウンが表示される (Apple 既定)。
+    expect(find.text('請求経路'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'ChatGPT Pro');
+    await tester.enterText(find.byType(TextFormField).at(1), '30000');
+    await tester.enterText(find.byType(TextFormField).at(2), '20');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(saved!.billingGateway, AssetSubscriptionBillingGateway.apple);
+  });
+
+  testWidgets('請求経路ドロップダウンは固定費(utility)では非表示', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: RecurringFixedCostEditorDialog()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('請求経路'), findsNothing);
+  });
+
+  testWidgets('サブスク→固定費へ区分変更すると請求経路は direct に戻して保存される', (
+    tester,
+  ) async {
+    const existing = AssetRecurringFixedCost(
+      id: 'sub_x',
+      name: 'X Premium',
+      amount: 980,
+      paymentDay: 20,
+      category: AssetRecurringFixedCostCategory.subscription,
+      billingGateway: AssetSubscriptionBillingGateway.apple,
+    );
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                saved = await showRecurringFixedCostEditor(
+                  context,
+                  existing: existing,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    // 区分を「定期固定費」へ切り替える。
+    await tester.tap(
+      find.byType(DropdownButtonFormField<AssetRecurringFixedCostCategory>),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('定期固定費').last);
+    await tester.pumpAndSettle();
+    // 区分=utility になり請求経路ドロップダウンは消える。
+    expect(find.text('請求経路'), findsNothing);
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isNotNull);
+    expect(saved!.category, AssetRecurringFixedCostCategory.utility);
+    expect(saved!.billingGateway, AssetSubscriptionBillingGateway.direct);
   });
 }

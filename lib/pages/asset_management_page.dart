@@ -37,11 +37,16 @@ import 'package:my_web_app/services/asset_management_ai_analysis_history_service
 import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/asset_account_balance_history_store.dart';
+import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
+import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
+import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
+import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
@@ -77,6 +82,8 @@ import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
+import 'package:my_web_app/widgets/subscription_audit_card.dart';
+import 'package:my_web_app/widgets/subscription_duplicate_alert_card.dart';
 import 'package:my_web_app/widgets/subscription_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
@@ -209,6 +216,16 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugRecurringFixedCostsDeletedMirror;
 
+  /// テスト専用: サブスク棚卸しの確認状況ミラー値 (`{sourceId: iso8601}`) を注入し、
+  /// 端末間 MAX マージ復元をネットワークなしで検証する。
+  @visibleForTesting
+  final Map<String, dynamic>? debugSubscriptionAuditMirror;
+
+  /// テスト専用: 収支フロー履歴 (`wealth_struggles` 行相当) の初期リストを注入し、
+  /// 給料日サイクル集計を Supabase なしで検証する。null なら通常のフェッチのみ。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugInitialRecentFlows;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -233,6 +250,8 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInitialRecurringFixedCosts,
     this.debugRecurringFixedCostsMirror,
     this.debugRecurringFixedCostsDeletedMirror,
+    this.debugSubscriptionAuditMirror,
+    this.debugInitialRecentFlows,
   });
 
   @override
@@ -433,8 +452,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // UI 登録の定期固定費 (家賃・光熱費など)。振替日昇順で保持する。
   List<AssetRecurringFixedCost> _recurringFixedCosts =
       <AssetRecurringFixedCost>[];
+  // サブスク棚卸し: 支払い元ごとの最終確認日時 (sourceId → UTC)。
+  Map<String, DateTime> _subscriptionAuditState = <String, DateTime>{};
   // 定期取引の自動検出で「無視」した正規化ラベル(再提案しない / 支出側)。
   Set<String> _ignoredRecurringLabels = <String>{};
+  Set<String> _ignoredDuplicateProviders = <String>{};
   // 定期入金の自動検出で「無視」した正規化ラベル(再提案しない / 収入側)。
   Set<String> _ignoredRecurringIncomeLabels = <String>{};
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
@@ -609,6 +631,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementDisplayModeStore.defaultMode;
   final AssetManagementMainAccountStore _mainAccountStore =
       const AssetManagementMainAccountStore();
+  // 月をまたいだ負債トレンド(リボ複利・残高増加)判定のための口座別残高履歴。
+  final AssetAccountBalanceHistoryStore _assetBalanceHistoryStore =
+      const AssetAccountBalanceHistoryStore();
+  // 前月末の口座別残高(accountId -> 残高絶対値)。非同期ロードでキャッシュ。
+  Map<String, double> _assetDebtTrendPriorBalances = const <String, double>{};
+  // 上記キャッシュが対象としている月キー(月跨ぎでの取り違え防止)。
+  String? _assetDebtTrendPriorBalancesMonth;
+  // 今月の残高記録の重複実行を防ぐシグネチャ(monthKey + 残高内容)。
+  String? _assetDebtTrendSyncedSignature;
   final AssetSalaryDayStore _salaryDayStore = const AssetSalaryDayStore();
   static const String _salaryDayMirrorKey = 'salary_day';
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
@@ -618,6 +649,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   static const String _recurringFixedCostsMirrorKey = 'recurring_fixed_costs';
   static const String _recurringFixedCostsDeletedMirrorKey =
       'recurring_fixed_costs_deleted';
+  final AssetSubscriptionAuditStore _subscriptionAuditStore =
+      const AssetSubscriptionAuditStore();
+  static const String _subscriptionAuditMirrorKey = 'subscription_audit_state';
   final AssetRecurringSuggestionIgnoreStore _recurringIgnoreStore =
       const AssetRecurringSuggestionIgnoreStore();
   static const String _recurringIgnoredMirrorKey =
@@ -628,6 +662,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   );
   static const String _recurringIncomeIgnoredMirrorKey =
       'recurring_income_suggestion_ignored';
+  final AssetRecurringSuggestionIgnoreStore _duplicateIgnoreStore =
+      const AssetRecurringSuggestionIgnoreStore(
+    prefsKey: 'asset_subscription_duplicate_ignored_v1',
+  );
+  static const String _duplicateIgnoredMirrorKey =
+      'subscription_duplicate_ignored';
   final AssetCategoryBudgetStore _categoryBudgetStore =
       const AssetCategoryBudgetStore();
   // 禁酒で借金完済チャレンジの記録(日付→我慢/飲んだ)。v1 はローカル永続化のみ。
@@ -726,6 +766,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (debugRecurring != null) {
       _recurringFixedCosts = List<AssetRecurringFixedCost>.from(debugRecurring);
     }
+    final debugFlows = widget.debugInitialRecentFlows;
+    if (debugFlows != null) {
+      _recentFlows = <Map<String, dynamic>>[
+        for (final flow in debugFlows) Map<String, dynamic>.from(flow),
+      ];
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -744,8 +790,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
+    unawaited(_loadSubscriptionAudit());
     unawaited(_loadRecurringIgnored());
     unawaited(_loadRecurringIncomeIgnored());
+    unawaited(_loadDuplicateIgnored());
     unawaited(_loadDrinkChallenge());
     _loadExpectedInflows();
     // ローカル→サーバの順で GC 設定を反映してから削除トゥームストーンを取込む。
@@ -857,7 +905,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// AIコメントが指摘するカード明細の未取込・差分に対し、取り込み・照合
   /// パネルへ誘導するリンクの文言。確認が必要なカード名を織り込む。
   String _cardStatementReconciliationLinkLabel(
-      AssetLiabilityWorkbook workbook) {
+    AssetLiabilityWorkbook workbook,
+  ) {
     final groups = workbook.cardStatementReconciliation.needsReviewGroups;
     if (groups.length == 1) {
       return '${groups.first.billingAccountName}の明細を取り込んで照合する';
@@ -1084,6 +1133,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       return !occurredAt.isBefore(start) && occurredAt.isBefore(endExclusive);
     }).toList();
+  }
+
+  /// 給料日サイクルの期間ラベル (例: "5/25〜6/24")。
+  String _salaryCycleRangeLabel(DateTime reference) {
+    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+      reference,
+      salaryDay: _salaryDay,
+    );
+    final endInclusive =
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+      reference,
+      salaryDay: _salaryDay,
+    ).subtract(const Duration(days: 1));
+    return '${start.month}/${start.day}〜${endInclusive.month}/${endInclusive.day}';
   }
 
   Future<void> _pickFlowHistoryMonth() async {
@@ -1521,6 +1584,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // ローカル(_debtPaymentDayOverrides)反映後に呼ぶ。空でなくても union
       // マージ/バックフィルするため常に実行する。
       unawaited(_restoreDebtPaymentDayOverridesFromMirror());
+      // 他端末の残高履歴を取り込み、負債トレンドの前月比を端末跨ぎで有効化。
+      unawaited(_restoreAssetBalanceHistoryFromMirror());
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
       }
@@ -4585,7 +4650,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
 
-    final currentMonthFlows = _flowsForMonth(DateTime.now());
+    final currentMonthFlows = _flowsForCycle(DateTime.now());
     int monthlyIncome = 0;
     int monthlyExpense = 0;
     for (final f in currentMonthFlows) {
@@ -4942,7 +5007,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final subsOk = _subscriptions.isNotEmpty;
 
-    final currentMonthFlows = _flowsForMonth(DateTime.now());
+    final currentMonthFlows = _flowsForCycle(DateTime.now());
     final incomeCount =
         currentMonthFlows.where((r) => r['action_type'] == 'conquer').length;
     final expenseCount =
@@ -5007,7 +5072,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       totalFixed += (s['price'] as num?)?.toInt() ?? 0;
     }
 
-    final currentMonthFlows = _flowsForMonth(now);
+    final currentMonthFlows = _flowsForCycle(now);
     int totalIncome = 0;
     int totalExpense = 0;
     int totalTransfer = 0;
@@ -5019,6 +5084,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final monthLabel = '${now.year}/${now.month.toString().padLeft(2, '0')}';
+    final flowCycleLabel = _salaryCycleRangeLabel(now);
     final mustThisMonth = _mustTasks.where((t) {
       final d = DateTime.parse(t['deadline']).toLocal();
       return d.year == now.year && d.month == now.month;
@@ -5074,7 +5140,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     buf.writeln('');
 
-    buf.writeln('### ④ 収支（$monthLabel）');
+    buf.writeln('### ④ 収支（給料サイクル $flowCycleLabel）');
     buf.writeln('- 収入合計: ¥${NumberFormat('#,###').format(totalIncome)}');
     buf.writeln('- 支出合計: ¥${NumberFormat('#,###').format(totalExpense)}');
     buf.writeln('- 振替合計: ¥${NumberFormat('#,###').format(totalTransfer)}');
@@ -7987,13 +8053,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildCategoryBudgetCard(),
             ],
             if (_isSectionShown(
-                AssetManagementSectionId.recurringFixedCost)) ...[
+              AssetManagementSectionId.recurringFixedCost,
+            )) ...[
               _buildRecurringFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(
-                AssetManagementSectionId.subscriptionFixedCost)) ...[
+              AssetManagementSectionId.subscriptionFixedCost,
+            )) ...[
+              SubscriptionDuplicateAlertCard(
+                groups: _detectSubscriptionDuplicates(),
+                onIgnore: _ignoreDuplicateGroup,
+              ),
               _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+            ],
+            if (_isSectionShown(
+              AssetManagementSectionId.subscriptionAudit,
+            )) ...[
+              _buildSubscriptionAuditCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
@@ -8204,9 +8282,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     if (day == null ||
                         day < AssetSalaryDayStore.minSalaryDay ||
                         day > AssetSalaryDayStore.maxSalaryDay) {
-                      setDialogState(
-                        () => errorText = '1〜28 の日付を入力してください',
-                      );
+                      setDialogState(() => errorText = '1〜28 の日付を入力してください');
                       return;
                     }
                     Navigator.of(dialogContext).pop();
@@ -8581,8 +8657,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final List<AssetRecurringFixedCost> serverList;
       final DateTime? mirrorUpdatedAt;
       if (debugMirror != null) {
-        serverList =
-            AssetRecurringFixedCostStore.decodeMirrorValue(debugMirror);
+        serverList = AssetRecurringFixedCostStore.decodeMirrorValue(
+          debugMirror,
+        );
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
         final rows = await _supabase
@@ -8697,12 +8774,209 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  // --- サブスク棚卸し (支払い元ごとの確認状況) ---
+
+  Future<void> _loadSubscriptionAudit() async {
+    try {
+      final state = await _subscriptionAuditStore.load();
+      if (mounted && state.isNotEmpty) {
+        setState(() => _subscriptionAuditState = state);
+      }
+    } catch (e) {
+      debugPrint('Error loading subscription audit: $e');
+    }
+    await _restoreSubscriptionAuditFromMirror();
+  }
+
+  /// サーバ集約ミラー (pref_key: subscription_audit_state) から復元する。
+  /// 「確認した」は単調なので、tombstone/dirty/LWW ではなく MAX マージで統合する。
+  Future<void> _restoreSubscriptionAuditFromMirror() async {
+    final debugMirror = widget.debugSubscriptionAuditMirror;
+    if (debugMirror == null && _supabase.auth.currentUser == null) {
+      return;
+    }
+    final localBefore = Map<String, DateTime>.from(_subscriptionAuditState);
+    try {
+      final Map<String, DateTime> serverState;
+      final DateTime? mirrorUpdatedAt;
+      if (debugMirror != null) {
+        serverState = AssetSubscriptionAuditStore.decodeMirrorValue(
+          debugMirror,
+        );
+        mirrorUpdatedAt = DateTime.now().toUtc();
+      } else {
+        final rows = await _supabase
+            .from('asset_pref_mirror')
+            .select()
+            .eq('pref_key', _subscriptionAuditMirrorKey);
+        if (rows.isEmpty) {
+          // サーバ行無し: ローカルにあれば初回バックフィル。
+          if (localBefore.isNotEmpty) {
+            unawaited(_mirrorSubscriptionAudit());
+          }
+          return;
+        }
+        serverState = AssetSubscriptionAuditStore.decodeMirrorValue(
+          rows.first['value'],
+        );
+        mirrorUpdatedAt = DateTime.tryParse(
+          rows.first['updated_at']?.toString() ?? '',
+        );
+      }
+      if (!mounted) {
+        return;
+      }
+      // 取込み中に「確認した」が入っても失わないよう、localBefore ではなく現在の
+      // in-memory state とマージする (MAX は単調なので新しい確認を消さない)。
+      final current = _subscriptionAuditState;
+      final merged = AssetSubscriptionAuditStore.mergeMax(current, serverState);
+      if (!_sameSubscriptionAuditState(current, merged)) {
+        setState(() => _subscriptionAuditState = merged);
+        _persistInBackground(
+          _subscriptionAuditStore.save(merged),
+          'subscription audit restore save',
+        );
+        unawaited(
+          _realignMirrorTimestamp(_subscriptionAuditMirrorKey, mirrorUpdatedAt),
+        );
+      }
+      // ローカルにサーバより新しい確認があればサーバへ反映 (和集合維持)。
+      final localHasNewer = localBefore.entries.any((entry) {
+        final server = serverState[entry.key];
+        return server == null || entry.value.isAfter(server);
+      });
+      if (localHasNewer && debugMirror == null) {
+        unawaited(_mirrorSubscriptionAudit());
+      }
+    } catch (e) {
+      debugPrint('subscription audit mirror restore failed: $e');
+    }
+  }
+
+  bool _sameSubscriptionAuditState(
+    Map<String, DateTime> a,
+    Map<String, DateTime> b,
+  ) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// 確認状況の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorSubscriptionAudit() async {
+    unawaited(_syncTimestampStore.markChanged(_subscriptionAuditMirrorKey));
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _subscriptionAuditMirrorKey,
+        'value': AssetSubscriptionAuditStore.encodeMirrorValue(
+          _subscriptionAuditState,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('subscription audit mirror upsert failed: $e');
+    }
+  }
+
+  void _markSubscriptionSourceChecked(SubscriptionAuditSource source) {
+    final next = Map<String, DateTime>.from(_subscriptionAuditState);
+    next[source.id] = DateTime.now().toUtc();
+    setState(() => _subscriptionAuditState = next);
+    _persistInBackground(
+      _subscriptionAuditStore.save(next),
+      'subscription audit save',
+    );
+    unawaited(_mirrorSubscriptionAudit());
+  }
+
+  /// 棚卸し対象の支払い元: manual (Apple/au/Google) + 銀行 + カード別 (口座から導出)。
+  List<SubscriptionAuditSource> _subscriptionAuditSources(
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    final sources = <SubscriptionAuditSource>[
+      ...AssetSubscriptionAuditCatalog.manualSources,
+      AssetSubscriptionAuditCatalog.bankSource,
+    ];
+    if (workbook != null) {
+      for (final account in _cardBillingAccountOptions(workbook)) {
+        sources.add(
+          SubscriptionAuditSource(
+            id: AssetSubscriptionAuditCatalog.cardSourceId(account.id),
+            name: account.name,
+            kind: SubscriptionAuditSourceKind.autoAssisted,
+          ),
+        );
+      }
+    }
+    return sources;
+  }
+
+  /// 未登録の定期支出を支払い元 (sourceId) ごとに集計する。検出は登録済み・無視済みを
+  /// 減算済みの `_detectRecurringTransactions()` を流用 (提案カードと二重計上しない)。
+  Map<String, int> _unregisteredCountBySourceId(
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    final detected = _detectRecurringTransactions();
+    if (detected.isEmpty) {
+      return const <String, int>{};
+    }
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    return AssetSubscriptionAuditCatalog.bucketUnregisteredCounts(
+      accounts: accounts.map(
+        (account) => (id: account.id, name: account.name, kind: account.kind),
+      ),
+      suggestedSourceNames: detected.map((item) => item.suggestedSourceName),
+    );
+  }
+
+  Widget _buildSubscriptionAuditCard(AssetLiabilityWorkbook? workbook) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    // サブスクはカード (ファミペイ等) へ請求されることが多いため、残高<=0 のカードも
+    // 請求先として選べるようにする。
+    final sourceOptions =
+        recurringFixedCostSourceOptions(accounts, includeCards: true);
+    final gatewayTotals = AssetSubscriptionAuditCatalog.gatewayTotalsBySourceId(
+      subscriptions: [
+        for (final cost in _recurringFixedCosts)
+          if (cost.category == AssetRecurringFixedCostCategory.subscription)
+            (gateway: cost.billingGateway, amount: cost.amount),
+      ],
+    );
+    return SubscriptionAuditCard(
+      sources: _subscriptionAuditSources(workbook),
+      lastCheckedAt: _subscriptionAuditState,
+      unregisteredCountBySourceId: _unregisteredCountBySourceId(workbook),
+      registeredByGatewaySourceId: gatewayTotals,
+      now: _now,
+      onMarkChecked: _markSubscriptionSourceChecked,
+      onRegisterSubscription: (source) => unawaited(
+        _openRecurringFixedCostEditor(
+          sourceOptions: sourceOptions,
+          category: AssetRecurringFixedCostCategory.subscription,
+          // Apple/au/Google 行から登録するときは請求経路を既定で合わせる。
+          gateway:
+              AssetSubscriptionAuditCatalog.gatewayForSourceId(source.id) ??
+                  AssetSubscriptionBillingGateway.direct,
+        ),
+      ),
+    );
+  }
+
   /// 削除した定期固定費のトゥームストーン。union マージ/backfill での復活を防ぎ、
   /// 他端末へ削除を伝播する (リボ設定と同じパターン)。
   static const MirrorTombstoneStore _recurringFixedCostTombstones =
-      MirrorTombstoneStore(
-    storageKey: 'recurring_fixed_costs_deleted_v1',
-  );
+      MirrorTombstoneStore(storageKey: 'recurring_fixed_costs_deleted_v1');
 
   /// 削除はトゥームストーン化、再追加 (同 id) は解除する。
   Future<void> _recordRecurringFixedCostTombstone(
@@ -8873,6 +9147,107 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_mirrorRecurringIgnored());
   }
 
+  /// 起動時に「重複ではない」とした提供元集合をローカルから読み、ミラーと union する。
+  Future<void> _loadDuplicateIgnored() async {
+    try {
+      final ignored = await _duplicateIgnoreStore.load();
+      if (mounted && ignored.isNotEmpty) {
+        setState(() => _ignoredDuplicateProviders = ignored);
+      }
+    } catch (e) {
+      debugPrint('Error loading duplicate ignored: $e');
+    }
+    await _restoreDuplicateIgnoredFromMirror();
+  }
+
+  /// サーバミラー (pref_key: subscription_duplicate_ignored) を取り込み、ローカル集合と
+  /// union する(無視は単調増加なので union が安全)。
+  Future<void> _restoreDuplicateIgnoredFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _duplicateIgnoredMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final serverIgnored =
+          AssetRecurringSuggestionIgnoreStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || serverIgnored.isEmpty) {
+        return;
+      }
+      final merged = <String>{..._ignoredDuplicateProviders, ...serverIgnored};
+      if (merged.length == _ignoredDuplicateProviders.length) {
+        return; // サーバに新規無視なし。
+      }
+      setState(() => _ignoredDuplicateProviders = merged);
+      _persistInBackground(
+        _duplicateIgnoreStore.save(merged),
+        'duplicate ignored restore save',
+      );
+    } catch (e) {
+      debugPrint('duplicate ignored mirror restore failed: $e');
+    }
+  }
+
+  /// 「重複ではない」集合の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorDuplicateIgnored() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _duplicateIgnoredMirrorKey,
+        'value': AssetRecurringSuggestionIgnoreStore.encodeMirrorValue(
+          _ignoredDuplicateProviders,
+        ),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('duplicate ignored mirror upsert failed: $e');
+    }
+  }
+
+  /// 提供元グループを「重複ではない」として今後の提示から除外する(永続化 + ミラー)。
+  void _ignoreDuplicateGroup(SubscriptionDuplicateGroup group) {
+    final key = group.providerKey;
+    if (key.isEmpty || _ignoredDuplicateProviders.contains(key)) {
+      return;
+    }
+    setState(() {
+      _ignoredDuplicateProviders = <String>{..._ignoredDuplicateProviders, key};
+    });
+    _persistInBackground(
+      _duplicateIgnoreStore.save(_ignoredDuplicateProviders),
+      'duplicate ignored save',
+    );
+    unawaited(_mirrorDuplicateIgnored());
+  }
+
+  /// 登録済みサブスクから「同じ提供元の複数契約 = 重複の可能性」を検出する。
+  List<SubscriptionDuplicateGroup> _detectSubscriptionDuplicates() {
+    return AssetSubscriptionDuplicateDetector.detect(
+      <SubscriptionDuplicateMember>[
+        for (final cost in _recurringFixedCosts)
+          if (cost.category == AssetRecurringFixedCostCategory.subscription)
+            (
+              id: cost.id,
+              name: cost.name,
+              amount: cost.amount,
+              gateway: cost.billingGateway,
+            ),
+      ],
+      ignoredProviderKeys: _ignoredDuplicateProviders,
+    );
+  }
+
   /// 起動時に収入の「無視」集合をローカルから読み、サーバミラーと union する。
   Future<void> _loadRecurringIncomeIgnored() async {
     try {
@@ -9011,6 +9386,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required List<RecurringFixedCostSourceOption> sourceOptions,
     AssetRecurringFixedCostCategory category =
         AssetRecurringFixedCostCategory.utility,
+    AssetSubscriptionBillingGateway gateway =
+        AssetSubscriptionBillingGateway.direct,
   }) async {
     final result = await showRecurringFixedCostEditor(
       context,
@@ -9018,6 +9395,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       prefill: prefill,
       sourceAccounts: sourceOptions,
       category: category,
+      gateway: gateway,
     );
     if (result != null) {
       _saveRecurringFixedCost(result);
@@ -9051,10 +9429,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildRecurringFixedCostCard(AssetLiabilityWorkbook? workbook) {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
-    final sourceOptions = <RecurringFixedCostSourceOption>[
-      for (final account in accounts)
-        if (account.balance > 0) (id: account.id, name: account.name),
-    ];
+    final sourceOptions = recurringFixedCostSourceOptions(accounts);
     final sourceNames = <String, String>{
       for (final account in accounts) account.id: account.name,
     };
@@ -9081,10 +9456,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildSubscriptionFixedCostCard(AssetLiabilityWorkbook? workbook) {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
-    final sourceOptions = <RecurringFixedCostSourceOption>[
-      for (final account in accounts)
-        if (account.balance > 0) (id: account.id, name: account.name),
-    ];
+    // サブスクはカード (ファミペイ等) へ請求されることが多いため、残高<=0 のカードも
+    // 請求先として選べるようにする。
+    final sourceOptions =
+        recurringFixedCostSourceOptions(accounts, includeCards: true);
     final sourceNames = <String, String>{
       for (final account in accounts) account.id: account.name,
     };
@@ -9232,10 +9607,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityWorkbook? workbook,
   ) {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
-    final sourceOptions = <RecurringFixedCostSourceOption>[
-      for (final account in accounts)
-        if (account.balance > 0) (id: account.id, name: account.name),
-    ];
+    final sourceOptions = recurringFixedCostSourceOptions(accounts);
     return AssetRecurringTransactionSuggestionCard(
       suggestions: _detectRecurringTransactions(),
       currencyFormatter: _formatYen,
@@ -9363,9 +9735,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       registerLabel: '定期収入に登録',
       suggestions: _detectRecurringIncome(),
       currencyFormatter: _formatYen,
-      onRegister: (detected) => unawaited(
-        _registerDetectedRecurringIncome(detected, workbook),
-      ),
+      onRegister: (detected) =>
+          unawaited(_registerDetectedRecurringIncome(detected, workbook)),
       onIgnore: _ignoreDetectedRecurringIncome,
     );
   }
@@ -9538,9 +9909,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 削除した (リボ OFF にした) リボ設定のトゥームストーン。union マージ/backfill
   /// での復活を防ぎ、他端末へ削除を伝播する (debt 上書きと同じパターン)。
   static const MirrorTombstoneStore _revolvingConfigTombstones =
-      MirrorTombstoneStore(
-    storageKey: 'revolving_credit_configs_deleted_v1',
-  );
+      MirrorTombstoneStore(storageKey: 'revolving_credit_configs_deleted_v1');
 
   void _persistRevolvingConfig(
     String debtId,
@@ -9869,7 +10238,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         <String>[
           'display_mode',
           'section_overrides',
-          'section_override_deleted'
+          'section_override_deleted',
         ],
       );
     } catch (e) {
@@ -10183,14 +10552,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final dateLabel = DateFormat('M月d日').format(date);
     if (_isSectionShown(AssetManagementSectionId.flow)) {
       _scrollTo(_keyFlow);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$dateLabelを記録日にセットしました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$dateLabelを記録日にセットしました')));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$dateLabelを記録日にセットしました。収支セクション(標準/フル)で記録できます'),
-        ),
+        SnackBar(content: Text('$dateLabelを記録日にセットしました。収支セクション(標準/フル)で記録できます')),
       );
     }
   }
@@ -10437,8 +10804,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Future<void> _fetchExperimentSummary() async {
     try {
-      final dynamic result =
-          await _supabase.rpc('display_mode_experiment_summary');
+      final dynamic result = await _supabase.rpc(
+        'display_mode_experiment_summary',
+      );
       if (!mounted || result is! Map) {
         return;
       }
@@ -10470,11 +10838,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      await _supabase
-          .from('asset_expected_inflow_items')
-          .upsert(<Map<String, dynamic>>[
-        for (final row in rows) <String, dynamic>{...row, 'user_id': userId},
-      ]);
+      await _supabase.from('asset_expected_inflow_items').upsert(
+        <Map<String, dynamic>>[
+          for (final row in rows) <String, dynamic>{...row, 'user_id': userId},
+        ],
+      );
     } catch (e) {
       debugPrint('inflow mirror upsert failed: $e');
     }
@@ -10575,9 +10943,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('入金予定をサーバのバックアップから復元しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('入金予定をサーバのバックアップから復元しました')));
     } catch (e) {
       debugPrint('inflow mirror restore failed: $e');
     }
@@ -10724,6 +11092,69 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 入金予定のミラー取り込みプレビュー行を組み立てる。
+  /// 口座別残高履歴を asset_pref_mirror へ丸ごと退避する（端末跨ぎ同期）。
+  ///
+  /// 汎用 jsonb ミラーの 1 pref_key を使うためマイグレーション不要。値は
+  /// `{monthKey: {accountId: 残高}}`。負債トレンドの前月比を別端末でも使える。
+  Future<void> _mirrorAssetBalanceHistory() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final history = await _assetBalanceHistoryStore.loadAll();
+      if (history.isEmpty) {
+        return;
+      }
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'account_balance_history',
+        'value': history,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('balance history mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末の残高履歴をミラーから取り込み、ローカルへ和集合マージする。
+  ///
+  /// マージは非破壊（月キー・口座を消さない/巻き戻さない）。取り込みで前月残高が
+  /// 変わったら、当月基準の前月残高キャッシュを更新して負債トレンドを再評価する。
+  Future<void> _restoreAssetBalanceHistoryFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', 'account_balance_history');
+      if (rows.isEmpty) {
+        return;
+      }
+      final changed =
+          await _assetBalanceHistoryStore.mergeRemote(rows.first['value']);
+      if (!changed || !mounted) {
+        return;
+      }
+      final monthKey = AssetAccountBalanceHistoryStore.formatMonthKey(_now);
+      final prior = await _assetBalanceHistoryStore.priorMonthBalances(_now);
+      if (!mounted) {
+        return;
+      }
+      if (_assetDebtTrendPriorBalancesMonth != monthKey ||
+          !_sameDoubleMap(_assetDebtTrendPriorBalances, prior)) {
+        setState(() {
+          _assetDebtTrendPriorBalances = prior;
+          _assetDebtTrendPriorBalancesMonth = monthKey;
+        });
+      }
+    } catch (e) {
+      debugPrint('balance history mirror restore failed: $e');
+    }
+  }
+
   String _inflowMergeRowLabel(Map<String, dynamic> row) {
     final label = row['label']?.toString() ?? '入金予定';
     final amount = (row['amount'] as num?)?.toDouble() ?? 0;
@@ -10912,9 +11343,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('古い削除記録を${removed.total}件 掃除しました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('古い削除記録を${removed.total}件 掃除しました')));
   }
 
   /// 各ドメインのトゥームストーンを掃除し、ドメイン別の削除件数を返す。
@@ -11064,9 +11495,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
       if (additions.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('サーバとの差分はありませんでした')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('サーバとの差分はありませんでした')));
         return;
       }
       final confirmed = await showDialog<bool>(
@@ -11120,9 +11551,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$added件をサーバから統合しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$added件をサーバから統合しました')));
     } catch (e) {
       debugPrint('inflow mirror merge failed: $e');
     }
@@ -11160,9 +11591,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          '$shiftedCount件の支払日を毎月$newDay日へまとめて変更しました(負債マスタから戻せます)',
-        ),
+        content: Text('$shiftedCount件の支払日を毎月$newDay日へまとめて変更しました(負債マスタから戻せます)'),
       ),
     );
   }
@@ -11261,9 +11690,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 ),
                               ),
                               IconButton(
-                                key: Key(
-                                  'asset_inflow_rule_delete_${rule.id}',
-                                ),
+                                key: Key('asset_inflow_rule_delete_${rule.id}'),
                                 tooltip: '削除',
                                 icon: const Icon(
                                   Icons.delete_outline,
@@ -11388,10 +11815,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           const Color(0xFF6366F1),
                           '初期解決',
                         ),
-                        _buildCalendarLegendItem(
-                          const Color(0xFFF97316),
-                          '切替',
-                        ),
+                        _buildCalendarLegendItem(const Color(0xFFF97316), '切替'),
                       ],
                     ),
                   ],
@@ -11781,9 +12205,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (event.sourceId != null) event.sourceId!,
     ];
     final comboSuggestionIds = comboIds.length >= 2 &&
-            shiftCandidates.every(
-              (entry) => entry.value == '(単独では回避不可)',
-            )
+            shiftCandidates.every((entry) => entry.value == '(単独では回避不可)')
         ? AssetPaymentCalendarService.findMinimalShiftSet(
             month: _calendarMonth,
             flows: _recentFlows,
@@ -11965,10 +12387,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 workbook,
                                 entry.key.sourceId!,
                               ),
-                              icon: const Icon(
-                                Icons.schedule_send,
-                                size: 14,
-                              ),
+                              icon: const Icon(Icons.schedule_send, size: 14),
                               label: Text(
                                 '${entry.key.label}を26日へ${entry.value}',
                                 style: const TextStyle(fontSize: 11),
@@ -12400,9 +12819,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // -------------------------
 
   Widget _buildMonthlyFlowFirstCard() {
-    final currentMonth = DateTime(_now.year, _now.month, 1);
-    final monthLabel = _flowMonthLabel(currentMonth);
-    final flows = _flowsForMonth(currentMonth);
+    final cycleRangeLabel = _salaryCycleRangeLabel(_now);
+    final flows = _flowsForCycle(_now);
     var totalIncome = 0;
     var totalExpense = 0;
 
@@ -12418,8 +12836,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final net = totalIncome - totalExpense;
     final statusText = flows.isEmpty
-        ? 'まだ今月の収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
-        : '今月の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
+        ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
+        : 'このサイクルの収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -12459,7 +12877,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$monthLabelの収支を最優先で把握',
+                        '給料サイクル($cycleRangeLabel)の収支を最優先で把握',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -15723,15 +16141,83 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 今月の口座別負債残高を履歴へ記録し、前月末残高をロードして負債トレンド
+  /// 判定(リボ複利・残高増加)に供給する。残高が変わったときだけ再記録し、
+  /// 前月残高が更新されたときだけ setState で再描画する。
+  void _scheduleAssetDebtTrendHistorySync(AssetLiabilityWorkbook workbook) {
+    final monthKey =
+        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    final balances = <String, double>{
+      for (final row in workbook.debtMasterRows)
+        if (row.balance < 0) row.id: row.balance.abs(),
+    };
+    final signatureParts = balances.entries
+        .map((entry) => '${entry.key}:${entry.value.round()}')
+        .toList()
+      ..sort();
+    final signature = '$monthKey|${signatureParts.join(',')}';
+    if (_assetDebtTrendSyncedSignature == signature) {
+      return;
+    }
+    _assetDebtTrendSyncedSignature = signature;
+    unawaited(
+      _syncAssetDebtTrendHistory(
+        workbook.baseDate,
+        monthKey,
+        balances,
+        signature,
+      ),
+    );
+  }
+
+  Future<void> _syncAssetDebtTrendHistory(
+    DateTime baseDate,
+    String monthKey,
+    Map<String, double> balances,
+    String signature,
+  ) async {
+    try {
+      final prior =
+          await _assetBalanceHistoryStore.priorMonthBalances(baseDate);
+      await _assetBalanceHistoryStore.recordMonth(baseDate, balances);
+      // 記録した最新履歴を端末跨ぎミラーへ退避（ログイン時のみ実効）。
+      unawaited(_mirrorAssetBalanceHistory());
+      if (!mounted) {
+        return;
+      }
+      if (_assetDebtTrendPriorBalancesMonth != monthKey ||
+          !_sameDoubleMap(_assetDebtTrendPriorBalances, prior)) {
+        setState(() {
+          _assetDebtTrendPriorBalances = prior;
+          _assetDebtTrendPriorBalancesMonth = monthKey;
+        });
+      }
+    } catch (_) {
+      // 失敗時はシグネチャを解除し、次のビルドで再試行できるようにする。
+      if (_assetDebtTrendSyncedSignature == signature) {
+        _assetDebtTrendSyncedSignature = null;
+      }
+    }
+  }
+
   Widget _buildAssetLiabilityWorkbookBoard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
     }
     _scheduleAssetLiabilityStateIdMigration(workbook);
+    _scheduleAssetDebtTrendHistorySync(workbook);
+    final currentMonthKey =
+        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    // キャッシュ済み前月残高が当月のものでない間は渡さない(取り違え防止)。
+    final priorMonthAccountBalances =
+        _assetDebtTrendPriorBalancesMonth == currentMonthKey
+            ? _assetDebtTrendPriorBalances
+            : const <String, double>{};
     final insightReport = _assetManagementInsightService.buildReport(
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
       mainAccountId: _assetManagementMainAccountId,
+      priorMonthAccountBalances: priorMonthAccountBalances,
     );
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
@@ -16651,8 +17137,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         occasion.date.month == _now.month &&
         occasion.date.day == _now.day;
     final isHoliday = occasion.reasons.contains(DrinkOccasionReason.holiday);
-    final isHolidayEve =
-        occasion.reasons.contains(DrinkOccasionReason.holidayEve);
+    final isHolidayEve = occasion.reasons.contains(
+      DrinkOccasionReason.holidayEve,
+    );
     final badge = isHoliday ? '祝' : (isHolidayEve ? '祝前' : '');
 
     return Padding(
@@ -16677,10 +17164,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               child: Text(
                 badge,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Color(0xFFB91C1C),
-                ),
+                style: const TextStyle(fontSize: 10, color: Color(0xFFB91C1C)),
               ),
             ),
           ],
@@ -16854,6 +17338,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementEmergencyAdviceList(report.emergencyAdvices),
             const SizedBox(height: 12),
           ],
+          if (report.debtTrendInsights.isNotEmpty) ...[
+            _buildAssetManagementMonthlyDebtTrendList(report.debtTrendInsights),
+            const SizedBox(height: 12),
+          ],
           _buildAssetManagementAssistantActionList(report.actionItems),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -16994,9 +17482,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         )
                       : const Icon(Icons.add_task_outlined, size: 16),
                   label: Text(
-                    _developerIssuesBulkButtonLabel(
-                      issueableDeveloperRequests,
-                    ),
+                    _developerIssuesBulkButtonLabel(issueableDeveloperRequests),
                   ),
                 ),
             ],
@@ -17129,11 +17615,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final existingIssuesByTitle = <String, Map<String, dynamic>>{};
     for (final request in report.developerRequests) {
-      final existing = _developerRequestExistingIssueResults[
-          _developerRequestIssueKey(request)];
+      final existing =
+          _developerRequestExistingIssueResults[_developerRequestIssueKey(
+        request,
+      )];
       if (existing != null) {
-        existingIssuesByTitle[request.title] =
-            Map<String, dynamic>.from(existing);
+        existingIssuesByTitle[request.title] = Map<String, dynamic>.from(
+          existing,
+        );
       }
     }
     final result = await _assetManagementAiSummaryService.generateSummary(
@@ -17325,9 +17814,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     ];
   }
 
-  bool _isAiGeneratedDeveloperRequest(
-    AssetManagementDeveloperRequest request,
-  ) {
+  bool _isAiGeneratedDeveloperRequest(AssetManagementDeveloperRequest request) {
     final aiRequests = _assetManagementAiSummaryResult?.aiDeveloperRequests ??
         const <AssetManagementDeveloperRequest>[];
     if (aiRequests.isEmpty) {
@@ -17584,11 +18071,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (candidates.isEmpty) {
       return const SizedBox.shrink();
     }
-    final validSelected = candidates.any(
-      (account) => account.id == _assetManagementMainAccountId,
-    )
-        ? _assetManagementMainAccountId
-        : null;
+    final validSelected =
+        candidates.any((account) => account.id == _assetManagementMainAccountId)
+            ? _assetManagementMainAccountId
+            : null;
     return Row(
       children: [
         Icon(
@@ -17682,6 +18168,182 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               fontSize: 11,
               height: 1.4,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _assetDebtTrendSeverityColor(AssetDebtTrendSeverity severity) {
+    return switch (severity) {
+      AssetDebtTrendSeverity.info => const Color(0xFF2563EB),
+      AssetDebtTrendSeverity.warning => const Color(0xFFD97706),
+      AssetDebtTrendSeverity.critical => const Color(0xFFB91C1C),
+    };
+  }
+
+  String _assetDebtTrendCategoryLabel(AssetDebtTrendCategory category) {
+    return switch (category) {
+      AssetDebtTrendCategory.negativeAmortization => 'リボ複利・返済が利息以下',
+      AssetDebtTrendCategory.balanceIncreasing => '残高が先月より増加',
+      AssetDebtTrendCategory.slowPayoff => '完済まで超長期',
+    };
+  }
+
+  /// 今月の負債の問題点と「翌月こうしなさい」を、計算済みの具体額つきで描画する。
+  Widget _buildAssetManagementMonthlyDebtTrendList(
+    List<AssetDebtTrendInsight> insights,
+  ) {
+    final hasCritical = insights.any(
+      (insight) => insight.severity == AssetDebtTrendSeverity.critical,
+    );
+    final headerColor =
+        hasCritical ? const Color(0xFFB91C1C) : const Color(0xFFD97706);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: headerColor.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.trending_up, color: headerColor, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '今月の問題点と翌月の改善（負債トレンド）',
+                  style: TextStyle(
+                    color: headerColor,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'リボ払いで返済が利息に負けている／先月より残高が増えた負債を検出し、翌月の具体的な返済額を提示します。',
+            style: TextStyle(fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          for (final insight in insights.take(5))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildAssetManagementMonthlyDebtTrendTile(insight),
+            ),
+          if (insights.length > 5)
+            Text(
+              'ほか ${insights.length - 5}件',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetManagementMonthlyDebtTrendTile(
+    AssetDebtTrendInsight insight,
+  ) {
+    final color = _assetDebtTrendSeverityColor(insight.severity);
+    final payoffValue = insight.estimatedPayoffMonths == null
+        ? 'この返済額では完済不能'
+        : '約${insight.estimatedPayoffMonths}ヶ月';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${insight.accountName}（${_assetDebtTrendCategoryLabel(insight.category)}）',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            insight.problem,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.arrow_forward, color: color, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '翌月: ${insight.nextMonthAction}',
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _buildAssetLiabilitySyncChip(
+                label: '残高',
+                value: _formatManagementYen(insight.currentBalance),
+                color: color,
+              ),
+              if (insight.balanceDelta != null)
+                _buildAssetLiabilitySyncChip(
+                  label: '前月比',
+                  value: _formatManagementDeltaYen(insight.balanceDelta),
+                  color: color,
+                ),
+              _buildAssetLiabilitySyncChip(
+                label: '月利息',
+                value: _formatManagementYen(insight.monthlyInterest),
+                color: const Color(0xFF6B7280),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '今月返済',
+                value: _formatManagementYen(insight.scheduledPayment),
+                color: const Color(0xFF6B7280),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '24ヶ月完済ライン',
+                value: _formatManagementYen(insight.payoffIn24MonthsPayment),
+                color: const Color(0xFF0D9488),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '完済見込み',
+                value: payoffValue,
+                color: const Color(0xFF6B7280),
+              ),
+            ],
           ),
         ],
       ),
@@ -21951,9 +22613,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 削除した支払日上書きのトゥームストーン (#part293: MirrorTombstoneStore 3例目)。
   /// ミラー復元で「自動へ戻した支払日」が復活するのを防ぐ。
   static const MirrorTombstoneStore _debtOverrideTombstones =
-      MirrorTombstoneStore(
-    storageKey: 'debt_payment_day_override_deleted_v1',
-  );
+      MirrorTombstoneStore(storageKey: 'debt_payment_day_override_deleted_v1');
 
   void _setDebtPaymentDayOverride(AssetLiabilityDebtRow row, int? day) {
     setState(() {
@@ -22468,10 +23128,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _formatManagementYen(billing.billedAmount),
               style: const TextStyle(fontWeight: FontWeight.bold, height: 1.3),
             ),
-            const Text(
-              'リボ自動算出',
-              style: TextStyle(fontSize: 11, height: 1.3),
-            ),
+            const Text('リボ自動算出', style: TextStyle(fontSize: 11, height: 1.3)),
           ],
         ),
       );
@@ -22572,10 +23229,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       children: [
         SizedBox(
           width: 64,
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 11, height: 1.3),
-          ),
+          child: Text(label, style: const TextStyle(fontSize: 11, height: 1.3)),
         ),
         Expanded(
           child: TextFormField(

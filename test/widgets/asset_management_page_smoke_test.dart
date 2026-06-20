@@ -6,11 +6,14 @@ import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
+import 'package:my_web_app/services/asset_salary_day_store.dart';
+import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
@@ -141,6 +144,95 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'monthly flow card aggregates over the salary cycle, not the month',
+      (tester) async {
+        // 暦月だと給料日(25日)受給分が翌月の窓から外れ収入0=赤字になる回帰を防ぐ。
+        // 当サイクル [給料日, 翌給料日) の窓で収入/支出を集計することを検証する。
+        final now = DateTime.now();
+        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+          now,
+          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+        );
+        // 当サイクル開始日(=給料日)に受け取った給料。暦月窓では外れるが、
+        // サイクル窓では収入として計上される。
+        final cycleSalary = DateTime(
+          cycleStart.year,
+          cycleStart.month,
+          cycleStart.day,
+          12,
+        );
+        // 前サイクル(給料日の前日)の収入。当サイクル窓では除外される。
+        final previousCycleIncome = cycleSalary.subtract(
+          const Duration(days: 1),
+        );
+        // 当サイクル内(本日)の支出。
+        final cycleExpense = DateTime(now.year, now.month, now.day, 12);
+
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialRecentFlows: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'action_type': 'conquer',
+                  'amount': 280000,
+                  'description': '給料',
+                  'occurred_at': cycleSalary.toIso8601String(),
+                },
+                <String, dynamic>{
+                  'action_type': 'expense',
+                  'amount': 50000,
+                  'description': '食費',
+                  'occurred_at': cycleExpense.toIso8601String(),
+                },
+                <String, dynamic>{
+                  'action_type': 'conquer',
+                  'amount': 999999,
+                  'description': '前サイクル収入',
+                  'occurred_at': previousCycleIncome.toIso8601String(),
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        final card = find.byKey(
+          const Key('asset_monthly_flow_priority_card'),
+        );
+        expect(card, findsOneWidget);
+
+        // 当サイクルの給料(280,000)が収入として計上される。
+        expect(
+          find.descendant(of: card, matching: find.text('¥280,000')),
+          findsOneWidget,
+        );
+        // 当サイクルの支出(50,000)も計上される。
+        expect(
+          find.descendant(of: card, matching: find.text('¥50,000')),
+          findsOneWidget,
+        );
+        // 前サイクルの収入(999,999)は窓外なので除外される。
+        expect(
+          find.descendant(of: card, matching: find.textContaining('999,999')),
+          findsNothing,
+        );
+        // 見出しは暦月ラベルではなく給料サイクルの期間ラベルになっている。
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('給料サイクル('),
+          ),
+          findsOneWidget,
+        );
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('tapping a day reveals the prefill action', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
@@ -814,6 +906,48 @@ void main() {
       expect(find.textContaining('回避ライン'), findsOneWidget);
       // ただし26日へ移せば20日の入金で賄えるため、事前判定が「回避できます」。
       expect(find.textContaining('を26日へ(回避できます)'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('revolving balance growth surfaces the monthly debt trend card',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final priorMonth = DateTime(now.year, now.month - 1, 1);
+      final priorKey = '${priorMonth.year.toString().padLeft(4, '0')}-'
+          '${priorMonth.month.toString().padLeft(2, '0')}';
+      // 前月末のモビット残高 3 万円を履歴に仕込み、今月 30 万へ増加させる。
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_account_balance_history_v1': jsonEncode(<String, dynamic>{
+          priorKey: <String, dynamic>{'mobit': 30000},
+        }),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 3000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 500000,
+                'モビット': -300000,
+              },
+            },
+          ),
+        ),
+      );
+      // 履歴の非同期ロード → setState → 再描画を待つ。
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.textContaining('今月の問題点と翌月の改善（負債トレンド）'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('残高が先月より増加'), findsWidgets);
 
       await _unmount(tester);
     });
@@ -1567,6 +1701,76 @@ void main() {
           local.map((c) => c.id),
           containsAll(<String>['fc_denki', 'fc_gym']),
         );
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'subscription audit syncs check state from the server mirror',
+      (tester) async {
+        // ローカルは空。新端末がサーバミラーから確認状況を取り込む。
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugSubscriptionAuditMirror:
+                  AssetSubscriptionAuditStore.encodeMirrorValue(
+                <String, DateTime>{'apple_id': DateTime.utc(2026, 6, 1)},
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final state = await const AssetSubscriptionAuditStore().load();
+        expect(state['apple_id'], DateTime.utc(2026, 6, 1));
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'subscription audit MAX-merges and never clobbers a newer check',
+      (tester) async {
+        // apple_id: local 古 + mirror 新 → 新。au_kantan: local 新 + mirror 古 → 新。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          AssetSubscriptionAuditStore.prefsKey: jsonEncode(
+            AssetSubscriptionAuditStore.encodeMirrorValue(
+              <String, DateTime>{
+                'apple_id': DateTime.utc(2026, 6, 1),
+                'au_kantan': DateTime.utc(2026, 6, 10),
+              },
+            ),
+          ),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugSubscriptionAuditMirror:
+                  AssetSubscriptionAuditStore.encodeMirrorValue(
+                <String, DateTime>{
+                  'apple_id': DateTime.utc(2026, 6, 10),
+                  'au_kantan': DateTime.utc(2026, 6, 1),
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final state = await const AssetSubscriptionAuditStore().load();
+        // どちらの方向でも新しい確認が残る (MAX マージ)。
+        expect(state['apple_id'], DateTime.utc(2026, 6, 10));
+        expect(state['au_kantan'], DateTime.utc(2026, 6, 10));
 
         await _unmount(tester);
       },
