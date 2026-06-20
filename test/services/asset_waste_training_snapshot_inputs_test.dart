@@ -105,4 +105,69 @@ void main() {
     expect(snapshot.todayViolationCount, 0);
     expect(snapshot.lockdownActive, isTrue);
   });
+
+  // --- Phase 3: 給料日サイクル窓 ---
+
+  AssetWasteTrainingSnapshot buildCycle(
+    List<Map<String, dynamic>> flows, {
+    required DateTime now,
+    required DateTime cycleStart,
+    required DateTime cycleEndExclusive,
+  }) {
+    return AssetWasteTrainingSnapshotInputs.build(
+      monthFlows: flows,
+      now: now,
+      cycleStart: cycleStart,
+      cycleEndExclusive: cycleEndExclusive,
+      isExpense: (actionType) => actionType == 'expense',
+      wasteCategoryOf: (description, actionType) =>
+          description.contains('#浪費') ? '浪費' : null,
+      ruleCompletedCount: 2,
+      ruleTargetCount: 5,
+      todayViolationCount: 1,
+      compliantStreakDays: 3,
+      lockdownActive: true,
+    );
+  }
+
+  test('salary cycle: month=cycleStart and elapsedDays counts from cycle start',
+      () {
+    final snapshot = buildCycle(
+      [
+        flow(
+          'expense',
+          2000,
+          description: 'ゲーム #浪費',
+          occurredAt: '2026-05-27T09:00:00',
+        ),
+        flow(
+          'expense',
+          1000,
+          description: 'ランチ',
+          occurredAt: '2026-06-10T09:00:00',
+        ),
+      ],
+      now: DateTime(2026, 6, 15),
+      cycleStart: DateTime(2026, 5, 25),
+      cycleEndExclusive: DateTime(2026, 6, 25),
+    );
+
+    expect(snapshot.month, DateTime(2026, 5, 25));
+    expect(snapshot.totalExpense, 3000);
+    expect(snapshot.wasteExpense, 2000);
+    expect(snapshot.elapsedDays, 22); // 5/25→6/15 = 21日 + 1
+    expect(snapshot.noWasteDays, 21); // 浪費1日 (5/27)
+  });
+
+  test('ended salary cycle uses the full cycle length for elapsedDays', () {
+    final snapshot = buildCycle(
+      const [],
+      now: DateTime(2026, 7, 10), // サイクル終了後
+      cycleStart: DateTime(2026, 5, 25),
+      cycleEndExclusive: DateTime(2026, 6, 25),
+    );
+
+    expect(snapshot.elapsedDays, 31); // 5/25→6/25 = 31日
+    expect(snapshot.month, DateTime(2026, 5, 25));
+  });
 }

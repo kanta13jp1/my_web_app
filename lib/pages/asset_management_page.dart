@@ -1059,6 +1059,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }).toList();
   }
 
+  /// [reference] が属する給料日サイクル `[salaryCycleStart, salaryCycleEndExclusive)`
+  /// に発生したフローを返す。資産管理の「今月 = 給料日サイクル」統一(Phase 3)用。
+  List<Map<String, dynamic>> _flowsForCycle(DateTime reference) {
+    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+      reference,
+      salaryDay: _salaryDay,
+    );
+    final endExclusive =
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+      reference,
+      salaryDay: _salaryDay,
+    );
+    return _recentFlows.where((flow) {
+      final occurredAtRaw = flow['occurred_at']?.toString();
+      if (occurredAtRaw == null || occurredAtRaw.isEmpty) {
+        return false;
+      }
+      final occurredAt = DateTime.tryParse(occurredAtRaw)?.toLocal();
+      if (occurredAt == null) {
+        return false;
+      }
+      return !occurredAt.isBefore(start) && occurredAt.isBefore(endExclusive);
+    }).toList();
+  }
+
   Future<void> _pickFlowHistoryMonth() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -1172,9 +1197,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   AssetWasteTrainingSnapshot _buildWasteTrainingSnapshot() {
     final lockdown = _debtLockdownSnapshot;
+    final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+      _now,
+      salaryDay: _salaryDay,
+    );
+    final cycleEndExclusive =
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+      _now,
+      salaryDay: _salaryDay,
+    );
     return AssetWasteTrainingSnapshotInputs.build(
-      monthFlows: _flowsForMonth(_monthStart(_now)),
+      monthFlows: _flowsForCycle(_now),
       now: _now,
+      cycleStart: cycleStart,
+      cycleEndExclusive: cycleEndExclusive,
       isExpense: _isExpenseActionType,
       wasteCategoryOf: (description, actionType) => _parseFlowDescription(
         description,
