@@ -108,4 +108,94 @@ void main() {
       );
     });
   });
+
+  group('AssetSubscriptionAuditCatalog gateway mapping', () {
+    test('sourceIdForGateway maps non-direct gateways to manual source ids',
+        () {
+      expect(
+        AssetSubscriptionAuditCatalog.sourceIdForGateway(
+          AssetSubscriptionBillingGateway.direct,
+        ),
+        isNull,
+      );
+      expect(
+        AssetSubscriptionAuditCatalog.sourceIdForGateway(
+          AssetSubscriptionBillingGateway.apple,
+        ),
+        AssetSubscriptionAuditCatalog.appleSourceId,
+      );
+      expect(
+        AssetSubscriptionAuditCatalog.sourceIdForGateway(
+          AssetSubscriptionBillingGateway.googlePlay,
+        ),
+        AssetSubscriptionAuditCatalog.googlePlaySourceId,
+      );
+      expect(
+        AssetSubscriptionAuditCatalog.sourceIdForGateway(
+          AssetSubscriptionBillingGateway.auKantan,
+        ),
+        AssetSubscriptionAuditCatalog.auKantanSourceId,
+      );
+    });
+
+    test('gatewayForSourceId is the inverse and null for unknown/bank', () {
+      expect(
+        AssetSubscriptionAuditCatalog.gatewayForSourceId(
+          AssetSubscriptionAuditCatalog.appleSourceId,
+        ),
+        AssetSubscriptionBillingGateway.apple,
+      );
+      expect(
+        AssetSubscriptionAuditCatalog.gatewayForSourceId(
+          AssetSubscriptionAuditCatalog.bankSourceId,
+        ),
+        isNull,
+      );
+      expect(
+        AssetSubscriptionAuditCatalog.gatewayForSourceId('card_aupay'),
+        isNull,
+      );
+    });
+
+    test('manual source ids align with the gateway mapping constants', () {
+      // カタログ定義の id と経路マッピングが drift しないことを pin。
+      final manualIds =
+          AssetSubscriptionAuditCatalog.manualSources.map((s) => s.id).toSet();
+      expect(manualIds, contains(AssetSubscriptionAuditCatalog.appleSourceId));
+      expect(
+        manualIds,
+        contains(AssetSubscriptionAuditCatalog.googlePlaySourceId),
+      );
+      expect(
+        manualIds,
+        contains(AssetSubscriptionAuditCatalog.auKantanSourceId),
+      );
+    });
+
+    test('gatewayTotalsBySourceId sums by gateway, excludes direct & non-pos',
+        () {
+      final totals = AssetSubscriptionAuditCatalog.gatewayTotalsBySourceId(
+        subscriptions: const <({
+          AssetSubscriptionBillingGateway gateway,
+          double amount,
+        })>[
+          (gateway: AssetSubscriptionBillingGateway.apple, amount: 30000),
+          (gateway: AssetSubscriptionBillingGateway.apple, amount: 1500),
+          (gateway: AssetSubscriptionBillingGateway.apple, amount: 980),
+          (gateway: AssetSubscriptionBillingGateway.googlePlay, amount: 1200),
+          (gateway: AssetSubscriptionBillingGateway.direct, amount: 3000),
+          (gateway: AssetSubscriptionBillingGateway.apple, amount: 0),
+        ],
+      );
+      final apple = totals[AssetSubscriptionAuditCatalog.appleSourceId];
+      expect(apple?.count, 3);
+      expect(apple?.total, 32480);
+      expect(
+        totals[AssetSubscriptionAuditCatalog.googlePlaySourceId]?.count,
+        1,
+      );
+      // direct と 0円 は集計対象外。Apple と Google の 2 ソースのみ。
+      expect(totals.length, 2);
+    });
+  });
 }

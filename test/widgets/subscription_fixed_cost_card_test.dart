@@ -140,5 +140,35 @@ void main() {
       await tester.tap(find.byTooltip('Anthropic (Claude) を削除'));
       expect(deleted?.id, 'sub_claude');
     });
+
+    testWidgets('shows the billing gateway suffix for Apple-billed subs',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SubscriptionFixedCostCard(
+              costs: const <AssetRecurringFixedCost>[
+                AssetRecurringFixedCost(
+                  id: 'sub_chatgpt',
+                  name: 'ChatGPT Pro',
+                  amount: 30000,
+                  paymentDay: 20,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                  billingGateway: AssetSubscriptionBillingGateway.apple,
+                ),
+              ],
+              sourceAccountNames: const <String, String>{},
+              presets: presets,
+              onAddPreset: (_) {},
+              onAddCustom: () {},
+              onEdit: (_) {},
+              onDelete: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('Apple経由'), findsOneWidget);
+    });
   });
 }

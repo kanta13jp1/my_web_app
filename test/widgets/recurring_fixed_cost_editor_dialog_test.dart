@@ -203,4 +203,100 @@ void main() {
     expect(saved!.name, 'Cursor');
     expect(saved!.category, AssetRecurringFixedCostCategory.subscription);
   });
+
+  testWidgets('請求経路ドロップダウンはサブスク時に表示され apple を保存できる', (
+    tester,
+  ) async {
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                saved = await showRecurringFixedCostEditor(
+                  context,
+                  category: AssetRecurringFixedCostCategory.subscription,
+                  gateway: AssetSubscriptionBillingGateway.apple,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    // 請求経路ドロップダウンが表示される (Apple 既定)。
+    expect(find.text('請求経路'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'ChatGPT Pro');
+    await tester.enterText(find.byType(TextFormField).at(1), '30000');
+    await tester.enterText(find.byType(TextFormField).at(2), '20');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(saved!.billingGateway, AssetSubscriptionBillingGateway.apple);
+  });
+
+  testWidgets('請求経路ドロップダウンは固定費(utility)では非表示', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: RecurringFixedCostEditorDialog()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('請求経路'), findsNothing);
+  });
+
+  testWidgets('サブスク→固定費へ区分変更すると請求経路は direct に戻して保存される', (
+    tester,
+  ) async {
+    const existing = AssetRecurringFixedCost(
+      id: 'sub_x',
+      name: 'X Premium',
+      amount: 980,
+      paymentDay: 20,
+      category: AssetRecurringFixedCostCategory.subscription,
+      billingGateway: AssetSubscriptionBillingGateway.apple,
+    );
+    AssetRecurringFixedCost? saved;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                saved = await showRecurringFixedCostEditor(
+                  context,
+                  existing: existing,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    // 区分を「定期固定費」へ切り替える。
+    await tester.tap(
+      find.byType(DropdownButtonFormField<AssetRecurringFixedCostCategory>),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('定期固定費').last);
+    await tester.pumpAndSettle();
+    // 区分=utility になり請求経路ドロップダウンは消える。
+    expect(find.text('請求経路'), findsNothing);
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isNotNull);
+    expect(saved!.category, AssetRecurringFixedCostCategory.utility);
+    expect(saved!.billingGateway, AssetSubscriptionBillingGateway.direct);
+  });
 }

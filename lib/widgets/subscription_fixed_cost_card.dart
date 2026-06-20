@@ -43,9 +43,26 @@ class SubscriptionFixedCostCard extends StatelessWidget {
   static String _normalize(String value) =>
       value.replaceAll(RegExp(r'\s+'), '').toLowerCase();
 
-  /// サブタイトルは定期固定費カードと同じ表記を共有する。
-  String _subtitle(AssetRecurringFixedCost cost) =>
-      RecurringFixedCostCard.subtitleFor(cost, sourceAccountNames);
+  /// サブタイトルは定期固定費カードの表記に、請求経路 (Apple/Google/au 経由) を付す。
+  String _subtitle(AssetRecurringFixedCost cost) {
+    final base = RecurringFixedCostCard.subtitleFor(cost, sourceAccountNames);
+    final gateway = gatewayLabel(cost.billingGateway);
+    return gateway == null ? base : '$base・$gateway経由';
+  }
+
+  /// 請求経路の短いラベル。direct (経由なし) は null。
+  static String? gatewayLabel(AssetSubscriptionBillingGateway gateway) {
+    switch (gateway) {
+      case AssetSubscriptionBillingGateway.direct:
+        return null;
+      case AssetSubscriptionBillingGateway.apple:
+        return 'Apple';
+      case AssetSubscriptionBillingGateway.googlePlay:
+        return 'Google Play';
+      case AssetSubscriptionBillingGateway.auKantan:
+        return 'auかんたん決済';
+    }
+  }
 
   /// 既に登録済み (正規化した名前が一致) のプリセットは候補から除く。
   ///

@@ -54,6 +54,8 @@ void main() {
   Widget host({
     Map<String, DateTime> lastCheckedAt = const <String, DateTime>{},
     Map<String, int> counts = const <String, int>{},
+    Map<String, ({int count, double total})> registered =
+        const <String, ({int count, double total})>{},
     required void Function(SubscriptionAuditSource) onMarkChecked,
     required void Function(SubscriptionAuditSource) onRegister,
   }) {
@@ -64,6 +66,7 @@ void main() {
             sources: const <SubscriptionAuditSource>[appleSource, cardSource],
             lastCheckedAt: lastCheckedAt,
             unregisteredCountBySourceId: counts,
+            registeredByGatewaySourceId: registered,
             now: now,
             onMarkChecked: onMarkChecked,
             onRegisterSubscription: onRegister,
@@ -129,5 +132,24 @@ void main() {
     expect(find.textContaining('確認済み (3日前)'), findsOneWidget);
     // 全ソース確認済み (staleDays 以内) → 要確認バッジ無し。
     expect(find.textContaining('要確認'), findsNothing);
+  });
+
+  testWidgets('manual row shows the gateway reconciliation total', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        registered: const <String, ({int count, double total})>{
+          'apple_id': (count: 3, total: 32480),
+        },
+        onMarkChecked: (_) {},
+        onRegister: (_) {},
+      ),
+    );
+
+    // Apple 行に「登録済み 3件 / 月 ¥32,480 ... 一致するか確認」が出る。
+    expect(find.textContaining('登録済み 3件'), findsOneWidget);
+    expect(find.textContaining('¥32,480'), findsOneWidget);
+    expect(find.textContaining('APPLE.COM/BILL'), findsOneWidget);
   });
 }
