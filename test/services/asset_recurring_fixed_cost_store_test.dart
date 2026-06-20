@@ -62,6 +62,140 @@ void main() {
       expect(fallback, isNotNull);
       expect(fallback!.cadence, AssetRecurringFixedCostCadence.monthly);
     });
+
+    test('category defaults to utility and is omitted from json', () {
+      const cost = AssetRecurringFixedCost(
+        id: 'a',
+        name: '電気代',
+        amount: 8000,
+        paymentDay: 27,
+      );
+      expect(cost.category, AssetRecurringFixedCostCategory.utility);
+      // 既定 (utility) のときは既存ペイロードと互換のため category を出力しない。
+      expect(cost.toJson().containsKey('category'), isFalse);
+    });
+
+    test('subscription category round-trips through json', () {
+      const cost = AssetRecurringFixedCost(
+        id: 'sub_claude',
+        name: 'Anthropic (Claude)',
+        amount: 3000,
+        paymentDay: 1,
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      final json = cost.toJson();
+      expect(json['category'], 'subscription');
+      final restored = AssetRecurringFixedCost.fromJson('sub_claude', json);
+      expect(restored, isNotNull);
+      expect(
+        restored!.category,
+        AssetRecurringFixedCostCategory.subscription,
+      );
+    });
+
+    test('fromJson without category defaults to utility (back-compat)', () {
+      // category キーが無い旧データ。
+      final restored = AssetRecurringFixedCost.fromJson('x', _validJson());
+      expect(restored, isNotNull);
+      expect(restored!.category, AssetRecurringFixedCostCategory.utility);
+    });
+
+    test('fromJson with unknown category falls back to utility', () {
+      final restored = AssetRecurringFixedCost.fromJson(
+        'x',
+        {..._validJson(), 'category': 'weird'},
+      );
+      expect(restored, isNotNull);
+      expect(restored!.category, AssetRecurringFixedCostCategory.utility);
+    });
+
+    test('copyWith updates category', () {
+      const cost = AssetRecurringFixedCost(
+        id: 'a',
+        name: 'Notion',
+        amount: 1650,
+        paymentDay: 5,
+      );
+      final updated = cost.copyWith(
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      expect(updated.category, AssetRecurringFixedCostCategory.subscription);
+      // 他フィールドは保持。
+      expect(updated.name, 'Notion');
+      expect(updated.amount, 1650);
+    });
+
+    test('billingGateway defaults to direct and is omitted from json', () {
+      const cost = AssetRecurringFixedCost(
+        id: 'a',
+        name: '電気代',
+        amount: 8000,
+        paymentDay: 27,
+      );
+      expect(cost.billingGateway, AssetSubscriptionBillingGateway.direct);
+      expect(cost.toJson().containsKey('billingGateway'), isFalse);
+    });
+
+    test('apple gateway round-trips through json', () {
+      const cost = AssetRecurringFixedCost(
+        id: 'sub_chatgpt',
+        name: 'ChatGPT Pro',
+        amount: 30000,
+        paymentDay: 20,
+        category: AssetRecurringFixedCostCategory.subscription,
+        billingGateway: AssetSubscriptionBillingGateway.apple,
+      );
+      final json = cost.toJson();
+      expect(json['billingGateway'], 'apple');
+      final restored = AssetRecurringFixedCost.fromJson('sub_chatgpt', json);
+      expect(restored!.billingGateway, AssetSubscriptionBillingGateway.apple);
+    });
+
+    test('fromJson without/unknown gateway falls back to direct (back-compat)',
+        () {
+      final noKey = AssetRecurringFixedCost.fromJson('x', _validJson());
+      expect(noKey!.billingGateway, AssetSubscriptionBillingGateway.direct);
+      final weird = AssetRecurringFixedCost.fromJson(
+        'x',
+        {..._validJson(), 'billingGateway': 'weird'},
+      );
+      expect(weird!.billingGateway, AssetSubscriptionBillingGateway.direct);
+    });
+
+    test('copyWith updates billingGateway', () {
+      const cost = AssetRecurringFixedCost(
+        id: 'a',
+        name: 'iCloud+',
+        amount: 1500,
+        paymentDay: 20,
+        category: AssetRecurringFixedCostCategory.subscription,
+      );
+      final updated = cost.copyWith(
+        billingGateway: AssetSubscriptionBillingGateway.apple,
+      );
+      expect(updated.billingGateway, AssetSubscriptionBillingGateway.apple);
+      expect(updated.name, 'iCloud+');
+    });
+  });
+
+  group('AssetRecurringFixedCostStore category', () {
+    test('mirror value preserves subscription category', () {
+      const costs = <AssetRecurringFixedCost>[
+        AssetRecurringFixedCost(
+          id: 'sub_openai',
+          name: 'OpenAI (ChatGPT)',
+          amount: 3000,
+          paymentDay: 1,
+          category: AssetRecurringFixedCostCategory.subscription,
+        ),
+      ];
+      final encoded = AssetRecurringFixedCostStore.encodeMirrorValue(costs);
+      final decoded = AssetRecurringFixedCostStore.decodeMirrorValue(encoded);
+      expect(
+        decoded.single.category,
+        AssetRecurringFixedCostCategory.subscription,
+      );
+    });
   });
 
   group('AssetRecurringFixedCostStore', () {

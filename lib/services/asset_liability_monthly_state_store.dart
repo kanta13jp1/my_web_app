@@ -628,6 +628,19 @@ class AssetLiabilityMonthlyStateStore {
     return DateTime(start.year, start.month + 1, start.day);
   }
 
+  /// 支払日 [paymentDay] を給料日サイクル内の並び順 (0 起点) へ写像する。
+  /// salaryDay を起点に「給料日以降→翌給料日前日」を 0..30 で表すので、
+  /// salaryDay=25 なら 25 日→0, 31 日→6, 1 日→7, 24 日→30 の順になる。
+  /// null (未設定) は末尾へ送るため十分大きい値を返す。
+  static int salaryCyclePaymentDayRank(int? paymentDay, {int salaryDay = 25}) {
+    if (paymentDay == null) {
+      return 1000;
+    }
+    final anchor = salaryDay.clamp(1, 28).toInt();
+    final day = paymentDay.clamp(1, 31).toInt();
+    return day >= anchor ? day - anchor : day - anchor + 31;
+  }
+
   static AssetLiabilityMonthlyState copyPreviousMonthState({
     required AssetLiabilityMonthlyState previousState,
     required DateTime targetMonth,

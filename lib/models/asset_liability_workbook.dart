@@ -272,12 +272,45 @@ enum AssetRecurringFixedCostCadence {
   bimonthlyOddMonth,
 }
 
+/// 定期固定費の区分。資金繰りへの計上は区分に依らず同じ (全額支払いの utility 負債)
+/// だが、UI 上の表示セクションと既定アイコンを切り替えるためだけに使う。
+enum AssetRecurringFixedCostCategory {
+  /// 家賃・光熱費・通信費など従来の定期固定費 (既定)。
+  utility,
+
+  /// AI/クラウド等の月額サブスク (Anthropic / OpenAI / Gemini / GCP / Supabase /
+  /// Notion など)。資金繰りでは固定費として同様に計上される。
+  subscription,
+}
+
+/// サブスクの請求経路 (どこ経由で課金されるか)。
+///
+/// 例: ChatGPT Pro は Apple App Store のサブスクとして課金され、Apple ID の支払い方法
+/// (ファミペイ等のカード) に請求される。この場合カード明細には `APPLE.COM/BILL` の
+/// 集約名義で出るため、個別サービス名では現れない。請求経路を記録しておくと、棚卸しで
+/// 「Apple 経由のサブスク合計」を集約請求と突き合わせて確認できる。
+enum AssetSubscriptionBillingGateway {
+  /// 経由なし (口座/カードへ直接請求)。既定。
+  direct,
+
+  /// Apple App Store (iOS/Mac) のサブスク経由。
+  apple,
+
+  /// Google Play 定期購入経由。
+  googlePlay,
+
+  /// auかんたん決済 (キャリア決済) 経由。
+  auKantan,
+}
+
 /// UI から登録できる定期固定費 (家賃・光熱費・通信費など毎月/隔月の口座振替)。
 ///
 /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) と同様に、資金繰りへ
 /// 「全額支払いの負債 (utility)」として計上される。`buildWorkbook` の
 /// `recurringFixedCosts` で渡し、`asset_pref_mirror` で端末間同期する。
-/// 保存形は `{id: {name, amount, paymentDay, cadence, sourceAccountId}}`。
+/// 保存形は `{id: {name, amount, paymentDay, cadence, sourceAccountId,
+/// category?, billingGateway?}}` (既定値 category=utility / billingGateway=direct
+/// は後方互換のため出力しない)。
 class AssetRecurringFixedCost {
   /// 安定した一意 ID (編集・削除のキー)。
   final String id;
@@ -297,6 +330,13 @@ class AssetRecurringFixedCost {
   /// 引落の振替元口座 ID (任意)。
   final String? sourceAccountId;
 
+  /// 区分 (固定費 / サブスク)。既定は utility で、表示セクションの振り分けにのみ使う。
+  final AssetRecurringFixedCostCategory category;
+
+  /// 請求経路 (Apple/Google/au 経由 or 直接)。既定は direct。棚卸しでの集約請求との
+  /// 突き合わせ表示に使い、資金繰りの計上額には影響しない。
+  final AssetSubscriptionBillingGateway billingGateway;
+
   const AssetRecurringFixedCost({
     required this.id,
     required this.name,
@@ -304,6 +344,8 @@ class AssetRecurringFixedCost {
     required this.paymentDay,
     this.cadence = AssetRecurringFixedCostCadence.monthly,
     this.sourceAccountId,
+    this.category = AssetRecurringFixedCostCategory.utility,
+    this.billingGateway = AssetSubscriptionBillingGateway.direct,
   });
 
   /// 指定した月 (1-12) にこの固定費が発生するか (隔月は偶数/奇数月のみ計上)。
@@ -326,6 +368,8 @@ class AssetRecurringFixedCost {
     AssetRecurringFixedCostCadence? cadence,
     String? sourceAccountId,
     bool clearSourceAccountId = false,
+    AssetRecurringFixedCostCategory? category,
+    AssetSubscriptionBillingGateway? billingGateway,
   }) {
     return AssetRecurringFixedCost(
       id: id ?? this.id,
@@ -336,10 +380,13 @@ class AssetRecurringFixedCost {
       sourceAccountId: clearSourceAccountId
           ? null
           : (sourceAccountId ?? this.sourceAccountId),
+      category: category ?? this.category,
+      billingGateway: billingGateway ?? this.billingGateway,
     );
   }
 
   /// ID をキーにする保存形のため、JSON には id を含めない。
+  /// 区分は既定 (utility) のときは出力しない (既存ペイロードと互換を保つ)。
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'name': name,
@@ -348,6 +395,10 @@ class AssetRecurringFixedCost {
       'cadence': cadence.name,
       if (sourceAccountId != null && sourceAccountId!.isNotEmpty)
         'sourceAccountId': sourceAccountId,
+      if (category != AssetRecurringFixedCostCategory.utility)
+        'category': category.name,
+      if (billingGateway != AssetSubscriptionBillingGateway.direct)
+        'billingGateway': billingGateway.name,
     };
   }
 
@@ -380,6 +431,16 @@ class AssetRecurringFixedCost {
       orElse: () => AssetRecurringFixedCostCadence.monthly,
     );
     final rawSource = json['sourceAccountId']?.toString().trim();
+    final categoryName = json['category']?.toString();
+    final category = AssetRecurringFixedCostCategory.values.firstWhere(
+      (value) => value.name == categoryName,
+      orElse: () => AssetRecurringFixedCostCategory.utility,
+    );
+    final gatewayName = json['billingGateway']?.toString();
+    final billingGateway = AssetSubscriptionBillingGateway.values.firstWhere(
+      (value) => value.name == gatewayName,
+      orElse: () => AssetSubscriptionBillingGateway.direct,
+    );
     return AssetRecurringFixedCost(
       id: trimmedId,
       name: name,
@@ -388,6 +449,8 @@ class AssetRecurringFixedCost {
       cadence: cadence,
       sourceAccountId:
           rawSource == null || rawSource.isEmpty ? null : rawSource,
+      category: category,
+      billingGateway: billingGateway,
     );
   }
 }

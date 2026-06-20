@@ -1,0 +1,31 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-06-20T06:00:00Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22件登録済み) / チケット: 0件 (cache 50日古い要確認) / PR非draftレビュー: 4件 (問題なし) / Issue修正: 0件 / workflow-failure #3512 ci-auto-fix済み / daily-report未実行継続 / ギター録音: 正常",
+  "details": {
+    "edge_function_ui_added": 0,
+    "edge_function_total": 22,
+    "tickets_handled": 0,
+    "ticket_cache_age_days": 50,
+    "prs_reviewed": 4,
+    "issues_fixed": 0,
+    "workflow_failures_recovered": 0,
+    "workflow_failures_pending": ["#3448 (Codex backlog - 人間対応)"],
+    "workflow_failures_auto_fixed": ["#3512 (dart format → ci-auto-fix済み)"],
+    "schedule_health": "warning",
+    "daily_report_missing": true,
+    "infrastructure": {
+      "supabase": "200 OK (cache)",
+      "firebase": "not checked (web sandbox)",
+      "guitar_recording_studio": "normal"
+    },
+    "escalations": [
+      "ticket-cache.json が約50日更新なし",
+      "daily-report 未実行継続",
+      "Issue #3175: tools-hub-mcp-smoke 連続失敗",
+      "Issue #2967: NotebookLM auth Secret 復旧待ち (P1)"
+    ]
+  }
+}
