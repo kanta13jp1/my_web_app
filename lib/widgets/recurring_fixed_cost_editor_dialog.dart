@@ -13,17 +13,32 @@ typedef RecurringFixedCostSourceOption = ({String id, String name});
 /// [includeCards] = true で**残高の符号によらず**クレジット/プリペイドカード
 /// (例: ファミペイ バーチャルカード) も含める。FamiPay は後払い/残高0だと
 /// `balance > 0` だけのフィルタでは選べないため、請求先カードとして拾えるようにする。
+/// [includeCarrierBilling] = true で auかんたん決済 (au通信料金合算) 等のキャリア決済
+/// 口座 (au / KDDI) も含める。これらは負債(請求)口座で残高<=0 のため通常は出ない。
 List<RecurringFixedCostSourceOption> recurringFixedCostSourceOptions(
   Iterable<AssetLiabilityAccount> accounts, {
   bool includeCards = false,
+  bool includeCarrierBilling = false,
 }) {
   return <RecurringFixedCostSourceOption>[
     for (final account in accounts)
       if (account.balance > 0 ||
           (includeCards &&
-              account.kind == AssetLiabilityAccountKind.creditCard))
+              account.kind == AssetLiabilityAccountKind.creditCard) ||
+          (includeCarrierBilling && _isCarrierBillingAccount(account)))
         (id: account.id, name: account.name),
   ];
+}
+
+/// auかんたん決済 (au通信料金合算) / KDDI などキャリア決済の口座か。残高の符号に依らず
+/// サブスクの振替元候補に含めるための判定。id は planning service の
+/// `auAccountId`('au') / `kddiProviderAccountId`('kddi_provider') と一致させる。
+bool _isCarrierBillingAccount(AssetLiabilityAccount account) {
+  final name = account.name.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+  return name == 'au' ||
+      account.id == 'au' ||
+      name.contains('kddi') ||
+      account.id == 'kddi_provider';
 }
 
 /// 定期固定費の追加/編集ダイアログを開き、保存された [AssetRecurringFixedCost] を返す。

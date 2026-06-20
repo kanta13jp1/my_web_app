@@ -8944,8 +8944,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
     // サブスクはカード (ファミペイ等) へ請求されることが多いため、残高<=0 のカードも
     // 請求先として選べるようにする。
-    final sourceOptions =
-        recurringFixedCostSourceOptions(accounts, includeCards: true);
+    final sourceOptions = recurringFixedCostSourceOptions(
+      accounts,
+      includeCards: true,
+      includeCarrierBilling: true,
+    );
     final gatewayTotals = AssetSubscriptionAuditCatalog.gatewayTotalsBySourceId(
       subscriptions: [
         for (final cost in _recurringFixedCosts)
@@ -9507,8 +9510,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
     // サブスクはカード (ファミペイ等) へ請求されることが多いため、残高<=0 のカードも
     // 請求先として選べるようにする。
-    final sourceOptions =
-        recurringFixedCostSourceOptions(accounts, includeCards: true);
+    final sourceOptions = recurringFixedCostSourceOptions(
+      accounts,
+      includeCards: true,
+      includeCarrierBilling: true,
+    );
     final sourceNames = <String, String>{
       for (final account in accounts) account.id: account.name,
     };
