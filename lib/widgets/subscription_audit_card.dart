@@ -32,6 +32,7 @@ class SubscriptionAuditCard extends StatelessWidget {
     required this.lastCheckedAt,
     required this.now,
     required this.onMarkChecked,
+    required this.onUnmarkChecked,
     required this.onRegisterSubscription,
     this.unregisteredCountBySourceId = const <String, int>{},
     this.registeredByGatewaySourceId =
@@ -65,6 +66,9 @@ class SubscriptionAuditCard extends StatelessWidget {
   final int staleDays;
 
   final void Function(SubscriptionAuditSource source) onMarkChecked;
+
+  /// 「確認した」を誤って押した / 解除したいときに、当該ソースを未確認へ戻す。
+  final void Function(SubscriptionAuditSource source) onUnmarkChecked;
   final void Function(SubscriptionAuditSource source) onRegisterSubscription;
 
   /// 最終確認日時と現在時刻からステータスを判定する (純関数)。
@@ -181,6 +185,7 @@ class SubscriptionAuditCard extends StatelessWidget {
                   cardBreakdown: cardBreakdownBySourceId[source.id] ??
                       const <GatewayCardBreakdownLine>[],
                   onMarkChecked: () => onMarkChecked(source),
+                  onUnmark: () => onUnmarkChecked(source),
                   onRegister: () => onRegisterSubscription(source),
                 ),
             ],
@@ -201,6 +206,7 @@ class _SourceTile extends StatelessWidget {
     required this.registered,
     required this.cardBreakdown,
     required this.onMarkChecked,
+    required this.onUnmark,
     required this.onRegister,
   });
 
@@ -215,6 +221,9 @@ class _SourceTile extends StatelessWidget {
   /// 請求先カード別の内訳 (合計降順)。2 件以上のときだけ内訳行を出す。
   final List<GatewayCardBreakdownLine> cardBreakdown;
   final VoidCallback onMarkChecked;
+
+  /// 確認を取り消して未確認へ戻す。
+  final VoidCallback onUnmark;
   final VoidCallback onRegister;
 
   static final NumberFormat _yen = NumberFormat('#,###');
@@ -246,6 +255,8 @@ class _SourceTile extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isManual = source.kind == SubscriptionAuditSourceKind.manualCheck;
+    // 確認済み/要再確認のときだけ「確認を取り消す」を出す (誤クリック解除用)。
+    final isChecked = status != SubscriptionAuditStatus.unchecked;
     final actions = Wrap(
       spacing: 8,
       children: [
@@ -254,6 +265,19 @@ class _SourceTile extends StatelessWidget {
           icon: const Icon(Icons.check, size: 18),
           label: const Text('確認した'),
         ),
+        if (isChecked)
+          Semantics(
+            button: true,
+            label: '${source.name}の確認を取り消す',
+            child: TextButton.icon(
+              onPressed: onUnmark,
+              style: TextButton.styleFrom(
+                foregroundColor: scheme.onSurfaceVariant,
+              ),
+              icon: const Icon(Icons.undo, size: 18),
+              label: const Text('確認を取り消す'),
+            ),
+          ),
         TextButton.icon(
           onPressed: onRegister,
           icon: const Icon(Icons.add, size: 18),

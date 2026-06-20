@@ -455,6 +455,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       <AssetRecurringFixedCost>[];
   // サブスク棚卸し: 支払い元ごとの最終確認日時 (sourceId → UTC)。
   Map<String, DateTime> _subscriptionAuditState = <String, DateTime>{};
+  // サブスク棚卸し: 確認の取り消し日時 (tombstone / sourceId → UTC)。checked と
+  // 突き合わせ、新しい方の操作が勝つ (確認 > 取り消し で確認済み)。誤クリックの解除を
+  // 端末間で正しく伝播させ、キー削除による誤復活を防ぐ。
+  Map<String, DateTime> _subscriptionAuditUnconfirmed = <String, DateTime>{};
   // 定期取引の自動検出で「無視」した正規化ラベル(再提案しない / 支出側)。
   Set<String> _ignoredRecurringLabels = <String>{};
   Set<String> _ignoredDuplicateProviders = <String>{};
@@ -8780,8 +8784,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _loadSubscriptionAudit() async {
     try {
       final state = await _subscriptionAuditStore.load();
-      if (mounted && state.isNotEmpty) {
-        setState(() => _subscriptionAuditState = state);
+      final unconfirmed = await _subscriptionAuditStore.loadUnconfirmed();
+      if (mounted && (state.isNotEmpty || unconfirmed.isNotEmpty)) {
+        setState(() {
+          _subscriptionAuditState = state;
+          _subscriptionAuditUnconfirmed = unconfirmed;
+        });
       }
     } catch (e) {
       debugPrint('Error loading subscription audit: $e');
@@ -8790,20 +8798,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// サーバ集約ミラー (pref_key: subscription_audit_state) から復元する。
-  /// 「確認した」は単調なので、tombstone/dirty/LWW ではなく MAX マージで統合する。
+  /// 確認 (checked) と取り消し (unconfirmed = tombstone) を独立に MAX マージして統合する。
+  /// 新しい方の操作が勝つので誤復活せず、確認の取り消しも端末間で伝播する。
   Future<void> _restoreSubscriptionAuditFromMirror() async {
     final debugMirror = widget.debugSubscriptionAuditMirror;
     if (debugMirror == null && _supabase.auth.currentUser == null) {
       return;
     }
-    final localBefore = Map<String, DateTime>.from(_subscriptionAuditState);
+    final localCheckedBefore = Map<String, DateTime>.from(
+      _subscriptionAuditState,
+    );
+    final localUnconfirmedBefore = Map<String, DateTime>.from(
+      _subscriptionAuditUnconfirmed,
+    );
     try {
-      final Map<String, DateTime> serverState;
+      final dynamic serverValue;
       final DateTime? mirrorUpdatedAt;
       if (debugMirror != null) {
-        serverState = AssetSubscriptionAuditStore.decodeMirrorValue(
-          debugMirror,
-        );
+        serverValue = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
         final rows = await _supabase
@@ -8812,14 +8824,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             .eq('pref_key', _subscriptionAuditMirrorKey);
         if (rows.isEmpty) {
           // サーバ行無し: ローカルにあれば初回バックフィル。
-          if (localBefore.isNotEmpty) {
+          if (localCheckedBefore.isNotEmpty ||
+              localUnconfirmedBefore.isNotEmpty) {
             unawaited(_mirrorSubscriptionAudit());
           }
           return;
         }
-        serverState = AssetSubscriptionAuditStore.decodeMirrorValue(
-          rows.first['value'],
-        );
+        serverValue = rows.first['value'];
         mirrorUpdatedAt = DateTime.tryParse(
           rows.first['updated_at']?.toString() ?? '',
         );
@@ -8827,31 +8838,72 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (!mounted) {
         return;
       }
-      // 取込み中に「確認した」が入っても失わないよう、localBefore ではなく現在の
-      // in-memory state とマージする (MAX は単調なので新しい確認を消さない)。
-      final current = _subscriptionAuditState;
-      final merged = AssetSubscriptionAuditStore.mergeMax(current, serverState);
-      if (!_sameSubscriptionAuditState(current, merged)) {
-        setState(() => _subscriptionAuditState = merged);
+      final serverState = AssetSubscriptionAuditStore.decodeMirrorPayload(
+        serverValue,
+      );
+      // 取込み中に確認/取り消しが入っても失わないよう、現在の in-memory state と
+      // マージする (MAX は単調なので新しい操作を消さない)。
+      final currentChecked = _subscriptionAuditState;
+      final currentUnconfirmed = _subscriptionAuditUnconfirmed;
+      final mergedChecked = AssetSubscriptionAuditStore.mergeMax(
+        currentChecked,
+        serverState.checked,
+      );
+      final mergedUnconfirmed = AssetSubscriptionAuditStore.mergeMax(
+        currentUnconfirmed,
+        serverState.unconfirmed,
+      );
+      final checkedChanged = !_sameSubscriptionAuditState(
+        currentChecked,
+        mergedChecked,
+      );
+      final unconfirmedChanged = !_sameSubscriptionAuditState(
+        currentUnconfirmed,
+        mergedUnconfirmed,
+      );
+      if (checkedChanged || unconfirmedChanged) {
+        setState(() {
+          _subscriptionAuditState = mergedChecked;
+          _subscriptionAuditUnconfirmed = mergedUnconfirmed;
+        });
         _persistInBackground(
-          _subscriptionAuditStore.save(merged),
+          _subscriptionAuditStore.save(mergedChecked),
           'subscription audit restore save',
+        );
+        _persistInBackground(
+          _subscriptionAuditStore.saveUnconfirmed(mergedUnconfirmed),
+          'subscription audit restore save (unconfirmed)',
         );
         unawaited(
           _realignMirrorTimestamp(_subscriptionAuditMirrorKey, mirrorUpdatedAt),
         );
       }
-      // ローカルにサーバより新しい確認があればサーバへ反映 (和集合維持)。
-      final localHasNewer = localBefore.entries.any((entry) {
-        final server = serverState[entry.key];
-        return server == null || entry.value.isAfter(server);
-      });
-      if (localHasNewer && debugMirror == null) {
+      // ローカルにサーバより新しい確認/取り消しがあればサーバへ反映 (和集合維持)。
+      final checkedNewer = _subscriptionAuditLocalHasNewer(
+        localCheckedBefore,
+        serverState.checked,
+      );
+      final unconfirmedNewer = _subscriptionAuditLocalHasNewer(
+        localUnconfirmedBefore,
+        serverState.unconfirmed,
+      );
+      if ((checkedNewer || unconfirmedNewer) && debugMirror == null) {
         unawaited(_mirrorSubscriptionAudit());
       }
     } catch (e) {
       debugPrint('subscription audit mirror restore failed: $e');
     }
+  }
+
+  /// local に server より新しい (= server に無いか後の) 時刻があれば true。
+  bool _subscriptionAuditLocalHasNewer(
+    Map<String, DateTime> local,
+    Map<String, DateTime> server,
+  ) {
+    return local.entries.any((entry) {
+      final remote = server[entry.key];
+      return remote == null || entry.value.isAfter(remote);
+    });
   }
 
   bool _sameSubscriptionAuditState(
@@ -8869,7 +8921,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return true;
   }
 
-  /// 確認状況の全量を `asset_pref_mirror` へ 1 行 upsert する。
+  /// 確認状況の全量 (確認 + 取り消し) を `asset_pref_mirror` へ 1 行 upsert する。
   Future<void> _mirrorSubscriptionAudit() async {
     unawaited(_syncTimestampStore.markChanged(_subscriptionAuditMirrorKey));
     final userId = _supabase.auth.currentUser?.id;
@@ -8880,8 +8932,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
         'user_id': userId,
         'pref_key': _subscriptionAuditMirrorKey,
-        'value': AssetSubscriptionAuditStore.encodeMirrorValue(
+        'value': AssetSubscriptionAuditStore.encodeMirrorPayload(
           _subscriptionAuditState,
+          _subscriptionAuditUnconfirmed,
         ),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
@@ -8899,6 +8952,42 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       'subscription audit save',
     );
     unawaited(_mirrorSubscriptionAudit());
+    // 誤クリック救済: 直後に「元に戻す」で未確認へ戻せる SnackBar を出す。
+    if (!mounted) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('「${source.name}」を確認済みにしました'),
+        action: SnackBarAction(
+          label: '元に戻す',
+          onPressed: () => _unmarkSubscriptionSourceChecked(source),
+        ),
+      ),
+    );
+  }
+
+  /// 確認を取り消して当該ソースを未確認へ戻す (常設「確認を取り消す」/ SnackBar の
+  /// 「元に戻す」の共通経路)。確認時刻は履歴として残し、取り消し時刻 (tombstone) を now で
+  /// 記録する。effective 判定で「取り消し > 確認」となり未確認表示になり、端末間も MAX
+  /// マージで誤復活しない (キー削除と違い、最後の操作が確実に勝つ)。
+  void _unmarkSubscriptionSourceChecked(SubscriptionAuditSource source) {
+    final next = Map<String, DateTime>.from(_subscriptionAuditUnconfirmed);
+    next[source.id] = DateTime.now().toUtc();
+    setState(() => _subscriptionAuditUnconfirmed = next);
+    _persistInBackground(
+      _subscriptionAuditStore.saveUnconfirmed(next),
+      'subscription audit unconfirm save',
+    );
+    unawaited(_mirrorSubscriptionAudit());
+    if (!mounted) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(const SnackBar(content: Text('確認を取り消しました')));
   }
 
   /// 棚卸し対象の支払い元: manual (Apple/au/Google) + 銀行 + カード別 (口座から導出)。
@@ -8959,12 +9048,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
     return SubscriptionAuditCard(
       sources: _subscriptionAuditSources(workbook),
-      lastCheckedAt: _subscriptionAuditState,
+      lastCheckedAt: AssetSubscriptionAuditStore.effectiveCheckedAt(
+        _subscriptionAuditState,
+        _subscriptionAuditUnconfirmed,
+      ),
       unregisteredCountBySourceId: _unregisteredCountBySourceId(workbook),
       registeredByGatewaySourceId: gatewayTotals,
       cardBreakdownBySourceId: _subscriptionGatewayCardBreakdown(accounts),
       now: _now,
       onMarkChecked: _markSubscriptionSourceChecked,
+      onUnmarkChecked: _unmarkSubscriptionSourceChecked,
       onRegisterSubscription: (source) => unawaited(
         _openRecurringFixedCostEditor(
           sourceOptions: sourceOptions,
