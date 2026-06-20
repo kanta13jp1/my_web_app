@@ -339,6 +339,12 @@ void main() {
       expect(prompt.contains('Dart側で完了'), true);
       // リボ払いカードの照合不一致を指摘させない明示指示が含まれること。
       expect(prompt.contains('リボ払いカードの扱い'), true);
+      // 残高を延滞額・今月の支払額として提示させない明示指示が含まれること。
+      expect(prompt.contains('残高と支払額の区別'), true);
+      expect(
+        prompt.contains('「残高」を延滞額・今月の支払額として並べてはいけません'),
+        true,
+      );
       expect(prompt.contains('本日'), true);
       expect(prompt.contains('プロフィール詳細'), true);
       expect(prompt.contains('職業: 会社員'), true);
