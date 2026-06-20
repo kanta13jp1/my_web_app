@@ -294,12 +294,11 @@ jobs:
         run: flutter test --platform chrome test/web_import_smoke_test.dart
         continue-on-error: false
 
-      #  修正: --no-tree-shake-icons を追加
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
         if: github.event_name != 'workflow_call'
         run: >
-          flutter build web --release --pwa-strategy=none --no-tree-shake-icons
+          flutter build web --release --pwa-strategy=none
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
         env:
           FLUTTER_WEB: true

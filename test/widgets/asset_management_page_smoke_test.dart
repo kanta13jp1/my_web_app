@@ -6,11 +6,13 @@ import 'package:intl/intl.dart';
 import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/services/asset_expected_inflow_store.dart';
+import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
+import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
@@ -142,6 +144,95 @@ void main() {
 
       await _unmount(tester);
     });
+
+    testWidgets(
+      'monthly flow card aggregates over the salary cycle, not the month',
+      (tester) async {
+        // 暦月だと給料日(25日)受給分が翌月の窓から外れ収入0=赤字になる回帰を防ぐ。
+        // 当サイクル [給料日, 翌給料日) の窓で収入/支出を集計することを検証する。
+        final now = DateTime.now();
+        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+          now,
+          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+        );
+        // 当サイクル開始日(=給料日)に受け取った給料。暦月窓では外れるが、
+        // サイクル窓では収入として計上される。
+        final cycleSalary = DateTime(
+          cycleStart.year,
+          cycleStart.month,
+          cycleStart.day,
+          12,
+        );
+        // 前サイクル(給料日の前日)の収入。当サイクル窓では除外される。
+        final previousCycleIncome = cycleSalary.subtract(
+          const Duration(days: 1),
+        );
+        // 当サイクル内(本日)の支出。
+        final cycleExpense = DateTime(now.year, now.month, now.day, 12);
+
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialRecentFlows: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'action_type': 'conquer',
+                  'amount': 280000,
+                  'description': '給料',
+                  'occurred_at': cycleSalary.toIso8601String(),
+                },
+                <String, dynamic>{
+                  'action_type': 'expense',
+                  'amount': 50000,
+                  'description': '食費',
+                  'occurred_at': cycleExpense.toIso8601String(),
+                },
+                <String, dynamic>{
+                  'action_type': 'conquer',
+                  'amount': 999999,
+                  'description': '前サイクル収入',
+                  'occurred_at': previousCycleIncome.toIso8601String(),
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        final card = find.byKey(
+          const Key('asset_monthly_flow_priority_card'),
+        );
+        expect(card, findsOneWidget);
+
+        // 当サイクルの給料(280,000)が収入として計上される。
+        expect(
+          find.descendant(of: card, matching: find.text('¥280,000')),
+          findsOneWidget,
+        );
+        // 当サイクルの支出(50,000)も計上される。
+        expect(
+          find.descendant(of: card, matching: find.text('¥50,000')),
+          findsOneWidget,
+        );
+        // 前サイクルの収入(999,999)は窓外なので除外される。
+        expect(
+          find.descendant(of: card, matching: find.textContaining('999,999')),
+          findsNothing,
+        );
+        // 見出しは暦月ラベルではなく給料サイクルの期間ラベルになっている。
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('給料サイクル('),
+          ),
+          findsOneWidget,
+        );
+
+        await _unmount(tester);
+      },
+    );
 
     testWidgets('tapping a day reveals the prefill action', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
@@ -857,6 +948,36 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('残高が先月より増加'), findsWidgets);
+
+      await _unmount(tester);
+    });
+
+    testWidgets(
+        'a revolving credit card trips the no-new-debt discipline monitor',
+        (tester) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      // ファミペイに残高（最低返済のみ＝リボ繰越）→ 「カードは全額一括」違反。
+      await tester.binding.setSurfaceSize(const Size(1200, 3000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 500000,
+                'ファミペイ': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.textContaining('借金しない宣言モニター'), findsOneWidget);
+      expect(find.textContaining('カードは全額一括: 違反'), findsWidgets);
 
       await _unmount(tester);
     });

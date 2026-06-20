@@ -24,28 +24,70 @@ void main() {
       acct('aupay', 'auPayカード', AssetLiabilityAccountKind.creditCard, 5000),
       acct('famipay', 'ファミペイカード', AssetLiabilityAccountKind.creditCard, 0),
       acct('mobit', 'モビット', AssetLiabilityAccountKind.cardLoan, -50000),
+      acct(
+        'acom_shopping',
+        'アコムショッピング',
+        AssetLiabilityAccountKind.shoppingDebt,
+        -180000,
+      ),
     ];
 
     test('default excludes non-positive cards (banks/positive cards only)', () {
       final ids =
           recurringFixedCostSourceOptions(accounts).map((o) => o.id).toList();
-      // 残高>0 の銀行と auPay は出る。残高0のファミペイと負債のモビットは出ない。
+      // 残高>0 の銀行と auPay は出る。残高0のファミペイと負債は出ない。
       expect(ids, containsAll(<String>['smbc', 'aupay']));
       expect(ids, isNot(contains('famipay')));
       expect(ids, isNot(contains('mobit')));
+      expect(ids, isNot(contains('acom_shopping')));
     });
 
-    test('includeCards surfaces zero/negative-balance credit cards', () {
+    test('includeCards surfaces cards and shopping credit', () {
       final ids = recurringFixedCostSourceOptions(
         accounts,
         includeCards: true,
       ).map((o) => o.id).toList();
-      // ファミペイ (creditCard / 残高0) が選べるようになる。
-      expect(ids, containsAll(<String>['smbc', 'aupay', 'famipay']));
-      // クレカでない負債 (cardLoan) は含めない。
+      // ファミペイ (creditCard / 残高0) とアコムショッピング枠 (shoppingDebt) が選べる。
+      expect(
+        ids,
+        containsAll(<String>['smbc', 'aupay', 'famipay', 'acom_shopping']),
+      );
+      // 現金借入の消費者ローン (cardLoan) は買い物の請求先でないため含めない。
       expect(ids, isNot(contains('mobit')));
       // 重複しない (auPay は1回だけ)。
       expect(ids.where((id) => id == 'aupay').length, 1);
+    });
+
+    test('includeCarrierBilling surfaces au/KDDI carrier accounts only', () {
+      final withCarrier = <AssetLiabilityAccount>[
+        ...accounts,
+        acct('au', 'au', AssetLiabilityAccountKind.otherLiability, -28797),
+        acct('kddi_provider', 'KDDI', AssetLiabilityAccountKind.utility, -5764),
+        acct('rent', '家賃', AssetLiabilityAccountKind.utility, -63000),
+      ];
+      final ids = recurringFixedCostSourceOptions(
+        withCarrier,
+        includeCards: true,
+        includeCarrierBilling: true,
+      ).map((o) => o.id).toList();
+      // au / KDDI (auかんたん決済 / 通信料金合算) は振替元に出る。
+      expect(ids, containsAll(<String>['au', 'kddi_provider']));
+      // 家賃 (utility だがキャリア決済でない) は出ない。
+      expect(ids, isNot(contains('rent')));
+      // auPayカードを au と誤判定しない (残高>0 のカードとして1回だけ)。
+      expect(ids.where((id) => id == 'aupay').length, 1);
+    });
+
+    test('carrier accounts stay hidden without includeCarrierBilling', () {
+      final withCarrier = <AssetLiabilityAccount>[
+        ...accounts,
+        acct('au', 'au', AssetLiabilityAccountKind.otherLiability, -28797),
+      ];
+      final ids = recurringFixedCostSourceOptions(
+        withCarrier,
+        includeCards: true,
+      ).map((o) => o.id).toList();
+      expect(ids, isNot(contains('au')));
     });
   });
 

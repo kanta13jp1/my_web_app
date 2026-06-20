@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
 import 'package:my_web_app/widgets/subscription_audit_card.dart';
 
+void _noop(SubscriptionAuditSource _) {}
+
 void main() {
   final now = DateTime.utc(2026, 6, 20);
 
@@ -56,8 +58,11 @@ void main() {
     Map<String, int> counts = const <String, int>{},
     Map<String, ({int count, double total})> registered =
         const <String, ({int count, double total})>{},
+    Map<String, List<GatewayCardBreakdownLine>> cardBreakdown =
+        const <String, List<GatewayCardBreakdownLine>>{},
     required void Function(SubscriptionAuditSource) onMarkChecked,
     required void Function(SubscriptionAuditSource) onRegister,
+    void Function(SubscriptionAuditSource) onUnmark = _noop,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -67,8 +72,10 @@ void main() {
             lastCheckedAt: lastCheckedAt,
             unregisteredCountBySourceId: counts,
             registeredByGatewaySourceId: registered,
+            cardBreakdownBySourceId: cardBreakdown,
             now: now,
             onMarkChecked: onMarkChecked,
+            onUnmarkChecked: onUnmark,
             onRegisterSubscription: onRegister,
           ),
         ),
@@ -116,6 +123,53 @@ void main() {
     expect(registered?.id, 'apple_id');
   });
 
+  testWidgets('unchecked source does not show 確認を取り消す', (tester) async {
+    await tester.pumpWidget(
+      host(
+        onMarkChecked: (_) {},
+        onRegister: (_) {},
+      ),
+    );
+
+    // 未確認のあいだは取り消しボタンを出さない (出す対象が無い)。
+    expect(find.text('確認を取り消す'), findsNothing);
+  });
+
+  testWidgets('confirmed source shows 確認を取り消す and fires with the source',
+      (tester) async {
+    SubscriptionAuditSource? unmarked;
+    await tester.pumpWidget(
+      host(
+        lastCheckedAt: <String, DateTime>{
+          'apple_id': now.subtract(const Duration(days: 3)),
+        },
+        onMarkChecked: (_) {},
+        onUnmark: (s) => unmarked = s,
+        onRegister: (_) {},
+      ),
+    );
+
+    final appleRow = find.byKey(const Key('asset_subscription_audit_apple_id'));
+    // 確認済みの Apple 行にだけ取り消しボタンが出る。
+    expect(
+      find.descendant(of: appleRow, matching: find.text('確認を取り消す')),
+      findsOneWidget,
+    );
+    // 未確認の card 行には出ない。
+    final cardRow = find.byKey(
+      const Key('asset_subscription_audit_card_aupay_card'),
+    );
+    expect(
+      find.descendant(of: cardRow, matching: find.text('確認を取り消す')),
+      findsNothing,
+    );
+
+    await tester.tap(
+      find.descendant(of: appleRow, matching: find.text('確認を取り消す')),
+    );
+    expect(unmarked?.id, 'apple_id');
+  });
+
   testWidgets('checked source shows 確認済み and clears the recheck badge',
       (tester) async {
     await tester.pumpWidget(
@@ -151,5 +205,53 @@ void main() {
     expect(find.textContaining('登録済み 3件'), findsOneWidget);
     expect(find.textContaining('¥32,480'), findsOneWidget);
     expect(find.textContaining('APPLE.COM/BILL'), findsOneWidget);
+  });
+
+  testWidgets('manual row breaks down by funding card when 2+ cards', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        registered: const <String, ({int count, double total})>{
+          'apple_id': (count: 5, total: 33700),
+        },
+        cardBreakdown: const <String, List<GatewayCardBreakdownLine>>{
+          'apple_id': <GatewayCardBreakdownLine>[
+            (label: 'ファミペイ', count: 3, total: 32770),
+            (label: 'PayPayカード', count: 2, total: 930),
+          ],
+        },
+        onMarkChecked: (_) {},
+        onRegister: (_) {},
+      ),
+    );
+
+    // 合計行に加え、請求先カード別の内訳行が出る。
+    expect(find.textContaining('登録済み 5件'), findsOneWidget);
+    expect(find.textContaining('・ファミペイ ¥32,770（3件）'), findsOneWidget);
+    expect(find.textContaining('・PayPayカード ¥930（2件）'), findsOneWidget);
+  });
+
+  testWidgets('single funding card shows no per-card breakdown', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        registered: const <String, ({int count, double total})>{
+          'apple_id': (count: 3, total: 32770),
+        },
+        cardBreakdown: const <String, List<GatewayCardBreakdownLine>>{
+          'apple_id': <GatewayCardBreakdownLine>[
+            (label: 'ファミペイ', count: 3, total: 32770),
+          ],
+        },
+        onMarkChecked: (_) {},
+        onRegister: (_) {},
+      ),
+    );
+
+    // カードが 1 つなら内訳行は出さない (合計行で十分)。
+    expect(find.textContaining('登録済み 3件'), findsOneWidget);
+    expect(find.textContaining('・ファミペイ'), findsNothing);
   });
 }

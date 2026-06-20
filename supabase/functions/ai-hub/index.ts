@@ -2947,6 +2947,10 @@ serve(async (req: Request) => {
       "compute-disposable-balance",
       "voice.tts",
       "voice.stt",
+      // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
+      "english_reading.submit_attempt",
+      "english_reading.ability",
+      "english_reading.generate_lesson",
     ];
     if (authRequired.includes(action) && !userId) {
       return json({ error: "Unauthorized" }, 401);
@@ -3949,6 +3953,250 @@ serve(async (req: Request) => {
           500,
         ) as Array<{ metadata?: Record<string, unknown> | null }>;
         return json({ success: true, snapshot: buildRlhfSnapshot(rows) });
+      }
+
+      // ===== 英語速読カリキュラム =====
+      case "english_reading.list_lessons": {
+        const level = Math.round(asNumber(body.level, 0));
+        let query = admin.from("english_reading_lessons")
+          .select(
+            "id, lesson_code, level, cefr, title, topic, target_wpm, passage, word_count, questions, source",
+          )
+          .eq("is_active", true);
+        if (level > 0) query = query.eq("level", level);
+        const { data, error } = await query
+          .order("level", { ascending: true })
+          .order("lesson_code", { ascending: true })
+          .limit(200);
+        if (error) throw new Error(error.message);
+        return json({ success: true, lessons: data ?? [] });
+      }
+
+      case "english_reading.get_lesson": {
+        const code = asString(body.lesson_code);
+        const id = asString(body.lesson_id);
+        if (!code && !id) {
+          return json({ error: "lesson_code or lesson_id required" }, 400);
+        }
+        let query = admin.from("english_reading_lessons")
+          .select(
+            "id, lesson_code, level, cefr, title, topic, target_wpm, passage, word_count, questions, source",
+          )
+          .eq("is_active", true);
+        query = id ? query.eq("id", id) : query.eq("lesson_code", code);
+        const { data, error } = await query.limit(1).maybeSingle();
+        if (error) throw new Error(error.message);
+        return json({ success: true, lesson: data ?? null });
+      }
+
+      case "english_reading.generate_lesson": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
+        const level = Math.min(Math.max(Math.round(asNumber(body.level, 3)), 1), 6);
+        // ユーザー入力 topic はプロンプト注入面を絞るため空白正規化 + 80 字上限。
+        const topic = asString(body.topic).replace(/\s+/g, " ").slice(0, 80)
+          .trim();
+        // 濫用 / API コスト対策: 1 ユーザーの当日 AI 生成数に上限を設ける。
+        const userPrefix = userId.slice(0, 8);
+        const dayStart = new Date();
+        dayStart.setUTCHours(0, 0, 0, 0);
+        const { count: genToday } = await admin
+          .from("english_reading_lessons")
+          .select("id", { count: "exact", head: true })
+          .eq("source", "ai")
+          .ilike("lesson_code", `AI-L%-${userPrefix}-%`)
+          .gte("created_at", dayStart.toISOString());
+        if ((genToday ?? 0) >= 30) {
+          return json(
+            { error: "daily AI lesson generation limit reached" },
+            429,
+          );
+        }
+        const levelMetaTable: Record<
+          number,
+          { cefr: string; target: number; words: number }
+        > = {
+          1: { cefr: "A2", target: 100, words: 90 },
+          2: { cefr: "B1", target: 150, words: 120 },
+          3: { cefr: "B1+", target: 180, words: 150 },
+          4: { cefr: "B2", target: 220, words: 200 },
+          5: { cefr: "C1", target: 260, words: 230 },
+          6: { cefr: "C2", target: 300, words: 250 },
+        };
+        const meta = levelMetaTable[level] ??
+          { cefr: "B1", target: 150, words: 120 };
+        const prompt =
+          `You are an expert English reading-fluency teacher for Japanese adult learners. ` +
+          `Generate ONE original English reading passage at CEFR level ${meta.cefr}. ` +
+          (topic
+            ? `Topic: ${topic}. `
+            : `Choose an engaging non-fiction topic suitable for adults. `) +
+          `Requirements: about ${meta.words} words of natural, coherent prose; ` +
+          `do NOT put a title inside the passage body; ` +
+          `then exactly 4 multiple-choice comprehension questions in English, ` +
+          `each with 4 options and exactly one correct answer, plus a short Japanese explanation. ` +
+          `Return STRICT JSON only (no markdown fences) of shape: ` +
+          `{"title": string, "topic": string, "passage": string, ` +
+          `"questions": [{"q": string, "choices": [string,string,string,string], ` +
+          `"answer_index": number, "explanation": string}]}`;
+
+        let raw = "";
+        try {
+          raw = await callGemini(prompt, geminiKey);
+        } catch (e) {
+          return json({ error: `generation failed: ${String(e)}` }, 502);
+        }
+        const parsed = extractJsonObject(raw);
+        if (!parsed) {
+          return json({ error: "could not parse generated lesson" }, 502);
+        }
+        const passage = asString(parsed.passage);
+        if (!passage) return json({ error: "empty passage generated" }, 502);
+
+        const rawQuestions = Array.isArray(parsed.questions)
+          ? parsed.questions
+          : [];
+        const questions = rawQuestions
+          .slice(0, 6)
+          .map((q) => {
+            const obj = (q ?? {}) as Record<string, unknown>;
+            const choices = Array.isArray(obj.choices)
+              ? obj.choices
+                .map((c) => asString(c))
+                .filter((c) => c.length > 0)
+                .slice(0, 6)
+              : [];
+            const maxIdx = Math.max(0, choices.length - 1);
+            return {
+              q: asString(obj.q),
+              choices,
+              answer_index: Math.min(
+                Math.max(Math.round(asNumber(obj.answer_index, 0)), 0),
+                maxIdx,
+              ),
+              explanation: asString(obj.explanation),
+            };
+          })
+          .filter((q) => q.q.length > 0 && q.choices.length >= 2);
+
+        // 内容理解クイズが 0 問の劣化教材は保存せず拒否する。
+        if (questions.length === 0) {
+          return json(
+            { error: "no valid comprehension questions generated" },
+            502,
+          );
+        }
+
+        const wordCount =
+          passage.trim().split(/\s+/).filter((w) => w.length > 0).length;
+        const lessonCode = `AI-L${level}-${userId.slice(0, 8)}-${Date.now()}`;
+        const title = asString(parsed.title) || `AI Lesson (Level ${level})`;
+        const topicOut = asString(parsed.topic) || topic || "general";
+
+        const { data, error } = await admin
+          .from("english_reading_lessons")
+          .insert({
+            lesson_code: lessonCode,
+            level,
+            cefr: meta.cefr,
+            title,
+            topic: topicOut,
+            target_wpm: meta.target,
+            passage,
+            word_count: wordCount,
+            questions,
+            source: "ai",
+          })
+          .select(
+            "id, lesson_code, level, cefr, title, topic, target_wpm, passage, word_count, questions, source",
+          )
+          .single();
+        if (error) throw new Error(error.message);
+        return json({ success: true, lesson: data });
+      }
+
+      case "english_reading.submit_attempt": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const lessonCode = asString(body.lesson_code);
+        const lessonId = asString(body.lesson_id);
+        const level = Math.min(Math.max(Math.round(asNumber(body.level, 1)), 1), 6);
+        const mode = asString(body.mode) === "rsvp" ? "rsvp" : "measure";
+        const wordCount = Math.max(0, Math.round(asNumber(body.word_count, 0)));
+        const elapsedMs = Math.max(0, Math.round(asNumber(body.elapsed_ms, 0)));
+        const correct = Math.max(
+          0,
+          Math.round(asNumber(body.comprehension_correct, 0)),
+        );
+        const total = Math.max(
+          0,
+          Math.round(asNumber(body.comprehension_total, 0)),
+        );
+
+        // WPM = words / minutes (ゼロ除算ガード)。実効 WPM = WPM × 理解率。
+        const minutes = elapsedMs / 60000;
+        const wpm = wordCount > 0 && minutes > 0
+          ? Math.round(wordCount / minutes)
+          : 0;
+        const ratio = total > 0
+          ? Math.min(Math.max(correct / total, 0), 1)
+          : 1;
+        const effectiveWpm = wpm > 0 ? Math.round(wpm * ratio) : 0;
+
+        const insertRow: Record<string, unknown> = {
+          user_id: userId,
+          lesson_code: lessonCode || null,
+          level,
+          mode,
+          word_count: wordCount,
+          elapsed_ms: elapsedMs,
+          wpm,
+          comprehension_correct: correct,
+          comprehension_total: total,
+          effective_wpm: effectiveWpm,
+        };
+        if (lessonId) insertRow.lesson_id = lessonId;
+
+        const { data, error } = await admin
+          .from("english_reading_attempts")
+          .insert(insertRow)
+          .select("*")
+          .single();
+        if (error) throw new Error(error.message);
+
+        // 読書も AI大学 学習ストリークへ算入 (best-effort)。
+        try {
+          await admin.rpc("update_ai_university_streak", { p_user_id: userId });
+        } catch (streakErr) {
+          // 試行記録は保存済み。streak 更新失敗は致命的でないが観測可能にする。
+          console.warn(
+            "english_reading.submit_attempt streak update failed",
+            String(streakErr),
+          );
+        }
+
+        return json({
+          success: true,
+          attempt: data,
+          wpm,
+          effective_wpm: effectiveWpm,
+        });
+      }
+
+      case "english_reading.ability": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const { data, error } = await admin
+          .from("english_reading_attempts")
+          .select(
+            "id, lesson_code, level, mode, word_count, elapsed_ms, wpm, comprehension_correct, comprehension_total, effective_wpm, created_at",
+          )
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (error) throw new Error(error.message);
+        return json({ success: true, attempts: data ?? [] });
       }
 
       case "user_data.finetune_readiness": {
