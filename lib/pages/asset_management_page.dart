@@ -221,6 +221,11 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final Map<String, dynamic>? debugSubscriptionAuditMirror;
 
+  /// テスト専用: 収支フロー履歴 (`wealth_struggles` 行相当) の初期リストを注入し、
+  /// 給料日サイクル集計を Supabase なしで検証する。null なら通常のフェッチのみ。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugInitialRecentFlows;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -246,6 +251,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugRecurringFixedCostsMirror,
     this.debugRecurringFixedCostsDeletedMirror,
     this.debugSubscriptionAuditMirror,
+    this.debugInitialRecentFlows,
   });
 
   @override
@@ -760,6 +766,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (debugRecurring != null) {
       _recurringFixedCosts = List<AssetRecurringFixedCost>.from(debugRecurring);
     }
+    final debugFlows = widget.debugInitialRecentFlows;
+    if (debugFlows != null) {
+      _recentFlows = <Map<String, dynamic>>[
+        for (final flow in debugFlows) Map<String, dynamic>.from(flow),
+      ];
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -1121,6 +1133,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       return !occurredAt.isBefore(start) && occurredAt.isBefore(endExclusive);
     }).toList();
+  }
+
+  /// 給料日サイクルの期間ラベル (例: "5/25〜6/24")。
+  String _salaryCycleRangeLabel(DateTime reference) {
+    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+      reference,
+      salaryDay: _salaryDay,
+    );
+    final endInclusive =
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+      reference,
+      salaryDay: _salaryDay,
+    ).subtract(const Duration(days: 1));
+    return '${start.month}/${start.day}〜${endInclusive.month}/${endInclusive.day}';
   }
 
   Future<void> _pickFlowHistoryMonth() async {
@@ -4624,7 +4650,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
 
-    final currentMonthFlows = _flowsForMonth(DateTime.now());
+    final currentMonthFlows = _flowsForCycle(DateTime.now());
     int monthlyIncome = 0;
     int monthlyExpense = 0;
     for (final f in currentMonthFlows) {
@@ -4981,7 +5007,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final subsOk = _subscriptions.isNotEmpty;
 
-    final currentMonthFlows = _flowsForMonth(DateTime.now());
+    final currentMonthFlows = _flowsForCycle(DateTime.now());
     final incomeCount =
         currentMonthFlows.where((r) => r['action_type'] == 'conquer').length;
     final expenseCount =
@@ -5046,7 +5072,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       totalFixed += (s['price'] as num?)?.toInt() ?? 0;
     }
 
-    final currentMonthFlows = _flowsForMonth(now);
+    final currentMonthFlows = _flowsForCycle(now);
     int totalIncome = 0;
     int totalExpense = 0;
     int totalTransfer = 0;
@@ -5058,6 +5084,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
 
     final monthLabel = '${now.year}/${now.month.toString().padLeft(2, '0')}';
+    final flowCycleLabel = _salaryCycleRangeLabel(now);
     final mustThisMonth = _mustTasks.where((t) {
       final d = DateTime.parse(t['deadline']).toLocal();
       return d.year == now.year && d.month == now.month;
@@ -5113,7 +5140,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     buf.writeln('');
 
-    buf.writeln('### ④ 収支（$monthLabel）');
+    buf.writeln('### ④ 収支（給料サイクル $flowCycleLabel）');
     buf.writeln('- 収入合計: ¥${NumberFormat('#,###').format(totalIncome)}');
     buf.writeln('- 支出合計: ¥${NumberFormat('#,###').format(totalExpense)}');
     buf.writeln('- 振替合計: ¥${NumberFormat('#,###').format(totalTransfer)}');
@@ -12792,9 +12819,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // -------------------------
 
   Widget _buildMonthlyFlowFirstCard() {
-    final currentMonth = DateTime(_now.year, _now.month, 1);
-    final monthLabel = _flowMonthLabel(currentMonth);
-    final flows = _flowsForMonth(currentMonth);
+    final cycleRangeLabel = _salaryCycleRangeLabel(_now);
+    final flows = _flowsForCycle(_now);
     var totalIncome = 0;
     var totalExpense = 0;
 
@@ -12810,8 +12836,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final net = totalIncome - totalExpense;
     final statusText = flows.isEmpty
-        ? 'まだ今月の収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
-        : '今月の収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
+        ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
+        : 'このサイクルの収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
 
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
@@ -12851,7 +12877,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$monthLabelの収支を最優先で把握',
+                        '給料サイクル($cycleRangeLabel)の収支を最優先で把握',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
