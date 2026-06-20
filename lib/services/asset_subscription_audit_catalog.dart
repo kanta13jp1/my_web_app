@@ -9,6 +9,22 @@ typedef SubscriptionAuditAccountView = ({
   AssetLiabilityAccountKind kind,
 });
 
+/// 経路ソース内の「請求先カード別」内訳 1 件。[fundingAccountId] が null のときは
+/// 請求先カード未設定 (どのカードに請求されるか未登録)。
+typedef GatewayCardTotal = ({
+  String? fundingAccountId,
+  int count,
+  double total,
+});
+
+/// [AssetSubscriptionAuditCatalog.gatewayCardBreakdownBySourceId] への入力 1 件
+/// (請求経路 + 月額 + 請求先カード ID)。
+typedef SubscriptionGatewayInput = ({
+  AssetSubscriptionBillingGateway gateway,
+  double amount,
+  String? sourceAccountId,
+});
+
 /// サブスク棚卸しで確認する「支払い元(ソース)」の種別。
 enum SubscriptionAuditSourceKind {
   /// アプリ側が個別サブスクを把握できない集約請求 (Apple/au/Google 等)。
@@ -164,6 +180,75 @@ class AssetSubscriptionAuditCatalog {
       );
     }
     return result;
+  }
+
+  /// 登録済みサブスクを「経由ソース × 請求先カード」で集計する純関数。
+  ///
+  /// 同じ Apple経由でもサブスクごとに請求先カードが分かれる場合 (例: ChatGPT は
+  /// ファミペイ・LINEスタンプは PayPay)、各カードの集約請求 (APPLE.COM/BILL) は
+  /// 別々に出る。経路ソース ID ごとに、請求先カード ([sourceAccountId]) 別の件数・
+  /// 合計を合計額の降順 (同額は accountId 昇順 / null は末尾) で返す。
+  static Map<String, List<GatewayCardTotal>> gatewayCardBreakdownBySourceId({
+    required Iterable<SubscriptionGatewayInput> subscriptions,
+  }) {
+    final byGateway = <String, Map<String?, ({int count, double total})>>{};
+    for (final sub in subscriptions) {
+      final sourceId = sourceIdForGateway(sub.gateway);
+      if (sourceId == null || sub.amount <= 0) {
+        continue;
+      }
+      final rawCard = sub.sourceAccountId;
+      final cardId = (rawCard == null || rawCard.isEmpty) ? null : rawCard;
+      final cards = byGateway.putIfAbsent(
+        sourceId,
+        () => <String?, ({int count, double total})>{},
+      );
+      final existing = cards[cardId];
+      cards[cardId] = (
+        count: (existing?.count ?? 0) + 1,
+        total: (existing?.total ?? 0) + sub.amount,
+      );
+    }
+    final result = <String, List<GatewayCardTotal>>{};
+    byGateway.forEach((sourceId, cards) {
+      final list = <GatewayCardTotal>[
+        for (final entry in cards.entries)
+          (
+            fundingAccountId: entry.key,
+            count: entry.value.count,
+            total: entry.value.total,
+          ),
+      ];
+      list.sort((a, b) {
+        final byTotal = b.total.compareTo(a.total);
+        if (byTotal != 0) {
+          return byTotal;
+        }
+        // null (未設定) は末尾へ。
+        if (a.fundingAccountId == null) {
+          return b.fundingAccountId == null ? 0 : 1;
+        }
+        if (b.fundingAccountId == null) {
+          return -1;
+        }
+        return a.fundingAccountId!.compareTo(b.fundingAccountId!);
+      });
+      result[sourceId] = list;
+    });
+    return result;
+  }
+
+  /// 請求先カード ID を「既知の口座だけ採用」に正規化する。null/空/未知 (削除済み口座等)
+  /// はすべて null (=請求先未設定) へ寄せる。これにより内訳で「未設定」が二重に出るのを
+  /// 防ぎ、未知 ID が単独グループとして見えるのを避ける。
+  static String? normalizeFundingCard(
+    String? sourceAccountId,
+    Set<String> knownAccountIds,
+  ) {
+    if (sourceAccountId == null || sourceAccountId.isEmpty) {
+      return null;
+    }
+    return knownAccountIds.contains(sourceAccountId) ? sourceAccountId : null;
   }
 
   /// 検出した定期支出 ([suggestedSourceNames] = 各検出の引落元口座名) を支払い元
