@@ -115,5 +115,84 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(await store.load(prefs: prefs), isEmpty);
     });
+
+    test('unconfirmed save/load round-trips on its own key', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final prefs = await SharedPreferences.getInstance();
+      await store.saveUnconfirmed(
+        <String, DateTime>{'apple_id': utc(2026, 6, 2)},
+        prefs: prefs,
+      );
+      // checked と取り消しは別キーなので互いに混ざらない。
+      expect(await store.load(prefs: prefs), isEmpty);
+      expect(
+        (await store.loadUnconfirmed(prefs: prefs))['apple_id'],
+        utc(2026, 6, 2),
+      );
+    });
+  });
+
+  group('AssetSubscriptionAuditStore.effectiveCheckedAt', () {
+    test('checked with no tombstone stays confirmed', () {
+      final effective = AssetSubscriptionAuditStore.effectiveCheckedAt(
+        <String, DateTime>{'apple_id': utc(2026, 6, 1)},
+        const <String, DateTime>{},
+      );
+      expect(effective['apple_id'], utc(2026, 6, 1));
+    });
+
+    test('newer unconfirm hides the source (= 未確認)', () {
+      final effective = AssetSubscriptionAuditStore.effectiveCheckedAt(
+        <String, DateTime>{'apple_id': DateTime.utc(2026, 6, 1, 9)},
+        <String, DateTime>{'apple_id': DateTime.utc(2026, 6, 1, 10)},
+      );
+      expect(effective.containsKey('apple_id'), isFalse);
+    });
+
+    test('re-confirm after unconfirm wins (= 確認済み)', () {
+      final effective = AssetSubscriptionAuditStore.effectiveCheckedAt(
+        <String, DateTime>{'apple_id': DateTime.utc(2026, 6, 1, 11)},
+        <String, DateTime>{'apple_id': DateTime.utc(2026, 6, 1, 10)},
+      );
+      expect(effective['apple_id'], DateTime.utc(2026, 6, 1, 11));
+    });
+
+    test('equal timestamps favour unconfirm (tie → 未確認)', () {
+      final t = DateTime.utc(2026, 6, 1, 10);
+      final effective = AssetSubscriptionAuditStore.effectiveCheckedAt(
+        <String, DateTime>{'apple_id': t},
+        <String, DateTime>{'apple_id': t},
+      );
+      expect(effective.containsKey('apple_id'), isFalse);
+    });
+  });
+
+  group('AssetSubscriptionAuditStore mirror payload (v2)', () {
+    test('encode/decode round-trips both maps', () {
+      final checked = <String, DateTime>{'apple_id': utc(2026, 6, 1)};
+      final unconfirmed = <String, DateTime>{'au_kantan': utc(2026, 6, 2)};
+      final encoded = AssetSubscriptionAuditStore.encodeMirrorPayload(
+        checked,
+        unconfirmed,
+      );
+      expect(encoded['v'], 2);
+      final decoded = AssetSubscriptionAuditStore.decodeMirrorPayload(encoded);
+      expect(decoded.checked['apple_id'], utc(2026, 6, 1));
+      expect(decoded.unconfirmed['au_kantan'], utc(2026, 6, 2));
+    });
+
+    test('legacy flat {id: iso} decodes as checked-only', () {
+      final decoded = AssetSubscriptionAuditStore.decodeMirrorPayload(
+        <String, dynamic>{'apple_id': '2026-06-01T00:00:00.000Z'},
+      );
+      expect(decoded.checked['apple_id'], utc(2026, 6, 1));
+      expect(decoded.unconfirmed, isEmpty);
+    });
+
+    test('null / non-map decodes to empty maps', () {
+      final decoded = AssetSubscriptionAuditStore.decodeMirrorPayload(null);
+      expect(decoded.checked, isEmpty);
+      expect(decoded.unconfirmed, isEmpty);
+    });
   });
 }
