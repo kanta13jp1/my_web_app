@@ -21899,7 +21899,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          '支払済みチェックは給料日25日基準のサイクルで保存されます。入力欄は画面幅に合わせて折り返します。',
+          '支払済みチェックは給料日$_salaryDay日基準のサイクルで保存されます。'
+          'カードも給料日起点の支払日順に並びます。入力欄は画面幅に合わせて折り返します。',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 12,
@@ -22326,9 +22327,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityDebtRow a,
     AssetLiabilityDebtRow b,
   ) {
-    final dayA = a.paymentDay ?? 99;
-    final dayB = b.paymentDay ?? 99;
-    final day = dayA.compareTo(dayB);
+    // 給料日サイクル順 (給料日起点) に並べる。salaryDay=25 なら
+    // 25,26…31,1…24 の順。未設定 (null) は末尾。
+    final rankA = AssetLiabilityMonthlyStateStore.salaryCyclePaymentDayRank(
+      a.paymentDay,
+      salaryDay: _salaryDay,
+    );
+    final rankB = AssetLiabilityMonthlyStateStore.salaryCyclePaymentDayRank(
+      b.paymentDay,
+      salaryDay: _salaryDay,
+    );
+    final day = rankA.compareTo(rankB);
     if (day != 0) {
       return day;
     }

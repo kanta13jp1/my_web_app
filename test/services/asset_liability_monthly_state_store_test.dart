@@ -73,6 +73,35 @@ void main() {
       );
     });
 
+    test('salaryCyclePaymentDayRank orders days from the salary day', () {
+      int rank(int? day, {int salaryDay = 25}) =>
+          AssetLiabilityMonthlyStateStore.salaryCyclePaymentDayRank(
+            day,
+            salaryDay: salaryDay,
+          );
+      // salaryDay=25: 25→0, 26→1, 31→6, 1→7, 24→30 の順 (給料日起点)。
+      expect(rank(25), 0);
+      expect(rank(26), 1);
+      expect(rank(31), 6);
+      expect(rank(1), 7);
+      expect(rank(24), 30);
+      // 給料日以降が必ず給料日前より前に来る (連続・単調)。
+      final ordered = [for (var d = 1; d <= 31; d++) d]
+        ..sort((a, b) => rank(a).compareTo(rank(b)));
+      expect(ordered.first, 25);
+      expect(ordered.last, 24);
+      // 未設定は末尾。
+      expect(rank(null), greaterThan(rank(24)));
+      // salaryDay を変えると起点も動く。
+      expect(rank(1, salaryDay: 1), 0);
+      expect(rank(28, salaryDay: 1), 27);
+      expect(rank(10, salaryDay: 10), 0);
+      expect(rank(9, salaryDay: 10), 30);
+      // clamp 境界 (paymentDay 0/32 は 1/31 扱い)。
+      expect(rank(0), rank(1));
+      expect(rank(32), rank(31));
+    });
+
     test('saves and restores monthly paid statuses', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
