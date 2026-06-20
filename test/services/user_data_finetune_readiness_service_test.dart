@@ -47,7 +47,7 @@ void main() {
       expect(snapshot.readyForEvalBatch, isFalse);
       expect(snapshot.readyForFineTune, isFalse);
       expect(snapshot.eligibleProgress, 0);
-      expect(snapshot.nextAction, contains('Collect more'));
+      expect(snapshot.nextAction, contains('さらに集めましょう'));
     });
   });
 }
