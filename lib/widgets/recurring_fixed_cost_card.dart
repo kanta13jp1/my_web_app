@@ -39,7 +39,12 @@ class RecurringFixedCostCard extends StatelessWidget {
     }
   }
 
-  String _subtitle(AssetRecurringFixedCost cost) {
+  /// 「周期+振替日 / ¥金額 [/ 振替元: 口座]」のサブタイトル文字列を組み立てる。
+  /// 定期固定費カードとサブスクカードで同一表記を共有する (フォーマット drift 防止)。
+  static String subtitleFor(
+    AssetRecurringFixedCost cost,
+    Map<String, String> sourceAccountNames,
+  ) {
     final buffer = StringBuffer(
       '${cadenceLabel(cost.cadence)}${cost.paymentDay}日 / ¥${_yen.format(cost.amount)}',
     );
@@ -52,6 +57,9 @@ class RecurringFixedCostCard extends StatelessWidget {
     }
     return buffer.toString();
   }
+
+  String _subtitle(AssetRecurringFixedCost cost) =>
+      subtitleFor(cost, sourceAccountNames);
 
   @override
   Widget build(BuildContext context) {
