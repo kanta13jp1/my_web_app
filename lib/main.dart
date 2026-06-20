@@ -496,6 +496,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           : themeService.getFlutterThemeMode(),
       builder: (context, child) {
         return GlobalHeaderClockShell(
+          navigatorKey: _navigatorKey,
           child: UniversalAiShareShell(
             navigatorKey: _navigatorKey,
             child: MaintenanceShell(

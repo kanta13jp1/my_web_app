@@ -14,6 +14,7 @@ enum AssetManagementSectionTier { essential, standard, full }
 enum AssetManagementSectionId {
   monthlyFlow,
   calendar,
+  proposals,
   salaryBreakdown,
   recurringFixedCost,
   disposable,
@@ -72,6 +73,8 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
         return '当月収支の概観';
       case AssetManagementSectionId.calendar:
         return 'マネーカレンダー';
+      case AssetManagementSectionId.proposals:
+        return '提案カード';
       case AssetManagementSectionId.salaryBreakdown:
         return '給与消費内訳';
       case AssetManagementSectionId.recurringFixedCost:
@@ -111,6 +114,7 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
       case AssetManagementSectionId.quickActions:
       case AssetManagementSectionId.debtPlanner:
         return AssetManagementSectionTier.essential;
+      case AssetManagementSectionId.proposals:
       case AssetManagementSectionId.salaryBreakdown:
       case AssetManagementSectionId.recurringFixedCost:
       case AssetManagementSectionId.deadlines:

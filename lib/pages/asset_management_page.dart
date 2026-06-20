@@ -4536,6 +4536,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
+      salaryDay: _salaryDay,
     );
     final liabilities = workbook.debtMasterRows;
     if (liabilities.isEmpty) {
@@ -7731,6 +7732,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       transferTasks: _transferTasks,
       recurringFixedCosts: _recurringFixedCosts,
       includeDefaultFixedPayments: true,
+      salaryDay: _salaryDay,
     );
   }
 
@@ -7933,14 +7935,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 16),
               _buildCashflowForecastCard(assetLiabilityWorkbook),
             ],
+            // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
+            // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
+            if (_isSectionShown(AssetManagementSectionId.proposals)) ...[
+              _buildRecurringTransactionSuggestionCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+              _buildRecurringIncomeSuggestionCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+            ],
             if (_isSectionShown(AssetManagementSectionId.salaryBreakdown)) ...[
               _buildSalarySpendingBreakdownCard(),
               const SizedBox(height: 16),
               _buildCategoryBudgetCard(),
-              const SizedBox(height: 16),
-              _buildRecurringTransactionSuggestionCard(assetLiabilityWorkbook),
-              const SizedBox(height: 16),
-              _buildRecurringIncomeSuggestionCard(assetLiabilityWorkbook),
             ],
             if (_isSectionShown(
                 AssetManagementSectionId.recurringFixedCost)) ...[
@@ -12529,6 +12535,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         transferTasks: _transferTasks,
         recurringFixedCosts: _recurringFixedCosts,
         includeDefaultFixedPayments: true,
+        salaryDay: _salaryDay,
       );
       final assetLiabilityInputs =
           _disposableBalanceAssetLiabilityAdapter.build(

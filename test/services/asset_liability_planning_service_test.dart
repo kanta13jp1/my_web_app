@@ -1739,4 +1739,103 @@ void main() {
       expect(mobit.fullPaymentEstimate, isFalse);
     });
   });
+
+  group('AssetLiabilityPlanningService.buildWorkbook (salary cycle)', () {
+    const service = AssetLiabilityPlanningService();
+    final snapshot = <String, double>{
+      '三井住友銀行大塚支店': 25677,
+      'アコムショッピング': -2234106, // 支払日 8 / 特別行は 26
+      'モビット': -1553260, // 支払日 15 (直接対象)
+      '横浜銀行': -161437,
+    };
+
+    test(
+        'payment day >= salaryDay lands in the first cycle month, < in the '
+        'second', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 6, 26), // サイクル 6/25〜7/24
+        salaryDay: 25,
+      );
+      final payments =
+          workbook.cashflowRows.where((row) => row.isPayment).toList();
+      expect(payments, isNotEmpty);
+      for (final row in payments) {
+        final day = row.paymentDay;
+        expect(row.paymentDate.year, 2026);
+        if (day >= 25) {
+          expect(row.paymentDate.month, 6, reason: '${row.accountName} d=$day');
+        } else {
+          expect(row.paymentDate.month, 7, reason: '${row.accountName} d=$day');
+        }
+      }
+    });
+
+    test(
+        'a pre-salaryDay payment is overdue under calendar but not under '
+        'the salary cycle (払ったのに未払い 逆戻りの根治)', () {
+      final base = DateTime(2026, 6, 26);
+      final calendar = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: base,
+      );
+      final cycle = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: base,
+        salaryDay: 25,
+      );
+      final calRows = calendar.cashflowRows
+          .where(
+            (row) =>
+                row.isPayment &&
+                row.paymentDay < 25 &&
+                row.isDirectCashflowTarget &&
+                !row.paid,
+          )
+          .toList();
+      expect(calRows, isNotEmpty);
+      final calRow = calRows.first;
+      final cycRow = cycle.cashflowRows.firstWhere(
+        (row) => row.accountId == calRow.accountId,
+      );
+
+      // 暦月: 当月(6月)の支払日 <= 6/26 → 期限超過。
+      expect(calRow.paymentDate.month, 6);
+      expect(calRow.overdue, isTrue);
+      // サイクル: 第2暦月(7月)→ 6/26 より後 → 期限超過でない。
+      expect(cycRow.paymentDate.month, 7);
+      expect(cycRow.overdue, isFalse);
+    });
+
+    test('without salaryDay, payment dates stay in the calendar month', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 6, 26),
+      );
+      for (final row in workbook.cashflowRows.where((row) => row.isPayment)) {
+        expect(row.paymentDate.month, 6, reason: row.accountName);
+      }
+    });
+
+    test('bimonthly water bill applies based on its cycle calendar month', () {
+      // 水道代(22日/偶数月)。salaryDay 25, baseDate 6/10 → サイクル 5/25〜6/24、
+      // 22<25 → 第2暦月=6月(偶数)→ 計上。
+      final included = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 6, 10),
+        salaryDay: 25,
+        includeDefaultFixedPayments: true,
+      );
+      expect(included.accounts.any((a) => a.name.contains('水道')), isTrue);
+
+      // baseDate 6/26 → サイクル 6/25〜7/24、22<25 → 第2暦月=7月(奇数)→ 非計上。
+      final excluded = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 6, 26),
+        salaryDay: 25,
+        includeDefaultFixedPayments: true,
+      );
+      expect(excluded.accounts.any((a) => a.name.contains('水道')), isFalse);
+    });
+  });
 }

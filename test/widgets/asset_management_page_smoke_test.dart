@@ -14,6 +14,7 @@ import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_sync_dirty_keys_store.dart';
 import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
+import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -1594,6 +1595,38 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(find.byType(RecurringFixedCostCard), findsOneWidget);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'proposal cards survive hiding the salary-breakdown section',
+      (tester) async {
+        // 給与内訳セクションを hidden にしても、定期取引/定期収入の自動検出
+        // (提案カード) は専用 proposals セクションとして残る (相乗り解消 = 候補#2)。
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'asset_management_display_mode_v1':
+              AssetManagementDisplayMode.standard.storageId,
+          'asset_management_section_overrides_v1': jsonEncode(<String, String>{
+            AssetManagementSectionId.salaryBreakdown.storageId:
+                AssetManagementSectionVisibilityOverride.hidden.storageId,
+          }),
+        });
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          const MaterialApp(home: AssetManagementPage()),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // 検出データが無くてもカード widget 自体は構築される (内部で shrink)。
+        expect(
+          find.byType(AssetRecurringTransactionSuggestionCard),
+          findsWidgets,
+        );
 
         await _unmount(tester);
       },
