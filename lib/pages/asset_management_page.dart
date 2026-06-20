@@ -41,6 +41,7 @@ import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
 import 'package:my_web_app/services/asset_recurring_suggestion_ignore_store.dart';
+import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
@@ -76,6 +77,7 @@ import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
+import 'package:my_web_app/widgets/subscription_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7989,6 +7991,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildRecurringFixedCostCard(assetLiabilityWorkbook),
               const SizedBox(height: 16),
             ],
+            if (_isSectionShown(
+                AssetManagementSectionId.subscriptionFixedCost)) ...[
+              _buildSubscriptionFixedCostCard(assetLiabilityWorkbook),
+              const SizedBox(height: 16),
+            ],
             if (_isSectionShown(AssetManagementSectionId.disposable)) ...[
               _buildDisposableBalanceCard(),
               const SizedBox(height: 16),
@@ -9002,12 +9009,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetRecurringFixedCost? existing,
     AssetRecurringFixedCost? prefill,
     required List<RecurringFixedCostSourceOption> sourceOptions,
+    AssetRecurringFixedCostCategory category =
+        AssetRecurringFixedCostCategory.utility,
   }) async {
     final result = await showRecurringFixedCostEditor(
       context,
       existing: existing,
       prefill: prefill,
       sourceAccounts: sourceOptions,
+      category: category,
     );
     if (result != null) {
       _saveRecurringFixedCost(result);
@@ -9048,11 +9058,57 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final sourceNames = <String, String>{
       for (final account in accounts) account.id: account.name,
     };
+    // サブスク区分は専用カードに分離し、ここでは従来の固定費 (utility) だけ表示する。
+    final utilityCosts = <AssetRecurringFixedCost>[
+      for (final cost in _recurringFixedCosts)
+        if (cost.category == AssetRecurringFixedCostCategory.utility) cost,
+    ];
     return RecurringFixedCostCard(
-      costs: _recurringFixedCosts,
+      costs: utilityCosts,
       sourceAccountNames: sourceNames,
       onAdd: () => unawaited(
         _openRecurringFixedCostEditor(sourceOptions: sourceOptions),
+      ),
+      onEdit: (cost) => unawaited(
+        _openRecurringFixedCostEditor(
+          existing: cost,
+          sourceOptions: sourceOptions,
+        ),
+      ),
+      onDelete: (cost) => unawaited(_confirmDeleteRecurringFixedCost(cost)),
+    );
+  }
+
+  Widget _buildSubscriptionFixedCostCard(AssetLiabilityWorkbook? workbook) {
+    final accounts = workbook?.accounts ?? const <AssetLiabilityAccount>[];
+    final sourceOptions = <RecurringFixedCostSourceOption>[
+      for (final account in accounts)
+        if (account.balance > 0) (id: account.id, name: account.name),
+    ];
+    final sourceNames = <String, String>{
+      for (final account in accounts) account.id: account.name,
+    };
+    final subscriptionCosts = <AssetRecurringFixedCost>[
+      for (final cost in _recurringFixedCosts)
+        if (cost.category == AssetRecurringFixedCostCategory.subscription) cost,
+    ];
+    return SubscriptionFixedCostCard(
+      costs: subscriptionCosts,
+      sourceAccountNames: sourceNames,
+      onAddPreset: (preset) => unawaited(
+        _openRecurringFixedCostEditor(
+          prefill: preset.toPrefill(
+            paymentDay: AssetSubscriptionCatalog.defaultPaymentDay,
+          ),
+          sourceOptions: sourceOptions,
+          category: AssetRecurringFixedCostCategory.subscription,
+        ),
+      ),
+      onAddCustom: () => unawaited(
+        _openRecurringFixedCostEditor(
+          sourceOptions: sourceOptions,
+          category: AssetRecurringFixedCostCategory.subscription,
+        ),
       ),
       onEdit: (cost) => unawaited(
         _openRecurringFixedCostEditor(

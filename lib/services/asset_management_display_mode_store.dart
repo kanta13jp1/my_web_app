@@ -17,6 +17,7 @@ enum AssetManagementSectionId {
   proposals,
   salaryBreakdown,
   recurringFixedCost,
+  subscriptionFixedCost,
   disposable,
   quickActions,
   wasteAi,
@@ -79,6 +80,8 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
         return '給与消費内訳';
       case AssetManagementSectionId.recurringFixedCost:
         return '定期固定費';
+      case AssetManagementSectionId.subscriptionFixedCost:
+        return 'サブスク (AI/クラウド)';
       case AssetManagementSectionId.disposable:
         return '裁量余資金';
       case AssetManagementSectionId.quickActions:
@@ -117,6 +120,7 @@ extension AssetManagementSectionIdMeta on AssetManagementSectionId {
       case AssetManagementSectionId.proposals:
       case AssetManagementSectionId.salaryBreakdown:
       case AssetManagementSectionId.recurringFixedCost:
+      case AssetManagementSectionId.subscriptionFixedCost:
       case AssetManagementSectionId.deadlines:
       case AssetManagementSectionId.threeMonth:
       case AssetManagementSectionId.workbookBoard:

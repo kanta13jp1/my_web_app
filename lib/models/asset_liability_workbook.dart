@@ -272,6 +272,17 @@ enum AssetRecurringFixedCostCadence {
   bimonthlyOddMonth,
 }
 
+/// 定期固定費の区分。資金繰りへの計上は区分に依らず同じ (全額支払いの utility 負債)
+/// だが、UI 上の表示セクションと既定アイコンを切り替えるためだけに使う。
+enum AssetRecurringFixedCostCategory {
+  /// 家賃・光熱費・通信費など従来の定期固定費 (既定)。
+  utility,
+
+  /// AI/クラウド等の月額サブスク (Anthropic / OpenAI / Gemini / GCP / Supabase /
+  /// Notion など)。資金繰りでは固定費として同様に計上される。
+  subscription,
+}
+
 /// UI から登録できる定期固定費 (家賃・光熱費・通信費など毎月/隔月の口座振替)。
 ///
 /// ハードコードされた既定固定費 (家賃/KDDI/水道/ガス) と同様に、資金繰りへ
@@ -297,6 +308,9 @@ class AssetRecurringFixedCost {
   /// 引落の振替元口座 ID (任意)。
   final String? sourceAccountId;
 
+  /// 区分 (固定費 / サブスク)。既定は utility で、表示セクションの振り分けにのみ使う。
+  final AssetRecurringFixedCostCategory category;
+
   const AssetRecurringFixedCost({
     required this.id,
     required this.name,
@@ -304,6 +318,7 @@ class AssetRecurringFixedCost {
     required this.paymentDay,
     this.cadence = AssetRecurringFixedCostCadence.monthly,
     this.sourceAccountId,
+    this.category = AssetRecurringFixedCostCategory.utility,
   });
 
   /// 指定した月 (1-12) にこの固定費が発生するか (隔月は偶数/奇数月のみ計上)。
@@ -326,6 +341,7 @@ class AssetRecurringFixedCost {
     AssetRecurringFixedCostCadence? cadence,
     String? sourceAccountId,
     bool clearSourceAccountId = false,
+    AssetRecurringFixedCostCategory? category,
   }) {
     return AssetRecurringFixedCost(
       id: id ?? this.id,
@@ -336,10 +352,12 @@ class AssetRecurringFixedCost {
       sourceAccountId: clearSourceAccountId
           ? null
           : (sourceAccountId ?? this.sourceAccountId),
+      category: category ?? this.category,
     );
   }
 
   /// ID をキーにする保存形のため、JSON には id を含めない。
+  /// 区分は既定 (utility) のときは出力しない (既存ペイロードと互換を保つ)。
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'name': name,
@@ -348,6 +366,8 @@ class AssetRecurringFixedCost {
       'cadence': cadence.name,
       if (sourceAccountId != null && sourceAccountId!.isNotEmpty)
         'sourceAccountId': sourceAccountId,
+      if (category != AssetRecurringFixedCostCategory.utility)
+        'category': category.name,
     };
   }
 
@@ -380,6 +400,11 @@ class AssetRecurringFixedCost {
       orElse: () => AssetRecurringFixedCostCadence.monthly,
     );
     final rawSource = json['sourceAccountId']?.toString().trim();
+    final categoryName = json['category']?.toString();
+    final category = AssetRecurringFixedCostCategory.values.firstWhere(
+      (value) => value.name == categoryName,
+      orElse: () => AssetRecurringFixedCostCategory.utility,
+    );
     return AssetRecurringFixedCost(
       id: trimmedId,
       name: name,
@@ -388,6 +413,7 @@ class AssetRecurringFixedCost {
       cadence: cadence,
       sourceAccountId:
           rawSource == null || rawSource.isEmpty ? null : rawSource,
+      category: category,
     );
   }
 }

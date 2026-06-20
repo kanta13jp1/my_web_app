@@ -19,6 +19,8 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
   AssetRecurringFixedCost? prefill,
   List<RecurringFixedCostSourceOption> sourceAccounts =
       const <RecurringFixedCostSourceOption>[],
+  AssetRecurringFixedCostCategory category =
+      AssetRecurringFixedCostCategory.utility,
 }) {
   return showDialog<AssetRecurringFixedCost>(
     context: context,
@@ -26,6 +28,7 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
       existing: existing,
       prefill: prefill,
       sourceAccounts: sourceAccounts,
+      category: category,
     ),
   );
 }
@@ -38,6 +41,7 @@ class RecurringFixedCostEditorDialog extends StatefulWidget {
     this.existing,
     this.prefill,
     this.sourceAccounts = const <RecurringFixedCostSourceOption>[],
+    this.category = AssetRecurringFixedCostCategory.utility,
   });
 
   final AssetRecurringFixedCost? existing;
@@ -45,6 +49,10 @@ class RecurringFixedCostEditorDialog extends StatefulWidget {
   /// 追加モードの初期値(検出結果からの登録用)。[existing] があれば無視される。
   final AssetRecurringFixedCost? prefill;
   final List<RecurringFixedCostSourceOption> sourceAccounts;
+
+  /// 区分の初期値 (固定費 / サブスク)。[existing]/[prefill] が区分を持つ場合は
+  /// そちらを優先する (サブスクカードから「その他を追加」する際の既定値)。
+  final AssetRecurringFixedCostCategory category;
 
   @override
   State<RecurringFixedCostEditorDialog> createState() =>
@@ -58,6 +66,7 @@ class _RecurringFixedCostEditorDialogState
   late final TextEditingController _amountController;
   late final TextEditingController _dayController;
   late AssetRecurringFixedCostCadence _cadence;
+  late AssetRecurringFixedCostCategory _category;
   String? _sourceAccountId;
 
   @override
@@ -65,6 +74,8 @@ class _RecurringFixedCostEditorDialogState
     super.initState();
     // existing(編集)優先。なければ prefill(検出結果からの追加)を初期値に使う。
     final initial = widget.existing ?? widget.prefill;
+    // 区分は initial が持つ値を最優先し、無ければ呼び出し側が指定した既定を使う。
+    _category = initial?.category ?? widget.category;
     _nameController = TextEditingController(text: initial?.name ?? '');
     _amountController = TextEditingController(
       text: initial == null ? '' : initial.amount.toStringAsFixed(0),
@@ -100,25 +111,56 @@ class _RecurringFixedCostEditorDialogState
       paymentDay: int.parse(_dayController.text.trim()),
       cadence: _cadence,
       sourceAccountId: _sourceAccountId,
+      category: _category,
     );
     Navigator.of(context).pop(cost);
   }
 
+  static String categoryLabel(AssetRecurringFixedCostCategory category) {
+    switch (category) {
+      case AssetRecurringFixedCostCategory.utility:
+        return '定期固定費';
+      case AssetRecurringFixedCostCategory.subscription:
+        return 'サブスク';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final label = categoryLabel(_category);
     return AlertDialog(
-      title: Text(widget.existing == null ? '定期固定費を追加' : '定期固定費を編集'),
+      title: Text(widget.existing == null ? '$labelを追加' : '$labelを編集'),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              DropdownButtonFormField<AssetRecurringFixedCostCategory>(
+                initialValue: _category,
+                decoration: const InputDecoration(labelText: '区分'),
+                items: [
+                  for (final category in AssetRecurringFixedCostCategory.values)
+                    DropdownMenuItem<AssetRecurringFixedCostCategory>(
+                      value: category,
+                      child: Text(categoryLabel(category)),
+                    ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _category = value);
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: '名称',
-                  hintText: '例: 電気代',
+                  hintText:
+                      _category == AssetRecurringFixedCostCategory.subscription
+                          ? '例: Anthropic (Claude)'
+                          : '例: 電気代',
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
                     ? '名称を入力してください'
