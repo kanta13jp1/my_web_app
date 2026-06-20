@@ -4536,6 +4536,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       incomePlans: _monthlyIncomePlans,
       cardStatementLines: _cardStatementLines,
       transferTasks: _transferTasks,
+      salaryDay: _salaryDay,
     );
     final liabilities = workbook.debtMasterRows;
     if (liabilities.isEmpty) {
@@ -7731,6 +7732,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       transferTasks: _transferTasks,
       recurringFixedCosts: _recurringFixedCosts,
       includeDefaultFixedPayments: true,
+      salaryDay: _salaryDay,
     );
   }
 
@@ -12529,6 +12531,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         transferTasks: _transferTasks,
         recurringFixedCosts: _recurringFixedCosts,
         includeDefaultFixedPayments: true,
+        salaryDay: _salaryDay,
       );
       final assetLiabilityInputs =
           _disposableBalanceAssetLiabilityAdapter.build(

@@ -17,10 +17,15 @@ class _BuiltInRecurringFixedCost {
   final AssetRecurringFixedCostCadence cadence;
   final String? sourceAccountId;
 
+  /// 支払日(_classifyAccount が付与する日と一致)。給料日サイクルでどの暦月に
+  /// 発生するかの判定(隔月の偶奇判定)に使う。毎月の固定費では実質影響しない。
+  final int paymentDay;
+
   const _BuiltInRecurringFixedCost({
     required this.accountId,
     required this.accountName,
     required this.monthlyAmount,
+    required this.paymentDay,
     this.cadence = AssetRecurringFixedCostCadence.monthly,
     this.sourceAccountId,
   });
@@ -126,16 +131,19 @@ class AssetLiabilityPlanningService {
       accountId: kddiProviderAccountId,
       accountName: kddiProviderAccountName,
       monthlyAmount: kddiProviderMonthlyPaymentAmount,
+      paymentDay: 25,
     ),
     _BuiltInRecurringFixedCost(
       accountId: rentAccountId,
       accountName: rentAccountName,
       monthlyAmount: rentMonthlyPaymentAmount,
+      paymentDay: 25,
     ),
     _BuiltInRecurringFixedCost(
       accountId: waterBillAccountId,
       accountName: waterBillAccountName,
       monthlyAmount: waterBillBimonthlyPaymentAmount,
+      paymentDay: waterBillPaymentDay,
       cadence: AssetRecurringFixedCostCadence.bimonthlyEvenMonth,
       sourceAccountId: smbcOtsukaBranchAccountId,
     ),
@@ -143,6 +151,7 @@ class AssetLiabilityPlanningService {
       accountId: gasBillAccountId,
       accountName: gasBillAccountName,
       monthlyAmount: gasBillMonthlyPaymentAmount,
+      paymentDay: gasBillPaymentDay,
       sourceAccountId: smbcOtsukaBranchAccountId,
     ),
   ];
@@ -175,6 +184,8 @@ class AssetLiabilityPlanningService {
     List<AssetRecurringFixedCost> recurringFixedCosts =
         const <AssetRecurringFixedCost>[],
     bool includeDefaultFixedPayments = false,
+    // 給料日サイクルの基準日。null のとき従来どおり baseDate の暦月で集計(後方互換)。
+    int? salaryDay,
   }) {
     // 既定固定費 (家賃/KDDI/水道/ガス) を当月該当の周期かつ未計上 (残高<0 の同 ID
     // 負債が無い) のものだけ抽出する。残高<0 限定の判定で正残高の同名資産
@@ -183,7 +194,9 @@ class AssetLiabilityPlanningService {
         ? _builtInRecurringFixedCosts
             .where(
               (cost) =>
-                  cost.appliesToMonth(baseDate.month) &&
+                  cost.appliesToMonth(
+                    _cycleTargetMonth(baseDate, salaryDay, cost.paymentDay),
+                  ) &&
                   !_hasLiabilityAccountFor(latestSnapshot, cost.accountId),
             )
             .toList(growable: false)
@@ -218,6 +231,7 @@ class AssetLiabilityPlanningService {
       recurringFixedCosts: recurringFixedCosts,
       existingAccounts: accounts,
       baseDate: baseDate,
+      salaryDay: salaryDay,
     );
     if (injectedFixedCosts.isNotEmpty) {
       accounts
@@ -243,6 +257,7 @@ class AssetLiabilityPlanningService {
       transferTasks: transferTasks,
       accounts: accounts,
       baseDate: baseDate,
+      salaryDay: salaryDay,
     );
     final resolvedTransferTasks = _resolveTransferTasks(
       transferTasks: effectiveTransferTasks,
@@ -314,11 +329,13 @@ class AssetLiabilityPlanningService {
     final paymentDayRisks = _buildPaymentDayRisks(
       rows: directDebtRows,
       baseDate: baseDate,
+      salaryDay: salaryDay,
     );
     final cashflowRows = _buildCashflowRows(
       rows: debtMasterRows,
       incomePlans: resolvedIncomePlans,
       baseDate: baseDate,
+      salaryDay: salaryDay,
       startingCash: cashLikeTotal,
       paidAccountNames: paidAccountNames,
       paymentSourceAccountIds: effectivePaymentSourceAccountIds,
@@ -1226,6 +1243,7 @@ class AssetLiabilityPlanningService {
   List<AssetLiabilityPaymentDayRisk> _buildPaymentDayRisks({
     required List<AssetLiabilityDebtRow> rows,
     required DateTime baseDate,
+    int? salaryDay,
   }) {
     final byDay = <int, List<AssetLiabilityDebtRow>>{};
     for (final row in rows) {
@@ -1245,9 +1263,7 @@ class AssetLiabilityPlanningService {
     final result = <AssetLiabilityPaymentDayRisk>[];
     for (final entry in byDay.entries) {
       final day = entry.key;
-      final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
-      final resolvedDay = day.clamp(1, lastDay).toInt();
-      final paymentDate = DateTime(baseDate.year, baseDate.month, resolvedDay);
+      final paymentDate = _resolveCyclePaymentDate(baseDate, salaryDay, day);
       final rowsForDay = entry.value
         ..sort((a, b) => b.balance.abs().compareTo(a.balance.abs()));
       result.add(
@@ -1297,8 +1313,8 @@ class AssetLiabilityPlanningService {
     required Set<String> paidAccountNames,
     required Map<String, String> paymentSourceAccountIds,
     required Map<String, AssetLiabilityAccount> accountsById,
+    int? salaryDay,
   }) {
-    final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
     final result = <AssetLiabilityCashflowRow>[];
     for (final plan in incomePlans) {
       final paymentDate = _dateOnly(plan.date);
@@ -1337,8 +1353,11 @@ class AssetLiabilityPlanningService {
 
     for (final row in rows.where((row) => row.paymentDay != null)) {
       final paymentDay = row.paymentDay!;
-      final resolvedDay = paymentDay.clamp(1, lastDay).toInt();
-      final paymentDate = DateTime(baseDate.year, baseDate.month, resolvedDay);
+      final paymentDate = _resolveCyclePaymentDate(
+        baseDate,
+        salaryDay,
+        paymentDay,
+      );
       final overdue = row.isDirectCashflowTarget &&
           !row.paid &&
           !paymentDate.isAfter(_dateOnly(baseDate));
@@ -1378,8 +1397,11 @@ class AssetLiabilityPlanningService {
     final acomShoppingRow = _findAcomShoppingDebtRow(rows);
     if (acomShoppingRow != null && acomShoppingRow.isDirectCashflowTarget) {
       const paymentDay = anthropicAcomShoppingPaymentDay;
-      final resolvedDay = paymentDay.clamp(1, lastDay).toInt();
-      final paymentDate = DateTime(baseDate.year, baseDate.month, resolvedDay);
+      final paymentDate = _resolveCyclePaymentDate(
+        baseDate,
+        salaryDay,
+        paymentDay,
+      );
       final paid = paidAccountNames.contains(anthropicAcomShoppingPaymentId) ||
           paidAccountNames.contains(anthropicAcomShoppingPaymentName);
       final sourceAccountId =
@@ -1586,6 +1608,7 @@ class AssetLiabilityPlanningService {
     required List<AssetLiabilityTransferTask> transferTasks,
     required List<AssetLiabilityAccount> accounts,
     required DateTime baseDate,
+    int? salaryDay,
   }) {
     if (transferTasks.any(
       (task) => task.id == auPayCardFundingTransferTaskId,
@@ -1602,8 +1625,6 @@ class AssetLiabilityPlanningService {
       return transferTasks;
     }
 
-    final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
-    final resolvedDay = auPayCardFundingTransferDay.clamp(1, lastDay).toInt();
     return <AssetLiabilityTransferTask>[
       ...transferTasks,
       AssetLiabilityTransferTask(
@@ -1613,7 +1634,11 @@ class AssetLiabilityPlanningService {
         toAccountId: toAccount.id,
         toAccountName: toAccount.name,
         amount: auPayCardFundingTransferAmount,
-        dueDate: DateTime(baseDate.year, baseDate.month, resolvedDay),
+        dueDate: _resolveCyclePaymentDate(
+          baseDate,
+          salaryDay,
+          auPayCardFundingTransferDay,
+        ),
       ),
     ];
   }
@@ -1853,6 +1878,7 @@ class AssetLiabilityPlanningService {
     required List<AssetRecurringFixedCost> recurringFixedCosts,
     required List<AssetLiabilityAccount> existingAccounts,
     required DateTime baseDate,
+    int? salaryDay,
   }) {
     if (recurringFixedCosts.isEmpty) {
       return const <({
@@ -1866,7 +1892,10 @@ class AssetLiabilityPlanningService {
     final result =
         <({AssetLiabilityAccount account, String? sourceAccountId})>[];
     for (final cost in recurringFixedCosts) {
-      if (cost.amount <= 0 || !cost.appliesToMonth(baseDate.month)) {
+      if (cost.amount <= 0 ||
+          !cost.appliesToMonth(
+            _cycleTargetMonth(baseDate, salaryDay, cost.paymentDay),
+          )) {
         continue;
       }
       final account = _liability(
@@ -2043,6 +2072,53 @@ class AssetLiabilityPlanningService {
 
   DateTime _dateOnly(DateTime source) {
     return DateTime(source.year, source.month, source.day);
+  }
+
+  /// 支払日 [dayOfMonth] の実日付を、[baseDate] を含む期間内で解決する。
+  ///
+  /// [salaryDay] が null のとき従来どおり [baseDate] の暦月で算出(後方互換)。
+  /// 指定時は給料日サイクル `[salaryDay 〜 翌salaryDay-1]` で算出する:
+  /// サイクルは 2 暦月にまたがり、支払日 >= salaryDay は第1暦月、未満は第2暦月に発生する
+  /// (例 salaryDay=25 のサイクル 5/25〜6/24: 27日→5/27、10日→6/10)。
+  /// 月末差異は対象暦月の末日にクランプする。
+  DateTime _resolveCyclePaymentDate(
+    DateTime baseDate,
+    int? salaryDay,
+    int dayOfMonth,
+  ) {
+    if (salaryDay == null) {
+      final lastDay = DateTime(baseDate.year, baseDate.month + 1, 0).day;
+      return DateTime(
+        baseDate.year,
+        baseDate.month,
+        dayOfMonth.clamp(1, lastDay).toInt(),
+      );
+    }
+    final anchor = salaryDay.clamp(1, 28).toInt();
+    // サイクルの第1暦月 (baseDate.day >= anchor なら当月、未満なら前月)。
+    final firstMonth = baseDate.day >= anchor
+        ? DateTime(baseDate.year, baseDate.month)
+        : DateTime(baseDate.year, baseDate.month - 1);
+    final monthOffset = dayOfMonth >= anchor ? 0 : 1;
+    final targetMonth = DateTime(
+      firstMonth.year,
+      firstMonth.month + monthOffset,
+    );
+    final lastDay = DateTime(targetMonth.year, targetMonth.month + 1, 0).day;
+    return DateTime(
+      targetMonth.year,
+      targetMonth.month,
+      dayOfMonth.clamp(1, lastDay).toInt(),
+    );
+  }
+
+  /// 支払日 [dayOfMonth] が発生する暦月 (1-12) を返す。隔月固定費の偶奇判定に使う。
+  /// [salaryDay] が null のとき [baseDate] の暦月。
+  int _cycleTargetMonth(DateTime baseDate, int? salaryDay, int dayOfMonth) {
+    if (salaryDay == null) {
+      return baseDate.month;
+    }
+    return _resolveCyclePaymentDate(baseDate, salaryDay, dayOfMonth).month;
   }
 }
 
