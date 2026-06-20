@@ -81,6 +81,51 @@ class AssetAccountBalanceHistoryStore {
     return history.keys.toList()..sort();
   }
 
+  /// 蓄積済みの全履歴（monthKey -> {accountId: 残高}）。端末跨ぎミラー同期用。
+  Future<Map<String, Map<String, double>>> loadAll({
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return _decode(store.getString(prefsKey));
+  }
+
+  /// 他端末由来のミラー値（jsonb 由来の Map）をローカル履歴へ和集合マージする。
+  ///
+  /// 月キー・口座とも非破壊（消さない・上書きしない）で、ローカルに無いものだけ
+  /// 補完する。競合する口座はローカル値を優先する（各端末は同期済みの残高から
+  /// 同値を導くため実害は小さく、月の取りこぼし/巻き戻しを防ぐことを優先）。
+  /// 変更があれば true を返す。
+  Future<bool> mergeRemote(Object? remoteValue, {SharedPreferences? prefs}) async {
+    final remote = remoteValue is Map
+        ? _decodeMap(remoteValue)
+        : const <String, Map<String, double>>{};
+    if (remote.isEmpty) {
+      return false;
+    }
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final local = _decode(store.getString(prefsKey));
+    var changed = false;
+    remote.forEach((monthKey, remoteBalances) {
+      final localBalances = local[monthKey];
+      if (localBalances == null) {
+        local[monthKey] = Map<String, double>.from(remoteBalances);
+        changed = true;
+        return;
+      }
+      remoteBalances.forEach((accountId, balance) {
+        if (!localBalances.containsKey(accountId)) {
+          localBalances[accountId] = balance;
+          changed = true;
+        }
+      });
+    });
+    if (changed) {
+      _pruneOldMonths(local);
+      await store.setString(prefsKey, jsonEncode(local));
+    }
+    return changed;
+  }
+
   void _pruneOldMonths(Map<String, Map<String, double>> history) {
     if (history.length <= maxMonths) {
       return;
@@ -98,32 +143,35 @@ class AssetAccountBalanceHistoryStore {
     }
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is! Map) {
-        return <String, Map<String, double>>{};
-      }
-      final result = <String, Map<String, double>>{};
-      decoded.forEach((monthKey, value) {
-        if (monthKey is! String || value is! Map) {
-          return;
-        }
-        final balances = <String, double>{};
-        value.forEach((accountId, balance) {
-          if (accountId is! String) {
-            return;
-          }
-          final parsed = balance is num
-              ? balance.toDouble()
-              : double.tryParse(balance.toString());
-          // 残高は絶対値（正の値）で保存する契約。負値は破損データとして拒否する。
-          if (parsed != null && parsed.isFinite && parsed >= 0) {
-            balances[accountId] = parsed;
-          }
-        });
-        result[monthKey] = balances;
-      });
-      return result;
+      return decoded is Map
+          ? _decodeMap(decoded)
+          : <String, Map<String, double>>{};
     } catch (_) {
       return <String, Map<String, double>>{};
     }
+  }
+
+  Map<String, Map<String, double>> _decodeMap(Map decoded) {
+    final result = <String, Map<String, double>>{};
+    decoded.forEach((monthKey, value) {
+      if (monthKey is! String || value is! Map) {
+        return;
+      }
+      final balances = <String, double>{};
+      value.forEach((accountId, balance) {
+        if (accountId is! String) {
+          return;
+        }
+        final parsed = balance is num
+            ? balance.toDouble()
+            : double.tryParse(balance.toString());
+        // 残高は絶対値（正の値）で保存する契約。負値は破損データとして拒否する。
+        if (parsed != null && parsed.isFinite && parsed >= 0) {
+          balances[accountId] = parsed;
+        }
+      });
+      result[monthKey] = balances;
+    });
+    return result;
   }
 }

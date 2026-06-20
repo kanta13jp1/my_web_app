@@ -1169,6 +1169,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (debtPaymentDayOverrides.isEmpty) {
         unawaited(_restoreDebtPaymentDayOverridesFromMirror());
       }
+      // 他端末の残高履歴を取り込み、負債トレンドの前月比を端末跨ぎで有効化。
+      unawaited(_restoreAssetBalanceHistoryFromMirror());
       final templates =
           await _assetLiabilityRepository.loadRecurringIncomeTemplates();
       final monthlySnapshots =
@@ -1990,6 +1992,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final prior =
           await _assetBalanceHistoryStore.priorMonthBalances(baseDate);
       await _assetBalanceHistoryStore.recordMonth(baseDate, balances);
+      // 記録した最新履歴を端末跨ぎミラーへ退避（ログイン時のみ実効）。
+      unawaited(_mirrorAssetBalanceHistory());
       if (!mounted) {
         return;
       }
@@ -8424,6 +8428,69 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       );
     } catch (e) {
       debugPrint('pref mirror restore failed: $e');
+    }
+  }
+
+  /// 口座別残高履歴を asset_pref_mirror へ丸ごと退避する（端末跨ぎ同期）。
+  ///
+  /// 汎用 jsonb ミラーの 1 pref_key を使うためマイグレーション不要。値は
+  /// `{monthKey: {accountId: 残高}}`。負債トレンドの前月比を別端末でも使える。
+  Future<void> _mirrorAssetBalanceHistory() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final history = await _assetBalanceHistoryStore.loadAll();
+      if (history.isEmpty) {
+        return;
+      }
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'account_balance_history',
+        'value': history,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('balance history mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末の残高履歴をミラーから取り込み、ローカルへ和集合マージする。
+  ///
+  /// マージは非破壊（月キー・口座を消さない/巻き戻さない）。取り込みで前月残高が
+  /// 変わったら、当月基準の前月残高キャッシュを更新して負債トレンドを再評価する。
+  Future<void> _restoreAssetBalanceHistoryFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', 'account_balance_history');
+      if (rows.isEmpty) {
+        return;
+      }
+      final changed =
+          await _assetBalanceHistoryStore.mergeRemote(rows.first['value']);
+      if (!changed || !mounted) {
+        return;
+      }
+      final monthKey = AssetAccountBalanceHistoryStore.formatMonthKey(_now);
+      final prior = await _assetBalanceHistoryStore.priorMonthBalances(_now);
+      if (!mounted) {
+        return;
+      }
+      if (_assetDebtTrendPriorBalancesMonth != monthKey ||
+          !_sameDoubleMap(_assetDebtTrendPriorBalances, prior)) {
+        setState(() {
+          _assetDebtTrendPriorBalances = prior;
+          _assetDebtTrendPriorBalancesMonth = monthKey;
+        });
+      }
+    } catch (e) {
+      debugPrint('balance history mirror restore failed: $e');
     }
   }
 

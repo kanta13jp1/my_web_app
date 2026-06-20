@@ -131,6 +131,89 @@ void main() {
     expect(prior.containsKey('bad'), isFalse);
   });
 
+  group('mergeRemote (cross-device sync)', () {
+    test('adds a remote-only month (union, no data loss)', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await store.recordMonth(
+        DateTime(2026, 6, 1),
+        <String, double>{'famipay': 100000},
+        prefs: prefs,
+      );
+
+      final changed = await store.mergeRemote(
+        <String, dynamic>{
+          '2026-05': <String, dynamic>{'mobit': 200000},
+        },
+        prefs: prefs,
+      );
+
+      expect(changed, isTrue);
+      final all = await store.loadAll(prefs: prefs);
+      expect(all['2026-05']!['mobit'], 200000);
+      expect(all['2026-06']!['famipay'], 100000);
+    });
+
+    test('fills remote-only accounts but keeps local on conflict', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await store.recordMonth(
+        DateTime(2026, 6, 1),
+        <String, double>{'famipay': 100000},
+        prefs: prefs,
+      );
+
+      final changed = await store.mergeRemote(
+        <String, dynamic>{
+          '2026-06': <String, dynamic>{'famipay': 999999, 'mobit': 50000},
+        },
+        prefs: prefs,
+      );
+
+      expect(changed, isTrue);
+      final all = await store.loadAll(prefs: prefs);
+      // 共有口座はローカル値を優先、リモート限定口座だけ補完。
+      expect(all['2026-06']!['famipay'], 100000);
+      expect(all['2026-06']!['mobit'], 50000);
+    });
+
+    test('returns false and changes nothing for empty/invalid remote', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await store.recordMonth(
+        DateTime(2026, 6, 1),
+        <String, double>{'famipay': 100000},
+        prefs: prefs,
+      );
+
+      expect(await store.mergeRemote(null, prefs: prefs), isFalse);
+      expect(await store.mergeRemote(<String, dynamic>{}, prefs: prefs), isFalse);
+      expect(await store.mergeRemote('garbage', prefs: prefs), isFalse);
+
+      final all = await store.loadAll(prefs: prefs);
+      expect(all['2026-06']!['famipay'], 100000);
+    });
+
+    test('merged remote month becomes the prior-month basis', () async {
+      final prefs = await SharedPreferences.getInstance();
+      // 今月だけローカルにある状態へ、他端末の先月分をマージ。
+      await store.recordMonth(
+        DateTime(2026, 6, 1),
+        <String, double>{'famipay': 100000},
+        prefs: prefs,
+      );
+      await store.mergeRemote(
+        <String, dynamic>{
+          '2026-05': <String, dynamic>{'famipay': 30000},
+        },
+        prefs: prefs,
+      );
+
+      final prior = await store.priorMonthBalances(
+        DateTime(2026, 6, 1),
+        prefs: prefs,
+      );
+      expect(prior['famipay'], 30000);
+    });
+  });
+
   test('prunes history beyond the retention window', () async {
     final prefs = await SharedPreferences.getInstance();
     for (var i = 0; i < AssetAccountBalanceHistoryStore.maxMonths + 4; i++) {
