@@ -1,5 +1,7 @@
 import '../models/asset_liability_workbook.dart';
 import '../models/user_profile.dart';
+import 'asset_debt_trend_analyzer.dart';
+import 'asset_management_available_money.dart';
 
 enum AssetManagementInsightActionType {
   missingInput,
@@ -224,6 +226,9 @@ class AssetManagementInsightReport {
   final List<AssetManagementDeveloperRequest> developerRequests;
   final List<AssetManagementImplementationContext> implementationContexts;
 
+  /// 月をまたいだ負債トレンド（リボ複利・残高増加・超長期完済）の指摘。
+  final List<AssetDebtTrendInsight> debtTrendInsights;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -236,7 +241,18 @@ class AssetManagementInsightReport {
     required this.developerRequests,
     this.implementationContexts =
         const <AssetManagementImplementationContext>[],
+    this.debtTrendInsights = const <AssetDebtTrendInsight>[],
   });
+
+  bool get hasDebtTrendInsights => debtTrendInsights.isNotEmpty;
+
+  List<AssetDebtTrendInsight> get criticalDebtTrendInsights {
+    return debtTrendInsights
+        .where(
+          (insight) => insight.severity == AssetDebtTrendSeverity.critical,
+        )
+        .toList(growable: false);
+  }
 
   bool get hasCriticalActions {
     return actionItems.any(
@@ -266,33 +282,36 @@ class AssetManagementInsightService {
         AssetManagementImplementationContext.defaultAssetManagementContexts,
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
+    String? mainAccountId,
+    Map<String, double> priorMonthAccountBalances = const <String, double>{},
+    AssetDebtTrendAnalyzer debtTrendAnalyzer = const AssetDebtTrendAnalyzer(),
   }) {
+    final breakdown = _availableMoneyBreakdown(
+      workbook: workbook,
+      mainAccountId: mainAccountId,
+      minimumSafetyBalance: minimumSafetyBalance,
+    );
+    final today = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.today,
+      breakdown,
+      workbook.baseDate,
+    );
+    final week = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.week,
+      breakdown,
+      workbook.baseDate,
+    );
+    final month = _availableInsightFromBreakdown(
+      AssetManagementInsightWindow.month,
+      breakdown,
+      workbook.baseDate,
+    );
     final actions = _buildActionItems(
       workbook: workbook,
       upcomingPaymentWarningDays: upcomingPaymentWarningDays,
       minimumSafetyBalance: minimumSafetyBalance,
+      todayInsight: today,
     )..sort(_compareActionItems);
-    final today = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.today,
-      startDate: _dateOnly(workbook.baseDate),
-      endDate: _dateOnly(workbook.baseDate),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
-    final week = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.week,
-      startDate: _dateOnly(workbook.baseDate),
-      endDate: _dateOnly(workbook.baseDate).add(const Duration(days: 6)),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
-    final month = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.month,
-      startDate: DateTime(workbook.baseDate.year, workbook.baseDate.month),
-      endDate: DateTime(workbook.baseDate.year, workbook.baseDate.month + 1, 0),
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
     final movementSuggestions = _buildMovementSuggestions(
       workbook: workbook,
       windows: <AssetManagementAvailableMoneyInsight>[today, week, month],
@@ -310,6 +329,10 @@ class AssetManagementInsightService {
       actions: actions,
       movementSuggestions: movementSuggestions,
     );
+    final debtTrendInsights = debtTrendAnalyzer.analyze(
+      workbook: workbook,
+      priorBalancesByAccountId: priorMonthAccountBalances,
+    );
 
     return AssetManagementInsightReport(
       workbook: workbook,
@@ -322,6 +345,7 @@ class AssetManagementInsightService {
       emergencyAdvices: emergencyAdvices,
       developerRequests: developerRequests,
       implementationContexts: implementationContexts,
+      debtTrendInsights: debtTrendInsights,
     );
   }
 
@@ -329,6 +353,7 @@ class AssetManagementInsightService {
     required AssetLiabilityWorkbook workbook,
     required int upcomingPaymentWarningDays,
     required double minimumSafetyBalance,
+    required AssetManagementAvailableMoneyInsight todayInsight,
   }) {
     final actions = <AssetManagementInsightActionItem>[];
     final today = _dateOnly(workbook.baseDate);
@@ -359,7 +384,7 @@ class AssetManagementInsightService {
             relatedAccountId: row.id,
             dueDate: null,
             paymentDay: null,
-            suggestedAction: '契約画面または請求明細で支払日を確認して入力してください。',
+            suggestedAction: '契約画面または請求明細で支払日を確認し、負債マスタ（支払日順）の「支払日」欄に入力してください。',
           ),
         );
       }
@@ -444,13 +469,6 @@ class AssetManagementInsightService {
       }
     }
 
-    final todayInsight = _buildAvailableMoneyInsight(
-      workbook: workbook,
-      window: AssetManagementInsightWindow.today,
-      startDate: today,
-      endDate: today,
-      minimumSafetyBalance: minimumSafetyBalance,
-    );
     if (todayInsight.availableAmount < 0) {
       actions.add(
         AssetManagementInsightActionItem(
@@ -480,7 +498,8 @@ class AssetManagementInsightService {
               ? null
               : _paymentDateFromDay(workbook.baseDate, item.paymentDay!),
           paymentDay: item.paymentDay,
-          suggestedAction: 'カード請求に含める設定と請求先カードを確認してください。',
+          suggestedAction:
+              '負債マスタ（支払日順）の「支払い方式」でカード請求に含める設定と請求先カードを確認してください。請求額が0円の月は「今月支払予定額」に0を入力してください。',
         ),
       );
     }
@@ -505,35 +524,62 @@ class AssetManagementInsightService {
     return actions;
   }
 
-  AssetManagementAvailableMoneyInsight _buildAvailableMoneyInsight({
+  AssetManagementAvailableMoneyBreakdown _availableMoneyBreakdown({
     required AssetLiabilityWorkbook workbook,
-    required AssetManagementInsightWindow window,
-    required DateTime startDate,
-    required DateTime endDate,
+    required String? mainAccountId,
     required double minimumSafetyBalance,
   }) {
-    final payments = _paymentTotalForWindow(
-      workbook: workbook,
-      startDate: startDate,
-      endDate: endDate,
+    final today = _dateOnly(workbook.baseDate);
+    final payday = AssetManagementAvailableMoney.nextPayday(today);
+    final remainingDays =
+        AssetManagementAvailableMoney.remainingDaysToPayday(today, payday);
+    final daysThisWeek = AssetManagementAvailableMoney.daysUntilWeekEnd(
+      today,
+      remainingDays: remainingDays,
     );
-    final income = _incomeTotalForWindow(
-      workbook: workbook,
-      startDate: startDate,
-      endDate: endDate,
+    return AssetManagementAvailableMoneyBreakdown(
+      availableAssets: AssetManagementAvailableMoney.availableAssets(
+        accounts: workbook.accounts,
+        mainAccountId: mainAccountId,
+      ),
+      unpaidUntilPayday: AssetManagementAvailableMoney.unpaidUntilPayday(
+        cashflowRows: workbook.cashflowRows,
+        payday: payday,
+      ),
+      minimumSafetyBalance: minimumSafetyBalance,
+      remainingDaysToPayday: remainingDays,
+      daysThisWeek: daysThisWeek,
+      payday: payday,
     );
-    final available =
-        workbook.cashLikeTotal + income - payments - minimumSafetyBalance;
+  }
+
+  AssetManagementAvailableMoneyInsight _availableInsightFromBreakdown(
+    AssetManagementInsightWindow window,
+    AssetManagementAvailableMoneyBreakdown breakdown,
+    DateTime baseDate,
+  ) {
+    final start = _dateOnly(baseDate);
+    final amount = switch (window) {
+      AssetManagementInsightWindow.today => breakdown.todayAvailable,
+      AssetManagementInsightWindow.week => breakdown.weekAvailable,
+      AssetManagementInsightWindow.month => breakdown.monthAvailable,
+    };
+    final end = switch (window) {
+      AssetManagementInsightWindow.today => start,
+      AssetManagementInsightWindow.week =>
+        start.add(Duration(days: breakdown.daysThisWeek - 1)),
+      AssetManagementInsightWindow.month => breakdown.payday,
+    };
     return AssetManagementAvailableMoneyInsight(
       window: window,
-      startDate: startDate,
-      endDate: endDate,
-      cashLikeTotal: workbook.cashLikeTotal,
-      unpaidPaymentTotal: payments,
-      unreceivedIncomeTotal: income,
-      minimumSafetyBalance: minimumSafetyBalance,
-      availableAmount: available,
-      summary: _availableSummary(window, available),
+      startDate: start,
+      endDate: end,
+      cashLikeTotal: breakdown.availableAssets,
+      unpaidPaymentTotal: breakdown.unpaidUntilPayday,
+      unreceivedIncomeTotal: 0,
+      minimumSafetyBalance: breakdown.minimumSafetyBalance,
+      availableAmount: amount,
+      summary: _availableSummary(window, amount),
     );
   }
 
@@ -911,44 +957,12 @@ class AssetManagementInsightService {
         (rows.length > 6 ? ' ほか${rows.length - 6}件' : '');
   }
 
-  double _paymentTotalForWindow({
-    required AssetLiabilityWorkbook workbook,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) {
-    return workbook.cashflowRows.fold<double>(0, (sum, row) {
-      if (!row.isPayment ||
-          !row.isDirectCashflowTarget ||
-          row.paid ||
-          row.paymentAmount <= 0) {
-        return sum;
-      }
-      final date = _dateOnly(row.paymentDate);
-      final inWindow = !date.isBefore(startDate) && !date.isAfter(endDate);
-      final overdueForWindow =
-          row.overdue && !endDate.isBefore(_dateOnly(workbook.baseDate));
-      return inWindow || overdueForWindow ? sum + row.paymentAmount : sum;
-    });
-  }
-
-  double _incomeTotalForWindow({
-    required AssetLiabilityWorkbook workbook,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) {
-    return workbook.cashflowRows.fold<double>(0, (sum, row) {
-      if (!row.isIncome || row.received || row.paymentAmount <= 0) {
-        return sum;
-      }
-      final date = _dateOnly(row.paymentDate);
-      return !date.isBefore(startDate) && !date.isAfter(endDate)
-          ? sum + row.paymentAmount
-          : sum;
-    });
-  }
-
   bool _needsAnnualRate(AssetLiabilityDebtRow row) {
     if (row.annualRate > 0) {
+      return false;
+    }
+    // 家賃・通信費など全額支払い型の固定費は利率の概念がないため対象外。
+    if (row.fullPaymentEstimate) {
       return false;
     }
     return switch (row.kind) {
@@ -1114,7 +1128,11 @@ class AssetManagementInsightPromptBuilder {
     return buildDetailedAdvicePrompt(report);
   }
 
-  String buildDetailedAdvicePrompt(AssetManagementInsightReport report) {
+  String buildDetailedAdvicePrompt(
+    AssetManagementInsightReport report, {
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
+  }) {
     final severityCounts = _countBy(
       report.actionItems.map((item) => item.severity.name),
     );
@@ -1155,6 +1173,12 @@ class AssetManagementInsightPromptBuilder {
       )
       ..writeln(
         '「7. 開発者向け改善提案」では、各提案ごとに「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず書いてください。',
+      )
+      ..writeln(
+        '「4. 今月の支払いと利息」と「5. 今後3〜5年の運気と借金圧縮」では、下記「今月の問題点と翌月の改善（負債トレンド）」を最優先で扱ってください。'
+        '特にリボ払いで返済額が利息以下の負債、前月比で利用残高が増えた負債は、'
+        '「今月いくら増えたか」「このままだと何年で完済か/一生終わらないか」「翌月いくら返済すべきか（具体額）」を断言してください。'
+        '該当データが無い月だけ、そのカテゴリには触れなくて構いません。',
       )
       ..writeln()
       ..writeln('## 総合サマリー')
@@ -1210,6 +1234,9 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('## カード請求内訳と照合')
       ..write(_cardBillingLines(workbook))
       ..writeln()
+      ..writeln('## 今月の問題点と翌月の改善（負債トレンド）')
+      ..write(_debtTrendLines(report))
+      ..writeln()
       ..writeln('## アクション件数')
       ..writeln('- 合計: ${report.actionItems.length}')
       ..writeln('- 重要度別: ${_formatCounts(severityCounts)}')
@@ -1229,7 +1256,12 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('## 開発者向け改善提案候補')
       ..writeln('- 合計: ${report.developerRequests.length}')
       ..writeln('- 重要度別: ${_formatCounts(developerCounts)}')
-      ..write(_developerRequestLines(report.developerRequests));
+      ..write(
+        _developerRequestLines(
+          report.developerRequests,
+          existingDeveloperIssuesByTitle: existingDeveloperIssuesByTitle,
+        ),
+      );
     return buffer.toString();
   }
 
@@ -1465,6 +1497,44 @@ class AssetManagementInsightPromptBuilder {
     return buffer.toString();
   }
 
+  String _debtTrendLines(AssetManagementInsightReport report) {
+    if (report.debtTrendInsights.isEmpty) {
+      return '- 月をまたいだ負債の悪化トレンドは検出されていません。'
+          '前月比のデータが無い場合は、来月以降の比較のために今月の残高を保存してください。\n';
+    }
+    final buffer = StringBuffer();
+    for (final insight in report.debtTrendInsights) {
+      final priorText = insight.priorBalance == null
+          ? '前月残高:履歴なし'
+          : '前月残高:${_formatAmount(insight.priorBalance!)} / '
+              '前月比:${_formatAmount(insight.balanceDelta ?? 0)}';
+      final payoffText = insight.estimatedPayoffMonths == null
+          ? '完済見込み:この返済額では完済不能'
+          : '完済見込み:約${insight.estimatedPayoffMonths}ヶ月';
+      buffer
+        ..writeln(
+          '- ${insight.accountName} / 区分:${_debtTrendCategoryLabel(insight.category)} / '
+          '重要度:${insight.severity.name} / 残高:${_formatAmount(insight.currentBalance)} / '
+          '$priorText / 月利息:${_formatAmount(insight.monthlyInterest)} / '
+          '今月返済:${_formatAmount(insight.scheduledPayment)} / '
+          '止血ライン(利息超え):${_formatAmount(insight.interestBreakEvenPayment)} / '
+          '24ヶ月完済ライン:${_formatAmount(insight.payoffIn24MonthsPayment)} / '
+          '$payoffText',
+        )
+        ..writeln('  - 問題点: ${insight.problem}')
+        ..writeln('  - 翌月アクション: ${insight.nextMonthAction}');
+    }
+    return buffer.toString();
+  }
+
+  String _debtTrendCategoryLabel(AssetDebtTrendCategory category) {
+    return switch (category) {
+      AssetDebtTrendCategory.negativeAmortization => 'リボ複利(返済が利息以下)',
+      AssetDebtTrendCategory.balanceIncreasing => '残高増加(新規利用過多)',
+      AssetDebtTrendCategory.slowPayoff => '超長期完済',
+    };
+  }
+
   String _redactedSituationCards(AssetManagementInsightReport report) {
     if (report.actionItems.isEmpty && report.emergencyAdvices.isEmpty) {
       return '- 目立つ個別リスクはありません。現状維持と入力精度の確認を優先してください。\n';
@@ -1506,13 +1576,25 @@ class AssetManagementInsightPromptBuilder {
   }
 
   String _developerRequestLines(
-    List<AssetManagementDeveloperRequest> requests,
-  ) {
+    List<AssetManagementDeveloperRequest> requests, {
+    Map<String, Map<String, dynamic>> existingDeveloperIssuesByTitle =
+        const <String, Map<String, dynamic>>{},
+  }) {
     if (requests.isEmpty) {
       return '- 開発者向け改善提案候補はありません。\n';
     }
     final buffer = StringBuffer();
     for (final request in requests) {
+      final existingIssue = existingDeveloperIssuesByTitle[request.title];
+      if (existingIssue != null) {
+        // 起票済み候補は echo の材料を渡さず、再掲禁止だけ伝える。
+        buffer.writeln(
+          '- ${request.title}'
+          '（起票済み GitHub Issue #${existingIssue['number'] ?? '-'}。'
+          '本文・JSONとも再掲禁止）',
+        );
+        continue;
+      }
       buffer
         ..writeln('- ${request.title}')
         ..writeln('  - 重要度: ${request.severity.name}')
