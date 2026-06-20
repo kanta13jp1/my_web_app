@@ -1757,12 +1757,11 @@ void main() {
         baseDate: DateTime(2026, 6, 26), // サイクル 6/25〜7/24
         salaryDay: 25,
       );
-      final payments = workbook.cashflowRows
-          .where((row) => row.isPayment && row.paymentDay != null)
-          .toList();
+      final payments =
+          workbook.cashflowRows.where((row) => row.isPayment).toList();
       expect(payments, isNotEmpty);
       for (final row in payments) {
-        final day = row.paymentDay!;
+        final day = row.paymentDay;
         expect(row.paymentDate.year, 2026);
         if (day >= 25) {
           expect(row.paymentDate.month, 6, reason: '${row.accountName} d=$day');
@@ -1789,7 +1788,7 @@ void main() {
           .where(
             (row) =>
                 row.isPayment &&
-                (row.paymentDay ?? 99) < 25 &&
+                row.paymentDay < 25 &&
                 row.isDirectCashflowTarget &&
                 !row.paid,
           )
@@ -1813,9 +1812,7 @@ void main() {
         latestSnapshot: snapshot,
         baseDate: DateTime(2026, 6, 26),
       );
-      for (final row in workbook.cashflowRows.where(
-        (row) => row.isPayment && row.paymentDay != null,
-      )) {
+      for (final row in workbook.cashflowRows.where((row) => row.isPayment)) {
         expect(row.paymentDate.month, 6, reason: row.accountName);
       }
     });
