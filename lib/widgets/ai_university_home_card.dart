@@ -171,9 +171,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
       await launchUrl(intent, mode: LaunchMode.externalApplication);
       return;
     }
-    await SharePlus.instance.share(
-      ShareParams(text: shareText),
-    );
+    await SharePlus.instance.share(ShareParams(text: shareText));
   }
 
   Future<void> _postAiGeneratedXUpdate() async {
@@ -198,14 +196,14 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
       final message = result.posted
           ? '$account にAI大学の学習ログを投稿しました'
           : 'X投稿文を作成しました。SupabaseのX API secret設定を確認してください';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AI X投稿に失敗しました: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('AI X投稿に失敗しました: $error')));
     } finally {
       if (mounted) {
         setState(() => _xPostSubmitting = false);
@@ -218,10 +216,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   }
 
   void _openProvider(String providerId) {
-    Navigator.of(context).pushNamed(
-      '/gemini-university',
-      arguments: {'provider': providerId},
-    );
+    Navigator.of(
+      context,
+    ).pushNamed('/gemini-university', arguments: {'provider': providerId});
   }
 
   void _openRanking() {
@@ -230,6 +227,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
 
   void _openVideoLesson() {
     Navigator.of(context).pushNamed('/ai-university-video');
+  }
+
+  void _openEnglishReading() {
+    Navigator.of(context).pushNamed('/english-reading-curriculum');
   }
 
   String _buildRefreshLabel() {
@@ -421,8 +422,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFFFF6B35).withValues(alpha: 0.10),
@@ -447,12 +449,14 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color:
-                                const Color(0xFFFF6B35).withValues(alpha: 0.18),
+                            color: const Color(
+                              0xFFFF6B35,
+                            ).withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: const Color(0xFFFF6B35)
-                                  .withValues(alpha: 0.28),
+                              color: const Color(
+                                0xFFFF6B35,
+                              ).withValues(alpha: 0.28),
                             ),
                           ),
                           child: const Icon(
@@ -554,8 +558,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color:
-                            kLegalAiGenre.accentColor.withValues(alpha: 0.16),
+                        color: kLegalAiGenre.accentColor.withValues(
+                          alpha: 0.16,
+                        ),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: kLegalAiGenre.accentColor.withValues(
@@ -754,8 +759,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           const SizedBox(height: 6),
                           LinearProgressIndicator(
                             value: progress,
-                            backgroundColor:
-                                Colors.white.withValues(alpha: 0.14),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.14,
+                            ),
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               Color(0xFFFFC107),
                             ),
@@ -815,6 +821,17 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
+                        child: _AiCardActionButton(
+                          label: '英語速読',
+                          icon: Icons.speed_outlined,
+                          foregroundColor: const Color(0xFF4CAF50),
+                          borderColor: const Color(0x334CAF50),
+                          onTap: _openEnglishReading,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
                         child: _buildAiXPostButton(),
                       ),
                     ] else
@@ -844,6 +861,14 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             borderColor: const Color(0x3390CAF9),
                             compact: true,
                             onTap: _openVideoLesson,
+                          ),
+                          _AiCardActionButton(
+                            label: '英語速読',
+                            icon: Icons.speed_outlined,
+                            foregroundColor: const Color(0xFF4CAF50),
+                            borderColor: const Color(0x334CAF50),
+                            compact: true,
+                            onTap: _openEnglishReading,
                           ),
                           _buildAiXPostButton(),
                           _AiCardActionButton(
@@ -935,8 +960,9 @@ class _AiCardActionButton extends StatelessWidget {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(effectiveForeground),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        effectiveForeground,
+                      ),
                     ),
                   )
                 else
