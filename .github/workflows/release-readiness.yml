@@ -94,7 +94,7 @@ jobs:
 
       - name: Flutter web release build
         run: >
-          flutter build web --release --pwa-strategy=none --no-tree-shake-icons
+          flutter build web --release --pwa-strategy=none
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
         env:
           FLUTTER_WEB: true
