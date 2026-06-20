@@ -3,12 +3,12 @@ name: Infra Health Check (インフラ監視)
 # 毎時 + 手動実行
 on:
   schedule:
-    - cron: "37 */2 * * *"  # 2時間ごと37分
+    - cron: "37 */2 * * *"  # 2時間ごと３７分
   workflow_dispatch:
 
 concurrency:
   group: infra-health-check
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-20 ci-audit: 純粋監視のみ・idempotent。手動+schedule重複時のキュー積み防止
 
 permissions:
   contents: write
