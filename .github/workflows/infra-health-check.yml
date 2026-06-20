@@ -89,10 +89,6 @@ jobs:
             NOTE=""
           fi
 
-          # コミット & push (ファイルが変わった場合のみ)
-          # NOTE: reset --hard を jq 書き込みより先に実行しないと、書いた直後の
-          # docs/infra-status.json が origin/main で上書きされ消える (= 2026-04-25
-          # 以降 stale 化していた真因。infra-health-check.yml ordering bug fix.)
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main --quiet
@@ -120,7 +116,6 @@ jobs:
             echo "変更なし — スキップ"
           else
             git commit -m "自動: インフラヘルスチェック $(date -u +%Y-%m-%d-%H):00 (GitHub Actions)"
-            # GH_PAT (deploy-prod と同じ bypass PAT) → BYPASS_RULES → GITHUB_TOKEN の順で試行
             PUSH_TOKEN="${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}"
             git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/kanta13jp1/my_web_app.git"
             git push origin main && echo "✅ infra-status.json push 完了" || echo "⚠️ push 失敗 (GH_PAT / BYPASS_RULES を確認)"
