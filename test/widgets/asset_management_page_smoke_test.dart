@@ -234,6 +234,122 @@ void main() {
       },
     );
 
+    testWidgets(
+      'monthly flow card counts payslip salary income when no conquer flow exists',
+      (tester) async {
+        // 給料を給与明細(payslips/salary_incomes)でのみ管理しているユーザーは、
+        // 収支フロー(conquer)が無いため収入¥0=常に赤字に見える回帰を防ぐ。
+        // 当サイクルに受給した給料が収入へ合算されることを検証する。
+        final now = DateTime.now();
+        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+          now,
+          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+        );
+        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
+
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              // 収支フロー(wealth_struggles)は空。
+              debugInitialRecentFlows: const <Map<String, dynamic>>[],
+              // 給料は salary_incomes にのみ存在 (給与明細のみ管理)。
+              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'pay_date': payDate,
+                  'amount': 280000,
+                  'description': 'Payslip: 自分株式会社',
+                  'source': 'payslip_auto',
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        final card = find.byKey(
+          const Key('asset_monthly_flow_priority_card'),
+        );
+        expect(card, findsOneWidget);
+
+        // 給与明細の給料(280,000)が収入として計上される。
+        expect(
+          find.descendant(of: card, matching: find.text('¥280,000')),
+          findsOneWidget,
+        );
+        // 収入があるので「未記録」の空状態文言は出ない。
+        expect(
+          find.descendant(
+            of: card,
+            matching: find.textContaining('まだこのサイクルの収支が未記録'),
+          ),
+          findsNothing,
+        );
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'payslip row and salary_income with same pay date/amount are counted once',
+      (tester) async {
+        // 1枚の給与明細は payslips と salary_incomes の両方に同日同額で入る。
+        // 二重計上(560,000)せず1件(280,000)に畳むことを検証する。
+        final now = DateTime.now();
+        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+          now,
+          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+        );
+        final payDate = DateFormat('yyyy-MM-dd').format(cycleStart);
+
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialRecentFlows: const <Map<String, dynamic>>[],
+              debugInitialPayslipSalaryIncomes: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'pay_date': payDate,
+                  'amount': 280000,
+                  'description': 'Payslip: 自分株式会社',
+                  'source': 'payslip_auto',
+                },
+              ],
+              debugInitialPayslipRows: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'pay_date': payDate,
+                  'net_amount': 280000,
+                  'company_name': '自分株式会社',
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        final card = find.byKey(
+          const Key('asset_monthly_flow_priority_card'),
+        );
+        expect(card, findsOneWidget);
+
+        // 二重計上されず1件分(280,000)だけ計上される。
+        expect(
+          find.descendant(of: card, matching: find.text('¥280,000')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: card, matching: find.textContaining('560,000')),
+          findsNothing,
+        );
+
+        await _unmount(tester);
+      },
+    );
+
     testWidgets('tapping a day reveals the prefill action', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));

@@ -227,6 +227,16 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<Map<String, dynamic>>? debugInitialRecentFlows;
 
+  /// テスト専用: 給料収入 (`salary_incomes` 行相当 / `pay_date` + `amount`) の初期
+  /// リストを注入し、給与明細のみ管理時のサイクル収入合算を Supabase なしで検証する。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugInitialPayslipSalaryIncomes;
+
+  /// テスト専用: 給与明細 (`payslips` 行相当 / `pay_date` + `net_amount`) の初期
+  /// リストを注入し、payslips↔salary_incomes 二重計上の排除を検証する。
+  @visibleForTesting
+  final List<Map<String, dynamic>>? debugInitialPayslipRows;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -253,6 +263,8 @@ class AssetManagementPage extends StatefulWidget {
     this.debugRecurringFixedCostsDeletedMirror,
     this.debugSubscriptionAuditMirror,
     this.debugInitialRecentFlows,
+    this.debugInitialPayslipSalaryIncomes,
+    this.debugInitialPayslipRows,
   });
 
   @override
@@ -777,6 +789,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         for (final flow in debugFlows) Map<String, dynamic>.from(flow),
       ];
     }
+    final debugSalaryIncomes = widget.debugInitialPayslipSalaryIncomes;
+    if (debugSalaryIncomes != null) {
+      _payslipSalaryIncomes = <Map<String, dynamic>>[
+        for (final row in debugSalaryIncomes) Map<String, dynamic>.from(row),
+      ];
+    }
+    final debugPayslipRows = widget.debugInitialPayslipRows;
+    if (debugPayslipRows != null) {
+      _payslipRows = <Map<String, dynamic>>[
+        for (final row in debugPayslipRows) Map<String, dynamic>.from(row),
+      ];
+    }
     _assetLiabilityRepository = widget.assetLiabilityRepository ??
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
@@ -1138,6 +1162,81 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       return !occurredAt.isBefore(start) && occurredAt.isBefore(endExclusive);
     }).toList();
+  }
+
+  /// 給料サイクル [reference] (= `[salaryCycleStart, salaryCycleEndExclusive)`)
+  /// に受給した給与収入の合計 (円)。給与明細(payslips) / salary_incomes から集計する。
+  ///
+  /// 収支カード等は `wealth_struggles` の収入フロー(conquer)だけを収入とみなすため、
+  /// 給料を給与明細でのみ管理しているユーザーは収入が ¥0 = 常に赤字に見えてしまう。
+  /// このヘルパーで給与明細の給料をサイクル収入へ合算する。二重計上を避けるため、
+  /// [cycleFlows] 内の収入フロー(conquer)および payslips↔salary_incomes 間で
+  /// 同日同額の収入は 1 件に畳む(canonical な
+  /// [AssetSalarySpendingEntries] の dedup と同方針)。
+  int _cycleSalaryIncomeTotal(
+    DateTime reference,
+    List<Map<String, dynamic>> cycleFlows,
+  ) {
+    final start = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+      reference,
+      salaryDay: _salaryDay,
+    );
+    final endExclusive =
+        AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+      reference,
+      salaryDay: _salaryDay,
+    );
+    String dayAmountKey(DateTime date, int amount) {
+      final y = date.year.toString().padLeft(4, '0');
+      final m = date.month.toString().padLeft(2, '0');
+      final d = date.day.toString().padLeft(2, '0');
+      return '$y-$m-$d:$amount';
+    }
+
+    // 既存の収入フロー(conquer)と同日同額の給料は二重計上になるため除外する。
+    final seen = <String>{};
+    for (final flow in cycleFlows) {
+      if ((flow['action_type']?.toString() ?? '') != 'conquer') {
+        continue;
+      }
+      final occurredAt =
+          DateTime.tryParse(flow['occurred_at']?.toString() ?? '')?.toLocal();
+      if (occurredAt == null) {
+        continue;
+      }
+      seen.add(
+        dayAmountKey(occurredAt, _numberFromDynamic(flow['amount']).round()),
+      );
+    }
+
+    var total = 0;
+    void addSalary(DateTime? payDate, int amount) {
+      if (payDate == null || amount <= 0) {
+        return;
+      }
+      if (payDate.isBefore(start) || !payDate.isBefore(endExclusive)) {
+        return;
+      }
+      // 既出 (conquer フロー or payslips↔salary_incomes 重複) は畳む。
+      if (!seen.add(dayAmountKey(payDate, amount))) {
+        return;
+      }
+      total += amount;
+    }
+
+    for (final row in _payslipSalaryIncomes) {
+      addSalary(
+        DateTime.tryParse(row['pay_date']?.toString() ?? ''),
+        _numberFromDynamic(row['amount']).round(),
+      );
+    }
+    for (final row in _payslipRows) {
+      addSalary(
+        DateTime.tryParse(row['pay_date']?.toString() ?? ''),
+        _numberFromDynamic(row['net_amount']).round(),
+      );
+    }
+    return total;
   }
 
   /// 給料日サイクルの期間ラベル (例: "5/25〜6/24")。
@@ -4655,7 +4754,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
 
-    final currentMonthFlows = _flowsForCycle(DateTime.now());
+    final planNow = DateTime.now();
+    final currentMonthFlows = _flowsForCycle(planNow);
     int monthlyIncome = 0;
     int monthlyExpense = 0;
     for (final f in currentMonthFlows) {
@@ -4663,6 +4763,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (f['action_type'] == 'conquer') monthlyIncome += amt;
       if (f['action_type'] == 'expense') monthlyExpense += amt;
     }
+    // 給与明細でのみ管理している給料もサイクル収入へ合算する。
+    monthlyIncome += _cycleSalaryIncomeTotal(planNow, currentMonthFlows);
 
     final currentFixedCost = _subscriptions.fold<int>(
       0,
@@ -5012,12 +5114,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final subsOk = _subscriptions.isNotEmpty;
 
-    final currentMonthFlows = _flowsForCycle(DateTime.now());
+    final checkNow = DateTime.now();
+    final currentMonthFlows = _flowsForCycle(checkNow);
     final incomeCount =
         currentMonthFlows.where((r) => r['action_type'] == 'conquer').length;
     final expenseCount =
         currentMonthFlows.where((r) => r['action_type'] == 'expense').length;
-    final flowsOk = (incomeCount + expenseCount) > 0;
+    // 給与明細でのみ管理している給料も「収支の記録あり」とみなす。
+    final salaryIncome = _cycleSalaryIncomeTotal(checkNow, currentMonthFlows);
+    final flowsOk = (incomeCount + expenseCount) > 0 || salaryIncome > 0;
 
     final now = DateTime.now();
     final mustThisMonth = _mustTasks.where((t) {
@@ -5087,6 +5192,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (f['action_type'] == 'expense') totalExpense += amt;
       if (f['action_type'] == 'transfer') totalTransfer += amt;
     }
+    // 給与明細でのみ管理している給料もサイクル収入へ合算する。
+    totalIncome += _cycleSalaryIncomeTotal(now, currentMonthFlows);
 
     final monthLabel = '${now.year}/${now.month.toString().padLeft(2, '0')}';
     final flowCycleLabel = _salaryCycleRangeLabel(now);
@@ -6446,6 +6553,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _loadPayslipFinanceData() async {
+    // テスト注入 (debugInitialPayslip*) がある場合はフェッチで上書きしない。
+    if (widget.debugInitialPayslipSalaryIncomes != null ||
+        widget.debugInitialPayslipRows != null) {
+      return;
+    }
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
       if (!mounted) return;
@@ -12982,9 +13094,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         totalExpense += amount;
       }
     }
+    // 給与明細(payslips/salary_incomes)でのみ管理している給料も収入へ合算する。
+    totalIncome += _cycleSalaryIncomeTotal(_now, flows);
 
     final net = totalIncome - totalExpense;
-    final statusText = flows.isEmpty
+    // フローが無くても給与明細の給料収入があれば「未記録」とは扱わない。
+    final hasNoData = flows.isEmpty && totalIncome == 0;
+    final statusText = hasNoData
         ? 'まだこのサイクルの収支が未記録です。まず収入と支出を入れて全体像を把握してください。'
         : 'このサイクルの収支差額は ${NumberFormat('#,###').format(net.abs())}円 ${net >= 0 ? '黒字' : '赤字'} です。まずここを基準に残りの判断を進めます。';
 
