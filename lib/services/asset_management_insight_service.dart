@@ -1,5 +1,6 @@
 import '../models/asset_liability_workbook.dart';
 import '../models/user_profile.dart';
+import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
 
 enum AssetManagementInsightActionType {
@@ -225,6 +226,9 @@ class AssetManagementInsightReport {
   final List<AssetManagementDeveloperRequest> developerRequests;
   final List<AssetManagementImplementationContext> implementationContexts;
 
+  /// 月をまたいだ負債トレンド（リボ複利・残高増加・超長期完済）の指摘。
+  final List<AssetDebtTrendInsight> debtTrendInsights;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -237,7 +241,18 @@ class AssetManagementInsightReport {
     required this.developerRequests,
     this.implementationContexts =
         const <AssetManagementImplementationContext>[],
+    this.debtTrendInsights = const <AssetDebtTrendInsight>[],
   });
+
+  bool get hasDebtTrendInsights => debtTrendInsights.isNotEmpty;
+
+  List<AssetDebtTrendInsight> get criticalDebtTrendInsights {
+    return debtTrendInsights
+        .where(
+          (insight) => insight.severity == AssetDebtTrendSeverity.critical,
+        )
+        .toList(growable: false);
+  }
 
   bool get hasCriticalActions {
     return actionItems.any(
@@ -268,6 +283,8 @@ class AssetManagementInsightService {
     double minimumSafetyBalance = defaultMinimumSafetyBalance,
     int upcomingPaymentWarningDays = defaultUpcomingPaymentWarningDays,
     String? mainAccountId,
+    Map<String, double> priorMonthAccountBalances = const <String, double>{},
+    AssetDebtTrendAnalyzer debtTrendAnalyzer = const AssetDebtTrendAnalyzer(),
   }) {
     final breakdown = _availableMoneyBreakdown(
       workbook: workbook,
@@ -312,6 +329,10 @@ class AssetManagementInsightService {
       actions: actions,
       movementSuggestions: movementSuggestions,
     );
+    final debtTrendInsights = debtTrendAnalyzer.analyze(
+      workbook: workbook,
+      priorBalancesByAccountId: priorMonthAccountBalances,
+    );
 
     return AssetManagementInsightReport(
       workbook: workbook,
@@ -324,6 +345,7 @@ class AssetManagementInsightService {
       emergencyAdvices: emergencyAdvices,
       developerRequests: developerRequests,
       implementationContexts: implementationContexts,
+      debtTrendInsights: debtTrendInsights,
     );
   }
 
@@ -1174,6 +1196,12 @@ class AssetManagementInsightPromptBuilder {
       ..writeln(
         '「7. 開発者向け改善提案」では、各提案ごとに「現状の痛み」「根拠データ」「変更ファイル」「実装手順」「受け入れ条件」「テスト/確認コマンド」「リスク」を必ず書いてください。',
       )
+      ..writeln(
+        '「4. 今月の支払いと利息」と「5. 今後3〜5年の運気と借金圧縮」では、下記「今月の問題点と翌月の改善（負債トレンド）」を最優先で扱ってください。'
+        '特にリボ払いで返済額が利息以下の負債、前月比で利用残高が増えた負債は、'
+        '「今月いくら増えたか」「このままだと何年で完済か/一生終わらないか」「翌月いくら返済すべきか（具体額）」を断言してください。'
+        '該当データが無い月だけ、そのカテゴリには触れなくて構いません。',
+      )
       ..writeln()
       ..writeln('## 総合サマリー')
       ..writeln('- 基準日: ${_formatDate(workbook.baseDate)}')
@@ -1227,6 +1255,9 @@ class AssetManagementInsightPromptBuilder {
       ..writeln()
       ..writeln('## カード請求内訳と照合')
       ..write(_cardBillingLines(workbook))
+      ..writeln()
+      ..writeln('## 今月の問題点と翌月の改善（負債トレンド）')
+      ..write(_debtTrendLines(report))
       ..writeln()
       ..writeln('## アクション件数')
       ..writeln('- 合計: ${report.actionItems.length}')
@@ -1509,6 +1540,44 @@ class AssetManagementInsightPromptBuilder {
       }
     }
     return buffer.toString();
+  }
+
+  String _debtTrendLines(AssetManagementInsightReport report) {
+    if (report.debtTrendInsights.isEmpty) {
+      return '- 月をまたいだ負債の悪化トレンドは検出されていません。'
+          '前月比のデータが無い場合は、来月以降の比較のために今月の残高を保存してください。\n';
+    }
+    final buffer = StringBuffer();
+    for (final insight in report.debtTrendInsights) {
+      final priorText = insight.priorBalance == null
+          ? '前月残高:履歴なし'
+          : '前月残高:${_formatAmount(insight.priorBalance!)} / '
+              '前月比:${_formatAmount(insight.balanceDelta ?? 0)}';
+      final payoffText = insight.estimatedPayoffMonths == null
+          ? '完済見込み:この返済額では完済不能'
+          : '完済見込み:約${insight.estimatedPayoffMonths}ヶ月';
+      buffer
+        ..writeln(
+          '- ${insight.accountName} / 区分:${_debtTrendCategoryLabel(insight.category)} / '
+          '重要度:${insight.severity.name} / 残高:${_formatAmount(insight.currentBalance)} / '
+          '$priorText / 月利息:${_formatAmount(insight.monthlyInterest)} / '
+          '今月返済:${_formatAmount(insight.scheduledPayment)} / '
+          '止血ライン(利息超え):${_formatAmount(insight.interestBreakEvenPayment)} / '
+          '24ヶ月完済ライン:${_formatAmount(insight.payoffIn24MonthsPayment)} / '
+          '$payoffText',
+        )
+        ..writeln('  - 問題点: ${insight.problem}')
+        ..writeln('  - 翌月アクション: ${insight.nextMonthAction}');
+    }
+    return buffer.toString();
+  }
+
+  String _debtTrendCategoryLabel(AssetDebtTrendCategory category) {
+    return switch (category) {
+      AssetDebtTrendCategory.negativeAmortization => 'リボ複利(返済が利息以下)',
+      AssetDebtTrendCategory.balanceIncreasing => '残高増加(新規利用過多)',
+      AssetDebtTrendCategory.slowPayoff => '超長期完済',
+    };
   }
 
   String _redactedSituationCards(AssetManagementInsightReport report) {

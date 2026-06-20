@@ -37,6 +37,8 @@ import 'package:my_web_app/services/asset_management_ai_analysis_history_service
 import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
+import 'package:my_web_app/services/asset_account_balance_history_store.dart';
+import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
@@ -620,6 +622,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetManagementDisplayModeStore.defaultMode;
   final AssetManagementMainAccountStore _mainAccountStore =
       const AssetManagementMainAccountStore();
+  // 月をまたいだ負債トレンド(リボ複利・残高増加)判定のための口座別残高履歴。
+  final AssetAccountBalanceHistoryStore _assetBalanceHistoryStore =
+      const AssetAccountBalanceHistoryStore();
+  // 前月末の口座別残高(accountId -> 残高絶対値)。非同期ロードでキャッシュ。
+  Map<String, double> _assetDebtTrendPriorBalances = const <String, double>{};
+  // 上記キャッシュが対象としている月キー(月跨ぎでの取り違え防止)。
+  String? _assetDebtTrendPriorBalancesMonth;
+  // 今月の残高記録の重複実行を防ぐシグネチャ(monthKey + 残高内容)。
+  String? _assetDebtTrendSyncedSignature;
   final AssetSalaryDayStore _salaryDayStore = const AssetSalaryDayStore();
   static const String _salaryDayMirrorKey = 'salary_day';
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
@@ -1536,6 +1547,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       // ローカル(_debtPaymentDayOverrides)反映後に呼ぶ。空でなくても union
       // マージ/バックフィルするため常に実行する。
       unawaited(_restoreDebtPaymentDayOverridesFromMirror());
+      // 他端末の残高履歴を取り込み、負債トレンドの前月比を端末跨ぎで有効化。
+      unawaited(_restoreAssetBalanceHistoryFromMirror());
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
       }
@@ -10930,6 +10943,69 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 入金予定のミラー取り込みプレビュー行を組み立てる。
+  /// 口座別残高履歴を asset_pref_mirror へ丸ごと退避する（端末跨ぎ同期）。
+  ///
+  /// 汎用 jsonb ミラーの 1 pref_key を使うためマイグレーション不要。値は
+  /// `{monthKey: {accountId: 残高}}`。負債トレンドの前月比を別端末でも使える。
+  Future<void> _mirrorAssetBalanceHistory() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    try {
+      final history = await _assetBalanceHistoryStore.loadAll();
+      if (history.isEmpty) {
+        return;
+      }
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': 'account_balance_history',
+        'value': history,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('balance history mirror upsert failed: $e');
+    }
+  }
+
+  /// 他端末の残高履歴をミラーから取り込み、ローカルへ和集合マージする。
+  ///
+  /// マージは非破壊（月キー・口座を消さない/巻き戻さない）。取り込みで前月残高が
+  /// 変わったら、当月基準の前月残高キャッシュを更新して負債トレンドを再評価する。
+  Future<void> _restoreAssetBalanceHistoryFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', 'account_balance_history');
+      if (rows.isEmpty) {
+        return;
+      }
+      final changed =
+          await _assetBalanceHistoryStore.mergeRemote(rows.first['value']);
+      if (!changed || !mounted) {
+        return;
+      }
+      final monthKey = AssetAccountBalanceHistoryStore.formatMonthKey(_now);
+      final prior = await _assetBalanceHistoryStore.priorMonthBalances(_now);
+      if (!mounted) {
+        return;
+      }
+      if (_assetDebtTrendPriorBalancesMonth != monthKey ||
+          !_sameDoubleMap(_assetDebtTrendPriorBalances, prior)) {
+        setState(() {
+          _assetDebtTrendPriorBalances = prior;
+          _assetDebtTrendPriorBalancesMonth = monthKey;
+        });
+      }
+    } catch (e) {
+      debugPrint('balance history mirror restore failed: $e');
+    }
+  }
+
   String _inflowMergeRowLabel(Map<String, dynamic> row) {
     final label = row['label']?.toString() ?? '入金予定';
     final amount = (row['amount'] as num?)?.toDouble() ?? 0;
@@ -15929,15 +16005,83 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 今月の口座別負債残高を履歴へ記録し、前月末残高をロードして負債トレンド
+  /// 判定(リボ複利・残高増加)に供給する。残高が変わったときだけ再記録し、
+  /// 前月残高が更新されたときだけ setState で再描画する。
+  void _scheduleAssetDebtTrendHistorySync(AssetLiabilityWorkbook workbook) {
+    final monthKey =
+        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    final balances = <String, double>{
+      for (final row in workbook.debtMasterRows)
+        if (row.balance < 0) row.id: row.balance.abs(),
+    };
+    final signatureParts = balances.entries
+        .map((entry) => '${entry.key}:${entry.value.round()}')
+        .toList()
+      ..sort();
+    final signature = '$monthKey|${signatureParts.join(',')}';
+    if (_assetDebtTrendSyncedSignature == signature) {
+      return;
+    }
+    _assetDebtTrendSyncedSignature = signature;
+    unawaited(
+      _syncAssetDebtTrendHistory(
+        workbook.baseDate,
+        monthKey,
+        balances,
+        signature,
+      ),
+    );
+  }
+
+  Future<void> _syncAssetDebtTrendHistory(
+    DateTime baseDate,
+    String monthKey,
+    Map<String, double> balances,
+    String signature,
+  ) async {
+    try {
+      final prior =
+          await _assetBalanceHistoryStore.priorMonthBalances(baseDate);
+      await _assetBalanceHistoryStore.recordMonth(baseDate, balances);
+      // 記録した最新履歴を端末跨ぎミラーへ退避（ログイン時のみ実効）。
+      unawaited(_mirrorAssetBalanceHistory());
+      if (!mounted) {
+        return;
+      }
+      if (_assetDebtTrendPriorBalancesMonth != monthKey ||
+          !_sameDoubleMap(_assetDebtTrendPriorBalances, prior)) {
+        setState(() {
+          _assetDebtTrendPriorBalances = prior;
+          _assetDebtTrendPriorBalancesMonth = monthKey;
+        });
+      }
+    } catch (_) {
+      // 失敗時はシグネチャを解除し、次のビルドで再試行できるようにする。
+      if (_assetDebtTrendSyncedSignature == signature) {
+        _assetDebtTrendSyncedSignature = null;
+      }
+    }
+  }
+
   Widget _buildAssetLiabilityWorkbookBoard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
     }
     _scheduleAssetLiabilityStateIdMigration(workbook);
+    _scheduleAssetDebtTrendHistorySync(workbook);
+    final currentMonthKey =
+        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    // キャッシュ済み前月残高が当月のものでない間は渡さない(取り違え防止)。
+    final priorMonthAccountBalances =
+        _assetDebtTrendPriorBalancesMonth == currentMonthKey
+            ? _assetDebtTrendPriorBalances
+            : const <String, double>{};
     final insightReport = _assetManagementInsightService.buildReport(
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
       mainAccountId: _assetManagementMainAccountId,
+      priorMonthAccountBalances: priorMonthAccountBalances,
     );
     final warningColor = workbook.cashAfterScheduledPayments < 0
         ? const Color(0xFFB91C1C)
@@ -17060,6 +17204,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementEmergencyAdviceList(report.emergencyAdvices),
             const SizedBox(height: 12),
           ],
+          if (report.debtTrendInsights.isNotEmpty) ...[
+            _buildAssetManagementMonthlyDebtTrendList(report.debtTrendInsights),
+            const SizedBox(height: 12),
+          ],
           _buildAssetManagementAssistantActionList(report.actionItems),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -17888,6 +18036,182 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               fontSize: 11,
               height: 1.4,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _assetDebtTrendSeverityColor(AssetDebtTrendSeverity severity) {
+    return switch (severity) {
+      AssetDebtTrendSeverity.info => const Color(0xFF2563EB),
+      AssetDebtTrendSeverity.warning => const Color(0xFFD97706),
+      AssetDebtTrendSeverity.critical => const Color(0xFFB91C1C),
+    };
+  }
+
+  String _assetDebtTrendCategoryLabel(AssetDebtTrendCategory category) {
+    return switch (category) {
+      AssetDebtTrendCategory.negativeAmortization => 'リボ複利・返済が利息以下',
+      AssetDebtTrendCategory.balanceIncreasing => '残高が先月より増加',
+      AssetDebtTrendCategory.slowPayoff => '完済まで超長期',
+    };
+  }
+
+  /// 今月の負債の問題点と「翌月こうしなさい」を、計算済みの具体額つきで描画する。
+  Widget _buildAssetManagementMonthlyDebtTrendList(
+    List<AssetDebtTrendInsight> insights,
+  ) {
+    final hasCritical = insights.any(
+      (insight) => insight.severity == AssetDebtTrendSeverity.critical,
+    );
+    final headerColor =
+        hasCritical ? const Color(0xFFB91C1C) : const Color(0xFFD97706);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: headerColor.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.trending_up, color: headerColor, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '今月の問題点と翌月の改善（負債トレンド）',
+                  style: TextStyle(
+                    color: headerColor,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'リボ払いで返済が利息に負けている／先月より残高が増えた負債を検出し、翌月の具体的な返済額を提示します。',
+            style: TextStyle(fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          for (final insight in insights.take(5))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildAssetManagementMonthlyDebtTrendTile(insight),
+            ),
+          if (insights.length > 5)
+            Text(
+              'ほか ${insights.length - 5}件',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetManagementMonthlyDebtTrendTile(
+    AssetDebtTrendInsight insight,
+  ) {
+    final color = _assetDebtTrendSeverityColor(insight.severity);
+    final payoffValue = insight.estimatedPayoffMonths == null
+        ? 'この返済額では完済不能'
+        : '約${insight.estimatedPayoffMonths}ヶ月';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${insight.accountName}（${_assetDebtTrendCategoryLabel(insight.category)}）',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            insight.problem,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.arrow_forward, color: color, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '翌月: ${insight.nextMonthAction}',
+                    style: const TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _buildAssetLiabilitySyncChip(
+                label: '残高',
+                value: _formatManagementYen(insight.currentBalance),
+                color: color,
+              ),
+              if (insight.balanceDelta != null)
+                _buildAssetLiabilitySyncChip(
+                  label: '前月比',
+                  value: _formatManagementDeltaYen(insight.balanceDelta),
+                  color: color,
+                ),
+              _buildAssetLiabilitySyncChip(
+                label: '月利息',
+                value: _formatManagementYen(insight.monthlyInterest),
+                color: const Color(0xFF6B7280),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '今月返済',
+                value: _formatManagementYen(insight.scheduledPayment),
+                color: const Color(0xFF6B7280),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '24ヶ月完済ライン',
+                value: _formatManagementYen(insight.payoffIn24MonthsPayment),
+                color: const Color(0xFF0D9488),
+              ),
+              _buildAssetLiabilitySyncChip(
+                label: '完済見込み',
+                value: payoffValue,
+                color: const Color(0xFF6B7280),
+              ),
+            ],
           ),
         ],
       ),
