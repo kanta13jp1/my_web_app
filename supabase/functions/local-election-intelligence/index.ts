@@ -2239,13 +2239,13 @@ function buildFallbackAnalysis(snapshot: {
   const delta = snapshot.officialCurrentLocalMembers -
     snapshot.baselineCurrentLocalMembers;
   const deltaLabel = delta === 0
-    ? "At baseline 340."
+    ? "基準340と同水準。"
     : delta > 0
-    ? `+${delta} vs 340.`
-    : `${delta} vs 340.`;
+    ? `基準340比 +${delta}人。`
+    : `基準340比 ${delta}人。`;
   const topPrefectures = [...snapshot.prefectures].sort((a, b) =>
     b.currentMembers - a.currentMembers
-  ).slice(0, 3).map((item) => `${item.prefecture}${item.currentMembers}`);
+  ).slice(0, 3).map((item) => `${item.prefecture}${item.currentMembers}人`);
   const cdpBenchmarked = snapshot.prefectures.filter((item) =>
     item.cdpLocalMembers > 0
   );
@@ -2263,33 +2263,33 @@ function buildFallbackAnalysis(snapshot: {
     item.kokuminCandidateCount === 1
   );
   const nearSchedules = scheduleEntries.slice(0, 3).map((item) =>
-    `${item.voteDate} ${item.prefecture} ${item.electionName}(${item.kokuminCandidateCount})`
+    `${item.voteDate} ${item.prefecture} ${item.electionName}（候補${item.kokuminCandidateCount}人）`
   );
   return {
     summary:
-      `Official local members: ${snapshot.officialCurrentLocalMembers}. Remaining to 700: ${snapshot.actualNetIncreaseRequired}. ${deltaLabel}`,
+      `公式地方議員数 ${snapshot.officialCurrentLocalMembers}人。700まで残り ${snapshot.actualNetIncreaseRequired}人。${deltaLabel}`,
     alerts: [
-      `2023 result: first half ${snapshot.official2023FirstHalfWins}, second half ${snapshot.official2023SecondHalfWins}, total ${snapshot.official2023TotalWins}.`,
-      `Roster size confirmed: ${snapshot.members.length}.`,
+      `2023年統一地方選の実績：前半 ${snapshot.official2023FirstHalfWins}、後半 ${snapshot.official2023SecondHalfWins}、合計 ${snapshot.official2023TotalWins}。`,
+      `現職名簿の確定件数：${snapshot.members.length}人。`,
       topPrefectures.length === 0
-        ? "Top prefectures unavailable."
-        : `Top prefectures: ${topPrefectures.join(" / ")}.`,
+        ? "上位都道府県のデータがありません。"
+        : `上位都道府県：${topPrefectures.join(" / ")}。`,
       topCdpGaps.length === 0
-        ? "CDP local benchmark unavailable."
-        : `CDP local benchmark gaps: ${topCdpGaps.join(" / ")}.`,
+        ? "立憲民主党との地方議員数の比較は今回取得していません。"
+        : `立憲民主党との地力差（上位）：${topCdpGaps.join(" / ")}。`,
     ],
     strategicNotes: [
-      "Protect incumbents, recruit challengers, and manage key municipalities in one monthly plan.",
-      "Treat zero-candidate elections as red and single-candidate elections as yellow for immediate action.",
-      "Keep the public roster, prefecture totals, and schedule under one shared operating view.",
+      "現職の維持、新人の擁立、重点自治体の管理を一つの月次計画で進める。",
+      "候補者0件の選挙は赤、1件のみの選挙は黄として優先的に対応する。",
+      "公開名簿・都道府県別集計・選挙日程を一つの運用ビューで共有する。",
     ],
     scheduleSummary: scheduleEntries.length === 0
-      ? "No near-term local election schedule found."
-      : `Upcoming elections: ${scheduleEntries.length}. Red ${redSchedules.length}, Yellow ${yellowSchedules.length}.`,
+      ? "直近の地方選日程は見つかりませんでした。"
+      : `予定されている地方選：${scheduleEntries.length}件。赤 ${redSchedules.length}件、黄 ${yellowSchedules.length}件。`,
     scheduleAlerts: [
       ...(redSchedules.length > 0
         ? [
-          `Red ${redSchedules.length}: ${
+          `赤 ${redSchedules.length}件：${
             redSchedules.slice(0, 3).map((item) =>
               `${item.prefecture} ${item.electionName}`
             ).join(" / ")
@@ -2298,7 +2298,7 @@ function buildFallbackAnalysis(snapshot: {
         : []),
       ...(yellowSchedules.length > 0
         ? [
-          `Yellow ${yellowSchedules.length}: ${
+          `黄 ${yellowSchedules.length}件：${
             yellowSchedules.slice(0, 3).map((item) =>
               `${item.prefecture} ${item.electionName}`
             ).join(" / ")
@@ -2306,7 +2306,7 @@ function buildFallbackAnalysis(snapshot: {
         ]
         : []),
       ...(nearSchedules.length > 0
-        ? [`Upcoming: ${nearSchedules.join(" / ")}`]
+        ? [`直近：${nearSchedules.join(" / ")}`]
         : []),
     ],
   };
