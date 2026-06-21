@@ -739,6 +739,27 @@ function providerFetchTimeoutMs(): number {
   return Number.isFinite(raw) && raw > 0 ? raw : 90_000;
 }
 
+/// 外部プロバイダ呼び出しに providerFetchTimeoutMs() のタイムアウトを付与する
+/// `fetch` ラッパー。遅延/ハングするプロバイダで edge function が wall-clock 上限を
+/// 超えてランタイムに kill され 502 になるのを防ぐ (callProvider と同方針の横展開)。
+/// abort 時は AbortError を throw → 各 action / serve トップレベルの try/catch が
+/// 捕捉し、502 ではなくハンドル済みエラー応答へ落ちる。
+async function fetchWithProviderTimeout(
+  input: string | URL,
+  init: RequestInit = {},
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    providerFetchTimeoutMs(),
+  );
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -3274,18 +3295,24 @@ serve(async (req: Request) => {
           return json({ success: true, summary: result });
         }
         if (openaiKey) {
-          const r = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${openaiKey}`,
-              "Content-Type": "application/json",
+          const r = await fetchWithProviderTimeout(
+            "https://api.openai.com/v1/chat/completions",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${openaiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [{
+                  role: "user",
+                  content: `200字以内で要約: ${text}`,
+                }],
+                max_tokens: 300,
+              }),
             },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              messages: [{ role: "user", content: `200字以内で要約: ${text}` }],
-              max_tokens: 300,
-            }),
-          });
+          );
           const d = await r.json() as {
             choices?: [{ message: { content: string } }];
           };
@@ -4372,7 +4399,7 @@ serve(async (req: Request) => {
 スコアデータ: ${JSON.stringify(scores).slice(0, 2000)}
 弱点プロバイダー・得意プロバイダー・学習スタイルをJSONで返してください。
 形式: {"weak_providers":["..."],"strong_providers":["..."],"preferred_style":"visual|text|voice","insights":"..."}`;
-        const claudeResp = await fetch(
+        const claudeResp = await fetchWithProviderTimeout(
           "https://api.anthropic.com/v1/messages",
           {
             method: "POST",
@@ -4427,7 +4454,7 @@ serve(async (req: Request) => {
         if (!groqKey) {
           return json({ error: "GROQ_API_KEY not configured" }, 503);
         }
-        const groqResp = await fetch(
+        const groqResp = await fetchWithProviderTimeout(
           "https://api.groq.com/openai/v1/chat/completions",
           {
             method: "POST",
@@ -4488,7 +4515,7 @@ serve(async (req: Request) => {
 正解: ${correctAnswer}
 ユーザーの回答: ${userAnswer}
 なぜ正解がそうなるのか、関連する背景知識も含めて日本語で300字以内で説明してください。`;
-        const claudeResp2 = await fetch(
+        const claudeResp2 = await fetchWithProviderTimeout(
           "https://api.anthropic.com/v1/messages",
           {
             method: "POST",
