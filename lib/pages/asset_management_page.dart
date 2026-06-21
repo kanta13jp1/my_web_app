@@ -49,6 +49,8 @@ import 'package:my_web_app/services/asset_subscription_audit_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
+import 'package:my_web_app/services/ai_hub_chat_service.dart';
+import 'package:my_web_app/services/asset_payment_check_guide_service.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
@@ -331,6 +333,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ];
 
   final _supabase = Supabase.instance.client;
+  // 支払確認手順(決定論ベース)と、ネット検索対応プロバイダ経由の AI 詳細手順。
+  final AssetPaymentCheckGuideService _paymentCheckGuideService =
+      const AssetPaymentCheckGuideService();
+  late final AiHubChatService _aiHubChatService = AiHubChatService(
+    supabase: _supabase,
+  );
   final ProfileService _profileService = ProfileService();
 
   // --- 今日18:00締切のためのチェックリスト ---
@@ -23986,9 +23994,89 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          _buildPaymentCheckGuideButton(row, workbook),
         ],
       ),
     );
+  }
+
+  /// 「手順を確認」ボタン: この負債の引き落としが行われたかを金融機関で確認する
+  /// 手順をダイアログで提示する(決定論ベース + AI ネット検索の詳細手順)。
+  Widget _buildPaymentCheckGuideButton(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: OutlinedButton.icon(
+        onPressed: () => unawaited(_showPaymentCheckGuide(row, workbook)),
+        icon: const Icon(Icons.fact_check_outlined, size: 16),
+        label: const Text('手順を確認'),
+      ),
+    );
+  }
+
+  AssetLiabilityCashflowRow? _cashflowRowForDebt(
+    AssetLiabilityWorkbook workbook,
+    String debtId,
+  ) {
+    for (final row in workbook.cashflowRows) {
+      if (row.accountId == debtId) {
+        return row;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _showPaymentCheckGuide(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    final cashflow = _cashflowRowForDebt(workbook, row.id);
+    final paymentDate = cashflow?.paymentDate;
+    final paymentAmount = cashflow?.paymentAmount;
+    final baseGuide = _paymentCheckGuideService.buildBaseGuide(
+      debtName: row.name,
+      paymentSourceAccountName: row.paymentSourceAccountName,
+      paymentDate: paymentDate,
+      paymentDay: row.paymentDay,
+      paymentAmount: paymentAmount,
+    );
+    final aiPrompt = _paymentCheckGuideService.buildAiPrompt(
+      debtName: row.name,
+      paymentSourceAccountName: row.paymentSourceAccountName,
+      paymentDate: paymentDate,
+      paymentDay: row.paymentDay,
+      paymentAmount: paymentAmount,
+    );
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => _PaymentCheckGuideDialog(
+        debtName: row.name,
+        baseGuide: baseGuide,
+        fetchAiGuide: () => _fetchPaymentCheckAiGuide(aiPrompt),
+      ),
+    );
+  }
+
+  /// ネット検索対応プロバイダ(perplexity)で金融機関別の詳しい手順を取得する。
+  /// 無効/オフライン/失敗時は null を返し、ダイアログはベース手順だけで完結する。
+  Future<String?> _fetchPaymentCheckAiGuide(String prompt) async {
+    try {
+      final response = await _aiHubChatService.sendProviderChat(
+        message: prompt,
+        provider: 'perplexity',
+        maxTokens: 1200,
+        traceId: 'asset-payment-check-guide',
+        routingUseCase: 'payment_check_guide',
+      );
+      final text = response.text.trim();
+      return text.isEmpty ? null : text;
+    } catch (e) {
+      debugPrint('payment check ai guide failed: $e');
+      return null;
+    }
   }
 
   Widget _buildDebtMasterMetric({
@@ -27492,5 +27580,138 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (type.contains('証券')) return Icons.trending_up;
     if (type.contains('ローン') || type.contains('カード')) return Icons.credit_card;
     return Icons.monetization_on;
+  }
+}
+
+/// 支払確認手順ダイアログ。決定論ベース手順を即時表示し、開いた直後に AI(ネット検索)
+/// で金融機関別の詳しい手順を取得する。取得失敗時はベース手順だけで完結する。
+class _PaymentCheckGuideDialog extends StatefulWidget {
+  const _PaymentCheckGuideDialog({
+    required this.debtName,
+    required this.baseGuide,
+    required this.fetchAiGuide,
+  });
+
+  final String debtName;
+  final String baseGuide;
+
+  /// AI 詳細手順を取得する。失敗/無効時は null を返す。
+  final Future<String?> Function() fetchAiGuide;
+
+  @override
+  State<_PaymentCheckGuideDialog> createState() =>
+      _PaymentCheckGuideDialogState();
+}
+
+class _PaymentCheckGuideDialogState extends State<_PaymentCheckGuideDialog> {
+  bool _loading = true;
+  bool _failed = false;
+  String? _aiGuide;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    String? text;
+    var failed = false;
+    try {
+      text = await widget.fetchAiGuide();
+      failed = text == null || text.trim().isEmpty;
+    } catch (_) {
+      failed = true;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _aiGuide = text;
+      _failed = failed;
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AlertDialog(
+      title: Text('${widget.debtName} の支払確認手順'),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '基本の確認手順',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: scheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            SelectableText(
+              widget.baseGuide,
+              style: const TextStyle(fontSize: 13, height: 1.6),
+            ),
+            const Divider(height: 24),
+            Row(
+              children: [
+                Icon(Icons.travel_explore, size: 16, color: scheme.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'AIによる金融機関別の詳しい手順',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            if (_loading)
+              const Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ネット検索で手順を取得しています…',
+                      style: TextStyle(fontSize: 13, height: 1.5),
+                    ),
+                  ),
+                ],
+              )
+            else if (_failed || _aiGuide == null)
+              Text(
+                'AIによる詳しい手順を取得できませんでした。上記の基本手順をご利用ください。',
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: scheme.onSurfaceVariant,
+                ),
+              )
+            else
+              SelectableText(
+                _aiGuide!,
+                style: const TextStyle(fontSize: 13, height: 1.6),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('閉じる'),
+        ),
+      ],
+    );
   }
 }
