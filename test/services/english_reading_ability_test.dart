@@ -166,5 +166,26 @@ void main() {
       expect(summary.latestEffectiveWpm, 300);
       expect(summary.reachedNative, isTrue);
     });
+
+    test('measurementDayStreak counts consecutive days to the most recent', () {
+      // distinct days 1, 4, 5, 6 -> streak from 6 backwards = 3 (gap at 1).
+      final attempts = <EnglishReadingAttempt>[
+        _attempt(wpm: 150, level: 2, day: 1),
+        _attempt(wpm: 150, level: 2, day: 4),
+        _attempt(wpm: 150, level: 2, day: 5),
+        _attempt(wpm: 150, level: 2, day: 6),
+      ];
+      final summary = EnglishReadingAbilitySummary.fromAttempts(attempts);
+      expect(summary.measurementDayStreak, 3);
+    });
+
+    test('measurementDayStreak is 1 for multiple attempts on a single day', () {
+      final attempts = <EnglishReadingAttempt>[
+        _attempt(wpm: 150, level: 2, day: 7),
+        _attempt(wpm: 160, level: 2, day: 7),
+      ];
+      final summary = EnglishReadingAbilitySummary.fromAttempts(attempts);
+      expect(summary.measurementDayStreak, 1);
+    });
   });
 }

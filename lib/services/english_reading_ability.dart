@@ -82,6 +82,7 @@ class EnglishReadingAbilitySummary {
     required this.nativeRatio,
     required this.clearedLevels,
     required this.trend,
+    this.measurementDayStreak = 0,
   });
 
   final int totalSessions;
@@ -106,6 +107,9 @@ class EnglishReadingAbilitySummary {
 
   /// 時系列 (古い→新しい) の WPM 推移。
   final List<EnglishReadingTrendPoint> trend;
+
+  /// 直近の計測日から連続して計測した暦日数 (継続フック)。
+  final int measurementDayStreak;
 
   bool get hasData => totalSessions > 0;
 
@@ -184,6 +188,27 @@ class EnglishReadingAbilitySummary {
         )
         .toList(growable: false);
 
+    // 連続計測日数: 直近の計測日から1日刻みで遡って連続する暦日数。
+    final dayKeys = sorted
+        .map(
+          (a) => DateTime(
+            a.createdAt.year,
+            a.createdAt.month,
+            a.createdAt.day,
+          ),
+        )
+        .toSet()
+        .toList()
+      ..sort();
+    var dayStreak = dayKeys.isEmpty ? 0 : 1;
+    for (var i = dayKeys.length - 1; i > 0; i--) {
+      if (dayKeys[i].difference(dayKeys[i - 1]).inDays == 1) {
+        dayStreak++;
+      } else {
+        break;
+      }
+    }
+
     return EnglishReadingAbilitySummary(
       totalSessions: sorted.length,
       totalWords: totalWords,
@@ -199,6 +224,7 @@ class EnglishReadingAbilitySummary {
       nativeRatio: EnglishReadingMetrics.nativeRatio(latest.effectiveWpm),
       clearedLevels: cleared,
       trend: trend,
+      measurementDayStreak: dayStreak,
     );
   }
 }
