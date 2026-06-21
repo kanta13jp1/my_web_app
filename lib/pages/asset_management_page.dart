@@ -24230,8 +24230,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityDebtRow row,
     AssetLiabilityWorkbook workbook,
   ) {
+    // アコムショッピング等のショッピング枠も請求のまとめ先に選べるようにする
+    // (請求ホストの正当性は AssetLiabilityPlanningService.isCardBillingHostKind と一致)。
     final cardOptions = _cardBillingAccountOptions(
       workbook,
+      includeShoppingDebt: true,
     ).where((account) => account.id != row.id).toList(growable: false);
     final configured = _cardBillingAccountIds[row.id];
     final selected = configured ??

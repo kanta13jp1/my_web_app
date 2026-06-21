@@ -635,6 +635,74 @@ void main() {
       expect(review.hasDoubleCountingRisk, isFalse);
     });
 
+    test('allows billing into an acom shopping (shoppingDebt) host', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'アコムショッピング': -2234106,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId:
+              AssetLiabilityPlanningService.acomShoppingAccountId,
+        },
+      );
+
+      final review = workbook.cardBillingReview;
+      final acomGroup = review.cardBillingGroups.firstWhere(
+        (group) =>
+            group.billingAccountId ==
+            AssetLiabilityPlanningService.acomShoppingAccountId,
+      );
+      final kddi = acomGroup.items.firstWhere(
+        (item) =>
+            item.accountId ==
+            AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+
+      expect(kddi.includedInBillingAccount, isTrue);
+      expect(
+        kddi.alerts,
+        isNot(
+          contains(
+            AssetLiabilityPlanningService
+                .cardBillingReviewRemovedBillingAccountAlert,
+          ),
+        ),
+      );
+    });
+
+    test('isCardBillingHostKind accepts credit card and shopping debt', () {
+      expect(
+        AssetLiabilityPlanningService.isCardBillingHostKind(
+          AssetLiabilityAccountKind.creditCard,
+        ),
+        isTrue,
+      );
+      expect(
+        AssetLiabilityPlanningService.isCardBillingHostKind(
+          AssetLiabilityAccountKind.shoppingDebt,
+        ),
+        isTrue,
+      );
+      expect(
+        AssetLiabilityPlanningService.isCardBillingHostKind(
+          AssetLiabilityAccountKind.deposit,
+        ),
+        isFalse,
+      );
+      expect(
+        AssetLiabilityPlanningService.isCardBillingHostKind(
+          AssetLiabilityAccountKind.cardLoan,
+        ),
+        isFalse,
+      );
+    });
+
     test('reconciles imported card statement totals with billed amount', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
