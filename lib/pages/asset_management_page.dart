@@ -8535,10 +8535,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         if (_isIncomeActionType(flow['action_type']?.toString() ?? ''))
           SalaryDepositFlowObservation(
             amount: ((flow['amount'] as num?)?.toDouble() ?? 0).abs(),
-            occurredAt:
-                DateTime.tryParse(flow['occurred_at']?.toString() ?? '')
-                        ?.toLocal() ??
-                    _now,
+            occurredAt: DateTime.tryParse(flow['occurred_at']?.toString() ?? '')
+                    ?.toLocal() ??
+                _now,
           ),
     ];
     return AssetSalaryDepositDetector.detect(
@@ -8578,8 +8577,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final candidates = workbook.accounts
         .where(
           (account) =>
-              account.kind != AssetLiabilityAccountKind.cash &&
-              account.isAsset,
+              account.kind != AssetLiabilityAccountKind.cash && account.isAsset,
         )
         .toList()
       ..sort((a, b) => b.balance.compareTo(a.balance));

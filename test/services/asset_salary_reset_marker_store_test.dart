@@ -101,8 +101,10 @@ void main() {
     });
 
     test('mergeLater never regresses past a null/invalid side', () {
-      expect(AssetSalaryResetMarkerStore.mergeLater(null, '2026-06'), '2026-06');
-      expect(AssetSalaryResetMarkerStore.mergeLater('2026-06', null), '2026-06');
+      expect(
+          AssetSalaryResetMarkerStore.mergeLater(null, '2026-06'), '2026-06');
+      expect(
+          AssetSalaryResetMarkerStore.mergeLater('2026-06', null), '2026-06');
       expect(AssetSalaryResetMarkerStore.mergeLater(null, null), isNull);
       // 不正値は無視され、有効な方が残る。
       expect(
