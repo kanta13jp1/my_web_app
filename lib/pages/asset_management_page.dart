@@ -18579,11 +18579,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     // 際限なく再スケジュールして発火しない (starvation) のを防ぐ。
     _assetManagementAiSummaryRequestKey = key;
     // デバウンス: 初期化時の連続リビルド (フィンガープリント毎回変化) で ai-hub を
-    // 連打しないよう、key が変わる度に前タイマーを取り消し、~700ms 静止した最後の
-    // key の 1 回だけ実発行する。
+    // 連打しないよう、key が変わる度に前タイマーを取り消し、リビルドが静止した最後の
+    // key の 1 回だけ実発行する。窓は初期データロード (~2s で収束) を上回る長さにして、
+    // 部分データでの先行生成 → 完了後に完全データで再生成、という二重発行を避ける
+    // (重い/低速な ai-hub を 1 回に集約する)。
     _assetManagementAiSummaryDebounce?.cancel();
     _assetManagementAiSummaryDebounce = Timer(
-      const Duration(milliseconds: 700),
+      const Duration(milliseconds: 2500),
       () {
         if (!mounted) {
           return;
@@ -18622,12 +18624,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _developerRequestExistingIssueLookupKey = lookupKey;
     _isCheckingExistingDeveloperRequestIssues = true;
     // デバウンス: 初期化時の連続リビルド (developer requests 変化) で core-hub の
-    // 既存Issue照合を連打しないよう、~700ms 静止した最後の 1 回だけ実行する。
+    // 既存Issue照合を連打しないよう、リビルドが静止した最後の 1 回だけ実行する。窓は
+    // 初期データロード (~2s) を上回る長さにして、部分データでの先行実行を避ける。
     // AI 要約生成前は _ensureExistingDeveloperIssuesLoaded が必要時に強制ロードするため
     // 注釈整合は保たれる。
     _existingDeveloperIssueLookupDebounce?.cancel();
     _existingDeveloperIssueLookupDebounce = Timer(
-      const Duration(milliseconds: 700),
+      const Duration(milliseconds: 2500),
       () {
         if (!mounted) {
           return;
