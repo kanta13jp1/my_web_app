@@ -1,14 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-20T21:43:43Z`
-- Previous check: `2026-06-19T21:42:50Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-06-21T21:45:38Z`
+- Previous check: `2026-06-20T21:43:43Z`
+- Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.185 / June 20, 2026
 - `changed` Codex changelog: 2026-06-18 / Codex app 26.616 New features Added Record
-- `changed` Devin release notes: June 19, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
