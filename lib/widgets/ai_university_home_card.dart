@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_university_x_post_service.dart';
+import '../theme/design_tokens.dart';
 
 /// AI大学ホームカード — ホーム最上部に表示するキラーコンテンツバナー
 ///
@@ -427,12 +428,12 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF6B35).withValues(alpha: 0.10),
+                      color: DesignTokens.orange.withValues(alpha: 0.10),
                       blurRadius: 24,
                       offset: const Offset(0, 12),
                     ),
                     BoxShadow(
-                      color: const Color(0xFF3D5AFE).withValues(alpha: 0.12),
+                      color: DesignTokens.indigo.withValues(alpha: 0.12),
                       blurRadius: 32,
                       offset: const Offset(0, 8),
                     ),
@@ -461,7 +462,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           ),
                           child: const Icon(
                             Icons.school_rounded,
-                            color: Color(0xFFFF8C5A),
+                            color: DesignTokens.orangeLight,
                             size: 26,
                           ),
                         ),
@@ -494,7 +495,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                                     _buildStatusPill(
                                       icon: Icons.replay_rounded,
                                       label: '復習 $_dueCardCount問',
-                                      color: const Color(0xFF3D5AFE),
+                                      color: DesignTokens.indigo,
                                     ),
                                 ],
                               ),
@@ -661,7 +662,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             icon: Icons.hub_outlined,
                             label: '掲載AI',
                             value: providerCountText,
-                            accent: const Color(0xFF3D5AFE),
+                            accent: DesignTokens.indigo,
                           ),
                         ),
                         SizedBox(
@@ -670,7 +671,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             icon: Icons.check_circle_outline,
                             label: '学習済み',
                             value: '$_answeredCount社',
-                            accent: const Color(0xFF4CAF50),
+                            accent: DesignTokens.green,
                           ),
                         ),
                         SizedBox(
@@ -679,7 +680,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             icon: Icons.local_fire_department_outlined,
                             label: '連続学習',
                             value: '$_currentStreak日',
-                            accent: const Color(0xFFFF6B35),
+                            accent: DesignTokens.orange,
                           ),
                         ),
                         SizedBox(
@@ -779,7 +780,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           label: primaryCta,
                           icon: Icons.play_arrow_rounded,
                           foregroundColor: Colors.white,
-                          backgroundColor: const Color(0xFFFF6B35),
+                          backgroundColor: DesignTokens.orange,
                           onTap: _openUniversity,
                         ),
                       ),
@@ -791,7 +792,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             label: '復習する ($_dueCardCount問)',
                             icon: Icons.replay_rounded,
                             foregroundColor: Colors.white,
-                            backgroundColor: const Color(0xFF3D5AFE),
+                            backgroundColor: DesignTokens.indigo,
                             onTap: _openUniversity,
                           ),
                         ),
@@ -824,7 +825,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                         child: _AiCardActionButton(
                           label: '英語速読',
                           icon: Icons.speed_outlined,
-                          foregroundColor: const Color(0xFF4CAF50),
+                          foregroundColor: DesignTokens.green,
                           borderColor: const Color(0x334CAF50),
                           onTap: _openEnglishReading,
                         ),
@@ -844,7 +845,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             label: primaryCta,
                             icon: Icons.play_arrow_rounded,
                             foregroundColor: Colors.white,
-                            backgroundColor: const Color(0xFFFF6B35),
+                            backgroundColor: DesignTokens.orange,
                             onTap: _openUniversity,
                           ),
                           _AiCardActionButton(
@@ -865,7 +866,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           _AiCardActionButton(
                             label: '英語速読',
                             icon: Icons.speed_outlined,
-                            foregroundColor: const Color(0xFF4CAF50),
+                            foregroundColor: DesignTokens.green,
                             borderColor: const Color(0x334CAF50),
                             compact: true,
                             onTap: _openEnglishReading,
@@ -874,7 +875,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           _AiCardActionButton(
                             label: '音声で学ぶ',
                             icon: Icons.mic,
-                            foregroundColor: const Color(0xFF3D5AFE),
+                            foregroundColor: DesignTokens.indigo,
                             borderColor: const Color(0x333D5AFE),
                             compact: true,
                             onTap: () => Navigator.pushNamed(
