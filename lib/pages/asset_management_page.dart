@@ -359,6 +359,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
 
+  /// build() 起点の AI 要約 (ai-hub) / 既存Issue照合 (core-hub) リクエストを、
+  /// 初期化中の setState 連打 (workbook フィンガープリント変化) による多重発行から
+  /// 守るためのデバウンス。リビルドが ~700ms 静止した最後の 1 回だけ発行する。
+  Timer? _assetManagementAiSummaryDebounce;
+  Timer? _existingDeveloperIssueLookupDebounce;
+
   /// 起動時の `asset_pref_mirror` 個別読み取り (~20 箇所) を 1 回のバッチ取得へ
   /// 集約するためのプリフェッチ結果 (`pref_key` → 行)。null = 未起動 / 失効後 で、
   /// その場合は各読み取りが従来どおり個別 `.eq('pref_key', X)` へフォールバックする。
@@ -993,6 +999,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
     _bootPrefMirrorExpiryTimer?.cancel();
+    _assetManagementAiSummaryDebounce?.cancel();
+    _existingDeveloperIssueLookupDebounce?.cancel();
     _annualRateEvidencePasteRegistration?.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -18566,17 +18574,32 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     )) {
       return;
     }
+    // requestKey は即時に確定する。これにより同一 key の後続リビルドは冒頭の
+    // 重複ガード (requestKey == key) で early-return し、デバウンスタイマーを
+    // 際限なく再スケジュールして発火しない (starvation) のを防ぐ。
     _assetManagementAiSummaryRequestKey = key;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted ||
-          !_assetManagementAiSummaryService.aiEnabled ||
-          _isGeneratingAssetManagementAiSummary ||
-          _assetManagementAiSummaryInFlightKey == key ||
-          _assetManagementAiSummaryRequestKey != key) {
-        return;
-      }
-      unawaited(_generateAssetManagementAiSummary(report, requestKey: key));
-    });
+    // デバウンス: 初期化時の連続リビルド (フィンガープリント毎回変化) で ai-hub を
+    // 連打しないよう、key が変わる度に前タイマーを取り消し、~700ms 静止した最後の
+    // key の 1 回だけ実発行する。
+    _assetManagementAiSummaryDebounce?.cancel();
+    _assetManagementAiSummaryDebounce = Timer(
+      const Duration(milliseconds: 700),
+      () {
+        if (!mounted) {
+          return;
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted ||
+              !_assetManagementAiSummaryService.aiEnabled ||
+              _isGeneratingAssetManagementAiSummary ||
+              _assetManagementAiSummaryInFlightKey == key ||
+              _assetManagementAiSummaryRequestKey != key) {
+            return;
+          }
+          unawaited(_generateAssetManagementAiSummary(report, requestKey: key));
+        });
+      },
+    );
   }
 
   String _assetManagementAiSummaryKey(AssetManagementInsightReport report) {
@@ -18598,14 +18621,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     _developerRequestExistingIssueLookupKey = lookupKey;
     _isCheckingExistingDeveloperRequestIssues = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _developerRequestExistingIssueLookupKey != lookupKey) {
-        return;
-      }
-      unawaited(
-        _loadExistingDeveloperIssues(lookupKey: lookupKey, requests: payload),
-      );
-    });
+    // デバウンス: 初期化時の連続リビルド (developer requests 変化) で core-hub の
+    // 既存Issue照合を連打しないよう、~700ms 静止した最後の 1 回だけ実行する。
+    // AI 要約生成前は _ensureExistingDeveloperIssuesLoaded が必要時に強制ロードするため
+    // 注釈整合は保たれる。
+    _existingDeveloperIssueLookupDebounce?.cancel();
+    _existingDeveloperIssueLookupDebounce = Timer(
+      const Duration(milliseconds: 700),
+      () {
+        if (!mounted) {
+          return;
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted ||
+              _developerRequestExistingIssueLookupKey != lookupKey) {
+            return;
+          }
+          unawaited(
+            _loadExistingDeveloperIssues(
+              lookupKey: lookupKey,
+              requests: payload,
+            ),
+          );
+        });
+      },
+    );
   }
 
   /// 既存Issue照合の完了を待つ。未取得・取得中の場合はその場で照合を実行する。
