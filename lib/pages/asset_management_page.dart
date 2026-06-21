@@ -13995,6 +13995,49 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ],
             ),
+            if (totalIncome == 0) ...[
+              const SizedBox(height: 14),
+              Container(
+                key: const Key('asset_monthly_flow_income_cta'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F766E).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF99F6E4)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '収入がまだ記録されていません。給与明細を使わなくても、'
+                      '手入力で収入を記録すれば黒字/赤字を正しく把握できます。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilledButton.icon(
+                        key: const Key('asset_monthly_flow_income_cta_button'),
+                        onPressed: () {
+                          _updateSelectedFlowType('収入');
+                          _scrollTo(_keyFlow);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F766E),
+                        ),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('収入を記録する'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -26616,6 +26659,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Expanded(
                   flex: 2,
                   child: DropdownButtonFormField<String>(
+                    key: const Key('asset_flow_type_dropdown'),
                     initialValue: _selectedFlowType,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),

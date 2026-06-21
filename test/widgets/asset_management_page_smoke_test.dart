@@ -294,6 +294,114 @@ void main() {
     );
 
     testWidgets(
+      'monthly flow card shows manual income CTA when no income is recorded',
+      (tester) async {
+        // 給与明細も収入フロー(conquer)も無く支出だけのユーザーは収入¥0=赤字に
+        // 見える。手入力収入への導線(CTA)が出て、ワンタップで収支記録の種別が
+        // 「収入」へ切り替わることを検証する。
+        final now = DateTime.now();
+        final cycleExpense = DateTime(now.year, now.month, now.day, 12);
+
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialRecentFlows: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'action_type': 'expense',
+                  'amount': 50000,
+                  'description': '食費',
+                  'occurred_at': cycleExpense.toIso8601String(),
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(
+          find.byKey(const Key('asset_monthly_flow_income_cta')),
+          findsOneWidget,
+        );
+
+        final dropdownFinder = find.byKey(
+          const Key('asset_flow_type_dropdown'),
+        );
+        // タップ前は既定の支出。
+        expect(
+          tester
+              .widget<DropdownButtonFormField<String>>(dropdownFinder)
+              .initialValue,
+          '支出',
+        );
+
+        final ctaButton = find.byKey(
+          const Key('asset_monthly_flow_income_cta_button'),
+        );
+        await tester.ensureVisible(ctaButton);
+        await tester.pump();
+        await tester.tap(ctaButton);
+        await tester.pump(const Duration(milliseconds: 400));
+
+        // CTA で収支記録の種別が「収入」へ切り替わる(記録時に conquer になる)。
+        expect(
+          tester
+              .widget<DropdownButtonFormField<String>>(dropdownFinder)
+              .initialValue,
+          '収入',
+        );
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'monthly flow card hides manual income CTA when income exists',
+      (tester) async {
+        // 当サイクルに収入フロー(conquer)があれば収入¥0ではないので CTA は出ない。
+        final now = DateTime.now();
+        final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+          now,
+          salaryDay: AssetSalaryDayStore.defaultSalaryDay,
+        );
+        final cycleSalary = DateTime(
+          cycleStart.year,
+          cycleStart.month,
+          cycleStart.day,
+          12,
+        );
+
+        await tester.binding.setSurfaceSize(const Size(1200, 2400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialRecentFlows: <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'action_type': 'conquer',
+                  'amount': 280000,
+                  'description': '給料',
+                  'occurred_at': cycleSalary.toIso8601String(),
+                },
+              ],
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 200));
+
+        expect(
+          find.byKey(const Key('asset_monthly_flow_income_cta')),
+          findsNothing,
+        );
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
       'payslip row and salary_income with same pay date/amount are counted once',
       (tester) async {
         // 1枚の給与明細は payslips と salary_incomes の両方に同日同額で入る。
