@@ -140,9 +140,8 @@ class AssetAutoDebitConfirmationService {
     };
     final details = pendingConfirmations(workbook).map((row) {
       final sourceAccountId = row.paymentSourceAccountId;
-      final source = sourceAccountId == null
-          ? null
-          : accountById[sourceAccountId];
+      final source =
+          sourceAccountId == null ? null : accountById[sourceAccountId];
       return AssetAutoDebitConfirmation(
         row: row,
         sourceAccountBalance: source?.balance,
