@@ -102,6 +102,27 @@ void main() {
       expect(rank(32), rank(31));
     });
 
+    test('compareSalaryCyclePaymentDays sorts a list into salary-cycle order',
+        () {
+      int cmp(int? a, int? b, {int salaryDay = 25}) =>
+          AssetLiabilityMonthlyStateStore.compareSalaryCyclePaymentDays(
+            a,
+            b,
+            salaryDay: salaryDay,
+          );
+      // salaryDay=25: 給料日以降 (25..31) が翌月分 (1..24) より前へ。
+      expect(cmp(27, 5).isNegative, isTrue);
+      expect(cmp(5, 27), greaterThan(0));
+      expect(cmp(25, 25), 0);
+      // null (未設定) は末尾へ。
+      expect(cmp(24, null).isNegative, isTrue);
+      expect(cmp(null, 1), greaterThan(0));
+      // 実リスト (定期固定費の paymentDay 相当) を並べ替えると、暦日昇順ではなく
+      // 給料日(25)起点の cycle 順へ: rank は 25→0,27→2,1→7,5→11,10→16,24→30。
+      final days = <int>[5, 27, 1, 24, 25, 10]..sort(cmp);
+      expect(days, <int>[25, 27, 1, 5, 10, 24]);
+    });
+
     test('saves and restores monthly paid statuses', () async {
       await store.saveMonth(
         month: DateTime(2026, 5, 13),
