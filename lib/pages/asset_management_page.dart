@@ -38,6 +38,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_account_balance_history_store.dart';
+import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
@@ -313,6 +314,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
 
+  /// 起動時の `asset_pref_mirror` 個別読み取り (~20 箇所) を 1 回のバッチ取得へ
+  /// 集約するためのプリフェッチ結果 (`pref_key` → 行)。null = 未起動 / 失効後 で、
+  /// その場合は各読み取りが従来どおり個別 `.eq('pref_key', X)` へフォールバックする。
+  /// 同時多発する REST が `ERR_INSUFFICIENT_RESOURCES` を誘発するのを緩和する。
+  Future<Map<String, Map<String, dynamic>>>? _bootPrefMirrorFuture;
+
+  /// 起動バーストが収束したらキャッシュを失効させ、以降の読み取りを最新化する。
+  Timer? _bootPrefMirrorExpiryTimer;
+
   // Supabaseに保存する「今日の締め」状態
   bool _assetsDone = false;
   bool _liabilitiesDone = false;
@@ -392,11 +402,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select('pref_key')
-          .eq('pref_key', prefKey)
-          .limit(1);
+      final rows = await _bootSelectPrefMirror(prefKey);
       // select の間にログアウト/別アカウントへ切替わっていないか再確認する。
       // 前アカウントのローカル値を新しい user_id で誤アップロードしない (review medium)。
       if (_supabase.auth.currentUser?.id != userId) {
@@ -408,6 +414,58 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('pref backfill check failed ($prefKey): $e');
     }
+  }
+
+  /// 当該ユーザーの `asset_pref_mirror` 行を 1 回だけまとめて取得し `pref_key` で
+  /// 索引する。起動時の多数の個別読み取りを 1 回の REST に集約するための土台。
+  Future<Map<String, Map<String, dynamic>>> _fetchAllPrefMirror() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return <String, Map<String, dynamic>>{};
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('user_id', userId);
+      return indexPrefMirrorRowsByKey(rows);
+    } catch (e) {
+      debugPrint('boot pref mirror prefetch failed: $e');
+      return <String, Map<String, dynamic>>{};
+    }
+  }
+
+  /// 起動時バッチ取得から [prefKey] の行群を返す。個別
+  /// `.eq('pref_key', prefKey)` select と同形 (0〜1 行のリスト) を返すため、各
+  /// 読み取り側のロジックは不変。バッチ未起動 / 失効後 / 未ログインなら従来どおり
+  /// 個別フェッチへフォールバックする (= 振る舞い保存)。
+  Future<List<Map<String, dynamic>>> _bootSelectPrefMirror(String prefKey) {
+    return _bootSelectPrefMirrorKeys(<String>[prefKey]);
+  }
+
+  /// [prefKeys] のいずれかに一致する行をまとめて返す (個別 `.inFilter('pref_key', …)`
+  /// select と同形)。バッチが有効なら 1 回の取得結果から抽出し、無効なら個別 select
+  /// へフォールバックする。
+  Future<List<Map<String, dynamic>>> _bootSelectPrefMirrorKeys(
+    List<String> prefKeys,
+  ) async {
+    final future = _bootPrefMirrorFuture;
+    if (future != null) {
+      final cache = await future;
+      return <Map<String, dynamic>>[
+        for (final key in prefKeys)
+          if (cache[key] != null) cache[key]!,
+      ];
+    }
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return <Map<String, dynamic>>[];
+    }
+    final rows = await _supabase
+        .from('asset_pref_mirror')
+        .select()
+        .inFilter('pref_key', prefKeys);
+    return List<Map<String, dynamic>>.from(rows);
   }
 
   /// union マージでローカルデータが変化した後、ローカル更新時刻をミラー版
@@ -805,6 +863,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
         );
+    // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
+    // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
+    // 起動バーストが収束したらキャッシュを失効させ、以降は最新を個別取得する。
+    _bootPrefMirrorFuture = _fetchAllPrefMirror();
+    _bootPrefMirrorExpiryTimer = Timer(const Duration(seconds: 20), () {
+      _bootPrefMirrorFuture = null;
+    });
     _loadDataFromSupabase();
     _loadAssetLiabilityMonthlyState();
     _loadWatchlistEntries();
@@ -878,6 +943,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
+    _bootPrefMirrorExpiryTimer?.cancel();
     _annualRateEvidencePasteRegistration?.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -5660,10 +5726,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       Map<String, dynamic>? value = debugMirror;
       if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'watchlist_entries_deleted');
+        final rows = await _bootSelectPrefMirror('watchlist_entries_deleted');
         if (rows.isEmpty) {
           return;
         }
@@ -5724,10 +5787,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         value = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _watchlistMirrorKey);
+        final rows = await _bootSelectPrefMirror(_watchlistMirrorKey);
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル。
           if (hasLocal) {
@@ -8299,10 +8359,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _salaryDayMirrorKey);
+      final rows = await _bootSelectPrefMirror(_salaryDayMirrorKey);
       if (rows.isEmpty) {
         return;
       }
@@ -8464,10 +8521,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         value = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _mainAccountMirrorKey);
+        final rows = await _bootSelectPrefMirror(_mainAccountMirrorKey);
         if (rows.isEmpty) {
           return;
         }
@@ -8525,14 +8579,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       var hasInflowOnServer = false;
       if (user != null) {
         try {
-          final rows = await _supabase
-              .from('asset_pref_mirror')
-              .select('pref_key')
-              .eq('user_id', user.id);
-          for (final row in rows) {
-            final key = row['pref_key'];
-            if (key is String) {
-              presentPrefKeys.add(key);
+          final boot = _bootPrefMirrorFuture;
+          if (boot != null) {
+            presentPrefKeys.addAll((await boot).keys);
+          } else {
+            final rows = await _supabase
+                .from('asset_pref_mirror')
+                .select('pref_key')
+                .eq('user_id', user.id);
+            for (final row in rows) {
+              final key = row['pref_key'];
+              if (key is String) {
+                presentPrefKeys.add(key);
+              }
             }
           }
         } catch (e) {
@@ -8684,10 +8743,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final hasLocal = _categoryBudgets.isNotEmpty;
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _categoryBudgetsMirrorKey);
+      final rows = await _bootSelectPrefMirror(_categoryBudgetsMirrorKey);
       if (rows.isEmpty) {
         if (hasLocal) {
           unawaited(_mirrorCategoryBudgets());
@@ -8783,10 +8839,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _recurringFixedCostsMirrorKey);
+        final rows = await _bootSelectPrefMirror(_recurringFixedCostsMirrorKey);
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル (他端末へ同期させる)。
           if (hasLocal) {
@@ -8934,10 +8987,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         serverValue = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _subscriptionAuditMirrorKey);
+        final rows = await _bootSelectPrefMirror(_subscriptionAuditMirrorKey);
         if (rows.isEmpty) {
           // サーバ行無し: ローカルにあれば初回バックフィル。
           if (localCheckedBefore.isNotEmpty ||
@@ -9289,10 +9339,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       Map<String, dynamic>? value = debugMirror;
       if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _recurringFixedCostsDeletedMirrorKey);
+        final rows = await _bootSelectPrefMirror(
+          _recurringFixedCostsDeletedMirrorKey,
+        );
         if (rows.isEmpty) {
           return;
         }
@@ -9349,10 +9398,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _recurringIgnoredMirrorKey);
+      final rows = await _bootSelectPrefMirror(_recurringIgnoredMirrorKey);
       if (rows.isEmpty) {
         return;
       }
@@ -9435,10 +9481,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _duplicateIgnoredMirrorKey);
+      final rows = await _bootSelectPrefMirror(_duplicateIgnoredMirrorKey);
       if (rows.isEmpty) {
         return;
       }
@@ -9536,10 +9579,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _recurringIncomeIgnoredMirrorKey);
+      final rows = await _bootSelectPrefMirror(
+        _recurringIncomeIgnoredMirrorKey,
+      );
       if (rows.isEmpty) {
         return;
       }
@@ -10090,10 +10132,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _revolvingConfigsMirrorKey);
+        final rows = await _bootSelectPrefMirror(_revolvingConfigsMirrorKey);
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル (旧端末で設定済みの
           // リボ設定をサーバへ上げ、他端末へ同期させる)。
@@ -10251,10 +10290,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       Map<String, dynamic>? value = debugMirror;
       if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'revolving_credit_configs_deleted');
+        final rows = await _bootSelectPrefMirror(
+          'revolving_credit_configs_deleted',
+        );
         if (rows.isEmpty) {
           return;
         }
@@ -10519,14 +10557,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 集約行を優先し、無ければ legacy per-key 行を per-key 形へ正規化して返す。
   Future<List<Map<String, dynamic>>> _fetchDisplayPrefRows() async {
-    final rows = List<Map<String, dynamic>>.from(
-      await _supabase.from('asset_pref_mirror').select().inFilter(
-            'pref_key',
-            AssetMirrorReadPolicy.readPrefKeys(
-              aggregatedKey: _displayPrefsAggregatedKey,
-              legacyKeys: const <String>['display_mode', 'section_overrides'],
-            ),
-          ),
+    final rows = await _bootSelectPrefMirrorKeys(
+      AssetMirrorReadPolicy.readPrefKeys(
+        aggregatedKey: _displayPrefsAggregatedKey,
+        legacyKeys: const <String>['display_mode', 'section_overrides'],
+      ),
     );
     for (final row in rows) {
       if (row['pref_key'] == _displayPrefsAggregatedKey) {
@@ -10557,14 +10592,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       } else {
         // 集約行 (asset_display_prefs_v1) を優先、無ければ legacy 行。
-        final rows =
-            await _supabase.from('asset_pref_mirror').select().inFilter(
-                  'pref_key',
-                  AssetMirrorReadPolicy.readPrefKeys(
-                    aggregatedKey: _displayPrefsAggregatedKey,
-                    legacyKeys: const <String>['section_override_deleted'],
-                  ),
-                );
+        final rows = await _bootSelectPrefMirrorKeys(
+          AssetMirrorReadPolicy.readPrefKeys(
+            aggregatedKey: _displayPrefsAggregatedKey,
+            legacyKeys: const <String>['section_override_deleted'],
+          ),
+        );
         Map<String, dynamic>? aggregated;
         Map<String, dynamic>? legacy;
         for (final row in rows) {
@@ -11267,10 +11300,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         value = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'debt_payment_day_overrides');
+        final rows = await _bootSelectPrefMirror('debt_payment_day_overrides');
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル。
           if (hasLocal) {
@@ -11397,10 +11427,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', 'account_balance_history');
+      final rows = await _bootSelectPrefMirror('account_balance_history');
       if (rows.isEmpty) {
         return;
       }
@@ -11493,14 +11520,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(debugMirror);
       } else {
         // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
-        final rows =
-            await _supabase.from('asset_pref_mirror').select().inFilter(
-                  'pref_key',
-                  AssetMirrorReadPolicy.readPrefKeys(
-                    aggregatedKey: _inflowPrefsAggregatedKey,
-                    legacyKeys: const <String>['inflow_deleted_ids'],
-                  ),
-                );
+        final rows = await _bootSelectPrefMirrorKeys(
+          AssetMirrorReadPolicy.readPrefKeys(
+            aggregatedKey: _inflowPrefsAggregatedKey,
+            legacyKeys: const <String>['inflow_deleted_ids'],
+          ),
+        );
         Map<String, dynamic>? aggregated;
         Map<String, dynamic>? legacy;
         for (final row in rows) {
@@ -11563,13 +11588,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     try {
       // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
-      final rows = await _supabase.from('asset_pref_mirror').select().inFilter(
-            'pref_key',
-            AssetMirrorReadPolicy.readPrefKeys(
-              aggregatedKey: _inflowPrefsAggregatedKey,
-              legacyKeys: const <String>['inflow_tombstone_gc'],
-            ),
-          );
+      final rows = await _bootSelectPrefMirrorKeys(
+        AssetMirrorReadPolicy.readPrefKeys(
+          aggregatedKey: _inflowPrefsAggregatedKey,
+          legacyKeys: const <String>['inflow_tombstone_gc'],
+        ),
+      );
       Map<String, dynamic>? aggregated;
       Map<String, dynamic>? legacy;
       for (final row in rows) {
@@ -23158,10 +23182,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       Map<String, dynamic>? value = debugMirror;
       if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'debt_payment_day_override_deleted');
+        final rows = await _bootSelectPrefMirror(
+          'debt_payment_day_override_deleted',
+        );
         if (rows.isEmpty) {
           return;
         }
