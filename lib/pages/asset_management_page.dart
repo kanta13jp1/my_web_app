@@ -3971,11 +3971,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   List<AssetLiabilityAccount> _cardBillingAccountOptions(
-    AssetLiabilityWorkbook workbook,
-  ) {
+    AssetLiabilityWorkbook workbook, {
+    bool includeShoppingDebt = false,
+  }) {
     return workbook.accounts
         .where(
-          (account) => account.kind == AssetLiabilityAccountKind.creditCard,
+          (account) =>
+              account.kind == AssetLiabilityAccountKind.creditCard ||
+              (includeShoppingDebt &&
+                  account.kind == AssetLiabilityAccountKind.shoppingDebt),
         )
         .toList()
       ..sort((a, b) => a.name.compareTo(b.name));
@@ -9103,6 +9107,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 棚卸し対象の支払い元: manual (Apple/au/Google) + 銀行 + カード別 (口座から導出)。
+  /// カード別はクレジットカードに加え、サブスクの請求先になりうるショッピング枠
+  /// (アコムショッピング枠など shoppingDebt) も含める (定期固定費エディタの請求先と同じ集合)。
   List<SubscriptionAuditSource> _subscriptionAuditSources(
     AssetLiabilityWorkbook? workbook,
   ) {
@@ -9111,7 +9117,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetSubscriptionAuditCatalog.bankSource,
     ];
     if (workbook != null) {
-      for (final account in _cardBillingAccountOptions(workbook)) {
+      final cardOptions = _cardBillingAccountOptions(
+        workbook,
+        includeShoppingDebt: true,
+      );
+      for (final account in cardOptions) {
         sources.add(
           SubscriptionAuditSource(
             id: AssetSubscriptionAuditCatalog.cardSourceId(account.id),
