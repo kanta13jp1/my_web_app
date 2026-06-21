@@ -12349,18 +12349,175 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      FilledButton.tonal(
-                        onPressed: () {
-                          unawaited(
-                            _toggleMonthlyPaymentPaid(entry.value, true),
-                          );
-                        },
-                        child: const Text('引落済み'),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          FilledButton.tonal(
+                            onPressed: () {
+                              unawaited(
+                                _toggleMonthlyPaymentPaid(entry.value, true),
+                              );
+                            },
+                            child: const Text('引落済み'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              unawaited(
+                                _showAutoDebitAlternateSourceSheet(
+                                  entry.value,
+                                  entry.key.row,
+                                  workbook,
+                                ),
+                              );
+                            },
+                            child: const Text('別口座で支払った'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 引落が設定上の振替元で失敗し、別の口座・カード (例: アコムショッピング枠) で
+  // 支払った場合に、実際の振替元を記録するためのシート。残高は自動変更せず、振替元の
+  // 上書き (今回のみ / 今後も) + 引落済み化のみ行う。見込み残高・AI・借入モニターは
+  // 記録した振替元基準で再計算される。
+  Future<void> _showAutoDebitAlternateSourceSheet(
+    AssetLiabilityDebtRow debtRow,
+    AssetLiabilityCashflowRow cashflowRow,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    // サブスク等はカード (ファミペイ等) やアコムショッピング枠 (shoppingDebt) へ
+    // 請求されるため、残高<=0 のカード/与信枠・キャリア決済も候補に含める。
+    final options = recurringFixedCostSourceOptions(
+      workbook.accounts,
+      includeCards: true,
+      includeCarrierBilling: true,
+    );
+    final currentSource = _paymentSourceAccountIds[debtRow.id] ??
+        _defaultPaymentSourceAccountIds[debtRow.id] ??
+        debtRow.paymentSourceAccountId;
+    final theme = Theme.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '実際に支払った振替元を選択',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${cashflowRow.accountName} / '
+                  '${_formatManagementYen(cashflowRow.paymentAmount)}\n'
+                  '引落が失敗し別の口座・カードで支払った場合に、実際の振替元を記録します。'
+                  '残高は自動変更しません。',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                if (options.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text('選択できる振替元がありません。'),
+                  )
+                else
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final option in options)
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            selected: option.id == currentSource,
+                            title: Text(option.name),
+                            trailing: Wrap(
+                              spacing: 6,
+                              children: [
+                                OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.of(sheetContext).pop();
+                                    _applyAutoDebitAlternateSource(
+                                      debtRow,
+                                      option,
+                                      _PaymentSourceSaveScope.monthlyOverride,
+                                    );
+                                  },
+                                  child: const Text('今回のみ'),
+                                ),
+                                OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.of(sheetContext).pop();
+                                    _applyAutoDebitAlternateSource(
+                                      debtRow,
+                                      option,
+                                      _PaymentSourceSaveScope.defaultSetting,
+                                    );
+                                  },
+                                  child: const Text('今後も'),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _applyAutoDebitAlternateSource(
+    AssetLiabilityDebtRow debtRow,
+    RecurringFixedCostSourceOption option,
+    _PaymentSourceSaveScope scope,
+  ) {
+    // 振替元の上書きを in-memory に設定してから引落済み化する。`_toggleMonthlyPaymentPaid`
+    // が月次 state を 1 回だけ保存し、その snapshot に上書きも paid も両方含める。
+    // (`_savePaymentSourceReviewChoice` を呼ぶと月次 state の保存が 2 回走り、上書きのみの
+    //  古い snapshot が paid 付き snapshot の後に着地して paid を取りこぼす競合があるため避ける。)
+    setState(() {
+      if (scope == _PaymentSourceSaveScope.defaultSetting) {
+        _defaultPaymentSourceAccountIds[debtRow.id] = option.id;
+        _paymentSourceAccountIds.remove(debtRow.id);
+      } else {
+        _paymentSourceAccountIds[debtRow.id] = option.id;
+      }
+    });
+    if (scope == _PaymentSourceSaveScope.defaultSetting) {
+      // 既定の振替元は月次 state とは別ストアのため独立保存で競合しない。
+      unawaited(_saveDefaultPaymentSources());
+    }
+    unawaited(_toggleMonthlyPaymentPaid(debtRow, true));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          autoDebitAlternateSourcePaidHint(
+            option.name,
+            _formatManagementYen(debtRow.scheduledPaymentAmount),
           ),
         ),
       ),

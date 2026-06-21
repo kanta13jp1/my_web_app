@@ -98,3 +98,14 @@ class AssetAutoDebitConfirmationService {
     ).where((detail) => detail.sourceBalanceInsufficient).length;
   }
 }
+
+/// 引落が失敗し別の振替元 ([sourceName]) で支払ったと記録したときに表示する案内文。
+/// 残高は自動変更しないため、ユーザーに実残高への反映を促す ([formattedAmount] は
+/// 表示用に整形済みの金額文字列)。
+String autoDebitAlternateSourcePaidHint(
+  String sourceName,
+  String formattedAmount,
+) {
+  return '$sourceName を振替元に記録しました。'
+      '残高一覧で $sourceName の残高に $formattedAmount を反映してください。';
+}
