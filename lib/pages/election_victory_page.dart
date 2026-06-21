@@ -4324,11 +4324,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 _buildMiniStatChip(
                   '立憲先行',
                   plan.cdpLeadPrefectureCount,
+                  suffix: '県',
                   color: const Color(0xFFF59E0B),
                 ),
                 _buildMiniStatChip(
                   '国民同数以上',
                   plan.kokuminLeadPrefectureCount,
+                  suffix: '県',
                   color: const Color(0xFF0F766E),
                 ),
               ],
