@@ -5224,6 +5224,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   // 新ジャンル棚の折りたたみ状態 (画面占有を抑えるため / prefs 永続化)。
   static const String _genreShelfPrefsKey = 'ai_univ_genre_shelf_collapsed';
   bool _genreShelfCollapsed = false;
+  // RLHF 品質ループカードの折りたたみ状態 (画面占有が大きいため既定で畳む / prefs 永続化)。
+  static const String _rlhfCardPrefsKey = 'ai_univ_rlhf_card_collapsed';
+  bool _rlhfCardCollapsed = true;
   final _shareCardKey = GlobalKey();
   final _fsrsService = AiFsrsService();
   final _learnerProfileService = AiLearnerProfileService();
@@ -5250,6 +5253,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     _loadRlhfSnapshot();
     _loadFineTuneReadiness();
     _loadGenreShelfState();
+    _loadRlhfCardState();
   }
 
   Future<void> _loadGenreShelfState() async {
@@ -5262,6 +5266,18 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     setState(() => _genreShelfCollapsed = !_genreShelfCollapsed);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_genreShelfPrefsKey, _genreShelfCollapsed);
+  }
+
+  Future<void> _loadRlhfCardState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final collapsed = prefs.getBool(_rlhfCardPrefsKey) ?? true;
+    if (mounted) setState(() => _rlhfCardCollapsed = collapsed);
+  }
+
+  Future<void> _toggleRlhfCard() async {
+    setState(() => _rlhfCardCollapsed = !_rlhfCardCollapsed);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rlhfCardPrefsKey, _rlhfCardCollapsed);
   }
 
   Future<void> _loadRlhfSnapshot() async {
@@ -5953,6 +5969,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         foregroundColor: const Color(0xFFE5E7EB),
         actions: [
           IconButton(
+            icon: const Icon(Icons.menu_book_outlined),
+            tooltip: '英語速読カリキュラム',
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/english-reading-curriculum',
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.leaderboard),
             tooltip: 'ランキング',
             onPressed: () => Navigator.push(
@@ -6485,110 +6509,122 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.tune, color: m.color, size: 20),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'RLHF 品質ループ',
+            InkWell(
+              onTap: _toggleRlhfCard,
+              borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  Icon(Icons.tune, color: m.color, size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'RLHF 品質ループ',
+                      style: TextStyle(
+                        color: Color(0xFFE5E7EB),
+                        fontWeight: FontWeight.w800,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${snapshot.qualityScore}%',
                     style: TextStyle(
-                      color: Color(0xFFE5E7EB),
+                      color: m.color,
                       fontWeight: FontWeight.w800,
                       height: 1.5,
                     ),
                   ),
-                ),
-                Text(
-                  '${snapshot.qualityScore}%',
-                  style: TextStyle(
-                    color: m.color,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
+                  const SizedBox(width: 4),
+                  Icon(
+                    _rlhfCardCollapsed ? Icons.expand_more : Icons.expand_less,
+                    color: const Color(0xFFB0B0B0),
+                    size: 22,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                minHeight: 8,
-                value: progress.clamp(0.0, 1.0).toDouble(),
-                backgroundColor: Colors.white.withValues(alpha: 0.10),
-                valueColor: AlwaysStoppedAnimation<Color>(m.color),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              '学習者の反応を選好データとして蓄積し、Scale 社流のフィードバックのようにスコア化して、次に改善すべき点の判断に使います。',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.74),
-                fontSize: 12,
-                height: 1.6,
+            if (!_rlhfCardCollapsed) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  minHeight: 8,
+                  value: progress.clamp(0.0, 1.0).toDouble(),
+                  backgroundColor: Colors.white.withValues(alpha: 0.10),
+                  valueColor: AlwaysStoppedAnimation<Color>(m.color),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildRlhfMetricChip('シグナル', '${snapshot.totalSignals}'),
-                _buildRlhfMetricChip(
-                  'このAI',
-                  providerSignals.toString(),
+              const SizedBox(height: 10),
+              Text(
+                '学習者の反応を選好データとして蓄積し、Scale 社流のフィードバックのようにスコア化して、次に改善すべき点の判断に使います。',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.74),
+                  fontSize: 12,
+                  height: 1.6,
                 ),
-                _buildRlhfMetricChip(
-                  '平均',
-                  snapshot.averageRating.toStringAsFixed(1),
-                ),
-                _buildRlhfMetricChip(
-                  '微調整',
-                  snapshot.readyForFineTune ? '可' : '未',
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              snapshot.nextAction,
-              style: const TextStyle(
-                color: Color(0xFFB0B0B0),
-                fontSize: 12,
-                height: 1.5,
               ),
-            ),
-            const SizedBox(height: 12),
-            _buildFineTuneReadinessPanel(fineTune, fineTuneColor),
-            const SizedBox(height: 12),
-            if (submitting)
-              const LinearProgressIndicator(minHeight: 3)
-            else
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  FilledButton.icon(
-                    onPressed: () => _submitRlhfSignal(
-                      providerId: providerId,
-                      helpful: true,
-                    ),
-                    icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
-                    label: const Text('役に立った'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: m.color,
-                      foregroundColor: Colors.white,
-                    ),
+                  _buildRlhfMetricChip('シグナル', '${snapshot.totalSignals}'),
+                  _buildRlhfMetricChip(
+                    'このAI',
+                    providerSignals.toString(),
                   ),
-                  OutlinedButton.icon(
-                    onPressed: () => _submitRlhfSignal(
-                      providerId: providerId,
-                      helpful: false,
-                    ),
-                    icon: const Icon(Icons.report_problem_outlined, size: 16),
-                    label: const Text('改善が必要'),
+                  _buildRlhfMetricChip(
+                    '平均',
+                    snapshot.averageRating.toStringAsFixed(1),
+                  ),
+                  _buildRlhfMetricChip(
+                    '微調整',
+                    snapshot.readyForFineTune ? '可' : '未',
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              Text(
+                snapshot.nextAction,
+                style: const TextStyle(
+                  color: Color(0xFFB0B0B0),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildFineTuneReadinessPanel(fineTune, fineTuneColor),
+              const SizedBox(height: 12),
+              if (submitting)
+                const LinearProgressIndicator(minHeight: 3)
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () => _submitRlhfSignal(
+                        providerId: providerId,
+                        helpful: true,
+                      ),
+                      icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
+                      label: const Text('役に立った'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: m.color,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => _submitRlhfSignal(
+                        providerId: providerId,
+                        helpful: false,
+                      ),
+                      icon: const Icon(Icons.report_problem_outlined, size: 16),
+                      label: const Text('改善が必要'),
+                    ),
+                  ],
+                ),
+            ],
           ],
         ),
       ),
