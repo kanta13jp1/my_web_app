@@ -739,8 +739,8 @@ function providerFetchTimeoutMs(): number {
   return Number.isFinite(raw) && raw > 0 ? raw : 90_000;
 }
 
-/// 外部プロバイダ呼び出しに providerFetchTimeoutMs() のタイムアウトを付与する
-/// `fetch` ラッパー。遅延/ハングするプロバイダで edge function が wall-clock 上限を
+/// 外部プロバイダ / 内部サブ関数呼び出しに providerFetchTimeoutMs() のタイムアウトを
+/// 付与する `fetch` ラッパー。遅延/ハングするプロバイダで edge function が wall-clock 上限を
 /// 超えてランタイムに kill され 502 になるのを防ぐ (callProvider と同方針の横展開)。
 /// abort 時は AbortError を throw → 各 action / serve トップレベルの try/catch が
 /// 捕捉し、502 ではなくハンドル済みエラー応答へ落ちる。
@@ -2664,7 +2664,7 @@ async function embedTextsWithGemini(
   apiKey: string,
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
-  const response = await fetch(
+  const response = await fetchWithProviderTimeout(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
     {
       method: "POST",
@@ -2811,15 +2811,18 @@ async function invokeAiAssistant(
   payload: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   if (!authHeader) throw new Error("Missing authorization header");
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": authHeader,
+  const response = await fetchWithProviderTimeout(
+    `${SUPABASE_URL}/functions/v1/ai-assistant`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": authHeader,
+      },
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+  );
   const rawText = await response.text();
   let parsed: Record<string, unknown> = {};
   if (rawText.trim()) {
@@ -2851,7 +2854,7 @@ async function callGemini(
       },
     });
   }
-  const res = await fetch(
+  const res = await fetchWithProviderTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
@@ -2885,7 +2888,7 @@ async function callManusTask(
   const manusPrompt = image
     ? `${prompt}\n\nNote: an image was attached in my-ai-agent, but this Manus task.create integration sends the text prompt only.`
     : prompt;
-  const res = await fetch(`${baseUrl}/task.create`, {
+  const res = await fetchWithProviderTimeout(`${baseUrl}/task.create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -4943,7 +4946,7 @@ serve(async (req: Request) => {
               // ignore logging errors
             }
           };
-          const resp = await fetch(fetchUrl, {
+          const resp = await fetchWithProviderTimeout(fetchUrl, {
             method: "POST",
             headers: {
               ...authHeaders,
@@ -5558,7 +5561,7 @@ serve(async (req: Request) => {
             reason: "ELEVENLABS_API_KEY not configured",
           });
         }
-        const ttsResp = await fetch(
+        const ttsResp = await fetchWithProviderTimeout(
           `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
           {
             method: "POST",
@@ -5626,7 +5629,7 @@ serve(async (req: Request) => {
         }
         const audioBody = new ArrayBuffer(audioBytes.byteLength);
         new Uint8Array(audioBody).set(audioBytes);
-        const dgResp = await fetch(
+        const dgResp = await fetchWithProviderTimeout(
           `https://api.deepgram.com/v1/listen?language=${language}&model=nova-2&punctuate=true`,
           {
             method: "POST",
@@ -5867,7 +5870,7 @@ serve(async (req: Request) => {
 }
 `;
         try {
-          const r = await fetch(
+          const r = await fetchWithProviderTimeout(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
             {
               method: "POST",
