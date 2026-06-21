@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
+import '../services/local_election_cdp_benchmark.dart';
 import '../services/local_election_plan_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
@@ -129,6 +130,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   String? _realityError;
   String? _geminiAnalysisResult;
   bool _appliedInitialPrefectureFilter = false;
+  Map<String, int> _cdpLocalMemberBenchmark = const <String, int>{};
   String _selectedRegion = _allLabel;
   String _selectedMemberPrefecture = _allLabel;
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
@@ -166,12 +168,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _service.loadPlan(),
       _realityService.loadCachedSnapshot(),
       _realityService.loadSnapshotHistory(),
+      LocalElectionCdpBenchmark.loadFromAsset(),
     ]);
     if (!mounted) {
       return;
     }
 
-    var plan = results[0] as LocalElectionPlanDashboard;
+    _cdpLocalMemberBenchmark = results[3] as Map<String, int>;
+    var plan = (results[0] as LocalElectionPlanDashboard)
+        .withCdpLocalMembers(_cdpLocalMemberBenchmark);
     final cachedSnapshot = results[1] as LocalElectionRealitySnapshot?;
     final cachedHistory = results[2] as List<LocalElectionRealityHistoryPoint>;
 
@@ -207,7 +212,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Future<void> _loadPlan() async {
-    var plan = await _service.loadPlan();
+    final loadedPlan = await _service.loadPlan();
+    var plan = loadedPlan.withCdpLocalMembers(_cdpLocalMemberBenchmark);
     final snapshot = _realitySnapshot;
     if (snapshot != null && snapshot.hasData) {
       plan = await _syncPlanWithSnapshot(
