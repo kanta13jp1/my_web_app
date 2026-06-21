@@ -45,12 +45,111 @@ class _ProviderMeta {
   final String officialUrl;
 }
 
-final _unknownMeta = _ProviderMeta(
-  name: 'AI',
-  emoji: '🤖',
-  color: const Color(0xFF607D8B),
-  officialUrl: '',
-);
+// _providerMeta 未登録の provider ID を、汎用フォールバック 'AI' ではなく
+// ID から読める表示名へ変換する。acronym / camelCase は overrides で正規化し、
+// それ以外は区切り (-, _) で分割して各語を Title Case にする。
+const Map<String, String> _providerDisplayNameOverrides = {
+  // ベンチマーク / 評価データセット
+  'mmlu': 'MMLU', 'gsm8k': 'GSM8K', 'humaneval': 'HumanEval',
+  'hellaswag': 'HellaSwag', 'winogrande': 'WinoGrande',
+  'truthfulqa': 'TruthfulQA', 'bigbench': 'BIG-bench', 'gpqa': 'GPQA',
+  'arc_challenge': 'ARC Challenge', 'swe_bench': 'SWE-bench',
+  'swe-bench': 'SWE-bench', 'swe-agent': 'SWE-agent', 'webarena': 'WebArena',
+  'chatbot_arena': 'Chatbot Arena', 'lm_eval_harness': 'LM Eval Harness',
+  'math_benchmark': 'Math Benchmark', 'civics_literacy': 'Civics Literacy',
+  // エージェント / フレームワーク
+  'crewai': 'CrewAI', 'autogpt': 'AutoGPT', 'babyagi': 'BabyAGI',
+  'metagpt': 'MetaGPT', 'autogen': 'AutoGen', 'langgraph': 'LangGraph',
+  'langsmith': 'LangSmith', 'langfuse': 'Langfuse', 'dspy': 'DSPy',
+  'openagents': 'OpenAgents', 'agentverse': 'AgentVerse',
+  'superagi': 'SuperAGI',
+  'memgpt': 'MemGPT', 'chatdev': 'ChatDev', 'openhands': 'OpenHands',
+  'taskweaver': 'TaskWeaver', 'autocoderover': 'AutoCodeRover',
+  'semantic_kernel': 'Semantic Kernel', 'phidata': 'Phidata', 'agno': 'Agno',
+  'voyager': 'Voyager', 'camel': 'CAMEL', 'agentless': 'Agentless',
+  'generative-agents': 'Generative Agents',
+  // コーディング支援
+  'claude': 'Claude', 'claude_code': 'Claude Code', 'gemini': 'Gemini',
+  'devin': 'Devin', 'aider': 'Aider', 'cline': 'Cline', 'codeium': 'Codeium',
+  'tabnine': 'Tabnine', 'qodo': 'Qodo', 'phind': 'Phind', 'plandex': 'Plandex',
+  'mentat': 'Mentat', 'coderabbit': 'CodeRabbit', 'continue_dev': 'Continue',
+  'gpt-engineer': 'GPT-Engineer', 'smol-developer': 'smol developer',
+  'sourcegraph-cody': 'Sourcegraph Cody',
+  'amazon-q-developer': 'Amazon Q Developer',
+  // 推論 / 学習基盤
+  'vllm': 'vLLM', 'litellm': 'LiteLLM', 'lmdeploy': 'LMDeploy',
+  'llamafile': 'llamafile', 'lmstudio': 'LM Studio', 'lm-studio': 'LM Studio',
+  'jan_ai': 'Jan', 'open_webui': 'Open WebUI', 'trl': 'TRL', 'peft': 'PEFT',
+  'unsloth': 'Unsloth', 'axolotl': 'Axolotl', 'mergekit': 'mergekit',
+  'watsonx': 'IBM watsonx', 'azure_openai': 'Azure OpenAI',
+  'amazon_bedrock': 'Amazon Bedrock', 'upstage': 'Upstage',
+  'text-generation-inference': 'Text Generation Inference',
+  // RAG / ベクトル / 評価
+  'weaviate': 'Weaviate', 'chroma': 'Chroma', 'haystack': 'Haystack',
+  'ragas': 'Ragas', 'trulens': 'TruLens', 'deepeval': 'DeepEval',
+  'promptfoo': 'Promptfoo', 'tavily': 'Tavily', 'firecrawl': 'Firecrawl',
+  'composio': 'Composio', 'flowise': 'Flowise', 'dust': 'Dust',
+  'instructor': 'Instructor', 'braintrust': 'Braintrust', 'galileo': 'Galileo',
+  // MLOps / データ基盤
+  'mlflow': 'MLflow', 'dvc': 'DVC', 'dbt': 'dbt', 'zenml': 'ZenML',
+  'prefect': 'Prefect', 'metaflow': 'Metaflow', 'hamilton': 'Hamilton',
+  'feast': 'Feast', 'tecton': 'Tecton', 'hopsworks': 'Hopsworks',
+  'clearml': 'ClearML', 'whylogs': 'whylogs', 'nannyml': 'NannyML',
+  'openlineage': 'OpenLineage', 'pachyderm': 'Pachyderm', 'ray': 'Ray',
+  'temporal': 'Temporal', 'n8n': 'n8n', 'e2b': 'E2B',
+  'browserbase': 'Browserbase', 'runpod': 'RunPod',
+  // データラベリング
+  'labelbox': 'Labelbox', 'encord': 'Encord', 'superannotate': 'SuperAnnotate',
+  'cvat': 'CVAT', 'dataloop': 'Dataloop', 'appen': 'Appen',
+  // 音声 / 映像 / メディア
+  'speechify': 'Speechify', 'mubert': 'Mubert', 'soundraw': 'Soundraw',
+  'aiva': 'AIVA', 'higgsfield': 'Higgsfield', 'meshy': 'Meshy', 'sora': 'Sora',
+  'gamma_app': 'Gamma', 'tome_app': 'Tome', 'krisp': 'Krisp', 'vapi': 'Vapi',
+  'livekit': 'LiveKit',
+  // 業務エージェント
+  'moveworks': 'Moveworks', 'gong': 'Gong', 'clay': 'Clay',
+  'bardeen': 'Bardeen', 'make_com': 'Make', 'aisera': 'Aisera',
+  'sierra': 'Sierra', 'notebooklm': 'NotebookLM',
+};
+
+const Set<String> _providerNameUpperTokens = {
+  'ai',
+  'ml',
+  'llm',
+  'api',
+  'os',
+  'ui',
+  'ux',
+  'io',
+  'sdk',
+  'gpu',
+  'tts',
+  'stt',
+  'rag',
+  'db',
+  'q',
+};
+
+/// provider ID を読める表示名へ変換する純関数 (overrides → Title Case)。
+String humanizeProviderId(String id) {
+  final override = _providerDisplayNameOverrides[id];
+  if (override != null && override.isNotEmpty) return override;
+  final tokens =
+      id.split(RegExp(r'[-_\s]+')).where((t) => t.isNotEmpty).toList();
+  if (tokens.isEmpty) return id;
+  return tokens.map((t) {
+    final lower = t.toLowerCase();
+    if (_providerNameUpperTokens.contains(lower)) return lower.toUpperCase();
+    return t[0].toUpperCase() + t.substring(1);
+  }).join(' ');
+}
+
+_ProviderMeta _fallbackProviderMeta(String id) => _ProviderMeta(
+      name: humanizeProviderId(id),
+      emoji: '🤖',
+      color: const Color(0xFF607D8B),
+      officialUrl: '',
+    );
 
 // 既知プロバイダーの表示設定。DB に新しい provider が現れれば自動的にタブが増える。
 // 表示名・絵文字・色・URL をカスタマイズしたい場合のみここに追加する。
@@ -5825,7 +5924,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     }
   }
 
-  _ProviderMeta _meta(String id) => _providerMeta[id] ?? _unknownMeta;
+  _ProviderMeta _meta(String id) =>
+      _providerMeta[id] ?? _fallbackProviderMeta(id);
 
   List<AiUniversityGenreEntry> _availableGenres() {
     return kAiUniversityGenres
