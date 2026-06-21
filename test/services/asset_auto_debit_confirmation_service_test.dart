@@ -220,4 +220,14 @@ void main() {
       expect(service.insufficientSourceCount(workbook), 1);
     });
   });
+
+  group('autoDebitAlternateSourcePaidHint', () {
+    test('names the recorded source and prompts the balance update', () {
+      final hint = autoDebitAlternateSourcePaidHint('アコムショッピング', '¥36,525');
+      expect(hint, contains('アコムショッピング'));
+      expect(hint, contains('¥36,525'));
+      expect(hint, contains('残高一覧'));
+      expect(hint, contains('反映'));
+    });
+  });
 }
