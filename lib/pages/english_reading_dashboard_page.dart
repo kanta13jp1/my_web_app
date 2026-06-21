@@ -318,6 +318,12 @@ class _EnglishReadingDashboardPageState
         value: '${_summary.totalSessions}',
         accent: const Color(0xFFFF6B35),
       ),
+      _StatTile(
+        icon: Icons.local_fire_department_outlined,
+        label: '連続計測日数',
+        value: '${_summary.measurementDayStreak}日',
+        accent: const Color(0xFFFF8C5A),
+      ),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {

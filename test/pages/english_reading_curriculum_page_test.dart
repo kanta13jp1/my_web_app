@@ -46,8 +46,8 @@ void main() {
     expect(find.text('📖 英語速読カリキュラム'), findsOneWidget);
     expect(find.text('A Morning Walk'), findsOneWidget);
     expect(find.text('Lv1 基礎'), findsWidgets);
-    // both practice mode buttons exist for a lesson
-    expect(find.text('計測'), findsWidgets);
-    expect(find.text('RSVP'), findsWidgets);
+    // 計測 (主ボタン) と RSVP訓練 (副ボタン) の両方が各教材に存在する
+    expect(find.text('計測する'), findsWidgets);
+    expect(find.text('RSVP訓練'), findsWidgets);
   });
 }

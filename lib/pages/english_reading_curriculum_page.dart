@@ -114,6 +114,15 @@ class _EnglishReadingCurriculumPageState
     return map;
   }
 
+  /// ログイン状態 (Supabase 未初期化のテスト環境では false)。
+  bool get _loggedIn {
+    try {
+      return Supabase.instance.client.auth.currentUser != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _openPractice(EnglishReadingLesson lesson, String mode) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -194,6 +203,10 @@ class _EnglishReadingCurriculumPageState
                     ).pushNamed('/english-reading-dashboard'),
                   ),
                   const SizedBox(height: 16),
+                  if (!_loggedIn) ...[
+                    const _LoginHintBanner(),
+                    const SizedBox(height: 16),
+                  ],
                   const _HowItWorksCard(),
                   const SizedBox(height: 20),
                   if (_error != null && _lessons.isEmpty)
@@ -317,7 +330,7 @@ class _HowItWorksCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '2つのモードで鍛える',
+            'まずは計測、次にRSVP訓練',
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 14,
@@ -328,15 +341,15 @@ class _HowItWorksCard extends StatelessWidget {
           _ModeLine(
             icon: Icons.timer_outlined,
             color: Color(0xFF3D5AFE),
-            title: '計測モード',
-            desc: '自分のペースで読み、内容理解クイズで WPM と理解率を測定します。',
+            title: '① 計測モード（まずはこれ）',
+            desc: '自分のペースで読み、内容理解クイズで WPM・理解率を測定。各レベルを計測して実力を把握します。',
           ),
           SizedBox(height: 6),
           _ModeLine(
             icon: Icons.flash_on_outlined,
             color: Color(0xFFFF6B35),
-            title: 'RSVPトレーナー',
-            desc: '設定した速度で単語を1語ずつ高速提示。ネイティブ速度を体に覚えさせます。',
+            title: '② RSVPトレーナー（追加訓練）',
+            desc: '設定速度で単語を1語ずつ高速提示。計測で課題が見えたら、速度を体に覚えさせる訓練に使います。',
           ),
         ],
       ),
@@ -562,22 +575,25 @@ class _LessonTile extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                flex: 3,
+                child: FilledButton.icon(
                   onPressed: onMeasure,
                   icon: const Icon(Icons.timer_outlined, size: 16),
-                  label: const Text('計測'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF3D5AFE),
+                  label: const Text('計測する'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF3D5AFE),
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
+                flex: 2,
                 child: OutlinedButton.icon(
                   onPressed: onRsvp,
                   icon: const Icon(Icons.flash_on_outlined, size: 16),
-                  label: const Text('RSVP'),
+                  label: const Text('RSVP訓練'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFFF6B35),
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -585,6 +601,41 @@ class _LessonTile extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginHintBanner extends StatelessWidget {
+  const _LoginHintBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF3D5AFE).withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF3D5AFE).withValues(alpha: 0.32),
+        ),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.info_outline, size: 18, color: Color(0xFF90CAF9)),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'ログインすると計測の記録・実力ダッシュボード・AI教材生成が使えます。'
+              '教材を読んで計測すること自体はログインなしでも試せます。',
+              style: TextStyle(
+                color: Color(0xFFD7DBE8),
+                fontSize: 12,
+                height: 1.6,
+              ),
+            ),
           ),
         ],
       ),
