@@ -629,20 +629,28 @@ class _EnglishReadingPracticePageState
             graded: _graded,
             onSelect: _graded
                 ? null
-                : (choice) => setState(() => _answers[i] = choice),
+                : (choice) {
+                    setState(() => _answers[i] = choice);
+                    // 全問回答したら自動採点 (手動の採点ボタンを廃止)。
+                    if (!_answers.contains(null)) _gradeQuiz();
+                  },
           ),
         const SizedBox(height: 8),
         if (!_graded)
-          SizedBox(
+          Container(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _answers.contains(null) ? null : _gradeQuiz,
-              icon: const Icon(Icons.fact_check_outlined),
-              label: const Text('採点する'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4CAF50),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '残り ${_answers.where((a) => a == null).length} 問 — すべて回答すると自動で採点されます',
+              style: const TextStyle(
+                color: Color(0xFFB0B0B0),
+                fontSize: 12,
+                height: 1.5,
               ),
             ),
           )
@@ -682,6 +690,17 @@ class _EnglishReadingPracticePageState
             : !clearedSpeed
                 ? '理解は十分。次は RSVP で速度を $target WPM 以上へ引き上げましょう。'
                 : '記録しました。継続して実効WPMを伸ばしましょう。';
+
+    // 次のレベルまでの進捗フック (実効WPMを上回る最小の目標レベル)。
+    EnglishReadingLevel? nextLevel;
+    for (final l in kEnglishReadingLevels) {
+      if (l.targetWpm > _resultEffectiveWpm) {
+        nextLevel = l;
+        break;
+      }
+    }
+    final toNext =
+        nextLevel == null ? 0 : (nextLevel.targetWpm - _resultEffectiveWpm);
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -781,6 +800,45 @@ class _EnglishReadingPracticePageState
               height: 1.7,
               fontWeight: FontWeight.w600,
             ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF3D5AFE).withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF3D5AFE).withValues(alpha: 0.28),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                nextLevel == null
+                    ? Icons.emoji_events
+                    : Icons.trending_up_rounded,
+                size: 20,
+                color: nextLevel == null
+                    ? const Color(0xFFFFD700)
+                    : const Color(0xFF90CAF9),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  nextLevel == null
+                      ? '🏆 ネイティブ速度(300WPM)に到達！最高レベルです。'
+                      : 'あと $toNext WPM で Lv${nextLevel.level} '
+                          '${nextLevel.labelJa}（${nextLevel.cefr}・'
+                          '目標${nextLevel.targetWpm}WPM）に到達します。',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         if (_saving) ...[
