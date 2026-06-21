@@ -50,6 +50,8 @@ import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
+import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
+import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
@@ -304,6 +306,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 給料日(資産管理の月次サイクル基準日 / 設定で変更可 / clamp 1-28)。
   // AssetSalaryDayStore で永続化 + asset_pref_mirror(salary_day)で端末間同期。
   int _salaryDay = AssetSalaryDayStore.defaultSalaryDay;
+  // 支払済みチェックのリセット契機を「給料がメインバンクへ振り込まれた検知」にする
+  // ための、リセット承認済み給料サイクル(yyyy-MM)。AssetSalaryResetMarkerStore で
+  // 永続化 + asset_pref_mirror(salary_reset_ack_cycle)で端末間同期(max-merge)。
+  // 当日サイクルがこのマーカーと一致しない間は前サイクルの支払済みチェックを保持し、
+  // 残高更新を促す。検知 or 手動承認でマーカーを当日サイクルへ前進=リセット。
+  final AssetSalaryResetMarkerStore _salaryResetMarkerStore =
+      const AssetSalaryResetMarkerStore();
+  static const String _salaryResetMarkerMirrorKey = 'salary_reset_ack_cycle';
+  String? _ackedResetCycleKey;
+  // 検知成立後の二重スケジュール防止(post-frame ack 中のサイクルキー)。
+  String? _pendingSalaryResetAck;
   static const List<Color> _salarySpendingChartColors = <Color>[
     Color(0xFF0F766E),
     Color(0xFF2563EB),
@@ -905,6 +918,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDisplayMode();
     _loadMainAccount();
     unawaited(_loadSalaryDay());
+    unawaited(_loadSalaryResetMarker());
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
@@ -934,6 +948,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           nextMonthKey != _loadedAssetLiabilityMonthKey) {
         unawaited(_loadAssetLiabilityMonthlyState());
       }
+      // リセット保留中(新サイクルだが未検知)なら給料振込を再評価する。
+      // 通常時は _salaryResetPending=false で即 return するため軽量。
+      _maybeDetectSalaryDeposit();
     });
     _fetchTodayClosing();
     _loadSourceOptionsFromDb();
@@ -1067,11 +1084,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   DateTime _monthStart(DateTime dt) => DateTime(dt.year, dt.month, 1);
 
   DateTime _assetLiabilityStateMonth(DateTime dt) {
-    return AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+    final dateCycle = AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
       dt,
       salaryDay: _salaryDay,
     );
+    // 給料振込を検知/承認したサイクルだけ新サイクルへ切り替える。未承認の間は前サイクル
+    // に留まり、支払済みチェック等の月次stateを保持する(暦の給料日では切り替えない)。
+    // マーカー未設定(初回)は当日サイクルを採用。load/save/sync すべてこの実効月を
+    // 共有するため、ウィンドウ中の編集も前サイクルへ対称に書かれる(非対称消失なし)。
+    final dateCycleKey =
+        AssetLiabilityMonthlyStateStore.formatMonthKey(dateCycle);
+    if (!AssetSalaryResetMarkerStore.isResetPending(
+      dateCycleKey: dateCycleKey,
+      ackedCycleKey: _ackedResetCycleKey,
+    )) {
+      return dateCycle;
+    }
+    return DateTime(dateCycle.year, dateCycle.month - 1);
   }
+
+  String _currentSalaryCycleKey() {
+    return AssetLiabilityMonthlyStateStore.formatMonthKey(
+      AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+        _now,
+        salaryDay: _salaryDay,
+      ),
+    );
+  }
+
+  /// 当日サイクルがまだリセット承認されていない(=前サイクルの支払済みを表示中)。
+  bool get _salaryResetPending => AssetSalaryResetMarkerStore.isResetPending(
+        dateCycleKey: _currentSalaryCycleKey(),
+        ackedCycleKey: _ackedResetCycleKey,
+      );
 
   String _assetLiabilityStateMonthKey(DateTime dt) {
     return AssetLiabilityMonthlyStateStore.formatMonthKey(
@@ -1783,6 +1828,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
       }
+      // 月次stateロード後(残高/フローも揃った状態)に給料振込検知を再評価する。
+      _maybeDetectSalaryDeposit();
     } catch (e) {
       debugPrint('Error loading asset liability monthly state: $e');
     }
@@ -6251,6 +6298,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
       await _fetchTodayClosing();
+      // メイン口座の残高更新が給料反映なら、ここで検知して支払済みをリセットする
+      // (残高増は入金フローを生成しないため、残高窓ベースの検知が要)。
+      _maybeDetectSalaryDeposit();
     } catch (e) {
       debugPrint('Error saving assets: $e');
     }
@@ -6850,6 +6900,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _recentFlows.isNotEmpty || _subscriptions.isNotEmpty,
           ),
         );
+        // フロー更新後に給料振込検知を再評価(サイクル窓の収入が増えた可能性)。
+        _maybeDetectSalaryDeposit();
       }
     } catch (e) {
       debugPrint('Error fetching flows: $e');
@@ -8229,6 +8281,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildSyncStatusBanner(),
             _buildUnsyncedBadgeRow(),
             _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
+            _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
             _buildDisplayModeSwitcher(),
             const SizedBox(height: 12),
@@ -8423,6 +8476,270 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 給料リセット承認マーカーをローカル + サーバミラーから読み込む。初回(未設定)は
+  /// 当日サイクルを承認済みにして、以後のサイクル遷移だけを gating 対象にする
+  /// (機能投入直後にいきなり前サイクルへ退避させない)。
+  Future<void> _loadSalaryResetMarker() async {
+    try {
+      final stored = await _salaryResetMarkerStore.load();
+      if (mounted && stored != _ackedResetCycleKey) {
+        setState(() => _ackedResetCycleKey = stored);
+      } else {
+        _ackedResetCycleKey = stored;
+      }
+    } catch (e) {
+      debugPrint('Error loading salary reset marker: $e');
+    }
+    await _restoreSalaryResetMarkerFromMirror();
+    if (_ackedResetCycleKey == null) {
+      await _acknowledgeSalaryReset(
+        _currentSalaryCycleKey(),
+        reloadMonthlyState: false,
+      );
+    }
+  }
+
+  /// サーバミラー (pref_key: salary_reset_ack_cycle) を max-merge で採用する。
+  /// 古い端末がマーカーを巻き戻さないよう、常に新しいサイクルキーを優先する。
+  Future<void> _restoreSalaryResetMarkerFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _salaryResetMarkerMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final restored = AssetSalaryResetMarkerStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      final merged = AssetSalaryResetMarkerStore.mergeLater(
+        _ackedResetCycleKey,
+        restored,
+      );
+      if (!mounted || merged == _ackedResetCycleKey) {
+        return;
+      }
+      setState(() => _ackedResetCycleKey = merged);
+      _persistInBackground(
+        _salaryResetMarkerStore.save(merged),
+        'salary reset marker restore save',
+      );
+      // 実効サイクルが変わるため月次stateを読み直す。
+      unawaited(_loadAssetLiabilityMonthlyState());
+    } catch (e) {
+      debugPrint('salary reset marker mirror restore failed: $e');
+    }
+  }
+
+  /// 給料リセット承認マーカーを `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorSalaryResetMarker() async {
+    final userId = _supabase.auth.currentUser?.id;
+    final marker = _ackedResetCycleKey;
+    if (userId == null || marker == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _salaryResetMarkerMirrorKey,
+        'value': AssetSalaryResetMarkerStore.encodeMirrorValue(marker),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('salary reset marker mirror upsert failed: $e');
+    }
+  }
+
+  /// 指定サイクルまでリセットを承認(=新サイクルへ切替)する。max-merge で前進のみ。
+  /// 前進したら永続化 + ミラー + (必要なら)月次state再読込で支払済みチェックを
+  /// 新サイクル(通常は空)へ切り替える。
+  Future<void> _acknowledgeSalaryReset(
+    String cycleKey, {
+    bool reloadMonthlyState = true,
+  }) async {
+    final merged = AssetSalaryResetMarkerStore.mergeLater(
+      _ackedResetCycleKey,
+      cycleKey,
+    );
+    if (merged == _ackedResetCycleKey) {
+      return;
+    }
+    if (mounted) {
+      setState(() => _ackedResetCycleKey = merged);
+    } else {
+      _ackedResetCycleKey = merged;
+    }
+    _persistInBackground(
+      _salaryResetMarkerStore.save(merged),
+      'salary reset marker save',
+    );
+    unawaited(_mirrorSalaryResetMarker());
+    if (reloadMonthlyState) {
+      await _loadAssetLiabilityMonthlyState();
+    }
+  }
+
+  /// 当日サイクルが未承認のときだけ給料振込を検知し、検知できたらリセットを承認する。
+  /// build からではなくイベント(月次stateロード後 / フロー取得後 / 残高更新後 / 1秒
+  /// タイマー)から呼ぶ。未承認でない通常時はワークブックも作らず即 return(軽量)。
+  /// 冪等(承認後はマーカー一致でこの分岐に入らない / `_pendingSalaryResetAck` で多重防止)。
+  void _maybeDetectSalaryDeposit() {
+    if (!_salaryResetPending) {
+      return;
+    }
+    final currentCycleKey = _currentSalaryCycleKey();
+    if (_pendingSalaryResetAck == currentCycleKey) {
+      return;
+    }
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) {
+      return;
+    }
+    final detection = _computeSalaryDepositDetection(workbook);
+    if (!detection.detected) {
+      return;
+    }
+    _pendingSalaryResetAck = currentCycleKey;
+    unawaited(
+      _acknowledgeSalaryReset(currentCycleKey).whenComplete(() {
+        _pendingSalaryResetAck = null;
+      }),
+    );
+  }
+
+  /// 現サイクルにメインバンクへの給料振込があったかを推定する。
+  SalaryDepositDetection _computeSalaryDepositDetection(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final incomeFlows = <SalaryDepositFlowObservation>[
+      for (final flow in _flowsForCycle(_now))
+        if (_isIncomeActionType(flow['action_type']?.toString() ?? ''))
+          SalaryDepositFlowObservation(
+            amount: ((flow['amount'] as num?)?.toDouble() ?? 0).abs(),
+            occurredAt: DateTime.tryParse(flow['occurred_at']?.toString() ?? '')
+                    ?.toLocal() ??
+                _now,
+          ),
+    ];
+    return AssetSalaryDepositDetector.detect(
+      cycleIncomeFlows: incomeFlows,
+      balances: _mainAccountBalanceWindow(workbook),
+      expectedSalaryAmount: _registeredSalaryAmount(),
+    );
+  }
+
+  /// メインバンク口座の「前サイクル末 → 現在」の残高窓。残高更新だけでは入金フローが
+  /// 生成されないため(残高ドロップ時のみ自動記録)、給料反映の検知はこの残高増に依る。
+  MainAccountBalanceWindow _mainAccountBalanceWindow(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final mainAccount = _resolveMainAccountForDetection(workbook);
+    if (mainAccount == null) {
+      return MainAccountBalanceWindow.unknown;
+    }
+    final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+      _now,
+      salaryDay: _salaryDay,
+    );
+    return MainAccountBalanceWindow(
+      previousCycleEndBalance: _historicalAccountBalanceBefore(
+        mainAccount.name,
+        cycleStart,
+      ),
+      currentBalance: mainAccount.balance,
+    );
+  }
+
+  /// メインバンク = メイン口座指定があればそれ、無ければ残高最大の非現金資産口座。
+  /// `_buildMainAccountSelector` と同じ候補ロジック。
+  AssetLiabilityAccount? _resolveMainAccountForDetection(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final candidates = workbook.accounts
+        .where(
+          (account) =>
+              account.kind != AssetLiabilityAccountKind.cash && account.isAsset,
+        )
+        .toList()
+      ..sort((a, b) => b.balance.compareTo(a.balance));
+    if (candidates.isEmpty) {
+      return null;
+    }
+    for (final account in candidates) {
+      if (account.id == _assetManagementMainAccountId) {
+        return account;
+      }
+    }
+    return candidates.first;
+  }
+
+  /// `_assetData` ({yyyy-MM-dd: {口座名: 残高}}) から [asOf] より厳密に前で最も新しい
+  /// 日付の残高を返す(= 前サイクル末時点の残高)。記録が無ければ null。
+  double? _historicalAccountBalanceBefore(String accountName, DateTime asOf) {
+    final asOfKey = _dateOnly(asOf);
+    String? bestKey;
+    for (final entry in _assetData.entries) {
+      if (!entry.value.containsKey(accountName)) {
+        continue;
+      }
+      if (entry.key.compareTo(asOfKey) >= 0) {
+        continue;
+      }
+      if (bestKey == null || entry.key.compareTo(bestKey) > 0) {
+        bestKey = entry.key;
+      }
+    }
+    return bestKey == null ? null : _assetData[bestKey]![accountName];
+  }
+
+  /// 登録済みの想定給料額(繰り返し入金ルール / 収入予定の最大額)。無ければ null。
+  double? _registeredSalaryAmount() {
+    var maxAmount = 0.0;
+    for (final rule in _expectedInflowRules) {
+      if (rule.amount > maxAmount) {
+        maxAmount = rule.amount;
+      }
+    }
+    for (final plan in _monthlyIncomePlans) {
+      if (plan.amount > maxAmount) {
+        maxAmount = plan.amount;
+      }
+    }
+    return maxAmount > 0 ? maxAmount : null;
+  }
+
+  /// 手動で「給料を受け取った」=支払済みチェックを新サイクルへリセットする。
+  Future<void> _confirmManualSalaryReset() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('給料を受け取った'),
+        content: const Text(
+          '支払済みチェックを新しい給料サイクルへリセットします。'
+          '前サイクルのチェックは消えます。よろしいですか?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('リセット'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    await _acknowledgeSalaryReset(_currentSalaryCycleKey());
+  }
+
   /// 給料日を更新して永続化 + ミラー + 月次state再読込(サイクル基準が変わる)。
   Future<void> _setSalaryDay(int day) async {
     final clamped = AssetSalaryDayStore.clampDay(day);
@@ -8452,7 +8769,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 children: [
                   const Text(
                     '資産管理は給料日から翌給料日の前日までを1サイクルとして集計します'
-                    '(支払済みチェックもこのサイクルで自動リセット)。',
+                    '(支払済みチェックは給料の振込を検知して新サイクルへ切り替え)。',
                     style: TextStyle(fontSize: 12, height: 1.5),
                   ),
                   const SizedBox(height: 12),
@@ -12264,6 +12581,84 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 支払日を過ぎた自動振替・固定費の「引落確認待ち」カード。引落済みなら
   // ユーザーが確認 → 支払済み(現在残高に反映済み)扱いにし、見込み残高の
   // 二重控除を防ぐ。引落失敗の可能性があるため自動では支払済みにしない。
+  /// 新しい給料サイクルに入ったが給料振込をまだ検知できていないとき、前サイクルの
+  /// 支払済みチェックを保持しつつメイン口座の残高更新を促すカード。残高を更新すると
+  /// 給料反映が検知され、新サイクルへ自動で切り替わる(支払済みチェックがリセット)。
+  Widget _buildSalaryDepositNudgeCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || !_salaryResetPending) {
+      return const SizedBox.shrink();
+    }
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: scheme.tertiaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 18,
+                    color: scheme.onTertiaryContainer,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '給料の入金を確認できません',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.onTertiaryContainer,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '新しい給料サイクルに入りましたが、メインバンクへの給料振込をまだ'
+                '検知できていません。支払済みチェックは前サイクルのまま保持しています。'
+                'メイン口座の残高を更新すると入金を検知し、新しいサイクルへ自動で'
+                '切り替わります(チェックがリセットされます)。',
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                  color: scheme.onTertiaryContainer,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildTextStatusChip(
+                label: '前サイクルの支払済みを表示中',
+                color: const Color(0xFF0E7490),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => _scrollTo(_keyStock),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('残高を更新'),
+                  ),
+                  TextButton.icon(
+                    onPressed: _confirmManualSalaryReset,
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('給料を受け取った（リセット）'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
