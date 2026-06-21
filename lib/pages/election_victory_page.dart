@@ -4283,7 +4283,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       );
     }
 
-    final topGaps = plan.topCdpGapPrefectures();
+    final allGaps = plan.allCdpGapPrefectures();
 
     return Container(
       decoration: BoxDecoration(
@@ -4341,7 +4341,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final item in topGaps) _buildCdpGapPill(item),
+                  for (final item in allGaps) _buildCdpGapPill(item),
                 ],
               ),
             ),
