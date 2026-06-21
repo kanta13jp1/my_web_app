@@ -104,6 +104,7 @@ flutter:
     - web/assets/fonts/
     - assets/legal/
     - assets/sounds/
+    - assets/data/
     - docs/
     - docs/release-notes/
     - docs/roadmaps/
