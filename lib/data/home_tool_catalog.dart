@@ -9,6 +9,7 @@ import '../pages/abstinence_guard_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
+import '../pages/english_reading_curriculum_page.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -785,6 +786,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['AI組織', 'エージェント', 'OS'],
       onOpen: (context) => _pushPage(context, AgentOrgPage()),
       requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'english-reading-curriculum',
+      sectionId: 'knowledge',
+      title: '英語速読カリキュラム',
+      subtitle: 'ネイティブ速度で読む訓練と実力可視化',
+      icon: Icons.speed_outlined,
+      color: const Color(0xFF4CAF50),
+      keywords: const <String>[
+        '英語',
+        '速読',
+        'リーディング',
+        'reading',
+        'wpm',
+        'TOEIC',
+        'TOEFL',
+        'English',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const EnglishReadingCurriculumPage()),
     ),
     HomeToolEntry(
       id: 'agent-gpa-dashboard',

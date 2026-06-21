@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-06-19",
+    "date": "2026-06-20",
     "users": {
       "total": 37
     },
@@ -34,6 +34,14 @@
     },
     "recentAchievements": [
       {
+        "title": "AI大学 FinTech/Trading AI 掲載コンテンツの日本語化",
+        "completed_at": "2026-06-21T00:00:00+00:00"
+      },
+      {
+        "title": "AI大学「英語速読カリキュラム」導入",
+        "completed_at": "2026-06-20T00:00:00+00:00"
+      },
+      {
         "title": "CI Setup Deno の deno.land 一時503耐性化 (retry+backoff)",
         "completed_at": "2026-06-10T18:24:04.736707+00:00"
       },
@@ -44,17 +52,9 @@
       {
         "title": "GitHub Actions Node.js 20 廃止対応完了 (actions/cache v5 化)",
         "completed_at": "2026-06-10T13:45:31.202955+00:00"
-      },
-      {
-        "title": "ブログ/ニュース配信 本番E2E検証完了 (Issue #1950 close)",
-        "completed_at": "2026-06-10T13:05:19.536047+00:00"
-      },
-      {
-        "title": "モデルルーティング戦略 (コスト tier) 策定 — 従量課金時代の使い分けガイドライン",
-        "completed_at": "2026-06-10T04:56:13.94377+00:00"
       }
     ]
   },
-  "fetched_at": "2026-06-20T07:49:35+09:00",
-  "report_date": "2026-06-20"
+  "fetched_at": "2026-06-21T07:52:44+09:00",
+  "report_date": "2026-06-21"
 }

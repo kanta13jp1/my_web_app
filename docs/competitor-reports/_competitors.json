@@ -680,6 +680,26 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-21",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-16 Microsoft MAI-Code-1-Flash 採択 / 5 day 経過 / cooldown 残 2 day / 次回 6/23 解禁). 前回 AI 分析 report = 6/20. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 本 6/21 は WebSearch 主体で 6/20→6/21 delta 集約. 最大シグナル = ★★ Claude Fable 5/Mythos 5 全世界 suspension が再エスカレート 🔴🔴 (= 6/20 report の『delta なし・据え置き』から一転 / 報道では 商務省 から 90 分最後通牒 + Amazon Andy Jassy の警告 + Anthropic が上級職員を Washington へ派遣し交渉 = 6/12 export-control directive 後の対立が硬直から再点火 / 復旧日は依然提示なし / Opus 4.8・Sonnet 4.6・Haiku 4.5 は引き続き非影響 = Win Claude #132 fleet 継続可 / [AI-TOOL-VERIFY] 当事者間で争点 [narrow か否か] の見解相違ありで断定回避 / 単一ベンダー依存+地政学リスク再燃 = fallback 経路点検の予防継続根拠). 他 = ★ Salesforce Summer '26 詳細拡充 🔴 (= 6/15 GA の中身が具体化 / Agent Fabric control plane [Guided Determinism + multi-vendor AI ガバナンス制御] + Multi-Agent Orchestration [複数 agent が単一 team として end-to-end workflow] + Tableau MCP 統合 + Momentum [conversation intelligence 買収製品] + Agentforce Self-Service 6 click setup + IT Service Domain Pack 50+ 専門 agent across Slack/Teams = 6/23 採択第1候補 Salesforce Agentforce Operations の viability を一段と強化) + 🟢 Microsoft Copilot Cowork GA 6/16 詳細裏取り (= Anthropic Opus4.8/Sonnet4.6 上で動作 / Cowork 1 自社モデル coming weeks / Fortune500 過半+Accenture+Zurich / Copilot Credits 従量 [model use+context retrieval+tool calls+runtime] / off-by-default ガバナンス + tenant/group/user 別 spend 上限 = back-office 三つ巴の rival さえ Anthropic 依存 = Fable/Mythos ガバナンス論点と接続=単一ベンダー集中) + 🟢 MoneyForward AI Cowork 7月 GA on track T-約10日 (= pre-registration 受付中 / 大きな新 delta なし / GA 前 narrative sharpening timing 継続) + 🟠 ACP 事実精緻化 (= 6/20 report の『6/2 Devin Desktop 起点』は訂正 / ACP は Zed Industries が 2025/8 作成・ACP Registry は 2026/1 launch・Devin Desktop は採用者 / JetBrains AI Assistant も ACP 対応 / ACP vs MCP 'protocol war' が 2026 narrative) + 🟠 AI coding stack 収斂継続 (= Cursor/Claude Code/Codex/Antigravity が単一 agentic blueprint へ収斂 / 72h で 3 coding agent 連続 launch = developer が払う知能の price floor 再設定). 6/23 採択 第 1 候補 = Salesforce Agentforce Operations 維持 (基準 a+c / 今回 Agent Fabric multi-vendor governance + Multi-Agent Orchestration で viability 一段と強化). https://www.salesforce.com/news/stories/agent-fabric-control-plane-announcement/ + https://www.gtlaw.com/en/insights/2026/6/ai-company-anthropic-suspends-access-to-claude-fable-5-claude-mythos-5-following-us-export-control-directive",
+      "skipped_candidates": [
+        "Salesforce Agentforce Operations (= 6/23 第 1 候補維持 / 6/15 Summer '26 GA + Agent Fabric multi-vendor governance + Multi-Agent Orchestration + Tableau MCP + Momentum + IT Service Domain Pack 50+ agents / バックオフィス自律 AI = 6 部署/B/S overlap 最大 / 基準 a+c 該当 / re-rank 最有力 = 今サイクルで viability 一段と強化)",
+        "Microsoft Copilot Cowork (= 6/16 全世界 GA / back-office 三つ巴中核 / Anthropic Opus4.8/Sonnet4.6 上で動作 + Cowork 1 自社モデル coming + MoneyForward plugin / ただし Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加回避で monitor / Salesforce 採択後 re-rank 候補)",
+        "Devin Desktop / ACP (= ACP は Zed Industries 2025/8 作成・Devin は採用者 = signal 層 / Devin 既収載で discovery 対象外)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 シグナル / 動向観察 1 月)",
+        "Claude Fable 5 / Mythos 5 (= モデル層 + 規制シグナル / discovery 対象外 / Anthropic 既収載派生)",
+        "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
     }
   ],
   "_schema_notes": {

@@ -1,7 +1,7 @@
 ---
 title: "The Day a Scheduled AI Agent Erased 31,000 Lines — append-only discipline and verify-first detection"
 tags: AI,ClaudeCode,automation,devops
-published: false
+published: true
 ---
 
 Automated AI agents are convenient — until a task as simple as "update a file" turns into a destructive operation. This post uses a real **ROADMAP truncation incident** from our operations to explain the **append-only discipline** that keeps scheduled agents from destroying large shared files, and the **verify-first** pattern that caught the damage immediately.

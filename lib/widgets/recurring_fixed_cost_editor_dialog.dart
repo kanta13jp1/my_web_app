@@ -7,6 +7,48 @@ import 'recurring_fixed_cost_card.dart';
 /// 振替元ドロップダウンに渡す口座 (ID + 表示名)。
 typedef RecurringFixedCostSourceOption = ({String id, String name});
 
+/// 振替元/請求先に選べる口座を組み立てる。
+///
+/// 既定は資産口座 (残高>0) のみ。サブスク等カードへ請求される費用では
+/// [includeCards] = true で**残高の符号によらず**クレジット/プリペイドカードや
+/// ショッピング枠 (例: ファミペイ バーチャルカード / アコムショッピング枠) も含める。
+/// これらは後払い/残高<=0 だと `balance > 0` だけのフィルタでは選べないため、請求先
+/// (リボ/分割で買い物に使う与信枠) として拾えるようにする。
+/// [includeCarrierBilling] = true で auかんたん決済 (au通信料金合算) 等のキャリア決済
+/// 口座 (au / KDDI) も含める。これらは負債(請求)口座で残高<=0 のため通常は出ない。
+List<RecurringFixedCostSourceOption> recurringFixedCostSourceOptions(
+  Iterable<AssetLiabilityAccount> accounts, {
+  bool includeCards = false,
+  bool includeCarrierBilling = false,
+}) {
+  return <RecurringFixedCostSourceOption>[
+    for (final account in accounts)
+      if (account.balance > 0 ||
+          (includeCards && _isChargeableCardAccount(account)) ||
+          (includeCarrierBilling && _isCarrierBillingAccount(account)))
+        (id: account.id, name: account.name),
+  ];
+}
+
+/// 買い物に使える与信枠の口座か (請求先候補)。クレジット/プリペイドカードに加え、
+/// アコムショッピング枠などのショッピング枠 (shoppingDebt) も含める。消費者ローン
+/// (cardLoan = 現金借入) や公共料金 (utility) は買い物の請求先ではないため除外。
+bool _isChargeableCardAccount(AssetLiabilityAccount account) {
+  return account.kind == AssetLiabilityAccountKind.creditCard ||
+      account.kind == AssetLiabilityAccountKind.shoppingDebt;
+}
+
+/// auかんたん決済 (au通信料金合算) / KDDI などキャリア決済の口座か。残高の符号に依らず
+/// サブスクの振替元候補に含めるための判定。id は planning service の
+/// `auAccountId`('au') / `kddiProviderAccountId`('kddi_provider') と一致させる。
+bool _isCarrierBillingAccount(AssetLiabilityAccount account) {
+  final name = account.name.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+  return name == 'au' ||
+      account.id == 'au' ||
+      name.contains('kddi') ||
+      account.id == 'kddi_provider';
+}
+
 /// 定期固定費の追加/編集ダイアログを開き、保存された [AssetRecurringFixedCost] を返す。
 /// キャンセル時は null。
 ///
@@ -21,6 +63,8 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
       const <RecurringFixedCostSourceOption>[],
   AssetRecurringFixedCostCategory category =
       AssetRecurringFixedCostCategory.utility,
+  AssetSubscriptionBillingGateway gateway =
+      AssetSubscriptionBillingGateway.direct,
 }) {
   return showDialog<AssetRecurringFixedCost>(
     context: context,
@@ -29,6 +73,7 @@ Future<AssetRecurringFixedCost?> showRecurringFixedCostEditor(
       prefill: prefill,
       sourceAccounts: sourceAccounts,
       category: category,
+      gateway: gateway,
     ),
   );
 }
@@ -42,6 +87,7 @@ class RecurringFixedCostEditorDialog extends StatefulWidget {
     this.prefill,
     this.sourceAccounts = const <RecurringFixedCostSourceOption>[],
     this.category = AssetRecurringFixedCostCategory.utility,
+    this.gateway = AssetSubscriptionBillingGateway.direct,
   });
 
   final AssetRecurringFixedCost? existing;
@@ -53,6 +99,10 @@ class RecurringFixedCostEditorDialog extends StatefulWidget {
   /// 区分の初期値 (固定費 / サブスク)。[existing]/[prefill] が区分を持つ場合は
   /// そちらを優先する (サブスクカードから「その他を追加」する際の既定値)。
   final AssetRecurringFixedCostCategory category;
+
+  /// 請求経路の初期値。棚卸しの Apple/au/Google 行から登録する際に既定を与える。
+  /// [existing]/[prefill] が経路を持つ場合はそちらを優先する。
+  final AssetSubscriptionBillingGateway gateway;
 
   @override
   State<RecurringFixedCostEditorDialog> createState() =>
@@ -67,6 +117,7 @@ class _RecurringFixedCostEditorDialogState
   late final TextEditingController _dayController;
   late AssetRecurringFixedCostCadence _cadence;
   late AssetRecurringFixedCostCategory _category;
+  late AssetSubscriptionBillingGateway _gateway;
   String? _sourceAccountId;
 
   @override
@@ -76,6 +127,7 @@ class _RecurringFixedCostEditorDialogState
     final initial = widget.existing ?? widget.prefill;
     // 区分は initial が持つ値を最優先し、無ければ呼び出し側が指定した既定を使う。
     _category = initial?.category ?? widget.category;
+    _gateway = initial?.billingGateway ?? widget.gateway;
     _nameController = TextEditingController(text: initial?.name ?? '');
     _amountController = TextEditingController(
       text: initial == null ? '' : initial.amount.toStringAsFixed(0),
@@ -112,6 +164,10 @@ class _RecurringFixedCostEditorDialogState
       cadence: _cadence,
       sourceAccountId: _sourceAccountId,
       category: _category,
+      // 請求経路は区分=サブスクのときだけ意味を持つ。固定費では direct に固定する。
+      billingGateway: _category == AssetRecurringFixedCostCategory.subscription
+          ? _gateway
+          : AssetSubscriptionBillingGateway.direct,
     );
     Navigator.of(context).pop(cost);
   }
@@ -122,6 +178,19 @@ class _RecurringFixedCostEditorDialogState
         return '定期固定費';
       case AssetRecurringFixedCostCategory.subscription:
         return 'サブスク';
+    }
+  }
+
+  static String gatewayLabel(AssetSubscriptionBillingGateway gateway) {
+    switch (gateway) {
+      case AssetSubscriptionBillingGateway.direct:
+        return '直接 (口座/カード)';
+      case AssetSubscriptionBillingGateway.apple:
+        return 'Apple (App Store)';
+      case AssetSubscriptionBillingGateway.googlePlay:
+        return 'Google Play';
+      case AssetSubscriptionBillingGateway.auKantan:
+        return 'auかんたん決済';
     }
   }
 
@@ -215,14 +284,36 @@ class _RecurringFixedCostEditorDialogState
                   }
                 },
               ),
+              if (_category ==
+                  AssetRecurringFixedCostCategory.subscription) ...[
+                const SizedBox(height: 8),
+                DropdownButtonFormField<AssetSubscriptionBillingGateway>(
+                  initialValue: _gateway,
+                  decoration: const InputDecoration(
+                    labelText: '請求経路',
+                    helperText: 'Apple/Google/au 経由は明細に集約名義で出ます',
+                  ),
+                  items: [
+                    for (final gateway
+                        in AssetSubscriptionBillingGateway.values)
+                      DropdownMenuItem<AssetSubscriptionBillingGateway>(
+                        value: gateway,
+                        child: Text(gatewayLabel(gateway)),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _gateway = value);
+                    }
+                  },
+                ),
+              ],
               const SizedBox(height: 8),
               DropdownButtonFormField<String?>(
                 initialValue: _sourceAccountId,
                 decoration: const InputDecoration(labelText: '振替元 (任意)'),
                 items: [
-                  const DropdownMenuItem<String?>(
-                    child: Text('未設定'),
-                  ),
+                  const DropdownMenuItem<String?>(child: Text('未設定')),
                   for (final option in widget.sourceAccounts)
                     DropdownMenuItem<String?>(
                       value: option.id,
@@ -240,10 +331,7 @@ class _RecurringFixedCostEditorDialogState
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('キャンセル'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('保存'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('保存')),
       ],
     );
   }

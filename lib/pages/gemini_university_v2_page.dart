@@ -45,12 +45,111 @@ class _ProviderMeta {
   final String officialUrl;
 }
 
-final _unknownMeta = _ProviderMeta(
-  name: 'AI',
-  emoji: '🤖',
-  color: const Color(0xFF607D8B),
-  officialUrl: '',
-);
+// _providerMeta 未登録の provider ID を、汎用フォールバック 'AI' ではなく
+// ID から読める表示名へ変換する。acronym / camelCase は overrides で正規化し、
+// それ以外は区切り (-, _) で分割して各語を Title Case にする。
+const Map<String, String> _providerDisplayNameOverrides = {
+  // ベンチマーク / 評価データセット
+  'mmlu': 'MMLU', 'gsm8k': 'GSM8K', 'humaneval': 'HumanEval',
+  'hellaswag': 'HellaSwag', 'winogrande': 'WinoGrande',
+  'truthfulqa': 'TruthfulQA', 'bigbench': 'BIG-bench', 'gpqa': 'GPQA',
+  'arc_challenge': 'ARC Challenge', 'swe_bench': 'SWE-bench',
+  'swe-bench': 'SWE-bench', 'swe-agent': 'SWE-agent', 'webarena': 'WebArena',
+  'chatbot_arena': 'Chatbot Arena', 'lm_eval_harness': 'LM Eval Harness',
+  'math_benchmark': 'Math Benchmark', 'civics_literacy': 'Civics Literacy',
+  // エージェント / フレームワーク
+  'crewai': 'CrewAI', 'autogpt': 'AutoGPT', 'babyagi': 'BabyAGI',
+  'metagpt': 'MetaGPT', 'autogen': 'AutoGen', 'langgraph': 'LangGraph',
+  'langsmith': 'LangSmith', 'langfuse': 'Langfuse', 'dspy': 'DSPy',
+  'openagents': 'OpenAgents', 'agentverse': 'AgentVerse',
+  'superagi': 'SuperAGI',
+  'memgpt': 'MemGPT', 'chatdev': 'ChatDev', 'openhands': 'OpenHands',
+  'taskweaver': 'TaskWeaver', 'autocoderover': 'AutoCodeRover',
+  'semantic_kernel': 'Semantic Kernel', 'phidata': 'Phidata', 'agno': 'Agno',
+  'voyager': 'Voyager', 'camel': 'CAMEL', 'agentless': 'Agentless',
+  'generative-agents': 'Generative Agents',
+  // コーディング支援
+  'claude': 'Claude', 'claude_code': 'Claude Code', 'gemini': 'Gemini',
+  'devin': 'Devin', 'aider': 'Aider', 'cline': 'Cline', 'codeium': 'Codeium',
+  'tabnine': 'Tabnine', 'qodo': 'Qodo', 'phind': 'Phind', 'plandex': 'Plandex',
+  'mentat': 'Mentat', 'coderabbit': 'CodeRabbit', 'continue_dev': 'Continue',
+  'gpt-engineer': 'GPT-Engineer', 'smol-developer': 'smol developer',
+  'sourcegraph-cody': 'Sourcegraph Cody',
+  'amazon-q-developer': 'Amazon Q Developer',
+  // 推論 / 学習基盤
+  'vllm': 'vLLM', 'litellm': 'LiteLLM', 'lmdeploy': 'LMDeploy',
+  'llamafile': 'llamafile', 'lmstudio': 'LM Studio', 'lm-studio': 'LM Studio',
+  'jan_ai': 'Jan', 'open_webui': 'Open WebUI', 'trl': 'TRL', 'peft': 'PEFT',
+  'unsloth': 'Unsloth', 'axolotl': 'Axolotl', 'mergekit': 'mergekit',
+  'watsonx': 'IBM watsonx', 'azure_openai': 'Azure OpenAI',
+  'amazon_bedrock': 'Amazon Bedrock', 'upstage': 'Upstage',
+  'text-generation-inference': 'Text Generation Inference',
+  // RAG / ベクトル / 評価
+  'weaviate': 'Weaviate', 'chroma': 'Chroma', 'haystack': 'Haystack',
+  'ragas': 'Ragas', 'trulens': 'TruLens', 'deepeval': 'DeepEval',
+  'promptfoo': 'Promptfoo', 'tavily': 'Tavily', 'firecrawl': 'Firecrawl',
+  'composio': 'Composio', 'flowise': 'Flowise', 'dust': 'Dust',
+  'instructor': 'Instructor', 'braintrust': 'Braintrust', 'galileo': 'Galileo',
+  // MLOps / データ基盤
+  'mlflow': 'MLflow', 'dvc': 'DVC', 'dbt': 'dbt', 'zenml': 'ZenML',
+  'prefect': 'Prefect', 'metaflow': 'Metaflow', 'hamilton': 'Hamilton',
+  'feast': 'Feast', 'tecton': 'Tecton', 'hopsworks': 'Hopsworks',
+  'clearml': 'ClearML', 'whylogs': 'whylogs', 'nannyml': 'NannyML',
+  'openlineage': 'OpenLineage', 'pachyderm': 'Pachyderm', 'ray': 'Ray',
+  'temporal': 'Temporal', 'n8n': 'n8n', 'e2b': 'E2B',
+  'browserbase': 'Browserbase', 'runpod': 'RunPod',
+  // データラベリング
+  'labelbox': 'Labelbox', 'encord': 'Encord', 'superannotate': 'SuperAnnotate',
+  'cvat': 'CVAT', 'dataloop': 'Dataloop', 'appen': 'Appen',
+  // 音声 / 映像 / メディア
+  'speechify': 'Speechify', 'mubert': 'Mubert', 'soundraw': 'Soundraw',
+  'aiva': 'AIVA', 'higgsfield': 'Higgsfield', 'meshy': 'Meshy', 'sora': 'Sora',
+  'gamma_app': 'Gamma', 'tome_app': 'Tome', 'krisp': 'Krisp', 'vapi': 'Vapi',
+  'livekit': 'LiveKit',
+  // 業務エージェント
+  'moveworks': 'Moveworks', 'gong': 'Gong', 'clay': 'Clay',
+  'bardeen': 'Bardeen', 'make_com': 'Make', 'aisera': 'Aisera',
+  'sierra': 'Sierra', 'notebooklm': 'NotebookLM',
+};
+
+const Set<String> _providerNameUpperTokens = {
+  'ai',
+  'ml',
+  'llm',
+  'api',
+  'os',
+  'ui',
+  'ux',
+  'io',
+  'sdk',
+  'gpu',
+  'tts',
+  'stt',
+  'rag',
+  'db',
+  'q',
+};
+
+/// provider ID を読める表示名へ変換する純関数 (overrides → Title Case)。
+String humanizeProviderId(String id) {
+  final override = _providerDisplayNameOverrides[id];
+  if (override != null && override.isNotEmpty) return override;
+  final tokens =
+      id.split(RegExp(r'[-_\s]+')).where((t) => t.isNotEmpty).toList();
+  if (tokens.isEmpty) return id;
+  return tokens.map((t) {
+    final lower = t.toLowerCase();
+    if (_providerNameUpperTokens.contains(lower)) return lower.toUpperCase();
+    return t[0].toUpperCase() + t.substring(1);
+  }).join(' ');
+}
+
+_ProviderMeta _fallbackProviderMeta(String id) => _ProviderMeta(
+      name: humanizeProviderId(id),
+      emoji: '🤖',
+      color: const Color(0xFF607D8B),
+      officialUrl: '',
+    );
 
 // 既知プロバイダーの表示設定。DB に新しい provider が現れれば自動的にタブが増える。
 // 表示名・絵文字・色・URL をカスタマイズしたい場合のみここに追加する。
@@ -5221,6 +5320,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   TabController? _tabController;
   final Set<String> _answeredQuizzes = {};
   static const String _prefsKey = 'ai_univ_answered_quizzes';
+  // 新ジャンル棚の折りたたみ状態 (画面占有を抑えるため / prefs 永続化)。
+  static const String _genreShelfPrefsKey = 'ai_univ_genre_shelf_collapsed';
+  bool _genreShelfCollapsed = false;
+  // RLHF 品質ループカードの折りたたみ状態 (画面占有が大きいため既定で畳む / prefs 永続化)。
+  static const String _rlhfCardPrefsKey = 'ai_univ_rlhf_card_collapsed';
+  bool _rlhfCardCollapsed = true;
   final _shareCardKey = GlobalKey();
   final _fsrsService = AiFsrsService();
   final _learnerProfileService = AiLearnerProfileService();
@@ -5246,6 +5351,32 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
     _loadFineTuneReadiness();
+    _loadGenreShelfState();
+    _loadRlhfCardState();
+  }
+
+  Future<void> _loadGenreShelfState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final collapsed = prefs.getBool(_genreShelfPrefsKey) ?? false;
+    if (mounted) setState(() => _genreShelfCollapsed = collapsed);
+  }
+
+  Future<void> _toggleGenreShelf() async {
+    setState(() => _genreShelfCollapsed = !_genreShelfCollapsed);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_genreShelfPrefsKey, _genreShelfCollapsed);
+  }
+
+  Future<void> _loadRlhfCardState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final collapsed = prefs.getBool(_rlhfCardPrefsKey) ?? true;
+    if (mounted) setState(() => _rlhfCardCollapsed = collapsed);
+  }
+
+  Future<void> _toggleRlhfCard() async {
+    setState(() => _rlhfCardCollapsed = !_rlhfCardCollapsed);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rlhfCardPrefsKey, _rlhfCardCollapsed);
   }
 
   Future<void> _loadRlhfSnapshot() async {
@@ -5793,7 +5924,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     }
   }
 
-  _ProviderMeta _meta(String id) => _providerMeta[id] ?? _unknownMeta;
+  _ProviderMeta _meta(String id) =>
+      _providerMeta[id] ?? _fallbackProviderMeta(id);
 
   List<AiUniversityGenreEntry> _availableGenres() {
     return kAiUniversityGenres
@@ -5937,6 +6069,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         foregroundColor: const Color(0xFFE5E7EB),
         actions: [
           IconButton(
+            icon: const Icon(Icons.menu_book_outlined),
+            tooltip: '英語速読カリキュラム',
+            onPressed: () => Navigator.pushNamed(
+              context,
+              '/english-reading-curriculum',
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.leaderboard),
             tooltip: 'ランキング',
             onPressed: () => Navigator.push(
@@ -6057,31 +6197,99 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final genres = _availableGenres();
     if (genres.isEmpty) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+    final width = MediaQuery.of(context).size.width;
+    // モバイルは次カードがちらっと見える幅、Web は固定幅でカルーセル感を出す。
+    final cardWidth = width < 600 ? (width * 0.82).clamp(220.0, 320.0) : 300.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '新ジャンル',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              height: 1.5,
+          // ヘッダー行: タップで棚全体を開閉し、本来のコンテンツ領域を確保する。
+          InkWell(
+            onTap: _toggleGenreShelf,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    size: 16,
+                    color: Color(0xFFFFC107),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    '新ジャンル',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${genres.length}',
+                      style: const TextStyle(
+                        color: Color(0xFFB0B0B0),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _genreShelfCollapsed ? '開く' : '隠す',
+                    style: const TextStyle(
+                      color: Color(0xFFB0B0B0),
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
+                  ),
+                  Icon(
+                    _genreShelfCollapsed
+                        ? Icons.expand_more
+                        : Icons.expand_less,
+                    size: 20,
+                    color: const Color(0xFFB0B0B0),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            '競合がまだ薄い専門領域を、AI大学の中でも独立した入口として育てます。',
-            style: TextStyle(
-              color: Color(0xFFB0B0B0),
-              fontSize: 12,
-              height: 1.6,
+          if (!_genreShelfCollapsed) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 158,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(right: 12),
+                itemCount: genres.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (context, i) => SizedBox(
+                  width: cardWidth.toDouble(),
+                  child: _buildGenreCard(genres[i]),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          ...genres.map(_buildGenreCard),
+          ],
         ],
       ),
     );
@@ -6093,137 +6301,136 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         .map((providerId) => _meta(providerId).name)
         .toList();
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF151B27),
-            Color.alphaBlend(
-              genre.accentColor.withValues(alpha: 0.18),
-              const Color(0xFF1E2434),
-            ),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: genre.accentColor.withValues(alpha: 0.32),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  genre.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${providerNames.length}教材',
-                style: TextStyle(
-                  color: genre.accentColor.withValues(alpha: 0.95),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  height: 1.5,
-                ),
+    return InkWell(
+      onTap: () => _selectProvider(genre.launchProviderId),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF151B27),
+              Color.alphaBlend(
+                genre.accentColor.withValues(alpha: 0.18),
+                const Color(0xFF1E2434),
               ),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: 10),
-          Text(
-            genre.headline,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              height: 1.5,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: genre.accentColor.withValues(alpha: 0.32),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      genre.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${providerNames.length}教材',
+                  style: TextStyle(
+                    color: genre.accentColor.withValues(alpha: 0.95),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            genre.description,
-            style: const TextStyle(
-              color: Color(0xFFD7DBE8),
-              fontSize: 13,
-              height: 1.7,
+            const SizedBox(height: 8),
+            Expanded(
+              child: Text(
+                genre.headline,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.45,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final area in genre.focusAreas)
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    providerNames.isNotEmpty
+                        ? providerNames.first
+                        : genre.focusAreas.isNotEmpty
+                            ? genre.focusAreas.first
+                            : genre.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFFB0B0B0),
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
+                    horizontal: 12,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
+                    color: genre.accentColor,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.10),
-                    ),
                   ),
-                  child: Text(
-                    area,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      height: 1.5,
-                    ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '開く',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          height: 1.3,
+                        ),
+                      ),
+                      SizedBox(width: 2),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
-          if (providerNames.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              '代表プロバイダー: ${providerNames.join(' / ')}',
-              style: const TextStyle(
-                color: Color(0xFFB0B0B0),
-                fontSize: 12,
-                height: 1.6,
-              ),
+              ],
             ),
           ],
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton.icon(
-              onPressed: () => _selectProvider(genre.launchProviderId),
-              icon: const Icon(Icons.gavel_rounded),
-              label: Text('${genre.title}を開く'),
-              style: FilledButton.styleFrom(
-                backgroundColor: genre.accentColor,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -6402,110 +6609,122 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.tune, color: m.color, size: 20),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'RLHF quality loop',
+            InkWell(
+              onTap: _toggleRlhfCard,
+              borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  Icon(Icons.tune, color: m.color, size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'RLHF 品質ループ',
+                      style: TextStyle(
+                        color: Color(0xFFE5E7EB),
+                        fontWeight: FontWeight.w800,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${snapshot.qualityScore}%',
                     style: TextStyle(
-                      color: Color(0xFFE5E7EB),
+                      color: m.color,
                       fontWeight: FontWeight.w800,
                       height: 1.5,
                     ),
                   ),
-                ),
-                Text(
-                  '${snapshot.qualityScore}%',
-                  style: TextStyle(
-                    color: m.color,
-                    fontWeight: FontWeight.w800,
-                    height: 1.5,
+                  const SizedBox(width: 4),
+                  Icon(
+                    _rlhfCardCollapsed ? Icons.expand_more : Icons.expand_less,
+                    color: const Color(0xFFB0B0B0),
+                    size: 22,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                minHeight: 8,
-                value: progress.clamp(0.0, 1.0).toDouble(),
-                backgroundColor: Colors.white.withValues(alpha: 0.10),
-                valueColor: AlwaysStoppedAnimation<Color>(m.color),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Learner reactions are stored as preference data, scored like a Scale-style feedback set, and used to decide what to improve next.',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.74),
-                fontSize: 12,
-                height: 1.6,
+            if (!_rlhfCardCollapsed) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  minHeight: 8,
+                  value: progress.clamp(0.0, 1.0).toDouble(),
+                  backgroundColor: Colors.white.withValues(alpha: 0.10),
+                  valueColor: AlwaysStoppedAnimation<Color>(m.color),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildRlhfMetricChip('Signals', '${snapshot.totalSignals}'),
-                _buildRlhfMetricChip(
-                  'Provider',
-                  providerSignals.toString(),
+              const SizedBox(height: 10),
+              Text(
+                '学習者の反応を選好データとして蓄積し、Scale 社流のフィードバックのようにスコア化して、次に改善すべき点の判断に使います。',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.74),
+                  fontSize: 12,
+                  height: 1.6,
                 ),
-                _buildRlhfMetricChip(
-                  'Avg',
-                  snapshot.averageRating.toStringAsFixed(1),
-                ),
-                _buildRlhfMetricChip(
-                  'Ready',
-                  snapshot.readyForFineTune ? 'Yes' : 'No',
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              snapshot.nextAction,
-              style: const TextStyle(
-                color: Color(0xFFB0B0B0),
-                fontSize: 12,
-                height: 1.5,
               ),
-            ),
-            const SizedBox(height: 12),
-            _buildFineTuneReadinessPanel(fineTune, fineTuneColor),
-            const SizedBox(height: 12),
-            if (submitting)
-              const LinearProgressIndicator(minHeight: 3)
-            else
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  FilledButton.icon(
-                    onPressed: () => _submitRlhfSignal(
-                      providerId: providerId,
-                      helpful: true,
-                    ),
-                    icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
-                    label: const Text('Useful'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: m.color,
-                      foregroundColor: Colors.white,
-                    ),
+                  _buildRlhfMetricChip('シグナル', '${snapshot.totalSignals}'),
+                  _buildRlhfMetricChip(
+                    'このAI',
+                    providerSignals.toString(),
                   ),
-                  OutlinedButton.icon(
-                    onPressed: () => _submitRlhfSignal(
-                      providerId: providerId,
-                      helpful: false,
-                    ),
-                    icon: const Icon(Icons.report_problem_outlined, size: 16),
-                    label: const Text('Needs fix'),
+                  _buildRlhfMetricChip(
+                    '平均',
+                    snapshot.averageRating.toStringAsFixed(1),
+                  ),
+                  _buildRlhfMetricChip(
+                    '微調整',
+                    snapshot.readyForFineTune ? '可' : '未',
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              Text(
+                snapshot.nextAction,
+                style: const TextStyle(
+                  color: Color(0xFFB0B0B0),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildFineTuneReadinessPanel(fineTune, fineTuneColor),
+              const SizedBox(height: 12),
+              if (submitting)
+                const LinearProgressIndicator(minHeight: 3)
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () => _submitRlhfSignal(
+                        providerId: providerId,
+                        helpful: true,
+                      ),
+                      icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
+                      label: const Text('役に立った'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: m.color,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => _submitRlhfSignal(
+                        providerId: providerId,
+                        helpful: false,
+                      ),
+                      icon: const Icon(Icons.report_problem_outlined, size: 16),
+                      label: const Text('改善が必要'),
+                    ),
+                  ],
+                ),
+            ],
           ],
         ),
       ),
@@ -6533,7 +6752,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  'First-party data tuning readiness',
+                  '自社データ調整の準備度',
                   style: TextStyle(
                     color: Color(0xFFE5E7EB),
                     fontSize: 13,
@@ -6578,19 +6797,19 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             runSpacing: 8,
             children: [
               _buildRlhfMetricChip(
-                'Eligible',
+                '有効',
                 '${snapshot.eligibleRecords}/${snapshot.eligibleTarget}',
               ),
-              _buildRlhfMetricChip('Total', '${snapshot.totalRecords}'),
-              _buildRlhfMetricChip('Blocked', '${snapshot.blockedRecords}'),
-              _buildRlhfMetricChip('PII', snapshot.piiRisk),
+              _buildRlhfMetricChip('総数', '${snapshot.totalRecords}'),
+              _buildRlhfMetricChip('除外', '${snapshot.blockedRecords}'),
+              _buildRlhfMetricChip('個人情報', _jaPiiRisk(snapshot.piiRisk)),
               _buildRlhfMetricChip(
-                'Eval',
-                snapshot.readyForEvalBatch ? 'Ready' : 'No',
+                '評価',
+                snapshot.readyForEvalBatch ? '可' : '未',
               ),
               _buildRlhfMetricChip(
-                'Tune',
-                snapshot.readyForFineTune ? 'Ready' : 'No',
+                '微調整',
+                snapshot.readyForFineTune ? '可' : '未',
               ),
             ],
           ),
@@ -6606,6 +6825,19 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         ],
       ),
     );
+  }
+
+  String _jaPiiRisk(String risk) {
+    switch (risk) {
+      case 'low':
+        return '低';
+      case 'medium':
+        return '中';
+      case 'high':
+        return '高';
+      default:
+        return '不明';
+    }
   }
 
   Widget _buildRlhfMetricChip(String label, String value) {

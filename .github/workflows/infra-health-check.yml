@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: infra-health-check
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: write

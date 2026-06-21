@@ -95,7 +95,6 @@ jobs:
         run: >
           flutter build web --release
           --pwa-strategy=none
-          --no-tree-shake-icons
           --dart-define=ENVIRONMENT=development
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:

@@ -98,7 +98,7 @@ jobs:
       # Build Flutter Web
       - name: Build Flutter Web (Staging)
         run: >
-          flutter build web --release --pwa-strategy=none --no-tree-shake-icons
+          flutter build web --release --pwa-strategy=none
           --dart-define=ENVIRONMENT=staging
           --dart-define=ASSET_LIABILITY_SUPABASE_SYNC_ENABLED=true
           --dart-define=ASSET_LIABILITY_SUPABASE_PRODUCTION_WRITES_ENABLED=true
