@@ -51,6 +51,7 @@ import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/asset_payment_check_guide_service.dart';
+import 'package:my_web_app/services/asset_salary_amount_store.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
 import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
@@ -308,6 +309,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 給料日(資産管理の月次サイクル基準日 / 設定で変更可 / clamp 1-28)。
   // AssetSalaryDayStore で永続化 + asset_pref_mirror(salary_day)で端末間同期。
   int _salaryDay = AssetSalaryDayStore.defaultSalaryDay;
+  // 想定給料額(手取りの目安 / 任意 / null=未登録)。登録すると給料振込の自動検知が
+  // heuristicFloor 依存から精密判定へ切り替わる。AssetSalaryAmountStore で永続化 +
+  // asset_pref_mirror(salary_amount)で端末間同期。
+  double? _salaryAmount;
   // 支払済みチェックのリセット契機を「給料がメインバンクへ振り込まれた検知」にする
   // ための、リセット承認済み給料サイクル(yyyy-MM)。AssetSalaryResetMarkerStore で
   // 永続化 + asset_pref_mirror(salary_reset_ack_cycle)で端末間同期(max-merge)。
@@ -768,6 +773,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _assetDebtTrendSyncedSignature;
   final AssetSalaryDayStore _salaryDayStore = const AssetSalaryDayStore();
   static const String _salaryDayMirrorKey = 'salary_day';
+  final AssetSalaryAmountStore _salaryAmountStore =
+      const AssetSalaryAmountStore();
+  static const String _salaryAmountMirrorKey = 'salary_amount';
   final AssetRevolvingCreditConfigStore _revolvingConfigStore =
       const AssetRevolvingCreditConfigStore();
   final AssetRecurringFixedCostStore _recurringFixedCostStore =
@@ -932,6 +940,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDisplayMode();
     _loadMainAccount();
     unawaited(_loadSalaryDay());
+    unawaited(_loadSalaryAmount());
     unawaited(_loadSalaryResetMarker());
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
@@ -8492,6 +8501,69 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 想定給料額を起動時にローカルから読み、サーバミラーで上書きする。
+  Future<void> _loadSalaryAmount() async {
+    try {
+      final amount = await _salaryAmountStore.load();
+      if (mounted && amount != _salaryAmount) {
+        setState(() => _salaryAmount = amount);
+      }
+    } catch (e) {
+      debugPrint('Error loading salary amount: $e');
+    }
+    await _restoreSalaryAmountFromMirror();
+  }
+
+  /// サーバミラー (pref_key: salary_amount) があれば採用する(設定は稀更新 +
+  /// AI 計算へは毎回 payload で渡すため scalar は集約優先で実害小)。
+  Future<void> _restoreSalaryAmountFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _bootSelectPrefMirror(_salaryAmountMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final restored = AssetSalaryAmountStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      if (!mounted || restored == _salaryAmount) {
+        return;
+      }
+      setState(() => _salaryAmount = restored);
+      _persistInBackground(
+        _salaryAmountStore.save(restored),
+        'salary amount restore save',
+      );
+    } catch (e) {
+      debugPrint('salary amount mirror restore failed: $e');
+    }
+  }
+
+  /// 想定給料額を `asset_pref_mirror` (pref_key: salary_amount) へ 1 行 upsert する。
+  /// 未登録 (null) のときは upsert しない(削除は稀なので明示クリア時のみ反映)。
+  Future<void> _mirrorSalaryAmount() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+    final amount = _salaryAmount;
+    if (amount == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _salaryAmountMirrorKey,
+        'value': AssetSalaryAmountStore.encodeMirrorValue(amount),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('salary amount mirror upsert failed: $e');
+    }
+  }
+
   /// 給料リセット承認マーカーをローカル + サーバミラーから読み込む。初回(未設定)は
   /// 当日サイクルを承認済みにして、以後のサイクル遷移だけを gating 対象にする
   /// (機能投入直後にいきなり前サイクルへ退避させない)。
@@ -8712,8 +8784,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return bestKey == null ? null : _assetData[bestKey]![accountName];
   }
 
-  /// 登録済みの想定給料額(繰り返し入金ルール / 収入予定の最大額)。無ければ null。
+  /// 自動検知に使う登録給料額。明示登録された想定給料額を最優先し、無ければ
+  /// 繰り返し入金ルール / 収入予定の最大額で推定する。いずれも無ければ null
+  /// (= ヒューリスティック検知へフォールバック)。
   double? _registeredSalaryAmount() {
+    // 明示登録された想定給料額があれば最優先(検知精度が最も高い)。
+    final explicit = _salaryAmount;
+    if (explicit != null && explicit > 0) {
+      return explicit;
+    }
     var maxAmount = 0.0;
     for (final rule in _expectedInflowRules) {
       if (rule.amount > maxAmount) {
@@ -8822,6 +8901,93 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     }
                     Navigator.of(dialogContext).pop();
                     unawaited(_setSalaryDay(day));
+                  },
+                  child: const Text('保存'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 想定給料額を更新して永続化 + ミラーする。null/0 以下はクリア(未登録)。
+  Future<void> _setSalaryAmount(double? amount) async {
+    final normalized = AssetSalaryAmountStore.normalize(amount);
+    if (normalized == _salaryAmount) {
+      return;
+    }
+    setState(() => _salaryAmount = normalized);
+    _persistInBackground(
+      _salaryAmountStore.save(normalized),
+      'salary amount save',
+    );
+    unawaited(_mirrorSalaryAmount());
+  }
+
+  /// 想定給料額(自動検知の精度を上げる手取りの目安)を設定するダイアログ。
+  Future<void> _showSalaryAmountDialog() async {
+    final initial = _salaryAmount;
+    final controller = TextEditingController(
+      text: initial == null ? '' : initial.round().toString(),
+    );
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        String? errorText;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('想定給料額'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'メインバンクへ毎サイクル振り込まれる手取りの目安を登録すると、'
+                    '入金額の一致で給料振込を自動検知でき、誤検知や取りこぼしが減ります。'
+                    '(任意 / 未登録でも残高の大きな増加で推定します)',
+                    style: TextStyle(fontSize: 12, height: 1.5),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: '想定給料額 (円)',
+                      hintText: '例: 280000',
+                      errorText: errorText,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('キャンセル'),
+                ),
+                if (initial != null)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      unawaited(_setSalaryAmount(null));
+                    },
+                    child: const Text('クリア'),
+                  ),
+                FilledButton(
+                  onPressed: () {
+                    final raw = controller.text.trim();
+                    final amount = double.tryParse(raw);
+                    if (raw.isEmpty ||
+                        amount == null ||
+                        AssetSalaryAmountStore.normalize(amount) == null) {
+                      setDialogState(() => errorText = '1 円以上の金額を入力してください');
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop();
+                    unawaited(_setSalaryAmount(amount));
                   },
                   child: const Text('保存'),
                 ),
@@ -12599,6 +12765,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return const SizedBox.shrink();
     }
     final scheme = Theme.of(context).colorScheme;
+    // 登録給料額が無いと検知は汎用しきい値 (heuristicFloor) 頼みで精度が落ちる。
+    // 未登録時は想定給料額の登録を促し、入金額一致での精密検知へ誘導する。
+    final salaryRegistered = _registeredSalaryAmount() != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -12645,6 +12814,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 label: '前サイクルの支払済みを表示中',
                 color: const Color(0xFF0E7490),
               ),
+              if (!salaryRegistered) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '想定給料額を登録すると、入金額の一致で給料振込を自動検知でき、'
+                  '誤検知や取りこぼしが減ります。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: scheme.onTertiaryContainer,
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -12655,6 +12836,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     icon: const Icon(Icons.refresh, size: 16),
                     label: const Text('残高を更新'),
                   ),
+                  if (!salaryRegistered)
+                    TextButton.icon(
+                      onPressed: () => unawaited(_showSalaryAmountDialog()),
+                      icon: const Icon(Icons.payments_outlined, size: 16),
+                      label: const Text('想定給料額を登録'),
+                    ),
                   TextButton.icon(
                     onPressed: _confirmManualSalaryReset,
                     icon: const Icon(Icons.check_circle_outline, size: 16),
@@ -21972,6 +22159,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     onPressed: () => unawaited(_showSalaryDayDialog()),
                     icon: const Icon(Icons.event_available_outlined),
                     label: Text('給料日 $_salaryDay日'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => unawaited(_showSalaryAmountDialog()),
+                    icon: const Icon(Icons.payments_outlined),
+                    label: Text(
+                      _salaryAmount == null
+                          ? '想定給料額'
+                          : '想定給料額 ¥${NumberFormat('#,###').format(_salaryAmount!.round())}',
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: _copyPreviousMonthSettings,
