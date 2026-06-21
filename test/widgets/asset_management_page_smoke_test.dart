@@ -19,6 +19,7 @@ import 'package:my_web_app/services/asset_sync_timestamp_store.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/widgets/asset_recurring_transaction_suggestion_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
+import 'package:my_web_app/widgets/subscription_audit_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -2192,6 +2193,42 @@ void main() {
 
         // 保存 future の失敗は catchError でログのみ → 未捕捉例外でクラッシュしない。
         expect(tester.takeException(), isNull);
+
+        await _unmount(tester);
+      },
+    );
+
+    testWidgets(
+      'subscription audit lists アコムショッピング枠 (shoppingDebt) as a source',
+      (tester) async {
+        final now = DateTime.now();
+        final dateKey = DateFormat('yyyy-MM-dd').format(now);
+        await tester.binding.setSurfaceSize(const Size(1200, 4000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AssetManagementPage(
+              debugInitialAssetData: <String, Map<String, double>>{
+                dateKey: const <String, double>{
+                  '財布(現金)': 10000,
+                  // 名前に「アコム」「ショッピング」を含むと shoppingDebt に分類される。
+                  'アコムショッピング枠': -50000,
+                },
+              },
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // サブスク棚卸しカードが描画され、ショッピング枠が請求先候補として
+        // 棚卸し対象に含まれる (クレジットカードに加え shoppingDebt も対象)。
+        final auditCard = find.byType(SubscriptionAuditCard);
+        expect(auditCard, findsOneWidget);
+        final card = tester.widget<SubscriptionAuditCard>(auditCard);
+        final sourceNames = card.sources.map((s) => s.name).toList();
+        expect(sourceNames, contains('アコムショッピング枠'));
 
         await _unmount(tester);
       },
