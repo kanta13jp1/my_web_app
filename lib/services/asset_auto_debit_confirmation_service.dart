@@ -12,18 +12,71 @@ class AssetAutoDebitConfirmation {
   /// 該当口座が無く残高を特定できない場合は null。
   final double? sourceAccountBalance;
 
+  /// 振替元口座の種別。与信枠 (クレカ/ショッピング枠/カードローン) は残高が常に
+  /// マイナス (=利用額) になるため、資産口座とは異なる判定を行う。特定できなければ null。
+  final AssetLiabilityAccountKind? sourceAccountKind;
+
+  /// 振替元が与信枠の場合の利用限度額 (リボ払い設定の利用限度額)。リボ設定が無い、
+  /// または限度額未設定の場合は null。与信枠で限度額が分からないときは判定しない。
+  final double? sourceAccountCreditLimit;
+
   const AssetAutoDebitConfirmation({
     required this.row,
     required this.sourceAccountBalance,
+    this.sourceAccountKind,
+    this.sourceAccountCreditLimit,
   });
 
-  /// 振替元残高が判明しており、かつ支払額を下回っている = 引落が失敗している可能性。
+  /// 引落が失敗している可能性があるか (= 要確認の警告を出すか)。
   ///
-  /// 残高を特定できない (null) 場合は判定できないため false を返す (過剰警告を避ける)。
-  /// なお現在残高は引落成功後の減算を反映していることもあるため、これは「失敗の確証」
-  /// ではなく「要確認」のヒントであり、UI でもその旨を断定せずに案内する。
-  bool get sourceBalanceInsufficient =>
-      sourceAccountBalance != null && sourceAccountBalance! < row.paymentAmount;
+  /// - 資産口座 (現金/預金など): 現在残高が支払額を下回るなら警告 (従来通り)。
+  /// - 与信枠 (クレカ/ショッピング枠/カードローン): 残高は通常マイナス (=利用額) の
+  ///   ため「残高 < 支払額」では常に誤発火する。**利用限度額が分かるときだけ**、
+  ///   利用額 (= -残高) + 今回の支払額 が限度額を超える場合のみ警告する。限度額が
+  ///   不明 (null/0) のときは判定できないため警告しない (= 翌月払いカード等の常時誤発火を防ぐ)。
+  /// 残高を特定できない (null) 場合も警告しない。これは「失敗の確証」ではなく「要確認」
+  /// のヒントであり、UI でも断定せずに案内する。
+  bool get sourceBalanceInsufficient {
+    return autoDebitSourceInsufficient(
+      balance: sourceAccountBalance,
+      kind: sourceAccountKind,
+      creditLimit: sourceAccountCreditLimit,
+      paymentAmount: row.paymentAmount,
+    );
+  }
+}
+
+/// 「引落失敗の可能性 (= 要確認)」を振替元の種別に応じて判定する純関数。
+///
+/// - 資産口座 (現金/預金など) / 種別不明: 残高 < 支払額 なら true (従来通り)。
+/// - 与信枠 (クレカ/ショッピング枠/カードローン): 残高は通常マイナス (=利用額) の
+///   ため、利用上限 [creditLimit] が分かるときだけ「利用額 (= -残高) + 支払額 > 上限」
+///   で true。上限が不明 (null/0) なら false (翌月払いカード等の常時誤発火を防ぐ)。
+/// 残高 [balance] が null (特定不能) のときは判定できないため false。
+bool autoDebitSourceInsufficient({
+  required double? balance,
+  required AssetLiabilityAccountKind? kind,
+  required double? creditLimit,
+  required double paymentAmount,
+}) {
+  if (balance == null) {
+    return false;
+  }
+  if (kind != null && _isCreditLineKind(kind)) {
+    if (creditLimit == null || creditLimit <= 0) {
+      return false;
+    }
+    return (-balance) + paymentAmount > creditLimit;
+  }
+  return balance < paymentAmount;
+}
+
+/// 残高が通常マイナス (=利用額) になる与信枠の口座種別か。これらは「残高 < 支払額」
+/// では常に警告が出てしまうため、利用限度額ベースで引落可否を判定する。
+bool _isCreditLineKind(AssetLiabilityAccountKind kind) {
+  return kind == AssetLiabilityAccountKind.creditCard ||
+      kind == AssetLiabilityAccountKind.shoppingDebt ||
+      kind == AssetLiabilityAccountKind.cardLoan;
 }
 
 /// 「支払日を過ぎたが、まだ支払済み確認をしていない直接支払い(口座振替など)」を
@@ -76,16 +129,27 @@ class AssetAutoDebitConfirmationService {
   List<AssetAutoDebitConfirmation> pendingConfirmationDetails(
     AssetLiabilityWorkbook workbook,
   ) {
-    final balanceByAccountId = <String, double>{
-      for (final account in workbook.accounts) account.id: account.balance,
+    final accountById = <String, AssetLiabilityAccount>{
+      for (final account in workbook.accounts) account.id: account,
+    };
+    // 与信枠の利用限度額はリボ払い設定 (revolvingBilling) から取得する。
+    final creditLimitByAccountId = <String, double>{
+      for (final debt in workbook.debtMasterRows)
+        if (debt.revolvingBilling != null)
+          debt.id: debt.revolvingBilling!.creditLimit,
     };
     final details = pendingConfirmations(workbook).map((row) {
       final sourceAccountId = row.paymentSourceAccountId;
+      final source = sourceAccountId == null
+          ? null
+          : accountById[sourceAccountId];
       return AssetAutoDebitConfirmation(
         row: row,
-        sourceAccountBalance: sourceAccountId == null
+        sourceAccountBalance: source?.balance,
+        sourceAccountKind: source?.kind,
+        sourceAccountCreditLimit: sourceAccountId == null
             ? null
-            : balanceByAccountId[sourceAccountId],
+            : creditLimitByAccountId[sourceAccountId],
       );
     }).toList();
     return List<AssetAutoDebitConfirmation>.unmodifiable(details);
