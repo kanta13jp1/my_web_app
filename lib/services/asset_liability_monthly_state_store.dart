@@ -641,6 +641,18 @@ class AssetLiabilityMonthlyStateStore {
     return day >= anchor ? day - anchor : day - anchor + 31;
   }
 
+  /// 支払日 2 件を給料日サイクル順 ([salaryCyclePaymentDayRank]) で比較する共有
+  /// コンパレータ。負債マスタ・定期固定費など「給料日サイクル順に並べたい」複数の
+  /// リストで同じ並びを共有するため。null (未設定) は末尾へ寄る。
+  static int compareSalaryCyclePaymentDays(
+    int? a,
+    int? b, {
+    int salaryDay = 25,
+  }) {
+    return salaryCyclePaymentDayRank(a, salaryDay: salaryDay)
+        .compareTo(salaryCyclePaymentDayRank(b, salaryDay: salaryDay));
+  }
+
   static AssetLiabilityMonthlyState copyPreviousMonthState({
     required AssetLiabilityMonthlyState previousState,
     required DateTime targetMonth,

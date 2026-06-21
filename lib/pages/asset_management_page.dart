@@ -9250,10 +9250,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       });
       if (changed && mounted) {
         final nextList = merged.values.toList()
-          ..sort((a, b) {
-            final byDay = a.paymentDay.compareTo(b.paymentDay);
-            return byDay != 0 ? byDay : a.name.compareTo(b.name);
-          });
+          ..sort(_compareRecurringFixedCostsByPaymentDay);
         setState(() {
           _recurringFixedCosts = nextList;
         });
@@ -10014,10 +10011,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       } else {
         next.add(cost);
       }
-      next.sort((a, b) {
-        final byDay = a.paymentDay.compareTo(b.paymentDay);
-        return byDay != 0 ? byDay : a.name.compareTo(b.name);
-      });
+      next.sort(_compareRecurringFixedCostsByPaymentDay);
       _recurringFixedCosts = next;
     });
     _persistInBackground(
@@ -10104,7 +10098,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final utilityCosts = <AssetRecurringFixedCost>[
       for (final cost in _recurringFixedCosts)
         if (cost.category == AssetRecurringFixedCostCategory.utility) cost,
-    ];
+    ]..sort(_compareRecurringFixedCostsByPaymentDay);
     return RecurringFixedCostCard(
       costs: utilityCosts,
       sourceAccountNames: sourceNames,
@@ -10136,7 +10130,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final subscriptionCosts = <AssetRecurringFixedCost>[
       for (final cost in _recurringFixedCosts)
         if (cost.category == AssetRecurringFixedCostCategory.subscription) cost,
-    ];
+    ]..sort(_compareRecurringFixedCostsByPaymentDay);
     return SubscriptionFixedCostCard(
       costs: subscriptionCosts,
       sourceAccountNames: sourceNames,
@@ -24190,15 +24184,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   ) {
     // 給料日サイクル順 (給料日起点) に並べる。salaryDay=25 なら
     // 25,26…31,1…24 の順。未設定 (null) は末尾。
-    final rankA = AssetLiabilityMonthlyStateStore.salaryCyclePaymentDayRank(
+    final day = AssetLiabilityMonthlyStateStore.compareSalaryCyclePaymentDays(
       a.paymentDay,
-      salaryDay: _salaryDay,
-    );
-    final rankB = AssetLiabilityMonthlyStateStore.salaryCyclePaymentDayRank(
       b.paymentDay,
       salaryDay: _salaryDay,
     );
-    final day = rankA.compareTo(rankB);
     if (day != 0) {
       return day;
     }
@@ -24207,6 +24197,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return balance;
     }
     return a.name.compareTo(b.name);
+  }
+
+  /// 定期固定費を給料日サイクル順に並べる。負債マスタ
+  /// ([_compareDebtRowsByPaymentDay]) と同じ起点・同じ rank を共有し、支払日が同じ
+  /// ときは名前順。paymentDay は非 null int なので null 救済は不要。
+  int _compareRecurringFixedCostsByPaymentDay(
+    AssetRecurringFixedCost a,
+    AssetRecurringFixedCost b,
+  ) {
+    final day = AssetLiabilityMonthlyStateStore.compareSalaryCyclePaymentDays(
+      a.paymentDay,
+      b.paymentDay,
+      salaryDay: _salaryDay,
+    );
+    return day != 0 ? day : a.name.compareTo(b.name);
   }
 
   List<AssetLiabilityDebtRow> _filteredDebtMasterRows(
