@@ -1905,5 +1905,31 @@ void main() {
       );
       expect(excluded.accounts.any((a) => a.name.contains('水道')), isFalse);
     });
+
+    test('treats a self-referential payment source as unset', () {
+      // 振替元が自分自身を指す不正設定は「未設定」に正規化する
+      // (ローンを自分自身からは返済できない / 自己宛て誤ルーティング防止)。
+      final selfRef = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: const <String, String>{'mobit': 'mobit'},
+      );
+      final selfMobit = selfRef.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+      expect(selfMobit.paymentSourceAccountId, isNull);
+      expect(selfMobit.paymentSourceAccountName, isNull);
+
+      // 自分以外の口座IDは従来どおり保持する (回帰なし)。
+      final other = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
+      );
+      final otherMobit = other.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+      expect(otherMobit.paymentSourceAccountId, 'smbc_otsuka');
+    });
   });
 }

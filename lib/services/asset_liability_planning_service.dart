@@ -756,7 +756,13 @@ class AssetLiabilityPlanningService {
     );
     final principalPayment = max(0.0, scheduledPayment - interest);
     final afterPayment = -max(0.0, principal + interest - scheduledPayment);
-    final paymentSourceAccountId = paymentSourceAccountIds[account.id];
+    final rawPaymentSourceAccountId = paymentSourceAccountIds[account.id];
+    // 振替元が自分自身を指す設定は不正 (ローンを自分自身からは返済できない) なので
+    // 未設定扱いにする。これにより「支払原資口座の未設定」セクションに表示され、正しい
+    // 口座 (例: じぶん銀行) へ修正できるようになり、見込み残高の自己宛て誤ルーティングも防ぐ。
+    final paymentSourceAccountId = rawPaymentSourceAccountId == account.id
+        ? null
+        : rawPaymentSourceAccountId;
     final paymentSourceAccountName = paymentSourceAccountId == null
         ? null
         : accountsById[paymentSourceAccountId]?.name;
