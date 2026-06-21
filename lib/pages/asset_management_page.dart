@@ -38,6 +38,7 @@ import 'package:my_web_app/services/asset_management_ai_summary_refresh.dart';
 import 'package:my_web_app/services/asset_management_ai_summary_service.dart';
 import 'package:my_web_app/services/asset_management_display_mode_store.dart';
 import 'package:my_web_app/services/asset_account_balance_history_store.dart';
+import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
@@ -49,6 +50,8 @@ import 'package:my_web_app/services/asset_subscription_audit_store.dart';
 import 'package:my_web_app/services/asset_subscription_catalog.dart';
 import 'package:my_web_app/services/asset_subscription_duplicate_detector.dart';
 import 'package:my_web_app/services/asset_salary_day_store.dart';
+import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
+import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
@@ -112,6 +115,30 @@ enum _CardBillingSaveScope { defaultSetting, monthlyOverride }
 enum _PaymentSourceSaveScope { monthlyOverride, defaultSetting }
 
 enum _DebtMasterReviewFilter { all, billingConfirmation, paymentSource }
+
+/// アクションアイテムから「対処できる場所」へのジャンプリンク文言を返す。
+/// null の場合はリンクを表示しない (関連口座が無い種別など)。
+/// 純関数なので widget を組まずに種別→文言の対応をテストできる。
+@visibleForTesting
+String? assetManagementActionJumpLabel(AssetManagementInsightActionItem item) {
+  final accountId = item.relatedAccountId;
+  if (accountId == null || accountId.trim().isEmpty) {
+    return null;
+  }
+  return switch (item.type) {
+    AssetManagementInsightActionType.missingPaymentDay => '支払日を入力する',
+    AssetManagementInsightActionType.missingInput => '今月支払予定額を入力する',
+    AssetManagementInsightActionType.missingAnnualRate => '利率を入力する',
+    AssetManagementInsightActionType.missingPaymentSource => '支払原資口座を設定する',
+    AssetManagementInsightActionType.cardBillingConfiguration =>
+      '支払い方式と請求先カードを設定する',
+    AssetManagementInsightActionType.doubleCountingRisk => '支払い方式を整理する',
+    AssetManagementInsightActionType.overduePayment => '支払済みチェックへ移動',
+    AssetManagementInsightActionType.upcomingPayment => '支払予定を確認する',
+    AssetManagementInsightActionType.cashShortageRisk => '支払予定を確認する',
+    _ => null,
+  };
+}
 
 class _PaymentSourceCandidate {
   final AssetLiabilityAccount account;
@@ -279,6 +306,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 給料日(資産管理の月次サイクル基準日 / 設定で変更可 / clamp 1-28)。
   // AssetSalaryDayStore で永続化 + asset_pref_mirror(salary_day)で端末間同期。
   int _salaryDay = AssetSalaryDayStore.defaultSalaryDay;
+  // 支払済みチェックのリセット契機を「給料がメインバンクへ振り込まれた検知」にする
+  // ための、リセット承認済み給料サイクル(yyyy-MM)。AssetSalaryResetMarkerStore で
+  // 永続化 + asset_pref_mirror(salary_reset_ack_cycle)で端末間同期(max-merge)。
+  // 当日サイクルがこのマーカーと一致しない間は前サイクルの支払済みチェックを保持し、
+  // 残高更新を促す。検知 or 手動承認でマーカーを当日サイクルへ前進=リセット。
+  final AssetSalaryResetMarkerStore _salaryResetMarkerStore =
+      const AssetSalaryResetMarkerStore();
+  static const String _salaryResetMarkerMirrorKey = 'salary_reset_ack_cycle';
+  String? _ackedResetCycleKey;
+  // 検知成立後の二重スケジュール防止(post-frame ack 中のサイクルキー)。
+  String? _pendingSalaryResetAck;
   static const List<Color> _salarySpendingChartColors = <Color>[
     Color(0xFF0F766E),
     Color(0xFF2563EB),
@@ -312,6 +350,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
+
+  /// 起動時の `asset_pref_mirror` 個別読み取り (~20 箇所) を 1 回のバッチ取得へ
+  /// 集約するためのプリフェッチ結果 (`pref_key` → 行)。null = 未起動 / 失効後 で、
+  /// その場合は各読み取りが従来どおり個別 `.eq('pref_key', X)` へフォールバックする。
+  /// 同時多発する REST が `ERR_INSUFFICIENT_RESOURCES` を誘発するのを緩和する。
+  Future<Map<String, Map<String, dynamic>>>? _bootPrefMirrorFuture;
+
+  /// 起動バーストが収束したらキャッシュを失効させ、以降の読み取りを最新化する。
+  Timer? _bootPrefMirrorExpiryTimer;
 
   // Supabaseに保存する「今日の締め」状態
   bool _assetsDone = false;
@@ -392,11 +439,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select('pref_key')
-          .eq('pref_key', prefKey)
-          .limit(1);
+      final rows = await _bootSelectPrefMirror(prefKey);
       // select の間にログアウト/別アカウントへ切替わっていないか再確認する。
       // 前アカウントのローカル値を新しい user_id で誤アップロードしない (review medium)。
       if (_supabase.auth.currentUser?.id != userId) {
@@ -408,6 +451,58 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } catch (e) {
       debugPrint('pref backfill check failed ($prefKey): $e');
     }
+  }
+
+  /// 当該ユーザーの `asset_pref_mirror` 行を 1 回だけまとめて取得し `pref_key` で
+  /// 索引する。起動時の多数の個別読み取りを 1 回の REST に集約するための土台。
+  Future<Map<String, Map<String, dynamic>>> _fetchAllPrefMirror() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return <String, Map<String, dynamic>>{};
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('user_id', userId);
+      return indexPrefMirrorRowsByKey(rows);
+    } catch (e) {
+      debugPrint('boot pref mirror prefetch failed: $e');
+      return <String, Map<String, dynamic>>{};
+    }
+  }
+
+  /// 起動時バッチ取得から [prefKey] の行群を返す。個別
+  /// `.eq('pref_key', prefKey)` select と同形 (0〜1 行のリスト) を返すため、各
+  /// 読み取り側のロジックは不変。バッチ未起動 / 失効後 / 未ログインなら従来どおり
+  /// 個別フェッチへフォールバックする (= 振る舞い保存)。
+  Future<List<Map<String, dynamic>>> _bootSelectPrefMirror(String prefKey) {
+    return _bootSelectPrefMirrorKeys(<String>[prefKey]);
+  }
+
+  /// [prefKeys] のいずれかに一致する行をまとめて返す (個別 `.inFilter('pref_key', …)`
+  /// select と同形)。バッチが有効なら 1 回の取得結果から抽出し、無効なら個別 select
+  /// へフォールバックする。
+  Future<List<Map<String, dynamic>>> _bootSelectPrefMirrorKeys(
+    List<String> prefKeys,
+  ) async {
+    final future = _bootPrefMirrorFuture;
+    if (future != null) {
+      final cache = await future;
+      return <Map<String, dynamic>>[
+        for (final key in prefKeys)
+          if (cache[key] != null) cache[key]!,
+      ];
+    }
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return <Map<String, dynamic>>[];
+    }
+    final rows = await _supabase
+        .from('asset_pref_mirror')
+        .select()
+        .inFilter('pref_key', prefKeys);
+    return List<Map<String, dynamic>>.from(rows);
   }
 
   /// union マージでローカルデータが変化した後、ローカル更新時刻をミラー版
@@ -805,6 +900,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
         );
+    // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
+    // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
+    // 起動バーストが収束したらキャッシュを失効させ、以降は最新を個別取得する。
+    _bootPrefMirrorFuture = _fetchAllPrefMirror();
+    _bootPrefMirrorExpiryTimer = Timer(const Duration(seconds: 20), () {
+      _bootPrefMirrorFuture = null;
+    });
     _loadDataFromSupabase();
     _loadAssetLiabilityMonthlyState();
     _loadWatchlistEntries();
@@ -816,6 +918,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDisplayMode();
     _loadMainAccount();
     unawaited(_loadSalaryDay());
+    unawaited(_loadSalaryResetMarker());
     unawaited(_loadRevolvingConfigs());
     unawaited(_loadCategoryBudgets());
     unawaited(_loadRecurringFixedCosts());
@@ -845,6 +948,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           nextMonthKey != _loadedAssetLiabilityMonthKey) {
         unawaited(_loadAssetLiabilityMonthlyState());
       }
+      // リセット保留中(新サイクルだが未検知)なら給料振込を再評価する。
+      // 通常時は _salaryResetPending=false で即 return するため軽量。
+      _maybeDetectSalaryDeposit();
     });
     _fetchTodayClosing();
     _loadSourceOptionsFromDb();
@@ -878,6 +984,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
+    _bootPrefMirrorExpiryTimer?.cancel();
     _annualRateEvidencePasteRegistration?.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -977,11 +1084,39 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   DateTime _monthStart(DateTime dt) => DateTime(dt.year, dt.month, 1);
 
   DateTime _assetLiabilityStateMonth(DateTime dt) {
-    return AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+    final dateCycle = AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
       dt,
       salaryDay: _salaryDay,
     );
+    // 給料振込を検知/承認したサイクルだけ新サイクルへ切り替える。未承認の間は前サイクル
+    // に留まり、支払済みチェック等の月次stateを保持する(暦の給料日では切り替えない)。
+    // マーカー未設定(初回)は当日サイクルを採用。load/save/sync すべてこの実効月を
+    // 共有するため、ウィンドウ中の編集も前サイクルへ対称に書かれる(非対称消失なし)。
+    final dateCycleKey =
+        AssetLiabilityMonthlyStateStore.formatMonthKey(dateCycle);
+    if (!AssetSalaryResetMarkerStore.isResetPending(
+      dateCycleKey: dateCycleKey,
+      ackedCycleKey: _ackedResetCycleKey,
+    )) {
+      return dateCycle;
+    }
+    return DateTime(dateCycle.year, dateCycle.month - 1);
   }
+
+  String _currentSalaryCycleKey() {
+    return AssetLiabilityMonthlyStateStore.formatMonthKey(
+      AssetLiabilityMonthlyStateStore.salaryCycleMonthFor(
+        _now,
+        salaryDay: _salaryDay,
+      ),
+    );
+  }
+
+  /// 当日サイクルがまだリセット承認されていない(=前サイクルの支払済みを表示中)。
+  bool get _salaryResetPending => AssetSalaryResetMarkerStore.isResetPending(
+        dateCycleKey: _currentSalaryCycleKey(),
+        ackedCycleKey: _ackedResetCycleKey,
+      );
 
   String _assetLiabilityStateMonthKey(DateTime dt) {
     return AssetLiabilityMonthlyStateStore.formatMonthKey(
@@ -1693,6 +1828,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       if (generatedTemplatePlans) {
         unawaited(_saveAssetLiabilityMonthlyState());
       }
+      // 月次stateロード後(残高/フローも揃った状態)に給料振込検知を再評価する。
+      _maybeDetectSalaryDeposit();
     } catch (e) {
       debugPrint('Error loading asset liability monthly state: $e');
     }
@@ -3971,11 +4108,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   List<AssetLiabilityAccount> _cardBillingAccountOptions(
-    AssetLiabilityWorkbook workbook,
-  ) {
+    AssetLiabilityWorkbook workbook, {
+    bool includeShoppingDebt = false,
+  }) {
     return workbook.accounts
         .where(
-          (account) => account.kind == AssetLiabilityAccountKind.creditCard,
+          (account) =>
+              account.kind == AssetLiabilityAccountKind.creditCard ||
+              (includeShoppingDebt &&
+                  account.kind == AssetLiabilityAccountKind.shoppingDebt),
         )
         .toList()
       ..sort((a, b) => a.name.compareTo(b.name));
@@ -5656,10 +5797,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       Map<String, dynamic>? value = debugMirror;
       if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'watchlist_entries_deleted');
+        final rows = await _bootSelectPrefMirror('watchlist_entries_deleted');
         if (rows.isEmpty) {
           return;
         }
@@ -5720,10 +5858,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         value = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _watchlistMirrorKey);
+        final rows = await _bootSelectPrefMirror(_watchlistMirrorKey);
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル。
           if (hasLocal) {
@@ -6163,6 +6298,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
       await _fetchTodayClosing();
+      // メイン口座の残高更新が給料反映なら、ここで検知して支払済みをリセットする
+      // (残高増は入金フローを生成しないため、残高窓ベースの検知が要)。
+      _maybeDetectSalaryDeposit();
     } catch (e) {
       debugPrint('Error saving assets: $e');
     }
@@ -6762,6 +6900,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _recentFlows.isNotEmpty || _subscriptions.isNotEmpty,
           ),
         );
+        // フロー更新後に給料振込検知を再評価(サイクル窓の収入が増えた可能性)。
+        _maybeDetectSalaryDeposit();
       }
     } catch (e) {
       debugPrint('Error fetching flows: $e');
@@ -8141,6 +8281,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildSyncStatusBanner(),
             _buildUnsyncedBadgeRow(),
             _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
+            _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
             _buildDisplayModeSwitcher(),
             const SizedBox(height: 12),
@@ -8295,10 +8436,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _salaryDayMirrorKey);
+      final rows = await _bootSelectPrefMirror(_salaryDayMirrorKey);
       if (rows.isEmpty) {
         return;
       }
@@ -8338,6 +8476,270 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  /// 給料リセット承認マーカーをローカル + サーバミラーから読み込む。初回(未設定)は
+  /// 当日サイクルを承認済みにして、以後のサイクル遷移だけを gating 対象にする
+  /// (機能投入直後にいきなり前サイクルへ退避させない)。
+  Future<void> _loadSalaryResetMarker() async {
+    try {
+      final stored = await _salaryResetMarkerStore.load();
+      if (mounted && stored != _ackedResetCycleKey) {
+        setState(() => _ackedResetCycleKey = stored);
+      } else {
+        _ackedResetCycleKey = stored;
+      }
+    } catch (e) {
+      debugPrint('Error loading salary reset marker: $e');
+    }
+    await _restoreSalaryResetMarkerFromMirror();
+    if (_ackedResetCycleKey == null) {
+      await _acknowledgeSalaryReset(
+        _currentSalaryCycleKey(),
+        reloadMonthlyState: false,
+      );
+    }
+  }
+
+  /// サーバミラー (pref_key: salary_reset_ack_cycle) を max-merge で採用する。
+  /// 古い端末がマーカーを巻き戻さないよう、常に新しいサイクルキーを優先する。
+  Future<void> _restoreSalaryResetMarkerFromMirror() async {
+    if (_supabase.auth.currentUser == null) {
+      return;
+    }
+    try {
+      final rows = await _supabase
+          .from('asset_pref_mirror')
+          .select()
+          .eq('pref_key', _salaryResetMarkerMirrorKey);
+      if (rows.isEmpty) {
+        return;
+      }
+      final restored = AssetSalaryResetMarkerStore.decodeMirrorValue(
+        rows.first['value'],
+      );
+      final merged = AssetSalaryResetMarkerStore.mergeLater(
+        _ackedResetCycleKey,
+        restored,
+      );
+      if (!mounted || merged == _ackedResetCycleKey) {
+        return;
+      }
+      setState(() => _ackedResetCycleKey = merged);
+      _persistInBackground(
+        _salaryResetMarkerStore.save(merged),
+        'salary reset marker restore save',
+      );
+      // 実効サイクルが変わるため月次stateを読み直す。
+      unawaited(_loadAssetLiabilityMonthlyState());
+    } catch (e) {
+      debugPrint('salary reset marker mirror restore failed: $e');
+    }
+  }
+
+  /// 給料リセット承認マーカーを `asset_pref_mirror` へ 1 行 upsert する。
+  Future<void> _mirrorSalaryResetMarker() async {
+    final userId = _supabase.auth.currentUser?.id;
+    final marker = _ackedResetCycleKey;
+    if (userId == null || marker == null) {
+      return;
+    }
+    try {
+      await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+        'user_id': userId,
+        'pref_key': _salaryResetMarkerMirrorKey,
+        'value': AssetSalaryResetMarkerStore.encodeMirrorValue(marker),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('salary reset marker mirror upsert failed: $e');
+    }
+  }
+
+  /// 指定サイクルまでリセットを承認(=新サイクルへ切替)する。max-merge で前進のみ。
+  /// 前進したら永続化 + ミラー + (必要なら)月次state再読込で支払済みチェックを
+  /// 新サイクル(通常は空)へ切り替える。
+  Future<void> _acknowledgeSalaryReset(
+    String cycleKey, {
+    bool reloadMonthlyState = true,
+  }) async {
+    final merged = AssetSalaryResetMarkerStore.mergeLater(
+      _ackedResetCycleKey,
+      cycleKey,
+    );
+    if (merged == _ackedResetCycleKey) {
+      return;
+    }
+    if (mounted) {
+      setState(() => _ackedResetCycleKey = merged);
+    } else {
+      _ackedResetCycleKey = merged;
+    }
+    _persistInBackground(
+      _salaryResetMarkerStore.save(merged),
+      'salary reset marker save',
+    );
+    unawaited(_mirrorSalaryResetMarker());
+    if (reloadMonthlyState) {
+      await _loadAssetLiabilityMonthlyState();
+    }
+  }
+
+  /// 当日サイクルが未承認のときだけ給料振込を検知し、検知できたらリセットを承認する。
+  /// build からではなくイベント(月次stateロード後 / フロー取得後 / 残高更新後 / 1秒
+  /// タイマー)から呼ぶ。未承認でない通常時はワークブックも作らず即 return(軽量)。
+  /// 冪等(承認後はマーカー一致でこの分岐に入らない / `_pendingSalaryResetAck` で多重防止)。
+  void _maybeDetectSalaryDeposit() {
+    if (!_salaryResetPending) {
+      return;
+    }
+    final currentCycleKey = _currentSalaryCycleKey();
+    if (_pendingSalaryResetAck == currentCycleKey) {
+      return;
+    }
+    final workbook = _buildCurrentAssetLiabilityWorkbook();
+    if (workbook == null) {
+      return;
+    }
+    final detection = _computeSalaryDepositDetection(workbook);
+    if (!detection.detected) {
+      return;
+    }
+    _pendingSalaryResetAck = currentCycleKey;
+    unawaited(
+      _acknowledgeSalaryReset(currentCycleKey).whenComplete(() {
+        _pendingSalaryResetAck = null;
+      }),
+    );
+  }
+
+  /// 現サイクルにメインバンクへの給料振込があったかを推定する。
+  SalaryDepositDetection _computeSalaryDepositDetection(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final incomeFlows = <SalaryDepositFlowObservation>[
+      for (final flow in _flowsForCycle(_now))
+        if (_isIncomeActionType(flow['action_type']?.toString() ?? ''))
+          SalaryDepositFlowObservation(
+            amount: ((flow['amount'] as num?)?.toDouble() ?? 0).abs(),
+            occurredAt: DateTime.tryParse(flow['occurred_at']?.toString() ?? '')
+                    ?.toLocal() ??
+                _now,
+          ),
+    ];
+    return AssetSalaryDepositDetector.detect(
+      cycleIncomeFlows: incomeFlows,
+      balances: _mainAccountBalanceWindow(workbook),
+      expectedSalaryAmount: _registeredSalaryAmount(),
+    );
+  }
+
+  /// メインバンク口座の「前サイクル末 → 現在」の残高窓。残高更新だけでは入金フローが
+  /// 生成されないため(残高ドロップ時のみ自動記録)、給料反映の検知はこの残高増に依る。
+  MainAccountBalanceWindow _mainAccountBalanceWindow(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final mainAccount = _resolveMainAccountForDetection(workbook);
+    if (mainAccount == null) {
+      return MainAccountBalanceWindow.unknown;
+    }
+    final cycleStart = AssetLiabilityMonthlyStateStore.salaryCycleStart(
+      _now,
+      salaryDay: _salaryDay,
+    );
+    return MainAccountBalanceWindow(
+      previousCycleEndBalance: _historicalAccountBalanceBefore(
+        mainAccount.name,
+        cycleStart,
+      ),
+      currentBalance: mainAccount.balance,
+    );
+  }
+
+  /// メインバンク = メイン口座指定があればそれ、無ければ残高最大の非現金資産口座。
+  /// `_buildMainAccountSelector` と同じ候補ロジック。
+  AssetLiabilityAccount? _resolveMainAccountForDetection(
+    AssetLiabilityWorkbook workbook,
+  ) {
+    final candidates = workbook.accounts
+        .where(
+          (account) =>
+              account.kind != AssetLiabilityAccountKind.cash && account.isAsset,
+        )
+        .toList()
+      ..sort((a, b) => b.balance.compareTo(a.balance));
+    if (candidates.isEmpty) {
+      return null;
+    }
+    for (final account in candidates) {
+      if (account.id == _assetManagementMainAccountId) {
+        return account;
+      }
+    }
+    return candidates.first;
+  }
+
+  /// `_assetData` ({yyyy-MM-dd: {口座名: 残高}}) から [asOf] より厳密に前で最も新しい
+  /// 日付の残高を返す(= 前サイクル末時点の残高)。記録が無ければ null。
+  double? _historicalAccountBalanceBefore(String accountName, DateTime asOf) {
+    final asOfKey = _dateOnly(asOf);
+    String? bestKey;
+    for (final entry in _assetData.entries) {
+      if (!entry.value.containsKey(accountName)) {
+        continue;
+      }
+      if (entry.key.compareTo(asOfKey) >= 0) {
+        continue;
+      }
+      if (bestKey == null || entry.key.compareTo(bestKey) > 0) {
+        bestKey = entry.key;
+      }
+    }
+    return bestKey == null ? null : _assetData[bestKey]![accountName];
+  }
+
+  /// 登録済みの想定給料額(繰り返し入金ルール / 収入予定の最大額)。無ければ null。
+  double? _registeredSalaryAmount() {
+    var maxAmount = 0.0;
+    for (final rule in _expectedInflowRules) {
+      if (rule.amount > maxAmount) {
+        maxAmount = rule.amount;
+      }
+    }
+    for (final plan in _monthlyIncomePlans) {
+      if (plan.amount > maxAmount) {
+        maxAmount = plan.amount;
+      }
+    }
+    return maxAmount > 0 ? maxAmount : null;
+  }
+
+  /// 手動で「給料を受け取った」=支払済みチェックを新サイクルへリセットする。
+  Future<void> _confirmManualSalaryReset() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('給料を受け取った'),
+        content: const Text(
+          '支払済みチェックを新しい給料サイクルへリセットします。'
+          '前サイクルのチェックは消えます。よろしいですか?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('リセット'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    await _acknowledgeSalaryReset(_currentSalaryCycleKey());
+  }
+
   /// 給料日を更新して永続化 + ミラー + 月次state再読込(サイクル基準が変わる)。
   Future<void> _setSalaryDay(int day) async {
     final clamped = AssetSalaryDayStore.clampDay(day);
@@ -8367,7 +8769,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 children: [
                   const Text(
                     '資産管理は給料日から翌給料日の前日までを1サイクルとして集計します'
-                    '(支払済みチェックもこのサイクルで自動リセット)。',
+                    '(支払済みチェックは給料の振込を検知して新サイクルへ切り替え)。',
                     style: TextStyle(fontSize: 12, height: 1.5),
                   ),
                   const SizedBox(height: 12),
@@ -8460,10 +8862,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         value = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _mainAccountMirrorKey);
+        final rows = await _bootSelectPrefMirror(_mainAccountMirrorKey);
         if (rows.isEmpty) {
           return;
         }
@@ -8521,14 +8920,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       var hasInflowOnServer = false;
       if (user != null) {
         try {
-          final rows = await _supabase
-              .from('asset_pref_mirror')
-              .select('pref_key')
-              .eq('user_id', user.id);
-          for (final row in rows) {
-            final key = row['pref_key'];
-            if (key is String) {
-              presentPrefKeys.add(key);
+          final boot = _bootPrefMirrorFuture;
+          if (boot != null) {
+            presentPrefKeys.addAll((await boot).keys);
+          } else {
+            final rows = await _supabase
+                .from('asset_pref_mirror')
+                .select('pref_key')
+                .eq('user_id', user.id);
+            for (final row in rows) {
+              final key = row['pref_key'];
+              if (key is String) {
+                presentPrefKeys.add(key);
+              }
             }
           }
         } catch (e) {
@@ -8680,10 +9084,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     final hasLocal = _categoryBudgets.isNotEmpty;
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _categoryBudgetsMirrorKey);
+      final rows = await _bootSelectPrefMirror(_categoryBudgetsMirrorKey);
       if (rows.isEmpty) {
         if (hasLocal) {
           unawaited(_mirrorCategoryBudgets());
@@ -8779,10 +9180,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _recurringFixedCostsMirrorKey);
+        final rows = await _bootSelectPrefMirror(_recurringFixedCostsMirrorKey);
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル (他端末へ同期させる)。
           if (hasLocal) {
@@ -8930,10 +9328,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         serverValue = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _subscriptionAuditMirrorKey);
+        final rows = await _bootSelectPrefMirror(_subscriptionAuditMirrorKey);
         if (rows.isEmpty) {
           // サーバ行無し: ローカルにあれば初回バックフィル。
           if (localCheckedBefore.isNotEmpty ||
@@ -9103,6 +9498,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 棚卸し対象の支払い元: manual (Apple/au/Google) + 銀行 + カード別 (口座から導出)。
+  /// カード別はクレジットカードに加え、サブスクの請求先になりうるショッピング枠
+  /// (アコムショッピング枠など shoppingDebt) も含める (定期固定費エディタの請求先と同じ集合)。
   List<SubscriptionAuditSource> _subscriptionAuditSources(
     AssetLiabilityWorkbook? workbook,
   ) {
@@ -9111,7 +9508,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetSubscriptionAuditCatalog.bankSource,
     ];
     if (workbook != null) {
-      for (final account in _cardBillingAccountOptions(workbook)) {
+      final cardOptions = _cardBillingAccountOptions(
+        workbook,
+        includeShoppingDebt: true,
+      );
+      for (final account in cardOptions) {
         sources.add(
           SubscriptionAuditSource(
             id: AssetSubscriptionAuditCatalog.cardSourceId(account.id),
@@ -9279,10 +9680,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       Map<String, dynamic>? value = debugMirror;
       if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _recurringFixedCostsDeletedMirrorKey);
+        final rows = await _bootSelectPrefMirror(
+          _recurringFixedCostsDeletedMirrorKey,
+        );
         if (rows.isEmpty) {
           return;
         }
@@ -9339,10 +9739,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _recurringIgnoredMirrorKey);
+      final rows = await _bootSelectPrefMirror(_recurringIgnoredMirrorKey);
       if (rows.isEmpty) {
         return;
       }
@@ -9425,10 +9822,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _duplicateIgnoredMirrorKey);
+      final rows = await _bootSelectPrefMirror(_duplicateIgnoredMirrorKey);
       if (rows.isEmpty) {
         return;
       }
@@ -9526,10 +9920,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', _recurringIncomeIgnoredMirrorKey);
+      final rows = await _bootSelectPrefMirror(
+        _recurringIncomeIgnoredMirrorKey,
+      );
       if (rows.isEmpty) {
         return;
       }
@@ -10080,10 +10473,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', _revolvingConfigsMirrorKey);
+        final rows = await _bootSelectPrefMirror(_revolvingConfigsMirrorKey);
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル (旧端末で設定済みの
           // リボ設定をサーバへ上げ、他端末へ同期させる)。
@@ -10241,10 +10631,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       Map<String, dynamic>? value = debugMirror;
       if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'revolving_credit_configs_deleted');
+        final rows = await _bootSelectPrefMirror(
+          'revolving_credit_configs_deleted',
+        );
         if (rows.isEmpty) {
           return;
         }
@@ -10509,14 +10898,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 集約行を優先し、無ければ legacy per-key 行を per-key 形へ正規化して返す。
   Future<List<Map<String, dynamic>>> _fetchDisplayPrefRows() async {
-    final rows = List<Map<String, dynamic>>.from(
-      await _supabase.from('asset_pref_mirror').select().inFilter(
-            'pref_key',
-            AssetMirrorReadPolicy.readPrefKeys(
-              aggregatedKey: _displayPrefsAggregatedKey,
-              legacyKeys: const <String>['display_mode', 'section_overrides'],
-            ),
-          ),
+    final rows = await _bootSelectPrefMirrorKeys(
+      AssetMirrorReadPolicy.readPrefKeys(
+        aggregatedKey: _displayPrefsAggregatedKey,
+        legacyKeys: const <String>['display_mode', 'section_overrides'],
+      ),
     );
     for (final row in rows) {
       if (row['pref_key'] == _displayPrefsAggregatedKey) {
@@ -10547,14 +10933,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       } else {
         // 集約行 (asset_display_prefs_v1) を優先、無ければ legacy 行。
-        final rows =
-            await _supabase.from('asset_pref_mirror').select().inFilter(
-                  'pref_key',
-                  AssetMirrorReadPolicy.readPrefKeys(
-                    aggregatedKey: _displayPrefsAggregatedKey,
-                    legacyKeys: const <String>['section_override_deleted'],
-                  ),
-                );
+        final rows = await _bootSelectPrefMirrorKeys(
+          AssetMirrorReadPolicy.readPrefKeys(
+            aggregatedKey: _displayPrefsAggregatedKey,
+            legacyKeys: const <String>['section_override_deleted'],
+          ),
+        );
         Map<String, dynamic>? aggregated;
         Map<String, dynamic>? legacy;
         for (final row in rows) {
@@ -11257,10 +11641,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         value = debugMirror;
         mirrorUpdatedAt = DateTime.now().toUtc();
       } else {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'debt_payment_day_overrides');
+        final rows = await _bootSelectPrefMirror('debt_payment_day_overrides');
         if (rows.isEmpty) {
           // サーバ行が無い: ローカルにあれば初回バックフィル。
           if (hasLocal) {
@@ -11387,10 +11768,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     try {
-      final rows = await _supabase
-          .from('asset_pref_mirror')
-          .select()
-          .eq('pref_key', 'account_balance_history');
+      final rows = await _bootSelectPrefMirror('account_balance_history');
       if (rows.isEmpty) {
         return;
       }
@@ -11483,14 +11861,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ids = AssetExpectedInflowStore.decodeDeletedIdsMirror(debugMirror);
       } else {
         // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
-        final rows =
-            await _supabase.from('asset_pref_mirror').select().inFilter(
-                  'pref_key',
-                  AssetMirrorReadPolicy.readPrefKeys(
-                    aggregatedKey: _inflowPrefsAggregatedKey,
-                    legacyKeys: const <String>['inflow_deleted_ids'],
-                  ),
-                );
+        final rows = await _bootSelectPrefMirrorKeys(
+          AssetMirrorReadPolicy.readPrefKeys(
+            aggregatedKey: _inflowPrefsAggregatedKey,
+            legacyKeys: const <String>['inflow_deleted_ids'],
+          ),
+        );
         Map<String, dynamic>? aggregated;
         Map<String, dynamic>? legacy;
         for (final row in rows) {
@@ -11553,13 +11929,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
     try {
       // 集約行 (asset_inflow_prefs_v1) を優先、無ければ legacy 行。
-      final rows = await _supabase.from('asset_pref_mirror').select().inFilter(
-            'pref_key',
-            AssetMirrorReadPolicy.readPrefKeys(
-              aggregatedKey: _inflowPrefsAggregatedKey,
-              legacyKeys: const <String>['inflow_tombstone_gc'],
-            ),
-          );
+      final rows = await _bootSelectPrefMirrorKeys(
+        AssetMirrorReadPolicy.readPrefKeys(
+          aggregatedKey: _inflowPrefsAggregatedKey,
+          legacyKeys: const <String>['inflow_tombstone_gc'],
+        ),
+      );
       Map<String, dynamic>? aggregated;
       Map<String, dynamic>? legacy;
       for (final row in rows) {
@@ -12206,6 +12581,84 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 支払日を過ぎた自動振替・固定費の「引落確認待ち」カード。引落済みなら
   // ユーザーが確認 → 支払済み(現在残高に反映済み)扱いにし、見込み残高の
   // 二重控除を防ぐ。引落失敗の可能性があるため自動では支払済みにしない。
+  /// 新しい給料サイクルに入ったが給料振込をまだ検知できていないとき、前サイクルの
+  /// 支払済みチェックを保持しつつメイン口座の残高更新を促すカード。残高を更新すると
+  /// 給料反映が検知され、新サイクルへ自動で切り替わる(支払済みチェックがリセット)。
+  Widget _buildSalaryDepositNudgeCard(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || !_salaryResetPending) {
+      return const SizedBox.shrink();
+    }
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: scheme.tertiaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 18,
+                    color: scheme.onTertiaryContainer,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '給料の入金を確認できません',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.onTertiaryContainer,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '新しい給料サイクルに入りましたが、メインバンクへの給料振込をまだ'
+                '検知できていません。支払済みチェックは前サイクルのまま保持しています。'
+                'メイン口座の残高を更新すると入金を検知し、新しいサイクルへ自動で'
+                '切り替わります(チェックがリセットされます)。',
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                  color: scheme.onTertiaryContainer,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildTextStatusChip(
+                label: '前サイクルの支払済みを表示中',
+                color: const Color(0xFF0E7490),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => _scrollTo(_keyStock),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('残高を更新'),
+                  ),
+                  TextButton.icon(
+                    onPressed: _confirmManualSalaryReset,
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('給料を受け取った（リセット）'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
@@ -12315,18 +12768,175 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      FilledButton.tonal(
-                        onPressed: () {
-                          unawaited(
-                            _toggleMonthlyPaymentPaid(entry.value, true),
-                          );
-                        },
-                        child: const Text('引落済み'),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          FilledButton.tonal(
+                            onPressed: () {
+                              unawaited(
+                                _toggleMonthlyPaymentPaid(entry.value, true),
+                              );
+                            },
+                            child: const Text('引落済み'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              unawaited(
+                                _showAutoDebitAlternateSourceSheet(
+                                  entry.value,
+                                  entry.key.row,
+                                  workbook,
+                                ),
+                              );
+                            },
+                            child: const Text('別口座で支払った'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 引落が設定上の振替元で失敗し、別の口座・カード (例: アコムショッピング枠) で
+  // 支払った場合に、実際の振替元を記録するためのシート。残高は自動変更せず、振替元の
+  // 上書き (今回のみ / 今後も) + 引落済み化のみ行う。見込み残高・AI・借入モニターは
+  // 記録した振替元基準で再計算される。
+  Future<void> _showAutoDebitAlternateSourceSheet(
+    AssetLiabilityDebtRow debtRow,
+    AssetLiabilityCashflowRow cashflowRow,
+    AssetLiabilityWorkbook workbook,
+  ) async {
+    // サブスク等はカード (ファミペイ等) やアコムショッピング枠 (shoppingDebt) へ
+    // 請求されるため、残高<=0 のカード/与信枠・キャリア決済も候補に含める。
+    final options = recurringFixedCostSourceOptions(
+      workbook.accounts,
+      includeCards: true,
+      includeCarrierBilling: true,
+    );
+    final currentSource = _paymentSourceAccountIds[debtRow.id] ??
+        _defaultPaymentSourceAccountIds[debtRow.id] ??
+        debtRow.paymentSourceAccountId;
+    final theme = Theme.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '実際に支払った振替元を選択',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${cashflowRow.accountName} / '
+                  '${_formatManagementYen(cashflowRow.paymentAmount)}\n'
+                  '引落が失敗し別の口座・カードで支払った場合に、実際の振替元を記録します。'
+                  '残高は自動変更しません。',
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                if (options.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text('選択できる振替元がありません。'),
+                  )
+                else
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final option in options)
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            selected: option.id == currentSource,
+                            title: Text(option.name),
+                            trailing: Wrap(
+                              spacing: 6,
+                              children: [
+                                OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.of(sheetContext).pop();
+                                    _applyAutoDebitAlternateSource(
+                                      debtRow,
+                                      option,
+                                      _PaymentSourceSaveScope.monthlyOverride,
+                                    );
+                                  },
+                                  child: const Text('今回のみ'),
+                                ),
+                                OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.of(sheetContext).pop();
+                                    _applyAutoDebitAlternateSource(
+                                      debtRow,
+                                      option,
+                                      _PaymentSourceSaveScope.defaultSetting,
+                                    );
+                                  },
+                                  child: const Text('今後も'),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _applyAutoDebitAlternateSource(
+    AssetLiabilityDebtRow debtRow,
+    RecurringFixedCostSourceOption option,
+    _PaymentSourceSaveScope scope,
+  ) {
+    // 振替元の上書きを in-memory に設定してから引落済み化する。`_toggleMonthlyPaymentPaid`
+    // が月次 state を 1 回だけ保存し、その snapshot に上書きも paid も両方含める。
+    // (`_savePaymentSourceReviewChoice` を呼ぶと月次 state の保存が 2 回走り、上書きのみの
+    //  古い snapshot が paid 付き snapshot の後に着地して paid を取りこぼす競合があるため避ける。)
+    setState(() {
+      if (scope == _PaymentSourceSaveScope.defaultSetting) {
+        _defaultPaymentSourceAccountIds[debtRow.id] = option.id;
+        _paymentSourceAccountIds.remove(debtRow.id);
+      } else {
+        _paymentSourceAccountIds[debtRow.id] = option.id;
+      }
+    });
+    if (scope == _PaymentSourceSaveScope.defaultSetting) {
+      // 既定の振替元は月次 state とは別ストアのため独立保存で競合しない。
+      unawaited(_saveDefaultPaymentSources());
+    }
+    unawaited(_toggleMonthlyPaymentPaid(debtRow, true));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          autoDebitAlternateSourcePaidHint(
+            option.name,
+            _formatManagementYen(debtRow.scheduledPaymentAmount),
           ),
         ),
       ),
@@ -17611,7 +18221,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementDisciplineCard(report.disciplineReport!),
             const SizedBox(height: 12),
           ],
-          _buildAssetManagementAssistantActionList(report.actionItems),
+          _buildAssetManagementAssistantActionList(
+            report.actionItems,
+            report.workbook.debtMasterRows.map((row) => row.id).toSet(),
+          ),
           if (report.movementSuggestions.isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildAssetManagementMovementSuggestionList(
@@ -18915,6 +19528,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   Widget _buildAssetManagementAssistantActionList(
     List<AssetManagementInsightActionItem> actionItems,
+    Set<String> debtMasterCardIds,
   ) {
     if (actionItems.isEmpty) {
       return Container(
@@ -18945,7 +19559,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         for (final item in actionItems.take(8))
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
-            child: _buildAssetManagementAssistantActionTile(item),
+            child: _buildAssetManagementAssistantActionTile(
+              item,
+              debtMasterCardIds,
+            ),
           ),
         if (actionItems.length > 8)
           Text(
@@ -18959,33 +19576,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  String? _assetManagementActionJumpLabel(
-    AssetManagementInsightActionItem item,
-  ) {
-    final accountId = item.relatedAccountId;
-    if (accountId == null || accountId.trim().isEmpty) {
-      return null;
-    }
-    return switch (item.type) {
-      AssetManagementInsightActionType.missingPaymentDay => '支払日を入力する',
-      AssetManagementInsightActionType.missingInput => '今月支払予定額を入力する',
-      AssetManagementInsightActionType.missingAnnualRate => '利率を入力する',
-      AssetManagementInsightActionType.missingPaymentSource => '支払原資口座を設定する',
-      AssetManagementInsightActionType.cardBillingConfiguration =>
-        '支払い方式と請求先カードを設定する',
-      AssetManagementInsightActionType.doubleCountingRisk => '支払い方式を整理する',
-      _ => null,
-    };
-  }
-
   Widget _buildAssetManagementAssistantActionTile(
     AssetManagementInsightActionItem item,
+    Set<String> debtMasterCardIds,
   ) {
     final color = _assetManagementInsightSeverityColor(item.severity);
     final dueLabel = item.dueDate == null
         ? (item.paymentDay == null ? null : '${item.paymentDay}日')
         : DateFormat('M/d').format(item.dueDate!);
-    final jumpLabel = _assetManagementActionJumpLabel(item);
+    final jumpLabel = assetManagementActionJumpLabel(item);
+    // 移動先の負債マスタカードが実在する項目だけリンクを出す
+    // (合成IDのアコムショッピング返済等で dead button を出さない)。
+    final canJump = jumpLabel != null &&
+        item.relatedAccountId != null &&
+        debtMasterCardIds.contains(item.relatedAccountId);
 
     return Container(
       width: double.infinity,
@@ -19050,7 +19654,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   item.suggestedAction,
                   style: const TextStyle(fontSize: 12, height: 1.5),
                 ),
-                if (jumpLabel != null)
+                if (canJump)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton.icon(
@@ -23148,10 +23752,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     try {
       Map<String, dynamic>? value = debugMirror;
       if (value == null) {
-        final rows = await _supabase
-            .from('asset_pref_mirror')
-            .select()
-            .eq('pref_key', 'debt_payment_day_override_deleted');
+        final rows = await _bootSelectPrefMirror(
+          'debt_payment_day_override_deleted',
+        );
         if (rows.isEmpty) {
           return;
         }

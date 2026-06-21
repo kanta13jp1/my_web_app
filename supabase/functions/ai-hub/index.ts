@@ -656,22 +656,38 @@ async function callSingleProvider(
       authHeaders = {};
       fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
     }
-    const resp = await fetch(fetchUrl, {
-      method: "POST",
-      headers: {
-        ...authHeaders,
-        "Content-Type": "application/json",
-        ...(cfg.extraHeaders ?? {}),
-      },
-      body: JSON.stringify(
-        applyProviderGenerationOptions(
-          providerId,
-          cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
-          options,
+    // プロバイダがハング/遅延すると edge function が wall-clock 上限を超えて
+    // ランタイムに kill され 502 になる。AbortController で時間を区切り、
+    // タイムアウトは catch で {ok:false, isRetriable:true} に落ちて別プロバイダ
+    // へのフォールバックに繋がる (502 を避ける)。
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      providerFetchTimeoutMs(),
+    );
+    let resp: Response;
+    let respText: string;
+    try {
+      resp = await fetch(fetchUrl, {
+        method: "POST",
+        headers: {
+          ...authHeaders,
+          "Content-Type": "application/json",
+          ...(cfg.extraHeaders ?? {}),
+        },
+        body: JSON.stringify(
+          applyProviderGenerationOptions(
+            providerId,
+            cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+            options,
+          ),
         ),
-      ),
-    });
-    const respText = await resp.text();
+        signal: controller.signal,
+      });
+      respText = await resp.text();
+    } finally {
+      clearTimeout(timeoutId);
+    }
     if (!resp.ok) {
       const paymentRequired = isProviderPaymentRequired(resp.status, respText);
       const isRetriable = paymentRequired || resp.status === 429 ||
@@ -713,6 +729,14 @@ async function callSingleProvider(
   } catch (e) {
     return { ok: false, error: String(e), isRetriable: true };
   }
+}
+
+/// LLM プロバイダ呼び出しのタイムアウト (ms)。遅延/ハングするプロバイダで edge
+/// function が wall-clock 上限を超えて 502 になるのを防ぐ。`AI_HUB_PROVIDER_TIMEOUT_MS`
+/// で調整可 (既定 90s = 正常な LLM 応答には十分長く、無限待機は防ぐ)。
+function providerFetchTimeoutMs(): number {
+  const raw = Number(Deno.env.get("AI_HUB_PROVIDER_TIMEOUT_MS"));
+  return Number.isFinite(raw) && raw > 0 ? raw : 90_000;
 }
 
 function asString(value: unknown): string {

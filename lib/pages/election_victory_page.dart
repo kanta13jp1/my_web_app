@@ -4283,7 +4283,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       );
     }
 
-    final topGaps = plan.topCdpGapPrefectures();
+    final allGaps = plan.allCdpGapPrefectures();
 
     return Container(
       decoration: BoxDecoration(
@@ -4324,11 +4324,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 _buildMiniStatChip(
                   '立憲先行',
                   plan.cdpLeadPrefectureCount,
+                  suffix: '県',
                   color: const Color(0xFFF59E0B),
                 ),
                 _buildMiniStatChip(
                   '国民同数以上',
                   plan.kokuminLeadPrefectureCount,
+                  suffix: '県',
                   color: const Color(0xFF0F766E),
                 ),
               ],
@@ -4341,7 +4343,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final item in topGaps) _buildCdpGapPill(item),
+                  for (final item in allGaps) _buildCdpGapPill(item),
                 ],
               ),
             ),

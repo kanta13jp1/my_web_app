@@ -220,4 +220,129 @@ void main() {
       expect(service.insufficientSourceCount(workbook), 1);
     });
   });
+
+  group('autoDebitAlternateSourcePaidHint', () {
+    test('names the recorded source and prompts the balance update', () {
+      final hint = autoDebitAlternateSourcePaidHint('アコムショッピング', '¥36,525');
+      expect(hint, contains('アコムショッピング'));
+      expect(hint, contains('¥36,525'));
+      expect(hint, contains('残高一覧'));
+      expect(hint, contains('反映'));
+    });
+  });
+
+  group('autoDebitSourceInsufficient (credit-line vs asset)', () {
+    test('asset account: warns only when balance is below the amount', () {
+      expect(
+        autoDebitSourceInsufficient(
+          balance: 3000,
+          kind: AssetLiabilityAccountKind.deposit,
+          creditLimit: null,
+          paymentAmount: 4500,
+        ),
+        isTrue,
+      );
+      expect(
+        autoDebitSourceInsufficient(
+          balance: 63539,
+          kind: AssetLiabilityAccountKind.deposit,
+          creditLimit: null,
+          paymentAmount: 4500,
+        ),
+        isFalse,
+      );
+    });
+
+    test('credit line with no/zero limit never warns (avoid false alarm)', () {
+      // ファミペイ (翌月払い=残高常時マイナス) で利用上限未設定 → 誤発火させない。
+      for (final limit in const <double?>[null, 0]) {
+        expect(
+          autoDebitSourceInsufficient(
+            balance: -223441,
+            kind: AssetLiabilityAccountKind.creditCard,
+            creditLimit: limit,
+            paymentAmount: 30000,
+          ),
+          isFalse,
+          reason: 'limit=$limit should not warn',
+        );
+      }
+    });
+
+    test('credit line warns only when usage + payment exceeds the limit', () {
+      // 利用額 223,441 + 支払 30,000 = 253,441 <= 上限 300,000 → 警告しない。
+      expect(
+        autoDebitSourceInsufficient(
+          balance: -223441,
+          kind: AssetLiabilityAccountKind.creditCard,
+          creditLimit: 300000,
+          paymentAmount: 30000,
+        ),
+        isFalse,
+      );
+      // 利用額 280,000 + 支払 30,000 = 310,000 > 上限 300,000 → 警告する。
+      expect(
+        autoDebitSourceInsufficient(
+          balance: -280000,
+          kind: AssetLiabilityAccountKind.creditCard,
+          creditLimit: 300000,
+          paymentAmount: 30000,
+        ),
+        isTrue,
+      );
+    });
+
+    test('credit line at exactly the limit does not warn (strict >)', () {
+      // 利用額 270,000 + 支払 30,000 = 300,000 == 上限 → 超過でないので警告しない。
+      expect(
+        autoDebitSourceInsufficient(
+          balance: -270000,
+          kind: AssetLiabilityAccountKind.creditCard,
+          creditLimit: 300000,
+          paymentAmount: 30000,
+        ),
+        isFalse,
+      );
+    });
+
+    test('shoppingDebt and cardLoan are treated as credit lines too', () {
+      for (final kind in const <AssetLiabilityAccountKind>[
+        AssetLiabilityAccountKind.shoppingDebt,
+        AssetLiabilityAccountKind.cardLoan,
+      ]) {
+        expect(
+          autoDebitSourceInsufficient(
+            balance: -100000,
+            kind: kind,
+            creditLimit: 300000,
+            paymentAmount: 50000,
+          ),
+          isFalse,
+          reason: '$kind within limit',
+        );
+        expect(
+          autoDebitSourceInsufficient(
+            balance: -280000,
+            kind: kind,
+            creditLimit: 300000,
+            paymentAmount: 50000,
+          ),
+          isTrue,
+          reason: '$kind over limit',
+        );
+      }
+    });
+
+    test('null balance never warns', () {
+      expect(
+        autoDebitSourceInsufficient(
+          balance: null,
+          kind: AssetLiabilityAccountKind.deposit,
+          creditLimit: null,
+          paymentAmount: 4500,
+        ),
+        isFalse,
+      );
+    });
+  });
 }
