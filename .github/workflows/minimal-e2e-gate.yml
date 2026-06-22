@@ -12,15 +12,6 @@ on:
       - reopened
       - edited
       - ready_for_review
-    paths-ignore:
-      - 'docs/**'
-      - 'memory/**'
-      - '.claude/**'
-      - '.codex/**'
-      - '*.md'
-      - '**/*.md'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
   workflow_dispatch:
     inputs:
       base_url:
@@ -65,12 +56,37 @@ jobs:
             "${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/changed-files.txt
 
+      - name: Skip if docs-only change
+        id: docs_check
+        run: |
+          DOCS_ONLY=true
+          while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            case "$f" in
+              docs/*|memory/*|.claude/*|.codex/*|.agents/*|*.md|\
+.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
+                ;;
+              *)
+                DOCS_ONLY=false
+                break
+                ;;
+            esac
+          done < .ci-logs/changed-files.txt
+          if [ "$DOCS_ONLY" = "true" ] && [ -s .ci-logs/changed-files.txt ]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+            echo "✅ docs-only PR — E2E declaration skipped (no app code changed)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check hook bypass markers
+        if: steps.docs_check.outputs.docs_only != 'true'
         run: >
           python scripts/check_no_verify_bypass.py
           --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
       - name: Check minimal E2E PR contract
+        if: steps.docs_check.outputs.docs_only != 'true'
         run: >
           python scripts/check_minimal_e2e_gate.py
           --event "$GITHUB_EVENT_PATH"
@@ -78,6 +94,7 @@ jobs:
 
       - name: Wait for deterministic CI checks
         id: deterministic_ci
+        if: steps.docs_check.outputs.docs_only != 'true'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -101,7 +118,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Enforce deterministic CI result
-        if: steps.deterministic_ci.outcome == 'failure'
+        if: steps.docs_check.outputs.docs_only != 'true' && steps.deterministic_ci.outcome == 'failure'
         run: exit 1
 
   deterministic-validation-comment:
@@ -165,19 +182,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Skip if docs-only PR
+        id: docs_check
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            > /tmp/e2e-changed-files.txt
+          DOCS_ONLY=true
+          while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            case "$f" in
+              docs/*|memory/*|.claude/*|.codex/*|.agents/*|*.md|\
+.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
+                ;;
+              *)
+                DOCS_ONLY=false
+                break
+                ;;
+            esac
+          done < /tmp/e2e-changed-files.txt
+          if [ "$DOCS_ONLY" = "true" ] && [ -s /tmp/e2e-changed-files.txt ]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+            echo "✅ docs-only PR — E2E smoke skipped (no app code changed)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Node
+        if: steps.docs_check.outputs.docs_only != 'true'
         uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
 
       - name: Install dependencies
+        if: steps.docs_check.outputs.docs_only != 'true'
         run: npm ci
 
       - name: Install Chromium
+        if: steps.docs_check.outputs.docs_only != 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Run repeated public smoke tests
+        if: steps.docs_check.outputs.docs_only != 'true'
         run: >
           npm run e2e:smoke --
           --project=chromium
@@ -189,6 +238,7 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
 
       - name: Run desktop and mobile visual evidence tests
+        if: steps.docs_check.outputs.docs_only != 'true'
         run: >
           npm run e2e:visual --
           --project=chromium
@@ -199,7 +249,7 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
 
       - name: Summarize Playwright evidence
-        if: always()
+        if: always() && steps.docs_check.outputs.docs_only != 'true'
         run: |
           node scripts/summarize_playwright_results.mjs \
             playwright-report/public-smoke-results.json \
@@ -207,7 +257,7 @@ jobs:
             --out playwright-report/issue-summary.md
 
       - name: Upload Playwright report
-        if: always()
+        if: always() && steps.docs_check.outputs.docs_only != 'true'
         uses: actions/upload-artifact@v7
         with:
           name: minimal-e2e-playwright-report
