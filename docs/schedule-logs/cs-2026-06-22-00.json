@@ -1,0 +1,19 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-06-22T00:00:00Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 (全22件登録済み) / チケット: 0件 / PR レビュー: 3件問題なし / Issue修正: 0件 / Schedule健全性: 正常 / インフラ: 正常",
+  "details": {
+    "edge_functions_added": 0,
+    "edge_functions_total": 22,
+    "tickets_handled": 0,
+    "prs_reviewed": 3,
+    "issues_fixed": 0,
+    "escalations": [
+      "Issue #2967: NotebookLM auth Secret 復旧 (P1・手動対応必要)",
+      "Issue #3175: tools-hub-mcp-smoke 連続失敗 (TOOLS_HUB_MCP_BEARER_TOKEN 確認)",
+      "Issue #3448: Codex backlog stale branches (人手マージ/削除確認要)"
+    ]
+  }
+}
