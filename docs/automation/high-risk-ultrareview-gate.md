@@ -47,6 +47,35 @@ PR body:
 
 Empty placeholders and hidden comments do not satisfy the gate.
 
+## Ready-to-paste blocks
+
+AI authors create PR bodies with `gh pr create --body`, which bypasses the PR
+template, and the gate also fires on PR *prose* (the words `deploy`, `billing`,
+`migration`, and so on), so a body can trip the gate even when no high-risk path
+is touched. Because editing a PR body does not re-run the check, the usual
+recovery is a wasteful close/reopen. Emit the exact passing block from the
+checker instead and paste it verbatim:
+
+```bash
+# Honest route when /ultrareview was NOT run (e.g. prose-only trigger):
+python scripts/check_high_risk_ultrareview_gate.py \
+  --emit-exception "prose-only trigger; no high-risk path touched, review after merge"
+
+# Evidence route — only after Claude Code #1 actually ran /ultrareview:
+python scripts/check_high_risk_ultrareview_gate.py --emit-evidence
+```
+
+The wording lives in `passing_exception_block()` / `passing_evidence_block()`
+next to the pattern tables they must satisfy, and the perspective list is
+derived from `REQUIRED_PERSPECTIVES`, so a round-trip test in
+`check_high_risk_ultrareview_gate_test.py` pins both against the validator — they
+cannot silently drift. When a local `--body-file` check FAILs, the exception
+block is printed under a `snippet start/end` banner so the fix is one copy away.
+
+Do not paste the evidence block unless a real `/ultrareview` run happened;
+claiming review evidence that was not produced defeats the gate. When in doubt,
+use the exception route and name the follow-up plan.
+
 ## Local Verification
 
 ```powershell

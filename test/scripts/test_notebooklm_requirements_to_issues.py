@@ -134,6 +134,20 @@ class NotebookLmRequirementsToIssuesTest(unittest.TestCase):
 
         self.assertIsNone(reqs.find_canonical_duplicate(requirement, [issue]))
 
+    def test_parse_answer_array_accepts_control_characters_in_strings(self):
+        answer = """[
+          {
+            "title": "line
+break",
+            "acceptance_criteria": ["ok"],
+            "priority": "P2"
+          }
+        ]"""
+
+        rows = reqs.parse_answer_array(answer)
+
+        self.assertEqual(rows[0]["title"], "line\nbreak")
+
     def test_report_surfaces_creation_cap(self):
         requirement = reqs.Requirement(
             notebook_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",

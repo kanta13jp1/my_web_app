@@ -60,6 +60,13 @@ import {
   DisposableBalanceError,
   handleDisposableBalanceAction,
 } from "./disposable_balance.ts";
+import {
+  handleMarketPriceAction,
+  isMarketPriceLiveFetchEnabled,
+  MarketPriceActionError,
+  type MarketPriceDb,
+} from "./market_price.ts";
+import { applyProviderGenerationOptions } from "./provider_generation_options.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -588,34 +595,6 @@ function normalizeMaxTokens(value: unknown): number | undefined {
   return Math.max(64, Math.min(8192, Math.round(raw)));
 }
 
-function applyProviderGenerationOptions(
-  providerId: string,
-  requestBody: Record<string, unknown>,
-  options?: ProviderCallOptions,
-): Record<string, unknown> {
-  const maxTokens = options?.maxTokens;
-  if (!maxTokens) return requestBody;
-
-  if (providerId === "google" || providerId === "google_flash_lite") {
-    const generationConfig = requestBody.generationConfig &&
-        typeof requestBody.generationConfig === "object"
-      ? requestBody.generationConfig as Record<string, unknown>
-      : {};
-    return {
-      ...requestBody,
-      generationConfig: {
-        ...generationConfig,
-        maxOutputTokens: maxTokens,
-      },
-    };
-  }
-
-  return {
-    ...requestBody,
-    max_tokens: maxTokens,
-  };
-}
-
 function providerFinishReason(data: unknown): string | null {
   const raw = pick(data, "choices", 0, "finish_reason") ??
     pick(data, "candidates", 0, "finishReason") ??
@@ -673,26 +652,42 @@ async function callSingleProvider(
     let fetchUrl = cfg.chatUrl;
     if (providerId === "anthropic") {
       authHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
-    } else if (providerId === "google") {
+    } else if (providerId === "google" || providerId === "google_flash_lite") {
       authHeaders = {};
       fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
     }
-    const resp = await fetch(fetchUrl, {
-      method: "POST",
-      headers: {
-        ...authHeaders,
-        "Content-Type": "application/json",
-        ...(cfg.extraHeaders ?? {}),
-      },
-      body: JSON.stringify(
-        applyProviderGenerationOptions(
-          providerId,
-          cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
-          options,
+    // プロバイダがハング/遅延すると edge function が wall-clock 上限を超えて
+    // ランタイムに kill され 502 になる。AbortController で時間を区切り、
+    // タイムアウトは catch で {ok:false, isRetriable:true} に落ちて別プロバイダ
+    // へのフォールバックに繋がる (502 を避ける)。
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      providerFetchTimeoutMs(),
+    );
+    let resp: Response;
+    let respText: string;
+    try {
+      resp = await fetch(fetchUrl, {
+        method: "POST",
+        headers: {
+          ...authHeaders,
+          "Content-Type": "application/json",
+          ...(cfg.extraHeaders ?? {}),
+        },
+        body: JSON.stringify(
+          applyProviderGenerationOptions(
+            providerId,
+            cfg.buildBody(messages, model ?? cfg.defaultModel, inlineFiles),
+            options,
+          ),
         ),
-      ),
-    });
-    const respText = await resp.text();
+        signal: controller.signal,
+      });
+      respText = await resp.text();
+    } finally {
+      clearTimeout(timeoutId);
+    }
     if (!resp.ok) {
       const paymentRequired = isProviderPaymentRequired(resp.status, respText);
       const isRetriable = paymentRequired || resp.status === 429 ||
@@ -733,6 +728,35 @@ async function callSingleProvider(
     return { ok: true, text: content, modelUsed, isRetriable: false };
   } catch (e) {
     return { ok: false, error: String(e), isRetriable: true };
+  }
+}
+
+/// LLM プロバイダ呼び出しのタイムアウト (ms)。遅延/ハングするプロバイダで edge
+/// function が wall-clock 上限を超えて 502 になるのを防ぐ。`AI_HUB_PROVIDER_TIMEOUT_MS`
+/// で調整可 (既定 90s = 正常な LLM 応答には十分長く、無限待機は防ぐ)。
+function providerFetchTimeoutMs(): number {
+  const raw = Number(Deno.env.get("AI_HUB_PROVIDER_TIMEOUT_MS"));
+  return Number.isFinite(raw) && raw > 0 ? raw : 90_000;
+}
+
+/// 外部プロバイダ / 内部サブ関数呼び出しに providerFetchTimeoutMs() のタイムアウトを
+/// 付与する `fetch` ラッパー。遅延/ハングするプロバイダで edge function が wall-clock 上限を
+/// 超えてランタイムに kill され 502 になるのを防ぐ (callProvider と同方針の横展開)。
+/// abort 時は AbortError を throw → 各 action / serve トップレベルの try/catch が
+/// 捕捉し、502 ではなくハンドル済みエラー応答へ落ちる。
+async function fetchWithProviderTimeout(
+  input: string | URL,
+  init: RequestInit = {},
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    providerFetchTimeoutMs(),
+  );
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -2217,12 +2241,12 @@ function rlhfQualityScore(
 
 function rlhfNextAction(totalSignals: number, qualityScore: number): string {
   if (totalSignals < 20) {
-    return "Collect at least 20 preference signals before tuning.";
+    return "チューニング前に、まず選好シグナルを20件以上集めましょう。";
   }
   if (qualityScore < 70) {
-    return "Review low-rated lessons and regenerate weak explanations.";
+    return "低評価のレッスンを見直し、弱い解説を再生成しましょう。";
   }
-  return "Dataset is ready for fine-tuning or evaluation batches.";
+  return "データセットは微調整・評価バッチに利用できる状態です。";
 }
 
 function buildRlhfSnapshot(
@@ -2346,10 +2370,10 @@ function buildUserDataFineTuneReadiness(
     sourceCoverage >= 2;
   const piiRisk = commentRows > 0 || judgmentTotal > 0 ? "medium" : "low";
   const nextAction = readyForFineTune
-    ? "Freeze a de-identified JSONL training set and run an offline evaluation before any fine-tune job."
+    ? "匿名化済みの JSONL 学習セットを確定し、微調整ジョブの前にオフライン評価を実施しましょう。"
     : readyForEvalBatch
-    ? "Create an evaluation batch first; keep collecting preference pairs until 100+ eligible records."
-    : "Collect more explicit Useful/Needs fix feedback and daily judgment outcomes before tuning.";
+    ? "まず評価バッチを作成し、有効レコードが100件以上になるまで選好ペアを集め続けましょう。"
+    : "チューニング前に、「役に立った／改善が必要」の明示的なフィードバックと日々の判断結果をさらに集めましょう。";
 
   return {
     method: "scale_egp_first_party_data_engine_v1",
@@ -2373,7 +2397,7 @@ function buildUserDataFineTuneReadiness(
       review_judgments: reviewJudgments,
     },
     kgi:
-      "Use first-party product data to improve AI answer quality without unsafe raw-data fine-tuning.",
+      "安全でない生データの微調整に頼らず、自社プロダクトのデータでAIの回答品質を高めます。",
     csf: [
       "Consent-aware first-party signal collection",
       "De-identification before export",
@@ -2640,7 +2664,7 @@ async function embedTextsWithGemini(
   apiKey: string,
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
-  const response = await fetch(
+  const response = await fetchWithProviderTimeout(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
     {
       method: "POST",
@@ -2787,15 +2811,18 @@ async function invokeAiAssistant(
   payload: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   if (!authHeader) throw new Error("Missing authorization header");
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": authHeader,
+  const response = await fetchWithProviderTimeout(
+    `${SUPABASE_URL}/functions/v1/ai-assistant`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": authHeader,
+      },
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+  );
   const rawText = await response.text();
   let parsed: Record<string, unknown> = {};
   if (rawText.trim()) {
@@ -2827,7 +2854,7 @@ async function callGemini(
       },
     });
   }
-  const res = await fetch(
+  const res = await fetchWithProviderTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
@@ -2861,7 +2888,7 @@ async function callManusTask(
   const manusPrompt = image
     ? `${prompt}\n\nNote: an image was attached in my-ai-agent, but this Manus task.create integration sends the text prompt only.`
     : prompt;
-  const res = await fetch(`${baseUrl}/task.create`, {
+  const res = await fetchWithProviderTimeout(`${baseUrl}/task.create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -2954,6 +2981,9 @@ serve(async (req: Request) => {
       "quiz.evaluate",
       "quiz.explain",
       "kpi.monthly_summary",
+      "asset.market_price.fetch",
+      "asset.investment.market_price.fetch",
+      "ai_hub.fetch_market_price",
       "asset.monthly_report.generate",
       "asset_liability.monthly_report.generate",
       "payslip.parse",
@@ -2965,6 +2995,10 @@ serve(async (req: Request) => {
       "compute-disposable-balance",
       "voice.tts",
       "voice.stt",
+      // 英語速読カリキュラム (実力測定 / AI 生成は要認証 / 教材閲覧は公開)
+      "english_reading.submit_attempt",
+      "english_reading.ability",
+      "english_reading.generate_lesson",
     ];
     if (authRequired.includes(action) && !userId) {
       return json({ error: "Unauthorized" }, 401);
@@ -3264,18 +3298,24 @@ serve(async (req: Request) => {
           return json({ success: true, summary: result });
         }
         if (openaiKey) {
-          const r = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${openaiKey}`,
-              "Content-Type": "application/json",
+          const r = await fetchWithProviderTimeout(
+            "https://api.openai.com/v1/chat/completions",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${openaiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [{
+                  role: "user",
+                  content: `200字以内で要約: ${text}`,
+                }],
+                max_tokens: 300,
+              }),
             },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              messages: [{ role: "user", content: `200字以内で要約: ${text}` }],
-              max_tokens: 300,
-            }),
-          });
+          );
           const d = await r.json() as {
             choices?: [{ message: { content: string } }];
           };
@@ -3969,6 +4009,255 @@ serve(async (req: Request) => {
         return json({ success: true, snapshot: buildRlhfSnapshot(rows) });
       }
 
+      // ===== 英語速読カリキュラム =====
+      case "english_reading.list_lessons": {
+        const level = Math.round(asNumber(body.level, 0));
+        let query = admin.from("english_reading_lessons")
+          .select(
+            "id, lesson_code, level, cefr, title, topic, target_wpm, passage, word_count, questions, source",
+          )
+          .eq("is_active", true);
+        if (level > 0) query = query.eq("level", level);
+        const { data, error } = await query
+          .order("level", { ascending: true })
+          .order("lesson_code", { ascending: true })
+          .limit(200);
+        if (error) throw new Error(error.message);
+        return json({ success: true, lessons: data ?? [] });
+      }
+
+      case "english_reading.get_lesson": {
+        const code = asString(body.lesson_code);
+        const id = asString(body.lesson_id);
+        if (!code && !id) {
+          return json({ error: "lesson_code or lesson_id required" }, 400);
+        }
+        let query = admin.from("english_reading_lessons")
+          .select(
+            "id, lesson_code, level, cefr, title, topic, target_wpm, passage, word_count, questions, source",
+          )
+          .eq("is_active", true);
+        query = id ? query.eq("id", id) : query.eq("lesson_code", code);
+        const { data, error } = await query.limit(1).maybeSingle();
+        if (error) throw new Error(error.message);
+        return json({ success: true, lesson: data ?? null });
+      }
+
+      case "english_reading.generate_lesson": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
+        const level = Math.min(
+          Math.max(Math.round(asNumber(body.level, 3)), 1),
+          6,
+        );
+        // ユーザー入力 topic はプロンプト注入面を絞るため空白正規化 + 80 字上限。
+        const topic = asString(body.topic).replace(/\s+/g, " ").slice(0, 80)
+          .trim();
+        // 濫用 / API コスト対策: 1 ユーザーの当日 AI 生成数に上限を設ける。
+        const userPrefix = userId.slice(0, 8);
+        const dayStart = new Date();
+        dayStart.setUTCHours(0, 0, 0, 0);
+        const { count: genToday } = await admin
+          .from("english_reading_lessons")
+          .select("id", { count: "exact", head: true })
+          .eq("source", "ai")
+          .ilike("lesson_code", `AI-L%-${userPrefix}-%`)
+          .gte("created_at", dayStart.toISOString());
+        if ((genToday ?? 0) >= 30) {
+          return json(
+            { error: "daily AI lesson generation limit reached" },
+            429,
+          );
+        }
+        const levelMetaTable: Record<
+          number,
+          { cefr: string; target: number; words: number }
+        > = {
+          1: { cefr: "A2", target: 100, words: 90 },
+          2: { cefr: "B1", target: 150, words: 120 },
+          3: { cefr: "B1+", target: 180, words: 150 },
+          4: { cefr: "B2", target: 220, words: 200 },
+          5: { cefr: "C1", target: 260, words: 230 },
+          6: { cefr: "C2", target: 300, words: 250 },
+        };
+        const meta = levelMetaTable[level] ??
+          { cefr: "B1", target: 150, words: 120 };
+        const prompt =
+          `You are an expert English reading-fluency teacher for Japanese adult learners. ` +
+          `Generate ONE original English reading passage at CEFR level ${meta.cefr}. ` +
+          (topic
+            ? `Topic: ${topic}. `
+            : `Choose an engaging non-fiction topic suitable for adults. `) +
+          `Requirements: about ${meta.words} words of natural, coherent prose; ` +
+          `do NOT put a title inside the passage body; ` +
+          `then exactly 4 multiple-choice comprehension questions in English, ` +
+          `each with 4 options and exactly one correct answer, plus a short Japanese explanation. ` +
+          `Return STRICT JSON only (no markdown fences) of shape: ` +
+          `{"title": string, "topic": string, "passage": string, ` +
+          `"questions": [{"q": string, "choices": [string,string,string,string], ` +
+          `"answer_index": number, "explanation": string}]}`;
+
+        let raw = "";
+        try {
+          raw = await callGemini(prompt, geminiKey);
+        } catch (e) {
+          return json({ error: `generation failed: ${String(e)}` }, 502);
+        }
+        const parsed = extractJsonObject(raw);
+        if (!parsed) {
+          return json({ error: "could not parse generated lesson" }, 502);
+        }
+        const passage = asString(parsed.passage);
+        if (!passage) return json({ error: "empty passage generated" }, 502);
+
+        const rawQuestions = Array.isArray(parsed.questions)
+          ? parsed.questions
+          : [];
+        const questions = rawQuestions
+          .slice(0, 6)
+          .map((q) => {
+            const obj = (q ?? {}) as Record<string, unknown>;
+            const choices = Array.isArray(obj.choices)
+              ? obj.choices
+                .map((c) => asString(c))
+                .filter((c) => c.length > 0)
+                .slice(0, 6)
+              : [];
+            const maxIdx = Math.max(0, choices.length - 1);
+            return {
+              q: asString(obj.q),
+              choices,
+              answer_index: Math.min(
+                Math.max(Math.round(asNumber(obj.answer_index, 0)), 0),
+                maxIdx,
+              ),
+              explanation: asString(obj.explanation),
+            };
+          })
+          .filter((q) => q.q.length > 0 && q.choices.length >= 2);
+
+        // 内容理解クイズが 0 問の劣化教材は保存せず拒否する。
+        if (questions.length === 0) {
+          return json(
+            { error: "no valid comprehension questions generated" },
+            502,
+          );
+        }
+
+        const wordCount = passage.trim().split(/\s+/).filter((w) =>
+          w.length > 0
+        ).length;
+        const lessonCode = `AI-L${level}-${userId.slice(0, 8)}-${Date.now()}`;
+        const title = asString(parsed.title) || `AI Lesson (Level ${level})`;
+        const topicOut = asString(parsed.topic) || topic || "general";
+
+        const { data, error } = await admin
+          .from("english_reading_lessons")
+          .insert({
+            lesson_code: lessonCode,
+            level,
+            cefr: meta.cefr,
+            title,
+            topic: topicOut,
+            target_wpm: meta.target,
+            passage,
+            word_count: wordCount,
+            questions,
+            source: "ai",
+          })
+          .select(
+            "id, lesson_code, level, cefr, title, topic, target_wpm, passage, word_count, questions, source",
+          )
+          .single();
+        if (error) throw new Error(error.message);
+        return json({ success: true, lesson: data });
+      }
+
+      case "english_reading.submit_attempt": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const lessonCode = asString(body.lesson_code);
+        const lessonId = asString(body.lesson_id);
+        const level = Math.min(
+          Math.max(Math.round(asNumber(body.level, 1)), 1),
+          6,
+        );
+        const mode = asString(body.mode) === "rsvp" ? "rsvp" : "measure";
+        const wordCount = Math.max(0, Math.round(asNumber(body.word_count, 0)));
+        const elapsedMs = Math.max(0, Math.round(asNumber(body.elapsed_ms, 0)));
+        const correct = Math.max(
+          0,
+          Math.round(asNumber(body.comprehension_correct, 0)),
+        );
+        const total = Math.max(
+          0,
+          Math.round(asNumber(body.comprehension_total, 0)),
+        );
+
+        // WPM = words / minutes (ゼロ除算ガード)。実効 WPM = WPM × 理解率。
+        const minutes = elapsedMs / 60000;
+        const wpm = wordCount > 0 && minutes > 0
+          ? Math.round(wordCount / minutes)
+          : 0;
+        const ratio = total > 0 ? Math.min(Math.max(correct / total, 0), 1) : 1;
+        const effectiveWpm = wpm > 0 ? Math.round(wpm * ratio) : 0;
+
+        const insertRow: Record<string, unknown> = {
+          user_id: userId,
+          lesson_code: lessonCode || null,
+          level,
+          mode,
+          word_count: wordCount,
+          elapsed_ms: elapsedMs,
+          wpm,
+          comprehension_correct: correct,
+          comprehension_total: total,
+          effective_wpm: effectiveWpm,
+        };
+        if (lessonId) insertRow.lesson_id = lessonId;
+
+        const { data, error } = await admin
+          .from("english_reading_attempts")
+          .insert(insertRow)
+          .select("*")
+          .single();
+        if (error) throw new Error(error.message);
+
+        // 読書も AI大学 学習ストリークへ算入 (best-effort)。
+        try {
+          await admin.rpc("update_ai_university_streak", { p_user_id: userId });
+        } catch (streakErr) {
+          // 試行記録は保存済み。streak 更新失敗は致命的でないが観測可能にする。
+          console.warn(
+            "english_reading.submit_attempt streak update failed",
+            String(streakErr),
+          );
+        }
+
+        return json({
+          success: true,
+          attempt: data,
+          wpm,
+          effective_wpm: effectiveWpm,
+        });
+      }
+
+      case "english_reading.ability": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const { data, error } = await admin
+          .from("english_reading_attempts")
+          .select(
+            "id, lesson_code, level, mode, word_count, elapsed_ms, wpm, comprehension_correct, comprehension_total, effective_wpm, created_at",
+          )
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (error) throw new Error(error.message);
+        return json({ success: true, attempts: data ?? [] });
+      }
+
       case "user_data.finetune_readiness": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const [rlhfRows, judgmentRows] = await Promise.all([
@@ -4113,7 +4402,7 @@ serve(async (req: Request) => {
 スコアデータ: ${JSON.stringify(scores).slice(0, 2000)}
 弱点プロバイダー・得意プロバイダー・学習スタイルをJSONで返してください。
 形式: {"weak_providers":["..."],"strong_providers":["..."],"preferred_style":"visual|text|voice","insights":"..."}`;
-        const claudeResp = await fetch(
+        const claudeResp = await fetchWithProviderTimeout(
           "https://api.anthropic.com/v1/messages",
           {
             method: "POST",
@@ -4168,7 +4457,7 @@ serve(async (req: Request) => {
         if (!groqKey) {
           return json({ error: "GROQ_API_KEY not configured" }, 503);
         }
-        const groqResp = await fetch(
+        const groqResp = await fetchWithProviderTimeout(
           "https://api.groq.com/openai/v1/chat/completions",
           {
             method: "POST",
@@ -4229,7 +4518,7 @@ serve(async (req: Request) => {
 正解: ${correctAnswer}
 ユーザーの回答: ${userAnswer}
 なぜ正解がそうなるのか、関連する背景知識も含めて日本語で300字以内で説明してください。`;
-        const claudeResp2 = await fetch(
+        const claudeResp2 = await fetchWithProviderTimeout(
           "https://api.anthropic.com/v1/messages",
           {
             method: "POST",
@@ -4443,6 +4732,18 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      case "asset.market_price.fetch":
+      case "asset.investment.market_price.fetch":
+      case "ai_hub.fetch_market_price": {
+        const result = await handleMarketPriceAction({
+          db: admin as unknown as MarketPriceDb,
+          body,
+          userId: userId ?? "",
+          liveFetchEnabled: isMarketPriceLiveFetchEnabled(body),
+        });
+        return json({ success: true, ...result });
+      }
+
       case "asset.monthly_report.generate":
       case "asset_liability.monthly_report.generate": {
         const aiSummaryEnabled = isMonthlyAssetReportAiSummaryEnabled(body);
@@ -4605,7 +4906,9 @@ serve(async (req: Request) => {
               "x-api-key": apiKey,
               "anthropic-version": "2023-06-01",
             };
-          } else if (providerId === "google") {
+          } else if (
+            providerId === "google" || providerId === "google_flash_lite"
+          ) {
             authHeaders = {};
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
           }
@@ -4643,7 +4946,7 @@ serve(async (req: Request) => {
               // ignore logging errors
             }
           };
-          const resp = await fetch(fetchUrl, {
+          const resp = await fetchWithProviderTimeout(fetchUrl, {
             method: "POST",
             headers: {
               ...authHeaders,
@@ -4732,22 +5035,30 @@ serve(async (req: Request) => {
           const modelUsed = pick(data, "model");
           const outputChars = content.length;
           const usedModel = String(modelUsed ?? requestedModel);
-          if (content && isProviderOutputLengthLimited(finishReason)) {
+          // 本文が空のレスポンスは成功扱いにしない。reasoning モデルが
+          // 推論で予算を使い切ると finish_reason=length かつ本文が空になり、
+          // 旧コードは success:true(空文字)で返してフォールバック連鎖を
+          // 止め、無駄なコストだけ計上していた。
+          const lengthLimited = isProviderOutputLengthLimited(finishReason);
+          if (!content.trim() || lengthLimited) {
+            const failureStatus = !content.trim()
+              ? "emptyOutput"
+              : "outputLengthLimited";
             await logProviderChat({
               success: false,
               statusCode: 502,
               model: usedModel,
               outputChars,
-              errorMessage: `outputLengthLimited: ${finishReason}`,
+              errorMessage: `${failureStatus}: ${finishReason ?? "no-content"}`,
             });
             return json({
               success: false,
-              status: "outputLengthLimited",
+              status: failureStatus,
               provider: providerId,
               model: usedModel,
               finish_reason: finishReason,
               message:
-                "AI応答が出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
+                "AI応答が空、または出力上限で途中終了しました。max_tokens を増やすか、別プロバイダーを試してください。",
             }, 502);
           }
           const estimatedCost = calculateApiCost(
@@ -5250,7 +5561,7 @@ serve(async (req: Request) => {
             reason: "ELEVENLABS_API_KEY not configured",
           });
         }
-        const ttsResp = await fetch(
+        const ttsResp = await fetchWithProviderTimeout(
           `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
           {
             method: "POST",
@@ -5318,7 +5629,7 @@ serve(async (req: Request) => {
         }
         const audioBody = new ArrayBuffer(audioBytes.byteLength);
         new Uint8Array(audioBody).set(audioBytes);
-        const dgResp = await fetch(
+        const dgResp = await fetchWithProviderTimeout(
           `https://api.deepgram.com/v1/listen?language=${language}&model=nova-2&punctuate=true`,
           {
             method: "POST",
@@ -5559,7 +5870,7 @@ serve(async (req: Request) => {
 }
 `;
         try {
-          const r = await fetch(
+          const r = await fetchWithProviderTimeout(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
             {
               method: "POST",
@@ -5618,6 +5929,9 @@ serve(async (req: Request) => {
       return json({ error: err.message }, err.status);
     }
     if (err instanceof DisposableBalanceError) {
+      return json({ error: err.message }, err.status);
+    }
+    if (err instanceof MarketPriceActionError) {
       return json({ error: err.message }, err.status);
     }
     const message = err instanceof Error ? err.message : String(err);

@@ -17,6 +17,19 @@
 powershell -ExecutionPolicy Bypass -File scripts/setup_windows_dev.ps1
 ```
 
+### Git hooks (推奨 / コミット前の静的監査)
+
+クローン後、ローカル git hooks を有効化すると、コミット前に
+`scripts/check_duplicate_dispose.py`(二重 dispose / 二重 await / 二重 setState の
+検知)が自動実行されます。CI と同じゲートを手元で前倒しでき、手戻りを減らせます。
+
+```bash
+git config core.hooksPath .githooks
+```
+
+詳細は [.githooks/README.md](.githooks/README.md) を参照。CI でも同じ監査が走るため
+未設定でも検出はされますが、ローカル有効化を推奨します(CI で hook の健全性も検証)。
+
 ## 2. 組織構造 (AI Agents) & 機能マップ
 
 ユーザー（CEO）を支えるAI役員たちの構造図については、以下のファイルを参照してください。

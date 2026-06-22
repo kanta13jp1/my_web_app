@@ -1,0 +1,1392 @@
+{
+  "generated_at": "2026-06-20T22:27:53Z",
+  "source_files": [
+    "docs/competitor-reports/2026-06-21.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 45,
+  "filter_summary": {
+    "total": 45,
+    "by_verdict": {
+      "pass": 0,
+      "review": 45,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 45
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-1be9f819fefd",
+        "title": "エグゼクティブサマリー (新シグナルのみ)",
+        "text": "エグゼクティブサマリー (新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (新シグナルのみ)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1be9f819fefd",
+        "title": "エグゼクティブサマリー (新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9719e051dae3",
+        "title": "詳細セクション (重大シグナル深掘り)",
+        "text": "詳細セクション (重大シグナル深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (重大シグナル深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9719e051dae3",
+        "title": "詳細セクション (重大シグナル深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2d56e88abe2a",
+        "title": "項目",
+        "text": "項目 項目 内容",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "項目",
+          "url": "",
+          "status": "",
+          "summary": "項目 内容"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2d56e88abe2a",
+        "title": "項目",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-381221f18e2e",
+        "title": "起点",
+        "text": "起点 起点 6/12 米商務省 export-control directive (foreign national 全員へ無効化 / jailbreak 経由の脆弱性発見懸念 / 6/9 launch のわずか 3 日後)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "起点",
+          "url": "",
+          "status": "",
+          "summary": "起点 6/12 米商務省 export-control directive (foreign national 全員へ無効化 / jailbreak 経由の脆弱性発見懸念 / 6/9 launch のわずか 3 日後)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-381221f18e2e",
+        "title": "起点",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-56388e44cac1",
+        "title": "6/20 時点",
+        "text": "6/20 時点 6/20 時点 「新 delta なし・据え置き」(協議継続も復旧日提示なし)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "6/20 時点",
+          "url": "",
+          "status": "",
+          "summary": "6/20 時点 「新 delta なし・据え置き」(協議継続も復旧日提示なし)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-56388e44cac1",
+        "title": "6/20 時点",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b0eba38c1930",
+        "title": "6/21 delta",
+        "text": "6/21 delta 6/21 delta **報道で escalation が前景化** = ① 商務省からの **90 分最後通牒** ② Amazon **Andy Jassy の警告** ③ Anthropic が**上級職員を Washington へ派遣し交渉**。対立が硬直から再点火。復旧日は依然提示なし",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "6/21 delta",
+          "url": "",
+          "status": "",
+          "summary": "6/21 delta **報道で escalation が前景化** = ① 商務省からの **90 分最後通牒** ② Amazon **Andy Jassy の警告** ③ Anthropic が**上級職員を Washington へ派遣し交渉**。対立が硬直から再点火。復旧日は依然提示なし"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b0eba38c1930",
+        "title": "6/21 delta",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a8abbca24d23",
+        "title": "自社影響",
+        "text": "自社影響 自社影響 **Opus 4.8 / Sonnet 4.6 / Haiku 4.5 は非影響 = Win Claude #132 fleet 継続可**。単一ベンダー依存 + 地政学リスクが再燃 → `[AI_FALLBACK_RUNBOOK]` 点検の予防継続根拠が強まる",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "自社影響",
+          "url": "",
+          "status": "",
+          "summary": "自社影響 **Opus 4.8 / Sonnet 4.6 / Haiku 4.5 は非影響 = Win Claude #132 fleet 継続可**。単一ベンダー依存 + 地政学リスクが再燃 → `[AI_FALLBACK_RUNBOOK]` 点検の予防継続根拠が強まる"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a8abbca24d23",
+        "title": "自社影響",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6b0501364019",
+        "title": "検証注記",
+        "text": "検証注記 検証注記 `[AI-TOOL-VERIFY]`: 争点が narrow か否かで Anthropic / 政府の見解相違あり → 断定回避。複数の法務系・報道系ソースで裏取り",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "検証注記",
+          "url": "",
+          "status": "",
+          "summary": "検証注記 `[AI-TOOL-VERIFY]`: 争点が narrow か否かで Anthropic / 政府の見解相違あり → 断定回避。複数の法務系・報道系ソースで裏取り"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6b0501364019",
+        "title": "検証注記",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2b4968af696f",
+        "title": "Agent Fabric (control plane)**: Guided Determinism + ガバナンス制御で **multi-vendor AI を高速にスケール**。異なるベンダーの agent を単一 fabric で統治",
+        "text": "Agent Fabric (control plane)**: Guided Determinism + ガバナンス制御で **multi-vendor AI を高速にスケール**。異なるベンダーの agent を単一 fabric で統治。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Agent Fabric (control plane)**: Guided Determinism + ガバナンス制御で **multi-vendor AI を高速にスケール**。異なるベンダーの agent を単一 fabric で統治。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2b4968af696f",
+        "title": "Agent Fabric (control plane)**: Guided Determinism + ガバナンス制御で **multi-vendor AI を高速にスケール**。異なるベンダーの agent を単一 fabric で統治",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-09f5303823b2",
+        "title": "Multi-Agent Orchestration**: agent 群が **単一 team として end-to-end workflow** を解決 / 全 channel で shared context を持つ single po",
+        "text": "Multi-Agent Orchestration**: agent 群が **単一 team として end-to-end workflow** を解決 / 全 channel で shared context を持つ single point of contact。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Multi-Agent Orchestration**: agent 群が **単一 team として end-to-end workflow** を解決 / 全 channel で shared context を持つ single point of contact。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-09f5303823b2",
+        "title": "Multi-Agent Orchestration**: agent 群が **単一 team として end-to-end workflow** を解決 / 全 channel で shared context を持つ single po",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-041fc178277a",
+        "title": "Tableau MCP 統合**: AI agent が Tableau 分析エンジンを直接 query → business context grounded な回答。",
+        "text": "Tableau MCP 統合**: AI agent が Tableau 分析エンジンを直接 query → business context grounded な回答。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Tableau MCP 統合**: AI agent が Tableau 分析エンジンを直接 query → business context grounded な回答。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-041fc178277a",
+        "title": "Tableau MCP 統合**: AI agent が Tableau 分析エンジンを直接 query → business context grounded な回答。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3d0d29856a74",
+        "title": "Momentum**: 買収した conversation-intelligence 製品 = 通話 / メール / 会議を構造化し Salesforce へ real-time write-back。",
+        "text": "Momentum**: 買収した conversation-intelligence 製品 = 通話 / メール / 会議を構造化し Salesforce へ real-time write-back。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Momentum**: 買収した conversation-intelligence 製品 = 通話 / メール / 会議を構造化し Salesforce へ real-time write-back。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3d0d29856a74",
+        "title": "Momentum**: 買収した conversation-intelligence 製品 = 通話 / メール / 会議を構造化し Salesforce へ real-time write-back。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a0e920ab093b",
+        "title": "IT Service Domain Pack**: 50+ 専門 agent を Slack / Teams / IT Service Desk へ即投入。",
+        "text": "IT Service Domain Pack**: 50+ 専門 agent を Slack / Teams / IT Service Desk へ即投入。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "IT Service Domain Pack**: 50+ 専門 agent を Slack / Teams / IT Service Desk へ即投入。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a0e920ab093b",
+        "title": "IT Service Domain Pack**: 50+ 専門 agent を Slack / Teams / IT Service Desk へ即投入。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-83a7c556f383",
+        "title": "含意**: 6/23 採択第1候補 **Salesforce Agentforce Operations** (基準 a B/S・6 部署 overlap 最大 + 基準 c 連続リリース) の viability を一段と強化。特に **",
+        "text": "含意**: 6/23 採択第1候補 **Salesforce Agentforce Operations** (基準 a B/S・6 部署 overlap 最大 + 基準 c 連続リリース) の viability を一段と強化。特に **multi-vendor governance** は自社 fleet 協調 (cross-instance-pr md doc + git log audit) の「独自だが監査可能な統治」positioning と対照すべき軸。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "含意**: 6/23 採択第1候補 **Salesforce Agentforce Operations** (基準 a B/S・6 部署 overlap 最大 + 基準 c 連続リリース) の viability を一段と強化。特に **multi-vendor governance** は自社 fleet 協調 (cross-instance-pr md doc + git log audit) の「独自だが監査可能な統治」positioning と対照すべき軸。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-83a7c556f383",
+        "title": "含意**: 6/23 採択第1候補 **Salesforce Agentforce Operations** (基準 a B/S・6 部署 overlap 最大 + 基準 c 連続リリース) の viability を一段と強化。特に **",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-97f7a8a9f337",
+        "title": "6/16 全世界 GA**。Microsoft 365 Copilot を chat → agentic layer へ転換 (multi-step task を human approval checkpoint 付きで実行)。",
+        "text": "6/16 全世界 GA**。Microsoft 365 Copilot を chat → agentic layer へ転換 (multi-step task を human approval checkpoint 付きで実行)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/16 全世界 GA**。Microsoft 365 Copilot を chat → agentic layer へ転換 (multi-step task を human approval checkpoint 付きで実行)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-97f7a8a9f337",
+        "title": "6/16 全世界 GA**。Microsoft 365 Copilot を chat → agentic layer へ転換 (multi-step task を human approval checkpoint 付きで実行)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5990b323598f",
+        "title": "Anthropic Opus 4.8 / Sonnet 4.6 上で動作**。GPT 5.5 は Frontier 経由 / **自社 Cowork 1 モデルは coming weeks**。",
+        "text": "Anthropic Opus 4.8 / Sonnet 4.6 上で動作**。GPT 5.5 は Frontier 経由 / **自社 Cowork 1 モデルは coming weeks**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Anthropic Opus 4.8 / Sonnet 4.6 上で動作**。GPT 5.5 は Frontier 経由 / **自社 Cowork 1 モデルは coming weeks**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5990b323598f",
+        "title": "Anthropic Opus 4.8 / Sonnet 4.6 上で動作**。GPT 5.5 は Frontier 経由 / **自社 Cowork 1 モデルは coming weeks**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3894239887ab",
+        "title": "Fortune 500 過半 + Accenture / Avanade / Capital Group / Koch / Zurich 等。",
+        "text": "Fortune 500 過半 + Accenture / Avanade / Capital Group / Koch / Zurich 等。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Fortune 500 過半 + Accenture / Avanade / Capital Group / Koch / Zurich 等。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3894239887ab",
+        "title": "Fortune 500 過半 + Accenture / Avanade / Capital Group / Koch / Zurich 等。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-807f788d3490",
+        "title": "Copilot Credits 従量** (model use + context retrieval + tool calls + runtime の 4 入力算定) / 3/30–6/16 の Frontier テナントは 7/1 まで",
+        "text": "Copilot Credits 従量** (model use + context retrieval + tool calls + runtime の 4 入力算定) / 3/30–6/16 の Frontier テナントは 7/1 まで grace period。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Copilot Credits 従量** (model use + context retrieval + tool calls + runtime の 4 入力算定) / 3/30–6/16 の Frontier テナントは 7/1 まで grace period。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-807f788d3490",
+        "title": "Copilot Credits 従量** (model use + context retrieval + tool calls + runtime の 4 入力算定) / 3/30–6/16 の Frontier テナントは 7/1 まで",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-da46b15b280d",
+        "title": "off-by-default ガバナンス** + tenant / group / user 別 spend 上限。",
+        "text": "off-by-default ガバナンス** + tenant / group / user 別 spend 上限。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "off-by-default ガバナンス** + tenant / group / user 別 spend 上限。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-da46b15b280d",
+        "title": "off-by-default ガバナンス** + tenant / group / user 別 spend 上限。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c226ded5bb19",
+        "title": "含意**: back-office agent 三つ巴 (Anthropic Cowork / MS Copilot Cowork / MF AI Cowork) のうち **rival の MS でさえ Anthropic モデルに依存*",
+        "text": "含意**: back-office agent 三つ巴 (Anthropic Cowork / MS Copilot Cowork / MF AI Cowork) のうち **rival の MS でさえ Anthropic モデルに依存** = §1 の単一ベンダー集中論点を補強。自社差別化は model でなく **「統合の単位」= 個人単位 6 部署 + B/S 統合 lifestyle CEO dashboard** (法人バックオフィスでなく個人)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "含意**: back-office agent 三つ巴 (Anthropic Cowork / MS Copilot Cowork / MF AI Cowork) のうち **rival の MS でさえ Anthropic モデルに依存** = §1 の単一ベンダー集中論点を補強。自社差別化は model でなく **「統合の単位」= 個人単位 6 部署 + B/S 統合 lifestyle CEO dashboard** (法人バックオフィスでなく個人)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c226ded5bb19",
+        "title": "含意**: back-office agent 三つ巴 (Anthropic Cowork / MS Copilot Cowork / MF AI Cowork) のうち **rival の MS でさえ Anthropic モデルに依存*",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-ecc237ea44dd",
+        "title": "7 月 GA 予定で **pre-registration 受付中**。経理 / 税務 / 財務 / 労務 / 法務など 6 バックオフィス業務を自然言語で自律遂行。MCP server 実装・運用・保守不要が訴求点。",
+        "text": "7 月 GA 予定で **pre-registration 受付中**。経理 / 税務 / 財務 / 労務 / 法務など 6 バックオフィス業務を自然言語で自律遂行。MCP server 実装・運用・保守不要が訴求点。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "7 月 GA 予定で **pre-registration 受付中**。経理 / 税務 / 財務 / 労務 / 法務など 6 バックオフィス業務を自然言語で自律遂行。MCP server 実装・運用・保守不要が訴求点。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-ecc237ea44dd",
+        "title": "7 月 GA 予定で **pre-registration 受付中**。経理 / 税務 / 財務 / 労務 / 法務など 6 バックオフィス業務を自然言語で自律遂行。MCP server 実装・運用・保守不要が訴求点。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9f192f17e5c4",
+        "title": "大きな新 delta なし。GA 前の narrative sharpening timing 継続 (= 「個人単位 6 部署 + B/S 統合」差別化の明文化好機)。",
+        "text": "大きな新 delta なし。GA 前の narrative sharpening timing 継続 (= 「個人単位 6 部署 + B/S 統合」差別化の明文化好機)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "大きな新 delta なし。GA 前の narrative sharpening timing 継続 (= 「個人単位 6 部署 + B/S 統合」差別化の明文化好機)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9f192f17e5c4",
+        "title": "大きな新 delta なし。GA 前の narrative sharpening timing 継続 (= 「個人単位 6 部署 + B/S 統合」差別化の明文化好機)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2296a741d41e",
+        "title": "項目",
+        "text": "項目 項目 6/20 記載 正確な事実 (6/21 訂正)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "項目",
+          "url": "",
+          "status": "",
+          "summary": "項目 6/20 記載 正確な事実 (6/21 訂正)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2296a741d41e",
+        "title": "項目",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2ba2f7c8ded9",
+        "title": "起点",
+        "text": "起点 起点 「6/2 Devin Desktop 起点」 **ACP は Zed Industries が 2025/8 作成**。Devin Desktop は採用者",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "起点",
+          "url": "",
+          "status": "",
+          "summary": "起点 「6/2 Devin Desktop 起点」 **ACP は Zed Industries が 2025/8 作成**。Devin Desktop は採用者"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2ba2f7c8ded9",
+        "title": "起点",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c00bb30b0c01",
+        "title": "Registry",
+        "text": "Registry Registry (未記載) **ACP Registry は 2026/1 launch** (agent 発見・接続の friction 低減)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "Registry",
+          "url": "",
+          "status": "",
+          "summary": "Registry (未記載) **ACP Registry は 2026/1 launch** (agent 発見・接続の friction 低減)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c00bb30b0c01",
+        "title": "Registry",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-41c973000fdb",
+        "title": "採用",
+        "text": "採用 採用 JetBrains / Google / GitHub + 25+ agents 同左 + **JetBrains AI Assistant も ACP 対応** (任意 agent を custom 統合なしで追加)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "採用",
+          "url": "",
+          "status": "",
+          "summary": "採用 JetBrains / Google / GitHub + 25+ agents 同左 + **JetBrains AI Assistant も ACP 対応** (任意 agent を custom 統合なしで追加)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-41c973000fdb",
+        "title": "採用",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b70ac86844d1",
+        "title": "Cursor / Claude Code / Codex / Antigravity が **単一 agentic blueprint へ収斂** (6 か月かけてフォームが概ね合意)。OpenAI plugin が Claude Code",
+        "text": "Cursor / Claude Code / Codex / Antigravity が **単一 agentic blueprint へ収斂** (6 か月かけてフォームが概ね合意)。OpenAI plugin が Claude Code 内で動く等、相互統合も進行。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "Cursor / Claude Code / Codex / Antigravity が **単一 agentic blueprint へ収斂** (6 か月かけてフォームが概ね合意)。OpenAI plugin が Claude Code 内で動く等、相互統合も進行。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b70ac86844d1",
+        "title": "Cursor / Claude Code / Codex / Antigravity が **単一 agentic blueprint へ収斂** (6 か月かけてフォームが概ね合意)。OpenAI plugin が Claude Code",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fb864ce649b9",
+        "title": "72h で 3 coding agent が連続 launch = **developer が払う知能の price floor 再設定** = 6/20 の「unlimited era is over」価格メータリング収斂スレッドを補強。",
+        "text": "72h で 3 coding agent が連続 launch = **developer が払う知能の price floor 再設定** = 6/20 の「unlimited era is over」価格メータリング収斂スレッドを補強。自社 prompt-caching コスト削減 narrative (`PROMPT_CACHING_OPUS47_COST_GUIDE.md`) + self-hosted gate TCO narrative の訴求好機継続。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "72h で 3 coding agent が連続 launch = **developer が払う知能の price floor 再設定** = 6/20 の「unlimited era is over」価格メータリング収斂スレッドを補強。自社 prompt-caching コスト削減 narrative (`PROMPT_CACHING_OPUS47_COST_GUIDE.md`) + self-hosted gate TCO narrative の訴求好機継続。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fb864ce649b9",
+        "title": "72h で 3 coding agent が連続 launch = **developer が払う知能の price floor 再設定** = 6/20 の「unlimited era is over」価格メータリング収斂スレッドを補強。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4fa08ba8a552",
+        "title": "discovery セクション — 本 run: SKIP (cooldown)",
+        "text": "discovery セクション — 本 run: SKIP (cooldown)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "discovery セクション — 本 run: SKIP (cooldown)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4fa08ba8a552",
+        "title": "discovery セクション — 本 run: SKIP (cooldown)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-0fd0b5a9008c",
+        "title": "判定**: SKIP。理由 = 2026-06-16 Microsoft MAI-Code-1-Flash 採択の **7 day cooldown 中** (5 day 経過 / 残 2 day / 次回 **6/23 解禁**)。",
+        "text": "判定**: SKIP。理由 = 2026-06-16 Microsoft MAI-Code-1-Flash 採択の **7 day cooldown 中** (5 day 経過 / 残 2 day / 次回 **6/23 解禁**)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "判定**: SKIP。理由 = 2026-06-16 Microsoft MAI-Code-1-Flash 採択の **7 day cooldown 中** (5 day 経過 / 残 2 day / 次回 **6/23 解禁**)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-0fd0b5a9008c",
+        "title": "判定**: SKIP。理由 = 2026-06-16 Microsoft MAI-Code-1-Flash 採択の **7 day cooldown 中** (5 day 経過 / 残 2 day / 次回 **6/23 解禁**)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-371b97fc5b10",
+        "title": "6/23 採択 第 1 候補**: **Salesforce Agentforce Operations** — 基準 a (B/S・6 部署 overlap 最大) + 基準 c (6/15 Summer '26 GA + Agent F",
+        "text": "6/23 採択 第 1 候補**: **Salesforce Agentforce Operations** — 基準 a (B/S・6 部署 overlap 最大) + 基準 c (6/15 Summer '26 GA + Agent Fabric multi-vendor governance + Multi-Agent Orchestration の連続リリース)。今サイクルで viability **一段と強化**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/23 採択 第 1 候補**: **Salesforce Agentforce Operations** — 基準 a (B/S・6 部署 overlap 最大) + 基準 c (6/15 Summer '26 GA + Agent Fabric multi-vendor governance + Multi-Agent Orchestration の連続リリース)。今サイクルで viability **一段と強化**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-371b97fc5b10",
+        "title": "6/23 採択 第 1 候補**: **Salesforce Agentforce Operations** — 基準 a (B/S・6 部署 overlap 最大) + 基準 c (6/15 Summer '26 GA + Agent F",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5efc115812fc",
+        "title": "monitor 継続**: Microsoft Copilot Cowork (back-office 三つ巴中核だが MS は MAI-Code で 6/16 既収載 = 同一ベンダー連続追加回避) / Warp / Sierra / G",
+        "text": "monitor 継続**: Microsoft Copilot Cowork (back-office 三つ巴中核だが MS は MAI-Code で 6/16 既収載 = 同一ベンダー連続追加回避) / Warp / Sierra / Google Jules・Antigravity 2.0 (6/24 再評価) / ServiceNow Build Agent / Prime Intellect Lab。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "monitor 継続**: Microsoft Copilot Cowork (back-office 三つ巴中核だが MS は MAI-Code で 6/16 既収載 = 同一ベンダー連続追加回避) / Warp / Sierra / Google Jules・Antigravity 2.0 (6/24 再評価) / ServiceNow Build Agent / Prime Intellect Lab。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5efc115812fc",
+        "title": "monitor 継続**: Microsoft Copilot Cowork (back-office 三つ巴中核だが MS は MAI-Code で 6/16 既収載 = 同一ベンダー連続追加回避) / Warp / Sierra / G",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5d953884e376",
+        "title": "[Salesforce: Agent Fabric — Guided Determinism + multi-vendor AI governance](https://www.salesforce.com/news/stories/age",
+        "text": "[Salesforce: Agent Fabric — Guided Determinism + multi-vendor AI governance](https://www.salesforce.com/news/stories/agent-fabric-control-plane-announcement/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Salesforce: Agent Fabric — Guided Determinism + multi-vendor AI governance](https://www.salesforce.com/news/stories/agent-fabric-control-plane-announcement/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5d953884e376",
+        "title": "[Salesforce: Agent Fabric — Guided Determinism + multi-vendor AI governance](https://www.salesforce.com/news/stories/age",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9c9fa58b9435",
+        "title": "[Salesforce: Summer 2026 Product Release Announcement](https://www.salesforce.com/news/stories/summer-2026-product-relea",
+        "text": "[Salesforce: Summer 2026 Product Release Announcement](https://www.salesforce.com/news/stories/summer-2026-product-release-announcement/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Salesforce: Summer 2026 Product Release Announcement](https://www.salesforce.com/news/stories/summer-2026-product-release-announcement/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9c9fa58b9435",
+        "title": "[Salesforce: Summer 2026 Product Release Announcement](https://www.salesforce.com/news/stories/summer-2026-product-relea",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6ac5ece991f3",
+        "title": "[Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "text": "[Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6ac5ece991f3",
+        "title": "[Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4543b0d1f002",
+        "title": "[Greenberg Traurig: Anthropic Suspends Claude Fable 5 / Mythos 5 (export control)](https://www.gtlaw.com/en/insights/202",
+        "text": "[Greenberg Traurig: Anthropic Suspends Claude Fable 5 / Mythos 5 (export control)](https://www.gtlaw.com/en/insights/2026/6/ai-company-anthropic-suspends-access-to-claude-fable-5-claude-mythos-5-following-us-export-control-directive)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Greenberg Traurig: Anthropic Suspends Claude Fable 5 / Mythos 5 (export control)](https://www.gtlaw.com/en/insights/2026/6/ai-company-anthropic-suspends-access-to-claude-fable-5-claude-mythos-5-following-us-export-control-directive)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4543b0d1f002",
+        "title": "[Greenberg Traurig: Anthropic Suspends Claude Fable 5 / Mythos 5 (export control)](https://www.gtlaw.com/en/insights/202",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-39ba14280ef9",
+        "title": "[MarkTechPost: Anthropic Disables Claude Fable 5 and Mythos 5 After US Government Order](https://www.marktechpost.com/20",
+        "text": "[MarkTechPost: Anthropic Disables Claude Fable 5 and Mythos 5 After US Government Order](https://www.marktechpost.com/2026/06/13/anthropic-disables-claude-fable-5-and-mythos-5-after-us-government-order/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[MarkTechPost: Anthropic Disables Claude Fable 5 and Mythos 5 After US Government Order](https://www.marktechpost.com/2026/06/13/anthropic-disables-claude-fable-5-and-mythos-5-after-us-government-order/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-39ba14280ef9",
+        "title": "[MarkTechPost: Anthropic Disables Claude Fable 5 and Mythos 5 After US Government Order](https://www.marktechpost.com/20",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-193531c1a652",
+        "title": "[Microsoft 365 Blog: Copilot Cowork is now generally available](https://www.microsoft.com/en-us/microsoft-365/blog/2026/",
+        "text": "[Microsoft 365 Blog: Copilot Cowork is now generally available](https://www.microsoft.com/en-us/microsoft-365/blog/2026/06/16/copilot-cowork-is-now-generally-available/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Microsoft 365 Blog: Copilot Cowork is now generally available](https://www.microsoft.com/en-us/microsoft-365/blog/2026/06/16/copilot-cowork-is-now-generally-available/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-193531c1a652",
+        "title": "[Microsoft 365 Blog: Copilot Cowork is now generally available](https://www.microsoft.com/en-us/microsoft-365/blog/2026/",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-099ef9a3cdc7",
+        "title": "[Windows News: Microsoft Copilot Cowork hits GA — credits billing + governance](https://windowsnews.ai/article/microsoft",
+        "text": "[Windows News: Microsoft Copilot Cowork hits GA — credits billing + governance](https://windowsnews.ai/article/microsoft-copilot-cowork-hits-general-availability-agentic-ai-credits-billing-and-governance-control.427146)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Windows News: Microsoft Copilot Cowork hits GA — credits billing + governance](https://windowsnews.ai/article/microsoft-copilot-cowork-hits-general-availability-agentic-ai-credits-billing-and-governance-control.427146)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-099ef9a3cdc7",
+        "title": "[Windows News: Microsoft Copilot Cowork hits GA — credits billing + governance](https://windowsnews.ai/article/microsoft",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c55e02561fca",
+        "title": "[MoneyForward 公式: AI Cowork 7月 GA](https://corp.moneyforward.com/en/news/release/service/20260407-mf-press-1/)",
+        "text": "[MoneyForward 公式: AI Cowork 7月 GA](https://corp.moneyforward.com/en/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[MoneyForward 公式: AI Cowork 7月 GA](https://corp.moneyforward.com/en/news/release/service/20260407-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c55e02561fca",
+        "title": "[MoneyForward 公式: AI Cowork 7月 GA](https://corp.moneyforward.com/en/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-af013976873c",
+        "title": "[JetBrains: Agent Client Protocol (ACP) — AI Assistant docs](https://www.jetbrains.com/help/ai-assistant/acp.html)",
+        "text": "[JetBrains: Agent Client Protocol (ACP) — AI Assistant docs](https://www.jetbrains.com/help/ai-assistant/acp.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[JetBrains: Agent Client Protocol (ACP) — AI Assistant docs](https://www.jetbrains.com/help/ai-assistant/acp.html)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-af013976873c",
+        "title": "[JetBrains: Agent Client Protocol (ACP) — AI Assistant docs](https://www.jetbrains.com/help/ai-assistant/acp.html)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c342f45f672a",
+        "title": "[Marc Nuri: Agent Client Protocol (ACP) — the LSP for AI coding agents](https://blog.marcnuri.com/agent-client-protocol-",
+        "text": "[Marc Nuri: Agent Client Protocol (ACP) — the LSP for AI coding agents](https://blog.marcnuri.com/agent-client-protocol-acp-introduction)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Marc Nuri: Agent Client Protocol (ACP) — the LSP for AI coding agents](https://blog.marcnuri.com/agent-client-protocol-acp-introduction)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c342f45f672a",
+        "title": "[Marc Nuri: Agent Client Protocol (ACP) — the LSP for AI coding agents](https://blog.marcnuri.com/agent-client-protocol-",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-cd388f795469",
+        "title": "[The New Stack: Cursor, Claude Code, and Codex merging into one AI coding stack](https://thenewstack.io/ai-coding-tool-s",
+        "text": "[The New Stack: Cursor, Claude Code, and Codex merging into one AI coding stack](https://thenewstack.io/ai-coding-tool-stack/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[The New Stack: Cursor, Claude Code, and Codex merging into one AI coding stack](https://thenewstack.io/ai-coding-tool-stack/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-cd388f795469",
+        "title": "[The New Stack: Cursor, Claude Code, and Codex merging into one AI coding stack](https://thenewstack.io/ai-coding-tool-s",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

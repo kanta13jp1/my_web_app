@@ -8,7 +8,7 @@ on:
       - "scripts/mcp_audit_anomaly_test.ts"
       - "terraform/mcp_oauth_clients/**"
   schedule:
-    - cron: "7 * * * *" # hourly :07
+    - cron: "7 */2 * * *" # every 2 hours at :07
   workflow_dispatch:
     inputs:
       dry_run:

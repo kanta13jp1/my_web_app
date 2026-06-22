@@ -21,6 +21,7 @@ import '../services/feature_strategy_ai_review_service.dart';
 import '../services/feature_strategy_focus_action_service.dart';
 import '../services/feature_strategy_monitor_service.dart';
 import '../services/feature_strategy_report_snapshot_service.dart';
+import '../services/grow_together_share.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/life_waste_elimination_service.dart';
 import '../services/personality_test_service.dart';
@@ -53,6 +54,7 @@ import '../widgets/ga_readiness_gate_panel.dart';
 import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
+import '../widgets/grow_together_share_card.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
 import '../widgets/referral_share_card.dart';
@@ -1279,6 +1281,17 @@ class _HomePageState extends State<HomePage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final today = _startOfDay(_now());
+      final calendarRange = _calendarVisibleRange();
+      final abstinenceStart = today.isBefore(calendarRange.startDay)
+          ? today
+          : calendarRange.startDay;
+      final abstinenceEnd =
+          today.isAfter(calendarRange.endDay) ? today : calendarRange.endDay;
+      final abstinenceSnapshotsByDate =
+          await AbstinenceGuardStore.loadSnapshotsByDate(
+        startDate: abstinenceStart,
+        endDate: abstinenceEnd,
+      );
       final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
         prefs: prefs,
         month: today,
@@ -1292,14 +1305,18 @@ class _HomePageState extends State<HomePage> {
       );
       final todayStatus =
           homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
-      final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
-        now: today,
-      );
+      final abstinenceSnapshot =
+          abstinenceSnapshotsByDate[_statusDateKey(today)] ??
+              _emptyAbstinenceSnapshot();
       final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
         now: today,
       );
       final primaryInterference = abstinenceSnapshot.primaryInterference;
-      final calendarDays = await _loadCalendarDays(prefs: prefs);
+      final calendarDays = await _loadCalendarDays(
+        prefs: prefs,
+        calendarRange: calendarRange,
+        abstinenceSnapshotsByDate: abstinenceSnapshotsByDate,
+      );
 
       return _HomeOpsSnapshot(
         morningBriefingDone: todayStatus.morningBriefingDone,
@@ -1334,10 +1351,21 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<List<_HomeCalendarDay>> _loadCalendarDays({
-    required SharedPreferences prefs,
-  }) async {
-    final now = _now();
+  AbstinenceGuardSnapshot _emptyAbstinenceSnapshot() {
+    return AbstinenceGuardSnapshot(
+      states: AbstinenceGuardStore.items
+          .map(
+            (item) => AbstinenceGuardState(
+              item: item,
+              isEnabled: false,
+              slipCount: 0,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  _HomeCalendarVisibleRange _calendarVisibleRange() {
     final monthAnchor = _calendarAnchorMonth();
     final firstDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month, 1);
     final lastDayOfMonth = DateTime(monthAnchor.year, monthAnchor.month + 1, 0);
@@ -1345,6 +1373,24 @@ class _HomePageState extends State<HomePage> {
     final startDay = firstDayOfMonth.subtract(Duration(days: startOffset));
     final endOffset = 6 - (lastDayOfMonth.weekday % 7);
     final endDay = lastDayOfMonth.add(Duration(days: endOffset));
+
+    return _HomeCalendarVisibleRange(
+      monthAnchor: monthAnchor,
+      startDay: startDay,
+      endDay: endDay,
+    );
+  }
+
+  Future<List<_HomeCalendarDay>> _loadCalendarDays({
+    required SharedPreferences prefs,
+    _HomeCalendarVisibleRange? calendarRange,
+    Map<String, AbstinenceGuardSnapshot>? abstinenceSnapshotsByDate,
+  }) async {
+    final now = _now();
+    final range = calendarRange ?? _calendarVisibleRange();
+    final monthAnchor = range.monthAnchor;
+    final startDay = range.startDay;
+    final endDay = range.endDay;
     final homeDailyMap = await _loadHomeDailyStatusMap(
       prefs: prefs,
       startDate: startDay,
@@ -1362,15 +1408,19 @@ class _HomePageState extends State<HomePage> {
       startDate: startDay,
       endDate: endDay,
     );
+    final abstinenceByDate = abstinenceSnapshotsByDate ??
+        await AbstinenceGuardStore.loadSnapshotsByDate(
+          startDate: startDay,
+          endDate: endDay,
+        );
 
     final days = <_HomeCalendarDay>[];
     for (DateTime day = startDay;
         !day.isAfter(endDay);
         day = day.add(const Duration(days: 1))) {
       final dateKey = _statusDateKey(day);
-      final abstinence = await AbstinenceGuardStore.loadSnapshot(
-        now: day,
-      );
+      final abstinence =
+          abstinenceByDate[dateKey] ?? _emptyAbstinenceSnapshot();
       final isCurrentMonth =
           day.year == monthAnchor.year && day.month == monthAnchor.month;
       final isToday =
@@ -6645,7 +6695,7 @@ abstinence_slip_details: $slipDetailsText
       );
     }
 
-    return Card(
+    final formCard = Card(
       elevation: 0,
       color: isDark ? const Color(0xFF111827) : Colors.white,
       shape: RoundedRectangleBorder(
@@ -6848,6 +6898,56 @@ abstinence_slip_details: $slipDetailsText
                           label: const Text('Issue URLコピー'),
                         ),
                       ],
+                      const SizedBox(height: 10),
+                      const Divider(height: 1, color: Color(0x33047857)),
+                      const SizedBox(height: 10),
+                      const Text(
+                        '要望をありがとうございます。あなたの一言がそのまま開発タスクになります。'
+                        'この仕組みをXで広めて、一緒にアプリを育てる仲間を増やしませんか？',
+                        style: TextStyle(
+                          color: Color(0xFF065F46),
+                          fontSize: 12,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.icon(
+                          key: const Key(
+                            'feature_request_share_x_button',
+                          ),
+                          onPressed: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            final opened =
+                                await GrowTogetherShare.launchXShare();
+                            if (!mounted || opened) return;
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Xの投稿画面を開けませんでした。本文をコピーして共有してください。',
+                                ),
+                              ),
+                            );
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF000000),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Text(
+                            '𝕏',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          label: const Text('Xでシェアして仲間を増やす'),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -6856,6 +6956,15 @@ abstinence_slip_details: $slipDetailsText
           ),
         ),
       ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        formCard,
+        const SizedBox(height: 16),
+        GrowTogetherShareCard(isDark: isDark, isCompact: isCompact),
+      ],
     );
   }
 
@@ -9146,6 +9255,18 @@ class _HomeDailyStatusRecord {
   const _HomeDailyStatusRecord({
     this.morningBriefingDone = false,
     this.balanceCheckDone = false,
+  });
+}
+
+class _HomeCalendarVisibleRange {
+  final DateTime monthAnchor;
+  final DateTime startDay;
+  final DateTime endDay;
+
+  const _HomeCalendarVisibleRange({
+    required this.monthAnchor,
+    required this.startDay,
+    required this.endDay,
   });
 }
 

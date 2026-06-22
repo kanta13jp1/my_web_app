@@ -154,6 +154,14 @@ class AssetManagementAiProviderRouter {
       displayName: 'Gemini 3.1 Pro',
       tier: 'performance',
     ),
+    // 高レート上限・低コストの最終フォールバック。上位 google(flash) が
+    // レート制限でクールダウン中でも、別プロバイダ扱い=独立クールダウンで応答できる。
+    AssetManagementAiProviderCandidate(
+      providerId: 'google_flash_lite',
+      modelId: 'gemini-2.5-flash-lite',
+      displayName: 'Gemini 2.5 Flash-Lite',
+      tier: 'fallback',
+    ),
   ];
 
   static const Map<AssetManagementAiProviderUseCase,

@@ -89,6 +89,7 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
     }
     await HomeToolUsageService.recordToolUse(entry.id);
     if (!mounted) return;
+    // entry.onOpen はカタログラッパー経由で user_feature_usage に記録される。
     await entry.onOpen(context);
     if (!mounted) return;
     setState(() {

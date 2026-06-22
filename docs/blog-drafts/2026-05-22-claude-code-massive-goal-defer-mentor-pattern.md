@@ -3,7 +3,7 @@ title: "Claude Code セッションで「大規模 /goal」を defer する判�
 emoji: "🛑"
 type: "tech"
 topics: ["claudecode", "ai", "agents", "devops", "productivity"]
-published: false
+published: true
 ---
 
 ## TL;DR

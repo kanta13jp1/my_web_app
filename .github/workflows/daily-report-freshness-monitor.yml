@@ -14,6 +14,10 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: daily-report-freshness-monitor-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   monitor:
     name: Check daily-report freshness

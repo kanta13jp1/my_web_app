@@ -604,6 +604,33 @@ class LocalElectionPlanDashboard {
     return sorted.take(limit).toList();
   }
 
+  /// All prefectures that have a CDP comparison, sorted by gap (largest CDP
+  /// lead first). Unlike [topCdpGapPrefectures] this is not capped, so it can
+  /// power the full benchmark list that shows every available prefecture.
+  List<LocalElectionPrefecturePlan> allCdpGapPrefectures() =>
+      topCdpGapPrefectures(limit: prefectures.length);
+
+  /// Returns a copy with each prefecture's CDP local member count replaced by
+  /// the fetched benchmark value when present and positive. A missing or
+  /// non-positive entry keeps the existing (seed) value, so a partial or failed
+  /// fetch never overwrites good data with zero.
+  LocalElectionPlanDashboard withCdpLocalMembers(
+    Map<String, int> membersByPrefecture,
+  ) {
+    if (membersByPrefecture.isEmpty) {
+      return this;
+    }
+    return copyWith(
+      prefectures: prefectures.map((item) {
+        final fetched = membersByPrefecture[item.prefecture] ?? 0;
+        if (fetched <= 0 || fetched == item.cdpLocalMembers) {
+          return item;
+        }
+        return item.copyWith(cdpLocalMembers: fetched);
+      }).toList(),
+    );
+  }
+
   int get confirmedEndorsementCount => prefectures.where((item) {
         return item.endorsementConfirmed;
       }).length;

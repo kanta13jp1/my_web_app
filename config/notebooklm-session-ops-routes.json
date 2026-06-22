@@ -324,7 +324,7 @@
       "landingTargets": [
         {
           "type": "docs",
-          "path": "docs/INSTANCE_CONFIG.md"
+          "path": "docs/AI_DRIVEN_DEV_OPERATING_MODEL.md"
         },
         {
           "type": "script",

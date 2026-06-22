@@ -3,10 +3,14 @@ name: Memory Search Sync
 on:
   workflow_dispatch:
   schedule:
-    - cron: "12 * * * *"
+    - cron: "12 */2 * * *"  # 2026-06-11 ci-audit: 毎時→2時間, 360runs/月削減
 
 permissions:
   contents: read
+
+concurrency:
+  group: memory-search-sync
+  cancel-in-progress: true
 
 jobs:
   sync:

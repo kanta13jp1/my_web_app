@@ -47,7 +47,7 @@ The manifest maps session-ops notebooks into concrete repo surfaces:
   `.github/workflows/schedule-resilience-watch.yml`
 - memory and hooks: `docs/CODEX_MEMORY_AUTOMATIONS.md`,
   `docs/PRECOMPACT_MEMORY_BACKUP_SPEC.md`, and `scripts/codex_session_check.py`
-- Remote Control: `docs/INSTANCE_CONFIG.md` and
+- Remote Control: `docs/AI_DRIVEN_DEV_OPERATING_MODEL.md` and
   `scripts/codex_session_check.py`
 - blog/news automation: `docs/BLOG_NEWS_AUTOMATION_RUNBOOK.md` and
   `.github/workflows/blog-news-prod-smoke.yml`

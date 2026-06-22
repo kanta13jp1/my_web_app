@@ -543,6 +543,33 @@ class AbstinenceGuardStore {
     );
   }
 
+  static Future<Map<String, AbstinenceGuardSnapshot>> loadSnapshotsByDate({
+    required DateTime startDate,
+    required DateTime endDate,
+    SharedPreferences? prefs,
+  }) async {
+    final start = _startOfDay(startDate);
+    final end = _startOfDay(endDate);
+    final rangeStart = start.isAfter(end) ? end : start;
+    final rangeEnd = start.isAfter(end) ? start : end;
+    final protocolPrefs = prefs ?? await SharedPreferences.getInstance();
+    final statesByDate = await _loadStatesForDateRange(
+      startDate: rangeStart,
+      endDate: rangeEnd,
+      prefs: prefs,
+    );
+
+    return <String, AbstinenceGuardSnapshot>{
+      for (final date in _dateRange(startDate: rangeStart, endDate: rangeEnd))
+        todayKey(date): _buildSnapshotFromStoredStates(
+          date: date,
+          storedStates: statesByDate[todayKey(date)] ??
+              const <String, _StoredAbstinenceState>{},
+          prefs: protocolPrefs,
+        ),
+    };
+  }
+
   static Future<AbstinenceGuardSnapshotWithSlipCounts>
       loadSnapshotWithSlipCounts({
     required String itemId,

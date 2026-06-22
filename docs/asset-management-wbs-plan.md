@@ -1,27 +1,45 @@
 # Asset Management WBS Plan
 
-Last updated: 2026-05-16 13:45 JST
+Last updated: 2026-05-19 00:57 JST
 
 ## Current WBS Snapshot
 
-- Active WBS tasks still contain schedule drift after GitHub Issue sync.
-- The live WBS again had many active rows scheduled for `2026-05-16 -> 2026-05-16`.
-- Issue #2447 is completed, so the next asset-management implementation task is #2448.
-- New model-evaluation and `/goal`/wrap-up tasks were added as #2520-#2523.
+- This Codex session used a fresh worktree because the root tree was dirty.
+- GitHub Issues WBS Sync succeeded through the latest Issue-triggered run after
+  the NotebookLM batch. Manual run `26044482065` was cancelled by concurrency,
+  but the last Issue-triggered run `26044490280` completed successfully.
+- WBS Auto Reschedule was manually dispatched as run `26044670021` and
+  completed successfully at `2026-05-19 00:56 JST`.
+- The reschedule updated `880` open WBS tasks with `0` errors:
+  `47` pinned tasks now run `2026-05-31 -> 2026-08-09`; GitHub Issue backlog
+  then runs `2026-08-10 -> 2027-08-10`.
+- #2448, #2449, #2450, #2451, #2452, #2453, #2456, #2508, #2521, and #2522 are
+  already closed. The next open pinned asset-management implementation task is
+  #2454.
+- #2520 remains open only for live provider scoring and final scored verdict;
+  the deterministic benchmark foundation and source recheck are already merged.
+- NotebookLM requirement extraction now covers all `114` notebooks with `342`
+  stable requirement slots linked to GitHub Issues.
 
-This is not a realistic execution plan. The rebaseline in
-`20260516134500_rebalance_wbs_asset_ai_model_plan.sql` treats WBS dates as
-planned work dates, estimates effort, and spreads active work by lane capacity.
+The current WBS dates are the live `wbs.reschedule_realistic` output, not an
+optimistic same-day backlog. Work should continue from the nearest due pinned
+task unless Claude Code routes a product-judgment blocker first.
 
 ## Scheduling Rules
 
 - One effort point is a small bounded change.
 - Codex capacity is treated as 2 effort points per day.
+- The two top-level lanes remain Claude Code #1 and Codex #1. Extra historical
+  agent labels are dormant unless explicitly reactivated.
 - Medium feature work is usually 2 effort points.
 - Larger sync, import, or simulation work is 3 effort points.
 - The asset-management roadmap is pinned first because this session explicitly
   prioritizes the asset/liability board.
 - Existing Codex backlog resumes after the pinned asset-management window.
+- NotebookLM issue extraction is an intake lane, not implementation capacity.
+  Scheduled runs should keep the default creation cap of 9 new Issues per day;
+  uncapped full backfills require explicit operator intent, dedup evidence, and
+  a WBS reschedule immediately afterward.
 - Two-instance routing is reflected in planning:
   - Claude Code owns ambiguous product judgment, architecture, prompt policy,
     and review-gate design.
@@ -50,22 +68,14 @@ from the nearest due WBS task.
 
 ## Asset Management Roadmap
 
+Completed before this rebaseline: #2448-#2453, #2456, #2508, #2521, and #2522.
+Current open pinned work starts here:
+
 | Issue | Task | Estimate | Planned Start | Planned End |
 |---:|---|---:|---|---|
-| #2517 | Fix WBS list pagination duplication before relying on WBS views | 1d | 2026-05-16 | 2026-05-16 |
-| #2523 | `/goal` WBS execution and wrap-up standardization | 1d | 2026-05-16 | 2026-05-16 |
-| #2448 | Supabase sync conflict resolution UI | 2d | 2026-05-17 | 2026-05-18 |
-| #2449 | Staged production write for Supabase persistence | 3d | 2026-05-19 | 2026-05-21 |
-| #2450 | Planned vs actual payment difference management | 2d | 2026-05-22 | 2026-05-23 |
-| #2451 | Card-billed statement import and reconciliation | 3d | 2026-05-24 | 2026-05-26 |
-| #2452 | Account transfer suggestions as managed tasks | 2d | 2026-05-27 | 2026-05-28 |
-| #2453 | Payment reminder notifications | 2d | 2026-05-29 | 2026-05-30 |
 | #2454 | Repayment simulation | 3d | 2026-05-31 | 2026-06-02 |
 | #2455 | CSV import and restore | 2d | 2026-06-03 | 2026-06-04 |
-| #2456 | Asset-management QA and operations documentation | 1d | 2026-06-05 | 2026-06-05 |
 | #2520 | Official AI model comparison benchmark foundation | 2d | 2026-06-06 | 2026-06-07 |
-| #2521 | Asset-management AI provider routing for GPT/Gemini/Claude Opus | 2d | 2026-06-08 | 2026-06-09 |
-| #2522 | Model cost/quality telemetry and monthly review | 2d | 2026-06-10 | 2026-06-11 |
 
 ## Phase 2 Roadmap
 
@@ -119,17 +129,33 @@ from the nearest due WBS task.
 
 ## Implementation Order
 
-1. Keep WBS reliable first: #2517 and #2523 prevent planning drift and session
-   state loss.
-2. Continue implementation from #2448, the nearest due asset-management feature.
-3. Finish Supabase validation and conflict handling before enabling production
-   writes.
-4. Add reconciliation and reminder features after the storage model can safely
-   persist monthly operational state.
-5. Add AI model benchmarking before adding more model-specific behavior. Social
-   posts can suggest candidates, but project benchmarks decide routing.
+1. Continue implementation from #2454, the nearest due open pinned
+   asset-management feature.
+2. Keep #2454 deterministic: repayment priority, extra payment, payoff date,
+   and interest math must live in Dart service tests, not AI output.
+3. Complete #2455 before broadening import/export flows.
+4. Finish #2520 live-provider scoring only when API keys and operator approval
+   are available; no production routing should depend on unverified social-media
+   model rankings.
+5. Start Phase 2 at #2460 with monthly reports, then investment assets, then
+   dashboard/anomaly/tax work.
 6. Defer MoneyForward and MUFG eSmart integrations until local/Supabase state,
-   conflict handling, and monthly reporting are stable.
+   conflict handling, monthly reporting, and investment asset storage are stable.
+
+## NotebookLM Requirement Batch
+
+- `notebooklm list --json` returned `114` notebooks.
+- All notebooks now have 3 requirement markers, for `342` total NotebookLM
+  requirement slots.
+- This session backfilled the missing notebooks and created Issues #2829-#2933.
+- `scripts/notebooklm_requirements_to_issues.py` now tolerates raw control
+  characters inside NotebookLM JSON strings so one malformed answer does not
+  block a full batch.
+- `.github/workflows/notebooklm-requirements-to-issues.yml` remains the daily
+  automation entrypoint. Keep the default cap of 9 created Issues per scheduled
+  run and rely on stable markers for dedup.
+- After any manual full backfill, immediately run GitHub Issues WBS Sync and
+  WBS Auto Reschedule, as was done in this session.
 
 ## Safety Notes
 

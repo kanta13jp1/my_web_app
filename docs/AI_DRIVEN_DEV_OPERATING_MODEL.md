@@ -64,5 +64,5 @@ WBS は機能カテゴリ（8 種）に加え、**工程軸 (`phase`)** を持�
 ## 7. follow-up（未了 flag）
 
 - `~/.claude/hooks/inject-rules.txt` の `[INSTANCE]` は「2 instance 制」記述 → 3 レーンへ更新要（machine-local config / `/hook-rule-audit` で対応）。
-- `.github/COMPRESSED_PROMPT_V3.md` も旧多インスタンス記述 = stale 候補（次 session 精査）。
-- WBS `phase` 列 migration = Codex 適用待ち（[`cross-instance-prs/20260603_wbs_sdlc_phase.md`](cross-instance-prs/20260603_wbs_sdlc_phase.md)）。
+- `.github/COMPRESSED_PROMPT_V3.md` = **精査済み (2026-06-10 part 259): 削除不可**。`two-instance-audit.yml` + `scripts/two_instance_audit.py` / `update_constraints_prompts.py` / `update_cv3_instances.py` が参照・自動更新する automation-managed artifact。内容の 3 レーン化は automation 側の改修 (L2) とセットでのみ行う — 手動削除・手動編集禁止。
+- WBS `phase` 列 = 列追加済みだが backfill 3.9% (123/3,159 / 2026-06-10 監査)。handoff は [`cross-instance-prs/done/20260603_wbs_sdlc_phase.md`](cross-instance-prs/done/20260603_wbs_sdlc_phase.md) (done 移動済) + `361c10d4` (L2)。工程カバレッジの実測は [`SDLC_WBS_COVERAGE_AUDIT.md`](SDLC_WBS_COVERAGE_AUDIT.md)。

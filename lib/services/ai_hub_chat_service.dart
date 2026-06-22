@@ -167,7 +167,7 @@ class AiHubChatService {
     String? providerChoiceReason,
     String? routingUseCase,
   }) async {
-    if (AiHubChatQuotaGuard.isCoolingDown) {
+    if (AiHubChatQuotaGuard.isCoolingDown(provider)) {
       throw const AiHubChatException('AI quota cooldown');
     }
 
@@ -210,7 +210,7 @@ class AiHubChatService {
         r'429|quota|rate.?limit',
         caseSensitive: false,
       ).hasMatch(message)) {
-        AiHubChatQuotaGuard.markQuotaExceeded();
+        AiHubChatQuotaGuard.markQuotaExceeded(provider);
       }
       if (error is AiHubChatException) {
         rethrow;
@@ -228,7 +228,7 @@ class AiHubChatService {
     String? providerChoiceReason,
     String? routingUseCase,
   }) async {
-    if (AiHubChatQuotaGuard.isCoolingDown) {
+    if (AiHubChatQuotaGuard.isCoolingDown()) {
       throw const AiHubChatException('AI quota cooldown');
     }
 
@@ -291,7 +291,7 @@ class AiHubChatService {
     String? imageName,
     String? traceId,
   }) async {
-    if (AiHubChatQuotaGuard.isCoolingDown) {
+    if (AiHubChatQuotaGuard.isCoolingDown()) {
       throw const AiHubChatException('AI quota cooldown');
     }
 
@@ -410,21 +410,32 @@ String? _emptyToNull(String? value) {
   return trimmed.isEmpty ? null : trimmed;
 }
 
+/// プロバイダ単位のクォータ・クールダウン。
+///
+/// あるプロバイダ(例: OpenAI)がクォータ超過しても、他プロバイダ(例: Gemini)の
+/// 呼び出しまでブロックしないよう、クールダウンはプロバイダごとに独立して管理する。
+/// provider を渡さない呼び出しは共通の既定キーを使う(従来挙動)。
 class AiHubChatQuotaGuard {
-  static DateTime? _lastQuotaErrorAt;
+  static final Map<String, DateTime> _lastQuotaErrorAt = <String, DateTime>{};
   static const Duration _cooldown = Duration(seconds: 60);
+  static const String _defaultProviderKey = '_default';
 
-  static void markQuotaExceeded() {
-    _lastQuotaErrorAt = DateTime.now();
+  static String _normalizeKey(String? provider) {
+    final trimmed = provider?.trim();
+    return trimmed == null || trimmed.isEmpty ? _defaultProviderKey : trimmed;
   }
 
-  static bool get isCoolingDown {
-    final ts = _lastQuotaErrorAt;
+  static void markQuotaExceeded([String? provider]) {
+    _lastQuotaErrorAt[_normalizeKey(provider)] = DateTime.now();
+  }
+
+  static bool isCoolingDown([String? provider]) {
+    final ts = _lastQuotaErrorAt[_normalizeKey(provider)];
     if (ts == null) return false;
     return DateTime.now().difference(ts) < _cooldown;
   }
 
   static void resetForTesting() {
-    _lastQuotaErrorAt = null;
+    _lastQuotaErrorAt.clear();
   }
 }

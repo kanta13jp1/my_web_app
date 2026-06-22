@@ -1,0 +1,80 @@
+{
+  "checked_at": "2026-05-18T00:10:41Z",
+  "create_issues": false,
+  "errors": [],
+  "notebook_count": 1,
+  "repo": "kanta13jp1/my_web_app",
+  "requirements": [
+    {
+      "acceptance_criteria": [
+        "MAU、データベース容量、エグレス転送量、ファイルストレージの使用量を定期的に取得する監視ジョブが実装されていること",
+        "各リソースの使用率が設定した閾値（例: 80%）に達した場合、運用チームに自動通知が送信されること",
+        "監視ジョブがGitHub Actions等で自動実行され、アラートが適切に機能することがテスト環境で検証されていること"
+      ],
+      "error": "",
+      "implementation_notes": "Supabaseの管理APIやWebhookを活用してメトリクスを取得し、超過課金の発生を防ぐためのフェイルセーフ策（アクセス制限等）の必要性も同時に検討する。",
+      "issue_number": null,
+      "issue_title": "[notebooklm:0678eea0:1] Supabaseリソース使用量および超過課金アラートの導入",
+      "issue_url": "",
+      "marker": "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:1",
+      "notebook_created_at": "2026-05-18T08:31:37",
+      "notebook_id": "0678eea0-f704-42db-9e69-0e3f0a4c9e7d",
+      "notebook_is_owner": true,
+      "notebook_short_id": "0678eea0",
+      "notebook_title": "Pro Plan Subscription and Billing Details",
+      "priority": "High",
+      "rationale": "Proプランへアップグレードしたことにより、MAU10万人、ディスク容量8GB、データ通信量250GBなどの基本枠を超過した場合、従量課金が発生する。想定外のコスト増加を防ぐために、システムリソース使用量を監視して事前に通知する仕組みが必要である。",
+      "requires_verification": true,
+      "slot": 1,
+      "status": "dry_run",
+      "title": "Supabaseリソース使用量および超過課金アラートの導入"
+    },
+    {
+      "acceptance_criteria": [
+        "日次バックアップデータを利用したデータベースのリストア手順がドキュメント化され、テスト環境で復旧訓練が完了していること",
+        "セキュリティおよび運用要件に照らし合わせ、7日間のログ保持期間で十分かどうかの評価レポートが作成されていること",
+        "長期ログ保管が必要な場合、ログドレイン（Log Drains）による外部ストレージへのログ退避アーキテクチャ設計およびコスト評価が行われていること"
+      ],
+      "error": "",
+      "implementation_notes": "GitHub Issuesにてバックアップ手順書の作成タスクを起票し、リカバリ時間の目標値（RTO）を定義する。財務的判断が含まれるため、ログドレイン導入の費用対効果を慎重に検証する。",
+      "issue_number": null,
+      "issue_title": "[notebooklm:0678eea0:2] 日次バックアップとログ保持機能（7日間）を活用した障害復旧プロセスの策定",
+      "issue_url": "",
+      "marker": "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:2",
+      "notebook_created_at": "2026-05-18T08:31:37",
+      "notebook_id": "0678eea0-f704-42db-9e69-0e3f0a4c9e7d",
+      "notebook_is_owner": true,
+      "notebook_short_id": "0678eea0",
+      "notebook_title": "Pro Plan Subscription and Billing Details",
+      "priority": "Medium",
+      "rationale": "Proプランの特典である7日間の日次バックアップおよび7日間のログ保持機能をシステム運用フローに組み込み、障害時のビジネスリスクを軽減させる必要がある。また、監査要件などで7日間以上の長期ログが必要な場合、追加のログドレイン機能（1ドレインあたり月額60ドル）の導入を評価しなければならない。",
+      "requires_verification": true,
+      "slot": 2,
+      "status": "dry_run",
+      "title": "日次バックアップとログ保持機能（7日間）を活用した障害復旧プロセスの策定"
+    },
+    {
+      "acceptance_criteria": [
+        "一時停止制約の回避策として外部機能に依存していたバッチ処理が、Supabase内部の定期実行機能（pg_cronやEdge Functionsのスケジュール実行など）へ移行されていること",
+        "移行されたバックグラウンド処理が、ユーザーリクエストやFlutter Webフロントエンドのアクティビティに依存せず、スケジュール通りに正常完了することが確認されていること"
+      ],
+      "error": "",
+      "implementation_notes": "フロントエンドから分離すべき処理（不要データのクリーンアップ、集計バッチ等）を洗い出し、バックエンド主導の処理フローへ移行するリファクタリングを実施する。",
+      "issue_number": null,
+      "issue_title": "[notebooklm:0678eea0:3] プロジェクト常時稼働（No Pausing）前提のバックグラウンド処理アーキテクチャ再設計",
+      "issue_url": "",
+      "marker": "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:3",
+      "notebook_created_at": "2026-05-18T08:31:37",
+      "notebook_id": "0678eea0-f704-42db-9e69-0e3f0a4c9e7d",
+      "notebook_is_owner": true,
+      "notebook_short_id": "0678eea0",
+      "notebook_title": "Pro Plan Subscription and Billing Details",
+      "priority": "Low",
+      "rationale": "無料プランの制約であったプロジェクトの一時停止（pausing）が解除されたことで、24時間の常時稼働が保証される。これにより、外部トリガーに依存しない内部スケジューラーを用いた定期タスクや、常駐型の非同期処理を安全に実装することが可能になった。",
+      "requires_verification": false,
+      "slot": 3,
+      "status": "dry_run",
+      "title": "プロジェクト常時稼働（No Pausing）前提のバックグラウンド処理アーキテクチャ再設計"
+    }
+  ]
+}

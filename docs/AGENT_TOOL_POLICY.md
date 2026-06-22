@@ -56,6 +56,27 @@ approval gate work a durable server-side audit trail before high-risk tool
 actions such as `send`, `purchase`, and `external_share` are wired to blocking
 CEO approval screens.
 
+`mcp_security_scan.ts` adds a deterministic CI guard for MCP tool I/O payloads.
+The scenario suite blocks tool-response manipulation, unexpected
+`sampling/createMessage` requests, and cross-server secret exfiltration prompts;
+CI fails if the scenario pass rate drops below 95%.
+
+`agent_context_guardrail.ts` adds the broader context-drift and abnormal
+operation guard for NotebookLM Issue #2920. Edge Functions can pass input,
+output, expected business context tags, requested scopes, approval state, and
+operation metrics to `evaluateAgentContextGuardrail()`. When the anomaly score
+reaches the threshold, the decision resets execution to the safe default
+(`read`/`suggest`) and returns an `ai_tool_monitoring` event payload for the AI
+tool monitoring dashboard or notification pipeline.
+
+`multi_step_approval_workflow.ts` adds the multi-step approval contract for
+NotebookLM Issue #2919. `social-commerce-hub:discount_approval.request` now
+stores a workflow with manager, finance, legal, and CEO steps as required by
+discount size, free offers, or privilege grants. Transactions stay
+`held_for_approval` until all steps pass, each decision appends audit events,
+and the request payload includes an `admin_approval_requests` notification event
+for dashboard or notification delivery.
+
 This follows the Harness Engineering direction from NotebookLM
 `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`: Claude Code, Codex, and external AI
 agents should operate inside explicit scopes, approval gates, and audit logs.

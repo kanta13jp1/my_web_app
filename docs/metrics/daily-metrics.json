@@ -1,14 +1,60 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-06-03",
+    "date": "2026-06-21",
     "users": {
       "total": 37
     },
     "featureRequests": {
-      "newToday": 0,
-      "openCount": 54,
-      "newTodayList": [],
+      "newToday": 9,
+      "openCount": 116,
+      "newTodayList": [
+        {
+          "id": "48a1d583-9761-4486-9391-550472f4da7a",
+          "title": "[資産管理] 資金ショート予測口座への実行可能な口座移動提案の精度向上",
+          "created_at": "2026-06-21T14:58:49.300062+00:00"
+        },
+        {
+          "id": "9cb05390-0f21-437e-8c44-26814d41eb36",
+          "title": "[資産管理] カード一括返済違反に対する具体的アクション指示の強化",
+          "created_at": "2026-06-21T14:58:46.19858+00:00"
+        },
+        {
+          "id": "7363fd9e-ceba-4ab7-948a-13a0533283e3",
+          "title": "[資産管理] 期限超過ステータスと支払済フラグの不整合修正",
+          "created_at": "2026-06-21T14:58:43.81941+00:00"
+        },
+        {
+          "id": "d6ada855-92a8-4494-a825-78371fa71cd5",
+          "title": "[資産管理] 利用可能額不足時の「口座移動提案」の根拠と優先度明確化",
+          "created_at": "2026-06-21T12:37:29.733205+00:00"
+        },
+        {
+          "id": "1aca600b-2a81-4afd-9d5a-a11c2a43d2d7",
+          "title": "[資産管理] リボ払いカードの「完済シミュレーション」と「利息負担額」の明示",
+          "created_at": "2026-06-21T12:37:23.796967+00:00"
+        },
+        {
+          "id": "d591b9c6-c4db-41fa-bbf5-36a83f2b55cc",
+          "title": "[資産管理] 未払い項目の「支払済み」ステータス明確化と緊急アドバイス具体化",
+          "created_at": "2026-06-21T12:37:18.455766+00:00"
+        },
+        {
+          "id": "331f585d-fb7c-4d3c-a77c-e38f752b11c6",
+          "title": "[資産管理] サブスクリプション過多アラートと解約検討導線",
+          "created_at": "2026-06-21T04:27:42.384666+00:00"
+        },
+        {
+          "id": "16c20ece-64f6-4b2b-8a96-c6965fc0dd63",
+          "title": "[資産管理] 高金利リボ払い負債への危機感喚起と返済シミュレーション表示",
+          "created_at": "2026-06-21T04:27:38.771536+00:00"
+        },
+        {
+          "id": "7751f4c3-3144-4a75-8ebc-365154138529",
+          "title": "[資産管理] 未払い項目の一括確認・支払い済みマーク機能",
+          "created_at": "2026-06-21T04:27:36.814816+00:00"
+        }
+      ],
       "topOpen": [
         {
           "title": "不具合報告: Loading from existing service worker.",
@@ -34,27 +80,27 @@
     },
     "recentAchievements": [
       {
-        "title": "Codex #1: WBS SDLC phase axis migration",
-        "completed_at": "2026-06-03T19:05:55.027242+00:00"
+        "title": "AI大学 FinTech/Trading AI 掲載コンテンツの日本語化",
+        "completed_at": "2026-06-21T00:00:00+00:00"
       },
       {
-        "title": "Scheduled Daily part 239: scheduled-agent append-only discipline + verify-first detection blog draft (JA+EN)",
-        "completed_at": "2026-05-30T00:00:00+00:00"
+        "title": "AI大学「英語速読カリキュラム」導入",
+        "completed_at": "2026-06-20T00:00:00+00:00"
       },
       {
-        "title": "Win Claude #1: WBS task 給与明細 PDF AI 取込 (Issue #3003)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
+        "title": "CI Setup Deno の deno.land 一時503耐性化 (retry+backoff)",
+        "completed_at": "2026-06-10T18:24:04.736707+00:00"
       },
       {
-        "title": "Win Claude #1: WBS task 前回給料の使いみち AI 連携 (Issue #3006)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
+        "title": "dependabot pub group 週次CI失敗の恒久解消 (flutter_native_splash ignore)",
+        "completed_at": "2026-06-10T18:03:21.222368+00:00"
       },
       {
-        "title": "Win Claude #1: WBS task 給料日サイクル可処分残高 AI (Issue #3007)",
-        "completed_at": "2026-05-25T00:00:00+00:00"
+        "title": "GitHub Actions Node.js 20 廃止対応完了 (actions/cache v5 化)",
+        "completed_at": "2026-06-10T13:45:31.202955+00:00"
       }
     ]
   },
-  "fetched_at": "2026-06-04T08:12:50+09:00",
-  "report_date": "2026-06-04"
+  "fetched_at": "2026-06-22T07:52:33+09:00",
+  "report_date": "2026-06-22"
 }

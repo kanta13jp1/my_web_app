@@ -9,7 +9,7 @@
 
 ### 1-1. OGP 現状
 - `web/index.html` の `og:image` = `https://my-web-app-b67f4.web.app/ogp.png` (固定)
-- `web/ogp.png` / `ogp_v1.png` / `ogp_v2.png` / `ogp_v3.png` 履歴あり (= 過去手動更新)
+- `web/ogp.png` 現役 (= cache buster 付きで deploy-prod が配信) / 旧 `ogp_v1.png` / `ogp_v2.png` / `ogp_v3.png` は未参照のため削除済 (egress 削減 / 2026-06-21)
 - **問題**:
   - 機能追加されたのに OGP 反映なし
   - X cache が古い image を 7-30 日保持 → URL 変更で cache buster 必要

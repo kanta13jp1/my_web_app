@@ -1,0 +1,57 @@
+name: CDP Benchmark Update
+
+# 立憲民主党の都道府県別 地方議員数を cdp-japan.jp から週次でスクレイプし、
+# assets/data/cdp_local_members.json を更新する。全 47 都道府県の取得は 110 秒超で
+# クライアントの 90 秒タイムアウトを超えるため、ページ読み込みからは切り離し、この
+# cron で取得・保存して Flutter アプリは保存済み asset を読む。
+# 件数に変化があったときだけ commit → main push → deploy-prod が走り本番反映される。
+
+on:
+  schedule:
+    # 毎週月曜 JST 06:00 (= UTC 日曜 21:00)
+    - cron: "0 21 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: cdp-benchmark-update
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: 立憲地方議員ベンチマーク更新
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repo (required for git commit/push step)
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Scrape CDP local member counts
+        run: node scripts/update_cdp_benchmark.mjs
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/data/cdp_local_members.json
+          if git diff --staged --quiet; then
+            echo "立憲ベンチマークに変化なし — commit スキップ"
+          else
+            git commit -m "chore: update 立憲地方議員ベンチマーク (cdp_local_members.json)"
+            git push origin HEAD:main && echo "✅ push 完了" || echo "⚠️ push 失敗 (GH_PAT / BYPASS_RULES を確認)"
+          fi
+
+      - name: Summary
+        run: |
+          echo "### 立憲地方議員ベンチマーク更新" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 実行時刻: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST')" >> "$GITHUB_STEP_SUMMARY"

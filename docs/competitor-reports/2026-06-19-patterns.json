@@ -1,0 +1,960 @@
+{
+  "generated_at": "2026-06-18T22:40:28Z",
+  "source_files": [
+    "docs/competitor-reports/2026-06-19.md"
+  ],
+  "min_confidence": 0.5,
+  "entries_total": 31,
+  "filter_summary": {
+    "total": 31,
+    "by_verdict": {
+      "pass": 0,
+      "review": 31,
+      "drop": 0
+    },
+    "risk_flags": {
+      "missing_source_url": 31
+    }
+  },
+  "entries": [
+    {
+      "entry": {
+        "entry_id": "nf-1be9f819fefd",
+        "title": "エグゼクティブサマリー (新シグナルのみ)",
+        "text": "エグゼクティブサマリー (新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "エグゼクティブサマリー (新シグナルのみ)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1be9f819fefd",
+        "title": "エグゼクティブサマリー (新シグナルのみ)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-9719e051dae3",
+        "title": "詳細セクション (重大シグナル深掘り)",
+        "text": "詳細セクション (重大シグナル深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "詳細セクション (重大シグナル深掘り)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-9719e051dae3",
+        "title": "詳細セクション (重大シグナル深掘り)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-2d56e88abe2a",
+        "title": "項目",
+        "text": "項目 項目 内容",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "項目",
+          "url": "",
+          "status": "",
+          "summary": "項目 内容"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-2d56e88abe2a",
+        "title": "項目",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4460fd075fb9",
+        "title": "経緯",
+        "text": "経緯 経緯 6/9 Fable 5 (Opus 超 / 1M ctx) 公開 → **6/12 全世界 suspension** (米政府 export-control directive / 国籍 real-time 検証不可で全顧客無効化)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "経緯",
+          "url": "",
+          "status": "",
+          "summary": "経緯 6/9 Fable 5 (Opus 超 / 1M ctx) 公開 → **6/12 全世界 suspension** (米政府 export-control directive / 国籍 real-time 検証不可で全顧客無効化)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4460fd075fb9",
+        "title": "経緯",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e632ff88d4bc",
+        "title": "6/19 時点の delta",
+        "text": "6/19 時点の delta 6/19 時点の delta **6/15-16 に Anthropic ↔ 米当局協議 → 復旧日提示なし** / 影響顧客へ **返金開始** / Anthropic は「narrow な争点・書面根拠未受領」と表明し **見解相違**",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "6/19 時点の delta",
+          "url": "",
+          "status": "",
+          "summary": "6/19 時点の delta **6/15-16 に Anthropic ↔ 米当局協議 → 復旧日提示なし** / 影響顧客へ **返金開始** / Anthropic は「narrow な争点・書面根拠未受領」と表明し **見解相違**"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e632ff88d4bc",
+        "title": "6/19 時点の delta",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-3773eb2ca59b",
+        "title": "争点",
+        "text": "争点 争点 Fable 5 の安全策 jailbreak で cyber 脆弱性特定タスクに転用され得る懸念 (ECRA 2018 dual-use / AI モデル自体への輸出規制適用は史上初)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "争点",
+          "url": "",
+          "status": "",
+          "summary": "争点 Fable 5 の安全策 jailbreak で cyber 脆弱性特定タスクに転用され得る懸念 (ECRA 2018 dual-use / AI モデル自体への輸出規制適用は史上初)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-3773eb2ca59b",
+        "title": "争点",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-49910ffdd6c7",
+        "title": "自社影響",
+        "text": "自社影響 自社影響 **Opus 4.8 / Sonnet 4.6 / Haiku 4.5 は非影響** = Win Claude #132 fleet 継続可。ただし単一ベンダー依存 + 地政学リスクの顕在化スレッドが「解決せず据え置き」",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "title": "自社影響",
+          "url": "",
+          "status": "",
+          "summary": "自社影響 **Opus 4.8 / Sonnet 4.6 / Haiku 4.5 は非影響** = Win Claude #132 fleet 継続可。ただし単一ベンダー依存 + 地政学リスクの顕在化スレッドが「解決せず据え置き」"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-49910ffdd6c7",
+        "title": "自社影響",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e916af839623",
+        "title": "含意**: 6/2 障害 + 6/12 Fable suspension + 6/15 課金分離 pause の **運用シグナル 3 連が未解決のまま並走**。自社は (a) [AI_FALLBACK_RUNBOOK] の Codex /",
+        "text": "含意**: 6/2 障害 + 6/12 Fable suspension + 6/15 課金分離 pause の **運用シグナル 3 連が未解決のまま並走**。自社は (a) [AI_FALLBACK_RUNBOOK] の Codex / Gemini / Copilot fallback chain を maintain 継続 / (b) GHA cron 30+ の Claude 依存度棚卸しドラフトは「凍結ではなく保留」(課金分離 pause は再導入余地あり)。[AI-TOOL-VERIFY] = 当事者間で見解相違がある争点は断定回避。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "含意**: 6/2 障害 + 6/12 Fable suspension + 6/15 課金分離 pause の **運用シグナル 3 連が未解決のまま並走**。自社は (a) [AI_FALLBACK_RUNBOOK] の Codex / Gemini / Copilot fallback chain を maintain 継続 / (b) GHA cron 30+ の Claude 依存度棚卸しドラフトは「凍結ではなく保留」(課金分離 pause は再導入余地あり)。[AI-TOOL-VERIFY] = 当事者間で見解相違がある争点は断定回避。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e916af839623",
+        "title": "含意**: 6/2 障害 + 6/12 Fable suspension + 6/15 課金分離 pause の **運用シグナル 3 連が未解決のまま並走**。自社は (a) [AI_FALLBACK_RUNBOOK] の Codex /",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-81381cbf2dcf",
+        "title": "ソース: [Nat Law Review: Anthropic Suspends Fable 5 / Mythos 5](https://natlawreview.com/article/ai-company-anthropic-suspe",
+        "text": "ソース: [Nat Law Review: Anthropic Suspends Fable 5 / Mythos 5](https://natlawreview.com/article/ai-company-anthropic-suspends-access-claude-fable-5-claude-mythos-5-following-us) / [TechTimes: US Pulls Fable 5 Offline — Refunds](https://www.techtimes.com/articles/318342/20260613/us-government-pulls-anthropics-fable-5-offline-now-come-refunds-vanished-ai.htm) / [Greenberg Traurig: export control directive](https://www.gtlaw.com/en/insights/2026/6/ai-company-anthropic-suspends-access-to-claude-fable-5-claude-mythos-5-following-us-export-control-directive)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース: [Nat Law Review: Anthropic Suspends Fable 5 / Mythos 5](https://natlawreview.com/article/ai-company-anthropic-suspends-access-claude-fable-5-claude-mythos-5-following-us) / [TechTimes: US Pulls Fable 5 Offline — Refunds](https://www.techtimes.com/articles/318342/20260613/us-government-pulls-anthropics-fable-5-offline-now-come-refunds-vanished-ai.htm) / [Greenberg Traurig: export control directive](https://www.gtlaw.com/en/insights/2026/6/ai-company-anthropic-suspends-access-to-claude-fable-5-claude-mythos-5-following-us-export-control-directive)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-81381cbf2dcf",
+        "title": "ソース: [Nat Law Review: Anthropic Suspends Fable 5 / Mythos 5](https://natlawreview.com/article/ai-company-anthropic-suspe",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6c4d6fbfb9d9",
+        "title": "4/29 GA 済。**Slack / Microsoft Teams 統合が 6 月に rollout** (delta)。30+ プリセット blueprint (invoice auditing / onboarding / PO r",
+        "text": "4/29 GA 済。**Slack / Microsoft Teams 統合が 6 月に rollout** (delta)。30+ プリセット blueprint (invoice auditing / onboarding / PO rescheduling)。cycle time -50〜70% / 手入力 -80%。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "4/29 GA 済。**Slack / Microsoft Teams 統合が 6 月に rollout** (delta)。30+ プリセット blueprint (invoice auditing / onboarding / PO rescheduling)。cycle time -50〜70% / 手入力 -80%。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6c4d6fbfb9d9",
+        "title": "4/29 GA 済。**Slack / Microsoft Teams 統合が 6 月に rollout** (delta)。30+ プリセット blueprint (invoice auditing / onboarding / PO r",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-fdbdf1f214b5",
+        "title": "6/15 GA の **Multi-Agent Orchestration** (Atlas Reasoning Engine 3.0 = description 駆動 routing) + **Agent Fabric control p",
+        "text": "6/15 GA の **Multi-Agent Orchestration** (Atlas Reasoning Engine 3.0 = description 駆動 routing) + **Agent Fabric control plane** (Guided Determinism + Governance) と合わせ、**back-office 自律 AI 4 強 (MoneyForward + Anthropic + Salesforce + Microsoft) 構造が確定**。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/15 GA の **Multi-Agent Orchestration** (Atlas Reasoning Engine 3.0 = description 駆動 routing) + **Agent Fabric control plane** (Guided Determinism + Governance) と合わせ、**back-office 自律 AI 4 強 (MoneyForward + Anthropic + Salesforce + Microsoft) 構造が確定**。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-fdbdf1f214b5",
+        "title": "6/15 GA の **Multi-Agent Orchestration** (Atlas Reasoning Engine 3.0 = description 駆動 routing) + **Agent Fabric control p",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e410d9fbb14d",
+        "title": "6/23 採択方針**: 基準 a (B/S・6 部署正面 overlap 最大) + 基準 c (6 月連続リリース) で viability 確認。enterprise 境界・Slack 経由間接監視からの「正面競合」格上げ採択。",
+        "text": "6/23 採択方針**: 基準 a (B/S・6 部署正面 overlap 最大) + 基準 c (6 月連続リリース) で viability 確認。enterprise 境界・Slack 経由間接監視からの「正面競合」格上げ採択。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/23 採択方針**: 基準 a (B/S・6 部署正面 overlap 最大) + 基準 c (6 月連続リリース) で viability 確認。enterprise 境界・Slack 経由間接監視からの「正面競合」格上げ採択。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e410d9fbb14d",
+        "title": "6/23 採択方針**: 基準 a (B/S・6 部署正面 overlap 最大) + 基準 c (6 月連続リリース) で viability 確認。enterprise 境界・Slack 経由間接監視からの「正面競合」格上げ採択。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-5ff472dad1d8",
+        "title": "ソース: [Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "text": "ソース: [Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/) / [Constellation Research](https://www.constellationr.com/insights/news/salesforce-launches-agentforce-operations) / [MarTech](https://martech.org/salesforce-launches-agentforce-operations-to-automate-back-office-work/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース: [Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/) / [Constellation Research](https://www.constellationr.com/insights/news/salesforce-launches-agentforce-operations) / [MarTech](https://martech.org/salesforce-launches-agentforce-operations-to-automate-back-office-work/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-5ff472dad1d8",
+        "title": "ソース: [Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-1bede06f2bb3",
+        "title": "経理 / 税務 / 財務 / 労務 / 法務の 6 バックオフィス業務を自然言語で自律遂行 (複数 AI agent が並列協調)。技術基盤 = **Anthropic Claude Agent SDK + Claude API + MCP",
+        "text": "経理 / 税務 / 財務 / 労務 / 法務の 6 バックオフィス業務を自然言語で自律遂行 (複数 AI agent が並列協調)。技術基盤 = **Anthropic Claude Agent SDK + Claude API + MCP**。4/7 先行受付開始済。**2030 年までに AI で 150 億円** target。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "経理 / 税務 / 財務 / 労務 / 法務の 6 バックオフィス業務を自然言語で自律遂行 (複数 AI agent が並列協調)。技術基盤 = **Anthropic Claude Agent SDK + Claude API + MCP**。4/7 先行受付開始済。**2030 年までに AI で 150 億円** target。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-1bede06f2bb3",
+        "title": "経理 / 税務 / 財務 / 労務 / 法務の 6 バックオフィス業務を自然言語で自律遂行 (複数 AI agent が並列協調)。技術基盤 = **Anthropic Claude Agent SDK + Claude API + MCP",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-7c5d94646e6a",
+        "title": "含意**: 自社 6 部署 + B/S narrative と最大 overlap。6/18 確認の「back-office 三つ巴」(Anthropic Claude Cowork + Microsoft Copilot Cowork 6",
+        "text": "含意**: 自社 6 部署 + B/S narrative と最大 overlap。6/18 確認の「back-office 三つ巴」(Anthropic Claude Cowork + Microsoft Copilot Cowork 6/16 GA + MoneyForward AI Cowork 7月 GA) が **同一 Claude モデル上で相互接続** → 差別化は model でなく **「統合の単位」= 個人単位 6 部署 + B/S 統合 lifestyle CEO dashboard**。GA 前の今週中に narrative を固めるのが timing 最良。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "含意**: 自社 6 部署 + B/S narrative と最大 overlap。6/18 確認の「back-office 三つ巴」(Anthropic Claude Cowork + Microsoft Copilot Cowork 6/16 GA + MoneyForward AI Cowork 7月 GA) が **同一 Claude モデル上で相互接続** → 差別化は model でなく **「統合の単位」= 個人単位 6 部署 + B/S 統合 lifestyle CEO dashboard**。GA 前の今週中に narrative を固めるのが timing 最良。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-7c5d94646e6a",
+        "title": "含意**: 自社 6 部署 + B/S narrative と最大 overlap。6/18 確認の「back-office 三つ巴」(Anthropic Claude Cowork + Microsoft Copilot Cowork 6",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bb8b0d7333c3",
+        "title": "ソース: [MoneyForward 公式: AI Cowork 7月 GA](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/) / [AI C",
+        "text": "ソース: [MoneyForward 公式: AI Cowork 7月 GA](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/) / [AI Cowork product page](https://biz.moneyforward.com/ai-cowork/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース: [MoneyForward 公式: AI Cowork 7月 GA](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/) / [AI Cowork product page](https://biz.moneyforward.com/ai-cowork/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bb8b0d7333c3",
+        "title": "ソース: [MoneyForward 公式: AI Cowork 7月 GA](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/) / [AI C",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-4fa08ba8a552",
+        "title": "discovery セクション — 本 run: SKIP (cooldown)",
+        "text": "discovery セクション — 本 run: SKIP (cooldown)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "discovery セクション — 本 run: SKIP (cooldown)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-4fa08ba8a552",
+        "title": "discovery セクション — 本 run: SKIP (cooldown)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c2c44ff55dbc",
+        "title": "判定**: SKIP。理由 = 2026-06-16 Microsoft MAI-Code-1-Flash 採択の **7 day cooldown 中** (3 day 経過 / 残 4 day / 次回 **6/23 解禁**)。`le",
+        "text": "判定**: SKIP。理由 = 2026-06-16 Microsoft MAI-Code-1-Flash 採択の **7 day cooldown 中** (3 day 経過 / 残 4 day / 次回 **6/23 解禁**)。`len(competitors)=23 < cap=50` だが連日追加防止の cooldown 規約に従い skip。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "判定**: SKIP。理由 = 2026-06-16 Microsoft MAI-Code-1-Flash 採択の **7 day cooldown 中** (3 day 経過 / 残 4 day / 次回 **6/23 解禁**)。`len(competitors)=23 < cap=50` だが連日追加防止の cooldown 規約に従い skip。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c2c44ff55dbc",
+        "title": "判定**: SKIP。理由 = 2026-06-16 Microsoft MAI-Code-1-Flash 採択の **7 day cooldown 中** (3 day 経過 / 残 4 day / 次回 **6/23 解禁**)。`le",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-255f30f1cefd",
+        "title": "6/23 採択 第 1 候補**: **Salesforce Agentforce Operations** (基準 a 正面競合 + 基準 c 過去 30 日重大リリース / B/S overlap 最大 / re-rank 最有力)。",
+        "text": "6/23 採択 第 1 候補**: **Salesforce Agentforce Operations** (基準 a 正面競合 + 基準 c 過去 30 日重大リリース / B/S overlap 最大 / re-rank 最有力)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "6/23 採択 第 1 候補**: **Salesforce Agentforce Operations** (基準 a 正面競合 + 基準 c 過去 30 日重大リリース / B/S overlap 最大 / re-rank 最有力)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-255f30f1cefd",
+        "title": "6/23 採択 第 1 候補**: **Salesforce Agentforce Operations** (基準 a 正面競合 + 基準 c 過去 30 日重大リリース / B/S overlap 最大 / re-rank 最有力)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c15f09f87f48",
+        "title": "次点 / monitor**: Microsoft Copilot Cowork (6/16 全世界 GA / back-office 三つ巴中核だが Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一",
+        "text": "次点 / monitor**: Microsoft Copilot Cowork (6/16 全世界 GA / back-office 三つ巴中核だが Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加回避で monitor) / Warp (terminal-native / 動向観察) / Sierra (CX 特化で軸遠い) / Google Jules・Antigravity 2.0 (1 month cooldown / 6/24 再評価)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "次点 / monitor**: Microsoft Copilot Cowork (6/16 全世界 GA / back-office 三つ巴中核だが Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加回避で monitor) / Warp (terminal-native / 動向観察) / Sierra (CX 特化で軸遠い) / Google Jules・Antigravity 2.0 (1 month cooldown / 6/24 再評価)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c15f09f87f48",
+        "title": "次点 / monitor**: Microsoft Copilot Cowork (6/16 全世界 GA / back-office 三つ巴中核だが Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-b622a355686f",
+        "title": "`discovery_history` に 2026-06-19 skip entry を記録済 (履歴の連続性維持)。",
+        "text": "`discovery_history` に 2026-06-19 skip entry を記録済 (履歴の連続性維持)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "`discovery_history` に 2026-06-19 skip entry を記録済 (履歴の連続性維持)。"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-b622a355686f",
+        "title": "`discovery_history` に 2026-06-19 skip entry を記録済 (履歴の連続性維持)。",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "text": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "アクション提案"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a01c7ed8c7f3",
+        "title": "アクション提案",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "text": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "ソース"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-e1a0cb39e70e",
+        "title": "ソース",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-c3e160e18a05",
+        "title": "[Nat Law Review: Anthropic Suspends Claude Fable 5 / Mythos 5 (export control)](https://natlawreview.com/article/ai-comp",
+        "text": "[Nat Law Review: Anthropic Suspends Claude Fable 5 / Mythos 5 (export control)](https://natlawreview.com/article/ai-company-anthropic-suspends-access-claude-fable-5-claude-mythos-5-following-us)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Nat Law Review: Anthropic Suspends Claude Fable 5 / Mythos 5 (export control)](https://natlawreview.com/article/ai-company-anthropic-suspends-access-claude-fable-5-claude-mythos-5-following-us)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-c3e160e18a05",
+        "title": "[Nat Law Review: Anthropic Suspends Claude Fable 5 / Mythos 5 (export control)](https://natlawreview.com/article/ai-comp",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-279ee281a297",
+        "title": "[TechTimes: US Pulls Fable 5 Offline — Refunds for a Vanished AI](https://www.techtimes.com/articles/318342/20260613/us-",
+        "text": "[TechTimes: US Pulls Fable 5 Offline — Refunds for a Vanished AI](https://www.techtimes.com/articles/318342/20260613/us-government-pulls-anthropics-fable-5-offline-now-come-refunds-vanished-ai.htm)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[TechTimes: US Pulls Fable 5 Offline — Refunds for a Vanished AI](https://www.techtimes.com/articles/318342/20260613/us-government-pulls-anthropics-fable-5-offline-now-come-refunds-vanished-ai.htm)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-279ee281a297",
+        "title": "[TechTimes: US Pulls Fable 5 Offline — Refunds for a Vanished AI](https://www.techtimes.com/articles/318342/20260613/us-",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-019b34a33bc6",
+        "title": "[Greenberg Traurig: Fable 5 / Mythos 5 export-control directive](https://www.gtlaw.com/en/insights/2026/6/ai-company-ant",
+        "text": "[Greenberg Traurig: Fable 5 / Mythos 5 export-control directive](https://www.gtlaw.com/en/insights/2026/6/ai-company-anthropic-suspends-access-to-claude-fable-5-claude-mythos-5-following-us-export-control-directive)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Greenberg Traurig: Fable 5 / Mythos 5 export-control directive](https://www.gtlaw.com/en/insights/2026/6/ai-company-anthropic-suspends-access-to-claude-fable-5-claude-mythos-5-following-us-export-control-directive)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-019b34a33bc6",
+        "title": "[Greenberg Traurig: Fable 5 / Mythos 5 export-control directive](https://www.gtlaw.com/en/insights/2026/6/ai-company-ant",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-6ac5ece991f3",
+        "title": "[Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "text": "[Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-6ac5ece991f3",
+        "title": "[Salesforce: Agentforce Operations 公式](https://www.salesforce.com/news/stories/agentforce-operations-announcement/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-34ceb92954a3",
+        "title": "[Constellation Research: Salesforce launches Agentforce Operations](https://www.constellationr.com/insights/news/salesfo",
+        "text": "[Constellation Research: Salesforce launches Agentforce Operations](https://www.constellationr.com/insights/news/salesforce-launches-agentforce-operations)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[Constellation Research: Salesforce launches Agentforce Operations](https://www.constellationr.com/insights/news/salesforce-launches-agentforce-operations)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-34ceb92954a3",
+        "title": "[Constellation Research: Salesforce launches Agentforce Operations](https://www.constellationr.com/insights/news/salesfo",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-a86022b8d86c",
+        "title": "[MarTech: Agentforce Operations automates back-office work](https://martech.org/salesforce-launches-agentforce-operation",
+        "text": "[MarTech: Agentforce Operations automates back-office work](https://martech.org/salesforce-launches-agentforce-operations-to-automate-back-office-work/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[MarTech: Agentforce Operations automates back-office work](https://martech.org/salesforce-launches-agentforce-operations-to-automate-back-office-work/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-a86022b8d86c",
+        "title": "[MarTech: Agentforce Operations automates back-office work](https://martech.org/salesforce-launches-agentforce-operation",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-bea02df7cd52",
+        "title": "[MoneyForward 公式: AI Cowork 7月 GA プレスリリース](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "text": "[MoneyForward 公式: AI Cowork 7月 GA プレスリリース](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[MoneyForward 公式: AI Cowork 7月 GA プレスリリース](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-bea02df7cd52",
+        "title": "[MoneyForward 公式: AI Cowork 7月 GA プレスリリース](https://corp.moneyforward.com/news/release/service/20260407-mf-press-1/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.43,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL",
+          "has enough context for review"
+        ]
+      }
+    },
+    {
+      "entry": {
+        "entry_id": "nf-f4b1b5428fb6",
+        "title": "[MoneyForward AI Cowork product page](https://biz.moneyforward.com/ai-cowork/)",
+        "text": "[MoneyForward AI Cowork product page](https://biz.moneyforward.com/ai-cowork/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "status": null,
+        "raw": {
+          "value": "[MoneyForward AI Cowork product page](https://biz.moneyforward.com/ai-cowork/)"
+        }
+      },
+      "filter": {
+        "entry_id": "nf-f4b1b5428fb6",
+        "title": "[MoneyForward AI Cowork product page](https://biz.moneyforward.com/ai-cowork/)",
+        "url": "",
+        "source": "",
+        "source_label": "competitor-monitoring",
+        "confidence": 0.39,
+        "verdict": "review",
+        "risk_flags": [
+          "missing_source_url"
+        ],
+        "reasons": [
+          "missing source URL"
+        ]
+      }
+    }
+  ],
+  "patterns": [],
+  "issue_candidates": []
+}

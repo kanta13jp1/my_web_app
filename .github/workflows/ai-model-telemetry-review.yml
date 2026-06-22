@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "23 21 1 * *"
 
+concurrency:
+  group: ai-model-telemetry-review-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

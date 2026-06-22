@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "17 22 * * 1"
 
+concurrency:
+  group: ai-bench-source-recheck-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

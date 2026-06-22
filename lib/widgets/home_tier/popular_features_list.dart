@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/home_feature_actions.dart';
 
 class PopularFeaturesList extends StatefulWidget {
   const PopularFeaturesList({super.key});
@@ -20,11 +21,7 @@ class _PopularFeaturesListState extends State<PopularFeaturesList> {
       'feature_label': 'AI大学',
       'use_count': 0,
     },
-    {
-      'feature_route': '/project-gantt',
-      'feature_label': 'WBS',
-      'use_count': 0,
-    },
+    {'feature_route': '/project-gantt', 'feature_label': 'WBS', 'use_count': 0},
     {
       'feature_route': '/release-notes',
       'feature_label': 'Release Notes',
@@ -45,11 +42,7 @@ class _PopularFeaturesListState extends State<PopularFeaturesList> {
     try {
       final resp = await Supabase.instance.client.functions.invoke(
         'ai-hub',
-        body: {
-          'action': 'home.popular',
-          'window_days': 30,
-          'limit': 8,
-        },
+        body: {'action': 'home.popular', 'window_days': 30, 'limit': 8},
       );
       final data = resp.data as Map<String, dynamic>?;
       final features = data?['features'] as List<dynamic>? ?? const [];
@@ -91,25 +84,30 @@ class _PopularFeaturesListState extends State<PopularFeaturesList> {
               _fallbackLabel(route);
           final countValue = item['use_count'];
           final count = countValue is num ? countValue.toInt() : 0;
-          return ActionChip(
-            avatar: const Icon(
-              Icons.trending_up,
-              size: 16,
-              color: Color(0xFF0D9488),
-            ),
-            label: Text(
-              count > 0 ? '$label  $count' : label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFFE2E8F0),
-                height: 1.5,
-              ),
-            ),
-            backgroundColor: const Color(0xFF10201D),
-            side: const BorderSide(color: Color(0xFF0D9488), width: 0.8),
-            onPressed: route.isEmpty
+          return GestureDetector(
+            onLongPress: route.isEmpty
                 ? null
-                : () => Navigator.pushNamed(context, route),
+                : () => pinHomeFeature(context, route, label),
+            child: ActionChip(
+              avatar: const Icon(
+                Icons.trending_up,
+                size: 16,
+                color: Color(0xFF0D9488),
+              ),
+              label: Text(
+                count > 0 ? '$label  $count' : label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFFE2E8F0),
+                  height: 1.5,
+                ),
+              ),
+              backgroundColor: const Color(0xFF10201D),
+              side: const BorderSide(color: Color(0xFF0D9488), width: 0.8),
+              onPressed: route.isEmpty
+                  ? null
+                  : () => openHomeFeature(context, route, label),
+            ),
           );
         }).toList(),
       ),

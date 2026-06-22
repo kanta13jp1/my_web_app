@@ -146,6 +146,25 @@ jobs:
             --log /tmp/workflow-failure.log \
             --json /tmp/workflow-root-cause.json
 
+      - name: Generate StackTrace-style AI summary
+        id: ai_summary
+        if: github.event.workflow_run.conclusion == 'failure'
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          FAILED_STEP: ${{ steps.detect_failure.outputs.failed_step }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
+        run: |
+          python scripts/ci_failure_digest.py workflow-ai-summary \
+            --workflow-name "$WORKFLOW_NAME" \
+            --branch "$HEAD_BRANCH" \
+            --failed-step "$FAILED_STEP" \
+            --log /tmp/workflow-failure.log \
+            --root-json /tmp/workflow-root-cause.json \
+            --markdown /tmp/workflow-ai-summary.md \
+            --json /tmp/workflow-ai-summary.json
+
       - name: Create or update failure issue
         id: handle_failure
         if: github.event.workflow_run.conclusion == 'failure'
@@ -155,8 +174,14 @@ jobs:
             const fs = require('fs');
             const run = context.payload.workflow_run;
             const root = JSON.parse(fs.readFileSync('/tmp/workflow-root-cause.json', 'utf8'));
+            const aiSummary = fs.existsSync('/tmp/workflow-ai-summary.md')
+              ? fs.readFileSync('/tmp/workflow-ai-summary.md', 'utf8').trim()
+              : '';
             const shortSha = (run.head_sha || '').substring(0, 7) || 'unknown';
             const escaped = (value) => String(value || '').replace(/\|/g, '\\|');
+            const recoveryDraft = String(root.recovery_draft || '')
+              .split('\n')
+              .filter((line) => line.trim().length > 0);
             const marker = `<!-- root_cause_key: ${root.root_cause_key} -->`;
             const issues = await github.paginate(github.rest.issues.listForRepo, {
               owner: context.repo.owner,
@@ -183,6 +208,10 @@ jobs:
                 `| Error signature | \`${escaped(root.error_signature)}\` |`,
                 `| Failed run | [${run.id}](${run.html_url}) |`,
                 `| Observed at | \`${now}\` |`,
+                '',
+                '## StackTrace-style AI summary',
+                '',
+                aiSummary || '_No AI summary was generated; inspect the failed job log._',
                 '',
                 `<!-- duplicate_run_id: ${run.id} -->`,
                 `<!-- root_cause_key: ${root.root_cause_key} -->`,
@@ -220,9 +249,17 @@ jobs:
               `| Root-cause key | \`${root.root_cause_key}\` |`,
               `| Recovery scope | \`${root.recovery_scope_key}\` |`,
               '',
+              '## StackTrace-style AI summary',
+              '',
+              aiSummary || '_No AI summary was generated; inspect the failed job log._',
+              '',
               '## Recovery rule',
               '',
               'A later successful run of the same workflow and branch will comment with the success run URL and close this issue only when this root-cause marker is present.',
+              '',
+              '## Suggested recovery draft',
+              '',
+              ...recoveryDraft,
               '',
               '## Triage checklist',
               '',

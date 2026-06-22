@@ -321,6 +321,9 @@ class ErrorReporter {
           body: {
             'action': 'feedback.submit',
             'category': 'bug',
+            // 自動エラー報告は公開 GitHub Issue 化せず hub_data 記録のみに留める
+            // (core-hub feedback.submit が source を見て Issue 化を抑止)。
+            'source': 'auto_error_report',
             'message': content.substring(0, min(2000, content.length)),
           },
         );

@@ -75,6 +75,39 @@ EXCEPTION_PATTERNS = (
     r"e2e例外",
 )
 
+# Minimum length the cleaned E2E-Exception reason must reach to count as visible.
+# Mirrors the threshold enforced in has_visible_exception_reason().
+EXCEPTION_REASON_MIN_LENGTH = 8
+
+
+def passing_snippet(exception_reason: str | None = None) -> str:
+    """Return a Minimal E2E Gate block that is guaranteed to pass validate().
+
+    Paste the output verbatim into a PR body (or `gh pr create --body`) so the
+    three required body commitments are always present, instead of rediscovering
+    the exact phrasing and re-editing the PR after a gate FAIL. The wording here
+    is the single source of truth that the round-trip test pins against the
+    pattern tables above, so it can never silently drift out of sync.
+
+    When the PR changes application code but ships no integration_test/ or
+    test/e2e/ file, pass an ``exception_reason`` (at least
+    EXCEPTION_REASON_MIN_LENGTH characters once the label is stripped) so the
+    E2E-Exception line is emitted as well.
+    """
+    lines = [
+        "## Minimal E2E Gate",
+        "",
+        "- Implementation-detail independent: the test asserts user-visible "
+        "input/output, not private internals.",
+        "- Minimal scope: about 3 cases (happy path, error path, recovery or "
+        "empty state).",
+        "- E2E: Flutter `integration_test/` flow or Playwright `test/e2e/` route.",
+    ]
+    reason = (exception_reason or "").strip()
+    if reason:
+        lines.append(f"- E2E-Exception: {reason}")
+    return "\n".join(lines) + "\n"
+
 
 def normalize_path(path: str) -> str:
     return path.replace("\ufeff", "").replace("\\", "/").lstrip("./")
@@ -191,11 +224,26 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--event", help="GitHub event JSON path")
     parser.add_argument("--body-file", help="Local markdown file to validate")
     parser.add_argument("--changed-files", help="Newline-separated changed file list")
+    parser.add_argument(
+        "--emit-snippet",
+        action="store_true",
+        help="Print a ready-to-paste Minimal E2E Gate block that passes the gate, then exit.",
+    )
+    parser.add_argument(
+        "--exception",
+        metavar="REASON",
+        help="With --emit-snippet (or on FAIL), include an E2E-Exception line carrying this reason.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
+
+    if args.emit_snippet:
+        print(passing_snippet(args.exception), end="")
+        return 0
+
     payload = event_payload(args.event)
     body = pr_body(payload, args.body_file)
     changed_files = read_changed_files(args.changed_files)
@@ -208,6 +256,18 @@ def main(argv: list[str]) -> int:
         print(f"Changed files inspected: {len(changed_files)}")
     for message in messages:
         print(f"- {message}")
+    if not ok:
+        print()
+        print("Paste this Minimal E2E Gate block into the PR body to satisfy the contract:")
+        print("---8<--- snippet start ---8<---")
+        print(passing_snippet(args.exception), end="")
+        print("---8<--- snippet end ---8<---")
+        if app_change and not args.exception:
+            print(
+                "If this PR changes app code without an integration_test/ or test/e2e/ file, "
+                "re-run with --exception \"<reason, >= "
+                f"{EXCEPTION_REASON_MIN_LENGTH} chars>\" to add an E2E-Exception line."
+            )
     return 0 if ok else 1
 
 

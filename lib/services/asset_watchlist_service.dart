@@ -49,6 +49,13 @@ class AssetWatchlistEntry {
   }
 }
 
+/// ウォッチリスト項目を永続化する。
+///
+/// ローカル (SharedPreferences) を一次ストアとし、端末間同期は資産管理ページが
+/// `asset_pref_mirror` (pref_key: `watchlist_entries`) へ 1 行 jsonb でミラーする
+/// (リボ設定と同じ集約方針 / MIRROR_PREF_SCHEMA.md)。
+/// [encodeMirrorValue] / [decodeMirrorValue] がその往復、[replaceAll] が
+/// ミラー復元時の一括ローカル書き戻しを担う。
 class AssetWatchlistService {
   static const String _storageKey = 'asset_watchlist_entries_v1';
 
@@ -118,6 +125,14 @@ class AssetWatchlistService {
     return _persistEntries(next, prefs: prefs);
   }
 
+  /// 全件を一括で置き換えて永続化する (ミラー復元時のローカル書き戻し用)。
+  Future<List<AssetWatchlistEntry>> replaceAll(
+    List<AssetWatchlistEntry> entries, {
+    SharedPreferences? prefs,
+  }) async {
+    return _persistEntries(entries, prefs: prefs);
+  }
+
   Future<List<AssetWatchlistEntry>> _persistEntries(
     List<AssetWatchlistEntry> entries, {
     SharedPreferences? prefs,
@@ -129,6 +144,42 @@ class AssetWatchlistService {
     );
     await store.setString(_storageKey, encoded);
     return sorted;
+  }
+
+  /// ウォッチリストを `asset_pref_mirror.value` (jsonb) 形へ変換する
+  /// (`{entries: [...]}`)。
+  static Map<String, dynamic> encodeMirrorValue(
+    List<AssetWatchlistEntry> entries,
+  ) {
+    return <String, dynamic>{
+      'entries': entries.map((entry) => entry.toJson()).toList(),
+    };
+  }
+
+  /// `asset_pref_mirror.value` (jsonb) からウォッチリストを復元する。
+  /// 不正な要素・assetType 空は捨てる寛容なパース (前方/後方互換)。
+  static List<AssetWatchlistEntry> decodeMirrorValue(dynamic value) {
+    if (value is! Map) {
+      return const <AssetWatchlistEntry>[];
+    }
+    final rawEntries = value['entries'];
+    if (rawEntries is! List) {
+      return const <AssetWatchlistEntry>[];
+    }
+    final entries = <AssetWatchlistEntry>[];
+    for (final item in rawEntries) {
+      if (item is! Map) {
+        continue;
+      }
+      final entry = AssetWatchlistEntry.fromJson(
+        Map<String, dynamic>.from(item),
+      );
+      if (entry.assetType.isEmpty) {
+        continue;
+      }
+      entries.add(entry);
+    }
+    return entries;
   }
 
   List<AssetWatchlistEntry> _sortEntries(List<AssetWatchlistEntry> entries) {

@@ -74,6 +74,25 @@ class SalarySpendingBreakdownService {
 
   static const int defaultSalaryDay = 25;
 
+  /// [categorize] が返しうるカテゴリラベル一覧(予算設定 UI の選択肢に使う)。
+  /// `_categoryRules` のラベル + フォールバックの「その他」。
+  static const List<String> categoryLabels = <String>[
+    '住居',
+    '食費',
+    '通信',
+    '光熱費',
+    '交通',
+    'サブスク',
+    '投資・貯蓄',
+    '医療',
+    '日用品',
+    '娯楽・浪費',
+    '借入返済',
+    '手数料・税金',
+    '使途不明金',
+    'その他',
+  ];
+
   SalarySpendingBreakdown build({
     required DateTime referenceDate,
     Iterable<SalarySpendingEntry> expenses = const <SalarySpendingEntry>[],

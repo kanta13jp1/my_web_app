@@ -7,6 +7,10 @@ name: Issue WBS Maintenance (manual wrapper)
 on:
   workflow_dispatch:
 
+concurrency:
+  group: issue-wbs-maintenance-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   actions: write
   contents: read

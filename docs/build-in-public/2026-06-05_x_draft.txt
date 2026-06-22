@@ -1,0 +1,6 @@
+自分株式会社 (= Jibun Inc.) 最近 7 日:
+- 23:24 JST 金 — Win版#132 part 237 (= stale-premise 是正 + scoped
+- 09:11 JST 土 — Win版#132 part 238 (= part 237 deferred PR land
+- 12:00 UTC 土 — Win版#132 part 239 (= scheduled `daily-developm
+
+#buildinpublic #flutter #supabase #claudecode #aifleet

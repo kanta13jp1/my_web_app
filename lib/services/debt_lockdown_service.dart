@@ -84,12 +84,137 @@ class DebtLockdownSnapshot {
   bool get allRulesCompletedToday => completedRuleIds.length >= rules.length;
 }
 
-class DebtLockdownService {
-  const DebtLockdownService({
-    this.nowProvider,
+enum DebtSafetySeverity { info, warning, danger }
+
+class DebtSafetyDebtInput {
+  const DebtSafetyDebtInput({
+    required this.accountId,
+    required this.accountName,
+    required this.balance,
+    required this.annualRate,
   });
 
+  final String accountId;
+  final String accountName;
+  final double balance;
+  final double annualRate;
+}
+
+class DebtAnnualRateRisk {
+  const DebtAnnualRateRisk({
+    required this.accountName,
+    required this.annualRate,
+    required this.principal,
+    required this.legalCapAnnualRate,
+    required this.blocksRegistration,
+  });
+
+  final String accountName;
+  final double annualRate;
+  final double principal;
+  final double legalCapAnnualRate;
+  final bool blocksRegistration;
+
+  DebtSafetySeverity get severity => blocksRegistration
+      ? DebtSafetySeverity.danger
+      : DebtSafetySeverity.warning;
+
+  String get title =>
+      blocksRegistration ? '年利20%超のため登録できません' : '元本別の上限金利を超える可能性があります';
+
+  String get detail {
+    final capLabel = DebtLockdownService.formatAnnualRate(legalCapAnnualRate);
+    final rateLabel = DebtLockdownService.formatAnnualRate(annualRate);
+    if (blocksRegistration) {
+      return '$accountName は年利 $rateLabel です。出資法の上限金利20%を超える可能性があるため、この条件は保存せず、登録貸金業者か確認してください。';
+    }
+    return '$accountName は年利 $rateLabel です。元本別の利息制限法上限 $capLabel を超える可能性があるため、契約条件を確認してください。';
+  }
+}
+
+class DebtSafetyGuidance {
+  const DebtSafetyGuidance({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.actionLabel,
+    required this.url,
+    required this.severity,
+  });
+
+  final String id;
+  final String title;
+  final String body;
+  final String actionLabel;
+  final String url;
+  final DebtSafetySeverity severity;
+}
+
+class DebtEducationNotice {
+  const DebtEducationNotice({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.actionLabel,
+    required this.url,
+    required this.severity,
+  });
+
+  final String id;
+  final String title;
+  final String body;
+  final String actionLabel;
+  final String url;
+  final DebtSafetySeverity severity;
+}
+
+class DebtSafetySnapshot {
+  const DebtSafetySnapshot({
+    required this.totalDebt,
+    required this.debtCount,
+    required this.annualRateRisks,
+    required this.guidanceCards,
+    required this.educationNotices,
+  });
+
+  final double totalDebt;
+  final int debtCount;
+  final List<DebtAnnualRateRisk> annualRateRisks;
+  final List<DebtSafetyGuidance> guidanceCards;
+  final List<DebtEducationNotice> educationNotices;
+
+  bool get hasBlockingAnnualRates =>
+      annualRateRisks.any((risk) => risk.blocksRegistration);
+
+  bool get shouldShowSelfExclusionGuidance =>
+      guidanceCards.any((guidance) => guidance.id == 'lending_self_exclusion');
+
+  bool get hasSignals =>
+      annualRateRisks.isNotEmpty ||
+      guidanceCards.isNotEmpty ||
+      educationNotices.isNotEmpty;
+}
+
+class DebtLockdownService {
+  const DebtLockdownService({this.nowProvider});
+
   static const String otherCategory = 'その他';
+  static const double statutoryBlockAnnualRate = 0.20;
+  static const double selfExclusionDebtTotalThreshold = 1000000;
+  static const int selfExclusionDebtCountThreshold = 5;
+
+  static const String selfExclusionGuidanceUrl =
+      'https://www.j-fsa.or.jp/personal/useful/question/selfcontrol.php';
+  static const String lendingConsultationUrl =
+      'https://www.j-fsa.or.jp/personal/borrowing/';
+  static const String registeredLenderSearchUrl =
+      'https://www.fsa.go.jp/ordinary/kensaku/index.html';
+  static const String illegalLenderWarningUrl =
+      'https://www.fsa.go.jp/ordinary/chuui/index.html';
+  static const String badContractorWarningUrl =
+      'https://www.j-fsa.or.jp/personal/bad_contractor/';
+  static const String youngFraudWarningUrl =
+      'https://www.j-fsa.or.jp/topics/association/for_young.php';
 
   static const List<DebtLockdownRule> builtinRules = <DebtLockdownRule>[
     DebtLockdownRule(
@@ -131,6 +256,156 @@ class DebtLockdownService {
         ...WasteTrackingService.categoryLabels,
         otherCategory,
       ];
+
+  static bool isRegistrableAnnualRate(double annualRate) =>
+      annualRate >= 0 && annualRate <= statutoryBlockAnnualRate;
+
+  static double legalAnnualRateCapForPrincipal(double principal) {
+    final amount = principal.abs();
+    if (amount >= 1000000) {
+      return 0.15;
+    }
+    if (amount >= 100000) {
+      return 0.18;
+    }
+    return statutoryBlockAnnualRate;
+  }
+
+  static String formatAnnualRate(double annualRate) {
+    final percent = annualRate * 100;
+    if (percent == percent.roundToDouble()) {
+      return '${percent.round()}%';
+    }
+    return '${percent.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '')}%';
+  }
+
+  static DebtAnnualRateRisk? evaluateAnnualRate({
+    required String accountName,
+    required double annualRate,
+    double? principal,
+  }) {
+    if (annualRate <= 0) {
+      return null;
+    }
+
+    final principalAmount = (principal ?? 0).abs();
+    final legalCap = legalAnnualRateCapForPrincipal(principalAmount);
+    final blocksRegistration = annualRate > statutoryBlockAnnualRate;
+    final exceedsPrincipalCap = annualRate > legalCap;
+    if (!blocksRegistration && !exceedsPrincipalCap) {
+      return null;
+    }
+
+    return DebtAnnualRateRisk(
+      accountName: accountName,
+      annualRate: annualRate,
+      principal: principalAmount,
+      legalCapAnnualRate: legalCap,
+      blocksRegistration: blocksRegistration,
+    );
+  }
+
+  static DebtSafetySnapshot buildSafetySnapshot({
+    required Iterable<DebtSafetyDebtInput> debts,
+  }) {
+    final activeDebts =
+        debts.where((debt) => debt.balance.abs() > 0).toList(growable: false);
+    final totalDebt = activeDebts.fold<double>(
+      0,
+      (sum, debt) => sum + debt.balance.abs(),
+    );
+    final annualRateRisks = activeDebts
+        .map(
+          (debt) => evaluateAnnualRate(
+            accountName: debt.accountName,
+            annualRate: debt.annualRate,
+            principal: debt.balance.abs(),
+          ),
+        )
+        .whereType<DebtAnnualRateRisk>()
+        .toList(growable: false);
+
+    final shouldShowSelfExclusion =
+        activeDebts.length >= selfExclusionDebtCountThreshold ||
+            totalDebt >= selfExclusionDebtTotalThreshold ||
+            annualRateRisks.any((risk) => risk.blocksRegistration);
+    final guidanceCards = <DebtSafetyGuidance>[
+      if (shouldShowSelfExclusion)
+        const DebtSafetyGuidance(
+          id: 'lending_self_exclusion',
+          title: '貸付自粛制度を確認',
+          body: '新たな借入れを自分の意思だけで止めにくい状態です。日本貸金業協会の貸付自粛制度と生活再建相談を確認してください。',
+          actionLabel: '制度を見る',
+          url: selfExclusionGuidanceUrl,
+          severity: DebtSafetySeverity.warning,
+        ),
+      if (shouldShowSelfExclusion)
+        const DebtSafetyGuidance(
+          id: 'lending_consultation',
+          title: '貸金業相談・紛争解決センター',
+          body: '返済や借入れで困っている場合は、早めに公的な相談窓口へつなげます。',
+          actionLabel: '相談窓口',
+          url: lendingConsultationUrl,
+          severity: DebtSafetySeverity.info,
+        ),
+      if (annualRateRisks.any((risk) => risk.blocksRegistration))
+        const DebtSafetyGuidance(
+          id: 'illegal_lender_warning',
+          title: '違法業者・高金利の疑い',
+          body: '年利20%を超える条件や登録確認できない業者からは借入れしないでください。',
+          actionLabel: '金融庁の注意',
+          url: illegalLenderWarningUrl,
+          severity: DebtSafetySeverity.danger,
+        ),
+      if (shouldShowSelfExclusion || annualRateRisks.isNotEmpty)
+        const DebtSafetyGuidance(
+          id: 'registered_lender_search',
+          title: '登録貸金業者を確認',
+          body: '新しい借入れや借換えを検討する前に、金融庁の登録貸金業者情報検索サービスで確認してください。',
+          actionLabel: '登録検索',
+          url: registeredLenderSearchUrl,
+          severity: DebtSafetySeverity.info,
+        ),
+    ];
+
+    final educationNotices =
+        shouldShowSelfExclusion || annualRateRisks.isNotEmpty
+            ? const <DebtEducationNotice>[
+                DebtEducationNotice(
+                  id: 'name_lending',
+                  title: '名義貸しに注意',
+                  body: '自分名義で借りて他人に渡す話は、返済義務だけが残る典型的なトラブルです。頼まれても登録しないでください。',
+                  actionLabel: '事例を見る',
+                  url: youngFraudWarningUrl,
+                  severity: DebtSafetySeverity.warning,
+                ),
+                DebtEducationNotice(
+                  id: 'credit_card_cashing',
+                  title: 'クレジットカード現金化に注意',
+                  body: 'ショッピング枠の現金化や後払い現金化は、手数料負担と規約違反のリスクが高い取引です。',
+                  actionLabel: '注意喚起',
+                  url: badContractorWarningUrl,
+                  severity: DebtSafetySeverity.warning,
+                ),
+                DebtEducationNotice(
+                  id: 'registered_lender_check',
+                  title: '借入先の登録確認',
+                  body: '業者名、電話番号、登録番号が確認できない場合は、連絡や申込みを止めて登録検索で確認してください。',
+                  actionLabel: '検索する',
+                  url: registeredLenderSearchUrl,
+                  severity: DebtSafetySeverity.info,
+                ),
+              ]
+            : const <DebtEducationNotice>[];
+
+    return DebtSafetySnapshot(
+      totalDebt: totalDebt,
+      debtCount: activeDebts.length,
+      annualRateRisks: annualRateRisks,
+      guidanceCards: guidanceCards,
+      educationNotices: educationNotices,
+    );
+  }
 
   Future<DebtLockdownSnapshot> loadSnapshot({
     required double remainingDebt,

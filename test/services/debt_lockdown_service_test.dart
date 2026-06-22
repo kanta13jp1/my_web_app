@@ -37,38 +37,129 @@ void main() {
       expect(snapshot.recentViolations.first.amount, 280);
     });
 
-    test('marks snapshot as released when remaining debt reaches zero',
-        () async {
-      final service = DebtLockdownService(
-        nowProvider: () => DateTime(2026, 3, 23, 9, 0),
+    test(
+      'marks snapshot as released when remaining debt reaches zero',
+      () async {
+        final service = DebtLockdownService(
+          nowProvider: () => DateTime(2026, 3, 23, 9, 0),
+        );
+
+        await service.setEnabled(true, remainingDebt: 80000);
+        final snapshot = await service.loadSnapshot(remainingDebt: 0);
+
+        expect(snapshot.isReleased, isTrue);
+        expect(snapshot.isEnabled, isFalse);
+      },
+    );
+
+    test(
+      'counts compliant streak across consecutive fully completed days',
+      () async {
+        var now = DateTime(2026, 3, 23, 7, 0);
+        final service = DebtLockdownService(nowProvider: () => now);
+
+        await service.setEnabled(true, remainingDebt: 100000);
+        for (final rule in DebtLockdownService.builtinRules) {
+          await service.toggleRule(rule.id, true, remainingDebt: 100000);
+        }
+
+        now = now.add(const Duration(days: 1));
+        for (final rule in DebtLockdownService.builtinRules) {
+          await service.toggleRule(rule.id, true, remainingDebt: 100000);
+        }
+
+        final snapshot = await service.loadSnapshot(remainingDebt: 100000);
+
+        expect(snapshot.currentCompliantStreakDays, 2);
+        expect(snapshot.todayViolations, isEmpty);
+      },
+    );
+
+    test('blocks annual rates above the statutory 20 percent line', () {
+      final risk = DebtLockdownService.evaluateAnnualRate(
+        accountName: 'Unregistered lender',
+        annualRate: 0.205,
+        principal: 50000,
       );
 
-      await service.setEnabled(true, remainingDebt: 80000);
-      final snapshot = await service.loadSnapshot(remainingDebt: 0);
-
-      expect(snapshot.isReleased, isTrue);
-      expect(snapshot.isEnabled, isFalse);
+      expect(risk, isNotNull);
+      expect(risk!.blocksRegistration, isTrue);
+      expect(risk.legalCapAnnualRate, 0.20);
+      expect(risk.severity, DebtSafetySeverity.danger);
     });
 
-    test('counts compliant streak across consecutive fully completed days',
-        () async {
-      var now = DateTime(2026, 3, 23, 7, 0);
-      final service = DebtLockdownService(nowProvider: () => now);
+    test('warns when the principal based cap is exceeded below 20 percent', () {
+      final risk = DebtLockdownService.evaluateAnnualRate(
+        accountName: 'Large card loan',
+        annualRate: 0.17,
+        principal: 1200000,
+      );
 
-      await service.setEnabled(true, remainingDebt: 100000);
-      for (final rule in DebtLockdownService.builtinRules) {
-        await service.toggleRule(rule.id, true, remainingDebt: 100000);
-      }
+      expect(risk, isNotNull);
+      expect(risk!.blocksRegistration, isFalse);
+      expect(risk.legalCapAnnualRate, 0.15);
+      expect(risk.severity, DebtSafetySeverity.warning);
+    });
 
-      now = now.add(const Duration(days: 1));
-      for (final rule in DebtLockdownService.builtinRules) {
-        await service.toggleRule(rule.id, true, remainingDebt: 100000);
-      }
+    test(
+      'shows self-exclusion guidance and education notices at thresholds',
+      () {
+        final snapshot = DebtLockdownService.buildSafetySnapshot(
+          debts: List<DebtSafetyDebtInput>.generate(
+            5,
+            (index) => DebtSafetyDebtInput(
+              accountId: 'debt_$index',
+              accountName: 'Debt $index',
+              balance: 220000,
+              annualRate: 0.18,
+            ),
+          ),
+        );
 
-      final snapshot = await service.loadSnapshot(remainingDebt: 100000);
+        expect(snapshot.totalDebt, 1100000);
+        expect(snapshot.shouldShowSelfExclusionGuidance, isTrue);
+        expect(
+          snapshot.guidanceCards.map((guidance) => guidance.id),
+          containsAll(<String>[
+            'lending_self_exclusion',
+            'lending_consultation',
+            'registered_lender_search',
+          ]),
+        );
+        expect(
+          snapshot.educationNotices.map((notice) => notice.id),
+          containsAll(<String>[
+            'name_lending',
+            'credit_card_cashing',
+            'registered_lender_check',
+          ]),
+        );
+        expect(
+          snapshot.guidanceCards
+              .firstWhere((guidance) => guidance.id == 'lending_self_exclusion')
+              .url,
+          DebtLockdownService.selfExclusionGuidanceUrl,
+        );
+      },
+    );
 
-      expect(snapshot.currentCompliantStreakDays, 2);
-      expect(snapshot.todayViolations, isEmpty);
+    test('keeps quiet when legal-rate debts are below guidance thresholds', () {
+      final snapshot = DebtLockdownService.buildSafetySnapshot(
+        debts: const <DebtSafetyDebtInput>[
+          DebtSafetyDebtInput(
+            accountId: 'small',
+            accountName: 'Small balance',
+            balance: 50000,
+            annualRate: 0.18,
+          ),
+        ],
+      );
+
+      expect(snapshot.hasSignals, isFalse);
+      expect(snapshot.shouldShowSelfExclusionGuidance, isFalse);
+      expect(snapshot.annualRateRisks, isEmpty);
+      expect(snapshot.educationNotices, isEmpty);
+      expect(snapshot.guidanceCards, isEmpty);
     });
   });
 }

@@ -13,12 +13,12 @@ name: Health Monitor (統合ヘルスモニター)
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # 毎30分
+    - cron: "0 */2 * * *"  # 毎2時間 (2026-06-15 ci-audit: 毎時→2時間, 360runs/月削減 / cs-check 7*/2 の直前に実行)
   workflow_dispatch:
 
 concurrency:
   group: health-monitor
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-13 ci-audit: 毎30分モニタリングのキュー積み防止
 
 permissions:
   contents: write

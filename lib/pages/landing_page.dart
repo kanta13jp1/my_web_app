@@ -747,7 +747,7 @@ $input
           const SizedBox(height: 20),
           // メインヘッドライン
           const Text(
-            'Google Workspaceだけじゃない\n財務・健康・習慣・6部署を1つに。',
+            '今日やるべき1件を、AIが決める。\n迷いが消えて、毎日が動き出す。',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 32,
@@ -759,7 +759,7 @@ $input
           ),
           const SizedBox(height: 14),
           const Text(
-            'Gmail・Calendar・Driveの予定整理に加えて、お金、健康、習慣、学習、広報、開発までAIが横断。今日の最優先タスクを1件に絞り、人生全体を経営するための無料コックピットです。',
+            'Gmail・予定・お金・習慣・学習までを1画面に集約。Notion や MoneyForward を渡り歩く代わりに、AIが今日の最優先1件を提案します。AI大学・英語速読で「学ぶ習慣」まで続く、人生を経営する無料コックピットです。',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -767,6 +767,8 @@ $input
               height: 1.7,
             ),
           ),
+          const SizedBox(height: 16),
+          const _GettingStartedStrip(),
           const SizedBox(height: 14),
           const _PlannerGapStrip(),
           const SizedBox(height: 14),
@@ -5012,6 +5014,68 @@ class _FaqItemState extends State<_FaqItem> {
             ),
           ),
         const Divider(height: 1),
+      ],
+    );
+  }
+}
+
+class _GettingStartedStrip extends StatelessWidget {
+  const _GettingStartedStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    const steps = <(String, String)>[
+      ('1', '無料で始める（30秒）'),
+      ('2', '今日の最優先1件をAIが提案'),
+      ('3', 'AI大学・英語速読で学ぶ習慣に'),
+    ];
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final s in steps)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF6B35),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    s.$1,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  s.$2,
+                  style: const TextStyle(
+                    color: Color(0xFF334155),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

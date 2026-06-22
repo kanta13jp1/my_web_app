@@ -7,6 +7,14 @@ on:
       - main
       - staging
       - develop
+    paths-ignore:
+      - 'docs/**'
+      - 'memory/**'
+      - '*.md'
+      - '**/*.md'
+      - '.claude/**'
+      - '.codex/**'
+      - '.agents/**'
   workflow_dispatch:
     inputs:
       ultrareview:

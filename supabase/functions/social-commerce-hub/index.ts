@@ -11,6 +11,11 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  applyApprovalStepDecision,
+  buildMultiStepApprovalWorkflow,
+  MultiStepApprovalWorkflow,
+} from "../_shared/multi_step_approval_workflow.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,6 +115,18 @@ function readAuditEvents(
       event !== null && typeof event === "object" && !Array.isArray(event)
     )
     : [];
+}
+
+function readApprovalWorkflow(
+  metadata: Record<string, unknown>,
+): MultiStepApprovalWorkflow | null {
+  const workflow = metadata.approval_workflow;
+  if (
+    workflow === null || typeof workflow !== "object" || Array.isArray(workflow)
+  ) {
+    return null;
+  }
+  return workflow as MultiStepApprovalWorkflow;
 }
 
 function evaluateDiscountHold(body: Record<string, unknown>) {
@@ -430,8 +447,30 @@ serve(async (req) => {
       case "discount_approval.request": {
         const now = new Date().toISOString();
         const gate = evaluateDiscountHold(body);
-        const status = gate.approvalRequired ? "pending" : "not_required";
-        const transactionStatus = gate.approvalRequired
+        const privilegeGrant = body.privilege_grant === true ||
+          body.special_privilege === true;
+        const actionType = privilegeGrant
+          ? "privilege_grant"
+          : gate.freeOffer
+          ? "free_offer"
+          : "discount_apply";
+        const workflow = buildMultiStepApprovalWorkflow({
+          actionType,
+          amountJpy: gate.discountAmount,
+          discountPct: gate.discountPct,
+          freeOffer: gate.freeOffer,
+          privilegeGrant,
+          requestedByRole: String(
+            body.requested_by_actor ?? body.actor_role ?? "system",
+          ),
+          requestedAt: now,
+        });
+        const approvalReasons = [
+          ...gate.reasons,
+          ...(privilegeGrant ? ["privilege_grant"] : []),
+        ];
+        const status = workflow.status;
+        const transactionStatus = workflow.required
           ? "held_for_approval"
           : "discount_clear";
         const item = await addItem(admin, DISCOUNT_APPROVAL_SOURCE, userId, {
@@ -450,26 +489,34 @@ serve(async (req) => {
           free_offer: gate.freeOffer,
           approval_threshold_pct: gate.thresholdPct,
           approval_amount_threshold: gate.amountThreshold,
-          approval_required: gate.approvalRequired,
-          approval_reasons: gate.reasons,
+          approval_required: workflow.required,
+          approval_reasons: approvalReasons,
+          approval_workflow: workflow,
+          current_approval_step: workflow.currentStepId,
+          approval_notification_event: workflow.notificationEvent,
           status,
           transaction_status: transactionStatus,
-          user_message: gate.approvalRequired
+          user_message: workflow.required
             ? "割引適用は管理者承認待ちです。承認後に処理を再開します。"
             : "この割引は承認不要の範囲です。",
-          audit_events: [{
-            event: "requested",
-            actor_id: userId,
-            at: now,
-            approval_required: gate.approvalRequired,
-            reasons: gate.reasons,
-          }],
+          audit_events: [
+            {
+              event: "requested",
+              actor_id: userId,
+              at: now,
+              approval_required: workflow.required,
+              reasons: approvalReasons,
+            },
+            ...workflow.auditEvents,
+          ],
         });
         return json({
           success: true,
-          approval_required: gate.approvalRequired,
+          approval_required: workflow.required,
           status,
           transaction_status: transactionStatus,
+          approval_workflow: workflow,
+          notification_event: workflow.notificationEvent,
           request: item,
         });
       }
@@ -539,28 +586,76 @@ serve(async (req) => {
         const now = new Date().toISOString();
         const metadata = (current.metadata ?? {}) as Record<string, unknown>;
         const auditEvents = readAuditEvents(metadata);
-        const nextMetadata = {
-          ...metadata,
-          status: decision,
-          transaction_status: decision === "approved"
-            ? "discount_approved"
-            : "discount_rejected",
-          decision,
-          decision_comment: body.comment ?? "",
-          decided_by: userId,
-          decided_by_role: approverRole,
-          decided_at: now,
-          audit_events: [
-            ...auditEvents,
-            {
-              event: decision,
-              actor_id: userId,
-              approver_role: approverRole,
-              comment: body.comment ?? "",
-              at: now,
-            },
-          ],
-        };
+        const approvalWorkflow = readApprovalWorkflow(metadata);
+        let nextMetadata: Record<string, unknown>;
+        if (approvalWorkflow) {
+          const stepResult = applyApprovalStepDecision(approvalWorkflow, {
+            decision: decision as "approved" | "rejected",
+            approverRole,
+            approverId: userId,
+            stepId: String(body.step_id ?? "") || null,
+            comment: String(body.comment ?? ""),
+            decidedAt: now,
+          });
+          if (!stepResult.accepted) {
+            return json({
+              success: false,
+              error: stepResult.error,
+              approval_workflow: stepResult.workflow,
+            }, 403);
+          }
+          const workflowDecision = stepResult.workflow.status === "approved"
+            ? "approved"
+            : stepResult.workflow.status === "rejected"
+            ? "rejected"
+            : "pending";
+          nextMetadata = {
+            ...metadata,
+            status: stepResult.workflow.status,
+            transaction_status: stepResult.workflow.transactionStatus,
+            decision: workflowDecision,
+            decision_comment: body.comment ?? "",
+            decided_by: stepResult.workflow.status === "pending"
+              ? null
+              : userId,
+            decided_by_role: stepResult.workflow.status === "pending"
+              ? null
+              : approverRole,
+            decided_at: stepResult.workflow.status === "pending" ? null : now,
+            last_decision_by: userId,
+            last_decision_by_role: approverRole,
+            last_decision_at: now,
+            approval_workflow: stepResult.workflow,
+            current_approval_step: stepResult.workflow.currentStepId,
+            audit_events: [
+              ...auditEvents,
+              ...stepResult.auditEvents,
+            ],
+          };
+        } else {
+          nextMetadata = {
+            ...metadata,
+            status: decision,
+            transaction_status: decision === "approved"
+              ? "discount_approved"
+              : "discount_rejected",
+            decision,
+            decision_comment: body.comment ?? "",
+            decided_by: userId,
+            decided_by_role: approverRole,
+            decided_at: now,
+            audit_events: [
+              ...auditEvents,
+              {
+                event: decision,
+                actor_id: userId,
+                approver_role: approverRole,
+                comment: body.comment ?? "",
+                at: now,
+              },
+            ],
+          };
+        }
         const { data: updated, error: updateErr } = await admin.from("hub_data")
           .update({ metadata: nextMetadata })
           .eq("id", id)
@@ -568,7 +663,12 @@ serve(async (req) => {
           .select("id, metadata, created_at")
           .single();
         if (updateErr) throw new Error(updateErr.message);
-        return json({ success: true, approval: updated });
+        return json({
+          success: true,
+          approval: updated,
+          approval_workflow: nextMetadata.approval_workflow ?? null,
+          current_approval_step: nextMetadata.current_approval_step ?? null,
+        });
       }
       case "discount_approval.audit": {
         const id = String(body.id ?? "");

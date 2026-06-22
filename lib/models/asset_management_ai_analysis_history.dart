@@ -45,10 +45,7 @@ class AssetManagementAiAnalysisHistoryEntry {
     );
   }
 
-  Map<String, dynamic> toPromptContextJson({
-    int maxSummaryCharacters = 1800,
-  }) {
-    final trimmed = summaryText.trim();
+  Map<String, dynamic> toPromptContextJson() {
     return <String, dynamic>{
       'id': id,
       'request_fingerprint': requestFingerprint,
@@ -58,8 +55,40 @@ class AssetManagementAiAnalysisHistoryEntry {
       'report_base_date': reportBaseDate?.toIso8601String(),
       'provider_choice_reason': providerChoiceReason,
       'provider_route': providerRoute,
-      'summary_excerpt': _truncate(trimmed, maxSummaryCharacters),
+      // 過去分析の本文(prose)は LLM へ渡さない。攻撃的ペルソナが当時の負の値・
+      // 期限超過・未払いを「現在の事実」として再生産する原因になるため。トレンド把握に
+      // 必要な数値メトリクスだけを過去スナップショットとして渡す。
+      'metrics_snapshot': _metricsSnapshotFromPayload(),
     };
+  }
+
+  /// 過去分析時点の数値スナップショット (= トレンド比較用)。
+  /// 保存済み input_payload から純資産・未払い合計・使用可能額のみを抽出する。
+  Map<String, dynamic> _metricsSnapshotFromPayload() {
+    final workbook = _mapFrom(inputPayload['workbook']);
+    final totals = _mapFrom(workbook['totals']);
+    final availableMoney = _mapFrom(inputPayload['available_money']);
+    return <String, dynamic>{
+      'net_worth': _numFrom(totals['net_worth']),
+      'liability_total': _numFrom(totals['liability_total']),
+      'monthly_unpaid_payment_total':
+          _numFrom(totals['monthly_unpaid_payment_total']),
+      'monthly_actual_payment_total':
+          _numFrom(totals['monthly_actual_payment_total']),
+      'today_available_amount': _availableAmount(availableMoney['today']),
+      'week_available_amount': _availableAmount(availableMoney['week']),
+      'month_available_amount': _availableAmount(availableMoney['month']),
+    };
+  }
+
+  static num? _availableAmount(Object? windowJson) {
+    return _numFrom(_mapFrom(windowJson)['available_amount']);
+  }
+
+  static num? _numFrom(Object? value) {
+    if (value is num) return value;
+    if (value is String) return num.tryParse(value);
+    return null;
   }
 
   static DateTime _parseDateTime(Object? value) {
@@ -86,12 +115,5 @@ class AssetManagementAiAnalysisHistoryEntry {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
     return trimmed;
-  }
-
-  static String _truncate(String value, int maxCharacters) {
-    if (value.length <= maxCharacters) {
-      return value;
-    }
-    return '${value.substring(0, maxCharacters)}...';
   }
 }

@@ -127,12 +127,39 @@ class ReleaseNotesDocument {
   }
 }
 
+/// リリースノートをポップアップ(ダイアログ)で表示する。
+///
+/// ヘッダーのバージョンバッジ等、フルページ遷移より軽い確認に使う。[context] は
+/// アプリ直下の Navigator を含むもの(ヘッダーは Navigator より上にあるため呼び出し
+/// 側で `navigatorKey.currentContext` を渡すこと)。
+Future<void> showReleaseNotesDialog(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return Dialog(
+        clipBehavior: Clip.antiAlias,
+        insetPadding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 680),
+          child: ReleaseNotesPage(
+            onClose: () => Navigator.of(dialogContext).pop(),
+          ),
+        ),
+      );
+    },
+  );
+}
+
 class ReleaseNotesPage extends StatefulWidget {
   final ReleaseNotesDocument? initialDocument;
+
+  /// 非 null のときダイアログ表示とみなし、AppBar に閉じるボタンを出す。
+  final VoidCallback? onClose;
 
   const ReleaseNotesPage({
     super.key,
     this.initialDocument,
+    this.onClose,
   });
 
   @override
@@ -211,6 +238,15 @@ class _ReleaseNotesPageState extends State<ReleaseNotesPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: widget.onClose == null,
+        leading: widget.onClose != null
+            ? IconButton(
+                key: const Key('release_notes_close_button'),
+                tooltip: '閉じる',
+                icon: const Icon(Icons.close),
+                onPressed: widget.onClose,
+              )
+            : null,
         title: const Text('Release Notes'),
         actions: [
           IconButton(

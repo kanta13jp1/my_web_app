@@ -42,6 +42,6 @@ void main() {
 
     expect(genre, isNotNull);
     expect(genre!.id, 'fintech_trading_ai');
-    expect(genre.title, 'FinTech/Trading AI');
+    expect(genre.title, '金融・トレーディングAI');
   });
 }

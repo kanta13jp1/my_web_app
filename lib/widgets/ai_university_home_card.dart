@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_university_x_post_service.dart';
+import '../theme/design_tokens.dart';
 
 /// AI大学ホームカード — ホーム最上部に表示するキラーコンテンツバナー
 ///
@@ -171,9 +172,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
       await launchUrl(intent, mode: LaunchMode.externalApplication);
       return;
     }
-    await SharePlus.instance.share(
-      ShareParams(text: shareText),
-    );
+    await SharePlus.instance.share(ShareParams(text: shareText));
   }
 
   Future<void> _postAiGeneratedXUpdate() async {
@@ -198,14 +197,14 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
       final message = result.posted
           ? '$account にAI大学の学習ログを投稿しました'
           : 'X投稿文を作成しました。SupabaseのX API secret設定を確認してください';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AI X投稿に失敗しました: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('AI X投稿に失敗しました: $error')));
     } finally {
       if (mounted) {
         setState(() => _xPostSubmitting = false);
@@ -218,10 +217,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   }
 
   void _openProvider(String providerId) {
-    Navigator.of(context).pushNamed(
-      '/gemini-university',
-      arguments: {'provider': providerId},
-    );
+    Navigator.of(
+      context,
+    ).pushNamed('/gemini-university', arguments: {'provider': providerId});
   }
 
   void _openRanking() {
@@ -230,6 +228,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
 
   void _openVideoLesson() {
     Navigator.of(context).pushNamed('/ai-university-video');
+  }
+
+  void _openEnglishReading() {
+    Navigator.of(context).pushNamed('/english-reading-curriculum');
   }
 
   String _buildRefreshLabel() {
@@ -421,16 +423,17 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF6B35).withValues(alpha: 0.10),
+                      color: DesignTokens.orange.withValues(alpha: 0.10),
                       blurRadius: 24,
                       offset: const Offset(0, 12),
                     ),
                     BoxShadow(
-                      color: const Color(0xFF3D5AFE).withValues(alpha: 0.12),
+                      color: DesignTokens.indigo.withValues(alpha: 0.12),
                       blurRadius: 32,
                       offset: const Offset(0, 8),
                     ),
@@ -447,17 +450,19 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color:
-                                const Color(0xFFFF6B35).withValues(alpha: 0.18),
+                            color: const Color(
+                              0xFFFF6B35,
+                            ).withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: const Color(0xFFFF6B35)
-                                  .withValues(alpha: 0.28),
+                              color: const Color(
+                                0xFFFF6B35,
+                              ).withValues(alpha: 0.28),
                             ),
                           ),
                           child: const Icon(
                             Icons.school_rounded,
-                            color: Color(0xFFFF8C5A),
+                            color: DesignTokens.orangeLight,
                             size: 26,
                           ),
                         ),
@@ -490,7 +495,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                                     _buildStatusPill(
                                       icon: Icons.replay_rounded,
                                       label: '復習 $_dueCardCount問',
-                                      color: const Color(0xFF3D5AFE),
+                                      color: DesignTokens.indigo,
                                     ),
                                 ],
                               ),
@@ -554,8 +559,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color:
-                            kLegalAiGenre.accentColor.withValues(alpha: 0.16),
+                        color: kLegalAiGenre.accentColor.withValues(
+                          alpha: 0.16,
+                        ),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: kLegalAiGenre.accentColor.withValues(
@@ -656,7 +662,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             icon: Icons.hub_outlined,
                             label: '掲載AI',
                             value: providerCountText,
-                            accent: const Color(0xFF3D5AFE),
+                            accent: DesignTokens.indigo,
                           ),
                         ),
                         SizedBox(
@@ -665,7 +671,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             icon: Icons.check_circle_outline,
                             label: '学習済み',
                             value: '$_answeredCount社',
-                            accent: const Color(0xFF4CAF50),
+                            accent: DesignTokens.green,
                           ),
                         ),
                         SizedBox(
@@ -674,7 +680,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             icon: Icons.local_fire_department_outlined,
                             label: '連続学習',
                             value: '$_currentStreak日',
-                            accent: const Color(0xFFFF6B35),
+                            accent: DesignTokens.orange,
                           ),
                         ),
                         SizedBox(
@@ -754,8 +760,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           const SizedBox(height: 6),
                           LinearProgressIndicator(
                             value: progress,
-                            backgroundColor:
-                                Colors.white.withValues(alpha: 0.14),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.14,
+                            ),
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               Color(0xFFFFC107),
                             ),
@@ -773,7 +780,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           label: primaryCta,
                           icon: Icons.play_arrow_rounded,
                           foregroundColor: Colors.white,
-                          backgroundColor: const Color(0xFFFF6B35),
+                          backgroundColor: DesignTokens.orange,
                           onTap: _openUniversity,
                         ),
                       ),
@@ -785,7 +792,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             label: '復習する ($_dueCardCount問)',
                             icon: Icons.replay_rounded,
                             foregroundColor: Colors.white,
-                            backgroundColor: const Color(0xFF3D5AFE),
+                            backgroundColor: DesignTokens.indigo,
                             onTap: _openUniversity,
                           ),
                         ),
@@ -815,6 +822,17 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
+                        child: _AiCardActionButton(
+                          label: '英語速読',
+                          icon: Icons.speed_outlined,
+                          foregroundColor: DesignTokens.green,
+                          borderColor: const Color(0x334CAF50),
+                          onTap: _openEnglishReading,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
                         child: _buildAiXPostButton(),
                       ),
                     ] else
@@ -827,7 +845,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             label: primaryCta,
                             icon: Icons.play_arrow_rounded,
                             foregroundColor: Colors.white,
-                            backgroundColor: const Color(0xFFFF6B35),
+                            backgroundColor: DesignTokens.orange,
                             onTap: _openUniversity,
                           ),
                           _AiCardActionButton(
@@ -845,11 +863,19 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             compact: true,
                             onTap: _openVideoLesson,
                           ),
+                          _AiCardActionButton(
+                            label: '英語速読',
+                            icon: Icons.speed_outlined,
+                            foregroundColor: DesignTokens.green,
+                            borderColor: const Color(0x334CAF50),
+                            compact: true,
+                            onTap: _openEnglishReading,
+                          ),
                           _buildAiXPostButton(),
                           _AiCardActionButton(
                             label: '音声で学ぶ',
                             icon: Icons.mic,
-                            foregroundColor: const Color(0xFF3D5AFE),
+                            foregroundColor: DesignTokens.indigo,
                             borderColor: const Color(0x333D5AFE),
                             compact: true,
                             onTap: () => Navigator.pushNamed(
@@ -935,8 +961,9 @@ class _AiCardActionButton extends StatelessWidget {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(effectiveForeground),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        effectiveForeground,
+                      ),
                     ),
                   )
                 else

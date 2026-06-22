@@ -14,23 +14,28 @@ class AssetLiabilityCardStatementImportService {
     final rejected = <AssetLiabilityCardStatementRejectedRow>[];
     final rows = rawText.split(RegExp(r'\r?\n'));
     var hasHeader = false;
+    _CardStatementColumnMap? columnMap;
 
     for (var i = 0; i < rows.length; i++) {
       final rawRow = rows[i].trim();
       if (rawRow.isEmpty) {
         continue;
       }
-      final cells = _splitCsvRow(rawRow).map((cell) => cell.trim()).toList();
+      final cells = _splitRow(rawRow).map((cell) => cell.trim()).toList();
       if (cells.isEmpty) {
         continue;
       }
       if (!hasHeader && _looksLikeHeader(cells)) {
         hasHeader = true;
+        // 各社 CSV/TSV のヘッダ列名から「日付・摘要・金額」の位置を学習し、
+        // 以降の行をその位置で読む (auPAY 等の列順差異を吸収)。
+        columnMap = _buildColumnMap(cells);
         continue;
       }
 
       final parsed = _parseRow(
         cells: cells,
+        columnMap: columnMap,
         rowNumber: i + 1,
         rawRow: rawRow,
         defaultBillingAccountId: defaultBillingAccountId,
@@ -51,6 +56,7 @@ class AssetLiabilityCardStatementImportService {
 
   _ParsedCardStatementRow _parseRow({
     required List<String> cells,
+    required _CardStatementColumnMap? columnMap,
     required int rowNumber,
     required String rawRow,
     required String? defaultBillingAccountId,
@@ -62,7 +68,21 @@ class AssetLiabilityCardStatementImportService {
     String? amountText;
     String? dateText;
 
-    if (cells.length >= 4) {
+    String? cellAt(int? index) =>
+        (index != null && index >= 0 && index < cells.length)
+            ? cells[index]
+            : null;
+
+    if (columnMap != null) {
+      // ヘッダ学習済み: 列名から得た位置で読む (auPAY 等の列順に対応)。
+      description = cellAt(columnMap.description);
+      amountText = cellAt(columnMap.amount);
+      dateText = cellAt(columnMap.date);
+      final billingFromColumn = cellAt(columnMap.billing);
+      if (billingFromColumn != null && billingFromColumn.trim().isNotEmpty) {
+        billingAccountId = billingFromColumn;
+      }
+    } else if (cells.length >= 4) {
       billingAccountId = cells[0];
       description = cells[1];
       amountText = cells[2];
@@ -85,13 +105,13 @@ class AssetLiabilityCardStatementImportService {
       return _ParsedCardStatementRow.rejected(
         rowNumber: rowNumber,
         rawText: rawRow,
-        reason: 'expected description and amount',
+        reason: '摘要と金額が必要です',
       );
     }
 
     billingAccountId = billingAccountId?.trim();
     billingAccountName = billingAccountName?.trim();
-    description = description.trim();
+    description = (description ?? '').trim();
     final amount = _parseAmount(amountText);
     final postedAt = _parseDate(dateText);
 
@@ -99,21 +119,21 @@ class AssetLiabilityCardStatementImportService {
       return _ParsedCardStatementRow.rejected(
         rowNumber: rowNumber,
         rawText: rawRow,
-        reason: 'billing account id is required',
+        reason: '請求先IDが必要です',
       );
     }
     if (description.isEmpty) {
       return _ParsedCardStatementRow.rejected(
         rowNumber: rowNumber,
         rawText: rawRow,
-        reason: 'description is required',
+        reason: '摘要が必要です',
       );
     }
     if (amount == null) {
       return _ParsedCardStatementRow.rejected(
         rowNumber: rowNumber,
         rawText: rawRow,
-        reason: 'amount is invalid',
+        reason: '金額が不正です',
       );
     }
 
@@ -141,7 +161,79 @@ class AssetLiabilityCardStatementImportService {
     return normalized.contains('amount') ||
         normalized.contains('billing_account') ||
         normalized.contains('description') ||
-        normalized.contains('posted_at');
+        normalized.contains('posted_at') ||
+        // 日本語ヘッダ (auPAY / 各社カード明細 CSV/TSV)。データ行には現れない
+        // 列見出しの語で判定する。
+        normalized.contains('利用金額') ||
+        normalized.contains('利用日') ||
+        normalized.contains('利用店名') ||
+        normalized.contains('ご利用者') ||
+        normalized.contains('ご利用日') ||
+        normalized.contains('請求額') ||
+        normalized.contains('支払区分');
+  }
+
+  /// ヘッダ行から「日付・摘要・金額・請求先ID」の列位置を学習する。
+  /// 金額と摘要が特定できなければ null を返し、位置ベースの推定へ委ねる。
+  _CardStatementColumnMap? _buildColumnMap(List<String> headerCells) {
+    int? dateIndex;
+    int? descriptionIndex;
+    int? amountIndex;
+    int? billingIndex;
+    for (var i = 0; i < headerCells.length; i++) {
+      final header = headerCells[i].toLowerCase().trim();
+      if (amountIndex == null &&
+          (header.contains('利用金額') ||
+              header.contains('請求額') ||
+              header == '金額' ||
+              header.contains('amount'))) {
+        amountIndex = i;
+      } else if (dateIndex == null &&
+          (header.contains('利用日') ||
+              header.contains('ご利用日') ||
+              header.contains('日付') ||
+              header.contains('date') ||
+              header.contains('posted_at'))) {
+        dateIndex = i;
+      } else if (descriptionIndex == null &&
+          (header.contains('利用店名') ||
+              header.contains('店名') ||
+              header.contains('利用内容') ||
+              header.contains('ご利用先') ||
+              header.contains('description'))) {
+        descriptionIndex = i;
+      } else if (billingIndex == null &&
+          (header.contains('請求先id') || header.contains('billing_account'))) {
+        billingIndex = i;
+      }
+    }
+    // 店名列が無い明細は摘要列を摘要(=説明)として使う。
+    if (descriptionIndex == null) {
+      for (var i = 0; i < headerCells.length; i++) {
+        if (headerCells[i].toLowerCase().contains('摘要')) {
+          descriptionIndex = i;
+          break;
+        }
+      }
+    }
+    if (amountIndex == null || descriptionIndex == null) {
+      return null;
+    }
+    return _CardStatementColumnMap(
+      date: dateIndex,
+      description: descriptionIndex,
+      amount: amountIndex,
+      billing: billingIndex,
+    );
+  }
+
+  /// タブ区切り (表計算/明細サイトからの貼り付け) はタブで、それ以外は
+  /// カンマで分割する。
+  List<String> _splitRow(String row) {
+    if (row.contains('\t')) {
+      return row.split('\t');
+    }
+    return _splitCsvRow(row);
   }
 
   List<String> _splitCsvRow(String row) {
@@ -173,8 +265,9 @@ class AssetLiabilityCardStatementImportService {
     if (raw == null) {
       return null;
     }
-    final normalized = raw
+    final normalized = _normalizeFullWidthDigits(raw)
         .replaceAll(',', '')
+        .replaceAll('\uff0c', '') // \u5168\u89d2\u30ab\u30f3\u30de
         .replaceAll('\u5186', '')
         .replaceAll('\u00a5', '')
         .trim();
@@ -184,8 +277,21 @@ class AssetLiabilityCardStatementImportService {
     return double.tryParse(normalized);
   }
 
+  /// \u5168\u89d2\u6570\u5b57 (\uff10-\uff19) \u3092\u534a\u89d2\u3078\u5909\u63db\u3059\u308b\u3002\u660e\u7d30\u30b5\u30a4\u30c8\u306e\u30b3\u30d4\u30fc\u306f\u5168\u89d2\u6df7\u3058\u308a\u304c\u591a\u3044\u3002
+  String _normalizeFullWidthDigits(String input) {
+    final buffer = StringBuffer();
+    for (final rune in input.runes) {
+      if (rune >= 0xFF10 && rune <= 0xFF19) {
+        buffer.writeCharCode(rune - 0xFF10 + 0x30);
+      } else {
+        buffer.writeCharCode(rune);
+      }
+    }
+    return buffer.toString();
+  }
+
   DateTime? _parseDate(String? raw) {
-    final text = raw?.trim();
+    final text = raw == null ? null : _normalizeFullWidthDigits(raw).trim();
     if (text == null || text.isEmpty) {
       return null;
     }
@@ -226,6 +332,21 @@ class AssetLiabilityCardStatementImportService {
         .replaceAll(RegExp(r'^_|_$'), '');
     return slug.isEmpty ? 'card_statement_$rowNumber' : slug;
   }
+}
+
+/// ヘッダから学習したカード明細の列位置 (0始まり)。date/billing は任意。
+class _CardStatementColumnMap {
+  final int? date;
+  final int description;
+  final int amount;
+  final int? billing;
+
+  const _CardStatementColumnMap({
+    required this.date,
+    required this.description,
+    required this.amount,
+    required this.billing,
+  });
 }
 
 class _ParsedCardStatementRow {

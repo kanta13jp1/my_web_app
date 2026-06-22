@@ -1,0 +1,30 @@
+{
+  "checked_at": "2026-05-18T00:10:41Z",
+  "repo": "kanta13jp1/my_web_app",
+  "requirements": {
+    "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:1": {
+      "hash": "6dbd4392811fa43a",
+      "issue_number": null,
+      "issue_url": "",
+      "last_seen_at": "2026-05-18T00:10:41Z",
+      "status": "dry_run",
+      "title": "Supabaseリソース使用量および超過課金アラートの導入"
+    },
+    "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:2": {
+      "hash": "269ef8487f44bd7a",
+      "issue_number": null,
+      "issue_url": "",
+      "last_seen_at": "2026-05-18T00:10:41Z",
+      "status": "dry_run",
+      "title": "日次バックアップとログ保持機能（7日間）を活用した障害復旧プロセスの策定"
+    },
+    "notebooklm-requirement:0678eea0-f704-42db-9e69-0e3f0a4c9e7d:3": {
+      "hash": "64c1a5a1a5ca14a3",
+      "issue_number": null,
+      "issue_url": "",
+      "last_seen_at": "2026-05-18T00:10:41Z",
+      "status": "dry_run",
+      "title": "プロジェクト常時稼働（No Pausing）前提のバックグラウンド処理アーキテクチャ再設計"
+    }
+  }
+}

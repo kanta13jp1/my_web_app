@@ -324,3 +324,38 @@ Karpathy 元記事 Level 1-3 と本プロジェクト ship 状況:
 *Win版#132 part 68 / 2026-04-29 起票 / NotebookLM 9871b0b1 "Claude Code and Obsidian: Building Your AI Second Brain" 蒸留 / Rule [BRAIN-32] / 10 番目の設計軸 (= Layer 3 設計層 / 知識インフラ・PKM ドメイン応用)*
 
 *Win版#132 part 138 / 2026-05-05 改訂 / Karpathy AI 外部脳 (hooeem 経由) 取込 / 4 cycle + 3 layer + Memex + Level 1-3 cross-walk / #1975 受け入れ条件達成*
+
+---
+
+## 階層的クリーンアップ運用 — 静的ルール × 動的コンテキスト (= Issue #2710 正本)
+
+> Win版#132 part 260 (2026-06-10): 原則 1 (階層分離)・原則 4 (定期 Lint) の**運用面を一枚に集約**。
+> 「普遍的な真実」と「一時的な文脈」の混在 = 記憶の技術的負債、への標準対処手順。
+
+### 現行の 2 階層 (= 何が静的で何が動的か)
+
+| 階層 | 実体 | ロード |
+|------|------|--------|
+| **静的 (不変ルール)** | `CLAUDE.md` (80 行 pointer hub) + `docs/` 原則 12 軸・運用 docs + `~/.claude/hooks/inject-rules.txt` (39 rule) | CLAUDE.md = セッション開始時 / inject-rules = **毎ターン** |
+| **動的 (短期記憶)** | `memory/MEMORY.md` (index) + `memory/project_*.md` / `feedback_*.md` + SessionStart hook の auto-capture work log | MEMORY.md = セッション開始時 / 個別 memory = 関連時 recall |
+
+静的と動的は**物理的に別ファイル・別ロード経路** — 混在させない (原則 1)。
+
+### 昇格 (動的 → 静的) の path
+
+1. セッション中の学び → `/wrap-up` で `memory/project_*.md` / `feedback_*.md` 化 + MEMORY.md へ 1 行 index ([MEMORY-DECAY] 書式)。
+2. **同種の学びが 2-3 回再現**したら昇格候補: 行動規範なら inject-rules へ rule 化 (`/hook-rule-audit` 経由) / 設計知見なら該当 `docs/` 原則 doc へ追記 / 概念なら `scripts/wiki_compile.py` で `docs/concepts/` 化。
+3. 昇格したら memory 側は「正本は doc」へ pointer 化 (二重管理しない)。
+
+### 破棄・整理 (クリーンアップ) の cadence
+
+| 周期 | 手順 | 実体 (実装済み) |
+|------|------|----------------|
+| 毎セッション末 | `/wrap-up` で学び抽出 + 次回候補 | wrap-up skill |
+| 月 1 | `consolidate-memory` skill — 重複 merge / stale 修正 / index prune + `--lint` (orphan/duplicate/contradiction 3 検出器 → `memory/lint_report_YYYY_MM.md`) | 原則 4 / PS#1 実装済 → 現行は Win Claude 実行 |
+| 随時 ([MEMORY-DECAY]) | 30+ 日参照 0 → consolidate / 200+ entries → `MEMORY_<period>.md` 分割 / `feedback_correction_*` は absolute keep | rule 運用中 (archive 実績: MEMORY_202604 / MEMORY_202605_archive) |
+| 週次 | vault lint (`scripts/knowledge_vault_lint.py`) + 必要時 `/wiki-orphan-batch` `/wiki-broken-cleanup` | Karpathy Lint cycle (GHA cron + 手動 skill) |
+
+**禁止事項**: 古い動的 memory を静的 doc へ昇格せず放置したまま参照し続けること (= 記憶負債) / 静的 doc に一時的文脈 (デバッグログ等) を書くこと。
+
+*Win版#132 part 260 / 2026-06-10 追記 / Issue #2710 ([notebooklm:d89ae1f5:3] 階層的クリーンアップ運用) の受入基準 ①②③ を既存実装への正本 pointer として一枚化*

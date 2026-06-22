@@ -23,7 +23,7 @@ void main() {
     // 3. その後でSupabaseを初期化する
     await Supabase.initialize(
       url: 'https://dummy.supabase.co',
-      anonKey: 'dummy',
+      publishableKey: 'dummy',
       debug: false,
     );
   });

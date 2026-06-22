@@ -504,7 +504,7 @@ def parse_answer_array(answer: str) -> list[Any]:
     end = text.rfind("]")
     if start < 0 or end < start:
         raise ValueError("answer did not contain a JSON array")
-    return json.loads(text[start : end + 1])
+    return json.JSONDecoder(strict=False).decode(text[start : end + 1])
 
 
 def answer_text_from_stdout(stdout: str) -> str:

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# 二重 dispose / 二重 await / 二重 setState をコミット前に即検知する pre-commit hook。
+# 有効化: git config core.hooksPath .githooks
+#
+# lib/ 配下の .dart がステージされている時だけ監査を走らせる (非 dart コミットは即通過)。
+# 監査本体は CI と同じ scripts/check_duplicate_dispose.py (#part286 で線形時間化済)。
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+staged_dart="$(git diff --cached --name-only --diff-filter=ACM | grep -E '^lib/.*\.dart$' || true)"
+if [ -z "$staged_dart" ]; then
+  exit 0
+fi
+
+python_bin="python"
+command -v python >/dev/null 2>&1 || python_bin="python3"
+
+if ! "$python_bin" scripts/check_duplicate_dispose.py --max-seconds 60; then
+  echo "" >&2
+  echo "pre-commit: 重複した dispose/await/setState を検出しました。修正後に再コミットしてください。" >&2
+  echo "（緊急時は 'git commit --no-verify' で迂回できますが非推奨）" >&2
+  exit 1
+fi
+
+exit 0

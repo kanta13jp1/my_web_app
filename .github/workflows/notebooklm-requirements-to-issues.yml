@@ -62,29 +62,58 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install NotebookLM CLI
-        run: pip install --quiet notebooklm-py
-
       - name: Restore NotebookLM auth
+        id: restore_auth
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p ~/.notebooklm
           if [ -z "${NOTEBOOKLM_STORAGE_STATE}" ]; then
-            echo "::error::NOTEBOOKLM_STORAGE_STATE_JSON secret is required for NotebookLM ask automation."
-            exit 1
+            echo "auth_ready=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning::NOTEBOOKLM_STORAGE_STATE_JSON secret is missing; skipping NotebookLM extraction and updating #2967."
+            {
+              echo "## NotebookLM auth not ready"
+              echo ""
+              echo "\`NOTEBOOKLM_STORAGE_STATE_JSON\` is missing or empty."
+              echo "Extraction was skipped, and Issue #2967 will be updated with the recovery action."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
           fi
           printf '%s' "${NOTEBOOKLM_STORAGE_STATE}" > ~/.notebooklm/storage_state.json
           chmod 600 ~/.notebooklm/storage_state.json
+          echo "auth_ready=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Install NotebookLM CLI
+        if: steps.restore_auth.outputs.auth_ready == 'true'
+        run: pip install --quiet notebooklm-py
 
       - name: Capture NotebookLM list
+        id: capture_notebooklm_list
+        if: steps.restore_auth.outputs.auth_ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p docs/notebooklm-requirements
-          notebooklm list --json > docs/notebooklm-requirements/notebooklm-list.json
+          tmp_list="$(mktemp)"
+          if notebooklm list --json > "${tmp_list}"; then
+            mv "${tmp_list}" docs/notebooklm-requirements/notebooklm-list.json
+            echo "list_ready=true" >> "${GITHUB_OUTPUT}"
+          else
+            status="$?"
+            rm -f "${tmp_list}"
+            echo "list_ready=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning::notebooklm list failed with exit status ${status}; treating this as an auth refresh blocker and updating #2967."
+            {
+              echo "## NotebookLM list unavailable"
+              echo ""
+              echo "The stored NotebookLM auth could not list notebooks."
+              echo "Extraction was skipped, and Issue #2967 will be updated with the recovery action."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
 
       - name: Extract requirements and create Issues
+        if: steps.restore_auth.outputs.auth_ready == 'true' && steps.capture_notebooklm_list.outputs.list_ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -134,7 +163,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Notify auth or extraction failure
-        if: failure()
+        if: failure() || steps.restore_auth.outputs.auth_ready == 'false' || steps.capture_notebooklm_list.outputs.list_ready == 'false'
         shell: bash
         run: |
           set -euo pipefail

@@ -1,8 +1,4 @@
-enum DebtRepaymentStrategy {
-  snowball,
-  avalanche,
-  hybrid,
-}
+enum DebtRepaymentStrategy { snowball, avalanche, dueDate, hybrid }
 
 class DebtRepaymentInputDebt {
   final String name;
@@ -10,6 +6,7 @@ class DebtRepaymentInputDebt {
   final double annualRate;
   final double minimumPaymentRate;
   final double minimumPaymentFloor;
+  final int? paymentDay;
 
   const DebtRepaymentInputDebt({
     required this.name,
@@ -17,6 +14,7 @@ class DebtRepaymentInputDebt {
     required this.annualRate,
     required this.minimumPaymentRate,
     required this.minimumPaymentFloor,
+    this.paymentDay,
   });
 }
 
@@ -53,6 +51,7 @@ class DebtPriorityItem {
   final String name;
   final double balance;
   final double annualRate;
+  final int? paymentDay;
   final String reason;
 
   const DebtPriorityItem({
@@ -60,6 +59,7 @@ class DebtPriorityItem {
     required this.name,
     required this.balance,
     required this.annualRate,
+    this.paymentDay,
     required this.reason,
   });
 }
@@ -133,10 +133,7 @@ class DebtExecutionPlan {
   final String summary;
   final List<DebtExecutionTask> tasks;
 
-  const DebtExecutionPlan({
-    required this.summary,
-    required this.tasks,
-  });
+  const DebtExecutionPlan({required this.summary, required this.tasks});
 }
 
 class DebtRepaymentPlanResult {

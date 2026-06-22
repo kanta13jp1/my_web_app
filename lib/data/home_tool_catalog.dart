@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../utils/feature_tap_logger.dart';
 
 import '../pages/abstinence_guard_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
+import '../pages/english_reading_curriculum_page.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -266,6 +271,16 @@ const List<HomeToolSection> homeToolSections = <HomeToolSection>[
 
 String? _pendingHomeToolRoutePath;
 
+// route -> 表示名 の遅延キャッシュ。カタログ全エントリの起動記録でラベル解決に使う。
+Map<String, String>? _routeTitleCache;
+Map<String, String> _routeTitleMap() {
+  return _routeTitleCache ??= <String, String>{
+    for (final entry in buildHomeToolCatalog())
+      if (entry.routePath != null && entry.routePath!.isNotEmpty)
+        entry.routePath!: entry.title,
+  };
+}
+
 HomeToolOpenCallback _wrapRouteAwareHomeToolOpen(
   HomeToolOpenCallback onOpen,
   String? routePath,
@@ -273,6 +288,14 @@ HomeToolOpenCallback _wrapRouteAwareHomeToolOpen(
   return (context) async {
     final previous = _pendingHomeToolRoutePath;
     _pendingHomeToolRoutePath = routePath;
+    // ホームの「最近使った機能 / よく使われる機能」は user_feature_usage を参照する。
+    // 業務メニュー・ホームタイルなどカタログ経由の全機能起動はこのラッパーを通るため、
+    // ここで DB へ記録する (個別の起動口での記録漏れを一掃する単一チョークポイント)。
+    if (routePath != null && routePath.isNotEmpty) {
+      final label = _routeTitleMap()[routePath] ??
+          routePath.substring(1).replaceAll('-', ' ');
+      unawaited(recordFeatureTap(routePath, label));
+    }
     try {
       await onOpen(context);
     } finally {
@@ -763,6 +786,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['AI組織', 'エージェント', 'OS'],
       onOpen: (context) => _pushPage(context, AgentOrgPage()),
       requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'english-reading-curriculum',
+      sectionId: 'knowledge',
+      title: '英語速読カリキュラム',
+      subtitle: 'ネイティブ速度で読む訓練と実力可視化',
+      icon: Icons.speed_outlined,
+      color: const Color(0xFF4CAF50),
+      keywords: const <String>[
+        '英語',
+        '速読',
+        'リーディング',
+        'reading',
+        'wpm',
+        'TOEIC',
+        'TOEFL',
+        'English',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const EnglishReadingCurriculumPage()),
     ),
     HomeToolEntry(
       id: 'agent-gpa-dashboard',

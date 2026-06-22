@@ -78,8 +78,12 @@ notebooklm status
 認証済みの場合、Step 2 で保存したメモリファイルを Master Brain ノートブックにソースとして追加する:
 
 ```bash
-# Master Brain ノートブックに切り替え（部分ID可）
-notebooklm use jibun-master-brain
+# Master Brain ノートブックに切り替え
+# 注意: use は notebook **ID prefix のみ** マッチ (title 不可 / CLI v0.3.4 実測)。
+# ea6cff25... = jibun-master-brain (kanta13jp@gmail.com 側 / NOTEBOOKLM_HOME は
+# .claude/settings.json env で gmail home に自動適用済み)
+notebooklm use ea6cff25
+notebooklm status   # Title = jibun-master-brain を verify してから add (誤着地防止)
 
 # 今セッションで作成したメモリファイルをすべてソース追加
 # (該当ファイルのみ実行。存在しないファイルはスキップ)
@@ -90,7 +94,7 @@ notebooklm source add "C:/Users/kanta/.claude/projects/C--Users-kanta-GitHub-my-
 
 これにより:
 - 複数セッションにまたがる学習がファイル単位で蓄積される
-- 次回 `/deep-research` で `notebooklm use jibun-master-brain && notebooklm ask "..."` で過去の知見を横断検索できる
+- 次回 `/deep-research` で `notebooklm use ea6cff25 && notebooklm ask "..."` で過去の知見を横断検索できる
 - NotebookLM の Gemini が全セッション履歴から関連情報を自動抽出する
 
 **認証未完了・cookie 期限切れの場合はスキップ**し、`notebooklm login` で再認証を促す（ローカルの memory/ 保存は必ず実行）。

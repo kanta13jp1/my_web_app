@@ -92,6 +92,43 @@ void main() {
     );
   });
 
+  test('quota cooldown is per-provider and does not block other providers',
+      () async {
+    final service = AiHubChatService(
+      invoker: (body) async {
+        if (body['provider'] == 'openai') {
+          return <String, dynamic>{
+            'success': false,
+            'status': 'paidPlanRequired',
+            'provider': 'openai',
+            'message': 'OpenAI quota',
+            'detail': 'You exceeded your current quota',
+          };
+        }
+        return <String, dynamic>{
+          'success': true,
+          'text': 'gemini ok',
+          'provider': 'google',
+        };
+      },
+    );
+
+    // OpenAI のクォータ超過は OpenAI のみクールダウンさせる。
+    await expectLater(
+      () => service.sendProviderChat(message: 'hi', provider: 'openai'),
+      throwsA(isA<AiHubChatException>()),
+    );
+    expect(AiHubChatQuotaGuard.isCoolingDown('openai'), isTrue);
+    expect(AiHubChatQuotaGuard.isCoolingDown('google'), isFalse);
+
+    // Gemini は別プロバイダなのでブロックされず成功する。
+    final response = await service.sendProviderChat(
+      message: 'hi',
+      provider: 'google',
+    );
+    expect(response.text, 'gemini ok');
+  });
+
   test('sendAutoChat returns auto-routed provider metadata', () async {
     final service = AiHubChatService(
       invoker: (body) async {

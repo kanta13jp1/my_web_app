@@ -34,7 +34,7 @@ class AiUniversityRlhfSnapshot {
         qualityScore: 0,
         readyForFineTune: false,
         providerSignalCounts: {},
-        nextAction: 'Collect learner feedback on lessons and quizzes.',
+        nextAction: 'レッスンやクイズへの学習者フィードバックを集めましょう。',
       );
 
   factory AiUniversityRlhfSnapshot.fromJson(Map<String, dynamic> json) {
@@ -55,8 +55,8 @@ class AiUniversityRlhfSnapshot {
       qualityScore: (json['quality_score'] as num?)?.toInt() ?? 0,
       readyForFineTune: json['ready_for_fine_tune'] == true,
       providerSignalCounts: counts,
-      nextAction: json['next_action'] as String? ??
-          'Collect learner feedback on lessons and quizzes.',
+      nextAction:
+          json['next_action'] as String? ?? 'レッスンやクイズへの学習者フィードバックを集めましょう。',
     );
   }
 
@@ -150,12 +150,12 @@ class AiUniversityRlhfSnapshot {
     required int qualityScore,
   }) {
     if (totalSignals < 20) {
-      return 'Collect at least 20 preference signals before tuning.';
+      return 'チューニング前に、まず選好シグナルを20件以上集めましょう。';
     }
     if (qualityScore < 70) {
-      return 'Review low-rated lessons and regenerate weak explanations.';
+      return '低評価のレッスンを見直し、弱い解説を再生成しましょう。';
     }
-    return 'Dataset is ready for fine-tuning or evaluation batches.';
+    return 'データセットは微調整・評価バッチに利用できる状態です。';
   }
 }
 
