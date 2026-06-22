@@ -63,8 +63,7 @@ jobs:
           while IFS= read -r f; do
             [[ -z "$f" ]] && continue
             case "$f" in
-              docs/*|memory/*|.claude/*|.codex/*|.agents/*|*.md|\
-.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
+              docs/*|memory/*|.claude/*|.codex/*|.agents/*|*.md|.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
                 ;;
               *)
                 DOCS_ONLY=false
@@ -194,8 +193,7 @@ jobs:
           while IFS= read -r f; do
             [[ -z "$f" ]] && continue
             case "$f" in
-              docs/*|memory/*|.claude/*|.codex/*|.agents/*|*.md|\
-.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
+              docs/*|memory/*|.claude/*|.codex/*|.agents/*|*.md|.github/ISSUE_TEMPLATE/*|.github/PULL_REQUEST_TEMPLATE.md)
                 ;;
               *)
                 DOCS_ONLY=false
