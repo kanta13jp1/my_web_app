@@ -45,7 +45,7 @@ jobs:
     steps:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # ── Step 1.5: 自動スケジュール実行時 — 未投稿ドラフト自動選択 ──────
       - name: Resolve publish draft
