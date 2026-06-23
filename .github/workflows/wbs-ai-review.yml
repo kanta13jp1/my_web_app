@@ -27,7 +27,7 @@ on:
 
 concurrency:
   group: wbs-ai-review
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
