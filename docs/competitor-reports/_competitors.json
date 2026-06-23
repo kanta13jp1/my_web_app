@@ -164,6 +164,13 @@
       "category": "AI coding model / MS first in-house frontier coding model / Copilot-native / 137B sparse MoE",
       "added": "discovery",
       "added_date": "2026-06-16"
+    },
+    {
+      "name": "Salesforce Agentforce Operations",
+      "url": "https://www.salesforce.com/agentforce/operations/",
+      "category": "back-office autonomous AI / 6部署+B/S overlap / Agent Broker + Agent Fabric multi-vendor control plane",
+      "added": "discovery",
+      "added_date": "2026-06-23"
     }
   ],
   "discovery_history": [
@@ -712,6 +719,25 @@
         "Microsoft Copilot Cowork (= 6/16 全世界 GA / back-office 三つ巴中核 / Anthropic Opus4.8/Sonnet4.6 上で動作 + MoneyForward plugin / ただし Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加回避で monitor / Salesforce 採択後 re-rank 候補)",
         "Warp (= terminal-native agentic dev / MarkTechPost 6/10 シグナル / 動向観察 1 月)",
         "Claude Fable 5 / Mythos 5 (= モデル層 + 規制シグナル / discovery 対象外 / Anthropic 既収載派生)",
+        "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
+        "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
+        "Microsoft Agent 365 (= Slack 経由間接監視継続)"
+      ]
+    },
+    {
+      "date": "2026-06-23",
+      "name": "Salesforce Agentforce Operations",
+      "category": "back-office autonomous AI / 6部署+B/S overlap / Agent Broker + Agent Fabric multi-vendor control plane",
+      "reason": "2026-06-16 Microsoft MAI-Code-1-Flash 採択の 7 day cooldown 満了 (= 最終採択 name≠null から 7 day / 6/17-6/22 は連日 cooldown skip で第1候補維持) → 6/23 解禁日初日採択。Agentforce Operations (2026-04-29 launch『to End Back-Office Bottlenecks』) は専門バックオフィス agent が email→ERP の分断システム横断で自律遂行 = 監査/オンボーディングの cycle time を最大 70% 短縮 + データ入力等の手作業 80% 削減 / 30+ pre-built blueprint (invoice auditing・onboarding・PO rescheduling) / 非構造文書を『digital blueprint』化 / 全 action を blueprint 紐付けで監査証跡化。基準 a (差別化軸直接競合 = 自律バックオフィス AI が自社『個人単位 6 部署 + B/S 統合 lifestyle CEO dashboard』と正面 overlap = 最大) + 基準 c (過去 30 日重大リリース連続: Agent Broker GA 6 月 [visual authoring canvas + Salesforce model] / Agent Fabric guided determinism + multi-vendor governance 拡張 [Agent Script・Agent Scanners が Bedrock/MS Foundry/MCP を discover・LLM Governance on AI Gateway・Trusted Agent Identity] / 6/15 Fin [旧 Intercom] $3.6B 買収 / Agentforce ARR $1.2B +205% YoY 再加速 / Summer '26 GA) を完全充足。Lovable 5/17・Bolt.new 5/24・Qoder 6/09・MAI-Code 6/16 と同じ解禁日初日採択 pattern。pricing = Flex Credits ($0.10/action = 20 credits / $500 で 100,000 credits)。",
+      "skipped_candidates": [
+        "OpenCode (= 次回 discovery 第1候補へ昇格 / OSS power ranking #1 / 160K stars・7.5M MAU で Cursor 超え / model-agnostic 75+ プロバイダ + terminal-native + データ主権 = 自社 AI 振り分け matrix 近接 / Salesforce 採択直後ゆえ次サイクル)",
+        "Microsoft Copilot Cowork (= 6/16 全世界 GA / back-office 三つ巴中核 / Anthropic Opus4.8/Sonnet4.6 上で動作 + MoneyForward plugin / ただし Microsoft は MAI-Code-1-Flash で 6/16 既収載 = 同一ベンダー連続追加回避で monitor 継続)",
+        "Warp (= terminal-native agentic dev / 動向観察 1 月)",
+        "Claude Fable 5 / Mythos 5 (= モデル層 + 規制シグナル / discovery 対象外 / Anthropic 既収載派生 / 6/23 時点も未復旧)",
         "Sierra (= $950M Series E / Bret Taylor / CX 特化で軸遠い / monitor)",
         "Google Jules / Antigravity 2.0 (= 5 月 rollout 障害 1 month cooldown / 6/24 再評価)",
         "ServiceNow Build Agent (= 動向観察 1 月)",

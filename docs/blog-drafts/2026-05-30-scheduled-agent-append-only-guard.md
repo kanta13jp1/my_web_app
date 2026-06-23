@@ -1,7 +1,7 @@
 ---
 title: "スケジュール AI エージェントが 31,000 行のファイルを 5 行に消した日 — append-only 規律と verify-first 検知"
 tags: AI,ClaudeCode,automation,devops
-published: false
+published: true
 ---
 
 自動化された AI エージェントは便利だが、「ファイルを更新する」という単純なタスクが破壊的操作に化けることがある。本記事は、自分株式会社の運用で実際に起きた **ROADMAP truncation incident** を題材に、スケジュール実行エージェントが大きな共有ファイルを安全に更新するための **append-only 規律** と、被害を最小化した **verify-first** 検知パターンを解説する。
