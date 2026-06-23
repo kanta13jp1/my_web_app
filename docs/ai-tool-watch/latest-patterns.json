@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-22T21:57:48Z",
+  "generated_at": "2026-06-23T21:50:15Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -28,7 +28,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "505353c8f4b119f404df350cd268759ccaab9b83ff187ceff9e27bfdbe28fbdc",
@@ -78,7 +78,7 @@
           "latest_signal": "2.1.186 / June 22, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "ca073ba045efa85ce1dbcc48c4c906e646832985230fbbbb3fd08385efbc3ee7",
+          "previous_hash": "505353c8f4b119f404df350cd268759ccaab9b83ff187ceff9e27bfdbe28fbdc",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -260,18 +260,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-dd80b434f972",
+        "entry_id": "nf-16d93d5396b4",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-06-18 / Codex app 26.616 New features Added Record Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... You or your administrator must also enable Computer Use. Added bulk actions to automation run history so you can mark every run as read or archive eligible runs.",
+        "text": "Codex changelog 2026-06-22 / ChatGPT for iOS 1.2026.167 New features Added per-host personality settings with Friendly a Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Improved progress visibility for subagents, tasks, and worktree creation. Improved workspace file search, code review drafts, steering, and host setup and recovery.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "27c74c5e28c4ac2d075ca272f2e5f8ff7e60ec73bedd704ffffc0a75925edbe3",
+          "hash": "9e7270f8cfbf94bb32c15be544ab3cd1041c2dba6707db69edd9c57b6c8250d3",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -313,22 +313,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-06-18 / Codex app 26.616 New features Added Record",
+          "latest_signal": "2026-06-22 / ChatGPT for iOS 1.2026.167 New features Added per-host personality settings with Friendly a",
           "name": "Codex changelog",
           "owner": "Codex",
           "previous_hash": "27c74c5e28c4ac2d075ca272f2e5f8ff7e60ec73bedd704ffffc0a75925edbe3",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "You or your administrator must also enable Computer Use.",
-            "Added bulk actions to automation run history so you can mark every run as read or archive eligible runs."
+            "Improved progress visibility for subagents, tasks, and worktree creation.",
+            "Improved workspace file search, code review drafts, steering, and host setup and recovery."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-dd80b434f972",
+        "entry_id": "nf-16d93d5396b4",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -354,10 +354,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "7500c570daf6a0bca472ca0f8ba33709827e62b8bb0f3979553d2cecf19a381c",
+          "hash": "82f59c251831cae380f85441ea9725956b47ac9e589d7607cdbca37e84404e22",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -470,22 +470,26 @@
     },
     {
       "entry": {
-        "entry_id": "nf-a7a4f68c5cbb",
+        "entry_id": "nf-182a8f974826",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.8 / Jun 18, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... This release introduces the /automate skill, new triggers for GitHub and Slack, and support for computer use. # /automate skill Use /automate to create an automation directly in your local agent session.",
+        "text": "Cursor changelog 3.8 / Jun 22, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs. # Marketplace leaderboard Cursor now shows you a leaderboard of the most popular plugins, skills, and MCPs across your team.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
+          "hash": "d261624adaf06bc61ebbb84edc921c3bf03bddd710beef2154ac552e93221504",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
               "subagents"
+            ],
+            "hooks": [
+              "hook",
+              "hooks"
             ],
             "integration": [
               "MCP",
@@ -494,7 +498,6 @@
             ],
             "quality-cost": [
               "cost",
-              "permission",
               "review",
               "CI"
             ],
@@ -505,22 +508,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "3.8 / Jun 18, 2026",
+          "latest_signal": "3.8 / Jun 22, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
           "previous_hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "This release introduces the /automate skill, new triggers for GitHub and Slack, and support for computer use.",
-            "# /automate skill Use /automate to create an automation directly in your local agent session."
+            "You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs.",
+            "# Marketplace leaderboard Cursor now shows you a leaderboard of the most popular plugins, skills, and MCPs across your team."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-a7a4f68c5cbb",
+        "entry_id": "nf-182a8f974826",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -684,11 +687,11 @@
   ],
   "patterns": [
     {
-      "id": "np-87b9ab2ffe3c",
+      "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 8,
-      "average_confidence": 0.963,
+      "entry_count": 7,
+      "average_confidence": 0.961,
       "risk_level": "review",
       "risk_flags": [
         "sensational_language"
@@ -697,8 +700,8 @@
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions",
-        "Codex changelog",
-        "Codex use cases"
+        "Codex use cases",
+        "Cursor changelog"
       ],
       "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
@@ -716,20 +719,6 @@
         "Claude Code GitHub Actions"
       ],
       "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
-    },
-    {
-      "id": "np-fdf5cccc858a",
-      "company": "openai",
-      "topic": "agentic-workflows",
-      "entry_count": 2,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
-      "evidence_titles": [
-        "Codex changelog",
-        "Codex use cases"
-      ],
-      "recommended_action": "Review openai movement for competitor-monitoring follow-up."
     }
   ],
   "issue_candidates": [
