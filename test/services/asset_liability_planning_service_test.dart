@@ -1054,7 +1054,7 @@ void main() {
       );
     });
 
-    test('adds Anthropic Acom shopping repayment on the 26th', () {
+    test('Anthropic Acom shopping charge is billed into acom (no cash)', () {
       const acomShoppingName =
           '\u30a2\u30b3\u30e0\u30b7\u30e7\u30c3\u30d4\u30f3\u30b0';
       final workbook = service.buildWorkbook(
@@ -1065,9 +1065,6 @@ void main() {
         baseDate: DateTime(2026, 5, 1),
         monthlyPaymentOverrides: const <String, double>{
           AssetLiabilityPlanningService.acomShoppingAccountId: 68000,
-        },
-        paymentSourceAccountIds: const <String, String>{
-          AssetLiabilityPlanningService.acomShoppingAccountId: 'custom_cash',
         },
       );
 
@@ -1086,19 +1083,25 @@ void main() {
         anthropicPayment.paymentAmount,
         AssetLiabilityPlanningService.anthropicAcomShoppingPaymentAmount,
       );
-      expect(anthropicPayment.paymentSourceAccountId, 'custom_cash');
+      // \u30a2\u30b3\u30e0\u30b7\u30e7\u30c3\u30d4\u30f3\u30b0\u8acb\u6c42\u306b\u542b\u3080\u6271\u3044 (\u73fe\u91d1\u3067\u5225\u9014\u8fd4\u6e08\u3057\u306a\u3044)\u3002
+      expect(anthropicPayment.includedInBillingAccount, isTrue);
+      expect(anthropicPayment.isDirectCashflowTarget, isFalse);
       expect(
-        anthropicPayment.destinationAccountId,
+        anthropicPayment.billingAccountId,
         AssetLiabilityPlanningService.acomShoppingAccountId,
+      );
+      expect(
+        anthropicPayment.paymentMethodLabel,
+        '$acomShoppingName\u6255\u3044',
       );
       expect(workbook.cashflowRows.map((row) => row.paymentDay).toList(), <int>[
         8,
         26,
       ]);
-      expect(workbook.monthlyScheduledPaymentTotal, 108000);
-      expect(workbook.monthlyUnpaidPaymentTotal, 108000);
-      expect(workbook.cashAfterScheduledPayments, -8000);
-      expect(anthropicPayment.cashAfterPayment, -8000);
+      // \u73fe\u91d1\u652f\u51fa\u306f\u30a2\u30b3\u30e0\u6700\u4f4e\u8fd4\u6e08 (68000) \u306e\u307f\u3002Anthropic \u306e 40000 \u306f\u4e8c\u91cd\u8a08\u4e0a\u3057\u306a\u3044\u3002
+      expect(workbook.monthlyScheduledPaymentTotal, 68000);
+      expect(workbook.monthlyUnpaidPaymentTotal, 68000);
+      expect(workbook.cashAfterScheduledPayments, 32000);
     });
 
     test('reflects unreceived income plans in chronological cashflow', () {
