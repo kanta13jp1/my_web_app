@@ -76,7 +76,7 @@ void main() {
       expect(payPayDebt.interestPayment, payPayRow.monthlyInterestEstimate);
     });
 
-    test('routes supplemental Anthropic repayment into debts', () {
+    test('Anthropic Acom shopping charge is not a separate cash debt', () {
       const acomShoppingName =
           '\u30a2\u30b3\u30e0\u30b7\u30e7\u30c3\u30d4\u30f3\u30b0';
       final asOfDate = DateTime(2026, 5, 26);
@@ -88,9 +88,6 @@ void main() {
         baseDate: asOfDate,
         monthlyPaymentOverrides: const <String, double>{
           AssetLiabilityPlanningService.acomShoppingAccountId: 68000,
-        },
-        paymentSourceAccountIds: const <String, String>{
-          AssetLiabilityPlanningService.acomShoppingAccountId: 'custom_cash',
         },
       );
       final nextPayday = disposableBalance.nextPaydayFor(
@@ -106,22 +103,16 @@ void main() {
         nextPayday: nextPayday,
       );
 
-      final anthropicDebt = result.debts.singleWhere(
-        (debt) =>
-            debt.name ==
+      // \u30a2\u30b3\u30e0\u30b7\u30e7\u30c3\u30d4\u30f3\u30b0\u8acb\u6c42\u306b\u542b\u3080\u6271\u3044\u306b\u306a\u3063\u305f\u305f\u3081\u3001\u73fe\u91d1\u3067\u5225\u9014\u8fd4\u6e08\u3059\u308b
+      // \u30c7\u30d6\u30c8\u3068\u3057\u3066\u306f\u73fe\u308c\u306a\u3044 (\u30a2\u30b3\u30e0\u6700\u4f4e\u8fd4\u6e08\u3067\u5438\u53ce\u3055\u308c\u308b)\u3002
+      expect(
+        result.debts.map((debt) => debt.name),
+        isNot(
+          contains(
             AssetLiabilityPlanningService.anthropicAcomShoppingPaymentName,
+          ),
+        ),
       );
-      expect(
-        anthropicDebt.monthlyPayment,
-        AssetLiabilityPlanningService.anthropicAcomShoppingPaymentAmount,
-      );
-      expect(anthropicDebt.dayOfMonth, 26);
-      expect(anthropicDebt.principal, 0);
-      expect(
-        anthropicDebt.principalPayment,
-        AssetLiabilityPlanningService.anthropicAcomShoppingPaymentAmount,
-      );
-      expect(anthropicDebt.interestPayment, 0);
     });
   });
 }

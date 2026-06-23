@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -51,12 +52,15 @@ class SmartCleanupTaskGuardTest(unittest.TestCase):
         self.assertIn("last_task_result 267011 indicates task has not run", result["reasons"])
 
     def test_accepts_recent_successful_task(self) -> None:
+        recent_last_run_time = (
+            datetime.now(timezone.utc) - timedelta(days=1)
+        ).isoformat()
         result = self.run_guard(
             {
                 "installed": True,
                 "state": "Ready",
                 "principal_user_id": "kanta",
-                "last_run_time": "2026-05-14T00:00:00+00:00",
+                "last_run_time": recent_last_run_time,
                 "last_task_result": 0,
                 "next_run_time": "2026-06-01T03:00:00+09:00",
             }
