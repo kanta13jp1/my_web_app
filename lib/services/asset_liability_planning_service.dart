@@ -1415,13 +1415,10 @@ class AssetLiabilityPlanningService {
       );
       final paid = paidAccountNames.contains(anthropicAcomShoppingPaymentId) ||
           paidAccountNames.contains(anthropicAcomShoppingPaymentName);
-      final sourceAccountId =
-          paymentSourceAccountIds[anthropicAcomShoppingPaymentId] ??
-              acomShoppingRow.paymentSourceAccountId;
-      final sourceAccountName = sourceAccountId == null
-          ? acomShoppingRow.paymentSourceAccountName
-          : accountsById[sourceAccountId]?.name ??
-              acomShoppingRow.paymentSourceAccountName;
+      // Anthropic サブスクはアコムショッピング枠に乗る購入であり、現金で別途
+      // 返済しない (アコム最低返済で吸収される)。アコムショッピング請求に含む
+      // 扱いにして、直接の現金支出として二重計上しないようにする。
+      final acomBillingLabel = '${acomShoppingRow.name}払い';
       result.add(
         AssetLiabilityCashflowRow(
           eventType: AssetLiabilityCashflowEventType.payment,
@@ -1429,17 +1426,17 @@ class AssetLiabilityPlanningService {
           accountName: anthropicAcomShoppingPaymentName,
           paymentDay: paymentDay,
           paymentDate: paymentDate,
-          paymentSourceAccountId: sourceAccountId,
-          paymentSourceAccountName: sourceAccountName,
-          destinationAccountId: acomShoppingRow.id,
-          destinationAccountName: acomShoppingRow.name,
-          paymentMethod: AssetLiabilityPaymentMethod.direct,
-          paymentMethodLabel: acomShoppingRow.paymentMethodLabel,
+          paymentSourceAccountId: null,
+          paymentSourceAccountName: null,
+          destinationAccountId: null,
+          destinationAccountName: acomBillingLabel,
+          paymentMethod: AssetLiabilityPaymentMethod.includedInCard,
+          paymentMethodLabel: acomBillingLabel,
           paymentMethodSettingSource:
               AssetLiabilityPaymentMethodSettingSource.builtInDefault,
-          billingAccountId: null,
-          billingAccountName: null,
-          includedInBillingAccount: false,
+          billingAccountId: acomShoppingRow.id,
+          billingAccountName: acomShoppingRow.name,
+          includedInBillingAccount: true,
           paymentAmount: anthropicAcomShoppingPaymentAmount,
           actualPaymentAmount: null,
           paymentDifferenceAmount: null,
@@ -1447,7 +1444,7 @@ class AssetLiabilityPlanningService {
           paymentAmountEstimated: false,
           paid: paid,
           received: false,
-          overdue: !paid && !paymentDate.isAfter(_dateOnly(baseDate)),
+          overdue: false,
           cashBeforePayment: 0,
           cashAfterPayment: 0,
           riskLevel: AssetLiabilityCashRiskLevel.normal,
