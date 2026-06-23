@@ -27,7 +27,7 @@ permissions:
 
 concurrency:
   group: feature-review
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-23 ci-audit: 4h cron ANTHROPIC_API_KEY 重複コスト防止
 
 jobs:
   review:
