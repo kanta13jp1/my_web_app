@@ -27,7 +27,7 @@ on:
 
 concurrency:
   group: wbs-ai-review
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-23 ci-audit: 2h cron Gemini API 重複コスト防止
 
 permissions:
   contents: read
