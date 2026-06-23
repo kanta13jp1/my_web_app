@@ -80,4 +80,62 @@ void main() {
       expect(prompt, contains('毎月27日'));
     });
   });
+
+  group('card-billed (billingCardName) guidance', () {
+    test('buildBaseGuide points at the card usage statement, not a bank', () {
+      final guide = service.buildBaseGuide(
+        debtName: 'Netflix',
+        paymentSourceAccountName: '三井住友銀行',
+        paymentDate: DateTime(2026, 6, 8),
+        paymentAmount: 1980,
+        billingCardName: 'ファミペイ',
+      );
+      // カード名と利用明細・締め日にまとめて引き落とし、を案内する。
+      expect(guide, contains('ファミペイ'));
+      expect(guide, contains('ご利用明細'));
+      expect(guide, contains('まとめて'));
+      expect(guide, contains('1,980円'));
+      // 銀行口座の入出金明細での個別照合は出さない(誤誘導の回避)。
+      expect(guide, isNot(contains('入出金明細')));
+    });
+
+    test('buildBaseGuide drops the amount line when amount unknown', () {
+      final guide = service.buildBaseGuide(
+        debtName: 'Spotify',
+        paymentDay: 10,
+        paymentAmount: 0,
+        billingCardName: 'au PAY カード',
+      );
+      expect(guide, contains('au PAY カード'));
+      expect(guide, contains('毎月10日'));
+      expect(guide, isNot(contains('0円')));
+    });
+
+    test('buildAiPrompt asks for card statement steps', () {
+      final prompt = service.buildAiPrompt(
+        debtName: 'Netflix',
+        paymentSourceAccountName: '三井住友銀行',
+        paymentDate: DateTime(2026, 6, 8),
+        paymentAmount: 1980,
+        billingCardName: 'ファミペイ',
+      );
+      expect(prompt, contains('ファミペイ'));
+      expect(prompt, contains('利用明細'));
+      expect(prompt, contains('まとめて'));
+      expect(prompt, contains('日本語'));
+      expect(prompt, isNot(contains('入出金明細')));
+    });
+
+    test('blank billingCardName falls back to the bank-account guide', () {
+      final guide = service.buildBaseGuide(
+        debtName: 'カードローン',
+        paymentSourceAccountName: 'みずほ銀行',
+        paymentDate: DateTime(2026, 6, 27),
+        paymentAmount: 30000,
+        billingCardName: '   ',
+      );
+      expect(guide, contains('入出金明細'));
+      expect(guide, contains('みずほ銀行'));
+    });
+  });
 }

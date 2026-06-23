@@ -24312,12 +24312,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final cashflow = _cashflowRowForDebt(workbook, row.id);
     final paymentDate = cashflow?.paymentDate;
     final paymentAmount = cashflow?.paymentAmount;
+    // カード請求にまとめて支払う負債は、実際の引き落としがカード締め日にまとまるため
+    // 銀行口座でなく請求元カードの利用明細で計上を確認する手順へ切り替える。
+    final billingCardName = row.includedInBillingAccount
+        ? (row.billingAccountName ?? row.paymentMethodLabel)
+        : null;
     final baseGuide = _paymentCheckGuideService.buildBaseGuide(
       debtName: row.name,
       paymentSourceAccountName: row.paymentSourceAccountName,
       paymentDate: paymentDate,
       paymentDay: row.paymentDay,
       paymentAmount: paymentAmount,
+      billingCardName: billingCardName,
     );
     final aiPrompt = _paymentCheckGuideService.buildAiPrompt(
       debtName: row.name,
@@ -24325,6 +24331,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       paymentDate: paymentDate,
       paymentDay: row.paymentDay,
       paymentAmount: paymentAmount,
+      billingCardName: billingCardName,
     );
     await showDialog<void>(
       context: context,
