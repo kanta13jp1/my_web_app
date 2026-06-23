@@ -635,6 +635,74 @@ void main() {
       expect(review.hasDoubleCountingRisk, isFalse);
     });
 
+    test('allows billing into an acom shopping (shoppingDebt) host', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'アコムショッピング': -2234106,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId:
+              AssetLiabilityPlanningService.acomShoppingAccountId,
+        },
+      );
+
+      final review = workbook.cardBillingReview;
+      final acomGroup = review.cardBillingGroups.firstWhere(
+        (group) =>
+            group.billingAccountId ==
+            AssetLiabilityPlanningService.acomShoppingAccountId,
+      );
+      final kddi = acomGroup.items.firstWhere(
+        (item) =>
+            item.accountId ==
+            AssetLiabilityPlanningService.kddiProviderAccountId,
+      );
+
+      expect(kddi.includedInBillingAccount, isTrue);
+      expect(
+        kddi.alerts,
+        isNot(
+          contains(
+            AssetLiabilityPlanningService
+                .cardBillingReviewRemovedBillingAccountAlert,
+          ),
+        ),
+      );
+    });
+
+    test('isCardBillingHostKind accepts credit card and shopping debt', () {
+      expect(
+        AssetLiabilityPlanningService.isCardBillingHostKind(
+          AssetLiabilityAccountKind.creditCard,
+        ),
+        isTrue,
+      );
+      expect(
+        AssetLiabilityPlanningService.isCardBillingHostKind(
+          AssetLiabilityAccountKind.shoppingDebt,
+        ),
+        isTrue,
+      );
+      expect(
+        AssetLiabilityPlanningService.isCardBillingHostKind(
+          AssetLiabilityAccountKind.deposit,
+        ),
+        isFalse,
+      );
+      expect(
+        AssetLiabilityPlanningService.isCardBillingHostKind(
+          AssetLiabilityAccountKind.cardLoan,
+        ),
+        isFalse,
+      );
+    });
+
     test('reconciles imported card statement totals with billed amount', () {
       final workbook = service.buildWorkbook(
         latestSnapshot: <String, double>{
@@ -1836,6 +1904,32 @@ void main() {
         includeDefaultFixedPayments: true,
       );
       expect(excluded.accounts.any((a) => a.name.contains('水道')), isFalse);
+    });
+
+    test('treats a self-referential payment source as unset', () {
+      // 振替元が自分自身を指す不正設定は「未設定」に正規化する
+      // (ローンを自分自身からは返済できない / 自己宛て誤ルーティング防止)。
+      final selfRef = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: const <String, String>{'mobit': 'mobit'},
+      );
+      final selfMobit = selfRef.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+      expect(selfMobit.paymentSourceAccountId, isNull);
+      expect(selfMobit.paymentSourceAccountName, isNull);
+
+      // 自分以外の口座IDは従来どおり保持する (回帰なし)。
+      final other = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: const <String, String>{'mobit': 'smbc_otsuka'},
+      );
+      final otherMobit = other.debtMasterRows.firstWhere(
+        (row) => row.name == 'モビット',
+      );
+      expect(otherMobit.paymentSourceAccountId, 'smbc_otsuka');
     });
   });
 }

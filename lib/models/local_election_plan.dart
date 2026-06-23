@@ -610,6 +610,27 @@ class LocalElectionPlanDashboard {
   List<LocalElectionPrefecturePlan> allCdpGapPrefectures() =>
       topCdpGapPrefectures(limit: prefectures.length);
 
+  /// Returns a copy with each prefecture's CDP local member count replaced by
+  /// the fetched benchmark value when present and positive. A missing or
+  /// non-positive entry keeps the existing (seed) value, so a partial or failed
+  /// fetch never overwrites good data with zero.
+  LocalElectionPlanDashboard withCdpLocalMembers(
+    Map<String, int> membersByPrefecture,
+  ) {
+    if (membersByPrefecture.isEmpty) {
+      return this;
+    }
+    return copyWith(
+      prefectures: prefectures.map((item) {
+        final fetched = membersByPrefecture[item.prefecture] ?? 0;
+        if (fetched <= 0 || fetched == item.cdpLocalMembers) {
+          return item;
+        }
+        return item.copyWith(cdpLocalMembers: fetched);
+      }).toList(),
+    );
+  }
+
   int get confirmedEndorsementCount => prefectures.where((item) {
         return item.endorsementConfirmed;
       }).length;

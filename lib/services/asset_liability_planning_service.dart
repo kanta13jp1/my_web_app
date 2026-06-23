@@ -756,7 +756,13 @@ class AssetLiabilityPlanningService {
     );
     final principalPayment = max(0.0, scheduledPayment - interest);
     final afterPayment = -max(0.0, principal + interest - scheduledPayment);
-    final paymentSourceAccountId = paymentSourceAccountIds[account.id];
+    final rawPaymentSourceAccountId = paymentSourceAccountIds[account.id];
+    // 振替元が自分自身を指す設定は不正 (ローンを自分自身からは返済できない) なので
+    // 未設定扱いにする。これにより「支払原資口座の未設定」セクションに表示され、正しい
+    // 口座 (例: じぶん銀行) へ修正できるようになり、見込み残高の自己宛て誤ルーティングも防ぐ。
+    final paymentSourceAccountId = rawPaymentSourceAccountId == account.id
+        ? null
+        : rawPaymentSourceAccountId;
     final paymentSourceAccountName = paymentSourceAccountId == null
         ? null
         : accountsById[paymentSourceAccountId]?.name;
@@ -959,21 +965,26 @@ class AssetLiabilityPlanningService {
     };
   }
 
+  /// カード請求のまとめ先（請求ホスト）になれる口座種別か。
+  /// クレジットカードに加え、アコムショッピング等のショッピング枠
+  /// (shoppingDebt) も複数購入をまとめて請求するためホストとして許可する。
+  static bool isCardBillingHostKind(AssetLiabilityAccountKind kind) =>
+      kind == AssetLiabilityAccountKind.creditCard ||
+      kind == AssetLiabilityAccountKind.shoppingDebt;
+
   AssetLiabilityCardBillingReviewData _buildCardBillingReview({
     required List<AssetLiabilityDebtRow> rows,
     required Map<String, AssetLiabilityAccount> accountsById,
   }) {
-    final creditCardAccountIds = accountsById.values
-        .where(
-          (account) => account.kind == AssetLiabilityAccountKind.creditCard,
-        )
+    final billingHostAccountIds = accountsById.values
+        .where((account) => isCardBillingHostKind(account.kind))
         .map((account) => account.id)
         .toSet();
     final items = [
       for (final row in rows)
         _cardBillingReviewItemFor(
           row: row,
-          creditCardAccountIds: creditCardAccountIds,
+          billingHostAccountIds: billingHostAccountIds,
         ),
     ]..sort(_compareCardBillingReviewItems);
 
@@ -999,14 +1010,14 @@ class AssetLiabilityPlanningService {
 
   AssetLiabilityCardBillingReviewItem _cardBillingReviewItemFor({
     required AssetLiabilityDebtRow row,
-    required Set<String> creditCardAccountIds,
+    required Set<String> billingHostAccountIds,
   }) {
     final alerts = <String>[];
     if (row.includedInBillingAccount) {
       final billingAccountId = row.billingAccountId?.trim();
       if (billingAccountId == null || billingAccountId.isEmpty) {
         alerts.add(cardBillingReviewMissingBillingAccountAlert);
-      } else if (!creditCardAccountIds.contains(billingAccountId)) {
+      } else if (!billingHostAccountIds.contains(billingAccountId)) {
         alerts.add(cardBillingReviewRemovedBillingAccountAlert);
       }
     }
