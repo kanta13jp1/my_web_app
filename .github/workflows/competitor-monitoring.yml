@@ -20,7 +20,7 @@ on:
 
 concurrency:
   group: competitor-monitoring
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-24 ci-audit: 日次モニタリング concurrent 防止
 
 permissions:
   contents: write

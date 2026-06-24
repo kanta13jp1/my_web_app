@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: cs-check
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-06-24 ci-audit: 2h cron キュー積み防止
 
 permissions:
   contents: write
