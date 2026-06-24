@@ -92,6 +92,7 @@ class LocalElectionShareService {
   Future<PublicMemo?> publishSnapshot({
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionLegislatorProfile> members,
+    LocalElectionPlanDashboard? plan,
   }) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
@@ -101,6 +102,7 @@ class LocalElectionShareService {
     final draft = buildDraft(
       snapshot: snapshot,
       members: members,
+      plan: plan,
     );
     final publishMemo = _publishMemo;
     if (publishMemo == null) {
@@ -180,6 +182,7 @@ class LocalElectionShareService {
   LocalElectionShareDraft buildDraft({
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionLegislatorProfile> members,
+    LocalElectionPlanDashboard? plan,
   }) {
     final resolvedMembers = _sortedMembers(members);
     final prefectures = _prefecturesForDisplay(snapshot);
@@ -194,11 +197,13 @@ class LocalElectionShareService {
         snapshot: snapshot,
         prefectures: prefectures,
         members: resolvedMembers,
+        plan: plan,
       ),
       metadata: _buildMetadata(
         snapshot: snapshot,
         prefectures: prefectures,
         members: resolvedMembers,
+        plan: plan,
       ),
     );
   }
@@ -615,7 +620,9 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionPrefectureReality> prefectures,
     required List<LocalElectionLegislatorProfile> members,
+    LocalElectionPlanDashboard? plan,
   }) {
+    final cdpByPrefecture = _cdpByPrefecture(plan);
     final missing =
         prefectures.where((item) => item.currentMembers == 0).toList();
     final low = prefectures
@@ -653,11 +660,12 @@ class LocalElectionShareService {
         ..writeln(snapshot.aiSummary.trim());
     }
 
-    if (snapshot.aiAlerts.isNotEmpty) {
+    final alerts = displayAiAlerts(snapshot, plan);
+    if (alerts.isNotEmpty) {
       buffer
         ..writeln()
         ..writeln('注視ポイント');
-      for (final item in snapshot.aiAlerts) {
+      for (final item in alerts) {
         buffer.writeln('- $item');
       }
     }
@@ -695,7 +703,7 @@ class LocalElectionShareService {
       buffer.writeln(
         '${_prefectureMarker(prefecture)}${prefecture.prefecture} '
         '地方議員 ${prefecture.currentMembers}人 '
-        '立憲参考 ${prefecture.cdpLocalMembers}人 '
+        '立憲参考 ${_resolveCdpLocalMembers(prefecture, cdpByPrefecture)}人 '
         '都道府県議 ${prefecture.prefecturalAssemblyMembers} / '
         '市区町村議 ${prefecture.municipalAssemblyMembers}',
       );
@@ -735,7 +743,9 @@ class LocalElectionShareService {
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionPrefectureReality> prefectures,
     required List<LocalElectionLegislatorProfile> members,
+    LocalElectionPlanDashboard? plan,
   }) {
+    final cdpByPrefecture = _cdpByPrefecture(plan);
     final missing =
         prefectures.where((item) => item.currentMembers == 0).toList();
     final low = prefectures
@@ -758,7 +768,7 @@ class LocalElectionShareService {
       'actualNetIncreaseRequired': snapshot.actualNetIncreaseRequired,
       'cdpLocalMembers': prefectures.fold<int>(
         0,
-        (sum, item) => sum + item.cdpLocalMembers,
+        (sum, item) => sum + _resolveCdpLocalMembers(item, cdpByPrefecture),
       ),
       'activePrefectureCount':
           prefectures.where((item) => item.currentMembers > 0).length,
@@ -774,7 +784,8 @@ class LocalElectionShareService {
             (item) => <String, dynamic>{
               'prefecture': item.prefecture,
               'currentMembers': item.currentMembers,
-              'cdpLocalMembers': item.cdpLocalMembers,
+              'cdpLocalMembers':
+                  _resolveCdpLocalMembers(item, cdpByPrefecture),
             },
           )
           .toList(),
@@ -1044,6 +1055,71 @@ class LocalElectionShareService {
       return '国民+${-gap}';
     }
     return '同数';
+  }
+
+  /// AI整理メモの注視ポイント。AI整理メモは includeCdpBenchmarks=false の snapshot を
+  /// 使うため立憲比較行が「取得していません」になる。週次cronでバッチ取得した立憲値
+  /// (plan に適用済み) から地力差を計算し、その行だけ差し替える。データが無ければ原文。
+  List<String> displayAiAlerts(
+    LocalElectionRealitySnapshot snapshot,
+    LocalElectionPlanDashboard? plan,
+  ) {
+    final cdpLine = cdpBenchmarkAlertLine(plan);
+    if (cdpLine == null) {
+      return snapshot.aiAlerts;
+    }
+    final result = <String>[];
+    var replaced = false;
+    for (final alert in snapshot.aiAlerts) {
+      if (!replaced && alert.contains('立憲')) {
+        result.add(cdpLine);
+        replaced = true;
+      } else {
+        result.add(alert);
+      }
+    }
+    return result;
+  }
+
+  /// バッチ取得した立憲値を適用済みの plan から、立憲との地力差(上位3県)を edge
+  /// function フォールバックと同じ書式で組み立てる。データが無ければ null。
+  String? cdpBenchmarkAlertLine(LocalElectionPlanDashboard? plan) {
+    if (plan == null) {
+      return null;
+    }
+    final top = plan.topCdpGapPrefectures(limit: 3);
+    if (top.isEmpty) {
+      return null;
+    }
+    final parts = top.map((item) {
+      final gap = item.cdpMemberGap;
+      return '${item.prefecture}${gap >= 0 ? '+' : ''}$gap';
+    }).join(' / ');
+    return '立憲民主党との地力差（上位）：$parts。';
+  }
+
+  /// plan の各県のバッチ取得済み立憲値を正規化キーで索引する。plan が無ければ空。
+  Map<String, int> _cdpByPrefecture(LocalElectionPlanDashboard? plan) {
+    if (plan == null) {
+      return const <String, int>{};
+    }
+    return <String, int>{
+      for (final item in plan.prefectures)
+        _normalizePrefectureKey(item.prefecture): item.cdpLocalMembers,
+    };
+  }
+
+  /// snapshot は includeCdpBenchmarks=false で立憲値が 0 のため、plan のバッチ値が
+  /// あればそれを優先する (_describePlanPrefecture のマージと同型 / 0・欠損は据置)。
+  int _resolveCdpLocalMembers(
+    LocalElectionPrefectureReality reality,
+    Map<String, int> cdpByPrefecture,
+  ) {
+    final planCdp = cdpByPrefecture[_normalizePrefectureKey(reality.prefecture)];
+    if (planCdp != null && planCdp > 0) {
+      return planCdp;
+    }
+    return reality.cdpLocalMembers;
   }
 
   DateTime _normalizeDate(DateTime dt) => DateTime(dt.year, dt.month, dt.day);

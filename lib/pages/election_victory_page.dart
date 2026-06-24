@@ -768,6 +768,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final memo = await _shareService.publishSnapshot(
         snapshot: snapshot,
         members: snapshot.members,
+        plan: _plan,
       );
       if (!mounted) {
         return memo;
@@ -5291,43 +5292,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  /// AI整理メモの注視ポイント。AI整理メモは includeCdpBenchmarks=false の snapshot を
-  /// 使うため立憲比較行が「取得していません」になる。週次cronでバッチ取得した立憲値
-  /// (plan に適用済み) から地力差を計算し、その行だけ差し替える。
+  /// AI整理メモの注視ポイント。立憲比較行を週次cronのバッチ値で差し替える処理は
+  /// 公開ノート生成 (LocalElectionShareService) と単一正本を共有する。
   List<String> _displayAiAlerts(LocalElectionRealitySnapshot snapshot) {
-    final cdpLine = _cdpBenchmarkAlertLine();
-    if (cdpLine == null) {
-      return snapshot.aiAlerts;
-    }
-    final result = <String>[];
-    var replaced = false;
-    for (final alert in snapshot.aiAlerts) {
-      if (!replaced && alert.contains('立憲')) {
-        result.add(cdpLine);
-        replaced = true;
-      } else {
-        result.add(alert);
-      }
-    }
-    return result;
-  }
-
-  /// バッチ取得した立憲値を適用済みの plan から、立憲との地力差(上位3県)を edge
-  /// function フォールバックと同じ書式で組み立てる。データが無ければ null。
-  String? _cdpBenchmarkAlertLine() {
-    final plan = _plan;
-    if (plan == null) {
-      return null;
-    }
-    final top = plan.topCdpGapPrefectures(limit: 3);
-    if (top.isEmpty) {
-      return null;
-    }
-    final parts = top.map((item) {
-      final gap = item.cdpMemberGap;
-      return '${item.prefecture}${gap >= 0 ? '+' : ''}$gap';
-    }).join(' / ');
-    return '立憲民主党との地力差（上位）：$parts。';
+    return _shareService.displayAiAlerts(snapshot, _plan);
   }
 
   Widget _buildBulletLine(String text) {
