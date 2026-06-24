@@ -21879,7 +21879,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityDebtRow row,
     AssetLiabilityWorkbook workbook,
   ) {
-    final options = _paymentSourceAccountOptions(workbook);
+    // 支払原資はサブスク同様、銀行/現金に加えカード/与信枠 (auPayカード/ファミペイ/
+    // アコムショッピング枠) やキャリア決済 (au) も候補に含める。auかんたん決済→auPay
+    // リボのように、原資が銀行口座でなくカードのリボ枠になるケースに対応する。
+    // (今月/既定の候補チップは資金ショート判定用に銀行のみのまま据え置き。)
+    final options = recurringFixedCostSourceOptions(
+      workbook.accounts,
+      includeCards: true,
+      includeCarrierBilling: true,
+    );
     if (options.isEmpty) {
       return const Text(
         '候補口座なし',
