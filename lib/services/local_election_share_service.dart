@@ -784,8 +784,7 @@ class LocalElectionShareService {
             (item) => <String, dynamic>{
               'prefecture': item.prefecture,
               'currentMembers': item.currentMembers,
-              'cdpLocalMembers':
-                  _resolveCdpLocalMembers(item, cdpByPrefecture),
+              'cdpLocalMembers': _resolveCdpLocalMembers(item, cdpByPrefecture),
             },
           )
           .toList(),
@@ -1115,7 +1114,8 @@ class LocalElectionShareService {
     LocalElectionPrefectureReality reality,
     Map<String, int> cdpByPrefecture,
   ) {
-    final planCdp = cdpByPrefecture[_normalizePrefectureKey(reality.prefecture)];
+    final planCdp =
+        cdpByPrefecture[_normalizePrefectureKey(reality.prefecture)];
     if (planCdp != null && planCdp > 0) {
       return planCdp;
     }
