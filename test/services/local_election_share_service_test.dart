@@ -235,6 +235,73 @@ void main() {
     expect(draft.metadata['missingPrefectureCount'], greaterThanOrEqualTo(1));
   });
 
+  LocalElectionRealitySnapshot buildSnapshotWithCdpFallbackAlert() {
+    return LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-03-28T09:00:00.000Z',
+      'officialCurrentLocalMembers': 333,
+      'actualNetIncreaseRequired': 367,
+      'aiSummary': '地方議員数は333人です。',
+      'aiAlerts': <String>[
+        '議員不在県の穴埋めが必要です。',
+        '立憲民主党との地方議員数の比較は今回取得していません。',
+      ],
+      'prefectures': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'prefecture': '東京都',
+          'sourceUrl': 'https://example.com/tokyo',
+          'currentMembers': 43,
+          'prefecturalAssemblyMembers': 9,
+          'municipalAssemblyMembers': 34,
+        },
+        <String, dynamic>{
+          'prefecture': '香川県',
+          'sourceUrl': 'https://example.com/kagawa',
+          'currentMembers': 23,
+          'prefecturalAssemblyMembers': 5,
+          'municipalAssemblyMembers': 18,
+        },
+      ],
+    });
+  }
+
+  test('buildDraft syncs CDP benchmark from plan batch values', () {
+    final snapshot = buildSnapshotWithCdpFallbackAlert();
+    final plan = buildPlan();
+    final draft = service.buildDraft(
+      snapshot: snapshot,
+      members: snapshot.members,
+      plan: plan,
+    );
+
+    // 注視ポイント: 立憲フォールバック行がバッチ地力差行へ差し替わる。
+    expect(
+      draft.content,
+      contains('立憲民主党との地力差（上位）：東京都+40 / 香川県-3。'),
+    );
+    expect(draft.content, isNot(contains('今回取得していません')));
+    // 非立憲の注視ポイントは残る。
+    expect(draft.content, contains('議員不在県の穴埋めが必要です。'));
+    // 全都道府県内訳: 各県の立憲参考が plan のバッチ値へ。
+    expect(draft.content, contains('立憲参考 83人'));
+    expect(draft.content, contains('立憲参考 20人'));
+    // metadata: 解決済み立憲値の合計 (83 + 20)。
+    expect(draft.metadata['cdpLocalMembers'], 103);
+  });
+
+  test('buildDraft keeps fallback alert and zero CDP when plan is absent', () {
+    final snapshot = buildSnapshotWithCdpFallbackAlert();
+    final draft = service.buildDraft(
+      snapshot: snapshot,
+      members: snapshot.members,
+    );
+
+    // plan 無し = 後方互換: 差し替えなし・立憲参考は snapshot 由来の 0。
+    expect(draft.content, contains('今回取得していません'));
+    expect(draft.content, isNot(contains('立憲民主党との地力差（上位）')));
+    expect(draft.content, contains('立憲参考 0人'));
+    expect(draft.metadata['cdpLocalMembers'], 0);
+  });
+
   test('buildXShareText includes public note link and alert counts', () {
     final snapshot = buildSnapshot();
     final shareText = service.buildXShareText(
