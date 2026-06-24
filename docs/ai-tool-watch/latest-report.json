@@ -11,7 +11,116 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9e7270f8cfbf94bb32c15be544ab3cd1041c2dba6707db69edd9c57b6c8250d3",
+      "hash": "0d5fb793d2503976772978f54b2032d3cafb608eb4143a18a62fe3541923bffd",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure",
+          "ultrareview"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2.1.190 / June 24, 2026",
+      "name": "Claude Code changelog",
+      "owner": "Claude Code",
+      "previous_hash": "505353c8f4b119f404df350cd268759ccaab9b83ff187ceff9e27bfdbe28fbdc",
+      "slug": "claude-code-changelog",
+      "snippets": [
+        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
+        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.190 June 24, 2026 Bug fixes and reliability improvements ​ 2.1.187 June 23, 2026 Added sandbox.credentials setting to block sandboxed commands from reading credential..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "6f4b44b973055668e7f82f48b51d27194fbb818c325987fce637bf7a2879fedc",
+      "keyword_groups": {
+        "codex-runtime": [
+          "computer use"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "GitHub",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "cost",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
+      "name": "Claude Code GitHub Actions",
+      "owner": "Claude Code",
+      "previous_hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
+      "slug": "claude-code-github-actions",
+      "snippets": [
+        "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
+        "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
+        "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/github-actions"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "f7fca3c3ed771bbc1c399d980944de56ffd2607eb16b14482a7424c99e944853",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -56,7 +165,7 @@
       "latest_signal": "2026-06-22 / ChatGPT for iOS 1.2026.167 New features Added per-host personality settings with Friendly a",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "27c74c5e28c4ac2d075ca272f2e5f8ff7e60ec73bedd704ffffc0a75925edbe3",
+      "previous_hash": "9e7270f8cfbf94bb32c15be544ab3cd1041c2dba6707db69edd9c57b6c8250d3",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -70,7 +179,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "82f59c251831cae380f85441ea9725956b47ac9e589d7607cdbca37e84404e22",
+      "hash": "60fe4247484a8b876e7273f45ac9c922a661221c266c207849321dfc52cf27e6",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -110,7 +219,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "7500c570daf6a0bca472ca0f8ba33709827e62b8bb0f3979553d2cecf19a381c",
+      "previous_hash": "82f59c251831cae380f85441ea9725956b47ac9e589d7607cdbca37e84404e22",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -124,7 +233,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d261624adaf06bc61ebbb84edc921c3bf03bddd710beef2154ac552e93221504",
+      "hash": "c2c87662241ddb6599c9a866be1eb07d8e0ed90da88a410a5b7f232b93e23f3b",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -151,10 +260,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "3.8 / Jun 22, 2026",
+      "latest_signal": "3.9 / Jun 22, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
+      "previous_hash": "d261624adaf06bc61ebbb84edc921c3bf03bddd710beef2154ac552e93221504",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
@@ -163,9 +272,48 @@
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
+      "keyword_groups": {
+        "hooks": [
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "GitHub",
+          "IDE extension",
+          "VSCode"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "workflow"
+        ]
+      },
+      "latest_signal": "VS Code Gemini Code Assist 2.86.0 / June 15, 2026",
+      "name": "Gemini Code Assist release notes",
+      "owner": "Gemini Code Assist",
+      "previous_hash": "844d33b7c371271ad3f1a6e24a6764f34eafb16017a3c85a80baec5ad0f20806",
+      "slug": "gemini-code-assist-release-notes",
+      "snippets": [
+        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
+        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
+        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
+      ],
+      "status": 200,
+      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   ],
-  "checked_at": "2026-06-23T21:50:13Z",
+  "checked_at": "2026-06-24T21:48:18Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -217,13 +365,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-22T21:57:46Z",
+  "previous_checked_at": "2026-06-23T21:50:13Z",
   "sources": [
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "505353c8f4b119f404df350cd268759ccaab9b83ff187ceff9e27bfdbe28fbdc",
+      "hash": "0d5fb793d2503976772978f54b2032d3cafb608eb4143a18a62fe3541923bffd",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -267,7 +415,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.186 / June 22, 2026",
+      "latest_signal": "2.1.190 / June 24, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
       "previous_hash": "505353c8f4b119f404df350cd268759ccaab9b83ff187ceff9e27bfdbe28fbdc",
@@ -275,7 +423,7 @@
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.186 June 22, 2026 Added claude mcp login <name> and claude mcp logout <name> to authenticate MCP servers from the CLI without opening the interactive /mcp menu, with --no-..."
+        "​ 2.1.190 June 24, 2026 Bug fixes and reliability improvements ​ 2.1.187 June 23, 2026 Added sandbox.credentials setting to block sandboxed commands from reading credential..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -332,17 +480,18 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
+      "hash": "6f4b44b973055668e7f82f48b51d27194fbb818c325987fce637bf7a2879fedc",
       "keyword_groups": {
         "codex-runtime": [
           "computer use"
         ],
         "hooks": [
           "hook",
-          "hooks"
+          "hooks",
+          "Stop"
         ],
         "integration": [
           "MCP",
@@ -382,7 +531,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9e7270f8cfbf94bb32c15be544ab3cd1041c2dba6707db69edd9c57b6c8250d3",
+      "hash": "f7fca3c3ed771bbc1c399d980944de56ffd2607eb16b14482a7424c99e944853",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -427,7 +576,7 @@
       "latest_signal": "2026-06-22 / ChatGPT for iOS 1.2026.167 New features Added per-host personality settings with Friendly a",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "27c74c5e28c4ac2d075ca272f2e5f8ff7e60ec73bedd704ffffc0a75925edbe3",
+      "previous_hash": "9e7270f8cfbf94bb32c15be544ab3cd1041c2dba6707db69edd9c57b6c8250d3",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -441,7 +590,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "82f59c251831cae380f85441ea9725956b47ac9e589d7607cdbca37e84404e22",
+      "hash": "60fe4247484a8b876e7273f45ac9c922a661221c266c207849321dfc52cf27e6",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -481,7 +630,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "7500c570daf6a0bca472ca0f8ba33709827e62b8bb0f3979553d2cecf19a381c",
+      "previous_hash": "82f59c251831cae380f85441ea9725956b47ac9e589d7607cdbca37e84404e22",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -510,7 +659,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d261624adaf06bc61ebbb84edc921c3bf03bddd710beef2154ac552e93221504",
+      "hash": "c2c87662241ddb6599c9a866be1eb07d8e0ed90da88a410a5b7f232b93e23f3b",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -537,10 +686,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "3.8 / Jun 22, 2026",
+      "latest_signal": "3.9 / Jun 22, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
+      "previous_hash": "d261624adaf06bc61ebbb84edc921c3bf03bddd710beef2154ac552e93221504",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
@@ -551,10 +700,10 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "844d33b7c371271ad3f1a6e24a6764f34eafb16017a3c85a80baec5ad0f20806",
+      "hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
       "keyword_groups": {
         "hooks": [
           "Stop"

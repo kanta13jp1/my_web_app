@@ -1,14 +1,17 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-23T21:50:13Z`
-- Previous check: `2026-06-22T21:57:46Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-06-24T21:48:18Z`
+- Previous check: `2026-06-23T21:50:13Z`
+- Changed/new official sources: `6`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
+- `changed` Claude Code changelog: 2.1.190 / June 24, 2026
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
 - `changed` Codex changelog: 2026-06-22 / ChatGPT for iOS 1.2026.167 New features Added per-host personality settings with Friendly a
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Cursor changelog: 3.8 / Jun 22, 2026
+- `changed` Cursor changelog: 3.9 / Jun 22, 2026
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.86.0 / June 15, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -20,7 +23,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.186 / June 22, 2026
+  - Latest signal: 2.1.190 / June 24, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -54,7 +57,7 @@
   - Keyword groups: none
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
-  - Latest signal: 3.8 / Jun 22, 2026
+  - Latest signal: 3.9 / Jun 22, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
   - Short signal: You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs.

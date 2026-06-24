@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-23T21:50:15Z",
+  "generated_at": "2026-06-24T21:48:20Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,18 +20,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-02236062a4fe",
+        "entry_id": "nf-77f19ae8f211",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.186 / June 22, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.186 June 22, 2026 Added claude mcp login <name> and claude mcp logout <name> to authenticate MCP servers from the CLI without opening the interactive /mcp menu, with --no-...",
+        "text": "Claude Code changelog 2.1.190 / June 24, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.190 June 24, 2026 Bug fixes and reliability improvements ​ 2.1.187 June 23, 2026 Added sandbox.credentials setting to block sandboxed commands from reading credential...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "505353c8f4b119f404df350cd268759ccaab9b83ff187ceff9e27bfdbe28fbdc",
+          "hash": "0d5fb793d2503976772978f54b2032d3cafb608eb4143a18a62fe3541923bffd",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,7 +75,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.186 / June 22, 2026",
+          "latest_signal": "2.1.190 / June 24, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
           "previous_hash": "505353c8f4b119f404df350cd268759ccaab9b83ff187ceff9e27bfdbe28fbdc",
@@ -83,14 +83,14 @@
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.186 June 22, 2026 Added claude mcp login <name> and claude mcp logout <name> to authenticate MCP servers from the CLI without opening the interactive /mcp menu, with --no-..."
+            "​ 2.1.190 June 24, 2026 Bug fixes and reliability improvements ​ 2.1.187 June 23, 2026 Added sandbox.credentials setting to block sandboxed commands from reading credential..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-02236062a4fe",
+        "entry_id": "nf-77f19ae8f211",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -194,17 +194,18 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "4013dd04f80c859183f0d898dafcf85a09d89c2e1036d9e27d34f7e7d851c1a9",
+          "hash": "6f4b44b973055668e7f82f48b51d27194fbb818c325987fce637bf7a2879fedc",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
             ],
             "hooks": [
               "hook",
-              "hooks"
+              "hooks",
+              "Stop"
             ],
             "integration": [
               "MCP",
@@ -271,7 +272,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "9e7270f8cfbf94bb32c15be544ab3cd1041c2dba6707db69edd9c57b6c8250d3",
+          "hash": "f7fca3c3ed771bbc1c399d980944de56ffd2607eb16b14482a7424c99e944853",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -316,7 +317,7 @@
           "latest_signal": "2026-06-22 / ChatGPT for iOS 1.2026.167 New features Added per-host personality settings with Friendly a",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "27c74c5e28c4ac2d075ca272f2e5f8ff7e60ec73bedd704ffffc0a75925edbe3",
+          "previous_hash": "9e7270f8cfbf94bb32c15be544ab3cd1041c2dba6707db69edd9c57b6c8250d3",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -357,7 +358,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "82f59c251831cae380f85441ea9725956b47ac9e589d7607cdbca37e84404e22",
+          "hash": "60fe4247484a8b876e7273f45ac9c922a661221c266c207849321dfc52cf27e6",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -397,7 +398,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "7500c570daf6a0bca472ca0f8ba33709827e62b8bb0f3979553d2cecf19a381c",
+          "previous_hash": "82f59c251831cae380f85441ea9725956b47ac9e589d7607cdbca37e84404e22",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -470,9 +471,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-182a8f974826",
+        "entry_id": "nf-dae327bf3fc8",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.8 / Jun 22, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs. # Marketplace leaderboard Cursor now shows you a leaderboard of the most popular plugins, skills, and MCPs across your team.",
+        "text": "Cursor changelog 3.9 / Jun 22, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs. # Marketplace leaderboard Cursor now shows you a leaderboard of the most popular plugins, skills, and MCPs across your team.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -481,7 +482,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d261624adaf06bc61ebbb84edc921c3bf03bddd710beef2154ac552e93221504",
+          "hash": "c2c87662241ddb6599c9a866be1eb07d8e0ed90da88a410a5b7f232b93e23f3b",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -508,10 +509,10 @@
               "workflow"
             ]
           },
-          "latest_signal": "3.8 / Jun 22, 2026",
+          "latest_signal": "3.9 / Jun 22, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "3f7e627da0f8ed9956417199461b4d42df04c610d1abe0490046aa4fb5a18304",
+          "previous_hash": "d261624adaf06bc61ebbb84edc921c3bf03bddd710beef2154ac552e93221504",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
@@ -523,7 +524,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-182a8f974826",
+        "entry_id": "nf-dae327bf3fc8",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -552,10 +553,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "844d33b7c371271ad3f1a6e24a6764f34eafb16017a3c85a80baec5ad0f20806",
+          "hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
           "keyword_groups": {
             "hooks": [
               "Stop"
