@@ -17,6 +17,10 @@
 powershell -ExecutionPolicy Bypass -File scripts/setup_windows_dev.ps1
 ```
 
+VS Code 統合ターミナルが起動しない、または終了コードだけで落ちる場合は
+[docs/VSCODE_TERMINAL_TROUBLESHOOTING.md](docs/VSCODE_TERMINAL_TROUBLESHOOTING.md)
+を参照してください。
+
 ### Git hooks (推奨 / コミット前の静的監査)
 
 クローン後、ローカル git hooks を有効化すると、コミット前に
