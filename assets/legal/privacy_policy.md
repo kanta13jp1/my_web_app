@@ -35,7 +35,7 @@ Last updated: 2026-05-07
 - 位置情報 (= GPS / `ACCESS_FINE_LOCATION` 申請しない)
 - 連絡先 / カレンダー / 写真ライブラリ (= mobile permission 申請しない)
 - 生体認証データ (= 顔 / 指紋 / 声紋)
-- 決済情報 (= 本サービスは課金なし)
+- クレジットカード番号等の決済情報 (= 有料プランの決済は Stripe, Inc. が処理し、**本サービスはカード番号を保持しない** / 後述 §4)
 
 ---
 
@@ -62,6 +62,7 @@ Last updated: 2026-05-07
 | **Google LLC (OAuth)** (= 米国) | 認証 (= profile / email 取得のみ) | §2.1 アカウント識別情報 | <https://policies.google.com/privacy> |
 | **Anthropic / OpenAI / Google DeepMind 等 LLM プロバイダー** | AI 応答生成 (= §8 で詳述) | ユーザー入力テキストの一部 (= 個人特定要素は事前マスキング) | 各社プライバシー方針 |
 | **GitHub, Inc.** (= 米国) | Issue tracker (= サポート窓口) | ユーザーが自発的に投稿した内容 | <https://docs.github.com/site-policy/privacy-policies/github-privacy-statement> |
+| **Stripe, Inc.** (= 米国) | 有料プランの決済処理 / サブスクリプション管理 | メールアドレス / 課金に必要な情報 (= **カード番号は Stripe が直接処理し本サービスは保持しない** / PCI DSS 準拠) | <https://stripe.com/privacy> |
 
 ### 4.1 委託先選定の原則 ([MCP-AUTH-27] 原則 6 = 最小権限 + Capability Attestation)
 

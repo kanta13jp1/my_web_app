@@ -255,7 +255,7 @@ function billingReturnUrl(value: unknown, fallbackPath: string): string {
   }
   const base = Deno.env.get("PUBLIC_SITE_URL") ??
     Deno.env.get("SITE_URL") ??
-    "https://my-web-app-b6f7f4.web.app";
+    "https://my-web-app-b67f4.web.app";
   return new URL(fallbackPath, base).toString();
 }
 

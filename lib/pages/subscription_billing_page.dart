@@ -83,7 +83,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     if (uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https')) {
       return uri.replace(path: '/subscription-billing', query: '').toString();
     }
-    return 'https://my-web-app-b6f7f4.web.app/subscription-billing';
+    return 'https://my-web-app-b67f4.web.app/subscription-billing';
   }
 
   @override
@@ -131,6 +131,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                   ),
                   const SizedBox(height: 16),
                   _UsageCard(status: status),
+                  const SizedBox(height: 16),
+                  const _LegalLinksCard(),
                   const SizedBox(height: 16),
                   const _SetupNoticeCard(),
                 ],
@@ -363,6 +365,67 @@ class _UsageCard extends StatelessWidget {
           Expanded(child: Text(label)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
+      ),
+    );
+  }
+}
+
+class _LegalLinksCard extends StatelessWidget {
+  const _LegalLinksCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'ご購入前にご確認ください',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '有料プランのお申し込みは、以下の規約・表記に同意のうえお手続きください。',
+              style: TextStyle(fontSize: 13),
+            ),
+            SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                _LegalLinkButton(
+                  label: '特定商取引法に基づく表記',
+                  route: '/tokusho',
+                ),
+                _LegalLinkButton(label: '利用規約', route: '/terms'),
+                _LegalLinkButton(label: 'プライバシーポリシー', route: '/privacy'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalLinkButton extends StatelessWidget {
+  const _LegalLinkButton({required this.label, required this.route});
+
+  final String label;
+  final String route;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: () => Navigator.of(context).pushNamed(route),
+      icon: const Icon(Icons.description_outlined, size: 16),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }
