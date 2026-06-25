@@ -202,7 +202,7 @@ class _CurrentPlanCard extends StatelessWidget {
                 if (status.currentPeriodEnd != null)
                   Chip(
                     label: Text(
-                      '次回更新 \${_formatDate(status.currentPeriodEnd!)}',
+                      '次回更新 ${_formatDate(status.currentPeriodEnd!)}',
                     ),
                   ),
                 if (status.cancelAtPeriodEnd)
@@ -396,6 +396,6 @@ class _Plan {
 
 String _formatDate(DateTime date) {
   final local = date.toLocal();
-  return '\${local.year}/\${local.month.toString().padLeft(2, '0')}/'
-      '\${local.day.toString().padLeft(2, '0')}';
+  return '${local.year}/${local.month.toString().padLeft(2, '0')}/'
+      '${local.day.toString().padLeft(2, '0')}';
 }
