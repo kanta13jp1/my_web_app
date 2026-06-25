@@ -204,7 +204,7 @@ class _CurrentPlanCard extends StatelessWidget {
                 if (status.currentPeriodEnd != null)
                   Chip(
                     label: Text(
-                      '次回更新 \${_formatDate(status.currentPeriodEnd!)}',
+                      '次回更新 ${_formatDate(status.currentPeriodEnd!)}',
                     ),
                   ),
                 if (status.cancelAtPeriodEnd)
@@ -349,8 +349,8 @@ class _UsageCard extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            _metric('AI質問', '\${status.aiQueryCount} 回'),
-            _metric('Edge Function 呼び出し', '\${status.efCallCount} 回'),
+            _metric('AI質問', '${status.aiQueryCount} 回'),
+            _metric('Edge Function 呼び出し', '${status.efCallCount} 回'),
           ],
         ),
       ),
@@ -459,6 +459,6 @@ class _Plan {
 
 String _formatDate(DateTime date) {
   final local = date.toLocal();
-  return '\${local.year}/\${local.month.toString().padLeft(2, '0')}/'
-      '\${local.day.toString().padLeft(2, '0')}';
+  return '${local.year}/${local.month.toString().padLeft(2, '0')}/'
+      '${local.day.toString().padLeft(2, '0')}';
 }
