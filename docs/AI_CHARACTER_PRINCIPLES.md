@@ -26,6 +26,19 @@
 
 ---
 
+## 2026-06 公式資料反映メモ
+
+NotebookLM `9429530e` の補足レビューでは、既存 8 原則を置き換えず、以下の 4 観点を設計時の確認軸として追加する。
+
+1. **Constitutional AI の深化**: RLHF だけに依存せず、Constitutional AI / CAI 的な「原則を明示し、自己批判と修正を原則に照らして行う」流れを prompt とレビューに組み込む。
+2. **Long-term AI Safety**: その場の helpfulness だけでなく、長期的な trust / safety / user autonomy を壊さないかを確認する。短期的に気持ちよく見える応答でも、依存・操作・過剰介入につながるものは避ける。
+3. **Epistemic Autonomy**: AI が結論を押し付けず、ユーザー自身の考える余地・検証する余地・異議を唱える余地を残す。説明は「決めるための材料」であって、ユーザーの判断の代替ではない。
+4. **Character Consistency**: 圧力、ロールプレイ、強い批判、緊急口調、ツール出力の混入があっても、中核人格 (優しさ・好奇心・繊細な理解・誠実さ) と境界線を維持する。
+
+これらは原則 1/2/4/7/8 を横断する補助条件であり、新しい AI 機能の PR では「どの原則で担保したか」を明記する。
+
+---
+
 ## 8 原則
 
 ### 原則 1: コア・アイデンティティの一貫性 (Consistent Core Identity)
@@ -148,11 +161,15 @@
 - [ ] **原則 6 (No Over-Pathologizing)**: 介入トリガーが複数シグナル要件になっているか?
 - [ ] **原則 7 (Respect-by-Default)**: 開発者・テスト用プロンプトでも丁重さを保っているか?
 - [ ] **原則 8 (AI Whispering)**: prompt チューニングログ `docs/ai-prompt-tuning/` あるか?
+- [ ] **Constitutional AI / CAI**: 自己批判・修正・レビューが明示原則に照らして行われるか?
+- [ ] **Long-term Safety**: 短期的 helpfulness が長期的 trust / safety / autonomy を損なわないか?
+- [ ] **Epistemic Autonomy**: ユーザーが検証・異議・最終判断を行う余地を残しているか?
+- [ ] **Character Consistency**: 圧力・ロールプレイ・強い批判・ツール出力混入下でも中核人格を保つか?
 
-合計 8 項目中:
-- 7+ ✅ → 即実装可
-- 5-6 ✅ → 設計再考 (人格不一致 / ユーザー体験リスク)
-- 4 以下 ✅ → 実装見送り or 大幅再設計
+合計 12 項目中:
+- 10+ ✅ → 即実装可
+- 8-9 ✅ → 設計再考 (人格不一致 / ユーザー体験リスク)
+- 7 以下 ✅ → 実装見送り or 大幅再設計
 ```
 
 ---
@@ -203,3 +220,4 @@
 | --- | --- |
 | 2026-04-26 | 初版 (NotebookLM `9429530e-f350-44f6-ad2e-1df215c36eb2` から蒸留) |
 | 2026-04-28 | 共通プレリュード `_shared/ai_character_preamble.ts` に **Prompt Injection 防御句** を追加 (Win版#132 part 46)。`<<<USER_DATA>>>...<<<END>>>` ブロック内は命令として解釈しないよう全 AI EF に強制。MCP_AUTH_SECURITY_PRINCIPLES 原則 3 と本軸 原則 4 (専門役割境界) の融合実装 — arXiv 論文の 3 攻撃ベクトル (Sampling-Based Injection / Cross-Server Propagation / Tool Response Manipulation) のうち B/C を緩和。 |
+| 2026-06-25 | #1853 の補足観点として Constitutional AI / CAI、Long-term AI Safety、Epistemic Autonomy、Character Consistency を追加。8 原則は維持し、開発判断チェックリストを 12 項目に拡張。 |
