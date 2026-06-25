@@ -1,4 +1,4 @@
-name: AI Tool Changelog Watch
+name: AI Tool Monthly Changelog Watch
 
 on:
   schedule:
