@@ -114,7 +114,8 @@ class _AppHubPageState extends State<AppHubPage> {
                         title: const Text('プラン'),
                         subtitle: Text(plan == 'free' ? '無料プラン' : '$plan プラン'),
                         trailing: TextButton(
-                          onPressed: () {},
+                          onPressed: () =>
+                              Navigator.of(context).pushNamed('/billing'),
                           child: const Text('アップグレード'),
                         ),
                       ),

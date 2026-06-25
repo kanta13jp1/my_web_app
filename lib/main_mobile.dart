@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_web_app/pages/legal_document_page.dart';
 import 'package:my_web_app/pages/privacy_policy_page.dart';
 
 void main() {
@@ -23,6 +24,18 @@ class JibunMobileApp extends StatelessWidget {
       ),
       routes: {
         '/privacy': (_) => const PrivacyPolicyPage(showBackButton: false),
+        '/tokusho': (_) => const LegalDocumentPage(
+              assetPath: 'assets/legal/tokushoho.md',
+              appBarTitle: '特定商取引法に基づく表記',
+              heading: 'Commercial Transaction Act',
+              showBackButton: false,
+            ),
+        '/terms': (_) => const LegalDocumentPage(
+              assetPath: 'assets/legal/terms.md',
+              appBarTitle: '利用規約',
+              heading: 'Terms of Service',
+              showBackButton: false,
+            ),
       },
       home: const MobileReleaseShell(),
     );
