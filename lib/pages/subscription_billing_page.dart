@@ -200,7 +200,7 @@ class _CurrentPlanCard extends StatelessWidget {
                 Chip(label: Text(status.tier.toUpperCase())),
                 Chip(label: Text(status.status)),
                 if (status.currentPeriodEnd != null)
-                  Chip(
+                  const Chip(
                     label: Text(
                       '次回更新 ${_formatDate(status.currentPeriodEnd!)}',
                     ),
