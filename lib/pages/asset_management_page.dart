@@ -963,10 +963,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     unawaited(_pruneTombstonesOnBoot());
     _deadlineTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      final previousMonthKey = _assetLiabilityStateMonthKey(_now);
+      final previousNow = _now;
       final nextNow = DateTime.now();
+      final previousMonthKey = _assetLiabilityStateMonthKey(previousNow);
       final nextMonthKey = _assetLiabilityStateMonthKey(nextNow);
-      setState(() => _now = nextNow);
+      // _now はこのページでは日付(M/d)までしか表示しない。毎秒 setState すると巨大な
+      // ページ全体の再ビルド + ワークブック再計算が常時走り続け、操作時のカクつきの
+      // 主因になる。そこでフィールドは毎秒更新して各種判定(月またぎ/給料検知)は最新
+      // 時刻で行いつつ、再描画は「表示が実際に変わる=日付が変わった時」だけに絞る。
+      final dayChanged = previousNow.year != nextNow.year ||
+          previousNow.month != nextNow.month ||
+          previousNow.day != nextNow.day;
+      _now = nextNow;
+      if (dayChanged) {
+        setState(() {});
+      }
       if (nextMonthKey != previousMonthKey &&
           nextMonthKey != _loadedAssetLiabilityMonthKey) {
         unawaited(_loadAssetLiabilityMonthlyState());
