@@ -221,13 +221,15 @@ function maintenanceWindowVisible(
 
 function billingPriceId(tier: string): string {
   const normalized = tier === "team" ? "TEAM" : "PRO";
-  return Deno.env.get(`STRIPE_${normalized}_PRICE_ID`) ??
+  // .trim(): Supabase secret に紛れ込んだ前後の空白/改行で "No such price" 等に
+  // ならないよう防御 (live 移行時のコピペ事故も吸収)。
+  return (Deno.env.get(`STRIPE_${normalized}_PRICE_ID`) ??
     Deno.env.get(`STRIPE_PRICE_${normalized}`) ??
-    "";
+    "").trim();
 }
 
 function stripeSecretKey(): string {
-  return Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+  return (Deno.env.get("STRIPE_SECRET_KEY") ?? "").trim();
 }
 
 function normalizeCheckoutTier(value: unknown): "pro" | "team" {
@@ -253,9 +255,9 @@ function billingReturnUrl(value: unknown, fallbackPath: string): string {
       // Fall through to the deployment fallback.
     }
   }
-  const base = Deno.env.get("PUBLIC_SITE_URL") ??
+  const base = (Deno.env.get("PUBLIC_SITE_URL") ??
     Deno.env.get("SITE_URL") ??
-    "https://my-web-app-b67f4.web.app";
+    "https://my-web-app-b67f4.web.app").trim();
   return new URL(fallbackPath, base).toString();
 }
 
