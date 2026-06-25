@@ -1,6 +1,9 @@
 name: Hotfix Stripe Return URL Typo (#3644)
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hotfix-stripe-url.yml'
 jobs:
   hotfix:
     runs-on: ubuntu-latest
@@ -8,12 +11,15 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Check and fix URL typo
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Check and fix Stripe return URL typo
         run: |
           FILE=supabase/functions/schedule-hub/index.ts
           if grep -q 'my-web-app-b6f7f4' "$FILE"; then
             sed -i 's/my-web-app-b6f7f4/my-web-app-b67f4/g' "$FILE"
-            echo "Fix applied:"
+            echo "FIX APPLIED:"
             grep -n 'b67f4' "$FILE"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -21,5 +27,5 @@ jobs:
             git commit -m "fix: Stripe 返却URL タイポ b6f7f4→b67f4 (schedule-hub/index.ts) [#3644]"
             git push
           else
-            echo "Already correct - no fix needed"
+            echo "NO FIX NEEDED - URL already correct"
           fi
