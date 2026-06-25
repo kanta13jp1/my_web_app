@@ -9,6 +9,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  checkAndRecordAiUsage,
+  supabaseUsageStore,
+} from "./usage_gate.ts";
+import {
   AI_CHARACTER_PREAMBLE,
   prependCharacter,
 } from "../_shared/ai_character_preamble.ts";
@@ -4895,6 +4899,28 @@ serve(async (req: Request) => {
           });
         }
 
+        // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        if (userId) {
+          const usage = await checkAndRecordAiUsage(
+            supabaseUsageStore(admin),
+            userId,
+          );
+          if (!usage.allowed) {
+            return json({
+              success: false,
+              status: "usageLimitReached",
+              code: "free_limit_reached",
+              upgrade_required: true,
+              used: usage.used,
+              limit: usage.limit,
+              upgrade_url: "/billing",
+              message:
+                `無料プランの今月のAI利用上限(${usage.limit ?? 0}回)に達しました。` +
+                `Pro にアップグレードすると無制限に利用できます。`,
+            }, 402);
+          }
+        }
+
         try {
           // 認証方式はプロバイダーごとに異なる
           let authHeaders: Record<string, string> = {
@@ -5130,6 +5156,28 @@ serve(async (req: Request) => {
             exceeded_scope: budget.exceeded_scope,
             exceeded_scope_id: budget.exceeded_scope_id,
           }, 429);
+        }
+
+        // フリーミアム上限ゲート + 使用量メータリング (#3645 / #3646)
+        if (userId) {
+          const usage = await checkAndRecordAiUsage(
+            supabaseUsageStore(admin),
+            userId,
+          );
+          if (!usage.allowed) {
+            return json({
+              success: false,
+              status: "usageLimitReached",
+              code: "free_limit_reached",
+              upgrade_required: true,
+              used: usage.used,
+              limit: usage.limit,
+              upgrade_url: "/billing",
+              message:
+                `無料プランの今月のAI利用上限(${usage.limit ?? 0}回)に達しました。` +
+                `Pro にアップグレードすると無制限に利用できます。`,
+            }, 402);
+          }
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
         const routedTier = requestedTier ??
