@@ -746,6 +746,22 @@
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)",
         "Microsoft Agent 365 (= Slack 経由間接監視継続)"
       ]
+    },
+    {
+      "date": "2026-06-26",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-06-23 Salesforce Agentforce Operations 採択 / 3 day 経過 / cooldown 残 4 day / 次回 6/30 解禁). 前回 AI 分析 report = 6/23 (6/24・6/25 は GHA static-template のみ / Claude run なし) → 本 run = 6/23→6/26 delta 集約. EF 可用性チェックは SUPABASE_SERVICE_KEY 未設定で skip. 新規 6 シグナル = (1) ★ Google Antigravity CLI 全員開放 6/18 + Gemini CLI / Gemini Code Assist IDE 個人・Pro・Ultra 6/18 提供停止 🔴🔴 (= 自社 L1 lane [Antigravity+Gemini 探索] + [AI_FALLBACK_RUNBOOK] の Gemini Code Assist 個人 fallback 経路が直撃 = 競合シグナルかつ自社運用シグナル / 6/24 予定の Google Jules/Antigravity 再評価が自社 toolchain 直結で緊急度上昇 → 6/30 第 1 候補) (2) ★ GitHub Copilot Desktop App GA 6/17 🔴 (= Win/macOS/Linux standalone = launch/supervise/validate/ship agent session の Agent Control Center / Cognition Devin Desktop [Windsurf rebrand] Agent Command Center default + ACP [Codex/Claude Agent 内包] と合わせ fleet 統治 UI commoditize 継続 = narrative pivot『並列 → 監査可能な並列統治』) (3) ★ MoneyForward AI Cowork 7月 GA T-1month 🔴 (= 経理/HR/法務 自律 / MF Cloud 標準統合 + guardrail + Draft & Approve + AI 監査ログ / B/S 中核最大脅威 / 非対称防衛 = 個人 lifestyle CEO ダッシュボード) (4) ★ Salesforce Agentforce Operations [6/23 採択] first-scan 🔴 (= Agent Broker GA 6月 = visual authoring canvas + Salesforce model / MuleSoft Agent Fabric guided determinism + 多ベンダー governance / email・Slack・Teams task engagement 6月 / back-office 自律 AI 4 強 = MoneyForward + Anthropic + Salesforce + Microsoft) (5) Anthropic Claude Code 6月 = Artifacts for Claude Code [Team/Enterprise = live shareable HTML dashboard] + Claude Design 双方向 /design-sync 🟠 (= Win Claude #132 + design-skills dogfood) (6) Notion Workers [hosted runtime] + database sync + Custom Agents が private Slack 読み書き 🟠 (= super-app orchestration layer 拡張). 6/30 採択 第 1 候補 = Google Jules / Antigravity (= 6/18 全員開放 transition で 基準 c 該当 + 自社 L1 lane 直結 / 5/24 設定の 1 month cooldown 明け).",
+      "skipped_candidates": [
+        "Google Jules / Antigravity 2.0 (= 6/30 第 1 候補 / 6/18 Antigravity CLI 全員開放 + Gemini CLI/Code Assist 個人停止 = 基準 c 該当 + 自社 L1 lane 直結 / 5/24 設定 1 month cooldown 明け / 6/24 再評価が 6/24・6/25 Claude run なしで本日繰越)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 新規参入 / 動向観察 1 月)",
+        "Microsoft Agent 365 / Copilot Cowork (= 6/16 GA metered billing / Slack 経由間接監視継続)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX agent / CX 特化で軸遠い / monitor)",
+        "ServiceNow Build Agent (= 動向観察 1 月)",
+        "Prime Intellect Lab (= 動向観察 1 月)",
+        "Manus AI (= 協調軸組込継続)",
+        "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)"
+      ]
     }
   ],
   "_schema_notes": {
