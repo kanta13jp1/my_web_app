@@ -52,6 +52,8 @@ import 'package:my_web_app/pages/competitor_browse_page.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/privacy_policy_page.dart';
+import 'package:my_web_app/pages/terms_page.dart';
+import 'package:my_web_app/pages/tokushoho_page.dart';
 import 'package:my_web_app/pages/ai_dev_principles_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
@@ -664,6 +666,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return MaterialPageRoute(
               builder: (_) => const PrivacyPolicyPage(),
               settings: const RouteSettings(name: '/privacy'),
+            );
+          case '/terms':
+            return MaterialPageRoute(
+              builder: (_) => const TermsPage(),
+              settings: const RouteSettings(name: '/terms'),
+            );
+          case '/tokusho':
+            return MaterialPageRoute(
+              builder: (_) => const TokushohoPage(),
+              settings: const RouteSettings(name: '/tokusho'),
             );
           case '/ai-dev-principles':
             return MaterialPageRoute(

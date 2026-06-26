@@ -85,87 +85,87 @@ class _AppHubPageState extends State<AppHubPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _errorMessage!,
-                        style: const TextStyle(
-                          color: Color(0xFFE53935),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: _fetchData,
-                        child: const Text('再試行'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(
+                      color: Color(0xFFE53935),
+                      height: 1.5,
+                    ),
                   ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // サブスクリプション状態
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.star_outline),
-                        title: const Text('プラン'),
-                        subtitle: Text(plan == 'free' ? '無料プラン' : '$plan プラン'),
-                        trailing: TextButton(
-                          onPressed: () {},
-                          child: const Text('アップグレード'),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _fetchData,
+                    child: const Text('再試行'),
+                  ),
+                ],
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // サブスクリプション状態
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.star_outline),
+                    title: const Text('プラン'),
+                    subtitle: Text(plan == 'free' ? '無料プラン' : '$plan プラン'),
+                    trailing: TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/billing'),
+                      child: const Text('アップグレード'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // カレンダーイベント
+                Text('直近のイベント', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                if (_events.isEmpty)
+                  const Card(child: ListTile(title: Text('イベントなし')))
+                else
+                  ..._events
+                      .take(5)
+                      .map(
+                        (e) => Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.event),
+                            title: Text(
+                              (e['metadata'] as Map<String, dynamic>?)?['title']
+                                      as String? ??
+                                  'イベント',
+                            ),
+                            subtitle: Text(e['created_at']?.toString() ?? ''),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    // カレンダーイベント
-                    Text(
-                      '直近のイベント',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    if (_events.isEmpty)
-                      const Card(child: ListTile(title: Text('イベントなし')))
-                    else
-                      ..._events.take(5).map(
-                            (e) => Card(
-                              child: ListTile(
-                                leading: const Icon(Icons.event),
-                                title: Text(
-                                  (e['metadata'] as Map<String, dynamic>?)?[
-                                          'title'] as String? ??
-                                      'イベント',
-                                ),
-                                subtitle:
-                                    Text(e['created_at']?.toString() ?? ''),
-                              ),
+                const SizedBox(height: 16),
+                // タスク
+                Text('タスク', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                if (_tasks.isEmpty)
+                  const Card(child: ListTile(title: Text('タスクなし')))
+                else
+                  ..._tasks
+                      .take(5)
+                      .map(
+                        (t) => Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.task_alt),
+                            title: Text(
+                              (t['metadata'] as Map<String, dynamic>?)?['title']
+                                      as String? ??
+                                  'タスク',
                             ),
+                            subtitle: Text(t['created_at']?.toString() ?? ''),
                           ),
-                    const SizedBox(height: 16),
-                    // タスク
-                    Text('タスク', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    if (_tasks.isEmpty)
-                      const Card(child: ListTile(title: Text('タスクなし')))
-                    else
-                      ..._tasks.take(5).map(
-                            (t) => Card(
-                              child: ListTile(
-                                leading: const Icon(Icons.task_alt),
-                                title: Text(
-                                  (t['metadata'] as Map<String, dynamic>?)?[
-                                          'title'] as String? ??
-                                      'タスク',
-                                ),
-                                subtitle:
-                                    Text(t['created_at']?.toString() ?? ''),
-                              ),
-                            ),
-                          ),
-                  ],
-                ),
+                        ),
+                      ),
+              ],
+            ),
     );
   }
 }

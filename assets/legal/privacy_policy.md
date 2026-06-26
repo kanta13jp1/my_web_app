@@ -35,7 +35,7 @@ Last updated: 2026-05-07
 - 位置情報 (= GPS / `ACCESS_FINE_LOCATION` 申請しない)
 - 連絡先 / カレンダー / 写真ライブラリ (= mobile permission 申請しない)
 - 生体認証データ (= 顔 / 指紋 / 声紋)
-- 決済情報 (= 本サービスは課金なし)
+- 決済関連情報 (= 有料プラン利用時のプラン種別・決済ステータス・Stripe customer/subscription identifiers。クレジットカード番号は本サービスで保持しません)
 
 ---
 
@@ -60,6 +60,7 @@ Last updated: 2026-05-07
 | **Supabase, Inc.** (= 米国) | DB (PostgreSQL) / 認証 / Edge Functions / ストレージ | §2 全カテゴリ | <https://supabase.com/privacy> |
 | **Google LLC (Firebase Hosting / Cloud Functions)** (= 米国) | Web ホスティング / アクセスログ | §2.2 利用ログ / IP | <https://policies.google.com/privacy> |
 | **Google LLC (OAuth)** (= 米国) | 認証 (= profile / email 取得のみ) | §2.1 アカウント識別情報 | <https://policies.google.com/privacy> |
+| **Stripe, Inc.** (= 米国) | クレジットカード決済 / 請求 / サブスクリプション管理 | 決済ステータス、Stripe customer/subscription/payment identifiers。カード情報はStripeが処理し、本サービスは保持しない | <https://stripe.com/privacy> |
 | **Anthropic / OpenAI / Google DeepMind 等 LLM プロバイダー** | AI 応答生成 (= §8 で詳述) | ユーザー入力テキストの一部 (= 個人特定要素は事前マスキング) | 各社プライバシー方針 |
 | **GitHub, Inc.** (= 米国) | Issue tracker (= サポート窓口) | ユーザーが自発的に投稿した内容 | <https://docs.github.com/site-policy/privacy-policies/github-privacy-statement> |
 

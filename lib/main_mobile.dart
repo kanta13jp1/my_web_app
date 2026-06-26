@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_web_app/pages/privacy_policy_page.dart';
+import 'package:my_web_app/pages/terms_page.dart';
+import 'package:my_web_app/pages/tokushoho_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +25,8 @@ class JibunMobileApp extends StatelessWidget {
       ),
       routes: {
         '/privacy': (_) => const PrivacyPolicyPage(showBackButton: false),
+        '/terms': (_) => const TermsPage(showBackButton: false),
+        '/tokusho': (_) => const TokushohoPage(showBackButton: false),
       },
       home: const MobileReleaseShell(),
     );
@@ -200,10 +204,7 @@ class _SurfaceTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  item.subtitle,
-                  style: const TextStyle(height: 1.35),
-                ),
+                Text(item.subtitle, style: const TextStyle(height: 1.35)),
               ],
             ),
           ),
@@ -243,10 +244,7 @@ class _ParkedPanel extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        height: 1.35,
-                      ),
+                      style: const TextStyle(color: Colors.white, height: 1.35),
                     ),
                   ),
                 ],

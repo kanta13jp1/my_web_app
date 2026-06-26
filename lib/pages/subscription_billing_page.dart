@@ -83,12 +83,13 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     if (uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https')) {
       return uri.replace(path: '/subscription-billing', query: '').toString();
     }
-    return 'https://my-web-app-b6f7f4.web.app/subscription-billing';
+    return 'https://my-web-app-b67f4.web.app/subscription-billing';
   }
 
   @override
   Widget build(BuildContext context) {
-    final status = _status ??
+    final status =
+        _status ??
         const BillingStatus(
           tier: 'free',
           status: 'active',
@@ -129,6 +130,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                     isBusy: _isOpeningStripe,
                     onUpgrade: _openCheckout,
                   ),
+                  const SizedBox(height: 16),
+                  const _LegalLinksCard(),
                   const SizedBox(height: 16),
                   _UsageCard(status: status),
                   const SizedBox(height: 16),
@@ -239,8 +242,8 @@ class _PlanGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= 900
             ? 3
             : constraints.maxWidth >= 620
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         return GridView.count(
           crossAxisCount: columns,
           shrinkWrap: true,
@@ -321,6 +324,45 @@ class _PlanCard extends StatelessWidget {
                     : const Icon(Icons.lock_open_outlined),
                 label: Text(isCurrent ? '現在のプラン' : 'Stripeで開始'),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalLinksCard extends StatelessWidget {
+  const _LegalLinksCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Text(
+              'Legal',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed('/terms'),
+              icon: const Icon(Icons.description_outlined),
+              label: const Text('Terms'),
+            ),
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed('/tokusho'),
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: const Text('Commercial disclosure'),
+            ),
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pushNamed('/privacy'),
+              icon: const Icon(Icons.privacy_tip_outlined),
+              label: const Text('Privacy'),
             ),
           ],
         ),
