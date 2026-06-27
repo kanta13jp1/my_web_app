@@ -39,7 +39,13 @@ class LegalDocumentPage extends StatefulWidget {
 }
 
 class _LegalDocumentPageState extends State<LegalDocumentPage> {
-  late final Future<String> _document = rootBundle.loadString(widget.assetPath);
+  late final Future<String> _document;
+
+  @override
+  void initState() {
+    super.initState();
+    _document = rootBundle.loadString(widget.assetPath);
+  }
 
   @override
   Widget build(BuildContext context) {

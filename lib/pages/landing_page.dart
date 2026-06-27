@@ -2799,10 +2799,10 @@ $input
             width: double.infinity,
             height: 46,
             child: FilledButton.icon(
-              onPressed: _scrollToAuthSection,
+              onPressed: () => Navigator.of(context).pushNamed('/billing'),
               icon: const Icon(Icons.rocket_launch, size: 16),
               label: const Text(
-                '無料で全機能を使う',
+                'Proプランを見る',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -2891,7 +2891,7 @@ $input
       const _CompetitorRow('Google Workspace', '¥680〜/月', '80+', false),
       const _CompetitorRow('Microsoft 365', '¥1,241〜/月', '90+', false),
       const _CompetitorRow('LINE AI', '¥750〜/月 (5項目)', '5', false),
-      const _CompetitorRow('自分株式会社', '完全無料', '21サービス分', true),
+      const _CompetitorRow('自分株式会社', '無料コア + Pro', '21サービス分', true),
     ];
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -2919,7 +2919,7 @@ $input
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '他社は有料。自分株式会社は完全無料。',
+                  'コアは無料。Proで支援と上限緩和。',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -2932,7 +2932,7 @@ $input
           ),
           const SizedBox(height: 4),
           const Text(
-            '月額数千円のSaaS21本分の機能を、無料で使えます。',
+            '日常の基本機能は無料で使えます。Pro/Teamは決済後に追加機能と上限緩和を提供します。',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF78350F),
@@ -3308,15 +3308,15 @@ $input
     const faqs = [
       (
         q: 'Notion AI がカレンダー・メール・Slack連携を始めました。それでも違いはありますか?',
-        a: '2026年4月にNotion AIはカレンダー・Mail・Slack統合をGA化しました。ただし「財務管理」「健康・習慣管理」「KPI＝昨日の自分（自己比較）」「日本語文化対応」は依然として対象外です。自分株式会社はAIが「今日やるべき1件」を決め、MoneyForward型資産管理・習慣化・AI診断まで人生6部署を一元管理します。Notionは仕事を整理しますが、自分株式会社は人生全体を整理します。しかも完全無料です。',
+        a: '2026年4月にNotion AIはカレンダー・Mail・Slack統合をGA化しました。ただし「財務管理」「健康・習慣管理」「KPI＝昨日の自分（自己比較）」「日本語文化対応」は依然として対象外です。自分株式会社はAIが「今日やるべき1件」を決め、MoneyForward型資産管理・習慣化・AI診断まで人生6部署を一元管理します。Notionは仕事を整理しますが、自分株式会社は人生全体を整理します。基本機能は無料で、Pro/Teamで上限緩和と支援導線を用意します。',
       ),
       (
         q: '12部署20人のAI組織OSって何?',
         a: '自分1人で12の仮想部署（企画・開発・営業・CS・法務・広報・調達など）と20人のAIエージェントを動かせる機能です。自然言語でゴールを入力するだけでAIが最適な部署に自動振り分け、タスク分解・進捗管理まで担当します。SlackもJiraも不要で、1アプリで組織のように動けます。',
       ),
       (
-        q: '完全無料で使い続けられますか?',
-        a: 'はい、現在は完全無料です。登録なしでAI提案を1回体験でき、登録後は制限なくすべての機能を利用できます。将来的にプレミアムプランを検討していますが、基本機能は無料のままです。',
+        q: '無料のまま使い続けられますか?',
+        a: 'はい。登録なしでAI提案を1回体験でき、登録後も基本機能は無料で利用できます。Pro/Teamは追加機能・上限緩和・開発支援のための有料プランです。',
       ),
       (
         q: 'NotionやEvernoteからデータを移行できますか?',
@@ -3332,7 +3332,7 @@ $input
       ),
       (
         q: 'Claude Cowork (Anthropic公式) が出ましたが、何が違うの?',
-        a: 'Claude Cowork (Pro \$20/月〜) は仕事のSaaS連携に特化した企業向けAIエージェントです。分離VM内で動作するため、セッションが終わるとデータが消えます。自分株式会社は「財務・健康・習慣・KPI」など人生6部署をSupabaseに永続保存し、昨日の自分と毎日比較できます。仕事だけでなく人生全体を経営したい個人CEOには、完全無料の自分株式会社が最適です。',
+        a: 'Claude Cowork (Pro \$20/月〜) は仕事のSaaS連携に特化した企業向けAIエージェントです。分離VM内で動作するため、セッションが終わるとデータが消えます。自分株式会社は「財務・健康・習慣・KPI」など人生6部署をSupabaseに永続保存し、昨日の自分と毎日比較できます。仕事だけでなく人生全体を経営したい個人CEOには、無料コアから始めて必要に応じてProへ進める自分株式会社が最適です。',
       ),
       (
         q: 'Perplexity Mac Agentに毎日のタスクを任せればよいのでは?',
@@ -3340,11 +3340,11 @@ $input
       ),
       (
         q: 'OpenAI Codex DesktopとClaude Codeが競合していますが、自分株式会社はどう違うの?',
-        a: 'Claude Code（423 plugins / 2,849 skills）とOpenAI Codex Desktop（Computer Use先行・20+ plugins）はツール選択の問題です。自分株式会社のai-hubは両方を含むClaude・OpenAI・Geminiを束ねる「指揮所」です。どのAIを使うかより「AIを使い分けるハブを持つか」が個人CEOの合理解。単一vendorへの依存は負債、分散が資産（原則7）。しかも完全無料。',
+        a: 'Claude Code（423 plugins / 2,849 skills）とOpenAI Codex Desktop（Computer Use先行・20+ plugins）はツール選択の問題です。自分株式会社のai-hubは両方を含むClaude・OpenAI・Geminiを束ねる「指揮所」です。どのAIを使うかより「AIを使い分けるハブを持つか」が個人CEOの合理解。単一vendorへの依存は負債、分散が資産（原則7）。基本機能は無料で、Pro/Teamで継続支援できます。',
       ),
       (
         q: 'Notion Custom Agentsが課金されるようになりましたが?',
-        a: '2026年5月4日からNotion Custom Agentsは\$10/1,000 creditの従量課金（Business/Enterprise add-on）となりました。credit残高を気にしながらAIを使うより、自分株式会社は課金の概念自体が存在しません。予測可能なゼロコストで「KPI＝昨日の自分」を継続観察できます。',
+        a: '2026年5月4日からNotion Custom Agentsは\$10/1,000 creditの従量課金（Business/Enterprise add-on）となりました。credit残高を気にしながらAIを使うより、自分株式会社は無料コアと任意のPro/Teamを分けています。予測可能な基本利用で「KPI＝昨日の自分」を継続観察できます。',
       ),
       (
         q: 'Notion、LINE、Claude Cowork、Perplexity、Codex Desktopと比べる時の差別化軸は何ですか?',
@@ -3392,7 +3392,7 @@ $input
       ),
       (
         q: 'すでに Notion + Slack を使っています。なぜ自分株式会社が必要ですか?',
-        a: 'Notionはチームのナレッジを整理します。Slackはチームとのコミュニケーションを支えます。しかし「あなた自身の意思決定」「昨日の自分との比較」「資産・負債のバランスシート」を管理するツールはどこにも存在しません。自分株式会社はその空白を埋める個人向けライフOSです。Notionが仕事を整理するなら、自分株式会社はあなた自身を経営します。しかも完全無料です。',
+        a: 'Notionはチームのナレッジを整理します。Slackはチームとのコミュニケーションを支えます。しかし「あなた自身の意思決定」「昨日の自分との比較」「資産・負債のバランスシート」を管理するツールはどこにも存在しません。自分株式会社はその空白を埋める個人向けライフOSです。Notionが仕事を整理するなら、自分株式会社はあなた自身を経営します。基本機能は無料で始められます。',
       ),
       (
         q: 'Notion Japan DC開設で日本市場が変わりますが、自分株式会社との違いは？',
@@ -3434,6 +3434,36 @@ $input
     );
   }
 
+  Widget _buildLegalFooterLinks() {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        TextButton.icon(
+          onPressed: () => Navigator.of(context).pushNamed('/terms'),
+          icon: const Icon(Icons.description_outlined, size: 18),
+          label: const Text('利用規約'),
+        ),
+        TextButton.icon(
+          onPressed: () => Navigator.of(context).pushNamed('/tokusho'),
+          icon: const Icon(Icons.receipt_long_outlined, size: 18),
+          label: const Text('特定商取引法に基づく表記'),
+        ),
+        TextButton.icon(
+          onPressed: () => Navigator.of(context).pushNamed('/privacy'),
+          icon: const Icon(Icons.privacy_tip_outlined, size: 18),
+          label: const Text('プライバシーポリシー'),
+        ),
+        TextButton.icon(
+          onPressed: () => Navigator.of(context).pushNamed('/billing'),
+          icon: const Icon(Icons.workspace_premium_outlined, size: 18),
+          label: const Text('有料プラン'),
+        ),
+      ],
+    );
+  }
+
   Widget _buildNotionVsSection() {
     const rows = [
       ('自分株式会社', 'Notion'),
@@ -3442,7 +3472,7 @@ $input
       ('資産/負債バランスシート（時間・お金）', 'プロジェクト管理'),
       ('IPO/ウェルビーイングという個人ゴール', 'ゴール設定なし'),
       ('6部署バランス（人事最優先の自己経営）', '業務効率化のみ'),
-      ('完全無料', '¥1,100〜/月 + AI従量課金'),
+      ('無料コア + Pro/Team', '¥1,100〜/月 + AI従量課金'),
     ];
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
@@ -3596,7 +3626,7 @@ $input
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _BenefitChip(icon: Icons.card_membership, label: '完全無料'),
+                  _BenefitChip(icon: Icons.card_membership, label: '無料コア'),
                   _BenefitChip(icon: Icons.auto_awesome, label: 'AI自動整理'),
                   _BenefitChip(icon: Icons.import_export, label: 'Notionから移行可'),
                 ],
@@ -4011,6 +4041,8 @@ $input
                   _buildComparisonLinksSection(),
                   // 12. B2B エンタープライズ CTA
                   _buildEnterpriseCta(),
+                  const SizedBox(height: 20),
+                  _buildLegalFooterLinks(),
                   const SizedBox(height: 20),
                   // 13. 紹介（紹介コードがある場合のみ表示）
                   _buildReferralInviteSection(),

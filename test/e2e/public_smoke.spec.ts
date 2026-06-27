@@ -19,7 +19,7 @@ test.describe('public production smoke', () => {
     await page.goto('/project-gantt', { waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('link', { name: '無料で始める' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Watch Demo' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Proで支援する' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'WBSガントチャート' })).toBeVisible();
   });
 });
