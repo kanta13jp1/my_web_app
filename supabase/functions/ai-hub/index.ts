@@ -8,10 +8,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
-import {
-  checkAndRecordAiUsage,
-  supabaseUsageStore,
-} from "./usage_gate.ts";
+import { checkAndRecordAiUsage, supabaseUsageStore } from "./usage_gate.ts";
 import {
   AI_CHARACTER_PREAMBLE,
   prependCharacter,
@@ -4915,7 +4912,9 @@ serve(async (req: Request) => {
               limit: usage.limit,
               upgrade_url: "/billing",
               message:
-                `無料プランの今月のAI利用上限(${usage.limit ?? 0}回)に達しました。` +
+                `無料プランの今月のAI利用上限(${
+                  usage.limit ?? 0
+                }回)に達しました。` +
                 `Pro にアップグレードすると無制限に利用できます。`,
             }, 402);
           }
@@ -5174,7 +5173,9 @@ serve(async (req: Request) => {
               limit: usage.limit,
               upgrade_url: "/billing",
               message:
-                `無料プランの今月のAI利用上限(${usage.limit ?? 0}回)に達しました。` +
+                `無料プランの今月のAI利用上限(${
+                  usage.limit ?? 0
+                }回)に達しました。` +
                 `Pro にアップグレードすると無制限に利用できます。`,
             }, 402);
           }
