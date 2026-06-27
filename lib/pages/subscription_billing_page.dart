@@ -5,7 +5,10 @@ import '../services/billing_service.dart';
 import '../widgets/paddle_approval_readiness_card.dart';
 
 class SubscriptionBillingPage extends StatefulWidget {
-  const SubscriptionBillingPage({super.key});
+  const SubscriptionBillingPage({super.key, this.service, this.initialUri});
+
+  final BillingGateway? service;
+  final Uri? initialUri;
 
   @override
   State<SubscriptionBillingPage> createState() =>
@@ -13,15 +16,18 @@ class SubscriptionBillingPage extends StatefulWidget {
 }
 
 class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
-  final _service = BillingService();
+  late final BillingGateway _service;
   bool _isLoading = true;
   bool _isOpeningStripe = false;
   String? _errorMessage;
   BillingStatus? _status;
+  _BillingReturnNotice? _returnNotice;
 
   @override
   void initState() {
     super.initState();
+    _service = widget.service ?? BillingService();
+    _returnNotice = _BillingReturnNotice.fromUri(widget.initialUri ?? Uri.base);
     _fetchBillingInfo();
   }
 
@@ -88,7 +94,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final status = _status ??
+    final status =
+        _status ??
         const BillingStatus(
           tier: 'free',
           status: 'active',
@@ -114,6 +121,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_errorMessage != null) _ErrorBanner(_errorMessage!),
+                  if (_returnNotice != null) ...[
+                    _BillingReturnBanner(_returnNotice!),
+                    const SizedBox(height: 12),
+                  ],
                   PaddleApprovalReadinessCard(
                     compact: true,
                     touchesRegulatedData: true,
@@ -138,6 +149,75 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                 ],
               ),
             ),
+    );
+  }
+}
+
+enum _BillingReturnKind { success, cancel }
+
+class _BillingReturnNotice {
+  const _BillingReturnNotice._(this.kind);
+
+  final _BillingReturnKind kind;
+
+  static _BillingReturnNotice? fromUri(Uri uri) {
+    final value = uri.queryParameters['billing']?.trim().toLowerCase();
+    return switch (value) {
+      'success' => const _BillingReturnNotice._(_BillingReturnKind.success),
+      'cancel' => const _BillingReturnNotice._(_BillingReturnKind.cancel),
+      _ => null,
+    };
+  }
+
+  bool get isSuccess => kind == _BillingReturnKind.success;
+
+  IconData get icon =>
+      isSuccess ? Icons.celebration_outlined : Icons.info_outline;
+
+  String get title => isSuccess ? 'ありがとうございます。決済を確認しています' : 'チェックアウトをキャンセルしました';
+
+  String get message => isSuccess
+      ? 'Stripeから戻りました。最新のプラン情報を再取得しました。反映に少し時間がかかる場合があります。'
+      : '請求は発生していません。必要になったらいつでも再開できます。';
+}
+
+class _BillingReturnBanner extends StatelessWidget {
+  const _BillingReturnBanner(this.notice);
+
+  final _BillingReturnNotice notice;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = notice.isSuccess ? scheme.primary : scheme.secondary;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        border: Border.all(color: color.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(notice.icon, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notice.title,
+                  style: TextStyle(fontWeight: FontWeight.bold, color: color),
+                ),
+                const SizedBox(height: 4),
+                Text(notice.message),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -241,8 +321,8 @@ class _PlanGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= 900
             ? 3
             : constraints.maxWidth >= 620
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         return GridView.count(
           crossAxisCount: columns,
           shrinkWrap: true,
@@ -395,10 +475,7 @@ class _LegalLinksCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 4,
               children: [
-                _LegalLinkButton(
-                  label: '特定商取引法に基づく表記',
-                  route: '/tokusho',
-                ),
+                _LegalLinkButton(label: '特定商取引法に基づく表記', route: '/tokusho'),
                 _LegalLinkButton(label: '利用規約', route: '/terms'),
                 _LegalLinkButton(label: 'プライバシーポリシー', route: '/privacy'),
               ],
