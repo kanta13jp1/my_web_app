@@ -21,8 +21,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('ありがとうございます。決済を確認しています'), findsOneWidget);
-    expect(find.textContaining('最新のプラン情報を再取得しました'), findsOneWidget);
+    expect(find.text('Checkout completed'), findsOneWidget);
+    expect(find.textContaining('latest billing status'), findsOneWidget);
     expect(billing.fetchStatusCount, 1);
   });
 
@@ -41,8 +41,28 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('チェックアウトをキャンセルしました'), findsOneWidget);
-    expect(find.textContaining('請求は発生していません'), findsOneWidget);
+    expect(find.text('Checkout canceled'), findsOneWidget);
+    expect(find.textContaining('No subscription payment'), findsOneWidget);
+    expect(billing.fetchStatusCount, 1);
+  });
+
+  testWidgets('shows supporter success confirmation', (tester) async {
+    final billing = _FakeBillingGateway();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: billing,
+          initialUri: Uri.parse(
+            'https://example.com/subscription-billing?billing=supporter_success',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Support received'), findsOneWidget);
+    expect(find.textContaining('first revenue evidence'), findsOneWidget);
     expect(billing.fetchStatusCount, 1);
   });
 }
@@ -65,6 +85,15 @@ class _FakeBillingGateway implements BillingGateway {
   Future<BillingCheckoutSession> createCheckoutSession({
     required String tier,
     required String returnUrl,
+  }) async {
+    return const BillingCheckoutSession(url: 'https://stripe.example.test');
+  }
+
+  @override
+  Future<BillingCheckoutSession> createSupporterCheckoutSession({
+    required String returnUrl,
+    BillingSupporterAttribution attribution =
+        const BillingSupporterAttribution(),
   }) async {
     return const BillingCheckoutSession(url: 'https://stripe.example.test');
   }

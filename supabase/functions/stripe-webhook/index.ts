@@ -53,6 +53,17 @@ function currentPeriodEnd(value: unknown): string | null {
     : null;
 }
 
+function asInteger(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.trunc(value);
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
+  }
+  return null;
+}
+
 function parseStripeSignature(header: string): {
   timestamp: string;
   signatures: string[];
@@ -171,11 +182,80 @@ async function upsertSubscriptionFromStripe(
   if (error) throw new Error(error.message);
 }
 
+const SUPPORTER_ATTRIBUTION_FIELDS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "experiment_key",
+  "variant",
+  "source_log_id",
+  "landing_touchpoint",
+];
+
+async function recordSupporterCheckout(
+  admin: SupabaseClient,
+  session: Record<string, unknown>,
+  metadata: Record<string, unknown>,
+): Promise<void> {
+  const sessionId = asString(session.id);
+  if (!sessionId) return;
+
+  const { data: existing, error: existingError } = await admin
+    .from("hub_data")
+    .select("id")
+    .eq("source", "stripe_supporter_payment")
+    .filter("metadata->>stripe_checkout_session_id", "eq", sessionId)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) return;
+
+  const customerDetails = asRecord(session.customer_details) ?? {};
+  const attribution: Record<string, string> = {};
+  for (const field of SUPPORTER_ATTRIBUTION_FIELDS) {
+    const value = asString(metadata[field]);
+    if (value) attribution[field] = value;
+  }
+
+  const amountTotal = asInteger(session.amount_total);
+  const amountJpy = asInteger(metadata.amount_jpy) ?? amountTotal;
+  const { error } = await admin.from("hub_data").insert({
+    source: "stripe_supporter_payment",
+    metadata: {
+      stripe_event_source: "checkout.session.completed",
+      stripe_checkout_session_id: sessionId,
+      stripe_payment_intent_id: asString(session.payment_intent) || null,
+      stripe_customer_id: asString(session.customer) || null,
+      customer_email: asString(customerDetails.email) ||
+        asString(session.customer_email) ||
+        null,
+      amount_total: amountTotal,
+      amount_jpy: amountJpy,
+      currency: asString(session.currency).toLowerCase() || "jpy",
+      payment_status: asString(session.payment_status),
+      mode: asString(session.mode),
+      offer: asString(metadata.offer),
+      milestone_code: asString(metadata.milestone_code),
+      recorded_at: new Date().toISOString(),
+      ...attribution,
+    },
+  });
+  if (error) throw new Error(error.message);
+}
+
 async function handleCheckoutCompleted(
   admin: SupabaseClient,
   session: Record<string, unknown>,
 ): Promise<void> {
   const metadata = asRecord(session.metadata) ?? {};
+  if (
+    asString(metadata.offer) === "founding_supporter" ||
+    asString(metadata.milestone_code) === "first-yen-revenue"
+  ) {
+    await recordSupporterCheckout(admin, session, metadata);
+    return;
+  }
+
   const userId = asString(metadata.user_id);
   const customerId = asString(session.customer);
   const subscriptionId = asString(session.subscription);

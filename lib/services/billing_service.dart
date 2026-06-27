@@ -58,6 +58,65 @@ class BillingCheckoutSession {
   }
 }
 
+class BillingSupporterAttribution {
+  const BillingSupporterAttribution({
+    this.utmSource,
+    this.utmMedium,
+    this.utmCampaign,
+    this.utmContent,
+    this.experimentKey,
+    this.variant,
+    this.sourceLogId,
+    this.landingTouchpoint,
+  });
+
+  final String? utmSource;
+  final String? utmMedium;
+  final String? utmCampaign;
+  final String? utmContent;
+  final String? experimentKey;
+  final String? variant;
+  final String? sourceLogId;
+  final String? landingTouchpoint;
+
+  factory BillingSupporterAttribution.fromUri(
+    Uri uri, {
+    String landingTouchpoint = 'subscription_billing',
+  }) {
+    final params = uri.queryParameters;
+    return BillingSupporterAttribution(
+      utmSource: params['utm_source'],
+      utmMedium: params['utm_medium'],
+      utmCampaign: params['utm_campaign'],
+      utmContent: params['utm_content'],
+      experimentKey: params['experiment_key'] ?? params['utm_campaign'],
+      variant: params['variant'] ?? params['utm_content'],
+      sourceLogId: params['source_log_id'] ?? params['x_post_log_id'],
+      landingTouchpoint: landingTouchpoint,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final json = <String, dynamic>{};
+    void add(String key, String? value) {
+      final normalized = value?.trim();
+      if (normalized == null || normalized.isEmpty) return;
+      json[key] =
+          normalized.length > 160 ? normalized.substring(0, 160) : normalized;
+    }
+
+    add('utm_source', utmSource);
+    add('utm_medium', utmMedium);
+    add('utm_campaign', utmCampaign);
+    add('utm_content', utmContent);
+    add('experiment_key', experimentKey);
+    add('variant', variant);
+    add('source_log_id', sourceLogId);
+    add('landing_touchpoint', landingTouchpoint);
+    return json;
+  }
+}
+
 class BillingPortalSession {
   const BillingPortalSession({required this.url, this.id});
 
@@ -79,6 +138,12 @@ abstract class BillingGateway {
   Future<BillingCheckoutSession> createCheckoutSession({
     required String tier,
     required String returnUrl,
+  });
+
+  Future<BillingCheckoutSession> createSupporterCheckoutSession({
+    required String returnUrl,
+    BillingSupporterAttribution attribution =
+        const BillingSupporterAttribution(),
   });
 
   Future<BillingPortalSession> createPortalSession({required String returnUrl});
@@ -105,6 +170,19 @@ class BillingService implements BillingGateway {
       'tier': tier,
       'return_url': returnUrl,
     });
+    return BillingCheckoutSession.fromJson(data);
+  }
+
+  @override
+  Future<BillingCheckoutSession> createSupporterCheckoutSession({
+    required String returnUrl,
+    BillingSupporterAttribution attribution =
+        const BillingSupporterAttribution(),
+  }) async {
+    final data = await _invokeBillingAction(
+      'billing.create_supporter_checkout_session',
+      {'return_url': returnUrl, ...attribution.toJson()},
+    );
     return BillingCheckoutSession.fromJson(data);
   }
 

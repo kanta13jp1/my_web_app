@@ -578,6 +578,137 @@ async function buildXPerformanceContext(
   return buildXPerformanceContextFromLogs(logs);
 }
 
+async function buildRevenueFunnelReport(
+  admin: SupabaseClient,
+  userId: string,
+  rawLimit: unknown,
+) {
+  const limit = Math.max(
+    10,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  const xLogs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const performance = buildXPerformanceContextFromLogs(xLogs);
+  const { data: payments, error } = await admin
+    .from("hub_data")
+    .select("id, metadata, created_at")
+    .eq("source", "stripe_supporter_payment")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+
+  const paidPayments = (payments ?? [])
+    .map((item) => {
+      const metadata = asRecord(item.metadata);
+      return {
+        id: String(item.id),
+        createdAt: String(item.created_at),
+        amountJpy: firstNumber(metadata.amount_jpy, metadata.amount_total) ?? 0,
+        paymentStatus: firstString(metadata.payment_status),
+        variant: firstString(metadata.variant, "unknown"),
+        experimentKey: firstString(metadata.experiment_key),
+        sourceLogId: firstString(metadata.source_log_id),
+        utmSource: firstString(metadata.utm_source),
+        utmMedium: firstString(metadata.utm_medium),
+        utmCampaign: firstString(metadata.utm_campaign),
+        utmContent: firstString(metadata.utm_content),
+        stripeCheckoutSessionId: firstString(
+          metadata.stripe_checkout_session_id,
+        ),
+      };
+    })
+    .filter((row) => row.paymentStatus === "paid");
+
+  const xRows = performance.rows as Array<{
+    id: string;
+    variant: string;
+    impressions?: number | null;
+    score: number;
+  }>;
+  const byVariant = new Map<
+    string,
+    {
+      variant: string;
+      posts: number;
+      impressions: number;
+      score: number;
+      paidSupporters: number;
+      revenueJpy: number;
+    }
+  >();
+  for (const row of xRows) {
+    const key = row.variant || "unknown";
+    const current = byVariant.get(key) ?? {
+      variant: key,
+      posts: 0,
+      impressions: 0,
+      score: 0,
+      paidSupporters: 0,
+      revenueJpy: 0,
+    };
+    current.posts += 1;
+    current.impressions += firstNumber(row.impressions) ?? 0;
+    current.score += row.score;
+    byVariant.set(key, current);
+  }
+  for (const payment of paidPayments) {
+    const key = payment.variant || "unknown";
+    const current = byVariant.get(key) ?? {
+      variant: key,
+      posts: 0,
+      impressions: 0,
+      score: 0,
+      paidSupporters: 0,
+      revenueJpy: 0,
+    };
+    current.paidSupporters += 1;
+    current.revenueJpy += payment.amountJpy;
+    byVariant.set(key, current);
+  }
+  const variants = [...byVariant.values()].sort((left, right) =>
+    right.revenueJpy - left.revenueJpy ||
+    right.paidSupporters - left.paidSupporters ||
+    right.impressions - left.impressions ||
+    right.score - left.score
+  );
+
+  return {
+    success: true,
+    target: {
+      firstRevenueJpy: 1,
+      xImpressionsPerPost: 10000,
+    },
+    summary: {
+      xPostLogs: xLogs.length,
+      measuredXPosts: xRows.length,
+      latestPaidSupporters: paidPayments.length,
+      revenueJpy: paidPayments.reduce(
+        (sum, payment) => sum + payment.amountJpy,
+        0,
+      ),
+      bestVariantForRevenue: variants[0]?.variant ?? null,
+      bestVariantForReach: performance.bestVariant,
+    },
+    variants,
+    payments: paidPayments,
+    xPerformance: {
+      winners: performance.winners,
+      underperformers: performance.underperformers,
+      promptContext: performance.promptContext,
+    },
+    nextActions: paidPayments.length === 0
+      ? [
+        "Post the next high-information X variant with link-in-reply enabled.",
+        "Use the Founding Supporter checkout URL from the billing page for one real supporter payment.",
+        "After payment, rerun revenue.funnel_report and first_supporter_webhook_evidence.sql.",
+      ]
+      : [
+        "Double down on the revenue-winning variant for the next 3 posts.",
+        "Verify Stripe payout eligibility and bank payout evidence.",
+      ],
+  };
+}
+
 async function buildAcquisitionTouchpointReport(
   admin: SupabaseClient,
   rawWindowDays: unknown,
@@ -1262,6 +1393,12 @@ serve(async (req: Request) => {
 
       case "x.performance_context": {
         return json(await buildXPerformanceContext(admin, userId!, body.limit));
+      }
+
+      case "revenue.funnel_report": {
+        return json(
+          await buildRevenueFunnelReport(admin, userId!, body.limit),
+        );
       }
 
       case "x.post": {

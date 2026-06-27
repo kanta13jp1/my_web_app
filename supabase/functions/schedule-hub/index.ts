@@ -267,6 +267,39 @@ function withBillingParam(url: string, value: string): string {
   return parsed.toString();
 }
 
+function supporterAmountJpy(): number {
+  const raw = Number(Deno.env.get("STRIPE_SUPPORTER_AMOUNT_JPY") ?? 100);
+  return Number.isFinite(raw) && raw >= 100 ? Math.trunc(raw) : 100;
+}
+
+function stripeMetadataValue(value: unknown): string {
+  const normalized = asString(value);
+  return normalized.length > 160 ? normalized.slice(0, 160) : normalized;
+}
+
+function supporterAttributionParams(
+  body: Record<string, unknown>,
+): Record<string, string> {
+  const fields = [
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_content",
+    "experiment_key",
+    "variant",
+    "source_log_id",
+    "landing_touchpoint",
+  ];
+  const params: Record<string, string> = {};
+  for (const field of fields) {
+    const value = stripeMetadataValue(body[field]);
+    if (!value) continue;
+    params[`metadata[${field}]`] = value;
+    params[`payment_intent_data[metadata][${field}]`] = value;
+  }
+  return params;
+}
+
 async function stripePostForm(
   path: string,
   params: Record<string, string>,
@@ -1583,6 +1616,7 @@ serve(async (req: Request) => {
       "notion.fix_wbs_all_instances",
       "wbs.unblock_dependents",
       "x.post_with_media",
+      "billing.create_supporter_checkout_session",
       "maintenance.list_active",
     ];
     const serviceRoleRequest = isServiceRoleRequest(req);
@@ -1653,6 +1687,39 @@ serve(async (req: Request) => {
           success: true,
           id: session.id,
           checkout_url: session.url,
+        });
+      }
+
+      case "billing.create_supporter_checkout_session": {
+        const amountJpy = supporterAmountJpy();
+        const returnUrl = billingReturnUrl(
+          body.return_url,
+          "/subscription-billing",
+        );
+        const session = await stripePostForm("/checkout/sessions", {
+          mode: "payment",
+          locale: "ja",
+          success_url: withBillingParam(returnUrl, "supporter_success"),
+          cancel_url: withBillingParam(returnUrl, "supporter_cancel"),
+          "line_items[0][price_data][currency]": "jpy",
+          "line_items[0][price_data][product_data][name]": "Founding Supporter",
+          "line_items[0][price_data][product_data][description]":
+            "One-time support for the first revenue proof.",
+          "line_items[0][price_data][unit_amount]": String(amountJpy),
+          "line_items[0][quantity]": "1",
+          "metadata[offer]": "founding_supporter",
+          "metadata[milestone_code]": "first-yen-revenue",
+          "metadata[amount_jpy]": String(amountJpy),
+          "payment_intent_data[metadata][offer]": "founding_supporter",
+          "payment_intent_data[metadata][milestone_code]": "first-yen-revenue",
+          "payment_intent_data[metadata][amount_jpy]": String(amountJpy),
+          ...supporterAttributionParams(body),
+        });
+        return json({
+          success: true,
+          id: session.id,
+          checkout_url: session.url,
+          amount_jpy: amountJpy,
         });
       }
 
