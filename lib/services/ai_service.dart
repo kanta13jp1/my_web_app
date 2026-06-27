@@ -12,13 +12,75 @@ class AIServiceException implements Exception {
   final String message;
   final String? errorType;
   final String? retryAfter;
+  final String? code;
+  final int? statusCode;
+  final String? upgradeUrl;
 
-  AIServiceException(this.message, {this.errorType, this.retryAfter});
+  AIServiceException(
+    this.message, {
+    this.errorType,
+    this.retryAfter,
+    this.code,
+    this.statusCode,
+    this.upgradeUrl,
+  });
+
+  factory AIServiceException.fromFunctionPayload(
+    Map<String, dynamic> payload, {
+    String fallbackMessage = 'AI処理に失敗しました',
+  }) {
+    final statusCode = _payloadStatusCode(payload);
+    final code = payload['code']?.toString();
+    final message = _payloadMessage(payload, fallbackMessage);
+    final upgradeUrl = _payloadString(payload, 'upgrade_url') ??
+        _payloadString(payload, 'upgradeUrl');
+    if (statusCode == 402 && code == 'free_limit_reached') {
+      return AIServiceException(
+        message,
+        errorType: 'FREE_LIMIT_REACHED',
+        code: code,
+        statusCode: statusCode,
+        upgradeUrl: upgradeUrl,
+      );
+    }
+
+    return AIServiceException(
+      message,
+      errorType: payload['errorType'] as String?,
+      retryAfter: payload['retryAfter']?.toString(),
+      code: code,
+      statusCode: statusCode,
+      upgradeUrl: upgradeUrl,
+    );
+  }
 
   bool get isRateLimitError => errorType == 'RATE_LIMIT';
+  bool get isFreeLimitReached =>
+      statusCode == 402 && code == 'free_limit_reached';
 
   @override
   String toString() => message;
+}
+
+String? _payloadString(Map<String, dynamic> payload, String key) {
+  final value = payload[key]?.toString().trim();
+  return value == null || value.isEmpty ? null : value;
+}
+
+int? _payloadStatusCode(Map<String, dynamic> payload) {
+  final value =
+      payload['status'] ?? payload['statusCode'] ?? payload['http_status'];
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value == null) return null;
+  return int.tryParse(value.toString());
+}
+
+String _payloadMessage(Map<String, dynamic> payload, String fallbackMessage) {
+  return _payloadString(payload, 'message') ??
+      _payloadString(payload, 'error') ??
+      _payloadString(payload, 'detail') ??
+      fallbackMessage;
 }
 
 /// グローバル 429 サーキットブレイカー
@@ -222,19 +284,13 @@ class AIService {
       AppLogger.debug('Supabase Function Response ($functionName): $data');
 
       if (data['success'] != true) {
-        final errorMessage = (data['error'] as String?) ?? 'AI処理に失敗しました';
-        final errorType = data['errorType'] as String?;
-        final retryAfter = data['retryAfter']?.toString();
+        final exception = AIServiceException.fromFunctionPayload(data);
 
         AppLogger.error(
-          'Supabase Function Error ($functionName): $errorMessage',
+          'Supabase Function Error ($functionName): ${exception.message}',
         );
 
-        throw AIServiceException(
-          errorMessage,
-          errorType: errorType,
-          retryAfter: retryAfter,
-        );
+        throw exception;
       }
 
       return data;
@@ -246,24 +302,31 @@ class AIService {
       );
 
       if (details is Map<String, dynamic>) {
-        final errorMessage =
-            details['error']?.toString() ?? 'Supabase Function からの詳細エラー';
-        final errorType = details['errorType'] as String?;
-        final retryAfter = details['retryAfter']?.toString();
+        final exception = AIServiceException.fromFunctionPayload(
+          details,
+          fallbackMessage: 'Supabase Function からの詳細エラー',
+        );
 
         // 429 / quota / rate limit を検知して circuit breaker を作動
-        final isQuota = errorType == 'RATE_LIMIT' ||
+        final isQuota = exception.errorType == 'RATE_LIMIT' ||
             RegExp(r'quota|rate.?limit|429', caseSensitive: false)
-                .hasMatch(errorMessage);
+                .hasMatch(exception.message);
         if (isQuota) {
           AiQuotaGuard.markQuotaExceeded();
         }
 
-        throw AIServiceException(
-          errorMessage,
-          errorType: isQuota ? 'RATE_LIMIT' : errorType,
-          retryAfter: retryAfter,
-        );
+        if (isQuota && !exception.isRateLimitError) {
+          throw AIServiceException(
+            exception.message,
+            errorType: 'RATE_LIMIT',
+            retryAfter: exception.retryAfter,
+            code: exception.code,
+            statusCode: exception.statusCode,
+            upgradeUrl: exception.upgradeUrl,
+          );
+        }
+
+        throw exception;
       }
 
       // details が読めない場合も 429 メッセージなら guard 作動
