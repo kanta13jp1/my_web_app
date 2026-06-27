@@ -13,9 +13,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FakeSupabaseClient extends Fake implements SupabaseClient {
   final _queryBuilder = FakeSupabaseQueryBuilder();
-  final Map<String, dynamic> _rpcResponse = <String, dynamic>{};
+  final Map<String, dynamic> _rpcResponses = <String, dynamic>{};
 
   FakeSupabaseQueryBuilder get queryBuilder => _queryBuilder;
+
+  void setRpcResponse(String functionName, dynamic data) {
+    _rpcResponses[functionName] = data;
+  }
 
   @override
   SupabaseQueryBuilder from(String table) {
@@ -26,7 +30,13 @@ class FakeSupabaseClient extends Fake implements SupabaseClient {
   @override
   dynamic noSuchMethod(Invocation invocation) {
     if (invocation.memberName == #rpc) {
-      return FakePostgrestFilterBuilder<dynamic>(_rpcResponse, false);
+      final functionName = invocation.positionalArguments.isEmpty
+          ? ''
+          : invocation.positionalArguments.first.toString();
+      return FakePostgrestFilterBuilder<dynamic>(
+        _rpcResponses[functionName] ?? <String, dynamic>{},
+        false,
+      );
     }
     return super.noSuchMethod(invocation);
   }
@@ -320,6 +330,32 @@ void main() {
     expect(find.text('4.0'), findsOneWidget);
   });
 
+  testWidgets('Shows paid conversion metrics from admin billing summary',
+      (WidgetTester tester) async {
+    fakeSupabaseClient.setRpcResponse(
+      'get_billing_paid_conversion_summary',
+      [
+        {'paid_customers': 2, 'mrr_yen': 3960},
+      ],
+    );
+    fakeSupabaseClient.queryBuilder
+      ..setData(sampleData())
+      ..setData(
+        profileData(todayRegistrations: 2, previousRegistrations: 18),
+        table: 'user_profiles',
+      );
+
+    await tester.pumpWidget(createTestWidget());
+    await tester.pumpAndSettle();
+
+    expect(find.text('有料転換'), findsOneWidget);
+    expect(find.text('課金ユーザー数'), findsOneWidget);
+    expect(find.text('MRR'), findsOneWidget);
+    expect(find.text('free→paid CVR'), findsOneWidget);
+    expect(find.text('¥3,960'), findsOneWidget);
+    expect(find.text('10.0%'), findsWidgets);
+  });
+
   testWidgets('Shows empty state when there is no data',
       (WidgetTester tester) async {
     fakeSupabaseClient.queryBuilder
@@ -331,6 +367,8 @@ void main() {
 
     expect(find.text('0.0'), findsOneWidget);
     expect(find.text('今日の登録目標'), findsOneWidget);
+    expect(find.text('有料転換'), findsOneWidget);
+    expect(find.text('¥0'), findsOneWidget);
   });
 
   testWidgets('Handles Supabase error gracefully', (WidgetTester tester) async {
