@@ -86,7 +86,7 @@ abstract class BillingGateway {
 
 class BillingService implements BillingGateway {
   BillingService({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 

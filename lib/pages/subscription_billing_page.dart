@@ -94,8 +94,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final status =
-        _status ??
+    final status = _status ??
         const BillingStatus(
           tier: 'free',
           status: 'active',
@@ -321,8 +320,8 @@ class _PlanGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= 900
             ? 3
             : constraints.maxWidth >= 620
-            ? 2
-            : 1;
+                ? 2
+                : 1;
         return GridView.count(
           crossAxisCount: columns,
           shrinkWrap: true,
