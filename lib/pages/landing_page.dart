@@ -1170,7 +1170,7 @@ $input
     final userCount = _totalUsers > 10 ? '登録者$_totalUsers人突破！' : '';
     final text = 'スマホでギター録音＋21のSaaSを1アプリに統合。'
         '自分株式会社 $userCount\n'
-        '完全無料で使えます👇\n'
+        '無料コアから使えます。Proで支援できます👇\n'
         '$siteUrl\n'
         '#FlutterWeb #buildinpublic #自分株式会社 #ギター録音';
     final uri = Uri.https('x.com', '/intent/tweet', {'text': text});
@@ -2002,7 +2002,7 @@ $input
         Icons.draw,
         '0xFF64748B',
         '電子署名',
-        '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を完全無料で提供。'
+        '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を無料コアで提供。'
       ),
       (
         Icons.storefront,
@@ -2098,7 +2098,7 @@ $input
         Icons.work_history,
         '0xFF059669',
         '採用ボード',
-        '求人票作成・応募者管理・面接スケジューリングをAIが支援。HR SaaSの代替を完全無料で実現。'
+        '求人票作成・応募者管理・面接スケジューリングをAIが支援。HR SaaSの代替を無料コアで実現。'
       ),
       (
         Icons.sensors,
@@ -2176,7 +2176,7 @@ $input
         Icons.lock,
         '0xFF7C3AED',
         'パスワード金庫',
-        '全パスワードをゼロ知識暗号化で保護・自動入力・セキュリティ監査。1Password/Bitwardenを超える統合認証管理を完全無料で提供。'
+        '全パスワードをゼロ知識暗号化で保護・自動入力・セキュリティ監査。1Password/Bitwardenを超える統合認証管理を無料コアで提供。'
       ),
       (
         Icons.podcasts,
@@ -2188,7 +2188,7 @@ $input
         Icons.screen_share,
         '0xFF0369A1',
         'スクリーン録画',
-        'ブラウザから直接スクリーン録画・即時共有。Loomを超える非同期ビデオコミュニケーションを完全無料で提供。'
+        'ブラウザから直接スクリーン録画・即時共有。Loomを超える非同期ビデオコミュニケーションを無料コアで提供。'
       ),
       (
         Icons.storefront,
@@ -2230,7 +2230,7 @@ $input
         Icons.inventory,
         '0xFF059669',
         '在庫・バーコード管理',
-        '商品バーコードスキャン・在庫数追跡・入出庫記録を自動化。Amazonの倉庫管理機能を個人・中小企業向けに完全無料で提供。'
+        '商品バーコードスキャン・在庫数追跡・入出庫記録を自動化。Amazonの倉庫管理機能を個人・中小企業向けに無料コアで提供。'
       ),
       (
         Icons.dashboard_customize,
@@ -2254,7 +2254,7 @@ $input
         Icons.account_balance_wallet,
         '0xFF00B900',
         'MoneyForward 連携',
-        '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える完全無料の資産管理を提供。'
+        '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える無料コアの資産管理を提供。'
       ),
       (
         Icons.webhook,
@@ -2284,7 +2284,7 @@ $input
         Icons.shopping_cart_outlined,
         '0xFFF97316',
         'ショッピングリスト',
-        '買い物リスト作成・価格管理・購入チェックをスマート管理。Amazonの購入管理機能を超えるAI節約提案付きの完全無料ショッピングアシスタント。'
+        '買い物リスト作成・価格管理・購入チェックをスマート管理。Amazonの購入管理機能を超えるAI節約提案付きの無料コアのショッピングアシスタント。'
       ),
       (
         Icons.notifications_active,
@@ -2410,7 +2410,7 @@ $input
         Icons.menu_book,
         '0xFF0F766E',
         'Wikiデータベース',
-        '階層式Wikiページ・社内マニュアル・チームナレッジを一元管理。Confluenceを超える個人・チーム向け知識ベースを完全無料で構築。'
+        '階層式Wikiページ・社内マニュアル・チームナレッジを一元管理。Confluenceを超える個人・チーム向け知識ベースを無料コアで構築。'
       ),
       (
         Icons.view_kanban,
@@ -2935,6 +2935,16 @@ $input
             '日常の基本機能は無料で使えます。Pro/Teamは決済後に追加機能と上限緩和を提供します。',
             style: TextStyle(
               fontSize: 13,
+              color: Color(0xFF78350F),
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Free: AI質問30回/月・基本機能無料 / Pro: ¥980/月 / Team: ¥2,980/席',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
               color: Color(0xFF78350F),
               height: 1.6,
             ),
