@@ -73,17 +73,30 @@ class BillingPortalSession {
   }
 }
 
-class BillingService {
+abstract class BillingGateway {
+  Future<BillingStatus> fetchStatus();
+
+  Future<BillingCheckoutSession> createCheckoutSession({
+    required String tier,
+    required String returnUrl,
+  });
+
+  Future<BillingPortalSession> createPortalSession({required String returnUrl});
+}
+
+class BillingService implements BillingGateway {
   BillingService({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
+  @override
   Future<BillingStatus> fetchStatus() async {
     final data = await _invokeBillingAction('billing.status', {});
     return BillingStatus.fromJson(data);
   }
 
+  @override
   Future<BillingCheckoutSession> createCheckoutSession({
     required String tier,
     required String returnUrl,
@@ -95,6 +108,7 @@ class BillingService {
     return BillingCheckoutSession.fromJson(data);
   }
 
+  @override
   Future<BillingPortalSession> createPortalSession({
     required String returnUrl,
   }) async {
