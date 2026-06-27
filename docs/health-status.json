@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-06-27T08:53:01Z",
+  "fetched_at": "2026-06-27T10:38:02Z",
   "tickets": {
     "http_code": "200",
     "count": 0,
@@ -15,16 +15,16 @@
       "ok": true
     },
     "get-home-dashboard": {
-      "code": "200",
-      "ok": true
+      "code": "000000",
+      "ok": false
     },
     "guitar-recording-studio": {
       "code": "200",
       "ok": true
     },
     "health-check": {
-      "code": "200",
-      "ok": true
+      "code": "000000",
+      "ok": false
     }
   }
 }
