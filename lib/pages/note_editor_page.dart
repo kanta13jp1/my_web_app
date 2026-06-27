@@ -19,6 +19,7 @@ import '../services/undo_redo_service.dart';
 import '../utils/note_image_clipboard.dart';
 import '../utils/note_image_drop.dart';
 import '../widgets/attachment_list_widget.dart';
+import '../widgets/ai_free_limit_upgrade_dialog.dart';
 import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
@@ -376,6 +377,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  Future<bool> _showUpgradeDialogIfNeeded(Object error) async {
+    if (error is! AIServiceException || !error.isFreeLimitReached || !mounted) {
+      return false;
+    }
+    return showAiFreeLimitUpgradeDialog(context, error);
   }
 
   Future<int?> _ensureNoteIdForAttachmentFlow() async {
@@ -804,6 +812,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       _setContentText(result);
       _showMessage('Prompt applied: ${template.title}');
     } catch (e) {
+      if (await _showUpgradeDialogIfNeeded(e)) {
+        return;
+      }
       _showMessage('Prompt failed: $e');
     } finally {
       if (mounted) {
@@ -1172,6 +1183,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       }
       _slashCommandController.clear();
     } catch (e) {
+      if (await _showUpgradeDialogIfNeeded(e)) {
+        return;
+      }
       _showMessage('コマンドの実行に失敗しました: $e');
     } finally {
       if (mounted) {
