@@ -4,6 +4,7 @@ const X_API_KEY = Deno.env.get("X_API_KEY") ?? "";
 const X_API_SECRET = Deno.env.get("X_API_SECRET") ?? "";
 const X_ACCESS_TOKEN = Deno.env.get("X_ACCESS_TOKEN") ?? "";
 const X_ACCESS_TOKEN_SECRET = Deno.env.get("X_ACCESS_TOKEN_SECRET") ?? "";
+const X_BEARER_TOKEN = Deno.env.get("X_BEARER_TOKEN") ?? "";
 const X_ACCOUNT_HANDLE = Deno.env.get("X_ACCOUNT_HANDLE") ?? "@kanta13jp1";
 const MAX_REMOTE_MEDIA_BYTES = 64 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = 4 * 1024 * 1024;
@@ -19,6 +20,31 @@ export interface UploadedXMedia {
 export interface XTweetResult {
   tweetId: string | null;
   account: string;
+  raw: Record<string, unknown>;
+}
+
+export interface XTrend {
+  name: string;
+  query: string | null;
+  tweetCount: number | null;
+  url: string | null;
+}
+
+export interface XTweetMetrics {
+  tweetId: string;
+  text: string | null;
+  createdAt: string | null;
+  publicMetrics: Record<string, unknown>;
+  nonPublicMetrics: Record<string, unknown>;
+  organicMetrics: Record<string, unknown>;
+  impressions: number | null;
+  engagements: number;
+  likeCount: number;
+  replyCount: number;
+  repostCount: number;
+  quoteCount: number;
+  bookmarkCount: number;
+  score: number;
   raw: Record<string, unknown>;
 }
 
@@ -63,6 +89,84 @@ export function assertXConfigured() {
       "X API credentials not configured. Set X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET in Supabase secrets.",
     );
   }
+}
+
+export async function fetchXTrendsByWoeid(options: {
+  woeid: number;
+  maxTrends?: number;
+}): Promise<XTrend[]> {
+  const woeid = Number.isFinite(options.woeid) ? Math.trunc(options.woeid) : 0;
+  if (woeid <= 0) throw new Error("woeid must be a positive number.");
+  const maxTrends = Math.max(1, Math.min(50, options.maxTrends ?? 10));
+
+  if (X_BEARER_TOKEN !== "") {
+    const url = new URL(
+      `https://api.x.com/2/trends/by/woeid/${
+        encodeURIComponent(String(woeid))
+      }`,
+    );
+    url.searchParams.set("max_trends", String(maxTrends));
+    url.searchParams.set("trend.fields", "trend_name,tweet_count");
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` },
+    });
+    const parsed = await parseXResponse(response);
+    return normalizeXTrends(parsed).slice(0, maxTrends);
+  }
+
+  assertXConfigured();
+  const url = new URL("https://api.twitter.com/1.1/trends/place.json");
+  url.searchParams.set("id", String(woeid));
+  const oauthHeader = await buildOAuthHeader("GET", url.toString());
+  const response = await fetch(url, {
+    headers: { Authorization: oauthHeader },
+  });
+  const parsed = await parseXResponse(response);
+  return normalizeXTrends(parsed).slice(0, maxTrends);
+}
+
+export async function fetchXTweetMetrics(
+  tweetIds: string[],
+): Promise<XTweetMetrics[]> {
+  assertXConfigured();
+  const ids = [...new Set(tweetIds.map(asString).filter((id) => id !== ""))]
+    .slice(0, 100);
+  if (ids.length === 0) return [];
+
+  try {
+    return await fetchXTweetMetricsWithFields(ids, [
+      "created_at",
+      "text",
+      "public_metrics",
+      "non_public_metrics",
+      "organic_metrics",
+    ]);
+  } catch (error) {
+    const payload = isXApiError(error) ? error.payload : null;
+    if (payload && (payload.status === 400 || payload.status === 403)) {
+      return await fetchXTweetMetricsWithFields(ids, [
+        "created_at",
+        "text",
+        "public_metrics",
+      ]);
+    }
+    throw error;
+  }
+}
+
+async function fetchXTweetMetricsWithFields(
+  tweetIds: string[],
+  fields: string[],
+): Promise<XTweetMetrics[]> {
+  const url = new URL("https://api.twitter.com/2/tweets");
+  url.searchParams.set("ids", tweetIds.join(","));
+  url.searchParams.set("tweet.fields", fields.join(","));
+  const oauthHeader = await buildOAuthHeader("GET", url.toString());
+  const response = await fetch(url, {
+    headers: { Authorization: oauthHeader },
+  });
+  const parsed = await parseXResponse(response);
+  return normalizeXTweetMetrics(parsed);
 }
 
 export function isXApiError(error: unknown): error is XApiError {
@@ -442,6 +546,100 @@ export function buildXApiErrorPayload(
     actionRequired: buildXActionRequired(code, requiredEnrollment),
     raw: Object.keys(parsed).length > 0 ? parsed : rawText,
   };
+}
+
+function normalizeXTrends(payload: unknown): XTrend[] {
+  const root = Array.isArray(payload) ? payload[0] : payload;
+  const rootObject = asObject(root);
+  const data = Array.isArray(rootObject.data)
+    ? rootObject.data
+    : Array.isArray(rootObject.trends)
+    ? rootObject.trends
+    : Array.isArray(payload)
+    ? payload
+    : [];
+  return data
+    .map((entry) => asObject(entry))
+    .map((entry) => {
+      const name = asString(entry.trend_name) ||
+        asString(entry.name) ||
+        asString(entry.topic);
+      if (name === "") return null;
+      return {
+        name,
+        query: asString(entry.query) || null,
+        tweetCount: firstFiniteNumber(entry.tweet_count, entry.tweet_volume),
+        url: asString(entry.url) || null,
+      };
+    })
+    .filter((entry): entry is XTrend => entry !== null);
+}
+
+function normalizeXTweetMetrics(payload: unknown): XTweetMetrics[] {
+  const root = asObject(payload);
+  const data = Array.isArray(root.data) ? root.data : [];
+  return data
+    .map((entry) => asObject(entry))
+    .map((tweet) => {
+      const tweetId = asString(tweet.id);
+      if (tweetId === "") return null;
+      const publicMetrics = asObject(tweet.public_metrics);
+      const nonPublicMetrics = asObject(tweet.non_public_metrics);
+      const organicMetrics = asObject(tweet.organic_metrics);
+      const likeCount = firstFiniteNumber(publicMetrics.like_count) ?? 0;
+      const replyCount = firstFiniteNumber(publicMetrics.reply_count) ?? 0;
+      const repostCount = firstFiniteNumber(publicMetrics.retweet_count) ?? 0;
+      const quoteCount = firstFiniteNumber(publicMetrics.quote_count) ?? 0;
+      const bookmarkCount = firstFiniteNumber(publicMetrics.bookmark_count) ??
+        0;
+      const urlClicks = firstFiniteNumber(
+        nonPublicMetrics.url_link_clicks,
+        organicMetrics.url_link_clicks,
+      ) ?? 0;
+      const profileClicks = firstFiniteNumber(
+        nonPublicMetrics.user_profile_clicks,
+        organicMetrics.user_profile_clicks,
+      ) ?? 0;
+      const impressions = firstFiniteNumber(
+        publicMetrics.impression_count,
+        nonPublicMetrics.impression_count,
+        organicMetrics.impression_count,
+      );
+      const engagements = likeCount + replyCount + repostCount + quoteCount +
+        bookmarkCount + urlClicks + profileClicks;
+      const score = impressions ??
+        (repostCount * 120 + quoteCount * 100 + replyCount * 80 +
+          bookmarkCount * 60 + likeCount * 20 + urlClicks * 150);
+      return {
+        tweetId,
+        text: asString(tweet.text) || null,
+        createdAt: asString(tweet.created_at) || null,
+        publicMetrics,
+        nonPublicMetrics,
+        organicMetrics,
+        impressions,
+        engagements,
+        likeCount,
+        replyCount,
+        repostCount,
+        quoteCount,
+        bookmarkCount,
+        score,
+        raw: tweet,
+      };
+    })
+    .filter((entry): entry is XTweetMetrics => entry !== null);
+}
+
+function firstFiniteNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
 }
 
 function buildXActionRequired(

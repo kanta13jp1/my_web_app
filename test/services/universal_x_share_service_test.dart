@@ -13,18 +13,84 @@ void main() {
     final draft = UniversalXShareService.buildFallbackDraft(page);
 
     expect(draft.text, contains(page.url));
+    expect(draft.text, contains('utm_campaign=first_user_growth'));
     expect(draft.text, isNot(contains('/#/')));
     expect(draft.text.length, lessThanOrEqualTo(280));
     expect(draft.imagePrompt, contains('Gemini University'));
     expect(draft.videoPrompt, contains('Gemini University'));
   });
 
+  test('growth draft variants include measurable X acquisition URLs', () {
+    final draft = UniversalXShareService.buildGrowthDraft(
+      page,
+      variant: UniversalXGrowthShareVariant.questionPost,
+    );
+
+    expect(draft.source, 'growth-fallback');
+    expect(draft.text, contains(page.url));
+    expect(draft.text, contains('utm_source=x'));
+    expect(draft.text, contains('utm_medium=ai_share'));
+    expect(draft.text, contains('utm_campaign=first_user_growth'));
+    expect(draft.text, contains('utm_content=question_post'));
+    expect(draft.text, contains('質問です'));
+    expect(draft.text, contains('一言もらえると助かります'));
+    expect(draft.text, isNot(contains('繝')));
+    expect(draft.text, isNot(contains('譛')));
+    expect(draft.text, isNot(contains('/#/')));
+    expect(draft.text.length, lessThanOrEqualTo(280));
+    expect(draft.imagePrompt, contains('AI executive secretary'));
+    expect(draft.imagePrompt, contains('no explicit sexualization'));
+  });
+
+  test('daily briefing draft turns X trends into a thread', () {
+    final draft = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: 'ワールドカップ', tweetCount: 120000),
+        UniversalXTrendTopic(name: 'OpenAI', tweetCount: 42000),
+        UniversalXTrendTopic(name: '日経平均', tweetCount: 18000),
+      ],
+    );
+
+    expect(draft.text, contains('デイリーブリーフィング'));
+    expect(draft.text, contains('ワールドカップ'));
+    expect(draft.text, contains(page.url));
+    expect(draft.text, contains('utm_content=daily_briefing'));
+    expect(draft.text.length, lessThanOrEqualTo(280));
+    expect(draft.threadReplies.length, greaterThanOrEqualTo(4));
+    expect(draft.threadReplies.first, contains('なぜ重要か'));
+    expect(draft.threadReplies.first, contains('見通し'));
+    expect(draft.threadReplies.first.length, lessThanOrEqualTo(280));
+  });
+
+  test('acquisitionUrlFor preserves existing query and strips fragments', () {
+    const pageWithQuery = UniversalSharePageContext(
+      routePath: '/work-menu',
+      title: 'Work Menu',
+      url: 'https://my-web-app-b67f4.web.app/work-menu?tab=ai#ignored',
+    );
+
+    final url = UniversalXShareService.acquisitionUrlFor(
+      pageWithQuery,
+      content: 'Pinned Post',
+    );
+
+    expect(url, contains('tab=ai'));
+    expect(url, contains('utm_source=x'));
+    expect(url, contains('utm_campaign=first_user_growth'));
+    expect(url, contains('utm_content=pinned_post'));
+    expect(url, isNot(contains('#')));
+  });
+
   test('generateDraft accepts JSON AI package', () async {
+    String? capturedPrompt;
     final chat = AiHubChatService(
-      invoker: (_) async => {
-        'success': true,
-        'provider': 'groq',
-        'text': '''
+      invoker: (body) async {
+        capturedPrompt = body['message']?.toString();
+        return {
+          'success': true,
+          'provider': 'groq',
+          'text': '''
 {
   "text": "AI大学をアップデートしました。\\n${page.url}\\n#buildinpublic #FlutterWeb",
   "imagePrompt": "16:9 product UI share image for AI University",
@@ -32,16 +98,39 @@ void main() {
   "hashtags": ["#buildinpublic", "#FlutterWeb"]
 }
 ''',
+        };
       },
     );
-    final service = UniversalXShareService(chatService: chat);
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async {
+        if (body['action'] == 'x.performance_context') {
+          return {
+            'success': true,
+            'promptContext':
+                'Measured X performance context: best variant=daily_briefing, Winner 1 score=30000',
+          };
+        }
+        if (body['action'] == 'x.trends') {
+          return {'success': true, 'trends': []};
+        }
+        return {'success': true};
+      },
+    );
 
     final draft = await service.generateDraft(page);
 
     expect(draft.fallbackUsed, isFalse);
     expect(draft.text, contains(page.url));
+    expect(draft.text, contains('utm_campaign=first_user_growth'));
     expect(draft.imagePrompt, contains('AI University'));
     expect(draft.hashtags, contains('#FlutterWeb'));
+    expect(
+      capturedPrompt,
+      contains('Recent X analytics and A/B test feedback'),
+    );
+    expect(capturedPrompt, contains('best variant=daily_briefing'));
+    expect(capturedPrompt, contains('utm_content=daily_briefing'));
   });
 
   test('postToX forwards optional media URL to growth-hub', () async {
@@ -71,6 +160,59 @@ void main() {
     expect(capturedFunction, 'growth-hub');
     expect(capturedBody?['action'], 'x.post');
     expect(capturedBody?['mediaUrl'], 'https://example.com/share.png');
+    expect(capturedBody?['experimentKey'], 'x_first_user_growth_10k');
+    expect(capturedBody?['variant'], 'post_to_x');
+    expect(capturedBody?['promptProfile'], 'performance_context_v1');
+    expect(capturedBody?['contentKind'], 'media');
+  });
+
+  test('postToX adds X acquisition URL when text has no URL', () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'posted': true};
+      },
+    );
+
+    await service.postToX(
+      context: page,
+      text: 'First user feedback wanted',
+    );
+
+    final text = capturedBody?['text']?.toString() ?? '';
+    expect(text, contains(page.url));
+    expect(text, contains('utm_campaign=first_user_growth'));
+    expect(text, contains('utm_content=post_to_x'));
+  });
+
+  test('postToX can move the link to a reply thread', () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {
+          'success': true,
+          'posted': true,
+          'tweetId': '100',
+          'replyTweetIds': ['101', '102'],
+        };
+      },
+    );
+
+    final result = await service.postToX(
+      context: page,
+      text: 'デイリーブリーフィング\n${page.url}',
+      threadReplies: const ['1. 【AI】OpenAI\nなぜ重要か: 仕事の入口が変わる。'],
+      linkInReply: true,
+    );
+
+    final text = capturedBody?['text']?.toString() ?? '';
+    final replies = capturedBody?['replyTexts'] as List;
+    expect(text, isNot(contains(page.url)));
+    expect(replies.first.toString(), contains('OpenAI'));
+    expect(replies.last.toString(), contains(page.url));
+    expect(result.replyTweetIds, ['101', '102']);
   });
 
   test('postToX surfaces X developer project guidance', () async {
@@ -123,6 +265,43 @@ void main() {
     expect(capturedBody?['mediaUrl'], isNull);
   });
 
+  test('generateImage keeps text-only sharing available on provider failure',
+      () async {
+    String? capturedFunction;
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedFunction = functionName;
+        capturedBody = body;
+        return {
+          'success': false,
+          'status': 'text_only_fallback',
+          'canPostTextOnly': true,
+          'errors': [
+            {
+              'model': 'gpt-image-1.5',
+              'status': 400,
+              'error': 'Billing hard limit has been reached.',
+            },
+          ],
+        };
+      },
+    );
+
+    final draft = UniversalXShareService.buildFallbackDraft(page);
+    final result = await service.generateImage(context: page, draft: draft);
+
+    expect(capturedFunction, 'media-hub');
+    expect(
+      capturedBody?['prompt'],
+      contains('adult female AI executive secretary'),
+    );
+    expect(capturedBody?['prompt'], contains('masculine presenter'));
+    expect(result.url, isNull);
+    expect(result.status, 'text_only_fallback');
+    expect(result.raw['canPostTextOnly'], isTrue);
+  });
+
   test(
     'generateVideo uses My Finance mobile UX template for finance pages',
     () async {
@@ -150,7 +329,8 @@ void main() {
 
       expect(capturedFunction, 'viral-video-ad-generator');
       expect(capturedBody?['template'], 'mobile_ux_validation');
-      expect(capturedBody?['title'], 'マイファイナンス');
+      expect(capturedBody?['title'], 'My Finance');
+      expect(capturedBody?['voice'], 'ja-JP');
       expect(capturedBody?['preferredModel'], 'seedance-2.0');
       expect(capturedBody?['imageUrl'], 'https://example.com/share.png');
       expect(capturedBody?['creativePipeline'], const [
@@ -162,6 +342,55 @@ void main() {
         capturedBody?['customPrompt'],
         contains('Moving smartphone app UX validation video'),
       );
+    },
+  );
+
+  test(
+    'generateVideo uses high-quality AI secretary site tour for general pages',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {'success': true, 'status': 'fallback_text'};
+        },
+      );
+
+      final draft = UniversalXShareService.buildGrowthDraft(page);
+      await service.generateVideo(
+        context: page,
+        draft: draft,
+        imageUrl: 'https://example.com/secretary.png',
+      );
+
+      expect(capturedBody?['template'], 'ai_secretary_site_tour');
+      expect(capturedBody?['voice'], 'ai_secretary_female');
+      expect(capturedBody?['preferredModel'], 'seedance-2.0');
+      expect(capturedBody?['creativePipeline'], const [
+        'gpt-image-2',
+        'gpt-5.5',
+        'seedance-2.0',
+      ]);
+      expect(
+        capturedBody?['customPrompt'],
+        contains(
+          'intelligent, elegant adult female AI executive secretary',
+        ),
+      );
+      expect(
+        capturedBody?['customPrompt'],
+        contains('polished feminine Japanese voice'),
+      );
+      expect(capturedBody?['customPrompt'], contains('ElevenLabs'));
+      expect(capturedBody?['customPrompt'], contains('Hedra'));
+      final script = (capturedBody?['customScript'] as List).join('\n');
+      expect(script, contains('知的で上品なAI秘書'));
+      expect(script, contains('サイト案内AI'));
+      expect(script, contains('AI大学'));
+      expect(script, contains('資産管理'));
+      expect(script, contains('ElevenLabs'));
+      expect(script, isNot(contains('縺')));
+      expect(script, isNot(contains('繝')));
     },
   );
 
@@ -195,6 +424,57 @@ void main() {
       );
     },
   );
+
+  test(
+    'generateVideo prefers durable Supabase stored video URL',
+    () async {
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          return {
+            'success': true,
+            'videoStatus': 'complete',
+            'storedVideoUrl': 'https://example.com/storage/video.mp4',
+            'generatedDownloadUrl': 'https://temporary.example.com/video.mp4',
+          };
+        },
+      );
+
+      final draft = UniversalXShareService.buildFallbackDraft(page);
+      final result = await service.generateVideo(
+        context: page,
+        draft: draft,
+      );
+
+      expect(result.url, 'https://example.com/storage/video.mp4');
+      expect(result.status, 'complete');
+    },
+  );
+
+  test('generateVideo uses the public OGP image when no generated image exists',
+      () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {
+          'success': true,
+          'videoStatus': 'submitted',
+          'hedraGenerationId': '123e4567-e89b-12d3-a456-426614174000',
+        };
+      },
+    );
+
+    final draft = UniversalXShareService.buildGrowthDraft(page);
+    final result = await service.generateVideo(context: page, draft: draft);
+
+    expect(result.status, 'submitted');
+    expect(
+      capturedBody?['imageUrl'],
+      UniversalXShareService.defaultHedraStartImageUrl,
+    );
+    expect(capturedBody?['imageUrlSource'], 'page_ogp_fallback');
+    expect(capturedBody?['type'], 'presenter_video');
+  });
 
   test('generateVideo does not forward embedded data URLs to Hedra', () async {
     String? capturedFunction;
