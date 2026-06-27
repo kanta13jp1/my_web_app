@@ -18,6 +18,8 @@ class _FakeEditorSupabaseClient extends Fake implements SupabaseClient {}
 class _FakeNoteEditorAIService extends AIService {
   _FakeNoteEditorAIService() : super(_FakeEditorSupabaseClient());
 
+  AIServiceException? summarizeError;
+  AIServiceException? customPromptError;
   String? lastSummarizeStyleName;
   String? lastSummarizeModel;
   String? lastSuggestTitlesModel;
@@ -31,6 +33,10 @@ class _FakeNoteEditorAIService extends AIService {
     String? styleName,
     String? styleInstruction,
   }) async {
+    final error = summarizeError;
+    if (error != null) {
+      throw error;
+    }
     lastSummarizeModel = model;
     lastSummarizeStyleName = styleName;
     return 'summary[$styleName]: $content';
@@ -52,6 +58,10 @@ class _FakeNoteEditorAIService extends AIService {
     String? styleName,
     String? styleInstruction,
   }) async {
+    final error = customPromptError;
+    if (error != null) {
+      throw error;
+    }
     lastCustomPrompt = prompt;
     lastCustomPromptModel = model;
     return 'custom[$model]: ${prompt.split('\n').first}';
@@ -200,6 +210,61 @@ void main() {
     expect(titleField.controller?.text, 'AI generated note title');
     expect(aiService.lastSuggestTitlesModel, 'gpt-4o-mini');
   });
+
+  testWidgets(
+    'NoteEditorPage shows upgrade dialog and opens billing on free limit',
+    (WidgetTester tester) async {
+      final aiService = _FakeNoteEditorAIService()
+        ..summarizeError = AIServiceException.fromFunctionPayload({
+          'status': 402,
+          'code': 'free_limit_reached',
+          'message': '今月の無料AI質問30回を使い切りました。',
+          'upgrade_url': '/billing',
+        });
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (_) => ThemeService(),
+          child: MaterialApp(
+            routes: {
+              '/billing': (_) => const Scaffold(
+                    body: Text('Billing upgrade page'),
+                  ),
+            },
+            home: NoteEditorPage(
+              initialContent: 'Revenue growth notes',
+              supabaseClient: _FakeEditorSupabaseClient(),
+              aiService: aiService,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final commandField = find.byKey(
+        const Key('note_editor_slash_command_field'),
+      );
+      await tester.ensureVisible(commandField);
+      await tester.showKeyboard(commandField);
+      await tester.enterText(commandField, '/summarize');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('ai_free_limit_upgrade_dialog')),
+        findsOneWidget,
+      );
+      expect(find.text('無料枠の上限に達しました'), findsOneWidget);
+      expect(find.text('今月の無料AI質問30回を使い切りました。'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const Key('ai_free_limit_upgrade_primary_button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Billing upgrade page'), findsOneWidget);
+    },
+  );
 
   testWidgets('NoteEditorPage prompt library saves and runs a custom prompt', (
     WidgetTester tester,
