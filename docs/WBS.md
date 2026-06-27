@@ -4,6 +4,47 @@
 > **蜿ら・**: 繧ｵ繧､繝井ｸ翫・ `/project-gantt` 繝壹・繧ｸ縺ｧ繝ｪ繧｢繝ｫ繧ｿ繧､繝遒ｺ隱榊庄閭ｽ  
 > **DB**: `wbs_milestones` + `wbs_tasks` 繝・・繝悶Ν (migration 20260417180000 / 20260417190000 / 20260417200000)
 
+## 収益化P0メモ (2026-06-27)
+
+- セッションゴール: Stripe等で決済を成立させるだけではなく、実際の銀行口座へ1円以上の入金が確認できるところまで追う。
+- DB反映: migration `20260627093000_wbs_revenue_first_monetization.sql` で `first-yen-revenue` milestone と収益化P0タスク5件を追加。
+- 最優先タスク:
+  1. `[追加要望][収益化P0] Stripe本番・銀行入金レディネス確認`
+  2. `[追加要望][収益化P0] Stripe本人確認・入金停止解除`
+  3. `[追加要望][収益化P0] Live Checkout + Webhook 証跡を本番で取得`
+  4. `[追加要望][収益化P0] Founding Supporter 有料CTAを公開`
+  5. `[追加要望][収益化P0] 初回購入者獲得スプリント`
+  6. `[追加要望][収益化P0] 銀行口座への1円以上入金を確認`
+- 1人目ユーザー獲得P0:
+  1. `[追加要望][収益化P0][1人目獲得] 最初の対象ユーザー像と10名リストを作る`
+  2. `[追加要望][収益化P0][1人目獲得] 1対1アウトリーチ10件を実施`
+  3. `[追加要望][収益化P0][1人目獲得] 公開投稿1本と導線クリックを確認`
+  4. `[追加要望][収益化P0][1人目獲得] 初回ユーザーの利用証跡とヒアリングを取得`
+  5. `[追加要望][収益化P0][1人目獲得] Stripe解除後に初回支援決済へ転換`
+- Xインプレッション獲得P0（知人・接点あり禁止）:
+  1. `[追加要望][収益化P0][X集客] プロフィールを1人目ユーザー獲得用に改修`
+  2. `[追加要望][収益化P0][X集客] 固定ポストをサイト導線に差し替え`
+  3. `[追加要望][収益化P0][X集客] 7日間・1日5投稿のインプレッション実験`
+  4. `[追加要望][収益化P0][X集客] 大きめアカウントへの有益リプライ30件`
+  5. `[追加要望][収益化P0][X集客] Xアナリティクスで勝ち投稿を増幅`
+  6. `[追加要望][収益化P0][X集客] X経由の1人利用を確認`
+- 10Kインプレッション狙いP0（ユーザーの勝ち投稿パターン反映）:
+  1. `[追加要望][収益化P0][X集客][10K] Xトレンド連動デイリーブリーフィング生成を本番化`
+  2. `[追加要望][収益化P0][X集客][10K] 10Kインプレッション狙いのブリーフィング投稿を7日実行`
+  3. `[追加要望][収益化P0][X集客][10K] 勝ち投稿から1人目ユーザー導線へ転換`
+  4. `[追加要望][収益化P0][X集客][10K] X投稿メトリクス監視・A/B自動改善ループを本番化`
+- 実装側の確認結果: `subscription_billing_page.dart`、`billing_service.dart`、`schedule-hub`のbilling actions、`stripe-webhook`、billing tablesは存在する。さらにログイン不要のFounding Supporter一回払いCheckoutと、`hub_data.source = stripe_supporter_payment`の証跡記録を追加。Supabase Edge FunctionsとFirebase Hostingへの公開は完了し、Supabase `STRIPE_SECRET_KEY` をlive keyへ更新後、100円Checkoutが `cs_live...` を返すことを確認済み。`STRIPE_WEBHOOK_SECRET` もlive endpointの `whsec...` に更新済み。ただしStripeのアカウントステータスで「担当者の本人確認書類を提出する」が審査中/入金停止リスクあり。Stripeダッシュボードの売上/JPY残高/顧客/サブスクは0。残る焦点はStripe本人確認完了、初回実決済、Webhook証跡、銀行入金証跡。
+- 検証ゲート: 最新の機械判定ステージは `live_checkout_ready_for_real_payment`。`Stripe本人確認・入金停止解除` を独立P0として追加済み。Stripeアカウントステータスの本人確認タスクが`完了`になり、入金停止が解消されるまでは宣伝・実決済を開始しない。実決済後は `--require-webhook`、銀行着金後は redacted bank evidence JSON + `--require-bank` を通してからゴール達成扱いにする。
+- 初回購入者獲得: Stripe本人確認完了後だけ `docs/marketing/first-revenue-outreach.md` のFounding Supporter文面を使う。入金停止中は宣伝しない。Live環境での自己決済テストは避け、実在の支援者/顧客からの支払いとして扱う。
+- 1人目ユーザー獲得: 支払い依頼はStripe本人確認完了まで止めるが、無料利用/フィードバック依頼は今すぐ開始する。`docs/marketing/first-user-acquisition-sprint.md` を使い、まず10名の具体的な対象者へ1対1で依頼する。匿名PVや自分のテストは「1人獲得」に数えない。
+- X集客: ユーザー方針により知人・接点ありの相手には頼らない。`https://x.com/kanta13jp1` のプロフィール、固定ポスト、7日間投稿、30件有益リプライ、Xアナリティクス増幅で1人目を取りに行く。実行文書は `docs/marketing/x-impression-growth-sprint.md`。
+- AIシェア改善: `UniversalXShareService` とAIシェアダイアログをX集客用に更新。共有URLへ `utm_campaign=first_user_growth` を付け、固定/課題/機能/質問/返信/ブリーフィングプリセットを追加し、OpenAI画像生成が課金上限で失敗してもテキスト投稿を続行できるようにした。X APIが402 credits不足で直接投稿に失敗した場合も投稿文をコピーしてX投稿画面へフォールバックする。2026-06-27追記: Xトレンド取得、デイリーブリーフィング型スレッド、URLを返信へ逃がす投稿、10Kインプレッション計測タスクを追加。`growth-hub`、`viral-video-ad-generator`、Firebase Hostingへ反映済み。さらにライブAIシェアで `Unknown action: x.trends` が出たため `growth-hub` を再デプロイし、WBS上のトレンド連動ブリーフィング本番化タスクを98%へ更新。2026-06-27追加: `x.metrics_collect` / `x.performance_context` でX投稿と返信のメトリクスを収集し、`x_post_log.latest_metrics` と `x_post_metric_snapshot` に保存、勝ちパターンを次回AIシェア生成プロンプトへ戻すA/B改善ループを追加。GitHub Actions `x-post-metrics-optimizer.yml` で3時間ごとに監視する。WBS登録: migration `20260627113000_wbs_ai_share_x_growth_mode.sql` / `20260627162000_wbs_x_trend_briefing_10k_p0.sql` / `20260627164000_wbs_x_trends_action_hotfix.sql` / `20260627173500_wbs_x_post_metrics_ab_optimizer.sql`。
+- X流入CVR改善: `utm_source=x&utm_campaign=first_user_growth` でランディングに来た人だけに、5分トライアル誘導と「A 要約 / B メモ / C 後で探す」の1クリックフィードバックCTAを表示する。クリックは `app_analytics.source_details` の `x_first_user_*` シグナルとして記録し、Xで一言返すintentも用意する。目的はインプレッションを匿名PVで終わらせず、1人目ユーザー証跡へつなぐこと。WBS登録: migration `20260627170000_wbs_x_first_user_feedback_capture.sql`。
+- Obsidian/記憶連携確認: `memory/` と `docs/` を `scripts/knowledge_vault_lint.py` で確認し、2026-06-27時点のHealth Scoreは96/100。構造は十分使えているが、直近の収益化P0（Stripe本番、X集客、Hedra/ElevenLabs動画、銀行入金証跡）がまだObsidian/memoryへ同期されていなかったため、`memory/vault/revenue_first_growth_loop_20260627.md` を追加。WBS登録: migration `20260627121500_wbs_revenue_obsidian_media_loop.sql`。
+- Hedra/ElevenLabs活用: `viral-video-ad-generator` にElevenLabs音声生成→Hedra音声アセットupload→Hedra presenter video生成の経路を追加。ElevenLabs/Hedraが失敗した場合は既存Hedra TTSまたはテキスト投稿へフォールバックする。本番でElevenLabs音声アセット作成とHedra動画生成完了まで確認済み（generation `b68583c2-7ba4-4367-a06d-6d12b3e8e1c4`）。さらにHedraの一時署名URLをSupabase Storage公開URLへコピーするようにして、Obsidian/WBS/X投稿で後から追える証跡にした。ライブUIから開始した `feature_highlight` のHedraジョブ `e8fe90b2-c1f7-4d43-bdd7-38b4cbd6a250` もStorage保存済みMP4としてHTTP 200を確認。2026-06-27追記: `model missing not valid for generation type text_to_speech` 対策として、Hedra `/models` からTTS `model_id` を自動解決し、ElevenLabs TTSリクエストを最小構成化した本番関数をデプロイ済み。AI秘書サイトツアー動画 `5333ecf8-6a39-49d3-9f9b-b5c1aa63e812` もStorage保存済みMP4としてHTTP 200を確認: `https://smmkxxavexumewbfaqpy.supabase.co/storage/v1/object/public/viral-ad-videos/hedra/2026-06-27/5333ecf8-6a39-49d3-9f9b-b5c1aa63e812-ai_secretary_site_tour-ja.mp4`。残作業はこの動画をX投稿へ使って1人目ユーザー獲得の実測へつなげること。
+- OpenAI API課金復旧: AI秘書動画の高品質化で使う image-gen2/GPT Image は、ChatGPT課金ではなくOpenAI Platform APIクレジットが必要。`Billing hard limit has been reached` はAPI課金上限/残高不足を示す。2026-06-27時点でOpenAI Platform Billingに約15 USDのクレジット反映を確認し、AIシェア画像生成が公開Storage URLを返すところまで回復。アプリ側は `media-hub` を更新し、`openai_billing_required` と請求URLを返すようにし、DALL-E fallbackへ古い `style` / `response_format` パラメータを送らない本番関数をデプロイ済み。WBS登録: migration `20260627130000_wbs_revenue_ai_secretary_openai_billing.sql`。
+- 詳細レビュー: `docs/MONETIZATION_REVENUE_FIRST_REVIEW.md`
+
 ## Codex 蠑輔″邯吶℃繝｡繝｢ (2026-04-21)
 
 - Claude quota 蛻ｶ髯蝉ｸｭ縺ｮ荳譎ょｯｾ蠢懊→縺励※縲・*螳滄圀縺ｫ逹謇区ｸ医∩縺ｮ繧ｿ繧ｹ繧ｯ縺ｮ縺ｿ** `Codex` 諡・ｽ薙↓螟画峩縲・
