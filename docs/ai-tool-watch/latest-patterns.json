@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T21:44:23Z",
+  "generated_at": "2026-06-27T21:39:39Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -20,9 +20,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-7286f04c81e6",
+        "entry_id": "nf-b799ab331a9f",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.193 / June 25, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.193 June 25, 2026 Added autoMode.classifyAllShell setting to route all Bash/PowerShell commands through the auto-mode classifier instead of only arbitrary-code-execution...",
+        "text": "Claude Code changelog 2.1.195 / June 26, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.195 June 26, 2026 Added CLAUDE_CODE_DISABLE_MOUSE_CLICKS to disable mouse click/drag/hover in fullscreen mode while keeping wheel scroll Fixed hook matchers with...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -31,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "785edafada8565aa6bfbbe96da38fafce0dc1840e0f0d128fa5f9ea3aba6d26b",
+          "hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -75,22 +75,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.193 / June 25, 2026",
+          "latest_signal": "2.1.195 / June 26, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "b75dedf41cb3b6e72a2d529c7e7f0127ee44c6be227a690265349fa52c7a30a8",
+          "previous_hash": "785edafada8565aa6bfbbe96da38fafce0dc1840e0f0d128fa5f9ea3aba6d26b",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.193 June 25, 2026 Added autoMode.classifyAllShell setting to route all Bash/PowerShell commands through the auto-mode classifier instead of only arbitrary-code-execution..."
+            "​ 2.1.195 June 26, 2026 Added CLAUDE_CODE_DISABLE_MOUSE_CLICKS to disable mouse click/drag/hover in fullscreen mode while keeping wheel scroll Fixed hook matchers with..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-7286f04c81e6",
+        "entry_id": "nf-b799ab331a9f",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -116,10 +116,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "3a49d49c68f50b8346bf3086a0c8ae0bda1553b636dc4f2c54c04ab91d055301",
+          "hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -269,7 +269,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
@@ -317,7 +317,7 @@
           "latest_signal": "2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "8aaecee8f993a97cbe1a11a29463e09afd278ea30784b1b58d7a15e20a2222c9",
+          "previous_hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -355,7 +355,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
@@ -398,7 +398,7 @@
           "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "60fe4247484a8b876e7273f45ac9c922a661221c266c207849321dfc52cf27e6",
+          "previous_hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
           "slug": "codex-use-cases",
           "snippets": [
             "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -611,18 +611,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-5d4bf2580182",
+        "entry_id": "nf-125c1a2a9a4b",
         "title": "Devin release notes",
-        "text": "Devin release notes June 24, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Security Findings in Ask Devin When using Ask Devin within PR Review, the AI context now includes security findings, enabling more security-aware assistance during code review...",
+        "text": "Devin release notes June 26, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "35508fc5b4b9488891781b5bfeeac08786e11f46bf273aeaeef9038c06d0e244",
+          "hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -654,7 +654,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "June 24, 2026",
+          "latest_signal": "June 26, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
           "previous_hash": "35508fc5b4b9488891781b5bfeeac08786e11f46bf273aeaeef9038c06d0e244",
@@ -662,14 +662,14 @@
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
             "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-            "Security Findings in Ask Devin When using Ask Devin within PR Review, the AI context now includes security findings, enabling more security-aware assistance during code review..."
+            "Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules."
           ],
           "status": 200,
           "url": "https://docs.devin.ai/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-5d4bf2580182",
+        "entry_id": "nf-125c1a2a9a4b",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",

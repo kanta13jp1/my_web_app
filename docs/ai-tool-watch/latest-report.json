@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "785edafada8565aa6bfbbe96da38fafce0dc1840e0f0d128fa5f9ea3aba6d26b",
+      "hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.193 / June 25, 2026",
+      "latest_signal": "2.1.195 / June 26, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "b75dedf41cb3b6e72a2d529c7e7f0127ee44c6be227a690265349fa52c7a30a8",
+      "previous_hash": "785edafada8565aa6bfbbe96da38fafce0dc1840e0f0d128fa5f9ea3aba6d26b",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.193 June 25, 2026 Added autoMode.classifyAllShell setting to route all Bash/PowerShell commands through the auto-mode classifier instead of only arbitrary-code-execution..."
+        "​ 2.1.195 June 26, 2026 Added CLAUDE_CODE_DISABLE_MOUSE_CLICKS to disable mouse click/drag/hover in fullscreen mode while keeping wheel scroll Fixed hook matchers with..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,21 +72,65 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
+      "hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
       "keyword_groups": {
         "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "model picker",
-          "in-app browser",
-          "browser use",
-          "computer use",
           "worktree",
           "subagents"
         ],
         "hooks": [
           "hook",
           "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "3a49d49c68f50b8346bf3086a0c8ae0bda1553b636dc4f2c54c04ab91d055301",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
+      "keyword_groups": {
+        "codex-runtime": [
+          "computer use",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
           "Stop"
         ],
         "integration": [
@@ -94,14 +138,12 @@
           "connector",
           "Slack",
           "Linear",
-          "GitHub",
-          "IDE extension"
+          "GitHub"
         ],
         "quality-cost": [
           "cost",
           "quota",
           "rate limit",
-          "sandbox",
           "permission",
           "review",
           "CI"
@@ -110,79 +152,24 @@
           "automation",
           "automations",
           "schedule",
-          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us",
-      "name": "Codex changelog",
-      "owner": "Codex",
-      "previous_hash": "8aaecee8f993a97cbe1a11a29463e09afd278ea30784b1b58d7a15e20a2222c9",
-      "slug": "codex-changelog",
+      "latest_signal": "June 26, 2026",
+      "name": "Devin release notes",
+      "owner": "Devin",
+      "previous_hash": "35508fc5b4b9488891781b5bfeeac08786e11f46bf273aeaeef9038c06d0e244",
+      "slug": "devin-release-notes",
       "snippets": [
-        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "Use Codex from the ChatGPT mobile app to start or continue work on a connected Mac or Windows host, review progress, and approve actions from your phone.",
-        "Improved progress visibility for subagents, tasks, and worktree creation."
+        "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
+        "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
+        "Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules."
       ],
       "status": 200,
-      "url": "https://developers.openai.com/codex/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "in-app browser",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
-      "name": "Codex use cases",
-      "owner": "Codex",
-      "previous_hash": "60fe4247484a8b876e7273f45ac9c922a661221c266c207849321dfc52cf27e6",
-      "slug": "codex-use-cases",
-      "snippets": [
-        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
-        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/use-cases/"
+      "url": "https://docs.devin.ai/release-notes"
     }
   ],
-  "checked_at": "2026-06-26T21:44:21Z",
+  "checked_at": "2026-06-27T21:39:37Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -234,13 +221,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-25T21:51:29Z",
+  "previous_checked_at": "2026-06-26T21:44:21Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "785edafada8565aa6bfbbe96da38fafce0dc1840e0f0d128fa5f9ea3aba6d26b",
+      "hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -284,24 +271,24 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.193 / June 25, 2026",
+      "latest_signal": "2.1.195 / June 26, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "b75dedf41cb3b6e72a2d529c7e7f0127ee44c6be227a690265349fa52c7a30a8",
+      "previous_hash": "785edafada8565aa6bfbbe96da38fafce0dc1840e0f0d128fa5f9ea3aba6d26b",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.193 June 25, 2026 Added autoMode.classifyAllShell setting to route all Bash/PowerShell commands through the auto-mode classifier instead of only arbitrary-code-execution..."
+        "​ 2.1.195 June 26, 2026 Added CLAUDE_CODE_DISABLE_MOUSE_CLICKS to disable mouse click/drag/hover in fullscreen mode while keeping wheel scroll Fixed hook matchers with..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "3a49d49c68f50b8346bf3086a0c8ae0bda1553b636dc4f2c54c04ab91d055301",
+      "hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -397,7 +384,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
@@ -445,7 +432,7 @@
       "latest_signal": "2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "8aaecee8f993a97cbe1a11a29463e09afd278ea30784b1b58d7a15e20a2222c9",
+      "previous_hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -456,7 +443,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
@@ -499,7 +486,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "60fe4247484a8b876e7273f45ac9c922a661221c266c207849321dfc52cf27e6",
+      "previous_hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -608,10 +595,10 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "35508fc5b4b9488891781b5bfeeac08786e11f46bf273aeaeef9038c06d0e244",
+      "hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -643,7 +630,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "June 24, 2026",
+      "latest_signal": "June 26, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
       "previous_hash": "35508fc5b4b9488891781b5bfeeac08786e11f46bf273aeaeef9038c06d0e244",
@@ -651,7 +638,7 @@
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
         "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-        "Security Findings in Ask Devin When using Ask Devin within PR Review, the AI context now includes security findings, enabling more security-aware assistance during code review..."
+        "Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
