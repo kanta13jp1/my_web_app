@@ -9,11 +9,14 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
+  fetchXTrendsByWoeid,
+  fetchXTweetMetrics,
   getXAccountHandle,
   isXApiError,
   isXConfigured,
   postTweet,
   uploadMediaFromUrl,
+  type XTweetMetrics,
 } from "../_shared/x-client.ts";
 
 const corsHeaders = {
@@ -40,6 +43,10 @@ function errorMessage(error: unknown): string {
 async function getUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return null;
+  const bearer = auth.replace(/^Bearer\s+/i, "").trim();
+  if (SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY) {
+    return "service_role";
+  }
   const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: auth } },
   });
@@ -47,6 +54,32 @@ async function getUserId(req: Request): Promise<string | null> {
     data: { user },
   } = await c.auth.getUser();
   return user?.id ?? null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function firstString(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim() !== "") {
+      return value.trim();
+    }
+  }
+  return "";
+}
+
+function firstNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
 }
 
 async function listItems(
@@ -62,6 +95,25 @@ async function listItems(
     .filter("metadata->>user_id", "eq", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+async function listXPostLogs(
+  admin: SupabaseClient,
+  userId: string,
+  limit = 50,
+) {
+  let query = admin
+    .from("hub_data")
+    .select("id, metadata, created_at")
+    .eq("source", "x_post_log")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (userId !== "service_role") {
+    query = query.filter("metadata->>user_id", "eq", userId);
+  }
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -167,11 +219,17 @@ const SUPPORTED_ACQUISITION_SIGNALS = new Set([
   "touch_referral",
   "touch_comparison",
   "touch_guitar_gallery",
+  "touch_x_first_user_growth",
   "import_preview_notion",
   "import_preview_evernote",
   "import_preview_markdown",
   "import_signup_cta",
   "public_memo_signup_cta",
+  "x_first_user_trial_intent",
+  "x_first_user_feedback_summary",
+  "x_first_user_feedback_memo",
+  "x_first_user_feedback_search",
+  "x_first_user_feedback_x_intent",
   "signup_submit_landing",
   "signup_submit_import",
   "signup_submit_public_memo",
@@ -245,6 +303,279 @@ async function recordAcquisitionSignal(
     .eq("date", dateKey);
   if (error) throw new Error(error.message);
   return { success: true, signalKey, dateKey };
+}
+
+type XPostLogItem = {
+  id: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+function metricSnapshotForLog(
+  item: XPostLogItem,
+  metric: XTweetMetrics,
+  tweetRole = "lead",
+  replyIndex: number | null = null,
+): Record<string, unknown> {
+  const metadata = asRecord(item.metadata);
+  return {
+    tweet_id: metric.tweetId,
+    tweet_role: tweetRole,
+    reply_index: replyIndex,
+    source_log_id: item.id,
+    source_log_created_at: item.created_at,
+    checked_at: new Date().toISOString(),
+    text: firstString(metric.text, metadata.text),
+    source: firstString(metadata.source, "growth-hub"),
+    route: firstString(metadata.route),
+    variant: firstString(metadata.variant, metadata.utm_content, "unknown"),
+    experiment_key: firstString(
+      metadata.experiment_key,
+      "x_first_user_growth_10k",
+    ),
+    has_media: Boolean(metadata.media_url),
+    media_url: firstString(metadata.media_url) || null,
+    link_in_reply: metadata.link_in_reply === true,
+    thread_reply_count: Array.isArray(metadata.reply_texts)
+      ? metadata.reply_texts.length
+      : 0,
+    impressions: metric.impressions,
+    engagements: metric.engagements,
+    like_count: metric.likeCount,
+    reply_count: metric.replyCount,
+    repost_count: metric.repostCount,
+    quote_count: metric.quoteCount,
+    bookmark_count: metric.bookmarkCount,
+    score: metric.score,
+    public_metrics: metric.publicMetrics,
+    non_public_metrics: metric.nonPublicMetrics,
+    organic_metrics: metric.organicMetrics,
+  };
+}
+
+function tweetTargetsForLog(
+  item: XPostLogItem,
+): { id: string; role: string; replyIndex: number | null }[] {
+  const metadata = asRecord(item.metadata);
+  const targets: { id: string; role: string; replyIndex: number | null }[] = [];
+  const leadId = firstString(metadata.tweet_id);
+  if (leadId !== "") {
+    targets.push({ id: leadId, role: "lead", replyIndex: null });
+  }
+  const replyIds = Array.isArray(metadata.reply_tweet_ids)
+    ? metadata.reply_tweet_ids
+    : [];
+  replyIds.forEach((rawId, index) => {
+    const id = firstString(rawId);
+    if (id !== "") targets.push({ id, role: "reply", replyIndex: index });
+  });
+  return targets;
+}
+
+async function collectXPostMetrics(
+  admin: SupabaseClient,
+  userId: string,
+  rawLimit: unknown,
+) {
+  const limit = Math.max(
+    1,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const targetsByLogId = new Map(
+    logs.map((item) => [item.id, tweetTargetsForLog(item)]),
+  );
+  const tweetIds = [
+    ...new Set(
+      [...targetsByLogId.values()].flat().map((target) => target.id),
+    ),
+  ].filter((id) => id !== "");
+  if (tweetIds.length === 0) {
+    return {
+      success: true,
+      collected: 0,
+      metrics: [],
+      warning: "No posted x_post_log rows with tweet_id were found.",
+    };
+  }
+
+  const metrics = await fetchXTweetMetrics(tweetIds);
+  const metricById = new Map(metrics.map((metric) => [metric.tweetId, metric]));
+  const checkedAt = new Date().toISOString();
+  const snapshots: Record<string, unknown>[] = [];
+
+  for (const item of logs) {
+    const metadata = asRecord(item.metadata);
+    const targets = targetsByLogId.get(item.id) ?? [];
+    const itemSnapshots = targets
+      .map((target) => {
+        const metric = metricById.get(target.id);
+        return metric
+          ? metricSnapshotForLog(item, metric, target.role, target.replyIndex)
+          : null;
+      })
+      .filter((snapshot): snapshot is Record<string, unknown> =>
+        snapshot !== null
+      );
+    if (itemSnapshots.length === 0) continue;
+    const leadSnapshot = itemSnapshots.find((snapshot) =>
+      snapshot.tweet_role === "lead"
+    ) ?? itemSnapshots[0];
+    const replySnapshots = itemSnapshots.filter((snapshot) =>
+      snapshot.tweet_role === "reply"
+    );
+    snapshots.push(...itemSnapshots);
+    const leadMetric = metricById.get(firstString(leadSnapshot.tweet_id));
+    const nextMetadata = {
+      ...metadata,
+      latest_metrics: leadSnapshot,
+      latest_reply_metrics: replySnapshots,
+      metrics_checked_at: checkedAt,
+      impressions: leadMetric?.impressions ?? firstNumber(
+        leadSnapshot.impressions,
+      ),
+      engagement_score: leadMetric?.score ?? firstNumber(leadSnapshot.score),
+    };
+    await admin
+      .from("hub_data")
+      .update({ metadata: nextMetadata })
+      .eq("id", item.id)
+      .eq("source", "x_post_log");
+    for (const snapshot of itemSnapshots) {
+      await addItem(
+        admin,
+        "x_post_metric_snapshot",
+        firstString(metadata.user_id, userId),
+        snapshot,
+      );
+    }
+  }
+
+  return {
+    success: true,
+    collected: snapshots.length,
+    checkedAt,
+    metrics: snapshots,
+  };
+}
+
+function compactPostText(value: unknown): string {
+  return firstString(value)
+    .replace(/\s+/g, " ")
+    .slice(0, 120);
+}
+
+function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
+  const rows = logs
+    .map((item) => {
+      const metadata = asRecord(item.metadata);
+      const latest = asRecord(metadata.latest_metrics);
+      const impressions = firstNumber(latest.impressions, metadata.impressions);
+      const score = firstNumber(latest.score, metadata.engagement_score);
+      if (impressions == null && score == null) return null;
+      return {
+        id: item.id,
+        tweetId: firstString(metadata.tweet_id),
+        text: compactPostText(latest.text ?? metadata.text),
+        variant: firstString(
+          latest.variant,
+          metadata.variant,
+          metadata.utm_content,
+          "unknown",
+        ),
+        route: firstString(latest.route, metadata.route),
+        source: firstString(latest.source, metadata.source),
+        hasMedia: Boolean(latest.has_media ?? metadata.media_url),
+        linkInReply: latest.link_in_reply === true ||
+          metadata.link_in_reply === true,
+        threadReplyCount: firstNumber(
+          latest.thread_reply_count,
+          Array.isArray(metadata.reply_texts) ? metadata.reply_texts.length : 0,
+        ) ?? 0,
+        contentKind: firstString(metadata.content_kind, "text"),
+        impressions,
+        engagements: firstNumber(latest.engagements) ?? 0,
+        likeCount: firstNumber(latest.like_count) ?? 0,
+        replyCount: firstNumber(latest.reply_count) ?? 0,
+        repostCount: firstNumber(latest.repost_count) ?? 0,
+        score: score ?? impressions ?? 0,
+        createdAt: firstString(item.created_at),
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null)
+    .sort((left, right) => right.score - left.score);
+
+  const winners = rows.slice(0, 5);
+  const underperformers = rows.slice(-5).reverse();
+  const byVariant = new Map<
+    string,
+    { variant: string; count: number; totalScore: number; maxScore: number }
+  >();
+  for (const row of rows) {
+    const key = row.variant || "unknown";
+    const current = byVariant.get(key) ?? {
+      variant: key,
+      count: 0,
+      totalScore: 0,
+      maxScore: 0,
+    };
+    current.count += 1;
+    current.totalScore += row.score;
+    current.maxScore = Math.max(current.maxScore, row.score);
+    byVariant.set(key, current);
+  }
+  const variants = [...byVariant.values()]
+    .map((entry) => ({
+      ...entry,
+      averageScore: Math.round(entry.totalScore / Math.max(1, entry.count)),
+    }))
+    .sort((left, right) => right.averageScore - left.averageScore);
+
+  const bestVariant = variants[0]?.variant ?? "daily_briefing";
+  const promptContext = rows.length === 0
+    ? [
+      "No measured X performance has been collected yet.",
+      "Run A/B test: daily_briefing vs question_post vs useful_reply.",
+      "Target: 10K impressions. Lead with information value, put product CTA later, and collect metrics after posting.",
+    ].join("\n")
+    : [
+      "Measured X performance context for the next post:",
+      `Target: 10K impressions. Current best variant: ${bestVariant}.`,
+      ...winners.map((row, index) =>
+        `Winner ${index + 1}: variant=${row.variant}, impressions=${
+          row.impressions ?? "unknown"
+        }, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
+      ),
+      ...underperformers.slice(0, 3).map((row, index) =>
+        `Avoid ${
+          index + 1
+        }: variant=${row.variant}, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
+      ),
+      "Use the winning structure, test one variable at a time, and keep the first post useful before adding the product CTA.",
+    ].join("\n");
+
+  return {
+    success: true,
+    rows,
+    winners,
+    underperformers,
+    variants,
+    bestVariant,
+    promptContext,
+  };
+}
+
+async function buildXPerformanceContext(
+  admin: SupabaseClient,
+  userId: string,
+  rawLimit: unknown,
+) {
+  const limit = Math.max(
+    10,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  return buildXPerformanceContextFromLogs(logs);
 }
 
 async function buildAcquisitionTouchpointReport(
@@ -879,8 +1210,72 @@ serve(async (req: Request) => {
       }
 
       // ─── X Post ───────────────────────────────────────────────────────────────
+      case "x.trends": {
+        const rawWoeid = Number(body.woeid ?? 23424856);
+        const rawLimit = Number(body.limit ?? body.maxTrends ?? 10);
+        const woeid = Number.isFinite(rawWoeid)
+          ? Math.max(1, Math.trunc(rawWoeid))
+          : 23424856;
+        const limit = Number.isFinite(rawLimit)
+          ? Math.max(1, Math.min(20, Math.trunc(rawLimit)))
+          : 10;
+        try {
+          const trends = await fetchXTrendsByWoeid({
+            woeid,
+            maxTrends: limit,
+          });
+          return json({
+            success: true,
+            woeid,
+            trends,
+            source: "x_api",
+            fetchedAt: new Date().toISOString(),
+          });
+        } catch (error) {
+          const xPayload = isXApiError(error) ? error.payload : null;
+          return json({
+            success: false,
+            woeid,
+            trends: [],
+            error: errorMessage(error),
+            code: xPayload?.code ?? "x_trends_failed",
+            actionRequired: xPayload?.actionRequired ??
+              "Check X API read access or configure X_BEARER_TOKEN.",
+          });
+        }
+      }
+
+      case "x.metrics_collect": {
+        try {
+          return json(await collectXPostMetrics(admin, userId!, body.limit));
+        } catch (error) {
+          const xPayload = isXApiError(error) ? error.payload : null;
+          return json({
+            success: false,
+            error: errorMessage(error),
+            code: xPayload?.code ?? "x_metrics_collect_failed",
+            actionRequired: xPayload?.actionRequired ??
+              "Check X API read access. If impression fields are unavailable, public engagement metrics will be used when possible.",
+          }, 502);
+        }
+      }
+
+      case "x.performance_context": {
+        return json(await buildXPerformanceContext(admin, userId!, body.limit));
+      }
+
       case "x.post": {
         const text = String(body.text ?? "").trim();
+        const replyText = String(body.replyText ?? body.reply_text ?? "")
+          .trim();
+        const replyTexts = [
+          ...(Array.isArray(body.replyTexts) ? body.replyTexts : []),
+          ...(Array.isArray(body.reply_texts) ? body.reply_texts : []),
+          ...(replyText ? [replyText] : []),
+        ]
+          .map((entry) => String(entry ?? "").trim())
+          .filter((entry) => entry !== "")
+          .slice(0, 8);
         const mediaUrl = String(body.mediaUrl ?? body.media_url ?? "").trim();
         const mediaType = String(body.mediaType ?? body.media_type ?? "")
           .trim();
@@ -892,12 +1287,31 @@ serve(async (req: Request) => {
             error: "text exceeds 280 characters",
           }, 400);
         }
+        const longReplyIndex = replyTexts.findIndex((entry) =>
+          entry.length > 280
+        );
+        if (longReplyIndex >= 0) {
+          return json({
+            success: false,
+            error: `replyTexts[${longReplyIndex}] exceeds 280 characters`,
+          }, 400);
+        }
 
         const baseLog = {
           text,
+          reply_text: replyTexts[0] ?? null,
+          reply_texts: replyTexts,
           posted_at: new Date().toISOString(),
           source: body.source ?? "growth-hub",
           media_url: mediaUrl || null,
+          route: body.route ?? null,
+          experiment_key: body.experimentKey ?? body.experiment_key ??
+            "x_first_user_growth_10k",
+          variant: body.variant ?? body.utmContent ?? body.utm_content ?? null,
+          prompt_profile: body.promptProfile ?? body.prompt_profile ?? null,
+          content_kind: body.contentKind ?? body.content_kind ?? null,
+          link_in_reply: body.linkInReply === true ||
+            body.link_in_reply === true,
         };
 
         if (dryRun || !isXConfigured()) {
@@ -911,6 +1325,8 @@ serve(async (req: Request) => {
             dryRun,
             account: getXAccountHandle(),
             text,
+            replyText: replyTexts[0] ?? null,
+            replyTexts,
             log,
             warning: dryRun
               ? undefined
@@ -928,10 +1344,26 @@ serve(async (req: Request) => {
             text,
             mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
           });
+          const replyResults = [];
+          let parentTweetId = result.tweetId;
+          for (const nextReplyText of replyTexts) {
+            if (!parentTweetId) break;
+            const replyResult = await postTweet({
+              text: nextReplyText,
+              replyToTweetId: parentTweetId,
+            });
+            replyResults.push(replyResult);
+            parentTweetId = replyResult.tweetId ?? parentTweetId;
+          }
+          const replyTweetIds = replyResults
+            .map((replyResult) => replyResult.tweetId)
+            .filter((tweetId): tweetId is string => Boolean(tweetId));
           const log = await addItem(admin, "x_post_log", userId!, {
             ...baseLog,
             status: "posted",
             tweet_id: result.tweetId,
+            reply_tweet_id: replyTweetIds[0] ?? null,
+            reply_tweet_ids: replyTweetIds,
             account: result.account,
             media_id: uploadedMedia?.mediaId ?? null,
             media_type: uploadedMedia?.mediaType ?? null,
@@ -941,6 +1373,10 @@ serve(async (req: Request) => {
             posted: true,
             text,
             tweetId: result.tweetId,
+            replyText: replyTexts[0] ?? null,
+            replyTexts,
+            replyTweetId: replyTweetIds[0] ?? null,
+            replyTweetIds,
             account: result.account,
             log,
           });
