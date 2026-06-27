@@ -105,8 +105,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final status =
-        _status ??
+    final status = _status ??
         const BillingStatus(
           tier: 'free',
           status: 'active',
@@ -185,11 +184,11 @@ class _BillingReturnNotice {
       'success' => const _BillingReturnNotice._(_BillingReturnKind.success),
       'cancel' => const _BillingReturnNotice._(_BillingReturnKind.cancel),
       'supporter_success' => const _BillingReturnNotice._(
-        _BillingReturnKind.supporterSuccess,
-      ),
+          _BillingReturnKind.supporterSuccess,
+        ),
       'supporter_cancel' => const _BillingReturnNotice._(
-        _BillingReturnKind.supporterCancel,
-      ),
+          _BillingReturnKind.supporterCancel,
+        ),
       _ => null,
     };
   }
@@ -202,22 +201,22 @@ class _BillingReturnNotice {
       isSuccess ? Icons.celebration_outlined : Icons.info_outline;
 
   String get title => switch (kind) {
-    _BillingReturnKind.supporterSuccess => 'Support received',
-    _BillingReturnKind.supporterCancel => 'Support checkout canceled',
-    _BillingReturnKind.success => 'Checkout completed',
-    _BillingReturnKind.cancel => 'Checkout canceled',
-  };
+        _BillingReturnKind.supporterSuccess => 'Support received',
+        _BillingReturnKind.supporterCancel => 'Support checkout canceled',
+        _BillingReturnKind.success => 'Checkout completed',
+        _BillingReturnKind.cancel => 'Checkout canceled',
+      };
 
   String get message => switch (kind) {
-    _BillingReturnKind.supporterSuccess =>
-      'Stripe accepted the one-time support payment. The webhook will store the first revenue evidence shortly.',
-    _BillingReturnKind.supporterCancel =>
-      'No payment was created. You can open the 100 JPY support checkout again anytime.',
-    _BillingReturnKind.success =>
-      'Stripe returned successfully. The latest billing status will be refreshed shortly.',
-    _BillingReturnKind.cancel =>
-      'No subscription payment was created. You can retry checkout anytime.',
-  };
+        _BillingReturnKind.supporterSuccess =>
+          'Stripe accepted the one-time support payment. The webhook will store the first revenue evidence shortly.',
+        _BillingReturnKind.supporterCancel =>
+          'No payment was created. You can open the 100 JPY support checkout again anytime.',
+        _BillingReturnKind.success =>
+          'Stripe returned successfully. The latest billing status will be refreshed shortly.',
+        _BillingReturnKind.cancel =>
+          'No subscription payment was created. You can retry checkout anytime.',
+      };
 }
 
 class _BillingReturnBanner extends StatelessWidget {
@@ -423,8 +422,8 @@ class _PlanGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= 900
             ? 3
             : constraints.maxWidth >= 620
-            ? 2
-            : 1;
+                ? 2
+                : 1;
         return GridView.count(
           crossAxisCount: columns,
           shrinkWrap: true,

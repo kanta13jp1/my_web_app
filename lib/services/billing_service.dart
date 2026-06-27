@@ -101,9 +101,8 @@ class BillingSupporterAttribution {
     void add(String key, String? value) {
       final normalized = value?.trim();
       if (normalized == null || normalized.isEmpty) return;
-      json[key] = normalized.length > 160
-          ? normalized.substring(0, 160)
-          : normalized;
+      json[key] =
+          normalized.length > 160 ? normalized.substring(0, 160) : normalized;
     }
 
     add('utm_source', utmSource);
@@ -152,7 +151,7 @@ abstract class BillingGateway {
 
 class BillingService implements BillingGateway {
   BillingService({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
