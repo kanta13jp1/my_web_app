@@ -11,165 +11,43 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
+      "hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
       "keyword_groups": {
-        "codex-runtime": [
-          "model picker",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
         "hooks": [
-          "hook",
-          "hooks",
-          "SessionStart",
-          "UserPromptSubmit",
-          "PostToolUse",
-          "Stop",
-          "StopFailure",
-          "ultrareview"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension",
-          "VSCode",
-          "Visual Studio Code"
-        ],
-        "quality-cost": [
-          "OpenTelemetry",
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "schedule",
-          "cron",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "2.1.195 / June 26, 2026",
-      "name": "Claude Code changelog",
-      "owner": "Claude Code",
-      "previous_hash": "785edafada8565aa6bfbbe96da38fafce0dc1840e0f0d128fa5f9ea3aba6d26b",
-      "slug": "claude-code-changelog",
-      "snippets": [
-        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
-        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.195 June 26, 2026 Added CLAUDE_CODE_DISABLE_MOUSE_CLICKS to disable mouse click/drag/hover in fullscreen mode while keeping wheel scroll Fixed hook matchers with..."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
-      "keyword_groups": {
-        "codex-runtime": [
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "SessionStart",
-          "UserPromptSubmit",
-          "PostToolUse",
-          "Stop",
-          "StopFailure"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "OpenTelemetry",
-          "cost",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "schedule",
-          "cron",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
-      "name": "Claude Code hooks reference",
-      "owner": "Claude Code",
-      "previous_hash": "3a49d49c68f50b8346bf3086a0c8ae0bda1553b636dc4f2c54c04ab91d055301",
-      "slug": "claude-code-hooks",
-      "snippets": [
-        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
-        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/hooks"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
-      "keyword_groups": {
-        "codex-runtime": [
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
           "Stop"
         ],
         "integration": [
           "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub"
+          "GitHub",
+          "IDE extension",
+          "VSCode"
         ],
         "quality-cost": [
           "cost",
           "quota",
-          "rate limit",
           "permission",
           "review",
           "CI"
         ],
         "schedule": [
-          "automation",
-          "automations",
-          "schedule",
           "workflow"
         ]
       },
-      "latest_signal": "June 26, 2026",
-      "name": "Devin release notes",
-      "owner": "Devin",
-      "previous_hash": "35508fc5b4b9488891781b5bfeeac08786e11f46bf273aeaeef9038c06d0e244",
-      "slug": "devin-release-notes",
+      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
+      "name": "Gemini Code Assist release notes",
+      "owner": "Gemini Code Assist",
+      "previous_hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
+      "slug": "gemini-code-assist-release-notes",
       "snippets": [
-        "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
-        "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-        "Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules."
+        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
+        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
+        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
       ],
       "status": 200,
-      "url": "https://docs.devin.ai/release-notes"
+      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   ],
-  "checked_at": "2026-06-27T21:39:37Z",
+  "checked_at": "2026-06-28T21:40:26Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -221,10 +99,10 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-26T21:44:21Z",
+  "previous_checked_at": "2026-06-27T21:39:37Z",
   "sources": [
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
@@ -274,7 +152,7 @@
       "latest_signal": "2.1.195 / June 26, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "785edafada8565aa6bfbbe96da38fafce0dc1840e0f0d128fa5f9ea3aba6d26b",
+      "previous_hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -285,7 +163,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
@@ -325,7 +203,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "3a49d49c68f50b8346bf3086a0c8ae0bda1553b636dc4f2c54c04ab91d055301",
+      "previous_hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -556,10 +434,10 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
+      "hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -581,7 +459,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.86.0 / June 15, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
       "previous_hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
@@ -595,7 +473,7 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
@@ -633,7 +511,7 @@
       "latest_signal": "June 26, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "35508fc5b4b9488891781b5bfeeac08786e11f46bf273aeaeef9038c06d0e244",
+      "previous_hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
