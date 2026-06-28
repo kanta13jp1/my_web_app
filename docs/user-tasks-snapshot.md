@@ -1,7 +1,7 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/6/27 (JST)_
-_Active user tasks: 85_
+_Generated: 2026/6/28 (JST)_
+_Active user tasks: 86_
 
 ## 概要
 
@@ -34,7 +34,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2492 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-09-06
+- **deadline**: 2026-09-04
 
 **説明**:
 
@@ -49,7 +49,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2604 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-09-10
+- **deadline**: 2026-09-08
 
 **説明**:
 
@@ -64,7 +64,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2712 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-09-17
+- **deadline**: 2026-09-15
 
 **説明**:
 
@@ -79,7 +79,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2815 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-09-24
+- **deadline**: 2026-09-22
 
 **説明**:
 
@@ -94,7 +94,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3383 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-10-02
+- **deadline**: 2026-10-06
 
 **説明**:
 
@@ -109,7 +109,7 @@ freee / MoneyForward Cloud 比較 → 契約
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-10-02
+- **deadline**: 2026-10-06
 
 **説明**:
 
@@ -124,26 +124,11 @@ freee / MoneyForward Cloud 比較 → 契約
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-10-05
+- **deadline**: 2026-10-09
 
 **説明**:
 
 監査法人選定 → audit prep → 認証取得
-
----
-
-### 🟡 ⏳ バーチャルオフィス契約
-
-- **id**: `e06d0486-1cd1-499f-89d2-173fa4b6ad6e`
-- **category**: business-ops
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-10-07
-
-**説明**:
-
-Tokyo 1 等地 / 登記住所 / 郵便受取
 
 ---
 
@@ -154,11 +139,26 @@ Tokyo 1 等地 / 登記住所 / 郵便受取
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-10-12
+- **deadline**: 2026-10-10
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2601 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T00:20:20Z
+
+---
+
+### 🟡 ⏳ バーチャルオフィス契約
+
+- **id**: `e06d0486-1cd1-499f-89d2-173fa4b6ad6e`
+- **category**: business-ops
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-10-11
+
+**説明**:
+
+Tokyo 1 等地 / 登記住所 / 郵便受取
 
 ---
 
@@ -169,7 +169,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2601 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-11-10
+- **deadline**: 2026-11-08
 
 **説明**:
 
@@ -184,7 +184,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3343 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-11-11
+- **deadline**: 2026-11-09
 
 **説明**:
 
@@ -199,7 +199,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2705 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-11-12
+- **deadline**: 2026-11-10
 
 **説明**:
 
@@ -214,7 +214,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-11-13
+- **deadline**: 2026-11-11
 
 **説明**:
 
@@ -229,7 +229,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3585 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-12-02
+- **deadline**: 2026-11-30
 
 **説明**:
 
@@ -244,7 +244,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3384 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-12-20
+- **deadline**: 2026-12-18
 
 **説明**:
 
@@ -259,7 +259,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2925 / Author: kan
 - **progress**: 99%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2026-12-23
+- **deadline**: 2026-12-20
 
 **説明**:
 
@@ -274,7 +274,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1287 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-01-06
+- **deadline**: 2027-01-03
 
 **説明**:
 
@@ -289,7 +289,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2593 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-01-09
+- **deadline**: 2027-01-06
 
 **説明**:
 
@@ -304,7 +304,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1289 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-02-02
+- **deadline**: 2027-01-30
 
 **説明**:
 
@@ -319,7 +319,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1926 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-02-05
+- **deadline**: 2027-02-03
 
 **説明**:
 
@@ -334,7 +334,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3291 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-02-19
+- **deadline**: 2027-02-17
 
 **説明**:
 
@@ -349,26 +349,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3147 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-02-20
+- **deadline**: 2027-02-18
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3328 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T13:22:40Z
-
----
-
-### 🟡 ⏳ [Issue #3443] [追加要望] [資産管理] 支払原資不足時の「自動的」な口座間移動提案と実行機能
-
-- **id**: `9350b129-3edb-4e6c-8365-8c65a67a474e`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2027-02-21
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3443 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-15T21:31:36Z
 
 ---
 
@@ -379,11 +364,26 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3443 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-02-22
+- **deadline**: 2027-02-19
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2735 / Author: kanta13jp1 / Labels: enhancement, automation, 追加要望, wbs, notebooklm / GitHub updated: 2026-05-18T03:12:33Z
+
+---
+
+### 🟡 ⏳ [Issue #3443] [追加要望] [資産管理] 支払原資不足時の「自動的」な口座間移動提案と実行機能
+
+- **id**: `9350b129-3edb-4e6c-8365-8c65a67a474e`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2027-02-19
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3443 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-15T21:31:36Z
 
 ---
 
@@ -394,7 +394,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2735 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-03-01
+- **deadline**: 2027-02-27
 
 **説明**:
 
@@ -409,7 +409,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2703 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-03-07
+- **deadline**: 2027-03-04
 
 **説明**:
 
@@ -424,7 +424,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1288 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-03-15
+- **deadline**: 2027-03-13
 
 **説明**:
 
@@ -439,7 +439,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2880 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-03-20
+- **deadline**: 2027-03-17
 
 **説明**:
 
@@ -454,26 +454,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3354 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-03-20
+- **deadline**: 2027-03-18
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3595 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-21T14:58:49Z
-
----
-
-### 🟡 ⏳ [Issue #3349] [追加要望] [資産管理] カード明細照合の差分を『仮内訳』として即時登録できるUI追加
-
-- **id**: `a95eb43d-5749-4fa3-9008-08d2d81c82f0`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2027-03-23
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3349 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T19:56:01Z
 
 ---
 
@@ -484,11 +469,26 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3349 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-03-24
+- **deadline**: 2027-03-21
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1322 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:10:42Z
+
+---
+
+### 🟡 ⏳ [Issue #3349] [追加要望] [資産管理] カード明細照合の差分を『仮内訳』として即時登録できるUI追加
+
+- **id**: `a95eb43d-5749-4fa3-9008-08d2d81c82f0`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2027-03-21
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3349 / Author: kanta13jp1 / Labels: enhancement, 追加要望, wbs / GitHub updated: 2026-06-13T19:56:01Z
 
 ---
 
@@ -499,7 +499,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1322 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-04-02
+- **deadline**: 2027-03-31
 
 **説明**:
 
@@ -514,7 +514,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1840 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-10
+- **deadline**: 2027-04-07
 
 **説明**:
 
@@ -529,7 +529,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2743 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-19
+- **deadline**: 2027-04-17
 
 **説明**:
 
@@ -544,7 +544,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2737 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-22
+- **deadline**: 2027-04-20
 
 **説明**:
 
@@ -559,7 +559,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3329 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-25
+- **deadline**: 2027-04-23
 
 **説明**:
 
@@ -574,7 +574,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2659 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-26
+- **deadline**: 2027-04-24
 
 **説明**:
 
@@ -589,7 +589,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1894 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-05-05
+- **deadline**: 2027-05-03
 
 **説明**:
 
@@ -604,7 +604,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1239 / Author: kan
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2027-05-29
+- **deadline**: 2027-05-27
 
 **説明**:
 
@@ -619,7 +619,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1228 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-06-08
+- **deadline**: 2027-06-07
 
 **説明**:
 
@@ -680,7 +680,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2939
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-10-10
+- **deadline**: 2026-10-11
 
 **説明**:
 
@@ -695,7 +695,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2939
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-07-24
+- **deadline**: 2027-07-23
 
 **説明**:
 
@@ -710,7 +710,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2235 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-07-25
+- **deadline**: 2027-07-24
 
 **説明**:
 
@@ -725,7 +725,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1731 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-07-30
+- **deadline**: 2027-07-29
 
 **説明**:
 
@@ -1234,6 +1234,44 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3329
 
 ---
 
+### 🟢 ⏳ [追加要望] [資産管理] 口座見込み残高のショート予兆に対する自動口座移動提案とワンクリック作成
+
+- **id**: `e4658da1-2bcd-4786-8cba-6b6f89074dcf`
+- **category**: ユーザー要望
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2027-09-13
+
+**説明**:
+
+account_cashflow_summariesでwatch/cautionまたは不足見込みの口座を検出し、他口座の余剰から移動候補（from/to/金額）を自動算出。画面で『提案から作成』ボタンを押すだけでtransferTasksに1件追加できるようにする。
+
+発行元: 資産管理画面 > 開発者向け改善提案
+重要度: 確認
+画面: /asset-management
+
+## 根拠データ
+- 三井住友銀行大塚支店: 現在63,539円 / 今後支払40,000円 / 見込み23,539円（watch）
+
+## 変更候補ファイル
+- lib/services/asset_liability_planning_service.dart
+- lib/pages/asset_management_page.dart
+
+## 実装手順
+- lib/services/asset_liability_planning_service.dart: transfer_suggestionsの生成ロジックを追加（不足/予兆口座へ余剰口座からの候補算出）。
+- lib/pages/asset_management_page.dart: 提案一覧を表示し、『提案から口座移動タスクを作成』ボタンでtransferTasksに反映。
+
+## 受け入れ条件
+- watch/caution口座があるとき、最低1件の移動提案が表示されること。
+- 『提案から作成』操作でtransferTasksに新規タスクが追加され、見込み残高が更新表示されること。
+
+カテゴリ: UX改善
+期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3325
+
+---
+
 ### 🟢 ⏳ [追加要望] [資産管理] 利用可能額不足時の「口座移動提案」の根拠と優先度明確化
 
 - **id**: `e674162a-ca29-4e34-a9d3-c7d899491e8a`
@@ -1273,44 +1311,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3329
 カテゴリ: UX改善
 期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3585
-
----
-
-### 🟢 ⏳ [追加要望] [資産管理] 口座見込み残高のショート予兆に対する自動口座移動提案とワンクリック作成
-
-- **id**: `e4658da1-2bcd-4786-8cba-6b6f89074dcf`
-- **category**: ユーザー要望
-- **progress**: 0%
-- **status**: pending
-- **priority**: low
-- **deadline**: 2027-09-13
-
-**説明**:
-
-account_cashflow_summariesでwatch/cautionまたは不足見込みの口座を検出し、他口座の余剰から移動候補（from/to/金額）を自動算出。画面で『提案から作成』ボタンを押すだけでtransferTasksに1件追加できるようにする。
-
-発行元: 資産管理画面 > 開発者向け改善提案
-重要度: 確認
-画面: /asset-management
-
-## 根拠データ
-- 三井住友銀行大塚支店: 現在63,539円 / 今後支払40,000円 / 見込み23,539円（watch）
-
-## 変更候補ファイル
-- lib/services/asset_liability_planning_service.dart
-- lib/pages/asset_management_page.dart
-
-## 実装手順
-- lib/services/asset_liability_planning_service.dart: transfer_suggestionsの生成ロジックを追加（不足/予兆口座へ余剰口座からの候補算出）。
-- lib/pages/asset_management_page.dart: 提案一覧を表示し、『提案から口座移動タスクを作成』ボタンでtransferTasksに反映。
-
-## 受け入れ条件
-- watch/caution口座があるとき、最低1件の移動提案が表示されること。
-- 『提案から作成』操作でtransferTasksに新規タスクが追加され、見込み残高が更新表示されること。
-
-カテゴリ: UX改善
-期待する成果: 資産管理画面の改善提案を開発ワークフローに乗せ、該当運用を画面上で確認・実行・監査できる状態にする。
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3325
 
 ---
 
@@ -1362,11 +1362,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3318
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-06-27
+- **deadline**: 2026-06-28
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kanta13jp1 / Labels: enhancement, priority:high, automation, triage:done, 追加要望, wbs, notebooklm / GitHub updated: 2026-06-26T22:40:44Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kanta13jp1 / Labels: enhancement, priority:high, automation, triage:done, 追加要望, wbs, notebooklm / GitHub updated: 2026-06-27T22:37:59Z
 
 ---
 
@@ -1392,7 +1392,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kan
 - **progress**: 60%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-08-18
+- **deadline**: 2026-08-21
 
 **説明**:
 
@@ -1407,7 +1407,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-08-30
+- **deadline**: 2026-09-02
 
 **説明**:
 
@@ -1422,7 +1422,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-08-31
+- **deadline**: 2026-09-03
 
 **説明**:
 
@@ -1437,7 +1437,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-09-01
+- **deadline**: 2026-09-04
 
 **説明**:
 
@@ -1452,26 +1452,11 @@ VC 30 社 / Angel 20 名 / 接点経路の整理
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-09-01
+- **deadline**: 2026-09-04
 
 **説明**:
 
 みずほ・三菱 UFJ・住信 SBI ネット銀行 比較 → 開設
-
----
-
-### 🔴 ⏳ 東証グロース申請書類作成
-
-- **id**: `480e8f90-5898-4575-8f11-7c043935064f`
-- **category**: business-ipo
-- **progress**: 0%
-- **status**: pending
-- **priority**: high
-- **deadline**: 2026-09-08
-
-**説明**:
-
-I の部 / II の部 / 申請書一式
 
 ---
 
@@ -1482,26 +1467,11 @@ I の部 / II の部 / 申請書一式
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-09-08
+- **deadline**: 2026-09-11
 
 **説明**:
 
 野村 / 大和 / SBI / みずほ 4 社
-
----
-
-### 🔴 ⏳ 上場審査対応
-
-- **id**: `c52e8b2e-2390-45a9-8368-761f14a568d1`
-- **category**: business-ipo
-- **progress**: 0%
-- **status**: pending
-- **priority**: high
-- **deadline**: 2026-09-09
-
-**説明**:
-
-東証ヒアリング 5 回 / 質疑応答資料
 
 ---
 
@@ -1512,7 +1482,7 @@ I の部 / II の部 / 申請書一式
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-09-09
+- **deadline**: 2026-09-12
 
 **説明**:
 
@@ -1520,14 +1490,44 @@ EY / KPMG / PwC / Deloitte / 太陽 / トーマツ
 
 ---
 
+### 🔴 ⏳ 東証グロース申請書類作成
+
+- **id**: `480e8f90-5898-4575-8f11-7c043935064f`
+- **category**: business-ipo
+- **progress**: 0%
+- **status**: pending
+- **priority**: high
+- **deadline**: 2026-09-12
+
+**説明**:
+
+I の部 / II の部 / 申請書一式
+
+---
+
+### 🔴 ⏳ 上場審査対応
+
+- **id**: `c52e8b2e-2390-45a9-8368-761f14a568d1`
+- **category**: business-ipo
+- **progress**: 0%
+- **status**: pending
+- **priority**: high
+- **deadline**: 2026-09-13
+
+**説明**:
+
+東証ヒアリング 5 回 / 質疑応答資料
+
+---
+
 ### 🔴 🔧 [追加要望][収益化P0][X集客] プロフィールを1人目ユーザー獲得用に改修
 
 - **id**: `1c981231-ab43-4363-a829-46297cd1d6a5`
 - **category**: 追加要望 / x-first-user-growth
-- **progress**: 10%
+- **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-04
+- **deadline**: 2027-08-02
 
 **説明**:
 
@@ -1535,14 +1535,14 @@ Rewrite the X profile for @kanta13jp1 so profile visitors immediately understand
 
 ---
 
-### 🔴 ⏳ [追加要望][収益化P0] 銀行口座への1円以上入金を確認
+### 🔴 🔧 [追加要望][収益化P0] 銀行口座への1円以上入金を確認
 
 - **id**: `3f0fd873-7521-46f7-b6a1-190d2059c0be`
 - **category**: 追加要望 / business-revenue
-- **progress**: 0%
-- **status**: pending
+- **progress**: 90%
+- **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-05
+- **deadline**: 2027-08-03
 
 **説明**:
 
@@ -1554,10 +1554,10 @@ Rewrite the X profile for @kanta13jp1 so profile visitors immediately understand
 
 - **id**: `6e1c181c-f6b4-4257-a99d-c93f5ef77c7b`
 - **category**: 追加要望 / business-revenue
-- **progress**: 50%
+- **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-06
+- **deadline**: 2027-08-04
 
 **説明**:
 
@@ -1565,14 +1565,14 @@ Stripe account-status task for the representative identity document must move to
 
 ---
 
-### 🔴 ⏳ [追加要望][収益化P0][1人目獲得] Stripe解除後に初回支援決済へ転換
+### 🔴 🔧 [追加要望][収益化P0][1人目獲得] Stripe解除後に初回支援決済へ転換
 
 - **id**: `475f26f8-e6ca-4d68-b734-8f7d3c6aba90`
 - **category**: 追加要望 / first-user-acquisition
-- **progress**: 0%
-- **status**: pending
+- **progress**: 90%
+- **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-06
+- **deadline**: 2027-08-04
 
 **説明**:
 
@@ -1580,14 +1580,14 @@ Once Stripe identity review and payout pause are clear, ask the first interested
 
 ---
 
-### 🔴 ⏳ [追加要望][収益化P0][X集客] Xアナリティクスで勝ち投稿を増幅
+### 🔴 🔧 [追加要望][収益化P0][X集客] Xアナリティクスで勝ち投稿を増幅
 
 - **id**: `7d89a9ca-51ea-42fb-b097-24b02a6e6cb9`
 - **category**: 追加要望 / x-first-user-growth
-- **progress**: 0%
-- **status**: pending
+- **progress**: 90%
+- **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-07
+- **deadline**: 2027-08-05
 
 **説明**:
 
@@ -1599,10 +1599,10 @@ Use X Analytics / post activity to identify which posts drive impressions and en
 
 - **id**: `7e01bd82-8e8d-46f0-88df-65f756bb5b27`
 - **category**: 追加要望 / first-user-acquisition
-- **progress**: 10%
+- **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-07
+- **deadline**: 2027-08-06
 
 **説明**:
 
@@ -1610,18 +1610,33 @@ Define the first-user persona and create a concrete list of at least 10 people t
 
 ---
 
-### 🔴 ⏳ [追加要望][収益化P0][X集客] 大きめアカウントへの有益リプライ30件
+### 🔴 🔧 [追加要望][収益化P0][X集客] 大きめアカウントへの有益リプライ30件
 
 - **id**: `88dccb12-d2e0-4988-b637-0d3574f2681e`
 - **category**: 追加要望 / x-first-user-growth
-- **progress**: 0%
-- **status**: pending
+- **progress**: 90%
+- **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-09
+- **deadline**: 2027-08-07
 
 **説明**:
 
 Use X replies to earn impressions without relying on acquaintances. Reply to 30 relevant posts from larger accounts in AI/dev/productivity/learning with concrete, non-spammy comments that naturally mention the site only when relevant.
+
+---
+
+### 🔴 🔧 [追加要望][収益化P0][X集客] 7日間・1日5投稿のインプレッション実験
+
+- **id**: `aaacd8b8-2efb-4db0-b77c-fe3a007e1284`
+- **category**: 追加要望 / x-first-user-growth
+- **progress**: 90%
+- **status**: in_progress
+- **priority**: high
+- **deadline**: 2027-08-08
+
+**説明**:
+
+Run a 7-day X content sprint: 1 build-in-public post, 1 problem/lesson post, 1 site feature post, 1 reply-bait question, and 1 quote/reply to a relevant larger account per day.
 
 ---
 
@@ -1632,7 +1647,7 @@ Use X replies to earn impressions without relying on acquaintances. Reply to 30 
 - **progress**: 95%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-10
+- **deadline**: 2027-08-09
 
 **説明**:
 
@@ -1640,18 +1655,18 @@ Stripe live mode、本人確認/事業者情報、銀行口座、live Product/Pr
 
 ---
 
-### 🔴 ⏳ [追加要望][収益化P0][X集客] 7日間・1日5投稿のインプレッション実験
+### 🔴 🔧 [追加要望][収益化P0][X集客][10K] 10Kインプレッション狙いのブリーフィング投稿を7日実行
 
-- **id**: `aaacd8b8-2efb-4db0-b77c-fe3a007e1284`
-- **category**: 追加要望 / x-first-user-growth
-- **progress**: 0%
-- **status**: pending
+- **id**: `aeede945-e64d-49c3-b208-3f03d7454011`
+- **category**: 追加要望 / x-10k-briefing-growth
+- **progress**: 90%
+- **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-10
+- **deadline**: 2027-08-09
 
 **説明**:
 
-Run a 7-day X content sprint: 1 build-in-public post, 1 problem/lesson post, 1 site feature post, 1 reply-bait question, and 1 quote/reply to a relevant larger account per day.
+Publish one Daily Briefing style X post/thread per day for 7 days using timely topics and the AI share briefing preset. Target at least one 10K-impression post, then convert profile visits/replies into one real site user.
 
 ---
 
@@ -1659,10 +1674,10 @@ Run a 7-day X content sprint: 1 build-in-public post, 1 problem/lesson post, 1 s
 
 - **id**: `c6e3cf85-7101-4579-8b42-47160ca1456f`
 - **category**: 追加要望 / first-user-acquisition
-- **progress**: 25%
+- **progress**: 90%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2027-08-11
+- **deadline**: 2027-08-10
 
 **説明**:
 
@@ -1674,7 +1689,7 @@ Publish one honest build-in-public post or X post that drives people to /subscri
 
 - **id**: `dcb0e1d2-be74-4ecb-bd2d-16853279d654`
 - **category**: 追加要望 / first-user-acquisition
-- **progress**: 25%
+- **progress**: 90%
 - **status**: in_progress
 - **priority**: high
 - **deadline**: 2027-08-11
@@ -1685,12 +1700,12 @@ Send direct messages or personal requests to 10 concrete prospects to get one re
 
 ---
 
-### 🔴 ⏳ [追加要望][収益化P0][X集客] 固定ポストをサイト導線に差し替え
+### 🔴 🔧 [追加要望][収益化P0][X集客] 固定ポストをサイト導線に差し替え
 
 - **id**: `e058bcba-b243-4cb2-8ffb-7b24ceb2457b`
 - **category**: 追加要望 / x-first-user-growth
-- **progress**: 0%
-- **status**: pending
+- **progress**: 90%
+- **status**: in_progress
 - **priority**: high
 - **deadline**: 2027-08-12
 
