@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-06-29T15:07:16Z",
+  "fetched_at": "2026-06-29T16:58:35Z",
   "tickets": {
     "http_code": "200",
     "count": 0,
@@ -11,8 +11,8 @@
   },
   "infra": {
     "firebase": {
-      "code": "000000",
-      "ok": false
+      "code": "200",
+      "ok": true
     },
     "get-home-dashboard": {
       "code": "200",
