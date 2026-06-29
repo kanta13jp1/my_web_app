@@ -655,21 +655,24 @@ async function createHedraPresenterVideo(params: {
       storedAudioUrl = audio.url;
       storedAudioPath = audio.path;
     } catch (error) {
-      const canRetryWithFallbackVoice = params.requiresUploadedAudio &&
-        shouldRetryElevenLabsWithFallbackVoice(error) &&
-        ELEVENLABS_FALLBACK_VOICE_ID !== ELEVENLABS_AI_SECRETARY_VOICE_ID;
-      if (canRetryWithFallbackVoice) {
-        try {
-          const audio = await createElevenLabsSpeechAsset(params.admin, {
-            text: spokenScript.slice(0, 1800),
-            templateTitle: `${params.title ?? "share-update"}-fallback`,
-            lang: params.lang,
-            voiceId: ELEVENLABS_FALLBACK_VOICE_ID,
-          });
-          audioGeneration = buildHedraUploadedAudioGeneration(audio.url);
-          audioProvider = "elevenlabs_fallback";
-          storedAudioUrl = audio.url;
-          storedAudioPath = audio.path;
+      if (
+        params.requiresUploadedAudio &&
+        shouldRetryElevenLabsWithFallbackVoice(error)
+      ) {
+        const fallbackResult = await tryElevenLabsFallbackVoices(params.admin, {
+          text: spokenScript.slice(0, 1800),
+          templateTitle: params.title ?? "share-update",
+          lang: params.lang,
+          configuredVoiceId: ELEVENLABS_AI_SECRETARY_VOICE_ID,
+          configuredError: error,
+        });
+        if (fallbackResult.ok) {
+          audioGeneration = buildHedraUploadedAudioGeneration(
+            fallbackResult.audio.url,
+          );
+          audioProvider = fallbackResult.audioProvider;
+          storedAudioUrl = fallbackResult.audio.url;
+          storedAudioPath = fallbackResult.audio.path;
           return await createHedraVideoFromUploadedAudio(params, {
             audioGeneration,
             storedAudioUrl,
@@ -677,13 +680,8 @@ async function createHedraPresenterVideo(params: {
             audioProvider,
             imageUrl,
           });
-        } catch (fallbackError) {
-          throw new Error(
-            `ElevenLabs speech generation failed with configured voice and fallback voice: configured=${
-              providerErrorMessage(error)
-            }; fallback=${providerErrorMessage(fallbackError)}`,
-          );
         }
+        throw new Error(fallbackResult.reason);
       }
       if (params.requiresUploadedAudio) {
         throw new Error(
@@ -766,6 +764,127 @@ function shouldRetryElevenLabsWithFallbackVoice(error: unknown): boolean {
   return message.includes("paid_plan_required") ||
     message.includes("library voices") ||
     message.includes("voice_not_found");
+}
+
+type ElevenLabsVoice = {
+  voice_id?: string;
+  name?: string;
+  category?: string;
+  labels?: Record<string, string>;
+};
+
+type ElevenLabsFallbackResult =
+  | { ok: true; audio: StoredMedia; audioProvider: string }
+  | { ok: false; reason: string };
+
+async function tryElevenLabsFallbackVoices(
+  admin: SupabaseClient,
+  params: {
+    text: string;
+    templateTitle: string;
+    lang: "ja" | "en";
+    configuredVoiceId: string;
+    configuredError: unknown;
+  },
+): Promise<ElevenLabsFallbackResult> {
+  const candidateVoiceIds = await resolveElevenLabsFallbackVoiceIds(
+    params.configuredVoiceId,
+    params.lang,
+  );
+  const errors: string[] = [];
+  for (const voiceId of candidateVoiceIds) {
+    try {
+      const audio = await createElevenLabsSpeechAsset(admin, {
+        text: params.text,
+        templateTitle: `${params.templateTitle}-fallback`,
+        lang: params.lang,
+        voiceId,
+      });
+      return { ok: true, audio, audioProvider: "elevenlabs_fallback" };
+    } catch (error) {
+      errors.push(`${redactVoiceId(voiceId)}=${providerErrorMessage(error)}`);
+    }
+  }
+  const listed = candidateVoiceIds.length > 0
+    ? errors.join("; ")
+    : "no fallback voices discovered";
+  return {
+    ok: false,
+    reason:
+      `ElevenLabs speech generation failed with configured voice and fallback voices: configured=${
+        providerErrorMessage(params.configuredError)
+      }; fallback=${listed}`,
+  };
+}
+
+async function resolveElevenLabsFallbackVoiceIds(
+  configuredVoiceId: string,
+  lang: "ja" | "en",
+): Promise<string[]> {
+  const ids = new Set<string>();
+  if (ELEVENLABS_FALLBACK_VOICE_ID !== configuredVoiceId) {
+    ids.add(ELEVENLABS_FALLBACK_VOICE_ID);
+  }
+  try {
+    const voices = await fetchElevenLabsVoices();
+    voices
+      .filter((voice) => voice.voice_id && voice.voice_id !== configuredVoiceId)
+      .sort((a, b) =>
+        elevenLabsVoiceScore(b, lang) - elevenLabsVoiceScore(a, lang)
+      )
+      .slice(0, 4)
+      .forEach((voice) => ids.add(voice.voice_id as string));
+  } catch (error) {
+    console.warn(
+      "ElevenLabs voice discovery failed",
+      providerErrorMessage(error),
+    );
+  }
+  return [...ids].slice(0, 4);
+}
+
+async function fetchElevenLabsVoices(): Promise<ElevenLabsVoice[]> {
+  const response = await fetch("https://api.elevenlabs.io/v1/voices", {
+    headers: { "xi-api-key": ELEVENLABS_API_KEY },
+  });
+  if (!response.ok) {
+    const raw = await response.text();
+    throw new Error(`ElevenLabs voices API ${response.status}: ${raw}`);
+  }
+  const payload = await response.json() as { voices?: ElevenLabsVoice[] };
+  return Array.isArray(payload.voices) ? payload.voices : [];
+}
+
+function elevenLabsVoiceScore(
+  voice: ElevenLabsVoice,
+  lang: "ja" | "en",
+): number {
+  const labels = Object.values(voice.labels ?? {}).join(" ");
+  const haystack = `${voice.name ?? ""} ${voice.category ?? ""} ${labels}`
+    .toLowerCase();
+  let score = 0;
+  if (haystack.includes("female") || haystack.includes("woman")) score += 20;
+  if (haystack.includes("warm") || haystack.includes("professional")) {
+    score += 5;
+  }
+  if (haystack.includes("premade") || haystack.includes("generated")) {
+    score += 4;
+  }
+  if (haystack.includes("cloned")) score += 2;
+  if (
+    lang === "ja" &&
+    (haystack.includes("japanese") || haystack.includes("multilingual"))
+  ) {
+    score += 6;
+  }
+  if (haystack.includes("male") || haystack.includes("man")) score -= 20;
+  if (haystack.includes("library")) score -= 8;
+  return score;
+}
+
+function redactVoiceId(voiceId: string): string {
+  if (voiceId.length <= 8) return "voice";
+  return `${voiceId.slice(0, 4)}...${voiceId.slice(-4)}`;
 }
 
 async function createHedraTextToSpeechAudioGeneration(
