@@ -27,6 +27,18 @@ class _FunnelMetrics {
   });
 }
 
+class _PaidConversionMetrics {
+  final int paidCustomers;
+  final int mrrYen;
+
+  const _PaidConversionMetrics({
+    required this.paidCustomers,
+    required this.mrrYen,
+  });
+
+  static const empty = _PaidConversionMetrics(paidCustomers: 0, mrrYen: 0);
+}
+
 class _GrowthActionPlan {
   final String bottleneckLabel;
   final String title;
@@ -62,6 +74,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _lpTotalViews = 0;
   int _allowedToolExecutionCount = 0;
   int _blockedToolExecutionCount = 0;
+  _PaidConversionMetrics _paidConversionMetrics = _PaidConversionMetrics.empty;
   bool _hasLpViewStats = false;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
@@ -195,6 +208,47 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       return '--';
     }
     return '${(numerator / denominator * 100).toStringAsFixed(1)}%';
+  }
+
+  String _formatPaidConversionRate(int paidCustomers, int totalUsers) {
+    if (totalUsers <= 0) {
+      return '0.0%';
+    }
+    return '${(paidCustomers / totalUsers * 100).toStringAsFixed(1)}%';
+  }
+
+  Map<String, dynamic> _firstMap(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    if (value is List && value.isNotEmpty && value.first is Map) {
+      return Map<String, dynamic>.from(value.first as Map);
+    }
+    return <String, dynamic>{};
+  }
+
+  _PaidConversionMetrics _paidConversionMetricsFromRpc(dynamic value) {
+    final row = _firstMap(value);
+    if (row.isEmpty) {
+      return _PaidConversionMetrics.empty;
+    }
+
+    return _PaidConversionMetrics(
+      paidCustomers: _toInt(row['paid_customers']),
+      mrrYen: _toInt(row['mrr_yen']),
+    );
+  }
+
+  Future<_PaidConversionMetrics> _loadPaidConversionMetrics() async {
+    try {
+      final response = await _supabase.rpc(
+        'get_billing_paid_conversion_summary',
+      );
+      return _paidConversionMetricsFromRpc(response);
+    } catch (error) {
+      debugPrint('billing paid conversion summary is unavailable: $error');
+      return _PaidConversionMetrics.empty;
+    }
   }
 
   int _estimateNeededMagicLinks({
@@ -1213,6 +1267,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ? Map<String, dynamic>.from(lpStatsResponse)
           : <String, dynamic>{};
       final hasLpViewStats = lpStats.isNotEmpty;
+      final paidConversionMetrics = await _loadPaidConversionMetrics();
 
       final toolExecutionLogs = <Map<String, dynamic>>[];
       final blockedReasonCounts = <String, int>{};
@@ -1267,6 +1322,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _blockedReasonBreakdown = normalizedBlockedReasons;
           _allowedToolExecutionCount = allowedExecutionCount;
           _blockedToolExecutionCount = blockedExecutionCount;
+          _paidConversionMetrics = paidConversionMetrics;
           _isLoading = false;
         });
       }
@@ -1552,6 +1608,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       totalShares,
                       effectiveTotalLpViews,
                       todayFunnel,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPaidConversionCard(
+                      metrics: _paidConversionMetrics,
+                      totalUsers: _actualUserCount,
                     ),
                     const SizedBox(height: 16),
                     _buildRegistrationOpsCard(
@@ -2326,6 +2387,100 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   '$totalLpViews',
                   Icons.analytics,
                   const Color(0xFF0D9488),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaidConversionCard({
+    required _PaidConversionMetrics metrics,
+    required int totalUsers,
+  }) {
+    final conversionRate = _formatPaidConversionRate(
+      metrics.paidCustomers,
+      totalUsers,
+    );
+    final formattedMrr = NumberFormat.currency(
+      locale: 'ja_JP',
+      symbol: '¥',
+      decimalDigits: 0,
+    ).format(metrics.mrrYen);
+
+    return Card(
+      elevation: 3,
+      shadowColor: const Color(0x33000000),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.workspace_premium,
+                  color: Color(0xFF0D9488),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    '有料転換',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                Text(
+                  'active pro/team',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'billing_subscriptions の active な Pro/Team だけを集計します。',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _buildMiniKpiChip(
+                  label: '課金ユーザー数',
+                  value: '${metrics.paidCustomers}',
+                  color: const Color(0xFF0D9488),
+                ),
+                _buildMiniKpiChip(
+                  label: 'MRR',
+                  value: formattedMrr,
+                  color: const Color(0xFF7C3AED),
+                ),
+                _buildMiniKpiChip(
+                  label: 'free→paid CVR',
+                  value: conversionRate,
+                  color: const Color(0xFF6366F1),
+                ),
+                _buildMiniKpiChip(
+                  label: '登録総数',
+                  value: '$totalUsers',
+                  color: const Color(0xFF475569),
                 ),
               ],
             ),
