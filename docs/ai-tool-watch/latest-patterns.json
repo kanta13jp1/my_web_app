@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-28T21:40:29Z",
+  "generated_at": "2026-06-29T21:46:16Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -13,7 +13,6 @@
       "drop": 0
     },
     "risk_flags": {
-      "sensational_language": 1,
       "source_http_problem": 1
     }
   },
@@ -471,18 +470,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-dae327bf3fc8",
+        "entry_id": "nf-6e3553944fad",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.9 / Jun 22, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs. # Marketplace leaderboard Cursor now shows you a leaderboard of the most popular plugins, skills, and MCPs across your team.",
+        "text": "Cursor changelog 3.9 / Jun 22, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Get push notifications when an agent finishes, needs input, or is ready for review. # Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "cbd1382a93c8248ad9dd4c76cdc2dfcd472ba79550fae7a19d91f5d406121989",
+          "hash": "570c5c6fd2ce3cf2324a7950db0767e7f2b973134987a4d4b47f17373920e3ab",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -516,29 +515,26 @@
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-            "You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs.",
-            "# Marketplace leaderboard Cursor now shows you a leaderboard of the most popular plugins, skills, and MCPs across your team."
+            "Get push notifications when an agent finishes, needs input, or is ready for review.",
+            "# Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-dae327bf3fc8",
+        "entry_id": "nf-6e3553944fad",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
-        "confidence": 0.91,
+        "confidence": 0.97,
         "verdict": "pass",
-        "risk_flags": [
-          "sensational_language"
-        ],
+        "risk_flags": [],
         "reasons": [
           "has source URL",
           "source domain is official or primary",
           "HTTP 200 reachable",
-          "sensational terms: kill",
           "has enough context for review"
         ]
       }
@@ -553,7 +549,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
@@ -581,7 +577,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
+          "previous_hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
@@ -692,11 +688,9 @@
       "company": "multi-source",
       "topic": "agentic-workflows",
       "entry_count": 7,
-      "average_confidence": 0.961,
-      "risk_level": "review",
-      "risk_flags": [
-        "sensational_language"
-      ],
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
       "evidence_titles": [
         "Claude Code changelog",
         "Claude Code hooks reference",
@@ -704,7 +698,7 @@
         "Codex use cases",
         "Cursor changelog"
       ],
-      "recommended_action": "Hold for human review before creating issues or blog drafts."
+      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
     },
     {
       "id": "np-30487c423ada",
@@ -723,6 +717,23 @@
     }
   ],
   "issue_candidates": [
+    {
+      "id": "np-ac6cd8e89955",
+      "company": "multi-source",
+      "topic": "agentic-workflows",
+      "entry_count": 7,
+      "average_confidence": 0.97,
+      "risk_level": "normal",
+      "risk_flags": [],
+      "evidence_titles": [
+        "Claude Code changelog",
+        "Claude Code hooks reference",
+        "Claude Code GitHub Actions",
+        "Codex use cases",
+        "Cursor changelog"
+      ],
+      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
+    },
     {
       "id": "np-30487c423ada",
       "company": "anthropic",

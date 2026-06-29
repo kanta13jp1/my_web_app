@@ -1,12 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-06-28T21:40:26Z`
-- Previous check: `2026-06-27T21:39:37Z`
+- Checked at: `2026-06-29T21:46:14Z`
+- Previous check: `2026-06-28T21:40:26Z`
 - Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
+- `changed` Cursor changelog: 3.9 / Jun 22, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -55,7 +55,7 @@
   - Latest signal: 3.9 / Jun 22, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...
-  - Short signal: You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs.
+  - Short signal: Get push notifications when an agent finishes, needs input, or is ready for review.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.87.0 / June 19, 2026

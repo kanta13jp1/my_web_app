@@ -11,43 +11,48 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
+      "hash": "570c5c6fd2ce3cf2324a7950db0767e7f2b973134987a4d4b47f17373920e3ab",
       "keyword_groups": {
+        "codex-runtime": [
+          "computer use",
+          "subagents"
+        ],
         "hooks": [
-          "Stop"
+          "hook",
+          "hooks"
         ],
         "integration": [
           "MCP",
-          "GitHub",
-          "IDE extension",
-          "VSCode"
+          "Slack",
+          "GitHub"
         ],
         "quality-cost": [
           "cost",
-          "quota",
-          "permission",
           "review",
           "CI"
         ],
         "schedule": [
+          "automation",
+          "automations",
+          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
-      "name": "Gemini Code Assist release notes",
-      "owner": "Gemini Code Assist",
-      "previous_hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
-      "slug": "gemini-code-assist-release-notes",
+      "latest_signal": "3.9 / Jun 22, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "cbd1382a93c8248ad9dd4c76cdc2dfcd472ba79550fae7a19d91f5d406121989",
+      "slug": "cursor-changelog",
       "snippets": [
-        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
-        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
-        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
+        "Get push notifications when an agent finishes, needs input, or is ready for review.",
+        "# Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone."
       ],
       "status": 200,
-      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
+      "url": "https://cursor.com/changelog"
     }
   ],
-  "checked_at": "2026-06-28T21:40:26Z",
+  "checked_at": "2026-06-29T21:46:14Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -99,7 +104,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-27T21:39:37Z",
+  "previous_checked_at": "2026-06-28T21:40:26Z",
   "sources": [
     {
       "changed": false,
@@ -390,10 +395,10 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cbd1382a93c8248ad9dd4c76cdc2dfcd472ba79550fae7a19d91f5d406121989",
+      "hash": "570c5c6fd2ce3cf2324a7950db0767e7f2b973134987a4d4b47f17373920e3ab",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -427,14 +432,14 @@
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
-        "You can now add and manage plugins, skills, MCPs, subagents, rules, commands, and hooks at the user, team, or workspace level, and even bring your own custom MCPs.",
-        "# Marketplace leaderboard Cursor now shows you a leaderboard of the most popular plugins, skills, and MCPs across your team."
+        "Get push notifications when an agent finishes, needs input, or is ready for review.",
+        "# Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
@@ -462,7 +467,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "b4bc36403687bb6af0252c1a9b4905530781abe0808390336d8f53c02a898a27",
+      "previous_hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
