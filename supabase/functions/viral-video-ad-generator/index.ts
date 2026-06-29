@@ -39,6 +39,10 @@ const HEDRA_TTS_MODEL_ID = Deno.env.get("HEDRA_TTS_MODEL_ID") ?? "";
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
 const ELEVENLABS_MODEL_ID = Deno.env.get("ELEVENLABS_MODEL_ID") ??
   "eleven_multilingual_v2";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const OPENAI_TTS_MODEL = Deno.env.get("OPENAI_TTS_MODEL") ??
+  "gpt-4o-mini-tts";
+const OPENAI_TTS_VOICE = Deno.env.get("OPENAI_TTS_VOICE") ?? "nova";
 const ELEVENLABS_DEFAULT_FEMALE_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
 const ELEVENLABS_FALLBACK_VOICE_ID =
   Deno.env.get("ELEVENLABS_FALLBACK_VOICE_ID") ??
@@ -681,7 +685,37 @@ async function createHedraPresenterVideo(params: {
             imageUrl,
           });
         }
-        throw new Error(fallbackResult.reason);
+        if (OPENAI_API_KEY) {
+          try {
+            const openAiAudio = await createOpenAiSpeechAsset(params.admin, {
+              text: spokenScript.slice(0, 1800),
+              templateTitle: `${params.title ?? "share-update"}-openai-tts`,
+              lang: params.lang,
+            });
+            audioGeneration = buildHedraUploadedAudioGeneration(
+              openAiAudio.url,
+            );
+            audioProvider = "openai_tts_fallback";
+            storedAudioUrl = openAiAudio.url;
+            storedAudioPath = openAiAudio.path;
+            return await createHedraVideoFromUploadedAudio(params, {
+              audioGeneration,
+              storedAudioUrl,
+              storedAudioPath,
+              audioProvider,
+              imageUrl,
+            });
+          } catch (openAiError) {
+            throw new Error(
+              `${fallbackResult.reason}; openai_tts=${
+                providerErrorMessage(openAiError)
+              }`,
+            );
+          }
+        }
+        throw new Error(
+          `${fallbackResult.reason}; openai_tts=OPENAI_API_KEY not configured`,
+        );
       }
       if (params.requiresUploadedAudio) {
         throw new Error(
@@ -762,6 +796,8 @@ function providerErrorMessage(error: unknown): string {
 function shouldRetryElevenLabsWithFallbackVoice(error: unknown): boolean {
   const message = providerErrorMessage(error);
   return message.includes("paid_plan_required") ||
+    message.includes("payment_required") ||
+    message.includes("free users cannot use") ||
     message.includes("library voices") ||
     message.includes("voice_not_found");
 }
@@ -972,6 +1008,98 @@ async function createElevenLabsSpeechAsset(
     });
   if (error) {
     throw new Error(`ElevenLabs audio upload failed: ${error.message}`);
+  }
+  const { data } = admin.storage.from(VIRAL_VIDEO_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, path };
+}
+
+async function createOpenAiSpeechAsset(
+  admin: SupabaseClient,
+  params: {
+    text: string;
+    templateTitle: string;
+    lang: "ja" | "en";
+  },
+): Promise<StoredMedia> {
+  const text = params.text.trim();
+  if (!text) throw new Error("OpenAI speech text is empty");
+  const modelCandidates = uniqueNonEmptyStrings([
+    OPENAI_TTS_MODEL,
+    "gpt-4o-mini-tts",
+    "tts-1-hd",
+    "tts-1",
+  ]);
+  const voiceCandidates = uniqueNonEmptyStrings([
+    OPENAI_TTS_VOICE,
+    "nova",
+    "shimmer",
+    "alloy",
+  ]);
+  const errors: string[] = [];
+  for (const model of modelCandidates) {
+    for (const voice of voiceCandidates) {
+      try {
+        const response = await fetch("https://api.openai.com/v1/audio/speech", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
+            "Accept": "audio/mpeg",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            voice,
+            input: text,
+          }),
+        });
+        if (!response.ok) {
+          const raw = await response.text();
+          errors.push(
+            `${model}/${voice}=OpenAI API ${response.status}: ${raw}`,
+          );
+          continue;
+        }
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        return await uploadAudioAsset(admin, {
+          bytes,
+          prefix: "openai-tts",
+          templateTitle: params.templateTitle,
+          lang: params.lang,
+        });
+      } catch (error) {
+        errors.push(`${model}/${voice}=${providerErrorMessage(error)}`);
+      }
+    }
+  }
+  throw new Error(
+    `OpenAI speech generation failed: ${errors.join("; ").slice(0, 900)}`,
+  );
+}
+
+async function uploadAudioAsset(
+  admin: SupabaseClient,
+  params: {
+    bytes: Uint8Array;
+    prefix: string;
+    templateTitle: string;
+    lang: "ja" | "en";
+  },
+): Promise<StoredMedia> {
+  const path = mediaStoragePath({
+    prefix: params.prefix,
+    fileName: `${crypto.randomUUID()}-${
+      storageSafeSegment(params.templateTitle)
+    }-${params.lang}.mp3`,
+  });
+  const { error } = await admin.storage
+    .from(VIRAL_VIDEO_BUCKET)
+    .upload(path, params.bytes, {
+      contentType: "audio/mpeg",
+      cacheControl: "604800",
+      upsert: false,
+    });
+  if (error) {
+    throw new Error(`${params.prefix} audio upload failed: ${error.message}`);
   }
   const { data } = admin.storage.from(VIRAL_VIDEO_BUCKET).getPublicUrl(path);
   return { url: data.publicUrl, path };
@@ -1253,6 +1381,15 @@ function firstNonEmptyString(...values: unknown[]): string | null {
     }
   }
   return null;
+}
+
+function uniqueNonEmptyStrings(values: unknown[]): string[] {
+  const seen = new Set<string>();
+  for (const value of values) {
+    const text = typeof value === "string" ? value.trim() : "";
+    if (text.length > 0) seen.add(text);
+  }
+  return [...seen];
 }
 
 function normalizeHedraStartKeyframeUrl(value: string | null): string | null {
