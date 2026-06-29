@@ -39,11 +39,15 @@ const HEDRA_TTS_MODEL_ID = Deno.env.get("HEDRA_TTS_MODEL_ID") ?? "";
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
 const ELEVENLABS_MODEL_ID = Deno.env.get("ELEVENLABS_MODEL_ID") ??
   "eleven_multilingual_v2";
+const ELEVENLABS_DEFAULT_FEMALE_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+const ELEVENLABS_FALLBACK_VOICE_ID =
+  Deno.env.get("ELEVENLABS_FALLBACK_VOICE_ID") ??
+    ELEVENLABS_DEFAULT_FEMALE_VOICE_ID;
 const ELEVENLABS_AI_SECRETARY_VOICE_ID =
   Deno.env.get("ELEVENLABS_AI_SECRETARY_VOICE_ID") ??
     Deno.env.get("ELEVENLABS_SECRETARY_VOICE_ID") ??
     Deno.env.get("ELEVENLABS_VOICE_ID") ??
-    "21m00Tcm4TlvDq8ikWAM";
+    ELEVENLABS_DEFAULT_FEMALE_VOICE_ID;
 const VIRAL_VIDEO_BUCKET = "viral-ad-videos";
 
 // Dark War風 広告テンプレート定義
@@ -651,6 +655,36 @@ async function createHedraPresenterVideo(params: {
       storedAudioUrl = audio.url;
       storedAudioPath = audio.path;
     } catch (error) {
+      const canRetryWithFallbackVoice = params.requiresUploadedAudio &&
+        shouldRetryElevenLabsWithFallbackVoice(error) &&
+        ELEVENLABS_FALLBACK_VOICE_ID !== ELEVENLABS_AI_SECRETARY_VOICE_ID;
+      if (canRetryWithFallbackVoice) {
+        try {
+          const audio = await createElevenLabsSpeechAsset(params.admin, {
+            text: spokenScript.slice(0, 1800),
+            templateTitle: `${params.title ?? "share-update"}-fallback`,
+            lang: params.lang,
+            voiceId: ELEVENLABS_FALLBACK_VOICE_ID,
+          });
+          audioGeneration = buildHedraUploadedAudioGeneration(audio.url);
+          audioProvider = "elevenlabs_fallback";
+          storedAudioUrl = audio.url;
+          storedAudioPath = audio.path;
+          return await createHedraVideoFromUploadedAudio(params, {
+            audioGeneration,
+            storedAudioUrl,
+            storedAudioPath,
+            audioProvider,
+            imageUrl,
+          });
+        } catch (fallbackError) {
+          throw new Error(
+            `ElevenLabs speech generation failed with configured voice and fallback voice: configured=${
+              providerErrorMessage(error)
+            }; fallback=${providerErrorMessage(fallbackError)}`,
+          );
+        }
+      }
       if (params.requiresUploadedAudio) {
         throw new Error(
           `ElevenLabs speech generation failed before Hedra video generation: ${
@@ -669,11 +703,34 @@ async function createHedraPresenterVideo(params: {
     });
   }
 
+  return await createHedraVideoFromUploadedAudio(params, {
+    audioGeneration,
+    storedAudioUrl,
+    storedAudioPath,
+    audioProvider,
+    imageUrl,
+  });
+}
+
+async function createHedraVideoFromUploadedAudio(
+  params: {
+    apiKey: string;
+    title?: string;
+    prompt: string;
+  },
+  media: {
+    audioGeneration: Record<string, unknown>;
+    storedAudioUrl: string | null;
+    storedAudioPath: string | null;
+    audioProvider: string | null;
+    imageUrl: string;
+  },
+): Promise<HedraVideoResult> {
   const generationBody: Record<string, unknown> = {
     type: "video",
     ai_model_id: HEDRA_AVATAR_MODEL_ID,
-    start_keyframe_url: imageUrl,
-    audio_generation: audioGeneration,
+    start_keyframe_url: media.imageUrl,
+    audio_generation: media.audioGeneration,
     generated_video_inputs: {
       text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
       aspect_ratio: "16:9",
@@ -684,19 +741,31 @@ async function createHedraPresenterVideo(params: {
   const payload = await createHedraGenerationWithTtsModelFallback(
     params.apiKey,
     generationBody,
-    audioGeneration["type"] === "text_to_speech" &&
-      audioGeneration["model_id"] != null,
+    media.audioGeneration["type"] === "text_to_speech" &&
+      media.audioGeneration["model_id"] != null,
   );
   const video = await pollHedraGeneration(
     params.apiKey,
     normalizeHedraVideoResponse(payload),
   );
-  return { ...video, storedAudioUrl, storedAudioPath, audioProvider };
+  return {
+    ...video,
+    storedAudioUrl: media.storedAudioUrl,
+    storedAudioPath: media.storedAudioPath,
+    audioProvider: media.audioProvider,
+  };
 }
 
 function providerErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message.replace(/\s+/g, " ").trim().slice(0, 500);
+}
+
+function shouldRetryElevenLabsWithFallbackVoice(error: unknown): boolean {
+  const message = providerErrorMessage(error);
+  return message.includes("paid_plan_required") ||
+    message.includes("library voices") ||
+    message.includes("voice_not_found");
 }
 
 async function createHedraTextToSpeechAudioGeneration(
@@ -735,11 +804,12 @@ async function createElevenLabsSpeechAsset(
     text: string;
     templateTitle: string;
     lang: "ja" | "en";
+    voiceId?: string;
   },
 ): Promise<StoredMedia> {
   const text = params.text.trim();
   if (!text) throw new Error("ElevenLabs speech text is empty");
-  const voiceId = ELEVENLABS_AI_SECRETARY_VOICE_ID;
+  const voiceId = params.voiceId ?? ELEVENLABS_AI_SECRETARY_VOICE_ID;
   const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${
       encodeURIComponent(voiceId)
