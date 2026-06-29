@@ -77,7 +77,7 @@ jobs:
       HAS_YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_PAT || github.token }}
           fetch-depth: 100  # Step 0 dedup needs ≥1h of history (default depth=1 hides past bot commits)
