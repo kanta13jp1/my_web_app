@@ -8,7 +8,7 @@
 // - 生成したメディアをSupabase Storageに保存
 // - X投稿用の動画URL + キャプションを返す
 //
-// POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "mobile_ux_validation" | "user_growth", "lang": "ja" | "en" }
+// POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "mobile_ux_validation" | "user_growth" | "ai_secretary_site_tour", "lang": "ja" | "en" }
 // GET  ?view=templates | ?view=history
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -130,6 +130,30 @@ const AD_TEMPLATES = {
       "Minimalist growth chart animation, single developer at desk, code flying around, user count increasing, warm inspiring colors, 16:9",
     hashtags: ["#buildinpublic", "#solofounder", "#indiedev"],
   },
+  ai_secretary_site_tour: {
+    name: "AI secretary site tour",
+    description:
+      "Intelligent female AI secretary presenter explains concrete site features without reading the URL aloud.",
+    script: {
+      ja: [
+        "はじめまして。知的で上品なAI秘書として、このサイトの使い方をご案内します。",
+        "まずはサイト案内AIに聞くと、迷わず必要な機能へ進めます。",
+        "AI大学では、AI企業、最新ニュース、プロンプト活用を体系的に学べます。",
+        "ノート、資産管理、英語学習、リリースノートを、ひとつの作業空間でつなげます。",
+        "5分だけ試して、役に立つ点と迷った点を教えてください。",
+      ],
+      en: [
+        "Hello. I am your intelligent AI executive secretary for this site tour.",
+        "Start with Site Guide AI when you are not sure where to go.",
+        "AI University helps you learn AI companies, news, and prompt workflows.",
+        "Notes, finance, English learning, and release notes connect in one workspace.",
+        "Try it for five minutes and tell us what helped or confused you.",
+      ],
+    },
+    imagePrompt:
+      "High-quality 16:9 product tour video key visual. An intelligent adult female AI executive secretary in a tasteful dark suit explains a premium SaaS cockpit. Show concrete app panels for Site Guide AI, AI secretary, AI University, notes, asset management, English reading dashboard, release notes, and supporter checkout. Refined, professional, brand-safe, no nudity, no explicit sexualization, no random text overlays, no URL text.",
+    hashtags: ["#buildinpublic", "#FlutterWeb", "#Supabase", "#AI"],
+  },
   competitor_comparison: {
     name: "競合比較広告",
     description: "vs 21競合の料金・機能比較でお得感を訴求",
@@ -152,6 +176,24 @@ const AD_TEMPLATES = {
     hashtags: ["#freetool", "#productivity", "#nocode"],
   },
 };
+
+function stripSpokenUrls(line: string): string {
+  return line
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function sanitizeScriptForTemplate(
+  templateKey: string,
+  lines: string[],
+): string[] {
+  if (templateKey !== "ai_secretary_site_tour") return lines;
+  const cleaned = lines.map(stripSpokenUrls).filter((line) => line.length > 0);
+  return cleaned.length > 0
+    ? cleaned
+    : AD_TEMPLATES.ai_secretary_site_tour.script.ja;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -235,12 +277,13 @@ serve(async (req) => {
       }, 400);
     }
 
-    const script =
+    const rawScript =
       Array.isArray(body.customScript) && body.customScript.length > 0
         ? body.customScript.map((line) => String(line).trim()).filter((line) =>
           line.length > 0
         ).slice(0, 6)
         : template.script[lang];
+    const script = sanitizeScriptForTemplate(templateKey, rawScript);
     const hashtags =
       Array.isArray(body.customHashtags) && body.customHashtags.length > 0
         ? body.customHashtags.map((tag) => String(tag).trim()).filter((tag) =>

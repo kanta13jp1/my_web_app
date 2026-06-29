@@ -437,12 +437,7 @@ class UniversalXShareService {
     );
     return UniversalXShareDraft(
       text: sanitizeTweet(
-        _growthTextFor(
-          context,
-          variant,
-          url,
-          trendTopics: trendTopics,
-        ),
+        _growthTextFor(context, variant, url, trendTopics: trendTopics),
         url: url,
       ),
       imagePrompt:
@@ -1089,13 +1084,13 @@ ${draft.videoPrompt}
     if (_isMyFinanceUxContext(context)) {
       return _scriptLinesFromText(draft.text);
     }
-    return [
-      'はじめまして。知的で上品なAI秘書が、このサイトの使い方を案内します。',
-      '最初に「サイト案内AI」へ聞けば、どの機能から開くべきか迷わず始められます。',
+    return const [
+      'はじめまして。知的で上品なAI秘書として、このサイトの使い方をご案内します。',
+      '最初にサイト案内AIへ聞くと、どの機能から開くべきか迷わず始められます。',
       'AI大学では、主要AI企業、最新ニュース、プロンプト活用を体系的に学べます。',
-      'ノート、仕事ログ、資産管理、英語学習、リリースノートを1つの作業空間でつなぎます。',
-      'GPT-5.5で説明を整え、image-gen2、Hedra、ElevenLabs、Seedance 2.0で動画として届けます。',
-      '${context.url} を5分だけ触って、役に立つ点と迷った点を教えてください。',
+      'ノート、仕事ログ、資産管理、英語学習、リリースノートを、ひとつの作業空間でつなげます。',
+      '説明文はGPT-5.5で整え、image-gen2、ElevenLabs、Hedra、Seedance 2.0で動画として届けます。',
+      '5分だけ試して、役に立った点と迷った点を教えてください。',
     ];
   }
 
