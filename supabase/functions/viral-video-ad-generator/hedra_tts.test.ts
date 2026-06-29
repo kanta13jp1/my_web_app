@@ -5,6 +5,7 @@ import {
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildHedraTextToSpeechAudioGeneration,
+  buildHedraUploadedAudioGeneration,
   isHedraInvalidTextToSpeechModelError,
   resolveConfiguredHedraTextToSpeechModelId,
   stripHedraTextToSpeechModelId,
@@ -33,6 +34,17 @@ Deno.test("Hedra TTS generation includes valid configured model_id", () => {
   });
 
   assertEquals(audioGeneration.model_id, modelId);
+});
+
+Deno.test("Hedra uploaded audio generation uses a public audio URL", () => {
+  const audioGeneration = buildHedraUploadedAudioGeneration(
+    "https://example.com/voice.mp3",
+  );
+
+  assertEquals(audioGeneration, {
+    type: "audio",
+    url: "https://example.com/voice.mp3",
+  });
 });
 
 Deno.test("Hedra TTS configured model_id accepts only UUID values", () => {
@@ -82,6 +94,13 @@ Deno.test("Hedra invalid text_to_speech model errors are recognized", () => {
     isHedraInvalidTextToSpeechModelError(
       new Error(
         'Hedra API 400: {"messages":["model d11481da-b973-4e72-ade0-7e8a86915bbf not valid for generation type text_to_speech"]}',
+      ),
+    ),
+  );
+  assert(
+    isHedraInvalidTextToSpeechModelError(
+      new Error(
+        'Hedra API 400: {"code":400,"messages":["model missing not valid for generation type text_to_speech"]}',
       ),
     ),
   );
