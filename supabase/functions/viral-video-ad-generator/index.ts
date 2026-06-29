@@ -368,6 +368,13 @@ serve(async (req) => {
         videoProvider = "hedra";
         videoStatus = "fallback_text";
         videoReason = "HEDRA_API_KEY not configured";
+      } else if (
+        templateKey === "ai_secretary_site_tour" && !ELEVENLABS_API_KEY
+      ) {
+        videoProvider = "hedra";
+        videoStatus = "fallback_text";
+        videoReason =
+          "ELEVENLABS_API_KEY not configured; ai_secretary_site_tour requires ElevenLabs uploaded audio to avoid Hedra text_to_speech model errors.";
       } else {
         try {
           const existingGenerationId = firstNonEmptyString(
@@ -506,8 +513,11 @@ serve(async (req) => {
         ? "Call x-media-post with this imageUrl and caption to post to X"
         : hedraGenerationId != null
         ? "Hedra generation is still processing. Poll again with hedraGenerationId."
+        : type === "presenter_video" &&
+            videoReason?.includes("ELEVENLABS_API_KEY")
+        ? "Set ELEVENLABS_API_KEY in Supabase secrets, then retry AI secretary video generation from the logged-in app."
         : type === "presenter_video"
-        ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY."
+        ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY and ELEVENLABS_API_KEY."
         : "FAL_KEY not set or generation failed. Use caption for text-only X post via post-x-update",
       textPost: {
         endpoint: "post-x-update",
