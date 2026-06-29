@@ -397,6 +397,7 @@ serve(async (req) => {
                 body.generatedImageUrl,
               ),
               lang,
+              requiresUploadedAudio: templateKey === "ai_secretary_site_tour",
             });
           generatedVideoUrl = hedraVideo.videoUrl;
           generatedPreviewUrl = hedraVideo.previewUrl;
@@ -514,8 +515,9 @@ serve(async (req) => {
         : hedraGenerationId != null
         ? "Hedra generation is still processing. Poll again with hedraGenerationId."
         : type === "presenter_video" &&
-            videoReason?.includes("ELEVENLABS_API_KEY")
-        ? "Set ELEVENLABS_API_KEY in Supabase secrets, then retry AI secretary video generation from the logged-in app."
+            (videoReason?.includes("ELEVENLABS_API_KEY") ||
+              videoReason?.includes("ElevenLabs"))
+        ? "Check the ElevenLabs secret, voice ID, credits, and Storage upload path, then retry AI secretary video generation from the logged-in app."
         : type === "presenter_video"
         ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY and ELEVENLABS_API_KEY."
         : "FAL_KEY not set or generation failed. Use caption for text-only X post via post-x-update",
@@ -612,6 +614,7 @@ async function createHedraPresenterVideo(params: {
   voice: string;
   imageUrl: string | null;
   lang: "ja" | "en";
+  requiresUploadedAudio?: boolean;
 }): Promise<HedraVideoResult> {
   const rawImageUrl = firstNonEmptyString(params.imageUrl);
   if (!rawImageUrl) {
@@ -647,6 +650,13 @@ async function createHedraPresenterVideo(params: {
       storedAudioUrl = audio.url;
       storedAudioPath = audio.path;
     } catch (error) {
+      if (params.requiresUploadedAudio) {
+        throw new Error(
+          `ElevenLabs speech generation failed before Hedra video generation: ${
+            providerErrorMessage(error)
+          }`,
+        );
+      }
       console.warn("ElevenLabs speech generation failed; falling back", error);
       audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
         text: spokenScript.slice(0, 1800),
@@ -681,6 +691,11 @@ async function createHedraPresenterVideo(params: {
     normalizeHedraVideoResponse(payload),
   );
   return { ...video, storedAudioUrl, storedAudioPath, audioProvider };
+}
+
+function providerErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.replace(/\s+/g, " ").trim().slice(0, 500);
 }
 
 async function createHedraTextToSpeechAudioGeneration(
