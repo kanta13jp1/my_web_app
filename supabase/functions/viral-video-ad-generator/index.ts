@@ -12,9 +12,10 @@
 // GET  ?view=templates | ?view=history
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
   buildHedraTextToSpeechAudioGeneration,
+  buildHedraUploadedAudioGeneration,
   isHedraInvalidTextToSpeechModelError,
   resolveConfiguredHedraTextToSpeechModelId,
   stripHedraTextToSpeechModelId,
@@ -35,6 +36,19 @@ const HEDRA_AVATAR_MODEL_ID = Deno.env.get("HEDRA_AVATAR_MODEL_ID") ??
   "26f0fc66-152b-40ab-abed-76c43df99bc8";
 const HEDRA_VOICE_ID = Deno.env.get("HEDRA_VOICE_ID") ?? "";
 const HEDRA_TTS_MODEL_ID = Deno.env.get("HEDRA_TTS_MODEL_ID") ?? "";
+const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
+const ELEVENLABS_MODEL_ID = Deno.env.get("ELEVENLABS_MODEL_ID") ??
+  "eleven_multilingual_v2";
+const ELEVENLABS_DEFAULT_FEMALE_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+const ELEVENLABS_FALLBACK_VOICE_ID =
+  Deno.env.get("ELEVENLABS_FALLBACK_VOICE_ID") ??
+    ELEVENLABS_DEFAULT_FEMALE_VOICE_ID;
+const ELEVENLABS_AI_SECRETARY_VOICE_ID =
+  Deno.env.get("ELEVENLABS_AI_SECRETARY_VOICE_ID") ??
+    Deno.env.get("ELEVENLABS_SECRETARY_VOICE_ID") ??
+    Deno.env.get("ELEVENLABS_VOICE_ID") ??
+    ELEVENLABS_DEFAULT_FEMALE_VOICE_ID;
+const VIRAL_VIDEO_BUCKET = "viral-ad-videos";
 
 // Dark War風 広告テンプレート定義
 const AD_TEMPLATES = {
@@ -184,12 +198,25 @@ function stripSpokenUrls(line: string): string {
     .trim();
 }
 
+function normalizeSpokenLine(line: string): string {
+  let cleaned = stripSpokenUrls(line)
+    .replace(/^[\s、。,.・:：;；!！?？-]+/u, "")
+    .trim();
+  cleaned = cleaned.replace(/^(?:を|へ|に|で|から|まで)\s*/u, "").trim();
+  if (/^5分/.test(cleaned)) {
+    return `このサイトを${cleaned}`;
+  }
+  return cleaned;
+}
+
 function sanitizeScriptForTemplate(
   templateKey: string,
   lines: string[],
 ): string[] {
   if (templateKey !== "ai_secretary_site_tour") return lines;
-  const cleaned = lines.map(stripSpokenUrls).filter((line) => line.length > 0);
+  const cleaned = lines.map(normalizeSpokenLine).filter((line) =>
+    line.length > 0
+  );
   return cleaned.length > 0
     ? cleaned
     : AD_TEMPLATES.ai_secretary_site_tour.script.ja;
@@ -301,6 +328,11 @@ serve(async (req) => {
     let videoProvider: string | null = null;
     let videoStatus: string | null = null;
     let videoReason: string | null = null;
+    let storedVideoUrl: string | null = null;
+    let storedVideoPath: string | null = null;
+    let storedAudioUrl: string | null = null;
+    let storedAudioPath: string | null = null;
+    let videoAudioProvider: string | null = null;
     let hedraGenerationId: string | null = null;
     let hedraProgress: number | null = null;
     let hedraEtaSec: number | null = null;
@@ -341,6 +373,13 @@ serve(async (req) => {
         videoProvider = "hedra";
         videoStatus = "fallback_text";
         videoReason = "HEDRA_API_KEY not configured";
+      } else if (
+        templateKey === "ai_secretary_site_tour" && !ELEVENLABS_API_KEY
+      ) {
+        videoProvider = "hedra";
+        videoStatus = "fallback_text";
+        videoReason =
+          "ELEVENLABS_API_KEY not configured; ai_secretary_site_tour requires ElevenLabs uploaded audio to avoid Hedra text_to_speech model errors.";
       } else {
         try {
           const existingGenerationId = firstNonEmptyString(
@@ -353,6 +392,7 @@ serve(async (req) => {
             )
             : await createHedraPresenterVideo({
               apiKey: HEDRA_API_KEY,
+              admin,
               script,
               title: body.title ?? template.name,
               prompt: imagePrompt,
@@ -362,6 +402,7 @@ serve(async (req) => {
                 body.generatedImageUrl,
               ),
               lang,
+              requiresUploadedAudio: templateKey === "ai_secretary_site_tour",
             });
           generatedVideoUrl = hedraVideo.videoUrl;
           generatedPreviewUrl = hedraVideo.previewUrl;
@@ -369,9 +410,29 @@ serve(async (req) => {
           videoProvider = "hedra";
           videoStatus = hedraVideo.status;
           videoReason = hedraVideo.reason;
+          storedAudioUrl = hedraVideo.storedAudioUrl ?? null;
+          storedAudioPath = hedraVideo.storedAudioPath ?? null;
+          videoAudioProvider = hedraVideo.audioProvider ?? null;
           hedraGenerationId = hedraVideo.id;
           hedraProgress = hedraVideo.progress;
           hedraEtaSec = hedraVideo.etaSec;
+          const videoToStore = firstNonEmptyString(
+            hedraVideo.videoUrl,
+            hedraVideo.downloadUrl,
+          );
+          if (videoToStore) {
+            const stored = await persistRemoteMediaToStorage(admin, {
+              url: videoToStore,
+              prefix: "hedra",
+              fileName: `${hedraVideo.id ?? crypto.randomUUID()}-${
+                storageSafeSegment(templateKey)
+              }-${lang}.mp4`,
+              contentType: "video/mp4",
+            });
+            storedVideoUrl = stored?.url ?? null;
+            storedVideoPath = stored?.path ?? null;
+            generatedVideoUrl = storedVideoUrl ?? generatedVideoUrl;
+          }
           if (!generatedVideoUrl) {
             videoReason = videoReason ?? "Hedra video is not complete yet";
           }
@@ -404,7 +465,7 @@ serve(async (req) => {
           caption,
           image_prompt: imagePrompt,
           generated_image_url: generatedImageUrl,
-          generated_video_url: generatedVideoUrl,
+          generated_video_url: storedVideoUrl ?? generatedVideoUrl,
           generated_preview_url: generatedPreviewUrl,
           generated_download_url: generatedDownloadUrl,
           fal_job_id: falJobId,
@@ -437,6 +498,11 @@ serve(async (req) => {
       generatedVideoUrl,
       generatedPreviewUrl,
       generatedDownloadUrl,
+      storedVideoUrl,
+      storedVideoPath,
+      storedAudioUrl,
+      storedAudioPath,
+      videoAudioProvider,
       hedraGenerationId,
       hedraProgress,
       hedraEtaSec,
@@ -453,8 +519,12 @@ serve(async (req) => {
         ? "Call x-media-post with this imageUrl and caption to post to X"
         : hedraGenerationId != null
         ? "Hedra generation is still processing. Poll again with hedraGenerationId."
+        : type === "presenter_video" &&
+            (videoReason?.includes("ELEVENLABS_API_KEY") ||
+              videoReason?.includes("ElevenLabs"))
+        ? "Check the ElevenLabs secret, voice ID, credits, and Storage upload path, then retry AI secretary video generation from the logged-in app."
         : type === "presenter_video"
-        ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY."
+        ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY and ELEVENLABS_API_KEY."
         : "FAL_KEY not set or generation failed. Use caption for text-only X post via post-x-update",
       textPost: {
         endpoint: "post-x-update",
@@ -508,12 +578,33 @@ function hedraEnglishTitle(title?: string): string {
   return isAscii ? trimmed : "This app";
 }
 
+function scriptForSpokenAudio(
+  script: string[],
+  lang: "ja" | "en",
+  title?: string,
+): string[] {
+  if (lang === "ja") {
+    const cleaned = script
+      .map(normalizeSpokenLine)
+      .filter((line) => line.length > 0);
+    return cleaned.length > 0
+      ? cleaned
+      : AD_TEMPLATES.ai_secretary_site_tour.script.ja.map(normalizeSpokenLine);
+  }
+  return scriptForHedraVoice(script, lang, title)
+    .map(normalizeSpokenLine)
+    .filter((line) => line.length > 0);
+}
+
 type HedraVideoResult = {
   id: string | null;
   status: string;
   videoUrl: string | null;
   previewUrl: string | null;
   downloadUrl: string | null;
+  storedAudioUrl?: string | null;
+  storedAudioPath?: string | null;
+  audioProvider?: string | null;
   progress: number | null;
   etaSec: number | null;
   reason: string | null;
@@ -521,12 +612,14 @@ type HedraVideoResult = {
 
 async function createHedraPresenterVideo(params: {
   apiKey: string;
+  admin: SupabaseClient;
   script: string[];
   title?: string;
   prompt: string;
   voice: string;
   imageUrl: string | null;
   lang: "ja" | "en";
+  requiresUploadedAudio?: boolean;
 }): Promise<HedraVideoResult> {
   const rawImageUrl = firstNonEmptyString(params.imageUrl);
   if (!rawImageUrl) {
@@ -539,31 +632,103 @@ async function createHedraPresenterVideo(params: {
     );
   }
 
-  const voiceId = await resolveHedraVoiceId(
-    params.apiKey,
-    params.voice,
-    params.lang,
-  );
-  const ttsModelId = resolveConfiguredHedraTextToSpeechModelId(
-    HEDRA_TTS_MODEL_ID,
-  );
-  const hedraLanguage = hedraLanguageForLang(params.lang);
-  const ttsScript = scriptForHedraVoice(
+  const spokenScript = scriptForSpokenAudio(
     params.script,
     params.lang,
     params.title,
   )
     .join("\n");
+  let audioProvider = "hedra_tts";
+  let storedAudioUrl: string | null = null;
+  let storedAudioPath: string | null = null;
+  let audioGeneration: Record<string, unknown>;
+
+  if (ELEVENLABS_API_KEY) {
+    try {
+      const audio = await createElevenLabsSpeechAsset(params.admin, {
+        text: spokenScript.slice(0, 1800),
+        templateTitle: params.title ?? "share-update",
+        lang: params.lang,
+      });
+      audioGeneration = buildHedraUploadedAudioGeneration(audio.url);
+      audioProvider = "elevenlabs";
+      storedAudioUrl = audio.url;
+      storedAudioPath = audio.path;
+    } catch (error) {
+      if (
+        params.requiresUploadedAudio &&
+        shouldRetryElevenLabsWithFallbackVoice(error)
+      ) {
+        const fallbackResult = await tryElevenLabsFallbackVoices(params.admin, {
+          text: spokenScript.slice(0, 1800),
+          templateTitle: params.title ?? "share-update",
+          lang: params.lang,
+          configuredVoiceId: ELEVENLABS_AI_SECRETARY_VOICE_ID,
+          configuredError: error,
+        });
+        if (fallbackResult.ok) {
+          audioGeneration = buildHedraUploadedAudioGeneration(
+            fallbackResult.audio.url,
+          );
+          audioProvider = fallbackResult.audioProvider;
+          storedAudioUrl = fallbackResult.audio.url;
+          storedAudioPath = fallbackResult.audio.path;
+          return await createHedraVideoFromUploadedAudio(params, {
+            audioGeneration,
+            storedAudioUrl,
+            storedAudioPath,
+            audioProvider,
+            imageUrl,
+          });
+        }
+        throw new Error(fallbackResult.reason);
+      }
+      if (params.requiresUploadedAudio) {
+        throw new Error(
+          `ElevenLabs speech generation failed before Hedra video generation: ${
+            providerErrorMessage(error)
+          }`,
+        );
+      }
+      console.warn("ElevenLabs speech generation failed; falling back", error);
+      audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
+        text: spokenScript.slice(0, 1800),
+      });
+    }
+  } else {
+    audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
+      text: spokenScript.slice(0, 1800),
+    });
+  }
+
+  return await createHedraVideoFromUploadedAudio(params, {
+    audioGeneration,
+    storedAudioUrl,
+    storedAudioPath,
+    audioProvider,
+    imageUrl,
+  });
+}
+
+async function createHedraVideoFromUploadedAudio(
+  params: {
+    apiKey: string;
+    title?: string;
+    prompt: string;
+  },
+  media: {
+    audioGeneration: Record<string, unknown>;
+    storedAudioUrl: string | null;
+    storedAudioPath: string | null;
+    audioProvider: string | null;
+    imageUrl: string;
+  },
+): Promise<HedraVideoResult> {
   const generationBody: Record<string, unknown> = {
     type: "video",
     ai_model_id: HEDRA_AVATAR_MODEL_ID,
-    start_keyframe_url: imageUrl,
-    audio_generation: buildHedraTextToSpeechAudioGeneration({
-      voiceId,
-      modelId: ttsModelId,
-      text: ttsScript.slice(0, 1800),
-      language: hedraLanguage,
-    }),
+    start_keyframe_url: media.imageUrl,
+    audio_generation: media.audioGeneration,
     generated_video_inputs: {
       text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
       aspect_ratio: "16:9",
@@ -574,12 +739,293 @@ async function createHedraPresenterVideo(params: {
   const payload = await createHedraGenerationWithTtsModelFallback(
     params.apiKey,
     generationBody,
-    ttsModelId != null,
+    media.audioGeneration["type"] === "text_to_speech" &&
+      media.audioGeneration["model_id"] != null,
   );
-  return await pollHedraGeneration(
+  const video = await pollHedraGeneration(
     params.apiKey,
     normalizeHedraVideoResponse(payload),
   );
+  return {
+    ...video,
+    storedAudioUrl: media.storedAudioUrl,
+    storedAudioPath: media.storedAudioPath,
+    audioProvider: media.audioProvider,
+  };
+}
+
+function providerErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.replace(/\s+/g, " ").trim().slice(0, 500);
+}
+
+function shouldRetryElevenLabsWithFallbackVoice(error: unknown): boolean {
+  const message = providerErrorMessage(error);
+  return message.includes("paid_plan_required") ||
+    message.includes("library voices") ||
+    message.includes("voice_not_found");
+}
+
+type ElevenLabsVoice = {
+  voice_id?: string;
+  name?: string;
+  category?: string;
+  labels?: Record<string, string>;
+};
+
+type ElevenLabsFallbackResult =
+  | { ok: true; audio: StoredMedia; audioProvider: string }
+  | { ok: false; reason: string };
+
+async function tryElevenLabsFallbackVoices(
+  admin: SupabaseClient,
+  params: {
+    text: string;
+    templateTitle: string;
+    lang: "ja" | "en";
+    configuredVoiceId: string;
+    configuredError: unknown;
+  },
+): Promise<ElevenLabsFallbackResult> {
+  const candidateVoiceIds = await resolveElevenLabsFallbackVoiceIds(
+    params.configuredVoiceId,
+    params.lang,
+  );
+  const errors: string[] = [];
+  for (const voiceId of candidateVoiceIds) {
+    try {
+      const audio = await createElevenLabsSpeechAsset(admin, {
+        text: params.text,
+        templateTitle: `${params.templateTitle}-fallback`,
+        lang: params.lang,
+        voiceId,
+      });
+      return { ok: true, audio, audioProvider: "elevenlabs_fallback" };
+    } catch (error) {
+      errors.push(`${redactVoiceId(voiceId)}=${providerErrorMessage(error)}`);
+    }
+  }
+  const listed = candidateVoiceIds.length > 0
+    ? errors.join("; ")
+    : "no fallback voices discovered";
+  return {
+    ok: false,
+    reason:
+      `ElevenLabs speech generation failed with configured voice and fallback voices: configured=${
+        providerErrorMessage(params.configuredError)
+      }; fallback=${listed}`,
+  };
+}
+
+async function resolveElevenLabsFallbackVoiceIds(
+  configuredVoiceId: string,
+  lang: "ja" | "en",
+): Promise<string[]> {
+  const ids = new Set<string>();
+  if (ELEVENLABS_FALLBACK_VOICE_ID !== configuredVoiceId) {
+    ids.add(ELEVENLABS_FALLBACK_VOICE_ID);
+  }
+  try {
+    const voices = await fetchElevenLabsVoices();
+    voices
+      .filter((voice) => voice.voice_id && voice.voice_id !== configuredVoiceId)
+      .sort((a, b) =>
+        elevenLabsVoiceScore(b, lang) - elevenLabsVoiceScore(a, lang)
+      )
+      .slice(0, 4)
+      .forEach((voice) => ids.add(voice.voice_id as string));
+  } catch (error) {
+    console.warn(
+      "ElevenLabs voice discovery failed",
+      providerErrorMessage(error),
+    );
+  }
+  return [...ids].slice(0, 4);
+}
+
+async function fetchElevenLabsVoices(): Promise<ElevenLabsVoice[]> {
+  const response = await fetch("https://api.elevenlabs.io/v1/voices", {
+    headers: { "xi-api-key": ELEVENLABS_API_KEY },
+  });
+  if (!response.ok) {
+    const raw = await response.text();
+    throw new Error(`ElevenLabs voices API ${response.status}: ${raw}`);
+  }
+  const payload = await response.json() as { voices?: ElevenLabsVoice[] };
+  return Array.isArray(payload.voices) ? payload.voices : [];
+}
+
+function elevenLabsVoiceScore(
+  voice: ElevenLabsVoice,
+  lang: "ja" | "en",
+): number {
+  const labels = Object.values(voice.labels ?? {}).join(" ");
+  const haystack = `${voice.name ?? ""} ${voice.category ?? ""} ${labels}`
+    .toLowerCase();
+  let score = 0;
+  if (haystack.includes("female") || haystack.includes("woman")) score += 20;
+  if (haystack.includes("warm") || haystack.includes("professional")) {
+    score += 5;
+  }
+  if (haystack.includes("premade") || haystack.includes("generated")) {
+    score += 4;
+  }
+  if (haystack.includes("cloned")) score += 2;
+  if (
+    lang === "ja" &&
+    (haystack.includes("japanese") || haystack.includes("multilingual"))
+  ) {
+    score += 6;
+  }
+  if (haystack.includes("male") || haystack.includes("man")) score -= 20;
+  if (haystack.includes("library")) score -= 8;
+  return score;
+}
+
+function redactVoiceId(voiceId: string): string {
+  if (voiceId.length <= 8) return "voice";
+  return `${voiceId.slice(0, 4)}...${voiceId.slice(-4)}`;
+}
+
+async function createHedraTextToSpeechAudioGeneration(
+  params: {
+    apiKey: string;
+    voice: string;
+    lang: "ja" | "en";
+  },
+  options: { text: string },
+): Promise<Record<string, unknown>> {
+  const voiceId = await resolveHedraVoiceId(
+    params.apiKey,
+    params.voice,
+    params.lang,
+  );
+  const ttsModelId = resolveConfiguredHedraTextToSpeechModelId(
+    HEDRA_TTS_MODEL_ID,
+  );
+  const hedraLanguage = hedraLanguageForLang(params.lang);
+  return buildHedraTextToSpeechAudioGeneration({
+    voiceId,
+    modelId: ttsModelId,
+    text: options.text,
+    language: hedraLanguage,
+  });
+}
+
+type StoredMedia = {
+  url: string;
+  path: string;
+};
+
+async function createElevenLabsSpeechAsset(
+  admin: SupabaseClient,
+  params: {
+    text: string;
+    templateTitle: string;
+    lang: "ja" | "en";
+    voiceId?: string;
+  },
+): Promise<StoredMedia> {
+  const text = params.text.trim();
+  if (!text) throw new Error("ElevenLabs speech text is empty");
+  const voiceId = params.voiceId ?? ELEVENLABS_AI_SECRETARY_VOICE_ID;
+  const response = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${
+      encodeURIComponent(voiceId)
+    }`,
+    {
+      method: "POST",
+      headers: {
+        "xi-api-key": ELEVENLABS_API_KEY,
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        model_id: ELEVENLABS_MODEL_ID,
+        voice_settings: {
+          stability: 0.58,
+          similarity_boost: 0.82,
+          style: 0.28,
+          use_speaker_boost: true,
+        },
+      }),
+    },
+  );
+  if (!response.ok) {
+    const raw = await response.text();
+    throw new Error(`ElevenLabs API ${response.status}: ${raw}`);
+  }
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const path = mediaStoragePath({
+    prefix: "elevenlabs",
+    fileName: `${crypto.randomUUID()}-${
+      storageSafeSegment(params.templateTitle)
+    }-${params.lang}.mp3`,
+  });
+  const { error } = await admin.storage
+    .from(VIRAL_VIDEO_BUCKET)
+    .upload(path, bytes, {
+      contentType: "audio/mpeg",
+      cacheControl: "604800",
+      upsert: false,
+    });
+  if (error) {
+    throw new Error(`ElevenLabs audio upload failed: ${error.message}`);
+  }
+  const { data } = admin.storage.from(VIRAL_VIDEO_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, path };
+}
+
+async function persistRemoteMediaToStorage(
+  admin: SupabaseClient,
+  params: {
+    url: string;
+    prefix: string;
+    fileName: string;
+    contentType: string;
+  },
+): Promise<StoredMedia | null> {
+  try {
+    const response = await fetch(params.url);
+    if (!response.ok) {
+      throw new Error(`download failed with ${response.status}`);
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const path = mediaStoragePath({
+      prefix: params.prefix,
+      fileName: params.fileName,
+    });
+    const { error } = await admin.storage
+      .from(VIRAL_VIDEO_BUCKET)
+      .upload(path, bytes, {
+        contentType: params.contentType,
+        cacheControl: "604800",
+        upsert: true,
+      });
+    if (error) throw error;
+    const { data } = admin.storage.from(VIRAL_VIDEO_BUCKET).getPublicUrl(path);
+    return { url: data.publicUrl, path };
+  } catch (error) {
+    console.warn("Remote media storage copy failed", error);
+    return null;
+  }
+}
+
+function mediaStoragePath(
+  params: { prefix: string; fileName: string },
+): string {
+  const datePrefix = new Date().toISOString().slice(0, 10);
+  return [
+    storageSafeSegment(params.prefix),
+    datePrefix,
+    storageSafeSegment(params.fileName),
+  ].join("/");
+}
+
+function storageSafeSegment(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") ||
+    "asset";
 }
 
 async function createHedraGenerationWithTtsModelFallback(

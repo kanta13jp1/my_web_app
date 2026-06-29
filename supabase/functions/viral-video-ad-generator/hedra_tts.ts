@@ -8,6 +8,15 @@ export type HedraTextToSpeechAudioGeneration = {
   model_id?: string;
 };
 
+export type HedraUploadedAudioGeneration = {
+  type: "audio";
+  url: string;
+};
+
+export type HedraAudioGeneration =
+  | HedraTextToSpeechAudioGeneration
+  | HedraUploadedAudioGeneration;
+
 export function resolveConfiguredHedraTextToSpeechModelId(
   configuredValue: string | null | undefined,
 ): string | null {
@@ -34,6 +43,12 @@ export function buildHedraTextToSpeechAudioGeneration(params: {
     audioGeneration.model_id = params.modelId;
   }
   return audioGeneration;
+}
+
+export function buildHedraUploadedAudioGeneration(
+  url: string,
+): HedraUploadedAudioGeneration {
+  return { type: "audio", url };
 }
 
 export function stripHedraTextToSpeechModelId(
