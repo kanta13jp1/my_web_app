@@ -41,6 +41,7 @@ const ELEVENLABS_MODEL_ID = Deno.env.get("ELEVENLABS_MODEL_ID") ??
   "eleven_multilingual_v2";
 const ELEVENLABS_AI_SECRETARY_VOICE_ID =
   Deno.env.get("ELEVENLABS_AI_SECRETARY_VOICE_ID") ??
+    Deno.env.get("ELEVENLABS_SECRETARY_VOICE_ID") ??
     Deno.env.get("ELEVENLABS_VOICE_ID") ??
     "21m00Tcm4TlvDq8ikWAM";
 const VIRAL_VIDEO_BUCKET = "viral-ad-videos";
