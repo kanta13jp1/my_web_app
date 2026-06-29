@@ -175,10 +175,7 @@ void main() {
       },
     );
 
-    await service.postToX(
-      context: page,
-      text: 'First user feedback wanted',
-    );
+    await service.postToX(context: page, text: 'First user feedback wanted');
 
     final text = capturedBody?['text']?.toString() ?? '';
     expect(text, contains(page.url));
@@ -265,42 +262,44 @@ void main() {
     expect(capturedBody?['mediaUrl'], isNull);
   });
 
-  test('generateImage keeps text-only sharing available on provider failure',
-      () async {
-    String? capturedFunction;
-    Map<String, dynamic>? capturedBody;
-    final service = UniversalXShareService(
-      functionInvoker: (functionName, body) async {
-        capturedFunction = functionName;
-        capturedBody = body;
-        return {
-          'success': false,
-          'status': 'text_only_fallback',
-          'canPostTextOnly': true,
-          'errors': [
-            {
-              'model': 'gpt-image-1.5',
-              'status': 400,
-              'error': 'Billing hard limit has been reached.',
-            },
-          ],
-        };
-      },
-    );
+  test(
+    'generateImage keeps text-only sharing available on provider failure',
+    () async {
+      String? capturedFunction;
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedFunction = functionName;
+          capturedBody = body;
+          return {
+            'success': false,
+            'status': 'text_only_fallback',
+            'canPostTextOnly': true,
+            'errors': [
+              {
+                'model': 'gpt-image-1.5',
+                'status': 400,
+                'error': 'Billing hard limit has been reached.',
+              },
+            ],
+          };
+        },
+      );
 
-    final draft = UniversalXShareService.buildFallbackDraft(page);
-    final result = await service.generateImage(context: page, draft: draft);
+      final draft = UniversalXShareService.buildFallbackDraft(page);
+      final result = await service.generateImage(context: page, draft: draft);
 
-    expect(capturedFunction, 'media-hub');
-    expect(
-      capturedBody?['prompt'],
-      contains('adult female AI executive secretary'),
-    );
-    expect(capturedBody?['prompt'], contains('masculine presenter'));
-    expect(result.url, isNull);
-    expect(result.status, 'text_only_fallback');
-    expect(result.raw['canPostTextOnly'], isTrue);
-  });
+      expect(capturedFunction, 'media-hub');
+      expect(
+        capturedBody?['prompt'],
+        contains('adult female AI executive secretary'),
+      );
+      expect(capturedBody?['prompt'], contains('masculine presenter'));
+      expect(result.url, isNull);
+      expect(result.status, 'text_only_fallback');
+      expect(result.raw['canPostTextOnly'], isTrue);
+    },
+  );
 
   test(
     'generateVideo uses My Finance mobile UX template for finance pages',
@@ -373,9 +372,7 @@ void main() {
       ]);
       expect(
         capturedBody?['customPrompt'],
-        contains(
-          'intelligent, elegant adult female AI executive secretary',
-        ),
+        contains('intelligent, elegant adult female AI executive secretary'),
       );
       expect(
         capturedBody?['customPrompt'],
@@ -389,8 +386,8 @@ void main() {
       expect(script, contains('AI大学'));
       expect(script, contains('資産管理'));
       expect(script, contains('ElevenLabs'));
-      expect(script, isNot(contains('縺')));
-      expect(script, isNot(contains('繝')));
+      expect(script, isNot(contains('https://')));
+      expect(script, isNot(contains(page.url)));
     },
   );
 
@@ -425,56 +422,52 @@ void main() {
     },
   );
 
-  test(
-    'generateVideo prefers durable Supabase stored video URL',
-    () async {
-      final service = UniversalXShareService(
-        functionInvoker: (functionName, body) async {
-          return {
-            'success': true,
-            'videoStatus': 'complete',
-            'storedVideoUrl': 'https://example.com/storage/video.mp4',
-            'generatedDownloadUrl': 'https://temporary.example.com/video.mp4',
-          };
-        },
-      );
-
-      final draft = UniversalXShareService.buildFallbackDraft(page);
-      final result = await service.generateVideo(
-        context: page,
-        draft: draft,
-      );
-
-      expect(result.url, 'https://example.com/storage/video.mp4');
-      expect(result.status, 'complete');
-    },
-  );
-
-  test('generateVideo uses the public OGP image when no generated image exists',
-      () async {
-    Map<String, dynamic>? capturedBody;
+  test('generateVideo prefers durable Supabase stored video URL', () async {
     final service = UniversalXShareService(
       functionInvoker: (functionName, body) async {
-        capturedBody = body;
         return {
           'success': true,
-          'videoStatus': 'submitted',
-          'hedraGenerationId': '123e4567-e89b-12d3-a456-426614174000',
+          'videoStatus': 'complete',
+          'storedVideoUrl': 'https://example.com/storage/video.mp4',
+          'generatedDownloadUrl': 'https://temporary.example.com/video.mp4',
         };
       },
     );
 
-    final draft = UniversalXShareService.buildGrowthDraft(page);
+    final draft = UniversalXShareService.buildFallbackDraft(page);
     final result = await service.generateVideo(context: page, draft: draft);
 
-    expect(result.status, 'submitted');
-    expect(
-      capturedBody?['imageUrl'],
-      UniversalXShareService.defaultHedraStartImageUrl,
-    );
-    expect(capturedBody?['imageUrlSource'], 'page_ogp_fallback');
-    expect(capturedBody?['type'], 'presenter_video');
+    expect(result.url, 'https://example.com/storage/video.mp4');
+    expect(result.status, 'complete');
   });
+
+  test(
+    'generateVideo uses the public OGP image when no generated image exists',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {
+            'success': true,
+            'videoStatus': 'submitted',
+            'hedraGenerationId': '123e4567-e89b-12d3-a456-426614174000',
+          };
+        },
+      );
+
+      final draft = UniversalXShareService.buildGrowthDraft(page);
+      final result = await service.generateVideo(context: page, draft: draft);
+
+      expect(result.status, 'submitted');
+      expect(
+        capturedBody?['imageUrl'],
+        UniversalXShareService.defaultHedraStartImageUrl,
+      );
+      expect(capturedBody?['imageUrlSource'], 'page_ogp_fallback');
+      expect(capturedBody?['type'], 'presenter_video');
+    },
+  );
 
   test('generateVideo does not forward embedded data URLs to Hedra', () async {
     String? capturedFunction;
