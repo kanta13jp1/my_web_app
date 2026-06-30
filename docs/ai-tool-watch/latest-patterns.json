@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-29T21:46:16Z",
+  "generated_at": "2026-06-30T21:48:04Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,18 +19,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-b799ab331a9f",
+        "entry_id": "nf-b3e259b6daf6",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.195 / June 26, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.195 June 26, 2026 Added CLAUDE_CODE_DISABLE_MOUSE_CLICKS to disable mouse click/drag/hover in fullscreen mode while keeping wheel scroll Fixed hook matchers with...",
+        "text": "Claude Code changelog 2.1.197 / June 30, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.197 June 30, 2026 Introducing Claude Sonnet 5: now the default model in Claude Code, with a native 1M-token context window and promotional pricing of 2 / 2/ 2/ 10 per Mtok...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
+          "hash": "7bd54d055a2164ca67dcc1d19df090fbf9f5535df56da3b68525e62bb33e9e56",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,7 +74,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.195 / June 26, 2026",
+          "latest_signal": "2.1.197 / June 30, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
           "previous_hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
@@ -82,14 +82,14 @@
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.195 June 26, 2026 Added CLAUDE_CODE_DISABLE_MOUSE_CLICKS to disable mouse click/drag/hover in fullscreen mode while keeping wheel scroll Fixed hook matchers with..."
+            "​ 2.1.197 June 30, 2026 Introducing Claude Sonnet 5: now the default model in Claude Code, with a native 1M-token context window and promotional pricing of 2 / 2/ 2/ 10 per Mtok..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-b799ab331a9f",
+        "entry_id": "nf-b3e259b6daf6",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,10 +115,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
+          "hash": "5099026b9a6539f08a42e510260ae6e301698a114407f65a38012d6cc4e9a426",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -193,10 +193,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "6f4b44b973055668e7f82f48b51d27194fbb818c325987fce637bf7a2879fedc",
+          "hash": "e18a1ac169a1d4511c70c425a76d55a301a02f7e8a47157aa0e91a1b9675cfb2",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -470,9 +470,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-6e3553944fad",
+        "entry_id": "nf-7d44438d721a",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.9 / Jun 22, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog... Get push notifications when an agent finishes, needs input, or is ready for review. # Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone.",
+        "text": "Cursor changelog 3.9 / Jun 29, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Automations CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓... Get push notifications when an agent finishes, needs input, or is ready for review. # Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -481,7 +481,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "570c5c6fd2ce3cf2324a7950db0767e7f2b973134987a4d4b47f17373920e3ab",
+          "hash": "be3ba5971d09a01bfe3f474a218d158e1628534e09122f04dd60164b86026406",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -508,13 +508,13 @@
               "workflow"
             ]
           },
-          "latest_signal": "3.9 / Jun 22, 2026",
+          "latest_signal": "3.9 / Jun 29, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "cbd1382a93c8248ad9dd4c76cdc2dfcd472ba79550fae7a19d91f5d406121989",
+          "previous_hash": "570c5c6fd2ce3cf2324a7950db0767e7f2b973134987a4d4b47f17373920e3ab",
           "slug": "cursor-changelog",
           "snippets": [
-            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓ Changelog Blog...",
+            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Automations CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓...",
             "Get push notifications when an agent finishes, needs input, or is ready for review.",
             "# Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone."
           ],
@@ -523,7 +523,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-6e3553944fad",
+        "entry_id": "nf-7d44438d721a",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
