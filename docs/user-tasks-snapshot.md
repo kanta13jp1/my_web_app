@@ -1,6 +1,6 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/6/30 (JST)_
+_Generated: 2026/7/1 (JST)_
 _Active user tasks: 86_
 
 ## 概要
@@ -529,7 +529,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2743 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-19
+- **deadline**: 2027-04-20
 
 **説明**:
 
@@ -559,7 +559,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3329 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-04-25
+- **deadline**: 2027-04-26
 
 **説明**:
 
@@ -619,7 +619,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1228 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2027-06-09
+- **deadline**: 2027-06-10
 
 **説明**:
 
@@ -680,7 +680,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2941
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-10-13
+- **deadline**: 2026-10-14
 
 **説明**:
 
@@ -695,7 +695,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2941
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-07-25
+- **deadline**: 2027-07-26
 
 **説明**:
 
@@ -710,7 +710,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2235 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-07-26
+- **deadline**: 2027-07-27
 
 **説明**:
 
@@ -725,7 +725,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1731 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2027-07-31
+- **deadline**: 2027-08-01
 
 **説明**:
 
@@ -1362,11 +1362,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/3318
 - **progress**: 20%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-06-30
+- **deadline**: 2026-07-01
 
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kanta13jp1 / Labels: enhancement, priority:high, automation, triage:done, 追加要望, wbs, notebooklm / GitHub updated: 2026-06-29T22:37:30Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2967 / Author: kanta13jp1 / Labels: enhancement, priority:high, automation, triage:done, 追加要望, wbs, notebooklm / GitHub updated: 2026-06-30T22:43:20Z
 
 ---
 
@@ -1580,21 +1580,6 @@ Stripe account-status task for the representative identity document must move to
 
 ---
 
-### 🔴 🔧 [追加要望][収益化P0][1人目獲得] 最初の対象ユーザー像と10名リストを作る
-
-- **id**: `7e01bd82-8e8d-46f0-88df-65f756bb5b27`
-- **category**: 追加要望 / first-user-acquisition
-- **progress**: 90%
-- **status**: in_progress
-- **priority**: high
-- **deadline**: 2027-08-09
-
-**説明**:
-
-Define the first-user persona and create a concrete list of at least 10 people to contact directly. This is not a vague marketing plan; it is a named target list for the first real user/supporter candidate.
-
----
-
 ### 🔴 🔧 [追加要望][収益化P0][X集客] Xアナリティクスで勝ち投稿を増幅
 
 - **id**: `7d89a9ca-51ea-42fb-b097-24b02a6e6cb9`
@@ -1607,6 +1592,21 @@ Define the first-user persona and create a concrete list of at least 10 people t
 **説明**:
 
 Use X Analytics / post activity to identify which posts drive impressions and engagement, then rewrite the top performer into 3 variants. X Business documentation says analytics show what works and help optimize future campaigns.
+
+---
+
+### 🔴 🔧 [追加要望][収益化P0][1人目獲得] 最初の対象ユーザー像と10名リストを作る
+
+- **id**: `7e01bd82-8e8d-46f0-88df-65f756bb5b27`
+- **category**: 追加要望 / first-user-acquisition
+- **progress**: 90%
+- **status**: in_progress
+- **priority**: high
+- **deadline**: 2027-08-09
+
+**説明**:
+
+Define the first-user persona and create a concrete list of at least 10 people to contact directly. This is not a vague marketing plan; it is a named target list for the first real user/supporter candidate.
 
 ---
 
