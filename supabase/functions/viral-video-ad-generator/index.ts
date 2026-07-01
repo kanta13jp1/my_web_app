@@ -1007,7 +1007,16 @@ async function createElevenLabsSpeechAsset(
       upsert: false,
     });
   if (error) {
-    throw new Error(`ElevenLabs audio upload failed: ${error.message}`);
+    const fallback = await uploadBytesToStorage(admin, {
+      bytes,
+      path,
+      contentType: "application/octet-stream",
+    });
+    if (!fallback.ok) {
+      throw new Error(
+        `ElevenLabs audio upload failed: ${error.message}; octet-stream retry failed: ${fallback.error}`,
+      );
+    }
   }
   const { data } = admin.storage.from(VIRAL_VIDEO_BUCKET).getPublicUrl(path);
   return { url: data.publicUrl, path };
@@ -1099,10 +1108,40 @@ async function uploadAudioAsset(
       upsert: false,
     });
   if (error) {
-    throw new Error(`${params.prefix} audio upload failed: ${error.message}`);
+    const fallback = await uploadBytesToStorage(admin, {
+      bytes: params.bytes,
+      path,
+      contentType: "application/octet-stream",
+    });
+    if (!fallback.ok) {
+      throw new Error(
+        `${params.prefix} audio upload failed: ${error.message}; octet-stream retry failed: ${fallback.error}`,
+      );
+    }
   }
   const { data } = admin.storage.from(VIRAL_VIDEO_BUCKET).getPublicUrl(path);
   return { url: data.publicUrl, path };
+}
+
+async function uploadBytesToStorage(
+  admin: SupabaseClient,
+  params: {
+    bytes: Uint8Array;
+    path: string;
+    contentType: string;
+  },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await admin.storage
+    .from(VIRAL_VIDEO_BUCKET)
+    .upload(params.path, params.bytes, {
+      contentType: params.contentType,
+      cacheControl: "604800",
+      upsert: false,
+    });
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
 }
 
 async function persistRemoteMediaToStorage(
