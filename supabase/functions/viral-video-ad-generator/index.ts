@@ -17,8 +17,13 @@ import {
   buildHedraTextToSpeechAudioGeneration,
   buildHedraUploadedAudioGeneration,
   isHedraInvalidTextToSpeechModelError,
+  isHedraMissingTextToSpeechModelError,
+  isHedraUploadedAudioUnsupportedError,
   resolveConfiguredHedraTextToSpeechModelId,
+  selectBestHedraTextToSpeechModelId,
+  selectBestHedraVoiceId,
   stripHedraTextToSpeechModelId,
+  withHedraTextToSpeechModelId,
 } from "./hedra_tts.ts";
 
 const corsHeaders = {
@@ -36,6 +41,9 @@ const HEDRA_AVATAR_MODEL_ID = Deno.env.get("HEDRA_AVATAR_MODEL_ID") ??
   "26f0fc66-152b-40ab-abed-76c43df99bc8";
 const HEDRA_VOICE_ID = Deno.env.get("HEDRA_VOICE_ID") ?? "";
 const HEDRA_TTS_MODEL_ID = Deno.env.get("HEDRA_TTS_MODEL_ID") ?? "";
+const HEDRA_UPLOADED_AUDIO_ENABLED = envFlag(
+  Deno.env.get("HEDRA_UPLOADED_AUDIO_ENABLED"),
+);
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
 const ELEVENLABS_MODEL_ID = Deno.env.get("ELEVENLABS_MODEL_ID") ??
   "eleven_multilingual_v2";
@@ -647,7 +655,7 @@ async function createHedraPresenterVideo(params: {
   let storedAudioPath: string | null = null;
   let audioGeneration: Record<string, unknown>;
 
-  if (ELEVENLABS_API_KEY) {
+  if (HEDRA_UPLOADED_AUDIO_ENABLED && ELEVENLABS_API_KEY) {
     try {
       const audio = await createElevenLabsSpeechAsset(params.admin, {
         text: spokenScript.slice(0, 1800),
@@ -683,6 +691,7 @@ async function createHedraPresenterVideo(params: {
             storedAudioPath,
             audioProvider,
             imageUrl,
+            fallbackText: spokenScript.slice(0, 1800),
           });
         }
         if (OPENAI_API_KEY) {
@@ -704,6 +713,7 @@ async function createHedraPresenterVideo(params: {
               storedAudioPath,
               audioProvider,
               imageUrl,
+              fallbackText: spokenScript.slice(0, 1800),
             });
           } catch (openAiError) {
             throw new Error(
@@ -741,6 +751,7 @@ async function createHedraPresenterVideo(params: {
     storedAudioPath,
     audioProvider,
     imageUrl,
+    fallbackText: spokenScript.slice(0, 1800),
   });
 }
 
@@ -749,6 +760,8 @@ async function createHedraVideoFromUploadedAudio(
     apiKey: string;
     title?: string;
     prompt: string;
+    voice: string;
+    lang: "ja" | "en";
   },
   media: {
     audioGeneration: Record<string, unknown>;
@@ -756,6 +769,7 @@ async function createHedraVideoFromUploadedAudio(
     storedAudioPath: string | null;
     audioProvider: string | null;
     imageUrl: string;
+    fallbackText: string;
   },
 ): Promise<HedraVideoResult> {
   const generationBody: Record<string, unknown> = {
@@ -770,12 +784,46 @@ async function createHedraVideoFromUploadedAudio(
       enhance_prompt: true,
     },
   };
-  const payload = await createHedraGenerationWithTtsModelFallback(
-    params.apiKey,
-    generationBody,
-    media.audioGeneration["type"] === "text_to_speech" &&
-      media.audioGeneration["model_id"] != null,
-  );
+  let payload: unknown;
+  try {
+    payload = await createHedraGenerationWithTtsModelFallback(
+      params.apiKey,
+      generationBody,
+      media.audioGeneration["type"] === "text_to_speech" &&
+        media.audioGeneration["model_id"] != null,
+    );
+  } catch (error) {
+    if (
+      media.audioGeneration["type"] !== "text_to_speech" &&
+      isHedraUploadedAudioUnsupportedError(error)
+    ) {
+      const fallbackAudioGeneration =
+        await createHedraTextToSpeechAudioGeneration(
+          {
+            apiKey: params.apiKey,
+            voice: params.voice,
+            lang: params.lang,
+          },
+          { text: media.fallbackText },
+        );
+      payload = await createHedraGenerationWithTtsModelFallback(
+        params.apiKey,
+        { ...generationBody, audio_generation: fallbackAudioGeneration },
+        fallbackAudioGeneration["model_id"] != null,
+      );
+      const video = await pollHedraGeneration(
+        params.apiKey,
+        normalizeHedraVideoResponse(payload),
+      );
+      return {
+        ...video,
+        storedAudioUrl: media.storedAudioUrl,
+        storedAudioPath: media.storedAudioPath,
+        audioProvider: "hedra_tts_after_uploaded_audio_rejected",
+      };
+    }
+    throw error;
+  }
   const video = await pollHedraGeneration(
     params.apiKey,
     normalizeHedraVideoResponse(payload),
@@ -936,9 +984,7 @@ async function createHedraTextToSpeechAudioGeneration(
     params.voice,
     params.lang,
   );
-  const ttsModelId = resolveConfiguredHedraTextToSpeechModelId(
-    HEDRA_TTS_MODEL_ID,
-  );
+  const ttsModelId = await resolveHedraTextToSpeechModelId(params.apiKey);
   const hedraLanguage = hedraLanguageForLang(params.lang);
   return buildHedraTextToSpeechAudioGeneration({
     voiceId,
@@ -1206,6 +1252,15 @@ async function createHedraGenerationWithTtsModelFallback(
       body,
     });
   } catch (error) {
+    if (isHedraMissingTextToSpeechModelError(error)) {
+      const resolvedTtsModelId = await resolveHedraTextToSpeechModelId(apiKey);
+      if (resolvedTtsModelId) {
+        return await hedraJsonRequest(apiKey, "/generations", {
+          method: "POST",
+          body: withHedraTextToSpeechModelId(body, resolvedTtsModelId),
+        });
+      }
+    }
     if (
       !canRetryWithoutTtsModel ||
       !isHedraInvalidTextToSpeechModelError(error)
@@ -1270,31 +1325,53 @@ async function resolveHedraVoiceId(
     : Array.isArray(asRecord(payload)?.["data"])
     ? asRecord(payload)?.["data"] as unknown[]
     : [];
-  const hedraLanguage = hedraLanguageForLang(lang).toLowerCase();
-  const languageMarkers = hedraLanguage === "english"
-    ? ["en", "english"]
-    : [hedraLanguage];
-  const languageMatch = voices
-    .map((voice) => asRecord(voice))
-    .find((voice) => {
-      const haystack = `${voice?.["name"] ?? ""} ${
-        voice?.["description"] ?? ""
-      }`.toLowerCase();
-      return languageMarkers.some((marker) =>
-        haystack.includes(marker.toLowerCase())
-      );
-    });
-  const fallbackVoice = voices.map((voice) => asRecord(voice)).find((voice) =>
-    voice?.["id"]
-  );
-  const voiceId = firstNonEmptyString(
-    languageMatch?.["id"],
-    fallbackVoice?.["id"],
-  );
+  const voiceId = selectBestHedraVoiceId(voices, {
+    lang,
+    preferredVoice: configured || preferredVoice,
+  });
   if (!voiceId) {
     throw new Error("Hedra voice_id could not be resolved");
   }
   return voiceId;
+}
+
+async function resolveHedraTextToSpeechModelId(
+  apiKey: string,
+): Promise<string | null> {
+  const configured = resolveConfiguredHedraTextToSpeechModelId(
+    HEDRA_TTS_MODEL_ID,
+  );
+  if (configured) return configured;
+
+  try {
+    const payload = await hedraJsonRequest(apiKey, "/models", {
+      method: "GET",
+    });
+    const models = extractHedraModelList(payload);
+    return selectBestHedraTextToSpeechModelId(models);
+  } catch (error) {
+    console.warn(
+      "Hedra TTS model discovery failed",
+      providerErrorMessage(error),
+    );
+    return null;
+  }
+}
+
+function extractHedraModelList(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) return payload;
+  const record = asRecord(payload);
+  if (!record) return [];
+  for (const key of ["data", "models", "items", "results"]) {
+    const value = record[key];
+    if (Array.isArray(value)) return value;
+    const nested = asRecord(value);
+    if (nested) {
+      const nestedModels = extractHedraModelList(nested);
+      if (nestedModels.length > 0) return nestedModels;
+    }
+  }
+  return [];
 }
 
 async function hedraJsonRequest(
@@ -1453,4 +1530,10 @@ function firstNumber(...values: unknown[]): number | null {
     }
   }
   return null;
+}
+
+function envFlag(value: string | null | undefined): boolean {
+  return ["1", "true", "yes", "on"].includes(
+    (value ?? "").trim().toLowerCase(),
+  );
 }
