@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-07-01",
+    "date": "2026-07-04",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-07-01T00:00:00Z",
+  "generatedAt": "2026-07-04T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -31,6 +31,97 @@
         "fix"
       ],
       "changes": [
+        {
+          "category": "fix",
+          "id": "pr-3766",
+          "links": [
+            {
+              "title": "PR #3766",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3766"
+            }
+          ],
+          "mergedAt": "2026-07-04T04:06:04Z",
+          "summary": "#3766 fix(x-share): URLをリプライへ回す + 動画をトレンド反映で毎回変化 (#3764)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3763",
+          "links": [
+            {
+              "title": "PR #3763",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3763"
+            }
+          ],
+          "mergedAt": "2026-07-04T02:47:42Z",
+          "summary": "#3763 fix(viral-video): Hedra音声アセット(audio_id)復活+ゲート非依存化+診断常時付記 (#3751)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-3760",
+          "links": [
+            {
+              "title": "PR #3760",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3760"
+            }
+          ],
+          "mergedAt": "2026-07-03T14:37:21Z",
+          "summary": "#3760 [CI/CD自動最適化] 2026-07-03 (concurrency追加 + cron 6h削減)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3752",
+          "links": [
+            {
+              "title": "PR #3752",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3752"
+            }
+          ],
+          "mergedAt": "2026-07-02T18:51:31Z",
+          "summary": "#3752 fix(viral-video): OpenAI TTS無条件フォールバック + speech_chain診断 (#3751)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-3703",
+          "links": [
+            {
+              "title": "PR #3703",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3703"
+            }
+          ],
+          "mergedAt": "2026-07-02T17:01:39Z",
+          "summary": "#3703 ci: bump the github-actions group across 2 directories with 2 updates"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3738",
+          "links": [
+            {
+              "title": "PR #3738",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3738"
+            }
+          ],
+          "mergedAt": "2026-07-02T16:48:42Z",
+          "summary": "#3738 fix: keep hedra video generation after speech failures"
+        },
+        {
+          "category": "fix",
+          "id": "pr-3735",
+          "links": [
+            {
+              "title": "PR #3735",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/3735"
+            }
+          ],
+          "mergedAt": "2026-07-01T18:28:55Z",
+          "summary": "#3735 fix: recover hedra presenter video tts"
+        },
         {
           "category": "fix",
           "id": "pr-3733",
@@ -306,19 +397,6 @@
         },
         {
           "category": "feature",
-          "id": "pr-3630",
-          "links": [
-            {
-              "title": "PR #3630",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3630"
-            }
-          ],
-          "mergedAt": "2026-06-25T09:12:45Z",
-          "summary": "#3630 perf(asset): 資産管理ページの毎秒フル再ビルドを解消（操作時のカクつき軽減）"
-        },
-        {
-          "category": "feature",
           "id": "pr-3633",
           "links": [
             {
@@ -342,87 +420,9 @@
           ],
           "mergedAt": "2026-06-24T05:47:17Z",
           "summary": "#3631 feat(election): 公開ノートの立憲ベンチマークを週次cronバッチ値へ同期"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3605",
-          "links": [
-            {
-              "title": "PR #3605",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3605"
-            }
-          ],
-          "mergedAt": "2026-06-24T01:26:36Z",
-          "summary": "#3605 deps: bump the python-dependencies group with 2 updates"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3627",
-          "links": [
-            {
-              "title": "PR #3627",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3627"
-            }
-          ],
-          "mergedAt": "2026-06-24T01:07:13Z",
-          "summary": "#3627 feat(asset): 支払原資口座の未設定ドロップダウンにカード/与信枠を追加"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3617",
-          "links": [
-            {
-              "title": "PR #3617",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3617"
-            }
-          ],
-          "mergedAt": "2026-06-23T15:53:56Z",
-          "summary": "#3617 feat(asset): カード請求負債の確認手順をカード利用明細ベースへ"
-        },
-        {
-          "category": "fix",
-          "id": "pr-3620",
-          "links": [
-            {
-              "title": "PR #3620",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3620"
-            }
-          ],
-          "mergedAt": "2026-06-23T15:44:03Z",
-          "summary": "#3620 fix(asset): アコムショッピング枠のAnthropic分を現金支出から除外（請求集約へ）"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3621",
-          "links": [
-            {
-              "title": "PR #3621",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3621"
-            }
-          ],
-          "mergedAt": "2026-06-23T15:41:12Z",
-          "summary": "#3621 [CI/CD自動最適化] 2026-06-23 cancel-in-progress: true (wbs-ai-review / feature-review)"
-        },
-        {
-          "category": "feature",
-          "id": "pr-3614",
-          "links": [
-            {
-              "title": "PR #3614",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/3614"
-            }
-          ],
-          "mergedAt": "2026-06-22T23:57:47Z",
-          "summary": "#3614 [CI/CD自動最適化] 2026-06-22 paths-ignore追加 / ai-university 2h→4h"
         }
       ],
-      "date": "2026-07-01",
+      "date": "2026-07-04",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 4,
