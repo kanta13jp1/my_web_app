@@ -647,6 +647,9 @@ async function createHedraPresenterVideo(params: {
   let storedAudioUrl: string | null = null;
   let storedAudioPath: string | null = null;
   let audioGeneration: Record<string, unknown>;
+  // 音声生成の失敗連鎖を記録し、最終エラーに speech_chain として付記する
+  // (= ダッシュボードのログを見ずに応答だけで診断できるようにする)。
+  const speechChain: string[] = [];
 
   if (HEDRA_UPLOADED_AUDIO_ENABLED && ELEVENLABS_API_KEY) {
     try {
@@ -660,11 +663,12 @@ async function createHedraPresenterVideo(params: {
       storedAudioUrl = audio.url;
       storedAudioPath = audio.path;
     } catch (error) {
+      console.warn("ElevenLabs speech generation failed; falling back", error);
+      speechChain.push(`elevenlabs=${providerErrorMessage(error)}`);
       if (
         params.requiresUploadedAudio &&
         shouldRetryElevenLabsWithFallbackVoice(error)
       ) {
-        let fallbackReason: string | null = null;
         const fallbackResult = await tryElevenLabsFallbackVoices(params.admin, {
           text: spokenScript.slice(0, 1800),
           templateTitle: params.title ?? "share-update",
@@ -688,43 +692,42 @@ async function createHedraPresenterVideo(params: {
             fallbackText: spokenScript.slice(0, 1800),
           });
         }
-        fallbackReason = fallbackResult.reason;
-        if (OPENAI_API_KEY) {
-          try {
-            const openAiAudio = await createOpenAiSpeechAsset(params.admin, {
-              text: spokenScript.slice(0, 1800),
-              templateTitle: `${params.title ?? "share-update"}-openai-tts`,
-              lang: params.lang,
-            });
-            audioGeneration = buildHedraUploadedAudioGeneration(
-              openAiAudio.url,
-            );
-            audioProvider = "openai_tts_fallback";
-            storedAudioUrl = openAiAudio.url;
-            storedAudioPath = openAiAudio.path;
-            return await createHedraVideoFromUploadedAudio(params, {
-              audioGeneration,
-              storedAudioUrl,
-              storedAudioPath,
-              audioProvider,
-              imageUrl,
-              fallbackText: spokenScript.slice(0, 1800),
-            });
-          } catch (openAiError) {
-            fallbackReason = `${fallbackResult.reason}; openai_tts=${
-              providerErrorMessage(openAiError)
-            }`;
-          }
-        } else {
-          fallbackReason =
-            `${fallbackResult.reason}; openai_tts=OPENAI_API_KEY not configured`;
-        }
-        console.warn(
-          "Premium speech generation failed; falling back to Hedra TTS",
-          fallbackReason,
-        );
+        speechChain.push(`fallback_voices=${fallbackResult.reason}`);
       }
-      console.warn("ElevenLabs speech generation failed; falling back", error);
+      // OpenAI TTS は ElevenLabs 失敗時の無条件フォールバック
+      // (従来は requiresUploadedAudio && 音声系エラーの時のみで、
+      //  それ以外の失敗が全て壊れた Hedra TTS へ直行していた)。
+      if (OPENAI_API_KEY) {
+        try {
+          const openAiAudio = await createOpenAiSpeechAsset(params.admin, {
+            text: spokenScript.slice(0, 1800),
+            templateTitle: `${params.title ?? "share-update"}-openai-tts`,
+            lang: params.lang,
+          });
+          audioGeneration = buildHedraUploadedAudioGeneration(
+            openAiAudio.url,
+          );
+          audioProvider = "openai_tts_fallback";
+          storedAudioUrl = openAiAudio.url;
+          storedAudioPath = openAiAudio.path;
+          return await createHedraVideoFromUploadedAudio(params, {
+            audioGeneration,
+            storedAudioUrl,
+            storedAudioPath,
+            audioProvider,
+            imageUrl,
+            fallbackText: spokenScript.slice(0, 1800),
+          });
+        } catch (openAiError) {
+          speechChain.push(`openai_tts=${providerErrorMessage(openAiError)}`);
+        }
+      } else {
+        speechChain.push("openai_tts=OPENAI_API_KEY not configured");
+      }
+      console.warn(
+        "Premium speech generation failed; falling back to Hedra TTS",
+        speechChain.join(" | "),
+      );
       audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
         text: spokenScript.slice(0, 1800),
       });
@@ -738,14 +741,22 @@ async function createHedraPresenterVideo(params: {
     });
   }
 
-  return await createHedraVideoFromUploadedAudio(params, {
-    audioGeneration,
-    storedAudioUrl,
-    storedAudioPath,
-    audioProvider,
-    imageUrl,
-    fallbackText: spokenScript.slice(0, 1800),
-  });
+  try {
+    return await createHedraVideoFromUploadedAudio(params, {
+      audioGeneration,
+      storedAudioUrl,
+      storedAudioPath,
+      audioProvider,
+      imageUrl,
+      fallbackText: spokenScript.slice(0, 1800),
+    });
+  } catch (error) {
+    if (speechChain.length === 0) throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    // 音声フォールバック連鎖の失敗理由を最終エラーへ含め、
+    // videoReason だけで根因診断できるようにする。
+    throw new Error(`${message}; speech_chain: ${speechChain.join(" | ")}`);
+  }
 }
 
 async function createHedraVideoFromUploadedAudio(
