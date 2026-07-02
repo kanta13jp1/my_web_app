@@ -385,13 +385,6 @@ serve(async (req) => {
         videoProvider = "hedra";
         videoStatus = "fallback_text";
         videoReason = "HEDRA_API_KEY not configured";
-      } else if (
-        templateKey === "ai_secretary_site_tour" && !ELEVENLABS_API_KEY
-      ) {
-        videoProvider = "hedra";
-        videoStatus = "fallback_text";
-        videoReason =
-          "ELEVENLABS_API_KEY not configured; ai_secretary_site_tour requires ElevenLabs uploaded audio to avoid Hedra text_to_speech model errors.";
       } else {
         try {
           const existingGenerationId = firstNonEmptyString(
@@ -671,6 +664,7 @@ async function createHedraPresenterVideo(params: {
         params.requiresUploadedAudio &&
         shouldRetryElevenLabsWithFallbackVoice(error)
       ) {
+        let fallbackReason: string | null = null;
         const fallbackResult = await tryElevenLabsFallbackVoices(params.admin, {
           text: spokenScript.slice(0, 1800),
           templateTitle: params.title ?? "share-update",
@@ -694,6 +688,7 @@ async function createHedraPresenterVideo(params: {
             fallbackText: spokenScript.slice(0, 1800),
           });
         }
+        fallbackReason = fallbackResult.reason;
         if (OPENAI_API_KEY) {
           try {
             const openAiAudio = await createOpenAiSpeechAsset(params.admin, {
@@ -716,28 +711,26 @@ async function createHedraPresenterVideo(params: {
               fallbackText: spokenScript.slice(0, 1800),
             });
           } catch (openAiError) {
-            throw new Error(
-              `${fallbackResult.reason}; openai_tts=${
-                providerErrorMessage(openAiError)
-              }`,
-            );
+            fallbackReason = `${fallbackResult.reason}; openai_tts=${
+              providerErrorMessage(openAiError)
+            }`;
           }
+        } else {
+          fallbackReason =
+            `${fallbackResult.reason}; openai_tts=OPENAI_API_KEY not configured`;
         }
-        throw new Error(
-          `${fallbackResult.reason}; openai_tts=OPENAI_API_KEY not configured`,
-        );
-      }
-      if (params.requiresUploadedAudio) {
-        throw new Error(
-          `ElevenLabs speech generation failed before Hedra video generation: ${
-            providerErrorMessage(error)
-          }`,
+        console.warn(
+          "Premium speech generation failed; falling back to Hedra TTS",
+          fallbackReason,
         );
       }
       console.warn("ElevenLabs speech generation failed; falling back", error);
       audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
         text: spokenScript.slice(0, 1800),
       });
+      audioProvider = params.requiresUploadedAudio
+        ? "hedra_tts_after_premium_speech_failure"
+        : "hedra_tts_after_elevenlabs_failure";
     }
   } else {
     audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
