@@ -10,6 +10,10 @@ on:
         required: false
         default: "100"
 
+concurrency:
+  group: x-post-metrics-optimizer
+  cancel-in-progress: true
+
 jobs:
   collect:
     runs-on: ubuntu-latest
