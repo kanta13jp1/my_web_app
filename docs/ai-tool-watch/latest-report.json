@@ -11,9 +11,11 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2cd91a022d54b03f605c19f1038c3bf9a6fce5abf8f1391a4aa2af8fdc2e1aa3",
+      "hash": "6c60d1c0ad363b83f7bfa9c33286bee5b6fb382697b73b74a6ba97013a4ad665",
       "keyword_groups": {
         "codex-runtime": [
+          "model picker",
+          "computer use",
           "worktree",
           "subagents"
         ],
@@ -24,17 +26,24 @@
           "UserPromptSubmit",
           "PostToolUse",
           "Stop",
-          "StopFailure"
+          "StopFailure",
+          "ultrareview"
         ],
         "integration": [
           "MCP",
           "connector",
-          "GitHub"
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
         ],
         "quality-cost": [
           "OpenTelemetry",
           "cost",
           "rate limit",
+          "sandbox",
           "permission",
           "review",
           "CI"
@@ -42,27 +51,28 @@
         "schedule": [
           "schedule",
           "cron",
+          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
-      "name": "Claude Code hooks reference",
+      "latest_signal": "2.1.198 / July 1, 2026",
+      "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "5099026b9a6539f08a42e510260ae6e301698a114407f65a38012d6cc4e9a426",
-      "slug": "claude-code-hooks",
+      "previous_hash": "7bd54d055a2164ca67dcc1d19df090fbf9f5535df56da3b68525e62bb33e9e56",
+      "slug": "claude-code-changelog",
       "snippets": [
-        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
-        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
+        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "​ 2.1.198 July 1, 2026 Claude in Chrome is now generally available Added background agent notifications in claude agents — sessions that need input or finish now fire the..."
       ],
       "status": 200,
-      "url": "https://code.claude.com/docs/en/hooks"
+      "url": "https://code.claude.com/docs/en/changelog"
     },
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7b32b0a8dbebcc51245045b75021181f86f853630921e20297618dad1a4fe18e",
+      "hash": "5b30bd4fae62b3bc33063bc896c4566d1a4ae0f8f2b487611119d4fc3c9b4022",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -111,7 +121,7 @@
       "latest_signal": "2026-07-01 / Codex CLI 0.142.5 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
+      "previous_hash": "7b32b0a8dbebcc51245045b75021181f86f853630921e20297618dad1a4fe18e",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -125,50 +135,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2b2433af42b3ff4436245c970021321d59963a7b556c156ac1484b0a7dd0a44b",
-      "keyword_groups": {
-        "codex-runtime": [
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "Slack",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "3.9 / Jun 29, 2026",
-      "name": "Cursor changelog",
-      "owner": "Cursor",
-      "previous_hash": "be3ba5971d09a01bfe3f474a218d158e1628534e09122f04dd60164b86026406",
-      "slug": "cursor-changelog",
-      "snippets": [
-        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Automations CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓...",
-        "# Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI.",
-        "When an admin sets up Team MCP servers for cloud agents, they can make those same servers available in a team marketplace from Dashboard -> Integrations & MCP ."
-      ],
-      "status": 200,
-      "url": "https://cursor.com/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "6e994a909946aedde8e8aec16c847323cd96837b2b814d80320f0780bae05af3",
+      "hash": "2cabf2fb186d0c3f29b773fe2349e4c0d4be483e487220a1a95573b2e2b3d657",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -200,21 +167,21 @@
           "workflow"
         ]
       },
-      "latest_signal": "June 26, 2026",
+      "latest_signal": "July 1, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
+      "previous_hash": "6e994a909946aedde8e8aec16c847323cd96837b2b814d80320f0780bae05af3",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
         "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-        "Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules."
+        "Auto-Review Scoped to Your PRs The auto-review user preference now applies only to PRs you author, so enabling it won’t trigger automatic reviews on other people’s pull requests."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
     }
   ],
-  "checked_at": "2026-07-01T21:48:42Z",
+  "checked_at": "2026-07-02T21:42:25Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -266,13 +233,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-06-30T21:48:00Z",
+  "previous_checked_at": "2026-07-01T21:48:42Z",
   "sources": [
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7bd54d055a2164ca67dcc1d19df090fbf9f5535df56da3b68525e62bb33e9e56",
+      "hash": "6c60d1c0ad363b83f7bfa9c33286bee5b6fb382697b73b74a6ba97013a4ad665",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -316,7 +283,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.197 / June 30, 2026",
+      "latest_signal": "2.1.198 / July 1, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
       "previous_hash": "7bd54d055a2164ca67dcc1d19df090fbf9f5535df56da3b68525e62bb33e9e56",
@@ -324,13 +291,13 @@
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.197 June 30, 2026 Introducing Claude Sonnet 5: now the default model in Claude Code, with a native 1M-token context window and promotional pricing of 2 / 2/ 2/ 10 per Mtok..."
+        "​ 2.1.198 July 1, 2026 Claude in Chrome is now generally available Added background agent notifications in claude agents — sessions that need input or finish now fire the..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "2cd91a022d54b03f605c19f1038c3bf9a6fce5abf8f1391a4aa2af8fdc2e1aa3",
@@ -370,7 +337,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "5099026b9a6539f08a42e510260ae6e301698a114407f65a38012d6cc4e9a426",
+      "previous_hash": "2cd91a022d54b03f605c19f1038c3bf9a6fce5abf8f1391a4aa2af8fdc2e1aa3",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -432,7 +399,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7b32b0a8dbebcc51245045b75021181f86f853630921e20297618dad1a4fe18e",
+      "hash": "5b30bd4fae62b3bc33063bc896c4566d1a4ae0f8f2b487611119d4fc3c9b4022",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -481,7 +448,7 @@
       "latest_signal": "2026-07-01 / Codex CLI 0.142.5 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
+      "previous_hash": "7b32b0a8dbebcc51245045b75021181f86f853630921e20297618dad1a4fe18e",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -561,7 +528,7 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "2b2433af42b3ff4436245c970021321d59963a7b556c156ac1484b0a7dd0a44b",
@@ -593,7 +560,7 @@
       "latest_signal": "3.9 / Jun 29, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "be3ba5971d09a01bfe3f474a218d158e1628534e09122f04dd60164b86026406",
+      "previous_hash": "2b2433af42b3ff4436245c970021321d59963a7b556c156ac1484b0a7dd0a44b",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Automations CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓...",
@@ -646,7 +613,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "6e994a909946aedde8e8aec16c847323cd96837b2b814d80320f0780bae05af3",
+      "hash": "2cabf2fb186d0c3f29b773fe2349e4c0d4be483e487220a1a95573b2e2b3d657",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -678,15 +645,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "June 26, 2026",
+      "latest_signal": "July 1, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
-      "previous_hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
+      "previous_hash": "6e994a909946aedde8e8aec16c847323cd96837b2b814d80320f0780bae05af3",
       "slug": "devin-release-notes",
       "snippets": [
         "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
         "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
-        "Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules."
+        "Auto-Review Scoped to Your PRs The auto-review user preference now applies only to PRs you author, so enabling it won’t trigger automatic reviews on other people’s pull requests."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
