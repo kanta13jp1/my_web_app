@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-30T21:48:04Z",
+  "generated_at": "2026-07-01T21:48:44Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -27,7 +27,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "7bd54d055a2164ca67dcc1d19df090fbf9f5535df56da3b68525e62bb33e9e56",
@@ -77,7 +77,7 @@
           "latest_signal": "2.1.197 / June 30, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "58a4789f088ef00e6ba522f5c1ef28e8bbfb63476c9c0f77be23d3210b639253",
+          "previous_hash": "7bd54d055a2164ca67dcc1d19df090fbf9f5535df56da3b68525e62bb33e9e56",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -118,7 +118,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5099026b9a6539f08a42e510260ae6e301698a114407f65a38012d6cc4e9a426",
+          "hash": "2cd91a022d54b03f605c19f1038c3bf9a6fce5abf8f1391a4aa2af8fdc2e1aa3",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "19951e52382be07303687536fc99106864249a4ed1b72e323840d0ed82b1ebeb",
+          "previous_hash": "5099026b9a6539f08a42e510260ae6e301698a114407f65a38012d6cc4e9a426",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -193,7 +193,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "e18a1ac169a1d4511c70c425a76d55a301a02f7e8a47157aa0e91a1b9675cfb2",
@@ -230,7 +230,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "6f4b44b973055668e7f82f48b51d27194fbb818c325987fce637bf7a2879fedc",
+          "previous_hash": "e18a1ac169a1d4511c70c425a76d55a301a02f7e8a47157aa0e91a1b9675cfb2",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
@@ -260,18 +260,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-c7afe271030b",
+        "entry_id": "nf-ea7ae1a55daf",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Use Codex from the ChatGPT mobile app to start or continue work on a connected Mac or Windows host, review progress, and approve actions from your phone. Improved progress visibility for subagents, tasks, and worktree creation.",
+        "text": "Codex changelog 2026-07-01 / Codex CLI 0.142.5 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #30771 ) Changelog Full Changelog: rust-v0.142.4...rust-v0.142.5 #30771 [codex] Backport websocket trace fix to release/0.142 @dylan-hurd-oai Full release on Github June 2026... Changelog Full Changelog: rust-v0.142.3...rust-v0.142.4 Full release on Github 2026-06-26 Codex CLI 0.142.3 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g...",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
+          "hash": "7b32b0a8dbebcc51245045b75021181f86f853630921e20297618dad1a4fe18e",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -286,6 +286,8 @@
             "hooks": [
               "hook",
               "hooks",
+              "SessionStart",
+              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -294,9 +296,11 @@
               "Slack",
               "Linear",
               "GitHub",
-              "IDE extension"
+              "IDE extension",
+              "VSCode"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -313,22 +317,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us",
+          "latest_signal": "2026-07-01 / Codex CLI 0.142.5 pre",
           "name": "Codex changelog",
           "owner": "Codex",
           "previous_hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "Use Codex from the ChatGPT mobile app to start or continue work on a connected Mac or Windows host, review progress, and approve actions from your phone.",
-            "Improved progress visibility for subagents, tasks, and worktree creation."
+            "( #30771 ) Changelog Full Changelog: rust-v0.142.4...rust-v0.142.5 #30771 [codex] Backport websocket trace fix to release/0.142 @dylan-hurd-oai Full release on Github June 2026...",
+            "Changelog Full Changelog: rust-v0.142.3...rust-v0.142.4 Full release on Github 2026-06-26 Codex CLI 0.142.3 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g..."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-c7afe271030b",
+        "entry_id": "nf-ea7ae1a55daf",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -470,9 +474,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-7d44438d721a",
+        "entry_id": "nf-5b75e29e71d6",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.9 / Jun 29, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Automations CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓... Get push notifications when an agent finishes, needs input, or is ready for review. # Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone.",
+        "text": "Cursor changelog 3.9 / Jun 29, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Automations CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓... # Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI. When an admin sets up Team MCP servers for cloud agents, they can make those same servers available in a team marketplace from Dashboard -> Integrations & MCP .",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
@@ -481,7 +485,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "be3ba5971d09a01bfe3f474a218d158e1628534e09122f04dd60164b86026406",
+          "hash": "2b2433af42b3ff4436245c970021321d59963a7b556c156ac1484b0a7dd0a44b",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -497,7 +501,6 @@
               "GitHub"
             ],
             "quality-cost": [
-              "cost",
               "review",
               "CI"
             ],
@@ -511,19 +514,19 @@
           "latest_signal": "3.9 / Jun 29, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "570c5c6fd2ce3cf2324a7950db0767e7f2b973134987a4d4b47f17373920e3ab",
+          "previous_hash": "be3ba5971d09a01bfe3f474a218d158e1628534e09122f04dd60164b86026406",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Automations CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓...",
-            "Get push notifications when an agent finishes, needs input, or is ready for review.",
-            "# Artifacts and SCM Review demos, screenshots, logs, and diffs from your phone."
+            "# Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI.",
+            "When an admin sets up Team MCP servers for cloud agents, they can make those same servers available in a team marketplace from Dashboard -> Integrations & MCP ."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-7d44438d721a",
+        "entry_id": "nf-5b75e29e71d6",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -607,18 +610,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-125c1a2a9a4b",
+        "entry_id": "nf-6e164e9b8710",
         "title": "Devin release notes",
-        "text": "Devin release notes June 26, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules.",
+        "text": "Devin release notes June 26, 2026 Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines... Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use... Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules.",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
+          "hash": "6e994a909946aedde8e8aec16c847323cd96837b2b814d80320f0780bae05af3",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -656,7 +659,7 @@
           "previous_hash": "d49ffd1ae09307811630db7e77a35ad62c283962257026de549468fbb884e382",
           "slug": "devin-release-notes",
           "snippets": [
-            "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines When to...",
+            "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
             "Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...",
             "Run-Once Automation Schedules Automations now support a run-once schedule option for one-time executions, in addition to recurring schedules."
           ],
@@ -665,7 +668,7 @@
         }
       },
       "filter": {
-        "entry_id": "nf-125c1a2a9a4b",
+        "entry_id": "nf-6e164e9b8710",
         "title": "Devin release notes",
         "url": "https://docs.devin.ai/release-notes",
         "source": "Devin",
@@ -714,6 +717,22 @@
         "Claude Code GitHub Actions"
       ],
       "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
+    },
+    {
+      "id": "np-8d8df4ba6ed1",
+      "company": "multi-source",
+      "topic": "mcp-integration",
+      "entry_count": 2,
+      "average_confidence": 0.85,
+      "risk_level": "review",
+      "risk_flags": [
+        "source_http_problem"
+      ],
+      "evidence_titles": [
+        "Codex changelog",
+        "Codex overview"
+      ],
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
     }
   ],
   "issue_candidates": [

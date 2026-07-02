@@ -171,6 +171,13 @@
       "category": "back-office autonomous AI / 6部署+B/S overlap / Agent Broker + Agent Fabric multi-vendor control plane",
       "added": "discovery",
       "added_date": "2026-06-23"
+    },
+    {
+      "name": "Google Jules / Antigravity",
+      "url": "https://antigravity.google",
+      "category": "AI dev tool / agent-first coding platform (Antigravity 2.0 = desktop+CLI+SDK+managed agents) + async autonomous coding agent (Jules) / self L1 lane + fallback runbook 直結",
+      "added": "discovery",
+      "added_date": "2026-07-02"
     }
   ],
   "discovery_history": [
@@ -761,6 +768,21 @@
         "Prime Intellect Lab (= 動向観察 1 月)",
         "Manus AI (= 協調軸組込継続)",
         "Mistral Le Chat Work agentic mode (= EU 軸 / 動向観察)"
+      ]
+    },
+    {
+      "date": "2026-07-02",
+      "name": "Google Jules / Antigravity",
+      "category": "AI dev tool / agent-first coding platform + async autonomous coding agent",
+      "reason": "2026-06-23 Salesforce Agentforce Operations 採択の 7-day cooldown 満了 (次回解禁 6/30) → 6/27-7/01 は GHA static-template のみで Claude run なし → 本 run (7/02) が 6/30 解禁後初の Claude discovery。6/26 report で明示的に『6/30 採択 第1候補 = Google Jules / Antigravity』と pre-designate 済 (Lovable 5/17・Bolt.new 5/24・Qoder 6/09・MAI-Code 6/16・Salesforce 6/23 の解禁日近接採択 pattern を継承)。採択根拠: 基準 a (差別化軸直接競合 = 並列 multi-agent orchestration が自社 2-instance fleet + subagent orchestration 軸と正面 = Antigravity 2.0 は dynamic subagents + scheduled background tasks + Go 製 Antigravity CLI + public SDK + managed execution + Gemini 3.5 Flash / Jules は cloud VM で 2M token context + CI/CD fail 時 自動 error 取得→fix→re-push の自律 loop + Jules Tools CLI companion) + 基準 c (過去 30 日重大リリース = 6/18 Antigravity CLI 全員開放で Gemini CLI を完全置換 [Agent Skills/Hooks/Subagents/Extensions→plugins 継承] + Gemini CLI/Code Assist IDE 個人・Pro・Ultra 提供停止)。二重の含意 = 稀有な『競合かつ自社 toolchain』候補: 自社 AI_DRIVEN_DEV_OPERATING_MODEL の L1 lane (Antigravity+Gemini 探索) + AI_FALLBACK_RUNBOOK の Gemini Code Assist fallback 経路が 6/18 transition で直撃 = 採択価値 (監視 + runbook 棚卸しトリガー) が最も高い。Google は seed 21 競合には含まれるが _competitors.json (監視対象) には未収載 = novel。",
+      "skipped_candidates": [
+        "OpenCode (= 6/23 に『次回 discovery 第1候補』へ昇格していたが 6/26 の Antigravity CLI 全員開放で Google Jules/Antigravity が二重関連で上回る / OSS #1 = 160K stars・7.5M MAU・827 releases [v1.17.10 6/24] / model-agnostic 75+ プロバイダ + terminal-native + データ主権 = 自社 AI 振り分け matrix 近接 / 次回 discovery 第1候補へ継続)",
+        "OpenAI GPT-5.6 Sol (= 7月 preview / max reasoning effort + ultra mode + agentic workflows / Terra・Luna 同時 / モデル層 + OpenAI Codex 既収載で同一ベンダー連続追加回避 = monitor)",
+        "Microsoft Copilot Cowork (= 6/16 全世界 GA metered billing / back-office 三つ巴 / Microsoft は MAI-Code-1-Flash 既収載で同一ベンダー回避 = monitor 継続)",
+        "Glean (= enterprise search→agent platform / intent 解釈+意思決定 / 動向観察 1 月)",
+        "Harvey (= 法務 vertical AI / $300M ARR 5月・AmLaw100 過半 / 軸遠い = monitor)",
+        "Warp (= terminal-native agentic dev / MarkTechPost 6/10 新規参入 / 動向観察 1 月)",
+        "Sierra (= $950M Series E / Bret Taylor / enterprise CX / CX 特化で軸遠い / monitor)"
       ]
     }
   ],
