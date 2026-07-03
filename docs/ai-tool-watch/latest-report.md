@@ -1,14 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-02T21:42:25Z`
-- Previous check: `2026-07-01T21:48:42Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-07-03T22:17:02Z`
+- Previous check: `2026-07-02T21:42:25Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.198 / July 1, 2026
-- `changed` Codex changelog: 2026-07-01 / Codex CLI 0.142.5 pre
-- `changed` Devin release notes: July 1, 2026
+- `changed` Claude Code changelog: 2.1.200 / July 3, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
+- `changed` Cursor changelog: 3.9 / Jun 29, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -20,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.198 / July 1, 2026
+  - Latest signal: 2.1.200 / July 3, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -56,7 +57,7 @@
   - URL: https://cursor.com/changelog
   - Latest signal: 3.9 / Jun 29, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Automations CLI Review Tab Marketplace ↗ Enterprise Pricing Resources ↓...
+  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...
   - Short signal: # Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
