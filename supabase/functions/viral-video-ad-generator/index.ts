@@ -651,8 +651,18 @@ async function createHedraPresenterVideo(params: {
   // (= ダッシュボードのログを見ずに応答だけで診断できるようにする)。
   const speechChain: string[] = [];
 
-  if (HEDRA_UPLOADED_AUDIO_ENABLED && ELEVENLABS_API_KEY) {
+  // requiresUploadedAudio テンプレ (= ai_secretary_site_tour) は
+  // HEDRA_UPLOADED_AUDIO_ENABLED フラグに関係なく ElevenLabs/OpenAI TTS の
+  // アップロード音声経路を必ず使う。壊れている Hedra 内蔵TTS
+  // (type=text_to_speech / model missing) へ落ちるのを構造的に防ぐ。
+  const useUploadedAudioPath =
+    (HEDRA_UPLOADED_AUDIO_ENABLED || params.requiresUploadedAudio === true) &&
+    Boolean(ELEVENLABS_API_KEY || OPENAI_API_KEY);
+  if (useUploadedAudioPath) {
     try {
+      if (!ELEVENLABS_API_KEY) {
+        throw new Error("ELEVENLABS_API_KEY not configured");
+      }
       const audio = await createElevenLabsSpeechAsset(params.admin, {
         text: spokenScript.slice(0, 1800),
         templateTitle: params.title ?? "share-update",
