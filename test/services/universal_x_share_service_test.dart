@@ -753,4 +753,74 @@ void main() {
     );
     expect(sawTonedVoice, isTrue);
   });
+
+  test('video narration is capped to a Hedra-safe length for long news drafts',
+      () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'status': 'fallback_text'};
+      },
+    );
+
+    // 1 行が 800 字超になる病的な長文 draft(=実測で processing 滞留→静止画に
+    // なった 685 字を大きく超える)。台本(customScript)が確実に短縮されること。
+    final longLine = 'とても長いニュース解説の一文です。' * 60;
+    final draft = UniversalXShareDraft(
+      text: '$longLine\n$longLine',
+      imagePrompt: 'x',
+      videoPrompt: 'y',
+      hashtags: const ['#AI'],
+      threadReplies: <String>['1. $longLine', '2. $longLine', '3. $longLine'],
+      fallbackUsed: false,
+      source: 'test',
+    );
+
+    await service.generateVideo(
+      context: page,
+      draft: draft,
+      imageUrl: 'https://example.com/secretary.png',
+    );
+
+    final scriptLines = (capturedBody?['customScript'] as List).cast<String>();
+    expect(scriptLines, isNotEmpty);
+    // 総ナレーションは 450 字(+省略記号の余白)以内に収まる。
+    expect(scriptLines.join().runes.length, lessThanOrEqualTo(460));
+  });
+
+  test('finance video narration is capped even with a long AI draft', () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'status': 'fallback_text'};
+      },
+    );
+
+    const financePage = UniversalSharePageContext(
+      routePath: '/asset-management',
+      title: '資産管理',
+      url: 'https://my-web-app-b67f4.web.app/asset-management',
+    );
+    final longLine = 'とても長い資産管理の説明文です。' * 60;
+    final draft = UniversalXShareDraft(
+      text: '$longLine\n$longLine\n$longLine',
+      imagePrompt: 'x',
+      videoPrompt: 'y',
+      hashtags: const ['#AI'],
+      fallbackUsed: false,
+      source: 'test',
+    );
+
+    await service.generateVideo(
+      context: financePage,
+      draft: draft,
+      imageUrl: 'https://example.com/secretary.png',
+    );
+
+    final scriptLines = (capturedBody?['customScript'] as List).cast<String>();
+    expect(scriptLines, isNotEmpty);
+    expect(scriptLines.join().runes.length, lessThanOrEqualTo(460));
+  });
 }

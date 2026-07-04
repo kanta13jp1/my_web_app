@@ -1298,7 +1298,16 @@ ${draft.videoPrompt}
     UniversalXShareDraft draft,
   ) {
     if (_isMyFinanceUxContext(context)) {
-      return _scriptLinesFromText(draft.text);
+      // finance も draft.text(400-900字の長文リード)をそのまま読み上げると
+      // 動画が長くなり静止画フォールバックになる。導入+2行(各60字上限)+締めに短縮。
+      const financeOpening = 'マイファイナンスの動くスマホUXを短くご紹介します。';
+      const financeClosing = '5分だけ触って、役立った点と迷った点を教えてください。';
+      final financeBody = _scriptLinesFromText(draft.text)
+          .take(2)
+          .map((line) => _clipNarrationLine(line, 60));
+      return _capNarration(
+        <String>[financeOpening, ...financeBody, financeClosing],
+      );
     }
     // 動画ナレーションを毎回「劇的に」変える。①導入(型)を draft 由来 seed で日替り
     // ローテ＋当日ニュースの話題を差し込み ②本文は LLM が当日ニュースから作った
@@ -1338,18 +1347,20 @@ ${draft.videoPrompt}
     // かかり、ワンボタン投稿のポーリング(最大5分)内に完成せず静止画で投稿されて
     // しまうため。ポスト本文(text/threadReplies)は長文のまま、読み上げる動画だけ簡潔に。
     if (body.isNotEmpty) {
-      return <String>[
+      // body 各行(threadReplies 由来。1行150-500字になりうる)を60字にクリップし、
+      // 総文字数も _capNarration で 450 字以内に抑えて短尺動画を保証する。
+      return _capNarration(<String>[
         opening,
-        ...body.take(2),
+        ...body.take(2).map((line) => _clipNarrationLine(line, 60)),
         'こうした話題も、AI仕事OSに残しておけば、後で使える判断材料に変わります。',
         closing,
-      ];
+      ]);
     }
-    return <String>[
+    return _capNarration(<String>[
       opening,
       'AI仕事OSは、学習・仕事ログ・資産管理・英語学習・メモをひとつに整理できるツールです。',
       closing,
-    ];
+    ]);
   }
 
   /// draft から動画で強調する「今日の話題」を短く1つ取り出す。
@@ -1393,6 +1404,41 @@ ${draft.videoPrompt}
         .take(5)
         .toList();
     return lines.isEmpty ? const ['ページの改善内容を紹介します。'] : lines;
+  }
+
+  /// 動画ナレーションの読み上げ総文字数を Hedra が 5 分ポーリング内に完成できる
+  /// 範囲へ制限する。実測: 145 字は video_ready まで到達 / 685 字は processing
+  /// 滞留→クライアントが打ち切り静止画。450 字なら余裕を持って窓内に収まる。
+  /// edge 側の `MAX_SPOKEN_CHARS` (viral-video-ad-generator) と同値。
+  static const int _maxNarrationChars = 450;
+
+  /// 1 行を最大 [max] 文字(runes 基準 / 日本語の結合文字割れを避ける)へクリップ。
+  static String _clipNarrationLine(String line, int max) {
+    final runes = line.runes.toList(growable: false);
+    if (runes.length <= max) return line;
+    return '${String.fromCharCodes(runes.take(max))}…';
+  }
+
+  /// ナレーション行群を総 [_maxNarrationChars] 文字以内へ切り詰める。どの分岐
+  /// (finance / 一般 / 空 body フォールバック)も必ずこれを通し、将来の分岐追加でも
+  /// 長尺化=静止画フォールバックが再発しないようにするための最終ガード。
+  static List<String> _capNarration(List<String> lines) {
+    final out = <String>[];
+    var total = 0;
+    for (final line in lines) {
+      if (line.isEmpty) continue;
+      final runes = line.runes.length;
+      if (total + runes > _maxNarrationChars) {
+        final remaining = _maxNarrationChars - total;
+        if (remaining > 8) {
+          out.add(_clipNarrationLine(line, remaining - 1));
+        }
+        break;
+      }
+      out.add(line);
+      total += runes;
+    }
+    return out.isEmpty ? lines.take(1).toList() : out;
   }
 
   static Map<String, dynamic> _asMap(Object? value) {
