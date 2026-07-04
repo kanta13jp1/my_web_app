@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-03T22:17:05Z",
+  "generated_at": "2026-07-04T22:13:23Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-17127a265e19",
+        "entry_id": "nf-e0424ad6687b",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.200 / July 3, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.200 July 3, 2026 Changed AskUserQuestion dialogs to no longer auto-continue by default; opt into an idle timeout via /config Changed the “default” permission mode to...",
+        "text": "Claude Code changelog 2.1.201 / July 3, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.201 July 3, 2026 Claude Sonnet 5 sessions no longer use the mid-conversation system role for harness reminders ​ 2.1.200 July 3, 2026 Changed AskUserQuestion dialogs to no...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "4b06d6ea81c0d1d695550177ec10d87fabce3883f743faa7d4eaf53176688c4f",
+          "hash": "42fb9083dae6170790faab3933c704ef1782243207a2971b82e62902bc8cbc7a",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.200 / July 3, 2026",
+          "latest_signal": "2.1.201 / July 3, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "6c60d1c0ad363b83f7bfa9c33286bee5b6fb382697b73b74a6ba97013a4ad665",
+          "previous_hash": "4b06d6ea81c0d1d695550177ec10d87fabce3883f743faa7d4eaf53176688c4f",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.200 July 3, 2026 Changed AskUserQuestion dialogs to no longer auto-continue by default; opt into an idle timeout via /config Changed the “default” permission mode to..."
+            "​ 2.1.201 July 3, 2026 Claude Sonnet 5 sessions no longer use the mid-conversation system role for harness reminders ​ 2.1.200 July 3, 2026 Changed AskUserQuestion dialogs to no..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-17127a265e19",
+        "entry_id": "nf-e0424ad6687b",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -118,7 +118,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "00a049697865362a8b9b84bf4ae5721670210f0d05fc6bd1d979ac88cbbdd22f",
+          "hash": "6ea514d7f850db8f0f650067ecb593c7653b8b319ef7154596016af809fa2dc9",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "2cd91a022d54b03f605c19f1038c3bf9a6fce5abf8f1391a4aa2af8fdc2e1aa3",
+          "previous_hash": "00a049697865362a8b9b84bf4ae5721670210f0d05fc6bd1d979ac88cbbdd22f",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -196,7 +196,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "cd1b6179c253ee6ff8d1fe71e27b63ce042190df6d3eb93f34222879a6955b59",
+          "hash": "d50ff352ac5d607c37b9c65a72f48db6b28dacfdeb9b48f7fb4a5a74561203a5",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -230,7 +230,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "e18a1ac169a1d4511c70c425a76d55a301a02f7e8a47157aa0e91a1b9675cfb2",
+          "previous_hash": "cd1b6179c253ee6ff8d1fe71e27b63ce042190df6d3eb93f34222879a6955b59",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
@@ -482,7 +482,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "e40fb5b45015b355b1178bba7dad73fbd7107a0c093fb739e092d4382e201e5b",
@@ -514,7 +514,7 @@
           "latest_signal": "3.9 / Jun 29, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "2b2433af42b3ff4436245c970021321d59963a7b556c156ac1484b0a7dd0a44b",
+          "previous_hash": "e40fb5b45015b355b1178bba7dad73fbd7107a0c093fb739e092d4382e201e5b",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",
