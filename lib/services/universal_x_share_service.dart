@@ -401,6 +401,8 @@ class UniversalXShareService {
     'ここから試せます。最初の1画面で迷った所があれば教えてください。',
     '実際に開けます。役に立ちそう/そうでない、どちらでも返信歓迎です。',
     'デモはこちら。5分だけ使って、続けたいと思ったか教えてください。',
+    '要点は後で使えるので保存推奨。触ったら一言だけ感想ください。',
+    'この投稿は保存しておくと後で効きます。使えたか一言返信歓迎です。',
   ];
 
   /// Builds the lead post + reply chain exactly like [postToX] does, so the
@@ -1215,9 +1217,11 @@ Rules:
 - When headlines are present, OPEN the lead post by tying today's single most relevant headline to this app's angle (information organization / AI work OS), so the post visibly changes every day. Do not lead with a generic app description.
 - The FIRST line (before the X "Show more" fold) must be a concrete curiosity/value/news hook that stops the scroll. Do NOT start with a label or date such as "デイリーブリーフィング — …朝"; do not prefix the post with the date. If you mention any date, use exactly today's real date (JST) given above and never invent another year (e.g. never write 2024).
 - Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
-- Prefer conversation hooks and save-worthy analysis over hashtags.
+- Prefer conversation hooks and save-worthy analysis over hashtags. When the thread genuinely helps later (a checklist, framework, or numbered briefing), add ONE natural save cue (e.g. "後で使えるよう保存を") — never on every post and never templated word-for-word.
 - This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars: a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
+- Format for scannability: break the lead and each reply into short one-idea lines with a blank line between meaning-chunks (no wall-of-text paragraph). Put labels (なぜ重要か / 見通し / 次の一手 など) at the start of a line and continue the explanation on the next line, so a reader can skim in 2 seconds.
+- Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical.
 - The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim and do NOT phrase it as "1つ目/item 1 of N". Replies 2 onward then form the numbered briefing.
 - Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 2-4 "options" (each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
 - DERIVE the poll question AND options from THE DAY'S single most relevant headline so the poll rotates daily and is specific — NEVER reuse a generic or hardcoded poll like "使ってみたい?はい/いいえ" (near-duplicate polls get down-ranked). Yesterday's poll must not be reusable today.

@@ -483,6 +483,24 @@ void main() {
     expect(seenCtas.length, greaterThanOrEqualTo(2));
   });
 
+  test('final-reply CTA pool includes a save/bookmark cue', () {
+    // ブックマーク(保存)は 2026 のリーチ品質シグナル。ローテプールに保存促しの
+    // バリアントが含まれ、複数入力のいずれかで最終リプに現れることを確認する。
+    var sawSaveCue = false;
+    for (var i = 0; i < 40; i += 1) {
+      final parts = UniversalXShareService.buildManualShareParts(
+        context: page,
+        text: 'body$i\n${page.url}',
+        linkInReply: true,
+      );
+      if (parts.replyTexts.last.contains('保存')) {
+        sawSaveCue = true;
+        break;
+      }
+    }
+    expect(sawSaveCue, isTrue);
+  });
+
   test('postToX surfaces X developer project guidance', () async {
     final service = UniversalXShareService(
       functionInvoker: (functionName, body) async {
