@@ -18,6 +18,12 @@ import {
   uploadMediaFromUrl,
   type XTweetMetrics,
 } from "../_shared/x-client.ts";
+import {
+  extractPostedTexts,
+  findDuplicateContent,
+  resolveDuplicateGuardConfig,
+  type XPostLogRowLike,
+} from "./x_duplicate_content.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,6 +34,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// x.post 近似重複ガードの調整用 env (未設定時は既定 0.9 / 直近 5 件)。
+const X_DUP_SIMILARITY_THRESHOLD = Deno.env.get("X_DUP_SIMILARITY_THRESHOLD") ??
+  null;
+const X_DUP_RECENT_COUNT = Deno.env.get("X_DUP_RECENT_COUNT") ?? null;
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -1565,6 +1575,56 @@ serve(async (req: Request) => {
               ? undefined
               : "X API credentials are not configured in Supabase secrets.",
           });
+        }
+
+        // ── 近似重複ガード (実投稿の直前) ──────────────────────────────────
+        // 同一/ほぼ同一の投稿を量産すると X に重複アカウント信号を送り、凍結
+        // リスク+インプレ低下を招く。直近の投稿済み本文と類似度を測り、閾値
+        // 超なら投稿せず拒否する。閾値/件数は env で調整可能。
+        const dupConfig = resolveDuplicateGuardConfig({
+          threshold: X_DUP_SIMILARITY_THRESHOLD,
+          recentCount: X_DUP_RECENT_COUNT,
+        });
+        if (dupConfig.recentCount > 0) {
+          // status!=posted の行で漏れないよう多めに取得してから posted を抽出。
+          const scanLimit = Math.min(
+            50,
+            Math.max(dupConfig.recentCount * 4, dupConfig.recentCount),
+          );
+          const recentLogs = await listXPostLogs(admin, userId!, scanLimit);
+          const recentPosts = extractPostedTexts(
+            recentLogs as XPostLogRowLike[],
+            dupConfig.recentCount,
+          );
+          const duplicate = findDuplicateContent(text, recentPosts, dupConfig);
+          if (duplicate) {
+            const rejectionLog = {
+              ...baseLog,
+              status: "rejected_duplicate",
+              duplicate_similarity: duplicate.similarity,
+              duplicate_threshold: duplicate.threshold,
+              duplicate_matched_log_id: duplicate.matchedId,
+              duplicate_matched_created_at: duplicate.matchedCreatedAt,
+            };
+            let log: unknown = null;
+            try {
+              log = await addItem(admin, "x_post_log", userId!, rejectionLog);
+            } catch (_logError) {
+              log = rejectionLog;
+            }
+            return json({
+              success: false,
+              posted: false,
+              code: "duplicate_content",
+              similarity: duplicate.similarity,
+              threshold: duplicate.threshold,
+              recentCount: dupConfig.recentCount,
+              matchedCreatedAt: duplicate.matchedCreatedAt,
+              account: getXAccountHandle(),
+              actionRequired: "文面を変えて再生成してください",
+              log,
+            });
+          }
         }
 
         try {
