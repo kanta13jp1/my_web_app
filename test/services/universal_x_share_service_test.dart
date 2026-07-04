@@ -119,27 +119,13 @@ void main() {
       expect(draft.imagePrompt, contains('as the friendly presenter'));
       expect(draft.imagePrompt, contains('adult'));
       expect(draft.imagePrompt, isNot(contains('child')));
-      final matched = <String>[
-        'secretary',
-        'gyaru',
-        'news anchor',
-        'nurse',
-        'CEO',
-        'guitarist',
-        'knight',
-        'chef',
-        'detective',
-        'athlete',
-        'barista',
-        'librarian',
-        'kimono',
-        'elf',
-        'android',
-        'dancer',
-        'idol',
-        'gentleman',
-      ].where(draft.imagePrompt.contains);
-      seenCharacters.addAll(matched);
+      // presenter フレーズ全体を distinct キーにする。ハンドメンテのキーワード
+      // 部分集合(39 キャラ中 18 個)だと、未カバーのキャラばかり引いた日(seed 依存)に
+      // undercount して落ちる。'... as the friendly presenter' の直前までを比較キーに。
+      const marker = ' as the friendly presenter';
+      final markerIndex = draft.imagePrompt.indexOf(marker);
+      expect(markerIndex, greaterThan(0));
+      seenCharacters.add(draft.imagePrompt.substring(0, markerIndex));
     }
     // 5トピックで少なくとも2種類以上の異なるキャラが登場すること。
     expect(seenCharacters.length, greaterThanOrEqualTo(2));
