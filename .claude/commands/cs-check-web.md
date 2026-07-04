@@ -5,6 +5,43 @@ WEB版 sandbox は外部HTTP (`*.supabase.co`, `*.web.app` 等) を全ブロッ�
 
 ---
 
+## ⚠️ コード修正の安全ルール (必須 / 2026-06-25 incident 由来)
+
+cs-check 中の「バグ修正 / P0 修復」で `.dart` / `.ts` ソースを編集する場合は、以下を**必ず**守る。
+
+### なぜこのルールがあるか
+2026-06-25, cs-check が Issue #3644 の URL typo (`b6f7f4`→`b67f4`) を修正した際、
+`lib/pages/subscription_billing_page.dart` の文字列補間 `${...}` を `\${...}` へ**過剰エスケープ**し、
+`flutter build` を全 PR/本番で失敗させた (compile 不能化 / commit `805166663` → PR #3652 で復旧)。
+原因 = この routine が教えるファイル書き込みは **unquoted heredoc** (`cat > file <<EOF`) で `$` がシェル展開されるため、
+ソース編集時に展開を防ごうと `$`→`\$` を付け、`\$` がそのままファイルへ残った。
+
+### ルール
+1. **`$` を絶対にエスケープしない**。Dart/TS の文字列補間 `${expr}` / `$var` はソース通りそのまま書く。
+2. ソース編集には **Edit ツール** を使う。`sed` / `create_or_update_file` で**全文を手書き上書きしない**。
+   やむを得ず heredoc を使う場合は **必ず quoted heredoc** (`<<'EOF'`) を使い `$` 展開を無効化する
+   (unquoted `<<EOF` は禁止)。
+3. **検証ゲート (必須)**: 編集後・commit 前に、変更ファイルを analyzer へ通し 0 エラーを確認する。
+   ```bash
+   dart analyze lib/pages/subscription_billing_page.dart   # Dart (変更ファイルのみ / 全体は OOM)
+   deno check supabase/functions/<fn>/index.ts             # TypeScript
+   ```
+   - エラーが残る場合は **commit しない**。
+   - 補間崩れの早期検知: `grep -nF '\${' <変更ファイル>` が 1 件でもヒットしたら過剰エスケープ → 修正する。
+4. **WEB版 sandbox は `flutter` / `dart` / `deno` を実行できない** ("flutter コマンド不可")。
+   analyzer を回せない以上、**`.dart` / `.ts` ソースを main へ直接 commit してはならない**。
+   代わりに **PR を作り ci.yml (Lint/Format/Test) にゲートさせる**:
+   ```bash
+   git switch -c fix/cs-<issue>
+   # Edit でソース修正 (heredoc/sed で全文上書きしない)
+   git commit -am "fix: <内容> (Issue #NNNN)"
+   git push origin HEAD
+   gh pr create --fill --base main
+   ```
+   docs (`docs/cs-notes/`, `docs/schedule-logs/` 等) のみの変更は従来通り main へ直接 commit 可。
+
+---
+
 ## Step 1-2: サポートチケット (代替: ticket-cache.json を読む)
 
 ```bash
