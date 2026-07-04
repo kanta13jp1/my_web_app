@@ -121,18 +121,21 @@ void main() {
       await _unmount(tester);
     });
 
-    testWidgets('calendar month navigation updates the label', (tester) async {
+    testWidgets('calendar cycle navigation updates the range label', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await _pumpAssetPage(tester);
+      // 「今日」を 2026-07-10 に固定 → 表示サイクルは 6/25〜7/24 (給料日既定25)。
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(debugCalendarNow: DateTime(2026, 7, 10)),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
 
-      final now = DateTime.now();
-      final current = DateFormat('yyyy年M月').format(now);
-      final next = DateFormat(
-        'yyyy年M月',
-      ).format(DateTime(now.year, now.month + 1));
-      expect(find.text(current), findsOneWidget);
+      expect(find.text('2026/6/25〜7/24'), findsOneWidget);
 
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_next_month')),
@@ -140,8 +143,8 @@ void main() {
       await tester.tap(find.byKey(const Key('asset_calendar_next_month')));
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text(next), findsOneWidget);
-      expect(find.text(current), findsNothing);
+      expect(find.text('2026/7/25〜8/24'), findsOneWidget);
+      expect(find.text('2026/6/25〜7/24'), findsNothing);
 
       await _unmount(tester);
     });
@@ -502,13 +505,11 @@ void main() {
     testWidgets('seeded inflows surface as chips and managed rules', (
       tester,
     ) async {
-      final now = DateTime.now();
-      final monthKey = '${now.year}${now.month.toString().padLeft(2, '0')}';
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_expected_inflows_v1': jsonEncode(<Map<String, dynamic>>[
           <String, dynamic>{
             'id': 'seeded_one',
-            'date': DateTime(now.year, now.month, 10).toUtc().toIso8601String(),
+            'date': DateTime(2026, 7, 10).toUtc().toIso8601String(),
             'amount': 5000,
             'label': '臨時収入',
           },
@@ -525,7 +526,13 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1200, 2400));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await _pumpAssetPage(tester);
+      // サイクル窓 6/25〜7/24: 単発 7/10 と毎月25日ルールの 6/25 分が窓内。
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(debugCalendarNow: DateTime(2026, 7, 10)),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 200));
 
       await tester.ensureVisible(
@@ -536,7 +543,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.byKey(Key('asset_inflow_chip_rule_seeded_rule_$monthKey')),
+        find.byKey(const Key('asset_inflow_chip_rule_seeded_rule_202606')),
         findsOneWidget,
       );
 
@@ -928,18 +935,17 @@ void main() {
     testWidgets('remote inflow tombstone removes the matching local chip', (
       tester,
     ) async {
-      final now = DateTime.now();
       SharedPreferences.setMockInitialValues(<String, Object>{
         'asset_expected_inflows_v1': jsonEncode(<Map<String, dynamic>>[
           <String, dynamic>{
             'id': 'keep_me',
-            'date': DateTime(now.year, now.month, 10).toUtc().toIso8601String(),
+            'date': DateTime(2026, 7, 10).toUtc().toIso8601String(),
             'amount': 5000,
             'label': '残す入金',
           },
           <String, dynamic>{
             'id': 'delete_me',
-            'date': DateTime(now.year, now.month, 12).toUtc().toIso8601String(),
+            'date': DateTime(2026, 7, 12).toUtc().toIso8601String(),
             'amount': 8000,
             'label': '他端末で削除',
           },
@@ -949,10 +955,12 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       // 他端末が delete_me を削除した状態をミラー経由で注入。
+      // サイクル窓 6/25〜7/24 に seed 日付が入るよう「今日」を固定する。
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
           home: AssetManagementPage(
-            debugInflowDeletedIdsMirror: <String, dynamic>{
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInflowDeletedIdsMirror: const <String, dynamic>{
               'ids': <String>['delete_me'],
             },
           ),
@@ -1007,6 +1015,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
                 '財布(現金)': 10000,
@@ -1018,7 +1027,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      // モビット既定支払日15日の予定額が現金1万を超え、ショート警告が出る。
+      // サイクル窓 6/25〜7/24 / 今日=7/10: モビット既定支払日15日(7/15)の
+      // 予定額が現金1万を超え、ショート警告が出る。
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
@@ -1071,6 +1081,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
                 '財布(現金)': 10000,
@@ -1082,7 +1093,7 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      // 14日の繰り返し入金が15日のモビット返済を覆い、警告は出ない。
+      // 14日(7/14)の繰り返し入金が15日(7/15)のモビット返済を覆い、警告は出ない。
       expect(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
         findsNothing,
@@ -1113,6 +1124,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
             debugInitialAssetData: <String, Map<String, double>>{
               dateKey: const <String, double>{
                 '財布(現金)': 10000,
@@ -1124,12 +1136,13 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      // 入金が返済日(15日)より後ろなので警告は残る。
+      // 入金(7/20)が返済日(7/15)より後ろなので警告は残る。
       await tester.ensureVisible(
         find.byKey(const Key('asset_calendar_add_inflow_button')),
       );
       expect(find.textContaining('回避ライン'), findsOneWidget);
-      // ただし26日へ移せば20日の入金で賄えるため、事前判定が「回避できます」。
+      // ただし26日へ移せば次回支払は 7/26 = 次サイクル(給料日後)扱いになり、
+      // 当サイクルの支払が消えるため事前判定が「回避できます」。
       expect(find.textContaining('を26日へ(回避できます)'), findsOneWidget);
 
       await _unmount(tester);

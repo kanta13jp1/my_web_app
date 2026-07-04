@@ -287,6 +287,12 @@ class AssetManagementPage extends StatefulWidget {
   @visibleForTesting
   final List<Map<String, dynamic>>? debugInitialPayslipRows;
 
+  /// テスト専用: マネーカレンダーの「今日」(サイクル決定・予定系の起点) を固定し、
+  /// 給料日サイクル窓の表示・ショート試算を実行日非依存で検証する。
+  /// null なら実時刻。
+  @visibleForTesting
+  final DateTime? debugCalendarNow;
+
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
@@ -315,6 +321,7 @@ class AssetManagementPage extends StatefulWidget {
     this.debugInitialRecentFlows,
     this.debugInitialPayslipSalaryIncomes,
     this.debugInitialPayslipRows,
+    this.debugCalendarNow,
   });
 
   @override
@@ -845,7 +852,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String? _displayModeStatsLabel;
   String? _experimentServerSummary;
   List<Map<String, dynamic>> _experimentWeekly = const <Map<String, dynamic>>[];
-  DateTime _calendarMonth = DateTime.now();
+  // マネーカレンダーの表示サイクルを指すアンカー日(この日を含む給料日サイクルを
+  // 表示する)。サイクル送りは給料日を保ったまま暦月を±1する。
+  DateTime _calendarCycleAnchor = DateTime.now();
   DateTime? _calendarSelectedDate;
   Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
   String? _wasteTrainingAiReviewKey;
@@ -913,6 +922,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   @override
   void initState() {
     super.initState();
+    final debugCalendarNow = widget.debugCalendarNow;
+    if (debugCalendarNow != null) {
+      _calendarCycleAnchor = debugCalendarNow;
+    }
     final debugAssetData = widget.debugInitialAssetData;
     if (debugAssetData != null) {
       _assetData = <String, Map<String, double>>{
@@ -1491,6 +1504,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return false;
       }
       return dueDate.year == target.year && dueDate.month == target.month;
+    }).toList();
+  }
+
+  /// [start]〜[endExclusive)(給料日サイクル窓)に請求日が入る固定費。
+  List<Map<String, dynamic>> _subscriptionsForRange(
+    DateTime start,
+    DateTime endExclusive,
+  ) {
+    return _subscriptionsThreeMonths.where((subscription) {
+      final dueDateRaw = subscription['due_date']?.toString();
+      if (dueDateRaw == null || dueDateRaw.isEmpty) {
+        return false;
+      }
+      final dueDate = DateTime.tryParse(dueDateRaw);
+      if (dueDate == null) {
+        return false;
+      }
+      final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
+      return !dueDay.isBefore(start) && dueDay.isBefore(endExclusive);
     }).toList();
   }
 
@@ -11758,8 +11790,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     required double? startingCashBalance,
   }) {
     final newDay = _salaryDay + 1;
-    final shifted = AssetPaymentCalendarService.buildMonth(
-      month: _calendarMonth,
+    final shifted = AssetPaymentCalendarService.buildRange(
+      start: _calendarCycleStart,
+      endExclusive: _calendarCycleEndExclusive,
       flows: _recentFlows,
       subscriptions: subscriptions,
       debts: [
@@ -11777,6 +11810,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             debt,
       ],
       salaryDay: _salaryDay,
+      asOf: _calendarNow,
       startingCashBalance: startingCashBalance,
       expectedInflows: inflows,
     );
@@ -12788,12 +12822,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
-  void _shiftCalendarMonth(int delta) {
-    setState(() {
-      _calendarMonth = DateTime(
-        _calendarMonth.year,
-        _calendarMonth.month + delta,
+  /// マネーカレンダーの「今日」。サイクル決定・予定系(返済/固定費/入金予定)の
+  /// 計上起点・本日ハイライトに使う。テストは [AssetManagementPage.debugCalendarNow]
+  /// で固定できる。
+  DateTime get _calendarNow => widget.debugCalendarNow ?? _now;
+
+  /// 表示中サイクルの開始日(= 給料日)。
+  DateTime get _calendarCycleStart =>
+      AssetLiabilityMonthlyStateStore.salaryCycleStart(
+        _calendarCycleAnchor,
+        salaryDay: _salaryDay,
       );
+
+  /// 表示中サイクルの終了(排他 = 次の給料日)。
+  DateTime get _calendarCycleEndExclusive =>
+      AssetLiabilityMonthlyStateStore.salaryCycleEndExclusive(
+        _calendarCycleAnchor,
+        salaryDay: _salaryDay,
+      );
+
+  void _shiftCalendarCycle(int delta) {
+    setState(() {
+      final start = _calendarCycleStart;
+      // start.day = 給料日 (clamp 1-28) なので月加算で日あふれしない。
+      _calendarCycleAnchor =
+          DateTime(start.year, start.month + delta, start.day);
       _calendarSelectedDate = null;
     });
   }
@@ -13249,12 +13302,34 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       }
       startingCashBalance = liquid;
     }
-    final monthInflowEntries = AssetExpectedInflowStore.materializeMonth(
-      oneTime: _expectedInflows,
-      rules: _expectedInflowRules,
-      month: _calendarMonth,
+    final cycleStart = _calendarCycleStart;
+    final cycleEndExclusive = _calendarCycleEndExclusive;
+    final cycleLastDay = DateTime(
+      cycleEndExclusive.year,
+      cycleEndExclusive.month,
+      cycleEndExclusive.day - 1,
     );
-    final monthSubscriptions = _subscriptionsForMonth(_calendarMonth);
+    // サイクルは高々2暦月に跨るので、両月へ展開してから窓内へ絞る。
+    final inflowMonths = <DateTime>[
+      DateTime(cycleStart.year, cycleStart.month),
+      if (cycleLastDay.month != cycleStart.month ||
+          cycleLastDay.year != cycleStart.year)
+        DateTime(cycleLastDay.year, cycleLastDay.month),
+    ];
+    final monthInflowEntries = <AssetExpectedInflow>[
+      for (final month in inflowMonths)
+        ...AssetExpectedInflowStore.materializeMonth(
+          oneTime: _expectedInflows,
+          rules: _expectedInflowRules,
+          month: month,
+        ).where(
+          (inflow) =>
+              !inflow.date.isBefore(cycleStart) &&
+              inflow.date.isBefore(cycleEndExclusive),
+        ),
+    ];
+    final monthSubscriptions =
+        _subscriptionsForRange(cycleStart, cycleEndExclusive);
     final debtInputs = <AssetCalendarDebtInput>[
       for (final row in debtRows)
         AssetCalendarDebtInput(
@@ -13274,19 +13349,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           label: inflow.label,
         ),
     ];
-    final calendar = AssetPaymentCalendarService.buildMonth(
-      month: _calendarMonth,
+    final calendar = AssetPaymentCalendarService.buildRange(
+      start: cycleStart,
+      endExclusive: cycleEndExclusive,
       flows: _recentFlows,
       subscriptions: monthSubscriptions,
       debts: debtInputs,
       salaryDay: _salaryDay,
+      asOf: _calendarNow,
       startingCashBalance: startingCashBalance,
       expectedInflows: inflowInputs,
     );
     final selectedDate = _calendarSelectedDate;
     final selectedDay =
         selectedDate == null ? null : calendar.dayFor(selectedDate);
-    final today = DateTime.now();
+    final today = _calendarNow;
     final shortfallDaySummary = calendar.firstShortfallDate == null
         ? null
         : calendar.dayFor(calendar.firstShortfallDate!);
@@ -13319,13 +13396,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final comboSuggestionIds = comboIds.length >= 2 &&
             shiftCandidates.every((entry) => entry.value == '(単独では回避不可)')
         ? AssetPaymentCalendarService.findMinimalShiftSet(
-            month: _calendarMonth,
+            month: cycleStart,
+            rangeStart: cycleStart,
+            rangeEndExclusive: cycleEndExclusive,
             flows: _recentFlows,
             subscriptions: monthSubscriptions,
             debts: debtInputs,
             candidateIds: comboIds,
             shiftToDay: _salaryDay + 1,
             salaryDay: _salaryDay,
+            asOf: _calendarNow,
             startingCashBalance: startingCashBalance,
             expectedInflows: inflowInputs,
           )
@@ -13361,12 +13441,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 IconButton(
                   key: const Key('asset_calendar_prev_month'),
-                  tooltip: '前の月',
+                  tooltip: '前のサイクル',
                   icon: const Icon(Icons.chevron_left),
-                  onPressed: () => _shiftCalendarMonth(-1),
+                  onPressed: () => _shiftCalendarCycle(-1),
                 ),
                 Text(
-                  DateFormat('yyyy年M月').format(calendar.month),
+                  '${DateFormat('yyyy/M/d').format(calendar.rangeStart)}'
+                  '〜${DateFormat('M/d').format(cycleLastDay)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     height: 1.4,
@@ -13374,15 +13455,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 IconButton(
                   key: const Key('asset_calendar_next_month'),
-                  tooltip: '次の月',
+                  tooltip: '次のサイクル',
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: () => _shiftCalendarMonth(1),
+                  onPressed: () => _shiftCalendarCycle(1),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
-              '日ごとの支出と、返済日・固定費・給料日のイベントをまとめて見渡せます。',
+              '給料日サイクル(給料日〜翌給料日前日)で、日ごとの支出と返済日・固定費・給料日のイベントをまとめて見渡せます。',
               style: TextStyle(
                 fontSize: 11,
                 color: Theme.of(context).colorScheme.onSurface,
@@ -13448,7 +13529,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '現金・預金 ${_formatYen(startingCashBalance ?? 0)} と登録済み入金予定を起点に、返済予定と固定費を差し引いた見込みです。未登録の入金は含まれません。',
+                      '現金・預金 ${_formatYen(startingCashBalance ?? 0)} と登録済み入金予定を起点に、今日以降の返済予定と固定費を差し引いた見込みです。未登録の入金は含まれません。',
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -13457,7 +13538,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '回避ライン: ショート日までに ${_formatYen(calendar.shortfallRecoveryAmount)} の入金、または月内支払の同額圧縮で黒字化します。',
+                      '回避ライン: ショート日までに ${_formatYen(calendar.shortfallRecoveryAmount)} の入金、またはサイクル内支払の同額圧縮で黒字化します。',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -13477,7 +13558,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '返済日の変更は「負債マスタ」の支払日設定から。給料日(25日)以降へ動かすとショートを避けやすくなります。',
+                      '返済日の変更は「負債マスタ」の支払日設定から。給料日($_salaryDay日)以降へ動かすと次サイクル(給料日後)の支払いになり、ショートを避けやすくなります。',
                       style: TextStyle(
                         fontSize: 10,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -13737,7 +13818,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           children: [
             Text(
-              '${day.date.day}',
+              // サイクルは月を跨ぐので、月替わりの初日は M/d で区切りを示す。
+              day.date.day == 1
+                  ? DateFormat('M/d').format(day.date)
+                  : '${day.date.day}',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
