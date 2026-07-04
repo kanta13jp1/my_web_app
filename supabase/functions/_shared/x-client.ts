@@ -305,12 +305,28 @@ export async function setMediaAltText(
   });
 }
 
-export async function postTweet(input: {
+export interface XTweetPoll {
+  options: string[];
+  durationMinutes: number;
+}
+
+export interface PostTweetInput {
   text: string;
   mediaIds?: string[];
   replyToTweetId?: string;
-}): Promise<XTweetResult> {
-  assertXConfigured();
+  // ネイティブ投票(H7 / impressions ブースター)。省略時は従来と完全に同一の
+  // payload になる(additive / default-off)。
+  poll?: XTweetPoll;
+}
+
+/**
+ * POST /2/tweets の request body を組み立てる純関数(ネットワーク非依存)。
+ * postTweet 本体から切り出して deno test 可能にしている。
+ * poll+media 同居ガードと 2 選択肢以上のゲートはここに集約する。
+ */
+export function buildTweetPayload(
+  input: PostTweetInput,
+): Record<string, unknown> {
   const text = asString(input.text);
   if (text === "") {
     throw new Error("text is required.");
@@ -333,6 +349,33 @@ export async function postTweet(input: {
   if (replyToTweetId !== "") {
     payload.reply = { in_reply_to_tweet_id: replyToTweetId };
   }
+
+  // X API v2 は POST /2/tweets に poll を直接受け付ける(新エンドポイント/scope 不要)。
+  // 各選択肢<=25字・2〜4個・期間5〜10080分。X は 1 ツイートに poll と media の同居を
+  // 禁止するため、poll は media を持たない text-only の最初のリプライにのみ載せる
+  // (media 付きのリード投稿には絶対に載せない)。
+  const pollOptions = (input.poll?.options ?? [])
+    .map((option) => asString(option))
+    .filter((option) => option !== "")
+    .slice(0, 4);
+  if (pollOptions.length >= 2) {
+    if (payload.media) {
+      throw new Error("poll and media cannot coexist on one tweet");
+    }
+    payload.poll = {
+      options: pollOptions,
+      duration_minutes: Math.max(
+        5,
+        Math.min(10080, Math.trunc(input.poll!.durationMinutes || 1440)),
+      ),
+    };
+  }
+  return payload;
+}
+
+export async function postTweet(input: PostTweetInput): Promise<XTweetResult> {
+  assertXConfigured();
+  const payload = buildTweetPayload(input);
 
   const tweetUrl = "https://api.twitter.com/2/tweets";
   const oauthHeader = await buildOAuthHeader("POST", tweetUrl);

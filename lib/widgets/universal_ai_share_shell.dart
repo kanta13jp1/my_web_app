@@ -414,6 +414,9 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         mediaUrl: _videoUrl ?? _imageUrl,
         threadReplies: draft.threadReplies,
         linkInReply: true,
+        // ネイティブ投票(H7 / impressions ブースター)。draft.poll が null の
+        // ときは従来と完全に同一の投稿になる(additive / default-off)。
+        poll: draft.poll,
       );
       if (_disposed || !mounted) return;
       setState(() {

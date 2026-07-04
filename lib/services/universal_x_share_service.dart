@@ -47,12 +47,29 @@ class UniversalSharePageContext {
   }
 }
 
+/// ネイティブ X 投票(H7 / impressions ブースター)。
+/// [question] は投票を載せる最初のリプライ本文になり、[options] は 2〜4 個・
+/// 各<=25 文字、[durationMinutes] は 5〜10080 分。null のドラフトは従来と完全に
+/// 同一の投稿になる(additive / default-off)。
+class UniversalXPoll {
+  final String question;
+  final List<String> options;
+  final int durationMinutes;
+
+  const UniversalXPoll({
+    required this.question,
+    required this.options,
+    this.durationMinutes = 1440,
+  });
+}
+
 class UniversalXShareDraft {
   final String text;
   final String imagePrompt;
   final String videoPrompt;
   final List<String> hashtags;
   final List<String> threadReplies;
+  final UniversalXPoll? poll;
   final bool fallbackUsed;
   final String source;
 
@@ -62,6 +79,7 @@ class UniversalXShareDraft {
     required this.videoPrompt,
     required this.hashtags,
     this.threadReplies = const [],
+    this.poll,
     required this.fallbackUsed,
     required this.source,
   });
@@ -72,6 +90,7 @@ class UniversalXShareDraft {
     String? videoPrompt,
     List<String>? hashtags,
     List<String>? threadReplies,
+    UniversalXPoll? poll,
     bool? fallbackUsed,
     String? source,
   }) {
@@ -81,6 +100,7 @@ class UniversalXShareDraft {
       videoPrompt: videoPrompt ?? this.videoPrompt,
       hashtags: hashtags ?? this.hashtags,
       threadReplies: threadReplies ?? this.threadReplies,
+      poll: poll ?? this.poll,
       fallbackUsed: fallbackUsed ?? this.fallbackUsed,
       source: source ?? this.source,
     );
@@ -281,6 +301,7 @@ class UniversalXShareService {
     bool linkInReply = false,
     bool dryRun = false,
     String? altText,
+    UniversalXPoll? poll,
   }) async {
     final normalizedMediaUrl = _emptyToNull(mediaUrl);
     final hasMedia =
@@ -297,7 +318,18 @@ class UniversalXShareService {
     );
     final mainText = parts.leadText;
     final textUrl = parts.textUrl;
-    final replyTexts = parts.replyTexts;
+    // ネイティブ投票(H7)は media を持たない最初のリプライにのみ載せられる
+    // (X は poll と media の同居を禁止)。投票の質問文をスレッド先頭のリプライへ
+    // 前置し、edge 側でその最初のリプライに poll を添付する。poll が無い/不正な
+    // ときは replyTexts も payload も従来と完全に同一(byte-identical)にする。
+    final pollPayload = _xPollPayload(poll);
+    final pollQuestion = pollPayload == null || poll == null
+        ? ''
+        : sanitizeTweet(poll.question, url: textUrl, requireUrl: false).trim();
+    final hasPoll = pollPayload != null && pollQuestion.isNotEmpty;
+    final replyTexts = hasPoll
+        ? <String>[pollQuestion, ...parts.replyTexts]
+        : parts.replyTexts;
     final data = await _invoke('growth-hub', {
       'action': 'x.post',
       'text': mainText,
@@ -312,6 +344,7 @@ class UniversalXShareService {
       'promptProfile': 'performance_context_v1',
       'contentKind': normalizedMediaUrl == null ? 'text' : 'media',
       'linkInReply': linkInReply,
+      if (hasPoll) 'poll': pollPayload,
     });
     if (data['success'] != true) {
       throw Exception(buildXPostFailureMessage(data));
@@ -330,6 +363,32 @@ class UniversalXShareService {
           : const [],
       raw: data,
     );
+  }
+
+  /// Normalizes an optional [UniversalXPoll] into the growth-hub wire shape
+  /// `{ options, durationMinutes }`, or null when it does not qualify as a real
+  /// poll (fewer than 2 non-empty options). Options are trimmed, de-duplicated
+  /// (X rejects duplicate options), capped at 4 and <=25 chars each; duration is
+  /// clamped to X's 5〜10080 minute range. Returning null keeps posts
+  /// byte-identical to the no-poll path.
+  static Map<String, dynamic>? _xPollPayload(UniversalXPoll? poll) {
+    if (poll == null) return null;
+    final seen = <String>{};
+    final options = <String>[];
+    for (final entry in poll.options) {
+      var option = entry.trim();
+      if (option.isEmpty) continue;
+      if (option.runes.length > 25) {
+        option = String.fromCharCodes(option.runes.take(25));
+      }
+      if (seen.add(option)) options.add(option);
+      if (options.length == 4) break;
+    }
+    if (options.length < 2) return null;
+    var duration = poll.durationMinutes;
+    if (duration < 5) duration = 5;
+    if (duration > 10080) duration = 10080;
+    return {'options': options, 'durationMinutes': duration};
   }
 
   /// URL を載せる最終リプライの CTA 文面プール。毎回同一文だと近似重複として
@@ -1043,6 +1102,7 @@ $url''';
           hashtags: hashtags,
           threadReplies:
               threadReplies.isNotEmpty ? threadReplies : fallback.threadReplies,
+          poll: _parsePoll(decoded['poll']) ?? fallback.poll,
           fallbackUsed: true,
           source: 'ai-json',
         );
@@ -1051,6 +1111,45 @@ $url''';
       // Fall through to treating the response as a tweet body.
     }
     return fallback.copyWith(text: sanitizeTweet(raw, url: shareUrl));
+  }
+
+  /// Parses an optional LLM-generated `poll` object into a [UniversalXPoll], or
+  /// null when it is missing/malformed so the post stays byte-identical to the
+  /// no-poll path. Requires a non-empty question and >=2 usable options; each
+  /// option is trimmed, de-duplicated and truncated to X's 25-char limit;
+  /// duration is clamped to X's 5〜10080 minute range (default 1440 = 1 day).
+  static UniversalXPoll? _parsePoll(dynamic raw) {
+    if (raw is! Map) return null;
+    final rawQuestion = raw['question'] ?? raw['q'] ?? raw['title'] ?? '';
+    final question = rawQuestion.toString().trim();
+    final rawOptions = raw['options'] ?? raw['choices'];
+    if (question.isEmpty || rawOptions is! List) return null;
+    final seen = <String>{};
+    final options = <String>[];
+    for (final entry in rawOptions) {
+      var option = entry.toString().trim();
+      if (option.isEmpty) continue;
+      if (option.runes.length > 25) {
+        option = String.fromCharCodes(option.runes.take(25));
+      }
+      if (seen.add(option)) options.add(option);
+      if (options.length == 4) break;
+    }
+    if (options.length < 2) return null;
+    final durationRaw = raw['durationMinutes'] ?? raw['duration_minutes'];
+    var duration = 1440;
+    if (durationRaw is num) {
+      duration = durationRaw.toInt();
+    } else if (durationRaw is String) {
+      duration = int.tryParse(durationRaw.trim()) ?? 1440;
+    }
+    if (duration < 5) duration = 5;
+    if (duration > 10080) duration = 10080;
+    return UniversalXPoll(
+      question: question,
+      options: options,
+      durationMinutes: duration,
+    );
   }
 
   static bool _isUsableText(String text, String url) {
@@ -1084,7 +1183,8 @@ Return valid JSON only:
   "threadReplies": ["4 to 8 substantive Japanese reply posts, each 150-500 chars, forming a full briefing thread"],
   "imagePrompt": "English prompt for a 16:9 share image, no text overlay",
   "videoPrompt": "English prompt for a short presenter/share video",
-  "hashtags": ["#buildinpublic", "#FlutterWeb", "#Supabase"]
+  "hashtags": ["#buildinpublic", "#FlutterWeb", "#Supabase"],
+  "poll": { "question": "<=100 char Japanese poll question tied to today's top headline>", "options": ["<=25 char option", "<=25 char option"], "durationMinutes": 1440 }
 }
 
 Page:
@@ -1119,6 +1219,9 @@ Rules:
 - This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars: a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
 - The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim and do NOT phrase it as "1つ目/item 1 of N". Replies 2 onward then form the numbered briefing.
+- Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 2-4 "options" (each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
+- DERIVE the poll question AND options from THE DAY'S single most relevant headline so the poll rotates daily and is specific — NEVER reuse a generic or hardcoded poll like "使ってみたい?はい/いいえ" (near-duplicate polls get down-ranked). Yesterday's poll must not be reusable today.
+- The poll is posted as its own FIRST text-only thread reply (never on the media lead), so make the "question" self-contained. If no natural, honest poll fits today's news, OMIT the "poll" field entirely rather than forcing a weak one.
 - Treat the creative workflow as GPT image -> GPT-5.5 -> ElevenLabs -> Hedra.
 - Keep the post natural, concise, and credible.
 $financeRule
