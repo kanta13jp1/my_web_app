@@ -802,46 +802,53 @@ async function createHedraVideoFromUploadedAudio(
   const uploadedAudioUrl = media.audioGeneration["type"] === "audio"
     ? firstNonEmptyString(media.audioGeneration["url"])
     : null;
+  // アセット化(audio_id)は Hedra 側が一時的に失敗することがあるため 2 回試行する。
+  // 全試行失敗した理由は最終エラーへ載せて診断可能にする(従来は console.warn のみで
+  // 応答から asset 失敗理由が見えず、壊れた text_to_speech の 400 だけが表面化していた)。
+  let assetFailureReason: string | null = null;
   if (uploadedAudioUrl) {
-    try {
-      const audioAssetId = await createHedraAudioAssetFromUrl(
-        params.apiKey,
-        uploadedAudioUrl,
-        `${storageSafeSegment(params.title ?? "share-update")}.mp3`,
-      );
-      const assetBody: Record<string, unknown> = {
-        type: "video",
-        ai_model_id: HEDRA_AVATAR_MODEL_ID,
-        start_keyframe_url: media.imageUrl,
-        audio_id: audioAssetId,
-        generated_video_inputs: {
-          text_prompt: `${params.title ?? "Share update"}
-${params.prompt}`,
-          aspect_ratio: "16:9",
-          resolution: "540p",
-          enhance_prompt: true,
-        },
-      };
-      const assetPayload = await hedraJsonRequest(
-        params.apiKey,
-        "/generations",
-        { method: "POST", body: assetBody },
-      );
-      const video = await pollHedraGeneration(
-        params.apiKey,
-        normalizeHedraVideoResponse(assetPayload),
-      );
-      return {
-        ...video,
-        storedAudioUrl: media.storedAudioUrl,
-        storedAudioPath: media.storedAudioPath,
-        audioProvider: media.audioProvider,
-      };
-    } catch (assetError) {
-      console.warn(
-        "Hedra audio asset flow failed; trying audio_generation",
-        providerErrorMessage(assetError),
-      );
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const audioAssetId = await createHedraAudioAssetFromUrl(
+          params.apiKey,
+          uploadedAudioUrl,
+          `${storageSafeSegment(params.title ?? "share-update")}.mp3`,
+        );
+        const assetBody: Record<string, unknown> = {
+          type: "video",
+          ai_model_id: HEDRA_AVATAR_MODEL_ID,
+          start_keyframe_url: media.imageUrl,
+          audio_id: audioAssetId,
+          generated_video_inputs: {
+            text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
+            aspect_ratio: "16:9",
+            resolution: "540p",
+            enhance_prompt: true,
+          },
+        };
+        const assetPayload = await hedraJsonRequest(
+          params.apiKey,
+          "/generations",
+          { method: "POST", body: assetBody },
+        );
+        const video = await pollHedraGeneration(
+          params.apiKey,
+          normalizeHedraVideoResponse(assetPayload),
+        );
+        return {
+          ...video,
+          storedAudioUrl: media.storedAudioUrl,
+          storedAudioPath: media.storedAudioPath,
+          audioProvider: media.audioProvider,
+        };
+      } catch (assetError) {
+        assetFailureReason = providerErrorMessage(assetError);
+        console.warn(
+          `Hedra audio asset flow failed (attempt ${attempt}/2)`,
+          assetFailureReason,
+        );
+        if (attempt < 2) await delay(1500);
+      }
     }
   }
   try {
@@ -856,32 +863,38 @@ ${params.prompt}`,
       media.audioGeneration["type"] !== "text_to_speech" &&
       isHedraUploadedAudioUnsupportedError(error)
     ) {
-      const fallbackAudioGeneration =
-        await createHedraTextToSpeechAudioGeneration(
-          {
-            apiKey: params.apiKey,
-            voice: params.voice,
-            lang: params.lang,
-          },
-          { text: media.fallbackText },
+      try {
+        const fallbackAudioGeneration =
+          await createHedraTextToSpeechAudioGeneration(
+            {
+              apiKey: params.apiKey,
+              voice: params.voice,
+              lang: params.lang,
+            },
+            { text: media.fallbackText },
+          );
+        payload = await createHedraGenerationWithTtsModelFallback(
+          params.apiKey,
+          { ...generationBody, audio_generation: fallbackAudioGeneration },
+          fallbackAudioGeneration["model_id"] != null,
         );
-      payload = await createHedraGenerationWithTtsModelFallback(
-        params.apiKey,
-        { ...generationBody, audio_generation: fallbackAudioGeneration },
-        fallbackAudioGeneration["model_id"] != null,
-      );
-      const video = await pollHedraGeneration(
-        params.apiKey,
-        normalizeHedraVideoResponse(payload),
-      );
-      return {
-        ...video,
-        storedAudioUrl: media.storedAudioUrl,
-        storedAudioPath: media.storedAudioPath,
-        audioProvider: "hedra_tts_after_uploaded_audio_rejected",
-      };
+        const video = await pollHedraGeneration(
+          params.apiKey,
+          normalizeHedraVideoResponse(payload),
+        );
+        return {
+          ...video,
+          storedAudioUrl: media.storedAudioUrl,
+          storedAudioPath: media.storedAudioPath,
+          audioProvider: "hedra_tts_after_uploaded_audio_rejected",
+        };
+      } catch (fallbackError) {
+        // audio_id アセット化が失敗して text_to_speech に落ち、さらにそれも失敗した
+        // 場合、元の asset 失敗理由を付記して根因(アセット化 or TTS モデル)を判別可能に。
+        throw withAudioAssetReason(fallbackError, assetFailureReason);
+      }
     }
-    throw error;
+    throw withAudioAssetReason(error, assetFailureReason);
   }
   const video = await pollHedraGeneration(
     params.apiKey,
@@ -893,6 +906,15 @@ ${params.prompt}`,
     storedAudioPath: media.storedAudioPath,
     audioProvider: media.audioProvider,
   };
+}
+
+function withAudioAssetReason(
+  error: unknown,
+  reason: string | null,
+): Error {
+  const base = error instanceof Error ? error : new Error(String(error));
+  if (!reason) return base;
+  return new Error(`${base.message}; audio_asset=${reason}`);
 }
 
 function providerErrorMessage(error: unknown): string {
