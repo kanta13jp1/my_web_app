@@ -17,7 +17,7 @@ name: WBS AI Review (1h cron)
 
 on:
   schedule:
-    - cron: "20 */2 * * *"  # 2時間ごと 20 分
+    - cron: "20 */4 * * *"  # 4時間ごと 20 分 (2026-07-04 ci-audit: 2h→4h, 540min/月削減)
   workflow_dispatch:
     inputs:
       max_tasks:
