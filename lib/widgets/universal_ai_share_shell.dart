@@ -363,7 +363,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       if (_videoUrl == null) {
         setState(() {
           _generatingVideo = true;
-          _statusMessage = 'AIが音声と動画を生成しています…（30〜60秒かかります）';
+          _statusMessage = 'AIが音声と動画を生成しています…（Hedraは数分かかる場合があります）';
         });
         var video = await _service.generateVideo(
           context: widget.page,
@@ -373,10 +373,18 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         var generationId = video.url == null
             ? _extractString(video.raw, 'hedraGenerationId')
             : null;
-        var polls = 0;
-        while (video.url == null && generationId != null && polls < 12) {
-          await Future<void>.delayed(const Duration(seconds: 8));
+        // Hedra は非同期で、長めのナレーションだと数分かかる。静止画で投稿されないよう、
+        // 動画URLが返るまで最大約5分ポーリングして完成を待つ。
+        const maxPolls = 30;
+        for (var polls = 0;
+            video.url == null && generationId != null && polls < maxPolls;
+            polls += 1) {
+          await Future<void>.delayed(const Duration(seconds: 10));
           if (_disposed || !mounted) return;
+          final elapsed = (polls + 1) * 10;
+          setState(() {
+            _statusMessage = '音声と動画を生成しています…（約$elapsed秒経過 / 最大5分）';
+          });
           video = await _service.generateVideo(
             context: widget.page,
             draft: draft,
@@ -386,19 +394,19 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           generationId = video.url == null
               ? (_extractString(video.raw, 'hedraGenerationId') ?? generationId)
               : null;
-          polls += 1;
         }
         if (_disposed || !mounted) return;
         _videoUrl = video.url;
         setState(() => _generatingVideo = false);
         if (_videoUrl == null) {
           final reason =
-              _extractString(video.raw, 'videoReason') ?? '完了しませんでした';
+              _extractString(video.raw, 'videoReason') ?? '時間内に完了しませんでした';
           setState(() => _statusMessage = '動画は生成できませんでした（$reason）。画像付きで投稿します。');
         }
       }
       // 3. X 投稿(URLはリプライへ、スレッド返信も投稿)
-      setState(() => _statusMessage = 'Xに投稿しています…');
+      final postedMedia = _videoUrl != null ? '動画' : '画像';
+      setState(() => _statusMessage = 'Xに投稿しています…（$postedMedia付き）');
       final result = await _service.postToX(
         context: widget.page,
         text: _textController.text,
@@ -409,7 +417,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       if (_disposed || !mounted) return;
       setState(() {
         _statusMessage = result.posted
-            ? '${result.account ?? '@kanta13jp1'} に投稿しました 🎉'
+            ? '${result.account ?? '@kanta13jp1'} に$postedMedia付きで投稿しました 🎉'
             : '投稿できませんでした。X API secret設定を確認してください';
       });
     } catch (error) {
