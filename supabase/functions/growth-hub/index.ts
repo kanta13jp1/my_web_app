@@ -1631,6 +1631,33 @@ serve(async (req: Request) => {
         const mediaAlt = String(
           body.mediaAlt ?? body.media_alt ?? body.altText ?? "",
         ).trim();
+        // ネイティブ投票(H7 / impressions ブースター)。>=2 選択肢のときだけ有効化し、
+        // 最初の text-only リプライにのみ載せる(media 付きリードには載せない)。
+        // 未指定(既定)のときは poll=null となり従来と完全に同一の投稿になる。
+        const rawPoll = (body.poll ?? null) as
+          | { options?: unknown; durationMinutes?: unknown; duration_minutes?: unknown }
+          | null;
+        const pollOptions = Array.isArray(rawPoll?.options)
+          ? rawPoll!.options
+            .map((option) => String(option ?? "").trim())
+            .filter((option) => option !== "")
+            .slice(0, 4)
+          : [];
+        const poll = pollOptions.length >= 2
+          ? {
+            options: pollOptions,
+            durationMinutes: Math.max(
+              5,
+              Math.min(
+                10080,
+                Math.trunc(
+                  Number(rawPoll?.durationMinutes ?? rawPoll?.duration_minutes) ||
+                    1440,
+                ),
+              ),
+            ),
+          }
+          : null;
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         // X Premium(認証済みアカウント)は最大25,000字の長文ポストが可能。280字で弾かない。
@@ -1750,14 +1777,19 @@ serve(async (req: Request) => {
           });
           const replyResults = [];
           let parentTweetId = result.tweetId;
+          let replyIndex = 0;
           for (const nextReplyText of replyTexts) {
             if (!parentTweetId) break;
+            // poll は最初の text-only リプライにのみ添付する(media 付きリードには
+            // 載せない = X の poll+media 同居禁止に準拠)。
             const replyResult = await postTweet({
               text: nextReplyText,
               replyToTweetId: parentTweetId,
+              ...(replyIndex === 0 && poll ? { poll } : {}),
             });
             replyResults.push(replyResult);
             parentTweetId = replyResult.tweetId ?? parentTweetId;
+            replyIndex += 1;
           }
           const replyTweetIds = replyResults
             .map((replyResult) => replyResult.tweetId)
@@ -1782,6 +1814,7 @@ serve(async (req: Request) => {
             replyTweetId: replyTweetIds[0] ?? null,
             replyTweetIds,
             account: result.account,
+            ...(poll ? { pollAttached: true } : {}),
             log,
           });
         } catch (error) {

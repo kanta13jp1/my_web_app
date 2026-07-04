@@ -309,6 +309,87 @@ void main() {
     expect(capturedBody?['variant'], 'post_to_x');
     expect(capturedBody?['promptProfile'], 'performance_context_v1');
     expect(capturedBody?['contentKind'], 'media');
+    // 投票なしの既定経路には poll キーを一切足さない(default-off)。
+    expect(capturedBody?.containsKey('poll'), isFalse);
+  });
+
+  test('postToX stays poll-free (byte-identical) when no poll is given',
+      () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'posted': true};
+      },
+    );
+
+    await service.postToX(
+      context: page,
+      text: 'リード投稿\n${page.url}',
+      threadReplies: const ['1. 【AI】本文\nなぜ重要か: 変わる。'],
+      linkInReply: true,
+    );
+
+    expect(capturedBody?.containsKey('poll'), isFalse);
+    final replies = capturedBody?['replyTexts'] as List;
+    // 先頭は投票質問ではなく従来どおりスレッド本文で始まる。
+    expect(replies.first.toString(), contains('本文'));
+  });
+
+  test('postToX attaches a native poll to a prepended first reply', () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'posted': true, 'tweetId': '1'};
+      },
+    );
+
+    await service.postToX(
+      context: page,
+      text: 'リード投稿\n${page.url}',
+      threadReplies: const ['1. 【AI】本文\nなぜ重要か: 変わる。'],
+      linkInReply: true,
+      poll: const UniversalXPoll(
+        question: 'あなたはどっち派?',
+        options: ['きのこ', 'たけのこ'],
+        durationMinutes: 1440,
+      ),
+    );
+
+    final poll = capturedBody?['poll'] as Map<String, dynamic>;
+    expect(poll['options'], ['きのこ', 'たけのこ']);
+    expect(poll['durationMinutes'], 1440);
+    final replies = capturedBody?['replyTexts'] as List;
+    // 投票質問がスレッド先頭リプライとして前置される(edge がここへ poll を添付)。
+    expect(replies.first.toString(), contains('どっち'));
+    expect(replies[1].toString(), contains('本文'));
+  });
+
+  test('postToX drops a poll with fewer than 2 usable options', () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'posted': true};
+      },
+    );
+
+    await service.postToX(
+      context: page,
+      text: 'リード投稿\n${page.url}',
+      threadReplies: const ['1. 本文だけ'],
+      poll: const UniversalXPoll(
+        question: '選べる?',
+        options: ['ひとつだけ', '  ', 'ひとつだけ'],
+        durationMinutes: 1440,
+      ),
+    );
+
+    // 実質 1 択(空白除去+重複排除後)なので投票は付かず本文が先頭のまま。
+    expect(capturedBody?.containsKey('poll'), isFalse);
+    final replies = capturedBody?['replyTexts'] as List;
+    expect(replies.first.toString(), contains('本文だけ'));
   });
 
   test('postToX adds X acquisition URL when text has no URL', () async {
