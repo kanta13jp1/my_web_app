@@ -357,6 +357,14 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       _statusMessage = null;
     });
     try {
+      // 開始キーフレームが固定の OGP 画像になり、presenter/舞台のローテが動画の
+      // 見た目に反映されない問題を防ぐ。既存の生成画像も継続中の Hedra ジョブも
+      // 無ければ、先に当日の画像(presenter/舞台がローテ済)を生成し、それを動画の
+      // 開始画像として使う。
+      if (_imageUrl == null && _hedraGenerationId == null) {
+        await _generateImage();
+        if (_disposed || !mounted) return;
+      }
       final result = await _service.generateVideo(
         context: widget.page,
         draft: draft,
