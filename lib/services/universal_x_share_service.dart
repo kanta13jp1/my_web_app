@@ -1084,12 +1084,27 @@ ${draft.videoPrompt}
     if (_isMyFinanceUxContext(context)) {
       return _scriptLinesFromText(draft.text);
     }
-    return const [
-      'はじめまして。知的で上品なAI秘書として、このサイトの使い方をご案内します。',
-      '最初にサイト案内AIへ聞くと、どの機能から開くべきか迷わず始められます。',
-      'AI大学では、主要AI企業、最新ニュース、プロンプト活用を体系的に学べます。',
-      'ノート、仕事ログ、資産管理、英語学習、リリースノートを、ひとつの作業空間でつなげます。',
-      '説明文はGPT-5.5で整え、image-gen2、ElevenLabs、Hedra、Seedance 2.0で動画として届けます。',
+    // 動画スクリプトを毎回同一の固定文にせず、トレンド反映済みの draft.text から
+    // 導入フックを取り、機能ハイライトを draft ハッシュで日替りローテーションする
+    // (= 同一内容の量産を避け、当日のトレンド/日付が動画にも反映される)。
+    final draftLines = _scriptLinesFromText(draft.text);
+    final hook =
+        draftLines.isEmpty ? '今日のAI仕事OSの使い方を、AI秘書がご案内します。' : draftLines.first;
+    const tourPool = <String>[
+      'サイト案内AIに聞けば、どの機能から始めるか迷いません。',
+      'AI大学では主要AI企業・最新ニュース・プロンプト活用を体系的に学べます。',
+      'ノート、仕事ログ、資産管理、英語学習をひとつの作業空間でつなげます。',
+      '家計と資産をKPIで見える化し、お金の判断を能力投資へ戻します。',
+      'デイリー判定とAI秘書が、今日踏み出す一手を静かに後押しします。',
+      'リリースノートで、日々進化する機能をそのまま体験できます。',
+    ];
+    final seed = draft.text.hashCode.abs();
+    final tour = <String>[
+      for (var i = 0; i < 3; i++) tourPool[(seed + i) % tourPool.length],
+    ];
+    return <String>[
+      hook,
+      ...tour,
       '5分だけ試して、役に立った点と迷った点を教えてください。',
     ];
   }
