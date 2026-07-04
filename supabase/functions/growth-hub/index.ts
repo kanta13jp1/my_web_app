@@ -40,6 +40,73 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+// X trends API 不可時(未設定/退役/空)の無料フォールバック。既存の tools-hub
+// rss.fetch_latest で当日ニュース見出しを取得し、trend トピックとして返す。
+// これで文面・動画が「今日のニュース」を反映し毎回変化する(有料 X API 不要)。
+async function fetchTodayNewsTrendTopics(
+  limit: number,
+): Promise<Array<{ name: string; tweetCount: number | null }>> {
+  const feeds = [
+    {
+      title: "ITmedia AI+",
+      url: "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml",
+      category: "AI",
+    },
+    {
+      title: "ITmedia NEWS",
+      url: "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml",
+      category: "IT",
+    },
+    {
+      title: "NHK NEWS WEB",
+      url: "https://www3.nhk.or.jp/rss/news/cat0.xml",
+      category: "総合",
+    },
+  ];
+  const url = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/tools-hub`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(SUPABASE_ANON_KEY ? { apikey: SUPABASE_ANON_KEY } : {}),
+      ...(SERVICE_ROLE_KEY
+        ? { Authorization: `Bearer ${SERVICE_ROLE_KEY}` }
+        : {}),
+    },
+    body: JSON.stringify({
+      action: "rss.fetch_latest",
+      feeds,
+      per_feed_limit: 8,
+      limit: 48,
+      signal_limit: Math.max(limit, 8),
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`tools-hub rss.fetch_latest failed: ${res.status}`);
+  }
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>;
+  const rawList = [
+    data["signals"],
+    data["items"],
+    data["latest"],
+    data["results"],
+  ].find((value) => Array.isArray(value)) as unknown[] | undefined;
+  const list = Array.isArray(rawList) ? rawList : [];
+  const seen = new Set<string>();
+  const topics: Array<{ name: string; tweetCount: number | null }> = [];
+  for (const entry of list) {
+    const rec = (entry && typeof entry === "object")
+      ? entry as Record<string, unknown>
+      : {};
+    const name = String(rec["title"] ?? rec["name"] ?? "").trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    topics.push({ name: name.slice(0, 120), tweetCount: null });
+    if (topics.length >= limit) break;
+  }
+  return topics;
+}
+
 async function getUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return null;
@@ -1350,30 +1417,59 @@ serve(async (req: Request) => {
         const limit = Number.isFinite(rawLimit)
           ? Math.max(1, Math.min(20, Math.trunc(rawLimit)))
           : 10;
+        // X trends API (v2 trends/by/woeid) は有料tier + X_BEARER_TOKEN が必要で、
+        // v1.1 trends/place.json は退役済み。未設定/失敗時に "今日のトレンド" が
+        // 空になり文面・動画がトレンド非反映で固定化する。→ 無料の RSS ニュース
+        // (NHK/ITmedia) を代替トピックとしてフォールバックし、毎回変化+当日反映を保つ。
+        let xError: unknown = null;
         try {
-          const trends = await fetchXTrendsByWoeid({
-            woeid,
-            maxTrends: limit,
-          });
-          return json({
-            success: true,
-            woeid,
-            trends,
-            source: "x_api",
-            fetchedAt: new Date().toISOString(),
-          });
+          const trends = await fetchXTrendsByWoeid({ woeid, maxTrends: limit });
+          if (trends.length > 0) {
+            return json({
+              success: true,
+              woeid,
+              trends,
+              source: "x_api",
+              fetchedAt: new Date().toISOString(),
+            });
+          }
         } catch (error) {
-          const xPayload = isXApiError(error) ? error.payload : null;
+          xError = error;
+        }
+        try {
+          const newsTrends = await fetchTodayNewsTrendTopics(limit);
+          if (newsTrends.length > 0) {
+            return json({
+              success: true,
+              woeid,
+              trends: newsTrends,
+              source: "rss_news_fallback",
+              fetchedAt: new Date().toISOString(),
+            });
+          }
+        } catch (rssError) {
           return json({
             success: false,
             woeid,
             trends: [],
-            error: errorMessage(error),
-            code: xPayload?.code ?? "x_trends_failed",
-            actionRequired: xPayload?.actionRequired ??
-              "Check X API read access or configure X_BEARER_TOKEN.",
+            error: `x_trends=${errorMessage(xError)}; rss=${
+              errorMessage(rssError)
+            }`,
+            code: "trends_and_rss_failed",
+            actionRequired:
+              "Configure X_BEARER_TOKEN (paid X API) or check tools-hub rss.fetch_latest.",
           });
         }
+        const xPayload = isXApiError(xError) ? xError.payload : null;
+        return json({
+          success: false,
+          woeid,
+          trends: [],
+          error: xError ? errorMessage(xError) : "no trends available",
+          code: xPayload?.code ?? "x_trends_empty",
+          actionRequired: xPayload?.actionRequired ??
+            "Check X API read access or configure X_BEARER_TOKEN.",
+        });
       }
 
       case "x.metrics_collect": {
