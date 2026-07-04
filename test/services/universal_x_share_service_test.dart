@@ -2,6 +2,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/universal_x_share_service.dart';
 
+// 非 finance の presenter 動画で使う音声ラベル一覧(エッジ側 voice_labels.ts と対応)。
+// 中庸の male/female_narrator に加え、トーン別 energetic_* / calm_* を含む。
+const _kVoiceLabels = <String>[
+  'female_narrator',
+  'male_narrator',
+  'energetic_female',
+  'energetic_male',
+  'calm_female',
+  'calm_male',
+];
+
 void main() {
   const page = UniversalSharePageContext(
     routePath: '/gemini-university',
@@ -531,11 +542,8 @@ void main() {
       );
 
       expect(capturedBody?['template'], 'ai_secretary_site_tour');
-      // 声はキャラの性別に合わせたラベル(男女どちらか)を送る。
-      expect(
-        ['male_narrator', 'female_narrator'],
-        contains(capturedBody?['voice']),
-      );
+      // 声はキャラの性別/トーンに合わせたラベル(6 種のいずれか)を送る。
+      expect(capturedBody?['voice'], isIn(_kVoiceLabels));
       expect(capturedBody?['preferredModel'], 'hedra');
       expect(capturedBody?['creativePipeline'], const [
         'gpt-5.5',
@@ -705,5 +713,58 @@ void main() {
       UniversalXShareService.isEmbeddedDataUrl('https://example.com/a.png'),
       isFalse,
     );
+  });
+
+  test('generateVideo matches narration voice gender+tone to the presenter',
+      () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'status': 'fallback_text'};
+      },
+    );
+
+    final baseDraft = UniversalXShareService.buildGrowthDraft(page);
+    final observedLabels = <String>{};
+    var sawMaleVoice = false;
+    var sawFemaleVoice = false;
+
+    // 多数の異なる seed(= 当日ニュース違い)で presenter が男女両方へ振れることを
+    // 確認しつつ、毎回 presenter の性別と音声ラベルの性別が一致すること(男性キャラに
+    // 女性声、女性キャラに男性声が付かない)を保証する。
+    for (var i = 0; i < 120; i += 1) {
+      final draft = baseDraft.copyWith(text: 'x-share-seed-$i ${page.url}');
+      await service.generateVideo(
+        context: page,
+        draft: draft,
+        imageUrl: 'https://example.com/secretary.png',
+      );
+      final voice = capturedBody?['voice'] as String;
+      final prompt = capturedBody?['customPrompt'] as String;
+      expect(voice, isIn(_kVoiceLabels));
+      final presenterIsFemale = prompt.contains('female') ||
+          prompt.contains('woman') ||
+          prompt.contains('lady');
+      final voiceIsFemale = voice.contains('female');
+      expect(
+        voiceIsFemale,
+        presenterIsFemale,
+        reason: 'voice "$voice" gender must match presenter in prompt: $prompt',
+      );
+      observedLabels.add(voice);
+      sawMaleVoice = sawMaleVoice || !voiceIsFemale;
+      sawFemaleVoice = sawFemaleVoice || voiceIsFemale;
+    }
+
+    // ローテの結果、男女両方の声が実際に選ばれること。
+    expect(sawMaleVoice, isTrue);
+    expect(sawFemaleVoice, isTrue);
+    // トーン別ラベルへローテするため、中庸 narrator 以外の声も現れること。
+    expect(observedLabels.length, greaterThanOrEqualTo(2));
+    final sawTonedVoice = observedLabels.any(
+      (label) => label.startsWith('energetic_') || label.startsWith('calm_'),
+    );
+    expect(sawTonedVoice, isTrue);
   });
 }

@@ -1171,9 +1171,10 @@ ${fallback.text}
   ) {
     if (_isMyFinanceUxContext(context)) return 'ja-JP';
     // 動画の presenter(人物)が男女ローテするので、ナレーション音声もその性別に
-    // 合わせる(男性キャラなのに女性の声、という不一致を解消)。画像/動画と同一 seed。
+    // 合わせる(男性キャラなのに女性の声、という不一致を解消)。さらにトーン
+    // (energetic / calm)も反映する。画像/動画と同一 seed。
     final character = _dailyPresenterCharacter(draft.text.hashCode);
-    return _isMalePresenter(character) ? 'male_narrator' : 'female_narrator';
+    return _voiceLabelForCharacter(character);
   }
 
   /// presenter キャラ文字列から男性かどうかを判定する。プールの女性エントリは
@@ -1183,6 +1184,47 @@ ${fallback.text}
     final isFemale =
         c.contains('female') || c.contains('woman') || c.contains('lady');
     return !isFemale;
+  }
+
+  /// presenter の性別(_isMalePresenter)に加えトーン(energetic / calm)を判定し、
+  /// 音声ラベルへ写像する。トーンが判定できない場合は中庸の
+  /// male_narrator / female_narrator を返す(= 従来の性別のみ一致と同じ出力)。
+  /// エッジ側はトーン別 secret が未設定なら性別ベース音声へフォールバックする。
+  static String _voiceLabelForCharacter(String character) {
+    final c = character.toLowerCase();
+    final gender = _isMalePresenter(character) ? 'male' : 'female';
+    const energeticMarkers = <String>[
+      'gyaru',
+      'idol',
+      'k-pop',
+      'kpop',
+      'dancer',
+      'rock',
+      'guitarist',
+      'bandman',
+      'runner',
+      'athlete',
+      'martial artist',
+    ];
+    const calmMarkers = <String>[
+      'librarian',
+      'elderly',
+      'onee-san',
+      'ojou-sama',
+      'kimono',
+      'shrine maiden',
+      'miko',
+      'gentleman',
+      'detective',
+      'wise',
+    ];
+    if (energeticMarkers.any((marker) => c.contains(marker))) {
+      return 'energetic_$gender';
+    }
+    if (calmMarkers.any((marker) => c.contains(marker))) {
+      return 'calm_$gender';
+    }
+    return '${gender}_narrator';
   }
 
   static String _imagePromptFor(
