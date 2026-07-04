@@ -448,7 +448,9 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     // X Web Intent は単一ツイート。リード文(URL除去済)のみで開き、URL入りリプライ
     // を含む全文はクリップボードへ入れてスレッド投稿できるようにする。
     await Clipboard.setData(ClipboardData(text: _manualThreadPayload()));
-    final uri = Uri.https('x.com', '/intent/tweet', {'text': parts.leadText});
+    final uri = Uri.https('x.com', '/intent/tweet', {
+      'text': parts.leadText,
+    });
     await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (_disposed || !mounted) return;
     setState(() {
