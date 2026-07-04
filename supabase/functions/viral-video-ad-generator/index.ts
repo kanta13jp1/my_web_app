@@ -855,10 +855,15 @@ async function createHedraVideoFromUploadedAudio(
         };
       } catch (assetError) {
         assetFailureReason = providerErrorMessage(assetError);
-        console.warn(
-          `Hedra audio asset flow failed (attempt ${attempt}/2)`,
+        console.error(
+          `[vvag-asset] Hedra audio asset flow failed (attempt ${attempt}/2)`,
           assetFailureReason,
         );
+        // クレジット不足(402)はリトライや text_to_speech フォールバックでも必ず失敗し、
+        // 追加でクレジットを消費するだけ。即座に明確なメッセージで打ち切る。
+        if (isHedraInsufficientCreditsError(assetError)) {
+          throw new Error(hedraInsufficientCreditsMessage(assetError));
+        }
         if (attempt < 2) await delay(1500);
       }
     }
@@ -927,6 +932,27 @@ function withAudioAssetReason(
   const base = error instanceof Error ? error : new Error(String(error));
   if (!reason) return base;
   return new Error(`${base.message}; audio_asset=${reason}`);
+}
+
+// Hedra の 402 「Insufficient credits」を検出する。クレジット不足は動画生成の
+// あらゆる経路(asset / text_to_speech)で必ず失敗するため、専用の明確なメッセージへ
+// 変換して、cryptic な model missing 400 の連鎖に埋もれないようにする。
+function isHedraInsufficientCreditsError(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : String(error))
+    .toLowerCase();
+  return message.includes("insufficient credits") ||
+    /hedra api 402\b/.test(message);
+}
+
+function hedraInsufficientCreditsMessage(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  const match = raw.match(/Required:\s*(\d+),\s*Available:\s*(\d+)/i);
+  const detail = match
+    ? `必要 ${match[1]} / 残り ${match[2]} クレジット`
+    : raw.replace(/\s+/g, " ").trim().slice(0, 200);
+  return `Hedra のクレジットが不足しています（${detail}）。` +
+    `動画生成には Hedra クレジットの追加が必要です。hedra.com のアカウントで` +
+    `クレジットをトップアップしてから、もう一度「動画生成」をお試しください。`;
 }
 
 function providerErrorMessage(error: unknown): string {
