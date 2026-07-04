@@ -66,6 +66,76 @@ void main() {
     expect(draft.threadReplies.first.length, lessThanOrEqualTo(280));
   });
 
+  test('growth draft imagePrompt weaves today\'s date and trend headlines', () {
+    final draft = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: 'OpenAI 新モデル発表', tweetCount: 42000),
+        UniversalXTrendTopic(name: 'ワールドカップ', tweetCount: 120000),
+      ],
+    );
+
+    final now = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final date = '${now.year}/${now.month}/${now.day}';
+    // 固定キービジュアルが毎回ほぼ同一で X アルゴリズムへ重複信号を送っていた
+    // 問題(#3776)を解消 — 当日の日付と実ニュース見出しを画像テーマへ反映する。
+    expect(draft.imagePrompt, contains('Daily edition $date'));
+    expect(draft.imagePrompt, contains('OpenAI 新モデル発表'));
+    // 見出しは視覚テーマへ反映するのみで、事実の捏造や画像内テキスト描画はしない。
+    expect(draft.imagePrompt, contains('do not invent'));
+    expect(draft.imagePrompt, contains('any on-image text'));
+    // 既存のブランドセーフなキービジュアル指定は維持する。
+    expect(draft.imagePrompt, contains('AI executive secretary'));
+    expect(draft.imagePrompt, contains('no text overlays'));
+  });
+
+  test('growth draft imagePrompt still varies by date without trends', () {
+    final draft = UniversalXShareService.buildGrowthDraft(page);
+
+    final now = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final date = '${now.year}/${now.month}/${now.day}';
+    // 見出しが無い日でも、日付だけで最低限の日替り変化を保証する。
+    expect(draft.imagePrompt, contains('Daily edition $date'));
+    expect(draft.imagePrompt, isNot(contains('today\'s news mood')));
+  });
+
+  test('fallback draft (no URL) weaves date and trend into imagePrompt', () {
+    const emptyUrlPage = UniversalSharePageContext(
+      routePath: '/gemini-university',
+      title: 'Gemini University',
+      url: '',
+    );
+
+    final draft = UniversalXShareService.buildFallbackDraft(
+      emptyUrlPage,
+      trendTopics: const [
+        UniversalXTrendTopic(name: 'ITmedia 生成AI', tweetCount: 3000),
+      ],
+    );
+
+    final now = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final date = '${now.year}/${now.month}/${now.day}';
+    expect(draft.imagePrompt, contains('Daily edition $date'));
+    expect(draft.imagePrompt, contains('ITmedia 生成AI'));
+    expect(draft.imagePrompt, contains('product screenshot style hero image'));
+  });
+
+  test('fallback draft (no URL, finance) weaves date into finance imagePrompt',
+      () {
+    const emptyUrlFinance = UniversalSharePageContext(
+      routePath: '/asset-management',
+      title: 'Asset Management',
+      url: '',
+    );
+
+    final draft = UniversalXShareService.buildFallbackDraft(emptyUrlFinance);
+
+    final now = DateTime.now().toUtc().add(const Duration(hours: 9));
+    final date = '${now.year}/${now.month}/${now.day}';
+    expect(draft.imagePrompt, contains('My Finance'));
+    expect(draft.imagePrompt, contains('Daily edition $date'));
+  });
+
   test('acquisitionUrlFor preserves existing query and strips fragments', () {
     const pageWithQuery = UniversalSharePageContext(
       routePath: '/work-menu',
