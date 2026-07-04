@@ -1118,29 +1118,48 @@ ${draft.videoPrompt}
     if (_isMyFinanceUxContext(context)) {
       return _scriptLinesFromText(draft.text);
     }
-    // 動画スクリプトを毎回同一の固定文にせず、トレンド反映済みの draft.text から
-    // 導入フックを取り、機能ハイライトを draft ハッシュで日替りローテーションする
-    // (= 同一内容の量産を避け、当日のトレンド/日付が動画にも反映される)。
-    final draftLines = _scriptLinesFromText(draft.text);
+    // 動画ナレーションは「当日ニュース由来の draft.text(フック)+ スレッド返信
+    // (ブリーフィング本文)」から構成する。従来は本文が固定のツアー定型文で、
+    // フック1行以外は毎回同一 = ユーザーに「動画で話す内容が固定」と映っていた。
+    // draft.threadReplies には LLM が生成した当日ニュースの分析(現状/課題/解決策)が
+    // 入っているので、それをそのまま読み上げ台本にすると動画も毎回変化+当日反映になる。
+    final hookLines = _scriptLinesFromText(draft.text);
+    final bodyLines = <String>[
+      for (final reply in draft.threadReplies)
+        if (_narrationLineFromReply(reply).isNotEmpty)
+          _narrationLineFromReply(reply),
+    ];
+    final newsScript = <String>[...hookLines, ...bodyLines];
+    if (newsScript.length >= 3) {
+      return <String>[
+        ...newsScript.take(5),
+        '5分だけ試して、役に立った点と迷った点を教えてください。',
+      ];
+    }
+    // ニュース/スレッドが乏しい時のみ、従来のサイト案内フォールバックへ。
     final hook =
-        draftLines.isEmpty ? '今日のAI仕事OSの使い方を、AI秘書がご案内します。' : draftLines.first;
-    const tourPool = <String>[
-      'サイト案内AIに聞けば、どの機能から始めるか迷いません。',
-      'AI大学では主要AI企業・最新ニュース・プロンプト活用を体系的に学べます。',
-      'ノート、仕事ログ、資産管理、英語学習をひとつの作業空間でつなげます。',
-      '家計と資産をKPIで見える化し、お金の判断を能力投資へ戻します。',
-      'デイリー判定とAI秘書が、今日踏み出す一手を静かに後押しします。',
-      'リリースノートで、日々進化する機能をそのまま体験できます。',
-    ];
-    final seed = draft.text.hashCode.abs();
-    final tour = <String>[
-      for (var i = 0; i < 3; i++) tourPool[(seed + i) % tourPool.length],
-    ];
+        hookLines.isEmpty ? '今日のAI仕事OSの使い方を、AI秘書がご案内します。' : hookLines.first;
     return <String>[
       hook,
-      ...tour,
+      'サイト案内AIに聞けば、どの機能から始めるか迷いません。',
+      'ノート、仕事ログ、資産管理、英語学習をひとつの作業空間でつなげます。',
       '5分だけ試して、役に立った点と迷った点を教えてください。',
     ];
+  }
+
+  /// スレッド返信(例: "1. 現在の状況: 九州北部で激しい雨…" や
+  /// "1. 【AI】OpenAI\nなぜ重要か:…")を、読み上げやすい1行の話し言葉に整形する。
+  /// 番号/カテゴリ接頭辞を除き、URL 行はナレーションに載せない。
+  static String _narrationLineFromReply(String reply) {
+    final firstLine = reply
+        .split('\n')
+        .map((line) => line.trim())
+        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+    if (firstLine.isEmpty || firstLine.startsWith('http')) return '';
+    return firstLine
+        .replaceFirst(RegExp(r'^\d+[.)]\s*'), '')
+        .replaceFirst(RegExp(r'^【[^】]*】\s*'), '')
+        .trim();
   }
 
   static List<String> _scriptLinesFromText(String text) {

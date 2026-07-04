@@ -412,8 +412,8 @@ void main() {
       expect(capturedBody?['customPrompt'], contains('Hedra'));
       final scriptLines = capturedBody?['customScript'] as List;
       final script = scriptLines.join('\n');
-      // 動画スクリプトは固定文ではなく、トレンド反映済み draft のフック +
-      // 機能ツアー(日替りローテーション) + CTA で毎回変化する (#3766)。
+      // 動画スクリプトは固定文ではなく、当日ニュース反映済み draft のフック +
+      // スレッド返信(ブリーフィング本文) + CTA で毎回変化する。
       expect(script, contains('デイリーブリーフィング')); // draft由来の可変フック
       expect(script, contains('5分だけ試して')); // 末尾CTA
       expect(scriptLines.length, greaterThanOrEqualTo(4));
@@ -421,6 +421,39 @@ void main() {
       expect(script, isNot(contains(page.url)));
     },
   );
+
+  test('video narration reflects today news and drops the fixed tour',
+      () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {'success': true, 'status': 'fallback_text'};
+      },
+    );
+
+    final draft = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: '九州北部で非常に激しい雨'),
+        UniversalXTrendTopic(name: 'OpenAIが新モデルを発表'),
+      ],
+    );
+    await service.generateVideo(
+      context: page,
+      draft: draft,
+      imageUrl: 'https://example.com/secretary.png',
+    );
+
+    final scriptLines = (capturedBody?['customScript'] as List).cast<String>();
+    final script = scriptLines.join('\n');
+    // 当日ニュース(トレンド)が動画ナレーションに載ること。
+    expect(script, contains('九州北部で非常に激しい雨'));
+    // 固定のツアー定型文ではないこと。
+    expect(script, isNot(contains('AI大学では主要AI企業')));
+    expect(scriptLines.length, greaterThanOrEqualTo(3));
+    expect(script, isNot(contains('https://')));
+  });
 
   test(
     'generateVideo can poll an existing Hedra generation and use download URL',
