@@ -530,7 +530,11 @@ void main() {
       );
 
       expect(capturedBody?['template'], 'ai_secretary_site_tour');
-      expect(capturedBody?['voice'], 'ai_secretary_female');
+      // 声はキャラの性別に合わせたラベル(男女どちらか)を送る。
+      expect(
+        ['male_narrator', 'female_narrator'],
+        contains(capturedBody?['voice']),
+      );
       expect(capturedBody?['preferredModel'], 'seedance-2.0');
       expect(capturedBody?['creativePipeline'], const [
         'gpt-image-2',

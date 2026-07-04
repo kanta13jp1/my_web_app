@@ -236,7 +236,7 @@ class UniversalXShareService {
       'template': _videoTemplateFor(context),
       'lang': 'ja',
       'title': _shareTitleFor(context),
-      'voice': _videoVoiceFor(context),
+      'voice': _videoVoiceFor(context, draft),
       'customPrompt': _videoPromptFor(context, draft),
       'customScript': _videoScriptFor(context, draft),
       'customHashtags': draft.hashtags,
@@ -1056,7 +1056,7 @@ Secondary goal: earn useful impressions without sounding like spam.
 Return valid JSON only:
 {
   "text": "Japanese X post under 280 chars, must include $shareUrl",
-  "threadReplies": ["0 to 6 Japanese reply posts, each under 280 chars"],
+  "threadReplies": ["5 to 8 substantive Japanese reply posts, each 120-270 chars, forming a full briefing thread"],
   "imagePrompt": "English prompt for a 16:9 share image, no text overlay",
   "videoPrompt": "English prompt for a short presenter/share video",
   "hashtags": ["#buildinpublic", "#FlutterWeb", "#Supabase"]
@@ -1089,7 +1089,8 @@ Rules:
 - When headlines are present, OPEN the lead post by tying today's single most relevant headline to this app's angle (information organization / AI work OS), so the post visibly changes every day. Do not lead with a generic app description.
 - Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
 - Prefer conversation hooks and save-worthy analysis over hashtags.
-- Keep the lead post under 280 chars. Use threadReplies for the briefing body.
+- Make the lead post rich and specific: aim for roughly 180-270 chars (still under 280), not a single short sentence.
+- Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
 - Treat the creative workflow as GPT image2 -> GPT-5.5 -> Seedance 2.0.
 - Keep the post natural, concise, and credible.
 $financeRule
@@ -1160,8 +1161,24 @@ ${fallback.text}
         : 'ai_secretary_site_tour';
   }
 
-  static String _videoVoiceFor(UniversalSharePageContext context) {
-    return _isMyFinanceUxContext(context) ? 'ja-JP' : 'ai_secretary_female';
+  static String _videoVoiceFor(
+    UniversalSharePageContext context,
+    UniversalXShareDraft draft,
+  ) {
+    if (_isMyFinanceUxContext(context)) return 'ja-JP';
+    // 動画の presenter(人物)が男女ローテするので、ナレーション音声もその性別に
+    // 合わせる(男性キャラなのに女性の声、という不一致を解消)。画像/動画と同一 seed。
+    final character = _dailyPresenterCharacter(draft.text.hashCode);
+    return _isMalePresenter(character) ? 'male_narrator' : 'female_narrator';
+  }
+
+  /// presenter キャラ文字列から男性かどうかを判定する。プールの女性エントリは
+  /// 必ず female / woman / lady のいずれかを含み、男性エントリは含まない。
+  static bool _isMalePresenter(String character) {
+    final c = character.toLowerCase();
+    final isFemale =
+        c.contains('female') || c.contains('woman') || c.contains('lady');
+    return !isFemale;
   }
 
   static String _imagePromptFor(
@@ -1271,12 +1288,39 @@ ${draft.videoPrompt}
         : '${openings[seed % openings.length]} 今日の話題は「$topic」です。';
     final closing = closings[(seed ~/ openings.length) % closings.length];
 
+    // ナレーションを大幅に長く・充実させる。各トピックに「なぜ重要か/どう整理するか」
+    // の解説を添え、導入・締めも厚くして、短い読み上げにならないようにする。
+    const commentaries = <String>[
+      'この話題は、その場で眺めるだけだと流れて消えてしまいます。ノートや仕事ログに残し、AI秘書に要点を聞ける形にしておくと、明日の判断材料としてそのまま使えます。',
+      'ポイントは、事実と自分への影響を分けて書き留めておくことです。AI仕事OSなら、関連するメモやタスクにその場でひも付けられます。',
+      'こうしたニュースは、後から「なぜそう動いたか」を振り返れるように残しておくと、学びが積み上がっていきます。',
+      '気になった論点は、AI大学の最新ニュースや主要AI企業の動きと合わせて見ると、仕事への応用先が具体的に見えてきます。',
+      '情報を集めるより、集めた情報を「いつ・どこで使うか」を決めておくことが大切です。デイリー判定とAI秘書が、その一手を後押しします。',
+    ];
     if (body.isNotEmpty) {
-      return <String>[opening, ...body.take(4), closing];
+      final items = body.take(6).toList(growable: false);
+      final lines = <String>[
+        opening,
+        'このデイリーブリーフィングでは、今日の主な話題を取り上げ、それぞれをAI仕事OSでどう整理し、明日の段取りや判断へどうつなげるかまでご紹介します。',
+      ];
+      for (var i = 0; i < items.length; i += 1) {
+        lines.add('${i + 1}つ目のトピックです。${items[i]}');
+        lines.add(commentaries[(seed + i) % commentaries.length]);
+      }
+      lines.addAll(<String>[
+        'ニュースはその場で消費すると忘れてしまいますが、ノート、仕事ログ、資産管理、英語学習をひとつの作業空間に残しておくと、後からAI秘書に要点を聞いて、そのまま仕事の材料に変えられます。',
+        'AI大学では、主要なAI企業の動きや最新ニュース、プロンプトの活用法を体系的に学べるので、こうした話題を自分の仕事にどう応用するかまで踏み込めます。',
+        'サイト案内AIに「今日はどこから始めればいい?」と聞けば、迷わず必要な機能へ進めます。まずは軽く触ってみてください。',
+        closing,
+      ]);
+      return lines;
     }
     return <String>[
       opening,
-      'AI仕事OSで、学習・仕事ログ・資産管理・英語学習をひとつに整理できます。',
+      'AI仕事OSは、学習、仕事ログ、資産管理、英語学習、メモを、ひとつの作業空間にまとめて整理できるツールです。',
+      'バラバラのアプリを行き来する代わりに、必要な情報を一か所に残し、AI秘書に要点を聞ける形にしておけます。',
+      'AI大学では最新のAIニュースや主要企業の動き、プロンプト活用を体系的に学べます。',
+      'サイト案内AIに聞けば、どの機能から始めればいいか迷いません。',
       closing,
     ];
   }
