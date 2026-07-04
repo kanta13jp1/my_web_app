@@ -278,33 +278,15 @@ class UniversalXShareService {
     bool dryRun = false,
   }) async {
     final normalizedMediaUrl = _emptyToNull(mediaUrl);
-    final existingUrl = _firstHttpUrl(text);
-    final existingUrlHasUtm = existingUrl != null &&
-        existingUrl.contains(context.url) &&
-        existingUrl.contains('utm_campaign=first_user_growth');
-    final textUrl = existingUrlHasUtm
-        ? existingUrl
-        : acquisitionUrlFor(context, content: 'post_to_x');
-    final baseText = existingUrl != null && existingUrl != textUrl
-        ? _removeUrl(text, existingUrl)
-        : text;
-    final mainText = linkInReply
-        ? sanitizeTweet(
-            _removeUrl(baseText, textUrl),
-            url: textUrl,
-            requireUrl: false,
-          )
-        : sanitizeTweet(baseText, url: textUrl);
-    final replyTexts = <String>[
-      ...threadReplies
-          .map((entry) => sanitizeTweet(entry, url: textUrl, requireUrl: false))
-          .where((entry) => entry.trim().isNotEmpty),
-      if (linkInReply)
-        sanitizeTweet(
-          '試せるURLはこちらです。5分だけ触って、A/B/Cか一言で返信ください。\n$textUrl',
-          url: textUrl,
-        ),
-    ];
+    final parts = buildManualShareParts(
+      context: context,
+      text: text,
+      threadReplies: threadReplies,
+      linkInReply: linkInReply,
+    );
+    final mainText = parts.leadText;
+    final textUrl = parts.textUrl;
+    final replyTexts = parts.replyTexts;
     final data = await _invoke('growth-hub', {
       'action': 'x.post',
       'text': mainText,
@@ -339,6 +321,48 @@ class UniversalXShareService {
           : const [],
       raw: data,
     );
+  }
+
+  /// Builds the lead post + reply chain exactly like [postToX] does, so the
+  /// manual share paths (X web intent button, copy button, API-failure
+  /// fallback) keep the product URL out of the lead post and move it to the
+  /// final reply whenever [linkInReply] is true. Without this, manual posts
+  /// leak the URL into the lead post and lose X impressions.
+  static ({String leadText, List<String> replyTexts, String textUrl})
+      buildManualShareParts({
+    required UniversalSharePageContext context,
+    required String text,
+    List<String> threadReplies = const [],
+    bool linkInReply = false,
+  }) {
+    final existingUrl = _firstHttpUrl(text);
+    final existingUrlHasUtm = existingUrl != null &&
+        existingUrl.contains(context.url) &&
+        existingUrl.contains('utm_campaign=first_user_growth');
+    final textUrl = existingUrlHasUtm
+        ? existingUrl
+        : acquisitionUrlFor(context, content: 'post_to_x');
+    final baseText = existingUrl != null && existingUrl != textUrl
+        ? _removeUrl(text, existingUrl)
+        : text;
+    final leadText = linkInReply
+        ? sanitizeTweet(
+            _removeUrl(baseText, textUrl),
+            url: textUrl,
+            requireUrl: false,
+          )
+        : sanitizeTweet(baseText, url: textUrl);
+    final replyTexts = <String>[
+      ...threadReplies
+          .map((entry) => sanitizeTweet(entry, url: textUrl, requireUrl: false))
+          .where((entry) => entry.trim().isNotEmpty),
+      if (linkInReply)
+        sanitizeTweet(
+          '試せるURLはこちらです。5分だけ触って、A/B/Cか一言で返信ください。\n$textUrl',
+          url: textUrl,
+        ),
+    ];
+    return (leadText: leadText, replyTexts: replyTexts, textUrl: textUrl);
   }
 
   Future<List<UniversalXTrendTopic>> _fetchXTrendTopics() async {
