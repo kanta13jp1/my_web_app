@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_share_button_preferences_service.dart';
 import '../services/universal_x_share_service.dart';
@@ -276,7 +274,6 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   UniversalXShareDraft? _draft;
   String? _imageUrl;
   String? _videoUrl;
-  String? _hedraGenerationId;
   String? _statusMessage;
   bool _loadingDraft = true;
   bool _generatingImage = false;
@@ -323,140 +320,110 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     }
   }
 
-  Future<void> _generateImage() async {
-    final draft = _draft;
-    if (draft == null || _generatingImage) return;
-    setState(() {
-      _generatingImage = true;
-      _statusMessage = null;
-    });
-    try {
-      final result = await _service.generateImage(
-        context: widget.page,
-        draft: draft,
-      );
-      if (_disposed || !mounted) return;
-      setState(() {
-        _imageUrl = result.url;
-        _statusMessage =
-            result.url == null ? '画像生成URLを取得できませんでした' : 'シェア画像を生成しました';
-      });
-    } catch (error) {
-      if (_disposed || !mounted) return;
-      setState(() => _statusMessage = '画像生成に失敗しました: $error');
-    } finally {
-      if (!_disposed && mounted) setState(() => _generatingImage = false);
-    }
+  bool get _statusIsError {
+    final s = _statusMessage;
+    if (s == null) return false;
+    return s.contains('失敗') ||
+        s.contains('エラー') ||
+        s.contains('できませんでした') ||
+        s.contains('不足') ||
+        s.contains('確認してください');
   }
 
-  Future<void> _generateVideo() async {
+  /// ワンボタン: 文章(生成済)→画像→音声+動画(Hedra/ElevenLabs, 非同期はポーリング)
+  /// →X投稿 を一括実行する。ユーザーは「AI生成して投稿」を押すだけ。失敗時は原因を
+  /// 画面に明確表示する。
+  Future<void> _generateAndPost() async {
     final draft = _draft;
-    if (draft == null || _generatingVideo) return;
-    setState(() {
-      _generatingVideo = true;
-      _statusMessage = null;
-    });
-    try {
-      // 開始キーフレームが固定の OGP 画像になり、presenter/舞台のローテが動画の
-      // 見た目に反映されない問題を防ぐ。既存の生成画像も継続中の Hedra ジョブも
-      // 無ければ、先に当日の画像(presenter/舞台がローテ済)を生成し、それを動画の
-      // 開始画像として使う。
-      if (_imageUrl == null && _hedraGenerationId == null) {
-        await _generateImage();
-        if (_disposed || !mounted) return;
-      }
-      final result = await _service.generateVideo(
-        context: widget.page,
-        draft: draft,
-        imageUrl: _imageUrl,
-        hedraGenerationId: _hedraGenerationId,
-      );
-      if (_disposed || !mounted) return;
-      setState(() {
-        _videoUrl = result.url;
-        _hedraGenerationId = result.url == null
-            ? _extractString(result.raw, 'hedraGenerationId')
-            : null;
-        _statusMessage = _videoStatusMessage(result);
-      });
-    } catch (error) {
-      if (_disposed || !mounted) return;
-      setState(() => _statusMessage = '動画生成に失敗しました: $error');
-    } finally {
-      if (!_disposed && mounted) setState(() => _generatingVideo = false);
+    if (_posting || _loadingDraft) return;
+    if (draft == null) {
+      setState(() => _statusMessage = 'AIが文章を生成中です。数秒待ってからもう一度押してください。');
+      return;
     }
-  }
-
-  Future<void> _postToX() async {
-    if (_posting) return;
     setState(() {
       _posting = true;
       _statusMessage = null;
     });
     try {
-      final mediaUrl = _videoUrl ?? _imageUrl;
+      // 1. 画像(presenter/舞台がローテ)
+      if (_imageUrl == null) {
+        setState(() {
+          _generatingImage = true;
+          _statusMessage = 'AIが画像を生成しています…';
+        });
+        final image = await _service.generateImage(
+          context: widget.page,
+          draft: draft,
+        );
+        if (_disposed || !mounted) return;
+        _imageUrl = image.url;
+        setState(() => _generatingImage = false);
+      }
+      // 2. 音声+動画(Hedra は非同期。生成IDが返ったら完了までポーリング)
+      if (_videoUrl == null) {
+        setState(() {
+          _generatingVideo = true;
+          _statusMessage = 'AIが音声と動画を生成しています…（30〜60秒かかります）';
+        });
+        var video = await _service.generateVideo(
+          context: widget.page,
+          draft: draft,
+          imageUrl: _imageUrl,
+        );
+        var generationId = video.url == null
+            ? _extractString(video.raw, 'hedraGenerationId')
+            : null;
+        var polls = 0;
+        while (video.url == null && generationId != null && polls < 12) {
+          await Future<void>.delayed(const Duration(seconds: 8));
+          if (_disposed || !mounted) return;
+          video = await _service.generateVideo(
+            context: widget.page,
+            draft: draft,
+            imageUrl: _imageUrl,
+            hedraGenerationId: generationId,
+          );
+          generationId = video.url == null
+              ? (_extractString(video.raw, 'hedraGenerationId') ?? generationId)
+              : null;
+          polls += 1;
+        }
+        if (_disposed || !mounted) return;
+        _videoUrl = video.url;
+        setState(() => _generatingVideo = false);
+        if (_videoUrl == null) {
+          final reason =
+              _extractString(video.raw, 'videoReason') ?? '完了しませんでした';
+          setState(() => _statusMessage = '動画は生成できませんでした（$reason）。画像付きで投稿します。');
+        }
+      }
+      // 3. X 投稿(URLはリプライへ、スレッド返信も投稿)
+      setState(() => _statusMessage = 'Xに投稿しています…');
       final result = await _service.postToX(
         context: widget.page,
         text: _textController.text,
-        mediaUrl: mediaUrl,
-        // 本文にURLを入れるとXがインプレを抑制するため、URLはリプライへ回す。
-        // スレッド返信(Q&A)も投稿してエンゲージとリーチを伸ばす。
-        threadReplies: _draft?.threadReplies ?? const [],
+        mediaUrl: _videoUrl ?? _imageUrl,
+        threadReplies: draft.threadReplies,
         linkInReply: true,
       );
       if (_disposed || !mounted) return;
       setState(() {
         _statusMessage = result.posted
-            ? '${result.account ?? '@kanta13jp1'} に投稿しました'
-            : '投稿文を保存しました。X API secret設定を確認してください';
+            ? '${result.account ?? '@kanta13jp1'} に投稿しました 🎉'
+            : '投稿できませんでした。X API secret設定を確認してください';
       });
     } catch (error) {
       if (_disposed || !mounted) return;
-      setState(() => _statusMessage = 'X投稿に失敗しました: $error');
+      setState(() => _statusMessage = '投稿に失敗しました: $error');
     } finally {
-      if (!_disposed && mounted) setState(() => _posting = false);
+      if (!_disposed && mounted) {
+        setState(() {
+          _posting = false;
+          _generatingImage = false;
+          _generatingVideo = false;
+        });
+      }
     }
-  }
-
-  // 手動投稿経路(コピー / X画面)でも、API投稿(_postToX)と同じく本文からURLを外し
-  // リプライへ回す。素の _textController.text を使うとURLがリード投稿に残り、Xの
-  // インプレッションが抑制されてしまうため。
-  ({String leadText, List<String> replyTexts, String textUrl}) _manualParts() {
-    return UniversalXShareService.buildManualShareParts(
-      context: widget.page,
-      text: _textController.text,
-      threadReplies: _draft?.threadReplies ?? const [],
-      linkInReply: true,
-    );
-  }
-
-  String _manualThreadPayload() {
-    final parts = _manualParts();
-    if (parts.replyTexts.isEmpty) return parts.leadText;
-    return [parts.leadText, ...parts.replyTexts].join('\n\n---\n\n');
-  }
-
-  Future<void> _copyText() async {
-    await Clipboard.setData(ClipboardData(text: _manualThreadPayload()));
-    if (mounted) {
-      setState(() => _statusMessage = '投稿文をコピーしました（URLはリプライに配置済み）');
-    }
-  }
-
-  Future<void> _openXComposer() async {
-    final parts = _manualParts();
-    // X Web Intent は単一ツイート。リード文(URL除去済)のみで開き、URL入りリプライ
-    // を含む全文はクリップボードへ入れてスレッド投稿できるようにする。
-    await Clipboard.setData(ClipboardData(text: _manualThreadPayload()));
-    final uri = Uri.https('x.com', '/intent/tweet', {
-      'text': parts.leadText,
-    });
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (_disposed || !mounted) return;
-    setState(() {
-      _statusMessage =
-          'X投稿画面を開きました（リード文のみ）。URLとスレッド返信はコピー済みなので、投稿後にリプライで貼ってください。';
-    });
   }
 
   static String? _extractString(Map<String, dynamic> raw, String key) {
@@ -473,30 +440,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         : '${mediaUrl.substring(0, 220)}...';
   }
 
-  static String _videoStatusMessage(UniversalXMediaResult result) {
-    if (result.url != null) return 'シェア動画を生成しました';
-    final reason = _extractString(result.raw, 'videoReason');
-    if (reason != null && reason.contains('public URL')) {
-      return 'Video needs a public image URL. Please regenerate the share image, then retry video generation.';
-    }
-    if (reason == 'Hedra avatar video requires imageUrl') {
-      return '先に画像生成を実行してから、動画生成を開始してください';
-    }
-    final status = _extractString(result.raw, 'videoStatus') ?? result.status;
-    final generationId = _extractString(result.raw, 'hedraGenerationId');
-    final eta = _extractString(result.raw, 'hedraEtaSec');
-    if (generationId != null &&
-        const {'queued', 'processing', 'submitted'}.contains(status)) {
-      final etaText = eta == null ? '' : ' 目安: 約$eta秒';
-      return 'Hedra動画生成ジョブを開始しました。少し待ってからもう一度「動画生成」を押すと結果を確認します。$etaText';
-    }
-    if (reason != null) return '動画生成結果を確認してください: $reason';
-    return '動画生成は完了待ちです。少し待ってからもう一度確認してください';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final textLength = _textController.text.length;
     final mediaUrl = _videoUrl ?? _imageUrl;
     return AlertDialog(
       title: Text('${widget.page.title} をAIシェア'),
@@ -536,89 +481,37 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                   ),
                 ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: _loadingDraft ? null : _generateDraft,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('文言再生成'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _generatingImage ? null : _generateImage,
-                    icon: _generatingImage
-                        ? const _TinyProgress()
-                        : const Icon(Icons.image_outlined),
-                    label: Text(_generatingImage ? '画像生成中' : '画像生成'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _generatingVideo ? null : _generateVideo,
-                    icon: _generatingVideo
-                        ? const _TinyProgress()
-                        : const Icon(Icons.movie_creation_outlined),
-                    label: Text(
-                      _generatingVideo
-                          ? '動画生成中'
-                          : _hedraGenerationId == null
-                              ? '動画生成'
-                              : '動画確認',
-                    ),
-                  ),
-                ],
-              ),
               if (mediaUrl != null) ...[
                 const SizedBox(height: 12),
                 SelectableText('添付メディア: ${_mediaDisplayText(mediaUrl)}'),
               ],
               if (_statusMessage != null) ...[
                 const SizedBox(height: 12),
+                // 失敗時は赤で原因を明確に表示する。
                 Text(
                   _statusMessage!,
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: _statusIsError
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
-              if (textLength > UniversalXShareService.maxTweetLength)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    '280文字を超えています。投稿前に短くしてください。',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
       ),
+      // 操作はワンボタン。「AI生成して投稿」で 文章→画像→音声→動画→投稿 を自動実行。
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _posting ? null : () => Navigator.of(context).pop(),
           child: const Text('閉じる'),
         ),
-        OutlinedButton.icon(
-          onPressed: _loadingDraft ? null : _copyText,
-          icon: const Icon(Icons.copy),
-          label: const Text('コピー'),
-        ),
-        OutlinedButton.icon(
-          onPressed: _loadingDraft ? null : _openXComposer,
-          icon: const Icon(Icons.open_in_new),
-          label: const Text('X画面'),
-        ),
         FilledButton.icon(
-          onPressed: _loadingDraft ||
-                  _posting ||
-                  textLength > UniversalXShareService.maxTweetLength
-              ? null
-              : _postToX,
+          onPressed: _loadingDraft || _posting ? null : _generateAndPost,
           icon: _posting ? const _TinyProgress() : const Icon(Icons.send),
-          label: Text(_posting ? '投稿中' : 'AI生成して投稿'),
+          label: Text(_posting ? '生成して投稿中…' : 'AI生成して投稿'),
         ),
       ],
     );
@@ -646,24 +539,33 @@ class _CreativePipelineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final steps = <_PipelineStepData>[
+      // 実際に使うツールを正確に表示する(嘘のパイプラインにしない)。
+      // 文章=GPT-5.5(ai-hub) / 画像=GPT image / 音声=ElevenLabs / 動画=Hedra。
       _PipelineStepData(
         index: 1,
-        model: 'GPT image2',
-        role: 'share image',
-        icon: Icons.image_outlined,
-        state: _stateFor(ready: imageReady, running: generatingImage),
-      ),
-      _PipelineStepData(
-        index: 2,
         model: 'GPT-5.5',
-        role: 'X copy',
+        role: '文章',
         icon: Icons.edit_note,
         state: _stateFor(ready: textReady, running: generatingText),
       ),
       _PipelineStepData(
+        index: 2,
+        model: 'GPT image',
+        role: '画像',
+        icon: Icons.image_outlined,
+        state: _stateFor(ready: imageReady, running: generatingImage),
+      ),
+      _PipelineStepData(
         index: 3,
-        model: 'Seedance 2.0',
-        role: 'short video',
+        model: 'ElevenLabs',
+        role: '音声',
+        icon: Icons.record_voice_over_outlined,
+        state: _stateFor(ready: videoReady, running: generatingVideo),
+      ),
+      _PipelineStepData(
+        index: 4,
+        model: 'Hedra',
+        role: '動画',
         icon: Icons.movie_creation_outlined,
         state: _stateFor(ready: videoReady, running: generatingVideo),
       ),

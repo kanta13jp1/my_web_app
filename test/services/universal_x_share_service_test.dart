@@ -497,12 +497,13 @@ void main() {
       expect(capturedBody?['template'], 'mobile_ux_validation');
       expect(capturedBody?['title'], 'My Finance');
       expect(capturedBody?['voice'], 'ja-JP');
-      expect(capturedBody?['preferredModel'], 'seedance-2.0');
+      expect(capturedBody?['preferredModel'], 'hedra');
       expect(capturedBody?['imageUrl'], 'https://example.com/share.png');
       expect(capturedBody?['creativePipeline'], const [
-        'gpt-image-2',
         'gpt-5.5',
-        'seedance-2.0',
+        'gpt-image',
+        'elevenlabs',
+        'hedra',
       ]);
       expect(
         capturedBody?['customPrompt'],
@@ -535,11 +536,12 @@ void main() {
         ['male_narrator', 'female_narrator'],
         contains(capturedBody?['voice']),
       );
-      expect(capturedBody?['preferredModel'], 'seedance-2.0');
+      expect(capturedBody?['preferredModel'], 'hedra');
       expect(capturedBody?['creativePipeline'], const [
-        'gpt-image-2',
         'gpt-5.5',
-        'seedance-2.0',
+        'gpt-image',
+        'elevenlabs',
+        'hedra',
       ]);
       // presenter は日替りローテ、声はそれに合わせた日本語ボイス。
       expect(capturedBody?['customPrompt'], contains('Presenter for today'));
