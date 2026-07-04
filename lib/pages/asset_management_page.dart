@@ -13466,6 +13466,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final selectedDay =
         selectedDate == null ? null : calendar.dayFor(selectedDate);
     final today = _calendarNow;
+    final todayDate = DateTime(today.year, today.month, today.day);
+    // サイクル終了(排他)が今日以前なら予定系イベントが存在しない過去サイクル。
+    // 予定チップの代わりに記録済みフローの実績サマリを見せる。
+    final isPastCycle = !cycleEndExclusive.isAfter(todayDate);
+    var cycleActualExpenseTotal = 0.0;
+    var cycleActualIncomeTotal = 0.0;
+    var cycleRecordedDayCount = 0;
+    for (final day in calendar.days) {
+      cycleActualExpenseTotal += day.expenseTotal;
+      cycleActualIncomeTotal += day.incomeTotal;
+      if (day.expenseTotal > 0 || day.incomeTotal > 0) {
+        cycleRecordedDayCount++;
+      }
+    }
+    final cycleActualNet = cycleActualIncomeTotal - cycleActualExpenseTotal;
     final shortfallDaySummary = calendar.firstShortfallDate == null
         ? null
         : calendar.dayFor(calendar.firstShortfallDate!);
@@ -13657,27 +13672,101 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
             ],
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildOverviewStatChip(
-                  label: '返済予定',
-                  value: _formatYen(calendar.scheduledDebtPaymentTotal),
-                  color: const Color(0xFFB91C1C),
+            if (isPastCycle)
+              Container(
+                key: const Key('asset_calendar_cycle_actual_summary'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                _buildOverviewStatChip(
-                  label: '固定費予定',
-                  value: _formatYen(calendar.subscriptionTotal),
-                  color: const Color(0xFF9333EA),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.history,
+                          size: 16,
+                          color: Color(0xFF475569),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'このサイクルの実績サマリ'
+                            '(${DateFormat('M/d').format(calendar.rangeStart)}'
+                            '〜${DateFormat('M/d').format(cycleLastDay)})',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildOverviewStatChip(
+                          label: '収入実績',
+                          value: _formatYen(cycleActualIncomeTotal),
+                          color: const Color(0xFF2563EB),
+                        ),
+                        _buildOverviewStatChip(
+                          label: '支出実績',
+                          value: _formatYen(cycleActualExpenseTotal),
+                          color: const Color(0xFFB91C1C),
+                        ),
+                        _buildOverviewStatChip(
+                          label: '差引収支',
+                          value: _formatSignedYen(cycleActualNet),
+                          color: cycleActualNet >= 0
+                              ? const Color(0xFF047857)
+                              : const Color(0xFFB91C1C),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      cycleRecordedDayCount > 0
+                          ? '記録がある日: $cycleRecordedDayCount日。終了したサイクルのため予定(返済・固定費・入金予定)は表示せず、記録済みフローのみを集計しています。'
+                          : '終了したサイクルです。この期間に記録されたフローはありません。',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
-                _buildOverviewStatChip(
-                  label: '支払予定合計',
-                  value: _formatYen(calendar.scheduledOutflowTotal),
-                  color: const Color(0xFFC05621),
-                ),
-              ],
-            ),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildOverviewStatChip(
+                    label: '返済予定',
+                    value: _formatYen(calendar.scheduledDebtPaymentTotal),
+                    color: const Color(0xFFB91C1C),
+                  ),
+                  _buildOverviewStatChip(
+                    label: '固定費予定',
+                    value: _formatYen(calendar.subscriptionTotal),
+                    color: const Color(0xFF9333EA),
+                  ),
+                  _buildOverviewStatChip(
+                    label: '支払予定合計',
+                    value: _formatYen(calendar.scheduledOutflowTotal),
+                    color: const Color(0xFFC05621),
+                  ),
+                ],
+              ),
             if (calendar.firstShortfallDate != null) ...[
               const SizedBox(height: 8),
               Container(

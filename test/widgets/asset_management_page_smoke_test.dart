@@ -149,6 +149,89 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('past cycle shows the actual summary instead of plan chips', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // 「今日」= 2026-07-10 → 表示サイクルは 6/25〜7/24。前サイクル(5/25〜6/24)は
+      // 全日が過去なので予定チップの代わりに実績サマリが出る。
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialRecentFlows: <Map<String, dynamic>>[
+              <String, dynamic>{
+                'action_type': 'conquer',
+                'amount': 300000,
+                'description': '給料',
+                'occurred_at': DateTime(2026, 5, 25, 12).toIso8601String(),
+              },
+              <String, dynamic>{
+                'action_type': 'expense',
+                'amount': 12000,
+                'description': '食費',
+                'occurred_at': DateTime(2026, 6, 10, 12).toIso8601String(),
+              },
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // 現在サイクルでは実績サマリは出ず、予定チップが出る。
+      expect(
+        find.byKey(const Key('asset_calendar_cycle_actual_summary')),
+        findsNothing,
+      );
+      expect(find.text('支払予定合計'), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_calendar_prev_month')),
+      );
+      await tester.tap(find.byKey(const Key('asset_calendar_prev_month')));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('2026/5/25〜6/24'), findsOneWidget);
+      final summary = find.byKey(
+        const Key('asset_calendar_cycle_actual_summary'),
+      );
+      expect(summary, findsOneWidget);
+      expect(find.text('支払予定合計'), findsNothing);
+
+      // 実績合算: 収入 300,000 / 支出 12,000 / 差引 +288,000 / 記録 2 日。
+      expect(
+        find.descendant(of: summary, matching: find.text('¥300,000')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: summary, matching: find.text('¥12,000')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: summary, matching: find.text('+¥288,000')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: summary,
+          matching: find.textContaining('記録がある日: 2日'),
+        ),
+        findsOneWidget,
+      );
+
+      // さらに前(4/25〜5/24)は記録なし → 空メッセージ。
+      await tester.tap(find.byKey(const Key('asset_calendar_prev_month')));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(
+        find.textContaining('この期間に記録されたフローはありません'),
+        findsOneWidget,
+      );
+
+      await _unmount(tester);
+    });
+
     testWidgets(
       'monthly flow card aggregates over the salary cycle, not the month',
       (tester) async {
