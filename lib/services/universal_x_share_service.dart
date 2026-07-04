@@ -459,13 +459,19 @@ class UniversalXShareService {
       context,
       content: _growthVariantContent(variant),
     );
+    final text = sanitizeTweet(
+      _growthTextFor(context, variant, url, trendTopics: trendTopics),
+      url: url,
+    );
+    // 動画の主視覚(=この share 画像)が毎回同じ「AI秘書＋同じオフィス」で固定に
+    // 見える問題を解消するため、舞台/照明/構図を6種で劇的にローテする。seed は
+    // text.hashCode(当日ニュースで変わる)なので、動画側 _videoPromptFor と同一舞台に
+    // 揃い、日替り+生成毎に見た目が大きく変化する。
+    final scene = _dailyImageScene(text.hashCode);
     return UniversalXShareDraft(
-      text: sanitizeTweet(
-        _growthTextFor(context, variant, url, trendTopics: trendTopics),
-        url: url,
-      ),
+      text: text,
       imagePrompt:
-          'A sophisticated adult AI executive secretary for "$title", intelligent and elegant, subtly glamorous but brand-safe, tasteful dark suit, premium futuristic office, holographic Flutter web app dashboards, AI assistant, AI University, notes, finance, work logs, English learning, cinematic lighting, no nudity, no explicit sexualization, 16:9, no text overlays. ${_dailyImageAccent(trendTopics)}',
+          'A sophisticated adult AI executive secretary for "$title", intelligent and elegant, brand-safe, tasteful outfit, in the setting of $scene, with holographic Flutter web app dashboards (site guide AI, AI University, notes, finance, work logs, English learning) as subtle background panels, cinematic lighting, no nudity, no explicit sexualization, 16:9, no text overlays. ${_dailyImageAccent(trendTopics)}',
       videoPrompt:
           'A concise presenter video inviting one real X user to try "$title", give first-user feedback, and explain where the app helps or confuses them.',
       hashtags: const ['#buildinpublic'],
@@ -698,6 +704,24 @@ $index. 【$category】$name$volume
   static String _jstDateLabel() {
     final now = DateTime.now().toUtc().add(const Duration(hours: 9));
     return '${now.year}/${now.month}/${now.day}';
+  }
+
+  /// 動画/画像の「舞台」を劇的にローテするための設定候補。presenter(女性AI秘書)は
+  /// 維持しつつ、環境・照明・時間帯・構図を大きく変えることで、静止画も動画も毎回
+  /// 見た目が大きく変わる。Hedra は顔を必要とするため人物シーンに限定している。
+  static const List<String> _presenterScenes = <String>[
+    'a sleek dawn broadcast news desk with soft sunrise light and floating holographic headline panels',
+    'a modern glass studio at night with cool blue holographic panels and distant city lights',
+    'a warm minimalist evening study with a single desk lamp, wooden shelves, and cozy amber tones',
+    'a bright airy daytime co-working space with green plants, large windows, and a relaxed mood',
+    'a premium rooftop lounge at golden hour overlooking a glowing city skyline',
+    'a dynamic control room with several large live dashboards and energetic cinematic composition',
+  ];
+
+  /// [seed]（通常は draft.text.hashCode = 当日ニュースで変化）から舞台を1つ選ぶ。
+  /// 画像側と動画側で同じ seed を使うことで、静止画と動画のシーンが一致する。
+  static String _dailyImageScene(int seed) {
+    return _presenterScenes[seed.abs() % _presenterScenes.length];
   }
 
   /// 当日の日付と（あれば）当日の実ニュース見出しを、画像プロンプトへ
@@ -1099,10 +1123,12 @@ ${draft.imagePrompt}
 '''
           .trim();
     }
+    final scene = _dailyImageScene(draft.text.hashCode);
     return '''
 High-end 16:9 cinematic key visual for ${context.url}.
-Main subject: an intelligent adult female AI executive secretary, refined feminine presence, confident warm expression, tasteful dark suit, premium SaaS cockpit, brand-safe.
-Show concrete product context around her: Site Guide AI, AI secretary, AI University, notes, asset management, English reading dashboard, release notes, and supporter checkout as holographic UI panels.
+Main subject: an intelligent adult female AI executive secretary, refined feminine presence, confident warm expression, tasteful outfit, in the setting of $scene, brand-safe.
+Change the setting, lighting, wardrobe, and camera angle so each day's key visual looks clearly different, while keeping the same brand-safe female presenter.
+Show concrete product context around her as subtle holographic UI panels: Site Guide AI, AI secretary, AI University, notes, asset management, English reading dashboard, release notes, and supporter checkout.
 Avoid generic landing-page mockups, random English marketing text, text overlays, nudity, explicit sexualization, or a masculine presenter.
 Supporting prompt:
 ${draft.imagePrompt}
@@ -1117,16 +1143,9 @@ ${draft.imagePrompt}
     if (!_isMyFinanceUxContext(context)) {
       // シーン/照明/カメラを日替りローテし、当日の話題も差し込むことで、Hedra の
       // enhance_prompt が毎回異なる背景・動きの動画を生成する(=見た目も劇的に変化)。
-      const scenes = <String>[
-        'a sleek dawn broadcast desk with soft sunrise light and floating news headlines',
-        'a modern glass news studio at night with cool blue holographic panels',
-        'a warm minimalist office with a single desk lamp and a calm morning mood',
-        'a dynamic control-room set with multiple live dashboards and energetic camera moves',
-        'a bright airy co-working space with plants, daylight, and a relaxed vibe',
-        'a premium rooftop lounge at golden hour overlooking a city skyline',
-      ];
-      final seed = draft.text.hashCode.abs();
-      final scene = scenes[seed % scenes.length];
+      // 舞台は開始画像(share画像)と同一 seed(draft.text.hashCode)で選ぶため、
+      // 静止画と動画のシーンが一致し、全体として一貫して大きく変わる。
+      final scene = _dailyImageScene(draft.text.hashCode);
       final topic = _topNewsTopicFor(draft);
       final topicLine = topic.isEmpty
           ? ''

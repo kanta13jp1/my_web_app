@@ -66,6 +66,26 @@ void main() {
     expect(draft.threadReplies.first.length, lessThanOrEqualTo(280));
   });
 
+  test('share image rotates the scene setting for dramatic variation', () {
+    final draft = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [UniversalXTrendTopic(name: '熊本豪雨から6年')],
+    );
+
+    // 固定オフィスでなく「舞台のローテ」が画像プロンプトに入っていること。
+    expect(draft.imagePrompt, contains('in the setting of'));
+    expect(draft.imagePrompt, contains('AI executive secretary'));
+    final hasScene = <String>[
+      'broadcast news desk',
+      'glass studio',
+      'evening study',
+      'co-working space',
+      'rooftop lounge',
+      'control room',
+    ].any(draft.imagePrompt.contains);
+    expect(hasScene, isTrue);
+  });
+
   test('growth draft imagePrompt weaves today\'s date and trend headlines', () {
     final draft = UniversalXShareService.buildGrowthDraft(
       page,
