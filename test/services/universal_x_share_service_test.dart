@@ -53,7 +53,10 @@ void main() {
     );
 
     expect(draft.text, contains('デイリーブリーフィング'));
+    // Lead post must open with today's top headline, not a generic app blurb.
+    expect(draft.text, contains('今日の注目'));
     expect(draft.text, contains('ワールドカップ'));
+    expect(draft.text, isNot(contains('Xで伸びている論点')));
     expect(draft.text, contains(page.url));
     expect(draft.text, contains('utm_content=daily_briefing'));
     expect(draft.text.length, lessThanOrEqualTo(280));
