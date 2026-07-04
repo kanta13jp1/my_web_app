@@ -327,6 +327,18 @@ class UniversalXShareService {
     );
   }
 
+  /// URL を載せる最終リプライの CTA 文面プール。毎回同一文だと近似重複として
+  /// スパム降格されやすい(=リプライも独自にインプレッションを稼ぐ)ため、
+  /// text.hashCode で日替りローテする。いずれも「5分試して一言返信」の低摩擦
+  /// アクションと link-in-reply を保つ。
+  static const List<String> _ctaFinalReplies = <String>[
+    '試せるURLはこちらです。5分だけ触って、A/B/Cか一言で返信ください。',
+    '触ってみたい方はこちらへ。5分で気づいた点を一言もらえると助かります。',
+    'ここから試せます。最初の1画面で迷った所があれば教えてください。',
+    '実際に開けます。役に立ちそう/そうでない、どちらでも返信歓迎です。',
+    'デモはこちら。5分だけ使って、続けたいと思ったか教えてください。',
+  ];
+
   /// Builds the lead post + reply chain exactly like [postToX] does, so the
   /// manual share paths (X web intent button, copy button, API-failure
   /// fallback) keep the product URL out of the lead post and move it to the
@@ -362,7 +374,7 @@ class UniversalXShareService {
           .where((entry) => entry.trim().isNotEmpty),
       if (linkInReply)
         sanitizeTweet(
-          '試せるURLはこちらです。5分だけ触って、A/B/Cか一言で返信ください。\n$textUrl',
+          '${_ctaFinalReplies[text.hashCode.abs() % _ctaFinalReplies.length]}\n$textUrl',
           url: textUrl,
         ),
     ];
@@ -588,29 +600,29 @@ $url''',
     required String url,
     required List<UniversalXTrendTopic> trends,
   }) {
-    final date = _jstDateLabel();
     final names = trends
         .take(3)
         .map((trend) => trend.name)
         .where((name) => name.trim().isNotEmpty)
         .toList(growable: false);
     // Real news headlines run 40-60 chars, so keep only the single top headline
-    // (clipped) in the <=280 char lead post; the rest go to thread replies.
+    // (clipped) in the lead post; the rest go to thread replies.
     String clip(String value, int max) =>
         value.length <= max ? value : '${value.substring(0, max)}…';
+    // 1 行目は「デイリーブリーフィング — 日付 朝」のラベルではなく、フォールドより上で
+    // スクロールを止める具体フックにする(=X はリード 1 行目でリーチが決まる)。日付は
+    // 載せない(LLM 経路の年ハルシネーション回避 + テンプレ感低減)。
     if (names.isEmpty) {
       return '''
-デイリーブリーフィング — $date 朝
-Xで伸びている論点を、AI仕事OS開発者の視点で整理します。
+AIツールが増えるほど「今日どれを何に使うか」が散らかります。学習・仕事ログ・情報整理を1画面に戻す視点で整理します。
 
 今日の入口: AI仕事OS、学習、仕事ログ、情報整理
 最後に、$title で試している「情報を残して使う」仕組みも共有します。
 $url''';
     }
     return '''
-デイリーブリーフィング — $date 朝
-今日の注目:「${clip(names.first, 42)}」
-この話題も、$title で情報を残して使う視点から整理します。
+今日いちばん動いた話題:「${clip(names.first, 42)}」— これを「後で使える判断材料」に変える視点で整理します。
+$title で情報を残して使う仕組みと一緒に、今日の論点をまとめます。
 $url''';
   }
 
@@ -708,7 +720,9 @@ $index. 【$category】$name$volume
 
   static String _jstDateLabel() {
     final now = DateTime.now().toUtc().add(const Duration(hours: 9));
-    return '${now.year}/${now.month}/${now.day}';
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    return '${now.year}/$month/$day';
   }
 
   /// 動画/画像の「舞台」を劇的にローテするための設定候補。presenter(女性AI秘書)は
@@ -1007,7 +1021,9 @@ $url''';
               ),
             )
             .where((entry) => entry.trim().isNotEmpty)
-            .take(6)
+            // プロンプトは 5-8 リプライを要求。各リプライは独自にインプレッションを
+            // 稼ぐので 6 で切らず 8 まで通す(サーバ側も slice(0,8))。
+            .take(8)
             .toList(growable: false);
         return UniversalXShareDraft(
           text: text,
@@ -1071,6 +1087,7 @@ Page:
 - route: ${context.routePath}
 - canonicalUrl: ${context.url}
 - shareUrlWithUtm: $shareUrl
+- Today's real date (JST): ${_jstDateLabel()}
 
 Today's real Japanese news headlines (verbatim from NHK / ITmedia news RSS; these are sourced snippets you MAY quote or paraphrase as today's news):
 $trendContext
@@ -1091,10 +1108,12 @@ Rules:
 - Put information value first and product CTA last. Avoid looking like an ad in the lead post.
 - The headline list above is REAL, sourced news (verbatim from NHK / ITmedia RSS). You MAY quote or paraphrase a headline as today's news. Do NOT add facts beyond the headline wording, and do NOT invent numbers, quotes, or outcomes.
 - When headlines are present, OPEN the lead post by tying today's single most relevant headline to this app's angle (information organization / AI work OS), so the post visibly changes every day. Do not lead with a generic app description.
+- The FIRST line (before the X "Show more" fold) must be a concrete curiosity/value/news hook that stops the scroll. Do NOT start with a label or date such as "デイリーブリーフィング — …朝"; do not prefix the post with the date. If you mention any date, use exactly today's real date (JST) given above and never invent another year (e.g. never write 2024).
 - Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
 - Prefer conversation hooks and save-worthy analysis over hashtags.
 - This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars: a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
+- The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim and do NOT phrase it as "1つ目/item 1 of N". Replies 2 onward then form the numbered briefing.
 - Treat the creative workflow as GPT image -> GPT-5.5 -> ElevenLabs -> Hedra.
 - Keep the post natural, concise, and credible.
 $financeRule

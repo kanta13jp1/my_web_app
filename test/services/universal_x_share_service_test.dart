@@ -63,9 +63,12 @@ void main() {
       ],
     );
 
-    expect(draft.text, contains('デイリーブリーフィング'));
-    // Lead post must open with today's top headline, not a generic app blurb.
-    expect(draft.text, contains('今日の注目'));
+    // リード 1 行目は「デイリーブリーフィング — 日付」ラベルではなく、当日トップ
+    // 見出しの具体フックで始まること(=フォールド上でスクロールを止める)。
+    final firstLine = draft.text.split('\n').first;
+    expect(firstLine, contains('ワールドカップ'));
+    expect(firstLine, isNot(contains('デイリーブリーフィング')));
+    expect(draft.text, isNot(contains('デイリーブリーフィング')));
     expect(draft.text, contains('ワールドカップ'));
     expect(draft.text, isNot(contains('Xで伸びている論点')));
     expect(draft.text, contains(page.url));
@@ -141,7 +144,8 @@ void main() {
     );
 
     final now = DateTime.now().toUtc().add(const Duration(hours: 9));
-    final date = '${now.year}/${now.month}/${now.day}';
+    final date =
+        '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}';
     // 固定キービジュアルが毎回ほぼ同一で X アルゴリズムへ重複信号を送っていた
     // 問題(#3776)を解消 — 当日の日付と実ニュース見出しを画像テーマへ反映する。
     expect(draft.imagePrompt, contains('Daily edition $date'));
@@ -158,7 +162,8 @@ void main() {
     final draft = UniversalXShareService.buildGrowthDraft(page);
 
     final now = DateTime.now().toUtc().add(const Duration(hours: 9));
-    final date = '${now.year}/${now.month}/${now.day}';
+    final date =
+        '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}';
     // 見出しが無い日でも、日付だけで最低限の日替り変化を保証する。
     expect(draft.imagePrompt, contains('Daily edition $date'));
     expect(draft.imagePrompt, isNot(contains('today\'s news mood')));
@@ -179,7 +184,8 @@ void main() {
     );
 
     final now = DateTime.now().toUtc().add(const Duration(hours: 9));
-    final date = '${now.year}/${now.month}/${now.day}';
+    final date =
+        '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}';
     expect(draft.imagePrompt, contains('Daily edition $date'));
     expect(draft.imagePrompt, contains('ITmedia 生成AI'));
     expect(draft.imagePrompt, contains('product screenshot style hero image'));
@@ -196,7 +202,8 @@ void main() {
     final draft = UniversalXShareService.buildFallbackDraft(emptyUrlFinance);
 
     final now = DateTime.now().toUtc().add(const Duration(hours: 9));
-    final date = '${now.year}/${now.month}/${now.day}';
+    final date =
+        '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}';
     expect(draft.imagePrompt, contains('My Finance'));
     expect(draft.imagePrompt, contains('Daily edition $date'));
   });
@@ -375,6 +382,24 @@ void main() {
 
     expect(parts.leadText, contains(page.url));
     expect(parts.replyTexts, isEmpty);
+  });
+
+  test('final-reply CTA rotates across posts to avoid duplicate suppression',
+      () {
+    final seenCtas = <String>{};
+    for (final body in const ['a', 'bb', 'ccc', 'dddd', 'eeeee', 'ffffff']) {
+      final parts = UniversalXShareService.buildManualShareParts(
+        context: page,
+        text: '$body\n${page.url}',
+        linkInReply: true,
+      );
+      final cta = parts.replyTexts.last;
+      // URL は最終リプライに載る(リードには載らない)。
+      expect(cta, contains(parts.textUrl));
+      seenCtas.add(cta.split('\n').first);
+    }
+    // 固定文の近似重複でなく、プールから複数バリアントが出る。
+    expect(seenCtas.length, greaterThanOrEqualTo(2));
   });
 
   test('postToX surfaces X developer project guidance', () async {
