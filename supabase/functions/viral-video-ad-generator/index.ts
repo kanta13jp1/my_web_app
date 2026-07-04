@@ -656,6 +656,14 @@ async function createHedraPresenterVideo(params: {
   const useUploadedAudioPath =
     (HEDRA_UPLOADED_AUDIO_ENABLED || params.requiresUploadedAudio === true) &&
     Boolean(ELEVENLABS_API_KEY || OPENAI_API_KEY);
+  console.log(
+    `[vvag-audio] path=${
+      useUploadedAudioPath ? "uploaded" : "hedra_tts"
+    } requiresUploadedAudio=${params.requiresUploadedAudio === true} ` +
+      `elevenlabs=${Boolean(ELEVENLABS_API_KEY)} openai=${
+        Boolean(OPENAI_API_KEY)
+      }`,
+  );
   if (useUploadedAudioPath) {
     try {
       if (!ELEVENLABS_API_KEY) {
@@ -670,8 +678,12 @@ async function createHedraPresenterVideo(params: {
       audioProvider = "elevenlabs";
       storedAudioUrl = audio.url;
       storedAudioPath = audio.path;
+      console.log(`[vvag-audio] ElevenLabs OK storedAudioUrl=${audio.url}`);
     } catch (error) {
-      console.warn("ElevenLabs speech generation failed; falling back", error);
+      console.error(
+        "[vvag-audio] ElevenLabs speech generation failed; falling back",
+        providerErrorMessage(error),
+      );
       speechChain.push(`elevenlabs=${providerErrorMessage(error)}`);
       if (
         params.requiresUploadedAudio &&
@@ -1276,19 +1288,41 @@ async function createHedraAudioAssetFromUrl(
   url: string,
   name: string,
 ): Promise<string> {
+  // 動画生成失敗の主因である「音声アセット化」の各段階を Supabase ログに記録し、
+  // どの段階(download / create asset / upload)で失敗したかを特定可能にする。
+  console.log(`[vvag-asset] download start url=${url.slice(0, 140)}`);
   const download = await fetch(url);
   if (!download.ok) {
-    throw new Error(`uploaded audio download failed with ${download.status}`);
+    const body = await download.text().catch(() => "");
+    console.error(
+      `[vvag-asset] download failed status=${download.status} body=${
+        body.slice(0, 200)
+      }`,
+    );
+    throw new Error(
+      `uploaded audio download failed with ${download.status}: ${
+        body.trim().slice(0, 200) || download.statusText
+      }`,
+    );
   }
   const bytes = new Uint8Array(await download.arrayBuffer());
+  console.log(
+    `[vvag-asset] downloaded bytes=${bytes.byteLength}; creating Hedra asset`,
+  );
   const created = await hedraJsonRequest(apiKey, "/assets", {
     method: "POST",
     body: { name, type: "audio" },
   });
   const assetId = extractHedraAssetId(created);
   if (!assetId) {
+    console.error(
+      `[vvag-asset] create asset returned no id payload=${
+        JSON.stringify(created).slice(0, 300)
+      }`,
+    );
     throw new Error("Hedra asset id was missing from create asset response");
   }
+  console.log(`[vvag-asset] asset created id=${assetId}; uploading bytes`);
   const form = new FormData();
   const buffer = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(buffer).set(bytes);
@@ -1299,12 +1333,18 @@ async function createHedraAudioAssetFromUrl(
   );
   if (!uploaded.ok) {
     const rawText = await uploaded.text();
+    console.error(
+      `[vvag-asset] upload failed status=${uploaded.status} body=${
+        rawText.slice(0, 200)
+      }`,
+    );
     throw new Error(
       `Hedra asset upload ${uploaded.status}: ${
         rawText.trim() || uploaded.statusText
       }`,
     );
   }
+  console.log(`[vvag-asset] upload OK asset=${assetId}`);
   return assetId;
 }
 
@@ -1473,17 +1513,31 @@ async function resolveHedraTextToSpeechModelId(
   const configured = resolveConfiguredHedraTextToSpeechModelId(
     HEDRA_TTS_MODEL_ID,
   );
-  if (configured) return configured;
-
+  if (configured) {
+    console.log(`[vvag-tts] using configured HEDRA_TTS_MODEL_ID=${configured}`);
+    return configured;
+  }
+  console.log(
+    `[vvag-tts] HEDRA_TTS_MODEL_ID unset/invalid (raw=${
+      HEDRA_TTS_MODEL_ID ? "set-but-non-uuid" : "empty"
+    }); discovering via /models`,
+  );
   try {
     const payload = await hedraJsonRequest(apiKey, "/models", {
       method: "GET",
     });
     const models = extractHedraModelList(payload);
-    return selectBestHedraTextToSpeechModelId(models);
+    const selected = selectBestHedraTextToSpeechModelId(models);
+    console.log(
+      `[vvag-tts] /models returned ${models.length} models; selected=${
+        selected ??
+          "NONE (no text_to_speech model matched → text_to_speech will 400)"
+      }`,
+    );
+    return selected;
   } catch (error) {
-    console.warn(
-      "Hedra TTS model discovery failed",
+    console.error(
+      "[vvag-tts] Hedra TTS model discovery failed",
       providerErrorMessage(error),
     );
     return null;
