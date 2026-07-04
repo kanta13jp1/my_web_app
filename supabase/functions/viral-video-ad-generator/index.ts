@@ -651,8 +651,16 @@ async function createHedraPresenterVideo(params: {
   // (= ダッシュボードのログを見ずに応答だけで診断できるようにする)。
   const speechChain: string[] = [];
 
-  if (HEDRA_UPLOADED_AUDIO_ENABLED && ELEVENLABS_API_KEY) {
+  // requiresUploadedAudio テンプレ (= ai_secretary_site_tour) はフラグ非依存で
+  // アップロード音声経路を使う (壊れた Hedra 内蔵TTSへ落ちるのを構造的に防ぐ)。
+  const useUploadedAudioPath =
+    (HEDRA_UPLOADED_AUDIO_ENABLED || params.requiresUploadedAudio === true) &&
+    Boolean(ELEVENLABS_API_KEY || OPENAI_API_KEY);
+  if (useUploadedAudioPath) {
     try {
+      if (!ELEVENLABS_API_KEY) {
+        throw new Error("ELEVENLABS_API_KEY not configured");
+      }
       const audio = await createElevenLabsSpeechAsset(params.admin, {
         text: spokenScript.slice(0, 1800),
         templateTitle: params.title ?? "share-update",
@@ -751,11 +759,11 @@ async function createHedraPresenterVideo(params: {
       fallbackText: spokenScript.slice(0, 1800),
     });
   } catch (error) {
-    if (speechChain.length === 0) throw error;
     const message = error instanceof Error ? error.message : String(error);
-    // 音声フォールバック連鎖の失敗理由を最終エラーへ含め、
+    // 音声経路(成功時含む)と失敗連鎖を最終エラーへ含め、
     // videoReason だけで根因診断できるようにする。
-    throw new Error(`${message}; speech_chain: ${speechChain.join(" | ")}`);
+    const chain = [`audio_provider=${audioProvider}`, ...speechChain];
+    throw new Error(`${message}; speech_chain: ${chain.join(" | ")}`);
   }
 }
 
@@ -789,6 +797,53 @@ async function createHedraVideoFromUploadedAudio(
     },
   };
   let payload: unknown;
+  // Hedra は audio_generation.type="audio" (URL渡し) を拒否するため、
+  // アップロード音声は歴史的に実績のあるアセット方式 (audio_id) を最優先で使う。
+  const uploadedAudioUrl = media.audioGeneration["type"] === "audio"
+    ? firstNonEmptyString(media.audioGeneration["url"])
+    : null;
+  if (uploadedAudioUrl) {
+    try {
+      const audioAssetId = await createHedraAudioAssetFromUrl(
+        params.apiKey,
+        uploadedAudioUrl,
+        `${storageSafeSegment(params.title ?? "share-update")}.mp3`,
+      );
+      const assetBody: Record<string, unknown> = {
+        type: "video",
+        ai_model_id: HEDRA_AVATAR_MODEL_ID,
+        start_keyframe_url: media.imageUrl,
+        audio_id: audioAssetId,
+        generated_video_inputs: {
+          text_prompt: `${params.title ?? "Share update"}
+${params.prompt}`,
+          aspect_ratio: "16:9",
+          resolution: "540p",
+          enhance_prompt: true,
+        },
+      };
+      const assetPayload = await hedraJsonRequest(
+        params.apiKey,
+        "/generations",
+        { method: "POST", body: assetBody },
+      );
+      const video = await pollHedraGeneration(
+        params.apiKey,
+        normalizeHedraVideoResponse(assetPayload),
+      );
+      return {
+        ...video,
+        storedAudioUrl: media.storedAudioUrl,
+        storedAudioPath: media.storedAudioPath,
+        audioProvider: media.audioProvider,
+      };
+    } catch (assetError) {
+      console.warn(
+        "Hedra audio asset flow failed; trying audio_generation",
+        providerErrorMessage(assetError),
+      );
+    }
+  }
   try {
     payload = await createHedraGenerationWithTtsModelFallback(
       params.apiKey,
@@ -1192,6 +1247,57 @@ async function uploadBytesToStorage(
     return { ok: false, error: error.message };
   }
   return { ok: true };
+}
+
+async function createHedraAudioAssetFromUrl(
+  apiKey: string,
+  url: string,
+  name: string,
+): Promise<string> {
+  const download = await fetch(url);
+  if (!download.ok) {
+    throw new Error(`uploaded audio download failed with ${download.status}`);
+  }
+  const bytes = new Uint8Array(await download.arrayBuffer());
+  const created = await hedraJsonRequest(apiKey, "/assets", {
+    method: "POST",
+    body: { name, type: "audio" },
+  });
+  const assetId = extractHedraAssetId(created);
+  if (!assetId) {
+    throw new Error("Hedra asset id was missing from create asset response");
+  }
+  const form = new FormData();
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  form.append("file", new Blob([buffer], { type: "audio/mpeg" }), name);
+  const uploaded = await fetch(
+    `${HEDRA_API_BASE}/assets/${encodeURIComponent(assetId)}/upload`,
+    { method: "POST", headers: { "X-API-Key": apiKey }, body: form },
+  );
+  if (!uploaded.ok) {
+    const rawText = await uploaded.text();
+    throw new Error(
+      `Hedra asset upload ${uploaded.status}: ${
+        rawText.trim() || uploaded.statusText
+      }`,
+    );
+  }
+  return assetId;
+}
+
+function extractHedraAssetId(payload: unknown): string | null {
+  const record = asRecord(payload);
+  const data = asRecord(record?.["data"]);
+  const asset = asRecord(record?.["asset"]);
+  return firstNonEmptyString(
+    record?.["id"],
+    record?.["asset_id"],
+    data?.["id"],
+    data?.["asset_id"],
+    asset?.["id"],
+    asset?.["asset_id"],
+  );
 }
 
 async function persistRemoteMediaToStorage(
