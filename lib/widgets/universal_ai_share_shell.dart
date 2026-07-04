@@ -391,6 +391,10 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         context: widget.page,
         text: _textController.text,
         mediaUrl: mediaUrl,
+        // 本文にURLを入れるとXがインプレを抑制するため、URLはリプライへ回す。
+        // スレッド返信(Q&A)も投稿してエンゲージとリーチを伸ばす。
+        threadReplies: _draft?.threadReplies ?? const [],
+        linkInReply: true,
       );
       if (_disposed || !mounted) return;
       setState(() {

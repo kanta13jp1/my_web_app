@@ -380,12 +380,13 @@ void main() {
       );
       expect(capturedBody?['customPrompt'], contains('ElevenLabs'));
       expect(capturedBody?['customPrompt'], contains('Hedra'));
-      final script = (capturedBody?['customScript'] as List).join('\n');
-      expect(script, contains('知的で上品なAI秘書'));
-      expect(script, contains('サイト案内AI'));
-      expect(script, contains('AI大学'));
-      expect(script, contains('資産管理'));
-      expect(script, contains('ElevenLabs'));
+      final scriptLines = capturedBody?['customScript'] as List;
+      final script = scriptLines.join('\n');
+      // 動画スクリプトは固定文ではなく、トレンド反映済み draft のフック +
+      // 機能ツアー(日替りローテーション) + CTA で毎回変化する (#3766)。
+      expect(script, contains('デイリーブリーフィング')); // draft由来の可変フック
+      expect(script, contains('5分だけ試して')); // 末尾CTA
+      expect(scriptLines.length, greaterThanOrEqualTo(4));
       expect(script, isNot(contains('https://')));
       expect(script, isNot(contains(page.url)));
     },
