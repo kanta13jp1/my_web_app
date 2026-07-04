@@ -179,6 +179,7 @@ export async function uploadMediaFromUrl(
     fileName?: string;
     mediaType?: string;
     mediaCategory?: string;
+    altText?: string;
   } = {},
 ): Promise<UploadedXMedia> {
   assertXConfigured();
@@ -187,6 +188,7 @@ export async function uploadMediaFromUrl(
     fileName: options.fileName || inferFileName(mediaUrl, binary.mediaType),
     mediaType: options.mediaType || binary.mediaType,
     mediaCategory: options.mediaCategory,
+    altText: options.altText,
   });
 }
 
@@ -196,6 +198,7 @@ export async function uploadMediaBytes(
     fileName?: string;
     mediaType?: string;
     mediaCategory?: string;
+    altText?: string;
   } = {},
 ): Promise<UploadedXMedia> {
   assertXConfigured();
@@ -243,6 +246,21 @@ export async function uploadMediaBytes(
     mediaId,
     finalizeResponse,
   );
+
+  // アクセシビリティ用の alt text を付与 (= 到達を僅かに広げ、ペナルティ無し)。
+  // 失敗しても投稿を絶対にブロックしないよう log のみで飲み込む。
+  const altText = asString(options.altText);
+  if (altText !== "") {
+    try {
+      await setMediaAltText(mediaId, altText);
+    } catch (error) {
+      console.error(
+        `[x-client] setMediaAltText failed for media ${mediaId} (non-fatal):`,
+        error,
+      );
+    }
+  }
+
   return {
     mediaId,
     mediaKey: asString(finalizeResponse.media_key) || null,
@@ -250,6 +268,41 @@ export async function uploadMediaBytes(
     sizeBytes: bytes.byteLength,
     processingState,
   };
+}
+
+/**
+ * media/metadata/create の JSON body を組み立てる純粋関数 (= test 可能に分離)。
+ * alt_text.text は X の上限 1000 字で切り詰める。
+ */
+export function buildMediaAltTextBody(
+  mediaId: string,
+  altText: string,
+): { media_id: string; alt_text: { text: string } } {
+  return {
+    media_id: mediaId,
+    alt_text: { text: altText.slice(0, 1000) },
+  };
+}
+
+/**
+ * アップロード済み media に alt text を付与する。
+ * JSON body なので requestParams は空 = postTweet と同じ署名パス。
+ * 呼び出し側 (uploadMediaBytes) が try/catch で飲み込むため、ここでは throw してよい。
+ */
+export async function setMediaAltText(
+  mediaId: string,
+  altText: string,
+): Promise<void> {
+  const url = "https://upload.twitter.com/1.1/media/metadata/create";
+  const oauthHeader = await buildOAuthHeader("POST", url);
+  await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: oauthHeader,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(buildMediaAltTextBody(mediaId, altText)),
+  });
 }
 
 export async function postTweet(input: {
