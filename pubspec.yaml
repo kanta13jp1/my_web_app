@@ -35,7 +35,7 @@ dependencies:
   screenshot: ^3.0.0               # Widgetを画像化
   cross_file: ^0.3.4+2             # 共有ファイルラッパー
   share_plus: ^12.0.1              # 共有（SNS/共有シート）
-  path_provider: ^2.1.5            # 保存先パス取得
+  path_provider: ^2.1.6            # 保存先パス取得
 
   logger: ^2.0.2                   # ログ出力
   timeago: ^3.7.0                  # 相対時刻表示（例: 3分前）
@@ -47,7 +47,7 @@ dependencies:
   confetti: ^0.8.0
   audioplayers: ^6.7.1
   table_calendar: ^3.1.2
-  flutter_local_notifications: ^21.0.0
+  flutter_local_notifications: ^22.0.1
   timezone: ^0.11.0
   flutter_map: ^8.0.0
   latlong2: ^0.9.1
