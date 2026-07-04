@@ -849,6 +849,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetExpectedInflow> _expectedInflows = <AssetExpectedInflow>[];
   List<AssetExpectedInflowRule> _expectedInflowRules =
       <AssetExpectedInflowRule>[];
+  // 給料の入金予定ルール登録提案カードの「表示しない」永続フラグ (#part311)。
+  // カレンダーが asOf 起点になった (#3799) ことで、給料未登録だと次サイクル頭の
+  // 見込み残高が細く見えるため、給与データからワンタップ登録できる導線を出す。
+  static const String _salaryInflowPromptDismissedKey =
+      'asset_salary_inflow_prompt_dismissed_v1';
+  bool _salaryInflowPromptDismissed = false;
   String? _displayModeStatsLabel;
   String? _experimentServerSummary;
   List<Map<String, dynamic>> _experimentWeekly = const <Map<String, dynamic>>[];
@@ -11375,12 +11381,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Future<void> _loadExpectedInflows() async {
     final entries = await _expectedInflowStore.loadAll();
     final rules = await _expectedInflowStore.loadRules();
+    final prefs = await SharedPreferences.getInstance();
+    final promptDismissed =
+        prefs.getBool(_salaryInflowPromptDismissedKey) ?? false;
     if (!mounted) {
       return;
     }
     setState(() {
       _expectedInflows = entries;
       _expectedInflowRules = rules;
+      _salaryInflowPromptDismissed = promptDismissed;
     });
     if (entries.isEmpty && rules.isEmpty) {
       unawaited(_restoreInflowsFromMirror());
@@ -11407,6 +11417,97 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return thisMonth;
     }
     return DateTime(now.year, now.month + 1, _salaryDay);
+  }
+
+  /// 給料を入金予定ルールへ登録する提案カードの提示金額 (円)。
+  /// 表示条件を満たさない場合は null (= カード非表示)。
+  ///
+  /// 給料らしいルール (給料日と同日 or ラベルに給料/給与) が既にあれば出さない。
+  /// 金額は 想定給料額 (設定) → 最新の給与明細/salary_incomes の手取り の順で採用。
+  double? _salaryInflowSuggestionAmount() {
+    if (_salaryInflowPromptDismissed) {
+      return null;
+    }
+    final hasSalaryLikeRule = _expectedInflowRules.any(
+      (rule) =>
+          rule.dayOfMonth == _salaryDay ||
+          rule.label.contains('給料') ||
+          rule.label.contains('給与'),
+    );
+    if (hasSalaryLikeRule) {
+      return null;
+    }
+    final explicit = _salaryAmount;
+    if (explicit != null && explicit > 0) {
+      return explicit;
+    }
+    DateTime? latestDate;
+    double? latestAmount;
+    void consider(Object? payDateRaw, double amount) {
+      final payDate = DateTime.tryParse(payDateRaw?.toString() ?? '');
+      if (payDate == null || amount <= 0) {
+        return;
+      }
+      if (latestDate == null || payDate.isAfter(latestDate!)) {
+        latestDate = payDate;
+        latestAmount = amount;
+      }
+    }
+
+    for (final row in _payslipSalaryIncomes) {
+      consider(row['pay_date'], _numberFromDynamic(row['amount']));
+    }
+    for (final row in _payslipRows) {
+      consider(row['pay_date'], _numberFromDynamic(row['net_amount']));
+    }
+    return latestAmount;
+  }
+
+  /// 提案カードのワンタップ登録: 毎月 [_salaryDay] 日の「給料」ルールを追加し
+  /// サーバへミラーする (入金予定ダイアログの繰り返し登録と同経路)。
+  Future<void> _registerSalaryInflowRule(double amount) async {
+    final beforeRuleIds = _expectedInflowRules.map((rule) => rule.id).toSet();
+    final rules = await _expectedInflowStore.addRule(
+      dayOfMonth: _salaryDay,
+      amount: amount,
+      label: '給料',
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _expectedInflowRules = rules;
+    });
+    unawaited(
+      _mirrorInflowsToSupabase(<Map<String, dynamic>>[
+        for (final rule in rules)
+          if (!beforeRuleIds.contains(rule.id))
+            <String, dynamic>{
+              'id': rule.id,
+              'kind': 'rule',
+              'day_of_month': rule.dayOfMonth,
+              'amount': rule.amount,
+              'label': rule.label,
+            },
+      ]),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('毎月$_salaryDay日の給料を入金予定に登録しました。見込み残高に反映されます')),
+    );
+  }
+
+  Future<void> _dismissSalaryInflowPrompt() async {
+    setState(() {
+      _salaryInflowPromptDismissed = true;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_salaryInflowPromptDismissedKey, true);
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('あとから「毎月の入金ルール」や入金予定ダイアログでも登録できます')),
+    );
   }
 
   Future<void> _sendDisplayModeEvent({
@@ -11463,9 +11564,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     DateTime initialDate, {
     double? initialAmount,
     String? initialLabel,
+    bool initialRepeatMonthly = false,
   }) async {
     var selectedDate = initialDate;
-    var repeatMonthly = false;
+    var repeatMonthly = initialRepeatMonthly;
     final amountController = TextEditingController(
       text: initialAmount != null && initialAmount > 0
           ? initialAmount.round().toString()
@@ -13417,6 +13519,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             .map((event) => event.label)
             .join(' + ');
     const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+    final salarySuggestionAmount = _salaryInflowSuggestionAmount();
 
     return Card(
       elevation: 2,
@@ -13470,6 +13573,89 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 height: 1.5,
               ),
             ),
+            if (salarySuggestionAmount != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                key: const Key('asset_salary_inflow_suggestion'),
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F9FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFBAE6FD)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.savings,
+                          size: 16,
+                          color: Color(0xFF0369A1),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '給料が入金予定に未登録です。登録すると給料日以降の見込み残高とショート判定が正確になります。',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              height: 1.6,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          key: const Key('asset_salary_inflow_dismiss'),
+                          tooltip: '表示しない',
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
+                          icon: const Icon(Icons.close, size: 16),
+                          onPressed: _dismissSalaryInflowPrompt,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          key: const Key('asset_salary_inflow_register'),
+                          onPressed: () => _registerSalaryInflowRule(
+                            salarySuggestionAmount,
+                          ),
+                          icon: const Icon(Icons.repeat, size: 16),
+                          label: Text(
+                            '給料 ${_formatYen(salarySuggestionAmount)} を毎月$_salaryDay日に登録',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        TextButton(
+                          key: const Key('asset_salary_inflow_adjust'),
+                          onPressed: () => _showAddExpectedInflowDialog(
+                            _nextSalaryDate(),
+                            initialAmount: salarySuggestionAmount,
+                            initialLabel: '給料',
+                            initialRepeatMonthly: true,
+                          ),
+                          child: const Text(
+                            '金額・日付を調整して登録',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
