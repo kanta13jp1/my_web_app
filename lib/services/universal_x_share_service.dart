@@ -441,7 +441,7 @@ class UniversalXShareService {
         url: url,
       ),
       imagePrompt:
-          'A sophisticated adult AI executive secretary for "$title", intelligent and elegant, subtly glamorous but brand-safe, tasteful dark suit, premium futuristic office, holographic Flutter web app dashboards, AI assistant, AI University, notes, finance, work logs, English learning, cinematic lighting, no nudity, no explicit sexualization, 16:9, no text overlays.',
+          'A sophisticated adult AI executive secretary for "$title", intelligent and elegant, subtly glamorous but brand-safe, tasteful dark suit, premium futuristic office, holographic Flutter web app dashboards, AI assistant, AI University, notes, finance, work logs, English learning, cinematic lighting, no nudity, no explicit sexualization, 16:9, no text overlays. ${_dailyImageAccent(trendTopics)}',
       videoPrompt:
           'A concise presenter video inviting one real X user to try "$title", give first-user feedback, and explain where the app helps or confuses them.',
       hashtags: const ['#buildinpublic'],
@@ -488,8 +488,8 @@ ${context.url}
     return UniversalXShareDraft(
       text: text,
       imagePrompt: isFinanceUx
-          ? 'A 16:9 moving smartphone app UX validation key visual for "My Finance", Japanese personal finance app, asset dashboard, spending review, KPI cards, tap gestures, clean fintech UI, no text overlays.'
-          : 'A clean 16:9 product screenshot style hero image for "$title", Flutter web app UI, crisp dashboard details, no text overlays, modern Japanese productivity app, bright and trustworthy.',
+          ? 'A 16:9 moving smartphone app UX validation key visual for "My Finance", Japanese personal finance app, asset dashboard, spending review, KPI cards, tap gestures, clean fintech UI, no text overlays. ${_dailyImageAccent(trendTopics)}'
+          : 'A clean 16:9 product screenshot style hero image for "$title", Flutter web app UI, crisp dashboard details, no text overlays, modern Japanese productivity app, bright and trustworthy. ${_dailyImageAccent(trendTopics)}',
       videoPrompt: isFinanceUx
           ? 'A short moving smartphone app UX validation video for "My Finance", showing a Japanese mobile finance app flow with assets, spending, KGI/CSF/KPI, and an improvement loop. Creative pipeline: GPT image2 -> GPT-5.5 -> Seedance 2.0.'
           : 'A short 16:9 presenter video concept introducing "$title" as a practical improvement in a Flutter web life-management app.',
@@ -674,6 +674,32 @@ $index. 【$category】$name$volume
   static String _jstDateLabel() {
     final now = DateTime.now().toUtc().add(const Duration(hours: 9));
     return '${now.year}/${now.month}/${now.day}';
+  }
+
+  /// 当日の日付と（あれば）当日の実ニュース見出しを、画像プロンプトへ
+  /// "視覚テーマのアクセント" として織り込む。固定キービジュアルが毎回ほぼ同一に
+  /// なり、X アルゴリズムへ重複アカウント信号を送っていた問題を解消し、日替りで
+  /// 画像が変わるようにする（テキスト側の [_trendAwareGrowthText] と同じ発想）。
+  /// 見出しは文言の範囲でムード・配色に反映するのみで、ニュース事実の捏造や、
+  /// 見出しを画像内テキスト／実シーンとして描画させることはしない。
+  /// 見出しが無い日でも日付だけで最低限の日替り変化を保証する。
+  static String _dailyImageAccent(List<UniversalXTrendTopic> trendTopics) {
+    final date = _jstDateLabel();
+    final names = trendTopics
+        .map((trend) => trend.name.trim())
+        .where((name) => name.isNotEmpty)
+        .take(3)
+        .toList(growable: false);
+    if (names.isEmpty) {
+      return 'Daily edition $date: refresh the mood for today through lighting, '
+          'a seasonal color palette, and subtle composition changes, without '
+          'rendering any date, headline, or text on the image.';
+    }
+    return 'Daily edition $date, today\'s news mood: ${names.join(' / ')}. '
+        'Reflect only the general atmosphere of these topics as background '
+        'palette, lighting, and abstract holographic motifs — never as literal '
+        'news scenes, logos, headlines, or any on-image text, and do not invent '
+        'facts beyond these words.';
   }
 
   static String _compactCount(int value) {
