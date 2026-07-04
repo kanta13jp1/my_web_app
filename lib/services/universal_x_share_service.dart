@@ -464,14 +464,15 @@ class UniversalXShareService {
       url: url,
     );
     // 動画の主視覚(=この share 画像)が毎回同じ「AI秘書＋同じオフィス」で固定に
-    // 見える問題を解消するため、舞台/照明/構図を6種で劇的にローテする。seed は
-    // text.hashCode(当日ニュースで変わる)なので、動画側 _videoPromptFor と同一舞台に
-    // 揃い、日替り+生成毎に見た目が大きく変化する。
+    // 見える問題を解消するため、presenter(人物)と舞台/照明/構図を大きくローテする。
+    // seed は text.hashCode(当日ニュース/生成毎で変わる)なので、動画側 _videoPromptFor
+    // と同一人物・同一舞台に揃い、生成毎に見た目が劇的に変化する。
     final scene = _dailyImageScene(text.hashCode);
+    final character = _dailyPresenterCharacter(text.hashCode);
     return UniversalXShareDraft(
       text: text,
       imagePrompt:
-          'A sophisticated adult AI executive secretary for "$title", intelligent and elegant, brand-safe, tasteful outfit, in the setting of $scene, with holographic Flutter web app dashboards (site guide AI, AI University, notes, finance, work logs, English learning) as subtle background panels, cinematic lighting, no nudity, no explicit sexualization, 16:9, no text overlays. ${_dailyImageAccent(trendTopics)}',
+          'Key visual with $character as the friendly presenter for "$title", in the setting of $scene, with holographic Flutter web app dashboards (site guide AI, AI University, notes, finance, work logs, English learning) as subtle background panels, cinematic lighting, adult, brand-safe, tasteful appropriate attire, no minors, no nudity, no explicit sexualization, 16:9, no text overlays. ${_dailyImageAccent(trendTopics)}',
       videoPrompt:
           'A concise presenter video inviting one real X user to try "$title", give first-user feedback, and explain where the app helps or confuses them.',
       hashtags: const ['#buildinpublic'],
@@ -722,6 +723,60 @@ $index. 【$category】$name$volume
   /// 画像側と動画側で同じ seed を使うことで、静止画と動画のシーンが一致する。
   static String _dailyImageScene(int seed) {
     return _presenterScenes[seed.abs() % _presenterScenes.length];
+  }
+
+  /// presenter(動画に登場する人物)をランダムに大きく変えるための候補。動画が毎回
+  /// 同じ「女性AI秘書」で固定に見える問題を解消するため、ファッション/職業/創作/
+  /// スポーツ/ファンタジー系の多様な人物へローテする。
+  /// 安全方針: **成人のみ**(未成年は一切含めない)、ブランド安全、適切な服装、
+  /// 非性的。夜職/グラビア系など性的文脈になりやすい類型は含めない。
+  /// Hedra は顔を必要とするため、いずれも「顔のある人物」に限定している。
+  static const List<String> _presenterCharacters = <String>[
+    'a poised adult female AI executive secretary in a tasteful suit',
+    'a cheerful adult gyaru-style woman with bright trendy fashion',
+    'an elegant adult onee-san woman in a refined modern outfit',
+    'a graceful adult ojou-sama lady in a classic tasteful dress',
+    'a natural mori-girl style adult woman in soft earth-tone layers',
+    'a chic adult woman in Korean-style minimal fashion',
+    'a cool adult woman in sharp monochrome mode fashion',
+    'a boyish short-haired adult woman in casual streetwear',
+    'an adult woman in a tasteful gothic-lolita style dress',
+    'a professional adult female news anchor in a smart blazer',
+    'a warm adult female nurse in clean scrubs',
+    'a calm adult female librarian with glasses and a cardigan',
+    'a dignified adult female CEO in a tailored suit',
+    'a friendly adult female cafe barista in an apron',
+    'an adult female flight attendant in a neat uniform',
+    'a bright adult idol-style woman in tasteful stage fashion',
+    'a cool adult female rock guitarist in stylish stage attire',
+    'a trendy adult K-pop-style female dancer',
+    'an adult female ballet dancer in an elegant practice outfit',
+    'a sporty adult female runner in athletic wear',
+    'an adult female martial artist in a clean karate gi',
+    'an adult female shrine maiden in traditional miko attire',
+    'an adult woman in a graceful kimono',
+    'a fantasy adult female knight in ornate armor',
+    'a magical-girl style adult woman in a colorful brand-safe costume',
+    'an adult female elf ranger with pointed ears in a woodland outfit',
+    'a friendly adult android-style woman with subtle sci-fi styling',
+    'a wise elderly woman with silver hair and a kind expression',
+    'a fresh clean-cut adult young man with a friendly look',
+    'a dandy adult gentleman in a refined suit',
+    'a rugged adult man with a confident outdoorsy style',
+    'a trendy adult male K-pop idol in stage fashion',
+    'a cool adult male rock bandman with an edgy style',
+    'an adult male chef in a crisp white uniform',
+    'a professional adult male news anchor in a sharp suit',
+    'a fantasy adult male knight in shining armor',
+    'a mysterious adult male detective in a long coat',
+    'a fit adult male athlete in sportswear',
+    'a distinguished elderly man with silver hair and a warm smile',
+  ];
+
+  /// [seed]（通常は draft.text.hashCode = 当日ニュース/生成毎で変化）から presenter
+  /// を1人選ぶ。画像側と動画側で同じ seed を使い、静止画と動画の人物を一致させる。
+  static String _dailyPresenterCharacter(int seed) {
+    return _presenterCharacters[seed.abs() % _presenterCharacters.length];
   }
 
   /// 当日の日付と（あれば）当日の実ニュース見出しを、画像プロンプトへ
@@ -1124,12 +1179,13 @@ ${draft.imagePrompt}
           .trim();
     }
     final scene = _dailyImageScene(draft.text.hashCode);
+    final character = _dailyPresenterCharacter(draft.text.hashCode);
     return '''
 High-end 16:9 cinematic key visual for ${context.url}.
-Main subject: an intelligent adult female AI executive secretary, refined feminine presence, confident warm expression, tasteful outfit, in the setting of $scene, brand-safe.
-Change the setting, lighting, wardrobe, and camera angle so each day's key visual looks clearly different, while keeping the same brand-safe female presenter.
-Show concrete product context around her as subtle holographic UI panels: Site Guide AI, AI secretary, AI University, notes, asset management, English reading dashboard, release notes, and supporter checkout.
-Avoid generic landing-page mockups, random English marketing text, text overlays, nudity, explicit sexualization, or a masculine presenter.
+Main subject: $character as the presenter, adult, brand-safe, tasteful appropriate attire, confident warm expression, in the setting of $scene.
+Rotate the character, setting, lighting, wardrobe, and camera angle so each day's key visual looks dramatically different.
+Show concrete product context around them as subtle holographic UI panels: Site Guide AI, AI secretary, AI University, notes, asset management, English reading dashboard, release notes, and supporter checkout.
+Strictly avoid minors, nudity, explicit sexualization, text overlays, and random English marketing text.
 Supporting prompt:
 ${draft.imagePrompt}
 '''
@@ -1146,6 +1202,7 @@ ${draft.imagePrompt}
       // 舞台は開始画像(share画像)と同一 seed(draft.text.hashCode)で選ぶため、
       // 静止画と動画のシーンが一致し、全体として一貫して大きく変わる。
       final scene = _dailyImageScene(draft.text.hashCode);
+      final character = _dailyPresenterCharacter(draft.text.hashCode);
       final topic = _topNewsTopicFor(draft);
       final topicLine = topic.isEmpty
           ? ''
@@ -1154,10 +1211,10 @@ ${draft.imagePrompt}
 High-quality 16:9 product tour video for ${context.url}.
 Setting for today: $scene. Change the composition, lighting, and camera movement so each day's video looks visibly different.
 $topicLine
-Presenter: an intelligent, elegant adult female AI executive secretary in a tasteful dark suit.
-Voice: polished feminine Japanese voice, warm and professional, matching the secretary's face and lip movement.
-Tone: premium, calm, confident, brand-safe, no nudity, no explicit sexualization.
-Visual direction: image-gen2 creates a polished female secretary/key visual, GPT-5.5 structures the explanation, ElevenLabs provides the feminine voice, Hedra turns the secretary into a presenter, and Seedance 2.0 style motion adds refined UI cutaways.
+Presenter for today: $character, adult, brand-safe, tasteful appropriate attire (the same presenter as the key visual).
+Voice: a warm, professional Japanese voice that matches the presenter's face and lip movement.
+Tone: premium, calm, confident, brand-safe, no minors, no nudity, no explicit sexualization.
+Visual direction: image-gen2 creates the key visual, GPT-5.5 structures the explanation, ElevenLabs provides the voice, Hedra turns the character into a presenter, and Seedance 2.0 style motion adds refined UI cutaways.
 Show concrete product surfaces: site guide AI, AI secretary, AI University, notes, asset management, English reading dashboard, release notes, and supporter checkout.
 ${draft.videoPrompt}
 '''

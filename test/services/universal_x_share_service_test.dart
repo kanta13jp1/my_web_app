@@ -38,7 +38,7 @@ void main() {
     expect(draft.text, isNot(contains('譛')));
     expect(draft.text, isNot(contains('/#/')));
     expect(draft.text.length, lessThanOrEqualTo(280));
-    expect(draft.imagePrompt, contains('AI executive secretary'));
+    expect(draft.imagePrompt, contains('presenter'));
     expect(draft.imagePrompt, contains('no explicit sexualization'));
   });
 
@@ -72,9 +72,13 @@ void main() {
       trendTopics: const [UniversalXTrendTopic(name: '熊本豪雨から6年')],
     );
 
-    // 固定オフィスでなく「舞台のローテ」が画像プロンプトに入っていること。
+    // 固定オフィスでなく「舞台のローテ」+「presenterキャラのローテ」が
+    // 画像プロンプトに入っていること。
     expect(draft.imagePrompt, contains('in the setting of'));
-    expect(draft.imagePrompt, contains('AI executive secretary'));
+    expect(draft.imagePrompt, contains('as the friendly presenter'));
+    // 安全ガード: 未成年除外・非性的が入っていること。
+    expect(draft.imagePrompt, contains('no minors'));
+    expect(draft.imagePrompt, contains('no explicit sexualization'));
     final hasScene = <String>[
       'broadcast news desk',
       'glass studio',
@@ -84,6 +88,50 @@ void main() {
       'control room',
     ].any(draft.imagePrompt.contains);
     expect(hasScene, isTrue);
+  });
+
+  test('presenter character rotates across a diverse adult pool', () {
+    // 異なるニュース(=異なる draft.text)で presenter が変わり得ること、
+    // かつ全て成人・ブランドセーフ指定であることを確認する。
+    final seenCharacters = <String>{};
+    for (final topic in const [
+      '熊本豪雨から6年',
+      'OpenAI 新モデル発表',
+      'ワールドカップ開幕',
+      '株価が最高値を更新',
+      '大型連休の交通情報',
+    ]) {
+      final draft = UniversalXShareService.buildGrowthDraft(
+        page,
+        trendTopics: [UniversalXTrendTopic(name: topic)],
+      );
+      expect(draft.imagePrompt, contains('as the friendly presenter'));
+      expect(draft.imagePrompt, contains('adult'));
+      expect(draft.imagePrompt, isNot(contains('child')));
+      final matched = <String>[
+        'secretary',
+        'gyaru',
+        'news anchor',
+        'nurse',
+        'CEO',
+        'guitarist',
+        'knight',
+        'chef',
+        'detective',
+        'athlete',
+        'barista',
+        'librarian',
+        'kimono',
+        'elf',
+        'android',
+        'dancer',
+        'idol',
+        'gentleman',
+      ].where(draft.imagePrompt.contains);
+      seenCharacters.addAll(matched);
+    }
+    // 5トピックで少なくとも2種類以上の異なるキャラが登場すること。
+    expect(seenCharacters.length, greaterThanOrEqualTo(2));
   });
 
   test('growth draft imagePrompt weaves today\'s date and trend headlines', () {
@@ -104,8 +152,8 @@ void main() {
     // 見出しは視覚テーマへ反映するのみで、事実の捏造や画像内テキスト描画はしない。
     expect(draft.imagePrompt, contains('do not invent'));
     expect(draft.imagePrompt, contains('any on-image text'));
-    // 既存のブランドセーフなキービジュアル指定は維持する。
-    expect(draft.imagePrompt, contains('AI executive secretary'));
+    // presenter はローテしつつ、ブランドセーフ指定は維持する。
+    expect(draft.imagePrompt, contains('presenter'));
     expect(draft.imagePrompt, contains('no text overlays'));
   });
 
@@ -410,11 +458,10 @@ void main() {
       final result = await service.generateImage(context: page, draft: draft);
 
       expect(capturedFunction, 'media-hub');
-      expect(
-        capturedBody?['prompt'],
-        contains('adult female AI executive secretary'),
-      );
-      expect(capturedBody?['prompt'], contains('masculine presenter'));
+      expect(capturedBody?['prompt'], contains('as the presenter'));
+      // presenter はローテするが、未成年除外・非性的の安全ガードは全画像で必須。
+      expect(capturedBody?['prompt'], contains('minors'));
+      expect(capturedBody?['prompt'], contains('explicit sexualization'));
       expect(result.url, isNull);
       expect(result.status, 'text_only_fallback');
       expect(result.raw['canPostTextOnly'], isTrue);
@@ -490,18 +537,15 @@ void main() {
         'gpt-5.5',
         'seedance-2.0',
       ]);
-      expect(
-        capturedBody?['customPrompt'],
-        contains('intelligent, elegant adult female AI executive secretary'),
-      );
-      expect(
-        capturedBody?['customPrompt'],
-        contains('polished feminine Japanese voice'),
-      );
+      // presenter は日替りローテ、声はそれに合わせた日本語ボイス。
+      expect(capturedBody?['customPrompt'], contains('Presenter for today'));
+      expect(capturedBody?['customPrompt'], contains('Japanese voice'));
       expect(capturedBody?['customPrompt'], contains('ElevenLabs'));
       expect(capturedBody?['customPrompt'], contains('Hedra'));
       // シーン/照明/カメラが日替りで変わる指示が入っていること。
       expect(capturedBody?['customPrompt'], contains('Setting for today'));
+      // 安全ガード(未成年除外)が動画プロンプトにも入っていること。
+      expect(capturedBody?['customPrompt'], contains('no minors'));
       final scriptLines = capturedBody?['customScript'] as List;
       final script = scriptLines.join('\n');
       // 動画スクリプトは固定ツアー定型文ではなく、日替りローテの導入 +
