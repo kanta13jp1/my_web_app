@@ -559,15 +559,23 @@ $url''',
         .map((trend) => trend.name)
         .where((name) => name.trim().isNotEmpty)
         .toList(growable: false);
-    final topicLine = names.isEmpty
-        ? 'AI仕事OS、学習、仕事ログ、情報整理'
-        : names.map((name) => '「$name」').join(' ');
-    return '''
+    // Real news headlines run 40-60 chars, so keep only the single top headline
+    // (clipped) in the <=280 char lead post; the rest go to thread replies.
+    String clip(String value, int max) =>
+        value.length <= max ? value : '${value.substring(0, max)}…';
+    if (names.isEmpty) {
+      return '''
 デイリーブリーフィング — $date 朝
 Xで伸びている論点を、AI仕事OS開発者の視点で整理します。
 
-今日の入口: $topicLine
+今日の入口: AI仕事OS、学習、仕事ログ、情報整理
 最後に、$title で試している「情報を残して使う」仕組みも共有します。
+$url''';
+    }
+    return '''
+デイリーブリーフィング — $date 朝
+今日の注目:「${clip(names.first, 42)}」
+この話題も、$title で情報を残して使う視点から整理します。
 $url''';
   }
 
@@ -931,7 +939,7 @@ Page:
 - canonicalUrl: ${context.url}
 - shareUrlWithUtm: $shareUrl
 
-Current X trends from Japan:
+Today's real Japanese news headlines (verbatim from NHK / ITmedia news RSS; these are sourced snippets you MAY quote or paraphrase as today's news):
 $trendContext
 
 Recent X analytics and A/B test feedback:
@@ -948,14 +956,16 @@ Rules:
 - A/B test only one major variable at a time: hook style, link placement, media/no-media, or thread length.
 - If past results say a link in the first post underperforms, put the product URL in the final reply.
 - Put information value first and product CTA last. Avoid looking like an ad in the lead post.
-- If using X trends, do not invent news facts. You may say a topic is trending, but only turn it into analysis, questions, and workflow implications unless source snippets are provided.
+- The headline list above is REAL, sourced news (verbatim from NHK / ITmedia RSS). You MAY quote or paraphrase a headline as today's news. Do NOT add facts beyond the headline wording, and do NOT invent numbers, quotes, or outcomes.
+- When headlines are present, OPEN the lead post by tying today's single most relevant headline to this app's angle (information organization / AI work OS), so the post visibly changes every day. Do not lead with a generic app description.
+- Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
 - Prefer conversation hooks and save-worthy analysis over hashtags.
 - Keep the lead post under 280 chars. Use threadReplies for the briefing body.
 - Treat the creative workflow as GPT image2 -> GPT-5.5 -> Seedance 2.0.
 - Keep the post natural, concise, and credible.
 $financeRule
 
-Fallback style:
+Emergency fallback only (DO NOT copy this verbatim; write fresh copy that leads with today's news. Use it only as a rough tone/length reference):
 ${fallback.text}
 ''';
   }
