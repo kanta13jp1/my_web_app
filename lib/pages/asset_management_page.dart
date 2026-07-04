@@ -143,6 +143,26 @@ String? assetManagementActionJumpLabel(AssetManagementInsightActionItem item) {
   };
 }
 
+/// 収入予定・定期収入の「入金先」候補口座を返す純関数。
+/// 入金先は資産口座 (現金/預金) であればよく、支払原資 (_paymentSourceAccountOptions)
+/// と違い残高が 0 以下でも選べる。給料日前に残高が尽きた口座や、当座マイナスの口座
+/// (負債と闘うユーザーで頻出) にも入金先を設定できるようにするため balance > 0 の
+/// 制約を課さない。与信枠 (クレカ/ショッピング枠/カードローン) は入金先にならない。
+/// 残高の大きい順に並べる。
+@visibleForTesting
+List<AssetLiabilityAccount> incomeDestinationAccountOptions(
+  List<AssetLiabilityAccount> accounts,
+) {
+  return accounts
+      .where(
+        (account) =>
+            account.kind == AssetLiabilityAccountKind.cash ||
+            account.kind == AssetLiabilityAccountKind.deposit,
+      )
+      .toList()
+    ..sort((a, b) => b.balance.compareTo(a.balance));
+}
+
 class _PaymentSourceCandidate {
   final AssetLiabilityAccount account;
   final double currentBalance;
@@ -3834,9 +3854,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       text: existing == null ? '' : existing.amount.round().toString(),
     );
     var selectedDate = existing?.date ?? _now;
-    var selectedDestinationId = existing?.destinationAccountId;
     var received = existing?.received ?? false;
-    final destinationOptions = _paymentSourceAccountOptions(workbook);
+    final destinationOptions =
+        incomeDestinationAccountOptions(workbook.accounts);
+    // 候補に無い入金先IDは保持しない (Dropdown の value 整合を保つ)。
+    final destinationIds = destinationOptions.map((a) => a.id).toSet();
+    var selectedDestinationId =
+        destinationIds.contains(existing?.destinationAccountId)
+            ? existing?.destinationAccountId
+            : null;
 
     await showDialog<void>(
       context: context,
@@ -3980,7 +4006,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final dayController = TextEditingController(
       text: initial == null ? '' : initial.dayOfMonth.toString(),
     );
-    final destinationOptions = _paymentSourceAccountOptions(workbook);
+    final destinationOptions =
+        incomeDestinationAccountOptions(workbook.accounts);
     // 候補に無い入金先IDは保持しない(Dropdown の値整合を保つ)。
     final destinationIds = destinationOptions.map((a) => a.id).toSet();
     var selectedDestinationId =
@@ -10546,7 +10573,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String? destinationAccountId;
     String? destinationAccountName;
     if (suggestedSource != null) {
-      for (final account in _paymentSourceAccountOptions(workbook)) {
+      final options = incomeDestinationAccountOptions(workbook.accounts);
+      for (final account in options) {
         if (account.name == suggestedSource) {
           destinationAccountId = account.id;
           destinationAccountName = account.name;
