@@ -410,18 +410,45 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     }
   }
 
+  // 手動投稿経路(コピー / X画面)でも、API投稿(_postToX)と同じく本文からURLを外し
+  // リプライへ回す。素の _textController.text を使うとURLがリード投稿に残り、Xの
+  // インプレッションが抑制されてしまうため。
+  ({String leadText, List<String> replyTexts, String textUrl}) _manualParts() {
+    return UniversalXShareService.buildManualShareParts(
+      context: widget.page,
+      text: _textController.text,
+      threadReplies: _draft?.threadReplies ?? const [],
+      linkInReply: true,
+    );
+  }
+
+  String _manualThreadPayload() {
+    final parts = _manualParts();
+    if (parts.replyTexts.isEmpty) return parts.leadText;
+    return [parts.leadText, ...parts.replyTexts].join('\n\n---\n\n');
+  }
+
   Future<void> _copyText() async {
-    await Clipboard.setData(ClipboardData(text: _textController.text));
+    await Clipboard.setData(ClipboardData(text: _manualThreadPayload()));
     if (mounted) {
-      setState(() => _statusMessage = '投稿文をコピーしました');
+      setState(() => _statusMessage = '投稿文をコピーしました（URLはリプライに配置済み）');
     }
   }
 
   Future<void> _openXComposer() async {
+    final parts = _manualParts();
+    // X Web Intent は単一ツイート。リード文(URL除去済)のみで開き、URL入りリプライ
+    // を含む全文はクリップボードへ入れてスレッド投稿できるようにする。
+    await Clipboard.setData(ClipboardData(text: _manualThreadPayload()));
     final uri = Uri.https('x.com', '/intent/tweet', {
-      'text': _textController.text,
+      'text': parts.leadText,
     });
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (_disposed || !mounted) return;
+    setState(() {
+      _statusMessage =
+          'X投稿画面を開きました（リード文のみ）。URLとスレッド返信はコピー済みなので、投稿後にリプライで貼ってください。';
+    });
   }
 
   static String? _extractString(Map<String, dynamic> raw, String key) {

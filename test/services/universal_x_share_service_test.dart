@@ -215,6 +215,33 @@ void main() {
     expect(result.replyTweetIds, ['101', '102']);
   });
 
+  test('buildManualShareParts moves the URL out of the lead into a reply', () {
+    final parts = UniversalXShareService.buildManualShareParts(
+      context: page,
+      text: 'デイリーブリーフィング\n今日の注目:「テスト見出し」\n${page.url}',
+      threadReplies: const ['1. 【AI】OpenAI\nなぜ重要か: 仕事の入口が変わる。'],
+      linkInReply: true,
+    );
+
+    // Manual share (copy / X composer) must keep the product URL out of the
+    // lead post — same contract as postToX's linkInReply path.
+    expect(parts.leadText, isNot(contains(page.url)));
+    expect(parts.leadText, contains('今日の注目'));
+    expect(parts.replyTexts.first, contains('OpenAI'));
+    expect(parts.replyTexts.last, contains(page.url));
+  });
+
+  test('buildManualShareParts keeps the URL inline when not linking in reply',
+      () {
+    final parts = UniversalXShareService.buildManualShareParts(
+      context: page,
+      text: 'ふつうの投稿\n${page.url}',
+    );
+
+    expect(parts.leadText, contains(page.url));
+    expect(parts.replyTexts, isEmpty);
+  });
+
   test('postToX surfaces X developer project guidance', () async {
     final service = UniversalXShareService(
       functionInvoker: (functionName, body) async {
