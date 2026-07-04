@@ -236,7 +236,7 @@ class UniversalXShareService {
       'template': _videoTemplateFor(context),
       'lang': 'ja',
       'title': _shareTitleFor(context),
-      'voice': _videoVoiceFor(context),
+      'voice': _videoVoiceFor(context, draft),
       'customPrompt': _videoPromptFor(context, draft),
       'customScript': _videoScriptFor(context, draft),
       'customHashtags': draft.hashtags,
@@ -1160,8 +1160,63 @@ ${fallback.text}
         : 'ai_secretary_site_tour';
   }
 
-  static String _videoVoiceFor(UniversalSharePageContext context) {
-    return _isMyFinanceUxContext(context) ? 'ja-JP' : 'ai_secretary_female';
+  /// 動画ナレーションの声を presenter(人物)に合わせて選ぶ。非 finance では、
+  /// 画像/動画と同一 seed(draft.text.hashCode)で選んだ presenter の性別・トーンに
+  /// 一致する voice ラベル(male_narrator / female_narrator / energetic_* / calm_*)
+  /// を返し、エッジ側が対応する ElevenLabs ボイスへ解決する。専用ボイス未設定時は
+  /// エッジが従来の単一 AI 秘書ボイスへフォールバックするため、常に安全に動作する。
+  static String _videoVoiceFor(
+    UniversalSharePageContext context,
+    UniversalXShareDraft draft,
+  ) {
+    if (_isMyFinanceUxContext(context)) return 'ja-JP';
+    return _voiceLabelForCharacter(
+      _dailyPresenterCharacter(draft.text.hashCode),
+    );
+  }
+
+  /// presenter の説明文から性別・トーンを判定し、音声ラベルへ写像する。
+  /// [_presenterCharacters] は女性系が必ず female/woman/lady を含み、男性系は
+  /// それらを含まない構成なので、まず女性判定を行ってから性別を確定する。
+  /// トーン(energetic / calm)が判定できない場合は中庸の narrator を使う。
+  static String _voiceLabelForCharacter(String character) {
+    final lower = character.toLowerCase();
+    final isFemale = lower.contains('female') ||
+        lower.contains('woman') ||
+        lower.contains('lady');
+    final gender = isFemale ? 'female' : 'male';
+    const energeticMarkers = <String>[
+      'gyaru',
+      'idol',
+      'k-pop',
+      'kpop',
+      'dancer',
+      'rock',
+      'guitarist',
+      'bandman',
+      'runner',
+      'athlete',
+      'martial artist',
+    ];
+    const calmMarkers = <String>[
+      'librarian',
+      'elderly',
+      'onee-san',
+      'ojou-sama',
+      'kimono',
+      'shrine maiden',
+      'miko',
+      'gentleman',
+      'detective',
+      'wise',
+    ];
+    if (energeticMarkers.any((marker) => lower.contains(marker))) {
+      return 'energetic_$gender';
+    }
+    if (calmMarkers.any((marker) => lower.contains(marker))) {
+      return 'calm_$gender';
+    }
+    return '${gender}_narrator';
   }
 
   static String _imagePromptFor(

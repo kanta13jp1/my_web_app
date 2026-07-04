@@ -25,6 +25,10 @@ import {
   stripHedraTextToSpeechModelId,
   withHedraTextToSpeechModelId,
 } from "./hedra_tts.ts";
+import {
+  resolveElevenLabsVoiceForLabel,
+  type VoiceGender,
+} from "./voice_labels.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -651,6 +655,19 @@ async function createHedraPresenterVideo(params: {
   // (= ダッシュボードのログを見ずに応答だけで診断できるようにする)。
   const speechChain: string[] = [];
 
+  // presenter(人物)の性別/トーンに合わせて実際のナレーション声を選ぶ。
+  // クライアントが送る voice ラベル(例: male_narrator / energetic_female)を
+  // ElevenLabs の voiceId(secret)へ解決する。専用 secret 未設定のラベルや
+  // 旧ラベル(ai_secretary_female / ja-JP 等)は voiceId=null となり、従来どおり
+  // 単一の AI 秘書ボイスへフォールバックする。
+  const voiceResolution = resolveElevenLabsVoiceForLabel(
+    params.voice,
+    (name) => Deno.env.get(name),
+  );
+  const elevenLabsVoiceId = voiceResolution.voiceId ??
+    ELEVENLABS_AI_SECRETARY_VOICE_ID;
+  const preferGender: VoiceGender | null = voiceResolution.gender;
+
   // requiresUploadedAudio テンプレ (= ai_secretary_site_tour) はフラグ非依存で
   // アップロード音声経路を使う (壊れた Hedra 内蔵TTSへ落ちるのを構造的に防ぐ)。
   const useUploadedAudioPath =
@@ -665,6 +682,7 @@ async function createHedraPresenterVideo(params: {
         text: spokenScript.slice(0, 1800),
         templateTitle: params.title ?? "share-update",
         lang: params.lang,
+        voiceId: elevenLabsVoiceId,
       });
       audioGeneration = buildHedraUploadedAudioGeneration(audio.url);
       audioProvider = "elevenlabs";
@@ -681,8 +699,9 @@ async function createHedraPresenterVideo(params: {
           text: spokenScript.slice(0, 1800),
           templateTitle: params.title ?? "share-update",
           lang: params.lang,
-          configuredVoiceId: ELEVENLABS_AI_SECRETARY_VOICE_ID,
+          configuredVoiceId: elevenLabsVoiceId,
           configuredError: error,
+          preferGender,
         });
         if (fallbackResult.ok) {
           audioGeneration = buildHedraUploadedAudioGeneration(
@@ -928,11 +947,13 @@ async function tryElevenLabsFallbackVoices(
     lang: "ja" | "en";
     configuredVoiceId: string;
     configuredError: unknown;
+    preferGender?: VoiceGender | null;
   },
 ): Promise<ElevenLabsFallbackResult> {
   const candidateVoiceIds = await resolveElevenLabsFallbackVoiceIds(
     params.configuredVoiceId,
     params.lang,
+    params.preferGender ?? null,
   );
   const errors: string[] = [];
   for (const voiceId of candidateVoiceIds) {
@@ -963,9 +984,15 @@ async function tryElevenLabsFallbackVoices(
 async function resolveElevenLabsFallbackVoiceIds(
   configuredVoiceId: string,
   lang: "ja" | "en",
+  preferGender: VoiceGender | null = null,
 ): Promise<string[]> {
   const ids = new Set<string>();
-  if (ELEVENLABS_FALLBACK_VOICE_ID !== configuredVoiceId) {
+  // ELEVENLABS_FALLBACK_VOICE_ID is a female voice; only seed it as the first
+  // fallback when we are not specifically trying to match a male presenter.
+  if (
+    preferGender !== "male" &&
+    ELEVENLABS_FALLBACK_VOICE_ID !== configuredVoiceId
+  ) {
     ids.add(ELEVENLABS_FALLBACK_VOICE_ID);
   }
   try {
@@ -973,7 +1000,8 @@ async function resolveElevenLabsFallbackVoiceIds(
     voices
       .filter((voice) => voice.voice_id && voice.voice_id !== configuredVoiceId)
       .sort((a, b) =>
-        elevenLabsVoiceScore(b, lang) - elevenLabsVoiceScore(a, lang)
+        elevenLabsVoiceScore(b, lang, preferGender) -
+        elevenLabsVoiceScore(a, lang, preferGender)
       )
       .slice(0, 4)
       .forEach((voice) => ids.add(voice.voice_id as string));
@@ -1001,12 +1029,21 @@ async function fetchElevenLabsVoices(): Promise<ElevenLabsVoice[]> {
 function elevenLabsVoiceScore(
   voice: ElevenLabsVoice,
   lang: "ja" | "en",
+  preferGender: VoiceGender | null = null,
 ): number {
   const labels = Object.values(voice.labels ?? {}).join(" ");
   const haystack = `${voice.name ?? ""} ${voice.category ?? ""} ${labels}`
     .toLowerCase();
   let score = 0;
-  if (haystack.includes("female") || haystack.includes("woman")) score += 20;
+  // Default (preferGender null/"female") keeps the historical female-leaning
+  // preference exactly. When the presenter is male we flip the signs so male
+  // voices are preferred instead — the "female" substring inside "male" keeps
+  // the two branches symmetric, so a male presenter nets +20 for male voices
+  // and 0 for female ones, mirroring the default's +20/-20.
+  const wantMale = preferGender === "male";
+  if (haystack.includes("female") || haystack.includes("woman")) {
+    score += wantMale ? -20 : 20;
+  }
   if (haystack.includes("warm") || haystack.includes("professional")) {
     score += 5;
   }
@@ -1020,7 +1057,9 @@ function elevenLabsVoiceScore(
   ) {
     score += 6;
   }
-  if (haystack.includes("male") || haystack.includes("man")) score -= 20;
+  if (haystack.includes("male") || haystack.includes("man")) {
+    score += wantMale ? 20 : -20;
+  }
   if (haystack.includes("library")) score -= 8;
   return score;
 }
