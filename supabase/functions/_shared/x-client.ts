@@ -262,8 +262,9 @@ export async function postTweet(input: {
   if (text === "") {
     throw new Error("text is required.");
   }
-  if (text.length > 280) {
-    throw new Error("text exceeds 280 characters.");
+  // X Premium(認証済みアカウント)は最大25,000字の長文ポストが可能。280字で弾かない。
+  if (text.length > 25000) {
+    throw new Error("text exceeds 25000 characters.");
   }
 
   const payload: Record<string, unknown> = { text };
