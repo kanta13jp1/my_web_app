@@ -24,6 +24,11 @@ import {
   resolveDuplicateGuardConfig,
   type XPostLogRowLike,
 } from "./x_duplicate_content.ts";
+import {
+  buildSignupSlackPayload,
+  isRecentSignupCreatedAt,
+  resolveSignupChannel,
+} from "./signup_notification.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1098,6 +1103,7 @@ serve(async (req: Request) => {
       "acquisition.signal",
       "acquisition.track",
       "acquisition.touchpoint_report",
+      "signup.notify",
     ];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
@@ -1147,6 +1153,106 @@ serve(async (req: Request) => {
 
       // ─── Command Center ─────────────────────────────────────────────────────
       // ─── Daily Challenges ─────────────────────────────────────────────────
+      case "signup.notify": {
+        const signupUserId = firstString(body.signupUserId, body.userId);
+        if (!signupUserId) {
+          return json({ error: "signupUserId required" }, 400);
+        }
+
+        const { data: signupUserData, error: signupUserError } = await admin
+          .auth
+          .admin
+          .getUserById(signupUserId);
+        if (signupUserError || !signupUserData?.user) {
+          return json({ error: "signup user not found" }, 404);
+        }
+
+        const createdAt = signupUserData.user.created_at ?? "";
+        if (!isRecentSignupCreatedAt(createdAt)) {
+          return json({
+            success: false,
+            skipped: true,
+            reason: "signup user is outside the notification window",
+          }, 202);
+        }
+
+        const { data: existing, error: existingError } = await admin
+          .from("hub_data")
+          .select("id, created_at")
+          .eq("source", "signup_slack_notification")
+          .filter("metadata->>signup_user_id", "eq", signupUserId)
+          .limit(1)
+          .maybeSingle();
+        if (existingError) throw new Error(existingError.message);
+        if (existing) {
+          return json({
+            success: true,
+            duplicate: true,
+            skipped: true,
+            id: existing.id,
+          });
+        }
+
+        const totalUsersResponse = await admin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1,
+        });
+        const totalUsers = totalUsersResponse.data?.total ?? null;
+        const payload = buildSignupSlackPayload({
+          totalUsers,
+          signalKey: body.signalKey,
+          signupUserId,
+          createdAt,
+          appUrl: Deno.env.get("PUBLIC_SITE_URL") ??
+            "https://my-web-app-b67f4.web.app/",
+        });
+        const webhookUrl = Deno.env.get("SLACK_WEBHOOK_URL") ?? "";
+        if (!webhookUrl) {
+          return json({
+            success: false,
+            error: "webhook not configured: SLACK_WEBHOOK_URL",
+          }, 500);
+        }
+
+        const slackResponse = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!slackResponse.ok) {
+          const detail = await slackResponse.text();
+          return json({
+            success: false,
+            error: `slack webhook failed: ${slackResponse.status}`,
+            detail: detail.slice(0, 500),
+          }, 502);
+        }
+
+        const channel = resolveSignupChannel(body.signalKey);
+        const item = await addItem(
+          admin,
+          "signup_slack_notification",
+          "service_role",
+          {
+            signup_user_id: signupUserId,
+            signup_created_at: createdAt,
+            signal_key: body.signalKey ?? null,
+            channel,
+            total_users: totalUsers,
+            slack_status: slackResponse.status,
+            notified_at: new Date().toISOString(),
+          },
+        );
+
+        return json({
+          success: true,
+          notified: true,
+          channel,
+          totalUsers,
+          item,
+        });
+      }
+
       case "daily.challenges_generate": {
         const dateStr = typeof body.date === "string" &&
             /^\d{4}-\d{2}-\d{2}$/.test(body.date as string)

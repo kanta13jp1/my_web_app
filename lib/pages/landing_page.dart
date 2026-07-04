@@ -214,6 +214,11 @@ class _LandingPageState extends State<LandingPage> {
           password: password,
           emailRedirectTo: _webRedirectUrl,
         );
+        unawaited(
+          _acquisitionService.notifySignupSuccess(
+            signupUserId: result.user?.id,
+          ),
+        );
         if (!mounted) return;
         if (result.session == null) {
           _showMessage('確認メールを送信しました。メール内のリンクから登録を完了してください。');

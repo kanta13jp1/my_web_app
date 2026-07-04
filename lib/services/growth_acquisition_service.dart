@@ -153,6 +153,43 @@ class GrowthAcquisitionService {
     await _recordSignal(resolveSignupSubmitSignal(latestTouchpoint));
   }
 
+  Future<void> notifySignupSuccess({
+    required String? signupUserId,
+  }) async {
+    final userId = signupUserId?.trim();
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+    final client = _client;
+    if (client == null) {
+      return;
+    }
+
+    final latestTouchpoint = await loadLatestTouchpoint();
+    final signalKey = resolveSignupSubmitSignal(latestTouchpoint);
+    try {
+      final response = await client.functions.invoke(
+        'growth-hub',
+        body: <String, dynamic>{
+          'action': 'signup.notify',
+          'signupUserId': userId,
+          'signalKey': signalKey,
+          'latestTouchpoint': latestTouchpoint,
+        },
+      );
+      final payload = _asMap(response.data);
+      if (payload['success'] == true || payload['skipped'] == true) {
+        return;
+      }
+      debugPrint(
+        'Signup Slack notification returned an unexpected payload: $payload',
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Signup Slack notification failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   Future<void> _persistLatestTouchpoint(String signalKey) async {
     try {
       final prefs = await SharedPreferences.getInstance();
