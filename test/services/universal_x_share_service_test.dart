@@ -480,13 +480,15 @@ void main() {
       );
       expect(capturedBody?['customPrompt'], contains('ElevenLabs'));
       expect(capturedBody?['customPrompt'], contains('Hedra'));
+      // シーン/照明/カメラが日替りで変わる指示が入っていること。
+      expect(capturedBody?['customPrompt'], contains('Setting for today'));
       final scriptLines = capturedBody?['customScript'] as List;
       final script = scriptLines.join('\n');
-      // 動画スクリプトは固定文ではなく、当日ニュース反映済み draft のフック +
-      // スレッド返信(ブリーフィング本文) + CTA で毎回変化する。
-      expect(script, contains('デイリーブリーフィング')); // draft由来の可変フック
-      expect(script, contains('5分だけ試して')); // 末尾CTA
-      expect(scriptLines.length, greaterThanOrEqualTo(4));
+      // 動画スクリプトは固定ツアー定型文ではなく、日替りローテの導入 +
+      // ニュース由来のブリーフィング本文 + ローテのCTA で毎回変化する。
+      expect(script, isNot(contains('AI大学では主要AI企業'))); // 旧固定ツアー非含有
+      expect(scriptLines.length, greaterThanOrEqualTo(3));
+      expect(scriptLines.first, isNotEmpty); // 導入がある
       expect(script, isNot(contains('https://')));
       expect(script, isNot(contains(page.url)));
     },
