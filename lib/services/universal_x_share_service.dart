@@ -280,8 +280,15 @@ class UniversalXShareService {
     List<String> threadReplies = const [],
     bool linkInReply = false,
     bool dryRun = false,
+    String? altText,
   }) async {
     final normalizedMediaUrl = _emptyToNull(mediaUrl);
+    final hasMedia =
+        normalizedMediaUrl != null && _isPublicHttpUrl(normalizedMediaUrl);
+    // アクセシビリティ用 alt text。画像がある時のみ、未指定ならページ題から既定生成。
+    final String? resolvedAltText = hasMedia
+        ? (_emptyToNull(altText) ?? _defaultShareAltText(context))
+        : null;
     final parts = buildManualShareParts(
       context: context,
       text: text,
@@ -295,10 +302,8 @@ class UniversalXShareService {
       'action': 'x.post',
       'text': mainText,
       if (replyTexts.isNotEmpty) 'replyTexts': replyTexts,
-      'mediaUrl':
-          normalizedMediaUrl != null && _isPublicHttpUrl(normalizedMediaUrl)
-              ? normalizedMediaUrl
-              : null,
+      'mediaUrl': hasMedia ? normalizedMediaUrl : null,
+      if (resolvedAltText != null) 'altText': resolvedAltText,
       'dryRun': dryRun,
       'source': 'universal_x_share',
       'route': context.routePath,
@@ -1176,6 +1181,13 @@ ${fallback.text}
   static String _shareTitleFor(UniversalSharePageContext context) {
     if (_isMyFinanceUxContext(context)) return 'My Finance';
     return context.title;
+  }
+
+  /// 共有カード画像の既定 alt text (= ページ題ベース)。
+  /// X の上限は 1000 字だが余裕を持って 900 字で切り詰める。
+  static String _defaultShareAltText(UniversalSharePageContext context) {
+    final base = '${_shareTitleFor(context)}の共有カード画像';
+    return base.length > 900 ? base.substring(0, 900) : base;
   }
 
   static String _videoTemplateFor(UniversalSharePageContext context) {

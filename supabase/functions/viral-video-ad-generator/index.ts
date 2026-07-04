@@ -29,6 +29,15 @@ import {
   resolveElevenLabsVoiceId,
   voiceGenderForLabel,
 } from "./voice_labels.ts";
+import {
+  buildCaptionSrt,
+  buildForceStyle,
+  burnCaptionsViaTranscoder,
+  type CaptionStyle,
+  type CaptionTimingConfig,
+  DEFAULT_CAPTION_STYLE,
+  DEFAULT_CAPTION_TIMING,
+} from "./captions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -75,6 +84,25 @@ const ELEVENLABS_AI_SECRETARY_VOICE_ID =
 const ELEVENLABS_MALE_VOICE_ID = Deno.env.get("ELEVENLABS_VOICE_MALE_ID") ??
   "onwK4e9ZLuTAKqWW03F9";
 const VIRAL_VIDEO_BUCKET = "viral-ad-videos";
+
+// --- On-screen caption burn-in (H3 / muted-autoplay dwell time) ---------------
+// muted-autoplay の X 視聴者向けに、生成済み presenter 動画へ字幕を焼き込む。
+// Deno EF は ffmpeg を実行できないため外部のホスト型トランスコーダへ委譲する。
+// 全 env が揃わない/どこかで失敗したら必ず素の mp4 へフォールバックし、投稿を
+// 絶対にブロックしない (= 既存 fallback_text と同じ graceful-degradation)。
+// 既定は OFF。Supabase secrets に以下を設定して初めて有効化される:
+//   VVAG_BURN_CAPTIONS=1
+//   VVAG_CAPTION_TRANSCODER_URL=<ffmpeg burn-in service endpoint>
+//   VVAG_CAPTION_TRANSCODER_KEY=<service api key>  (認証不要なサービスなら省略可)
+const VVAG_BURN_CAPTIONS = envFlag(Deno.env.get("VVAG_BURN_CAPTIONS"));
+const VVAG_CAPTION_TRANSCODER_URL =
+  Deno.env.get("VVAG_CAPTION_TRANSCODER_URL") ?? "";
+const VVAG_CAPTION_TRANSCODER_KEY =
+  Deno.env.get("VVAG_CAPTION_TRANSCODER_KEY") ?? "";
+const VVAG_CAPTION_TIMEOUT_MS = positiveNumberEnv(
+  "VVAG_CAPTION_TIMEOUT_MS",
+  45000,
+);
 
 // Flutter が送る voice ラベル(gender: "male_narrator"/"female_narrator" /
 // tone: "energetic_*"/"calm_*")を ElevenLabs の voiceId に解決する。トーン別
@@ -376,6 +404,8 @@ serve(async (req) => {
     let hedraGenerationId: string | null = null;
     let hedraProgress: number | null = null;
     let hedraEtaSec: number | null = null;
+    let captionStatus: string | null = null;
+    let captionReason: string | null = null;
 
     // FAL.ai で画像生成 (キーが設定されている場合)
     if (FAL_KEY && type === "image") {
@@ -449,17 +479,40 @@ serve(async (req) => {
           hedraGenerationId = hedraVideo.id;
           hedraProgress = hedraVideo.progress;
           hedraEtaSec = hedraVideo.etaSec;
-          const videoToStore = firstNonEmptyString(
+          const rawVideoUrl = firstNonEmptyString(
             hedraVideo.videoUrl,
             hedraVideo.downloadUrl,
           );
+          // Hedra 生成 mp4 を Storage へ保存する前に、muted-autoplay 向けの字幕を
+          // 焼き込む。フラグ未設定/失敗時は素の mp4 (rawVideoUrl) をそのまま保存する。
+          let videoToStore = rawVideoUrl;
+          if (rawVideoUrl) {
+            const spokenForCaptions = scriptForSpokenAudio(
+              script,
+              lang,
+              body.title ?? template.name,
+            ).join("\n").slice(0, MAX_SPOKEN_CHARS);
+            const burn = await maybeBurnCaptions({
+              videoUrl: rawVideoUrl,
+              spokenText: spokenForCaptions,
+              lang,
+            });
+            captionStatus = burn.status;
+            captionReason = burn.reason;
+            if (burn.videoUrl) {
+              // 焼き込み成功: Storage コピーが失敗しても字幕版を返せるよう先に反映。
+              videoToStore = burn.videoUrl;
+              generatedVideoUrl = burn.videoUrl;
+            }
+          }
           if (videoToStore) {
+            const captioned = captionStatus === "captions_burned";
             const stored = await persistRemoteMediaToStorage(admin, {
               url: videoToStore,
               prefix: "hedra",
               fileName: `${hedraVideo.id ?? crypto.randomUUID()}-${
                 storageSafeSegment(templateKey)
-              }-${lang}.mp4`,
+              }-${lang}${captioned ? "-captioned" : ""}.mp4`,
               contentType: "video/mp4",
             });
             storedVideoUrl = stored?.url ?? null;
@@ -543,6 +596,8 @@ serve(async (req) => {
       videoProvider,
       videoStatus,
       videoReason,
+      captionStatus,
+      captionReason,
       status: generatedVideoUrl != null || generatedImageUrl != null
         ? "ready_to_post"
         : generationStatus,
@@ -1456,6 +1511,107 @@ async function persistRemoteMediaToStorage(
     console.warn("Remote media storage copy failed", error);
     return null;
   }
+}
+
+// 生成済み Hedra 動画へ字幕を焼き込む。フラグ/transcoder が未設定、SRT が空、
+// あるいは焼き込みが失敗した場合は videoUrl=null を返し、呼び出し側は素の mp4 へ
+// フォールバックする。status/reason は診断用に応答へ載せる (DB スキーマは変更しない)。
+async function maybeBurnCaptions(params: {
+  videoUrl: string;
+  spokenText: string;
+  lang: "ja" | "en";
+}): Promise<{ status: string; reason: string | null; videoUrl: string | null }> {
+  if (!VVAG_BURN_CAPTIONS) {
+    return { status: "captions_disabled", reason: null, videoUrl: null };
+  }
+  if (!VVAG_CAPTION_TRANSCODER_URL) {
+    return {
+      status: "captions_skipped",
+      reason: "VVAG_CAPTION_TRANSCODER_URL not configured",
+      videoUrl: null,
+    };
+  }
+  try {
+    const srt = buildCaptionSrt(
+      params.spokenText,
+      params.lang,
+      captionTimingFromEnv(),
+    );
+    if (!srt.trim()) {
+      return {
+        status: "captions_skipped",
+        reason: "no spoken script lines to caption",
+        videoUrl: null,
+      };
+    }
+    const style = captionStyleFromEnv();
+    const result = await burnCaptionsViaTranscoder({
+      endpoint: VVAG_CAPTION_TRANSCODER_URL,
+      apiKey: VVAG_CAPTION_TRANSCODER_KEY || null,
+      timeoutMs: VVAG_CAPTION_TIMEOUT_MS,
+      request: {
+        videoUrl: params.videoUrl,
+        mp4Url: params.videoUrl,
+        srt,
+        subtitleFormat: "srt",
+        format: "mp4",
+        resolution: "540p",
+        style,
+        forceStyle: buildForceStyle(style),
+      },
+    });
+    if (result.ok) {
+      console.log(
+        `[vvag-caption] burned OK lang=${params.lang} url=${
+          result.url.slice(0, 140)
+        }`,
+      );
+      return { status: "captions_burned", reason: null, videoUrl: result.url };
+    }
+    console.warn(
+      `[vvag-caption] burn failed; using un-captioned mp4: ${result.reason}`,
+    );
+    return { status: "captions_failed", reason: result.reason, videoUrl: null };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `[vvag-caption] burn threw; using un-captioned mp4: ${reason}`,
+    );
+    return { status: "captions_failed", reason, videoUrl: null };
+  }
+}
+
+function captionTimingFromEnv(): CaptionTimingConfig {
+  return {
+    ...DEFAULT_CAPTION_TIMING,
+    jaCharsPerSecond: positiveNumberEnv(
+      "VVAG_CAPTION_JA_CPS",
+      DEFAULT_CAPTION_TIMING.jaCharsPerSecond,
+    ),
+    enCharsPerSecond: positiveNumberEnv(
+      "VVAG_CAPTION_EN_CPS",
+      DEFAULT_CAPTION_TIMING.enCharsPerSecond,
+    ),
+  };
+}
+
+function captionStyleFromEnv(): CaptionStyle {
+  return {
+    ...DEFAULT_CAPTION_STYLE,
+    fontName: Deno.env.get("VVAG_CAPTION_FONT_NAME")?.trim() ||
+      DEFAULT_CAPTION_STYLE.fontName,
+    fontSizePx: positiveNumberEnv(
+      "VVAG_CAPTION_FONT_SIZE",
+      DEFAULT_CAPTION_STYLE.fontSizePx,
+    ),
+  };
+}
+
+function positiveNumberEnv(name: string, fallback: number): number {
+  const raw = Deno.env.get(name);
+  if (raw == null || raw.trim().length === 0) return fallback;
+  const parsed = Number(raw.trim());
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function mediaStoragePath(

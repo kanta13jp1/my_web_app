@@ -1628,6 +1628,9 @@ serve(async (req: Request) => {
         const mediaUrl = String(body.mediaUrl ?? body.media_url ?? "").trim();
         const mediaType = String(body.mediaType ?? body.media_type ?? "")
           .trim();
+        const mediaAlt = String(
+          body.mediaAlt ?? body.media_alt ?? body.altText ?? "",
+        ).trim();
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         // X Premium(認証済みアカウント)は最大25,000字の長文ポストが可能。280字で弾かない。
@@ -1738,6 +1741,7 @@ serve(async (req: Request) => {
           const uploadedMedia = mediaUrl
             ? await uploadMediaFromUrl(mediaUrl, {
               mediaType: mediaType || undefined,
+              altText: mediaAlt || undefined,
             })
             : null;
           const result = await postTweet({
