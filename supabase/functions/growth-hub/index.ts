@@ -1630,19 +1630,20 @@ serve(async (req: Request) => {
           .trim();
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
-        if (text.length > 280) {
+        // X Premium(認証済みアカウント)は最大25,000字の長文ポストが可能。280字で弾かない。
+        if (text.length > 25000) {
           return json({
             success: false,
-            error: "text exceeds 280 characters",
+            error: "text exceeds 25000 characters",
           }, 400);
         }
         const longReplyIndex = replyTexts.findIndex((entry) =>
-          entry.length > 280
+          entry.length > 25000
         );
         if (longReplyIndex >= 0) {
           return json({
             success: false,
-            error: `replyTexts[${longReplyIndex}] exceeds 280 characters`,
+            error: `replyTexts[${longReplyIndex}] exceeds 25000 characters`,
           }, 400);
         }
 

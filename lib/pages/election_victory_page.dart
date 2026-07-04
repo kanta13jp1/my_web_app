@@ -518,7 +518,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     try {
       final snapshot = await _realityService.fetchLatestSnapshot(
         includeAiSummary: false,
-        includeCdpBenchmarks: false,
         forceRefresh: forceRefresh,
       );
       final history = await _realityService.loadSnapshotHistory();

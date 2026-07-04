@@ -25,6 +25,10 @@ import {
   stripHedraTextToSpeechModelId,
   withHedraTextToSpeechModelId,
 } from "./hedra_tts.ts";
+import {
+  resolveElevenLabsVoiceId,
+  voiceGenderForLabel,
+} from "./voice_labels.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,15 +70,18 @@ const ELEVENLABS_MALE_VOICE_ID = Deno.env.get("ELEVENLABS_VOICE_MALE_ID") ??
   "onwK4e9ZLuTAKqWW03F9";
 const VIRAL_VIDEO_BUCKET = "viral-ad-videos";
 
-// Flutter が送る voice ラベル("male_narrator"/"female_narrator")を ElevenLabs の
-// voiceId に解決する。"female" は "male" を部分文字列に含むため female を先に判定。
+// Flutter が送る voice ラベル(gender: "male_narrator"/"female_narrator" /
+// tone: "energetic_*"/"calm_*")を ElevenLabs の voiceId に解決する。トーン別
+// secret が設定されていればそれを、無ければ性別ベース音声(#3794 と同一)を返す。
 function resolveElevenLabsVoiceForLabel(
   voiceLabel: string | undefined,
 ): string {
-  const label = (voiceLabel ?? "").toLowerCase();
-  if (label.includes("female")) return ELEVENLABS_AI_SECRETARY_VOICE_ID;
-  if (label.includes("male")) return ELEVENLABS_MALE_VOICE_ID;
-  return ELEVENLABS_AI_SECRETARY_VOICE_ID;
+  return resolveElevenLabsVoiceId({
+    voiceLabel,
+    femaleBaseVoiceId: ELEVENLABS_AI_SECRETARY_VOICE_ID,
+    maleBaseVoiceId: ELEVENLABS_MALE_VOICE_ID,
+    env: (name) => Deno.env.get(name),
+  });
 }
 
 // Dark War風 広告テンプレート定義
@@ -694,10 +701,7 @@ async function createHedraPresenterVideo(params: {
       audioProvider = "elevenlabs";
       console.log(
         `[vvag-audio] voice label=${params.voice} → ${
-          resolveElevenLabsVoiceForLabel(params.voice) ===
-              ELEVENLABS_MALE_VOICE_ID
-            ? "male"
-            : "female"
+          voiceGenderForLabel(params.voice)
         }`,
       );
       storedAudioUrl = audio.url;
