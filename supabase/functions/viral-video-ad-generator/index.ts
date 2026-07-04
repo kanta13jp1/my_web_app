@@ -692,7 +692,9 @@ async function createHedraPresenterVideo(params: {
         throw new Error("ELEVENLABS_API_KEY not configured");
       }
       const audio = await createElevenLabsSpeechAsset(params.admin, {
-        text: spokenScript.slice(0, 2600),
+        // 動画は短尺(~40-60秒)に保つ。長い音声は Hedra 生成が数分以上かかり、
+        // ワンボタン投稿のポーリング内に完成しないため上限を抑える。
+        text: spokenScript.slice(0, 900),
         templateTitle: params.title ?? "share-update",
         lang: params.lang,
         voiceId: resolveElevenLabsVoiceForLabel(params.voice),
