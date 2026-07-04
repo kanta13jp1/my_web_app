@@ -134,13 +134,17 @@ class UniversalXTrendTopic {
 }
 
 class UniversalXShareService {
-  static const int maxTweetLength = 280;
+  // X Premium(認証済みアカウント)は最大25,000字の長文ポストが可能。280字で切らない。
+  static const int maxTweetLength = 25000;
   static const String defaultHedraStartImageUrl =
       'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
+  // 実際に使うツール(嘘のパイプラインにしない): 文章=GPT-5.5 / 画像=GPT image /
+  // 音声=ElevenLabs / 動画=Hedra。
   static const List<String> _creativePipeline = <String>[
-    'gpt-image-2',
     'gpt-5.5',
-    'seedance-2.0',
+    'gpt-image',
+    'elevenlabs',
+    'hedra',
   ];
 
   final SupabaseClient? _supabase;
@@ -240,7 +244,7 @@ class UniversalXShareService {
       'customPrompt': _videoPromptFor(context, draft),
       'customScript': _videoScriptFor(context, draft),
       'customHashtags': draft.hashtags,
-      'preferredModel': 'seedance-2.0',
+      'preferredModel': 'hedra',
       'creativePipeline': _creativePipeline,
       'source': 'universal_x_share',
       'route': context.routePath,
@@ -500,7 +504,7 @@ class UniversalXShareService {
         ? sanitizeTweet(
             '''動くスマホアプリUX検証動画「マイファイナンス」
 お金の浪費を減らすため、資産・支出・KGI/CSF/KPIを一画面で検証します。
-GPT image2 → GPT-5.5 → Seedance 2.0
+GPT image → GPT-5.5 → ElevenLabs → Hedra
 
 ${context.url}
 
@@ -522,7 +526,7 @@ ${context.url}
           ? 'A 16:9 moving smartphone app UX validation key visual for "My Finance", Japanese personal finance app, asset dashboard, spending review, KPI cards, tap gestures, clean fintech UI, no text overlays. ${_dailyImageAccent(trendTopics)}'
           : 'A clean 16:9 product screenshot style hero image for "$title", Flutter web app UI, crisp dashboard details, no text overlays, modern Japanese productivity app, bright and trustworthy. ${_dailyImageAccent(trendTopics)}',
       videoPrompt: isFinanceUx
-          ? 'A short moving smartphone app UX validation video for "My Finance", showing a Japanese mobile finance app flow with assets, spending, KGI/CSF/KPI, and an improvement loop. Creative pipeline: GPT image2 -> GPT-5.5 -> Seedance 2.0.'
+          ? 'A short moving smartphone app UX validation video for "My Finance", showing a Japanese mobile finance app flow with assets, spending, KGI/CSF/KPI, and an improvement loop. Creative pipeline: GPT image -> GPT-5.5 -> ElevenLabs -> Hedra.'
           : 'A short 16:9 presenter video concept introducing "$title" as a practical improvement in a Flutter web life-management app.',
       hashtags: isFinanceUx
           ? const ['#AI動画', '#FlutterWeb', '#資産管理']
@@ -1045,7 +1049,7 @@ $url''';
     final shareUrl = shareUrlOverride ?? acquisitionUrlFor(context);
     final trendContext = _formatTrendContext(trendTopics);
     final financeRule = _isMyFinanceUxContext(context)
-        ? '- For finance routes, frame this as 動くスマホアプリUX検証動画「マイファイナンス」 and mention GPT image2 -> GPT-5.5 -> Seedance 2.0 when natural.'
+        ? '- For finance routes, frame this as 動くスマホアプリUX検証動画「マイファイナンス」 and mention GPT image -> GPT-5.5 -> ElevenLabs -> Hedra when natural.'
         : '';
     return '''
 You are a Japanese build-in-public growth strategist.
@@ -1055,8 +1059,8 @@ Secondary goal: earn useful impressions without sounding like spam.
 
 Return valid JSON only:
 {
-  "text": "Japanese X post under 280 chars, must include $shareUrl",
-  "threadReplies": ["5 to 8 substantive Japanese reply posts, each 120-270 chars, forming a full briefing thread"],
+  "text": "Japanese X post, a rich 400-900 char long-form lead (this account has X Premium so it is NOT limited to 280 chars), must include $shareUrl",
+  "threadReplies": ["4 to 8 substantive Japanese reply posts, each 150-500 chars, forming a full briefing thread"],
   "imagePrompt": "English prompt for a 16:9 share image, no text overlay",
   "videoPrompt": "English prompt for a short presenter/share video",
   "hashtags": ["#buildinpublic", "#FlutterWeb", "#Supabase"]
@@ -1089,9 +1093,9 @@ Rules:
 - When headlines are present, OPEN the lead post by tying today's single most relevant headline to this app's angle (information organization / AI work OS), so the post visibly changes every day. Do not lead with a generic app description.
 - Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
 - Prefer conversation hooks and save-worthy analysis over hashtags.
-- Make the lead post rich and specific: aim for roughly 180-270 chars (still under 280), not a single short sentence.
+- This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars: a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
-- Treat the creative workflow as GPT image2 -> GPT-5.5 -> Seedance 2.0.
+- Treat the creative workflow as GPT image -> GPT-5.5 -> ElevenLabs -> Hedra.
 - Keep the post natural, concise, and credible.
 $financeRule
 
@@ -1231,7 +1235,7 @@ $topicLine
 Presenter for today: $character, adult, brand-safe, tasteful appropriate attire (the same presenter as the key visual).
 Voice: a warm, professional Japanese voice that matches the presenter's face and lip movement.
 Tone: premium, calm, confident, brand-safe, no minors, no nudity, no explicit sexualization.
-Visual direction: image-gen2 creates the key visual, GPT-5.5 structures the explanation, ElevenLabs provides the voice, Hedra turns the character into a presenter, and Seedance 2.0 style motion adds refined UI cutaways.
+Visual direction: GPT image creates the key visual, GPT-5.5 structures the explanation, ElevenLabs provides the voice, and Hedra turns the character into a talking presenter with refined UI cutaways.
 Show concrete product surfaces: site guide AI, AI secretary, AI University, notes, asset management, English reading dashboard, release notes, and supporter checkout.
 ${draft.videoPrompt}
 '''
@@ -1241,7 +1245,7 @@ ${draft.videoPrompt}
 Moving smartphone app UX validation video for "My Finance".
 Use the actual product context from ${context.url}.
 Show a Japanese mobile finance app flow: assets, spending, KGI/CSF/KPI, waste reduction, and an improvement loop.
-Creative pipeline: GPT image2 -> GPT-5.5 -> Seedance 2.0.
+Creative pipeline: GPT image -> GPT-5.5 -> ElevenLabs -> Hedra.
 ${draft.videoPrompt}
 '''
         .trim();
