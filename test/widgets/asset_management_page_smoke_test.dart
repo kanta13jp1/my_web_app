@@ -1103,6 +1103,120 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('salary inflow suggestion registers a monthly rule in one tap',
+        (tester) async {
+      // 給与明細/salary_incomes でのみ給料を管理していると入金予定ルールが
+      // 未登録になり、asOf 起点カレンダーでは次サイクル頭の見込み残高が細く
+      // 見える (#3799)。最新給与額のワンタップ登録導線を検証する。
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialPayslipSalaryIncomes: const <Map<String, dynamic>>[
+              <String, dynamic>{'pay_date': '2026-05-25', 'amount': 400000},
+              <String, dynamic>{'pay_date': '2026-06-25', 'amount': 452815},
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_salary_inflow_suggestion')),
+      );
+      // 最新 (6/25) の手取りが提示される。
+      expect(
+        find.textContaining('給料 ¥452,815 を毎月25日に登録'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('asset_salary_inflow_register')));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // 登録後は導線が消え、サイクル窓内 (6/25) の給料チップとして反映される。
+      expect(
+        find.byKey(const Key('asset_salary_inflow_suggestion')),
+        findsNothing,
+      );
+      expect(find.textContaining('6/25 給料 ¥452,815'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('salary suggestion stays hidden when a salary rule exists',
+        (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'asset_expected_inflow_rules_v1': jsonEncode(<Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'r_salary',
+            'day_of_month': 25,
+            'amount': 450000,
+            'label': '給料',
+          },
+        ]),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialPayslipSalaryIncomes: const <Map<String, dynamic>>[
+              <String, dynamic>{'pay_date': '2026-06-25', 'amount': 452815},
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_salary_inflow_suggestion')),
+        findsNothing,
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets('dismissing the salary suggestion persists to prefs',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialPayslipSalaryIncomes: const <Map<String, dynamic>>[
+              <String, dynamic>{'pay_date': '2026-06-25', 'amount': 452815},
+            ],
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.ensureVisible(
+        find.byKey(const Key('asset_salary_inflow_dismiss')),
+      );
+      await tester.tap(find.byKey(const Key('asset_salary_inflow_dismiss')));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_salary_inflow_suggestion')),
+        findsNothing,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(
+        prefs.getBool('asset_salary_inflow_prompt_dismissed_v1'),
+        isTrue,
+      );
+
+      await _unmount(tester);
+    });
+
     testWidgets('post-payday inflow keeps warning but shift previews clear', (
       tester,
     ) async {
