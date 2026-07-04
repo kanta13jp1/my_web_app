@@ -1115,14 +1115,31 @@ ${draft.imagePrompt}
     UniversalXShareDraft draft,
   ) {
     if (!_isMyFinanceUxContext(context)) {
+      // シーン/照明/カメラを日替りローテし、当日の話題も差し込むことで、Hedra の
+      // enhance_prompt が毎回異なる背景・動きの動画を生成する(=見た目も劇的に変化)。
+      const scenes = <String>[
+        'a sleek dawn broadcast desk with soft sunrise light and floating news headlines',
+        'a modern glass news studio at night with cool blue holographic panels',
+        'a warm minimalist office with a single desk lamp and a calm morning mood',
+        'a dynamic control-room set with multiple live dashboards and energetic camera moves',
+        'a bright airy co-working space with plants, daylight, and a relaxed vibe',
+        'a premium rooftop lounge at golden hour overlooking a city skyline',
+      ];
+      final seed = draft.text.hashCode.abs();
+      final scene = scenes[seed % scenes.length];
+      final topic = _topNewsTopicFor(draft);
+      final topicLine = topic.isEmpty
+          ? ''
+          : 'Weave in a subtle visual nod to today\'s topic: "$topic".';
       return '''
 High-quality 16:9 product tour video for ${context.url}.
+Setting for today: $scene. Change the composition, lighting, and camera movement so each day's video looks visibly different.
+$topicLine
 Presenter: an intelligent, elegant adult female AI executive secretary in a tasteful dark suit.
 Voice: polished feminine Japanese voice, warm and professional, matching the secretary's face and lip movement.
 Tone: premium, calm, confident, brand-safe, no nudity, no explicit sexualization.
 Visual direction: image-gen2 creates a polished female secretary/key visual, GPT-5.5 structures the explanation, ElevenLabs provides the feminine voice, Hedra turns the secretary into a presenter, and Seedance 2.0 style motion adds refined UI cutaways.
 Show concrete product surfaces: site guide AI, AI secretary, AI University, notes, asset management, English reading dashboard, release notes, and supporter checkout.
-Make it feel like a smart SaaS concierge explaining the site in detail to a first-time visitor.
 ${draft.videoPrompt}
 '''
           .trim();
@@ -1144,33 +1161,65 @@ ${draft.videoPrompt}
     if (_isMyFinanceUxContext(context)) {
       return _scriptLinesFromText(draft.text);
     }
-    // 動画ナレーションは「当日ニュース由来の draft.text(フック)+ スレッド返信
-    // (ブリーフィング本文)」から構成する。従来は本文が固定のツアー定型文で、
-    // フック1行以外は毎回同一 = ユーザーに「動画で話す内容が固定」と映っていた。
-    // draft.threadReplies には LLM が生成した当日ニュースの分析(現状/課題/解決策)が
-    // 入っているので、それをそのまま読み上げ台本にすると動画も毎回変化+当日反映になる。
-    final hookLines = _scriptLinesFromText(draft.text);
+    // 動画ナレーションを毎回「劇的に」変える。①導入(型)を draft 由来 seed で日替り
+    // ローテ＋当日ニュースの話題を差し込み ②本文は LLM が当日ニュースから作った
+    // threadReplies(現状/課題/解決策)を読み上げ ③締めも複数から選ぶ。固定のツアー
+    // 定型文は使わない。ニュースが変われば draft.text の hashCode が変わり、導入・締め
+    // も連動して変わるので、動画の印象が日替りで大きく変化する。
     final bodyLines = <String>[
       for (final reply in draft.threadReplies)
         if (_narrationLineFromReply(reply).isNotEmpty)
           _narrationLineFromReply(reply),
     ];
-    final newsScript = <String>[...hookLines, ...bodyLines];
-    if (newsScript.length >= 3) {
-      return <String>[
-        ...newsScript.take(5),
-        '5分だけ試して、役に立った点と迷った点を教えてください。',
-      ];
-    }
-    // ニュース/スレッドが乏しい時のみ、従来のサイト案内フォールバックへ。
-    final hook =
-        hookLines.isEmpty ? '今日のAI仕事OSの使い方を、AI秘書がご案内します。' : hookLines.first;
-    return <String>[
-      hook,
-      'サイト案内AIに聞けば、どの機能から始めるか迷いません。',
-      'ノート、仕事ログ、資産管理、英語学習をひとつの作業空間でつなげます。',
-      '5分だけ試して、役に立った点と迷った点を教えてください。',
+    final hookLines = _scriptLinesFromText(draft.text);
+    final body = bodyLines.isNotEmpty ? bodyLines : hookLines;
+    final topic = _topNewsTopicFor(draft);
+    final seed = draft.text.hashCode.abs();
+
+    const openings = <String>[
+      '今日のニュースを、AI仕事OSの視点で手短に整理します。',
+      'おはようございます。今朝の気になる話題を、仕事の段取りに引きつけて読み解きます。',
+      'ニュースは追うだけで終わりがち。今日の話題を「後で使える形」に整理します。',
+      '話題が多い日ほど、情報の置き場所で差が出ます。今日の要点です。',
+      '今日の注目トピックを、AI仕事OS開発者の視点でまとめました。',
+      '流れてくるニュースを、判断材料に変えるコツを紹介します。',
     ];
+    const closings = <String>[
+      '5分だけ試して、役に立った点と迷った点を教えてください。',
+      'まず触ってみて、どこで役立ちそうか一言もらえると嬉しいです。',
+      '気になった方は、5分だけ触って感想を返信してください。',
+      '今日の情報整理、ここから始めてみませんか。',
+    ];
+    final opening = topic.isEmpty
+        ? openings[seed % openings.length]
+        : '${openings[seed % openings.length]} 今日の話題は「$topic」です。';
+    final closing = closings[(seed ~/ openings.length) % closings.length];
+
+    if (body.isNotEmpty) {
+      return <String>[opening, ...body.take(4), closing];
+    }
+    return <String>[
+      opening,
+      'AI仕事OSで、学習・仕事ログ・資産管理・英語学習をひとつに整理できます。',
+      closing,
+    ];
+  }
+
+  /// draft から動画で強調する「今日の話題」を短く1つ取り出す。
+  /// リード文の「…:「見出し」」やトレンド名を優先。
+  static String _topNewsTopicFor(UniversalXShareDraft draft) {
+    final quoted = RegExp(r'「([^」]{2,40})」').firstMatch(draft.text);
+    if (quoted != null) {
+      final topic = quoted.group(1)!.trim();
+      if (!topic.contains('情報を残して使う')) return topic;
+    }
+    for (final reply in draft.threadReplies) {
+      final line = _narrationLineFromReply(reply);
+      if (line.length >= 6) {
+        return line.length > 34 ? '${line.substring(0, 34)}…' : line;
+      }
+    }
+    return '';
   }
 
   /// スレッド返信(例: "1. 現在の状況: 九州北部で激しい雨…" や
