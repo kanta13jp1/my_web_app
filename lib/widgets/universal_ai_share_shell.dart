@@ -373,9 +373,10 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         var generationId = video.url == null
             ? _extractString(video.raw, 'hedraGenerationId')
             : null;
-        // Hedra は非同期で、長めのナレーションだと数分かかる。静止画で投稿されないよう、
-        // 動画URLが返るまで最大約5分ポーリングして完成を待つ。
-        const maxPolls = 30;
+        // Hedra は非同期で、ナレーション長に応じて数分かかる。静止画で投稿されないよう、
+        // 動画URLが返るまでポーリングして完成を待つ。台本は短尺(<=450字)に制限済で通常
+        // 数分内に完成するが、Hedra のキュー変動に備え約7分半まで待つ(defense-in-depth)。
+        const maxPolls = 45;
         for (var polls = 0;
             video.url == null && generationId != null && polls < maxPolls;
             polls += 1) {
@@ -383,7 +384,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           if (_disposed || !mounted) return;
           final elapsed = (polls + 1) * 10;
           setState(() {
-            _statusMessage = '音声と動画を生成しています…（約$elapsed秒経過 / 最大5分）';
+            _statusMessage = '音声と動画を生成しています…（約$elapsed秒経過 / 最大約7分半）';
           });
           video = await _service.generateVideo(
             context: widget.page,

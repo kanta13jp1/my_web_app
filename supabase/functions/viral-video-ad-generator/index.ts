@@ -41,6 +41,12 @@ const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 const FAL_KEY = Deno.env.get("FAL_KEY") ?? "";
 const HEDRA_API_KEY = Deno.env.get("HEDRA_API_KEY") ?? "";
 const HEDRA_API_BASE = "https://api.hedra.com/web-app/public";
+// 読み上げ台本(spokenScript)の最大文字数。Hedra の動画生成は台本長に比例して
+// 長くなり、長すぎるとワンボタン投稿のクライアント側ポーリング内に完成せず静止画で
+// 投稿されてしまう。実測: 145 字は video_ready 到達 / 685 字は processing 滞留。
+// 全 TTS 経路(主 ElevenLabs / fallback voice / OpenAI / Hedra native / fallbackText)を
+// この単一上限で統一し、どの経路でも短尺動画を保証する。client 側 _maxNarrationChars と同値。
+const MAX_SPOKEN_CHARS = 450;
 const HEDRA_AVATAR_MODEL_ID = Deno.env.get("HEDRA_AVATAR_MODEL_ID") ??
   "26f0fc66-152b-40ab-abed-76c43df99bc8";
 const HEDRA_VOICE_ID = Deno.env.get("HEDRA_VOICE_ID") ?? "";
@@ -692,9 +698,8 @@ async function createHedraPresenterVideo(params: {
         throw new Error("ELEVENLABS_API_KEY not configured");
       }
       const audio = await createElevenLabsSpeechAsset(params.admin, {
-        // 動画は短尺(~40-60秒)に保つ。長い音声は Hedra 生成が数分以上かかり、
-        // ワンボタン投稿のポーリング内に完成しないため上限を抑える。
-        text: spokenScript.slice(0, 900),
+        // 動画を短尺に保つための上限。全 TTS 経路で MAX_SPOKEN_CHARS に統一。
+        text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
         templateTitle: params.title ?? "share-update",
         lang: params.lang,
         voiceId: resolveElevenLabsVoiceForLabel(params.voice),
@@ -720,7 +725,7 @@ async function createHedraPresenterVideo(params: {
         shouldRetryElevenLabsWithFallbackVoice(error)
       ) {
         const fallbackResult = await tryElevenLabsFallbackVoices(params.admin, {
-          text: spokenScript.slice(0, 1800),
+          text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
           templateTitle: params.title ?? "share-update",
           lang: params.lang,
           configuredVoiceId: ELEVENLABS_AI_SECRETARY_VOICE_ID,
@@ -739,7 +744,7 @@ async function createHedraPresenterVideo(params: {
             storedAudioPath,
             audioProvider,
             imageUrl,
-            fallbackText: spokenScript.slice(0, 1800),
+            fallbackText: spokenScript.slice(0, MAX_SPOKEN_CHARS),
           });
         }
         speechChain.push(`fallback_voices=${fallbackResult.reason}`);
@@ -750,7 +755,7 @@ async function createHedraPresenterVideo(params: {
       if (OPENAI_API_KEY) {
         try {
           const openAiAudio = await createOpenAiSpeechAsset(params.admin, {
-            text: spokenScript.slice(0, 1800),
+            text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
             templateTitle: `${params.title ?? "share-update"}-openai-tts`,
             lang: params.lang,
           });
@@ -766,7 +771,7 @@ async function createHedraPresenterVideo(params: {
             storedAudioPath,
             audioProvider,
             imageUrl,
-            fallbackText: spokenScript.slice(0, 1800),
+            fallbackText: spokenScript.slice(0, MAX_SPOKEN_CHARS),
           });
         } catch (openAiError) {
           speechChain.push(`openai_tts=${providerErrorMessage(openAiError)}`);
@@ -779,7 +784,7 @@ async function createHedraPresenterVideo(params: {
         speechChain.join(" | "),
       );
       audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
-        text: spokenScript.slice(0, 1800),
+        text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
       });
       audioProvider = params.requiresUploadedAudio
         ? "hedra_tts_after_premium_speech_failure"
@@ -787,7 +792,7 @@ async function createHedraPresenterVideo(params: {
     }
   } else {
     audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
-      text: spokenScript.slice(0, 1800),
+      text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
     });
   }
 
@@ -798,7 +803,7 @@ async function createHedraPresenterVideo(params: {
       storedAudioPath,
       audioProvider,
       imageUrl,
-      fallbackText: spokenScript.slice(0, 1800),
+      fallbackText: spokenScript.slice(0, MAX_SPOKEN_CHARS),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
