@@ -1056,9 +1056,10 @@ class LocalElectionShareService {
     return '同数';
   }
 
-  /// AI整理メモの注視ポイント。AI整理メモは includeCdpBenchmarks=false の snapshot を
-  /// 使うため立憲比較行が「取得していません」になる。週次cronでバッチ取得した立憲値
-  /// (plan に適用済み) から地力差を計算し、その行だけ差し替える。データが無ければ原文。
+  /// AI整理メモの注視ポイント。snapshot の edge function は立憲値を取得しない
+  /// (週次cronが正本) ため立憲比較行が「取得していません」になる。週次cronで
+  /// バッチ取得した立憲値 (plan に適用済み) から地力差を計算し、その行だけ差し替える。
+  /// データが無ければ原文。
   List<String> displayAiAlerts(
     LocalElectionRealitySnapshot snapshot,
     LocalElectionPlanDashboard? plan,
@@ -1108,7 +1109,7 @@ class LocalElectionShareService {
     };
   }
 
-  /// snapshot は includeCdpBenchmarks=false で立憲値が 0 のため、plan のバッチ値が
+  /// snapshot の立憲値は edge function が取得せず常に 0 のため、plan のバッチ値が
   /// あればそれを優先する (_describePlanPrefecture のマージと同型 / 0・欠損は据置)。
   int _resolveCdpLocalMembers(
     LocalElectionPrefectureReality reality,
