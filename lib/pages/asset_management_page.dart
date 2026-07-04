@@ -613,6 +613,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // カテゴリ別 月次予算 (category -> 金額)。予算/カテゴリ予実カードで使用。
   Map<String, double> _categoryBudgets = <String, double>{};
   final Map<String, GlobalKey> _debtMasterCardKeys = <String, GlobalKey>{};
+  // アクションアイテムからジャンプした直後に、対処すべき支払済みチェックボックスへ
+  // 視線誘導するため一時的に点滅ハイライトする負債マスタ行ID (2.6 秒で自動解除)。
+  String? _highlightedDebtCardId;
+  Timer? _debtCardHighlightTimer;
   Map<String, AssetLiabilityAnnualRateEvidence> _annualRateEvidences =
       <String, AssetLiabilityAnnualRateEvidence>{};
   Set<String> _monthlyPaidAccountNames = <String>{};
@@ -1039,6 +1043,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
     _bootPrefMirrorExpiryTimer?.cancel();
+    _debtCardHighlightTimer?.cancel();
     _assetManagementAiSummaryDebounce?.cancel();
     _existingDeveloperIssueLookupDebounce?.cancel();
     _annualRateEvidencePasteRegistration?.dispose();
@@ -24012,7 +24017,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         return;
       }
       _scrollTo(key);
+      _flashDebtMasterCard(accountId);
     });
+  }
+
+  /// ジャンプ着地後、対象行の支払済みチェックボックスを一時的に点滅ハイライトして
+  /// 「ここをチェックすればよい」と視線誘導する。2.6 秒後に自動で解除する。
+  void _flashDebtMasterCard(String accountId) {
+    _debtCardHighlightTimer?.cancel();
+    setState(() {
+      _highlightedDebtCardId = accountId;
+    });
+    _debtCardHighlightTimer = Timer(
+      const Duration(milliseconds: 2600),
+      () {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _highlightedDebtCardId = null;
+        });
+      },
+    );
   }
 
   /// 削除した支払日上書きのトゥームストーン (#part293: MirrorTombstoneStore 3例目)。
@@ -24229,7 +24255,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               ),
               _buildDebtMasterControl(
                 label: '支払状態',
-                child: _buildPaidCheckbox(row),
+                child: _DebtPaidCheckboxHighlight(
+                  active: _highlightedDebtCardId == row.id,
+                  child: _buildPaidCheckbox(row),
+                ),
                 maxWidth: 220,
               ),
             ],
@@ -28057,6 +28086,82 @@ class _PaymentCheckGuideDialogState extends State<_PaymentCheckGuideDialog> {
           child: const Text('閉じる'),
         ),
       ],
+    );
+  }
+}
+
+/// 負債マスタ行の支払済みチェックボックスを、アクションアイテムからのジャンプ着地時に
+/// 一時的に点滅させて「ここをチェックすればよい」と視線誘導するラッパー。
+/// [active] が true の間だけ枠が明滅する。false のときは子をそのまま描画するが、
+/// レイアウトのずれを避けるため常に幅 2px の枠 (非アクティブ時は透明) を確保する。
+class _DebtPaidCheckboxHighlight extends StatefulWidget {
+  const _DebtPaidCheckboxHighlight({
+    required this.active,
+    required this.child,
+  });
+
+  final bool active;
+  final Widget child;
+
+  @override
+  State<_DebtPaidCheckboxHighlight> createState() =>
+      _DebtPaidCheckboxHighlightState();
+}
+
+class _DebtPaidCheckboxHighlightState extends State<_DebtPaidCheckboxHighlight>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 550),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.active) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(_DebtPaidCheckboxHighlight oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.active && oldWidget.active) {
+      _controller.stop();
+      _controller.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t =
+            widget.active ? Curves.easeInOut.transform(_controller.value) : 0.0;
+        // 自分株式会社ブランドのオレンジ (DESIGN.md) で明滅する。
+        const accent = Color(0xFFF97316);
+        return Container(
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12 * t),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.75 * t),
+              width: 2,
+            ),
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
     );
   }
 }
