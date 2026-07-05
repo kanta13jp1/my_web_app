@@ -5,6 +5,10 @@ on:
     paths:
       - '.github/workflows/hotfix-stripe-url.yml'
 
+concurrency:
+  group: hotfix-stripe-url
+  cancel-in-progress: true  # 2026-07-04 ci-audit: push 連続時キュー積み防止
+
 jobs:
   hotfix:
     runs-on: ubuntu-latest
