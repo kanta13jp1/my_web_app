@@ -129,29 +129,42 @@ export async function fetchXTweetMetrics(
   tweetIds: string[],
 ): Promise<XTweetMetrics[]> {
   assertXConfigured();
-  const ids = [...new Set(tweetIds.map(asString).filter((id) => id !== ""))]
-    .slice(0, 100);
+  // X API v2 の /2/tweets は 1 リクエスト最大 100 id。従来は `.slice(0, 100)` で
+  // 101 件目以降を黙って切り捨てており、投稿数が増えるほど計測から漏れた
+  // (perf フィードバックループの入力欠損)。100 件ずつ順次バッチで全件取得する。
+  const ids = [...new Set(tweetIds.map(asString).filter((id) => id !== ""))];
   if (ids.length === 0) return [];
 
-  try {
-    return await fetchXTweetMetricsWithFields(ids, [
-      "created_at",
-      "text",
-      "public_metrics",
-      "non_public_metrics",
-      "organic_metrics",
-    ]);
-  } catch (error) {
-    const payload = isXApiError(error) ? error.payload : null;
-    if (payload && (payload.status === 400 || payload.status === 403)) {
-      return await fetchXTweetMetricsWithFields(ids, [
-        "created_at",
-        "text",
-        "public_metrics",
-      ]);
+  const results: XTweetMetrics[] = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const batch = ids.slice(i, i + 100);
+    try {
+      results.push(
+        ...await fetchXTweetMetricsWithFields(batch, [
+          "created_at",
+          "text",
+          "public_metrics",
+          "non_public_metrics",
+          "organic_metrics",
+        ]),
+      );
+    } catch (error) {
+      const payload = isXApiError(error) ? error.payload : null;
+      if (payload && (payload.status === 400 || payload.status === 403)) {
+        // 昇格フィールド非対応(未認可)時のダウングレードはバッチ単位で維持。
+        results.push(
+          ...await fetchXTweetMetricsWithFields(batch, [
+            "created_at",
+            "text",
+            "public_metrics",
+          ]),
+        );
+      } else {
+        throw error;
+      }
     }
-    throw error;
   }
+  return results;
 }
 
 async function fetchXTweetMetricsWithFields(
