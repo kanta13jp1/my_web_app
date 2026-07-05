@@ -1141,6 +1141,19 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ## セッション記録
 
+### daily-report Schedule — 2026-07-05 (Web版 Claude Schedule)
+
+**日次レポート生成・競合モニタリング補足**
+
+- **日次レポート確認**: `docs/daily-reports/2026-07-05.md` は GitHub Actions により生成済み (総ユーザー数41人 / 未対応機能リクエスト119件)
+- **Supabase API**: ネットワークプロキシポリシーにより `smmkxxavexumewbfaqpy.supabase.co` へのアクセスがブロック (既知の環境制約 / GHA 経由では正常稼働)
+- **X投稿**: viral-growth-engine および post-x-update ともにプロキシブロックにより未実施
+- **GitHub Issues (auto-review)**: 対象 Issue なし (0件)
+- **競合モニタリング補足**: `docs/competitor-reports/2026-07-05.md` に Slack/GitHub 7月新機能を WebSearch で追記
+  - Slack: IDP Groups 可視化 / 画像 alt text / メッセージ予約送信 / Named group DMs / サイドバーフィルター / Slack Connect 自動化
+  - GitHub: Issue Fields GA / Code Quality GA (7/20) / Copilot CLI in GH Actions / AI credit pools / Copilot vision GA / GitHub Models 退役 (7/30)
+- **重要競合動向 (7/05 既報 補足)**: Notion 3.6 Workers (hosted runtime) + CLI + モデルピッカー (Opus 4.8/Grok 4.3/GLM 5.2) が確認。「同じ Claude で動く競合」構図 (MoneyForward + Notion) が固まりつつある。自社の差別化は統治の深さ＋6部署 B/S 統合に集中。
+
 ### PS#27 — 2026-04-07 (PowerShell/Management)
 
 **awesome-design-md-jp 日本語デザインシステム統合**
