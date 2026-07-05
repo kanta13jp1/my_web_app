@@ -12,7 +12,18 @@ import {
   DEFAULT_CAPTION_TIMING,
   extractBurnedVideoUrl,
   formatSrtTimestamp,
+  MAX_ROW_UNITS,
+  MAX_ROWS_PER_CUE,
+  wrapCaptionText,
 } from "./captions.ts";
+
+// 重み付き幅(全角=1.0 / ASCII・半角カナ=0.5)をテスト側でも再現する。
+function rowUnits(row: string): number {
+  return Array.from(row).reduce((sum, ch) => {
+    const cp = ch.codePointAt(0) ?? 0;
+    return sum + (cp <= 0xff || (cp >= 0xff61 && cp <= 0xff9f) ? 0.5 : 1);
+  }, 0);
+}
 
 function timestampToMs(stamp: string): number {
   const [hms, millis] = stamp.split(",");
@@ -83,16 +94,28 @@ Deno.test("buildCaptionSrt allocates duration proportional to char length", () =
   assert(ratio > 1.8 && ratio < 2.2, `expected ~2x, got ${ratio}`);
 });
 
-Deno.test("buildCaptionSrt clamps degenerate short/long lines", () => {
-  const srt = buildCaptionSrt("hi\n" + "x".repeat(5000), "en", {
+Deno.test("buildCaptionSrt floors short lines but no longer caps long ones", () => {
+  const srt = buildCaptionSrt("hi\n" + "x".repeat(600), "en", {
     jaCharsPerSecond: 6.5,
     enCharsPerSecond: 15,
     minLineSeconds: 1.2,
     maxLineSeconds: 7,
   });
-  const [b0, b1] = parseSrt(srt);
-  assertEquals(b0.end - b0.start, 1200); // min floor
-  assertEquals(b1.end - b1.start, 7000); // max ceiling
+  const blocks = parseSrt(srt);
+  // 短行は従来どおり minLineSeconds を床とする。
+  assertEquals(blocks[0].end - blocks[0].start, 1200);
+  // 長行は複数 cue に分割され、行合計は文字数比 (600/15=40s) を保つ。
+  // 旧実装の 7 秒天井は比例配分を歪めるため廃止(cue 単体は分割で十分短い)。
+  const longTotal = blocks.slice(1)
+    .reduce((sum, b) => sum + (b.end - b.start), 0);
+  assertEquals(longTotal, 40000);
+  assert(blocks.length > 2, "long line must split into multiple cues");
+  for (const b of blocks) {
+    assert(
+      b.text.split("\n").length <= MAX_ROWS_PER_CUE,
+      "every cue renders at most 2 rows",
+    );
+  }
 });
 
 Deno.test("buildCaptionSrt returns empty string for blank input", () => {
@@ -100,10 +123,80 @@ Deno.test("buildCaptionSrt returns empty string for blank input", () => {
   assertEquals(buildCaptionSrt("   \n \n\t", "en"), "");
 });
 
-Deno.test("buildCaptionSrt preserves the spoken text verbatim", () => {
+Deno.test("buildCaptionSrt preserves the spoken text (modulo row breaks)", () => {
   const line = "AI大学では、最新ニュースとプロンプト活用を学べます。";
   const srt = buildCaptionSrt(line, "ja");
-  assertStringIncludes(srt, line);
+  // 折返しで \n が入るため、改行を除去した連結が原文と一致することを確認。
+  const blocks = parseSrt(srt);
+  const joined = blocks.map((b) => b.text.replaceAll("\n", "")).join("");
+  assertEquals(joined, line);
+});
+
+Deno.test("wrapCaptionText keeps every row within the width budget", () => {
+  const line =
+    "流れてくるニュースを、判断材料に変えるコツを紹介します。今日の話題は「Meta、AIで『爆速開発』のはずが『想定より加速せず』」です。";
+  const rows = wrapCaptionText(line);
+  assert(rows.length >= 4, "70+ char ja line must wrap into several rows");
+  for (const row of rows) {
+    assert(
+      rowUnits(row) <= MAX_ROW_UNITS + 0.5,
+      `row exceeds width budget: ${row} (${rowUnits(row)})`,
+    );
+  }
+  // 連結すると原文に戻る(文字は一切失われない)。
+  assertEquals(rows.join(""), line.trim());
+  // 行頭禁則: 句読点・閉じ括弧などで行が始まらない(ベストエフォート)。
+  for (const row of rows.slice(1)) {
+    assert(
+      !"、。ー」』）".includes(Array.from(row)[0]),
+      `row starts with kinsoku char: ${row}`,
+    );
+  }
+});
+
+Deno.test("wrapCaptionText does not split ASCII words or surrogate pairs", () => {
+  const en = "Practical productivity insights for developers everywhere today";
+  for (const row of wrapCaptionText(en)) {
+    assert(rowUnits(row) <= MAX_ROW_UNITS + 0.5);
+  }
+  // 単語の途中で割れていない: 境界の空白は落ちるので、空白1つで連結し直すと
+  // 原文と一致する(=どの単語も分断されていない)ことを検証する。
+  const rows = wrapCaptionText(en);
+  assert(rows.length >= 2, "long en line must wrap");
+  assertEquals(rows.join(" "), en);
+  // サロゲートペア(絵文字)は割れず、例外も投げない。
+  const emoji = "🚀".repeat(20);
+  const emojiRows = wrapCaptionText(emoji);
+  assertEquals(emojiRows.join(""), emoji);
+  for (const row of emojiRows) {
+    assert(!row.includes("�"), "no broken surrogate halves");
+  }
+});
+
+Deno.test("buildCaptionSrt merges a tiny tail cue when width allows", () => {
+  // 30 全角 = 14+14+2 行 → 末尾 2 文字( <1.2s 相当)は前 cue の最終行(2文字)…
+  // ではなく幅上限を超えない場合のみ併合される。ここでは 16 文字 + 14 文字の
+  // 2 行に収まるケースで、cue 数が減ることを確認する。
+  const line = "あ".repeat(15); // 14 + 1 → tail 1 文字は前行(14)に足すと 15 > 14 で不可
+  const srt15 = buildCaptionSrt(line, "ja");
+  const blocks15 = parseSrt(srt15);
+  // 幅が許さないので tail cue は残る(2 cue) — かつ各行は幅上限以内。
+  for (const b of blocks15) {
+    for (const row of b.text.split("\n")) {
+      assert(rowUnits(row) <= MAX_ROW_UNITS + 0.5);
+    }
+  }
+  // 450 字の最悪ケースでも全 cue が 2 行以内・連番・連続タイムスタンプ。
+  const worst = ("今日の注目トピックを、AI仕事OS開発者の視点でまとめました。".repeat(10))
+    .slice(0, 450);
+  const blocks = parseSrt(buildCaptionSrt(worst, "ja"));
+  let prevEnd = 0;
+  blocks.forEach((b, i) => {
+    assertEquals(b.index, i + 1);
+    assertEquals(b.start, prevEnd);
+    prevEnd = b.end;
+    assert(b.text.split("\n").length <= MAX_ROWS_PER_CUE);
+  });
 });
 
 Deno.test("buildForceStyle encodes bottom-center high-contrast stroked style", () => {
@@ -113,7 +206,10 @@ Deno.test("buildForceStyle encodes bottom-center high-contrast stroked style", (
   assertStringIncludes(style, "PrimaryColour=&H00FFFFFF"); // white text
   assertStringIncludes(style, "OutlineColour=&H00000000"); // black outline
   assertStringIncludes(style, "Bold=1");
-  assertStringIncludes(style, "FontSize=22");
+  assertStringIncludes(style, "FontSize=20");
+  // 折返し幅を拘束する左右マージン(PlayRes 単位 / 960w で ~75px per side)。
+  assertStringIncludes(style, "MarginL=30");
+  assertStringIncludes(style, "MarginR=30");
 });
 
 Deno.test("extractBurnedVideoUrl reads common response shapes", () => {
@@ -152,6 +248,9 @@ const SAMPLE_REQUEST: BurnCaptionsRequest = {
   resolution: "540p",
   style: DEFAULT_CAPTION_STYLE,
   forceStyle: buildForceStyle(DEFAULT_CAPTION_STYLE),
+  stretchToVideo: true,
+  leadInMs: 0,
+  tailPadMs: 300,
 };
 
 Deno.test("burnCaptionsViaTranscoder returns ok with url on 200", async () => {

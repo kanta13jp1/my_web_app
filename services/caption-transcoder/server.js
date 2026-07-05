@@ -96,6 +96,92 @@ function buildVideoFilter(srtPath, forceStyle, scaleHeight) {
   return scaleHeight ? 'scale=-2:' + scaleHeight + ',' + sub : sub;
 }
 
+// --- SRT rescale to the real media duration (desync fix) -------------------
+// The edge function estimates cue times from a fixed chars/sec rate, which
+// drifts against the real ElevenLabs speech rate. The mp4 is already local,
+// so ffprobe the REAL duration and linearly rescale all cue times to fit
+// [leadInMs, duration - tailPadMs]. Every guard failure returns the input
+// unchanged — rescaling can never break a burn.
+
+const SRT_TIME_RE =
+  /(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})/g;
+
+function srtTimeToMs(h, m, s, ms) {
+  return ((Number(h) * 60 + Number(m)) * 60 + Number(s)) * 1000 + Number(ms);
+}
+
+function msToSrtTime(total) {
+  const t = Math.max(0, Math.round(total));
+  const pad = (v, w) => String(v).padStart(w || 2, '0');
+  return (
+    pad(Math.floor(t / 3600000)) + ':' + pad(Math.floor(t / 60000) % 60) +
+    ':' + pad(Math.floor(t / 1000) % 60) + ',' + pad(t % 1000, 3)
+  );
+}
+
+// ffprobe the real media duration (ms). Audio stream first (speech ends with
+// audio; -c:a copy keeps it authoritative), container format as fallback.
+// Resolves null on any failure/timeout — caller treats null as "skip rescale".
+function ffprobeDurationMs(filePath, timeoutMs) {
+  const probe = (args) => new Promise((resolve) => {
+    const p = spawn(
+      'ffprobe',
+      ['-v', 'error'].concat(args, ['-of', 'csv=p=0', filePath]),
+      { stdio: ['ignore', 'pipe', 'ignore'] },
+    );
+    let out = '';
+    const timer = setTimeout(() => p.kill('SIGKILL'), timeoutMs || 5000);
+    p.stdout.on('data', (d) => { out += d.toString(); });
+    p.on('close', () => {
+      clearTimeout(timer);
+      const sec = parseFloat(out.trim());
+      resolve(Number.isFinite(sec) && sec > 0 ? Math.round(sec * 1000) : null);
+    });
+    p.on('error', () => { clearTimeout(timer); resolve(null); });
+  });
+  return probe(['-select_streams', 'a:0', '-show_entries', 'stream=duration'])
+    .then((ms) => ms || probe(['-show_entries', 'format=duration']));
+}
+
+// Linearly rescale all SRT cue times from [0, srtEnd] to
+// [leadInMs, durationMs - tailPadMs]. Pure; returns the input unchanged on
+// any guard failure. Factor bounds reject SRT/video gross mismatches; a 5%
+// passthrough skips needless rewrites when the estimate already fits.
+function rescaleSrtToDuration(srt, durationMs, opts) {
+  try {
+    const o = opts || {};
+    let leadInMs = Number.isFinite(o.leadInMs) && o.leadInMs >= 0
+      ? o.leadInMs : 0;
+    let tailPadMs = Number.isFinite(o.tailPadMs) && o.tailPadMs >= 0
+      ? o.tailPadMs : 300;
+    const minFactor = o.minFactor || 0.5;
+    const maxFactor = o.maxFactor || 3;
+    if (!Number.isFinite(durationMs) || durationMs <= 1000) return srt;
+    if (leadInMs + tailPadMs >= durationMs) { leadInMs = 0; tailPadMs = 0; }
+    let srtEndMs = 0;
+    let matched = false;
+    srt.replace(SRT_TIME_RE, (all, h1, m1, s1, x1, h2, m2, s2, x2) => {
+      matched = true;
+      srtEndMs = Math.max(srtEndMs, srtTimeToMs(h2, m2, s2, x2));
+      return all;
+    });
+    if (!matched || srtEndMs <= 0) return srt;
+    if (leadInMs === 0 && Math.abs(srtEndMs - durationMs) / durationMs <= 0.05) {
+      return srt;
+    }
+    const factor = (durationMs - leadInMs - tailPadMs) / srtEndMs;
+    if (!(factor >= minFactor && factor <= maxFactor)) return srt;
+    return srt.replace(SRT_TIME_RE, (all, h1, m1, s1, x1, h2, m2, s2, x2) => {
+      const start = leadInMs + Math.round(srtTimeToMs(h1, m1, s1, x1) * factor);
+      let end = leadInMs + Math.round(srtTimeToMs(h2, m2, s2, x2) * factor);
+      if (end < start + 300) end = start + 300; // anti-flicker floor
+      return msToSrtTime(start) + ' --> ' + msToSrtTime(end);
+    });
+  } catch (e) {
+    return srt;
+  }
+}
+
 function sendJson(res, status, obj) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(obj));
@@ -137,8 +223,28 @@ const server = http.createServer(async (req, res) => {
       const inMp4 = path.join(os.tmpdir(), id + '-in.mp4');
       const srtFile = path.join(os.tmpdir(), id + '.srt');
       const outMp4 = path.join(OUT_DIR, id + '.mp4');
-      fs.writeFileSync(srtFile, srt, 'utf8');
       await download(videoUrl, inMp4);
+
+      // stretchToVideo: default ON (opt out with explicit false), so payloads
+      // from older edge versions (no field) get the desync fix immediately.
+      // The 5% passthrough + factor bounds inside rescaleSrtToDuration keep
+      // well-timed or grossly-mismatched SRTs untouched.
+      let finalSrt = srt;
+      if (body.stretchToVideo !== false) {
+        const durationMs = await ffprobeDurationMs(inMp4, 5000);
+        if (durationMs) {
+          finalSrt = rescaleSrtToDuration(srt, durationMs, {
+            leadInMs: Number(body.leadInMs),
+            tailPadMs: Number(body.tailPadMs),
+          });
+          if (finalSrt !== srt) {
+            console.log(
+              '[burn] srt rescaled to media duration ' + durationMs + 'ms',
+            );
+          }
+        }
+      }
+      fs.writeFileSync(srtFile, finalSrt, 'utf8');
 
       const vf = buildVideoFilter(
         srtFile,
@@ -187,4 +293,11 @@ if (require.main === module) {
 }
 
 // Exported for unit tests (test.js). The server only listens when run directly.
-module.exports = { buildVideoFilter, resolutionHeight, authed };
+module.exports = {
+  buildVideoFilter,
+  resolutionHeight,
+  authed,
+  srtTimeToMs,
+  msToSrtTime,
+  rescaleSrtToDuration,
+};

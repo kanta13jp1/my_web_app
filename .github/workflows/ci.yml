@@ -149,6 +149,12 @@ jobs:
           fi
         # 74テスト安定稼働中 (2026-04-12 PR#317) — continue-on-error 廃止
 
+      - name: Caption transcoder unit tests
+        # services/caption-transcoder (Cloud Run ffmpeg 字幕焼き込み) の純関数
+        # テスト。ubuntu-latest は node 20 プリインストールなので数秒で完走し、
+        # SRT リスケール等の回帰を EF 側の変更と同一 PR でブロックできる。
+        run: node services/caption-transcoder/test.js
+
       - name: Check Edge Function deploy count (ハードキャップ50本以下)
         run: |
           # deploy-prod.yml のデプロイリストを抽出 (macro-hub体制 — Tier1/Tier2廃止)
