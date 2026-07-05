@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: schedule-resilience-watch
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-05 ci-audit: 4h cron queue積み防止
 
 jobs:
   watch:
