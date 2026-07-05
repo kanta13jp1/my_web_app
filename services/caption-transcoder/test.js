@@ -26,8 +26,12 @@ ok('garbage -> null', resolutionHeight('abc') === null);
 // buildVideoFilter: force_style single-quoted so its commas are literal; scale prefixed.
 const fs1 = buildVideoFilter('/tmp/x.srt', 'FontName=Noto Sans CJK JP,FontSize=22', 540);
 ok('scale prefixed', fs1.startsWith('scale=-2:540,'));
-ok('subtitles present', fs1.includes('subtitles=/tmp/x.srt'));
+ok('subtitles filename quoted', fs1.includes("subtitles='/tmp/x.srt'"));
 ok('force_style single-quoted', fs1.includes(":force_style='FontName=Noto Sans CJK JP,FontSize=22'"));
+// Windows パス: ドライブコロンを \: へエスケープした上で引用符に包む
+// (未対応だと ffmpeg がコロンでフィルタオプション分割して失敗する)。
+const fsWin = buildVideoFilter('C:\\Users\\me\\a.srt', '', null);
+ok('windows path quoted+escaped', fsWin.includes("subtitles='C\\:/Users/me/a.srt'"));
 
 const fs2 = buildVideoFilter('/tmp/x.srt', '', null);
 ok('no scale when height null', !fs2.includes('scale='));

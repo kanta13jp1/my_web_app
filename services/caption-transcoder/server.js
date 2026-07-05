@@ -89,9 +89,13 @@ function resolutionHeight(resolution) {
 
 // ffmpeg subtitles filter needs the srt path escaped and force_style single-quoted
 // so its internal commas are not parsed as filtergraph option separators.
+// The filename itself is ALSO single-quoted (with the drive colon backslash-
+// escaped): unquoted, a Windows path like C:/Users/... is split at the colon
+// and ffmpeg mis-parses the remainder as filter options (observed:
+// "Unable to parse 'original_size' option"). Harmless on Linux paths.
 function buildVideoFilter(srtPath, forceStyle, scaleHeight) {
   const escaped = srtPath.replace(/\\/g, '/').replace(/:/g, '\\:');
-  let sub = 'subtitles=' + escaped;
+  let sub = "subtitles='" + escaped + "'";
   if (forceStyle) sub += ":force_style='" + forceStyle + "'";
   return scaleHeight ? 'scale=-2:' + scaleHeight + ',' + sub : sub;
 }
