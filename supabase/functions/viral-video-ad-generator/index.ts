@@ -1558,6 +1558,11 @@ async function maybeBurnCaptions(params: {
         resolution: "540p",
         style,
         forceStyle: buildForceStyle(style),
+        // 実測動画長へ SRT を線形リスケール(トランスコーダ側 ffprobe)。推定
+        // 話速との乖離や Hedra の頭出し余白による字幕ずれを吸収する。
+        stretchToVideo: true,
+        leadInMs: positiveNumberEnv("VVAG_CAPTION_LEAD_MS", 0),
+        tailPadMs: positiveNumberEnv("VVAG_CAPTION_TAIL_MS", 300),
       },
     });
     if (result.ok) {
