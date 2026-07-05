@@ -278,6 +278,163 @@ void main() {
     expect(capturedPrompt, contains('utm_content=daily_briefing'));
   });
 
+  test('generateDraft recovers a poll leaked inside threadReplies', () async {
+    // 実障害: LLM が poll をトップレベルでなく threadReplies の要素(オブジェクト)
+    // に入れ、Map.toString() の生テキスト `{text: , poll: {...}}` がそのまま
+    // リプ投稿された。オブジェクトは文字列化せず、poll は回収して native 投票を
+    // 復元し、text は非空文字列のときだけ採用する。
+    final chat = AiHubChatService(
+      invoker: (body) async => {
+        'success': true,
+        'provider': 'groq',
+        'text': '''
+{
+  "text": "AI大学をアップデートしました。\\n${page.url}\\n#buildinpublic",
+  "imagePrompt": "16:9 product UI share image",
+  "videoPrompt": "short presenter video",
+  "hashtags": ["#buildinpublic"],
+  "threadReplies": [
+    {"text": "", "poll": {"question": "AI導入、どこに壁を感じますか？", "options": ["開発の複雑性", "データの整理", "人材不足", "期待値ギャップ"], "durationMinutes": 1440}},
+    "現状の解説です。なぜ重要か: 明日の判断材料になるからです。",
+    "背景の解説です。"
+  ]
+}
+''',
+      },
+    );
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async => {'success': true},
+    );
+
+    final draft = await service.generateDraft(page);
+
+    expect(draft.fallbackUsed, isFalse);
+    // 生オブジェクトのテキスト漏出が一切ないこと。
+    for (final reply in draft.threadReplies) {
+      expect(reply, isNot(contains('{text')));
+      expect(reply, isNot(contains('durationMinutes')));
+    }
+    expect(draft.threadReplies.length, 2);
+    // 迷い込んだ poll をトップレベル poll として回収できていること。
+    expect(draft.poll, isNotNull);
+    expect(draft.poll!.question, 'AI導入、どこに壁を感じますか？');
+    expect(draft.poll!.options.length, 4);
+  });
+
+  test('generateDraft drops non-string junk threadReplies entries', () async {
+    final chat = AiHubChatService(
+      invoker: (body) async => {
+        'success': true,
+        'provider': 'groq',
+        'text': '''
+{
+  "text": "AI大学をアップデートしました。\\n${page.url}\\n#buildinpublic",
+  "imagePrompt": "16:9 product UI share image",
+  "videoPrompt": "short presenter video",
+  "hashtags": ["#buildinpublic"],
+  "threadReplies": [123, ["a", "b"], {"foo": "bar"}]
+}
+''',
+      },
+    );
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async => {'success': true},
+    );
+
+    final draft = await service.generateDraft(page);
+
+    // 文字列以外は全て破棄され(空なら fallback リプへ)、生テキスト漏出がない。
+    for (final reply in draft.threadReplies) {
+      expect(reply, isNot(contains('foo')));
+      expect(reply, isNot(contains('[a')));
+      expect(reply, isNot(contains('123')));
+    }
+  });
+
+  test('buildManualShareParts keeps the product URL only on the final reply',
+      () {
+    // LLM が自リプへ製品 URL を含めると OG カードが複数リプで重複表示される
+    // (実機で同一カードが2連続)。linkInReply ではリプ本文から URL を剥がし、
+    // URL は最終 CTA リプライだけに載せる。
+    final parts = UniversalXShareService.buildManualShareParts(
+      context: page,
+      text: 'リード本文\n${page.url}',
+      threadReplies: <String>[
+        'ポイント解説です。',
+        '締めです。詳しくは ${page.url} を見てください。',
+      ],
+      linkInReply: true,
+    );
+
+    expect(parts.replyTexts.length, 3);
+    // 中間リプに URL が残らない(重複 OG カード防止)。
+    expect(parts.replyTexts[0], isNot(contains('my-web-app')));
+    expect(parts.replyTexts[1], isNot(contains('my-web-app')));
+    // URL は最終 CTA リプライのみ。
+    expect(parts.replyTexts.last, contains(parts.textUrl));
+  });
+
+  test('assembleReplyTexts keeps the URL CTA when poll+replies exceed 8', () {
+    // growth-hub は replyTexts を slice(0,8) で切る。poll 質問(+1)と最終
+    // CTA(+1)で 8 を超えると、素通しではサーバ側で CTA(唯一の商品 URL)が
+    // 黙って落ちる。溢れは CTA 直前の分析リプから落とし CTA を必ず残す。
+    final analysis = List<String>.generate(8, (i) => '分析リプライ${i + 1}です。');
+    final partsReplies = <String>[...analysis, 'CTAです。\nhttps://example.com/x'];
+
+    final capped = UniversalXShareService.assembleReplyTexts(
+      partsReplyTexts: partsReplies,
+      pollQuestion: 'どこに壁を感じますか？',
+      hasPoll: true,
+      linkInReply: true,
+    );
+
+    expect(capped.length, 8);
+    expect(capped.first, 'どこに壁を感じますか？');
+    expect(capped.last, contains('https://example.com/x'));
+
+    // 8 件以下は従来と同一のパススルー。
+    final passthrough = UniversalXShareService.assembleReplyTexts(
+      partsReplyTexts: const ['a', 'b'],
+      pollQuestion: '',
+      hasPoll: false,
+      linkInReply: true,
+    );
+    expect(passthrough, const ['a', 'b']);
+  });
+
+  test('generateDraft drops double-encoded JSON string replies', () async {
+    final chat = AiHubChatService(
+      invoker: (body) async => {
+        'success': true,
+        'provider': 'groq',
+        'text': '''
+{
+  "text": "AI大学をアップデートしました。\\n${page.url}\\n#buildinpublic",
+  "imagePrompt": "16:9 product UI share image",
+  "videoPrompt": "short presenter video",
+  "hashtags": ["#buildinpublic"],
+  "threadReplies": [
+    "{\\"text\\": \\"\\", \\"poll\\": {\\"question\\": \\"Q\\"}}",
+    "手順は {設定→実行→確認} の3段階で進めると迷いません。"
+  ]
+}
+''',
+      },
+    );
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async => {'success': true},
+    );
+
+    final draft = await service.generateDraft(page);
+
+    // オブジェクトリテラル全体の文字列は捨てるが、括弧を含む日本語散文は残す。
+    expect(draft.threadReplies.length, 1);
+    expect(draft.threadReplies.first, contains('3段階'));
+  });
+
   test('postToX forwards optional media URL to growth-hub', () async {
     Map<String, dynamic>? capturedBody;
     String? capturedFunction;

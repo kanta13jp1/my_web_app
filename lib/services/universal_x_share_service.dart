@@ -327,9 +327,12 @@ class UniversalXShareService {
         ? ''
         : sanitizeTweet(poll.question, url: textUrl, requireUrl: false).trim();
     final hasPoll = pollPayload != null && pollQuestion.isNotEmpty;
-    final replyTexts = hasPoll
-        ? <String>[pollQuestion, ...parts.replyTexts]
-        : parts.replyTexts;
+    final replyTexts = assembleReplyTexts(
+      partsReplyTexts: parts.replyTexts,
+      pollQuestion: pollQuestion,
+      hasPoll: hasPoll,
+      linkInReply: linkInReply,
+    );
     final data = await _invoke('growth-hub', {
       'action': 'x.post',
       'text': mainText,
@@ -363,6 +366,36 @@ class UniversalXShareService {
           : const [],
       raw: data,
     );
+  }
+
+  /// growth-hub x.post は replyTexts を slice(0, 8) で切り捨てる。poll 質問の
+  /// 前置(+1)と URL 入り最終 CTA(+1)で 8 を超えると、サーバ側が末尾 = CTA
+  /// (link-in-reply 時は投稿全体で唯一の商品 URL)を黙って落とす。クライアント
+  /// 側で同じ上限を適用しつつ、溢れは末尾側の分析リプライから落として CTA を
+  /// 必ず残す。合計 8 件以下のときは従来と同一のパススルー。
+  static const int _serverReplyCap = 8; // growth-hub の slice(0, 8) と一致
+
+  static List<String> assembleReplyTexts({
+    required List<String> partsReplyTexts,
+    required String pollQuestion,
+    required bool hasPoll,
+    required bool linkInReply,
+  }) {
+    final base = <String>[if (hasPoll) pollQuestion, ...partsReplyTexts];
+    if (base.length <= _serverReplyCap) return base;
+    if (linkInReply && partsReplyTexts.isNotEmpty) {
+      // buildManualShareParts は linkInReply=true のとき URL 入り CTA を必ず
+      // 末尾に置くので .last が CTA。溢れた分は CTA 直前の分析リプを落とす。
+      final budget = _serverReplyCap - (hasPoll ? 1 : 0);
+      final analysis = partsReplyTexts.sublist(0, partsReplyTexts.length - 1);
+      final cta = partsReplyTexts.last;
+      return <String>[
+        if (hasPoll) pollQuestion,
+        ...analysis.take(budget - 1),
+        cta,
+      ];
+    }
+    return base.take(_serverReplyCap).toList(growable: false);
   }
 
   /// Normalizes an optional [UniversalXPoll] into the growth-hub wire shape
@@ -435,8 +468,16 @@ class UniversalXShareService {
           )
         : sanitizeTweet(baseText, url: textUrl);
     final replyTexts = <String>[
+      // linkInReply では URL を最終 CTA リプライだけに載せる。LLM が自リプへ
+      // 製品 URL を含めると OG カードが複数リプで重複表示されるため剥がす。
       ...threadReplies
-          .map((entry) => sanitizeTweet(entry, url: textUrl, requireUrl: false))
+          .map(
+            (entry) => sanitizeTweet(
+              linkInReply ? _removeUrl(entry, textUrl) : entry,
+              url: textUrl,
+              requireUrl: false,
+            ),
+          )
           .where((entry) => entry.trim().isNotEmpty),
       if (linkInReply)
         sanitizeTweet(
@@ -1032,6 +1073,15 @@ $url''';
     return next.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
   }
 
+  /// 全体がオブジェクト/配列リテラルの文字列(=二重エンコードされた JSON や
+  /// Map/List.toString() のダンプ)かどうか。先頭と末尾の両方に括弧を要求する
+  /// ので、「手順は {設定→実行→確認} の3段階」のような日本語散文は落ちない。
+  static bool _looksLikeSerializedObject(String s) {
+    final t = s.trim();
+    return (t.startsWith('{') && t.endsWith('}')) ||
+        (t.startsWith('[') && t.endsWith(']'));
+  }
+
   Future<Map<String, dynamic>> _invoke(
     String functionName,
     Map<String, dynamic> body,
@@ -1078,19 +1128,34 @@ $url''';
             : decoded['thread'] is List
                 ? decoded['thread'] as List
                 : const [];
-        final threadReplies = rawThreadReplies
-            .map(
-              (entry) => sanitizeTweet(
-                entry.toString(),
-                url: shareUrl,
-                requireUrl: false,
-              ),
-            )
-            .where((entry) => entry.trim().isNotEmpty)
-            // プロンプトは 5-8 リプライを要求。各リプライは独自にインプレッションを
-            // 稼ぐので 6 で切らず 8 まで通す(サーバ側も slice(0,8))。
-            .take(8)
-            .toList(growable: false);
+        // LLM が threadReplies の要素へ poll 等のオブジェクトを紛れ込ませることが
+        // ある(実害: Map.toString() の生テキスト `{text: , poll: {...}}` がその
+        // ままリプ投稿された)。文字列以外を無条件 toString() せず、Map からは
+        // poll を回収してトップレベル poll 欠落時の代わりに使い、text は非空の
+        // 文字列のときだけ採用する。その他の型は破棄する。
+        UniversalXPoll? recoveredPoll;
+        final threadReplies = <String>[];
+        for (final entry in rawThreadReplies) {
+          String? line;
+          if (entry is String) {
+            line = entry;
+          } else if (entry is Map) {
+            recoveredPoll ??= _parsePoll(entry['poll']);
+            final text = entry['text'];
+            if (text is String) line = text;
+          }
+          if (line == null) continue;
+          final sanitized =
+              sanitizeTweet(line, url: shareUrl, requireUrl: false);
+          if (sanitized.trim().isEmpty) continue;
+          // 二重エンコード({"text": …} を JSON 文字列として返す drift)対策:
+          // 全体がオブジェクト/配列リテラルの文字列は散文ではないので捨てる。
+          if (_looksLikeSerializedObject(sanitized)) continue;
+          threadReplies.add(sanitized);
+          // プロンプトは 5-8 リプライを要求。各リプライは独自にインプレッションを
+          // 稼ぐので 6 で切らず 8 まで通す(サーバ側も slice(0,8))。
+          if (threadReplies.length >= 8) break;
+        }
         return UniversalXShareDraft(
           text: text,
           imagePrompt:
@@ -1104,7 +1169,9 @@ $url''';
           hashtags: hashtags,
           threadReplies:
               threadReplies.isNotEmpty ? threadReplies : fallback.threadReplies,
-          poll: _parsePoll(decoded['poll']) ?? fallback.poll,
+          // トップレベル poll が正だが、threadReplies 内へ迷い込んだ poll も
+          // 回収して native 投票を復元する(生テキスト漏出の再発防止とセット)。
+          poll: _parsePoll(decoded['poll']) ?? recoveredPoll ?? fallback.poll,
           fallbackUsed: true,
           source: 'ai-json',
         );
@@ -1182,7 +1249,7 @@ Secondary goal: earn useful impressions without sounding like spam.
 Return valid JSON only:
 {
   "text": "Japanese X post, a rich 400-900 char long-form lead (this account has X Premium so it is NOT limited to 280 chars), must include $shareUrl",
-  "threadReplies": ["4 to 8 substantive Japanese reply posts, each 150-500 chars, forming a full briefing thread"],
+  "threadReplies": ["4 to 8 substantive Japanese reply posts, each 150-500 chars, forming a full briefing thread. PLAIN STRINGS ONLY - never JSON objects"],
   "imagePrompt": "English prompt for a 16:9 share image, no text overlay",
   "videoPrompt": "English prompt for a short presenter/share video",
   "hashtags": ["#buildinpublic", "#FlutterWeb", "#Supabase"],
@@ -1222,8 +1289,9 @@ Rules:
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
 - Format for scannability: break the lead and each reply into short one-idea lines with a blank line between meaning-chunks (no wall-of-text paragraph). Put labels (なぜ重要か / 見通し / 次の一手 など) at the start of a line and continue the explanation on the next line, so a reader can skim in 2 seconds.
 - Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical.
-- The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim and do NOT phrase it as "1つ目/item 1 of N". Replies 2 onward then form the numbered briefing.
+- The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim, do NOT phrase it as "1つ目/item 1 of N", and do NOT begin it with a number or list marker (never start with "1."). Replies 2 onward then form the numbered briefing.
 - Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 2-4 "options" (each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
+- The "poll" must be a TOP-LEVEL JSON key only. NEVER place a poll object (or any JSON object) inside the threadReplies array — every threadReplies element must be a plain Japanese string, or it will be posted as raw garbage text.
 - DERIVE the poll question AND options from THE DAY'S single most relevant headline so the poll rotates daily and is specific — NEVER reuse a generic or hardcoded poll like "使ってみたい?はい/いいえ" (near-duplicate polls get down-ranked). Yesterday's poll must not be reusable today.
 - The poll is posted as its own FIRST text-only thread reply (never on the media lead), so make the "question" self-contained. If no natural, honest poll fits today's news, OMIT the "poll" field entirely rather than forcing a weak one.
 - Treat the creative workflow as GPT image -> GPT-5.5 -> ElevenLabs -> Hedra.
