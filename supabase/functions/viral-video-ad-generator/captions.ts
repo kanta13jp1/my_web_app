@@ -153,6 +153,39 @@ export function wrapCaptionText(
 }
 
 /**
+ * 台本行を文境界(。？！ の直後)で分割する。cue が文の途中(実機観測:
+ * 「た。今日の話題は…」)から始まらないようにするための前処理。
+ * 「」『』（） 内の終端記号では分割しない(引用ニュースタイトルを割らない)。
+ * 失敗時は [line] を返す fail-safe(wrapCaptionText と同型)。
+ */
+export function splitAtSentenceBoundaries(line: string): string[] {
+  try {
+    const openers = "「『（";
+    const closers = "」』）";
+    const enders = "。？！";
+    const segments: string[] = [];
+    let current = "";
+    let depth = 0;
+    for (const ch of Array.from(line)) {
+      current += ch;
+      if (openers.includes(ch)) depth += 1;
+      else if (closers.includes(ch)) depth = Math.max(0, depth - 1);
+      else if (depth === 0 && enders.includes(ch)) {
+        segments.push(current);
+        current = "";
+      }
+    }
+    if (current.trim().length > 0) segments.push(current);
+    const cleaned = segments
+      .map((seg) => seg.trim())
+      .filter((seg) => seg.length > 0);
+    return cleaned.length > 0 ? cleaned : [line];
+  } catch (_error) {
+    return [line];
+  }
+}
+
+/**
  * 読み上げ台本から SRT を生成する。各行を [wrapCaptionText] で折り返し、
  * 最大 [MAX_ROWS_PER_CUE] 行ずつの cue に分割。行の尺は `文字数 / 発話レート`
  * を cue の文字数比で比例配分する(単一 cue の行のみ minLineSeconds を床とし、
@@ -183,10 +216,15 @@ export function buildCaptionSrt(
   const blocks: string[] = [];
   const joiner = lang === "ja" ? "" : " ";
   for (const line of lines) {
-    const rows = wrapCaptionText(line);
+    // 文境界(。？！)で区切ってから折り返す。cue が前文の断片(「た。今日の…」)
+    // から始まらず、必ず文頭 or 同一文の折返し継続で始まるようにする。
+    const segments = splitAtSentenceBoundaries(line);
     const cues: string[][] = [];
-    for (let i = 0; i < rows.length; i += MAX_ROWS_PER_CUE) {
-      cues.push(rows.slice(i, i + MAX_ROWS_PER_CUE));
+    for (const segment of segments) {
+      const rows = wrapCaptionText(segment);
+      for (let i = 0; i < rows.length; i += MAX_ROWS_PER_CUE) {
+        cues.push(rows.slice(i, i + MAX_ROWS_PER_CUE));
+      }
     }
     // 末尾の極小 cue (推定 < minLineSeconds) は、直前 cue の最終行に足しても
     // 行幅の上限を破らない場合のみ併合する(タイムライン全体は膨らませない)。

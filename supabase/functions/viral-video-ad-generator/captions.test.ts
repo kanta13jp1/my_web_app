@@ -14,8 +14,56 @@ import {
   formatSrtTimestamp,
   MAX_ROW_UNITS,
   MAX_ROWS_PER_CUE,
+  splitAtSentenceBoundaries,
   wrapCaptionText,
 } from "./captions.ts";
+
+Deno.test("splitAtSentenceBoundaries splits after 。？！ outside quotes", () => {
+  // 実機観測行: cue が「た。今日の話題は…」と文の途中から始まっていた。
+  const line =
+    "流れてくるニュースを、判断材料に変えるコツを紹介します。今日の話題は「マイクロン、AI需要で広島工場増強へ」です。";
+  const segs = splitAtSentenceBoundaries(line);
+  assertEquals(segs.length, 2);
+  assertEquals(segs[0], "流れてくるニュースを、判断材料に変えるコツを紹介します。");
+  assertEquals(segs[1], "今日の話題は「マイクロン、AI需要で広島工場増強へ」です。");
+  // 「」内の 、や終端記号では割らない。
+  const quoted = "話題は「爆速開発。想定より加速せず？」です！続きへ。";
+  const qsegs = splitAtSentenceBoundaries(quoted);
+  assertEquals(qsegs.length, 2);
+  assertEquals(qsegs[0], "話題は「爆速開発。想定より加速せず？」です！");
+  // 終端記号なし・空入力の fail-safe。
+  assertEquals(splitAtSentenceBoundaries("終端記号なしの一文"), ["終端記号なしの一文"]);
+});
+
+Deno.test("buildCaptionSrt cues start at sentence boundaries", () => {
+  const line =
+    "流れてくるニュースを、判断材料に変えるコツを紹介します。今日の話題は「マイクロン、AI需要で広島工場増強へ」です。";
+  const blocks = parseSrt(buildCaptionSrt(line, "ja"));
+  // 各 cue の先頭は「文頭」か「同一文の折返し継続」— 前文の断片(た。等)で
+  // 始まる cue が存在しないこと = どの cue 先頭も 。？！ 直後の文字ではなく
+  // 文境界で区切ったセグメント由来であることを、cue 連結の再構成で検証する。
+  const joined = blocks.map((b) => b.text.replaceAll("\n", "")).join("");
+  assertEquals(joined, line);
+  // 2文に分かれているので、2文目の先頭「今日の話題は」で始まる cue が存在する。
+  assert(
+    blocks.some((b) => b.text.replaceAll("\n", "").startsWith("今日の話題は")),
+    "second sentence must start its own cue",
+  );
+  // どの cue も「た。」のような前文断片で始まらない。
+  for (const b of blocks) {
+    const head = Array.from(b.text)[0];
+    assert(
+      !"。？！、".includes(head),
+      `cue starts with dangling punctuation: ${b.text}`,
+    );
+  }
+  // 行合計尺は従来どおり文字数比(トリム差は最終 cue が吸収)。
+  const total = blocks.reduce((sum, b) => sum + (b.end - b.start), 0);
+  const expected = Math.round(
+    (Array.from(line).length / DEFAULT_CAPTION_TIMING.jaCharsPerSecond) * 1000,
+  );
+  assertEquals(total, expected);
+});
 
 // 重み付き幅(全角=1.0 / ASCII・半角カナ=0.5)をテスト側でも再現する。
 function rowUnits(row: string): number {
