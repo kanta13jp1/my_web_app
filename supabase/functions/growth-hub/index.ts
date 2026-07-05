@@ -614,6 +614,57 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     .sort((left, right) => right.averageScore - left.averageScore);
 
   const bestVariant = variants[0]?.variant ?? "daily_briefing";
+  // 集計ロールアップ (guarded): 両バケットに十分なサンプルがあるときだけ、
+  // 変動要因(メディア有無/リンク位置/スレッド長)ごとの平均スコア差を測定事実と
+  // して LLM へ渡す。データが薄い間は行自体を出さない(=実質 default-off で、
+  // 投稿が貯まるほど自動的に有効化される)。従来は top-1 variant と逸話的な
+  // winner 行のみで、集計済みの variants ランキングが未提示だった。
+  const avgScore = (list: typeof rows): number =>
+    list.length === 0
+      ? 0
+      : Math.round(list.reduce((sum, r) => sum + r.score, 0) / list.length);
+  const structuralLines: string[] = [];
+  const withMedia = rows.filter((r) => r.hasMedia);
+  const withoutMedia = rows.filter((r) => !r.hasMedia);
+  if (withMedia.length >= 2 && withoutMedia.length >= 2) {
+    structuralLines.push(
+      `Structural lift (media): avg score with media=${avgScore(withMedia)} (n=${withMedia.length}) vs without=${avgScore(withoutMedia)} (n=${withoutMedia.length}).`,
+    );
+  }
+  const linkReply = rows.filter((r) => r.linkInReply);
+  const linkLead = rows.filter((r) => !r.linkInReply);
+  if (linkReply.length >= 2 && linkLead.length >= 2) {
+    structuralLines.push(
+      `Structural lift (link placement): avg score link-in-reply=${avgScore(linkReply)} (n=${linkReply.length}) vs link-in-lead=${avgScore(linkLead)} (n=${linkLead.length}).`,
+    );
+  }
+  if (rows.length >= 3) {
+    const buckets = [
+      ["0 replies", rows.filter((r) => r.threadReplyCount === 0)],
+      [
+        "1-4 replies",
+        rows.filter((r) => r.threadReplyCount >= 1 && r.threadReplyCount <= 4),
+      ],
+      ["5-8 replies", rows.filter((r) => r.threadReplyCount >= 5)],
+    ].filter(([, list]) => (list as typeof rows).length > 0) as Array<
+      [string, typeof rows]
+    >;
+    if (buckets.length >= 2) {
+      buckets.sort((a, b) => avgScore(b[1]) - avgScore(a[1]));
+      const [label, list] = buckets[0];
+      structuralLines.push(
+        `Best thread length so far: ${label} (avg score ${avgScore(list)}, n=${list.length}).`,
+      );
+    }
+  }
+  const distinctVariants = variants.filter((v) => v.variant !== "unknown");
+  const rankingLine = distinctVariants.length >= 2
+    ? `Variant ranking (avg score, n): ${
+      distinctVariants.slice(0, 5).map((v) =>
+        `${v.variant}=${v.averageScore} (n=${v.count})`
+      ).join(", ")
+    }.`
+    : "";
   const promptContext = rows.length === 0
     ? [
       "No measured X performance has been collected yet.",
@@ -633,6 +684,13 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
           index + 1
         }: variant=${row.variant}, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
+      ...(rankingLine ? [rankingLine] : []),
+      ...structuralLines,
+      ...(winners[0]
+        ? [
+          `Top hook to emulate (copy the structure, not the words): "${winners[0].text}"`,
+        ]
+        : []),
       "Use the winning structure, test one variable at a time, and keep the first post useful before adding the product CTA.",
     ].join("\n");
 
