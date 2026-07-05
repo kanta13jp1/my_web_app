@@ -1,14 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-04T22:13:19Z`
-- Previous check: `2026-07-03T22:17:02Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-07-05T22:14:33Z`
+- Previous check: `2026-07-04T22:13:19Z`
+- Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.201 / July 3, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
-- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
+- `changed` Codex changelog: 2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -38,10 +36,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-07-01 / Codex CLI 0.142.5 pre
+  - Latest signal: 2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: ( #30771 ) Changelog Full Changelog: rust-v0.142.4...rust-v0.142.5 #30771 [codex] Backport websocket trace fix to release/0.142 @dylan-hurd-oai Full release on Github June 2026...
+  - Short signal: Use Codex from the ChatGPT mobile app to start or continue work on a connected Mac or Windows host, review progress, and approve actions from your phone.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint

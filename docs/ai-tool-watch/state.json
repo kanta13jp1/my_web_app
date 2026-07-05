@@ -1,7 +1,7 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-07-04T22:13:19Z",
+      "checked_at": "2026-07-05T22:14:33Z",
       "hash": "42fb9083dae6170790faab3933c704ef1782243207a2971b82e62902bc8cbc7a",
       "keyword_groups": {
         "codex-runtime": [
@@ -52,7 +52,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-07-04T22:13:19Z",
+      "checked_at": "2026-07-05T22:14:33Z",
       "hash": "d50ff352ac5d607c37b9c65a72f48db6b28dacfdeb9b48f7fb4a5a74561203a5",
       "keyword_groups": {
         "codex-runtime": [
@@ -90,7 +90,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-07-04T22:13:19Z",
+      "checked_at": "2026-07-05T22:14:33Z",
       "hash": "6ea514d7f850db8f0f650067ecb593c7653b8b319ef7154596016af809fa2dc9",
       "keyword_groups": {
         "codex-runtime": [
@@ -131,8 +131,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-07-04T22:13:19Z",
-      "hash": "5b30bd4fae62b3bc33063bc896c4566d1a4ae0f8f2b487611119d4fc3c9b4022",
+      "checked_at": "2026-07-05T22:14:33Z",
+      "hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -147,8 +147,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -157,11 +155,9 @@
           "Slack",
           "Linear",
           "GitHub",
-          "IDE extension",
-          "VSCode"
+          "IDE extension"
         ],
         "quality-cost": [
-          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -178,13 +174,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-01 / Codex CLI 0.142.5 pre",
+      "latest_signal": "2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-07-04T22:13:19Z",
+      "checked_at": "2026-07-05T22:14:33Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -193,7 +189,7 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-07-04T22:13:19Z",
+      "checked_at": "2026-07-05T22:14:33Z",
       "hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
       "keyword_groups": {
         "codex-runtime": [
@@ -237,7 +233,7 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-07-04T22:13:19Z",
+      "checked_at": "2026-07-05T22:14:33Z",
       "hash": "e40fb5b45015b355b1178bba7dad73fbd7107a0c093fb739e092d4382e201e5b",
       "keyword_groups": {
         "codex-runtime": [
@@ -270,7 +266,7 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-07-04T22:13:19Z",
+      "checked_at": "2026-07-05T22:14:33Z",
       "hash": "2cabf2fb186d0c3f29b773fe2349e4c0d4be483e487220a1a95573b2e2b3d657",
       "keyword_groups": {
         "codex-runtime": [
@@ -309,7 +305,7 @@
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-07-04T22:13:19Z",
+      "checked_at": "2026-07-05T22:14:33Z",
       "hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
       "keyword_groups": {
         "hooks": [
@@ -338,5 +334,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-07-04T22:13:19Z"
+  "updated_at": "2026-07-05T22:14:33Z"
 }
