@@ -823,6 +823,13 @@
         "Glean (enterprise search→agent)",
         "Warp (terminal-native・観察)"
       ]
+    },
+    {
+      "date": "2026-07-06",
+      "name": null,
+      "category": "skip",
+      "reason": "cooldown / 7-day since 2026-07-02 Google Jules-Antigravity adoption / next unlock 2026-07-09 (OpenCode 第1候補)",
+      "skipped": true
     }
   ],
   "_schema_notes": {
