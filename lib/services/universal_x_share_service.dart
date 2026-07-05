@@ -1277,6 +1277,7 @@ Rules:
 - Prefer concrete pain, feature, or question hooks over generic app promotion.
 - Target 10K impressions by using the user's proven Daily Briefing style when trend context is strong: numbered items, headline, why it matters, outlook.
 - Use the measured performance context above. Prefer winning variants and avoid losing hook styles.
+- Treat the "Variant ranking", "Structural lift", and "Top hook to emulate" lines (when present) as authoritative measured data: adopt the winning structure (media choice, link placement, thread length, hook shape) but never copy winning wording verbatim.
 - A/B test only one major variable at a time: hook style, link placement, media/no-media, or thread length.
 - If past results say a link in the first post underperforms, put the product URL in the final reply.
 - Put information value first and product CTA last. Avoid looking like an ad in the lead post.
@@ -1475,7 +1476,12 @@ ${draft.imagePrompt}
       final topic = _topNewsTopicFor(draft);
       final topicLine = topic.isEmpty
           ? ''
-          : 'Weave in a subtle visual nod to today\'s topic: "$topic".';
+          : 'Weave in a subtle visual nod to today\'s topic: "$topic". '
+              'Open with a strong first beat: within the first second the '
+              'presenter looks straight into camera and starts speaking '
+              'immediately, with an eye-catching camera move (push-in or '
+              'whip-pan), so the video hooks muted viewers in the first '
+              '3 seconds.';
       return '''
 High-quality 16:9 product tour video for ${context.url}.
 Setting for today: $scene. Change the composition, lighting, and camera movement so each day's video looks visibly different.
@@ -1544,9 +1550,17 @@ ${draft.videoPrompt}
       '気になった方は、5分だけ触って感想を返信してください。',
       '今日の情報整理、ここから始めてみませんか。',
     ];
+    // ミュート自動再生では最初の3秒が視聴継続を決める。話題がある日は前置きの
+    // 定型文でなく、話題そのものを1文目に一度だけ話す(旧形式は2文の opening が
+    // 字幕 cue の途中分割「た。今日の話題は…」も誘発していた)。
+    const topicHooks = <String>[
+      '「%T」、30秒で要点だけ。',
+      '「%T」、いま押さえるべき点をひと言で。',
+      '「%T」。仕事にどう効くか、30秒で。',
+    ];
     final opening = topic.isEmpty
         ? openings[seed % openings.length]
-        : '${openings[seed % openings.length]} 今日の話題は「$topic」です。';
+        : topicHooks[seed % topicHooks.length].replaceFirst('%T', topic);
     final closing = closings[(seed ~/ openings.length) % closings.length];
 
     // 動画ナレーションは短尺(~40秒)に保つ。長い台本は Hedra の動画生成に数分以上
