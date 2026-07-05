@@ -98,6 +98,12 @@ serve(async (req) => {
         signup: "signup_submit_landing",
       },
       {
+        id: "profile",
+        label: "X profile",
+        touch: "touch_profile",
+        signup: "signup_submit_profile",
+      },
+      {
         id: "import",
         label: "インポート",
         touch: "touch_import",

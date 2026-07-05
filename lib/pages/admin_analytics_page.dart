@@ -3116,6 +3116,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Public memo copy';
       case 'touch_landing':
         return 'Landing touch';
+      case 'touch_profile':
+        return 'X profile touch';
       case 'touch_import':
         return 'Import touch';
       case 'touch_public_memo':
@@ -3136,6 +3138,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Public memo sign-up CTA';
       case 'signup_submit_landing':
         return 'Sign-up submit: Landing';
+      case 'signup_submit_profile':
+        return 'Sign-up submit: X profile';
       case 'signup_submit_import':
         return 'Sign-up submit: Import';
       case 'signup_submit_public_memo':
@@ -3177,6 +3181,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFFFFA000);
       case 'touch_landing':
         return const Color(0xFF475569);
+      case 'touch_profile':
+        return const Color(0xFF0F172A);
       case 'touch_import':
         return const Color(0xFF818CF8);
       case 'touch_public_memo':
@@ -3197,6 +3203,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return const Color(0xFFEC4899);
       case 'signup_submit_landing':
         return const Color(0xFF0D9488);
+      case 'signup_submit_profile':
+        return const Color(0xFF2563EB);
       case 'signup_submit_import':
         return const Color(0xFF4338CA);
       case 'signup_submit_public_memo':

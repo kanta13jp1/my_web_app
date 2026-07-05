@@ -7,7 +7,9 @@ import {
 
 Deno.test("resolveSignupChannel maps known signup and touch signals", () => {
   assertEquals(resolveSignupChannel("signup_submit_landing"), "landing");
+  assertEquals(resolveSignupChannel("signup_submit_profile"), "profile");
   assertEquals(resolveSignupChannel("signup_submit_referral"), "referral");
+  assertEquals(resolveSignupChannel("touch_profile"), "profile");
   assertEquals(resolveSignupChannel("touch_comparison_slack"), "comparison");
   assertEquals(resolveSignupChannel(""), "unknown");
 });

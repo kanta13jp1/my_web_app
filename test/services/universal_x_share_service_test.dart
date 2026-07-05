@@ -407,6 +407,22 @@ void main() {
     expect(url, isNot(contains('#')));
   });
 
+  test('profileAcquisitionUrlFor builds measurable X profile URL', () {
+    const home = UniversalSharePageContext(
+      routePath: '/',
+      title: 'Home',
+      url: 'https://my-web-app-b67f4.web.app/',
+    );
+
+    final url = UniversalXShareService.profileAcquisitionUrlFor(home);
+    final uri = Uri.parse(url);
+
+    expect(uri.queryParameters['utm_source'], 'x');
+    expect(uri.queryParameters['utm_medium'], 'profile');
+    expect(uri.queryParameters['utm_campaign'], 'first_user_growth');
+    expect(uri.queryParameters['utm_content'], 'profile_bio');
+  });
+
   test('generateDraft accepts JSON AI package', () async {
     String? capturedPrompt;
     final chat = AiHubChatService(

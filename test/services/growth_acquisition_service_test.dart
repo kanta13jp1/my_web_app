@@ -44,7 +44,31 @@ void main() {
     );
   });
 
+  test('maps first-user profile UTM to profile touch signal', () {
+    final profileUri = Uri.parse(
+      'https://my-web-app-b67f4.web.app/'
+      '?utm_source=x&utm_medium=profile&utm_campaign=first_user_growth'
+      '&utm_content=profile_bio',
+    );
+    final shareUri = Uri.parse(
+      'https://my-web-app-b67f4.web.app/'
+      '?utm_source=x&utm_medium=ai_share&utm_campaign=first_user_growth',
+    );
+
+    expect(
+      GrowthAcquisitionService.signalForIncomingUri(profileUri),
+      GrowthAcquisitionService.touchProfile,
+    );
+    expect(GrowthAcquisitionService.signalForIncomingUri(shareUri), isNull);
+  });
+
   test('resolves signup submit signal from latest touchpoint', () {
+    expect(
+      GrowthAcquisitionService.resolveSignupSubmitSignal(
+        GrowthAcquisitionService.touchProfile,
+      ),
+      GrowthAcquisitionService.signupSubmitProfile,
+    );
     expect(
       GrowthAcquisitionService.resolveSignupSubmitSignal(
         GrowthAcquisitionService.touchImport,

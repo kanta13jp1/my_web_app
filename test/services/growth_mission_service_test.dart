@@ -178,5 +178,8 @@ class _NoopGrowthAcquisitionService extends GrowthAcquisitionService {
   const _NoopGrowthAcquisitionService();
 
   @override
-  Future<void> recordTouchpointForPagePath(String pagePath) async {}
+  Future<void> recordTouchpointForPagePath(
+    String pagePath, {
+    Uri? currentUri,
+  }) async {}
 }
