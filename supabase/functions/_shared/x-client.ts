@@ -793,7 +793,9 @@ function buildXApiErrorMessage(payload: XApiErrorPayload): string {
   if (payload.code === "x_billing_blocked") {
     // 生 detail はデバッグ用に残しつつ、対処が一目で分かる日本語を先頭に。
     return [
-      `X APIのクレジットが不足しています（${payload.detail ?? payload.status}）。`,
+      `X APIのクレジットが不足しています（${
+        payload.detail ?? payload.status
+      }）。`,
       payload.actionRequired,
     ].filter((part) => part).join(" ");
   }
