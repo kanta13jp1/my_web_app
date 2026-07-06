@@ -830,6 +830,13 @@
       "category": "skip",
       "reason": "cooldown / 7-day since 2026-07-02 Google Jules-Antigravity adoption / next unlock 2026-07-09 (OpenCode 第1候補)",
       "skipped": true
+    },
+    {
+      "date": "2026-07-07",
+      "name": null,
+      "category": "skip",
+      "reason": "cooldown / 7-day since 2026-07-02 Google Jules-Antigravity adoption / next unlock 2026-07-09 (OpenCode 第1候補)",
+      "skipped": true
     }
   ],
   "_schema_notes": {
