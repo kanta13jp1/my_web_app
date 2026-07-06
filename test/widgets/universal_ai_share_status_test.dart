@@ -52,6 +52,35 @@ void main() {
     );
   });
 
+  test('composePostedStatus discloses reused-video posts without 🎉', () {
+    final message = composePostedStatus(
+      posted: true,
+      account: '@kanta13jp1',
+      videoAttached: true,
+      videoFailReason:
+          'Hedra のクレジットが不足しています（必要 119 / 残り 68 クレジット）。動画生成には追加が必要です。',
+      videoReused: true,
+      reusedVideoDate: '7/6',
+    );
+    expect(message, contains('動画付きで投稿しました'));
+    expect(message, contains('7/6生成'));
+    expect(message, contains('過去動画を再利用'));
+    expect(message, contains('動画生成不可:'));
+    expect(message, isNot(contains('🎉')));
+
+    // 理由なし(プリフライトスキップ等で理由未設定)でも再利用は開示する。
+    final noReason = composePostedStatus(
+      posted: true,
+      account: '@kanta13jp1',
+      videoAttached: true,
+      videoFailReason: null,
+      videoReused: true,
+      reusedVideoDate: '7/6',
+    );
+    expect(noReason, contains('過去動画を再利用'));
+    expect(noReason, isNot(contains('🎉')));
+  });
+
   test('composePostedStatus caps very long reasons at 60 runes', () {
     final message = composePostedStatus(
       posted: true,

@@ -9,19 +9,9 @@ import 'ai_share_button_settings_panel.dart';
 /// 理由(例: Hedraクレジット不足)を末尾に残し、operator が投稿画面だけで
 /// 「なぜ静止画になったか」を即視認できるようにする。理由は最初の「。」まで
 /// (最大60字)に短縮する。
-String composePostedStatus({
-  required bool posted,
-  required String? account,
-  required bool videoAttached,
-  required String? videoFailReason,
-}) {
-  if (!posted) {
-    return '投稿できませんでした。X API secret設定を確認してください';
-  }
-  final who = account ?? '@kanta13jp1';
-  if (videoAttached) return '$who に動画付きで投稿しました 🎉';
+String? _shortenReason(String? videoFailReason) {
   final reason = videoFailReason?.trim() ?? '';
-  if (reason.isEmpty) return '$who に画像付きで投稿しました 🎉';
+  if (reason.isEmpty) return null;
   var short = reason;
   final period = short.indexOf('。');
   if (period > 0) short = short.substring(0, period);
@@ -29,6 +19,32 @@ String composePostedStatus({
   if (runes.length > 60) {
     short = '${String.fromCharCodes(runes.take(60))}…';
   }
+  return short;
+}
+
+String composePostedStatus({
+  required bool posted,
+  required String? account,
+  required bool videoAttached,
+  required String? videoFailReason,
+  bool videoReused = false,
+  String? reusedVideoDate,
+}) {
+  if (!posted) {
+    return '投稿できませんでした。X API secret設定を確認してください';
+  }
+  final who = account ?? '@kanta13jp1';
+  if (videoAttached && videoReused) {
+    // 再利用投稿は劣化系として理由を残す(🎉なし)。
+    final when = reusedVideoDate == null ? '' : '$reusedVideoDate生成・';
+    final short = _shortenReason(videoFailReason);
+    return short == null
+        ? '$who に動画付きで投稿しました（$when過去動画を再利用）'
+        : '$who に動画付きで投稿しました（$when過去動画を再利用・動画生成不可: $short）';
+  }
+  if (videoAttached) return '$who に動画付きで投稿しました 🎉';
+  final short = _shortenReason(videoFailReason);
+  if (short == null) return '$who に画像付きで投稿しました 🎉';
   return '$who に画像付きで投稿しました（動画なし: $short）';
 }
 
@@ -301,6 +317,10 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   UniversalXShareDraft? _draft;
   String? _imageUrl;
   String? _videoUrl;
+  // 過去生成動画の再利用状態(新規生成が不可のとき静止画の代わりに使う)。
+  bool _videoReused = false;
+  bool _reusedVideoSameDay = false;
+  String? _reusedVideoDateLabel; // 例 '7/6'
   String? _statusMessage;
   bool _loadingDraft = true;
   bool _generatingImage = false;
@@ -396,11 +416,32 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           _generatingVideo = true;
           _statusMessage = 'AIが音声と動画を生成しています…（Hedraは数分かかる場合があります）';
         });
-        var video = await _service.generateVideo(
-          context: widget.page,
-          draft: draft,
-          imageUrl: _imageUrl,
+        // preflight: 直近24h以内の Hedra クレジット不足失敗(以後の成功なし)を
+        // 検出したら、ElevenLabs TTS を含む生成経路を丸ごとスキップして過去
+        // 動画の再利用へ直行する(枯渇中の試行毎の TTS 代 + 30-60 秒待ちを除去)。
+        // クレジット補充後は TTL 24h 失効時の実試行で自動復帰する。
+        List<Map<String, dynamic>> shareHistory = const [];
+        try {
+          shareHistory = await _service.fetchShareVideoHistory();
+        } catch (_) {}
+        if (_disposed || !mounted) return;
+        final skipGeneration = UniversalXShareService.shouldSkipVideoGeneration(
+          shareHistory,
+          nowUtc: DateTime.now().toUtc(),
         );
+        var video = skipGeneration
+            ? const UniversalXMediaResult(
+                url: null,
+                status: 'billing_preflight_skipped',
+                raw: {
+                  'videoReason': 'Hedra クレジット不足（直近24h内の失敗を検出し生成をスキップ）',
+                },
+              )
+            : await _service.generateVideo(
+                context: widget.page,
+                draft: draft,
+                imageUrl: _imageUrl,
+              );
         var generationId = video.url == null
             ? _extractString(video.raw, 'hedraGenerationId')
             : null;
@@ -434,17 +475,48 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           final reason =
               _extractString(video.raw, 'videoReason') ?? '時間内に完了しませんでした';
           videoFailReason = reason;
-          setState(() => _statusMessage = '動画は生成できませんでした（$reason）。画像付きで投稿します。');
+          // 静止画へ降格する前に、保存済みの過去生成動画(7日以内・同日/字幕優先)
+          // を再利用する。取得失敗時は従来どおり静止画(never-throw)。
+          try {
+            final reused = await _service.fetchReusableVideo(
+              context: widget.page,
+              history: shareHistory.isNotEmpty ? shareHistory : null,
+            );
+            if (_disposed || !mounted) return;
+            if (reused != null) {
+              _videoUrl = reused.url;
+              _videoReused = true;
+              _reusedVideoSameDay = reused.sameDay;
+              _reusedVideoDateLabel = reused.dateLabel;
+            }
+          } catch (_) {}
+          if (_disposed || !mounted) return;
+          setState(
+            () => _statusMessage = _videoReused
+                ? '新規動画は生成できませんでした（$reason）。過去の生成動画'
+                    '（${_reusedVideoDateLabel ?? '?'}生成）を再利用して投稿します。'
+                : '動画は生成できませんでした（$reason）。画像付きで投稿します。',
+          );
         }
       }
       // 3. X 投稿(URLはリプライへ、スレッド返信も投稿)
       final postedMedia = _videoUrl != null ? '動画' : '画像';
       setState(() => _statusMessage = 'Xに投稿しています…（$postedMedia付き）');
+      // 非同日の再利用動画のみ最終リプへ1行開示する(リード1行目のフックには
+      // 触れない)。同日生成の再利用は内容が今日の話題なので注記不要。
+      final threadReplies = (_videoReused &&
+              !_reusedVideoSameDay &&
+              _reusedVideoDateLabel != null)
+          ? <String>[
+              ...draft.threadReplies,
+              '※動画は過去生成分（$_reusedVideoDateLabel）を再利用しています',
+            ]
+          : draft.threadReplies;
       final result = await _service.postToX(
         context: widget.page,
         text: _textController.text,
         mediaUrl: _videoUrl ?? _imageUrl,
-        threadReplies: draft.threadReplies,
+        threadReplies: threadReplies,
         linkInReply: true,
         // ネイティブ投票(H7 / impressions ブースター)。draft.poll が null の
         // ときは従来と完全に同一の投稿になる(additive / default-off)。
@@ -459,6 +531,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           account: result.account,
           videoAttached: _videoUrl != null,
           videoFailReason: videoFailReason,
+          videoReused: _videoReused,
+          reusedVideoDate: _reusedVideoDateLabel,
         );
       });
     } catch (error) {
@@ -513,6 +587,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                 generatingText: _loadingDraft,
                 generatingImage: _generatingImage,
                 generatingVideo: _generatingVideo,
+                videoReused: _videoReused,
               ),
               const SizedBox(height: 12),
               if (_loadingDraft)
@@ -532,7 +607,11 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
               const SizedBox(height: 8),
               if (mediaUrl != null) ...[
                 const SizedBox(height: 12),
-                SelectableText('添付メディア: ${_mediaDisplayText(mediaUrl)}'),
+                SelectableText(
+                  _videoReused
+                      ? '添付メディア（過去動画を再利用）: ${_mediaDisplayText(mediaUrl)}'
+                      : '添付メディア: ${_mediaDisplayText(mediaUrl)}',
+                ),
               ],
               if (_statusMessage != null) ...[
                 const SizedBox(height: 12),
@@ -574,6 +653,7 @@ class _CreativePipelineCard extends StatelessWidget {
   final bool generatingText;
   final bool generatingImage;
   final bool generatingVideo;
+  final bool videoReused;
 
   const _CreativePipelineCard({
     required this.textReady,
@@ -582,6 +662,7 @@ class _CreativePipelineCard extends StatelessWidget {
     required this.generatingText,
     required this.generatingImage,
     required this.generatingVideo,
+    this.videoReused = false,
   });
 
   @override
@@ -609,14 +690,22 @@ class _CreativePipelineCard extends StatelessWidget {
         model: 'ElevenLabs',
         role: '音声',
         icon: Icons.record_voice_over_outlined,
-        state: _stateFor(ready: videoReady, running: generatingVideo),
+        state: _stateFor(
+          ready: videoReady,
+          running: generatingVideo,
+          reused: videoReused,
+        ),
       ),
       _PipelineStepData(
         index: 4,
         model: 'Hedra',
         role: '動画',
         icon: Icons.movie_creation_outlined,
-        state: _stateFor(ready: videoReady, running: generatingVideo),
+        state: _stateFor(
+          ready: videoReady,
+          running: generatingVideo,
+          reused: videoReused,
+        ),
       ),
     ];
 
@@ -666,14 +755,18 @@ class _CreativePipelineCard extends StatelessWidget {
   static _PipelineStepState _stateFor({
     required bool ready,
     required bool running,
+    bool reused = false,
   }) {
     if (running) return _PipelineStepState.running;
-    if (ready) return _PipelineStepState.ready;
+    if (ready) {
+      // 再利用時は ElevenLabs/Hedra とも新規生成していないことを正直に表示。
+      return reused ? _PipelineStepState.reused : _PipelineStepState.ready;
+    }
     return _PipelineStepState.waiting;
   }
 }
 
-enum _PipelineStepState { waiting, running, ready }
+enum _PipelineStepState { waiting, running, ready, reused }
 
 class _PipelineStepData {
   final int index;
@@ -702,11 +795,13 @@ class _PipelineStepChip extends StatelessWidget {
     final color = switch (step.state) {
       _PipelineStepState.ready => const Color(0xFF059669),
       _PipelineStepState.running => const Color(0xFFF97316),
+      _PipelineStepState.reused => const Color(0xFF2563EB),
       _PipelineStepState.waiting => theme.colorScheme.onSurfaceVariant,
     };
     final status = switch (step.state) {
       _PipelineStepState.ready => 'ready',
       _PipelineStepState.running => 'running',
+      _PipelineStepState.reused => '再利用',
       _PipelineStepState.waiting => 'waiting',
     };
 
