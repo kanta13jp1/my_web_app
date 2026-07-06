@@ -9,6 +9,53 @@ typedef UniversalShareFunctionInvoker = Future<Map<String, dynamic>> Function(
   Map<String, dynamic> body,
 );
 
+/// GET ?view=history 用の注入可能フェッチャ(テストシーム)。既存の POST 専用
+/// [UniversalShareFunctionInvoker] とそのモック群を変更しないための追加シーム。
+typedef UniversalShareHistoryFetcher = Future<List<Map<String, dynamic>>>
+    Function();
+
+/// 静止画降格の代わりに再利用する過去生成動画。
+class ReusableShareVideo {
+  final String url;
+  final DateTime createdAtJst;
+  final bool captioned;
+  final bool sameDay;
+
+  const ReusableShareVideo({
+    required this.url,
+    required this.createdAtJst,
+    required this.captioned,
+    required this.sameDay,
+  });
+
+  String get dateLabel => '${createdAtJst.month}/${createdAtJst.day}';
+}
+
+class _ReusableVideoCandidate {
+  final String url;
+  final DateTime createdAtJst;
+  final bool captioned;
+  final bool sameDay;
+  final bool templateMatch;
+  final bool hasExplicitDate;
+
+  const _ReusableVideoCandidate({
+    required this.url,
+    required this.createdAtJst,
+    required this.captioned,
+    required this.sameDay,
+    required this.templateMatch,
+    required this.hasExplicitDate,
+  });
+
+  // 同日 > 字幕焼き込み済 > 同テンプレ > 日付入り台本でない、の優先度。
+  int get score =>
+      (sameDay ? 8 : 0) +
+      (captioned ? 4 : 0) +
+      (templateMatch ? 2 : 0) +
+      (hasExplicitDate ? 0 : 1);
+}
+
 class UniversalSharePageContext {
   final String routePath;
   final String title;
@@ -174,14 +221,160 @@ class UniversalXShareService {
   final SupabaseClient? _supabase;
   final AiHubChatService _chatService;
   final UniversalShareFunctionInvoker? _functionInvoker;
+  final UniversalShareHistoryFetcher? _historyFetcher;
 
   UniversalXShareService({
     SupabaseClient? supabase,
     AiHubChatService? chatService,
     UniversalShareFunctionInvoker? functionInvoker,
+    UniversalShareHistoryFetcher? historyFetcher,
   })  : _supabase = supabase,
         _chatService = chatService ?? AiHubChatService(supabase: supabase),
-        _functionInvoker = functionInvoker;
+        _functionInvoker = functionInvoker,
+        _historyFetcher = historyFetcher;
+
+  // ── 過去生成メディアの再利用 (media library reuse) ──────────────────────
+  // Hedra クレジット枯渇などで新規動画が作れないとき、静止画へ降格する代わりに
+  // Storage へ永続化済みの過去動画を再利用する(動画 >> 静止画 for dwell)。
+
+  /// 再利用候補の鮮度上限。これより古い動画は舞台/UI が陳腐化しうるので静止画へ。
+  static const int kVideoReuseFreshnessDays = 7;
+
+  /// この時間内の Hedra クレジット不足失敗(以後成功なし)を検出したら、
+  /// ElevenLabs TTS を含む生成経路を丸ごとスキップして再利用へ直行する。
+  /// 日次ケイデンス(前回失敗が ~24h 前)を捕捉するため 24h。
+  static const int kBillingPreflightTtlHours = 24;
+
+  /// edge が永続化する日本語クレジット不足文言の安定接頭辞。
+  static const String kHedraCreditsFailurePrefix = 'Hedra のクレジットが不足';
+
+  /// Storage 永続化済み(=durable)動画 URL の判定。永続化失敗行は
+  /// 期限切れしうる Hedra 一時 URL のままなので再利用しない。
+  static const String kDurableVideoPathMarker = '/viral-ad-videos/';
+
+  /// viral-video-ad-generator の GET ?view=history(最新20件・失敗行含む)を取得。
+  Future<List<Map<String, dynamic>>> fetchShareVideoHistory() async {
+    final fetcher = _historyFetcher;
+    if (fetcher != null) return fetcher();
+    final client = _supabase ?? Supabase.instance.client;
+    final response = await client.functions.invoke(
+      'viral-video-ad-generator',
+      method: HttpMethod.get,
+      queryParameters: {'view': 'history'},
+    );
+    final data = response.data;
+    final history = data is Map ? data['history'] : null;
+    if (history is! List) return const [];
+    return history
+        .whereType<Map>()
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList(growable: false);
+  }
+
+  /// 静止画降格の代わりに使う過去動画を選ぶ(候補なしなら null=従来の静止画)。
+  Future<ReusableShareVideo?> fetchReusableVideo({
+    required UniversalSharePageContext context,
+    List<Map<String, dynamic>>? history,
+    DateTime? nowUtc,
+  }) async {
+    try {
+      final rows = history ?? await fetchShareVideoHistory();
+      return selectReusableVideo(
+        rows,
+        nowJst:
+            (nowUtc ?? DateTime.now().toUtc()).add(const Duration(hours: 9)),
+        templateKey: _videoTemplateFor(context),
+      );
+    } catch (_) {
+      return null; // ライブラリ障害時は従来の静止画フォールバックを維持。
+    }
+  }
+
+  /// 再利用候補の選択(純関数)。フィルタ: video_ready / ja / durable URL /
+  /// [kVideoReuseFreshnessDays] 以内。優先: 同日 > 字幕済 > 同テンプレ >
+  /// 台本に明示日付なし > 新しい順。
+  static ReusableShareVideo? selectReusableVideo(
+    List<Map<String, dynamic>> rows, {
+    required DateTime nowJst,
+    required String templateKey,
+  }) {
+    final candidates = <_ReusableVideoCandidate>[];
+    for (final row in rows) {
+      if (row['status']?.toString() != 'video_ready') continue;
+      if ((row['lang']?.toString() ?? 'ja') != 'ja') continue;
+      final url = row['generated_video_url']?.toString() ?? '';
+      if (!url.startsWith('https://')) continue;
+      if (!url.contains(kDurableVideoPathMarker)) continue;
+      final created = DateTime.tryParse(row['created_at']?.toString() ?? '');
+      if (created == null) continue;
+      final createdJst = created.toUtc().add(const Duration(hours: 9));
+      final age = nowJst.difference(createdJst);
+      if (age.isNegative || age.inDays >= kVideoReuseFreshnessDays) continue;
+      final script = row['script']?.toString() ?? '';
+      candidates.add(
+        _ReusableVideoCandidate(
+          url: url,
+          createdAtJst: createdJst,
+          captioned: url.contains('-captioned'),
+          sameDay: createdJst.year == nowJst.year &&
+              createdJst.month == nowJst.month &&
+              createdJst.day == nowJst.day,
+          templateMatch: row['template_key']?.toString() == templateKey,
+          hasExplicitDate: RegExp(r'\d+月\d+日').hasMatch(script),
+        ),
+      );
+    }
+    if (candidates.isEmpty) return null;
+    candidates.sort((a, b) {
+      final byScore = b.score - a.score;
+      if (byScore != 0) return byScore;
+      return b.createdAtJst.compareTo(a.createdAtJst);
+    });
+    final best = candidates.first;
+    return ReusableShareVideo(
+      url: best.url,
+      createdAtJst: best.createdAtJst,
+      captioned: best.captioned,
+      sameDay: best.sameDay,
+    );
+  }
+
+  /// 直近の presenter_video 試行が [kHedraCreditsFailurePrefix] を含む失敗で、
+  /// [kBillingPreflightTtlHours] 以内、かつそれより新しい成功が無いとき true。
+  /// true のときは生成(TTS 課金含む)を丸ごとスキップして再利用へ直行する。
+  static bool shouldSkipVideoGeneration(
+    List<Map<String, dynamic>> rows, {
+    required DateTime nowUtc,
+  }) {
+    DateTime? lastBillingFail;
+    DateTime? lastSuccess;
+    for (final row in rows) {
+      if (row['type']?.toString() != 'presenter_video') continue;
+      final created =
+          DateTime.tryParse(row['created_at']?.toString() ?? '')?.toUtc();
+      if (created == null) continue;
+      if (row['status']?.toString() == 'video_ready') {
+        if (lastSuccess == null || created.isAfter(lastSuccess)) {
+          lastSuccess = created;
+        }
+      }
+      final reason = row['video_reason']?.toString() ?? '';
+      if (reason.contains(kHedraCreditsFailurePrefix)) {
+        if (lastBillingFail == null || created.isAfter(lastBillingFail)) {
+          lastBillingFail = created;
+        }
+      }
+    }
+    if (lastBillingFail == null) return false;
+    if (nowUtc.difference(lastBillingFail).inHours >=
+        kBillingPreflightTtlHours) {
+      return false;
+    }
+    if (lastSuccess != null && lastSuccess.isAfter(lastBillingFail)) {
+      return false;
+    }
+    return true;
+  }
 
   Future<UniversalXShareDraft> generateDraft(
     UniversalSharePageContext context,
