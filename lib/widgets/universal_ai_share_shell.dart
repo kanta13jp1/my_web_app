@@ -492,10 +492,12 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
             }
           } catch (_) {}
           if (_disposed || !mounted) return;
-          setState(() => _statusMessage = _videoReused
-              ? '新規動画は生成できませんでした（$reason）。過去の生成動画'
-                  '（${_reusedVideoDateLabel ?? '?'}生成）を再利用して投稿します。'
-              : '動画は生成できませんでした（$reason）。画像付きで投稿します。');
+          setState(() {
+            _statusMessage = _videoReused
+                ? '新規動画は生成できませんでした（$reason）。過去の生成動画'
+                    '（${_reusedVideoDateLabel ?? '?'}生成）を再利用して投稿します。'
+                : '動画は生成できませんでした（$reason）。画像付きで投稿します。';
+          });
         }
       }
       // 3. X 投稿(URLはリプライへ、スレッド返信も投稿)
@@ -606,9 +608,11 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
               const SizedBox(height: 8),
               if (mediaUrl != null) ...[
                 const SizedBox(height: 12),
-                SelectableText(_videoReused
-                    ? '添付メディア（過去動画を再利用）: ${_mediaDisplayText(mediaUrl)}'
-                    : '添付メディア: ${_mediaDisplayText(mediaUrl)}'),
+                SelectableText(
+                  _videoReused
+                      ? '添付メディア（過去動画を再利用）: ${_mediaDisplayText(mediaUrl)}'
+                      : '添付メディア: ${_mediaDisplayText(mediaUrl)}',
+                ),
               ],
               if (_statusMessage != null) ...[
                 const SizedBox(height: 12),
