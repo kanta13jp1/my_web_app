@@ -195,14 +195,23 @@ class UniversalXShareService {
     // 定型文フォールバック(スレッド定型・投票なし)へ劣化した。45 秒 timeout で
     // 失敗を早期検知し 1 回だけ再試行して LLM 経路(長文リード+多様リプ+投票)の
     // 成功率を上げる。traceId で ai_hub_chat_logs と attempt 単位の相関が可能。
-    // 注意: .timeout は実行中の edge 呼び出し自体は中断しない(free tier の重複
-    // 実行は許容)。ai-hub 側のプロバイダ timeout 変更時はこの 45s も見直す。
+    // 注意: .timeout は実行中の edge 呼び出し自体は中断しない(重複実行は許容)。
+    // ai-hub 側のプロバイダ timeout 変更時はこの 45s も見直す。
+    //
+    // 実障害2(2026-07-07 / 2連続503の真因): ①maxTokens 未指定だと edge 既定の
+    // max_tokens=512 で 2,000+ トークンの JSON が途中切断され、健全なプロバイダ
+    // 応答まで finish_reason=length で全滅していた → 8192(サーバ上限)を明示。
+    // ②free ティア先頭の遅延プロバイダが 45 秒予算を焼き尽くす → 収益直結の
+    // この呼び出しは budget ティア開始・リトライは performance ティアへ昇格
+    // (サーバ側でさらに上位ティアへの自動フォールバックが続く)。コストは
+    // テキストのみ数円/投稿で、動画(Hedra)コストとは無関係。
     final traceId = 'uxs-${DateTime.now().microsecondsSinceEpoch}';
     for (var attempt = 0; attempt < 2; attempt += 1) {
       try {
         final response = await _chatService
             .sendAutoChat(
-              tier: 'free',
+              tier: attempt == 0 ? 'budget' : 'performance',
+              maxTokens: 8192,
               sessionId: 'universal-x-share',
               traceId: traceId,
               message: _buildDraftPrompt(
