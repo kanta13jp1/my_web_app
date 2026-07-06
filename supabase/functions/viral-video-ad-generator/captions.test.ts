@@ -202,6 +202,25 @@ Deno.test("wrapCaptionText keeps every row within the width budget", () => {
   }
 });
 
+Deno.test("wrapCaptionText prefers breaking after punctuation near the edge", () => {
+  // 実機観測:「不正プログラム自|作」の語中割れ。行末近く(6文字以内)に読点が
+  // あればそこで折り、語のまとまりを保つ。
+  const line = "Nintendo Switch 2、不正プログラム自作の疑いで再逮捕されたと報道";
+  const rows = wrapCaptionText(line);
+  for (const row of rows) {
+    assert(
+      rowUnits(row) <= MAX_ROW_UNITS + 0.5,
+      `row exceeds width budget: ${row}`,
+    );
+    // 「不正プログラム自作」という語が行境界で分断されない。
+    assert(
+      !row.endsWith("自") || row.endsWith("自作"),
+      `word split mid-token: ${row}`,
+    );
+  }
+  assertEquals(rows.join(""), line.trim());
+});
+
 Deno.test("wrapCaptionText does not split ASCII words or surrogate pairs", () => {
   const en = "Practical productivity insights for developers everywhere today";
   for (const row of wrapCaptionText(en)) {

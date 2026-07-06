@@ -134,6 +134,30 @@ export function wrapCaptionText(
               break;
             }
           }
+        } else {
+          // 実機観測:「不正プログラム自|作」のように語の途中で行が割れると
+          // 読みにくい。行末から 6 文字以内に読点/中黒/閉じ括弧等の「好ましい
+          // 折返し点」があればそこまで戻して折る(残り幅 >= 8 units のときのみ。
+          // 見つからなければ従来どおり幅上限で折る = 幅不変条件は維持)。
+          const preferredBreaks = "、。・！？：…」』）";
+          for (let back = 1; back <= 6 && row.length - back > 0; back += 1) {
+            const cut = row.length - back;
+            const cutLast = row[cut - 1];
+            const cutNext = row[cut];
+            if (!preferredBreaks.includes(cutLast)) continue;
+            const remainingUnits = row
+              .slice(0, cut)
+              .reduce((sum, c) => sum + charUnits(c), 0);
+            const compliant = remainingUnits >= 8 &&
+              !KINSOKU_NO_START.includes(cutNext) &&
+              !KINSOKU_NO_END.includes(cutLast) &&
+              !(isAsciiWordChar(cutLast) && isAsciiWordChar(cutNext));
+            if (compliant) {
+              carry = row.slice(cut);
+              row = row.slice(0, cut);
+              break;
+            }
+          }
         }
         rows.push(row.join(""));
         row = [...carry, ch];
