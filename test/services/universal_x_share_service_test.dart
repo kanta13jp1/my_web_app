@@ -168,9 +168,13 @@ void main() {
     'generateDraft retries once after a transient ai-hub failure',
     () async {
       var calls = 0;
+      final tiers = <String?>[];
+      final maxTokens = <Object?>[];
       final chat = AiHubChatService(
         invoker: (body) async {
           calls += 1;
+          tiers.add(body['tier']?.toString());
+          maxTokens.add(body['max_tokens']);
           if (calls == 1) {
             throw Exception('ai-hub 502');
           }
@@ -195,6 +199,10 @@ void main() {
       final draft = await service.generateDraft(page);
       expect(calls, 2);
       expect(draft.fallbackUsed, isFalse);
+      // 収益直結呼び出しは budget ティア開始・リトライで performance へ昇格。
+      expect(tiers, ['budget', 'performance']);
+      // edge 既定の max_tokens=512 で長文 JSON が切断されないよう上限を明示。
+      expect(maxTokens, [8192, 8192]);
     },
     timeout: const Timeout(Duration(minutes: 2)),
   );
