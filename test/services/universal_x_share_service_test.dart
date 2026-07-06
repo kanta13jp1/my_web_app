@@ -199,6 +199,58 @@ void main() {
     timeout: const Timeout(Duration(minutes: 2)),
   );
 
+  test('generateDraft repairs LLM JSON with raw newlines inside strings',
+      () async {
+    // 実障害(2026-07-06): 文字列値内の生改行で decode 失敗→生 JSON がリード
+    // 本文に漏出。修復パスで正しく decode され、日本語コピーが採用されること。
+    final chat = AiHubChatService(
+      invoker: (body) async => {
+        'success': true,
+        'provider': 'groq',
+        // 文字列値の中に「生の改行」を含む不正 JSON(実事故と同形)。
+        'text': '{\n  "text": "目が不自由な人の歩行をAIが音声で支援\nこれは新たな可能性です。\n${page.url}",\n  "imagePrompt": "16:9 image",\n  "videoPrompt": "video",\n  "hashtags": ["#buildinpublic"],\n  "threadReplies": ["解説その1です。"]\n}',
+      },
+    );
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async => {'success': true},
+    );
+    final draft = await service.generateDraft(page);
+    expect(draft.fallbackUsed, isFalse);
+    expect(draft.text, contains('目が不自由な人の歩行'));
+    expect(draft.text.trim(), isNot(startsWith('{')));
+    expect(draft.threadReplies, contains('解説その1です。'));
+  });
+
+  test(
+    'generateDraft never posts a JSON dump and falls back after retries',
+    () async {
+      var calls = 0;
+      final chat = AiHubChatService(
+        invoker: (body) async {
+          calls += 1;
+          // 修復不能な壊れ JSON(未終端文字列)。生テキストは JSON ダンプの
+          // 指紋(`{"` 開始)を持つため本文採用は禁止される。
+          return {
+            'success': true,
+            'provider': 'groq',
+            'text': '{ "text": "未終端の文字列 ${page.url}',
+          };
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async => {'success': true},
+      );
+      final draft = await service.generateDraft(page);
+      // 両 attempt が不採用→retry 実行→真のフォールバックに着地する。
+      expect(calls, 2);
+      expect(draft.fallbackUsed, isTrue);
+      expect(draft.text.trim(), isNot(startsWith('{')));
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
+
   test('share image rotates the scene setting for dramatic variation', () {
     final draft = UniversalXShareService.buildGrowthDraft(
       page,
