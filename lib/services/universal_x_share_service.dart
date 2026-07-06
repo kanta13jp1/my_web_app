@@ -1657,7 +1657,7 @@ Return STRICT JSON only (RFC 8259). The raw response must parse with a standard 
   "imagePrompt": "English prompt for a 16:9 share image, no text overlay",
   "videoPrompt": "English prompt for a short presenter/share video",
   "hashtags": ["#buildinpublic", "#FlutterWeb", "#Supabase"],
-  "poll": { "question": "<=100 char Japanese poll question tied to today's top headline>", "options": ["<=25 char option", "<=25 char option"], "durationMinutes": 1440 }
+  "poll": { "question": "<=100 char Japanese poll question tied to today's top headline>", "options": ["<=25 char option", "<=25 char option", "<=25 char option"], "durationMinutes": 1440 }
 }
 
 Page:
@@ -1696,7 +1696,8 @@ Rules:
 - The multi-line formatting above applies to the RENDERED post; inside the JSON string values you must still encode every line break as the two characters \\n, never a real newline.
 - Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical.
 - The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim, do NOT phrase it as "1つ目/item 1 of N", and do NOT begin it with a number or list marker (never start with "1."). Replies 2 onward then form the numbered briefing.
-- Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 2-4 "options" (each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
+- Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 3-4 "options" (prefer 4 when each option is genuinely distinct; never pad with filler; each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
+- Poll options must be 3-4 GRADED reader stances or next actions (例: もう追っている/いま知った/後で調べる/仕事に直結) — never a flat binary such as 興味がある/興味がない or 賛成/反対 (binary polls collect fewer votes and read as low-effort).
 - The "poll" must be a TOP-LEVEL JSON key only. NEVER place a poll object (or any JSON object) inside the threadReplies array — every threadReplies element must be a plain Japanese string, or it will be posted as raw garbage text.
 - DERIVE the poll question AND options from THE DAY'S single most relevant headline so the poll rotates daily and is specific — NEVER reuse a generic or hardcoded poll like "使ってみたい?はい/いいえ" (near-duplicate polls get down-ranked). Yesterday's poll must not be reusable today.
 - The poll is posted as its own FIRST text-only thread reply (never on the media lead), so make the "question" self-contained. If no natural, honest poll fits today's news, OMIT the "poll" field entirely rather than forcing a weak one.

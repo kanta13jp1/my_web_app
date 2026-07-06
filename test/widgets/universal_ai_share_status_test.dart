@@ -92,4 +92,14 @@ void main() {
     expect(message.contains('…'), isTrue);
     expect(message.runes.length, lessThan(120));
   });
+
+  test('composePostedTweetUrl builds /i/status/ links and rejects blanks', () {
+    // /i/status/ 形式はアカウント名(@付き/表記ゆれ)に依存しない。
+    expect(
+      composePostedTweetUrl('2074234802048503845'),
+      'https://x.com/i/status/2074234802048503845',
+    );
+    expect(composePostedTweetUrl(null), isNull);
+    expect(composePostedTweetUrl('   '), isNull);
+  });
 }
