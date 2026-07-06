@@ -5,6 +5,33 @@ import '../services/ai_share_button_preferences_service.dart';
 import '../services/universal_x_share_service.dart';
 import 'ai_share_button_settings_panel.dart';
 
+/// 投稿完了メッセージを組み立てる純関数。動画が付かなかった投稿では、その
+/// 理由(例: Hedraクレジット不足)を末尾に残し、operator が投稿画面だけで
+/// 「なぜ静止画になったか」を即視認できるようにする。理由は最初の「。」まで
+/// (最大60字)に短縮する。
+String composePostedStatus({
+  required bool posted,
+  required String? account,
+  required bool videoAttached,
+  required String? videoFailReason,
+}) {
+  if (!posted) {
+    return '投稿できませんでした。X API secret設定を確認してください';
+  }
+  final who = account ?? '@kanta13jp1';
+  if (videoAttached) return '$who に動画付きで投稿しました 🎉';
+  final reason = videoFailReason?.trim() ?? '';
+  if (reason.isEmpty) return '$who に画像付きで投稿しました 🎉';
+  var short = reason;
+  final period = short.indexOf('。');
+  if (period > 0) short = short.substring(0, period);
+  final runes = short.runes.toList(growable: false);
+  if (runes.length > 60) {
+    short = '${String.fromCharCodes(runes.take(60))}…';
+  }
+  return '$who に画像付きで投稿しました（動画なし: $short）';
+}
+
 final universalAiShareRouteObserver = UniversalAiShareRouteObserver();
 
 class UniversalAiShareRouteObserver extends NavigatorObserver {
@@ -344,6 +371,10 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       _posting = true;
       _statusMessage = null;
     });
+    // 動画が生成できなかった理由。投稿完了メッセージへ残し、静止画になった
+    // 原因(例: Hedraクレジット不足)を operator が投稿画面で即視認できるようにする
+    // (従来は投稿前の一瞬のステータスにしか出ず、気づけなかった)。
+    String? videoFailReason;
     try {
       // 1. 画像(presenter/舞台がローテ)
       if (_imageUrl == null) {
@@ -402,6 +433,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         if (_videoUrl == null) {
           final reason =
               _extractString(video.raw, 'videoReason') ?? '時間内に完了しませんでした';
+          videoFailReason = reason;
           setState(() => _statusMessage = '動画は生成できませんでした（$reason）。画像付きで投稿します。');
         }
       }
@@ -422,9 +454,12 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       );
       if (_disposed || !mounted) return;
       setState(() {
-        _statusMessage = result.posted
-            ? '${result.account ?? '@kanta13jp1'} に$postedMedia付きで投稿しました 🎉'
-            : '投稿できませんでした。X API secret設定を確認してください';
+        _statusMessage = composePostedStatus(
+          posted: result.posted,
+          account: result.account,
+          videoAttached: _videoUrl != null,
+          videoFailReason: videoFailReason,
+        );
       });
     } catch (error) {
       if (_disposed || !mounted) return;
