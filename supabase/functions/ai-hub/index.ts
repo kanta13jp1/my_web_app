@@ -552,7 +552,10 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
 type Tier = "free" | "budget" | "performance" | "premium";
 
 const TIER_PROVIDERS: Record<Tier, string[]> = {
-  free: ["deepseek", "groq", "cerebras", "siliconflow", "novita_ai"],
+  // 実障害(2026-07-07): free 先頭の遅延プロバイダが chat_auto の時間予算を
+  // 焼き尽くし 2 連続 503。高速推論ホスト(groq/cerebras)を先頭に置く。
+  // key 未設定のプロバイダは callSingleProvider が即 fail するので無害。
+  free: ["groq", "cerebras", "deepseek", "siliconflow", "novita_ai"],
   budget: [
     "sambanova",
     "arcee_ai",
@@ -5235,6 +5238,10 @@ serve(async (req: Request) => {
         // 66 秒待たせた。予算内で per-call 上限を配分し、残りが尽きたら即返す。
         const chatBudgetMs = chatTotalBudgetMs();
         let budgetExhausted = false;
+        // どのプロバイダが予算を焼いたかを可視化する試行トレイル。全滅時の
+        // error_message へ付加し、Supabase Logs だけでチェーン健全性を診断
+        // できるようにする(従来は "budget exhausted" の一言で真犯人が不明)。
+        const attemptTrail: string[] = [];
         outerLoop:
         for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
           const tier = TIER_ORDER[ti];
@@ -5246,8 +5253,10 @@ serve(async (req: Request) => {
               (performance.now() - requestStartedAt);
             if (remainingMs < 2_000) {
               budgetExhausted = true;
+              attemptTrail.push(`budget-stop before ${pid}`);
               break outerLoop;
             }
+            const attemptStartedAt = performance.now();
             const result = await callSingleProvider(
               pid,
               finalMessages,
@@ -5269,6 +5278,12 @@ serve(async (req: Request) => {
               usedModel = result.modelUsed;
               break outerLoop;
             }
+            const attemptMs = Math.round(performance.now() - attemptStartedAt);
+            const attemptError = (result.error ?? "unknown").slice(0, 80);
+            attemptTrail.push(`${pid}:${attemptMs}ms ${attemptError}`);
+            console.warn(
+              `[chat_auto] provider failed: ${pid} tier=${tier} ${attemptMs}ms ${attemptError}`,
+            );
           }
         }
 
@@ -5287,10 +5302,14 @@ serve(async (req: Request) => {
               trace_id: traceId,
               session_id: sessionId,
               input_chars: inputChars,
-              // 予算切れと全プロバイダ失敗を区別して flaky 検出を容易に。
-              error_message: budgetExhausted
+              // 予算切れと全プロバイダ失敗を区別し、per-provider の試行
+              // トレイルで真犯人(遅延/死亡プロバイダ)まで特定可能に。
+              error_message: ((budgetExhausted
                 ? "budget exhausted"
-                : "all tiers exhausted",
+                : "all tiers exhausted") +
+                (attemptTrail.length > 0
+                  ? ` | ${attemptTrail.join("; ")}`
+                  : "")).slice(0, 500),
               action: "provider.chat_auto",
               status_code: 503,
               provider_choice_reason: providerChoiceReason,
