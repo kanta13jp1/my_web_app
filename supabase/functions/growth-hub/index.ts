@@ -559,12 +559,25 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
         id: item.id,
         tweetId: firstString(metadata.tweet_id),
         text: compactPostText(latest.text ?? metadata.text),
-        variant: firstString(
-          latest.variant,
-          metadata.variant,
-          metadata.utm_content,
-          "unknown",
-        ),
+        // 定型文フォールバック投稿は `${variant}_fallback` の別バケットで計測
+        // する(低品質な定型データが winner exemplar / ランキングを汚染しない
+        // ように)。旧行はフィールド欠落 = 非フォールバック扱いで後方互換。
+        variant: (metadata.fallback_used === true ||
+            String(metadata.prompt_profile ?? "") === "fallback_template_v1")
+          ? `${
+            firstString(
+              latest.variant,
+              metadata.variant,
+              metadata.utm_content,
+              "unknown",
+            )
+          }_fallback`
+          : firstString(
+            latest.variant,
+            metadata.variant,
+            metadata.utm_content,
+            "unknown",
+          ),
         route: firstString(latest.route, metadata.route),
         source: firstString(latest.source, metadata.source),
         hasMedia: Boolean(latest.has_media ?? metadata.media_url),
@@ -1747,6 +1760,10 @@ serve(async (req: Request) => {
             "x_first_user_growth_10k",
           variant: body.variant ?? body.utmContent ?? body.utm_content ?? null,
           prompt_profile: body.promptProfile ?? body.prompt_profile ?? null,
+          // 定型文フォールバック投稿を perf 計測で LLM 投稿と分離するための
+          // 明示フラグ(旧行はフィールド欠落 = 非フォールバック扱いで後方互換)。
+          fallback_used: body.fallbackUsed === true ||
+            body.fallback_used === true,
           content_kind: body.contentKind ?? body.content_kind ?? null,
           link_in_reply: body.linkInReply === true ||
             body.link_in_reply === true,
