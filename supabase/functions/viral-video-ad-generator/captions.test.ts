@@ -6,8 +6,8 @@ import {
 import {
   buildCaptionSrt,
   buildForceStyle,
-  burnCaptionsViaTranscoder,
   type BurnCaptionsRequest,
+  burnCaptionsViaTranscoder,
   DEFAULT_CAPTION_STYLE,
   DEFAULT_CAPTION_TIMING,
   extractBurnedVideoUrl,
@@ -24,15 +24,23 @@ Deno.test("splitAtSentenceBoundaries splits after 。？！ outside quotes", () 
     "流れてくるニュースを、判断材料に変えるコツを紹介します。今日の話題は「マイクロン、AI需要で広島工場増強へ」です。";
   const segs = splitAtSentenceBoundaries(line);
   assertEquals(segs.length, 2);
-  assertEquals(segs[0], "流れてくるニュースを、判断材料に変えるコツを紹介します。");
-  assertEquals(segs[1], "今日の話題は「マイクロン、AI需要で広島工場増強へ」です。");
+  assertEquals(
+    segs[0],
+    "流れてくるニュースを、判断材料に変えるコツを紹介します。",
+  );
+  assertEquals(
+    segs[1],
+    "今日の話題は「マイクロン、AI需要で広島工場増強へ」です。",
+  );
   // 「」内の 、や終端記号では割らない。
   const quoted = "話題は「爆速開発。想定より加速せず？」です！続きへ。";
   const qsegs = splitAtSentenceBoundaries(quoted);
   assertEquals(qsegs.length, 2);
   assertEquals(qsegs[0], "話題は「爆速開発。想定より加速せず？」です！");
   // 終端記号なし・空入力の fail-safe。
-  assertEquals(splitAtSentenceBoundaries("終端記号なしの一文"), ["終端記号なしの一文"]);
+  assertEquals(splitAtSentenceBoundaries("終端記号なしの一文"), [
+    "終端記号なしの一文",
+  ]);
 });
 
 Deno.test("buildCaptionSrt cues start at sentence boundaries", () => {
@@ -205,7 +213,8 @@ Deno.test("wrapCaptionText keeps every row within the width budget", () => {
 Deno.test("wrapCaptionText prefers breaking after punctuation near the edge", () => {
   // 実機観測:「不正プログラム自|作」の語中割れ。行末近く(6文字以内)に読点が
   // あればそこで折り、語のまとまりを保つ。
-  const line = "Nintendo Switch 2、不正プログラム自作の疑いで再逮捕されたと報道";
+  const line =
+    "Nintendo Switch 2、不正プログラム自作の疑いで再逮捕されたと報道";
   const rows = wrapCaptionText(line);
   for (const row of rows) {
     assert(
@@ -254,8 +263,9 @@ Deno.test("buildCaptionSrt merges a tiny tail cue when width allows", () => {
     }
   }
   // 450 字の最悪ケースでも全 cue が 2 行以内・連番・連続タイムスタンプ。
-  const worst = ("今日の注目トピックを、AI仕事OS開発者の視点でまとめました。".repeat(10))
-    .slice(0, 450);
+  const worst =
+    ("今日の注目トピックを、AI仕事OS開発者の視点でまとめました。".repeat(10))
+      .slice(0, 450);
   const blocks = parseSrt(buildCaptionSrt(worst, "ja"));
   let prevEnd = 0;
   blocks.forEach((b, i) => {
@@ -293,7 +303,9 @@ Deno.test("extractBurnedVideoUrl reads common response shapes", () => {
     "https://x.test/b.mp4",
   );
   assertEquals(
-    extractBurnedVideoUrl({ result: { video: { url: "https://x.test/c.mp4" } } }),
+    extractBurnedVideoUrl({
+      result: { video: { url: "https://x.test/c.mp4" } },
+    }),
     "https://x.test/c.mp4",
   );
 });
@@ -323,8 +335,7 @@ const SAMPLE_REQUEST: BurnCaptionsRequest = {
 Deno.test("burnCaptionsViaTranscoder returns ok with url on 200", async () => {
   let seenAuth: string | null = null;
   const fetchImpl = ((_url: string | URL | Request, init?: RequestInit) => {
-    seenAuth =
-      new Headers(init?.headers).get("authorization");
+    seenAuth = new Headers(init?.headers).get("authorization");
     return Promise.resolve(
       new Response(JSON.stringify({ url: "https://cdn.test/captioned.mp4" }), {
         status: 200,
@@ -374,8 +385,8 @@ Deno.test("burnCaptionsViaTranscoder returns not-ok when url missing", async () 
 });
 
 Deno.test("burnCaptionsViaTranscoder never throws when fetch rejects", async () => {
-  const fetchImpl = (() =>
-    Promise.reject(new Error("network down"))) as typeof fetch;
+  const fetchImpl =
+    (() => Promise.reject(new Error("network down"))) as typeof fetch;
   const result = await burnCaptionsViaTranscoder({
     endpoint: "https://transcoder.test/burn",
     timeoutMs: 5000,

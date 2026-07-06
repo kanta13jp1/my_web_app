@@ -156,6 +156,10 @@ class UniversalXTrendTopic {
 class UniversalXShareService {
   // X Premium(認証済みアカウント)は最大25,000字の長文ポストが可能。280字で切らない。
   static const int maxTweetLength = 25000;
+  // LLM ドラフトのリード文の妥当上限。プロンプト仕様は 400-900 字(2 倍超の
+  // ヘッドルーム)。これを超える「リード」は JSON ダンプや暴走テキストの兆候
+  // なので不採用にして retry/fallback へ回す。
+  static const int maxLeadDraftLength = 2000;
   static const String defaultHedraStartImageUrl =
       'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
   // 実際に使うツール(嘘のパイプラインにしない): 文章=GPT-5.5 / 画像=GPT image /
@@ -216,7 +220,11 @@ class UniversalXShareService {
           fallback,
           shareUrl: shareUrl,
         );
-        if (_isUsableText(parsed.text, shareUrl)) {
+        // _parseDraft は JSON ダンプを検知すると fallback インスタンスその
+        // ものを返す。それを LLM 成功(fallbackUsed:false)と誤ラベルせず、
+        // retry(次 attempt)へ回すため identical で除外する。
+        if (!identical(parsed, fallback) &&
+            _isUsableText(parsed.text, shareUrl)) {
           return parsed.copyWith(fallbackUsed: false, source: response.source);
         }
       } on Object catch (error) {
@@ -1169,6 +1177,63 @@ $url''';
         (t.startsWith('[') && t.endsWith(']'));
   }
 
+  /// 投稿本文にしてはならない「JSON ダンプ」の指紋。実障害(2026-07-06):
+  /// LLM が文字列値内に生改行を含む不正 JSON を返し、decode 失敗の生テキスト
+  /// (`{\n  "text": "…`)がそのままリード本文になった。sanitizeTweet が末尾へ
+  /// URL を足すため末尾 `}` を要求する既存 helper では検知できない。先頭
+  /// アンカーの `{"` / `["` 形のみを弾くので、日本語散文中の括弧は誤爆しない。
+  static bool _looksLikeJsonDump(String s) {
+    final t = s.trim();
+    return _looksLikeSerializedObject(t) || RegExp(r'^[\{\[]\s*"').hasMatch(t);
+  }
+
+  /// 不正 JSON の最頻パターン=文字列リテラル内の生制御文字(改行/タブ等)を
+  /// エスケープして修復する。引用符状態(バックスラッシュエスケープ考慮)を
+  /// 1 パスで追跡し、文字列外は素通し。valid な JSON には無害。
+  static String _repairJsonControlChars(String input) {
+    final buffer = StringBuffer();
+    var inString = false;
+    var escaped = false;
+    for (final code in input.codeUnits) {
+      final ch = String.fromCharCode(code);
+      if (escaped) {
+        buffer.write(ch);
+        escaped = false;
+        continue;
+      }
+      if (inString) {
+        if (ch == r'\') {
+          buffer.write(ch);
+          escaped = true;
+          continue;
+        }
+        if (ch == '"') {
+          inString = false;
+          buffer.write(ch);
+          continue;
+        }
+        if (code < 0x20) {
+          switch (ch) {
+            case '\n':
+              buffer.write(r'\n');
+            case '\r':
+              buffer.write(r'\r');
+            case '\t':
+              buffer.write(r'\t');
+            default:
+              buffer.write('\\u${code.toRadixString(16).padLeft(4, '0')}');
+          }
+          continue;
+        }
+        buffer.write(ch);
+        continue;
+      }
+      if (ch == '"') inString = true;
+      buffer.write(ch);
+    }
+    return buffer.toString();
+  }
+
   Future<Map<String, dynamic>> _invoke(
     String functionName,
     Map<String, dynamic> body,
@@ -1197,8 +1262,17 @@ $url''';
         .replaceAll(RegExp(r'```json', caseSensitive: false), '')
         .replaceAll('```', '')
         .trim();
+    // 実障害(2026-07-06): LLM が文字列値内に生改行を含む不正 JSON を返し
+    // decode 失敗→生 JSON がリード本文に漏れた。valid ならそのまま(fast path
+    // 無変更)、invalid なら制御文字を修復してから本パースする。
+    var jsonInput = jsonText;
     try {
-      final decoded = jsonDecode(jsonText);
+      jsonDecode(jsonText);
+    } catch (_) {
+      jsonInput = _repairJsonControlChars(jsonText);
+    }
+    try {
+      final decoded = jsonDecode(jsonInput);
       if (decoded is Map<String, dynamic>) {
         final text = sanitizeTweet(
           decoded['text']?.toString() ?? fallback.text,
@@ -1268,7 +1342,11 @@ $url''';
     } catch (_) {
       // Fall through to treating the response as a tweet body.
     }
-    return fallback.copyWith(text: sanitizeTweet(raw, url: shareUrl));
+    // 修復しても JSON として読めなかった生テキスト。JSON ダンプの指紋があれば
+    // 本文には絶対に使わず、高品質化済みの真のフォールバックへ戻す。
+    final rawTweet = sanitizeTweet(raw, url: shareUrl);
+    if (_looksLikeJsonDump(rawTweet)) return fallback;
+    return fallback.copyWith(text: rawTweet);
   }
 
   /// Parses an optional LLM-generated `poll` object into a [UniversalXPoll], or
@@ -1312,9 +1390,13 @@ $url''';
 
   static bool _isUsableText(String text, String url) {
     return text.isNotEmpty &&
-        text.length <= maxTweetLength &&
+        // 25000(X上限)でなくリード妥当上限で判定。超過は JSON ダンプ/暴走の
+        // 兆候なので retry/fallback へ回す。
+        text.length <= maxLeadDraftLength &&
         text.contains(url) &&
-        !text.contains('/#/');
+        !text.contains('/#/') &&
+        // JSON ダンプをリード本文として絶対に採用しない。
+        !_looksLikeJsonDump(text);
   }
 
   static String _buildDraftPrompt(
@@ -1335,7 +1417,7 @@ Create one X sharing package for the current page of a Flutter Web app.
 Primary goal: get one real first user from X to try the site and leave feedback.
 Secondary goal: earn useful impressions without sounding like spam.
 
-Return valid JSON only:
+Return STRICT JSON only (RFC 8259). The raw response must parse with a standard JSON parser: (a) inside every string value, escape all line breaks as the two-character sequence \\n (blank line = \\n\\n) and NEVER emit a raw/literal newline inside a string value; (b) no markdown code fences, no comments, no trailing commas, no text before or after the JSON object. Schema:
 {
   "text": "Japanese X post, a rich 400-900 char long-form lead (this account has X Premium so it is NOT limited to 280 chars), must include $shareUrl",
   "threadReplies": ["4 to 8 substantive Japanese reply posts, each 150-500 chars, forming a full briefing thread. PLAIN STRINGS ONLY - never JSON objects"],
@@ -1378,6 +1460,7 @@ Rules:
 - This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars: a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
 - Format for scannability: break the lead and each reply into short one-idea lines with a blank line between meaning-chunks (no wall-of-text paragraph). Put labels (なぜ重要か / 見通し / 次の一手 など) at the start of a line and continue the explanation on the next line, so a reader can skim in 2 seconds.
+- The multi-line formatting above applies to the RENDERED post; inside the JSON string values you must still encode every line break as the two characters \\n, never a real newline.
 - Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical.
 - The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim, do NOT phrase it as "1つ目/item 1 of N", and do NOT begin it with a number or list marker (never start with "1."). Replies 2 onward then form the numbered briefing.
 - Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 2-4 "options" (each <=25 chars). X natively boosts impressions and early engagement on poll tweets.

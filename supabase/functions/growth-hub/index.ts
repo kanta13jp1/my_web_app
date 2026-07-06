@@ -641,14 +641,22 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   const withoutMedia = rows.filter((r) => !r.hasMedia);
   if (withMedia.length >= 2 && withoutMedia.length >= 2) {
     structuralLines.push(
-      `Structural lift (media): avg score with media=${avgScore(withMedia)} (n=${withMedia.length}) vs without=${avgScore(withoutMedia)} (n=${withoutMedia.length}).`,
+      `Structural lift (media): avg score with media=${
+        avgScore(withMedia)
+      } (n=${withMedia.length}) vs without=${
+        avgScore(withoutMedia)
+      } (n=${withoutMedia.length}).`,
     );
   }
   const linkReply = rows.filter((r) => r.linkInReply);
   const linkLead = rows.filter((r) => !r.linkInReply);
   if (linkReply.length >= 2 && linkLead.length >= 2) {
     structuralLines.push(
-      `Structural lift (link placement): avg score link-in-reply=${avgScore(linkReply)} (n=${linkReply.length}) vs link-in-lead=${avgScore(linkLead)} (n=${linkLead.length}).`,
+      `Structural lift (link placement): avg score link-in-reply=${
+        avgScore(linkReply)
+      } (n=${linkReply.length}) vs link-in-lead=${
+        avgScore(linkLead)
+      } (n=${linkLead.length}).`,
     );
   }
   if (rows.length >= 3) {
@@ -666,7 +674,9 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       buckets.sort((a, b) => avgScore(b[1]) - avgScore(a[1]));
       const [label, list] = buckets[0];
       structuralLines.push(
-        `Best thread length so far: ${label} (avg score ${avgScore(list)}, n=${list.length}).`,
+        `Best thread length so far: ${label} (avg score ${
+          avgScore(list)
+        }, n=${list.length}).`,
       );
     }
   }
@@ -701,7 +711,9 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       ...structuralLines,
       ...(winners[0]
         ? [
-          `Top hook to emulate (copy the structure, not the words): "${winners[0].text}"`,
+          `Top hook to emulate (copy the structure, not the words): "${
+            winners[0].text
+          }"`,
         ]
         : []),
       "Use the winning structure, test one variable at a time, and keep the first post useful before adding the product CTA.",
@@ -1720,7 +1732,11 @@ serve(async (req: Request) => {
         // 最初の text-only リプライにのみ載せる(media 付きリードには載せない)。
         // 未指定(既定)のときは poll=null となり従来と完全に同一の投稿になる。
         const rawPoll = (body.poll ?? null) as
-          | { options?: unknown; durationMinutes?: unknown; duration_minutes?: unknown }
+          | {
+            options?: unknown;
+            durationMinutes?: unknown;
+            duration_minutes?: unknown;
+          }
           | null;
         const pollOptions = Array.isArray(rawPoll?.options)
           ? rawPoll!.options
@@ -1736,7 +1752,9 @@ serve(async (req: Request) => {
               Math.min(
                 10080,
                 Math.trunc(
-                  Number(rawPoll?.durationMinutes ?? rawPoll?.duration_minutes) ||
+                  Number(
+                    rawPoll?.durationMinutes ?? rawPoll?.duration_minutes,
+                  ) ||
                     1440,
                 ),
               ),

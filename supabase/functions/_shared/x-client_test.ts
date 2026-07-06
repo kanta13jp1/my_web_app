@@ -29,7 +29,10 @@ Deno.test("buildXApiErrorPayload classifies client-not-enrolled", () => {
 });
 
 Deno.test("buildMediaAltTextBody builds media/metadata/create JSON body", () => {
-  const body = buildMediaAltTextBody("1234567890", "自分株式会社の共有カード画像");
+  const body = buildMediaAltTextBody(
+    "1234567890",
+    "自分株式会社の共有カード画像",
+  );
 
   assertEquals(body, {
     media_id: "1234567890",
@@ -107,7 +110,10 @@ Deno.test("buildTweetPayload clamps poll duration and caps options at 4", () => 
     text: "p",
     poll: { options: ["a", "b"], durationMinutes: 1 },
   });
-  assertEquals((tooShort.poll as { duration_minutes: number }).duration_minutes, 5);
+  assertEquals(
+    (tooShort.poll as { duration_minutes: number }).duration_minutes,
+    5,
+  );
 
   const tooLong = buildTweetPayload({
     text: "p",
