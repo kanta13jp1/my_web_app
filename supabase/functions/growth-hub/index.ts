@@ -29,6 +29,7 @@ import {
   isRecentSignupCreatedAt,
   resolveSignupChannel,
 } from "./signup_notification.ts";
+import { filterRecentLogs } from "./metrics_window.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +44,14 @@ const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
 const X_DUP_SIMILARITY_THRESHOLD = Deno.env.get("X_DUP_SIMILARITY_THRESHOLD") ??
   null;
 const X_DUP_RECENT_COUNT = Deno.env.get("X_DUP_RECENT_COUNT") ?? null;
+// metrics 収集の鮮度窓(日)。X 指標は ~72h で定常化するため、窓外の再読は
+// X API の spend cap を浪費するだけ(実障害 2026-07-05〜07)。既定 7 日。
+// `supabase secrets set X_METRICS_WINDOW_DAYS=14` で再デプロイなしに調整可。
+const X_METRICS_WINDOW_DAYS = Deno.env.get("X_METRICS_WINDOW_DAYS") ?? null;
+const metricsWindowDays = (() => {
+  const n = Number(X_METRICS_WINDOW_DAYS);
+  return Number.isFinite(n) && n > 0 ? n : 7;
+})();
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -425,6 +434,8 @@ function metricSnapshotForLog(
     ),
     has_media: Boolean(metadata.media_url),
     media_url: firstString(metadata.media_url) || null,
+    // 動画 vs 画像の構造 lift 判定用(1:1 アスペクト実験のトリガーデータ)。
+    media_type: firstString(metadata.media_type) || null,
     link_in_reply: metadata.link_in_reply === true,
     thread_reply_count: Array.isArray(metadata.reply_texts)
       ? metadata.reply_texts.length
@@ -472,8 +483,12 @@ async function collectXPostMetrics(
     Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
   );
   const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  // 鮮度窓フィルタ: 窓外の計測済み行を毎サイクル再読しない(X 指標は ~72h で
+  // 定常化)。未計測行は年齢に関わらず 1 回はレスキューされる(cap 停止中の
+  // 投稿を復旧後に必ず計測するため)。詳細は metrics_window.ts。
+  const recentLogs = filterRecentLogs(logs, metricsWindowDays, Date.now());
   const targetsByLogId = new Map(
-    logs.map((item) => [item.id, tweetTargetsForLog(item)]),
+    recentLogs.map((item) => [item.id, tweetTargetsForLog(item)]),
   );
   const tweetIds = [
     ...new Set(
@@ -485,7 +500,8 @@ async function collectXPostMetrics(
       success: true,
       collected: 0,
       metrics: [],
-      warning: "No posted x_post_log rows with tweet_id were found.",
+      warning: "No posted x_post_log rows with tweet_id were found " +
+        `within the ${metricsWindowDays}-day metrics window.`,
     };
   }
 
@@ -494,7 +510,7 @@ async function collectXPostMetrics(
   const checkedAt = new Date().toISOString();
   const snapshots: Record<string, unknown>[] = [];
 
-  for (const item of logs) {
+  for (const item of recentLogs) {
     const metadata = asRecord(item.metadata);
     const targets = targetsByLogId.get(item.id) ?? [];
     const itemSnapshots = targets
@@ -589,6 +605,7 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
         route: firstString(latest.route, metadata.route),
         source: firstString(latest.source, metadata.source),
         hasMedia: Boolean(latest.has_media ?? metadata.media_url),
+        mediaType: firstString(metadata.media_type, latest.media_type),
         linkInReply: latest.link_in_reply === true ||
           metadata.link_in_reply === true,
         threadReplyCount: firstNumber(
@@ -654,6 +671,19 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       } (n=${withMedia.length}) vs without=${
         avgScore(withoutMedia)
       } (n=${withoutMedia.length}).`,
+    );
+  }
+  // 動画 vs 非動画(画像/なし)の lift。1:1 アスペクト実験(R4 defer)の判定
+  // データ。media_type が貯まるまでは自動的に沈黙する(sample ガード)。
+  const withVideo = rows.filter((r) => r.mediaType.startsWith("video/"));
+  const withoutVideo = rows.filter((r) => !r.mediaType.startsWith("video/"));
+  if (withVideo.length >= 2 && withoutVideo.length >= 2) {
+    structuralLines.push(
+      `Structural lift (video vs image/none): avg score video=${
+        avgScore(withVideo)
+      } (n=${withVideo.length}) vs non-video=${
+        avgScore(withoutVideo)
+      } (n=${withoutVideo.length}).`,
     );
   }
   const linkReply = rows.filter((r) => r.linkInReply);
