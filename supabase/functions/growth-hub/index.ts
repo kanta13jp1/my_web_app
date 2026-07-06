@@ -1664,6 +1664,20 @@ serve(async (req: Request) => {
           return json(await collectXPostMetrics(admin, userId!, body.limit));
         } catch (error) {
           const xPayload = isXApiError(error) ? error.payload : null;
+          // X API クレジット枯渇/spend cap は次の請求サイクルまで自然復旧
+          // しない運用事象。3 時間毎の cron を赤く落とし続けず、HTTP 200 の
+          // skipped で返して workflow 側の warning 表示に委ねる。
+          if (xPayload?.code === "x_billing_blocked") {
+            return json({
+              success: false,
+              skipped: true,
+              collected: 0,
+              error: errorMessage(error),
+              code: "x_billing_blocked",
+              actionRequired: xPayload?.actionRequired ??
+                "X APIクレジット/spend cap枯渇。console.x.com で上限引き上げ、または次の請求サイクルまで収集は自動スキップされます。",
+            });
+          }
           return json({
             success: false,
             error: errorMessage(error),
