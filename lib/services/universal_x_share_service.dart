@@ -209,6 +209,9 @@ class UniversalXShareService {
   static const int maxLeadDraftLength = 2000;
   static const String defaultHedraStartImageUrl =
       'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
+  static const String firstUserGrowthCampaign = 'first_user_growth';
+  static const String aiShareMedium = 'ai_share';
+  static const String profileMedium = 'profile';
   // 実際に使うツール(嘘のパイプラインにしない): 文章=GPT-5.5 / 画像=GPT image /
   // 音声=ElevenLabs / 動画=Hedra。
   static const List<String> _creativePipeline = <String>[
@@ -790,6 +793,7 @@ class UniversalXShareService {
   static String acquisitionUrlFor(
     UniversalSharePageContext context, {
     String content = 'share_dialog',
+    String medium = aiShareMedium,
   }) {
     final uri = Uri.tryParse(context.url);
     if (uri == null || uri.scheme.isEmpty || uri.host.isEmpty) {
@@ -797,10 +801,17 @@ class UniversalXShareService {
     }
     final params = Map<String, String>.from(uri.queryParameters)
       ..['utm_source'] = 'x'
-      ..['utm_medium'] = 'ai_share'
-      ..['utm_campaign'] = 'first_user_growth'
+      ..['utm_medium'] = _utmMedium(medium)
+      ..['utm_campaign'] = firstUserGrowthCampaign
       ..['utm_content'] = _utmContent(content);
     return uri.replace(queryParameters: params).removeFragment().toString();
+  }
+
+  static String profileAcquisitionUrlFor(
+    UniversalSharePageContext context, {
+    String content = 'profile_bio',
+  }) {
+    return acquisitionUrlFor(context, content: content, medium: profileMedium);
   }
 
   static String hedraStartImageUrlFor(UniversalSharePageContext context) {
@@ -1144,7 +1155,7 @@ $commentary''';
   /// [seed]（通常は draft.text.hashCode = 当日ニュースで変化）から舞台を1つ選ぶ。
   /// 画像側と動画側で同じ seed を使うことで、静止画と動画のシーンが一致する。
   static String _dailyImageScene(int seed) {
-    return _presenterScenes[seed.abs() % _presenterScenes.length];
+    return _presenterScenes[_mixedSeedIndex(seed, _presenterScenes.length)];
   }
 
   /// presenter(動画に登場する人物)をランダムに大きく変えるための候補。動画が毎回
@@ -1198,7 +1209,18 @@ $commentary''';
   /// [seed]（通常は draft.text.hashCode = 当日ニュース/生成毎で変化）から presenter
   /// を1人選ぶ。画像側と動画側で同じ seed を使い、静止画と動画の人物を一致させる。
   static String _dailyPresenterCharacter(int seed) {
-    return _presenterCharacters[seed.abs() % _presenterCharacters.length];
+    final index = _mixedSeedIndex(seed, _presenterCharacters.length);
+    return _presenterCharacters[index];
+  }
+
+  static int _mixedSeedIndex(int seed, int length) {
+    var value = seed & 0x7fffffff;
+    value ^= value >> 16;
+    value = (value * 0x7feb352d) & 0x7fffffff;
+    value ^= value >> 15;
+    value = (value * 0x846ca68b) & 0x7fffffff;
+    value ^= value >> 16;
+    return value % length;
   }
 
   /// 当日の日付と（あれば）当日の実ニュース見出しを、画像プロンプトへ
@@ -1310,6 +1332,15 @@ $url''';
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
     return normalized.isEmpty ? 'share_dialog' : normalized;
+  }
+
+  static String _utmMedium(String value) {
+    final normalized = value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9_]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    return normalized.isEmpty ? aiShareMedium : normalized;
   }
 
   static String? _utmContentFromUrl(String url) {

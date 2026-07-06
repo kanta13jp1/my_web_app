@@ -28,6 +28,7 @@ export type SignupSlackPayload = {
 
 const SIGNUP_CHANNEL_LABELS: Record<string, string> = {
   signup_submit_landing: "landing",
+  signup_submit_profile: "profile",
   signup_submit_import: "import",
   signup_submit_public_memo: "public_memo",
   signup_submit_referral: "referral",
@@ -45,6 +46,7 @@ export function resolveSignupChannel(signalKey: unknown): string {
   if (normalized.startsWith("touch_referral")) return "referral";
   if (normalized.startsWith("touch_import")) return "import";
   if (normalized.startsWith("touch_public_memo")) return "public_memo";
+  if (normalized.startsWith("touch_profile")) return "profile";
   if (normalized.startsWith("touch_landing")) return "landing";
   return "unknown";
 }

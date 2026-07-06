@@ -245,6 +245,12 @@ const TOUCHPOINT_DEFS = [
     signupSignal: "signup_submit_landing",
   },
   {
+    id: "profile",
+    label: "X profile",
+    touchSignal: "touch_profile",
+    signupSignal: "signup_submit_profile",
+  },
+  {
     id: "import",
     label: "Import",
     touchSignal: "touch_import",
@@ -296,6 +302,7 @@ const IMPORT_PREVIEW_DEFS = [
 
 const SUPPORTED_ACQUISITION_SIGNALS = new Set([
   "touch_landing",
+  "touch_profile",
   "touch_import",
   "touch_public_memo",
   "touch_referral",
@@ -313,6 +320,7 @@ const SUPPORTED_ACQUISITION_SIGNALS = new Set([
   "x_first_user_feedback_search",
   "x_first_user_feedback_x_intent",
   "signup_submit_landing",
+  "signup_submit_profile",
   "signup_submit_import",
   "signup_submit_public_memo",
   "signup_submit_referral",
