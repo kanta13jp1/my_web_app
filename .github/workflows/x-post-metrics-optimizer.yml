@@ -2,7 +2,7 @@ name: X Post Metrics Optimizer
 
 on:
   schedule:
-    - cron: "17 */3 * * *"
+    - cron: "17 */6 * * *"  # 2026-07-06 ci-audit: 3h→6h, 8→4runs/日削減, ~240 ubuntu-min/月削減
   workflow_dispatch:
     inputs:
       limit:
