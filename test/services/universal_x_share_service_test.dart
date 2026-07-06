@@ -208,7 +208,8 @@ void main() {
         'success': true,
         'provider': 'groq',
         // 文字列値の中に「生の改行」を含む不正 JSON(実事故と同形)。
-        'text': '{\n  "text": "目が不自由な人の歩行をAIが音声で支援\nこれは新たな可能性です。\n${page.url}",\n  "imagePrompt": "16:9 image",\n  "videoPrompt": "video",\n  "hashtags": ["#buildinpublic"],\n  "threadReplies": ["解説その1です。"]\n}',
+        'text':
+            '{\n  "text": "目が不自由な人の歩行をAIが音声で支援\nこれは新たな可能性です。\n${page.url}",\n  "imagePrompt": "16:9 image",\n  "videoPrompt": "video",\n  "hashtags": ["#buildinpublic"],\n  "threadReplies": ["解説その1です。"]\n}',
       },
     );
     final service = UniversalXShareService(

@@ -473,7 +473,9 @@ export async function burnCaptionsViaTranscoder(params: {
     if (!url) {
       return {
         ok: false,
-        reason: `transcoder response had no video url: ${rawText.slice(0, 200)}`,
+        reason: `transcoder response had no video url: ${
+          rawText.slice(0, 200)
+        }`,
       };
     }
     return { ok: true, url };

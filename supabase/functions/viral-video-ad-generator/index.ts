@@ -1520,7 +1520,9 @@ async function maybeBurnCaptions(params: {
   videoUrl: string;
   spokenText: string;
   lang: "ja" | "en";
-}): Promise<{ status: string; reason: string | null; videoUrl: string | null }> {
+}): Promise<
+  { status: string; reason: string | null; videoUrl: string | null }
+> {
   if (!VVAG_BURN_CAPTIONS) {
     return { status: "captions_disabled", reason: null, videoUrl: null };
   }
