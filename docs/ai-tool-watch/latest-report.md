@@ -1,12 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-05T22:14:33Z`
-- Previous check: `2026-07-04T22:13:19Z`
-- Changed/new official sources: `1`
+- Checked at: `2026-07-06T22:39:52Z`
+- Previous check: `2026-07-05T22:14:33Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Codex changelog: 2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us
+- `changed` Codex changelog: 2026-07-01 / Codex CLI 0.142.5 pre
+- `changed` Cursor changelog: 3.10 / Jun 30, 2026
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
+- `changed` Devin release notes: July 3, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -36,10 +39,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-06-25 / Codex Remote reaches general availability Codex Remote has reached general availability. Us
+  - Latest signal: 2026-07-01 / Codex CLI 0.142.5 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: Use Codex from the ChatGPT mobile app to start or continue work on a connected Mac or Windows host, review progress, and approve actions from your phone.
+  - Short signal: ( #30771 ) Changelog Full Changelog: rust-v0.142.4...rust-v0.142.5 #30771 [codex] Backport websocket trace fix to release/0.142 @dylan-hurd-oai Full release on Github June 2026...
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -52,7 +55,7 @@
   - Keyword groups: none
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
-  - Latest signal: 3.9 / Jun 29, 2026
+  - Latest signal: 3.10 / Jun 30, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...
   - Short signal: # Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI.
@@ -64,7 +67,7 @@
   - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: July 1, 2026
+  - Latest signal: July 3, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...
   - Short signal: Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...
