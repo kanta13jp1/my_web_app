@@ -219,11 +219,8 @@ jobs:
         if: steps.gitlog.outputs.count != '0'
         id: xpost
         run: |
-          TODAY_UTC=$(python3 -c "
-          from datetime import datetime, timedelta, timezone
-          now_jst = datetime.now(timezone.utc) + timedelta(hours=9)
-          start_jst = now_jst.replace(hour=0, minute=0, second=0, microsecond=0)
-          print((start_jst - timedelta(hours=9)).strftime('%Y-%m-%dT%H:%M:%SZ'))")
+          # JST の今日 0 時を UTC で表現 (repo 規約: 複数行 python3 -c 禁止)。
+          TODAY_UTC=$(python3 -c "from datetime import datetime, timedelta, timezone; now_jst = datetime.now(timezone.utc) + timedelta(hours=9); start_jst = now_jst.replace(hour=0, minute=0, second=0, microsecond=0); print((start_jst - timedelta(hours=9)).strftime('%Y-%m-%dT%H:%M:%SZ'))")
           set +e
           COUNT=$(curl -s --max-time 30 \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
