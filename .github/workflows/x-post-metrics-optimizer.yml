@@ -33,13 +33,20 @@ jobs:
         shell: bash
         run: |
           limit="${INPUT_LIMIT:-100}"
-          curl --fail-with-body --show-error --silent \
+          response=$(curl --fail-with-body --show-error --silent \
             --request POST \
             --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
             --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             --header "Content-Type: application/json" \
             --data "{\"action\":\"x.metrics_collect\",\"limit\":${limit}}" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/growth-hub"
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/growth-hub")
+          echo "${response}"
+          # X API クレジット枯渇時は edge が HTTP 200 + skipped:true を返す
+          # (次の請求サイクルまで自然復旧しないため cron を赤く落とさない)。
+          # operator への信号は warning annotation で残す。
+          if echo "${response}" | grep -q '"code":"x_billing_blocked"'; then
+            echo "::warning::X API billing blocked — metrics collection skipped. console.x.com でクレジット追加/上限引き上げが必要です。"
+          fi
         env:
           INPUT_LIMIT: ${{ github.event.inputs.limit }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

@@ -640,7 +640,15 @@ export function buildXApiErrorPayload(
   const detail = asString(parsed.detail) || null;
   const registrationUrl = asString(parsed.registration_url) || null;
   const requiredEnrollment = asString(parsed.required_enrollment) || null;
-  const code = reason === "client-not-enrolled"
+  // 実障害(2026-07-06): X API のクレジット制プランで残高ゼロになると
+  // 402 "does not have any credits" で全投稿・計測がブロックされる。
+  // spend cap 到達由来の 403 も同じ課金起因なので単一コードへ正規化する。
+  const billingText = `${detail ?? ""} ${title ?? ""} ${rawText}`;
+  const isBillingBlocked = status === 402 ||
+    (status === 403 && /spend cap|billing cycle|credit/i.test(billingText));
+  const code = isBillingBlocked
+    ? "x_billing_blocked"
+    : reason === "client-not-enrolled"
     ? "x_client_not_enrolled"
     : status === 403
     ? "x_forbidden"
@@ -767,6 +775,9 @@ function buildXActionRequired(
   if (code === "x_forbidden") {
     return "Check the X Developer App permissions, API access tier, and OAuth user-context access token.";
   }
+  if (code === "x_billing_blocked") {
+    return "X APIのクレジット不足/spend cap到達です。X Developer Portal (console.x.com) の該当プロジェクトでクレジット追加または上限引き上げをしてください。解除まで投稿・計測は失敗します。";
+  }
   return "Check the X API response, credentials, and endpoint permissions.";
 }
 
@@ -778,6 +789,13 @@ function buildXApiErrorMessage(payload: XApiErrorPayload): string {
       "Use keys and tokens from an X Developer App attached to a Project.",
       payload.actionRequired,
     ].join(" ");
+  }
+  if (payload.code === "x_billing_blocked") {
+    // 生 detail はデバッグ用に残しつつ、対処が一目で分かる日本語を先頭に。
+    return [
+      `X APIのクレジットが不足しています（${payload.detail ?? payload.status}）。`,
+      payload.actionRequired,
+    ].filter((part) => part).join(" ");
   }
   return `X API error ${payload.status}: ${
     payload.detail || payload.title || JSON.stringify(payload.raw)
