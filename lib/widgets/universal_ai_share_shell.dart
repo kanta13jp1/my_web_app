@@ -434,8 +434,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                 url: null,
                 status: 'billing_preflight_skipped',
                 raw: {
-                  'videoReason':
-                      'Hedra クレジット不足（直近24h内の失敗を検出し生成をスキップ）',
+                  'videoReason': 'Hedra クレジット不足（直近24h内の失敗を検出し生成をスキップ）',
                 },
               )
             : await _service.generateVideo(
@@ -492,12 +491,12 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
             }
           } catch (_) {}
           if (_disposed || !mounted) return;
-          setState(() {
-            _statusMessage = _videoReused
+          setState(
+            () => _statusMessage = _videoReused
                 ? '新規動画は生成できませんでした（$reason）。過去の生成動画'
                     '（${_reusedVideoDateLabel ?? '?'}生成）を再利用して投稿します。'
-                : '動画は生成できませんでした（$reason）。画像付きで投稿します。';
-          });
+                : '動画は生成できませんでした（$reason）。画像付きで投稿します。',
+          );
         }
       }
       // 3. X 投稿(URLはリプライへ、スレッド返信も投稿)
