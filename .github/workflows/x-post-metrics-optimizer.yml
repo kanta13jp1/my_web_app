@@ -2,7 +2,12 @@ name: X Post Metrics Optimizer
 
 on:
   schedule:
+    # fresh tier: 直近投稿の初速シグナル用 (limit=25 / 3h毎)。
     - cron: "17 */3 * * *"
+    # daily backfill: 未計測レスキュー+窓内全量 (limit=100 / 04:17 JST)。
+    # */3 グリッド外の 19 時 UTC を選び、fresh 便との衝突と
+    # cancel-in-progress レースを回避する。
+    - cron: "17 19 * * *"
   workflow_dispatch:
     inputs:
       limit:
@@ -32,7 +37,18 @@ jobs:
       - name: Collect X post metrics
         shell: bash
         run: |
-          limit="${INPUT_LIMIT:-100}"
+          # 手動 dispatch は入力値、daily backfill 便(19:17 UTC)は 100、
+          # fresh 便(3h毎)は 25 に絞って X API 読取を節約する。
+          # 25 の根拠: x_post_log には dry_run/rejected_duplicate 等の
+          # tweet-id なし行が混在するため(APIコストはゼロ)、実投稿が
+          # 押し出されない余裕を持たせる。edge 側の 7 日鮮度窓と併用。
+          if [ -n "${INPUT_LIMIT}" ]; then
+            limit="${INPUT_LIMIT}"
+          elif [ "${EVENT_SCHEDULE}" = "17 19 * * *" ]; then
+            limit=100
+          else
+            limit=25
+          fi
           response=$(curl --fail-with-body --show-error --silent \
             --request POST \
             --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
@@ -49,4 +65,5 @@ jobs:
           fi
         env:
           INPUT_LIMIT: ${{ github.event.inputs.limit }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
