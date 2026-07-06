@@ -102,6 +102,11 @@ class _LandingPageState extends State<LandingPage> {
     return Uri.base.resolve('/').toString();
   }
 
+  bool get _isFirstUserGrowthTraffic {
+    if (!kIsWeb) return false;
+    return GrowthAcquisitionService.isFirstUserGrowthUri(Uri.base);
+  }
+
   void _goToAuthenticatedEntry() {
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
@@ -685,6 +690,7 @@ $input
   Widget _buildHeroSection() {
     return _WorkflowLandingHero(
       achievementCount: _achievementCount,
+      showFirstUserGrowthCta: _isFirstUserGrowthTraffic,
       onGetStarted: _scrollToAuthSection,
       onWatchDemo: _scrollToTrialSection,
       onOpenRoadmap: () => Navigator.of(context).pushNamed('/project-gantt'),
@@ -4100,6 +4106,7 @@ class _LandingNavButton extends StatelessWidget {
 
 class _WorkflowLandingHero extends StatelessWidget {
   final int achievementCount;
+  final bool showFirstUserGrowthCta;
   final VoidCallback onGetStarted;
   final VoidCallback onWatchDemo;
   final VoidCallback onOpenRoadmap;
@@ -4108,6 +4115,7 @@ class _WorkflowLandingHero extends StatelessWidget {
 
   const _WorkflowLandingHero({
     required this.achievementCount,
+    this.showFirstUserGrowthCta = false,
     required this.onGetStarted,
     required this.onWatchDemo,
     required this.onOpenRoadmap,
@@ -4164,6 +4172,13 @@ class _WorkflowLandingHero extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 28),
+                if (showFirstUserGrowthCta) ...[
+                  _FirstUserGrowthHeroCta(
+                    onGetStarted: onGetStarted,
+                    onWatchDemo: onWatchDemo,
+                  ),
+                  const SizedBox(height: 24),
+                ],
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 14,
@@ -4251,6 +4266,123 @@ class _WorkflowLandingHero extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FirstUserGrowthHeroCta extends StatelessWidget {
+  final VoidCallback onGetStarted;
+  final VoidCallback onWatchDemo;
+
+  const _FirstUserGrowthHeroCta({
+    required this.onGetStarted,
+    required this.onWatchDemo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFF93C5FD)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1F7AE0).withValues(alpha: 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 620;
+              final actions = Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: compact ? WrapAlignment.start : WrapAlignment.end,
+                children: [
+                  FilledButton.icon(
+                    key: const Key('first_user_growth_signup_button'),
+                    onPressed: onGetStarted,
+                    icon: const Icon(Icons.bolt, size: 18),
+                    label: const Text('30秒で保存'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F7AE0),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('first_user_growth_trial_button'),
+                    onPressed: onWatchDemo,
+                    icon: const Icon(Icons.play_circle_outline, size: 18),
+                    label: const Text('5分だけ試す'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF1F7AE0),
+                      side: const BorderSide(color: Color(0xFF93C5FD)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+
+              const copy = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Xから来た方へ',
+                    style: TextStyle(
+                      color: Color(0xFF1D4ED8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'まず5分で「今日やる1件」を出して、役に立った点と迷った点だけ教えてください。',
+                    style: TextStyle(
+                      color: Color(0xFF172033),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      height: 1.55,
+                    ),
+                  ),
+                ],
+              );
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    copy,
+                    const SizedBox(height: 12),
+                    actions,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Expanded(child: copy),
+                  const SizedBox(width: 16),
+                  actions,
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }
