@@ -128,6 +128,9 @@ type ProviderInlineFile = {
 
 type ProviderCallOptions = {
   maxTokens?: number;
+  /// この 1 呼び出しの timeout (ms)。未指定なら providerFetchTimeoutMs()。
+  /// chat_auto はリクエスト全体予算から残り時間を配分して渡す。
+  timeoutMs?: number;
 };
 
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
@@ -664,7 +667,7 @@ async function callSingleProvider(
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
-      providerFetchTimeoutMs(),
+      options?.timeoutMs ?? providerFetchTimeoutMs(),
     );
     let resp: Response;
     let respText: string;
@@ -738,6 +741,25 @@ async function callSingleProvider(
 function providerFetchTimeoutMs(): number {
   const raw = Number(Deno.env.get("AI_HUB_PROVIDER_TIMEOUT_MS"));
   return Number.isFinite(raw) && raw > 0 ? raw : 90_000;
+}
+
+/// provider.chat_auto の「リクエスト全体」予算 (ms)。実障害(2026-07-06): 各
+/// プロバイダ 90s timeout のまま複数プロバイダが遅延すると合計が edge の
+/// wall-clock を超え、gateway に ~66s で kill されて生の 502 が返った。
+/// `AI_HUB_CHAT_TOTAL_BUDGET_MS` で調整可 (既定 45s)。クライアント側の
+/// universal-x-share は 45s timeout + 1 retry — 両者は結合しているので
+/// 変更時はセットで見直す。
+function chatTotalBudgetMs(): number {
+  const raw = Number(Deno.env.get("AI_HUB_CHAT_TOTAL_BUDGET_MS"));
+  return Number.isFinite(raw) && raw > 0 ? raw : 45_000;
+}
+
+/// chat_auto の 1 プロバイダ呼び出し上限 (ms)。ハングした 1 プロバイダの
+/// コストを抑え、予算内で後続プロバイダへ順番を回す。
+/// `AI_HUB_CHAT_PER_CALL_MS` で調整可 (既定 20s)。
+function chatPerCallTimeoutMs(): number {
+  const raw = Number(Deno.env.get("AI_HUB_CHAT_PER_CALL_MS"));
+  return Number.isFinite(raw) && raw > 0 ? raw : 20_000;
 }
 
 /// 外部プロバイダ / 内部サブ関数呼び出しに providerFetchTimeoutMs() のタイムアウトを
@@ -5208,6 +5230,11 @@ serve(async (req: Request) => {
         let usedTier: Tier | undefined;
         let usedModel: string | undefined;
 
+        // リクエスト全体の時間予算。実障害(2026-07-06): 予算なしで遅延プロバイダを
+        // 順に待つと edge の wall-clock を超え、gateway 502 でクライアントに
+        // 66 秒待たせた。予算内で per-call 上限を配分し、残りが尽きたら即返す。
+        const chatBudgetMs = chatTotalBudgetMs();
+        let budgetExhausted = false;
         outerLoop:
         for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
           const tier = TIER_ORDER[ti];
@@ -5215,12 +5242,25 @@ serve(async (req: Request) => {
             p in PROVIDER_CONFIGS
           );
           for (const pid of providers) {
+            const remainingMs = chatBudgetMs -
+              (performance.now() - requestStartedAt);
+            if (remainingMs < 2_000) {
+              budgetExhausted = true;
+              break outerLoop;
+            }
             const result = await callSingleProvider(
               pid,
               finalMessages,
               undefined,
               undefined,
-              { maxTokens: requestedMaxTokens },
+              {
+                maxTokens: requestedMaxTokens,
+                timeoutMs: Math.min(
+                  providerFetchTimeoutMs(),
+                  chatPerCallTimeoutMs(),
+                  remainingMs,
+                ),
+              },
             );
             if (result.ok && result.text) {
               resultText = result.text;
@@ -5247,18 +5287,26 @@ serve(async (req: Request) => {
               trace_id: traceId,
               session_id: sessionId,
               input_chars: inputChars,
-              error_message: "all tiers exhausted",
+              // 予算切れと全プロバイダ失敗を区別して flaky 検出を容易に。
+              error_message: budgetExhausted
+                ? "budget exhausted"
+                : "all tiers exhausted",
               action: "provider.chat_auto",
-              status_code: 502,
+              status_code: 503,
               provider_choice_reason: providerChoiceReason,
               routing_use_case: routingUseCase,
             });
           } catch { /* ignore */ }
+          // 503 = ハンドリング済みの exhaustion (runtime kill の生 502 と区別)。
+          // traceId を返しクライアント側から attempt 単位で相関可能にする。
           return json({
             success: false,
             status: "allProvidersFailed",
-            message: "すべての Tier のプロバイダーが失敗しました",
-          }, 502);
+            message: budgetExhausted
+              ? "時間予算内にプロバイダー応答が得られませんでした"
+              : "すべての Tier のプロバイダーが失敗しました",
+            traceId: traceId ?? null,
+          }, 503);
         }
 
         // コスト + 観測データ記録 (best-effort、失敗してもレスポンスには影響しない)
