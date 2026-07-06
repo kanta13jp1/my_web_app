@@ -187,29 +187,50 @@ class UniversalXShareService {
     final shareContent = _recommendedShareContent(trends, performanceContext);
     final fallback = buildFallbackDraft(context, trendTopics: trends);
     final shareUrl = acquisitionUrlFor(context, content: shareContent);
-    try {
-      final response = await _chatService.sendAutoChat(
-        tier: 'free',
-        sessionId: 'universal-x-share',
-        message: _buildDraftPrompt(
+    // 実障害(2026-07-06): ai-hub が 66 秒後に 502 → 1 回きりの試行が失敗し
+    // 定型文フォールバック(スレッド定型・投票なし)へ劣化した。45 秒 timeout で
+    // 失敗を早期検知し 1 回だけ再試行して LLM 経路(長文リード+多様リプ+投票)の
+    // 成功率を上げる。traceId で ai_hub_chat_logs と attempt 単位の相関が可能。
+    // 注意: .timeout は実行中の edge 呼び出し自体は中断しない(free tier の重複
+    // 実行は許容)。ai-hub 側のプロバイダ timeout 変更時はこの 45s も見直す。
+    final traceId = 'uxs-${DateTime.now().microsecondsSinceEpoch}';
+    for (var attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        final response = await _chatService
+            .sendAutoChat(
+              tier: 'free',
+              sessionId: 'universal-x-share',
+              traceId: traceId,
+              message: _buildDraftPrompt(
+                context,
+                fallback,
+                trendTopics: trends,
+                performanceContext: performanceContext,
+                shareUrlOverride: shareUrl,
+              ),
+            )
+            .timeout(const Duration(seconds: 45));
+        final parsed = _parseDraft(
+          response.text,
           context,
           fallback,
-          trendTopics: trends,
-          performanceContext: performanceContext,
-          shareUrlOverride: shareUrl,
-        ),
-      );
-      final parsed = _parseDraft(
-        response.text,
-        context,
-        fallback,
-        shareUrl: shareUrl,
-      );
-      if (_isUsableText(parsed.text, shareUrl)) {
-        return parsed.copyWith(fallbackUsed: false, source: response.source);
+          shareUrl: shareUrl,
+        );
+        if (_isUsableText(parsed.text, shareUrl)) {
+          return parsed.copyWith(fallbackUsed: false, source: response.source);
+        }
+      } on Object catch (error) {
+        // quota cooldown 中の再試行は確定失敗なので打ち切る。
+        if (error is AiHubChatException &&
+            error.message.contains('AI quota cooldown')) {
+          break;
+        }
+        // The global share button must remain usable even when AI routing
+        // fails — fall through to the retry / fallback.
       }
-    } catch (_) {
-      // The global share button must remain usable even when AI routing fails.
+      if (attempt == 0) {
+        await Future<void>.delayed(const Duration(seconds: 2));
+      }
     }
     return fallback;
   }
@@ -302,6 +323,9 @@ class UniversalXShareService {
     bool dryRun = false,
     String? altText,
     UniversalXPoll? poll,
+    // 定型文フォールバックで生成した投稿かどうか。perf 計測ループが LLM 投稿と
+    // フォールバック投稿を分離できるように growth-hub へ明示的に渡す。
+    bool fallbackUsed = false,
   }) async {
     final normalizedMediaUrl = _emptyToNull(mediaUrl);
     final hasMedia =
@@ -344,7 +368,9 @@ class UniversalXShareService {
       'route': context.routePath,
       'experimentKey': 'x_first_user_growth_10k',
       'variant': _utmContentFromUrl(textUrl) ?? 'post_to_x',
-      'promptProfile': 'performance_context_v1',
+      'promptProfile':
+          fallbackUsed ? 'fallback_template_v1' : 'performance_context_v1',
+      'fallbackUsed': fallbackUsed,
       'contentKind': normalizedMediaUrl == null ? 'text' : 'media',
       'linkInReply': linkInReply,
       if (hasPoll) 'poll': pollPayload,
@@ -605,8 +631,40 @@ class UniversalXShareService {
         url,
         trendTopics: trendTopics,
       ),
+      // LLM 失敗時のフォールバックでも投票(エンゲージメントブースター)を落と
+      // さない。当日トップトレンド由来の決定論的な質問+選択肢を seed ローテ。
+      poll: variant == UniversalXGrowthShareVariant.dailyBriefing
+          ? _fallbackPollFor(trendTopics, text.hashCode)
+          : null,
       fallbackUsed: true,
       source: 'growth-fallback',
+    );
+  }
+
+  /// フォールバック用の決定論的な投票。トレンドが無い日は null(投票なし)。
+  /// 質問はトップトレンド由来(~20 runes に clip)、選択肢セットは seed ローテ。
+  /// 全選択肢は 25 runes 以下で `_xPollPayload` の検証を素通りする設計。
+  static UniversalXPoll? _fallbackPollFor(
+    List<UniversalXTrendTopic> trends,
+    int seed,
+  ) {
+    if (trends.isEmpty) return null;
+    final rawName = trends.first.name.trim();
+    if (rawName.isEmpty) return null;
+    final runes = rawName.runes.toList(growable: false);
+    final topic = runes.length <= 20
+        ? rawName
+        : '${String.fromCharCodes(runes.take(20))}…';
+    const optionSets = <List<String>>[
+      <String>['詳しく知りたい', '様子見', '仕事に関係あり', '関係なし'],
+      <String>['もう追っている', 'いま知った', '後で調べる'],
+      <String>['影響ありそう', '影響なさそう', 'まだ分からない'],
+      <String>['保存して整理する', '流し読みで十分', '人と話したい'],
+    ];
+    return UniversalXPoll(
+      question: '今日の注目「$topic」、あなたは？',
+      options: optionSets[seed.abs() % optionSets.length],
+      durationMinutes: 1440,
     );
   }
 
@@ -749,9 +807,12 @@ $url''';
             UniversalXTrendTopic(name: '仕事メモ'),
           ]
         : trendTopics.take(5).toList(growable: false);
+    // seed はスレッド全体で 1 回だけ計算して渡す(トレンド毎の seed だと同一
+    // カテゴリの解説が同じ変種に揃い、リプ同士の重複が再発する)。
+    final seed = selected.map((trend) => trend.name).join('|').hashCode.abs();
     final replies = <String>[];
     for (var index = 0; index < selected.length && index < 5; index += 1) {
-      replies.add(_dailyBriefingItem(index + 1, selected[index]));
+      replies.add(_dailyBriefingItem(index + 1, selected[index], seed));
     }
     replies.add('''
 なぜこの型にしているか:
@@ -763,36 +824,62 @@ $url''';
         .toList(growable: false);
   }
 
-  static String _dailyBriefingItem(int index, UniversalXTrendTopic trend) {
+  /// カテゴリ別の解説プール。実障害(2026-07-06): 単一テンプレだったため同一
+  /// カテゴリのトレンド3件でリプ本文が完全一致(near-duplicate=スパム降格リスク+
+  /// 保存価値ゼロ)。5 変種 × (index + seed) ローテで、1 スレッド(最大5件)内の
+  /// pairwise 重複をゼロにする。全変種は「なぜ重要か/見通し」の2行構造を保つ。
+  static const List<String> _briefingSportsPool = <String>[
+    'なぜ重要か: 試合中は速報、戦術、感想が一気に流れ、見返せる整理場所の差が出ます。\n見通し: 試合後は「要点まとめ」「保存したい解説」「次戦の論点」が伸びやすいです。',
+    'なぜ重要か: 熱量が高い話題ほど、感想と事実を分けて残した人が後で強くなります。\n見通し: ハイライトよりも「何が決め手だったか」の一行整理が保存されやすいです。',
+    'なぜ重要か: リアルタイムの盛り上がりは数時間で流れ、翌日に残る情報は一握りです。\n見通し: 選手・采配・数字の3点で整理したメモが次戦の観戦価値を上げます。',
+    'なぜ重要か: 観戦の楽しさは「前回何を見たか」を思い出せるかで大きく変わります。\n見通し: 保存した論点が多い人ほど、次の試合の予想や会話が具体的になります。',
+    'なぜ重要か: スポーツの話題は共通言語になりやすく、職場の雑談や商談にも効きます。\n見通し: 結果だけでなく「なぜ勝てたか」を一言添えた投稿が読まれ続けます。',
+  ];
+  static const List<String> _briefingAiPool = <String>[
+    'なぜ重要か: AIの話題はモデル名より「仕事で何が変わるか」に落とすと読まれます。\n見通し: 次はプロンプト、権限管理、レビュー品質、課金の話に関心が移ります。',
+    'なぜ重要か: 新モデルの発表は、自分の業務フローを見直す絶好のタイミングです。\n見通し: 発表直後の感想より、1週間後の「実際どう使ったか」が価値を持ちます。',
+    'なぜ重要か: AIニュースは量が多く、要点を自分の言葉で残した人だけが活かせます。\n見通し: ツール比較より「この作業をこう置き換えた」という実例が保存されます。',
+    'なぜ重要か: 話題のAIも、試して合わなければ捨てる判断材料として残す価値があります。\n見通し: 導入の成否より「どこで詰まったか」の記録が次の選定を速くします。',
+    'なぜ重要か: AIの進化は速く、昨日の常識が今日の非効率になることがあります。\n見通し: 定点観測のメモを持つ人が、乗り換えどきを最初に察知できます。',
+  ];
+  static const List<String> _briefingDefaultPool = <String>[
+    'なぜ重要か: いま人が集まっている話題は、感情だけでなく次の行動や判断材料になります。\n見通し: 事実、論点、生活への影響を分けて整理した投稿ほど保存されやすいです。',
+    'なぜ重要か: 大きな話題ほど一次情報と感想が混ざり、整理した人の情報が引用されます。\n見通し: 「何が起きたか」と「自分にどう関わるか」を分けたメモが後で効きます。',
+    'なぜ重要か: 流れの速い話題は、翌日には検索しづらくなり、残した人だけが使えます。\n見通し: 論点を3つに絞った要約が、1週間後も参照される投稿になります。',
+    'なぜ重要か: 注目の話題は判断を急がせますが、急ぐほど整理の価値が上がります。\n見通し: 感情が落ち着いた頃に「事実だけのメモ」を見返せる人が正確に動けます。',
+    'なぜ重要か: 話題の賞味期限は短く、学びに変換できるかは記録の仕方で決まります。\n見通し: 出来事→影響→自分の一手、の順で書いた整理が最も再利用されます。',
+  ];
+
+  static String _dailyBriefingItem(
+    int index,
+    UniversalXTrendTopic trend,
+    int seed,
+  ) {
     final name = trend.name;
     final volume = trend.tweetCount == null
         ? ''
         : '（約${_compactCount(trend.tweetCount!)}件）';
     final category = _trendCategory(name);
     final lower = name.toLowerCase();
+    final List<String> pool;
     if (lower.contains('worldcup') ||
         lower.contains('world cup') ||
         name.contains('ワールドカップ') ||
         name.contains('W杯') ||
         name.contains('サッカー')) {
-      return '''
-$index. 【$category】$name$volume
-なぜ重要か: 試合中は速報、戦術、感想が一気に流れ、見返せる整理場所の差が出ます。
-見通し: 試合後は「要点まとめ」「保存したい解説」「次戦の論点」が伸びやすいです。''';
-    }
-    if (lower.contains('ai') ||
+      pool = _briefingSportsPool;
+    } else if (lower.contains('ai') ||
         lower.contains('openai') ||
         lower.contains('gemini') ||
         lower.contains('claude')) {
-      return '''
-$index. 【$category】$name$volume
-なぜ重要か: AIの話題はモデル名より「仕事で何が変わるか」に落とすと読まれます。
-見通し: 次はプロンプト、権限管理、レビュー品質、課金の話に関心が移ります。''';
+      pool = _briefingAiPool;
+    } else {
+      pool = _briefingDefaultPool;
     }
+    final commentary = pool[(index - 1 + seed) % pool.length];
     return '''
 $index. 【$category】$name$volume
-なぜ重要か: いま人が集まっている話題は、感情だけでなく次の行動や判断材料になります。
-見通し: 事実、論点、生活への影響を分けて整理した投稿ほど保存されやすいです。''';
+$commentary''';
   }
 
   static String _trendCategory(String name) {
@@ -1171,7 +1258,9 @@ $url''';
               threadReplies.isNotEmpty ? threadReplies : fallback.threadReplies,
           // トップレベル poll が正だが、threadReplies 内へ迷い込んだ poll も
           // 回収して native 投票を復元する(生テキスト漏出の再発防止とセット)。
-          poll: _parsePoll(decoded['poll']) ?? recoveredPoll ?? fallback.poll,
+          // LLM が投票を出さなかった成功ドラフトへ fallback のテンプレ投票を
+          // 継承しない(毎日同じ投票が付き near-duplicate 降格を招くため)。
+          poll: _parsePoll(decoded['poll']) ?? recoveredPoll,
           fallbackUsed: true,
           source: 'ai-json',
         );

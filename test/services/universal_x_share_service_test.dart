@@ -80,6 +80,125 @@ void main() {
     expect(draft.threadReplies.first.length, lessThanOrEqualTo(280));
   });
 
+  test('fallback thread commentary never repeats within one thread', () {
+    // 実障害(2026-07-06): 同一カテゴリのトレンド3件で「なぜ重要か/見通し」が
+    // 完全一致(near-duplicate)。5変種プール×seedローテで pairwise 重複ゼロに。
+    final draft = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: '税収過去最高'),
+        UniversalXTrendTopic(name: 'サイバー攻撃で退会'),
+        UniversalXTrendTopic(name: '高校生を逮捕'),
+        UniversalXTrendTopic(name: '広島工場増強'),
+        UniversalXTrendTopic(name: '不正プログラム自作'),
+      ],
+    );
+    // トレンド名部分を除いた解説部分(なぜ重要か以降)で重複を判定する。
+    final commentaries = draft.threadReplies
+        .where((reply) => reply.contains('なぜ重要か'))
+        .map((reply) => reply.substring(reply.indexOf('なぜ重要か')))
+        .toList();
+    expect(commentaries.length, greaterThanOrEqualTo(5));
+    expect(
+      commentaries.toSet().length,
+      commentaries.length,
+      reason: 'no two replies may share identical commentary',
+    );
+
+    // トレンドなしの既定3件でも重複しない。
+    final defaults = UniversalXShareService.buildGrowthDraft(page);
+    final defCommentaries = defaults.threadReplies
+        .where((reply) => reply.contains('なぜ重要か'))
+        .map((reply) => reply.substring(reply.indexOf('なぜ重要か')))
+        .toList();
+    expect(defCommentaries.toSet().length, defCommentaries.length);
+  });
+
+  test('fallback daily briefing carries a deterministic poll', () {
+    final draft = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: 'ChatGPTで不正プログラム自作の疑いで再逮捕'),
+      ],
+    );
+    expect(draft.poll, isNotNull);
+    expect(draft.poll!.question, contains('今日の注目「'));
+    expect(draft.poll!.options.length, greaterThanOrEqualTo(3));
+    for (final option in draft.poll!.options) {
+      expect(option.runes.length, lessThanOrEqualTo(25));
+    }
+    // トレンドなしの日は投票なし(質問が作れないため)。
+    final noTrend = UniversalXShareService.buildGrowthDraft(page);
+    expect(noTrend.poll, isNull);
+  });
+
+  test('LLM draft without poll does not inherit the fallback poll', () async {
+    final chat = AiHubChatService(
+      invoker: (body) async => {
+        'success': true,
+        'provider': 'groq',
+        'text': '''
+{
+  "text": "AI大学をアップデートしました。\\n${page.url}\\n#buildinpublic",
+  "imagePrompt": "16:9 product UI share image",
+  "videoPrompt": "short presenter video",
+  "hashtags": ["#buildinpublic"],
+  "threadReplies": ["解説その1です。", "解説その2です。"]
+}
+''',
+      },
+    );
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async => {
+        'success': true,
+        if (body['action'] == 'x.trends')
+          'trends': [
+            {'name': '注目トレンド', 'tweet_count': 1000},
+          ],
+      },
+    );
+    final draft = await service.generateDraft(page);
+    expect(draft.fallbackUsed, isFalse);
+    // LLM が投票を出さなかったら、fallback のテンプレ投票を継承しない。
+    expect(draft.poll, isNull);
+  });
+
+  test(
+    'generateDraft retries once after a transient ai-hub failure',
+    () async {
+      var calls = 0;
+      final chat = AiHubChatService(
+        invoker: (body) async {
+          calls += 1;
+          if (calls == 1) {
+            throw Exception('ai-hub 502');
+          }
+          return {
+            'success': true,
+            'provider': 'groq',
+            'text': '''
+{
+  "text": "AI大学をアップデートしました。\\n${page.url}\\n#buildinpublic",
+  "imagePrompt": "16:9 product UI share image",
+  "videoPrompt": "short presenter video",
+  "hashtags": ["#buildinpublic"]
+}
+''',
+          };
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async => {'success': true},
+      );
+      final draft = await service.generateDraft(page);
+      expect(calls, 2);
+      expect(draft.fallbackUsed, isFalse);
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
+
   test('share image rotates the scene setting for dramatic variation', () {
     final draft = UniversalXShareService.buildGrowthDraft(
       page,

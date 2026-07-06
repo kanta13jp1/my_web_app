@@ -417,6 +417,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         // ネイティブ投票(H7 / impressions ブースター)。draft.poll が null の
         // ときは従来と完全に同一の投稿になる(additive / default-off)。
         poll: draft.poll,
+        // 定型文フォールバック投稿を perf 計測で分離するためのタグ。
+        fallbackUsed: draft.fallbackUsed,
       );
       if (_disposed || !mounted) return;
       setState(() {
