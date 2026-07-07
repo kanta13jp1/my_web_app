@@ -241,6 +241,9 @@ void main() {
     // 真正性クレームモード(作り話の個人的実績を禁止)。
     expect(prompt, contains('検証可能な範囲'));
     expect(prompt, contains('家計が健全になりました'));
+    // R13: media 軸。"Media lift" 行を authoritative 測定データとして扱い、勝ち
+    // メディアへ最強フックを寄せるルールがプロンプトに届くこと。
+    expect(prompt, contains('Media lift'));
   });
 
   test('generateDraft repairs LLM JSON with raw newlines inside strings',
