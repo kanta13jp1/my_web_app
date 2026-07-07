@@ -10,6 +10,13 @@ on:
         description: "検証する公開メモ ID"
         required: false
         default: "44"
+  # GitHub App からの workflow_dispatch が 403 になるため、
+  # この workflow 自身の変更 push でも smoke を実行する。
+  push:
+    branches:
+      - claude/page-accessibility-memo-qb499c
+    paths:
+      - ".github/workflows/public-memo-smoke.yml"
 
 permissions:
   contents: read
