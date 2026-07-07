@@ -18,6 +18,7 @@ import {
   renderPublicMemoMarkdown,
   renderPublicMemoNotFoundHtml,
   resolvePublicMemoViewFormat,
+  searchParamsToActionBody,
 } from "./public_memo_view.ts";
 
 function sampleRow(overrides: Partial<PublicMemoViewRow> = {}) {
@@ -39,6 +40,32 @@ Deno.test("resolvePublicMemoViewFormat honors explicit format first", () => {
   assertEquals(resolvePublicMemoViewFormat("md", "GET"), "md");
   assertEquals(resolvePublicMemoViewFormat("markdown", "POST"), "md");
   assertEquals(resolvePublicMemoViewFormat(" HTML ", "POST"), "html");
+});
+
+Deno.test("resolvePublicMemoViewFormat maps txt aliases to text/plain view", () => {
+  assertEquals(resolvePublicMemoViewFormat("txt", "GET"), "txt");
+  assertEquals(resolvePublicMemoViewFormat("text", "POST"), "txt");
+  assertEquals(resolvePublicMemoViewFormat("plain", "GET"), "txt");
+});
+
+Deno.test("searchParamsToActionBody rescues HTML-entity mangled query keys", () => {
+  const base = "https://example.com/functions/v1/core-hub";
+  assertEquals(
+    searchParamsToActionBody(`${base}?action=memo.public.view&id=44`),
+    { action: "memo.public.view", id: "44" },
+  );
+  // `&` が `&amp;` に化けた URL (ChatGPT fetch で実測) を救済
+  assertEquals(
+    searchParamsToActionBody(
+      `${base}?action=memo.public.view&amp;id=44&amp;format=json`,
+    ),
+    { action: "memo.public.view", id: "44", format: "json" },
+  );
+  // 二重化け (amp;amp;) にも耐える。同名キーは先勝ち
+  assertEquals(
+    searchParamsToActionBody(`${base}?id=1&amp;amp;id=2`),
+    { id: "1" },
+  );
 });
 
 Deno.test("resolvePublicMemoViewFormat defaults by method", () => {

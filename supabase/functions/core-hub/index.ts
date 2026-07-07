@@ -36,6 +36,7 @@ import {
   renderPublicMemoMarkdown,
   renderPublicMemoNotFoundHtml,
   resolvePublicMemoViewFormat,
+  searchParamsToActionBody,
 } from "./public_memo_view.ts";
 
 const corsHeaders = {
@@ -836,7 +837,7 @@ serve(async (req: Request) => {
       // GET/HEAD は query param を body 相当として扱う。ヘッダーを付けられない
       // クローラー / 外部 AI が匿名 action (memo.public.* 等) を叩けるようにする。
       // HEAD はブラウザ / AI フェッチャーが本文取得前のプリフライトとして送る。
-      body = Object.fromEntries(new URL(req.url).searchParams);
+      body = searchParamsToActionBody(req.url);
     } else {
       try {
         body = await req.json();
@@ -845,10 +846,7 @@ serve(async (req: Request) => {
       }
       if (typeof body.action !== "string" || body.action === "") {
         // 一部フェッチャーは POST でも body を送らない — query param を fallback。
-        body = {
-          ...Object.fromEntries(new URL(req.url).searchParams),
-          ...body,
-        };
+        body = { ...searchParamsToActionBody(req.url), ...body };
       }
     }
 
@@ -969,10 +967,12 @@ serve(async (req: Request) => {
         if (format === "json") {
           return json({ success: true, memo: publicMemoToPayload(row) });
         }
-        if (format === "md") {
+        if (format === "md" || format === "txt") {
           return publicText(
             renderPublicMemoMarkdown(row),
-            "text/markdown; charset=utf-8",
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
           );
         }
         return publicText(
@@ -998,10 +998,12 @@ serve(async (req: Request) => {
             "text/html; charset=utf-8",
           );
         }
-        if (format === "md") {
+        if (format === "md" || format === "txt") {
           return publicText(
             renderPublicMemoListMarkdown(rows),
-            "text/markdown; charset=utf-8",
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
           );
         }
         return json({
@@ -1041,10 +1043,12 @@ serve(async (req: Request) => {
             "text/html; charset=utf-8",
           );
         }
-        if (format === "md") {
+        if (format === "md" || format === "txt") {
           return publicText(
             renderPublicMemoListMarkdown(rows),
-            "text/markdown; charset=utf-8",
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
           );
         }
         return json({
@@ -1100,10 +1104,12 @@ serve(async (req: Request) => {
             "text/html; charset=utf-8",
           );
         }
-        if (format === "md") {
+        if (format === "md" || format === "txt") {
           return publicText(
             renderPublicMemoListMarkdown(rows),
-            "text/markdown; charset=utf-8",
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
           );
         }
         return json({
