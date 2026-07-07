@@ -26,8 +26,9 @@ export type PublicMemoViewFormat = "html" | "json" | "md";
 export const PUBLIC_MEMO_VIEW_COLUMNS =
   "id, title, content, category, published_at, updated_at, view_count, like_count";
 
-/// format param 明示が最優先。未指定時は GET (ブラウザ / クローラー直アクセス)
-/// は HTML、POST (API クライアント) は JSON を既定とする。
+/// format param 明示が最優先。未指定時は GET/HEAD (ブラウザ / クローラー直
+/// アクセス。HEAD は AI フェッチャーのプリフライト) は HTML、POST (API
+/// クライアント) は JSON を既定とする。
 export function resolvePublicMemoViewFormat(
   format: unknown,
   method: string,
@@ -38,7 +39,8 @@ export function resolvePublicMemoViewFormat(
   if (normalized === "json") return "json";
   if (normalized === "md" || normalized === "markdown") return "md";
   if (normalized === "html") return "html";
-  return method.toUpperCase() === "GET" ? "html" : "json";
+  const upper = method.toUpperCase();
+  return upper === "GET" || upper === "HEAD" ? "html" : "json";
 }
 
 export function escapeHtml(value: string): string {

@@ -41,6 +41,8 @@ Deno.test("resolvePublicMemoViewFormat honors explicit format first", () => {
 Deno.test("resolvePublicMemoViewFormat defaults by method", () => {
   assertEquals(resolvePublicMemoViewFormat(null, "GET"), "html");
   assertEquals(resolvePublicMemoViewFormat(undefined, "get"), "html");
+  assertEquals(resolvePublicMemoViewFormat(null, "HEAD"), "html");
+  assertEquals(resolvePublicMemoViewFormat(undefined, "head"), "html");
   assertEquals(resolvePublicMemoViewFormat("", "POST"), "json");
   assertEquals(resolvePublicMemoViewFormat("bogus", "POST"), "json");
 });
