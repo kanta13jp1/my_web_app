@@ -22,7 +22,7 @@ export interface PublicMemoViewRow {
   like_count: number | null;
 }
 
-export type PublicMemoViewFormat = "html" | "json" | "md";
+export type PublicMemoViewFormat = "html" | "json" | "md" | "txt";
 
 export const PUBLIC_MEMO_VIEW_COLUMNS =
   "id, title, content, category, metadata, published_at, updated_at, view_count, like_count";
@@ -39,9 +39,29 @@ export function resolvePublicMemoViewFormat(
     : "";
   if (normalized === "json") return "json";
   if (normalized === "md" || normalized === "markdown") return "md";
+  // 一部の AI フェッチャーは text/markdown・text/html を本文として扱えない
+  // ため、text/plain で返す txt を用意する (中身は Markdown と同一)。
+  if (normalized === "txt" || normalized === "text" || normalized === "plain") {
+    return "txt";
+  }
   if (normalized === "html") return "html";
   const upper = method.toUpperCase();
   return upper === "GET" || upper === "HEAD" ? "html" : "json";
+}
+
+/// URL query を action body 相当へ変換する。レンダリング済みテキストから
+/// URL をコピーすると `&` が `&amp;` に化け、`amp;id=44` のようなキーで
+/// 届くことがある (ChatGPT の fetch で実測 400)。キー先頭の `amp;` を
+/// 除去して救済する。同名キーは先勝ち。
+export function searchParamsToActionBody(url: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of new URL(url).searchParams) {
+    const normalized = key.replace(/^(amp;)+/, "");
+    if (!(normalized in result)) {
+      result[normalized] = value;
+    }
+  }
+  return result;
 }
 
 export function escapeHtml(value: string): string {
