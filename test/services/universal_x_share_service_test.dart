@@ -114,22 +114,82 @@ void main() {
     expect(defCommentaries.toSet().length, defCommentaries.length);
   });
 
-  test('fallback daily briefing carries a deterministic poll', () {
-    final draft = UniversalXShareService.buildGrowthDraft(
+  test('fallback poll obeys R13b subject-lock and current-state rules', () {
+    // R13b(#3872): fallback poll は _buildDraftPrompt を通らないため R12 の poll
+    // ルールが効かない。旧「今日の注目『$topic』、あなたは？」+「詳しく知りたい/
+    // 関係なし」(関心度サーベイ = R12 で潰した 0 票型)が復活しないことを検証する。
+
+    // AI・テック トレンド → 一人称・現在状態 poll。
+    final ai = UniversalXShareService.buildGrowthDraft(
       page,
       trendTopics: const [
-        UniversalXTrendTopic(name: 'ChatGPTで不正プログラム自作の疑いで再逮捕'),
+        UniversalXTrendTopic(name: 'ChatGPTの新機能が話題'),
       ],
     );
-    expect(draft.poll, isNotNull);
-    expect(draft.poll!.question, contains('今日の注目「'));
-    expect(draft.poll!.options.length, greaterThanOrEqualTo(3));
-    for (final option in draft.poll!.options) {
+    expect(ai.poll, isNotNull);
+    // 汎用の関心度 stem / 選択肢は復活しない(R12 準拠)。
+    expect(ai.poll!.question, isNot(contains('あなたは？')));
+    expect(ai.poll!.question, isNot(contains('今日の注目「')));
+    expect(ai.poll!.options, isNot(contains('詳しく知りたい')));
+    expect(ai.poll!.options, isNot(contains('関係なし')));
+    expect(ai.poll!.options, isNot(contains('様子見')));
+    expect(ai.poll!.options.length, inInclusiveRange(3, 4));
+    for (final option in ai.poll!.options) {
       expect(option.runes.length, lessThanOrEqualTo(25));
     }
-    // トレンドなしの日は投票なし(質問が作れないため)。
-    final noTrend = UniversalXShareService.buildGrowthDraft(page);
-    expect(noTrend.poll, isNull);
+
+    // 経済・市場 トレンド → 家計の現在状態 poll(主題がアプリと一致)。
+    final money = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: '円安が加速し日経平均が急落'),
+      ],
+    );
+    expect(money.poll, isNotNull);
+    expect(money.poll!.question, isNot(contains('今日の注目「')));
+    expect(money.poll!.options, isNot(contains('関係なし')));
+
+    // アプリ中核の家計トレンド(物価/給料 等)も poll を発火させる(旧 false-negative)。
+    final prices = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: '物価高で家計が悲鳴'),
+      ],
+    );
+    expect(prices.poll, isNotNull);
+    expect(prices.poll!.options, isNot(contains('関係なし')));
+
+    // 誤爆回帰: 'アイドル' は 'ドル' を部分に含むが家計トレンドではない。
+    // 家計 poll を貼らず、非関連として poll を省略すること。
+    final idol = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: 'アイドルグループが解散を発表'),
+      ],
+    );
+    expect(idol.poll, isNull);
+
+    // カテゴリ特定不能な汎用トレンド → poll を省略(本文主題ズレ/0票を回避)。
+    final generic = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: 'カルピスの誕生日'),
+      ],
+    );
+    expect(generic.poll, isNull);
+
+    // 誤爆回帰: 'Ukraine' は小文字部分一致 'ai' を含むが AI トレンドではない。
+    // AI 現在状態 poll を貼らず、非関連として poll を省略すること。
+    final ukraine = UniversalXShareService.buildGrowthDraft(
+      page,
+      trendTopics: const [
+        UniversalXTrendTopic(name: 'Ukraine ceasefire talks'),
+      ],
+    );
+    expect(ukraine.poll, isNull);
+
+    // トレンドなしの日も投票なし。
+    expect(UniversalXShareService.buildGrowthDraft(page).poll, isNull);
   });
 
   test('LLM draft without poll does not inherit the fallback poll', () async {
