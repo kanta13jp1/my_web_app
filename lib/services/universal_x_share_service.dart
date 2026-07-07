@@ -667,6 +667,18 @@ class UniversalXShareService {
   /// スパム降格されやすい(=リプライも独自にインプレッションを稼ぐ)ため、
   /// text.hashCode で日替りローテする。いずれも「5分試して一言返信」の低摩擦
   /// アクションと link-in-reply を保つ。
+  /// 実在する具体機能の一次事実。LLM は _buildDraftPrompt でこの一覧を渡され、
+  /// 今日の見出しに最も直結する 1 つを名前で挙げるよう求められる。これが無いと
+  /// モデルは製品を語る具体材料を持たず「強力なツール」等の一般名詞に堕ちる
+  /// (R11 実測: 実投稿の product mention が全て generic だった真因)。
+  static const List<String> _appFeatureFacts = <String>[
+    '給料日サイクル: 給料日起点の窓で支出を実測し、過去分の二重控除を排除する家計把握',
+    '負債トレンド: 口座別の残高履歴を月次で検出し、翌月の具体アクションを提示',
+    'Xワンボタン投稿: 当日ニュースを字幕付きの短尺動画に自動要約して投稿',
+    '資産/負債の端末跨ぎ同期: 残高履歴を端末を跨いで同期し、いつでも同じ数字を見る',
+    '給与明細取込: 明細から手取りを取り込み、給料日サイクルの収入へ自動合算',
+  ];
+
   static const List<String> _ctaFinalReplies = <String>[
     '試せるURLはこちらです。5分だけ触って、A/B/Cか一言で返信ください。',
     '触ってみたい方はこちらへ。5分で気づいた点を一言もらえると助かります。',
@@ -1645,12 +1657,13 @@ $url''';
   }) {
     final shareUrl = shareUrlOverride ?? acquisitionUrlFor(context);
     final trendContext = _formatTrendContext(trendTopics);
+    final featureFacts = _appFeatureFacts.map((f) => '- $f').join('\n');
     final financeRule = _isMyFinanceUxContext(context)
         ? '- For finance routes, frame this as 動くスマホアプリUX検証動画「マイファイナンス」 and mention GPT image -> GPT-5.5 -> ElevenLabs -> Hedra when natural.'
         : '';
     return '''
-You are a Japanese build-in-public growth strategist.
-Create one X sharing package for the current page of a Flutter Web app.
+You are the solo developer who personally runs the one-person company 「自分株式会社」. Write build-in-public copy in the FIRST PERSON as yourself (自分が作った/実測した/つまずいた), NOT as a third-party marketer describing someone else's product.
+Create one X sharing package for the current page of your Flutter Web app.
 Primary goal: get one real first user from X to try the site and leave feedback.
 Secondary goal: earn useful impressions without sounding like spam.
 
@@ -1677,12 +1690,21 @@ $trendContext
 Recent X analytics and A/B test feedback:
 ${performanceContext.trim().isEmpty ? 'No measured performance context yet.' : performanceContext}
 
+App の実在する具体機能 (今日の見出しに最も直結する 1 つを名前で挙げ、それが何を数値/画面/具体で解決するかを書く。アプリを一般名詞「ウェブアプリ」「ツール」「強力なツール」で呼ぶな):
+$featureFacts
+
 Rules:
 - Do not use hash routing. The URL must not contain # or /#/.
 - Make the copy specific to this page and useful for a stranger on X.
 - Ask for a low-friction first action: try for 5 minutes and say what helped or confused them.
 - Do not ask for payment, promise revenue, or imply Stripe payout readiness.
 - Prefer concrete pain, feature, or question hooks over generic app promotion.
+- 一人称の実体験で書け: 運営者本人が実際にやったこと・作ったこと・実測したこと・つまずいたことを最低1つ具体で入れる(数値・固有機能名・失敗を歓迎)。三人称のブランド口調(「私たちの新しいウェブアプリは」「企業がAIを取り入れると」等の伝聞・一般論)を禁止する。
+- 禁止フレーズ(これらを含む文は削除して書き直せ): 「可能性があります」「影響を及ぼすでしょう」「ますます激化」「激化しています」「強力なツール」「重要性を認識」「効率よく整理」「活用するためのサポート」「注目のニュース」「〜と言えるでしょう」、および「〜化が加速する中」の型。英語の game-changer / powerful tool / the future of も禁止。
+- 各文ルール: 断定・具体・数字・一次体験(自分が実際にやったこと)のいずれかを含まない文は入れるな。誰でも書ける当てずっぽうの一般予測を禁止。
+- 具体性の下限: 少なくとも3つのリプはそれぞれ固有アンカー(具体的な数字 / 見出し以外の固有名詞 / このアプリを作って分かった一次体験)を1つ以上持つこと。
+- アプリに触れるときは上の「App の実在する具体機能」から今日の見出しに直結する機能を1つ名前で挙げ、それが何を数値/画面/具体で解決するかを書く。一般名詞で濁すな。
+- 例(リプの実質・BAD→GOOD、この差を真似て今日の内容で書け): BAD「AI技術の競争がますます激化しています。今後、業界全体に影響を及ぼすでしょう。」 GOOD「今日の見出しは3分でこのアプリの検索できる判断メモに放り込んだ。自分は毎朝これで前日の見出しを整理してる。」 / BAD「私たちの新しいウェブアプリは情報整理を強力にサポートします。」 GOOD「給料日サイクルで家計を組み直したら過去支払の二重控除に気づいて直した、という実装ログをそのままアプリにしてる。」
 - Target 10K impressions by using the user's proven Daily Briefing style when trend context is strong: numbered items, headline, why it matters, outlook.
 - Use the measured performance context above. Prefer winning variants and avoid losing hook styles.
 - Treat the "Variant ranking", "Structural lift", and "Top hook to emulate" lines (when present) as authoritative measured data: adopt the winning structure (media choice, link placement, thread length, hook shape) but never copy winning wording verbatim.
@@ -1697,6 +1719,7 @@ Rules:
 - This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars: a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
 - Make the thread SAVE-worthy: turn the LAST analysis reply (the one just before the final URL/CTA reply) into a self-contained "保存版まとめ" — a numbered 3-4 point 使えるチェックリスト that stands alone as a single screenshot. This IS the bookmark anchor. Write it fresh each day (never templated), at most once, and NEVER put it on the final URL/CTA reply. Do NOT add any other separate "保存を" save cue — this まとめ is the single save mechanism per thread.
+- 保存版まとめの各行は「動詞で始まる、アプリ無しでも即実行できる具体手順」にせよ。今日のニュースから得た固有の学び(数字・固有名詞・具体行動のいずれか)を最低1つ含める。「理解する」「認識する」「意識する」「重要性を〜」等の内省・抽象動詞をポイントの主眼にするのを禁止(そういう行は無効=具体的にやることへ置換)。悪い例(禁止): 1.AI技術の進化を理解する 2.情報整理の重要性を認識する 3.フィードバックを提供する / 良い例(この型を真似て今日の内容で作り直す): 1.今日の注目ニュースの要点だけ3行で自分のメモに残す(所要3分) 2.『事実』と『自分の考え』を1行ずつ分けて書く=後で判断材料に引ける 3.週末に今週保存したメモを見返し、仕事で使える1件だけタグ付けする
 - Format for scannability: break the lead and each reply into short one-idea lines with a blank line between meaning-chunks (no wall-of-text paragraph). Put labels (なぜ重要か / 見通し / 次の一手 など) at the start of a line and continue the explanation on the next line, so a reader can skim in 2 seconds.
 - The multi-line formatting above applies to the RENDERED post; inside the JSON string values you must still encode every line break as the two characters \\n, never a real newline.
 - Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical.
