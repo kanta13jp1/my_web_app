@@ -837,6 +837,13 @@
       "category": "skip",
       "reason": "cooldown / 7-day since 2026-07-02 Google Jules-Antigravity adoption / next unlock 2026-07-09 (OpenCode 第1候補)",
       "skipped": true
+    },
+    {
+      "date": "2026-07-08",
+      "name": null,
+      "category": "skip",
+      "reason": "cooldown / 7-day since 2026-07-02 (Google Jules / Antigravity) / next unlock 2026-07-09. 第1候補=OpenCode (v1.17.13 / 7-01 / Opencode-managed provider + MCP resource template/read tools / Sonnet 5 adaptive thinking / 160K+ stars). 7/08 delta=全threadが継続シグナル (White House 自主基準 未確定 / Fable 5 switch 実行済 / Gemini 3.5 Pro ~7/17 architectural rebuild / MF AI Cowork orchestrator+My Agents 判明) = 新規採択に足る novel candidate 無し",
+      "skipped": true
     }
   ],
   "_schema_notes": {
