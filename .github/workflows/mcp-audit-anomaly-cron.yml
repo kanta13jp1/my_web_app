@@ -25,7 +25,7 @@ permissions:
 
 concurrency:
   group: mcp-audit-anomaly
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-07 ci-audit: 2h cron キュー積み防止・最新状態のみ評価
 
 jobs:
   script-test:
