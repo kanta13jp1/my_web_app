@@ -828,15 +828,23 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     // deno-lint-ignore no-explicit-any
     let body: Record<string, any> = {};
-    if (req.method === "GET") {
-      // GET は query param を body 相当として扱う。ヘッダーを付けられない
+    if (req.method === "GET" || req.method === "HEAD") {
+      // GET/HEAD は query param を body 相当として扱う。ヘッダーを付けられない
       // クローラー / 外部 AI が匿名 action (memo.public.* 等) を叩けるようにする。
+      // HEAD はブラウザ / AI フェッチャーが本文取得前のプリフライトとして送る。
       body = Object.fromEntries(new URL(req.url).searchParams);
     } else {
       try {
         body = await req.json();
       } catch {
         body = {};
+      }
+      if (typeof body.action !== "string" || body.action === "") {
+        // 一部フェッチャーは POST でも body を送らない — query param を fallback。
+        body = {
+          ...Object.fromEntries(new URL(req.url).searchParams),
+          ...body,
+        };
       }
     }
 
