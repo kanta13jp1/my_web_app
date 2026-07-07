@@ -675,6 +675,10 @@ class UniversalXShareService {
     'デモはこちら。5分だけ使って、続けたいと思ったか教えてください。',
     '要点は後で使えるので保存推奨。触ったら一言だけ感想ください。',
     'この投稿は保存しておくと後で効きます。使えたか一言返信歓迎です。',
+    // フォロー変換バリアント: 毎日この形式で発信している事実を添え、スレッド
+    // 読者をプロフィール経由のフォローへ導く(全体の ~1/9 出現でスパム化しない)。
+    '毎日この形式で自分株式会社の開発を発信しています。役立ったらプロフィールからフォローどうぞ。試すURLはこちら。',
+    'この続きは毎日ここで出しています。よければプロフィールを覗いてみてください。試すURLはこちら。',
   ];
 
   /// Builds the lead post + reply chain exactly like [postToX] does, so the
@@ -1657,7 +1661,7 @@ Return STRICT JSON only (RFC 8259). The raw response must parse with a standard 
   "imagePrompt": "English prompt for a 16:9 share image, no text overlay",
   "videoPrompt": "English prompt for a short presenter/share video",
   "hashtags": ["#buildinpublic", "#FlutterWeb", "#Supabase"],
-  "poll": { "question": "<=100 char Japanese poll question tied to today's top headline>", "options": ["<=25 char option", "<=25 char option"], "durationMinutes": 1440 }
+  "poll": { "question": "<=100 char Japanese poll question tied to today's top headline>", "options": ["<=25 char option", "<=25 char option", "<=25 char option"], "durationMinutes": 1440 }
 }
 
 Page:
@@ -1689,14 +1693,16 @@ Rules:
 - When headlines are present, OPEN the lead post by tying today's single most relevant headline to this app's angle (information organization / AI work OS), so the post visibly changes every day. Do not lead with a generic app description.
 - The FIRST line (before the X "Show more" fold) must be a concrete curiosity/value/news hook that stops the scroll. Do NOT start with a label or date such as "デイリーブリーフィング — …朝"; do not prefix the post with the date. If you mention any date, use exactly today's real date (JST) given above and never invent another year (e.g. never write 2024).
 - Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
-- Prefer conversation hooks and save-worthy analysis over hashtags. When the thread genuinely helps later (a checklist, framework, or numbered briefing), add ONE natural save cue (e.g. "後で使えるよう保存を") — never on every post and never templated word-for-word.
+- Keep the LEAD post strictly hashtag-free (the news hook must stay above the fold). Append 2-3 natural Japanese discovery hashtags on a trailing line of exactly ONE mid-thread reply (never the lead, never every reply), chosen from {#AI活用, #個人開発, #buildinpublic} plus at most one topic-specific tag — 3 tags max total, no stuffing.
 - This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars: a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
+- Make the thread SAVE-worthy: turn the LAST analysis reply (the one just before the final URL/CTA reply) into a self-contained "保存版まとめ" — a numbered 3-4 point 使えるチェックリスト that stands alone as a single screenshot. This IS the bookmark anchor. Write it fresh each day (never templated), at most once, and NEVER put it on the final URL/CTA reply. Do NOT add any other separate "保存を" save cue — this まとめ is the single save mechanism per thread.
 - Format for scannability: break the lead and each reply into short one-idea lines with a blank line between meaning-chunks (no wall-of-text paragraph). Put labels (なぜ重要か / 見通し / 次の一手 など) at the start of a line and continue the explanation on the next line, so a reader can skim in 2 seconds.
 - The multi-line formatting above applies to the RENDERED post; inside the JSON string values you must still encode every line break as the two characters \\n, never a real newline.
 - Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical.
 - The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim, do NOT phrase it as "1つ目/item 1 of N", and do NOT begin it with a number or list marker (never start with "1."). Replies 2 onward then form the numbered briefing.
-- Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 2-4 "options" (each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
+- Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 3-4 "options" (prefer 4 when each option is genuinely distinct; never pad with filler; each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
+- Poll options must be 3-4 GRADED reader stances or next actions (例: もう追っている/いま知った/後で調べる/仕事に直結) — never a flat binary such as 興味がある/興味がない or 賛成/反対 (binary polls collect fewer votes and read as low-effort).
 - The "poll" must be a TOP-LEVEL JSON key only. NEVER place a poll object (or any JSON object) inside the threadReplies array — every threadReplies element must be a plain Japanese string, or it will be posted as raw garbage text.
 - DERIVE the poll question AND options from THE DAY'S single most relevant headline so the poll rotates daily and is specific — NEVER reuse a generic or hardcoded poll like "使ってみたい?はい/いいえ" (near-duplicate polls get down-ranked). Yesterday's poll must not be reusable today.
 - The poll is posted as its own FIRST text-only thread reply (never on the media lead), so make the "question" self-contained. If no natural, honest poll fits today's news, OMIT the "poll" field entirely rather than forcing a weak one.

@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_share_button_preferences_service.dart';
 import '../services/universal_x_share_service.dart';
 import 'ai_share_button_settings_panel.dart';
+
+/// 投稿済みツイートの URL を組み立てる純関数。ハンドル名は不要な
+/// `https://x.com/i/status/<id>` 形式(アカウント名の @ 付き/表記ゆれに非依存)。
+String? composePostedTweetUrl(String? tweetId) {
+  final id = tweetId?.trim() ?? '';
+  if (id.isEmpty) return null;
+  return 'https://x.com/i/status/$id';
+}
 
 /// 投稿完了メッセージを組み立てる純関数。動画が付かなかった投稿では、その
 /// 理由(例: Hedraクレジット不足)を末尾に残し、operator が投稿画面だけで
@@ -322,6 +331,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   bool _reusedVideoSameDay = false;
   String? _reusedVideoDateLabel; // 例 '7/6'
   String? _statusMessage;
+  String? _postedTweetUrl;
   bool _loadingDraft = true;
   bool _generatingImage = false;
   bool _generatingVideo = false;
@@ -380,6 +390,14 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   /// ワンボタン: 文章(生成済)→画像→音声+動画(Hedra/ElevenLabs, 非同期はポーリング)
   /// →X投稿 を一括実行する。ユーザーは「AI生成して投稿」を押すだけ。失敗時は原因を
   /// 画面に明確表示する。
+  Future<void> _openPostedTweet() async {
+    final url = _postedTweetUrl;
+    if (url == null) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _generateAndPost() async {
     final draft = _draft;
     if (_posting || _loadingDraft) return;
@@ -390,6 +408,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     setState(() {
       _posting = true;
       _statusMessage = null;
+      _postedTweetUrl = null;
     });
     // 動画が生成できなかった理由。投稿完了メッセージへ残し、静止画になった
     // 原因(例: Hedraクレジット不足)を operator が投稿画面で即視認できるようにする
@@ -534,6 +553,9 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           videoReused: _videoReused,
           reusedVideoDate: _reusedVideoDateLabel,
         );
+        // ゴールデンアワー導線用(投稿を開くボタン)。
+        _postedTweetUrl =
+            result.posted ? composePostedTweetUrl(result.tweetId) : null;
       });
     } catch (error) {
       if (_disposed || !mounted) return;
@@ -623,6 +645,20 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                         ? Theme.of(context).colorScheme.error
                         : Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              if (_postedTweetUrl != null) ...[
+                const SizedBox(height: 4),
+                // ゴールデンアワー導線: 投稿直後 30-60 分の初速エンゲージが
+                // リーチを複利で伸ばす。開いて確認・当日の看板ならピン留め・
+                // 実コメントには手動で返信する(自動返信はしない)。
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _openPostedTweet,
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text('投稿を開く（最初の30分の反応が伸びを決めます）'),
                   ),
                 ),
               ],
