@@ -1709,7 +1709,8 @@ Rules:
 - 例(リプの実質・BAD→GOOD、この差を真似て今日の内容で書け): BAD「AI技術の競争がますます激化しています。今後、業界全体に影響を及ぼすでしょう。」 GOOD「今日の見出しは3分でこのアプリの検索できる判断メモに放り込んだ。自分は毎朝これで前日の見出しを整理してる。」 / BAD「私たちの新しいウェブアプリは情報整理を強力にサポートします。」 GOOD「給料日サイクル機能を実装した狙いはこれ: 窓を給料日起点に切ると、月初にまたぐ支払いが二重計上されず支出が実額になる。」
 - Target 10K impressions by using the user's proven Daily Briefing style when trend context is strong: numbered items, headline, why it matters, outlook.
 - Use the measured performance context above. Prefer winning variants and avoid losing hook styles.
-- Treat the "Variant ranking", "Structural lift", and "Top hook to emulate" lines (when present) as authoritative measured data: adopt the winning structure (media choice, link placement, thread length, hook shape) but never copy winning wording verbatim.
+- Treat the "Variant ranking", "Structural lift", "Media lift", and "Top hook to emulate" lines (when present) as authoritative measured data: adopt the winning structure (media choice, link placement, thread length, hook shape) but never copy winning wording verbatim.
+- If a "Media lift (by type)" line recommends a winning media type (動画/画像/テキスト) with enough samples, invest the strongest hook in that media: when video wins, front-load the first ~3 seconds of videoPrompt with the day's concrete hook; when image wins, make imagePrompt carry the single sharpest visual. If it says samples are insufficient, do NOT change media strategy — keep今日の既定(動画優先)。
 - A/B test only one major variable at a time: hook style, link placement, media/no-media, or thread length.
 - If past results say a link in the first post underperforms, put the product URL in the final reply.
 - Put information value first and product CTA last. Avoid looking like an ad in the lead post.

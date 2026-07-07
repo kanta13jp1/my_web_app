@@ -30,6 +30,7 @@ import {
   resolveSignupChannel,
 } from "./signup_notification.ts";
 import { filterRecentLogs } from "./metrics_window.ts";
+import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -679,19 +680,16 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       } (n=${withoutMedia.length}).`,
     );
   }
-  // 動画 vs 非動画(画像/なし)の lift。1:1 アスペクト実験(R4 defer)の判定
-  // データ。media_type が貯まるまでは自動的に沈黙する(sample ガード)。
-  const withVideo = rows.filter((r) => r.mediaType.startsWith("video/"));
-  const withoutVideo = rows.filter((r) => !r.mediaType.startsWith("video/"));
-  if (withVideo.length >= 2 && withoutVideo.length >= 2) {
-    structuralLines.push(
-      `Structural lift (video vs image/none): avg score video=${
-        avgScore(withVideo)
-      } (n=${withVideo.length}) vs non-video=${
-        avgScore(withoutVideo)
-      } (n=${withoutVideo.length}).`,
-    );
-  }
+  // media_type 別 lift(R13: video/image/text を第1級 A/B 次元に昇格 / #3764)。
+  // 純ロジックは x_media_type.ts に抽出。n>=2 のバケットだけ表示・比較可能が 2 つ
+  // 以上で勝ちメディア recommendation を付す・判定不能な既存行は unknown で保持。
+  // media_type が貯まるまでは null(=データ希薄時は自動的に沈黙 / 実質 default-off)。
+  const mediaLine = buildMediaLiftLine(
+    rows,
+    (row) => row.mediaType,
+    (row) => row.score,
+  );
+  if (mediaLine) structuralLines.push(mediaLine);
   const linkReply = rows.filter((r) => r.linkInReply);
   const linkLead = rows.filter((r) => !r.linkInReply);
   if (linkReply.length >= 2 && linkLead.length >= 2) {
@@ -1855,6 +1853,9 @@ serve(async (req: Request) => {
           posted_at: new Date().toISOString(),
           source: body.source ?? "growth-hub",
           media_url: mediaUrl || null,
+          // R13: media 軸 A/B の一次データ。全投稿で video/image/text を必ず記録。
+          // 実投稿時は下の posted 分岐が uploadMediaFromUrl の実 MIME で上書きする。
+          media_type: classifyPostMediaType(mediaUrl, mediaType),
           route: body.route ?? null,
           experiment_key: body.experimentKey ?? body.experiment_key ??
             "x_first_user_growth_10k",
@@ -1977,7 +1978,14 @@ serve(async (req: Request) => {
             reply_tweet_ids: replyTweetIds,
             account: result.account,
             media_id: uploadedMedia?.mediaId ?? null,
-            media_type: uploadedMedia?.mediaType ?? null,
+            // R13: アップロード実 MIME(authoritative)を意味カテゴリへ正規化して
+            // 記録(video/image/text)。baseLog の推定値を実測 MIME で上書きする。
+            media_type: classifyPostMediaType(
+              mediaUrl,
+              uploadedMedia?.mediaType ?? mediaType,
+            ),
+            // 生 MIME も監査用に残す(拡張子判定の突合せ・将来の 1:1 実験用)。
+            media_mime: uploadedMedia?.mediaType ?? null,
           });
           return json({
             success: true,
