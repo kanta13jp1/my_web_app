@@ -878,9 +878,15 @@ class UniversalXShareService {
     );
   }
 
-  /// フォールバック用の決定論的な投票。トレンドが無い日は null(投票なし)。
-  /// 質問はトップトレンド由来(~20 runes に clip)、選択肢セットは seed ローテ。
-  /// 全選択肢は 25 runes 以下で `_xPollPayload` の検証を素通りする設計。
+  /// フォールバック用の決定論的な投票(R13b / #3872)。この経路は
+  /// [_buildDraftPrompt] を通らないため R12 で入れた poll の主題ロック/現在状態
+  /// ルールが効かず、旧実装は「今日の注目『$topic』、あなたは？」+「詳しく知りたい
+  /// /様子見/仕事に関係あり/関係なし」という R12 で潰した 0 票型(関心度 stem +
+  /// 意見サーベイ)を復活させていた。対策として、スレッド本文が実際に扱う
+  /// カテゴリ([_trendCategory])に一致する一人称・現在状態 poll だけを出し、
+  /// カテゴリを特定できない汎用トレンドは poll を省略する(本文主題ズレ/0票を回避)。
+  /// トレンドが無い日も null(投票なし)。全選択肢は 25 runes 以下で
+  /// [_xPollPayload] の検証を素通りする。
   static UniversalXPoll? _fallbackPollFor(
     List<UniversalXTrendTopic> trends,
     int seed,
@@ -888,21 +894,53 @@ class UniversalXShareService {
     if (trends.isEmpty) return null;
     final rawName = trends.first.name.trim();
     if (rawName.isEmpty) return null;
-    final runes = rawName.runes.toList(growable: false);
-    final topic = runes.length <= 20
-        ? rawName
-        : '${String.fromCharCodes(runes.take(20))}…';
-    const optionSets = <List<String>>[
-      <String>['詳しく知りたい', '様子見', '仕事に関係あり', '関係なし'],
-      <String>['もう追っている', 'いま知った', '後で調べる'],
-      <String>['影響ありそう', '影響なさそう', 'まだ分からない'],
-      <String>['保存して整理する', '流し読みで十分', '人と話したい'],
-    ];
-    return UniversalXPoll(
-      question: '今日の注目「$topic」、あなたは？',
-      options: optionSets[seed.abs() % optionSets.length],
-      durationMinutes: 1440,
-    );
+    final variants = _fallbackStatePollsFor(_trendCategory(rawName));
+    if (variants.isEmpty) return null;
+    return variants[seed.abs() % variants.length];
+  }
+
+  /// カテゴリ別の一人称・現在状態 poll 候補(R13b)。質問は意見/関心度の度合いでは
+  /// なく「今どうしているか(状態/行動)」を問い、選択肢もすべて現在の状態/行動。
+  /// 本文主題に一致するカテゴリのみ定義し、特定不能な 'トレンド' は空 = poll を
+  /// 出さない。複数候補は seed で日替りローテし近似重複の降格を避ける。
+  static const Map<String, List<UniversalXPoll>> _fallbackStatePolls = {
+    'AI・テック': [
+      UniversalXPoll(
+        question: '新しいAIの話題、あなたは今どこ？',
+        options: ['もう業務で使ってる', '試している', '情報だけ追ってる', 'まだ触ってない'],
+      ),
+      UniversalXPoll(
+        question: '話題のAIツール、あなたの今の使い方は？',
+        options: ['毎日の仕事で常用', 'たまに試す', '様子を見て記録', '導入は未定'],
+      ),
+    ],
+    '経済・市場': [
+      UniversalXPoll(
+        question: 'お金の動き、あなたは今どう見てる？',
+        options: ['給料日基準で見てる', '月初〜月末で見てる', '把握できてない', '見直したい'],
+      ),
+      UniversalXPoll(
+        question: '家計の把握、あなたの今のやり方は？',
+        options: ['アプリで自動集計', '手動で記録', '通帳を時々確認', 'ほぼ見ていない'],
+      ),
+    ],
+    'スポーツ/国際': [
+      UniversalXPoll(
+        question: 'その試合・話題、あなたは今？',
+        options: ['リアルタイムで追ってる', '結果だけ見た', 'あとで振り返る', '追っていない'],
+      ),
+    ],
+    '日本政治': [
+      UniversalXPoll(
+        question: 'この政治の動き、あなたは今？',
+        options: ['一次情報を追ってる', 'ニュースで把握', 'あとで調べる', '追っていない'],
+      ),
+    ],
+  };
+
+  static List<UniversalXPoll> _fallbackStatePollsFor(String category) {
+    // 'トレンド' 等の特定不能カテゴリは空 = poll を省略(R12: 主題ズレ/0票回避)。
+    return _fallbackStatePolls[category] ?? const <UniversalXPoll>[];
   }
 
   static UniversalXShareDraft buildFallbackDraft(
@@ -1097,27 +1135,62 @@ $url''';
         ? ''
         : '（約${_compactCount(trend.tweetCount!)}件）';
     final category = _trendCategory(name);
-    final lower = name.toLowerCase();
-    final List<String> pool;
-    if (lower.contains('worldcup') ||
-        lower.contains('world cup') ||
-        name.contains('ワールドカップ') ||
-        name.contains('W杯') ||
-        name.contains('サッカー')) {
-      pool = _briefingSportsPool;
-    } else if (lower.contains('ai') ||
-        lower.contains('openai') ||
-        lower.contains('gemini') ||
-        lower.contains('claude')) {
-      pool = _briefingAiPool;
-    } else {
-      pool = _briefingDefaultPool;
-    }
+    // ラベルと解説プールを同じ分類([_trendCategory])で選び、両者を一致させる
+    // (R13b で _trendCategory の AI 判定を拡張したため、旧インライン判定との
+    // 二重管理を解消 = ChatGPT 等も 【AI・テック】ラベルと AI 解説が揃う)。
+    final pool = switch (category) {
+      'スポーツ/国際' => _briefingSportsPool,
+      'AI・テック' => _briefingAiPool,
+      _ => _briefingDefaultPool,
+    };
     final commentary = pool[(index - 1 + seed) % pool.length];
     return '''
 $index. 【$category】$name$volume
 $commentary''';
   }
+
+  /// 「AI」を独立トークンとして判定する(前後が英字でない)。単純な部分一致だと
+  /// 大文字 UKRAINE/TAIWAN/DUBAI や小文字 Ukraine/campaign 等、"ai" を含む長い
+  /// 英単語へ誤爆する。AI技術 / 生成AI / 単体 AI には一致する。
+  static final RegExp _aiTokenPattern =
+      RegExp(r'(?:^|[^A-Za-z])AI(?:[^A-Za-z]|$)');
+
+  /// 経済・市場カテゴリの具体キーワード(#3872 R13b)。bare 円/ドル/株 の部分一致は
+  /// 公園・アイドル・株式会社 等へ誤爆するため使わず、家計アプリの主題に直結する
+  /// 具体語で拾う(物価/給料/家計 等の false-negative も同時に解消して、当該日は
+  /// 家計の現在状態 poll が正しく発火するようにする)。
+  static const List<String> _financeKeywords = <String>[
+    '日経',
+    '株価',
+    '株式市場',
+    '株主',
+    '円安',
+    '円高',
+    '為替',
+    '米ドル',
+    'ドル円',
+    '物価',
+    'インフレ',
+    'デフレ',
+    '家計',
+    '給料',
+    '給与',
+    '賃上げ',
+    '節約',
+    '投資',
+    '年金',
+    '増税',
+    '減税',
+    '値上げ',
+    '金利',
+    '日銀',
+    '景気',
+    '住宅ローン',
+    '貯金',
+    '貯蓄',
+    '確定申告',
+    'NISA',
+  ];
 
   static String _trendCategory(String name) {
     final lower = name.toLowerCase();
@@ -1128,10 +1201,16 @@ $commentary''';
         name.contains('サッカー')) {
       return 'スポーツ/国際';
     }
-    if (lower.contains('ai') ||
+    if (_aiTokenPattern.hasMatch(name) ||
+        lower.contains('gpt') ||
+        lower.contains('llm') ||
         lower.contains('openai') ||
         lower.contains('gemini') ||
-        lower.contains('claude')) {
+        lower.contains('claude') ||
+        lower.contains('anthropic') ||
+        lower.contains('copilot') ||
+        name.contains('人工知能') ||
+        name.contains('生成モデル')) {
       return 'AI・テック';
     }
     if (name.contains('選挙') ||
@@ -1140,10 +1219,7 @@ $commentary''';
         name.contains('首相')) {
       return '日本政治';
     }
-    if (name.contains('円') ||
-        name.contains('株') ||
-        name.contains('日経') ||
-        name.contains('ドル')) {
+    if (_financeKeywords.any(name.contains)) {
       return '経済・市場';
     }
     return 'トレンド';
