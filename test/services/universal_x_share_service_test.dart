@@ -207,6 +207,42 @@ void main() {
     timeout: const Timeout(Duration(minutes: 2)),
   );
 
+  test('generateDraft prompt carries R12 coherence constraints', () async {
+    // R12: 実投稿スレッド(Fable 5 を家計スレッドへ貼り付けた非関連フック +
+    // 単一機能の反復 + 0票の抽象 poll)への対策が、LLM へ渡るプロンプトに
+    // 実際に届くことを検証(実装非依存 = generateDraft の公開経路で送信 body を捕捉)。
+    String? sentPrompt;
+    final chat = AiHubChatService(
+      invoker: (body) async {
+        sentPrompt = body['message']?.toString();
+        return {
+          'success': true,
+          'provider': 'groq',
+          'text': '{"text": "x ${page.url}", "hashtags": ["#buildinpublic"]}',
+        };
+      },
+    );
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async => {'success': true},
+    );
+    await service.generateDraft(page);
+    final prompt = sentPrompt ?? '';
+    // 関連性ゲート(見出しが真につながる日のみフックにし、無関係語の貼付を禁止)。
+    expect(prompt, contains('関連性ゲート'));
+    expect(prompt, contains('無関係なトレンド語'));
+    // 橋渡しの逆接テンプレ禁止(「◯◯が気になる方も多いですが」型)。
+    expect(prompt, contains('橋渡しの禁止形'));
+    // 機能カバレッジ配分(単一機能を 3 投稿以上の主眼にしない)。
+    expect(prompt, contains('機能カバレッジ配分'));
+    // poll 主題ロック + 抽象 stem 禁止。
+    expect(prompt, contains('投票の主題は'));
+    expect(prompt, contains('どの程度追ってますか'));
+    // 真正性クレームモード(作り話の個人的実績を禁止)。
+    expect(prompt, contains('検証可能な範囲'));
+    expect(prompt, contains('家計が健全になりました'));
+  });
+
   test('generateDraft repairs LLM JSON with raw newlines inside strings',
       () async {
     // 実障害(2026-07-06): 文字列値内の生改行で decode 失敗→生 JSON がリード

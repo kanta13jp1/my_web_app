@@ -1700,11 +1700,13 @@ Rules:
 - Do not ask for payment, promise revenue, or imply Stripe payout readiness.
 - Prefer concrete pain, feature, or question hooks over generic app promotion.
 - 一人称の実体験で書け: 運営者本人が実際にやったこと・作ったこと・実測したこと・つまずいたことを最低1つ具体で入れる(数値・固有機能名・失敗を歓迎)。三人称のブランド口調(「私たちの新しいウェブアプリは」「企業がAIを取り入れると」等の伝聞・一般論)を禁止する。
-- 禁止フレーズ(これらを含む文は削除して書き直せ): 「可能性があります」「影響を及ぼすでしょう」「ますます激化」「激化しています」「強力なツール」「重要性を認識」「効率よく整理」「活用するためのサポート」「注目のニュース」「〜と言えるでしょう」、および「〜化が加速する中」の型。英語の game-changer / powerful tool / the future of も禁止。
+- 一人称は《検証可能な範囲》に限れ: (A)アプリを作った/実装した/直した(実在の機能・意図)や、(B)機能が何をする/読者が何をできるか(FEATURE-FACTに基づく現在形の能力)は書いてよい。だが payload に無い個人的実績(「先月○○に気づいた」「家計が健全になった」式の、日付・金額・生活改善の作り話)を事実として書くな。具体を出したいときは機能の仕組みか、明示ヘッジ付きの1例(「例えば給料日サイクルで見ると〜という形で出る」)にせよ。
+- 禁止フレーズ(これらを含む文は削除して書き直せ): 「可能性があります」「影響を及ぼすでしょう」「ますます激化」「激化しています」「強力なツール」「重要性を認識」「効率よく整理」「活用するためのサポート」「注目のニュース」「〜と言えるでしょう」、および「〜化が加速する中」の型。英語の game-changer / powerful tool / the future of も禁止。さらに作り話の個人的実績・誇張の型も禁止: 「〜に気づきました」「〜が劇的に変わりました」「家計が健全になりました」「劇的に」「大幅に」。
 - 各文ルール: 断定・具体・数字・一次体験(自分が実際にやったこと)のいずれかを含まない文は入れるな。誰でも書ける当てずっぽうの一般予測を禁止。
 - 具体性の下限: 少なくとも3つのリプはそれぞれ固有アンカー(具体的な数字 / 見出し以外の固有名詞 / このアプリを作って分かった一次体験)を1つ以上持つこと。
-- アプリに触れるときは上の「App の実在する具体機能」から今日の見出しに直結する機能を1つ名前で挙げ、それが何を数値/画面/具体で解決するかを書く。一般名詞で濁すな。
-- 例(リプの実質・BAD→GOOD、この差を真似て今日の内容で書け): BAD「AI技術の競争がますます激化しています。今後、業界全体に影響を及ぼすでしょう。」 GOOD「今日の見出しは3分でこのアプリの検索できる判断メモに放り込んだ。自分は毎朝これで前日の見出しを整理してる。」 / BAD「私たちの新しいウェブアプリは情報整理を強力にサポートします。」 GOOD「給料日サイクルで家計を組み直したら過去支払の二重控除に気づいて直した、という実装ログをそのままアプリにしてる。」
+- アプリに触れるときはリードで今日の見出しに最も直結する1機能を主役にしつつ、リプでは他の機能も名前を挙げて具体で出す。いずれも上の「App の実在する具体機能」から選び、それが何を数値/画面/具体で解決するかを書く。一般名詞で濁すな。
+- 機能カバレッジ配分: 同じ機能名とその成果アンカー(例: 給料日サイクル/二重控除)を、スレッド全体で3投稿以上の主眼にするな(リード=1投稿と数える)。スレッドが5投稿以上のときは、上の実在機能リストから異なる機能を最低2つ、それぞれ少なくとも1つのリプの主眼にせよ。ただし今日の見出しに本当に直結する機能が1つしかないなら、無関係な機能を無理に挿入するより、その1機能の別々の具体面(別の画面/別の数字/別の一次体験)を各リプで扱え。substanceを軸で散らせ: (1)数字/実測 (2)リードとは別の機能 (3)その機能が内部でどう動く仕組み1点 (4)このアプリが今できない/やらないことを正直に1つ(「まだ○○は無い」の形)。同じ軸を2連続で使うな。
+- 例(リプの実質・BAD→GOOD、この差を真似て今日の内容で書け): BAD「AI技術の競争がますます激化しています。今後、業界全体に影響を及ぼすでしょう。」 GOOD「今日の見出しは3分でこのアプリの検索できる判断メモに放り込んだ。自分は毎朝これで前日の見出しを整理してる。」 / BAD「私たちの新しいウェブアプリは情報整理を強力にサポートします。」 GOOD「給料日サイクル機能を実装した狙いはこれ: 窓を給料日起点に切ると、月初にまたぐ支払いが二重計上されず支出が実額になる。」
 - Target 10K impressions by using the user's proven Daily Briefing style when trend context is strong: numbered items, headline, why it matters, outlook.
 - Use the measured performance context above. Prefer winning variants and avoid losing hook styles.
 - Treat the "Variant ranking", "Structural lift", and "Top hook to emulate" lines (when present) as authoritative measured data: adopt the winning structure (media choice, link placement, thread length, hook shape) but never copy winning wording verbatim.
@@ -1712,7 +1714,8 @@ Rules:
 - If past results say a link in the first post underperforms, put the product URL in the final reply.
 - Put information value first and product CTA last. Avoid looking like an ad in the lead post.
 - The headline list above is REAL, sourced news (verbatim from NHK / ITmedia RSS). You MAY quote or paraphrase a headline as today's news. Do NOT add facts beyond the headline wording, and do NOT invent numbers, quotes, or outcomes.
-- When headlines are present, OPEN the lead post by tying today's single most relevant headline to this app's angle (information organization / AI work OS), so the post visibly changes every day. Do not lead with a generic app description.
+- 見出しの使い方(関連性ゲート): まず注入した見出しの中に、このアプリのドメイン(家計・資産・給与・負債・支出・節約・投資・AIによる仕事効率化/情報整理)と《具体的な因果でつながる》見出しが1つでもあるか判定せよ。(A)ある場合のみ、その見出しをフックにし1文でドメインへ橋を架ける。橋は必ず同じ1文の中で因果を通す=「(見出しの事象)→お金/仕事にこう効く→だから(FEATURE-FACT)でこう対処」の形。(B)真につながる見出しが1つも無い日は、見出しに一切触れず、上の『App の実在する具体機能』の1つから始まる運営者の実体験ストーリーをリードにせよ(一般名詞のアプリ紹介は禁止=必ず固有機能名で始める)。無関係なトレンド語(モデル名・製品名)をフックとして貼り付けることを禁止する。
+- 橋渡しの禁止形: 話題名を出すだけで内容的に捨てる逆接ブリッジ(「◯◯が気になる方も多いですが、私の△△機能は」「◯◯の話題ですが、それはさておき」「◯◯が話題ですが、」)を禁止する。1文で自然に因果が書けないなら、その見出しとアプリは本当につながっていない→別の見出し/角度を選ぶか、上記(B)へ切り替えて見出しに触れず書け。BAD「Fable 5が気になる方も多いですが、給料日サイクル機能は…」 GOOD「AIの月額サブスクが乱立する今、固定費が見えにくい。給料日サイクル機能で今月の支出を実測したら、契約したまま忘れていた引き落としが浮いた。」
 - The FIRST line (before the X "Show more" fold) must be a concrete curiosity/value/news hook that stops the scroll. Do NOT start with a label or date such as "デイリーブリーフィング — …朝"; do not prefix the post with the date. If you mention any date, use exactly today's real date (JST) given above and never invent another year (e.g. never write 2024).
 - Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
 - Keep the LEAD post strictly hashtag-free (the news hook must stay above the fold). Append 2-3 natural Japanese discovery hashtags on a trailing line of exactly ONE mid-thread reply (never the lead, never every reply), chosen from {#AI活用, #個人開発, #buildinpublic} plus at most one topic-specific tag — 3 tags max total, no stuffing.
@@ -1724,10 +1727,11 @@ Rules:
 - The multi-line formatting above applies to the RENDERED post; inside the JSON string values you must still encode every line break as the two characters \\n, never a real newline.
 - Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical.
 - The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim, do NOT phrase it as "1つ目/item 1 of N", and do NOT begin it with a number or list marker (never start with "1."). Replies 2 onward then form the numbered briefing.
-- Native poll (impressions booster): when today's top headline supports a crisp either/or, ranking, or opinion question, include a "poll" object with a short Japanese "question" and 3-4 "options" (prefer 4 when each option is genuinely distinct; never pad with filler; each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
-- Poll options must be 3-4 GRADED reader stances or next actions (例: もう追っている/いま知った/後で調べる/仕事に直結) — never a flat binary such as 興味がある/興味がない or 賛成/反対 (binary polls collect fewer votes and read as low-effort).
+- Native poll (impressions booster): when the thread's subject supports a crisp either/or, ranking, or first-person current-state question, include a "poll" object with a short Japanese "question" and 3-4 "options" (prefer 4 when each option is genuinely distinct; never pad with filler; each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
+- 投票の選択肢は、回答者が1秒で自分を位置づけられる一人称の《現在の状態/行動》を3-4個にせよ(意見や関心度の度合いではなく、既に取っている状態)。良い例(家計): 給料日基準で支出を見ている / 月初〜月末で見ている / 支出は把握していない / 見直したい。フラットな二択(興味がある/ない・賛成/反対)は不可(票が集まらず低品質に読まれる)。
 - The "poll" must be a TOP-LEVEL JSON key only. NEVER place a poll object (or any JSON object) inside the threadReplies array — every threadReplies element must be a plain Japanese string, or it will be posted as raw garbage text.
-- DERIVE the poll question AND options from THE DAY'S single most relevant headline so the poll rotates daily and is specific — NEVER reuse a generic or hardcoded poll like "使ってみたい?はい/いいえ" (near-duplicate polls get down-ranked). Yesterday's poll must not be reusable today.
+- 投票の主題は、スレッドが実際に扱っている内容(=リードのフック主題)から導け。リードが製品ストーリー(給料日サイクル等の機能・家計行動)を主題にしたなら投票もその機能/行動を主題にする。スレッド本文で一度も掘り下げていない見出し語(モデル名・時事トピック)を投票の主題にしてはならない — 来た読者が答えられず0票になる(実際に「Fable 5の活用法について、どの程度追ってますか?」が0票だった)。上記(B)の日(=ドメイン直結の見出しが無い日)は見出し由来のpollを作るな。汎用・ハードコードのpoll("使ってみたい?はい/いいえ"等)も禁止(近似重複は降格)。昨日のpollは今日再利用不可。
+- 禁止する投票の型(この語尾/形は書き直せ): 「どう感じますか」「どの程度〜ていますか」「どの程度追ってますか」、および答えが意見・関心度の度合いになるstem。GOOD例: 「あなたの支出、いつ基準で見てる?」+ 上の現在状態の選択肢。
 - The poll is posted as its own FIRST text-only thread reply (never on the media lead), so make the "question" self-contained. If no natural, honest poll fits today's news, OMIT the "poll" field entirely rather than forcing a weak one.
 - Treat the creative workflow as GPT image -> GPT-5.5 -> ElevenLabs -> Hedra.
 - Keep the post natural, concise, and credible.
