@@ -22,6 +22,17 @@ import {
   matchExistingFeatureRequestIssues,
 } from "./feature_request_dedupe.ts";
 import { buildFeedbackIssue } from "./feedback_issue.ts";
+import {
+  PUBLIC_MEMO_VIEW_COLUMNS,
+  publicMemoToPayload,
+  type PublicMemoViewRow,
+  renderPublicMemoHtml,
+  renderPublicMemoListHtml,
+  renderPublicMemoListMarkdown,
+  renderPublicMemoMarkdown,
+  renderPublicMemoNotFoundHtml,
+  resolvePublicMemoViewFormat,
+} from "./public_memo_view.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,6 +47,17 @@ function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function publicText(body: string, contentType: string, status = 200): Response {
+  return new Response(body, {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=300",
+    },
   });
 }
 
@@ -806,7 +828,11 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     // deno-lint-ignore no-explicit-any
     let body: Record<string, any> = {};
-    if (req.method !== "GET") {
+    if (req.method === "GET") {
+      // GET は query param を body 相当として扱う。ヘッダーを付けられない
+      // クローラー / 外部 AI が匿名 action (memo.public.* 等) を叩けるようにする。
+      body = Object.fromEntries(new URL(req.url).searchParams);
+    } else {
       try {
         body = await req.json();
       } catch {
@@ -823,7 +849,11 @@ serve(async (req: Request) => {
       "discord.notify",
     ]);
     // Anonymous-allowed actions (no auth required / page-specific cache)
-    const anonymousActions = new Set(["page.share_generate"]);
+    const anonymousActions = new Set([
+      "page.share_generate",
+      "memo.public.view",
+      "memo.public.list",
+    ]);
     const bearer = (req.headers.get("authorization") ?? "").replace(
       /^Bearer\s+/i,
       "",
@@ -891,6 +921,82 @@ serve(async (req: Request) => {
           image: body.image,
         });
         return json({ success: true, item });
+      }
+
+      // ---- Public memo bot/AI-readable view (anonymous) ----
+      // Flutter SPA (/public-memo?id=X) は JS 実行後に本文を取得するため、
+      // ChatGPT 等の外部 AI / クローラーは URL を開いても本文を読めない。
+      // GET ?action=memo.public.view&id=44 で SSR 済み HTML を返す
+      // (format=json / md も可)。RLS と同じく is_public=true の行のみ返す。
+      case "memo.public.view": {
+        const memoId = Number(body.id ?? body.memo_id);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        if (!Number.isInteger(memoId) || memoId <= 0) {
+          return json({ error: "id (positive integer) required" }, 400);
+        }
+        const { data, error } = await admin
+          .from("public_memos")
+          .select(PUBLIC_MEMO_VIEW_COLUMNS)
+          .eq("id", memoId)
+          .eq("is_public", true)
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 500);
+        if (!data) {
+          if (format === "html") {
+            return publicText(
+              renderPublicMemoNotFoundHtml(memoId),
+              "text/html; charset=utf-8",
+              404,
+            );
+          }
+          return json({ error: `Public memo ${memoId} not found` }, 404);
+        }
+        const row = data as PublicMemoViewRow;
+        if (format === "json") {
+          return json({ success: true, memo: publicMemoToPayload(row) });
+        }
+        if (format === "md") {
+          return publicText(
+            renderPublicMemoMarkdown(row),
+            "text/markdown; charset=utf-8",
+          );
+        }
+        return publicText(
+          renderPublicMemoHtml(row),
+          "text/html; charset=utf-8",
+        );
+      }
+
+      case "memo.public.list": {
+        const rawLimit = Number(body.limit);
+        const limit = Number.isFinite(rawLimit)
+          ? Math.min(Math.max(Math.trunc(rawLimit), 1), 50)
+          : 20;
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        const { data, error } = await admin
+          .from("public_memos")
+          .select(PUBLIC_MEMO_VIEW_COLUMNS)
+          .eq("is_public", true)
+          .order("published_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 500);
+        const rows = (data ?? []) as PublicMemoViewRow[];
+        if (format === "html") {
+          return publicText(
+            renderPublicMemoListHtml(rows),
+            "text/html; charset=utf-8",
+          );
+        }
+        if (format === "md") {
+          return publicText(
+            renderPublicMemoListMarkdown(rows),
+            "text/markdown; charset=utf-8",
+          );
+        }
+        return json({
+          success: true,
+          memos: rows.map(publicMemoToPayload),
+        });
       }
 
       // ---- OGP fetch (stateless) ----
