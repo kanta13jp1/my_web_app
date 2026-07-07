@@ -23,6 +23,10 @@ import {
 } from "./feature_request_dedupe.ts";
 import { buildFeedbackIssue } from "./feedback_issue.ts";
 import {
+  clampPublicMemoLimit,
+  normalizePublicMemoSearchQuery,
+  PUBLIC_MEMO_SEARCH_MAX_QUERY_LENGTH,
+  PUBLIC_MEMO_SEARCH_MIN_QUERY_LENGTH,
   PUBLIC_MEMO_VIEW_COLUMNS,
   publicMemoToPayload,
   type PublicMemoViewRow,
@@ -861,6 +865,8 @@ serve(async (req: Request) => {
       "page.share_generate",
       "memo.public.view",
       "memo.public.list",
+      "memo.public.search",
+      "memo.public.related",
     ]);
     const bearer = (req.headers.get("authorization") ?? "").replace(
       /^Bearer\s+/i,
@@ -976,10 +982,7 @@ serve(async (req: Request) => {
       }
 
       case "memo.public.list": {
-        const rawLimit = Number(body.limit);
-        const limit = Number.isFinite(rawLimit)
-          ? Math.min(Math.max(Math.trunc(rawLimit), 1), 50)
-          : 20;
+        const limit = clampPublicMemoLimit(body.limit, 20, 50);
         const format = resolvePublicMemoViewFormat(body.format, req.method);
         const { data, error } = await admin
           .from("public_memos")
@@ -1003,6 +1006,110 @@ serve(async (req: Request) => {
         }
         return json({
           success: true,
+          memos: rows.map(publicMemoToPayload),
+        });
+      }
+
+      // ---- Public memo search (anonymous / AI 向け) ----
+      // 負荷対策: query は正規化 + 2〜100 字ガード、limit は 1..50 clamp、
+      // is_public=true のみ。ilike ワイルドカードは無害化済み。
+      case "memo.public.search": {
+        const query = normalizePublicMemoSearchQuery(body.q ?? body.query);
+        if (query === null) {
+          return json({
+            error: `q (${PUBLIC_MEMO_SEARCH_MIN_QUERY_LENGTH}-` +
+              `${PUBLIC_MEMO_SEARCH_MAX_QUERY_LENGTH} chars) required`,
+          }, 400);
+        }
+        const limit = clampPublicMemoLimit(body.limit, 20, 50);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        const pattern = `%${query}%`;
+        const { data, error } = await admin
+          .from("public_memos")
+          .select(PUBLIC_MEMO_VIEW_COLUMNS)
+          .eq("is_public", true)
+          .or(
+            `title.ilike.${pattern},content.ilike.${pattern},category.ilike.${pattern}`,
+          )
+          .order("published_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 500);
+        const rows = (data ?? []) as PublicMemoViewRow[];
+        if (format === "html") {
+          return publicText(
+            renderPublicMemoListHtml(rows),
+            "text/html; charset=utf-8",
+          );
+        }
+        if (format === "md") {
+          return publicText(
+            renderPublicMemoListMarkdown(rows),
+            "text/markdown; charset=utf-8",
+          );
+        }
+        return json({
+          success: true,
+          query,
+          memos: rows.map(publicMemoToPayload),
+        });
+      }
+
+      // ---- Public memo related v1 (anonymous / 同カテゴリ・自分以外・新しい順) ----
+      case "memo.public.related": {
+        const memoId = Number(body.id ?? body.memo_id);
+        if (!Number.isInteger(memoId) || memoId <= 0) {
+          return json({ error: "id (positive integer) required" }, 400);
+        }
+        const limit = clampPublicMemoLimit(body.limit, 5, 20);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        const { data: base, error: baseError } = await admin
+          .from("public_memos")
+          .select("id, category")
+          .eq("id", memoId)
+          .eq("is_public", true)
+          .maybeSingle();
+        if (baseError) return json({ error: baseError.message }, 500);
+        if (!base) {
+          if (format === "html") {
+            return publicText(
+              renderPublicMemoNotFoundHtml(memoId),
+              "text/html; charset=utf-8",
+              404,
+            );
+          }
+          return json({ error: `Public memo ${memoId} not found` }, 404);
+        }
+        const category = ((base as { category: string | null }).category ?? "")
+          .trim();
+        let rows: PublicMemoViewRow[] = [];
+        if (category) {
+          const { data, error } = await admin
+            .from("public_memos")
+            .select(PUBLIC_MEMO_VIEW_COLUMNS)
+            .eq("is_public", true)
+            .eq("category", category)
+            .neq("id", memoId)
+            .order("published_at", { ascending: false })
+            .limit(limit);
+          if (error) return json({ error: error.message }, 500);
+          rows = (data ?? []) as PublicMemoViewRow[];
+        }
+        if (format === "html") {
+          return publicText(
+            renderPublicMemoListHtml(rows),
+            "text/html; charset=utf-8",
+          );
+        }
+        if (format === "md") {
+          return publicText(
+            renderPublicMemoListMarkdown(rows),
+            "text/markdown; charset=utf-8",
+          );
+        }
+        return json({
+          success: true,
+          memoId,
+          category: category || null,
           memos: rows.map(publicMemoToPayload),
         });
       }

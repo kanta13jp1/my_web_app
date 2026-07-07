@@ -6,7 +6,10 @@ import {
 import {
   buildPublicMemoExcerpt,
   buildPublicMemoPageUrl,
+  clampPublicMemoLimit,
   escapeHtml,
+  extractPublicMemoTags,
+  normalizePublicMemoSearchQuery,
   publicMemoToPayload,
   type PublicMemoViewRow,
   renderPublicMemoHtml,
@@ -75,6 +78,55 @@ Deno.test("publicMemoToPayload exposes app URL and normalized counts", () => {
     payload.appUrl,
     "https://my-web-app-b67f4.web.app/public-memo?id=44",
   );
+});
+
+Deno.test("publicMemoToPayload includes AI-friendly summary/markdown/tags", () => {
+  const payload = publicMemoToPayload(
+    sampleRow({ metadata: { tags: ["地方議員", "国民民主党"] } }),
+  );
+  assertEquals(payload.summary, buildPublicMemoExcerpt(sampleRow().content));
+  assertStringIncludes(String(payload.markdown), "# 地方議員データ更新メモ");
+  assertEquals(payload.tags, ["選挙", "地方議員", "国民民主党"]);
+});
+
+Deno.test("extractPublicMemoTags merges category and metadata.tags safely", () => {
+  assertEquals(extractPublicMemoTags(sampleRow()), ["選挙"]);
+  assertEquals(
+    extractPublicMemoTags(
+      sampleRow({ metadata: { tags: ["選挙", " 議員 ", 7, "", null] } }),
+    ),
+    ["選挙", "議員"],
+  );
+  assertEquals(
+    extractPublicMemoTags(sampleRow({ category: null, metadata: null })),
+    [],
+  );
+  assertEquals(
+    extractPublicMemoTags(sampleRow({ category: null, metadata: "junk" })),
+    [],
+  );
+});
+
+Deno.test("normalizePublicMemoSearchQuery guards anonymous search input", () => {
+  assertEquals(normalizePublicMemoSearchQuery("地方議員"), "地方議員");
+  assertEquals(normalizePublicMemoSearchQuery("  foo   bar "), "foo bar");
+  // or() 構文破壊文字と ilike ワイルドカードは空白へ無害化
+  assertEquals(normalizePublicMemoSearchQuery("a%b_c,d(e)f"), "a b c d e f");
+  assertEquals(normalizePublicMemoSearchQuery("x"), null);
+  assertEquals(normalizePublicMemoSearchQuery("%_"), null);
+  assertEquals(normalizePublicMemoSearchQuery(42), null);
+  assertEquals(normalizePublicMemoSearchQuery(null), null);
+  const long = normalizePublicMemoSearchQuery("あ".repeat(300));
+  assertEquals(long?.length, 100);
+});
+
+Deno.test("clampPublicMemoLimit clamps and falls back", () => {
+  assertEquals(clampPublicMemoLimit(undefined, 20, 50), 20);
+  assertEquals(clampPublicMemoLimit("abc", 5, 20), 5);
+  assertEquals(clampPublicMemoLimit("7", 20, 50), 7);
+  assertEquals(clampPublicMemoLimit(0, 20, 50), 1);
+  assertEquals(clampPublicMemoLimit(999, 20, 50), 50);
+  assertEquals(clampPublicMemoLimit(3.9, 5, 20), 3);
 });
 
 Deno.test("renderPublicMemoHtml embeds escaped content and OGP tags", () => {
