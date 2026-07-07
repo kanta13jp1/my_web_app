@@ -90,9 +90,10 @@ jobs:
           fi
 
           # AI 向け search / related action (匿名)。search は 0 件でも 200 が正。
-          check "search json"      "$BASE?action=memo.public.search&q=2026&limit=5" "200" "\"success\":true"
+          # GET は format 未指定だと HTML が既定のため format=json を明示する。
+          check "search json"      "$BASE?action=memo.public.search&q=2026&limit=5&format=json" "200" "\"success\":true"
           check "search too short" "$BASE?action=memo.public.search&q=x" "400" ""
-          check "related json"     "$BASE?action=memo.public.related&id=$MEMO_ID&limit=5" "200" "\"success\":true"
+          check "related json"     "$BASE?action=memo.public.related&id=$MEMO_ID&limit=5&format=json" "200" "\"success\":true"
 
           exit "$FAIL"
 
