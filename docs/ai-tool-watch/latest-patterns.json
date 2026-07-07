@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-06T22:39:55Z",
+  "generated_at": "2026-07-07T22:32:27Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,18 +19,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-e0424ad6687b",
+        "entry_id": "nf-1373b7144770",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.201 / July 3, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.201 July 3, 2026 Claude Sonnet 5 sessions no longer use the mid-conversation system role for harness reminders ​ 2.1.200 July 3, 2026 Changed AskUserQuestion dialogs to no...",
+        "text": "Claude Code changelog 2.1.202 / July 6, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.202 July 6, 2026 Added a “Dynamic workflow size” setting in /config for controlling how large Claude generally makes dynamic workflows (small/medium/large agent counts) —...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "42fb9083dae6170790faab3933c704ef1782243207a2971b82e62902bc8cbc7a",
+          "hash": "84f64cdd3f3c23d0b2c2f4a6135e521fc39daa788047ab97c63c61feca79a7b2",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,7 +74,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.201 / July 3, 2026",
+          "latest_signal": "2.1.202 / July 6, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
           "previous_hash": "42fb9083dae6170790faab3933c704ef1782243207a2971b82e62902bc8cbc7a",
@@ -82,14 +82,14 @@
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.201 July 3, 2026 Claude Sonnet 5 sessions no longer use the mid-conversation system role for harness reminders ​ 2.1.200 July 3, 2026 Changed AskUserQuestion dialogs to no..."
+            "​ 2.1.202 July 6, 2026 Added a “Dynamic workflow size” setting in /config for controlling how large Claude generally makes dynamic workflows (small/medium/large agent counts) —..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-e0424ad6687b",
+        "entry_id": "nf-1373b7144770",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,10 +115,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "6ea514d7f850db8f0f650067ecb593c7653b8b319ef7154596016af809fa2dc9",
+          "hash": "ede430cc21167af8fb40f625b3862c367cd8cbe981c20a9f85244dd99262db07",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -260,9 +260,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-ea7ae1a55daf",
+        "entry_id": "nf-2c6d43bf045e",
         "title": "Codex changelog",
-        "text": "Codex changelog 2026-07-01 / Codex CLI 0.142.5 pre Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... ( #30771 ) Changelog Full Changelog: rust-v0.142.4...rust-v0.142.5 #30771 [codex] Backport websocket trace fix to release/0.142 @dylan-hurd-oai Full release on Github June 2026... Changelog Full Changelog: rust-v0.142.3...rust-v0.142.4 Full release on Github 2026-06-26 Codex CLI 0.142.3 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g...",
+        "text": "Codex changelog 2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and... Added previews for image and file attachments before sending. Fixed stuck thread-list loading, prompt mode deadlocks, stale images, and microphone permission alerts.",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
         "source_label": "ai-tool-watch",
@@ -271,7 +271,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "ac5b0717a7721a4ce304761369c87d21948b4eddb309c499456a8c016c9aa1c0",
+          "hash": "e0e3b4a9517fc63a9a4797e09221bb7c871b0ce33980f5e04409ca3d6f19ae16",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -286,7 +286,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -295,11 +294,9 @@
               "Slack",
               "Linear",
               "GitHub",
-              "IDE extension",
-              "VSCode"
+              "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -316,22 +313,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2026-07-01 / Codex CLI 0.142.5 pre",
+          "latest_signal": "2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "24e0394f01b4333ae256f81180cf8ecdae66900fe12e100ee4f43124addd8aed",
+          "previous_hash": "ac5b0717a7721a4ce304761369c87d21948b4eddb309c499456a8c016c9aa1c0",
           "slug": "codex-changelog",
           "snippets": [
             "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-            "( #30771 ) Changelog Full Changelog: rust-v0.142.4...rust-v0.142.5 #30771 [codex] Backport websocket trace fix to release/0.142 @dylan-hurd-oai Full release on Github June 2026...",
-            "Changelog Full Changelog: rust-v0.142.3...rust-v0.142.4 Full release on Github 2026-06-26 Codex CLI 0.142.3 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g..."
+            "Added previews for image and file attachments before sending.",
+            "Fixed stuck thread-list loading, prompt mode deadlocks, stale images, and microphone permission alerts."
           ],
           "status": 200,
           "url": "https://developers.openai.com/codex/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-ea7ae1a55daf",
+        "entry_id": "nf-2c6d43bf045e",
         "title": "Codex changelog",
         "url": "https://developers.openai.com/codex/changelog",
         "source": "Codex",
@@ -481,7 +478,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
@@ -513,7 +510,7 @@
           "latest_signal": "3.10 / Jun 30, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
-          "previous_hash": "e40fb5b45015b355b1178bba7dad73fbd7107a0c093fb739e092d4382e201e5b",
+          "previous_hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",
@@ -543,9 +540,9 @@
     },
     {
       "entry": {
-        "entry_id": "nf-11eeb4061144",
+        "entry_id": "nf-7592fe59dddc",
         "title": "Gemini Code Assist release notes",
-        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.87.0 / June 19, 2026 Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体... Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview). Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories.",
+        "text": "Gemini Code Assist release notes VS Code Gemini Code Assist 2.87.0 / June 19, 2026 Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application... Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra... April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues.",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
         "source_label": "ai-tool-watch",
@@ -554,7 +551,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "23ee602bc8a6033341fcbfd0ae1f2c9a578b1b01692c605fe35f80af581457a5",
+          "hash": "7c735322002001a0de7979d166187c74427d3e68f2e21d3930b1eec3e8239eff",
           "keyword_groups": {
             "hooks": [
               "Stop"
@@ -579,19 +576,19 @@
           "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "39d0b161e75b795d7ef492799d59b6735efa443635b33401b500bb53c3cf3435",
+          "previous_hash": "23ee602bc8a6033341fcbfd0ae1f2c9a578b1b01692c605fe35f80af581457a5",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
-            "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
-            "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
-            "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
+            "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
+            "Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...",
+            "April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues."
           ],
           "status": 200,
           "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
         }
       },
       "filter": {
-        "entry_id": "nf-11eeb4061144",
+        "entry_id": "nf-7592fe59dddc",
         "title": "Gemini Code Assist release notes",
         "url": "https://developers.google.com/gemini-code-assist/resources/release-notes",
         "source": "Gemini Code Assist",
@@ -617,7 +614,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "b12e3e431693d45f38e97379bcb18ceee8d347cfb1350f47c422ebbe51e67c34",
@@ -655,7 +652,7 @@
           "latest_signal": "July 3, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "2cabf2fb186d0c3f29b773fe2349e4c0d4be483e487220a1a95573b2e2b3d657",
+          "previous_hash": "b12e3e431693d45f38e97379bcb18ceee8d347cfb1350f47c422ebbe51e67c34",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",
@@ -689,7 +686,7 @@
       "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 7,
+      "entry_count": 6,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],
@@ -718,6 +715,22 @@
       "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
     },
     {
+      "id": "np-633b3c99949c",
+      "company": "openai",
+      "topic": "mcp-integration",
+      "entry_count": 2,
+      "average_confidence": 0.85,
+      "risk_level": "review",
+      "risk_flags": [
+        "source_http_problem"
+      ],
+      "evidence_titles": [
+        "Codex changelog",
+        "Codex overview"
+      ],
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
+    },
+    {
       "id": "np-8d8df4ba6ed1",
       "company": "multi-source",
       "topic": "mcp-integration",
@@ -739,7 +752,7 @@
       "id": "np-ac6cd8e89955",
       "company": "multi-source",
       "topic": "agentic-workflows",
-      "entry_count": 7,
+      "entry_count": 6,
       "average_confidence": 0.97,
       "risk_level": "normal",
       "risk_flags": [],

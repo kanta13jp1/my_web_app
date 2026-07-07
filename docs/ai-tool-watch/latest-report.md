@@ -1,15 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-06T22:39:52Z`
-- Previous check: `2026-07-05T22:14:33Z`
+- Checked at: `2026-07-07T22:32:25Z`
+- Previous check: `2026-07-06T22:39:52Z`
 - Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Codex changelog: 2026-07-01 / Codex CLI 0.142.5 pre
-- `changed` Cursor changelog: 3.10 / Jun 30, 2026
+- `changed` Claude Code changelog: 2.1.202 / July 6, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Codex changelog: 2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for
 - `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
-- `changed` Devin release notes: July 3, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -21,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.201 / July 3, 2026
+  - Latest signal: 2.1.202 / July 6, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -39,10 +39,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-07-01 / Codex CLI 0.142.5 pre
+  - Latest signal: 2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: ( #30771 ) Changelog Full Changelog: rust-v0.142.4...rust-v0.142.5 #30771 [codex] Backport websocket trace fix to release/0.142 @dylan-hurd-oai Full release on Github June 2026...
+  - Short signal: Added previews for image and file attachments before sending.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -63,8 +63,8 @@
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
   - Keyword groups: hooks, schedule, integration, quality-cost
-  - Short signal: Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...
-  - Short signal: Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).
+  - Short signal: Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...
+  - Short signal: Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
   - Latest signal: July 3, 2026
