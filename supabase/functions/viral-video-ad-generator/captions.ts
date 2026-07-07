@@ -79,6 +79,33 @@ function isAsciiWordChar(ch: string): boolean {
   return /[A-Za-z0-9]/.test(ch);
 }
 
+// 折返し位置の善し悪し判定に使う書記素クラス。同一クラスの連なり(漢字熟語・
+// 仮名列)の途中で割ると読みにくい(実機観測:「判断材|料」)。クラスが切り替わる
+// 境界=形態素の切れ目に近いので、そこを優先折返し点にする。
+type ScriptClass = "kanji" | "kana" | "latin" | "other";
+function scriptClass(ch: string): ScriptClass {
+  const cp = ch.codePointAt(0) ?? 0;
+  if (
+    (cp >= 0x4e00 && cp <= 0x9fff) || // CJK 統合漢字
+    (cp >= 0x3400 && cp <= 0x4dbf) || // CJK 拡張 A
+    (cp >= 0xf900 && cp <= 0xfaff) || // CJK 互換漢字
+    cp === 0x3005 || cp === 0x3007 // 々 〇
+  ) {
+    return "kanji";
+  }
+  if (
+    (cp >= 0x3040 && cp <= 0x30ff) || // ひらがな/カタカナ
+    (cp >= 0xff66 && cp <= 0xff9f) // 半角カナ
+  ) {
+    return "kana";
+  }
+  if (/[A-Za-z0-9]/.test(ch)) return "latin";
+  return "other";
+}
+
+// 単独で文節末になりやすい助詞。この直後は自然な折返し点。
+const PARTICLE_BREAK_AFTER = "はがをにでとへのもや";
+
 /**
  * 字幕テキストを最大 [maxUnitsPerRow] 幅の行へ折り返す。コードポイント単位で
  * 走査するのでサロゲートペア(絵文字)は割れない。禁則(行頭/行末)と ASCII 単語
@@ -156,6 +183,31 @@ export function wrapCaptionText(
               carry = row.slice(cut);
               row = row.slice(0, cut);
               break;
+            }
+          }
+          // 句読点が見つからなければ、書記素クラスの境界(漢字↔仮名↔英数)か
+          // 助詞の直後へ戻して折る。同一クラスの連なり=漢字熟語(「判断材料」)や
+          // 仮名列を語中で割らないためのベストエフォート。幅上限は不変条件のまま。
+          if (carry.length === 0) {
+            for (let back = 1; back <= 6 && row.length - back > 0; back += 1) {
+              const cut = row.length - back;
+              const cutLast = row[cut - 1];
+              const cutNext = row[cut];
+              const boundary = scriptClass(cutLast) !== scriptClass(cutNext) ||
+                PARTICLE_BREAK_AFTER.includes(cutLast);
+              if (!boundary) continue;
+              const remainingUnits = row
+                .slice(0, cut)
+                .reduce((sum, c) => sum + charUnits(c), 0);
+              const compliant = remainingUnits >= 8 &&
+                !KINSOKU_NO_START.includes(cutNext) &&
+                !KINSOKU_NO_END.includes(cutLast) &&
+                !(isAsciiWordChar(cutLast) && isAsciiWordChar(cutNext));
+              if (compliant) {
+                carry = row.slice(cut);
+                row = row.slice(0, cut);
+                break;
+              }
             }
           }
         }

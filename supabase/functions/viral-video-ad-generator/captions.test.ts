@@ -230,6 +230,29 @@ Deno.test("wrapCaptionText prefers breaking after punctuation near the edge", ()
   assertEquals(rows.join(""), line.trim());
 });
 
+Deno.test("wrapCaptionText keeps a kanji compound intact across a row break", () => {
+  // 実機観測(2026-07-07 投稿):「後で使える判断材|料」で漢字熟語 判断材料 が
+  // 行境界(=cue境界)で語中割れした。句読点が無い連なりでも、書記素クラス境界
+  // (仮名↔漢字)や助詞の直後へ戻して折り、熟語を割らないこと。
+  const line =
+    "こうした話題も、AI仕事OSに残しておけば、後で使える判断材料になります。";
+  const rows = wrapCaptionText(line);
+  for (const row of rows) {
+    assert(
+      rowUnits(row) <= MAX_ROW_UNITS + 0.5,
+      `row exceeds width budget: ${row}`,
+    );
+    // 「判断材料」が 判断材|料 のように分断されない(行末が熟語の途中で終わらない)。
+    for (const frag of ["判断材", "判断", "材"]) {
+      assert(
+        !(row.endsWith(frag) && !row.endsWith("判断材料")),
+        `kanji compound split mid-token: ${row}`,
+      );
+    }
+  }
+  assertEquals(rows.join(""), line.trim());
+});
+
 Deno.test("wrapCaptionText does not split ASCII words or surrogate pairs", () => {
   const en = "Practical productivity insights for developers everywhere today";
   for (const row of wrapCaptionText(en)) {
