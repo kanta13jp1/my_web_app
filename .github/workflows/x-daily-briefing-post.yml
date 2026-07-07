@@ -1,0 +1,274 @@
+name: X Daily Briefing Post
+
+on:
+  schedule:
+    # Every day 22:00 UTC (= 07:00 JST)
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run without posting"
+        type: boolean
+        default: true
+      force:
+        description: "Post even if today's daily briefing already exists"
+        type: boolean
+        default: false
+
+concurrency:
+  group: x-daily-briefing-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SOURCE: x-daily-briefing-post.yml
+      EXPERIMENT_KEY: x_first_user_growth_10k
+      VARIANT: daily_briefing
+      TARGET_URL: https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=daily_briefing&utm_campaign=first_user_growth&utm_content=daily_briefing
+    steps:
+      - name: Validate secrets
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY}" || {
+            echo "SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Resolve run mode
+        id: mode
+        shell: bash
+        run: |
+          dry_run="${{ github.event.inputs.dry_run }}"
+          force="${{ github.event.inputs.force }}"
+          if [ -z "${dry_run}" ]; then
+            dry_run="false"
+          fi
+          if [ -z "${force}" ]; then
+            force="false"
+          fi
+          echo "dry_run=${dry_run}" >> "${GITHUB_OUTPUT}"
+          echo "force=${force}" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve JST day
+        id: day
+        shell: bash
+        run: |
+          node <<'NODE' >> "${GITHUB_OUTPUT}"
+          const now = new Date();
+          const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+          const year = jst.getUTCFullYear();
+          const month = jst.getUTCMonth();
+          const day = jst.getUTCDate();
+          const startUtc = new Date(Date.UTC(year, month, day) - 9 * 60 * 60 * 1000);
+          const label = `${year}/${month + 1}/${day}`;
+          console.log(`jst_label=${label}`);
+          console.log(`jst_start_utc=${startUtc.toISOString()}`);
+          NODE
+
+      - name: Check existing post for today
+        id: duplicate
+        shell: bash
+        run: |
+          http_code=$(curl --get --silent --show-error --output /tmp/x_daily_existing.json --write-out "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/hub_data" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --data-urlencode "source=eq.x_post_log" \
+            --data-urlencode "created_at=gte.${{ steps.day.outputs.jst_start_utc }}" \
+            --data-urlencode "metadata->>source=eq.${SOURCE}" \
+            --data-urlencode "metadata->>status=eq.posted" \
+            --data-urlencode "select=id" \
+            --data-urlencode "limit=1")
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::Duplicate guard returned HTTP ${http_code}; continuing so growth-hub duplicate guard can decide."
+            echo "already_posted=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          count=$(jq 'length' /tmp/x_daily_existing.json)
+          if [ "${count}" -gt 0 ]; then
+            echo "already_posted=true" >> "${GITHUB_OUTPUT}"
+            echo "Daily briefing already posted for ${{ steps.day.outputs.jst_label }}."
+          else
+            echo "already_posted=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Fetch trend context
+        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_trends.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"action":"x.trends","woeid":23424856,"limit":6}')
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::x.trends returned HTTP ${http_code}; using evergreen fallback topics."
+            printf '{"success":false,"trends":[],"source":"workflow_fallback"}' > /tmp/x_trends.json
+          fi
+          cat /tmp/x_trends.json
+
+      - name: Build daily briefing payload
+        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const raw = JSON.parse(fs.readFileSync('/tmp/x_trends.json', 'utf8'));
+          const fallbackTopics = [
+            'AI仕事術',
+            '情報整理',
+            '個人開発',
+            '政治経済',
+            '学習ログ',
+            '資産管理',
+          ];
+
+          const clean = (value) => String(value ?? '')
+            .replace(/\s+/g, ' ')
+            .replace(/^#/, '')
+            .trim();
+
+          const names = Array.isArray(raw.trends)
+            ? raw.trends
+              .map((trend) => {
+                if (typeof trend === 'string') return trend;
+                return trend?.name ?? trend?.title ?? trend?.query ?? trend?.topic ?? '';
+              })
+              .map(clean)
+              .filter(Boolean)
+            : [];
+
+          const topics = [...new Set([...names, ...fallbackTopics])].slice(0, 5);
+          const jstLabel = process.env.JST_LABEL;
+          const targetUrl = process.env.TARGET_URL;
+
+          const lead = [
+            `デイリーブリーフィング — ${jstLabel} 朝`,
+            '今日の注目テーマを、仕事で使う判断材料に圧縮します。',
+            '1つ選ぶなら、どれを深掘りしますか？',
+          ].join('\n');
+
+          const replies = [
+            [
+              `1. 【今日の注目】${topics[0]}`,
+              'なぜ重要か：伸びる話題は、感情だけでなく「自分の判断にどう影響するか」まで整理されていることが多いです。',
+              '見通し：まずは事実、論点、次に見る数字の3点に分けると、保存されやすい投稿になります。',
+            ].join('\n'),
+            [
+              `2. 【情報整理】${topics[1]}`,
+              '散らかったニュースをそのまま読むより、仕事、学習、投資、生活のどれに効くかで分類すると行動に変わります。',
+              '今日は「あとで読む」より「何を決める材料か」で残すのがコツです。',
+            ].join('\n'),
+            [
+              `3. 【AI/開発】${topics[2]}`,
+              'AI時代の差は、生成する量よりも、入力する材料と検証ログの質に出ます。',
+              '使ったプロンプト、失敗した出力、直した理由を1つの作業空間に残せると、次の改善が速くなります。',
+            ].join('\n'),
+            [
+              `4. 【市場/社会】${topics[3]}`,
+              '大きな話題ほど、賛否より先に「誰のコストが増え、誰の選択肢が増えるか」を見ると読み違えにくいです。',
+              '短期の反応と、中期の制度変更を分けて見るのが今日のポイントです。',
+            ].join('\n'),
+            [
+              `5. 【今日の問い】${topics[4]}`,
+              'あなたが今いちばん困っているのは、ニュースの量、仕事ログの散乱、学習メモの迷子、どれですか？',
+              '返信で教えてください。明日のブリーフィングの材料にします。',
+            ].join('\n'),
+            [
+              'この形式で、毎朝の情報整理をAI仕事OSとして試作中です。',
+              '5分だけ触って、役に立った点と迷った点を教えてください。',
+              targetUrl,
+            ].join('\n'),
+          ];
+
+          const payload = {
+            action: 'x.post',
+            text: lead,
+            replyTexts: replies,
+            poll: {
+              options: ['情報整理', 'AI仕事術', '政治経済', '開発メモ'],
+              durationMinutes: 1440,
+            },
+            source: process.env.SOURCE,
+            route: 'growth/daily-briefing',
+            experimentKey: process.env.EXPERIMENT_KEY,
+            variant: process.env.VARIANT,
+            utmContent: process.env.VARIANT,
+            promptProfile: 'workflow_daily_briefing_v1',
+            contentKind: 'daily_briefing_thread',
+            linkInReply: true,
+            dryRun: process.env.DRY_RUN === 'true',
+          };
+
+          fs.writeFileSync('/tmp/x_daily_payload.json', JSON.stringify(payload, null, 2));
+          console.log(JSON.stringify({
+            text: payload.text,
+            replyCount: payload.replyTexts.length,
+            dryRun: payload.dryRun,
+            topics,
+            trendSource: raw.source ?? null,
+          }, null, 2));
+          NODE
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          JST_LABEL: ${{ steps.day.outputs.jst_label }}
+
+      - name: Post daily briefing thread
+        id: post
+        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_response.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_daily_payload.json)
+          response=$(cat /tmp/x_daily_response.json)
+          echo "HTTP ${http_code}"
+          echo "${response}"
+          posted=$(jq -r '.posted // false' /tmp/x_daily_response.json)
+          success=$(jq -r '.success // false' /tmp/x_daily_response.json)
+          tweet_id=$(jq -r '.tweetId // ""' /tmp/x_daily_response.json)
+          echo "posted=${posted}" >> "${GITHUB_OUTPUT}"
+          echo "success=${success}" >> "${GITHUB_OUTPUT}"
+          echo "tweet_id=${tweet_id}" >> "${GITHUB_OUTPUT}"
+
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::growth-hub returned HTTP ${http_code}"
+            exit 1
+          fi
+          if [ "${success}" != "true" ]; then
+            echo "::error::growth-hub returned success=false"
+            exit 1
+          fi
+          if [ "${{ steps.mode.outputs.dry_run }}" != "true" ] && [ "${posted}" != "true" ]; then
+            echo "::error::Scheduled daily briefing did not post."
+            exit 1
+          fi
+
+      - name: Write summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## X Daily Briefing Post"
+            echo ""
+            echo "- JST day: ${{ steps.day.outputs.jst_label }}"
+            echo "- Dry run: ${{ steps.mode.outputs.dry_run }}"
+            echo "- Force: ${{ steps.mode.outputs.force }}"
+            echo "- Existing posted today: ${{ steps.duplicate.outputs.already_posted }}"
+            echo "- Posted: ${{ steps.post.outputs.posted }}"
+            echo "- Tweet ID: ${{ steps.post.outputs.tweet_id }}"
+            echo "- Source: ${SOURCE}"
+            echo "- Variant: ${VARIANT}"
+          } >> "${GITHUB_STEP_SUMMARY}"
