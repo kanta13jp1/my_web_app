@@ -1,0 +1,58 @@
+name: Public Memo Bot-View Smoke
+
+# core-hub の匿名 action memo.public.view / memo.public.list (PR #3870) の
+# 本番 smoke。WEB版 sandbox は *.supabase.co へ直接アクセスできないため、
+# GHA から匿名 (ヘッダーなし) で叩いて HTML / JSON / Markdown の応答を検証する。
+on:
+  workflow_dispatch:
+    inputs:
+      memo_id:
+        description: "検証する公開メモ ID"
+        required: false
+        default: "44"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Anonymous GET smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Smoke memo.public.view / memo.public.list (no auth headers)
+        run: |
+          BASE="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub"
+          MEMO_ID="${{ github.event.inputs.memo_id || '44' }}"
+          FAIL=0
+
+          check() {
+            local label="$1" url="$2" expected="$3" needle="$4"
+            local body code
+            body=$(curl -sS --max-time 20 -w "\n%{http_code}" "$url" 2>&1) || true
+            code=$(echo "$body" | tail -1)
+            body=$(echo "$body" | head -n -1)
+            echo "=== $label ==="
+            echo "URL: $url"
+            echo "HTTP: $code (expected $expected)"
+            echo "$body" | head -c 600
+            echo ""
+            if [ "$code" != "$expected" ]; then
+              echo "::error::$label: HTTP $code != $expected"
+              FAIL=1
+            elif [ -n "$needle" ] && ! echo "$body" | grep -qF "$needle"; then
+              echo "::error::$label: response does not contain '$needle'"
+              FAIL=1
+            else
+              echo "✅ $label OK"
+            fi
+            echo ""
+          }
+
+          check "view html"  "$BASE?action=memo.public.view&id=$MEMO_ID" "200" "<html lang=\"ja\">"
+          check "view json"  "$BASE?action=memo.public.view&id=$MEMO_ID&format=json" "200" "\"appUrl\""
+          check "view md"    "$BASE?action=memo.public.view&id=$MEMO_ID&format=md" "200" "App URL:"
+          check "list html"  "$BASE?action=memo.public.list&limit=5" "200" "公開メモ一覧"
+          check "not found"  "$BASE?action=memo.public.view&id=999999999" "404" ""
+
+          exit "$FAIL"
