@@ -854,6 +854,25 @@ void main() {
     expect(sawSaveCue, isTrue);
   });
 
+  test('final-reply CTA pool includes a follow-conversion cue', () {
+    // フォロワー変換レバー: ローテプールにフォロー誘導バリアントが含まれ、
+    // 複数入力のいずれかで最終リプに現れることを確認する。
+    var sawFollowCue = false;
+    for (var i = 0; i < 60; i += 1) {
+      final parts = UniversalXShareService.buildManualShareParts(
+        context: page,
+        text: 'follow$i\n${page.url}',
+        linkInReply: true,
+      );
+      final cta = parts.replyTexts.last;
+      if (cta.contains('フォロー') || cta.contains('プロフィール')) {
+        sawFollowCue = true;
+        break;
+      }
+    }
+    expect(sawFollowCue, isTrue);
+  });
+
   test('postToX surfaces X developer project guidance', () async {
     final service = UniversalXShareService(
       functionInvoker: (functionName, body) async {
