@@ -19,6 +19,9 @@ concurrency:
   group: x-daily-briefing-post
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   post:
     runs-on: ubuntu-latest
