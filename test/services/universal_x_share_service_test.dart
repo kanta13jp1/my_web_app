@@ -474,6 +474,47 @@ void main() {
     expect(capturedPrompt, contains('utm_content=daily_briefing'));
   });
 
+  test('draft prompt injects R11 anti-slop content constraints', () async {
+    // R11 実測: 実投稿のリプが一般論の AI スロップ(「強力なツール」「可能性が
+    // あります」「重要性を認識」)だった真因は、プロンプトが (a) 製品の具体事実を
+    // 一切渡さず (b) 禁止フレーズ/一人称/具体性の負の制約を持たなかったこと。
+    // ここではプロンプトにそれらが確実に注入されることを実装非依存で固定する。
+    String? capturedPrompt;
+    final chat = AiHubChatService(
+      invoker: (body) async {
+        capturedPrompt = body['message']?.toString();
+        return {
+          'success': true,
+          'provider': 'groq',
+          'text': '{"text": "x ${page.url}", "hashtags": ["#buildinpublic"]}',
+        };
+      },
+    );
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async => {'success': true},
+    );
+
+    await service.generateDraft(page);
+
+    // (1) 実在する具体機能が名前付きで渡り、一般名詞禁止が明示される。
+    expect(capturedPrompt, contains('App の実在する具体機能'));
+    expect(capturedPrompt, contains('給料日サイクル'));
+    expect(capturedPrompt, contains('負債トレンド'));
+    // (2) 一人称オペレーター視点 + 三人称ブランド口調の禁止。
+    expect(capturedPrompt, contains('一人称の実体験で書け'));
+    expect(capturedPrompt, contains('私たちの新しいウェブアプリは'));
+    // (3) 禁止フレーズ ブロックと具体性の下限。
+    expect(capturedPrompt, contains('禁止フレーズ'));
+    expect(capturedPrompt, contains('強力なツール'));
+    expect(capturedPrompt, contains('具体性の下限'));
+    // (4) BAD→GOOD few-shot 対比。
+    expect(capturedPrompt, contains('BAD'));
+    expect(capturedPrompt, contains('GOOD'));
+    // (5) 保存版まとめの内省・抽象動詞禁止(理解する/認識する)。
+    expect(capturedPrompt, contains('内省・抽象動詞'));
+  });
+
   test('generateDraft recovers a poll leaked inside threadReplies', () async {
     // 実障害: LLM が poll をトップレベルでなく threadReplies の要素(オブジェクト)
     // に入れ、Map.toString() の生テキスト `{text: , poll: {...}}` がそのまま

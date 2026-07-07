@@ -7,6 +7,7 @@
 
 | Function | 用途 |
 | --- | --- |
+| `core-hub` | コアUI・メモ・通知統合。公開メモ bot 可読ビュー `memo.public.view` / `memo.public.list` (= 認証不要 GET / format=html\|json\|md / SPA を読めない ChatGPT 等の AI・クローラー向け) |
 | `tools-hub` | 個人生産性ツール統合 (= WBS / Issue / digest / agent_tool_policy 等) |
 | `schedule-hub` (`digest.run`) | Schedule 用日次メトリクス API + blog auto_publish + blog.recent_posted (= part 124) + blog.backfill_from_apis |
 | `growth-hub` | グロース指標 / share track / command analyze (= part 112 EF 移行) |
