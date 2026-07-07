@@ -15,6 +15,7 @@ export interface PublicMemoViewRow {
   title: string | null;
   content: string | null;
   category: string | null;
+  metadata?: unknown;
   published_at: string | null;
   updated_at: string | null;
   view_count: number | null;
@@ -24,7 +25,7 @@ export interface PublicMemoViewRow {
 export type PublicMemoViewFormat = "html" | "json" | "md";
 
 export const PUBLIC_MEMO_VIEW_COLUMNS =
-  "id, title, content, category, published_at, updated_at, view_count, like_count";
+  "id, title, content, category, metadata, published_at, updated_at, view_count, like_count";
 
 /// format param 明示が最優先。未指定時は GET/HEAD (ブラウザ / クローラー直
 /// アクセス。HEAD は AI フェッチャーのプリフライト) は HTML、POST (API
@@ -69,6 +70,24 @@ export function buildPublicMemoExcerpt(
   return `${normalized.slice(0, maxLength - 3)}...`;
 }
 
+/// category + metadata.tags (JSONB / OGP シェアカード用に既存) を合成した
+/// AI 向けタグ。文字列以外・空白・重複は除外する。
+export function extractPublicMemoTags(row: PublicMemoViewRow): string[] {
+  const tags: string[] = [];
+  const push = (value: unknown) => {
+    if (typeof value !== "string") return;
+    const trimmed = value.trim();
+    if (trimmed && !tags.includes(trimmed)) tags.push(trimmed);
+  };
+  push(row.category);
+  const metadata = row.metadata;
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
+    const raw = (metadata as Record<string, unknown>).tags;
+    if (Array.isArray(raw)) raw.forEach(push);
+  }
+  return tags;
+}
+
 export function publicMemoToPayload(
   row: PublicMemoViewRow,
 ): Record<string, unknown> {
@@ -76,6 +95,9 @@ export function publicMemoToPayload(
     id: row.id,
     title: row.title ?? "",
     content: row.content ?? "",
+    summary: buildPublicMemoExcerpt(row.content),
+    markdown: renderPublicMemoMarkdown(row),
+    tags: extractPublicMemoTags(row),
     category: row.category,
     publishedAt: row.published_at,
     updatedAt: row.updated_at,
@@ -83,6 +105,37 @@ export function publicMemoToPayload(
     likeCount: row.like_count ?? 0,
     appUrl: buildPublicMemoPageUrl(row.id),
   };
+}
+
+export const PUBLIC_MEMO_SEARCH_MIN_QUERY_LENGTH = 2;
+export const PUBLIC_MEMO_SEARCH_MAX_QUERY_LENGTH = 100;
+
+/// 匿名検索の入力ガード (負荷対策)。PostgREST の or() 構文を壊す文字と
+/// ilike ワイルドカードを空白へ無害化し、最大長へ切り詰めた上で
+/// 最小長未満なら null (= 400 にする) を返す。
+export function normalizePublicMemoSearchQuery(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const sanitized = raw
+    .replace(/[,()%_\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, PUBLIC_MEMO_SEARCH_MAX_QUERY_LENGTH)
+    .trim();
+  if (sanitized.length < PUBLIC_MEMO_SEARCH_MIN_QUERY_LENGTH) {
+    return null;
+  }
+  return sanitized;
+}
+
+/// 匿名 action 共通の limit clamp。数値でなければ fallback、1..max に収める。
+export function clampPublicMemoLimit(
+  raw: unknown,
+  fallback: number,
+  max: number,
+): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(Math.trunc(n), 1), max);
 }
 
 function formatDate(iso: string | null): string {
