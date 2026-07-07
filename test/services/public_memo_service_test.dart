@@ -20,5 +20,27 @@ void main() {
         PublicMemoService.buildPublicMemoAppUrl(42),
       );
     });
+
+    test('buildPublicMemoReaderUrl returns the bot-readable core-hub route',
+        () {
+      final url = PublicMemoService.buildPublicMemoReaderUrl(44);
+
+      expect(
+        url,
+        'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub'
+        '?action=memo.public.view&id=44',
+      );
+    });
+
+    test('buildPublicMemoReaderUrl appends the requested format', () {
+      final url =
+          PublicMemoService.buildPublicMemoReaderUrl(44, format: 'json');
+
+      expect(
+        url,
+        'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub'
+        '?action=memo.public.view&id=44&format=json',
+      );
+    });
   });
 }
