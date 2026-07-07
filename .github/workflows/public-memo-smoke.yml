@@ -10,13 +10,11 @@ on:
         description: "検証する公開メモ ID"
         required: false
         default: "44"
-  # GitHub App からの workflow_dispatch が 403 になるため、
-  # この workflow 自身の変更 push でも smoke を実行する。
-  push:
-    branches:
-      - claude/page-accessibility-memo-qb499c
-    paths:
-      - ".github/workflows/public-memo-smoke.yml"
+  # 日次回帰検知: core-hub リファクタで HEAD/GET/POST 匿名アクセスが壊れたら
+  # 検知する (外部 AI 互換性の継続保証 / PR #3870, #3873)。
+  # push トリガーは使わない — main push 直後は deploy-prod 完了前で誤検知するため。
+  schedule:
+    - cron: "7 21 * * *" # 毎日 06:07 JST
 
 permissions:
   contents: read
@@ -61,6 +59,29 @@ jobs:
           check "view md"    "$BASE?action=memo.public.view&id=$MEMO_ID&format=md" "200" "App URL:"
           check "list html"  "$BASE?action=memo.public.list&limit=5" "200" "公開メモ一覧"
           check "not found"  "$BASE?action=memo.public.view&id=999999999" "404" ""
+
+          # PR #3873: AI フェッチャーの HEAD プリフライト / 空 body POST も匿名で通ること
+          echo "=== HEAD ==="
+          HEAD_CODE=$(curl -sS --max-time 20 -o /dev/null -w "%{http_code}" -I \
+            "$BASE?action=memo.public.view&id=$MEMO_ID") || true
+          echo "HTTP: $HEAD_CODE (expected 200)"
+          if [ "$HEAD_CODE" != "200" ]; then
+            echo "::error::HEAD preflight: HTTP $HEAD_CODE != 200"
+            FAIL=1
+          else
+            echo "✅ HEAD OK"
+          fi
+          echo "=== POST empty body ==="
+          POST_BODY=$(curl -sS --max-time 20 -X POST -w "\n%{http_code}" \
+            "$BASE?action=memo.public.view&id=$MEMO_ID") || true
+          POST_CODE=$(echo "$POST_BODY" | tail -1)
+          echo "HTTP: $POST_CODE (expected 200)"
+          if [ "$POST_CODE" != "200" ] || ! echo "$POST_BODY" | grep -qF '"appUrl"'; then
+            echo "::error::POST empty body: HTTP $POST_CODE or missing appUrl"
+            FAIL=1
+          else
+            echo "✅ POST empty body OK"
+          fi
 
           exit "$FAIL"
 
