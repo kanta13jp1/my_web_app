@@ -447,6 +447,9 @@ function metricSnapshotForLog(
     repost_count: metric.repostCount,
     quote_count: metric.quoteCount,
     bookmark_count: metric.bookmarkCount,
+    // 保存性/プロフィール変換シグナル(アカウント成長レバーの判定用)。
+    url_clicks: metric.urlClicks,
+    profile_clicks: metric.profileClicks,
     score: metric.score,
     public_metrics: metric.publicMetrics,
     non_public_metrics: metric.nonPublicMetrics,
@@ -618,6 +621,9 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
         likeCount: firstNumber(latest.like_count) ?? 0,
         replyCount: firstNumber(latest.reply_count) ?? 0,
         repostCount: firstNumber(latest.repost_count) ?? 0,
+        bookmarkCount: firstNumber(latest.bookmark_count) ?? 0,
+        urlClicks: firstNumber(latest.url_clicks) ?? 0,
+        profileClicks: firstNumber(latest.profile_clicks) ?? 0,
         score: score ?? impressions ?? 0,
         createdAt: firstString(item.created_at),
       };
@@ -718,6 +724,30 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       );
     }
   }
+  // 保存性/プロフィール変換のリーダーを露出(アカウント成長レバーの判定材料)。
+  // どちらも >=2 サンプルかつ非ゼロ合計のときだけ出す(データ希薄時は沈黙)。
+  const bookmarkRows = rows.filter((r) => r.bookmarkCount > 0);
+  if (bookmarkRows.length >= 2) {
+    const top = [...bookmarkRows]
+      .sort((a, b) => b.bookmarkCount - a.bookmarkCount)
+      .slice(0, 2);
+    structuralLines.push(
+      `Save-worthiness leaders (by bookmarks): ${
+        top.map((r) => `${r.bookmarkCount} bookmarks — "${r.text}"`).join(" | ")
+      }. Emulate what made these save-worthy (checklist/まとめ structure).`,
+    );
+  }
+  const profileRows = rows.filter((r) => r.profileClicks > 0);
+  if (profileRows.length >= 2) {
+    const top = [...profileRows]
+      .sort((a, b) => b.profileClicks - a.profileClicks)
+      .slice(0, 2);
+    structuralLines.push(
+      `Best profile-conversion posts (by profile clicks): ${
+        top.map((r) => `${r.profileClicks} clicks — "${r.text}"`).join(" | ")
+      }. These drove the most profile visits — reuse their hook/format.`,
+    );
+  }
   const distinctVariants = variants.filter((v) => v.variant !== "unknown");
   const rankingLine = distinctVariants.length >= 2
     ? `Variant ranking (avg score, n): ${
@@ -738,7 +768,7 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       ...winners.map((row, index) =>
         `Winner ${index + 1}: variant=${row.variant}, impressions=${
           row.impressions ?? "unknown"
-        }, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
+        }, score=${row.score}, bookmarks=${row.bookmarkCount}, profileClicks=${row.profileClicks}, urlClicks=${row.urlClicks}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
       ...underperformers.slice(0, 3).map((row, index) =>
         `Avoid ${

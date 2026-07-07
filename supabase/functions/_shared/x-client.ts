@@ -44,6 +44,9 @@ export interface XTweetMetrics {
   repostCount: number;
   quoteCount: number;
   bookmarkCount: number;
+  // 保存性/変換シグナル(既に計算済だが従来は返していなかった)。
+  urlClicks: number;
+  profileClicks: number;
   score: number;
   raw: Record<string, unknown>;
 }
@@ -742,6 +745,8 @@ function normalizeXTweetMetrics(payload: unknown): XTweetMetrics[] {
         repostCount,
         quoteCount,
         bookmarkCount,
+        urlClicks,
+        profileClicks,
         score,
         raw: tweet,
       };
