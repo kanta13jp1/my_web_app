@@ -1141,6 +1141,22 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ## セッション記録
 
+### daily-report Schedule — 2026-07-08 (Web版 Claude Schedule)
+
+**日次レポート生成・競合モニタリング補足**
+
+- **日次レポート確認**: `docs/daily-reports/2026-07-08.md` は GitHub Actions により生成済み (総ユーザー数 44人 / 未対応機能リクエスト 119件 / 本日新規リクエスト 0件)
+- **Supabase API**: ネットワークプロキシポリシーにより `smmkxxavexumewbfaqpy.supabase.co` へのアクセスがブロック (既知の環境制約 / GHA 経由では正常稼働)
+- **X投稿**: viral-growth-engine および post-x-update ともにプロキシブロックにより未実施 (GHA 側記録 = ✅ 2件投稿済み)
+- **GitHub Issues (auto-review)**: 対象 Issue なし (0件)
+- **競合モニタリング補足 (WebSearch)**:
+  - ✅ **GitHub: Kimi K2.7 Code GA / Copilot vision GA / Secret scanning 強化 (Asana/IBM/MessageBird)** — Copilot の multi-modal・オープンモデル活用が拡充
+  - ⚠️ **GitHub Code Quality GA (7/20)**: $10/active committer/月 へ移行。7/19 前にコスト試算実施推奨
+  - Slack: IDP Groups / Named group DMs / サイドバーフィルタリング / 画像 alt text / Slack Connect 自動承認 (7/28) — 継続監視
+  - Notion 3.6 (7/01): External Agents / Workers / CLI / Opus 4.8/Grok 4.3 対応 — 7/08 新規なし、低デルタ継続
+- **競合 `docs/competitor-reports/2026-07-08.md`**: 高品質レポート既存 (GHA 生成) + Claude Schedule WebSearch 補足追記済み
+- **次回アクション候補**: ①GitHub Code Quality GA コスト試算 (7/19 期限) ②7/09 discovery 解禁 = OpenCode v1.17.13 採択評価 ③White House AI 自主基準 確定待ち (確定次第 AI_FALLBACK_RUNBOOK 更新)
+
 ### daily-report Schedule — 2026-07-06 (Web版 Claude Schedule)
 
 **日次レポート生成・競合モニタリング補足**
