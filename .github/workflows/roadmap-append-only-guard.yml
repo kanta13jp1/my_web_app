@@ -24,7 +24,7 @@ permissions:
 
 concurrency:
   group: roadmap-append-only-guard-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-08 ci-audit: PR連続push時のキュー積み防止
 
 jobs:
   guard:

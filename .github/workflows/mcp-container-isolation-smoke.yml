@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: mcp-container-isolation-smoke-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-08 ci-audit: workflow_dispatch二重実行・PR連続push防止
 
 jobs:
   smoke:
