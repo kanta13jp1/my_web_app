@@ -797,13 +797,38 @@ class UniversalXShareService {
     final error = data['error']?.toString().trim();
     final actionRequired = data['actionRequired']?.toString().trim();
     final registrationUrl = data['registrationUrl']?.toString().trim();
-    final parts = <String>[
+    final candidates = <String>[
       if (error != null && error.isNotEmpty) error else 'X post failed',
       if (actionRequired != null && actionRequired.isNotEmpty) actionRequired,
       if (registrationUrl != null && registrationUrl.isNotEmpty)
         'Developer Portal: $registrationUrl',
     ];
+    // 実障害(2026-07-08): edge が error 本文にガイダンスを埋め込み、同文が
+    // actionRequired としても返るため、連結すると同じ段落が二重表示された。
+    // 既に採用済みの部分に substring として含まれる部分は落とす(コード非依存
+    // = 旧 edge デプロイや他コードパスの同型二重化にも効く)。
+    final parts = <String>[];
+    for (final candidate in candidates) {
+      if (parts.any((existing) => existing.contains(candidate))) continue;
+      parts.add(candidate);
+    }
     return parts.join('\n');
+  }
+
+  /// R15: 投稿前の spend-cap preflight。growth-hub の read-only
+  /// `x.post_preflight`(X API 非呼出・直近ログ判定)を呼び、ブロック中なら
+  /// 高価な画像/音声/動画生成と投稿試行を丸ごとスキップさせる。
+  /// preflight 自体の失敗で本流を止めない(never-throw / fail-open)。
+  Future<({bool blocked, String? resetAt})> checkXPostPreflight() async {
+    try {
+      final data = await _invoke('growth-hub', {'action': 'x.post_preflight'});
+      return (
+        blocked: data['blocked'] == true,
+        resetAt: data['resetAt']?.toString(),
+      );
+    } catch (_) {
+      return (blocked: false, resetAt: null);
+    }
   }
 
   static String acquisitionUrlFor(
@@ -1777,7 +1802,12 @@ Rules:
 - Prefer concrete pain, feature, or question hooks over generic app promotion.
 - 一人称の実体験で書け: 運営者本人が実際にやったこと・作ったこと・実測したこと・つまずいたことを最低1つ具体で入れる(数値・固有機能名・失敗を歓迎)。三人称のブランド口調(「私たちの新しいウェブアプリは」「企業がAIを取り入れると」等の伝聞・一般論)を禁止する。
 - 一人称は《検証可能な範囲》に限れ: (A)アプリを作った/実装した/直した(実在の機能・意図)や、(B)機能が何をする/読者が何をできるか(FEATURE-FACTに基づく現在形の能力)は書いてよい。だが payload に無い個人的実績(「先月○○に気づいた」「家計が健全になった」式の、日付・金額・生活改善の作り話)を事実として書くな。具体を出したいときは機能の仕組みか、明示ヘッジ付きの1例(「例えば給料日サイクルで見ると〜という形で出る」)にせよ。
-- 禁止フレーズ(これらを含む文は削除して書き直せ): 「可能性があります」「影響を及ぼすでしょう」「ますます激化」「激化しています」「強力なツール」「重要性を認識」「効率よく整理」「活用するためのサポート」「注目のニュース」「〜と言えるでしょう」、および「〜化が加速する中」の型。英語の game-changer / powerful tool / the future of も禁止。さらに作り話の個人的実績・誇張の型も禁止: 「〜に気づきました」「〜が劇的に変わりました」「家計が健全になりました」「劇的に」「大幅に」。
+- 捏造実績の文法テンプレートも禁止(言い換えでも不可): 一人称+過去形の《体験→成果》構文(「〜してみたところ/〜したら/〜した結果/〜を使ってみて」+「できました/なりました/楽になりました/解消しました/気づくことができました」)は、その成果が上の実在機能リストに明記されている場合を除き全面禁止。許可形は (A)構築行為の過去形(作った/実装した/直した) (B)機能の現在形 (C)明示ヘッジ付き仮例 のみ。出力前に各文を検査: 過去形の成果主張があれば実在機能リストに根拠があるか確認し、なければ(C)のヘッジ形へ書き直せ。
+- 禁止フレーズ(これらを含む文は削除して書き直せ): 「可能性があります」「影響を及ぼすでしょう」「ますます激化」「激化しています」「強力なツール」「重要性を認識」「効率よく整理」「活用するためのサポート」「注目のニュース」「〜と言えるでしょう」。英語の game-changer / powerful tool / the future of も禁止。さらに作り話の個人的実績の型も禁止: 「〜に気づきました」「〜が劇的に変わりました」「家計が健全になりました」。
+- 程度を誇張する副詞で改善・変化を主張するな: 「劇的に」「大幅に」「格段に」「飛躍的に」「圧倒的に」「一気に」およびこれらに類する副詞すべて。改善の大きさは具体的な数値か仕組み(何がどう動いて何が消えるか)でのみ語れ。BAD「家計の把握が格段に楽になりました」 GOOD「給料日起点に窓を切ると月初またぎの支払いが二重計上されない=支出が実額になる」。
+- 「〜が…する中、」「〜が…される中、」「〜が進む中、」型の一般論→自アプリ転換ブリッジを禁止(「〜化が加速する中」を含む全変種)。見出しとの接続は関連性ゲートの因果1文形のみ許可。BAD「企業の定型業務が効率化される中、私のウェブアプリでは…」。
+- 自分のアプリを一般名詞で呼ぶ型も禁止(所有格を付けても不可): 「ウェブアプリ」「私のアプリでは」「このツール」「私のサービス」。アプリ自体に言及するときは必ず固有機能名(給料日サイクル 等、上の実在機能リストの名前)か「自分株式会社」で呼べ(「このアプリ」は既出文脈の照応としてのみ可)。BAD「私のウェブアプリでは『給料日サイクル』機能を実装しました」 GOOD「『給料日サイクル』は支出窓を給料日起点に切る機能。作った狙いは月初またぎ支払いの二重計上をなくすこと。」
+- threadReplies のどのリプも poll の question 文をそのまま繰り返すな(poll は独立したリプとして自動投稿されるため、同文で始まるリプは連続重複に見える)。このプロンプト内の例文(GOOD例・保存版の良い例)を一言一句コピーするのも禁止=型だけ真似て今日の内容で必ず書き直せ。
 - 各文ルール: 断定・具体・数字・一次体験(自分が実際にやったこと)のいずれかを含まない文は入れるな。誰でも書ける当てずっぽうの一般予測を禁止。
 - 具体性の下限: 少なくとも3つのリプはそれぞれ固有アンカー(具体的な数字 / 見出し以外の固有名詞 / このアプリを作って分かった一次体験)を1つ以上持つこと。
 - アプリに触れるときはリードで今日の見出しに最も直結する1機能を主役にしつつ、リプでは他の機能も名前を挙げて具体で出す。いずれも上の「App の実在する具体機能」から選び、それが何を数値/画面/具体で解決するかを書く。一般名詞で濁すな。
@@ -1792,7 +1822,7 @@ Rules:
 - Put information value first and product CTA last. Avoid looking like an ad in the lead post.
 - The headline list above is REAL, sourced news (verbatim from NHK / ITmedia RSS). You MAY quote or paraphrase a headline as today's news. Do NOT add facts beyond the headline wording, and do NOT invent numbers, quotes, or outcomes.
 - 見出しの使い方(関連性ゲート): まず注入した見出しの中に、このアプリのドメイン(家計・資産・給与・負債・支出・節約・投資・AIによる仕事効率化/情報整理)と《具体的な因果でつながる》見出しが1つでもあるか判定せよ。(A)ある場合のみ、その見出しをフックにし1文でドメインへ橋を架ける。橋は必ず同じ1文の中で因果を通す=「(見出しの事象)→お金/仕事にこう効く→だから(FEATURE-FACT)でこう対処」の形。(B)真につながる見出しが1つも無い日は、見出しに一切触れず、上の『App の実在する具体機能』の1つから始まる運営者の実体験ストーリーをリードにせよ(一般名詞のアプリ紹介は禁止=必ず固有機能名で始める)。無関係なトレンド語(モデル名・製品名)をフックとして貼り付けることを禁止する。
-- 橋渡しの禁止形: 話題名を出すだけで内容的に捨てる逆接ブリッジ(「◯◯が気になる方も多いですが、私の△△機能は」「◯◯の話題ですが、それはさておき」「◯◯が話題ですが、」)を禁止する。1文で自然に因果が書けないなら、その見出しとアプリは本当につながっていない→別の見出し/角度を選ぶか、上記(B)へ切り替えて見出しに触れず書け。BAD「Fable 5が気になる方も多いですが、給料日サイクル機能は…」 GOOD「AIの月額サブスクが乱立する今、固定費が見えにくい。給料日サイクル機能で今月の支出を実測したら、契約したまま忘れていた引き落としが浮いた。」
+- 橋渡しの禁止形: 話題名を出すだけで内容的に捨てる逆接ブリッジ(「◯◯が気になる方も多いですが、私の△△機能は」「◯◯の話題ですが、それはさておき」「◯◯が話題ですが、」)を禁止する。1文で自然に因果が書けないなら、その見出しとアプリは本当につながっていない→別の見出し/角度を選ぶか、上記(B)へ切り替えて見出しに触れず書け。BAD「Fable 5が気になる方も多いですが、給料日サイクル機能は…」 GOOD「AIの月額サブスクが乱立する今、固定費が見えにくい。給料日サイクルで見ると、月初をまたぐ引き落としが二重計上されずに実額で出る。」
 - The FIRST line (before the X "Show more" fold) must be a concrete curiosity/value/news hook that stops the scroll. Do NOT start with a label or date such as "デイリーブリーフィング — …朝"; do not prefix the post with the date. If you mention any date, use exactly today's real date (JST) given above and never invent another year (e.g. never write 2024).
 - Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
 - Keep the LEAD post strictly hashtag-free (the news hook must stay above the fold). Append 2-3 natural Japanese discovery hashtags on a trailing line of exactly ONE mid-thread reply (never the lead, never every reply), chosen from {#AI活用, #個人開発, #buildinpublic} plus at most one topic-specific tag — 3 tags max total, no stuffing.

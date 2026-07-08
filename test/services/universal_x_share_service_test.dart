@@ -304,6 +304,55 @@ void main() {
     // R13: media 軸。"Media lift" 行を authoritative 測定データとして扱い、勝ち
     // メディアへ最強フックを寄せるルールがプロンプトに届くこと。
     expect(prompt, contains('Media lift'));
+    // R15: 言い換え回避への強化。文法テンプレート禁止・誇張副詞クラス禁止・
+    // 一般名詞呼称の exact 禁止・poll 質問文の反復禁止・例文コピー禁止が届くこと。
+    expect(prompt, contains('捏造実績の文法テンプレート'));
+    expect(prompt, contains('格段に'));
+    expect(prompt, contains('程度を誇張する副詞'));
+    expect(prompt, contains('私のアプリでは'));
+    expect(prompt, contains('question 文をそのまま繰り返すな'));
+    // 矛盾 few-shot(禁止テンプレートを実演していた GOOD 例)が除去済みなこと。
+    expect(prompt, isNot(contains('引き落としが浮いた')));
+  });
+
+  test('buildXPostFailureMessage dedupes guidance embedded in the error', () {
+    // 実障害(2026-07-08): edge が error にガイダンスを埋め込み + actionRequired
+    // にも同文が返る → 連結で同じ段落が二重表示された。
+    const guidance = 'X APIのクレジット不足/spend cap到達です。console.x.com で引き上げてください。';
+    final message = UniversalXShareService.buildXPostFailureMessage({
+      'error': 'X APIのクレジットが不足しています（spend cap reached）。 $guidance',
+      'actionRequired': guidance,
+    });
+    expect(RegExp(RegExp.escape(guidance)).allMatches(message).length, 1);
+    // 独立した error / actionRequired は両方描画される(no-op 保証)。
+    final independent = UniversalXShareService.buildXPostFailureMessage({
+      'error': 'X post failed with 500',
+      'actionRequired': 'Check credentials.',
+    });
+    expect(independent, contains('X post failed with 500'));
+    expect(independent, contains('Check credentials.'));
+  });
+
+  test('checkXPostPreflight parses blocked state and fails open', () async {
+    final service = UniversalXShareService(
+      chatService: AiHubChatService(invoker: (body) async => {'success': true}),
+      functionInvoker: (functionName, body) async {
+        expect(body['action'], 'x.post_preflight');
+        return {'success': true, 'blocked': true, 'resetAt': '2026-07-10'};
+      },
+    );
+    final result = await service.checkXPostPreflight();
+    expect(result.blocked, isTrue);
+    expect(result.resetAt, '2026-07-10');
+
+    // preflight 自体の障害では本流を止めない(fail-open)。
+    final failing = UniversalXShareService(
+      chatService: AiHubChatService(invoker: (body) async => {'success': true}),
+      functionInvoker: (functionName, body) async =>
+          throw Exception('edge down'),
+    );
+    final open = await failing.checkXPostPreflight();
+    expect(open.blocked, isFalse);
   });
 
   test('generateDraft repairs LLM JSON with raw newlines inside strings',

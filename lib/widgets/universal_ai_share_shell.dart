@@ -415,6 +415,26 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     // (従来は投稿前の一瞬のステータスにしか出ず、気づけなかった)。
     String? videoFailReason;
     try {
+      // 0. X spend-cap preflight(R15)。cap 到達中は投稿が確定失敗するのに、
+      // 従来は GPT画像+ElevenLabs+Hedra(~119クレジット+最大7.5分)を全部生成
+      // してから投稿で失敗していた(実障害 2026-07-08)。ブロック中は有償生成と
+      // 投稿試行を丸ごとスキップし、解除手段を即提示する。文面は生成済みなので
+      // このダイアログからコピーして X の投稿画面で手動投稿は引き続き可能。
+      final preflight = await _service.checkXPostPreflight();
+      if (_disposed || !mounted) return;
+      if (preflight.blocked) {
+        final resetNote = preflight.resetAt == null
+            ? ''
+            : '（${preflight.resetAt} に自動リセット見込み）';
+        setState(() {
+          _posting = false;
+          _statusMessage = 'X APIのspend cap到達中のため、画像・音声・動画の生成と'
+              'API投稿をスキップしました$resetNote。console.x.com の'
+              '「支出上限を管理」で引き上げると即時解除されます。上の文面を'
+              'コピーして X で手動投稿することは可能です。';
+        });
+        return;
+      }
       // 1. 画像(presenter/舞台がローテ)
       if (_imageUrl == null) {
         setState(() {
