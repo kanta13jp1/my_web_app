@@ -31,6 +31,7 @@ import {
 } from "./signup_notification.ts";
 import { filterRecentLogs } from "./metrics_window.ts";
 import { decideXPostPreflight } from "./x_post_preflight.ts";
+import { computeTodayStatus } from "./x_today_status.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
 
 const corsHeaders = {
@@ -1785,6 +1786,31 @@ serve(async (req: Request) => {
           success: true,
           ...decideXPostPreflight(rows, new Date()),
         });
+      }
+
+      case "x.today_status": {
+        // R16: /admin ダッシュボードへ「今日すでに投稿したか / 最新tweetと初速
+        // インプレ / spend-cap ブロック中か」を返す read-only チェック(X API 非
+        // 呼出・ゼロコスト)。どんな例外でも 200 {available:false} を返し、
+        // ダッシュボードが必ず degrade(現行文言に戻る)できることを保証する。
+        try {
+          const logs =
+            (await listXPostLogs(admin, userId!, 20)) as XPostLogItem[];
+          const rows = logs.map((item) => ({
+            created_at: item.created_at,
+            metadata: asRecord(item.metadata),
+          }));
+          return json({
+            success: true,
+            ...computeTodayStatus(
+              rows,
+              String(body.startOfDayIso ?? ""),
+              new Date(),
+            ),
+          });
+        } catch (_error) {
+          return json({ success: true, available: false });
+        }
       }
 
       case "revenue.funnel_report": {
