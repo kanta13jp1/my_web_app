@@ -6,6 +6,7 @@ import '../services/growth_mission_service.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
 import '../widgets/self_devin_control_tower_card.dart';
+import 'admin_x_posted_today.dart';
 import 'ai_secretary_page.dart';
 import 'admin/feedback_list_page.dart';
 import 'admin/quota_dashboard_page.dart';
@@ -46,6 +47,9 @@ class _GrowthActionPlan {
   final IconData icon;
   final String buttonLabel;
   final bool isAcquisitionAction;
+  // R16: 非 null のとき、ボタンはページ遷移ではなくこの URL を外部起動する
+  // (投稿を開く / console.x.com で上限確認 等)。
+  final String? launchUrl;
 
   const _GrowthActionPlan({
     required this.bottleneckLabel,
@@ -54,6 +58,7 @@ class _GrowthActionPlan {
     required this.icon,
     required this.buttonLabel,
     required this.isAcquisitionAction,
+    this.launchUrl,
   });
 }
 
@@ -76,6 +81,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   int _blockedToolExecutionCount = 0;
   _PaidConversionMetrics _paidConversionMetrics = _PaidConversionMetrics.empty;
   bool _hasLpViewStats = false;
+  // R16: growth-hub x.today_status の結果(今日すでに投稿したか / 最新tweet+初速
+  // インプレ / spend-cap ブロック中か)。取得失敗や available:false のときは null
+  // に戻し、アクションカードは従来文言(「X投稿を作る」)へ degrade する。
+  Map<String, dynamic>? _xTodayStatus;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   late final SupabaseClient _supabase;
@@ -293,6 +302,93 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return total / window.length;
   }
 
+  /// R16: growth-hub x.today_status を fail-safe に取得する。今日境界はブラウザ
+  /// ローカル深夜を UTC ISO(絶対時刻)で渡す(サーバは epoch 比較する)。
+  /// 例外・available!=true のときは null を返し、アクションカードは従来動作へ degrade。
+  Future<Map<String, dynamic>?> _loadXTodayStatus() async {
+    try {
+      final startOfDayIso =
+          _startOfDay(DateTime.now()).toUtc().toIso8601String();
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.today_status',
+          'startOfDayIso': startOfDayIso,
+          'tz': 'Asia/Tokyo',
+        },
+      );
+      final data = res.data;
+      if (data is Map && data['available'] == true) {
+        return Map<String, dynamic>.from(data);
+      }
+    } catch (error) {
+      debugPrint('x.today_status unavailable: $error');
+    }
+    return null;
+  }
+
+  /// R16: 今日すでに X 投稿済みなら「投稿を作れ」ではなく、投稿直後30分は
+  /// ゴールデンアワー(手動リプ/poll確認)、以降は計測待ち、spend-cap 中は上限
+  /// 確認案内へ切り替える。今日未投稿(または status 未取得)なら null を返し、
+  /// 呼び出し側の従来ロジック(流入不足→X投稿を作る)へフォールバックする。
+  _GrowthActionPlan? _buildPostedTodayActionPlan() {
+    final status = _xTodayStatus;
+    if (status == null) return null;
+    final cta = adminXPostedTodayCta(status, DateTime.now());
+
+    switch (cta) {
+      case AdminXPostedTodayCta.none:
+        return null;
+      case AdminXPostedTodayCta.blocked:
+        final resetAt = status['resetAt']?.toString();
+        final resetNote = resetAt != null && resetAt.isNotEmpty
+            ? '（$resetAt に自動リセット見込み）'
+            : '';
+        return _GrowthActionPlan(
+          bottleneckLabel: 'X API上限',
+          title: 'X APIの支出上限に到達中',
+          detail: 'console.x.com の「支出上限を管理」で引き上げると即時解除されます$resetNote。'
+              '解除まで自動投稿はスキップされます。再投稿の前に上限を確認してください。',
+          icon: Icons.credit_card_off,
+          buttonLabel: 'console.x.com で上限を確認',
+          isAcquisitionAction: false,
+          launchUrl: 'https://console.x.com/',
+        );
+      case AdminXPostedTodayCta.goldenHour:
+      case AdminXPostedTodayCta.measuring:
+        final postedCount = _toInt(status['postedTodayCount']);
+        final impressions = status['latestImpressions'];
+        final imprText = impressions == null ? '計測待ち' : 'インプレ $impressions';
+        final tweetId = status['lastTweetId']?.toString();
+        final tweetUrl = tweetId != null && tweetId.isNotEmpty
+            ? 'https://x.com/i/web/status/$tweetId'
+            : null;
+        if (cta == AdminXPostedTodayCta.goldenHour) {
+          return _GrowthActionPlan(
+            bottleneckLabel: 'ゴールデンアワー',
+            title: '投稿直後30分: 反応を取りにいく',
+            detail: '本日$postedCount件投稿済み。今は新規投稿より、投稿を開いて実際に来た'
+                'コメントへ手動で返信し、poll票と初速($imprText)を確認するのが伸びを決めます。',
+            icon: Icons.bolt,
+            buttonLabel: tweetUrl != null ? '投稿を開く' : '反応を確認',
+            isAcquisitionAction: false,
+            launchUrl: tweetUrl,
+          );
+        }
+        return _GrowthActionPlan(
+          bottleneckLabel: 'リーチ→LP変換待ち',
+          title: '本日は投稿済み（計測待ち）',
+          detail: '本日$postedCount件投稿済み（$imprText）。再投稿は近似重複ガードに当たるため'
+              '避け、bio・固定ツイート導線(X_PROFILE_CONVERSION_KIT)の見直しや大型'
+              'アカウントへの手動返信で発見性を上げてください。次の投稿はJST 20-22時が目安です。',
+          icon: Icons.hourglass_bottom,
+          buttonLabel: tweetUrl != null ? '投稿を開いて確認' : '成長プレイブックを見る',
+          isAcquisitionAction: false,
+          launchUrl: tweetUrl,
+        );
+    }
+  }
+
   _GrowthActionPlan _buildGrowthActionPlan({
     required bool achieved,
     required int todayViews,
@@ -313,6 +409,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
 
     if (todayViews == 0) {
+      // R16: 今日すでに投稿済みなら「作れ」ではなくゴールデンアワー/計測待ち/上限
+      // 確認へ切り替える(再投稿の near-dup ガード踏み+有償生成を防ぐ)。今日未投稿
+      // or status 未取得なら null → 従来の「X投稿を作る」へフォールバック。
+      final postedTodayPlan = _buildPostedTodayActionPlan();
+      if (postedTodayPlan != null) return postedTodayPlan;
       return _GrowthActionPlan(
         bottleneckLabel: '流入不足',
         title: '今やる流入改善アクション',
@@ -468,7 +569,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required bool isAcquisitionAction,
     String? priorityChannelKey,
     String? priorityChannelLabel,
+    String? ctaUrl,
   }) {
+    // R16: 投稿済み/上限ブロック状態のボタンはページ遷移ではなく URL を外部起動
+    // する(投稿を開く / console.x.com)。CmoPage への遷移(有償生成トリガ)を回避。
+    if (ctaUrl != null && ctaUrl.isNotEmpty) {
+      final uri = Uri.tryParse(ctaUrl);
+      if (uri != null) {
+        launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      return;
+    }
     final targetPage = isAcquisitionAction
         ? _buildAcquisitionTargetPage(priorityChannelKey)
         : const AISecretaryPage(
@@ -1268,6 +1379,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           : <String, dynamic>{};
       final hasLpViewStats = lpStats.isNotEmpty;
       final paidConversionMetrics = await _loadPaidConversionMetrics();
+      final xTodayStatus = await _loadXTodayStatus();
 
       final toolExecutionLogs = <Map<String, dynamic>>[];
       final blockedReasonCounts = <String, int>{};
@@ -1323,6 +1435,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _allowedToolExecutionCount = allowedExecutionCount;
           _blockedToolExecutionCount = blockedExecutionCount;
           _paidConversionMetrics = paidConversionMetrics;
+          _xTodayStatus = xTodayStatus;
           _isLoading = false;
         });
       }
@@ -1793,43 +1906,54 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
     final accentColor =
         achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
+    // R16: 今日すでに投稿済み(または spend-cap ブロック中)なら、todayViews==0 でも
+    // 「流入不足/今日の流入がありません」を出さず、growthAction(投稿済み状態機械の
+    // 出力)の診断・文言をそのまま使う。
+    final postedTodayActive =
+        !achieved && todayViews == 0 && _buildPostedTodayActionPlan() != null;
     final todayCvr =
         todayViews == 0 ? 0.0 : (todayRegistrations / todayViews * 100);
     final diagnosisLabel = achieved
         ? '登録発生'
-        : todayViews == 0
-            ? '流入不足'
-            : growthAction.bottleneckLabel;
+        : postedTodayActive
+            ? growthAction.bottleneckLabel
+            : todayViews == 0
+                ? '流入不足'
+                : growthAction.bottleneckLabel;
     final diagnosisColor = achieved
         ? const Color(0xFF0D9488)
-        : todayViews == 0
-            ? const Color(0xFFFF6B35)
-            : todayFunnel.trialRuns == 0
-                ? const Color(0xFF0D9488)
-                : todayFunnel.saveClicks == 0
-                    ? const Color(0xFF6366F1)
-                    : todayFunnel.magicLinkSends == 0
-                        ? const Color(0xFFFF6B35)
-                        : todayFunnel.inboxOpens == 0
-                            ? const Color(0xFF92400E)
-                            : const Color(0xFFB91C1C);
+        : postedTodayActive
+            ? const Color(0xFF6366F1)
+            : todayViews == 0
+                ? const Color(0xFFFF6B35)
+                : todayFunnel.trialRuns == 0
+                    ? const Color(0xFF0D9488)
+                    : todayFunnel.saveClicks == 0
+                        ? const Color(0xFF6366F1)
+                        : todayFunnel.magicLinkSends == 0
+                            ? const Color(0xFFFF6B35)
+                            : todayFunnel.inboxOpens == 0
+                                ? const Color(0xFF92400E)
+                                : const Color(0xFFB91C1C);
     final actionTitle = achieved ? null : growthAction.title;
     final actionDetail = achieved ? null : growthAction.detail;
     final actionIcon = achieved ? null : growthAction.icon;
     final actionButtonLabel = achieved ? null : growthAction.buttonLabel;
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
-        : todayViews == 0
-            ? '今日の流入がありません。まずは露出導線を1つ増やして、訪問者を作ってください。'
-            : todayFunnel.trialRuns == 0
-                ? '流れ込みはありますが、無料体験がまだ1回も実行されていません。最初の一手を試したくなる導線を最優先で短くしてください。'
-                : todayFunnel.saveClicks == 0
-                    ? '無料体験の実行はありますが、保存CTAが押されていません。体験直後に「保存すると残る価値」を再提示する必要があります。'
-                    : todayFunnel.magicLinkSends == 0
-                        ? '保存CTAまでは到達していますが、Magic Link送信が0件です。メール入力前の不安を減らす必要があります。'
-                        : todayFunnel.inboxOpens == 0
-                            ? 'Magic Link送信はありますが、受信箱が開かれていません。送信後の次の行動をさらに明確にしてください。'
-                            : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
+        : postedTodayActive
+            ? growthAction.detail
+            : todayViews == 0
+                ? '今日の流入がありません。まずは露出導線を1つ増やして、訪問者を作ってください。'
+                : todayFunnel.trialRuns == 0
+                    ? '流れ込みはありますが、無料体験がまだ1回も実行されていません。最初の一手を試したくなる導線を最優先で短くしてください。'
+                    : todayFunnel.saveClicks == 0
+                        ? '無料体験の実行はありますが、保存CTAが押されていません。体験直後に「保存すると残る価値」を再提示する必要があります。'
+                        : todayFunnel.magicLinkSends == 0
+                            ? '保存CTAまでは到達していますが、Magic Link送信が0件です。メール入力前の不安を減らす必要があります。'
+                            : todayFunnel.inboxOpens == 0
+                                ? 'Magic Link送信はありますが、受信箱が開かれていません。送信後の次の行動をさらに明確にしてください。'
+                                : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -2050,6 +2174,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   growthAction.isAcquisitionAction,
                               priorityChannelKey: priorityChannelKey,
                               priorityChannelLabel: priorityChannelLabel,
+                              ctaUrl: growthAction.launchUrl,
                             );
                           },
                           icon: const Icon(Icons.arrow_forward, size: 16),
