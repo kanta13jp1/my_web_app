@@ -60,6 +60,8 @@ export interface XApiErrorPayload {
   requiredEnrollment: string | null;
   registrationUrl: string | null;
   actionRequired: string;
+  // R15: spend cap 解除見込み日(ISO, 例 "2026-07-10")。billing 起因以外は null。
+  billingBlockedUntil?: string | null;
   raw: Record<string, unknown> | string;
 }
 
@@ -665,8 +667,21 @@ export function buildXApiErrorPayload(
     requiredEnrollment,
     registrationUrl,
     actionRequired: buildXActionRequired(code, requiredEnrollment),
+    // R15: spend cap 解除見込み日(ISO)。X の 402/403 エラーメッセージから
+    // 機械可読化し、preflight(生成前スキップ)と UI 表示の基盤にする。
+    billingBlockedUntil: isBillingBlocked
+      ? parseBillingBlockedUntil(billingText)
+      : null,
     raw: Object.keys(parsed).length > 0 ? parsed : rawText,
   };
+}
+
+/// X の spend-cap エラー文(例: "API requests will be blocked until the next
+/// cycle begins on 2026-07-10.")からリセット日を ISO 日付で抽出する純関数。
+/// 一致しなければ null(呼び出し側は TTL フォールバックへ degrade)。
+export function parseBillingBlockedUntil(text: string): string | null {
+  const match = /next cycle begins on (\d{4}-\d{2}-\d{2})/i.exec(text ?? "");
+  return match ? match[1] : null;
 }
 
 function normalizeXTrends(payload: unknown): XTrend[] {
@@ -796,13 +811,12 @@ function buildXApiErrorMessage(payload: XApiErrorPayload): string {
     ].join(" ");
   }
   if (payload.code === "x_billing_blocked") {
-    // 生 detail はデバッグ用に残しつつ、対処が一目で分かる日本語を先頭に。
-    return [
-      `X APIのクレジットが不足しています（${
-        payload.detail ?? payload.status
-      }）。`,
-      payload.actionRequired,
-    ].filter((part) => part).join(" ");
+    // 生 detail(リセット日を含む)はデバッグ/ログ永続用に保持。対処ガイダンスは
+    // actionRequired のみへ単一化(R15: 従来は error にも同文を埋め込んでおり、
+    // クライアントが error + actionRequired を連結して同じ段落が二重表示された)。
+    return `X APIのクレジットが不足しています（${
+      payload.detail ?? payload.status
+    }）。`;
   }
   return `X API error ${payload.status}: ${
     payload.detail || payload.title || JSON.stringify(payload.raw)

@@ -30,6 +30,7 @@ import {
   resolveSignupChannel,
 } from "./signup_notification.ts";
 import { filterRecentLogs } from "./metrics_window.ts";
+import { decideXPostPreflight } from "./x_post_preflight.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
 
 const corsHeaders = {
@@ -1770,6 +1771,22 @@ serve(async (req: Request) => {
         return json(await buildXPerformanceContext(admin, userId!, body.limit));
       }
 
+      case "x.post_preflight": {
+        // R15: spend cap 到達中に高価な創作パイプライン(GPT image + TTS +
+        // Hedra)を燃やす前に、直近ログから「投稿しても billing で確定失敗
+        // するか」を返す read-only チェック。X API は一切呼ばない(ゼロコスト)。
+        const logs =
+          (await listXPostLogs(admin, userId!, 20)) as XPostLogItem[];
+        const rows = logs.map((item) => ({
+          created_at: item.created_at,
+          metadata: asRecord(item.metadata),
+        }));
+        return json({
+          success: true,
+          ...decideXPostPreflight(rows, new Date()),
+        });
+      }
+
       case "revenue.funnel_report": {
         return json(
           await buildRevenueFunnelReport(admin, userId!, body.limit),
@@ -2011,6 +2028,9 @@ serve(async (req: Request) => {
             x_api_status: xPayload?.status ?? null,
             x_api_reason: xPayload?.reason ?? null,
             action_required: xPayload?.actionRequired ?? null,
+            // R15: spend cap 解除見込み日(ISO)。x.post_preflight が構造化値
+            // として優先参照する(無ければ error 文の regex にフォールバック)。
+            billing_blocked_until: xPayload?.billingBlockedUntil ?? null,
           };
           let log: unknown = null;
           try {
@@ -2031,6 +2051,7 @@ serve(async (req: Request) => {
             registrationUrl: xPayload?.registrationUrl ?? null,
             actionRequired: xPayload?.actionRequired ??
               "Check X API credentials and posting permissions.",
+            billingBlockedUntil: xPayload?.billingBlockedUntil ?? null,
             log,
           });
         }
