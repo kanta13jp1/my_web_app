@@ -30,6 +30,10 @@ import {
   shouldBlockExternalProviderCall,
 } from "../_shared/offline_secure_mode_guard.ts";
 import {
+  normalizeAiRouterPreference,
+  normalizeAiRoutingTask,
+} from "../_shared/ai_router_cost_optimization.ts";
+import {
   getUniversityContentByFaculty,
   getUniversityDepartmentList,
   getUniversityFacultyList,
@@ -857,6 +861,40 @@ function providerTier(providerId: string): Tier | null {
     if (TIER_PROVIDERS[tier].includes(providerId)) return tier;
   }
   return null;
+}
+
+async function loadManualRoutingPreference(
+  userId: string | null,
+  taskValue: unknown,
+): Promise<{ task: string; provider: string; model: string | null } | null> {
+  if (!userId) return null;
+  const task = normalizeAiRoutingTask(taskValue);
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const { data, error } = await admin
+      .from("ai_task_routing_preferences")
+      .select("task, provider, model, is_enabled, updated_at")
+      .eq("user_id", userId)
+      .eq("task", task)
+      .eq("is_enabled", true)
+      .maybeSingle();
+    if (error) {
+      console.warn(`[ai-router] preference lookup skipped: ${error.message}`);
+      return null;
+    }
+    const preference = normalizeAiRouterPreference(data);
+    if (!preference || !(preference.provider in PROVIDER_CONFIGS)) {
+      return null;
+    }
+    return {
+      task: preference.task,
+      provider: preference.provider,
+      model: preference.model,
+    };
+  } catch (error) {
+    console.warn(`[ai-router] preference lookup failed: ${String(error)}`);
+    return null;
+  }
 }
 
 function stripMarkdownCodeFence(text: string): string {
@@ -5242,25 +5280,19 @@ serve(async (req: Request) => {
         // error_message へ付加し、Supabase Logs だけでチェーン健全性を診断
         // できるようにする(従来は "budget exhausted" の一言で真犯人が不明)。
         const attemptTrail: string[] = [];
-        outerLoop:
-        for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
-          const tier = TIER_ORDER[ti];
-          const providers = TIER_PROVIDERS[tier].filter((p) =>
-            p in PROVIDER_CONFIGS
-          );
-          for (const pid of providers) {
-            const remainingMs = chatBudgetMs -
-              (performance.now() - requestStartedAt);
-            if (remainingMs < 2_000) {
-              budgetExhausted = true;
-              attemptTrail.push(`budget-stop before ${pid}`);
-              break outerLoop;
-            }
+        const manualPreference = await loadManualRoutingPreference(
+          userId,
+          routingUseCase ?? body.task ?? body.task_type ?? body.action_key,
+        );
+        if (manualPreference) {
+          const remainingMs = chatBudgetMs -
+            (performance.now() - requestStartedAt);
+          if (remainingMs >= 2_000) {
             const attemptStartedAt = performance.now();
             const result = await callSingleProvider(
-              pid,
+              manualPreference.provider,
               finalMessages,
-              undefined,
+              manualPreference.model ?? undefined,
               undefined,
               {
                 maxTokens: requestedMaxTokens,
@@ -5273,17 +5305,71 @@ serve(async (req: Request) => {
             );
             if (result.ok && result.text) {
               resultText = result.text;
-              usedProvider = pid;
-              usedTier = tier;
+              usedProvider = manualPreference.provider;
+              usedTier = providerTier(manualPreference.provider) ?? routedTier;
               usedModel = result.modelUsed;
-              break outerLoop;
+            } else {
+              const attemptMs = Math.round(
+                performance.now() - attemptStartedAt,
+              );
+              const attemptError = (result.error ?? "unknown").slice(0, 80);
+              attemptTrail.push(
+                `manual:${manualPreference.provider}:${attemptMs}ms ${attemptError}`,
+              );
             }
-            const attemptMs = Math.round(performance.now() - attemptStartedAt);
-            const attemptError = (result.error ?? "unknown").slice(0, 80);
-            attemptTrail.push(`${pid}:${attemptMs}ms ${attemptError}`);
-            console.warn(
-              `[chat_auto] provider failed: ${pid} tier=${tier} ${attemptMs}ms ${attemptError}`,
+          } else {
+            budgetExhausted = true;
+            attemptTrail.push(
+              `budget-stop before manual:${manualPreference.provider}`,
             );
+          }
+        }
+        if (!resultText) {
+          outerLoop:
+          for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
+            const tier = TIER_ORDER[ti];
+            const providers = TIER_PROVIDERS[tier].filter((p) =>
+              p in PROVIDER_CONFIGS
+            );
+            for (const pid of providers) {
+              const remainingMs = chatBudgetMs -
+                (performance.now() - requestStartedAt);
+              if (remainingMs < 2_000) {
+                budgetExhausted = true;
+                attemptTrail.push(`budget-stop before ${pid}`);
+                break outerLoop;
+              }
+              const attemptStartedAt = performance.now();
+              const result = await callSingleProvider(
+                pid,
+                finalMessages,
+                undefined,
+                undefined,
+                {
+                  maxTokens: requestedMaxTokens,
+                  timeoutMs: Math.min(
+                    providerFetchTimeoutMs(),
+                    chatPerCallTimeoutMs(),
+                    remainingMs,
+                  ),
+                },
+              );
+              if (result.ok && result.text) {
+                resultText = result.text;
+                usedProvider = pid;
+                usedTier = tier;
+                usedModel = result.modelUsed;
+                break outerLoop;
+              }
+              const attemptMs = Math.round(
+                performance.now() - attemptStartedAt,
+              );
+              const attemptError = (result.error ?? "unknown").slice(0, 80);
+              attemptTrail.push(`${pid}:${attemptMs}ms ${attemptError}`);
+              console.warn(
+                `[chat_auto] provider failed: ${pid} tier=${tier} ${attemptMs}ms ${attemptError}`,
+              );
+            }
           }
         }
 
@@ -5452,6 +5538,10 @@ serve(async (req: Request) => {
           ? String(body.session_id)
           : null;
         const explicitModel = asString(body.model) || undefined;
+        const routingUseCase = sanitizeProviderChoiceLogText(
+          body.routing_use_case ?? body.task ?? body.task_type,
+          80,
+        );
 
         let resultText: string | undefined;
         let usedProvider: string | undefined;
@@ -5526,24 +5616,48 @@ serve(async (req: Request) => {
             return json({ error: "invalid tier" }, 400);
           }
 
-          outerLoop:
-          for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
-            const tier = TIER_ORDER[ti];
-            const providers = TIER_PROVIDERS[tier].filter((p) =>
-              p in PROVIDER_CONFIGS
+          const manualPreference = await loadManualRoutingPreference(
+            userId,
+            routingUseCase ?? body.task ?? body.task_type ?? body.action_key,
+          );
+          if (manualPreference) {
+            const result = await callSingleProvider(
+              manualPreference.provider,
+              finalMessages,
+              manualPreference.model ?? undefined,
             );
-            for (const pid of providers) {
-              const result = await callSingleProvider(
-                pid,
-                finalMessages,
-                explicitModel,
+            if (result.ok && result.text) {
+              resultText = result.text;
+              usedProvider = manualPreference.provider;
+              usedTier = providerTier(manualPreference.provider) ?? routedTier;
+              usedModel = result.modelUsed;
+            } else {
+              failureDetail = `manual preference failed: ${
+                result.error ?? manualPreference.provider
+              }`;
+            }
+          }
+
+          if (!resultText) {
+            outerLoop:
+            for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
+              const tier = TIER_ORDER[ti];
+              const providers = TIER_PROVIDERS[tier].filter((p) =>
+                p in PROVIDER_CONFIGS
               );
-              if (result.ok && result.text) {
-                resultText = result.text;
-                usedProvider = pid;
-                usedTier = tier;
-                usedModel = result.modelUsed;
-                break outerLoop;
+              for (const pid of providers) {
+                const result = await callSingleProvider(
+                  pid,
+                  finalMessages,
+                  explicitModel,
+                );
+                if (result.ok && result.text) {
+                  resultText = result.text;
+                  usedProvider = pid;
+                  usedTier = tier;
+                  usedModel = result.modelUsed;
+                  break outerLoop;
+                }
               }
             }
           }
@@ -5571,6 +5685,7 @@ serve(async (req: Request) => {
               error_message: failureDetail ?? "edge_llm.invoke failed",
               action: "edge_llm.invoke",
               status_code: 502,
+              routing_use_case: routingUseCase,
             });
           } catch {
             // ignore logging errors
@@ -5615,6 +5730,7 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             action: "edge_llm.invoke",
             status_code: 200,
+            routing_use_case: routingUseCase,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
         } catch {
@@ -5645,6 +5761,7 @@ serve(async (req: Request) => {
             output_chars: outputChars,
             action: "edge_llm.invoke",
             status_code: 200,
+            routing_use_case: routingUseCase,
           },
         });
       }

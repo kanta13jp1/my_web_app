@@ -1,6 +1,10 @@
 // admin-hub — 管理・サポート・監視・分析統合EF
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildAiRouterCostDashboard,
+  normalizeAiRoutingTask,
+} from "../_shared/ai_router_cost_optimization.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -270,6 +274,85 @@ serve(async (req: Request) => {
           .eq("checked_at", today);
         if (error) return json({ error: error.message }, 500);
         return json({ success: true, data });
+      }
+
+      case "ai_router.cost_dashboard": {
+        const rawDays = Number(body.days ?? 30);
+        const days = Number.isFinite(rawDays)
+          ? Math.max(1, Math.min(90, Math.round(rawDays)))
+          : 30;
+        const since = new Date(Date.now() - days * 86400_000).toISOString();
+        const { data: telemetryRows, error: telemetryError } = await admin
+          .from("ai_hub_chat_logs")
+          .select(
+            "provider, model, tier, action, routing_use_case, success, " +
+              "estimated_cost_usd, latency_ms, input_chars, output_chars, created_at",
+          )
+          .gte("created_at", since)
+          .order("created_at", { ascending: false })
+          .limit(2000);
+        if (telemetryError) return json({ error: telemetryError.message }, 500);
+
+        const { data: quotaRows, error: quotaError } = await admin
+          .from("ai_quota_usage")
+          .select("tool, checked_at, usage_json, alert")
+          .order("checked_at", { ascending: false })
+          .limit(100);
+        if (quotaError) return json({ error: quotaError.message }, 500);
+
+        let preferenceRows: Record<string, unknown>[] = [];
+        if (userId) {
+          const { data: prefs, error: prefError } = await admin
+            .from("ai_task_routing_preferences")
+            .select("task, provider, model, is_enabled, updated_at")
+            .eq("user_id", userId);
+          if (prefError) return json({ error: prefError.message }, 500);
+          preferenceRows = (prefs ?? []) as Record<string, unknown>[];
+        }
+
+        const dashboard = buildAiRouterCostDashboard(
+          (telemetryRows ?? []) as unknown as Record<string, unknown>[],
+          (quotaRows ?? []) as unknown as Record<string, unknown>[],
+          preferenceRows,
+        );
+        return json({ success: true, days, ...dashboard });
+      }
+
+      case "ai_router.preference.list": {
+        if (!userId) return json({ error: "User auth required" }, 401);
+        const { data, error } = await admin
+          .from("ai_task_routing_preferences")
+          .select("task, provider, model, is_enabled, updated_at")
+          .eq("user_id", userId)
+          .order("task", { ascending: true });
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, data: data ?? [] });
+      }
+
+      case "ai_router.preference.set": {
+        if (!userId) return json({ error: "User auth required" }, 401);
+        const task = normalizeAiRoutingTask(
+          body.task ?? body.routing_use_case ?? body.action_key,
+        );
+        const provider = String(body.provider ?? "").trim();
+        if (!provider) return json({ error: "provider required" }, 400);
+        const model = String(body.model ?? "").trim() || null;
+        const isEnabled = body.is_enabled !== false;
+        const { data, error } = await admin
+          .from("ai_task_routing_preferences")
+          .upsert({
+            user_id: userId,
+            task,
+            provider,
+            model,
+            is_enabled: isEnabled,
+            source: "manual",
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id,task" })
+          .select("task, provider, model, is_enabled, updated_at")
+          .single();
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, preference: data });
       }
 
       // ---- Edge function coverage ----
