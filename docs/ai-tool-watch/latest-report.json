@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "84f64cdd3f3c23d0b2c2f4a6135e521fc39daa788047ab97c63c61feca79a7b2",
+      "hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.202 / July 6, 2026",
+      "latest_signal": "2.1.205 / July 8, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "42fb9083dae6170790faab3933c704ef1782243207a2971b82e62902bc8cbc7a",
+      "previous_hash": "84f64cdd3f3c23d0b2c2f4a6135e521fc39daa788047ab97c63c61feca79a7b2",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.202 July 6, 2026 Added a “Dynamic workflow size” setting in /config for controlling how large Claude generally makes dynamic workflows (small/medium/large agent counts) —..."
+        "​ 2.1.205 July 8, 2026 Added an auto mode rule that blocks tampering with session transcript files Fixed --json-schema silently producing unstructured output when the schema was..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,58 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "ede430cc21167af8fb40f625b3862c367cd8cbe981c20a9f85244dd99262db07",
-      "keyword_groups": {
-        "codex-runtime": [
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "SessionStart",
-          "UserPromptSubmit",
-          "PostToolUse",
-          "Stop",
-          "StopFailure"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "OpenTelemetry",
-          "cost",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "schedule",
-          "cron",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
-      "name": "Claude Code hooks reference",
-      "owner": "Claude Code",
-      "previous_hash": "6ea514d7f850db8f0f650067ecb593c7653b8b319ef7154596016af809fa2dc9",
-      "slug": "claude-code-hooks",
-      "snippets": [
-        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
-        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/hooks"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "e0e3b4a9517fc63a9a4797e09221bb7c871b0ce33980f5e04409ca3d6f19ae16",
+      "hash": "d4756ff4bf05feff0785a78817c8a5ac31802ce416b46ca3efaa636ab2990bbc",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -168,7 +117,7 @@
       "latest_signal": "2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "ac5b0717a7721a4ce304761369c87d21948b4eddb309c499456a8c016c9aa1c0",
+      "previous_hash": "e0e3b4a9517fc63a9a4797e09221bb7c871b0ce33980f5e04409ca3d6f19ae16",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -182,7 +131,61 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7c735322002001a0de7979d166187c74427d3e68f2e21d3930b1eec3e8239eff",
+      "hash": "e65760dc29e298d07245c55ed286cccd29acc05f66c816df8bed67d511c02916",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "in-app browser",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
+      "slug": "codex-use-cases",
+      "snippets": [
+        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
+        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
+        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -207,7 +210,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "23ee602bc8a6033341fcbfd0ae1f2c9a578b1b01692c605fe35f80af581457a5",
+      "previous_hash": "7c735322002001a0de7979d166187c74427d3e68f2e21d3930b1eec3e8239eff",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
@@ -218,7 +221,7 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   ],
-  "checked_at": "2026-07-07T22:32:25Z",
+  "checked_at": "2026-07-08T22:17:40Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -270,13 +273,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-06T22:39:52Z",
+  "previous_checked_at": "2026-07-07T22:32:25Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "84f64cdd3f3c23d0b2c2f4a6135e521fc39daa788047ab97c63c61feca79a7b2",
+      "hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -320,21 +323,21 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.202 / July 6, 2026",
+      "latest_signal": "2.1.205 / July 8, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "42fb9083dae6170790faab3933c704ef1782243207a2971b82e62902bc8cbc7a",
+      "previous_hash": "84f64cdd3f3c23d0b2c2f4a6135e521fc39daa788047ab97c63c61feca79a7b2",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.202 July 6, 2026 Added a “Dynamic workflow size” setting in /config for controlling how large Claude generally makes dynamic workflows (small/medium/large agent counts) —..."
+        "​ 2.1.205 July 8, 2026 Added an auto mode rule that blocks tampering with session transcript files Fixed --json-schema silently producing unstructured output when the schema was..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "ede430cc21167af8fb40f625b3862c367cd8cbe981c20a9f85244dd99262db07",
@@ -374,7 +377,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "6ea514d7f850db8f0f650067ecb593c7653b8b319ef7154596016af809fa2dc9",
+      "previous_hash": "ede430cc21167af8fb40f625b3862c367cd8cbe981c20a9f85244dd99262db07",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -436,7 +439,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "e0e3b4a9517fc63a9a4797e09221bb7c871b0ce33980f5e04409ca3d6f19ae16",
+      "hash": "d4756ff4bf05feff0785a78817c8a5ac31802ce416b46ca3efaa636ab2990bbc",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -481,7 +484,7 @@
       "latest_signal": "2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "ac5b0717a7721a4ce304761369c87d21948b4eddb309c499456a8c016c9aa1c0",
+      "previous_hash": "e0e3b4a9517fc63a9a4797e09221bb7c871b0ce33980f5e04409ca3d6f19ae16",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -492,10 +495,10 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
+      "hash": "e65760dc29e298d07245c55ed286cccd29acc05f66c816df8bed67d511c02916",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -607,7 +610,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7c735322002001a0de7979d166187c74427d3e68f2e21d3930b1eec3e8239eff",
+      "hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -632,7 +635,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "23ee602bc8a6033341fcbfd0ae1f2c9a578b1b01692c605fe35f80af581457a5",
+      "previous_hash": "7c735322002001a0de7979d166187c74427d3e68f2e21d3930b1eec3e8239eff",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
