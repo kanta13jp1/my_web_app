@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef AdminHubInvoker =
-    Future<Map<String, dynamic>> Function(Map<String, dynamic> body);
+typedef AdminHubInvoker = Future<Map<String, dynamic>> Function(
+    Map<String, dynamic> body);
 
 class AiRouterCandidate {
   const AiRouterCandidate({
@@ -112,9 +112,8 @@ class AiRouterTaskSummary {
       recommendation: recommendation == null
           ? null
           : AiRouterCandidate.fromMap(recommendation),
-      preference: preference == null
-          ? null
-          : AiRouterPreference.fromMap(preference),
+      preference:
+          preference == null ? null : AiRouterPreference.fromMap(preference),
       candidates: ((map['candidates'] as List?) ?? const [])
           .whereType<Map>()
           .map(
@@ -170,8 +169,8 @@ class AiRouterCostDashboardService {
   const AiRouterCostDashboardService({
     SupabaseClient? supabaseClient,
     AdminHubInvoker? invoker,
-  }) : _supabaseClient = supabaseClient,
-       _invoker = invoker;
+  })  : _supabaseClient = supabaseClient,
+        _invoker = invoker;
 
   final SupabaseClient? _supabaseClient;
   final AdminHubInvoker? _invoker;
