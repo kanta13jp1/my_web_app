@@ -36,3 +36,34 @@ export function filterRecentLogs<T extends MetricsWindowLog>(
     return nowMs - createdMs <= windowMs; // (a) 鮮度窓
   });
 }
+
+// R18: X パフォーマンス学習(勝ち型ランキング/winner exemplar/生成プロンプトの
+// 「Top hook to emulate」)を「現行コピー戦略」の投稿だけで測るためのフィルタ。
+//
+// なぜ必要か: buildXPerformanceContextFromLogs は score 降順の winners[0] を
+// verbatim で生成プロンプトへ注入する。recency フィルタが無いと、R11-R15 で
+// 廃止した旧フォーマット(誤年 2024 の「デイリーブリーフィング — 日付 朝」)の
+// 高スコア旧投稿が「勝ち型」を占拠し、廃止済みスタイルを毎回再教育してしまう
+// (実障害 2026-07-09 観測: 真似る型に 2024/07/05 の旧投稿)。
+//
+// filterRecentLogs とは別関数にする理由: あちらは (c) 未計測レスキューで古い
+// 未計測行を保持する = ランキングに旧投稿を再流入させてしまうため不可。
+//
+// 保持条件: created_at が max(now-windowDays, epochMs) 以降。境界:
+//   - created_at がパース不能/不在 → 保持(fail-open — 壊れた行で学習を落とさない)
+//   - epochMs が NaN(env 未設定/不正) → windowDays のみで判定
+export function filterCurrentStrategyLogs<T extends MetricsWindowLog>(
+  logs: T[],
+  options: { windowDays: number; epochMs: number },
+  nowMs: number,
+): T[] {
+  const windowStartMs = nowMs - options.windowDays * 86_400_000;
+  const cutoffMs = Number.isFinite(options.epochMs)
+    ? Math.max(windowStartMs, options.epochMs)
+    : windowStartMs;
+  return logs.filter((log) => {
+    const createdMs = Date.parse(String(log.created_at ?? ""));
+    if (!Number.isFinite(createdMs)) return true; // fail-open
+    return createdMs >= cutoffMs;
+  });
+}
