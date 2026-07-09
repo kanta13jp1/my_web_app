@@ -1,14 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-07T22:32:25Z`
-- Previous check: `2026-07-06T22:39:52Z`
+- Checked at: `2026-07-08T22:17:40Z`
+- Previous check: `2026-07-07T22:32:25Z`
 - Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.202 / July 6, 2026
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Claude Code changelog: 2.1.205 / July 8, 2026
 - `changed` Codex changelog: 2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
 - `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
 
 ## Recommended Actions
@@ -21,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.202 / July 6, 2026
+  - Latest signal: 2.1.205 / July 8, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
