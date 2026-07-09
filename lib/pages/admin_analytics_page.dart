@@ -3705,32 +3705,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Widget _buildProfileCompletionSummary() {
-    final complete =
-        _adminUsers.where((u) => _toInt(u['completionPct']) >= 67).length;
-    final partial = _adminUsers.where((u) {
-      final pct = _toInt(u['completionPct']);
-      return pct >= 34 && pct < 67;
-    }).length;
-    final empty =
-        _adminUsers.where((u) => _toInt(u['completionPct']) < 34).length;
+    // R19: 旧サマリは未fetch の completionPct(全員0)で「0完成/0途中/44未設定」を
+    // 捏造していた。email 空=匿名 auth を信頼プロキシに「実ユーザー/匿名テスト」へ
+    // 誠実に分割する(合計44 vs 実CVR4 の乖離=匿名を実登録と誤認する虚栄を防ぐ)。
+    final split = summarizeAdminUsers(_adminUsers);
     return Row(
       children: [
         _profileStatChip(
-          Icons.check_circle,
-          '$complete 完成',
+          Icons.verified_user_outlined,
+          '実ユーザー ${split.real}人',
           const Color(0xFF0D9488),
         ),
         const SizedBox(width: 8),
         _profileStatChip(
-          Icons.pending,
-          '$partial 途中',
-          const Color(0xFFFF6B35),
-        ),
-        const SizedBox(width: 8),
-        _profileStatChip(
-          Icons.warning_amber,
-          '$empty 未設定',
-          const Color(0xFFB91C1C),
+          Icons.help_outline,
+          '匿名テスト ${split.anon}人',
+          const Color(0xFF9CA3AF),
         ),
       ],
     );
@@ -3770,7 +3760,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '登録ユーザー管理 (合計 $_adminUsersTotal 人)',
+                    _adminUsers.isEmpty
+                        ? '登録ユーザー管理 (合計 $_adminUsersTotal 人)'
+                        : '登録ユーザー管理 (合計 $_adminUsersTotal 人 / '
+                            '実 ${summarizeAdminUsers(_adminUsers).real}・'
+                            '匿名 ${summarizeAdminUsers(_adminUsers).anon})',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -3871,13 +3865,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       final bio = user['bio']?.toString();
                       final location = user['location']?.toString();
                       final provider = user['provider']?.toString() ?? 'email';
-                      final createdAt = user['createdAt']?.toString() ?? '';
+                      // R19: edge は created_at(snake)を返すのに旧UIは createdAt
+                      // (camel)を読み全行の登録日が空だった。snake 優先で吸収する。
+                      final createdAt = adminUserCreatedRaw(user);
                       final lastSignIn = user['lastSignInAt']?.toString() ?? '';
-                      final hasProfile = user['hasProfile'] as bool? ?? false;
-                      final completionPct = _toInt(user['completionPct']);
+                      // R19: email 空 = Supabase 匿名 auth(headless 検証)の信頼プロキシ。
+                      final isAnonymous = adminUserIsAnonymous(user);
 
-                      String createdStr = '';
-                      String lastSignInStr = '';
+                      // R19: 登録日=parse 不可なら「日付なし」、最終ログインは edge が
+                      // 未送出のため「ログイン記録なし」と正直に出す(空欄で誤魔化さない)。
+                      String createdStr = '日付なし';
+                      String lastSignInStr = 'ログイン記録なし';
                       try {
                         createdStr = DateFormat('yyyy/MM/dd').format(
                           DateTime.parse(createdAt).toLocal(),
@@ -3892,15 +3890,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       final isGoogle = provider.contains('google');
                       final isDark =
                           Theme.of(context).brightness == Brightness.dark;
-
-                      Color profileColor;
-                      if (!hasProfile || completionPct < 34) {
-                        profileColor = const Color(0xFFB91C1C);
-                      } else if (completionPct < 67) {
-                        profileColor = const Color(0xFFFF6B35);
-                      } else {
-                        profileColor = const Color(0xFF0D9488);
-                      }
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
@@ -3917,7 +3906,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       ? const Color(0xFF1A1E3A)
                                       : const Color(0xFFE8EAF6)),
                               child: Text(
-                                email.isNotEmpty ? email[0].toUpperCase() : '?',
+                                email.isNotEmpty
+                                    ? email[0].toUpperCase()
+                                    : (isAnonymous ? '匿' : '?'),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -3940,7 +3931,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                           displayName != null &&
                                                   displayName.isNotEmpty
                                               ? displayName
-                                              : email,
+                                              : (email.isNotEmpty
+                                                  ? email
+                                                  : '匿名ユーザー'),
                                           style: const TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
@@ -3965,7 +3958,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                               BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          isGoogle ? 'Google' : 'Email',
+                                          isGoogle
+                                              ? 'Google'
+                                              : (isAnonymous ? '匿名' : 'Email'),
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -4020,32 +4015,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       ],
                                     ),
                                   const SizedBox(height: 4),
-                                  Row(
+                                  // R19: completionPct は users.list が未送出で常に0。
+                                  // 「プロフィール 0%」バーは捏造なので出さず、未取得を
+                                  // 正直に表示する(R17 の display-truthfulness 規律)。
+                                  const Row(
                                     children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                          child: LinearProgressIndicator(
-                                            value: completionPct / 100,
-                                            minHeight: 4,
-                                            backgroundColor: Theme.of(context)
-                                                .colorScheme
-                                                .surfaceContainerHighest,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              profileColor,
-                                            ),
-                                          ),
-                                        ),
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 11,
+                                        color: Color(0xFF9CA3AF),
                                       ),
-                                      const SizedBox(width: 6),
+                                      SizedBox(width: 4),
                                       Text(
-                                        'プロフィール $completionPct%',
+                                        'プロフィール情報 未取得',
                                         style: TextStyle(
                                           fontSize: 10,
-                                          color: profileColor,
-                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF9CA3AF),
                                           height: 1.5,
                                         ),
                                       ),
@@ -4131,7 +4116,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final hasProfile = user['hasProfile'] as bool? ?? false;
     final provider = user['provider']?.toString() ?? 'email';
     final isGoogle = provider.contains('google');
-    final createdAt = user['createdAt']?.toString() ?? '';
+    // R19: 行と同じ契約バグ。edge の created_at(snake)を優先で拾う。
+    final createdAt = adminUserCreatedRaw(user);
     final lastSignIn = user['lastSignInAt']?.toString() ?? '';
 
     String createdStr = '';
