@@ -134,3 +134,53 @@ String adminUserCreatedRaw(Map<String, dynamic> user) {
   }
   return (real: users.length - anon, anon: anon);
 }
+
+// R20: X成長ループ panel の鮮度フッター。R17 は鮮度だけ「今日の投稿の計測時刻」
+// (_xTodayStatus.lastCollectedAt)を読んでいたため、12件計測済みでも今日未投稿だと
+// 「計測待ち」と矛盾表示していた(偽の計測停止アラーム)。パネル自身が描く
+// perf-context の行から鮮度を出す。
+
+/// perf-context 行(各 {createdAt}) の中で最も新しい created_at を返す。行は
+/// growth-hub 側で score 降順ソート済みなので rows[0] は最新でない → 全行走査で
+/// max を取る。パース可能な行が無ければ null。
+DateTime? newestMeasuredCreatedAt(List<dynamic>? rows) {
+  if (rows == null) return null;
+  DateTime? newest;
+  for (final row in rows) {
+    if (row is! Map) continue;
+    final dt = DateTime.tryParse((row['createdAt'] ?? '').toString());
+    if (dt == null) continue;
+    if (newest == null || dt.isAfter(newest)) newest = dt;
+  }
+  return newest;
+}
+
+/// X成長ループ鮮度ラベル。計測済み(measuredCount>0)なら決して「計測待ち」と
+/// 言わない。createdAt は投稿時刻で計測実行時刻ではないためラベルは「最新
+/// サンプル」に留め「最終計測」と過剰主張しない。
+String resolveXGrowthLoopFreshness({
+  required int measuredCount,
+  required DateTime? newestMeasuredAt,
+  required DateTime now,
+}) {
+  if (measuredCount <= 0) return '最終計測: 計測待ち';
+  if (newestMeasuredAt == null) return '計測済み $measuredCount件';
+  final diff = now.difference(newestMeasuredAt);
+  if (diff.isNegative) return '計測済み $measuredCount件';
+  if (diff.inDays >= 1) return '最新サンプル: ${diff.inDays}日前';
+  if (diff.inHours >= 1) return '最新サンプル: ${diff.inHours}時間前';
+  return '最新サンプル: 1時間以内';
+}
+
+/// R20: 年なし MM/dd は 3か月前の機能リクエストや 2か月前のツール実行ログを
+/// 「今月」に見せてしまう。別年、もしくは staleDays(既定30日=1か月超)超は
+/// yyyy/MM/dd を返して年齢を明示する(パース不能は raw をそのまま返す)。
+String formatAgeAwareDate(String? iso, DateTime now, {int staleDays = 30}) {
+  final raw = (iso ?? '').toString();
+  final dt = DateTime.tryParse(raw)?.toLocal();
+  if (dt == null) return raw;
+  final m = dt.month.toString().padLeft(2, '0');
+  final d = dt.day.toString().padLeft(2, '0');
+  final stale = dt.year != now.year || now.difference(dt).inDays > staleDays;
+  return stale ? '${dt.year}/$m/$d' : '$m/$d';
+}

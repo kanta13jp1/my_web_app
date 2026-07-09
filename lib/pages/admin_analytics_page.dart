@@ -3030,7 +3030,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (parsed == null) {
       return '--';
     }
-    return DateFormat('MM/dd HH:mm:ss').format(parsed);
+    // R20: 年なし MM/dd は2か月前(05/11)のログを今週に見せる。1か月超/別年は
+    // 年を前置して年齢を明示する(「Recent」ラベルの誤読を解消)。
+    final now = DateTime.now();
+    final stale = parsed.year != now.year || now.difference(parsed).inDays > 30;
+    return DateFormat(stale ? 'yyyy/MM/dd HH:mm:ss' : 'MM/dd HH:mm:ss')
+        .format(parsed);
   }
 
   Color _getCvrColor(double cvr) {
@@ -4729,11 +4734,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   final createdAt = req['created_at']?.toString() ?? '';
                   final adminReply = req['admin_reply']?.toString();
                   final adminRepliedAt = req['admin_replied_at']?.toString();
-                  String dateStr = createdAt;
-                  try {
-                    dateStr = DateFormat('MM/dd')
-                        .format(DateTime.parse(createdAt).toLocal());
-                  } catch (_) {}
+                  // R20: 年なし MM/dd は3か月前(04月)の要望を「今月」に見せる。
+                  // 1か月超/別年は yyyy/ を前置して年齢を明示する。
+                  final dateStr = formatAgeAwareDate(createdAt, DateTime.now());
                   String? repliedAtStr;
                   if (adminRepliedAt != null) {
                     try {
@@ -4910,6 +4913,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             ),
                             child: Text(
                               'AI: $adminReply',
+                              // R20: 数百字の返信が50件リストを支配する wall-of-text
+                              // を抑制。全文は返信編集ダイアログで到達可能=無損失。
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF4338CA),
@@ -5804,7 +5811,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (loop.state == XGrowthLoopState.hidden) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final freshness = _xGrowthLoopFreshness();
+    // R20: 鮮度はパネル自身のデータ(perf-context 行)から出す。旧実装は今日の投稿の
+    // 計測時刻を読み、12件計測済みでも今日未投稿だと「計測待ち」と矛盾していた。
+    final freshness = resolveXGrowthLoopFreshness(
+      measuredCount: rows.length,
+      newestMeasuredAt: newestMeasuredCreatedAt(rows),
+      now: DateTime.now(),
+    );
     final lines = <Widget>[];
 
     switch (loop.state) {
@@ -5952,18 +5965,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final text = (first['text'] ?? '').toString().trim();
     if (text.isEmpty) return null;
     return text.length <= 60 ? text : '${text.substring(0, 58)}…';
-  }
-
-  String _xGrowthLoopFreshness() {
-    final collected =
-        DateTime.tryParse(_xTodayStatus?['lastCollectedAt']?.toString() ?? '')
-            ?.toLocal();
-    if (collected == null) return '最終計測: 計測待ち';
-    final days = DateTime.now().difference(collected).inDays;
-    final hours = DateTime.now().difference(collected).inHours;
-    if (days >= 1) return '最終計測: $days日前';
-    if (hours >= 1) return '最終計測: $hours時間前';
-    return '最終計測: 1時間以内';
   }
 
   Widget _buildGrowthAchievementSummaryCard() {
