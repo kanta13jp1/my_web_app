@@ -133,4 +133,41 @@ void main() {
       expect(streakAtWindowCap(0, 30), isFalse);
     });
   });
+
+  group('R19 admin user list (contract bug + fabrication)', () {
+    test('adminUserIsAnonymous: empty email = anonymous auth', () {
+      expect(adminUserIsAnonymous({'email': ''}), isTrue);
+      expect(adminUserIsAnonymous({'email': '  '}), isTrue);
+      expect(adminUserIsAnonymous(<String, dynamic>{}), isTrue);
+      expect(adminUserIsAnonymous({'email': 'a@b.com'}), isFalse);
+    });
+
+    test('adminUserCreatedRaw: snake created_at preferred, camel fallback', () {
+      // edge が返す snake が優先される(契約バグの本丸)。
+      expect(
+        adminUserCreatedRaw({'created_at': '2026-07-01T00:00:00Z'}),
+        '2026-07-01T00:00:00Z',
+      );
+      // 旧 UI の camel も後方互換で拾う。
+      expect(
+        adminUserCreatedRaw({'createdAt': '2026-07-02T00:00:00Z'}),
+        '2026-07-02T00:00:00Z',
+      );
+      // どちらも無ければ空 → 呼び出し側で「日付なし」へ。
+      expect(adminUserCreatedRaw(<String, dynamic>{}), '');
+    });
+
+    test('summarizeAdminUsers: real vs anonymous split', () {
+      final users = <Map<String, dynamic>>[
+        {'email': 'real1@x.com'},
+        {'email': 'real2@x.com'},
+        {'email': ''},
+        <String, dynamic>{},
+        {'email': '  '},
+      ];
+      final s = summarizeAdminUsers(users);
+      expect(s.real, 2);
+      expect(s.anon, 3);
+    });
+  });
 }
