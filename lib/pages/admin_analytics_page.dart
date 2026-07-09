@@ -7,6 +7,7 @@ import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
 import '../widgets/self_devin_control_tower_card.dart';
 import 'admin_x_posted_today.dart';
+import 'admin_dashboard_signals.dart';
 import 'ai_secretary_page.dart';
 import 'admin/feedback_list_page.dart';
 import 'admin/quota_dashboard_page.dart';
@@ -85,6 +86,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // インプレ / spend-cap ブロック中か)。取得失敗や available:false のときは null
   // に戻し、アクションカードは従来文言(「X投稿を作る」)へ degrade する。
   Map<String, dynamic>? _xTodayStatus;
+  // R17: growth-hub x.performance_context の結果(計測済み投稿の variant ランキング
+  // / 勝ち型 / winner exemplar)。X 学習ループを意思決定点(ダッシュボード)に露出
+  // する。取得失敗時は null → 成長ループ panel は非表示に degrade。
+  Map<String, dynamic>? _xPerformanceContext;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   late final SupabaseClient _supabase;
@@ -220,10 +225,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   String _formatPaidConversionRate(int paidCustomers, int totalUsers) {
-    if (totalUsers <= 0) {
-      return '0.0%';
-    }
-    return '${(paidCustomers / totalUsers * 100).toStringAsFixed(1)}%';
+    // R17: 母数0のとき「0.0%」は測定した0%に見えて誤解を生む → 計測不能の「—」。
+    return formatRatePercent(paidCustomers, totalUsers);
   }
 
   Map<String, dynamic> _firstMap(dynamic value) {
@@ -323,6 +326,25 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       }
     } catch (error) {
       debugPrint('x.today_status unavailable: $error');
+    }
+    return null;
+  }
+
+  /// R17: growth-hub x.performance_context を fail-safe に取得する。edge 側に
+  /// server-side try/catch が無いため、ここで必ず握りつぶして null に degrade
+  /// する(取得失敗で成長ループ panel を消すだけ・ダッシュボードは必ず描画する)。
+  Future<Map<String, dynamic>?> _loadXPerformanceContext() async {
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {'action': 'x.performance_context', 'limit': 50},
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true) {
+        return Map<String, dynamic>.from(data);
+      }
+    } catch (error) {
+      debugPrint('x.performance_context unavailable: $error');
     }
     return null;
   }
@@ -1380,6 +1402,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final hasLpViewStats = lpStats.isNotEmpty;
       final paidConversionMetrics = await _loadPaidConversionMetrics();
       final xTodayStatus = await _loadXTodayStatus();
+      final xPerformanceContext = await _loadXPerformanceContext();
 
       final toolExecutionLogs = <Map<String, dynamic>>[];
       final blockedReasonCounts = <String, int>{};
@@ -1436,6 +1459,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _blockedToolExecutionCount = blockedExecutionCount;
           _paidConversionMetrics = paidConversionMetrics;
           _xTodayStatus = xTodayStatus;
+          _xPerformanceContext = xPerformanceContext;
           _isLoading = false;
         });
       }
@@ -1703,6 +1727,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       sourceBreakdown: sourceBreakdown,
                       todayFunnel: todayFunnel,
                     ),
+                    // R17: X 学習ループ(勝ち型/計測待ち/cron警告)を意思決定点に露出。
+                    // データが無いときは SizedBox.shrink() で静かに消える。
+                    _buildXGrowthLoopSection(),
                     const SizedBox(height: 16),
                     _buildFunnelOverviewCard(
                       title: '今日の登録ファネル',
@@ -1911,8 +1938,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     // 出力)の診断・文言をそのまま使う。
     final postedTodayActive =
         !achieved && todayViews == 0 && _buildPostedTodayActionPlan() != null;
-    final todayCvr =
-        todayViews == 0 ? 0.0 : (todayRegistrations / todayViews * 100);
     final diagnosisLabel = achieved
         ? '登録発生'
         : postedTodayActive
@@ -2065,7 +2090,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
               _buildMiniKpiChip(
                 label: '今日のCVR',
-                value: '${todayCvr.toStringAsFixed(1)}%',
+                // R17: 流入0のとき「0.0%」は捏造 → 「—」(ファネル率セルと同じ規律)。
+                value: formatRatePercent(todayRegistrations, todayViews),
                 color: diagnosisColor,
               ),
               if (todayViews > 0)
@@ -2435,34 +2461,55 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
             ),
             const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  cvr.toStringAsFixed(1),
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: _getCvrColor(cvr),
-                    height: 1.4,
-                  ),
+            // R17: 流入0のときは測定不能なので「0.0%」ではなく中立の「—」計測待ち
+            // を出す(母数=todayViews==0 で判定。流入>0で登録0は真の0.0%なので従来表示)。
+            if (todayViews == 0)
+              const Text(
+                '—',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF9CA3AF),
+                  height: 1.4,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Text(
-                    '%',
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    cvr.toStringAsFixed(1),
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 48,
                       fontWeight: FontWeight.bold,
                       color: _getCvrColor(cvr),
-                      height: 1.5,
+                      height: 1.4,
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(
+                      '%',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _getCvrColor(cvr),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            if (todayViews == 0)
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Text(
+                  '計測待ち（流入なし）',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
                 ),
-              ],
-            ),
+              ),
             const SizedBox(height: 24),
             const Divider(height: 1),
             const SizedBox(height: 24),
@@ -3521,6 +3568,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         final views = _toInt(stat['landing_views']);
         final conv = _toInt(stat['conversions']);
         final cvr = views == 0 ? 0.0 : (conv / views * 100);
+        // R17: 流入0の日は測定不能。「0.0%」赤バッジ(_getCvrColorは0→赤)ではなく
+        // 中立グレーの「—」を出す(流入>0で登録0は真の0.0%なので従来色)。
+        final cvrBadgeColor =
+            views == 0 ? const Color(0xFF9CA3AF) : _getCvrColor(cvr);
+        final cvrBadgeText = formatRatePercent(conv, views);
         final dayFunnel = _extractFunnelMetrics(
           _extractSourceCounts(stat['source_details']),
         );
@@ -3571,7 +3623,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getCvrColor(cvr).withValues(alpha: 0.1),
+                color: cvrBadgeColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Column(
@@ -3580,11 +3632,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${cvr.toStringAsFixed(1)}%',
+                    cvrBadgeText,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: _getCvrColor(cvr),
+                      color: cvrBadgeColor,
                       height: 1.5,
                     ),
                   ),
@@ -3592,7 +3644,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     'CVR',
                     style: TextStyle(
                       fontSize: 10,
-                      color: _getCvrColor(cvr),
+                      color: cvrBadgeColor,
                       height: 1.5,
                     ),
                   ),
@@ -5719,6 +5771,184 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     } catch (_) {
       if (mounted) setState(() => _growthSummaryLoading = false);
     }
+  }
+
+  /// R17: X 学習ループ(growth-hub x.performance_context)を意思決定点へ露出する
+  /// read-only カード。データ無しは SizedBox.shrink() で静かに消える。空(bestVariant
+  /// が既定 'daily_briefing' に落ちる)を勝ち型に見せないため、必ず非空ガードの内側。
+  Widget _buildXGrowthLoopSection() {
+    final perf = _xPerformanceContext;
+    if (perf == null) return const SizedBox.shrink();
+    final rows = perf['rows'] is List ? perf['rows'] as List : const [];
+    final variants = perf['variants'] is List ? perf['variants'] as List : null;
+    final loop = resolveXGrowthLoop(
+      measuredCount: rows.length,
+      distinctVariantCount: distinctMeasuredVariants(variants),
+      postedTodayCount: _toInt(_xTodayStatus?['postedTodayCount']),
+    );
+    if (loop.state == XGrowthLoopState.hidden) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final freshness = _xGrowthLoopFreshness();
+    final lines = <Widget>[];
+
+    switch (loop.state) {
+      case XGrowthLoopState.awaitingMetrics:
+        lines.add(
+          _growthLoopLine(
+            Icons.warning_amber_rounded,
+            const Color(0xFFF59E0B),
+            '本日の投稿はまだ計測されていません。spend-cap 到達や metrics 収集 cron の'
+            '停止で計測が止まっていないか確認してください（console.x.com の支出上限）。',
+          ),
+        );
+        break;
+      case XGrowthLoopState.sampling:
+        lines.add(
+          _growthLoopLine(
+            Icons.hourglass_bottom,
+            const Color(0xFF6366F1),
+            '学習サンプル ${loop.measuredCount}件（variant ${loop.distinctVariantCount}種）。'
+            '勝ちパターンの比較表示まで、あと数投稿ぶんのデータが必要です。',
+          ),
+        );
+        break;
+      case XGrowthLoopState.unlocked:
+        final bestVariant = perf['bestVariant']?.toString();
+        if (bestVariant != null && bestVariant.isNotEmpty) {
+          lines.add(
+            _growthLoopLine(
+              Icons.emoji_events_outlined,
+              const Color(0xFF0D9488),
+              '今の勝ち型: $bestVariant',
+            ),
+          );
+        }
+        for (final line in _xGrowthVariantRankingLines(variants)) {
+          lines.add(
+            _growthLoopLine(
+              Icons.leaderboard_outlined,
+              const Color(0xFF6366F1),
+              line,
+            ),
+          );
+        }
+        final winnerHook = _xGrowthWinnerHook(perf['winners']);
+        if (winnerHook != null) {
+          lines.add(
+            _growthLoopLine(
+              Icons.format_quote,
+              const Color(0xFF9CA3AF),
+              '真似る型: $winnerHook',
+            ),
+          );
+        }
+        break;
+      case XGrowthLoopState.hidden:
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: theme.colorScheme.surfaceContainerLow,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.insights,
+                    size: 18,
+                    color: Color(0xFF0D9488),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'X 成長ループ（計測から勝ち型を学ぶ）',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...lines,
+              const SizedBox(height: 8),
+              Text(
+                freshness,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _growthLoopLine(IconData icon, Color color, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.6,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// variants(平均スコア降順)から上位3種を「{variant} 平均{score} (n={count})」に。
+  List<String> _xGrowthVariantRankingLines(List<dynamic>? variants) {
+    if (variants == null) return const [];
+    final lines = <String>[];
+    for (final entry in variants) {
+      if (entry is! Map) continue;
+      final name = (entry['variant'] ?? '').toString().trim();
+      if (name.isEmpty || name == 'unknown') continue;
+      final score = _toInt(entry['averageScore']);
+      final count = _toInt(entry['count']);
+      lines.add('$name 平均$score (n=$count)');
+      if (lines.length >= 3) break;
+    }
+    return lines;
+  }
+
+  String? _xGrowthWinnerHook(dynamic winners) {
+    if (winners is! List || winners.isEmpty) return null;
+    final first = winners.first;
+    if (first is! Map) return null;
+    final text = (first['text'] ?? '').toString().trim();
+    if (text.isEmpty) return null;
+    return text.length <= 60 ? text : '${text.substring(0, 58)}…';
+  }
+
+  String _xGrowthLoopFreshness() {
+    final collected =
+        DateTime.tryParse(_xTodayStatus?['lastCollectedAt']?.toString() ?? '')
+            ?.toLocal();
+    if (collected == null) return '最終計測: 計測待ち';
+    final days = DateTime.now().difference(collected).inDays;
+    final hours = DateTime.now().difference(collected).inHours;
+    if (days >= 1) return '最終計測: $days日前';
+    if (hours >= 1) return '最終計測: $hours時間前';
+    return '最終計測: 1時間以内';
   }
 
   Widget _buildGrowthAchievementSummaryCard() {
