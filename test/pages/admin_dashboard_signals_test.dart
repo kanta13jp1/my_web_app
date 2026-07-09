@@ -170,4 +170,96 @@ void main() {
       expect(s.anon, 3);
     });
   });
+
+  group('R20 X成長ループ freshness (perf-context source, not today-status)', () {
+    final now = DateTime(2026, 7, 10, 12, 0);
+
+    test('measuredCount 0 → 計測待ち (the only honest waiting state)', () {
+      expect(
+        resolveXGrowthLoopFreshness(
+          measuredCount: 0,
+          newestMeasuredAt: null,
+          now: now,
+        ),
+        '最終計測: 計測待ち',
+      );
+    });
+
+    test('measured but no parseable date → 計測済み N件, never 計測待ち', () {
+      final r = resolveXGrowthLoopFreshness(
+        measuredCount: 12,
+        newestMeasuredAt: null,
+        now: now,
+      );
+      expect(r, '計測済み 12件');
+      expect(r.contains('計測待ち'), isFalse);
+    });
+
+    test('measured with recent date → 最新サンプル relative', () {
+      expect(
+        resolveXGrowthLoopFreshness(
+          measuredCount: 12,
+          newestMeasuredAt: now.subtract(const Duration(days: 3)),
+          now: now,
+        ),
+        '最新サンプル: 3日前',
+      );
+      expect(
+        resolveXGrowthLoopFreshness(
+          measuredCount: 12,
+          newestMeasuredAt: now.subtract(const Duration(hours: 2)),
+          now: now,
+        ),
+        '最新サンプル: 2時間前',
+      );
+    });
+
+    test('future timestamp → falls through to 計測済み N件', () {
+      expect(
+        resolveXGrowthLoopFreshness(
+          measuredCount: 12,
+          newestMeasuredAt: now.add(const Duration(hours: 5)),
+          now: now,
+        ),
+        '計測済み 12件',
+      );
+    });
+
+    test('newestMeasuredCreatedAt: max across rows (rows are score-sorted)',
+        () {
+      // rows[0] は高スコアの古い投稿、後続に新しい投稿 → 最新を返すこと。
+      final rows = [
+        {'createdAt': '2026-07-01T00:00:00Z', 'score': 200},
+        {'createdAt': '2026-07-08T00:00:00Z', 'score': 10},
+        {'createdAt': '2026-07-05T00:00:00Z', 'score': 50},
+      ];
+      expect(
+        newestMeasuredCreatedAt(rows),
+        DateTime.parse('2026-07-08T00:00:00Z'),
+      );
+      expect(newestMeasuredCreatedAt(null), isNull);
+      expect(
+        newestMeasuredCreatedAt([
+          {'createdAt': 'bad'},
+        ]),
+        isNull,
+      );
+    });
+  });
+
+  group('R20 formatAgeAwareDate (yearless MM/dd hides old dates)', () {
+    final now = DateTime(2026, 7, 10);
+    test('recent same-year → MM/dd', () {
+      expect(formatAgeAwareDate('2026-07-05T00:00:00Z', now), '07/05');
+    });
+    test('same-year but > staleDays → yyyy/MM/dd', () {
+      expect(formatAgeAwareDate('2026-04-14T00:00:00Z', now), '2026/04/14');
+    });
+    test('different year → yyyy/MM/dd', () {
+      expect(formatAgeAwareDate('2025-12-20T00:00:00Z', now), '2025/12/20');
+    });
+    test('unparseable → raw', () {
+      expect(formatAgeAwareDate('n/a', now), 'n/a');
+    });
+  });
 }
