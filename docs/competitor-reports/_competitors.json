@@ -178,6 +178,13 @@
       "category": "AI dev tool / agent-first coding platform (Antigravity 2.0 = desktop+CLI+SDK+managed agents) + async autonomous coding agent (Jules) / self L1 lane + fallback runbook 直結",
       "added": "discovery",
       "added_date": "2026-07-02"
+    },
+    {
+      "name": "Lindy AI",
+      "url": "https://www.lindy.ai",
+      "category": "personal AI executive assistant / autonomous life-admin agent (consumer, mobile-first)",
+      "added": "discovery",
+      "added_date": "2026-07-10"
     }
   ],
   "discovery_history": [
@@ -844,6 +851,21 @@
       "category": "skip",
       "reason": "cooldown / 7-day since 2026-07-02 (Google Jules / Antigravity) / next unlock 2026-07-09. 第1候補=OpenCode (v1.17.13 / 7-01 / Opencode-managed provider + MCP resource template/read tools / Sonnet 5 adaptive thinking / 160K+ stars). 7/08 delta=全threadが継続シグナル (White House 自主基準 未確定 / Fable 5 switch 実行済 / Gemini 3.5 Pro ~7/17 architectural rebuild / MF AI Cowork orchestrator+My Agents 判明) = 新規採択に足る novel candidate 無し",
       "skipped": true
+    },
+    {
+      "date": "2026-07-10",
+      "name": "Lindy AI",
+      "category": "personal AI executive assistant / autonomous life-admin agent (consumer, mobile-first)",
+      "reason": "cooldown 明け初サイクル (7-02 Google Jules / Antigravity 採択 + 7-day / next unlock 2026-07-09 経過 / 25→26 社 / cap 50)。採択理由 = 基準 a+b 主導のダイバーシフィケーション是正。(1) 直近 discovery 11 件中 10 件が AI dev tool = 追跡リストが 25 社中 ~13 社 coding tool へ極端に偏り、自社の実プロダクト領域 (= 個人ライフ/家計マネジメント super-app) の競合カバレッジが空洞化していた。(2) Lindy AI = パーソナル AI エグゼクティブアシスタント (受信箱トリアージ + 自分の文体での返信ドラフト + 会議スケジュール + 事前ブリーフ + Daily Brief / iMessage・SMS 主体のモバイル/コンシューマ先行 / 有料ユーザ 40 万人超 / Menlo・Battery・Coatue・Tiger Global から ~$50M 調達 / Gaia 電話エージェント + Computer Use + agent swarms + app builder + enterprise tier / Claude Sonnet 4.5 統合)。自社差別化軸 (= 個人 CEO × AI エージェント統合 × KPI 自動追跡) と正面競合 (基準 a) かつ既存 26 社が誰もカバーしていない『コンシューマ/パーソナル自律 AI アシスタント』カテゴリの代表 (基準 b)。コンシューマ/モバイル先行 (iMessage/SMS・個人課金 40 万人) は自社『個人ライフ CEO ダッシュボード』のターゲットセグメントと直撃。基準 c = 2026-02 パーソナル AI エグゼクティブアシスタントへ relaunch + 2025-2026 に Gaia/Computer Use/agent swarms/app builder を連続投入で『動きのある会社』。NOTE: 6 サイクル queue されていた第1候補 OpenCode (171-178K stars・7.5M MAU・75+ providers・ローカルモデル) は今回意図的に見送り = 追加すると coding tool が 14/26 へ更に偏り基準 b に逆行、かつ OpenCode は自社『製品』でなく開発『ツーリング/fleet-routing』の競合 → signal 層/将来 AI 振り分け matrix 候補として skip 継続。https://www.lindy.ai/ + https://mastra.ai/blog/best-personal-ai-assistants-in-2026",
+      "skipped_candidates": [
+        "OpenCode (= 6 サイクル queue 済 第1候補 / 171-178K stars・1.68M weekly npm DL・7.5M MAU・75+ providers・ローカルモデル [Ollama/LM Studio/llama.cpp]・OpenCode Zen 従量 / だが coding tool 14/26 偏り悪化で基準 b 逆行 + 製品でなくツーリング競合 = signal 層/fleet-routing 候補として skip 継続 / 次の coding-tool サイクルで再評価)",
+        "Motion (= AI SuperApp for Work / $550M valuation・$102M 調達 / project/task/calendar/Gantt = ワーク/チーム寄りで個人ライフ軸から遠い + 直近 delta [email/Siri 統合] は minor / 次点コンシューマ候補)",
+        "OpenAI GPT-5.6 Sol/Terra/Luna (= Codex 既収載ベンダー派生 / 6-26 投入・Codex 既定化)",
+        "Microsoft Copilot Cowork (= MAI-Code 既収載ベンダー / back-office 三つ巴)",
+        "Zo (= autonomous computer / persistent workflows / 動向観察)",
+        "Glean (= enterprise search→agent / 観察)",
+        "Warp (= terminal-native agentic dev / 観察 1 月)"
+      ]
     }
   ],
   "_schema_notes": {
