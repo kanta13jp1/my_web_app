@@ -210,13 +210,46 @@ ${options.body}
 `;
 }
 
+/// Article 構造化データ (JSON-LD)。非JSクローラー / LLM / 検索エンジンに
+/// 公開メモを「記事」として認識させる。<script> ブレイクアウト防止のため
+/// `<` を < にエスケープする。
+export function renderPublicMemoArticleJsonLd(row: PublicMemoViewRow): string {
+  const title = row.title ?? `Public Memo #${row.id}`;
+  const appUrl = buildPublicMemoPageUrl(row.id);
+  const article: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description: buildPublicMemoExcerpt(row.content),
+    inLanguage: "ja",
+    mainEntityOfPage: appUrl,
+    url: appUrl,
+    author: { "@type": "Organization", name: PUBLIC_MEMO_SITE_NAME },
+    publisher: {
+      "@type": "Organization",
+      name: PUBLIC_MEMO_SITE_NAME,
+      logo: {
+        "@type": "ImageObject",
+        url: "https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png",
+      },
+    },
+  };
+  const tags = extractPublicMemoTags(row);
+  if (tags.length > 0) article.keywords = tags.join(", ");
+  if (row.published_at) article.datePublished = row.published_at;
+  if (row.updated_at) article.dateModified = row.updated_at;
+  const json = JSON.stringify(article).replaceAll("<", "\\u003c");
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
 export function renderPublicMemoHtml(row: PublicMemoViewRow): string {
   const title = row.title ?? `Public Memo #${row.id}`;
   const appUrl = buildPublicMemoPageUrl(row.id);
   const jsonHref = escapeHtml(
     `?action=memo.public.view&id=${row.id}&format=json`,
   );
-  const body = `<article>
+  const body = `${renderPublicMemoArticleJsonLd(row)}
+<article>
 <h1>${escapeHtml(title)}</h1>
 <p>${escapeHtml(memoMetaLine(row))}</p>
 <div style="white-space:pre-wrap">${escapeHtml(row.content ?? "")}</div>

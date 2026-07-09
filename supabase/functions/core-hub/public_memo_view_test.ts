@@ -12,6 +12,7 @@ import {
   normalizePublicMemoSearchQuery,
   publicMemoToPayload,
   type PublicMemoViewRow,
+  renderPublicMemoArticleJsonLd,
   renderPublicMemoHtml,
   renderPublicMemoListHtml,
   renderPublicMemoListMarkdown,
@@ -180,6 +181,39 @@ Deno.test("renderPublicMemoHtml embeds escaped content and OGP tags", () => {
     html,
     "?action=memo.public.view&amp;id=44&amp;format=json",
   );
+});
+
+Deno.test("renderPublicMemoArticleJsonLd emits valid escaped Article schema", () => {
+  const script = renderPublicMemoArticleJsonLd(
+    sampleRow({
+      content: "本文 </script><b>x</b>",
+      metadata: { tags: ["選挙"] },
+    }),
+  );
+  assertStringIncludes(script, '<script type="application/ld+json">');
+  // <script> ブレイクアウト防止: 生の </script> が本文由来で出てはいけない
+  assert(!script.slice(30).includes("</script><b>"));
+  const jsonText = script
+    .replace('<script type="application/ld+json">', "")
+    .replace("</script>", "")
+    .replaceAll("\\u003c", "<");
+  const parsed = JSON.parse(jsonText);
+  assertEquals(parsed["@type"], "Article");
+  assertEquals(parsed.headline, "地方議員データ更新メモ");
+  assertEquals(parsed.datePublished, "2026-07-01T09:30:00+09:00");
+  assertEquals(parsed.dateModified, "2026-07-02T10:00:00+09:00");
+  assertEquals(parsed.keywords, "選挙");
+  assertEquals(
+    parsed.mainEntityOfPage,
+    "https://my-web-app-b67f4.web.app/public-memo?id=44",
+  );
+  assertEquals(parsed.author.name, "自分株式会社");
+});
+
+Deno.test("renderPublicMemoHtml embeds the Article JSON-LD in body", () => {
+  const html = renderPublicMemoHtml(sampleRow());
+  assertStringIncludes(html, '"@type":"Article"');
+  assertStringIncludes(html, '<script type="application/ld+json">');
 });
 
 Deno.test("renderPublicMemoMarkdown carries title, meta, and body", () => {
