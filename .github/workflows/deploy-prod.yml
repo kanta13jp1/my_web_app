@@ -687,7 +687,8 @@ jobs:
           python3 scripts/prerender_seo_routes.py \
             --template build/web/index.html \
             --outdir build/web \
-            --routes web/seo/comparison-routes.json
+            --routes web/seo/comparison-routes.json \
+            --public-routes web/seo/public-routes.json
           # 実在ルートのみの sitemap を当日 lastmod で再生成 (build 済みへ出力)
           python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
           echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true

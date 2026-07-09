@@ -160,6 +160,69 @@ def build_route_html(template: str, route: dict, base_url: str) -> str:
     return out
 
 
+def build_public_route_html(template: str, route: dict, base_url: str) -> str:
+    """実在公開ルート (競合比較以外) の静的HTML。自己参照 canonical + 固有
+    title/meta/OG + WebPage JSON-LD + seo-shell にクロール可能な本文。"""
+    path = route["path"]
+    title = route["title"]
+    desc = route["description"]
+    h1 = route.get("h1", title)
+    points = route.get("points", [])
+    url = f"{base_url}{path}"
+    esc_title = html.escape(title)
+    esc_desc = html.escape(desc)
+    esc_url = html.escape(url)
+
+    out = template
+    out = re.sub(r"<title>.*?</title>",
+                 f"<title>{esc_title}</title>", out, count=1, flags=re.DOTALL)
+    out = re.sub(r'(<link rel="canonical" href=")[^"]*(">)',
+                 lambda m: m.group(1) + esc_url + m.group(2), out, count=1)
+    out = replace_attr_content(
+        out, r'(<meta\s+name="description"\s+content=")([^"]*)(")', desc)
+    out = replace_attr_content(
+        out, r'(<meta property="og:title" content=")([^"]*)(")', title)
+    out = replace_attr_content(
+        out, r'(<meta\s+property="og:description"\s+content=")([^"]*)(")', desc)
+    out = replace_attr_content(
+        out, r'(<meta property="og:url" content=")([^"]*)(")', url)
+    out = replace_attr_content(
+        out, r'(<meta property="twitter:title" content=")([^"]*)(")', title)
+    out = replace_attr_content(
+        out, r'(<meta\s+property="twitter:description"\s+content=")([^"]*)(")', desc)
+    out = replace_attr_content(
+        out, r'(<meta property="twitter:url" content=")([^"]*)(")', url)
+
+    graph = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "@id": f"{url}#webpage",
+        "url": url,
+        "name": title,
+        "description": desc,
+        "inLanguage": "ja",
+        "isPartOf": {"@id": f"{base_url}/#website"},
+        "publisher": {"@id": f"{base_url}/#organization"},
+    }
+    json_ld = json.dumps(graph, ensure_ascii=False).replace("<", "\\u003c")
+    out = out.replace(
+        "</head>",
+        '  <script type="application/ld+json" data-prerender="public">'
+        f"{json_ld}</script>\n</head>", 1)
+
+    out = re.sub(r'(<h1 id="seo-title">).*?(</h1>)',
+                 lambda m: m.group(1) + html.escape(h1) + m.group(2),
+                 out, count=1, flags=re.DOTALL)
+    points_html = "".join(f"<li>{html.escape(p)}</li>" for p in points)
+    section = (
+        f'<p lang="ja">{esc_desc}</p>'
+        f'<section aria-label="{html.escape(h1)}" data-prerender="public-body">'
+        f"<ul>{points_html}</ul></section>"
+    )
+    out = re.sub(r'<p lang="ja">.*?</p>', section, out, count=1, flags=re.DOTALL)
+    return out
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--template", required=True,
@@ -167,6 +230,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--outdir", required=True,
                     help="出力先ルート (通常 build/web)")
     ap.add_argument("--routes", default="web/seo/comparison-routes.json")
+    ap.add_argument("--public-routes", default=None,
+                    help="公開ルート config (web/seo/public-routes.json)")
     ap.add_argument("--base-url", default=None,
                     help="省略時は routes JSON の site を使用")
     args = ap.parse_args(argv)
@@ -174,18 +239,30 @@ def main(argv: list[str]) -> int:
     template = Path(args.template).read_text(encoding="utf-8")
     config = json.loads(Path(args.routes).read_text(encoding="utf-8"))
     base_url = (args.base_url or config["site"]).rstrip("/")
-    routes = config["routes"]
 
     outdir = Path(args.outdir)
-    written = 0
-    for route in routes:
+    vs_written = 0
+    for route in config["routes"]:
         page = build_route_html(template, route, base_url)
         dest = outdir / f"vs-{route['slug']}" / "index.html"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(page, encoding="utf-8")
-        written += 1
+        vs_written += 1
 
-    print(f"prerendered {written} /vs-* routes into {outdir}")
+    pub_written = 0
+    if args.public_routes:
+        pub_config = json.loads(
+            Path(args.public_routes).read_text(encoding="utf-8"))
+        pub_base = (args.base_url or pub_config["site"]).rstrip("/")
+        for route in pub_config["routes"]:
+            page = build_public_route_html(template, route, pub_base)
+            dest = outdir / route["path"].strip("/") / "index.html"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(page, encoding="utf-8")
+            pub_written += 1
+
+    print(f"prerendered {vs_written} /vs-* + {pub_written} public routes "
+          f"into {outdir}")
     return 0
 
 

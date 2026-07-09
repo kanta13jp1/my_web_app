@@ -9,7 +9,10 @@ import xml.dom.minidom
 from pathlib import Path
 
 from scripts.generate_sitemap import PUBLIC_ROUTES, build_sitemap
-from scripts.prerender_seo_routes import build_route_html
+from scripts.prerender_seo_routes import (
+    build_public_route_html,
+    build_route_html,
+)
 
 TEMPLATE = """<!DOCTYPE html>
 <html lang="ja">
@@ -112,6 +115,41 @@ class PrerenderRouteTest(unittest.TestCase):
         # BreadcrumbList の最終要素が自 URL
         bc = next(g for g in parsed["@graph"] if g["@type"] == "BreadcrumbList")
         self.assertEqual(bc["itemListElement"][-1]["item"], f"{BASE}/vs-notion")
+
+
+PUBLIC_ROUTE = {
+    "path": "/competitors",
+    "title": "競合比較 174社 | 自分株式会社",
+    "description": "174社以上と比較。<b>統合</b> & 一元管理。",
+    "h1": "競合174社との比較",
+    "points": ["ポイントA", "ポイントB </script>"],
+}
+
+
+class PublicRouteTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.out = build_public_route_html(TEMPLATE, PUBLIC_ROUTE, BASE)
+
+    def test_self_canonical_and_title(self) -> None:
+        self.assertIn(
+            '<link rel="canonical" href="https://my-web-app-b67f4.web.app/competitors">',
+            self.out,
+        )
+        self.assertIn("<title>競合比較 174社 | 自分株式会社</title>", self.out)
+        self.assertNotIn("<title>ホーム | 自分株式会社</title>", self.out)
+
+    def test_body_and_jsonld(self) -> None:
+        self.assertIn('<h1 id="seo-title">競合174社との比較</h1>', self.out)
+        self.assertIn('data-prerender="public-body"', self.out)
+        self.assertIn("<li>ポイントA</li>", self.out)
+        vs = re.findall(
+            r'<script type="application/ld\+json" data-prerender="public">(.*?)</script>',
+            self.out, re.DOTALL)
+        self.assertEqual(len(vs), 1)
+        self.assertNotIn("</script></script>", self.out)
+        parsed = json.loads(vs[0].replace("\\u003c", "<"))
+        self.assertEqual(parsed["@type"], "WebPage")
+        self.assertEqual(parsed["url"], f"{BASE}/competitors")
 
 
 class SitemapTest(unittest.TestCase):
