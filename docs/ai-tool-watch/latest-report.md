@@ -1,15 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-08T22:17:40Z`
-- Previous check: `2026-07-07T22:32:25Z`
-- Changed/new official sources: `4`
+- Checked at: `2026-07-09T22:44:15Z`
+- Previous check: `2026-07-08T22:17:40Z`
+- Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.205 / July 8, 2026
-- `changed` Codex changelog: 2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for
-- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Codex changelog: 2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a
+- `changed` Codex use cases: ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -39,16 +38,16 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for
+  - Latest signal: 2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: Added previews for image and file attachments before sending.
+  - Short signal: Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
+  - Short signal: Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
-  - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+  - Latest signal: ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...
-  - Short signal: Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.
+  - Short signal: ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs...
+  - Short signal: Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...
 - **Codex overview** (HTTP 403)
   - URL: https://openai.com/codex/
   - Latest signal: No title detected
