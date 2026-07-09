@@ -93,6 +93,12 @@ jobs:
           check "view txt"         "$BASE?action=memo.public.view&id=$MEMO_ID&format=txt" "200" "App URL:"
           check "amp-mangled rescue" "$BASE?action=memo.public.view&amp;id=$MEMO_ID&amp;format=json" "200" "\"appUrl\""
 
+          # PR #3899: prerender 済み /vs-<slug> が固有本文 + 自己参照 canonical で
+          # 配信されること (SPA シェルではなく静的HTMLが Firebase 優先配信される)。
+          VS="https://my-web-app-b67f4.web.app/vs-notion"
+          check "prerender vs-notion body"      "$VS" "200" "data-prerender=\"vs-body\""
+          check "prerender vs-notion canonical" "$VS" "200" "href=\"https://my-web-app-b67f4.web.app/vs-notion\""
+
           exit "$FAIL"
 
       # 外部 AI / ブラウザ系フェッチャーのリクエスト形状を再現し、
