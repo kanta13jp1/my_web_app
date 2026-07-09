@@ -103,3 +103,34 @@ WeeklyDigestCardState weeklyDigestCardState({
 bool streakAtWindowCap(int streak, int windowLen) {
   return streak > 0 && windowLen > 0 && streak >= windowLen;
 }
+
+// R19: 登録ユーザー管理カードの契約バグ+捏造を吸収する純ロジック。
+// admin-hub users.list は {id, email, created_at(snake)} しか返さないのに、UI は
+// camelCase createdAt / 未送出の completionPct・lastSignInAt を読んで「登録日空」
+// 「プロフィール 0%」を捏造していた。ここで snake 優先のキー吸収と、email 空を
+// Supabase 匿名 auth の信頼プロキシとした実/匿名判定を提供する。
+
+/// email が空 = Supabase 匿名 auth ユーザー(headless 検証用 anon-signup)の信頼
+/// プロキシ。実ユーザー(実登録)と匿名テストを区別する。
+bool adminUserIsAnonymous(Map<String, dynamic> user) {
+  return (user['email'] ?? '').toString().trim().isEmpty;
+}
+
+/// 登録日時の生文字列を取り出す。edge の created_at(snake)を優先し、旧 UI が
+/// 読んでいた createdAt(camel)へ後方互換フォールバックする(R19 契約バグ修正)。
+String adminUserCreatedRaw(Map<String, dynamic> user) {
+  final snake = (user['created_at'] ?? '').toString().trim();
+  if (snake.isNotEmpty) return snake;
+  return (user['createdAt'] ?? '').toString().trim();
+}
+
+/// 登録ユーザー一覧を「実ユーザー / 匿名テスト」に分割して数える。捏造の
+/// completionPct(全員0)で bucket 化していた旧サマリの置き換え(合計44 vs 実CVR4
+/// の乖離=匿名を実ユーザーと誤認する虚栄を防ぐ)。
+({int real, int anon}) summarizeAdminUsers(List<Map<String, dynamic>> users) {
+  var anon = 0;
+  for (final user in users) {
+    if (adminUserIsAnonymous(user)) anon += 1;
+  }
+  return (real: users.length - anon, anon: anon);
+}
