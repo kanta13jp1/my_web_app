@@ -153,37 +153,94 @@ jobs:
           const jstLabel = process.env.JST_LABEL;
           const targetUrl = process.env.TARGET_URL;
 
+          const limitText = (value, max) => {
+            const text = clean(value);
+            return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
+          };
+
+          const categoryFor = (topic) => {
+            if (/政治|選挙|国会|政権|首相|税|財政|補正|与党|野党/.test(topic)) {
+              return '日本政治';
+            }
+            if (/米国|中国|欧州|イラン|ロシア|ウクライナ|原油|ホルムズ|国際|安全保障/.test(topic)) {
+              return '国際情勢';
+            }
+            if (/日経|株|市場|円|金利|決算|投資|Apple|Broadcom|LayerX|CEO|予算/.test(topic)) {
+              return '経済・市場';
+            }
+            if (/学校|教育|学習|大学|人材|小中|高校/.test(topic)) {
+              return '教育・人材';
+            }
+            if (/障害|復旧|インフラ|通信|クラウド|ファイル|セキュリティ/.test(topic)) {
+              return 'インフラ・運用';
+            }
+            if (/AI|OpenAI|Claude|GPT|Meta|ロボット|開発|OSS|GitHub|画像|動画|モデル/.test(topic)) {
+              return 'AI・テック';
+            }
+            return '情報整理';
+          };
+
+          const whyFor = (category) => ({
+            '日本政治': '制度変更は家計、事業、投資判断の前提を動かします。賛否より先に、誰の負担と選択肢が変わるかを見る必要があります。',
+            '国際情勢': '地政学ニュースはエネルギー、為替、供給網に遅れて効きます。遠い話題に見えても、生活コストや企業収益に波及します。',
+            '経済・市場': '企業投資や市場の動きは、個人の仕事選び、予算配分、資産管理にもつながります。数字の裏にある意思決定が重要です。',
+            '教育・人材': '情報活用が基礎力になるほど、子どもの教育だけでなく、大人の学び直しと仕事ログの残し方も変わります。',
+            'インフラ・運用': '便利なサービスほど、止まった瞬間に業務全体が止まります。復旧後も、どこに何を置くかの設計が問われます。',
+            'AI・テック': 'モデル名より重要なのは、何を任せ、何を人間が検証し、どう運用ログとして残すかです。仕事の型そのものが変わります。',
+            '情報整理': 'ニュースを読むだけでは行動に変わりません。仕事、学習、投資、生活のどの判断材料かに分けると使える情報になります。',
+          }[category]);
+
+          const outlookFor = (category) => ({
+            '日本政治': '今週は財源、制度設計、市場反応の3点を見ると流れを追いやすいです。',
+            '国際情勢': '次の焦点は当事国の発言より、原油、為替、物流コストに出る変化です。',
+            '経済・市場': '決算、投資額、為替、金利のどれが主因かを分けると短期の反応を読みやすくなります。',
+            '教育・人材': '実施時期、学校現場の負担、企業側が求める基礎スキルの変化に注目です。',
+            'インフラ・運用': '再発防止策、代替手段、ログ管理が整うかを見ると実務への影響が見えます。',
+            'AI・テック': '明日見るべきは性能比較より、料金、権限管理、レビュー品質、実務導入のしやすさです。',
+            '情報整理': '保存する前に、何を決めるための情報かを一文で書けるかが分かれ目です。',
+          }[category]);
+
+          const briefingItem = (index, topic) => {
+            const category = categoryFor(topic);
+            const headline = limitText(topic, 64);
+            return [
+              `${index}. 【${category}】${headline}`,
+              `見出し：${headline}`,
+              `なぜ重要か：${whyFor(category)}`,
+              `見通し：${outlookFor(category)}`,
+            ].join('\n\n');
+          };
+
           const lead = [
             `デイリーブリーフィング — ${jstLabel} 朝`,
-            '今日の注目テーマを、仕事で使う判断材料に圧縮します。',
-            '1つ選ぶなら、どれを深掘りしますか？',
+            '今日の5本を、仕事で使う判断材料に圧縮します。',
+            `1本目は「${limitText(topics[0], 38)}」。`,
+            'どれを深掘りしますか？',
           ].join('\n');
 
+          const categoryOptions = [...new Set(topics.map(categoryFor))]
+            .filter((category) => category !== '情報整理')
+            .slice(0, 3);
+          const pollOptions = [...categoryOptions, '情報整理']
+            .slice(0, 4);
+          while (pollOptions.length < 4) {
+            const next = ['AI仕事術', '政治経済', '開発メモ', '学習ログ']
+              .find((option) => !pollOptions.includes(option));
+            pollOptions.push(next ?? '仕事ログ');
+          }
+
           const replies = [
+            ...topics.slice(0, 5).map((topic, index) =>
+              briefingItem(index + 1, topic)
+            ),
             [
-              `1. 【今日の注目】${topics[0]}`,
-              'なぜ重要か：伸びる話題は、感情だけでなく「自分の判断にどう影響するか」まで整理されていることが多いです。',
-              '見通し：まずは事実、論点、次に見る数字の3点に分けると、保存されやすい投稿になります。',
-            ].join('\n'),
-            [
-              `2. 【情報整理】${topics[1]}`,
-              '散らかったニュースをそのまま読むより、仕事、学習、投資、生活のどれに効くかで分類すると行動に変わります。',
-              '今日は「あとで読む」より「何を決める材料か」で残すのがコツです。',
-            ].join('\n'),
-            [
-              `3. 【AI/開発】${topics[2]}`,
-              'AI時代の差は、生成する量よりも、入力する材料と検証ログの質に出ます。',
-              '使ったプロンプト、失敗した出力、直した理由を1つの作業空間に残せると、次の改善が速くなります。',
-            ].join('\n'),
-            [
-              `4. 【市場/社会】${topics[3]}`,
-              '大きな話題ほど、賛否より先に「誰のコストが増え、誰の選択肢が増えるか」を見ると読み違えにくいです。',
-              '短期の反応と、中期の制度変更を分けて見るのが今日のポイントです。',
-            ].join('\n'),
-            [
-              `5. 【今日の問い】${topics[4]}`,
-              'あなたが今いちばん困っているのは、ニュースの量、仕事ログの散乱、学習メモの迷子、どれですか？',
-              '返信で教えてください。明日のブリーフィングの材料にします。',
+              '今日の問い：',
+              'AI時代の情報整理で一番困っているのはどれですか？',
+              'A. ニュースが多すぎる',
+              'B. 仕事ログが散らかる',
+              'C. 学習メモが続かない',
+              'D. AIに何を任せるか迷う',
+              '返信で教えてください。明日の改善材料にします。',
             ].join('\n'),
             [
               'この形式で、毎朝の情報整理をAI仕事OSとして試作中です。',
@@ -197,7 +254,7 @@ jobs:
             text: lead,
             replyTexts: replies,
             poll: {
-              options: ['情報整理', 'AI仕事術', '政治経済', '開発メモ'],
+              options: pollOptions,
               durationMinutes: 1440,
             },
             source: process.env.SOURCE,
@@ -205,7 +262,7 @@ jobs:
             experimentKey: process.env.EXPERIMENT_KEY,
             variant: process.env.VARIANT,
             utmContent: process.env.VARIANT,
-            promptProfile: 'workflow_daily_briefing_v1',
+            promptProfile: 'workflow_daily_briefing_v2_deep_briefing',
             contentKind: 'daily_briefing_thread',
             linkInReply: true,
             dryRun: process.env.DRY_RUN === 'true',
