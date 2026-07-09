@@ -678,6 +678,20 @@ jobs:
         run: |
           sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
 
+      - name: Prerender per-route static HTML + sitemap (SEO)
+        run: |
+          # SEO 監査 H1/H2/H4/H3 対応。厳選 /vs-<slug> の静的HTML (自己参照
+          # canonical + 固有 meta/JSON-LD + クロール可能本文) を build/web に生成。
+          # Firebase は一致する静的ファイルを ** rewrite より優先配信するため、
+          # firebase.json 変更なし・SPA 無破壊で per-route インデックス性を回復する。
+          python3 scripts/prerender_seo_routes.py \
+            --template build/web/index.html \
+            --outdir build/web \
+            --routes web/seo/comparison-routes.json
+          # 実在ルートのみの sitemap を当日 lastmod で再生成 (build 済みへ出力)
+          python3 scripts/generate_sitemap.py --out build/web/sitemap.xml
+          echo "prerendered vs-* pages:"; ls build/web/ | grep -c '^vs-' || true
+
       - name: Setup Node for Firebase CLI
         uses: actions/setup-node@v6
         with:
