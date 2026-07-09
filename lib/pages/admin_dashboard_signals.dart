@@ -72,9 +72,34 @@ int distinctMeasuredVariants(List<dynamic>? variants) {
   final seen = <String>{};
   for (final entry in variants) {
     if (entry is! Map) continue;
-    final name = (entry['variant'] ?? '').toString().trim();
+    var name = (entry['variant'] ?? '').toString().trim();
     if (name.isEmpty || name == 'unknown') continue;
+    // R18: `${variant}_fallback`(定型フォールバックの劣化版)は base variant と
+    // 同一戦略なので base に畳んで数える。daily_briefing + daily_briefing_fallback
+    // を2種と誤認して「勝ち型」を false-unlock しない(実データはまだ1戦略のみ)。
+    if (name.endsWith('_fallback')) {
+      name = name.substring(0, name.length - '_fallback'.length);
+    }
+    if (name.isEmpty) continue;
     seen.add(name);
   }
   return seen.length;
+}
+
+/// R18: 週次ダイジェストカードの3状態。fetch 完了(loaded)とデータ有無(hasData)を
+/// 分離し、静かに失敗/空の週を無限「読み込み中」ではなく正直な「計測待ち」にする。
+enum WeeklyDigestCardState { loading, empty, data }
+
+WeeklyDigestCardState weeklyDigestCardState({
+  required bool loaded,
+  required bool hasData,
+}) {
+  if (!loaded) return WeeklyDigestCardState.loading;
+  return hasData ? WeeklyDigestCardState.data : WeeklyDigestCardState.empty;
+}
+
+/// R18: 連続登録ゼロ日が集計窓(30日)を使い切っているか。true のとき値は下限で、
+/// 実際はそれ以上の可能性があるため「N日以上」と正直に表示する。
+bool streakAtWindowCap(int streak, int windowLen) {
+  return streak > 0 && windowLen > 0 && streak >= windowLen;
 }

@@ -92,6 +92,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Map<String, dynamic>? _xPerformanceContext;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
+  // R18: fetch 完了フラグ。empty() のままか、完了して空かを区別し、静かに失敗/空の
+  // 週を無限「読み込み中」ではなく正直な「計測待ち」に落とす。
+  bool _weeklyDigestLoaded = false;
   late final SupabaseClient _supabase;
   final _growthService = const GrowthMissionService();
   List<Map<String, dynamic>> _featureRequests = [];
@@ -747,9 +750,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     try {
       final digest = await _growthService.loadWeeklyDigest();
       if (!mounted) return;
-      if (mounted) setState(() => _weeklyDigest = digest);
+      // R18: 完了フラグを立てて loading と loaded-empty を区別する
+      // (loadWeeklyDigest は内部で握りつぶし empty() を返すため rethrow しない)。
+      setState(() {
+        _weeklyDigest = digest;
+        _weeklyDigestLoaded = true;
+      });
     } catch (e) {
       debugPrint('weekly digest load error: $e');
+      if (mounted) setState(() => _weeklyDigestLoaded = true);
     }
   }
 
@@ -1608,6 +1617,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         : 0;
     final zeroRegistrationStreakDays =
         _countConsecutiveNoRegistrationDays(_dailyStats);
+    // R18: streak が集計窓(_dailyStats)を使い切っていると値は下限。実際はそれ以上
+    // なので「N日以上」と正直に出す(30 をちょうどの安心値に見せない)。
+    final zeroStreakAtCap = streakAtWindowCap(
+      zeroRegistrationStreakDays,
+      _dailyStats.length,
+    );
     final averageViewsLast7Days = _averageViews(_dailyStats);
 
     return Scaffold(
@@ -1759,6 +1774,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       todayDropBeforeTrial: todayDropBeforeTrial,
                       totalDropBeforeTrial: totalDropBeforeTrial,
                       zeroRegistrationStreakDays: zeroRegistrationStreakDays,
+                      zeroStreakAtCap: zeroStreakAtCap,
                       averageViewsLast7Days: averageViewsLast7Days,
                       totalTrialRate: _formatRate(
                         totalFunnel.trialRuns,
@@ -2666,12 +2682,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required int todayDropBeforeTrial,
     required int totalDropBeforeTrial,
     required int zeroRegistrationStreakDays,
+    required bool zeroStreakAtCap,
     required double averageViewsLast7Days,
     required String totalTrialRate,
     required String? registrationsPerLpView,
   }) {
+    // R18: 集計窓を使い切っていたら「N日以上」(実際はそれ以上)と正直に。
+    final streakLabel =
+        '$zeroRegistrationStreakDays日${zeroStreakAtCap ? '以上' : ''}';
     final alertText = zeroRegistrationStreakDays >= 3
-        ? '登録ゼロが$zeroRegistrationStreakDays日連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
+        ? '登録ゼロが$streakLabel連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
         : todayDropBeforeTrial > 0
             ? '今日は流入がありますが、体験前に$todayDropBeforeTrial件が離脱しています。無料体験の訴求を最優先で確認してください。'
             : '直近の登録導線は動いています。次は送信後の完了率を維持できているかを確認してください。';
@@ -2719,7 +2739,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 _buildMiniKpiChip(
                   label: '連続登録ゼロ日',
-                  value: '$zeroRegistrationStreakDays日',
+                  value: streakLabel,
                   color: const Color(0xFFB91C1C),
                 ),
                 _buildMiniKpiChip(
@@ -3393,6 +3413,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildWeeklyDigestCard(BuildContext context) {
     final d = _weeklyDigest;
     final hasData = d.currentWeekStart.isNotEmpty;
+    // R18: loading / loaded-empty / loaded-data の3状態に分けてヘッダ文言を決める。
+    final cardState = weeklyDigestCardState(
+      loaded: _weeklyDigestLoaded,
+      hasData: hasData,
+    );
+    final headerText = switch (cardState) {
+      WeeklyDigestCardState.loading => '読み込み中...',
+      WeeklyDigestCardState.empty => '今週はまだ計測データがありません（計測待ち）',
+      WeeklyDigestCardState.data =>
+        '${d.currentWeekStart} 〜 ${d.currentWeekEnd}',
+    };
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -3410,9 +3441,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  hasData
-                      ? '${d.currentWeekStart} 〜 ${d.currentWeekEnd}'
-                      : '読み込み中...',
+                  headerText,
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

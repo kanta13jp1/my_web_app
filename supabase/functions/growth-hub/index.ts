@@ -29,7 +29,10 @@ import {
   isRecentSignupCreatedAt,
   resolveSignupChannel,
 } from "./signup_notification.ts";
-import { filterRecentLogs } from "./metrics_window.ts";
+import {
+  filterCurrentStrategyLogs,
+  filterRecentLogs,
+} from "./metrics_window.ts";
 import { decideXPostPreflight } from "./x_post_preflight.ts";
 import { computeTodayStatus } from "./x_today_status.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
@@ -578,7 +581,27 @@ function compactPostText(value: unknown): string {
 }
 
 function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
-  const rows = logs
+  // R18: 学習(勝ち型/winner exemplar/生成プロンプトの Top hook)を「現行コピー
+  // 戦略」の投稿だけで測る。旧フォーマット(誤年 2024 の「デイリーブリーフィング —
+  // 日付 朝」)の高スコア旧投稿が勝ち型を占拠し廃止スタイルを再教育する実障害
+  // (2026-07-09)への対策。epoch 既定 2026-07-05 = 実日付注入/コピーリセット着地日。
+  // フィルタで全滅したら未フィルタへ fallback(データを絶対に隠さない)。両 knob は env。
+  const windowDays = Number(Deno.env.get("X_PERF_LEARN_WINDOW_DAYS") ?? "28");
+  const epochMs = Date.parse(
+    Deno.env.get("X_PERF_STRATEGY_EPOCH") ?? "2026-07-05",
+  );
+  const strategyLogs = filterCurrentStrategyLogs(
+    logs,
+    {
+      windowDays: Number.isFinite(windowDays) && windowDays > 0
+        ? windowDays
+        : 28,
+      epochMs,
+    },
+    Date.now(),
+  );
+  const effectiveLogs = strategyLogs.length > 0 ? strategyLogs : logs;
+  const rows = effectiveLogs
     .map((item) => {
       const metadata = asRecord(item.metadata);
       const latest = asRecord(metadata.latest_metrics);
