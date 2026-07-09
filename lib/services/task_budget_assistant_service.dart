@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef TaskBudgetAssistantInvoker =
-    Future<Map<String, dynamic>> Function(Map<String, dynamic> body);
+typedef TaskBudgetAssistantInvoker = Future<Map<String, dynamic>> Function(
+    Map<String, dynamic> body);
 
 class TaskBudgetAssistantDocument {
   const TaskBudgetAssistantDocument({
@@ -102,8 +102,8 @@ class TaskBudgetAssistantJob {
       artifact: artifact is Map<String, dynamic>
           ? artifact
           : artifact is Map
-          ? Map<String, dynamic>.from(artifact)
-          : <String, dynamic>{},
+              ? Map<String, dynamic>.from(artifact)
+              : <String, dynamic>{},
       createdAt: _asDate(map['created_at']),
       updatedAt: _asDate(map['updated_at']),
       completedAt: _asDate(map['completed_at']),
@@ -122,8 +122,8 @@ class TaskBudgetAssistantService {
   const TaskBudgetAssistantService({
     SupabaseClient? supabaseClient,
     TaskBudgetAssistantInvoker? invoker,
-  }) : _supabaseClient = supabaseClient,
-       _invoker = invoker;
+  })  : _supabaseClient = supabaseClient,
+        _invoker = invoker;
 
   final SupabaseClient? _supabaseClient;
   final TaskBudgetAssistantInvoker? _invoker;
@@ -216,8 +216,8 @@ TaskBudgetAssistantDetail _detailFromResponse(Map<String, dynamic> data) {
 
 void _throwIfError(Map<String, dynamic> data) {
   if (data['success'] == true) return;
-  final message = (data['error'] ?? data['message'] ?? 'admin-hub failed')
-      .toString();
+  final message =
+      (data['error'] ?? data['message'] ?? 'admin-hub failed').toString();
   throw StateError(message);
 }
 
