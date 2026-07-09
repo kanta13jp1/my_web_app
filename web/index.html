@@ -176,6 +176,40 @@
   }
   </script>
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://my-web-app-b67f4.web.app/#organization",
+        "name": "自分株式会社",
+        "alternateName": "Jibun Inc.",
+        "url": "https://my-web-app-b67f4.web.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png",
+          "width": 1200,
+          "height": 630
+        },
+        "sameAs": [
+          "https://x.com/kanta13jp1",
+          "https://github.com/kanta13jp1"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://my-web-app-b67f4.web.app/#website",
+        "url": "https://my-web-app-b67f4.web.app/",
+        "name": "自分株式会社",
+        "alternateName": "Jibun Inc.",
+        "inLanguage": "ja",
+        "publisher": { "@id": "https://my-web-app-b67f4.web.app/#organization" }
+      }
+    ]
+  }
+  </script>
+
   <style>
     :root {
       color-scheme: light;
@@ -941,9 +975,16 @@
         );
         setMeta('og:url', window.location.href);
         setMeta('twitter:url', window.location.href);
+        setCanonical(window.location.href);
       }
 
       if ((path === '/public-memo' || path.endsWith('/public-memo')) && memoId) {
+        // 公開メモは一意な公開コンテンツ。canonical をトップ固定のままにすると
+        // 重複としてトップへ集約され独立インデックスされないため自URLへ。
+        setCanonical(
+          'https://my-web-app-b67f4.web.app/public-memo?id=' +
+            encodeURIComponent(memoId)
+        );
         fetch(SUPABASE_FUNC_BASE + '/get-public-memo-preview?id=' + encodeURIComponent(memoId))
           .then(function (res) { return res.json(); })
           .then(function (data) {
