@@ -77,6 +77,7 @@ import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
 import 'package:my_web_app/pages/ai_observability_page.dart';
+import 'package:my_web_app/pages/ai_router_cost_dashboard_page.dart';
 import 'package:my_web_app/pages/agent_gpa_dashboard_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
@@ -859,6 +860,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           case '/ai-observability':
             return MaterialPageRoute(
               builder: (_) => const AiObservabilityPage(),
+            );
+          case '/ai-router-cost-dashboard':
+            return MaterialPageRoute(
+              builder: (_) => const AiRouterCostDashboardPage(),
             );
           case '/agent-gpa-dashboard':
             return MaterialPageRoute(

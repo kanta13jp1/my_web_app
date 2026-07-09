@@ -134,6 +134,12 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
+            icon: const Icon(Icons.route_outlined, color: Colors.white70),
+            tooltip: 'AI Router Cost',
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/ai-router-cost-dashboard'),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white70),
             tooltip: '更新',
             onPressed: _loadLatest,
