@@ -15,12 +15,6 @@ on:
   # push トリガーは使わない — main push 直後は deploy-prod 完了前で誤検知するため。
   schedule:
     - cron: "7 21 * * *" # 毎日 06:07 JST
-  # 一時: PR #3899 (prerender) デプロイ後の実機検証用 (branch 限定 / 検証後に削除)
-  push:
-    branches:
-      - claude/page-accessibility-memo-qb499c
-    paths:
-      - ".github/workflows/public-memo-smoke.yml"
 
 permissions:
   contents: read
