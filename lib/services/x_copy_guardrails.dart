@@ -1,0 +1,117 @@
+// R21: X コピー生成のアンチスロップ・ガードレール(依存ゼロ = VM テスト可能)。
+//
+// なぜ必要か: X 投稿コピーの生成経路が2つあり、universal_x_share_service だけが
+// R11-R15 でアンチスロップ強化されていた。ダッシュボードの「X投稿を作る」CTA が
+// 飛ぶ CmoPage は別プロンプトで、旧世代の一般論スロップ(実測 2026-07-10:
+// 「あなたの価値、埋もれていませんか？…自分集客力を構築」)を再生産していた。
+// FEATURE-FACT / 禁止トークン / 機能名を1箇所へ集約し、両経路のドリフトを防ぐ。
+
+/// アプリの実在する具体機能(一次事実)。LLM はこの一覧を渡され、今日の主題に
+/// 直結する1つを名前で挙げるよう求められる。universal_x_share_service と
+/// CmoPage の両方がこの単一定数を参照する(byte-identical MOVE)。
+const List<String> kAppFeatureFacts = <String>[
+  '給料日サイクル: 給料日起点の窓で支出を実測し、過去分の二重控除を排除する家計把握',
+  '負債トレンド: 口座別の残高履歴を月次で検出し、翌月の具体アクションを提示',
+  'Xワンボタン投稿: 当日ニュースを字幕付きの短尺動画に自動要約して投稿',
+  '資産/負債の端末跨ぎ同期: 残高履歴を端末を跨いで同期し、いつでも同じ数字を見る',
+  '給与明細取込: 明細から手取りを取り込み、給料日サイクルの収入へ自動合算',
+];
+
+/// 空虚な精神論・造語のスロップトークン。R11-R15 の中核禁止語 + 2026-07-10 に
+/// CmoPage が実際に出力したスロップ語。生成後の検出(detectSlop)にも使う。
+const List<String> kSlopBannedTokens = <String>[
+  // R11-R15 の中核(両経路の語彙が乖離しないための drift guard)
+  '可能性があります',
+  '強力なツール',
+  '劇的に',
+  '大幅に',
+  '格段に',
+  '重要性を認識',
+  '効率よく整理',
+  'と言えるでしょう',
+  'game-changer',
+  'powerful tool',
+  // R21 実測スロップ(CmoPage が出した型)
+  '埋もれた才能',
+  '埋もれていませんか',
+  '最大限にアピール',
+  '社会で輝く',
+  '理想の未来へ',
+  '今すぐ一歩',
+  '自分集客力',
+  '価値、埋もれ',
+];
+
+/// 実在機能名(短縮キー)。生成物が固有機能に触れているか(hasFeatureAnchor)の判定用。
+const List<String> kFeatureNames = <String>[
+  '給料日サイクル',
+  '負債トレンド',
+  'Xワンボタン投稿',
+  '端末跨ぎ同期',
+  '給与明細',
+];
+
+/// CmoPage 用の生成プロンプトを組み立てる純関数。channel 非依存のアンチスロップ
+/// テキスト(FEATURE-FACT / 一人称 persona / 禁止語 / 具体性要求 / BAD→GOOD)を
+/// 追加し、既存の per-channel spec(長さ/tone)と {title,body,hashtags} 契約は
+/// 一切上書きしない(facebook も同プロンプトを共有するため長さは spec のまま)。
+String buildCmoDraftPrompt({
+  required String channelKey,
+  required String channelLabel,
+  required Map<String, String> spec,
+  required List<String> hashtags,
+}) {
+  final facts = kAppFeatureFacts.map((fact) => '- $fact').join('\n');
+  final banned = kSlopBannedTokens.map((token) => '「$token」').join(' / ');
+  return '''
+あなたは「自分株式会社」という一人会社を運営する開発者本人です。$channelLabel 向けの日本語コピーを、build-in-public の一人称で書いてください。三人称のブランド口調(「私たち」「弊社」「本サービスは」「私たちの新しいウェブアプリは」)を禁止します。
+
+目的:
+- ${spec['goal']}
+
+App の実在する具体機能(この中から今日伝える1つを名前で挙げ、それが何を数値/画面/具体で解決するかを書く。アプリを「ツール」等の一般名詞で濁すな):
+$facts
+
+必須ルール:
+- 一人称の実体験で書く=自分が何を作った/実測した/つまずいたかを最低1つ具体で入れる。伝聞・一般論・精神論・造語を禁止。
+- 本文に上の実在機能を最低1つ名前で挙げる(固有機能名を必ず含める)。
+- 禁止フレーズ(これらを含む文は必ず書き直せ): $banned。
+- 誇張副詞(劇的に/大幅に/格段に/飛躍的に)で改善を主張するな。改善の大きさは具体的な数字か仕組み(何がどう動いて何が消えるか)でのみ語れ。
+
+例(実質・BAD→GOOD、この差を真似て今日の内容で書け):
+- BAD: 「あなたの価値、埋もれていませんか？埋もれた才能を最大限にアピールし、社会で輝くための自分集客力を構築。」
+- GOOD: 「『給料日サイクル』は支出の窓を給料日起点に切る機能。作って分かったのは、月初をまたぐ引き落としが二重計上されず支出が実額で出ること。5分触って一言もらえると助かります。」
+
+出力条件:
+- JSONのみを返す(Markdownやコードフェンスは禁止)
+- keys は title, body, hashtags
+- title: ${spec['titleRule']}。ただし空虚なフックでなく具体(機能名や数字)を入れる。
+- body: ${spec['bodyRule']}
+- tone: ${spec['tone']}
+- hashtags: $channelLabel に適した発見タグを3件
+
+出力形式:
+{
+  "title": "...",
+  "body": "...",
+  "hashtags": ["...", "...", "..."]
+}
+
+推奨ハッシュタグ:
+${hashtags.join(' ')}
+''';
+}
+
+/// 生成された title/body に含まれるスロップトークンを返す(空=クリーン)。
+/// プロンプトをすり抜けたスロップやクライアント側フォールバック文言を、投稿前に
+/// 非ブロッキングで警告するための検出器。
+List<String> detectSlop(String title, String body) {
+  final haystack = '$title\n$body';
+  return kSlopBannedTokens.where(haystack.contains).toList(growable: false);
+}
+
+/// 生成物が実在機能に1つでも触れているか。false=一般論に流れている疑い。
+bool hasFeatureAnchor(String title, String body) {
+  final haystack = '$title\n$body';
+  return kFeatureNames.any(haystack.contains);
+}
