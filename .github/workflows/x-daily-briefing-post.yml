@@ -186,6 +186,16 @@ jobs:
           const selectedVariant = hasStableWinner
             ? bestVariant
             : experimentVariants[daySeed % experimentVariants.length];
+          const targetUrlWithVariant = (() => {
+            try {
+              const url = new URL(targetUrl);
+              url.searchParams.set('utm_content', selectedVariant);
+              return url.toString();
+            } catch (_error) {
+              const separator = targetUrl.includes('?') ? '&' : '?';
+              return `${targetUrl}${separator}utm_content=${encodeURIComponent(selectedVariant)}`;
+            }
+          })();
 
           const limitText = (value, max) => {
             const text = clean(value);
@@ -297,7 +307,7 @@ jobs:
                 ? '返信で出た迷いを、次の改善テーマにします。'
                 : 'この形式で、毎朝の情報整理をAI仕事OSとして試作中です。',
               '5分だけ触って、役に立った点と迷った点を教えてください。',
-              targetUrl,
+              targetUrlWithVariant,
             ].join('\n'),
           ];
 
@@ -331,6 +341,7 @@ jobs:
             performanceRows: rows.length,
             bestVariant: bestVariant || null,
             promptContext: promptContext || null,
+            targetUrl: targetUrlWithVariant,
           }, null, 2));
           NODE
         env:
