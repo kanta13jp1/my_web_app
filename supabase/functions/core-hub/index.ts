@@ -38,6 +38,16 @@ import {
   resolvePublicMemoViewFormat,
   searchParamsToActionBody,
 } from "./public_memo_view.ts";
+import {
+  BLOG_VIEW_COLUMNS,
+  type BlogPostRow,
+  blogPostToPayload,
+  renderBlogHtml,
+  renderBlogListHtml,
+  renderBlogListMarkdown,
+  renderBlogMarkdown,
+  renderBlogNotFoundHtml,
+} from "./blog_view.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -865,6 +875,8 @@ serve(async (req: Request) => {
       "memo.public.list",
       "memo.public.search",
       "memo.public.related",
+      "blog.public.view",
+      "blog.public.list",
     ]);
     const bearer = (req.headers.get("authorization") ?? "").replace(
       /^Bearer\s+/i,
@@ -1118,6 +1130,74 @@ serve(async (req: Request) => {
           category: category || null,
           memos: rows.map(publicMemoToPayload),
         });
+      }
+
+      // ---- Public blog bot/AI-readable view (anonymous / status='posted') ----
+      // /blog/post は SPA でアプリ内ナビ引数から記事を特定するため URL で
+      // クロールできない。GET ?action=blog.public.view&id=X で SSR 済み HTML
+      // (format=json / md 可) を返す。RLS と同じく status='posted' のみ。
+      case "blog.public.view": {
+        const id = String(body.id ?? "").trim();
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        if (!id) return json({ error: "id required" }, 400);
+        const { data, error } = await admin
+          .from("blog_posts")
+          .select(BLOG_VIEW_COLUMNS)
+          .eq("id", id)
+          .eq("status", "posted")
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 500);
+        if (!data) {
+          if (format === "html") {
+            return publicText(
+              renderBlogNotFoundHtml(id),
+              "text/html; charset=utf-8",
+              404,
+            );
+          }
+          return json({ error: `Blog ${id} not found` }, 404);
+        }
+        const row = data as BlogPostRow;
+        if (format === "json") {
+          return json({ success: true, post: blogPostToPayload(row) });
+        }
+        if (format === "md" || format === "txt") {
+          return publicText(
+            renderBlogMarkdown(row),
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+        }
+        return publicText(renderBlogHtml(row), "text/html; charset=utf-8");
+      }
+
+      case "blog.public.list": {
+        const limit = clampPublicMemoLimit(body.limit, 20, 50);
+        const format = resolvePublicMemoViewFormat(body.format, req.method);
+        const { data, error } = await admin
+          .from("blog_posts")
+          .select(BLOG_VIEW_COLUMNS)
+          .eq("status", "posted")
+          .order("posted_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 500);
+        const rows = (data ?? []) as BlogPostRow[];
+        if (format === "html") {
+          return publicText(
+            renderBlogListHtml(rows),
+            "text/html; charset=utf-8",
+          );
+        }
+        if (format === "md" || format === "txt") {
+          return publicText(
+            renderBlogListMarkdown(rows),
+            format === "md"
+              ? "text/markdown; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+        }
+        return json({ success: true, posts: rows.map(blogPostToPayload) });
       }
 
       // ---- OGP fetch (stateless) ----
