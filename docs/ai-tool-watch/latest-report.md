@@ -1,14 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-09T22:44:15Z`
-- Previous check: `2026-07-08T22:17:40Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-07-10T22:17:54Z`
+- Previous check: `2026-07-09T22:44:15Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
+- `changed` Claude Code changelog: 2.1.206 / July 9, 2026
 - `changed` Codex changelog: 2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a
 - `changed` Codex use cases: ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc
+- `changed` Cursor changelog: 3.11 / Jul 10, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -20,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.205 / July 8, 2026
+  - Latest signal: 2.1.206 / July 9, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -54,10 +55,10 @@
   - Keyword groups: none
 - **Cursor changelog** (HTTP 200)
   - URL: https://cursor.com/changelog
-  - Latest signal: 3.10 / Jun 30, 2026
+  - Latest signal: 3.11 / Jul 10, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...
-  - Short signal: # Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI.
+  - Short signal: Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
