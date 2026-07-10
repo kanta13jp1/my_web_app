@@ -93,6 +93,9 @@ jobs:
           check "view txt"         "$BASE?action=memo.public.view&id=$MEMO_ID&format=txt" "200" "App URL:"
           check "amp-mangled rescue" "$BASE?action=memo.public.view&amp;id=$MEMO_ID&amp;format=json" "200" "\"appUrl\""
 
+          # PR: 公開ブログ SSR (blog.public.list) が匿名で 200 + success を返すこと
+          check "blog list json"   "$BASE?action=blog.public.list&limit=3&format=json" "200" "\"success\":true"
+
           # PR #3899: prerender 済み /vs-<slug> が固有本文 + 自己参照 canonical で
           # 配信されること (SPA シェルではなく静的HTMLが Firebase 優先配信される)。
           VS="https://my-web-app-b67f4.web.app/vs-notion"

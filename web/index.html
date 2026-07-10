@@ -984,6 +984,42 @@
         setCanonical(window.location.href);
       }
 
+      if (path === '/blog/post' || path.endsWith('/blog/post')) {
+        // 公開ブログ記事: URL クエリ id から自己参照 canonical + meta を設定し
+        // クローラーにインデックスさせる (SEO 監査 H7)。
+        var blogId = params.get('id');
+        if (blogId) {
+          setCanonical(
+            'https://my-web-app-b67f4.web.app/blog/post?id=' +
+              encodeURIComponent(blogId)
+          );
+          fetch(
+            SUPABASE_FUNC_BASE +
+              '/core-hub?action=blog.public.view&id=' +
+              encodeURIComponent(blogId) + '&format=json'
+          )
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+              if (!data || !data.success || !data.post) return;
+              var p = data.post;
+              if (p.title) {
+                document.title = p.title + ' | 自分株式会社';
+                setMeta('og:title', p.title);
+                setMeta('twitter:title', p.title);
+              }
+              if (p.excerpt) {
+                setMeta('description', p.excerpt);
+                setMeta('og:description', p.excerpt);
+                setMeta('twitter:description', p.excerpt);
+              }
+              setMeta('og:type', 'article');
+              setMeta('og:url', p.appUrl);
+              setMeta('twitter:url', p.appUrl);
+            })
+            .catch(function () { /* ignore, keep default */ });
+        }
+      }
+
       if ((path === '/public-memo' || path.endsWith('/public-memo')) && memoId) {
         // 公開メモは一意な公開コンテンツ。canonical をトップ固定のままにすると
         // 重複としてトップへ集約され独立インデックスされないため自URLへ。
