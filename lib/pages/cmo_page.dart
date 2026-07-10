@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
 import '../services/magi_system_settings_service.dart';
+import '../services/x_copy_guardrails.dart';
 
 class CmoPage extends StatefulWidget {
   final String? initialChannel;
@@ -26,6 +27,10 @@ class _CmoPageState extends State<CmoPage> {
       const MagiSystemSettingsService();
   bool _isLoading = false;
   Map<String, dynamic>? _pressRelease;
+  // R21: 生成後にプロンプトをすり抜けたスロップ語/機能未言及を非ブロッキングで
+  // 警告する(auto-regenerate はしない = 有償生成の foot-gun 回避)。
+  List<String> _slopWarnings = const [];
+  bool _missingFeatureAnchor = false;
 
   static const Color _purple = Color(0xFF7C3AED);
 
@@ -75,7 +80,8 @@ class _CmoPageState extends State<CmoPage> {
   List<String> _defaultHashtags(String? channelKey) {
     switch (channelKey) {
       case 'x_share':
-        return const ['#自分株式会社', '#X投稿', '#集客改善'];
+        // R21: 自己言及的な #X投稿/#集客改善 でなく発見タグへ(成長/発見の意図に整合)。
+        return const ['#自分株式会社', '#個人開発', '#buildinpublic'];
       case 'line':
         return const ['#自分株式会社', '#LINE導線', '#導線改善'];
       case 'facebook':
@@ -128,36 +134,17 @@ class _CmoPageState extends State<CmoPage> {
   }
 
   String _buildDraftPrompt(String channelKey) {
-    final channelLabel = _channelLabel(channelKey);
-    final spec = _channelPromptSpec(channelKey);
-    final hashtags = _defaultHashtags(channelKey).join(' ');
-
-    return '''
-あなたは自分株式会社のCMOです。
-$channelLabel 向けの日本語コピーを作成してください。
-
-目的:
-- ${spec['goal']}
-
-出力条件:
-- JSONのみを返す
-- Markdownやコードフェンスは禁止
-- keys は title, body, hashtags
-- title: ${spec['titleRule']}
-- body: ${spec['bodyRule']}
-- tone: ${spec['tone']}
-- hashtags: $channelLabel に適した短いハッシュタグを3件
-
-出力形式:
-{
-  "title": "...",
-  "body": "...",
-  "hashtags": ["...", "...", "..."]
-}
-
-推奨ハッシュタグ:
-$hashtags
-''';
+    // R21: 旧実装は goal/tone だけの一般プロンプトで、ダッシュボードの「X投稿を
+    // 作る」CTA がここへ飛んだ結果、R11-R15 で潰した旧世代スロップ(「あなたの
+    // 価値、埋もれていませんか？…自分集客力」)を再生産していた。アンチスロップ
+    // 装置(実在機能事実/一人称persona/禁止語/具体性/BAD→GOOD)を共有ガードレール
+    // から注入する。per-channel の長さ/tone spec と {title,body,hashtags} 契約は不変。
+    return buildCmoDraftPrompt(
+      channelKey: channelKey,
+      channelLabel: _channelLabel(channelKey),
+      spec: _channelPromptSpec(channelKey),
+      hashtags: _defaultHashtags(channelKey),
+    );
   }
 
   String? _extractFirstJsonObject(String text) {
@@ -333,6 +320,11 @@ $hashtags
           data['result'],
           channelKey,
         );
+        // R21: X 系チャネルのみスロップ検査(facebook/x_share は成長コピー)。
+        final title = (_pressRelease?['title'] ?? '').toString();
+        final body = (_pressRelease?['body'] ?? '').toString();
+        _slopWarnings = detectSlop(title, body);
+        _missingFeatureAnchor = !hasFeatureAnchor(title, body);
       });
     } catch (error) {
       _showRecoverableAiError(error.toString());
@@ -393,6 +385,41 @@ $hashtags
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('X を直接開けなかったため、共有シートを表示しました。')),
+    );
+  }
+
+  /// R21: 生成物にスロップ語/機能未言及があるときの非ブロッキング警告。投稿は
+  /// 妨げず、再生成を促すだけ(自動再生成はしない = 有償生成の foot-gun 回避)。
+  Widget _buildSlopWarningBanner() {
+    final reasons = <String>[
+      if (_slopWarnings.isNotEmpty) '空虚な表現: ${_slopWarnings.take(3).join('・')}',
+      if (_missingFeatureAnchor) '実在機能(給料日サイクル 等)に触れていない',
+    ].join(' / ');
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border:
+            Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            size: 16,
+            color: Color(0xFFF59E0B),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '言い換え候補: $reasons。再生成を推奨します。',
+              style: const TextStyle(fontSize: 12, height: 1.6),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -522,6 +549,10 @@ $hashtags
               ),
             if (_pressRelease != null) ...[
               _buildResultCard(channelKey),
+              if (_slopWarnings.isNotEmpty || _missingFeatureAnchor) ...[
+                const SizedBox(height: 12),
+                _buildSlopWarningBanner(),
+              ],
               const SizedBox(height: 24),
               Row(
                 children: [

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'ai_hub_chat_service.dart';
+import 'x_copy_guardrails.dart';
 
 typedef UniversalShareFunctionInvoker = Future<Map<String, dynamic>> Function(
   String functionName,
@@ -671,13 +672,10 @@ class UniversalXShareService {
   /// 今日の見出しに最も直結する 1 つを名前で挙げるよう求められる。これが無いと
   /// モデルは製品を語る具体材料を持たず「強力なツール」等の一般名詞に堕ちる
   /// (R11 実測: 実投稿の product mention が全て generic だった真因)。
-  static const List<String> _appFeatureFacts = <String>[
-    '給料日サイクル: 給料日起点の窓で支出を実測し、過去分の二重控除を排除する家計把握',
-    '負債トレンド: 口座別の残高履歴を月次で検出し、翌月の具体アクションを提示',
-    'Xワンボタン投稿: 当日ニュースを字幕付きの短尺動画に自動要約して投稿',
-    '資産/負債の端末跨ぎ同期: 残高履歴を端末を跨いで同期し、いつでも同じ数字を見る',
-    '給与明細取込: 明細から手取りを取り込み、給料日サイクルの収入へ自動合算',
-  ];
+  // R21: 実体は x_copy_guardrails.dart の共有定数へ byte-identical に移動
+  // (CmoPage と両参照して語彙ドリフトを防ぐ)。private alias 経由なので参照箇所
+  // (_buildDraftPrompt 内)は一切変更しない。
+  static const List<String> _appFeatureFacts = kAppFeatureFacts;
 
   static const List<String> _ctaFinalReplies = <String>[
     '試せるURLはこちらです。5分だけ触って、A/B/Cか一言で返信ください。',
