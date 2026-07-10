@@ -20,6 +20,7 @@ import {
   externalFetchErrorPayload,
   isExternalFetchError,
 } from "../_shared/external_fetch.ts";
+import { buildOwnSiteBlogPostUrl } from "./blog_canonical.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2373,6 +2374,11 @@ serve(async (req: Request) => {
                   body_markdown: ppContent,
                   published: true,
                   tags: cleanTags.length > 0 ? cleanTags : ["flutter"],
+                  // SEO 監査 H7: postId は blog_posts.id で、直後に status='posted'
+                  // へ更新され core-hub blog_view.ts が /blog/post?id=X で SSR 配信する。
+                  // canonical_url を自サイトへ向け、dev.to へ流出していた検索 authority を
+                  // 自ドメインに集約する。
+                  canonical_url: buildOwnSiteBlogPostUrl(postId),
                 },
               }),
             }, "schedule-hub.blog.publish_post.devto");
