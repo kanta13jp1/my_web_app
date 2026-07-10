@@ -117,6 +117,23 @@ jobs:
           fi
           cat /tmp/x_trends.json
 
+      - name: Fetch performance context
+        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_performance_context.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{"action":"x.performance_context","limit":80}')
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::x.performance_context returned HTTP ${http_code}; rotating default A/B variants."
+            printf '{"success":false,"rows":[],"bestVariant":null,"promptContext":"No measured X performance context available."}' > /tmp/x_performance_context.json
+          fi
+          cat /tmp/x_performance_context.json
+
       - name: Build daily briefing payload
         if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
         shell: bash
@@ -125,6 +142,7 @@ jobs:
           const fs = require('fs');
 
           const raw = JSON.parse(fs.readFileSync('/tmp/x_trends.json', 'utf8'));
+          const performance = JSON.parse(fs.readFileSync('/tmp/x_performance_context.json', 'utf8'));
           const fallbackTopics = [
             'AI仕事術',
             '情報整理',
@@ -152,6 +170,22 @@ jobs:
           const topics = [...new Set([...names, ...fallbackTopics])].slice(0, 5);
           const jstLabel = process.env.JST_LABEL;
           const targetUrl = process.env.TARGET_URL;
+          const experimentVariants = [
+            'daily_briefing_v2_deep',
+            'daily_briefing_v2_question',
+            'daily_briefing_v2_numbers',
+          ];
+          const rows = Array.isArray(performance.rows) ? performance.rows : [];
+          const promptContext = clean(performance.promptContext).slice(0, 900);
+          const bestVariant = clean(performance.bestVariant);
+          const hasStableWinner =
+            rows.length >= 6 &&
+            experimentVariants.includes(bestVariant) &&
+            !bestVariant.endsWith('_fallback');
+          const daySeed = Number(String(jstLabel).replace(/\D/g, '')) || 0;
+          const selectedVariant = hasStableWinner
+            ? bestVariant
+            : experimentVariants[daySeed % experimentVariants.length];
 
           const limitText = (value, max) => {
             const text = clean(value);
@@ -211,12 +245,28 @@ jobs:
             ].join('\n\n');
           };
 
-          const lead = [
-            `デイリーブリーフィング — ${jstLabel} 朝`,
-            '今日の5本を、仕事で使う判断材料に圧縮します。',
-            `1本目は「${limitText(topics[0], 38)}」。`,
-            'どれを深掘りしますか？',
-          ].join('\n');
+          const categorySummary = [...new Set(topics.map(categoryFor))].slice(0, 4).join(' / ');
+          const leadByVariant = {
+            daily_briefing_v2_deep: [
+              `デイリーブリーフィング — ${jstLabel} 朝`,
+              '今日の5本を、仕事で使う判断材料に圧縮します。',
+              `1本目は「${limitText(topics[0], 38)}」。`,
+              'どれを深掘りしますか？',
+            ],
+            daily_briefing_v2_question: [
+              `今日の問い — ${jstLabel} 朝`,
+              'AI時代の情報整理で難しいのは、ニュースを読む量ではなく、何を判断材料として残すかです。',
+              `今朝は「${limitText(topics[0], 34)}」から考えます。`,
+              'あなたなら、どの論点を仕事に持ち帰りますか？',
+            ],
+            daily_briefing_v2_numbers: [
+              `朝の判断材料 — ${jstLabel}`,
+              `今日拾った論点は ${topics.length} 本。カテゴリは ${categorySummary} です。`,
+              `最初の焦点は「${limitText(topics[0], 34)}」。`,
+              '数字・制度・実務影響に分けて整理します。',
+            ],
+          };
+          const lead = (leadByVariant[selectedVariant] ?? leadByVariant.daily_briefing_v2_deep).join('\n');
 
           const categoryOptions = [...new Set(topics.map(categoryFor))]
             .filter((category) => category !== '情報整理')
@@ -243,7 +293,9 @@ jobs:
               '返信で教えてください。明日の改善材料にします。',
             ].join('\n'),
             [
-              'この形式で、毎朝の情報整理をAI仕事OSとして試作中です。',
+              selectedVariant === 'daily_briefing_v2_question'
+                ? '返信で出た迷いを、次の改善テーマにします。'
+                : 'この形式で、毎朝の情報整理をAI仕事OSとして試作中です。',
               '5分だけ触って、役に立った点と迷った点を教えてください。',
               targetUrl,
             ].join('\n'),
@@ -260,9 +312,9 @@ jobs:
             source: process.env.SOURCE,
             route: 'growth/daily-briefing',
             experimentKey: process.env.EXPERIMENT_KEY,
-            variant: process.env.VARIANT,
-            utmContent: process.env.VARIANT,
-            promptProfile: 'workflow_daily_briefing_v2_deep_briefing',
+            variant: selectedVariant,
+            utmContent: selectedVariant,
+            promptProfile: 'workflow_daily_briefing_v3_performance_context',
             contentKind: 'daily_briefing_thread',
             linkInReply: true,
             dryRun: process.env.DRY_RUN === 'true',
@@ -275,6 +327,10 @@ jobs:
             dryRun: payload.dryRun,
             topics,
             trendSource: raw.source ?? null,
+            selectedVariant,
+            performanceRows: rows.length,
+            bestVariant: bestVariant || null,
+            promptContext: promptContext || null,
           }, null, 2));
           NODE
         env:
@@ -320,6 +376,10 @@ jobs:
         if: always()
         shell: bash
         run: |
+          selected_variant="${VARIANT}"
+          if [ -f /tmp/x_daily_payload.json ]; then
+            selected_variant=$(jq -r '.variant // env.VARIANT' /tmp/x_daily_payload.json)
+          fi
           {
             echo "## X Daily Briefing Post"
             echo ""
@@ -330,5 +390,5 @@ jobs:
             echo "- Posted: ${{ steps.post.outputs.posted }}"
             echo "- Tweet ID: ${{ steps.post.outputs.tweet_id }}"
             echo "- Source: ${SOURCE}"
-            echo "- Variant: ${VARIANT}"
+            echo "- Variant: ${selected_variant}"
           } >> "${GITHUB_STEP_SUMMARY}"
