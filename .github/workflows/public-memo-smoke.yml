@@ -16,6 +16,10 @@ on:
   schedule:
     - cron: "7 21 * * *" # 毎日 06:07 JST
 
+concurrency:
+  group: public-memo-smoke
+  cancel-in-progress: true  # 2026-07-10 ci-audit: schedule × manual 同時実行キュー積み防止
+
 permissions:
   contents: read
 

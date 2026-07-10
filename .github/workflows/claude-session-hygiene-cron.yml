@@ -2,9 +2,9 @@ name: Claude Session Hygiene Cron
 
 on:
   schedule:
-    # Every 180 minutes from 06:00 JST through 03:00 JST next day.
-    # (2026-06-12 ci-audit: 30分→60分 / 2026-06-18 ci-audit: 60分→120分, 21→11runs/日 / 2026-06-21 ci-audit: 120分→180分, 11→8runs/日削減)
-    - cron: "0 21,0,3,6,9,12,15,18 * * *"
+    # Every 360 minutes (4x/day).
+    # (2026-06-12 ci-audit: 30→60分 / 2026-06-18: 60→120分 / 2026-06-21: 120→180分 / 2026-07-10: 180→360分, 8→4runs/日, windows-latest コスト削減)
+    - cron: "0 0,6,12,18 * * *"
   workflow_dispatch:
     inputs:
       apply:
