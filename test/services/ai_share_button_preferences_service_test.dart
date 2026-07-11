@@ -60,8 +60,7 @@ void main() {
     expect(preferences.position, AiShareButtonPosition.bottomRight);
   });
 
-  test('falls back to presenter when stored video engine is unknown',
-      () async {
+  test('falls back to presenter when stored video engine is unknown', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'ai_share_video_engine_v1': 'hologram',
     });

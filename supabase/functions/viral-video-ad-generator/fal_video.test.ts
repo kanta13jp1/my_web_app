@@ -1,6 +1,4 @@
-import {
-  assertEquals,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildFalTextToVideoPayload,
   extractFalVideoUrl,
@@ -87,7 +85,7 @@ Deno.test("extractFalVideoUrl accepts common fal output shapes", () => {
 Deno.test("isFalExhaustedBalanceError detects billing failures", () => {
   assertEquals(
     isFalExhaustedBalanceError(
-      new Error("fal.ai API 403: {\"detail\":\"Exhausted balance\"}"),
+      new Error('fal.ai API 403: {"detail":"Exhausted balance"}'),
     ),
     true,
   );
