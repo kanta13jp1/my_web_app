@@ -64,7 +64,9 @@ class _AiShareButtonSettingsPanelState
       animation: _controller,
       builder: (context, _) {
         final preferences = _controller.preferences;
-        return Padding(
+        // 動画エンジン節の追加でシートが低い画面(スマホ横向き等)からあふれる
+        // ようになったため、パネル全体を縦スクロール可能にする。
+        return SingleChildScrollView(
           padding: widget.padding,
           child: Column(
             mainAxisSize: MainAxisSize.min,
