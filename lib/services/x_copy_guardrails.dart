@@ -31,6 +31,11 @@ const List<String> kSlopBannedTokens = <String>[
   'と言えるでしょう',
   'game-changer',
   'powerful tool',
+  // R22 実測すり抜け(2026-07-11 の実投稿: exact 禁止をかわした変形)
+  'ぜひ試して',
+  'ぜひ使ってみて',
+  'ウェブアプリ',
+  'が向上しました',
   // R21 実測スロップ(CmoPage が出した型)
   '埋もれた才能',
   '埋もれていませんか',
@@ -114,4 +119,12 @@ List<String> detectSlop(String title, String body) {
 bool hasFeatureAnchor(String title, String body) {
   final haystack = '$title\n$body';
   return kFeatureNames.any(haystack.contains);
+}
+
+/// 検出結果から非ブロッキング警告文を作る(空なら null)。投稿は止めず、
+/// 再生成を促すだけ(自動再生成は有償生成の foot-gun なのでしない)。
+String? composeSlopWarning(List<String> hits) {
+  if (hits.isEmpty) return null;
+  final shown = hits.take(3).map((t) => '「$t」').join(' ');
+  return '言い換え候補: $shown を含みます。具体性が薄い可能性があるため再生成を推奨します(このまま投稿も可能)。';
 }
