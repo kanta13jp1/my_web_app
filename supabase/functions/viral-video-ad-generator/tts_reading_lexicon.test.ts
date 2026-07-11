@@ -11,6 +11,20 @@ Deno.test("負債 is read ふさい (observed TTS misread ふくたく / 2026-07
   );
 });
 
+Deno.test("月初の支出 is read げっしょのししゅつ (observed misread やくしょのしず / 2026-07-11)", () => {
+  assertEquals(
+    applyTtsReadings("うことで、月初の支出が二重計上されず、", "ja"),
+    "うことで、げっしょのししゅつが二重計上されず、",
+  );
+});
+
+Deno.test("月初め takes the longest match つきはじめ, not げっしょめ", () => {
+  assertEquals(
+    applyTtsReadings("月初めの支払いを月初にまとめる。", "ja"),
+    "つきはじめの支払いをげっしょにまとめる。",
+  );
+});
+
 Deno.test("compound words containing lexicon entries stay readable", () => {
   assertEquals(
     applyTtsReadings("資産負債のバランスと固定費・変動費を確認。", "ja"),
