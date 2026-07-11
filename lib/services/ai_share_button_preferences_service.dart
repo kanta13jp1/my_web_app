@@ -3,25 +3,36 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum AiShareButtonPosition { topLeft, topRight, bottomLeft, bottomRight }
 
+/// AIシェア投稿に添付する動画の生成エンジン。
+/// - [presenter]: Hedra のアバター lipsync 動画(従来動作 / 既定)。
+/// - [cinematic]: fal.ai text-to-video によるシネマティック映像(顔・TTS 不要)。
+enum AiShareVideoEngine { presenter, cinematic }
+
 class AiShareButtonPreferences {
   static const AiShareButtonPosition defaultPosition =
       AiShareButtonPosition.bottomRight;
+  static const AiShareVideoEngine defaultVideoEngine =
+      AiShareVideoEngine.presenter;
 
   final bool visible;
   final AiShareButtonPosition position;
+  final AiShareVideoEngine videoEngine;
 
   const AiShareButtonPreferences({
     this.visible = true,
     this.position = defaultPosition,
+    this.videoEngine = defaultVideoEngine,
   });
 
   AiShareButtonPreferences copyWith({
     bool? visible,
     AiShareButtonPosition? position,
+    AiShareVideoEngine? videoEngine,
   }) {
     return AiShareButtonPreferences(
       visible: visible ?? this.visible,
       position: position ?? this.position,
+      videoEngine: videoEngine ?? this.videoEngine,
     );
   }
 }
@@ -29,6 +40,7 @@ class AiShareButtonPreferences {
 class AiShareButtonPreferencesService {
   static const String _visibleKey = 'ai_share_button_visible_v1';
   static const String _positionKey = 'ai_share_button_position_v1';
+  static const String _videoEngineKey = 'ai_share_video_engine_v1';
 
   const AiShareButtonPreferencesService();
 
@@ -39,6 +51,7 @@ class AiShareButtonPreferencesService {
     return AiShareButtonPreferences(
       visible: store.getBool(_visibleKey) ?? true,
       position: _positionFromStorage(store.getString(_positionKey)),
+      videoEngine: _videoEngineFromStorage(store.getString(_videoEngineKey)),
     );
   }
 
@@ -51,6 +64,10 @@ class AiShareButtonPreferencesService {
     await store.setString(
       _positionKey,
       _positionToStorage(preferences.position),
+    );
+    await store.setString(
+      _videoEngineKey,
+      _videoEngineToStorage(preferences.videoEngine),
     );
     return preferences;
   }
@@ -69,6 +86,17 @@ class AiShareButtonPreferencesService {
   }) async {
     final current = await loadPreferences(prefs: prefs);
     return savePreferences(current.copyWith(position: position), prefs: prefs);
+  }
+
+  Future<AiShareButtonPreferences> saveVideoEngine(
+    AiShareVideoEngine videoEngine, {
+    SharedPreferences? prefs,
+  }) async {
+    final current = await loadPreferences(prefs: prefs);
+    return savePreferences(
+      current.copyWith(videoEngine: videoEngine),
+      prefs: prefs,
+    );
   }
 
   static AiShareButtonPosition _positionFromStorage(String? value) {
@@ -96,6 +124,26 @@ class AiShareButtonPreferencesService {
         return 'bottom_left';
       case AiShareButtonPosition.bottomRight:
         return 'bottom_right';
+    }
+  }
+
+  static AiShareVideoEngine _videoEngineFromStorage(String? value) {
+    switch (value) {
+      case 'cinematic':
+        return AiShareVideoEngine.cinematic;
+      case 'presenter':
+        return AiShareVideoEngine.presenter;
+      default:
+        return AiShareButtonPreferences.defaultVideoEngine;
+    }
+  }
+
+  static String _videoEngineToStorage(AiShareVideoEngine engine) {
+    switch (engine) {
+      case AiShareVideoEngine.presenter:
+        return 'presenter';
+      case AiShareVideoEngine.cinematic:
+        return 'cinematic';
     }
   }
 }
@@ -128,6 +176,10 @@ class AiShareButtonPreferencesController extends ChangeNotifier {
 
   Future<void> updatePosition(AiShareButtonPosition position) {
     return updatePreferences(_preferences.copyWith(position: position));
+  }
+
+  Future<void> updateVideoEngine(AiShareVideoEngine videoEngine) {
+    return updatePreferences(_preferences.copyWith(videoEngine: videoEngine));
   }
 
   Future<void> updatePreferences(AiShareButtonPreferences next) async {

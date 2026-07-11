@@ -34,6 +34,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('表示位置'), findsOneWidget);
+    expect(find.text('動画エンジン'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('settings sheet switches the share video engine to cinematic',
+      (tester) async {
+    await tester.pumpWidget(_buildShell());
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('AIシェアボタン設定'));
+    await tester.pumpAndSettle();
+
+    expect(
+      aiShareButtonPreferencesController.preferences.videoEngine,
+      AiShareVideoEngine.presenter,
+    );
+
+    await tester.ensureVisible(find.text('シネマティック'));
+    await tester.tap(find.text('シネマティック'));
+    await tester.pumpAndSettle();
+
+    expect(
+      aiShareButtonPreferencesController.preferences.videoEngine,
+      AiShareVideoEngine.cinematic,
+    );
     expect(tester.takeException(), isNull);
   });
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'ai_hub_chat_service.dart';
+import 'ai_share_button_preferences_service.dart';
 import 'x_copy_guardrails.dart';
 
 typedef UniversalShareFunctionInvoker = Future<Map<String, dynamic>> Function(
@@ -221,6 +222,21 @@ class UniversalXShareService {
     'elevenlabs',
     'hedra',
   ];
+  // シネマティック動画エンジン(fal.ai text-to-video)のパイプライン。顔画像・
+  // TTS を使わないので image/elevenlabs は含めない。
+  static const List<String> _cinematicCreativePipeline = <String>[
+    'gpt-5.5',
+    'fal-text-to-video',
+  ];
+
+  /// シネマティック動画の固定アートディレクション。LLM が毎回生成する
+  /// [UniversalXShareDraft.videoPrompt] に後置し、日々の話題は変わっても
+  /// ブランドの見た目(和紙ペーパークラフト×藍/朱)が一貫するようにする。
+  static const String kCinematicStyleDirective =
+      'Handcrafted washi paper-craft diorama style, layered paper textures, '
+      'indigo and vermilion color palette, soft studio lighting, gentle '
+      'cinematic camera movement, 16:9 short video, consistent art direction, '
+      'no on-screen text, no watermark, no logos.';
 
   final SupabaseClient? _supabase;
   final AiHubChatService _chatService;
@@ -476,7 +492,38 @@ class UniversalXShareService {
     required UniversalXShareDraft draft,
     String? imageUrl,
     String? hedraGenerationId,
+    String? falRequestId,
+    AiShareVideoEngine engine = AiShareVideoEngine.presenter,
   }) async {
+    // シネマティック動画(fal.ai text-to-video)。Hedra と違い顔画像を
+    // 必要としないため、imageUrl 検証や開始画像の指定は行わない。
+    if (engine == AiShareVideoEngine.cinematic) {
+      final requestBody = <String, dynamic>{
+        'type': 'cinematic_video',
+        'template': _videoTemplateFor(context),
+        'lang': 'ja',
+        'title': _shareTitleFor(context),
+        'customPrompt': cinematicVideoPromptFor(context, draft),
+        'customScript': _videoScriptFor(context, draft),
+        'customHashtags': draft.hashtags,
+        'preferredModel': 'fal-text-to-video',
+        'creativePipeline': _cinematicCreativePipeline,
+        'source': 'universal_x_share',
+        'route': context.routePath,
+      };
+      final normalizedFalRequestId = _emptyToNull(falRequestId);
+      if (normalizedFalRequestId != null) {
+        requestBody['falRequestId'] = normalizedFalRequestId;
+      }
+      final data = await _invoke('viral-video-ad-generator', requestBody);
+      return UniversalXMediaResult(
+        url: _emptyToNull(_extractVideoUrl(data)),
+        status: data['videoStatus']?.toString() ??
+            data['status']?.toString() ??
+            'unknown',
+        raw: data,
+      );
+    }
     final normalizedImageUrl = _emptyToNull(imageUrl);
     if (normalizedImageUrl != null && !_isPublicHttpUrl(normalizedImageUrl)) {
       return const UniversalXMediaResult(
@@ -512,20 +559,37 @@ class UniversalXShareService {
       requestBody['hedraGenerationId'] = normalizedGenerationId;
     }
     final data = await _invoke('viral-video-ad-generator', requestBody);
-    final url = data['storedVideoUrl']?.toString() ??
+    return UniversalXMediaResult(
+      url: _emptyToNull(_extractVideoUrl(data)),
+      status: data['videoStatus']?.toString() ??
+          data['status']?.toString() ??
+          'unknown',
+      raw: data,
+    );
+  }
+
+  static String? _extractVideoUrl(Map<String, dynamic> data) {
+    return data['storedVideoUrl']?.toString() ??
         data['generatedVideoUrl']?.toString() ??
         data['generatedDownloadUrl']?.toString() ??
         data['generatedPreviewUrl']?.toString() ??
         data['videoUrl']?.toString() ??
         data['downloadUrl']?.toString() ??
         data['url']?.toString();
-    return UniversalXMediaResult(
-      url: _emptyToNull(url),
-      status: data['videoStatus']?.toString() ??
-          data['status']?.toString() ??
-          'unknown',
-      raw: data,
-    );
+  }
+
+  /// シネマティック動画のプロンプト(公開 static / テスト可能)。LLM ドラフトの
+  /// videoPrompt(当日の話題入り)に固定アートディレクションを後置する。
+  static String cinematicVideoPromptFor(
+    UniversalSharePageContext context,
+    UniversalXShareDraft draft,
+  ) {
+    final base = draft.videoPrompt.trim().isNotEmpty
+        ? draft.videoPrompt.trim()
+        : 'A short cinematic teaser video introducing '
+            '"${_shareTitleFor(context)}", a Japanese life-management web app.';
+    final separator = base.endsWith('.') ? ' ' : '. ';
+    return '$base$separator$kCinematicStyleDirective';
   }
 
   Future<UniversalXPostResult> postToX({

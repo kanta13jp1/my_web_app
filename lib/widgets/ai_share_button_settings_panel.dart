@@ -42,6 +42,14 @@ class _AiShareButtonSettingsPanelState
     }
   }
 
+  Future<void> _updateVideoEngine(AiShareVideoEngine engine) async {
+    try {
+      await _controller.updateVideoEngine(engine);
+    } catch (_) {
+      _showSaveError();
+    }
+  }
+
   void _showSaveError() {
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -103,11 +111,74 @@ class _AiShareButtonSettingsPanelState
                   },
                 ),
               ),
+              const SizedBox(height: 16),
+              Text(
+                '動画エンジン',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<AiShareVideoEngine>(
+                  showSelectedIcon: false,
+                  segments: AiShareVideoEngine.values
+                      .map(
+                        (engine) => ButtonSegment<AiShareVideoEngine>(
+                          value: engine,
+                          icon: Icon(engine.icon),
+                          label: Text(engine.label),
+                        ),
+                      )
+                      .toList(),
+                  selected: <AiShareVideoEngine>{preferences.videoEngine},
+                  onSelectionChanged: (selection) {
+                    if (selection.isNotEmpty) {
+                      _updateVideoEngine(selection.first);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                preferences.videoEngine.description,
+                style: theme.textTheme.bodySmall,
+              ),
             ],
           ),
         );
       },
     );
+  }
+}
+
+extension _AiShareVideoEngineUi on AiShareVideoEngine {
+  String get label {
+    switch (this) {
+      case AiShareVideoEngine.presenter:
+        return 'プレゼンター';
+      case AiShareVideoEngine.cinematic:
+        return 'シネマティック';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case AiShareVideoEngine.presenter:
+        return 'AI秘書が話すアバター動画（Hedra / 従来どおり）';
+      case AiShareVideoEngine.cinematic:
+        return '話題に合わせた映像だけの短編動画（fal.ai text-to-video）';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case AiShareVideoEngine.presenter:
+        return Icons.record_voice_over_outlined;
+      case AiShareVideoEngine.cinematic:
+        return Icons.movie_outlined;
+    }
   }
 }
 
