@@ -269,6 +269,29 @@ print(f"output:      {response.usage.output_tokens}")
 - [ ] `docs/CLAUDE_CODE_MASTERCLASS_AGENTIC_WORKFLOW.md` への cache 章 追記
 - [ ] CLAUDE.md 冒頭の `> Win版#132 part XXX` を別ファイル化 (= cache 破壊源)
 
+### 10.4 三次対応 (= 2026-07-11 ベンダーダイジェスト採用 #1/#2 実装済)
+
+- [x] `supabase/functions/_shared/anthropic_messages.ts` — system 分離 + `cache_control` breakpoint + usage/diagnostics 抽出ヘルパー
+- [x] ai-hub `provider.chat` / `callSingleProvider` の Anthropic 経路に prompt caching 適用 (= 旧実装は system role を捨てていた)
+- [x] `ai_hub_chat_logs` に実測 token / cache KPI 列追加 (= `20260711120000_extend_ai_hub_chat_logs_cache_metrics.sql`) → §9.1 の cache hit rate を SQL で直接計測可能に
+- [x] cache diagnostics public beta (= `cache-diagnosis-2026-04-07`) 対応: `ANTHROPIC_CACHE_DIAGNOSTICS=1` で有効化、`cache_miss_reason` を同テーブルに記録
+- [x] `scripts/feature_review.py` (4h 毎 cron / 1 run 複数 feature) に system `cache_control` + usage ログ + diagnostics 適用
+- [x] mid-conversation system entry (= Opus 4.8 のみ / `appendSystemEntry`): top-level system を書き換えずに mid-task 指示更新 → prefix cache 温存。非対応モデルは `<system-reminder>` fallback
+
+**cache hit rate 計測 SQL** (§9.1 の実装):
+
+```sql
+SELECT
+  date_trunc('day', created_at) AS day,
+  sum(cache_read_input_tokens)::float
+    / nullif(sum(cache_read_input_tokens)
+      + sum(cache_creation_input_tokens)
+      + sum(input_tokens), 0) AS cache_hit_rate
+FROM ai_hub_chat_logs
+WHERE provider = 'anthropic' AND input_tokens IS NOT NULL
+GROUP BY 1 ORDER BY 1 DESC;
+```
+
 ### 10.3 運用ルール (= 全 instance 共通)
 
 - [ ] CLAUDE.md / docs/*.md 編集後の **同 session 内** 参照は避ける

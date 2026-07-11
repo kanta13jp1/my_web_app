@@ -34,6 +34,14 @@ import {
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
 import {
+  anthropicCacheDiagnosticsEnabled,
+  attachCacheDiagnostics,
+  buildAnthropicMessagesBody,
+  CACHE_DIAGNOSTICS_BETA,
+  extractAnthropicUsage,
+  extractCacheMissReason,
+} from "../_shared/anthropic_messages.ts";
+import {
   getUniversityContentByFaculty,
   getUniversityDepartmentList,
   getUniversityFacultyList,
@@ -294,18 +302,19 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
       String(pick(data, "message", "content", 0, "text") ?? ""),
   },
   // Anthropic は x-api-key ヘッダ認証 — provider.chat ハンドラ側で Authorization を抑制する
+  // system role は捨てずに top-level system (cache_control 付き) へ分離し
+  // prompt caching を有効化する (ベンダーダイジェスト 2026-07-05 採用 #2)
   anthropic: {
     displayName: "Anthropic Claude",
     envKey: "ANTHROPIC_API_KEY",
     chatUrl: "https://api.anthropic.com/v1/messages",
     defaultModel: "claude-haiku-4-5-20251001",
-    buildBody: (messages, model) => ({
-      model,
-      max_tokens: 512,
-      messages: (messages as { role: string; content: string }[]).filter(
-        (m) => m.role !== "system",
+    buildBody: (messages, model) =>
+      buildAnthropicMessagesBody(
+        messages as { role: string; content: string }[],
+        model,
+        { maxTokens: 512 },
       ),
-    }),
     parseResponse: (data) => String(pick(data, "content", 0, "text") ?? ""),
   },
   // Google Gemini は Bearer ではなく ?key=xxx クエリ認証 — provider.chat で特殊分岐
@@ -4994,6 +5003,9 @@ serve(async (req: Request) => {
               "x-api-key": apiKey,
               "anthropic-version": "2023-06-01",
             };
+            if (anthropicCacheDiagnosticsEnabled()) {
+              authHeaders["anthropic-beta"] = CACHE_DIAGNOSTICS_BETA;
+            }
           } else if (
             providerId === "google" || providerId === "google_flash_lite"
           ) {
@@ -5009,6 +5021,13 @@ serve(async (req: Request) => {
               outputChars?: number | null;
               estimatedCostUsd?: number | null;
               errorMessage?: string | null;
+              usage?: {
+                input_tokens: number | null;
+                output_tokens: number | null;
+                cache_read_input_tokens: number | null;
+                cache_creation_input_tokens: number | null;
+              } | null;
+              cacheMissReason?: string | null;
             },
           ) => {
             try {
@@ -5029,11 +5048,35 @@ serve(async (req: Request) => {
                 status_code: params.statusCode,
                 provider_choice_reason: providerChoiceReason,
                 routing_use_case: routingUseCase,
+                // prompt caching KPI (ベンダーダイジェスト 2026-07-05 採用 #2)
+                input_tokens: params.usage?.input_tokens ?? null,
+                output_tokens: params.usage?.output_tokens ?? null,
+                cache_read_input_tokens:
+                  params.usage?.cache_read_input_tokens ?? null,
+                cache_creation_input_tokens:
+                  params.usage?.cache_creation_input_tokens ?? null,
+                cache_miss_reason: params.cacheMissReason ?? null,
               });
             } catch {
               // ignore logging errors
             }
           };
+          const requestBody = applyProviderGenerationOptions(
+            providerId,
+            cfg.buildBody(finalMessages, requestedModel),
+            { maxTokens: requestedMaxTokens },
+          ) as Record<string, unknown>;
+          if (
+            providerId === "anthropic" && anthropicCacheDiagnosticsEnabled()
+          ) {
+            // 会話継続時はクライアントが直前レスポンスの message id を渡す
+            attachCacheDiagnostics(
+              requestBody,
+              typeof body.previous_message_id === "string"
+                ? body.previous_message_id
+                : null,
+            );
+          }
           const resp = await fetchWithProviderTimeout(fetchUrl, {
             method: "POST",
             headers: {
@@ -5041,13 +5084,7 @@ serve(async (req: Request) => {
               "Content-Type": "application/json",
               ...(cfg.extraHeaders ?? {}),
             },
-            body: JSON.stringify(
-              applyProviderGenerationOptions(
-                providerId,
-                cfg.buildBody(finalMessages, requestedModel),
-                { maxTokens: requestedMaxTokens },
-              ),
-            ),
+            body: JSON.stringify(requestBody),
           });
           const respText = await resp.text();
           if (!resp.ok) {
@@ -5123,6 +5160,14 @@ serve(async (req: Request) => {
           const modelUsed = pick(data, "model");
           const outputChars = content.length;
           const usedModel = String(modelUsed ?? requestedModel);
+          // Anthropic は実測 usage (token / cache 指標) が返る — KPI 記録 +
+          // コスト計算の精度向上に使う (他プロバイダは null のまま)
+          const anthropicUsage = providerId === "anthropic"
+            ? extractAnthropicUsage(data)
+            : null;
+          const cacheMissReason = providerId === "anthropic"
+            ? extractCacheMissReason(data)
+            : null;
           // 本文が空のレスポンスは成功扱いにしない。reasoning モデルが
           // 推論で予算を使い切ると finish_reason=length かつ本文が空になり、
           // 旧コードは success:true(空文字)で返してフォールバック連鎖を
@@ -5138,6 +5183,8 @@ serve(async (req: Request) => {
               model: usedModel,
               outputChars,
               errorMessage: `${failureStatus}: ${finishReason ?? "no-content"}`,
+              usage: anthropicUsage,
+              cacheMissReason,
             });
             return json({
               success: false,
@@ -5151,8 +5198,9 @@ serve(async (req: Request) => {
           }
           const estimatedCost = calculateApiCost(
             usedModel,
-            estimateTokensFromChars(inputChars),
-            estimateTokensFromChars(outputChars),
+            anthropicUsage?.input_tokens ?? estimateTokensFromChars(inputChars),
+            anthropicUsage?.output_tokens ??
+              estimateTokensFromChars(outputChars),
           );
           await logProviderChat({
             success: true,
@@ -5160,6 +5208,8 @@ serve(async (req: Request) => {
             model: usedModel,
             outputChars,
             estimatedCostUsd: estimatedCost,
+            usage: anthropicUsage,
+            cacheMissReason,
           });
           await recordSpend("ef", "ai-hub", estimatedCost);
           return json({

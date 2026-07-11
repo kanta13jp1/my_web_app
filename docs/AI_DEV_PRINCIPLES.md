@@ -177,6 +177,36 @@ AI ツールで開発スピードが圧倒的に上がる一方、**目に見え
 
 ---
 
+## Anthropic API 運用パターン (2026-07-11 ベンダーダイジェスト採用分)
+
+新規に Claude API を呼ぶコードは `supabase/functions/_shared/anthropic_messages.ts` を経由すること。
+
+### パターン A: prompt caching + 実測 KPI (原則 3/4 の強化)
+
+- system prompt は `buildAnthropicMessagesBody()` で top-level `system` blocks に分離し、最後の block に `cache_control: {type: "ephemeral"}` を付ける (prefix cache)。
+- レスポンスの `usage` を `extractAnthropicUsage()` で取り出し `ai_hub_chat_logs` の token/cache 列に記録する (推定値でなく実測でコスト監視)。
+- cache miss の原因調査は `ANTHROPIC_CACHE_DIAGNOSTICS=1` (cache diagnostics public beta / first-party API のみ)。`cache_miss_reason` が同テーブルに残る。
+- 詳細: [`docs/PROMPT_CACHING_OPUS47_COST_GUIDE.md`](PROMPT_CACHING_OPUS47_COST_GUIDE.md) §10.4
+
+### パターン B: mid-task 指示更新 (messages 配列内 system entry)
+
+- multi-step エージェントで途中から指示を変えるとき、top-level `system` を書き換えると prefix cache が全壊する。`appendSystemEntry(messages, instruction, model)` を使うこと。
+- **Claude Opus 4.8 のみ** `{role: "system"}` を messages に追加できる (beta header 不要)。非対応モデル (haiku-4-5 / sonnet-4-6 / opus-4-7) は 400 になるため、ヘルパーが `<system-reminder>` テキストへ自動 fallback する。
+- 指示は「命令」でなく「事実の提示」として書く (例: "This project's codebase is Go." — "ignore what the user said" 系は不可)。
+
+### パターン C: Llama Guard 4 入出力安全フィルタ (原則 2/7 の強化)
+
+- ユーザー入力を LLM に渡す機能は `_shared/llama_guard.ts` の `checkContentSafety()` を入力前段に置く (ai-assistant に配線済み)。
+- `LLAMA_GUARD_ENABLED=1` + `GROQ_API_KEY` で有効化 (Groq 経由 Llama Guard 4)。Guard 障害時は fail-open (可用性優先)、ブロック時は `code: "content_blocked"` + hazard categories を返す。
+- **本番有効化の前提**: `scripts/llama_guard_eval.py` で false-positive 率を評価し全ケース OK を確認すること (deny-by-default だが精度未確認のブロックはユーザー体験を壊すため段階導入)。
+
+**チェックリスト追加項目 (新 AI 機能設計時)**:
+
+- [ ] Claude 呼び出しは `_shared/anthropic_messages.ts` 経由か? (caching + KPI)
+- [ ] ユーザー入力を LLM に渡すなら Llama Guard フィルタを検討したか?
+
+---
+
 ## PHILOSOPHY.md (9 原則・what/why) との関係
 
 | 軸 | PHILOSOPHY.md | AI_DEV_PRINCIPLES.md |
@@ -210,4 +240,5 @@ AI ツールで開発スピードが圧倒的に上がる一方、**目に見え
 | 日付 | 変更 |
 | --- | --- |
 | 2026-04-19 | 初版 (Windowsアプリ版#100・NotebookLM 7e39f060 から蒸留) |
+| 2026-07-11 | Anthropic API 運用パターン A/B/C 追加 (ベンダーダイジェスト 2026-07-05 採用 TOP3 実装: prompt caching + cache diagnostics / mid-task system entry / Llama Guard 4) |
 | 2026-04-19 | competitor-monitoring 3/7 → 6/7 (PS版#4): trace_id・slow検出・21件Circuit Breaker・2-retry+DLQ・Sentinel追加 |

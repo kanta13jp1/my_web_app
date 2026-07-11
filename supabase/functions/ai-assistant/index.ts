@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { AI_CHARACTER_PREAMBLE } from "../_shared/ai_character_preamble.ts";
+import { checkContentSafety } from "../_shared/llama_guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -192,6 +193,36 @@ serve(async (req) => {
     const { action, model: targetModel } = requestData;
 
     const requestContent = requestData.content ?? requestData.text;
+
+    // Llama Guard 4 入力安全フィルタ (ベンダーダイジェスト 2026-07-05 採用 #3)
+    // LLAMA_GUARD_ENABLED=1 のときのみ有効。Guard 障害時は fail-open で
+    // 既存動作を変えない (checked=false)。評価は scripts/llama_guard_eval.py。
+    const guardTarget = [requestContent, requestData.message]
+      .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+      .join("\n");
+    if (guardTarget) {
+      const guard = await checkContentSafety(guardTarget, "user");
+      if (guard.checked && !guard.safe) {
+        console.warn(
+          `[llama-guard] blocked input action=${action} categories=${
+            guard.categories.join(",")
+          }`,
+        );
+        return new Response(
+          JSON.stringify({
+            success: false,
+            code: "content_blocked",
+            categories: guard.categories,
+            error: "入力内容が安全ポリシーに抵触したためブロックされました。",
+          }),
+          { status: 400, headers: corsHeaders },
+        );
+      }
+      if (guard.error) {
+        console.warn(`[llama-guard] check failed (fail-open): ${guard.error}`);
+      }
+    }
+
     const runFallbackChain = async (
       originalPrompt: string,
       image?: { base64: string; mime: string },

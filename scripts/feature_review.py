@@ -32,6 +32,12 @@ SCREENSHOT_DIR = Path("/tmp/feature-review-screenshots")
 TITLE_HASH_RE = re.compile(r"\[review:([a-f0-9]{6,16})\]", re.IGNORECASE)
 TODO_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b", re.IGNORECASE)
 
+# prompt caching + cache diagnostics (ベンダーダイジェスト 2026-07-05 採用 #2)
+# cache diagnostics は public beta / first-party API のみ。
+# ANTHROPIC_CACHE_DIAGNOSTICS=1 で有効化 (失敗しても review 本体には影響しない)。
+ANTHROPIC_CACHE_DIAGNOSTICS_BETA = "cache-diagnosis-2026-04-07"
+_ANTHROPIC_PREVIOUS_MESSAGE_ID: str | None = None
+
 
 def configure_stdout() -> None:
     if hasattr(sys.stdout, "reconfigure"):
@@ -45,6 +51,46 @@ def log(message: str) -> None:
     print(line)
     with LOG_PATH.open("a", encoding="utf-8") as handle:
         handle.write(line + "\n")
+
+
+def anthropic_cache_kwargs() -> dict[str, Any]:
+    """ANTHROPIC_CACHE_DIAGNOSTICS=1 のとき cache diagnostics beta を付与する。
+
+    同一プロセス内の直前レスポンス id を previous_message_id として渡すと、
+    レスポンスの diagnostics に cache_miss_reason (prefix がどこで分岐したか)
+    が返る。初回呼び出しは null。
+    """
+    if os.getenv("ANTHROPIC_CACHE_DIAGNOSTICS") != "1":
+        return {}
+    return {
+        "extra_headers": {"anthropic-beta": ANTHROPIC_CACHE_DIAGNOSTICS_BETA},
+        "extra_body": {
+            "diagnostics": {
+                "previous_message_id": _ANTHROPIC_PREVIOUS_MESSAGE_ID,
+            },
+        },
+    }
+
+
+def record_anthropic_response(response: Any) -> None:
+    """usage (token / cache 指標) と cache diagnostics を GHA ログに残す。"""
+    global _ANTHROPIC_PREVIOUS_MESSAGE_ID
+    _ANTHROPIC_PREVIOUS_MESSAGE_ID = getattr(response, "id", None) or None
+    usage = getattr(response, "usage", None)
+    if usage is not None:
+        log(
+            "[INFO] anthropic usage"
+            f" input={getattr(usage, 'input_tokens', None)}"
+            f" output={getattr(usage, 'output_tokens', None)}"
+            f" cache_read={getattr(usage, 'cache_read_input_tokens', None)}"
+            f" cache_creation={getattr(usage, 'cache_creation_input_tokens', None)}"
+        )
+    try:
+        diagnostics = response.to_dict().get("diagnostics")
+    except Exception:  # noqa: BLE001
+        diagnostics = None
+    if isinstance(diagnostics, dict) and diagnostics.get("cache_miss_reason"):
+        log(f"[INFO] anthropic cache_miss_reason={diagnostics['cache_miss_reason']}")
 
 
 def load_config(path: Path) -> dict[str, Any]:
@@ -365,15 +411,28 @@ def claude_review(
 
     retry_count = int(claude_config.get("max_retry", 3) or 3)
     client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    # prompt caching: 安定 prefix (system) に cache_control breakpoint を付ける。
+    # 1 run で複数 feature をループするため 2 件目以降が cache hit になる
+    # (system が最小キャッシュ長未満のときは黙って非キャッシュ — usage で観測)。
+    system_prompt = str(claude_config.get("system_prompt_addition", "") or "")
+    system_kwargs: dict[str, Any] = {}
+    if system_prompt:
+        system_kwargs["system"] = [{
+            "type": "text",
+            "text": system_prompt,
+            "cache_control": {"type": "ephemeral"},
+        }]
     for attempt in range(1, retry_count + 1):
         try:
             response = client.messages.create(
                 model=model,
                 max_tokens=1200,
                 temperature=0,
-                system=claude_config.get("system_prompt_addition", ""),
                 messages=[{"role": "user", "content": content}],
+                **system_kwargs,
+                **anthropic_cache_kwargs(),
             )
+            record_anthropic_response(response)
             raw_text = "\n".join(
                 getattr(part, "text", "")
                 for part in response.content
