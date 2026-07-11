@@ -4,11 +4,12 @@
 // 機能:
 // - FAL.ai (fast-sdxl) を使った広告画像生成
 // - Hedra を使ったプレゼンター動画生成
+// - fal.ai text-to-video (Veo/Kling 等) を使ったシネマティック動画生成
 // - 自分株式会社の「21の競合を超える」ストーリーを動画化
 // - 生成したメディアをSupabase Storageに保存
 // - X投稿用の動画URL + キャプションを返す
 //
-// POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "mobile_ux_validation" | "user_growth" | "ai_secretary_site_tour", "lang": "ja" | "en" }
+// POST { "type": "image" | "presenter_video" | "cinematic_video" | "video_script", "template": "dark_war" | "feature_highlight" | "mobile_ux_validation" | "user_growth" | "ai_secretary_site_tour", "lang": "ja" | "en" }
 // GET  ?view=templates | ?view=history
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -31,6 +32,15 @@ import {
 } from "./voice_labels.ts";
 import { applyTtsReadings } from "./tts_reading_lexicon.ts";
 import {
+  buildFalTextToVideoPayload,
+  DEFAULT_FAL_TEXT_TO_VIDEO_MODEL,
+  extractFalVideoUrl,
+  getFalQueueRequestResult,
+  getFalQueueRequestStatus,
+  isFalExhaustedBalanceError,
+  submitFalTextToVideoJob,
+} from "./fal_video.ts";
+import {
   buildCaptionSrt,
   buildForceStyle,
   burnCaptionsViaTranscoder,
@@ -49,6 +59,13 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 const FAL_KEY = Deno.env.get("FAL_KEY") ?? "";
+// type=cinematic_video 用の fal.ai text-to-video モデル。secret で
+// Veo/Kling/Seedance 等の任意の fal ホストモデルへ差し替え可能。
+const FAL_TEXT_TO_VIDEO_MODEL = Deno.env.get("FAL_TEXT_TO_VIDEO_MODEL") ??
+  DEFAULT_FAL_TEXT_TO_VIDEO_MODEL;
+// モデル固有パラメータ(duration/resolution 等)の JSON 上書き。省略可。
+const FAL_TEXT_TO_VIDEO_PARAMS = Deno.env.get("FAL_TEXT_TO_VIDEO_PARAMS") ??
+  "";
 const HEDRA_API_KEY = Deno.env.get("HEDRA_API_KEY") ?? "";
 const HEDRA_API_BASE = "https://api.hedra.com/web-app/public";
 // 読み上げ台本(spokenScript)の最大文字数。Hedra の動画生成は台本長に比例して
@@ -347,6 +364,7 @@ serve(async (req) => {
       imageUrl?: string;
       generatedImageUrl?: string;
       hedraGenerationId?: string;
+      falRequestId?: string;
       preferredModel?: string;
       creativePipeline?: string[];
     };
@@ -531,11 +549,94 @@ serve(async (req) => {
       }
     }
 
+    // シネマティック動画 (fal.ai text-to-video)。presenter_video (Hedra) と違い
+    // 顔画像・TTS を必要とせず、customPrompt のアートディレクションだけで
+    // 短尺シネマティック映像を生成する。queue API 非同期: 初回は submit して
+    // falRequestId を返し、クライアントが falRequestId 付きで再呼び出しして
+    // 完成をポーリングする (hedraGenerationId と同型)。
+    if (type === "cinematic_video") {
+      videoProvider = `fal:${FAL_TEXT_TO_VIDEO_MODEL}`;
+      if (!FAL_KEY) {
+        videoStatus = "fallback_text";
+        videoReason = "FAL_KEY not configured";
+      } else {
+        try {
+          let falRequestId = firstNonEmptyString(body.falRequestId);
+          if (falRequestId == null) {
+            const submitted = await submitFalTextToVideoJob({
+              apiKey: FAL_KEY,
+              modelId: FAL_TEXT_TO_VIDEO_MODEL,
+              payload: buildFalTextToVideoPayload({
+                prompt: imagePrompt,
+                extraParamsJson: FAL_TEXT_TO_VIDEO_PARAMS,
+              }),
+            });
+            falRequestId = submitted.requestId;
+            if (falRequestId == null) {
+              throw new Error(
+                "fal.ai queue submit did not return a request_id",
+              );
+            }
+          }
+          falJobId = falRequestId;
+          const queueStatus = await getFalQueueRequestStatus({
+            apiKey: FAL_KEY,
+            modelId: FAL_TEXT_TO_VIDEO_MODEL,
+            requestId: falRequestId,
+          });
+          if (queueStatus.status === "completed") {
+            const result = await getFalQueueRequestResult({
+              apiKey: FAL_KEY,
+              modelId: FAL_TEXT_TO_VIDEO_MODEL,
+              requestId: falRequestId,
+            });
+            const falVideoUrl = extractFalVideoUrl(result);
+            if (falVideoUrl == null) {
+              videoStatus = "fallback_text";
+              videoReason =
+                "fal.ai generation completed but no video URL was returned";
+            } else {
+              generatedVideoUrl = falVideoUrl;
+              generatedDownloadUrl = falVideoUrl;
+              // fal の出力 URL は恒久保証がないため、再利用ライブラリと同じ
+              // Storage バケットへ永続化する (失敗時は fal URL のまま投稿継続)。
+              const stored = await persistRemoteMediaToStorage(admin, {
+                url: falVideoUrl,
+                prefix: "fal",
+                fileName: `${falRequestId}-${
+                  storageSafeSegment(templateKey)
+                }-${lang}.mp4`,
+                contentType: "video/mp4",
+              });
+              storedVideoUrl = stored?.url ?? null;
+              storedVideoPath = stored?.path ?? null;
+              generatedVideoUrl = storedVideoUrl ?? generatedVideoUrl;
+              videoStatus = "video_ready";
+            }
+          } else if (queueStatus.status === "failed") {
+            videoStatus = "fallback_text";
+            videoReason = "fal.ai text-to-video generation failed";
+          } else {
+            videoStatus = "processing";
+            videoReason = "fal.ai text-to-video is still processing";
+          }
+        } catch (error) {
+          videoStatus = "fallback_text";
+          videoReason = isFalExhaustedBalanceError(error)
+            ? "fal.ai のクレジットが不足しています。fal.ai ダッシュボードで残高を補充してください。"
+            : error instanceof Error
+            ? error.message
+            : String(error);
+        }
+      }
+    }
+
     const generationStatus = generatedVideoUrl != null
       ? "video_ready"
       : generatedImageUrl != null
       ? "ready"
-      : type === "presenter_video" && videoStatus != null
+      : (type === "presenter_video" || type === "cinematic_video") &&
+          videoStatus != null
       ? videoStatus
       : "script_only";
 
@@ -594,6 +695,14 @@ serve(async (req) => {
       hedraProgress,
       hedraEtaSec,
       falJobId,
+      // cinematic_video のポーリング継続用 ID (falJobId と同値だが、client が
+      // hedraGenerationId と対で扱えるよう明示キーでも返す)。進行中のときだけ
+      // 返す: 終端状態 (failed / completed-no-URL = fallback_text) でも返すと
+      // クライアントが video.url 待ちで最大 7 分半ポーリングし続けてしまう
+      // (Hedra 経路の「失敗は即フォールバック」と同じ挙動に揃える)。
+      falRequestId: type === "cinematic_video" && videoStatus === "processing"
+        ? falJobId
+        : null,
       videoProvider,
       videoStatus,
       videoReason,
@@ -608,6 +717,10 @@ serve(async (req) => {
         ? "Call x-media-post with this imageUrl and caption to post to X"
         : hedraGenerationId != null
         ? "Hedra generation is still processing. Poll again with hedraGenerationId."
+        : type === "cinematic_video" && videoStatus === "processing"
+        ? "fal.ai text-to-video is still processing. Poll again with falRequestId."
+        : type === "cinematic_video"
+        ? "fal.ai text-to-video is unavailable. Use the caption for text-only X post or retry after checking FAL_KEY and FAL_TEXT_TO_VIDEO_MODEL."
         : type === "presenter_video" &&
             (videoReason?.includes("ELEVENLABS_API_KEY") ||
               videoReason?.includes("ElevenLabs"))

@@ -322,6 +322,10 @@ class UniversalAiShareDialog extends StatefulWidget {
 }
 
 class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
+  // 動画エンジン等のユーザー設定(設定パネルと同一のグローバル controller)。
+  AiShareButtonPreferencesController get _preferencesController =>
+      aiShareButtonPreferencesController;
+
   late final UniversalXShareService _service;
   late final TextEditingController _textController;
   UniversalXShareDraft? _draft;
@@ -342,6 +346,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   @override
   void initState() {
     super.initState();
+    // 通常は shell 側で読込済(冪等)。ダイアログ単体表示でも設定を反映する。
+    _preferencesController.load();
     _service = UniversalXShareService(supabase: Supabase.instance.client);
     _textController = TextEditingController();
     _generateDraft();
@@ -456,25 +462,34 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         _imageUrl = image.url;
         setState(() => _generatingImage = false);
       }
-      // 2. 音声+動画(Hedra は非同期。生成IDが返ったら完了までポーリング)
+      // 2. 音声+動画(Hedra / fal.ai とも非同期。生成IDが返ったら完了までポーリング)
+      // 動画エンジンは設定パネルで選択(既定は従来どおり Hedra プレゼンター動画)。
+      final videoEngine = _preferencesController.preferences.videoEngine;
+      final cinematic = videoEngine == AiShareVideoEngine.cinematic;
       if (_videoUrl == null) {
         setState(() {
           _generatingVideo = true;
-          _statusMessage = 'AIが音声と動画を生成しています…（Hedraは数分かかる場合があります）';
+          _statusMessage = cinematic
+              ? 'AIがシネマティック動画を生成しています…（fal.aiは数分かかる場合があります）'
+              : 'AIが音声と動画を生成しています…（Hedraは数分かかる場合があります）';
         });
         // preflight: 直近24h以内の Hedra クレジット不足失敗(以後の成功なし)を
         // 検出したら、ElevenLabs TTS を含む生成経路を丸ごとスキップして過去
         // 動画の再利用へ直行する(枯渇中の試行毎の TTS 代 + 30-60 秒待ちを除去)。
         // クレジット補充後は TTL 24h 失効時の実試行で自動復帰する。
+        // Hedra 固有の課金失敗検出なので cinematic エンジンでは適用しない。
         List<Map<String, dynamic>> shareHistory = const [];
         try {
           shareHistory = await _service.fetchShareVideoHistory();
         } catch (_) {}
         if (_disposed || !mounted) return;
-        final skipGeneration = UniversalXShareService.shouldSkipVideoGeneration(
-          shareHistory,
-          nowUtc: DateTime.now().toUtc(),
-        );
+        var skipGeneration = false;
+        if (!cinematic) {
+          skipGeneration = UniversalXShareService.shouldSkipVideoGeneration(
+            shareHistory,
+            nowUtc: DateTime.now().toUtc(),
+          );
+        }
         var video = skipGeneration
             ? const UniversalXMediaResult(
                 url: null,
@@ -487,13 +502,17 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                 context: widget.page,
                 draft: draft,
                 imageUrl: _imageUrl,
+                engine: videoEngine,
               );
+        final generationIdKey =
+            cinematic ? 'falRequestId' : 'hedraGenerationId';
         var generationId = video.url == null
-            ? _extractString(video.raw, 'hedraGenerationId')
+            ? _extractString(video.raw, generationIdKey)
             : null;
-        // Hedra は非同期で、ナレーション長に応じて数分かかる。静止画で投稿されないよう、
-        // 動画URLが返るまでポーリングして完成を待つ。台本は短尺(<=450字)に制限済で通常
-        // 数分内に完成するが、Hedra のキュー変動に備え約7分半まで待つ(defense-in-depth)。
+        // Hedra / fal.ai は非同期で数分かかる。静止画で投稿されないよう、
+        // 動画URLが返るまでポーリングして完成を待つ。Hedra の台本は短尺(<=450字)に
+        // 制限済で通常数分内に完成するが、キュー変動に備え約7分半まで待つ
+        // (defense-in-depth)。fal.ai text-to-video も同予算内に収まる。
         const maxPolls = 45;
         for (var polls = 0;
             video.url == null && generationId != null && polls < maxPolls;
@@ -502,16 +521,20 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           if (_disposed || !mounted) return;
           final elapsed = (polls + 1) * 10;
           setState(() {
-            _statusMessage = '音声と動画を生成しています…（約$elapsed秒経過 / 最大約7分半）';
+            _statusMessage = cinematic
+                ? 'シネマティック動画を生成しています…（約$elapsed秒経過 / 最大約7分半）'
+                : '音声と動画を生成しています…（約$elapsed秒経過 / 最大約7分半）';
           });
           video = await _service.generateVideo(
             context: widget.page,
             draft: draft,
             imageUrl: _imageUrl,
-            hedraGenerationId: generationId,
+            hedraGenerationId: cinematic ? null : generationId,
+            falRequestId: cinematic ? generationId : null,
+            engine: videoEngine,
           );
           generationId = video.url == null
-              ? (_extractString(video.raw, 'hedraGenerationId') ?? generationId)
+              ? (_extractString(video.raw, generationIdKey) ?? generationId)
               : null;
         }
         if (_disposed || !mounted) return;
@@ -629,14 +652,19 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
-              _CreativePipelineCard(
-                textReady: !_loadingDraft && _draft != null,
-                imageReady: _imageUrl != null,
-                videoReady: _videoUrl != null,
-                generatingText: _loadingDraft,
-                generatingImage: _generatingImage,
-                generatingVideo: _generatingVideo,
-                videoReused: _videoReused,
+              AnimatedBuilder(
+                animation: _preferencesController,
+                builder: (context, _) => _CreativePipelineCard(
+                  textReady: !_loadingDraft && _draft != null,
+                  imageReady: _imageUrl != null,
+                  videoReady: _videoUrl != null,
+                  generatingText: _loadingDraft,
+                  generatingImage: _generatingImage,
+                  generatingVideo: _generatingVideo,
+                  videoReused: _videoReused,
+                  cinematic: _preferencesController.preferences.videoEngine ==
+                      AiShareVideoEngine.cinematic,
+                ),
               ),
               const SizedBox(height: 12),
               if (_loadingDraft)
@@ -717,6 +745,7 @@ class _CreativePipelineCard extends StatelessWidget {
   final bool generatingImage;
   final bool generatingVideo;
   final bool videoReused;
+  final bool cinematic;
 
   const _CreativePipelineCard({
     required this.textReady,
@@ -726,6 +755,7 @@ class _CreativePipelineCard extends StatelessWidget {
     required this.generatingImage,
     required this.generatingVideo,
     this.videoReused = false,
+    this.cinematic = false,
   });
 
   @override
@@ -733,7 +763,9 @@ class _CreativePipelineCard extends StatelessWidget {
     final theme = Theme.of(context);
     final steps = <_PipelineStepData>[
       // 実際に使うツールを正確に表示する(嘘のパイプラインにしない)。
-      // 文章=GPT-5.5(ai-hub) / 画像=GPT image / 音声=ElevenLabs / 動画=Hedra。
+      // presenter: 文章=GPT-5.5(ai-hub) / 画像=GPT image / 音声=ElevenLabs / 動画=Hedra。
+      // cinematic: 文章=GPT-5.5 / 画像=GPT image(静止画フォールバック用) /
+      //            動画=fal.ai text-to-video(音声・アバターなし)。
       _PipelineStepData(
         index: 1,
         model: 'GPT-5.5',
@@ -748,20 +780,21 @@ class _CreativePipelineCard extends StatelessWidget {
         icon: Icons.image_outlined,
         state: _stateFor(ready: imageReady, running: generatingImage),
       ),
-      _PipelineStepData(
-        index: 3,
-        model: 'ElevenLabs',
-        role: '音声',
-        icon: Icons.record_voice_over_outlined,
-        state: _stateFor(
-          ready: videoReady,
-          running: generatingVideo,
-          reused: videoReused,
+      if (!cinematic)
+        _PipelineStepData(
+          index: 3,
+          model: 'ElevenLabs',
+          role: '音声',
+          icon: Icons.record_voice_over_outlined,
+          state: _stateFor(
+            ready: videoReady,
+            running: generatingVideo,
+            reused: videoReused,
+          ),
         ),
-      ),
       _PipelineStepData(
-        index: 4,
-        model: 'Hedra',
+        index: cinematic ? 3 : 4,
+        model: cinematic ? 'fal.ai' : 'Hedra',
         role: '動画',
         icon: Icons.movie_creation_outlined,
         state: _stateFor(

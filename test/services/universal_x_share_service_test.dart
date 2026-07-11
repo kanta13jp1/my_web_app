@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
+import 'package:my_web_app/services/ai_share_button_preferences_service.dart';
 import 'package:my_web_app/services/universal_x_share_service.dart';
 
 // 非 finance の presenter 動画で使う音声ラベル一覧(エッジ側 voice_labels.ts と対応)。
@@ -1308,6 +1309,91 @@ void main() {
       );
     },
   );
+
+  test(
+    'generateVideo with cinematic engine requests fal.ai text-to-video',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      String? capturedFunction;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedFunction = functionName;
+          capturedBody = body;
+          return {
+            'success': true,
+            'videoStatus': 'processing',
+            'falRequestId': 'req-123',
+          };
+        },
+      );
+
+      final draft = UniversalXShareService.buildGrowthDraft(page);
+      final result = await service.generateVideo(
+        context: page,
+        draft: draft,
+        imageUrl: 'https://example.com/share.png',
+        engine: AiShareVideoEngine.cinematic,
+      );
+
+      expect(capturedFunction, 'viral-video-ad-generator');
+      expect(capturedBody?['type'], 'cinematic_video');
+      expect(capturedBody?['preferredModel'], 'fal-text-to-video');
+      expect(capturedBody?['creativePipeline'], const [
+        'gpt-5.5',
+        'fal-text-to-video',
+      ]);
+      // text-to-video は顔画像を使わないので Hedra 用開始画像を送らない。
+      expect(capturedBody?.containsKey('imageUrl'), isFalse);
+      // 固定アートディレクションで見た目の一貫性を担保する。
+      expect(capturedBody?['customPrompt'], contains('paper-craft'));
+      expect(capturedBody?['customPrompt'], contains('16:9'));
+      // 初回はポーリング ID を送らず、応答から falRequestId を取得できる。
+      expect(capturedBody?.containsKey('falRequestId'), isFalse);
+      expect(result.url, isNull);
+      expect(result.status, 'processing');
+      expect(result.raw['falRequestId'], 'req-123');
+    },
+  );
+
+  test(
+    'generateVideo cinematic engine can poll an existing fal request',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {
+            'success': true,
+            'videoStatus': 'video_ready',
+            'storedVideoUrl': 'https://example.com/storage/cinematic.mp4',
+          };
+        },
+      );
+
+      final draft = UniversalXShareService.buildFallbackDraft(page);
+      final result = await service.generateVideo(
+        context: page,
+        draft: draft,
+        falRequestId: 'req-123',
+        engine: AiShareVideoEngine.cinematic,
+      );
+
+      expect(capturedBody?['falRequestId'], 'req-123');
+      expect(result.url, 'https://example.com/storage/cinematic.mp4');
+      expect(result.status, 'video_ready');
+    },
+  );
+
+  test('cinematic prompt falls back to page title when draft prompt is empty',
+      () {
+    final draft = UniversalXShareService.buildFallbackDraft(page)
+        .copyWith(videoPrompt: '');
+
+    final prompt = UniversalXShareService.cinematicVideoPromptFor(page, draft);
+
+    expect(prompt, contains('Gemini University'));
+    expect(prompt, contains('paper-craft'));
+  });
 
   test('generateVideo prefers durable Supabase stored video URL', () async {
     final service = UniversalXShareService(
