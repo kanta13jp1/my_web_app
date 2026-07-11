@@ -43,6 +43,7 @@ class _LandingPageState extends State<LandingPage> {
 
   StreamSubscription<AuthState>? _authSubscription;
   Timer? _magicLinkCooldownTimer;
+  final Set<String> _signupNotificationUserIds = <String>{};
 
   bool _isLoading = false;
   bool _isTrialLoading = false;
@@ -77,6 +78,7 @@ class _LandingPageState extends State<LandingPage> {
     _authSubscription = widget.adapter.authStateChanges().listen((data) {
       if (!mounted) return;
       if (data.event == AuthChangeEvent.signedIn && data.session != null) {
+        unawaited(_notifySignupIfPossible(data.session?.user.id));
         unawaited(widget.growthService.applyPendingReferralIfPossible());
         _goToAuthenticatedEntry();
       }
@@ -109,6 +111,17 @@ class _LandingPageState extends State<LandingPage> {
 
   void _goToAuthenticatedEntry() {
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+  }
+
+  Future<void> _notifySignupIfPossible(String? signupUserId) async {
+    final userId = signupUserId?.trim();
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+    if (!_signupNotificationUserIds.add(userId)) {
+      return;
+    }
+    await _acquisitionService.notifySignupSuccess(signupUserId: userId);
   }
 
   Future<void> _bootstrapReferralInvite() async {
@@ -219,11 +232,7 @@ class _LandingPageState extends State<LandingPage> {
           password: password,
           emailRedirectTo: _webRedirectUrl,
         );
-        unawaited(
-          _acquisitionService.notifySignupSuccess(
-            signupUserId: result.user?.id,
-          ),
-        );
+        unawaited(_notifySignupIfPossible(result.user?.id));
         if (!mounted) return;
         if (result.session == null) {
           _showMessage('確認メールを送信しました。メール内のリンクから登録を完了してください。');
@@ -255,6 +264,7 @@ class _LandingPageState extends State<LandingPage> {
 
     setState(() => _isLoading = true);
     try {
+      unawaited(_acquisitionService.recordLandingSignupSubmit());
       final launched = await widget.adapter.signInWithGoogle(
         redirectTo: _webRedirectUrl,
       );
