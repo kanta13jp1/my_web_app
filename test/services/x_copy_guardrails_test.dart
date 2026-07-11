@@ -72,5 +72,24 @@ void main() {
       expect(kSlopBannedTokens, contains('強力なツール'));
       expect(kSlopBannedTokens, contains('可能性があります'));
     });
+
+    test('R22: observed dodge tokens are detectable', () {
+      // 2026-07-11 実投稿で exact 禁止をかわした変形。
+      const lead = '私のウェブアプリ『給料日サイクル』では支出を把握。'
+          '家計の透明性が向上しました。ぜひ試してみてください。';
+      final hits = detectSlop('', lead);
+      expect(hits, contains('ウェブアプリ'));
+      expect(hits, contains('が向上しました'));
+      expect(hits, contains('ぜひ試して'));
+    });
+
+    test('composeSlopWarning: null when clean, message when hits', () {
+      expect(composeSlopWarning(const []), isNull);
+      final w = composeSlopWarning(const ['ぜひ試して'])!;
+      expect(w, contains('言い換え候補'));
+      expect(w, contains('ぜひ試して'));
+      // 投稿は止めない文言(再生成の推奨に留める)。
+      expect(w, contains('このまま投稿も可能'));
+    });
   });
 }

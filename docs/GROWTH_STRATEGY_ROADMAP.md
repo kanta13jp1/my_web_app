@@ -32523,3 +32523,34 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - `docs/GROWTH_STRATEGY_ROADMAP.md` — 本セッション記録追記
 
 **Philosophy Alignment**: 原則 1 (CEO感: 競合の動きを即時把握) / 原則 6 (資本=時間: スケジュール自動確認) / 原則 8 (KPI 自動集計確認).
+
+## セッション記録: SEO 監査 H7 完了 + 監査 doc 化 (2026-07-11 / WEB版)
+
+**Summary**:
+- SEO 10仮説監査の残レバー **H7 (被リンク/authority 流出 + 公開ブログ非クロール)** を完了。
+- **#3925 (H7土台)**: 公開ブログを core-hub `blog_view.ts` で SSR 化 + クロール可能URL化 (`/blog/post?id=X`)。匿名 action `blog.public.view`/`blog.public.list` (status='posted' のみ / HTML/JSON/MD + BlogPosting JSON-LD + 自己参照 canonical)。`PublicBlogPostPage` が URL クエリからも id 解決。日次 smoke に blog.public.list 追加。
+- **#3927 (H7本体)**: `blog_canonical.ts` を新設し `blog.publish_post` の dev.to payload に `article.canonical_url = /blog/post?id=X` を付与。dev.to へ流出していた検索 authority を自ドメインへ集約。
+- **#3941 (監査 doc化)**: `docs/seo/SEO_AUDIT_2026-07.md` に H1-H10 × 対応 × 決定を正本化。
+
+**決定事項 (2026-07-11)**:
+- **H8 フォントサブセット = Skip**。実測で「安全減は約18%のみ / UGC 無限漢字で豆腐(□)リスク」。CWV は将来、初回JS遅延ロード等の非破壊手段で対応。
+- **H6 独自ドメイン = 保留**。移行コスト大 (DNS/Hosting/全 canonical/sitemap/OG URL 移行) / 他レバー優先。
+
+**Key insights**:
+- **blog publish 2経路の table 差異**: `blog.publish_post` は `blog_posts.id` (直後 status='posted' → /blog/post で解決) → canonical 安全。`blog.auto_publish` は `blog.create` が作る **hub_data** 行由来 → /blog/post では解決しない → canonical 除外 (blog_posts 化は別 issue)。
+- **WEB版制約**: AskUserQuestion/send_later 不通 → テキスト確認。Supabase 直 curl / workflow_dispatch は 403 → 本番検証は日次 smoke cron (06:07 JST) 依存。
+
+**SEO 監査 最終**: 10仮説中 **9 実装 + H8 意図的 Skip = 全着地**。監査は `docs/seo/SEO_AUDIT_2026-07.md` に正本化。
+
+**Changes**:
+- `supabase/functions/core-hub/blog_view.ts` (+test) / `schedule-hub/blog_canonical.ts` (+test) / `docs/seo/SEO_AUDIT_2026-07.md` (前セッションで PR マージ済)
+- `memory/` — feedback_success / feedback_correction / project (20260711_web_seo_h7) 追加
+- `docs/GROWTH_STRATEGY_ROADMAP.md` — 本セッション記録追記
+
+### Philosophy Alignment (WEB版 2026-07-11)
+
+- 主要実装: 公開ブログ SSR + クロール可能URL化 + dev.to canonical 自サイト集約 (H7) + SEO 監査 doc 正本化。
+- 該当原則: 5 (商品=ユーザー価値: 数百記事の公開ブログを検索/LLM から発見可能に) / 6 (資本=時間: オーガニック流入の資産化 = 継続的な無償集客資産) / 7 (資産負債: authority 流出を止め自ドメインへ集約 = 無形資産の回収) / 8 (KPI=昨日の自分: 監査を数値化・doc 正本化して継続改善)。
+- 整合性スコア: **8/9 ✅** (原則 1/2/3/5/6/7/8/9 に整合。原則 4 人事は本セッション非該当)。
+- 理念的貢献: 発信済みコンテンツの「検索資産化」= 時間資本の複利化。実測で H8 を Skip した誠実さも原則 5 (ユーザー可視の豆腐を出さない) を体現。
+- 懸念: なし。auto_publish 記事の canonical 集約は残課題として doc/memory に記録済。

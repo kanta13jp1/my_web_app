@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "849bef4718af2c5418d4eb8e9454a0bb1b6e9f187e44e12cbae6d68b83fa7718",
+      "hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,179 +55,21 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.206 / July 9, 2026",
+      "latest_signal": "2.1.207 / July 11, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
+      "previous_hash": "849bef4718af2c5418d4eb8e9454a0bb1b6e9f187e44e12cbae6d68b83fa7718",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.206 July 9, 2026 Added directory path suggestions to /cd , matching /add-dir behavior Added a /doctor check that proposes trimming checked-in CLAUDE.md files by cutting..."
+        "​ 2.1.207 July 11, 2026 Auto mode is now available without CLAUDE_CODE_ENABLE_AUTO_MODE opt-in on Bedrock, Vertex AI, and Foundry; disable via disableAutoMode in settings Fixed..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "model picker",
-          "in-app browser",
-          "browser use",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "PostToolUse",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "OpenTelemetry",
-          "cost",
-          "quota",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
-      "name": "Codex changelog",
-      "owner": "Codex",
-      "previous_hash": "5d436331646042ce76a1072fbda7c7482a4bea0b2206e1a4e9d941bf36218564",
-      "slug": "codex-changelog",
-      "snippets": [
-        "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
-        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "fe93fc860fe18878e197ff5be89ff26ae9384e0eddcc1b544fdc5bbaa7aa7feb",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.4",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "schedule",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc",
-      "name": "Codex use cases",
-      "owner": "Codex",
-      "previous_hash": "0355b165414c3112ac70f40fd8233e05120e8441d9e18dca1e7caceb8361b871",
-      "slug": "codex-use-cases",
-      "snippets": [
-        "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs...",
-        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
-        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/use-cases/"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "8e341f92cadee96206da07a719cbfa0e1963f77895f44e7e637dae08927e224e",
-      "keyword_groups": {
-        "codex-runtime": [
-          "computer use",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "Slack",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "3.11 / Jul 10, 2026",
-      "name": "Cursor changelog",
-      "owner": "Cursor",
-      "previous_hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
-      "slug": "cursor-changelog",
-      "snippets": [
-        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",
-        "Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running.",
-        "You can now stay in the picker for workflows that used to send you elsewhere."
-      ],
-      "status": 200,
-      "url": "https://cursor.com/changelog"
     }
   ],
-  "checked_at": "2026-07-10T22:17:54Z",
+  "checked_at": "2026-07-11T22:09:19Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -279,13 +121,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-09T22:44:15Z",
+  "previous_checked_at": "2026-07-10T22:17:54Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "849bef4718af2c5418d4eb8e9454a0bb1b6e9f187e44e12cbae6d68b83fa7718",
+      "hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -329,15 +171,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.206 / July 9, 2026",
+      "latest_signal": "2.1.207 / July 11, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
+      "previous_hash": "849bef4718af2c5418d4eb8e9454a0bb1b6e9f187e44e12cbae6d68b83fa7718",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.206 July 9, 2026 Added directory path suggestions to /cd , matching /add-dir behavior Added a /doctor check that proposes trimming checked-in CLAUDE.md files by cutting..."
+        "​ 2.1.207 July 11, 2026 Auto mode is now available without CLAUDE_CODE_ENABLE_AUTO_MODE opt-in on Bedrock, Vertex AI, and Foundry; disable via disableAutoMode in settings Fixed..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -442,7 +284,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
@@ -492,7 +334,7 @@
       "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "5d436331646042ce76a1072fbda7c7482a4bea0b2206e1a4e9d941bf36218564",
+      "previous_hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
       "slug": "codex-changelog",
       "snippets": [
         "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -503,7 +345,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "fe93fc860fe18878e197ff5be89ff26ae9384e0eddcc1b544fdc5bbaa7aa7feb",
@@ -545,7 +387,7 @@
       "latest_signal": "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "0355b165414c3112ac70f40fd8233e05120e8441d9e18dca1e7caceb8361b871",
+      "previous_hash": "fe93fc860fe18878e197ff5be89ff26ae9384e0eddcc1b544fdc5bbaa7aa7feb",
       "slug": "codex-use-cases",
       "snippets": [
         "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs...",
@@ -571,7 +413,7 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "8e341f92cadee96206da07a719cbfa0e1963f77895f44e7e637dae08927e224e",
@@ -604,7 +446,7 @@
       "latest_signal": "3.11 / Jul 10, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
-      "previous_hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
+      "previous_hash": "8e341f92cadee96206da07a719cbfa0e1963f77895f44e7e637dae08927e224e",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",

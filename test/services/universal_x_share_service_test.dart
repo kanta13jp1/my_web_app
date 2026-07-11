@@ -314,6 +314,8 @@ void main() {
     expect(prompt, contains('question 文をそのまま繰り返すな'));
     // 矛盾 few-shot(禁止テンプレートを実演していた GOOD 例)が除去済みなこと。
     expect(prompt, isNot(contains('引き落としが浮いた')));
+    // R22: R12 の禁止行書き換えで脱落していた「ぜひ試して」ban の復活を固定。
+    expect(prompt, contains('ぜひ試して'));
   });
 
   test('buildXPostFailureMessage dedupes guidance embedded in the error', () {

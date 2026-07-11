@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/ai_share_button_preferences_service.dart';
 import '../services/universal_x_share_service.dart';
+import '../services/x_copy_guardrails.dart';
 import 'ai_share_button_settings_panel.dart';
 
 /// 投稿済みツイートの URL を組み立てる純関数。ハンドル名は不要な
@@ -367,12 +368,18 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     try {
       final draft = await _service.generateDraft(widget.page);
       if (_disposed || !mounted) return;
+      // R22: exact 禁止語はプロンプトだけでは毎回すり抜けが出る(実測 2026-07-11:
+      // 「ウェブアプリ」「ぜひ試して」等)。決定的検出で非ブロッキング警告を出す
+      // (投稿は止めない・自動再生成もしない = 有償生成 foot-gun 回避)。
+      final slopWarning = composeSlopWarning(
+        detectSlop(draft.text, draft.threadReplies.join('\n')),
+      );
       setState(() {
         _draft = draft;
         _textController.text = draft.text;
         _loadingDraft = false;
         _statusMessage =
-            draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : null;
+            draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : slopWarning;
       });
     } catch (error) {
       if (_disposed || !mounted) return;
