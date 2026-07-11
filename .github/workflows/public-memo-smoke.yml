@@ -19,6 +19,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: public-memo-smoke
+  cancel-in-progress: true  # 2026-07-11 ci-audit: 日次+手動重複実行防止
+
 jobs:
   smoke:
     name: Anonymous GET smoke
