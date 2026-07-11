@@ -696,8 +696,13 @@ serve(async (req) => {
       hedraEtaSec,
       falJobId,
       // cinematic_video のポーリング継続用 ID (falJobId と同値だが、client が
-      // hedraGenerationId と対で扱えるよう明示キーでも返す)。
-      falRequestId: type === "cinematic_video" ? falJobId : null,
+      // hedraGenerationId と対で扱えるよう明示キーでも返す)。進行中のときだけ
+      // 返す: 終端状態 (failed / completed-no-URL = fallback_text) でも返すと
+      // クライアントが video.url 待ちで最大 7 分半ポーリングし続けてしまう
+      // (Hedra 経路の「失敗は即フォールバック」と同じ挙動に揃える)。
+      falRequestId: type === "cinematic_video" && videoStatus === "processing"
+        ? falJobId
+        : null,
       videoProvider,
       videoStatus,
       videoReason,

@@ -5,9 +5,9 @@
 
 export const FAL_QUEUE_BASE = "https://queue.fal.run";
 
-/// 既定モデル。速度/コスト/品質バランスの良い Veo fast を選ぶ。
-/// より高品質にしたい場合は FAL_TEXT_TO_VIDEO_MODEL で
-/// "fal-ai/veo3" や "fal-ai/kling-video/v2.5-turbo/pro/text-to-video" 等へ切替。
+// 既定モデル。速度/コスト/品質バランスの良い Veo fast を選ぶ。
+// より高品質にしたい場合は FAL_TEXT_TO_VIDEO_MODEL で
+// "fal-ai/veo3" や "fal-ai/kling-video/v2.5-turbo/pro/text-to-video" 等へ切替。
 export const DEFAULT_FAL_TEXT_TO_VIDEO_MODEL = "fal-ai/veo3/fast";
 
 export type FalQueueStatus = "queued" | "processing" | "completed" | "failed";
@@ -18,9 +18,9 @@ export type FalSubmitResult = {
   responseUrl: string | null;
 };
 
-/// fal queue の status/result エンドポイントはモデルのサブパス
-/// ("fal-ai/veo3/fast" の "/fast" 等) を含まない owner/alias 2 セグメントで
-/// 参照する必要がある。"fal-ai/veo3/fast" -> "fal-ai/veo3"。
+// fal queue の status/result エンドポイントはモデルのサブパス
+// ("fal-ai/veo3/fast" の "/fast" 等) を含まない owner/alias 2 セグメントで
+// 参照する必要がある。"fal-ai/veo3/fast" -> "fal-ai/veo3"。
 export function falQueueAppId(modelId: string): string {
   const segments = modelId
     .split("/")
@@ -30,10 +30,10 @@ export function falQueueAppId(modelId: string): string {
   return `${segments[0]}/${segments[1]}`;
 }
 
-/// 送信 payload を組み立てる。prompt + 16:9 を既定にし、モデル固有パラメータ
-/// (duration / resolution 等はモデル毎に名前が違う) は JSON 文字列の
-/// extraParamsJson (= FAL_TEXT_TO_VIDEO_PARAMS secret) で上書き注入する。
-/// 壊れた JSON は無視して既定のみで送る (投稿フローを絶対に止めない)。
+// 送信 payload を組み立てる。prompt + 16:9 を既定にし、モデル固有パラメータ
+// (duration / resolution 等はモデル毎に名前が違う) は JSON 文字列の
+// extraParamsJson (= FAL_TEXT_TO_VIDEO_PARAMS secret) で上書き注入する。
+// 壊れた JSON は無視して既定のみで送る (投稿フローを絶対に止めない)。
 export function buildFalTextToVideoPayload(params: {
   prompt: string;
   extraParamsJson?: string | null;
@@ -60,7 +60,7 @@ export function buildFalTextToVideoPayload(params: {
   return payload;
 }
 
-/// fal queue の status 文字列を安定した内部ステータスへ正規化する。
+// fal queue の status 文字列を安定した内部ステータスへ正規化する。
 export function normalizeFalQueueStatus(value: unknown): FalQueueStatus {
   const status = typeof value === "string" ? value.trim().toUpperCase() : "";
   if (status === "COMPLETED" || status === "OK") return "completed";
@@ -72,9 +72,9 @@ export function normalizeFalQueueStatus(value: unknown): FalQueueStatus {
   return "processing";
 }
 
-/// result payload から動画 URL を取り出す。モデルにより出力 shape が違う
-/// (Veo/Kling: {video:{url}} / 一部: {videos:[{url}]} / {video_url}) ため
-/// 代表的な形を順に許容する。
+// result payload から動画 URL を取り出す。モデルにより出力 shape が違う
+// (Veo/Kling: {video:{url}} / 一部: {videos:[{url}]} / {video_url}) ため
+// 代表的な形を順に許容する。
 export function extractFalVideoUrl(payload: unknown): string | null {
   const record = asRecord(payload);
   if (record == null) return null;
@@ -96,8 +96,8 @@ export function extractFalVideoUrl(payload: unknown): string | null {
   return null;
 }
 
-/// fal の課金系エラー文言判定。Hedra クレジット不足と同様に、静止画降格の
-/// 理由として operator が投稿画面で即視認できる日本語文言に変換するために使う。
+// fal の課金系エラー文言判定。Hedra クレジット不足と同様に、静止画降格の
+// 理由として operator が投稿画面で即視認できる日本語文言に変換するために使う。
 export function isFalExhaustedBalanceError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   const normalized = message.toLowerCase();
