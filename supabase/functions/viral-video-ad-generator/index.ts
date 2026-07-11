@@ -30,6 +30,7 @@ import {
   resolveElevenLabsVoiceId,
   voiceGenderForLabel,
 } from "./voice_labels.ts";
+import { applyTtsReadings } from "./tts_reading_lexicon.ts";
 import {
   buildFalTextToVideoPayload,
   DEFAULT_FAL_TEXT_TO_VIDEO_MODEL,
@@ -834,6 +835,10 @@ async function createHedraPresenterVideo(params: {
     params.title,
   )
     .join("\n");
+  // TTS へ渡すテキストにだけ読み辞書を適用する (誤読対策 / 例: 負債→ふさい)。
+  // 字幕 (index.ts の spokenForCaptions) は漢字表記のまま維持される。
+  const ttsText = applyTtsReadings(spokenScript, params.lang)
+    .slice(0, MAX_SPOKEN_CHARS);
   let audioProvider = "hedra_tts";
   let storedAudioUrl: string | null = null;
   let storedAudioPath: string | null = null;
@@ -862,7 +867,7 @@ async function createHedraPresenterVideo(params: {
       }
       const audio = await createElevenLabsSpeechAsset(params.admin, {
         // 動画を短尺に保つための上限。全 TTS 経路で MAX_SPOKEN_CHARS に統一。
-        text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
+        text: ttsText,
         templateTitle: params.title ?? "share-update",
         lang: params.lang,
         voiceId: resolveElevenLabsVoiceForLabel(params.voice),
@@ -888,7 +893,7 @@ async function createHedraPresenterVideo(params: {
         shouldRetryElevenLabsWithFallbackVoice(error)
       ) {
         const fallbackResult = await tryElevenLabsFallbackVoices(params.admin, {
-          text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
+          text: ttsText,
           templateTitle: params.title ?? "share-update",
           lang: params.lang,
           configuredVoiceId: ELEVENLABS_AI_SECRETARY_VOICE_ID,
@@ -907,7 +912,7 @@ async function createHedraPresenterVideo(params: {
             storedAudioPath,
             audioProvider,
             imageUrl,
-            fallbackText: spokenScript.slice(0, MAX_SPOKEN_CHARS),
+            fallbackText: ttsText,
           });
         }
         speechChain.push(`fallback_voices=${fallbackResult.reason}`);
@@ -918,7 +923,7 @@ async function createHedraPresenterVideo(params: {
       if (OPENAI_API_KEY) {
         try {
           const openAiAudio = await createOpenAiSpeechAsset(params.admin, {
-            text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
+            text: ttsText,
             templateTitle: `${params.title ?? "share-update"}-openai-tts`,
             lang: params.lang,
           });
@@ -934,7 +939,7 @@ async function createHedraPresenterVideo(params: {
             storedAudioPath,
             audioProvider,
             imageUrl,
-            fallbackText: spokenScript.slice(0, MAX_SPOKEN_CHARS),
+            fallbackText: ttsText,
           });
         } catch (openAiError) {
           speechChain.push(`openai_tts=${providerErrorMessage(openAiError)}`);
@@ -947,7 +952,7 @@ async function createHedraPresenterVideo(params: {
         speechChain.join(" | "),
       );
       audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
-        text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
+        text: ttsText,
       });
       audioProvider = params.requiresUploadedAudio
         ? "hedra_tts_after_premium_speech_failure"
@@ -955,7 +960,7 @@ async function createHedraPresenterVideo(params: {
     }
   } else {
     audioGeneration = await createHedraTextToSpeechAudioGeneration(params, {
-      text: spokenScript.slice(0, MAX_SPOKEN_CHARS),
+      text: ttsText,
     });
   }
 
@@ -966,7 +971,7 @@ async function createHedraPresenterVideo(params: {
       storedAudioPath,
       audioProvider,
       imageUrl,
-      fallbackText: spokenScript.slice(0, MAX_SPOKEN_CHARS),
+      fallbackText: ttsText,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
