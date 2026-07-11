@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-09T22:44:19Z",
+  "generated_at": "2026-07-10T22:17:57Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,18 +19,18 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-a83bc4015561",
+        "entry_id": "nf-00ec465ca76f",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.205 / July 8, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.205 July 8, 2026 Added an auto mode rule that blocks tampering with session transcript files Fixed --json-schema silently producing unstructured output when the schema was...",
+        "text": "Claude Code changelog 2.1.206 / July 9, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.206 July 9, 2026 Added directory path suggestions to /cd , matching /add-dir behavior Added a /doctor check that proposes trimming checked-in CLAUDE.md files by cutting...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
+          "hash": "849bef4718af2c5418d4eb8e9454a0bb1b6e9f187e44e12cbae6d68b83fa7718",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,7 +74,7 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.205 / July 8, 2026",
+          "latest_signal": "2.1.206 / July 9, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
           "previous_hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
@@ -82,14 +82,14 @@
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.205 July 8, 2026 Added an auto mode rule that blocks tampering with session transcript files Fixed --json-schema silently producing unstructured output when the schema was..."
+            "​ 2.1.206 July 9, 2026 Added directory path suggestions to /cd , matching /add-dir behavior Added a /doctor check that proposes trimming checked-in CLAUDE.md files by cutting..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-a83bc4015561",
+        "entry_id": "nf-00ec465ca76f",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -115,7 +115,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
@@ -155,7 +155,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "ede430cc21167af8fb40f625b3862c367cd8cbe981c20a9f85244dd99262db07",
+          "previous_hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -271,7 +271,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5d436331646042ce76a1072fbda7c7482a4bea0b2206e1a4e9d941bf36218564",
+          "hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -286,6 +286,7 @@
             "hooks": [
               "hook",
               "hooks",
+              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -297,6 +298,7 @@
               "IDE extension"
             ],
             "quality-cost": [
+              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -316,7 +318,7 @@
           "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "d4756ff4bf05feff0785a78817c8a5ac31802ce416b46ca3efaa636ab2990bbc",
+          "previous_hash": "5d436331646042ce76a1072fbda7c7482a4bea0b2206e1a4e9d941bf36218564",
           "slug": "codex-changelog",
           "snippets": [
             "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -357,7 +359,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "0355b165414c3112ac70f40fd8233e05120e8441d9e18dca1e7caceb8361b871",
+          "hash": "fe93fc860fe18878e197ff5be89ff26ae9384e0eddcc1b544fdc5bbaa7aa7feb",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -396,7 +398,7 @@
           "latest_signal": "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc",
           "name": "Codex use cases",
           "owner": "Codex",
-          "previous_hash": "e65760dc29e298d07245c55ed286cccd29acc05f66c816df8bed67d511c02916",
+          "previous_hash": "0355b165414c3112ac70f40fd8233e05120e8441d9e18dca1e7caceb8361b871",
           "slug": "codex-use-cases",
           "snippets": [
             "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs...",
@@ -469,18 +471,18 @@
     },
     {
       "entry": {
-        "entry_id": "nf-6343294b9d01",
+        "entry_id": "nf-7ccbc55659b2",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.10 / Jun 30, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources... # Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI. When an admin sets up Team MCP servers for cloud agents, they can make those same servers available in a team marketplace from Dashboard -> Integrations & MCP .",
+        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources... Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running. You can now stay in the picker for workflows that used to send you elsewhere.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
+          "hash": "8e341f92cadee96206da07a719cbfa0e1963f77895f44e7e637dae08927e224e",
           "keyword_groups": {
             "codex-runtime": [
               "computer use",
@@ -488,7 +490,8 @@
             ],
             "hooks": [
               "hook",
-              "hooks"
+              "hooks",
+              "Stop"
             ],
             "integration": [
               "MCP",
@@ -506,22 +509,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "3.10 / Jun 30, 2026",
+          "latest_signal": "3.11 / Jul 10, 2026",
           "name": "Cursor changelog",
           "owner": "Cursor",
           "previous_hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
           "slug": "cursor-changelog",
           "snippets": [
             "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",
-            "# Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI.",
-            "When an admin sets up Team MCP servers for cloud agents, they can make those same servers available in a team marketplace from Dashboard -> Integrations & MCP ."
+            "Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running.",
+            "You can now stay in the picker for workflows that used to send you elsewhere."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-6343294b9d01",
+        "entry_id": "nf-7ccbc55659b2",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
