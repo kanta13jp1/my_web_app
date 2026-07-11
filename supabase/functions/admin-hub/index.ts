@@ -5,6 +5,12 @@ import {
   buildAiRouterCostDashboard,
   normalizeAiRoutingTask,
 } from "../_shared/ai_router_cost_optimization.ts";
+import {
+  normalizeTaskBudgetDocuments,
+  normalizeTaskBudgetEffort,
+  normalizeTaskBudgetTokens,
+  runTaskBudgetAssistant,
+} from "../_shared/task_budget_assistant.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -353,6 +359,135 @@ serve(async (req: Request) => {
           .single();
         if (error) return json({ error: error.message }, 500);
         return json({ success: true, preference: data });
+      }
+
+      case "task_budget_assistant.job.create": {
+        if (!userId) return json({ error: "User auth required" }, 401);
+        const title = String(body.title ?? "Task budget job").trim();
+        const objective = String(body.objective ?? body.prompt ?? "").trim();
+        if (!objective) return json({ error: "objective required" }, 400);
+
+        const documents = normalizeTaskBudgetDocuments(
+          body.documents ?? body.files ?? body.inputs,
+        );
+        if (documents.length === 0) {
+          return json({ error: "documents required" }, 400);
+        }
+
+        const budgetTokens = normalizeTaskBudgetTokens(
+          body.budget_tokens ?? body.token_budget,
+        );
+        const effort = normalizeTaskBudgetEffort(body.effort);
+        const run = runTaskBudgetAssistant({
+          objective,
+          documents,
+          budget_tokens: budgetTokens,
+          effort,
+        });
+
+        const { data: job, error: jobError } = await admin
+          .from("ai_task_budget_jobs")
+          .insert({
+            user_id: userId,
+            title: title || "Task budget job",
+            objective,
+            budget_tokens: budgetTokens,
+            consumed_tokens: run.consumed_tokens,
+            effort,
+            status: run.status,
+            progress_percent: run.progress_percent,
+            document_count: documents.length,
+            summary: run.summary,
+            artifact: run.artifact,
+            completed_at: new Date().toISOString(),
+          })
+          .select("*")
+          .single();
+        if (jobError) return json({ error: jobError.message }, 500);
+
+        const stepRows = run.steps.map((step) => ({
+          job_id: job.id,
+          user_id: userId,
+          step_index: step.step_index,
+          title: step.title,
+          status: step.status,
+          input_tokens: step.input_tokens,
+          output_tokens: step.output_tokens,
+          notes: step.notes,
+        }));
+        let steps: unknown[] = [];
+        if (stepRows.length > 0) {
+          const { data: insertedSteps, error: stepError } = await admin
+            .from("ai_task_budget_job_steps")
+            .insert(stepRows)
+            .select("*")
+            .order("step_index", { ascending: true });
+          if (stepError) return json({ error: stepError.message }, 500);
+          steps = insertedSteps ?? [];
+        }
+
+        return json({ success: true, job, steps });
+      }
+
+      case "task_budget_assistant.job.list": {
+        if (!userId) return json({ error: "User auth required" }, 401);
+        const requestedLimit = Number(body.limit ?? 20);
+        const limit = Number.isFinite(requestedLimit)
+          ? Math.max(1, Math.min(50, Math.round(requestedLimit)))
+          : 20;
+        const { data, error } = await admin
+          .from("ai_task_budget_jobs")
+          .select(
+            "id, title, objective, budget_tokens, consumed_tokens, effort, status, progress_percent, document_count, summary, artifact, created_at, updated_at, completed_at",
+          )
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, jobs: data ?? [] });
+      }
+
+      case "task_budget_assistant.job.get": {
+        if (!userId) return json({ error: "User auth required" }, 401);
+        const id = String(body.id ?? body.job_id ?? "").trim();
+        if (!id) return json({ error: "id required" }, 400);
+        const { data: job, error: jobError } = await admin
+          .from("ai_task_budget_jobs")
+          .select("*")
+          .eq("id", id)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (jobError) return json({ error: jobError.message }, 500);
+        if (!job) return json({ error: "job not found" }, 404);
+
+        const { data: steps, error: stepsError } = await admin
+          .from("ai_task_budget_job_steps")
+          .select("*")
+          .eq("job_id", id)
+          .eq("user_id", userId)
+          .order("step_index", { ascending: true });
+        if (stepsError) return json({ error: stepsError.message }, 500);
+        return json({ success: true, job, steps: steps ?? [] });
+      }
+
+      case "task_budget_assistant.job.cancel": {
+        if (!userId) return json({ error: "User auth required" }, 401);
+        const id = String(body.id ?? body.job_id ?? "").trim();
+        if (!id) return json({ error: "id required" }, 400);
+        const { data, error } = await admin
+          .from("ai_task_budget_jobs")
+          .update({
+            status: "cancelled",
+            summary: "Cancelled by user before further autonomous work.",
+            completed_at: new Date().toISOString(),
+          })
+          .eq("id", id)
+          .eq("user_id", userId)
+          .in("status", ["queued", "running"])
+          .select("*")
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, job: data });
       }
 
       // ---- Edge function coverage ----
