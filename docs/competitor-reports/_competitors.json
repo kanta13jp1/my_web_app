@@ -866,6 +866,15 @@
         "Glean (= enterprise search→agent / 観察)",
         "Warp (= terminal-native agentic dev / 観察 1 月)"
       ]
+    },
+    {
+      "date": "2026-07-12",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ実施 = AI dev tool 一斉更新を検知 (Codex+GPT-5.6 ChatGPT desktop統合 / Cursor iOS+Automations+Grok4.5 / GitHub Copilot desktop全プラン開放 worktree-per-session / Claude Code Sonnet5既定+background agent自走 / Jules scheduled tasks + #TODO自発スキャン)。運用リスク: Antigravity soft-deprecation 疑惑 (未検証, L1 レーン要確認)。次サイクル第1候補メモ = OpenAI ChatGPT Work (7/9 企業向け agent スイート / 基準 b)。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT Work (= 7/9 発表の企業向け agent スイート / 次サイクル第1候補メモ)"
+      ]
     }
   ],
   "_schema_notes": {
