@@ -92,6 +92,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Map<String, dynamic>? _xPerformanceContext;
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
+  // R18: fetch 完了フラグ。empty() のままか、完了して空かを区別し、静かに失敗/空の
+  // 週を無限「読み込み中」ではなく正直な「計測待ち」に落とす。
+  bool _weeklyDigestLoaded = false;
   late final SupabaseClient _supabase;
   final _growthService = const GrowthMissionService();
   List<Map<String, dynamic>> _featureRequests = [];
@@ -747,9 +750,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     try {
       final digest = await _growthService.loadWeeklyDigest();
       if (!mounted) return;
-      if (mounted) setState(() => _weeklyDigest = digest);
+      // R18: 完了フラグを立てて loading と loaded-empty を区別する
+      // (loadWeeklyDigest は内部で握りつぶし empty() を返すため rethrow しない)。
+      setState(() {
+        _weeklyDigest = digest;
+        _weeklyDigestLoaded = true;
+      });
     } catch (e) {
       debugPrint('weekly digest load error: $e');
+      if (mounted) setState(() => _weeklyDigestLoaded = true);
     }
   }
 
@@ -1608,6 +1617,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         : 0;
     final zeroRegistrationStreakDays =
         _countConsecutiveNoRegistrationDays(_dailyStats);
+    // R18: streak が集計窓(_dailyStats)を使い切っていると値は下限。実際はそれ以上
+    // なので「N日以上」と正直に出す(30 をちょうどの安心値に見せない)。
+    final zeroStreakAtCap = streakAtWindowCap(
+      zeroRegistrationStreakDays,
+      _dailyStats.length,
+    );
     final averageViewsLast7Days = _averageViews(_dailyStats);
 
     return Scaffold(
@@ -1759,6 +1774,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       todayDropBeforeTrial: todayDropBeforeTrial,
                       totalDropBeforeTrial: totalDropBeforeTrial,
                       zeroRegistrationStreakDays: zeroRegistrationStreakDays,
+                      zeroStreakAtCap: zeroStreakAtCap,
                       averageViewsLast7Days: averageViewsLast7Days,
                       totalTrialRate: _formatRate(
                         totalFunnel.trialRuns,
@@ -2666,12 +2682,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     required int todayDropBeforeTrial,
     required int totalDropBeforeTrial,
     required int zeroRegistrationStreakDays,
+    required bool zeroStreakAtCap,
     required double averageViewsLast7Days,
     required String totalTrialRate,
     required String? registrationsPerLpView,
   }) {
+    // R18: 集計窓を使い切っていたら「N日以上」(実際はそれ以上)と正直に。
+    final streakLabel =
+        '$zeroRegistrationStreakDays日${zeroStreakAtCap ? '以上' : ''}';
     final alertText = zeroRegistrationStreakDays >= 3
-        ? '登録ゼロが$zeroRegistrationStreakDays日連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
+        ? '登録ゼロが$streakLabel連続です。流入ではなく、体験開始と認証前の離脱を最優先で潰してください。'
         : todayDropBeforeTrial > 0
             ? '今日は流入がありますが、体験前に$todayDropBeforeTrial件が離脱しています。無料体験の訴求を最優先で確認してください。'
             : '直近の登録導線は動いています。次は送信後の完了率を維持できているかを確認してください。';
@@ -2719,7 +2739,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 _buildMiniKpiChip(
                   label: '連続登録ゼロ日',
-                  value: '$zeroRegistrationStreakDays日',
+                  value: streakLabel,
                   color: const Color(0xFFB91C1C),
                 ),
                 _buildMiniKpiChip(
@@ -3010,7 +3030,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (parsed == null) {
       return '--';
     }
-    return DateFormat('MM/dd HH:mm:ss').format(parsed);
+    // R20: 年なし MM/dd は2か月前(05/11)のログを今週に見せる。1か月超/別年は
+    // 年を前置して年齢を明示する(「Recent」ラベルの誤読を解消)。
+    final now = DateTime.now();
+    final stale = parsed.year != now.year || now.difference(parsed).inDays > 30;
+    return DateFormat(stale ? 'yyyy/MM/dd HH:mm:ss' : 'MM/dd HH:mm:ss')
+        .format(parsed);
   }
 
   Color _getCvrColor(double cvr) {
@@ -3393,6 +3418,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildWeeklyDigestCard(BuildContext context) {
     final d = _weeklyDigest;
     final hasData = d.currentWeekStart.isNotEmpty;
+    // R18: loading / loaded-empty / loaded-data の3状態に分けてヘッダ文言を決める。
+    final cardState = weeklyDigestCardState(
+      loaded: _weeklyDigestLoaded,
+      hasData: hasData,
+    );
+    final headerText = switch (cardState) {
+      WeeklyDigestCardState.loading => '読み込み中...',
+      WeeklyDigestCardState.empty => '今週はまだ計測データがありません（計測待ち）',
+      WeeklyDigestCardState.data =>
+        '${d.currentWeekStart} 〜 ${d.currentWeekEnd}',
+    };
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -3410,9 +3446,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  hasData
-                      ? '${d.currentWeekStart} 〜 ${d.currentWeekEnd}'
-                      : '読み込み中...',
+                  headerText,
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -3676,32 +3710,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Widget _buildProfileCompletionSummary() {
-    final complete =
-        _adminUsers.where((u) => _toInt(u['completionPct']) >= 67).length;
-    final partial = _adminUsers.where((u) {
-      final pct = _toInt(u['completionPct']);
-      return pct >= 34 && pct < 67;
-    }).length;
-    final empty =
-        _adminUsers.where((u) => _toInt(u['completionPct']) < 34).length;
+    // R19: 旧サマリは未fetch の completionPct(全員0)で「0完成/0途中/44未設定」を
+    // 捏造していた。email 空=匿名 auth を信頼プロキシに「実ユーザー/匿名テスト」へ
+    // 誠実に分割する(合計44 vs 実CVR4 の乖離=匿名を実登録と誤認する虚栄を防ぐ)。
+    final split = summarizeAdminUsers(_adminUsers);
     return Row(
       children: [
         _profileStatChip(
-          Icons.check_circle,
-          '$complete 完成',
+          Icons.verified_user_outlined,
+          '実ユーザー ${split.real}人',
           const Color(0xFF0D9488),
         ),
         const SizedBox(width: 8),
         _profileStatChip(
-          Icons.pending,
-          '$partial 途中',
-          const Color(0xFFFF6B35),
-        ),
-        const SizedBox(width: 8),
-        _profileStatChip(
-          Icons.warning_amber,
-          '$empty 未設定',
-          const Color(0xFFB91C1C),
+          Icons.help_outline,
+          '匿名テスト ${split.anon}人',
+          const Color(0xFF9CA3AF),
         ),
       ],
     );
@@ -3741,7 +3765,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '登録ユーザー管理 (合計 $_adminUsersTotal 人)',
+                    _adminUsers.isEmpty
+                        ? '登録ユーザー管理 (合計 $_adminUsersTotal 人)'
+                        : '登録ユーザー管理 (合計 $_adminUsersTotal 人 / '
+                            '実 ${summarizeAdminUsers(_adminUsers).real}・'
+                            '匿名 ${summarizeAdminUsers(_adminUsers).anon})',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -3842,13 +3870,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       final bio = user['bio']?.toString();
                       final location = user['location']?.toString();
                       final provider = user['provider']?.toString() ?? 'email';
-                      final createdAt = user['createdAt']?.toString() ?? '';
+                      // R19: edge は created_at(snake)を返すのに旧UIは createdAt
+                      // (camel)を読み全行の登録日が空だった。snake 優先で吸収する。
+                      final createdAt = adminUserCreatedRaw(user);
                       final lastSignIn = user['lastSignInAt']?.toString() ?? '';
-                      final hasProfile = user['hasProfile'] as bool? ?? false;
-                      final completionPct = _toInt(user['completionPct']);
+                      // R19: email 空 = Supabase 匿名 auth(headless 検証)の信頼プロキシ。
+                      final isAnonymous = adminUserIsAnonymous(user);
 
-                      String createdStr = '';
-                      String lastSignInStr = '';
+                      // R19: 登録日=parse 不可なら「日付なし」、最終ログインは edge が
+                      // 未送出のため「ログイン記録なし」と正直に出す(空欄で誤魔化さない)。
+                      String createdStr = '日付なし';
+                      String lastSignInStr = 'ログイン記録なし';
                       try {
                         createdStr = DateFormat('yyyy/MM/dd').format(
                           DateTime.parse(createdAt).toLocal(),
@@ -3863,15 +3895,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       final isGoogle = provider.contains('google');
                       final isDark =
                           Theme.of(context).brightness == Brightness.dark;
-
-                      Color profileColor;
-                      if (!hasProfile || completionPct < 34) {
-                        profileColor = const Color(0xFFB91C1C);
-                      } else if (completionPct < 67) {
-                        profileColor = const Color(0xFFFF6B35);
-                      } else {
-                        profileColor = const Color(0xFF0D9488);
-                      }
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
@@ -3888,7 +3911,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       ? const Color(0xFF1A1E3A)
                                       : const Color(0xFFE8EAF6)),
                               child: Text(
-                                email.isNotEmpty ? email[0].toUpperCase() : '?',
+                                email.isNotEmpty
+                                    ? email[0].toUpperCase()
+                                    : (isAnonymous ? '匿' : '?'),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -3911,7 +3936,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                           displayName != null &&
                                                   displayName.isNotEmpty
                                               ? displayName
-                                              : email,
+                                              : (email.isNotEmpty
+                                                  ? email
+                                                  : '匿名ユーザー'),
                                           style: const TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
@@ -3936,7 +3963,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                               BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          isGoogle ? 'Google' : 'Email',
+                                          isGoogle
+                                              ? 'Google'
+                                              : (isAnonymous ? '匿名' : 'Email'),
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -3991,32 +4020,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       ],
                                     ),
                                   const SizedBox(height: 4),
-                                  Row(
+                                  // R19: completionPct は users.list が未送出で常に0。
+                                  // 「プロフィール 0%」バーは捏造なので出さず、未取得を
+                                  // 正直に表示する(R17 の display-truthfulness 規律)。
+                                  const Row(
                                     children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                          child: LinearProgressIndicator(
-                                            value: completionPct / 100,
-                                            minHeight: 4,
-                                            backgroundColor: Theme.of(context)
-                                                .colorScheme
-                                                .surfaceContainerHighest,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              profileColor,
-                                            ),
-                                          ),
-                                        ),
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 11,
+                                        color: Color(0xFF9CA3AF),
                                       ),
-                                      const SizedBox(width: 6),
+                                      SizedBox(width: 4),
                                       Text(
-                                        'プロフィール $completionPct%',
+                                        'プロフィール情報 未取得',
                                         style: TextStyle(
                                           fontSize: 10,
-                                          color: profileColor,
-                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF9CA3AF),
                                           height: 1.5,
                                         ),
                                       ),
@@ -4102,7 +4121,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final hasProfile = user['hasProfile'] as bool? ?? false;
     final provider = user['provider']?.toString() ?? 'email';
     final isGoogle = provider.contains('google');
-    final createdAt = user['createdAt']?.toString() ?? '';
+    // R19: 行と同じ契約バグ。edge の created_at(snake)を優先で拾う。
+    final createdAt = adminUserCreatedRaw(user);
     final lastSignIn = user['lastSignInAt']?.toString() ?? '';
 
     String createdStr = '';
@@ -4714,11 +4734,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   final createdAt = req['created_at']?.toString() ?? '';
                   final adminReply = req['admin_reply']?.toString();
                   final adminRepliedAt = req['admin_replied_at']?.toString();
-                  String dateStr = createdAt;
-                  try {
-                    dateStr = DateFormat('MM/dd')
-                        .format(DateTime.parse(createdAt).toLocal());
-                  } catch (_) {}
+                  // R20: 年なし MM/dd は3か月前(04月)の要望を「今月」に見せる。
+                  // 1か月超/別年は yyyy/ を前置して年齢を明示する。
+                  final dateStr = formatAgeAwareDate(createdAt, DateTime.now());
                   String? repliedAtStr;
                   if (adminRepliedAt != null) {
                     try {
@@ -4895,6 +4913,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             ),
                             child: Text(
                               'AI: $adminReply',
+                              // R20: 数百字の返信が50件リストを支配する wall-of-text
+                              // を抑制。全文は返信編集ダイアログで到達可能=無損失。
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF4338CA),
@@ -5789,7 +5811,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (loop.state == XGrowthLoopState.hidden) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final freshness = _xGrowthLoopFreshness();
+    // R20: 鮮度はパネル自身のデータ(perf-context 行)から出す。旧実装は今日の投稿の
+    // 計測時刻を読み、12件計測済みでも今日未投稿だと「計測待ち」と矛盾していた。
+    final freshness = resolveXGrowthLoopFreshness(
+      measuredCount: rows.length,
+      newestMeasuredAt: newestMeasuredCreatedAt(rows),
+      now: DateTime.now(),
+    );
     final lines = <Widget>[];
 
     switch (loop.state) {
@@ -5937,18 +5965,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final text = (first['text'] ?? '').toString().trim();
     if (text.isEmpty) return null;
     return text.length <= 60 ? text : '${text.substring(0, 58)}…';
-  }
-
-  String _xGrowthLoopFreshness() {
-    final collected =
-        DateTime.tryParse(_xTodayStatus?['lastCollectedAt']?.toString() ?? '')
-            ?.toLocal();
-    if (collected == null) return '最終計測: 計測待ち';
-    final days = DateTime.now().difference(collected).inDays;
-    final hours = DateTime.now().difference(collected).inHours;
-    if (days >= 1) return '最終計測: $days日前';
-    if (hours >= 1) return '最終計測: $hours時間前';
-    return '最終計測: 1時間以内';
   }
 
   Widget _buildGrowthAchievementSummaryCard() {

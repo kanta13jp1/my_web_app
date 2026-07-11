@@ -1,0 +1,76 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/x_copy_guardrails.dart';
+
+void main() {
+  const xSpec = <String, String>{
+    'goal': 'X向けに3秒で伝わる短文を作る',
+    'titleRule': '見出しは28文字以内で強いフックを入れる',
+    'bodyRule': '本文は80-140文字。問題提起、便益、CTAを1つずつ入れる',
+    'tone': 'sharp, compact, high-contrast',
+  };
+  const fbSpec = <String, String>{
+    'goal': 'Facebook向けに文脈説明つきの長文を作る',
+    'titleRule': '見出しは28-48文字で内容が分かるようにする',
+    'bodyRule': '本文は220-420文字。課題、価値、CTAの3段落で書く',
+    'tone': 'warm, persuasive, slightly detailed',
+  };
+
+  group('buildCmoDraftPrompt injects the anti-slop apparatus', () {
+    final xPrompt = buildCmoDraftPrompt(
+      channelKey: 'x_share',
+      channelLabel: 'X',
+      spec: xSpec,
+      hashtags: const ['#自分株式会社', '#個人開発', '#buildinpublic'],
+    );
+
+    test('carries feature facts, first-person ban, and slop bans', () {
+      expect(xPrompt, contains('給料日サイクル'));
+      expect(xPrompt, contains('一人称'));
+      expect(xPrompt, contains('私たち')); // banned brand-voice explicitly listed
+      // observed slop tokens are present as bans.
+      for (final t in ['埋もれていませんか', '自分集客力', '最大限にアピール']) {
+        expect(xPrompt, contains(t), reason: 'ban $t missing');
+      }
+      // still a valid {title,body,hashtags} contract.
+      expect(xPrompt, contains('title'));
+      expect(xPrompt, contains('body'));
+      expect(xPrompt, contains('hashtags'));
+    });
+
+    test('preserves per-channel length spec (facebook 220-420 not overridden)',
+        () {
+      final fbPrompt = buildCmoDraftPrompt(
+        channelKey: 'facebook',
+        channelLabel: 'Facebook',
+        spec: fbSpec,
+        hashtags: const ['#自分株式会社'],
+      );
+      expect(fbPrompt, contains('220-420'));
+      expect(xPrompt, contains('80-140'));
+    });
+  });
+
+  group('detectSlop / hasFeatureAnchor', () {
+    const observedSlop = 'あなたの価値、埋もれていませんか？埋もれた才能を最大限にアピールし、'
+        '社会で輝くための自分集客力を構築。理想の未来へ、今すぐ一歩を踏み出しましょう。';
+    const goodCopy = '『給料日サイクル』は支出の窓を給料日起点に切る機能。作って分かったのは、'
+        '月初をまたぐ引き落としが二重計上されず支出が実額で出ること。';
+
+    test('detectSlop flags the real prod slop, passes the good copy', () {
+      final flagged = detectSlop('あなたの価値、埋もれていませんか？', observedSlop);
+      expect(flagged, contains('埋もれていませんか'));
+      expect(flagged, contains('自分集客力'));
+      expect(detectSlop('給料日サイクルの話', goodCopy), isEmpty);
+    });
+
+    test('hasFeatureAnchor: good copy names a feature, slop does not', () {
+      expect(hasFeatureAnchor('', goodCopy), isTrue);
+      expect(hasFeatureAnchor('', observedSlop), isFalse);
+    });
+
+    test('drift guard: core R11 terms are in the shared banlist', () {
+      expect(kSlopBannedTokens, contains('強力なツール'));
+      expect(kSlopBannedTokens, contains('可能性があります'));
+    });
+  });
+}

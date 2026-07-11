@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
+      "hash": "849bef4718af2c5418d4eb8e9454a0bb1b6e9f187e44e12cbae6d68b83fa7718",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.205 / July 8, 2026",
+      "latest_signal": "2.1.206 / July 9, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "84f64cdd3f3c23d0b2c2f4a6135e521fc39daa788047ab97c63c61feca79a7b2",
+      "previous_hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.205 July 8, 2026 Added an auto mode rule that blocks tampering with session transcript files Fixed --json-schema silently producing unstructured output when the schema was..."
+        "​ 2.1.206 July 9, 2026 Added directory path suggestions to /cd , matching /add-dir behavior Added a /doctor check that proposes trimming checked-in CLAUDE.md files by cutting..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,7 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d4756ff4bf05feff0785a78817c8a5ac31802ce416b46ca3efaa636ab2990bbc",
+      "hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -80,6 +80,63 @@
           "model picker",
           "in-app browser",
           "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "PostToolUse",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "5d436331646042ce76a1072fbda7c7482a4bea0b2206e1a4e9d941bf36218564",
+      "slug": "codex-changelog",
+      "snippets": [
+        "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
+        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "fe93fc860fe18878e197ff5be89ff26ae9384e0eddcc1b544fdc5bbaa7aa7feb",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.4",
           "computer use",
           "worktree",
           "subagents"
@@ -99,7 +156,6 @@
         ],
         "quality-cost": [
           "cost",
-          "quota",
           "rate limit",
           "sandbox",
           "permission",
@@ -108,75 +164,20 @@
         ],
         "schedule": [
           "automation",
-          "automations",
           "schedule",
           "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for",
-      "name": "Codex changelog",
-      "owner": "Codex",
-      "previous_hash": "e0e3b4a9517fc63a9a4797e09221bb7c871b0ce33980f5e04409ca3d6f19ae16",
-      "slug": "codex-changelog",
-      "snippets": [
-        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "Added previews for image and file attachments before sending.",
-        "Fixed stuck thread-list loading, prompt mode deadlocks, stale images, and microphone permission alerts."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "e65760dc29e298d07245c55ed286cccd29acc05f66c816df8bed67d511c02916",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "in-app browser",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "latest_signal": "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
+      "previous_hash": "0355b165414c3112ac70f40fd8233e05120e8441d9e18dca1e7caceb8361b871",
       "slug": "codex-use-cases",
       "snippets": [
-        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
-        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
+        "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs...",
+        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
+        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
@@ -185,43 +186,48 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
+      "hash": "8e341f92cadee96206da07a719cbfa0e1963f77895f44e7e637dae08927e224e",
       "keyword_groups": {
+        "codex-runtime": [
+          "computer use",
+          "subagents"
+        ],
         "hooks": [
+          "hook",
+          "hooks",
           "Stop"
         ],
         "integration": [
           "MCP",
-          "GitHub",
-          "IDE extension",
-          "VSCode"
+          "Slack",
+          "GitHub"
         ],
         "quality-cost": [
-          "cost",
-          "quota",
-          "permission",
           "review",
           "CI"
         ],
         "schedule": [
+          "automation",
+          "automations",
+          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
-      "name": "Gemini Code Assist release notes",
-      "owner": "Gemini Code Assist",
-      "previous_hash": "7c735322002001a0de7979d166187c74427d3e68f2e21d3930b1eec3e8239eff",
-      "slug": "gemini-code-assist-release-notes",
+      "latest_signal": "3.11 / Jul 10, 2026",
+      "name": "Cursor changelog",
+      "owner": "Cursor",
+      "previous_hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
+      "slug": "cursor-changelog",
       "snippets": [
-        "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
-        "Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...",
-        "April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues."
+        "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",
+        "Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running.",
+        "You can now stay in the picker for workflows that used to send you elsewhere."
       ],
       "status": 200,
-      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
+      "url": "https://cursor.com/changelog"
     }
   ],
-  "checked_at": "2026-07-08T22:17:40Z",
+  "checked_at": "2026-07-10T22:17:54Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -273,13 +279,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-07T22:32:25Z",
+  "previous_checked_at": "2026-07-09T22:44:15Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
+      "hash": "849bef4718af2c5418d4eb8e9454a0bb1b6e9f187e44e12cbae6d68b83fa7718",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -323,15 +329,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.205 / July 8, 2026",
+      "latest_signal": "2.1.206 / July 9, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "84f64cdd3f3c23d0b2c2f4a6135e521fc39daa788047ab97c63c61feca79a7b2",
+      "previous_hash": "9dd845090c520018554e6f369264dbe9468a9e5fdf7a20c84041a2595a5662b7",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.205 July 8, 2026 Added an auto mode rule that blocks tampering with session transcript files Fixed --json-schema silently producing unstructured output when the schema was..."
+        "​ 2.1.206 July 9, 2026 Added directory path suggestions to /cd , matching /add-dir behavior Added a /doctor check that proposes trimming checked-in CLAUDE.md files by cutting..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -340,7 +346,7 @@
       "changed": false,
       "error": null,
       "first_seen": false,
-      "hash": "ede430cc21167af8fb40f625b3862c367cd8cbe981c20a9f85244dd99262db07",
+      "hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -377,7 +383,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "ede430cc21167af8fb40f625b3862c367cd8cbe981c20a9f85244dd99262db07",
+      "previous_hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -439,7 +445,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d4756ff4bf05feff0785a78817c8a5ac31802ce416b46ca3efaa636ab2990bbc",
+      "hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -447,6 +453,63 @@
           "model picker",
           "in-app browser",
           "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "PostToolUse",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "5d436331646042ce76a1072fbda7c7482a4bea0b2206e1a4e9d941bf36218564",
+      "slug": "codex-changelog",
+      "snippets": [
+        "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
+        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "fe93fc860fe18878e197ff5be89ff26ae9384e0eddcc1b544fdc5bbaa7aa7feb",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.4",
           "computer use",
           "worktree",
           "subagents"
@@ -466,7 +529,6 @@
         ],
         "quality-cost": [
           "cost",
-          "quota",
           "rate limit",
           "sandbox",
           "permission",
@@ -475,75 +537,20 @@
         ],
         "schedule": [
           "automation",
-          "automations",
           "schedule",
           "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-06 / ChatGPT for iOS 1.2026.181 New features Added support for creating, searching, opening, for",
-      "name": "Codex changelog",
-      "owner": "Codex",
-      "previous_hash": "e0e3b4a9517fc63a9a4797e09221bb7c871b0ce33980f5e04409ca3d6f19ae16",
-      "slug": "codex-changelog",
-      "snippets": [
-        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "Added previews for image and file attachments before sending.",
-        "Fixed stuck thread-list loading, prompt mode deadlocks, stale images, and microphone permission alerts."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "e65760dc29e298d07245c55ed286cccd29acc05f66c816df8bed67d511c02916",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "in-app browser",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "latest_signal": "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "5b4a2cfd145e7bb23781fcf11d9ebaa9fd14218ca6e53e8989b1e94359c4e67f",
+      "previous_hash": "0355b165414c3112ac70f40fd8233e05120e8441d9e18dca1e7caceb8361b871",
       "slug": "codex-use-cases",
       "snippets": [
-        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-        "Automation Integrations Use your computer with Codex Let Codex click, type, and navigate apps on your Mac.",
-        "Knowledge Work Workflow Follow a goal Give Codex a durable objective for long-running work."
+        "ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs...",
+        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
+        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
@@ -564,10 +571,10 @@
       "url": "https://openai.com/codex/"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
+      "hash": "8e341f92cadee96206da07a719cbfa0e1963f77895f44e7e637dae08927e224e",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -575,7 +582,8 @@
         ],
         "hooks": [
           "hook",
-          "hooks"
+          "hooks",
+          "Stop"
         ],
         "integration": [
           "MCP",
@@ -593,21 +601,21 @@
           "workflow"
         ]
       },
-      "latest_signal": "3.10 / Jun 30, 2026",
+      "latest_signal": "3.11 / Jul 10, 2026",
       "name": "Cursor changelog",
       "owner": "Cursor",
       "previous_hash": "b079ad77edff20a488c49849380a2756855094b76d49bc50bd51bda0823ca68a",
       "slug": "cursor-changelog",
       "snippets": [
         "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",
-        "# Team MCPs in team marketplaces Admins can now configure Team MCP servers once and distribute them across cloud agents, the agents window, IDE, and CLI.",
-        "When an admin sets up Team MCP servers for cloud agents, they can make those same servers available in a team marketplace from Dashboard -> Integrations & MCP ."
+        "Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running.",
+        "You can now stay in the picker for workflows that used to send you elsewhere."
       ],
       "status": 200,
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
@@ -635,7 +643,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "7c735322002001a0de7979d166187c74427d3e68f2e21d3930b1eec3e8239eff",
+      "previous_hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",

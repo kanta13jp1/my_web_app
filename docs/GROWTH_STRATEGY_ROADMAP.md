@@ -32479,3 +32479,47 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - `docs/GROWTH_STRATEGY_ROADMAP.md` — 本セッション記録追記
 
 **Philosophy Alignment**: 原則 1 (CEO感: 競合の動きを即時把握) / 原則 6 (資本=時間: スケジュール確認効率化) / 原則 8 (KPI 自動集計確認).
+
+## セッション記録: Claude Schedule daily-report (2026-07-10 00:02 UTC / WEB版)
+
+**Summary**:
+- 日次レポート `docs/daily-reports/2026-07-10.md` 確認済み (GitHub Actions が 08:46 JST に生成済み / 総ユーザー 44人 / 新規FR 0件 / 未対応 119件 / X投稿 1件済み / ワークフロー失敗 open 3件)
+- 競合レポート `docs/competitor-reports/2026-07-10.md` 確認済み (MoneyForward AI Cowork GA 🔴🔴 / Slack MCP hub 化 / Claude Code Routines / Lindy AI discovery 追加)
+- Supabase Edge Functions = プロキシブロック (既知制約 / GitHub Actions run が本体 / viral-growth-engine + schedule_task_runs 登録は GHA 側で実行済み)
+- 競合 WebSearch 実施: Notion / Slack / GitHub の最新動向を追加確認
+- GitHub Issues `auto-review` label: **0件** (対応不要)
+- スケジュールヘルス: 直近24h の commits 正常 (インフラヘルスチェック×4 / ヘルスモニター×4 / AI大学更新×2 / CS チェック×2 / wiki compile / ブログ下書き / 日次レポート / CI/CDコスト監査 / 競合レポート ✅)
+
+**Key insights**:
+- **Notion 3.6 追加機能 (2026-07-09)**: HTML blocks (sandboxed iframe) + AI Meeting Notes への他所録音アップロード + Developer Platform β (Worker hosting) + Opus 4.8 / Grok 4.3 エージェントサポート。「オーケストレーションプラットフォーム」化が加速。差別化は「個人CEO×生活統合×KPI深度」で継続。
+- **GitHub Code Quality GA (2026-07-20 = 残り10日)**: $10/committer/月 + AI 機能 従量課金。GitHub Models は 7/30 廃止。Issue fields も全組織で GA。Kimi K2.7 Code が Copilot に追加 (初の open-weight モデル選択肢)。
+- **Slack (2026-07)**: Tableau Next MCP接続 / 名前付きグループDM（11年越し実装） / サイドバーあいまい検索。MCP hub 化継続。
+- **MoneyForward AI Cowork GA (最重要)**: 資金繰り予測・経理/労務/法務の自律 AI が今月 GA。自社マネーカレンダー/負債トレンドとの機能比較を優先実施推奨。
+- **ワークフロー失敗 open 3件**: root-cause = deno-lint=131 / notion-sync=8 / generic-ci=8。平均回復 10.63h は許容範囲。
+
+**Changes**:
+- `docs/GROWTH_STRATEGY_ROADMAP.md` — 本セッション記録追記
+
+**Philosophy Alignment**: 原則 1 (CEO感: 競合の動きを即時把握) / 原則 6 (資本=時間: スケジュール自動確認) / 原則 8 (KPI 自動集計確認).
+
+## セッション記録: Claude Schedule daily-report (2026-07-11 00:02 UTC / WEB版)
+
+**Summary**:
+- 日次レポート `docs/daily-reports/2026-07-11.md` 確認済み (GitHub Actions が 08:30 JST に生成済み / 総ユーザー 44人 / 新規FR 0件 / 未対応 119件 / X投稿 1件済み / ワークフロー失敗 open 2件)
+- 競合レポート `docs/competitor-reports/2026-07-11.md` = static-template のみ → Claude Schedule が WebSearch で競合インテリジェンスを補完追記
+- Supabase Edge Functions = プロキシブロック (既知制約 / smmkxxavexumewbfaqpy.supabase.co:443 が 403 CONNECT / GitHub Actions run が本体)
+- GitHub Issues `auto-review` label: **0件** (対応不要)
+- スケジュールヘルス: 直近24h commits 正常 (インフラヘルスチェック×2 / CS チェック×1 / ヘルスモニター×2 / wiki compile / AI大学更新×2 / 日次レポート / 競合レポート ✅ / ワークフロー失敗 open 2件 = 前日比 -1件)
+
+**Key insights (2026-07-11)**:
+- **Notion 3.6 (2026-07-01) 🔴🔴**: External Agents API (Claude/Codex/カスタムAIをNotionに招待) + HTML blocks + Developer Platform β (Notion CLI/Agent SDK/webhook/MCP 91%トークン削減) + Opus 4.8 / Grok 4.3 / GLM 5.2。「AIオーケストレーション基盤」として一段上のポジションへ。差別化は「個人CEO×生活統合×財務KPI×日本語縦断AI」で継続
+- **GitHub Code Quality GA (2026-07-20 = 残り9日)**: $10/committer/月。Copilot vision GA / Kimi K2.7 Code (open-weight) / PR dashboard GA / Issue fields GA が重なり、開発プラットフォームとしての完成度が急上昇
+- **Slack 🟠**: 名前付きグループDM (11年越し) / Tableau Next MCP / AI agent メンション→channel 変換 / サイドバーfuzzy検索。MCP hub 化継続
+- **viral-growth-engine + post-x-update**: プロキシブロックのため本セッションからは呼び出し不可 (GHA 側で 1件/日 運用済み)
+- **ワークフロー失敗 open 2件**: root-cause = deno-lint=131 / notion-sync=8 / generic-ci=8。平均回復 11.09h は許容範囲
+
+**Changes**:
+- `docs/competitor-reports/2026-07-11.md` — WebSearch 競合インテリジェンスを補完追記 (Notion 3.6 / Slack / GitHub)
+- `docs/GROWTH_STRATEGY_ROADMAP.md` — 本セッション記録追記
+
+**Philosophy Alignment**: 原則 1 (CEO感: 競合の動きを即時把握) / 原則 6 (資本=時間: スケジュール自動確認) / 原則 8 (KPI 自動集計確認).

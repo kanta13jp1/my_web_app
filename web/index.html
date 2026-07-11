@@ -489,23 +489,23 @@
       </nav>
       <section class="seo-product-grid" aria-label="主要機能">
         <article class="seo-product-card">
-          <h2>Task Automations</h2>
-          <p>迷ったタスクを、次の一手まで自動整理。</p>
+          <h2>AIタスク自動整理</h2>
+          <p>迷ったタスクを、AIが次の一手まで自動整理。今日の最優先1件を提案。</p>
           <div class="seo-mock">
-            <strong>When</strong> WBS task is blocked<br>
-            <strong>Then</strong> Split into next actions
+            <strong>When</strong> WBSタスクが停滞<br>
+            <strong>Then</strong> 次のアクションへ分割
           </div>
         </article>
         <article class="seo-product-card">
-          <h2>Time Tracking</h2>
-          <p>集中時間と習慣を、内蔵タイマーで記録。</p>
+          <h2>時間・習慣トラッキング</h2>
+          <p>集中時間と習慣を、内蔵タイマーで記録して継続を仕組み化。</p>
           <div class="seo-mock" style="text-align:center;font-size:28px;letter-spacing:1px;">
             02:17:45
           </div>
         </article>
         <article class="seo-product-card">
-          <h2>Advanced Reporting</h2>
-          <p>WBS・成長・習慣をレポートで俯瞰。</p>
+          <h2>WBS・成長レポート</h2>
+          <p>WBS・成長・習慣・家計をレポートで俯瞰。資産管理まで一元化。</p>
           <div class="seo-mock seo-bars" aria-hidden="true">
             <span style="height:45px"></span><span style="height:64px"></span><span style="height:38px"></span>
             <span style="height:55px"></span><span style="height:32px"></span><span style="height:70px"></span>
@@ -514,10 +514,16 @@
         </article>
       </section>
       <section class="seo-new" aria-label="新機能">
-        <h2>What's New?</h2>
-        <p>Smart Automations・Time Tracking・Detailed Reports を公開中。</p>
+        <h2>新着アップデート</h2>
+        <p>AIタスク自動整理・時間トラッキング・成長レポートを公開中。</p>
       </section>
       <p class="seo-loading">Loading application...</p>
+      <nav class="seo-links" aria-label="運営者情報" style="margin-top:20px">
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/philosophy">経営哲学</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/tokusho">特定商取引法に基づく表記</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/terms">利用規約</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/privacy">プライバシーポリシー</a>
+      </nav>
       <noscript>
         JavaScript is required to use the full app. Search engines and preview crawlers
         can still read this summary and the public links above.
@@ -976,6 +982,42 @@
         setMeta('og:url', window.location.href);
         setMeta('twitter:url', window.location.href);
         setCanonical(window.location.href);
+      }
+
+      if (path === '/blog/post' || path.endsWith('/blog/post')) {
+        // 公開ブログ記事: URL クエリ id から自己参照 canonical + meta を設定し
+        // クローラーにインデックスさせる (SEO 監査 H7)。
+        var blogId = params.get('id');
+        if (blogId) {
+          setCanonical(
+            'https://my-web-app-b67f4.web.app/blog/post?id=' +
+              encodeURIComponent(blogId)
+          );
+          fetch(
+            SUPABASE_FUNC_BASE +
+              '/core-hub?action=blog.public.view&id=' +
+              encodeURIComponent(blogId) + '&format=json'
+          )
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+              if (!data || !data.success || !data.post) return;
+              var p = data.post;
+              if (p.title) {
+                document.title = p.title + ' | 自分株式会社';
+                setMeta('og:title', p.title);
+                setMeta('twitter:title', p.title);
+              }
+              if (p.excerpt) {
+                setMeta('description', p.excerpt);
+                setMeta('og:description', p.excerpt);
+                setMeta('twitter:description', p.excerpt);
+              }
+              setMeta('og:type', 'article');
+              setMeta('og:url', p.appUrl);
+              setMeta('twitter:url', p.appUrl);
+            })
+            .catch(function () { /* ignore, keep default */ });
+        }
       }
 
       if ((path === '/public-memo' || path.endsWith('/public-memo')) && memoId) {
