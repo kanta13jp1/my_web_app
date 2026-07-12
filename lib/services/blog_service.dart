@@ -96,11 +96,6 @@ class BlogService {
     });
   }
 
-  // ── Qiita 記事本文取得 ────────────────────────────────────────
-  Future<Map<String, dynamic>> qiitaGetItem(String itemId) async {
-    return _invokeBlogAction('blog.qiita_get_item', {'item_id': itemId});
-  }
-
   // ── 訂正承認 ────────────────────────────────────────────────────
   Future<void> qiitaUpdate({
     required String articleId,
