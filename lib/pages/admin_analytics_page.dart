@@ -359,7 +359,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return null;
   }
 
-  /// R26: X投稿候補キュー(pending_approval)を fail-safe に取得する。
+  /// R26: X投稿候補キューを fail-safe に取得する。status フィルタを付けず
+  /// 直近分を取り、操作可能な3状態(承認待ち/承認済み・投稿未完/投稿失敗)へ
+  /// クライアント側で絞る=「approve 成功→投稿失敗」の候補も再試行面に残す。
   /// X operator 権限が無いと edge が 403 を返すため、例外/非成功は空リストに
   /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
   Future<List<XPostCandidateSummary>> _loadXCandidateQueue() async {
@@ -368,13 +370,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         'growth-hub',
         body: {
           'action': 'x.candidate.list',
-          'status': 'pending_approval',
-          'limit': 20,
+          'limit': 30,
         },
       );
       final data = res.data;
       if (data is Map && data['success'] == true) {
-        return parseXPostCandidates(data['candidates']);
+        return actionableCandidates(parseXPostCandidates(data['candidates']));
       }
     } catch (error) {
       debugPrint('x.candidate.list unavailable: $error');
@@ -6374,6 +6375,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           color: Color(0xFF9CA3AF),
                         ),
                       ),
+                    if (!candidate.isPendingApproval)
+                      Text(
+                        candidate.statusLabel,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFFB45309),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     if (age.isNotEmpty)
                       Text(
                         age,
@@ -6394,7 +6404,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           const SizedBox(width: 8),
           FilledButton.tonal(
-            onPressed: publishing || !candidate.isPendingApproval
+            onPressed: publishing || !candidate.isActionable
                 ? null
                 : () => _publishXCandidate(candidate),
             child: publishing

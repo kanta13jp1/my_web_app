@@ -62,6 +62,44 @@ class XPostCandidateSummary {
   String get seriesLabel => xTrackerSeriesLabel(variant);
 
   bool get isPendingApproval => status == 'pending_approval';
+
+  /// 承認→投稿を実行できる状態か。edge の approveXPostCandidateMetadata は
+  /// pending_approval / approved / publish_failed の3状態から承認可能
+  /// (approved=投稿が途中で落ちた回、publish_failed=投稿失敗回の再試行)。
+  /// pending のみ表示だと「approve 成功→x.post 失敗」の候補が panel から
+  /// 消えて再試行不能になるため、この3状態を actionable として扱う。
+  bool get isActionable =>
+      status == 'pending_approval' ||
+      status == 'approved' ||
+      status == 'publish_failed';
+
+  /// 状態の運用者向け短ラベル(pending 以外=再試行系は明示)。
+  String get statusLabel {
+    switch (status) {
+      case 'pending_approval':
+        return '承認待ち';
+      case 'approved':
+        return '承認済み・投稿未完(再試行可)';
+      case 'publish_failed':
+        return '投稿失敗(再試行可)';
+      case 'posted':
+        return '投稿済み';
+      case 'rejected_duplicate':
+        return '近似重複で見送り';
+      default:
+        return status;
+    }
+  }
+}
+
+/// 一覧から操作対象(actionable)だけを残す。posted / rejected_duplicate は
+/// キューの仕事が終わった行なので出さない。
+List<XPostCandidateSummary> actionableCandidates(
+  List<XPostCandidateSummary> candidates,
+) {
+  return candidates
+      .where((candidate) => candidate.isActionable)
+      .toList(growable: false);
 }
 
 /// x.candidate.list の応答行([{id, metadata, created_at}])を表示用サマリへ。

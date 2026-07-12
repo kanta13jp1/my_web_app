@@ -77,6 +77,35 @@ void main() {
       expect(parseXPostCandidates(null), isEmpty);
       expect(parseXPostCandidates('x'), isEmpty);
     });
+
+    test('actionableCandidates keeps retryable states, drops finished ones',
+        () {
+      XPostCandidateSummary withStatus(String status) => XPostCandidateSummary(
+            id: status,
+            status: status,
+            candidateType: 't',
+            variant: 'household_tracker',
+            archetype: 'data_report',
+            text: 'x',
+            replyCount: 0,
+            generatedAt: null,
+          );
+      final filtered = actionableCandidates([
+        withStatus('pending_approval'),
+        withStatus('approved'),
+        withStatus('publish_failed'),
+        withStatus('posted'),
+        withStatus('rejected_duplicate'),
+      ]);
+      // edge の approve は pending/approved/publish_failed の3状態から可能=
+      // 「approve成功→投稿失敗」の候補が再試行面から消えない。
+      expect(
+        filtered.map((c) => c.status).toList(),
+        ['pending_approval', 'approved', 'publish_failed'],
+      );
+      expect(withStatus('publish_failed').statusLabel, contains('再試行可'));
+      expect(withStatus('posted').isActionable, isFalse);
+    });
   });
 
   group('R26 preview and age labels', () {
