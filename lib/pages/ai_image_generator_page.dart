@@ -14,7 +14,10 @@ class AiImageGeneratorPage extends StatefulWidget {
 
 class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
   final _supabase = Supabase.instance.client;
-  final _promptController = TextEditingController();
+  final _sceneSubjectController = TextEditingController();
+  final _detailsStyleController = TextEditingController();
+  final _constraintsController = TextEditingController();
+  final _imageTextController = TextEditingController();
 
   bool _isFetching = false;
   bool _isGenerating = false;
@@ -45,7 +48,10 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
 
   @override
   void dispose() {
-    _promptController.dispose();
+    _sceneSubjectController.dispose();
+    _detailsStyleController.dispose();
+    _constraintsController.dispose();
+    _imageTextController.dispose();
     super.dispose();
   }
 
@@ -87,8 +93,14 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
   }
 
   Future<void> _generate() async {
-    final prompt = _promptController.text.trim();
-    if (prompt.isEmpty) return;
+    final structuredPrompt = AiImageStructuredPrompt(
+      sceneAndSubject: _sceneSubjectController.text,
+      detailsAndStyle: _detailsStyleController.text,
+      constraints: _constraintsController.text,
+      imageText: _imageTextController.text,
+    );
+    if (!structuredPrompt.hasInput) return;
+    final prompt = structuredPrompt.buildPrompt();
     setState(() {
       _isGenerating = true;
       _errorMessage = null;
@@ -108,7 +120,10 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
         setState(() => _errorMessage = data['error'].toString());
         return;
       }
-      _promptController.clear();
+      _sceneSubjectController.clear();
+      _detailsStyleController.clear();
+      _constraintsController.clear();
+      _imageTextController.clear();
       await _fetchImages();
     } catch (e) {
       if (mounted) {
@@ -117,6 +132,39 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
     } finally {
       if (mounted) setState(() => _isGenerating = false);
     }
+  }
+
+  Widget _buildPromptField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+    bool highlight = false,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        enabledBorder: highlight
+            ? const OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFFE65100)),
+              )
+            : const OutlineInputBorder(),
+        focusedBorder: highlight
+            ? const OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFFE65100), width: 2),
+              )
+            : null,
+        prefixIcon: Icon(icon),
+        suffixIcon: highlight
+            ? const Icon(Icons.priority_high, color: Color(0xFFE65100))
+            : null,
+        filled: highlight,
+        fillColor: highlight ? const Color(0xFFFFF8E1) : null,
+      ),
+    );
   }
 
   @override
@@ -137,18 +185,30 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _promptController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: '画像プロンプト',
-                hintText: '例: 青い空と富士山の風景、水彩画風',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.image_search),
-              ),
-              onSubmitted: (_) {
-                if (!_isBusy) _generate();
-              },
+            _buildPromptField(
+              controller: _sceneSubjectController,
+              label: 'シーンと対象',
+              icon: Icons.image_search,
+            ),
+            const SizedBox(height: 8),
+            _buildPromptField(
+              controller: _detailsStyleController,
+              label: 'スタイル',
+              icon: Icons.palette_outlined,
+            ),
+            const SizedBox(height: 8),
+            _buildPromptField(
+              controller: _constraintsController,
+              label: '制約（維持・除外するもの）',
+              icon: Icons.rule,
+              highlight: true,
+            ),
+            const SizedBox(height: 8),
+            _buildPromptField(
+              controller: _imageTextController,
+              label: '画像内テキスト',
+              icon: Icons.text_fields,
+              maxLines: 1,
             ),
             const SizedBox(height: 12),
             Wrap(
