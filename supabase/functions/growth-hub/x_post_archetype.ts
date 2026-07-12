@@ -61,7 +61,12 @@ export function classifyPostArchetype(
   text: string,
 ): "data_report" | "news_briefing" | "product_promo" | "general" {
   const body = text ?? "";
-  if (body.includes("デイリーブリーフィング")) return "news_briefing";
+  // ラベルは投稿の「先頭」にあってこそラベル(自前テンプレのリード書式)。
+  // 本文深部の出現は他投稿の引用(例: 週次実測レポートが勝ちフックを引用)で
+  // あり得るため、冒頭 120 字に限定して判定する。
+  if (body.slice(0, 120).includes("デイリーブリーフィング")) {
+    return "news_briefing";
+  }
   let dataScore = 0;
   if (/取得日時|現職名簿|基準\s*\d[\d,]*\s*との差分/.test(body)) dataScore += 2;
   if (/集計/.test(body)) dataScore += 1;
@@ -159,14 +164,13 @@ export function buildArchetypeLiftLine<T>(
   return line;
 }
 
-/// LLM が「データレポート型」投稿で一人称公開してよい実測数値行を作る純関数。
-/// 捏造禁止ルールと両立する唯一の恒常データ源=このアカウント自身の実測
-/// インプレッション。実測行(impressions 非 null)が 3 件以上あるときだけ
-/// 中央値/最高値/件数を返し、薄いうちは null(沈黙)。
-export function buildOwnDataFactsLine<T>(
+/// 実測インプレッションの要約統計(数値版)。実測行(impressions 非 null)が
+/// 3 件以上あるときだけ件数/中央値/最高値を返し、薄いうちは null(ノイズを
+/// 公開実数として扱わない)。行ビルダーと週次データレポート(R24)が共用する。
+export function computeOwnDataFacts<T>(
   rows: readonly T[],
   impressionsOf: (row: T) => number | null,
-): string | null {
+): { count: number; median: number; best: number } | null {
   const measured = rows
     .map((row) => impressionsOf(row))
     .filter((value): value is number =>
@@ -178,8 +182,23 @@ export function buildOwnDataFactsLine<T>(
   const median = measured.length % 2 === 1
     ? measured[mid]
     : Math.round((measured[mid - 1] + measured[mid]) / 2);
-  const best = measured[measured.length - 1];
+  return {
+    count: measured.length,
+    median,
+    best: measured[measured.length - 1],
+  };
+}
+
+/// LLM が「データレポート型」投稿で一人称公開してよい実測数値行を作る純関数。
+/// 捏造禁止ルールと両立する唯一の恒常データ源=このアカウント自身の実測
+/// インプレッション。実測 3 件未満は null(沈黙)。
+export function buildOwnDataFactsLine<T>(
+  rows: readonly T[],
+  impressionsOf: (row: T) => number | null,
+): string | null {
+  const facts = computeOwnDataFacts(rows, impressionsOf);
+  if (facts === null) return null;
   return `Own measured data (REAL numbers you MAY publish first-person as ` +
-    `build-in-public stats): measured posts=${measured.length}, median ` +
-    `impressions=${median}, best impressions=${best}.`;
+    `build-in-public stats): measured posts=${facts.count}, median ` +
+    `impressions=${facts.median}, best impressions=${facts.best}.`;
 }

@@ -72,6 +72,20 @@ Deno.test("classifyPostArchetype does not misfile briefings as data_report", () 
     "2. 【選挙】投開票まであと3日、期日前投票は増加",
   ].join("\n");
   assertEquals(classifyPostArchetype(unlabeledElectionNews), "news_briefing");
+  // 逆方向の誤爆も防ぐ: ラベルが本文深部の「引用」として現れるデータレポート
+  // (週次実測レポートが勝ちフックを引用する形)は data_report のまま。
+  const reportQuotingBriefing = [
+    "自分株式会社 X運用実測レポート 2026/7/12",
+    "取得日時: 2026-07-12T03:00:00.000Z",
+    "計測済み投稿数: 3件",
+    "中央値インプレッション: 517",
+    "最高インプレッション: 3200",
+    "基準10,000との差分: -6800",
+    "10,000まで残り: 6800",
+    "インプレッション上位",
+    "517 — 「デイリーブリーフィング — 2026年7月12日朝」",
+  ].join("\n");
+  assertEquals(classifyPostArchetype(reportQuotingBriefing), "data_report");
 });
 
 Deno.test("classifyPostArchetype resolves hybrids by payload precedence", () => {
