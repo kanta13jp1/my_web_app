@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/wallet_summary.dart';
+
 /// デジタルウォレットページ
-/// digital-wallet Edge Function と連携して残高・取引履歴を管理
+/// social-commerce-hub Edge Function (wallet.balance) と連携して
+/// 残高・取引履歴を管理する。
 class DigitalWalletPage extends StatefulWidget {
   const DigitalWalletPage({super.key});
 
@@ -13,8 +16,9 @@ class DigitalWalletPage extends StatefulWidget {
 class _DigitalWalletPageState extends State<DigitalWalletPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
+  bool _isSignedIn = true;
   String? _errorMessage;
-  List<Map<String, dynamic>> _transactions = [];
+  WalletSummary _summary = WalletSummary.empty;
 
   @override
   void initState() {
@@ -24,11 +28,15 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
 
   Future<void> _fetchTransactions() async {
     if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _isSignedIn = false;
+      });
       return;
     }
     setState(() {
       _isLoading = true;
+      _isSignedIn = true;
       _errorMessage = null;
     });
     try {
@@ -36,17 +44,8 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
         'social-commerce-hub',
         body: {'action': 'wallet.balance'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['transactions'] is List) {
-        setState(
-          () => _transactions =
-              (data['transactions'] as List).cast<Map<String, dynamic>>(),
-        );
-      } else if (data is List) {
-        setState(() => _transactions = data.cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _transactions = []);
-      }
+      final summary = WalletSummary.fromResponse(response.data);
+      if (mounted) setState(() => _summary = summary);
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = '取引履歴の取得に失敗しました: $e');
@@ -68,79 +67,7 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Color(0xFFE53935),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFE53935),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _fetchTransactions,
-                        child: const Text('再試行'),
-                      ),
-                    ],
-                  ),
-                )
-              : _transactions.isEmpty
-                  ? const Center(child: Text('取引履歴はありません'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _transactions.length,
-                      itemBuilder: (context, index) {
-                        final tx = _transactions[index];
-                        final description =
-                            tx['description']?.toString() ?? '取引 ${index + 1}';
-                        final amount = tx['amount']?.toString() ?? '0';
-                        final type = tx['type']?.toString() ?? 'debit';
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            leading: Icon(
-                              type == 'credit'
-                                  ? Icons.arrow_downward
-                                  : Icons.arrow_upward,
-                              color: type == 'credit'
-                                  ? const Color(0xFF4CAF50)
-                                  : const Color(0xFFE53935),
-                            ),
-                            title: Text(
-                              description,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                height: 1.5,
-                              ),
-                            ),
-                            subtitle: Text(tx['created_at']?.toString() ?? ''),
-                            trailing: Text(
-                              '¥$amount',
-                              style: TextStyle(
-                                color: type == 'credit'
-                                    ? const Color(0xFF4CAF50)
-                                    : const Color(0xFFE53935),
-                                fontWeight: FontWeight.bold,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+      body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -149,6 +76,144 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
         },
         icon: const Icon(Icons.send),
         label: const Text('送金'),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (!_isSignedIn) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'ログインすると残高と取引履歴が表示されます',
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.5),
+          ),
+        ),
+      );
+    }
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFFE53935), height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchTransactions,
+              child: const Text('再試行'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchTransactions,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildBalanceCard(),
+          const SizedBox(height: 20),
+          const Text(
+            '取引履歴',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          if (_summary.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: Text('取引履歴はありません')),
+            )
+          else
+            ..._summary.transactions.map(_buildTransactionTile),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBalanceCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+          ),
+        ),
+        child: Column(
+          children: [
+            const Text(
+              '現在の残高',
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                const Text(
+                  '¥',
+                  style: TextStyle(color: Colors.white, fontSize: 22),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  formatWalletYen(_summary.balance),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionTile(WalletTransaction tx) {
+    final createdAt = formatWalletTimestamp(tx.createdAt);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Icon(
+          tx.isCredit ? Icons.arrow_downward : Icons.arrow_upward,
+          color:
+              tx.isCredit ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
+        ),
+        title: Text(
+          tx.label,
+          style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+        ),
+        subtitle: createdAt.isEmpty ? null : Text(createdAt),
+        trailing: Text(
+          '${tx.isCredit ? '+' : '-'}¥${formatWalletYen(tx.amount.abs())}',
+          style: TextStyle(
+            color:
+                tx.isCredit ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
       ),
     );
   }

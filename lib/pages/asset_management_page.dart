@@ -41,6 +41,7 @@ import 'package:my_web_app/services/asset_account_balance_history_store.dart';
 import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
+import 'package:my_web_app/services/household_tracker_share_service.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
 import 'package:my_web_app/services/asset_recurring_fixed_cost_store.dart';
@@ -19952,6 +19953,51 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   /// 今月の負債の問題点と「翌月こうしなさい」を、計算済みの具体額つきで描画する。
+  bool _householdTrackerPosting = false;
+
+  /// R24b: 負債トレンドの実データ(件数・日数・方向のみ/金額なし)を post A 同型の
+  /// データレポート型スコアボードとして X へ投稿し、variant=household_tracker で
+  /// 学習ループの計測対象にする。
+  Future<void> _postHouseholdTracker(
+    List<AssetDebtTrendInsight> insights,
+  ) async {
+    if (_householdTrackerPosting) return;
+    setState(() => _householdTrackerPosting = true);
+    try {
+      final snapshot = householdSnapshotFromInsights(
+        insights,
+        salaryDay: _salaryDay,
+        now: DateTime.now(),
+      );
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: buildHouseholdTrackerPostPayload(snapshot),
+      );
+      if (!mounted) return;
+      final data = res.data is Map
+          ? Map<String, dynamic>.from(res.data as Map)
+          : <String, dynamic>{};
+      final posted = data['posted'] == true;
+      final tweetId = data['tweetId']?.toString() ?? '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            posted
+                ? '家計トラッカーを投稿しました（計測対象・金額非公開）'
+                    '${tweetId.isNotEmpty ? ' https://x.com/i/status/$tweetId' : ''}'
+                : '投稿に失敗しました: ${data['error'] ?? data['code'] ?? '不明'}',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('投稿に失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _householdTrackerPosting = false);
+    }
+  }
+
   Widget _buildAssetManagementMonthlyDebtTrendList(
     List<AssetDebtTrendInsight> insights,
   ) {
@@ -19984,6 +20030,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     height: 1.4,
                   ),
                 ),
+              ),
+              IconButton(
+                tooltip: '家計トラッカーを投稿（計測対象・金額非公開）',
+                icon: _householdTrackerPosting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(Icons.ios_share, color: headerColor, size: 18),
+                onPressed: _householdTrackerPosting
+                    ? null
+                    : () => _postHouseholdTracker(insights),
               ),
             ],
           ),

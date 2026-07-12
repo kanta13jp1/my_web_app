@@ -9,6 +9,8 @@
 // - 投稿は growth-hub x.post 経由(variant=household_tracker /
 //   contentArchetype=data_report)で学習ループの計測対象にする。
 
+import 'asset_debt_trend_analyzer.dart';
+
 /// 家計トラッカー投稿の入力(すべて件数/日数/方向 — 金額は受け取らない)。
 class HouseholdTrackerSnapshot {
   /// 監視対象の負債口座数。
@@ -68,7 +70,7 @@ String buildHouseholdTrackerText(HouseholdTrackerSnapshot s) {
     '家計トラッカー $dateLabel（自分株式会社・実運用データ）',
     '',
     '取得日時: $timestamp',
-    '監視口座数: ${s.monitoredAccounts}',
+    'トレンド検出口座: ${s.monitoredAccounts}',
     '負債トレンド検出: ${s.totalFindings}件',
     '内訳: 残高増加 ${s.balanceIncreasing} / 利息超過 ${s.negativeAmortization} / 長期化 ${s.slowPayoff}',
     if (s.criticalCount > 0 || s.warningCount > 0)
@@ -96,4 +98,27 @@ Map<String, dynamic> buildHouseholdTrackerPostPayload(
     'contentArchetype': 'data_report',
     'experimentKey': 'x_first_user_growth_10k',
   };
+}
+
+/// 負債トレンド insights から Snapshot を組み立てる純ヘルパ(金額は一切読まない)。
+/// monitoredAccounts は insights 内の distinct 口座数(=検出対象口座)。
+HouseholdTrackerSnapshot householdSnapshotFromInsights(
+  List<AssetDebtTrendInsight> insights, {
+  required int salaryDay,
+  required DateTime now,
+}) {
+  int countBy(AssetDebtTrendCategory c) =>
+      insights.where((i) => i.category == c).length;
+  int severity(AssetDebtTrendSeverity sv) =>
+      insights.where((i) => i.severity == sv).length;
+  return HouseholdTrackerSnapshot(
+    monitoredAccounts: insights.map((i) => i.accountId).toSet().length,
+    balanceIncreasing: countBy(AssetDebtTrendCategory.balanceIncreasing),
+    negativeAmortization: countBy(AssetDebtTrendCategory.negativeAmortization),
+    slowPayoff: countBy(AssetDebtTrendCategory.slowPayoff),
+    criticalCount: severity(AssetDebtTrendSeverity.critical),
+    warningCount: severity(AssetDebtTrendSeverity.warning),
+    salaryDay: salaryDay,
+    now: now,
+  );
 }

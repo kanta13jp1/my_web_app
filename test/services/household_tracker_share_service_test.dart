@@ -26,7 +26,7 @@ void main() {
     test('scoreboard text: counts/days/directions only, no yen amounts', () {
       final text = buildHouseholdTrackerText(snapshot);
       expect(text, contains('家計トラッカー 2026/07/12'));
-      expect(text, contains('監視口座数: 4'));
+      expect(text, contains('トレンド検出口座: 4'));
       expect(text, contains('負債トレンド検出: 3件'));
       expect(text, contains('内訳: 残高増加 1 / 利息超過 0 / 長期化 2'));
       expect(text, contains('アラート: 🔴1件 / 🟡2件'));
