@@ -9,6 +9,7 @@ import '../widgets/competitor_monitoring_card.dart';
 import '../widgets/self_devin_control_tower_card.dart';
 import 'admin_x_posted_today.dart';
 import 'admin_dashboard_signals.dart';
+import 'admin_x_candidate_queue.dart';
 import 'ai_secretary_page.dart';
 import 'admin/feedback_list_page.dart';
 import 'admin/quota_dashboard_page.dart';
@@ -91,6 +92,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // / 勝ち型 / winner exemplar)。X 学習ループを意思決定点(ダッシュボード)に露出
   // する。取得失敗時は null → 成長ループ panel は非表示に degrade。
   Map<String, dynamic>? _xPerformanceContext;
+  // R26: X投稿候補キュー(HITL 承認待ち)。トラッカー系列の cron が生成した
+  // pending_approval 候補をここで承認→投稿する(UUID 手掘り+workflow dispatch
+  // の運用ボトルネック解消)。X operator 権限が無い/取得失敗は空=panel 非表示。
+  List<XPostCandidateSummary> _xCandidates = const [];
+  final Set<String> _xCandidatePublishing = <String>{};
   bool _isLoading = true;
   WeeklyDigestSnapshot _weeklyDigest = const WeeklyDigestSnapshot.empty();
   // R18: fetch 完了フラグ。empty() のままか、完了して空かを区別し、静かに失敗/空の
@@ -351,6 +357,142 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       debugPrint('x.performance_context unavailable: $error');
     }
     return null;
+  }
+
+  /// R26: X投稿候補キュー(pending_approval)を fail-safe に取得する。
+  /// X operator 権限が無いと edge が 403 を返すため、例外/非成功は空リストに
+  /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
+  Future<List<XPostCandidateSummary>> _loadXCandidateQueue() async {
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.list',
+          'status': 'pending_approval',
+          'limit': 20,
+        },
+      );
+      final data = res.data;
+      if (data is Map && data['success'] == true) {
+        return parseXPostCandidates(data['candidates']);
+      }
+    } catch (error) {
+      debugPrint('x.candidate.list unavailable: $error');
+    }
+    return const [];
+  }
+
+  /// R26: 候補を承認→投稿→確定する HITL フロー。無審査自動投稿はしない
+  /// (必ず全文確認ダイアログを挟む)。approve が返す postPayload は edge 側で
+  /// whitelist 済みの「人間がレビューした本文そのもの」で、それ以外を送らない。
+  Future<void> _publishXCandidate(XPostCandidateSummary candidate) async {
+    if (_xCandidatePublishing.contains(candidate.id)) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('候補を承認してXへ投稿: ${candidate.seriesLabel}'),
+        content: SizedBox(
+          width: 520,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '全${candidate.text.length}字'
+                '${candidate.replyCount > 0 ? ' + リプライ${candidate.replyCount}件' : ''}'
+                'を実投稿します(取り消し不可)。',
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Text(
+                    candidate.text,
+                    style: Theme.of(dialogContext).textTheme.bodySmall,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('承認して投稿する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _xCandidatePublishing.add(candidate.id));
+    try {
+      final approveRes = await _supabase.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.candidate.approve',
+          'candidateId': candidate.id,
+        },
+      );
+      final approveData = approveRes.data is Map
+          ? Map<String, dynamic>.from(approveRes.data as Map)
+          : <String, dynamic>{};
+      if (approveData['success'] != true ||
+          approveData['postPayload'] is! Map) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '承認に失敗しました: ${approveData['error'] ?? '不明なエラー'}',
+            ),
+          ),
+        );
+        return;
+      }
+      final postPayload = Map<String, dynamic>.from(
+        approveData['postPayload'] as Map,
+      );
+      final postRes = await _supabase.functions.invoke(
+        'growth-hub',
+        body: postPayload,
+      );
+      final postData = postRes.data is Map
+          ? Map<String, dynamic>.from(postRes.data as Map)
+          : <String, dynamic>{};
+      // 投稿結果を候補へ確定記録(posted / rejected_duplicate / publish_failed)。
+      // finalize 自体の失敗は投稿結果の通知を妨げない(ログのみ)。
+      try {
+        await _supabase.functions.invoke(
+          'growth-hub',
+          body: {
+            'action': 'x.candidate.finalize',
+            'candidateId': candidate.id,
+            'result': buildCandidateFinalizeResult(postData),
+          },
+        );
+      } catch (finalizeError) {
+        debugPrint('x.candidate.finalize failed: $finalizeError');
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(candidatePublishOutcomeMessage(postData))),
+      );
+      final refreshed = await _loadXCandidateQueue();
+      if (mounted) {
+        setState(() => _xCandidates = refreshed);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('候補の投稿処理でエラー: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _xCandidatePublishing.remove(candidate.id));
+      }
+    }
   }
 
   /// R16: 今日すでに X 投稿済みなら「投稿を作れ」ではなく、投稿直後30分は
@@ -1561,6 +1703,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final paidConversionMetrics = await _loadPaidConversionMetrics();
       final xTodayStatus = await _loadXTodayStatus();
       final xPerformanceContext = await _loadXPerformanceContext();
+      final xCandidates = await _loadXCandidateQueue();
 
       final toolExecutionLogs = <Map<String, dynamic>>[];
       final blockedReasonCounts = <String, int>{};
@@ -1618,6 +1761,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           _paidConversionMetrics = paidConversionMetrics;
           _xTodayStatus = xTodayStatus;
           _xPerformanceContext = xPerformanceContext;
+          _xCandidates = xCandidates;
           _isLoading = false;
         });
       }
@@ -1894,6 +2038,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     // R17: X 学習ループ(勝ち型/計測待ち/cron警告)を意思決定点に露出。
                     // データが無いときは SizedBox.shrink() で静かに消える。
                     _buildXGrowthLoopSection(),
+                    _buildXCandidateQueueSection(),
                     const SizedBox(height: 16),
                     _buildFunnelOverviewCard(
                       title: '今日の登録ファネル',
@@ -6128,6 +6273,139 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// R26: X投稿候補キュー(トラッカー量産の HITL 承認面)。系列 cron が生成した
+  /// pending_approval 候補を一覧し、全文確認→承認→投稿→確定を1画面で回す。
+  /// 候補ゼロ or X operator 権限なし(list が空 degrade)は panel ごと非表示。
+  Widget _buildXCandidateQueueSection() {
+    if (_xCandidates.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final now = DateTime.now();
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: theme.colorScheme.surfaceContainerLow,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.pending_actions,
+                    size: 18,
+                    color: Color(0xFF0EA5E9),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'X投稿候補キュー（承認待ち ${_xCandidates.length}件）',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'トラッカー系列の自動生成候補。承認した本文だけが投稿され、'
+                '計測ループ（Archetype lift）の対象になります。',
+                style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              ),
+              const SizedBox(height: 12),
+              ..._xCandidates.map(_buildXCandidateRow),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildXCandidateRow(XPostCandidateSummary candidate) {
+    final theme = Theme.of(context);
+    final publishing = _xCandidatePublishing.contains(candidate.id);
+    final age = candidateAgeLabel(candidate.generatedAt, DateTime.now());
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0EA5E9).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        candidate.seriesLabel,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF0369A1),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (candidate.archetype.isNotEmpty)
+                      Text(
+                        candidate.archetype,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    if (age.isNotEmpty)
+                      Text(
+                        age,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  candidatePreviewText(candidate.text),
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonal(
+            onPressed: publishing || !candidate.isPendingApproval
+                ? null
+                : () => _publishXCandidate(candidate),
+            child: publishing
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('承認して投稿'),
+          ),
+        ],
       ),
     );
   }
