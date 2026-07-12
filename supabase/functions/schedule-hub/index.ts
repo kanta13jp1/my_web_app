@@ -31,6 +31,7 @@ import {
   buildUpstreamErrorPayload,
   summarizePlatformFailures,
 } from "./upstream_error.ts";
+import { requiredAuthLevel } from "./action_auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1639,32 +1640,16 @@ serve(async (req: Request) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    // Public actions that don't require auth
-    const publicActions = [
-      "digest.run",
-      "health.check",
-      "blog.auto_publish",
-      "blog.create",
-      "blog.recent_posted", // Win版#132 part 124: tech-blog-tracker page 用 public read
-      "blog.backfill_from_apis", // Win版#132 part 124: 過去 dev.to + Qiita 投稿を hub_data に backfill
-      "reminders.study",
-      "notion.sync_wbs",
-      "notion.preflight_wbs",
-      "notion.sync_roadmap",
-      "notion.sync_memory_index",
-      "notion.fix_wbs_all_instances",
-      "wbs.unblock_dependents",
-      "x.post_with_media",
-      "billing.create_supporter_checkout_session",
-      "maintenance.list_active",
-    ];
+    // 認可: action ごとの必要レベルは action_auth.ts (純ロジック) に集約
+    const authLevel = requiredAuthLevel(action);
     const serviceRoleRequest = isServiceRoleRequest(req);
     let userId: string | null = null;
-    if (!publicActions.includes(action)) {
-      if (!serviceRoleRequest) {
-        userId = await getUserId(req);
-        if (!userId) return json({ error: "Unauthorized" }, 401);
-      }
+    if (authLevel === "service_role" && !serviceRoleRequest) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+    if (authLevel === "user" && !serviceRoleRequest) {
+      userId = await getUserId(req);
+      if (!userId) return json({ error: "Unauthorized" }, 401);
     }
 
     switch (action) {
