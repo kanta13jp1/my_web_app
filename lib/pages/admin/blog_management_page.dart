@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'blog_sync_feedback.dart';
+
 class _NewsSignalLintReport {
   final String checkedAt;
   final String status;
@@ -42,6 +44,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   List<Map<String, dynamic>> _drafts = [];
   bool _isLoading = true;
   bool _isSyncing = false;
+  // R21: 最後の同期失敗を保持し、空状態を「Syncで取得できます」の失敗ループ
+  // ではなく失敗理由+是正手順の表示に切り替える。
+  String? _lastSyncError;
   bool _isLintingNewsSignals = false;
   final Set<String> _publishingIds = {};
   final Set<String> _togglingIds = {};
@@ -138,32 +143,47 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   Future<void> _syncNow() async {
     if (_isSyncing) return;
     setState(() => _isSyncing = true);
+    // R21: Qiita と dev.to を独立に同期する(ボタンの文言どおり両方実行し、
+    // Qiita トークン失効が dev.to 同期を巻き添えにしない)。失敗は生
+    // FunctionException ではなく是正手順つきの文言へ変換する。
+    final lines = <String>[];
+    var anySuccess = false;
+    var anyFailure = false;
+
+    Future<void> runSync(String label, String action) async {
+      try {
+        final res = await _supabase.functions.invoke(
+          'schedule-hub',
+          body: {'action': action},
+        );
+        lines.add(composeBlogSyncSuccessLine(label, res.data));
+        anySuccess = true;
+      } on FunctionException catch (e) {
+        anyFailure = true;
+        lines.add(
+          '$label: ${composeBlogSyncErrorMessage(status: e.status, details: e.details)}',
+        );
+      } catch (e) {
+        anyFailure = true;
+        lines.add('$label: ${composeBlogSyncErrorMessage(fallback: '$e')}');
+      }
+    }
+
     try {
-      final res = await _supabase.functions.invoke(
-        'schedule-hub',
-        body: {'action': 'blog.sync_engagement'},
+      await runSync('Qiita', 'blog.sync_engagement');
+      await runSync('dev.to', 'blog.devto_sync_engagement');
+
+      if (!mounted) return;
+      final message = lines.join('\n');
+      setState(() => _lastSyncError = anyFailure ? message : null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(anyFailure ? '⚠️ $message' : '✅ $message'),
+          backgroundColor: anyFailure ? _red : _green,
+          duration: Duration(seconds: anyFailure ? 8 : 3),
+        ),
       );
-      if (mounted) {
-        final success = res.status == 200;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success ? '✅ 同期完了' : '⚠️ 同期エラー (${res.status})'),
-            backgroundColor: success ? _green : _red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-        if (success) await _loadData();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ 同期失敗: $e'),
-            backgroundColor: _red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+      if (anySuccess) await _loadData();
     } finally {
       if (mounted) setState(() => _isSyncing = false);
     }
@@ -1229,16 +1249,27 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(
-                  Icons.article_outlined,
-                  color: Colors.white24,
+                Icon(
+                  _lastSyncError != null
+                      ? Icons.sync_problem
+                      : Icons.article_outlined,
+                  color: _lastSyncError != null ? _orange : Colors.white24,
                   size: 48,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'データなし\nSync ボタンで Qiita / dev.to から取得できます',
+                // R21: 同期失敗後は「Syncで取得できます」ではなく失敗理由+
+                // 是正手順を出す(失敗ループのデッドエンド解消)。
+                Text(
+                  _lastSyncError != null
+                      ? '前回の同期に失敗しました。\n$_lastSyncError'
+                      : 'データなし\nSync ボタンで Qiita / dev.to から取得できます',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white38, height: 1.6),
+                  style: TextStyle(
+                    color: _lastSyncError != null
+                        ? Colors.white70
+                        : Colors.white38,
+                    height: 1.6,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
@@ -1266,7 +1297,24 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       ];
     }
 
+    // R21: 表示中の数値がいつの同期かを明示する(同期失敗中の凍結値を
+    // 今の数値に見せない)。直近同期が失敗していれば警告も添える。
+    final freshness = blogEngagementFreshnessLabel(_engagement, DateTime.now());
     return [
+      if (freshness != null)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Text(
+              _lastSyncError != null ? '$freshness(直近の同期は失敗しています)' : freshness,
+              style: TextStyle(
+                color: _lastSyncError != null ? _orange : Colors.white38,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ),
       SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         sliver: SliverList(
