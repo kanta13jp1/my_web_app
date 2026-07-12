@@ -68,6 +68,12 @@ import {
   finalizeXPostCandidateMetadata,
   X_POST_CANDIDATE_SOURCE,
 } from "./x_post_candidate.ts";
+import {
+  canReadRoadmapShareStats,
+  parseRoadmapCounts,
+  type RoadmapPlan,
+  selectShareableRoadmapPlans,
+} from "./roadmap_share_stats.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1732,6 +1738,64 @@ function _applyAchievements<
   });
 }
 
+type RoadmapProgressPayload = {
+  userCount: number;
+  achievementsCount: number;
+  plans: RoadmapPlan[];
+};
+
+async function isRoadmapShareStatsAdmin(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  if (userId === "service_role") return true;
+  const { data, error } = await admin
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return canReadRoadmapShareStats(
+    userId,
+    error == null && data?.is_admin === true,
+  );
+}
+
+/// roadmap.progress / roadmap.share_stats 共通の検証済み集計。
+/// 旧実装は各クエリの error を捨て、障害時にも 0 件を success:true で返していた。
+/// X のデータダイジェストへ偽のゼロを供給しないため、3 系統のどれか1つでも
+/// 失敗・不定値なら throw し、呼び出し元を fail closed にする。
+async function loadRoadmapProgress(
+  admin: SupabaseClient,
+): Promise<RoadmapProgressPayload> {
+  const [authListResult, plansResult, achievementsResult] = await Promise.all([
+    admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
+    admin
+      .from("growth_plans")
+      .select(
+        "label, deadline, target, features_done, features_total, sort_order",
+      )
+      .order("sort_order", { ascending: true })
+      .order("target", { ascending: true }),
+    admin
+      .from("development_achievements")
+      .select("id", { count: "exact", head: true }),
+  ]);
+  if (authListResult.error || plansResult.error || achievementsResult.error) {
+    throw new Error("roadmap progress source query failed");
+  }
+  const totalUsers = (authListResult.data as { total?: unknown } | null)?.total;
+  const totalAchievements = achievementsResult.count;
+  const counts = parseRoadmapCounts(totalUsers, totalAchievements);
+  const plans = _applyAchievements(
+    (plansResult.data ?? []) as RoadmapPlan[],
+    counts.achievementsCount,
+  );
+  return {
+    ...counts,
+    plans,
+  };
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -1847,7 +1911,8 @@ serve(async (req: Request) => {
           page: 1,
           perPage: 1,
         });
-        const totalUsers = totalUsersResponse.data?.total ?? null;
+        const totalUsers =
+          (totalUsersResponse.data as { total?: number } | null)?.total ?? null;
         const payload = buildSignupSlackPayload({
           totalUsers,
           signalKey: body.signalKey,
@@ -2100,43 +2165,24 @@ serve(async (req: Request) => {
 
       // ─── Roadmap Progress (実データ: growth_plans テーブル) ───────────────────
       case "roadmap.progress": {
-        const [
-          authListResult,
-          { data: plansData },
-          { count: achievementsCount },
-        ] = await Promise.all([
-          admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
-          admin
-            .from("growth_plans")
-            .select(
-              "label, deadline, target, features_done, features_total, sort_order",
-            )
-            .order("sort_order", { ascending: true })
-            .order("target", { ascending: true }),
-          admin
-            .from("development_achievements")
-            .select("id", { count: "exact", head: true }),
-        ]);
-        const totalUsers =
-          ((authListResult.data as { total?: number } | null)?.total) ?? 0;
-        const totalAchievements = achievementsCount ?? 0;
-        const plans = _applyAchievements(
-          (plansData ?? []) as Array<
-            {
-              label: string;
-              deadline: string;
-              target: number;
-              features_done: number;
-              features_total: number;
-              sort_order?: number;
-            }
-          >,
-          totalAchievements,
-        );
+        return json({ success: true, ...await loadRoadmapProgress(admin) });
+      }
+
+      // AI シェアへ渡す公開可能な全体集計。通常ユーザーには service-role 集計を
+      // 開示せず、user_profiles.is_admin / automation service-role だけが取得できる。
+      // 競合別の内部計画は除き、公開シリーズに使う短/中/長期計画だけを返す。
+      case "roadmap.share_stats": {
+        if (!(await isRoadmapShareStatsAdmin(admin, userId!))) {
+          return json({ success: false, error: "Forbidden" }, 403);
+        }
+        const progress = await loadRoadmapProgress(admin);
+        const plans = selectShareableRoadmapPlans(progress.plans);
         return json({
           success: true,
-          userCount: totalUsers,
-          achievementsCount: totalAchievements,
+          verified: true,
+          source: "roadmap.share_stats",
+          userCount: progress.userCount,
+          achievementsCount: progress.achievementsCount,
           plans,
         });
       }

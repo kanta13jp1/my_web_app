@@ -215,6 +215,11 @@ class UniversalXShareService {
   static const String firstUserGrowthCampaign = 'first_user_growth';
   static const String aiShareMedium = 'ai_share';
   static const String profileMedium = 'profile';
+  static const List<String> _shareableProjectPlanLabels = <String>[
+    '短期計画',
+    '中期計画',
+    '長期計画',
+  ];
   // 実際に使うツール(嘘のパイプラインにしない): 文章=GPT-5.5 / 画像=GPT image /
   // 音声=ElevenLabs / 動画=Hedra。
   static const List<String> _creativePipeline = <String>[
@@ -302,8 +307,9 @@ class UniversalXShareService {
       final rows = history ?? await fetchShareVideoHistory();
       return selectReusableVideo(
         rows,
-        nowJst:
-            (nowUtc ?? DateTime.now().toUtc()).add(const Duration(hours: 9)),
+        nowJst: (nowUtc ?? DateTime.now().toUtc()).add(
+          const Duration(hours: 9),
+        ),
         templateKey: _videoTemplateFor(context),
       );
     } catch (_) {
@@ -371,8 +377,9 @@ class UniversalXShareService {
     DateTime? lastSuccess;
     for (final row in rows) {
       if (row['type']?.toString() != 'presenter_video') continue;
-      final created =
-          DateTime.tryParse(row['created_at']?.toString() ?? '')?.toUtc();
+      final created = DateTime.tryParse(
+        row['created_at']?.toString() ?? '',
+      )?.toUtc();
       if (created == null) continue;
       if (row['status']?.toString() == 'video_ready') {
         if (lastSuccess == null || created.isAfter(lastSuccess)) {
@@ -400,11 +407,18 @@ class UniversalXShareService {
   Future<UniversalXShareDraft> generateDraft(
     UniversalSharePageContext context,
   ) async {
-    final trends = await _fetchXTrendTopics();
-    final performanceContext = await _fetchXPerformanceContext();
-    // R24: データレポート型(実測の勝ちアーキタイプ)へ実数を供給する自社実データ。
-    // 取得失敗/未ログインは '' で、プロンプト側の数字源(d)が自動無効化される。
-    final projectStatsContext = await _fetchProjectStatsContext();
+    // 独立した3 enrichment を直列待ちしない。各 fetcher は fail-open なので、
+    // どれかが不調でも残りの事実と従来 fallback で下書き生成を続けられる。
+    final enrichment = await Future.wait<dynamic>([
+      _fetchXTrendTopics(),
+      _fetchXPerformanceContext(),
+      supportsProjectStatsContext(context)
+          ? _fetchProjectStatsContext()
+          : Future<String>.value(''),
+    ]);
+    final trends = enrichment[0] as List<UniversalXTrendTopic>;
+    final performanceContext = enrichment[1] as String;
+    final projectStatsContext = enrichment[2] as String;
     final shareContent = _recommendedShareContent(trends, performanceContext);
     final fallback = buildFallbackDraft(context, trendTopics: trends);
     final shareUrl = acquisitionUrlFor(context, content: shareContent);
@@ -860,14 +874,17 @@ class UniversalXShareService {
     return 'No X performance data is available yet. Start with Daily Briefing vs question-post A/B tests, then collect metrics after posting.';
   }
 
-  /// R24: growth-hub roadmap.progress の自社実データ(実ユーザー数・出荷済み
-  /// 達成件数・計画の進捗/期日)を、データレポート型リードの数字源(d)となる
+  /// R26: 管理者限定 growth-hub roadmap.share_stats の自社実データ(登録アカウント
+  /// 総数・開発ログ件数・公開可能な計画進捗/期日)を、データレポート型リードの
+  /// 数字源(d)となる
   /// "Own project data" ブロックへ整形して返す。失敗・未ログイン・実数不足は
   /// '' を返し、プロンプト側で数字源(d)が DISABLED と明示される
   /// (= 実データは共有を良くするためで、下書き生成を絶対に止めない)。
   Future<String> _fetchProjectStatsContext() async {
     try {
-      final data = await _invoke('growth-hub', {'action': 'roadmap.progress'});
+      final data = await _invoke('growth-hub', {
+        'action': 'roadmap.share_stats',
+      });
       if (data['success'] == true) {
         return buildProjectStatsContext(data);
       }
@@ -877,7 +894,20 @@ class UniversalXShareService {
     return '';
   }
 
-  /// roadmap.progress 応答を "Own project data" ブロックへ整形する純関数。
+  /// 全体の登録/開発進捗が現在ページの主題になり得る route だけで source (d) を
+  /// 有効化する。利用可能な数字があるだけで、学習・家計・選挙など無関係なページを
+  /// 汎用ロードマップ投稿へ変えてしまわないための relevance gate。
+  static bool supportsProjectStatsContext(UniversalSharePageContext context) {
+    final path = context.routePath.trim().toLowerCase();
+    return path == '/' ||
+        path == '/cmo' ||
+        path == '/cmo-office' ||
+        path == '/admin' ||
+        path.startsWith('/admin/') ||
+        path.startsWith('/growth-');
+  }
+
+  /// roadmap.share_stats 応答を "Own project data" ブロックへ整形する純関数。
   /// 実測 97K ポスト(集計ヘッダ→差分→残り→期日カウントダウン)の数字骨格を、
   /// 実在する自社データだけで再現するための供給源。差分・残り・あとN日 は
   /// LLM に計算させず、ここで確定した値のみをプロンプトへ渡す(捏造/計算ミス
@@ -887,19 +917,31 @@ class UniversalXShareService {
     Map<String, dynamic> progress, {
     DateTime? nowJst,
   }) {
+    // roadmap.share_stats は運営者限定かつ3系統の取得成功後だけ verified=true を
+    // 返す。通常 roadmap.progress や部分レスポンスを publishable と誤認しない。
+    if (progress['verified'] != true ||
+        progress['source']?.toString() != 'roadmap.share_stats') {
+      return '';
+    }
     final now = nowJst ?? DateTime.now().toUtc().add(const Duration(hours: 9));
     var realNumbers = 0;
     final lines = <String>[];
 
     final statParts = <String>[];
     final userCount = progress['userCount'];
+    int? registeredAccounts;
     if (userCount is num && userCount >= 0) {
-      statParts.add('users=${userCount.toInt()}');
+      // Supabase Auth の総レコード数であり、アクティブ/外部の「実ユーザー」ではない。
+      registeredAccounts = userCount.toInt();
+      statParts.add('registered-accounts(total)=$registeredAccounts');
       realNumbers += 1;
     }
     final achievementsCount = progress['achievementsCount'];
     if (achievementsCount is num && achievementsCount >= 0) {
-      statParts.add('shipped-achievements(total)=${achievementsCount.toInt()}');
+      // development_achievements の行数。全件がユーザー向け出荷機能とは限らない。
+      statParts.add(
+        'development-log-entries(total)=${achievementsCount.toInt()}',
+      );
       realNumbers += 1;
     }
     if (statParts.isNotEmpty) {
@@ -908,37 +950,75 @@ class UniversalXShareService {
 
     final plans = progress['plans'];
     if (plans is List) {
-      for (final raw in plans.take(3)) {
-        if (raw is! Map) continue;
+      final planByLabel = <String, Map<dynamic, dynamic>>{};
+      for (final raw in plans.whereType<Map>()) {
         final label = raw['label']?.toString().trim() ?? '';
-        if (label.isEmpty) continue;
+        if (_shareableProjectPlanLabels.contains(label)) {
+          planByLabel[label] = raw;
+        }
+      }
+      for (final allowedLabel in _shareableProjectPlanLabels) {
+        final raw = planByLabel[allowedLabel];
+        if (raw == null) continue;
+        final label = raw['label']?.toString().trim() ?? '';
         final parts = <String>[];
+        int? remaining;
+        int? accountGap;
+        int? daysLeft;
         final done = raw['features_done'];
         final total = raw['features_total'];
         if (done is num && total is num && total > 0) {
           final doneInt = done.toInt();
           final totalInt = total.toInt();
-          final remaining = (totalInt - doneInt) < 0 ? 0 : totalInt - doneInt;
-          parts.add('features $doneInt/$totalInt done, 残り$remaining件');
+          remaining = (totalInt - doneInt) < 0 ? 0 : totalInt - doneInt;
+          // 短/中/長期計画の値は growth-hub が development_achievements 行数を
+          // 50/200/500 の閾値へ当てたもの。出荷機能数とは呼ばない。
+          parts.add(
+            'development-log threshold $doneInt/$totalInt, '
+            '閾値まで残り$remaining件',
+          );
           realNumbers += 2;
         }
         final target = raw['target'];
         if (target is num && target > 0) {
-          parts.add('目標ユーザー ${target.toInt()}人');
-          realNumbers += 1;
+          final targetInt = target.toInt();
+          parts.add('登録アカウント目標 $targetInt件');
+          if (registeredAccounts != null) {
+            final gap = targetInt - registeredAccounts;
+            accountGap = gap;
+            parts.add(gap > 0 ? '目標まで残り$gap件' : '目標達成 +${-gap}件');
+            realNumbers += 2;
+          } else {
+            realNumbers += 1;
+          }
         }
         final deadline = raw['deadline']?.toString().trim() ?? '';
         if (deadline.isNotEmpty) {
-          final daysLeft = _daysUntilDeadline(deadline, now);
+          daysLeft = _daysUntilDeadline(deadline, now);
           if (daysLeft == null) {
             parts.add('期日 $deadline');
+          } else if (daysLeft < 0) {
+            // 過去期日を「あと0日」と表示すると、まだ期限内だと誤読される。
+            // 経過日数は投稿価値が低く日々変わるため、更新が必要な状態だけ示す。
+            parts.add('期日 $deadline = 終了・更新必要');
+            realNumbers += 1;
+          } else if (daysLeft == 0) {
+            parts.add('期日 $deadline = 本日期日');
+            realNumbers += 1;
           } else {
             parts.add('期日 $deadline = あと$daysLeft日');
             realNumbers += 1;
           }
         }
         if (parts.isEmpty) continue;
-        lines.add('- Goal gap ($label): ${parts.join('; ')}');
+        // 97K 集計の赤黄アラートを「モデルに考えさせる」のではなく実データから
+        // 確定する。未完了かつ期日超過=赤、30日以内=黄。それ以外は無印。
+        final hasOpenGap = (remaining != null && remaining > 0) ||
+            (accountGap != null && accountGap > 0);
+        final marker = hasOpenGap && daysLeft != null
+            ? (daysLeft < 0 ? '🔴 ' : (daysLeft <= 30 ? '🟡 ' : ''))
+            : '';
+        lines.add('- ${marker}Goal gap ($label): ${parts.join('; ')}');
       }
     }
 
@@ -946,15 +1026,15 @@ class UniversalXShareService {
     final stamp = '${now.year}-${_pad2(now.month)}-${_pad2(now.day)} '
         '${_pad2(now.hour)}:${_pad2(now.minute)} JST';
     return [
-      'Own project data (取得日時 $stamp — REAL numbers you MAY publish '
-          'first-person as build-in-public stats):',
+      'Own project data (source=growth-hub roadmap.share_stats; 取得日時 $stamp '
+          '— REAL numbers you MAY publish first-person as build-in-public stats):',
       ...lines,
     ].join('\n');
   }
 
   /// 'yyyy年M月d日' か ISO 'yyyy-MM-dd' の期日を JST 今日からの残日数に変換
-  /// する(期日超過は 0 に丸め、負のカウントダウンを投稿させない)。未知形式は
-  /// null(期日は文字列のまま渡し、日数は出さない)。
+  /// する。期日超過は負値のまま返し、呼び出し側が「終了・更新必要」と表示して
+  /// 偽の「あと0日」を避ける。未知形式は null(期日は文字列のまま渡す)。
   static int? _daysUntilDeadline(String deadline, DateTime nowJst) {
     final jp = RegExp(r'^(\d{4})年(\d{1,2})月(\d{1,2})日$').firstMatch(deadline);
     final date = jp != null
@@ -965,10 +1045,11 @@ class UniversalXShareService {
           )
         : DateTime.tryParse(deadline);
     if (date == null) return null;
-    final today = DateTime(nowJst.year, nowJst.month, nowJst.day);
-    final due = DateTime(date.year, date.month, date.day);
-    final days = due.difference(today).inDays;
-    return days < 0 ? 0 : days;
+    // 日付だけの差分は UTC midnight 同士で計算し、実行環境の DST による
+    // 23/25時間日の `.inDays` 丸め誤差を避ける。
+    final today = DateTime.utc(nowJst.year, nowJst.month, nowJst.day);
+    final due = DateTime.utc(date.year, date.month, date.day);
+    return due.difference(today).inDays;
   }
 
   static String _pad2(int value) => value.toString().padLeft(2, '0');
@@ -1357,8 +1438,9 @@ $commentary''';
   /// 「AI」を独立トークンとして判定する(前後が英字でない)。単純な部分一致だと
   /// 大文字 UKRAINE/TAIWAN/DUBAI や小文字 Ukraine/campaign 等、"ai" を含む長い
   /// 英単語へ誤爆する。AI技術 / 生成AI / 単体 AI には一致する。
-  static final RegExp _aiTokenPattern =
-      RegExp(r'(?:^|[^A-Za-z])AI(?:[^A-Za-z]|$)');
+  static final RegExp _aiTokenPattern = RegExp(
+    r'(?:^|[^A-Za-z])AI(?:[^A-Za-z]|$)',
+  );
 
   /// 経済・市場カテゴリの具体キーワード(#3872 R13b)。bare 円/ドル/株 の部分一致は
   /// 公園・アイドル・株式会社 等へ誤爆するため使わず、家計アプリの主題に直結する
@@ -1836,8 +1918,11 @@ $url''';
             if (text is String) line = text;
           }
           if (line == null) continue;
-          final sanitized =
-              sanitizeTweet(line, url: shareUrl, requireUrl: false);
+          final sanitized = sanitizeTweet(
+            line,
+            url: shareUrl,
+            requireUrl: false,
+          );
           if (sanitized.trim().isEmpty) continue;
           // 二重エンコード({"text": …} を JSON 文字列として返す drift)対策:
           // 全体がオブジェクト/配列リテラルの文字列は散文ではないので捨てる。
@@ -1951,7 +2036,7 @@ Secondary goal: earn useful impressions without sounding like spam.
 
 Return STRICT JSON only (RFC 8259). The raw response must parse with a standard JSON parser: (a) inside every string value, escape all line breaks as the two-character sequence \\n (blank line = \\n\\n) and NEVER emit a raw/literal newline inside a string value; (b) no markdown code fences, no comments, no trailing commas, no text before or after the JSON object. Schema:
 {
-  "text": "Japanese X post, a rich 400-900 char long-form lead (this account has X Premium so it is NOT limited to 280 chars), must include $shareUrl",
+  "text": "Japanese X post, normally 400-900 chars; only a supported data-report breakdown may be 900-1500 chars (this account has X Premium), must include $shareUrl",
   "threadReplies": ["4 to 8 substantive Japanese reply posts, each 150-500 chars, forming a full briefing thread. PLAIN STRINGS ONLY - never JSON objects"],
   "imagePrompt": "English prompt for a 16:9 share image, no text overlay",
   "videoPrompt": "English prompt for a short presenter/share video",
@@ -1973,7 +2058,7 @@ Recent X analytics and A/B test feedback:
 ${performanceContext.trim().isEmpty ? 'No measured performance context yet.' : performanceContext}
 
 Own project data (real, fetched now; publishable first-person numbers):
-${projectStatsContext.trim().isEmpty ? 'No project stats available today. Number source (d) below is DISABLED — do not invent user counts, shipped totals, goal gaps, or deadline countdowns.' : projectStatsContext}
+${projectStatsContext.trim().isEmpty ? 'No project stats available today. Number source (d) below is DISABLED — do not invent registered-account counts, development-log totals, goal gaps, or deadline countdowns.' : projectStatsContext}
 
 App の実在する具体機能 (今日の見出しに最も直結する 1 つを名前で挙げ、それが何を数値/画面/具体で解決するかを書く。アプリを一般名詞「ウェブアプリ」「ツール」「強力なツール」で呼ぶな):
 $featureFacts
@@ -1997,13 +2082,15 @@ Rules:
 - アプリに触れるときはリードで今日の見出しに最も直結する1機能を主役にしつつ、リプでは他の機能も名前を挙げて具体で出す。いずれも上の「App の実在する具体機能」から選び、それが何を数値/画面/具体で解決するかを書く。一般名詞で濁すな。
 - 機能カバレッジ配分: 同じ機能名とその成果アンカー(例: 給料日サイクル/二重控除)を、スレッド全体で3投稿以上の主眼にするな(リード=1投稿と数える)。スレッドが5投稿以上のときは、上の実在機能リストから異なる機能を最低2つ、それぞれ少なくとも1つのリプの主眼にせよ。ただし今日の見出しに本当に直結する機能が1つしかないなら、無関係な機能を無理に挿入するより、その1機能の別々の具体面(別の画面/別の数字/別の一次体験)を各リプで扱え。substanceを軸で散らせ: (1)数字/実測 (2)リードとは別の機能 (3)その機能が内部でどう動く仕組み1点 (4)このアプリが今できない/やらないことを正直に1つ(「まだ○○は無い」の形)。同じ軸を2連続で使うな。
 - 例(リプの実質・BAD→GOOD、この差を真似て今日の内容で書け): BAD「AI技術の競争がますます激化しています。今後、業界全体に影響を及ぼすでしょう。」 GOOD「今日の見出しは3分でこのアプリの検索できる判断メモに放り込んだ。自分は毎朝これで前日の見出しを整理してる。」 / BAD「私たちの新しいウェブアプリは情報整理を強力にサポートします。」 GOOD「給料日サイクル機能を実装した狙いはこれ: 窓を給料日起点に切ると、月初にまたぐ支払いが二重計上されず支出が実額になる。」
-- Target 10K impressions. The numbered analysis REPLIES keep the Daily Briefing structure when trend context is strong (numbered items, headline, why it matters, outlook), but the LEAD's shape follows the measured archetype guidance above: data-report style (real numbers first) when the allowed number sources supply enough real numbers, news-hook style otherwise. The briefing style is NOT the measured winner for the lead (news-briefing measured 517 vs data-report 3.2K on 2026-07-12).
+- Reach goal: beat 10K consistently and test toward the historical 97K-class benchmark without promising a specific result. The numbered analysis REPLIES keep the Daily Briefing structure when trend context is strong (numbered items, headline, why it matters, outlook), but the LEAD's shape follows the measured archetype guidance above: data-report style (real numbers first) when the allowed number sources supply enough real numbers, news-hook style otherwise. The briefing style is NOT the measured winner for the lead (news-briefing measured 517 vs data-report 3.2K on 2026-07-12).
 - Use the measured performance context above. Prefer winning variants and avoid losing hook styles.
 - Treat the "Variant ranking", "Structural lift", "Media lift", and "Top hook to emulate" lines (when present) as authoritative measured data: adopt the winning structure (media choice, link placement, thread length, hook shape) but never copy winning wording verbatim.
 - If a "Media lift (by type)" line recommends a winning media type (動画/画像/テキスト) with enough samples, invest the strongest hook in that media: when video wins, front-load the first ~3 seconds of videoPrompt with the day's concrete hook; when image wins, make imagePrompt carry the single sharpest visual. If it says samples are insufficient, do NOT change media strategy — keep今日の既定(動画優先)。
 - $kDataReportArchetypeLesson
-- 上の教訓の実行形: 使ってよい実数が2つ以上あるなら、リードを「データレポート型」で構成せよ=冒頭1行目に今日の具体的な実数を1つ置き、差分→内訳→次の節目 の順に短行で並べる。使ってよい数字は次の系統のみ: (a)上の見出しに実際に書かれている数字 (b)上の "Own measured data" 行の実測値(このアカウント自身の実測インプレッションなので、一人称の build-in-public 実数として公開してよい) (c)機能の仕組みが定義する数(例: 給料日起点で支出の窓を切る) (d)上の "Own project data" ブロックに実際に書かれている実数(ユーザー数・出荷済み達成件数・残り件数・あとN日。ブロックが DISABLED の日は (d) を使うな)。それ以外の数字・集計値を作るな。差分・残り・残日数も payload に書かれた値だけを使い、自分で計算・再集計するな。実数が足りない日はデータレポート型を無理に作らず、ニュースフック型のリードに落とせ。
+- The historical 97K value above is STRATEGY EVIDENCE ONLY, never a number source for today's copy. Do not print 97K as today's impressions, target progress, or product result unless an "Own measured data" payload explicitly supplies that value for the current report.
+- 上の教訓の実行形: 使ってよい実数が2つ以上あるなら、リードを「データレポート型」で構成せよ=冒頭1行目に今日の具体的な実数を1つ置き、差分→内訳→次の節目 の順に短行で並べる。使ってよい数字は次の系統のみ: (a)上の見出しに実際に書かれている数字 (b)上の "Own measured data" 行の実測値(このアカウント自身の実測インプレッションなので、一人称の build-in-public 実数として公開してよい) (c)機能の仕組みが定義する数(例: 給料日起点で支出の窓を切る) (d)上の "Own project data" ブロックに実際に書かれている実数(登録アカウント総数・開発ログ件数・残り件数・あとN日。ブロックが DISABLED の日は (d) を使うな)。それ以外の数字・集計値を作るな。差分・残り・残日数も payload に書かれた値だけを使い、自分で計算・再集計するな。実数が足りない日はデータレポート型を無理に作らず、ニュースフック型のリードに落とせ。
 - データレポート型の日の骨格(97K実測ポストの構造): 集計ヘッダ(実数入り)→取得日時→基準/目標との差分→残り・あとN日→内訳の短行リスト→アラート。内訳の列挙はリードでは上位5行までにとどめ、続きや全量は threadReplies 側で出せ。
+- source (d) を使えるのは、この prompt に管理者検証済みの "Own project data" ブロックがある日だけ。その登録アカウント数を「実ユーザー/アクティブユーザー」、開発ログ件数を「出荷済み機能」と言い換えるな。🔴/🟡 はブロックに既に付いた行だけそのまま使い、モデル自身で重大度や件数を作るな。出典行は payload どおり「データ元: growth-hub roadmap.share_stats」とし、公式統計を装うな。
 - Treat the "Archetype lift (by content archetype)" line (when present) as authoritative measured data too: when data_report is winning with enough samples, structure the lead as a data report (dense real numbers, deltas, named specifics); when it says samples are insufficient, do not force an archetype.
 - A/B test only one major variable at a time: hook style, link placement, media/no-media, or thread length.
 - If past results say a link in the first post underperforms, put the product URL in the final reply.
@@ -2248,12 +2335,14 @@ ${draft.videoPrompt}
       // 動画が長くなり静止画フォールバックになる。導入+2行(各60字上限)+締めに短縮。
       const financeOpening = 'マイファイナンスの動くスマホUXを短くご紹介します。';
       const financeClosing = '5分だけ触って、役立った点と迷った点を教えてください。';
-      final financeBody = _scriptLinesFromText(draft.text)
-          .take(2)
-          .map((line) => _clipNarrationLine(line, 60));
-      return _capNarration(
-        <String>[financeOpening, ...financeBody, financeClosing],
-      );
+      final financeBody = _scriptLinesFromText(
+        draft.text,
+      ).take(2).map((line) => _clipNarrationLine(line, 60));
+      return _capNarration(<String>[
+        financeOpening,
+        ...financeBody,
+        financeClosing,
+      ]);
     }
     // 動画ナレーションを毎回「劇的に」変える。①導入(型)を draft 由来 seed で日替り
     // ローテ＋当日ニュースの話題を差し込み ②本文は LLM が当日ニュースから作った
