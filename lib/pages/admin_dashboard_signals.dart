@@ -185,37 +185,100 @@ String formatAgeAwareDate(String? iso, DateTime now, {int staleDays = 30}) {
   return stale ? '${dt.year}/$m/$d' : '$m/$d';
 }
 
-/// R24: perf-context 行(各 {archetype, score})から「Archetype lift」表示行を作る。
-/// #3953 で全投稿に content_archetype が記録され perf-context の rows に載る。
-/// n>=1 のバケットを平均スコア降順で並べ、行が1つも無ければ null(非表示)。
-/// ラベルは日本語(データレポート/ニュース要約/製品プロモ/不明)。
-String? xGrowthArchetypeLiftLine(List<dynamic>? rows) {
-  if (rows == null || rows.isEmpty) return null;
-  const labels = {
-    'data_report': 'データレポート',
-    'news_summary': 'ニュース要約',
-    'product_promo': '製品プロモ',
-  };
-  final buckets = <String, List<num>>{};
+// R25: R23 の内容アーキタイプ別実測(Archetype lift)を X成長ループ panel へ
+// 露出する純ロジック。perf-context rows(各 {archetype, score})から型別平均を
+// 出す。n>=2 のみ「実測」とみなし、n<2 は実測不足として勝ち型を主張しない
+// (edge の buildArchetypeLiftLine と同じ閾値)。旧ログ(archetype 欠落)は
+// unknown として保持しデータを捨てない。
+// 注: 初版(#3965 の xGrowthArchetypeLiftLine)は edge の実バケット値
+// news_briefing を news_summary と誤記しニュース要約行が全て「不明」へ落ちる
+// R19 型の契約バグがあり、この実装で置き換えた。
+
+/// アーキタイプ意味値 → 表示ラベル。キー集合は edge の正本
+/// supabase/functions/growth-hub/x_post_archetype.ts の ArchetypeBucket と
+/// 同期を保つこと(新バケット追加時はここへ日本語ラベルも足す。欠けると
+/// panel には raw キーがそのまま出る)。
+const Map<String, String> kArchetypeLiftLabels = <String, String>{
+  'data_report': 'データレポート型',
+  'news_briefing': 'ニュース要約型',
+  'product_promo': '製品紹介型',
+  'general': 'その他',
+  'unknown': '分類前(旧ログ)',
+};
+
+class ArchetypeLiftEntry {
+  final String archetype;
+  final int averageScore;
+  final int count;
+
+  const ArchetypeLiftEntry({
+    required this.archetype,
+    required this.averageScore,
+    required this.count,
+  });
+
+  /// n>=2 のときだけ平均を実測として扱う(1件平均は勝ち型に見せない)。
+  bool get measured => count >= 2;
+
+  String get label => kArchetypeLiftLabels[archetype] ?? archetype;
+}
+
+/// perf-context rows から型別の平均スコアを集計する。実測(n>=2)を平均降順で
+/// 先に、実測不足を後に並べ、unknown は常に最後(分類前の旧ログが勝ち型の
+/// 位置に見えないように)。
+List<ArchetypeLiftEntry> resolveArchetypeLift(List<dynamic>? rows) {
+  if (rows == null) return const [];
+  final totals = <String, double>{};
+  final counts = <String, int>{};
   for (final row in rows) {
     if (row is! Map) continue;
-    final raw = (row['archetype'] ?? '').toString().trim();
-    final key = labels.containsKey(raw) ? raw : 'unknown';
-    final score = row['score'];
-    if (score is! num) continue;
-    buckets.putIfAbsent(key, () => []).add(score);
+    var key = (row['archetype'] ?? '').toString().trim();
+    if (key.isEmpty) key = 'unknown';
+    final rawScore = row['score'];
+    final score = rawScore is num
+        ? rawScore.toDouble()
+        : double.tryParse('$rawScore') ?? 0;
+    totals[key] = (totals[key] ?? 0) + score;
+    counts[key] = (counts[key] ?? 0) + 1;
   }
-  if (buckets.isEmpty) return null;
-  final parts = buckets.entries
+  final entries = counts.keys
       .map(
-        (e) => (
-          label: labels[e.key] ?? '不明',
-          avg: (e.value.reduce((a, b) => a + b) / e.value.length).round(),
-          n: e.value.length,
+        (key) => ArchetypeLiftEntry(
+          archetype: key,
+          averageScore: (totals[key]! / counts[key]!).round(),
+          count: counts[key]!,
         ),
       )
-      .toList()
-    ..sort((a, b) => b.avg.compareTo(a.avg));
-  final body = parts.map((p) => '${p.label} 平均${p.avg} (n=${p.n})').join(' / ');
-  return '型別リフト: $body';
+      .toList();
+  int rank(ArchetypeLiftEntry e) {
+    if (e.archetype == 'unknown') return 2;
+    return e.measured ? 0 : 1;
+  }
+
+  entries.sort((a, b) {
+    final byRank = rank(a).compareTo(rank(b));
+    if (byRank != 0) return byRank;
+    return b.averageScore.compareTo(a.averageScore);
+  });
+  return entries;
+}
+
+/// 実測バケットが2種以上あるときだけ勝ちアーキタイプを返す(1種では比較に
+/// ならないため null = 勝ち型を主張しない)。
+ArchetypeLiftEntry? archetypeLiftWinner(List<ArchetypeLiftEntry> entries) {
+  final measured =
+      entries.where((e) => e.measured && e.archetype != 'unknown').toList();
+  if (measured.length < 2) return null;
+  return measured.first;
+}
+
+/// panel 表示用の1行サマリ。空データは null(行自体を出さない)。
+String? archetypeLiftSummaryLine(List<ArchetypeLiftEntry> entries) {
+  if (entries.isEmpty) return null;
+  final parts = entries.map(
+    (e) => e.measured
+        ? '${e.label} 平均${e.averageScore} (${e.count}件)'
+        : '${e.label} 実測不足 (${e.count}件)',
+  );
+  return '型別実測: ${parts.join(' / ')}';
 }

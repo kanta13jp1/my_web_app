@@ -263,29 +263,70 @@ void main() {
     });
   });
 
-  group('R24 xGrowthArchetypeLiftLine', () {
-    test('buckets by archetype, sorted by avg desc, JP labels', () {
-      final rows = [
-        {'archetype': 'data_report', 'score': 8000},
-        {'archetype': 'news_summary', 'score': 791},
-        {'archetype': 'product_promo', 'score': 31},
-        {'archetype': 'product_promo', 'score': 29},
-      ];
-      final line = xGrowthArchetypeLiftLine(rows);
-      expect(line, isNotNull);
-      expect(line, contains('データレポート 平均8000 (n=1)'));
-      expect(line, contains('ニュース要約 平均791 (n=1)'));
-      expect(line, contains('製品プロモ 平均30 (n=2)'));
-      expect(line!.indexOf('データレポート'), lessThan(line.indexOf('製品プロモ')));
+  group('R25 archetype lift exposure (R23 measured axis to the panel)', () {
+    // 初版(#3965)は edge の実バケット値 news_briefing を news_summary と
+    // 誤記しニュース要約行が全て「分類前」へ落ちる契約バグがあった。本実装は
+    // edge x_post_archetype.ts の ArchetypeBucket と同一キーで固定する。
+    List<Map<String, dynamic>> rows() => [
+          {'archetype': 'data_report', 'score': 3200},
+          {'archetype': 'data_report', 'score': 2800},
+          {'archetype': 'news_briefing', 'score': 517},
+          {'archetype': 'news_briefing', 'score': 28},
+          {'archetype': 'product_promo', 'score': 10},
+          // 旧ログ(archetype 欠落)は unknown 保持。
+          {'score': 99},
+        ];
+
+    test('groups by archetype, measured first, unknown always last', () {
+      final entries = resolveArchetypeLift(rows());
+      expect(entries.map((e) => e.archetype).toList(), [
+        'data_report',
+        'news_briefing',
+        'product_promo',
+        'unknown',
+      ]);
+      expect(entries[0].averageScore, 3000);
+      expect(entries[0].measured, isTrue);
+      expect(entries[1].averageScore, 273);
+      // n=1 は実測扱いしない。
+      expect(entries[2].measured, isFalse);
     });
 
-    test('unknown archetype rows bucket as 不明; empty rows → null', () {
-      expect(xGrowthArchetypeLiftLine(null), isNull);
-      expect(xGrowthArchetypeLiftLine([]), isNull);
-      final line = xGrowthArchetypeLiftLine([
-        {'archetype': '', 'score': 10},
+    test('edge contract: news_briefing rows carry the JP label (not 分類前)', () {
+      final line = archetypeLiftSummaryLine(resolveArchetypeLift(rows()));
+      expect(line, contains('ニュース要約型 平均273 (2件)'));
+      expect(line, isNot(contains('news_briefing')));
+    });
+
+    test('winner needs >=2 measured buckets (honesty gate)', () {
+      expect(
+        archetypeLiftWinner(resolveArchetypeLift(rows()))?.archetype,
+        'data_report',
+      );
+      // 実測バケット1種では勝ち型を主張しない。
+      final single = resolveArchetypeLift([
+        {'archetype': 'news_briefing', 'score': 517},
+        {'archetype': 'news_briefing', 'score': 28},
+        {'archetype': 'product_promo', 'score': 10},
       ]);
-      expect(line, contains('不明 平均10 (n=1)'));
+      expect(archetypeLiftWinner(single), isNull);
+      // unknown だけが n>=2 でも勝ち型にしない。
+      final unknownOnly = resolveArchetypeLift([
+        {'score': 1},
+        {'score': 2},
+        {'archetype': 'general', 'score': 3},
+        {'archetype': 'general', 'score': 4},
+      ]);
+      expect(archetypeLiftWinner(unknownOnly), isNull);
+    });
+
+    test('summary line labels measured vs 実測不足, null when empty', () {
+      final line = archetypeLiftSummaryLine(resolveArchetypeLift(rows()));
+      expect(line, contains('データレポート型 平均3000 (2件)'));
+      expect(line, contains('製品紹介型 実測不足 (1件)'));
+      expect(line, contains('分類前(旧ログ)'));
+      expect(archetypeLiftSummaryLine(resolveArchetypeLift(null)), isNull);
+      expect(archetypeLiftSummaryLine(resolveArchetypeLift(const [])), isNull);
     });
   });
 }
