@@ -54,7 +54,7 @@ jobs:
         run: |
           RESP=$(curl -sS -X POST \
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             -d "{\"action\":\"notion.sync_wbs\",\"limit\":${{ github.event.inputs.limit || '30' }},\"offset\":${{ github.event.inputs.offset || '0' }}}" \
             --max-time 600)
@@ -125,7 +125,7 @@ jobs:
 
       - name: Call schedule-hub:notion.sync_roadmap
         env:
-          SUPABASE_AUTH_TOKEN: ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_AUTH_TOKEN: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ROADMAP_MAX_CHARS: ${{ github.event.inputs.roadmap_max_chars || '24000' }}
         run: |
           python3 - <<'PY'
@@ -186,7 +186,7 @@ jobs:
 
       - name: Call schedule-hub:notion.sync_memory_index
         env:
-          SUPABASE_AUTH_TOKEN: ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_AUTH_TOKEN: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           MEMORY_LIMIT: ${{ github.event.inputs.memory_limit || '50' }}
         run: |
           python3 - <<'PY'

@@ -5,7 +5,7 @@ import {
   SERVICE_ROLE_ONLY_ACTIONS,
 } from "./action_auth.ts";
 
-Deno.test("書き込み系 4 action は service_role 必須", () => {
+Deno.test("blog/x 書き込み系 4 action は service_role 必須", () => {
   for (
     const action of [
       "blog.auto_publish",
@@ -18,17 +18,39 @@ Deno.test("書き込み系 4 action は service_role 必須", () => {
   }
 });
 
-Deno.test("read-only public action は public のまま", () => {
+Deno.test("notion/wbs/reminders 書き込み系 7 action は service_role 必須", () => {
+  for (
+    const action of [
+      "notion.sync_wbs",
+      "notion.preflight_wbs",
+      "notion.sync_roadmap",
+      "notion.sync_memory_index",
+      "notion.fix_wbs_all_instances",
+      "wbs.unblock_dependents",
+      "reminders.study",
+    ]
+  ) {
+    assertEquals(requiredAuthLevel(action), "service_role");
+  }
+});
+
+Deno.test("read-only public action + 非ログイン支援者導線は public のまま", () => {
   for (
     const action of [
       "health.check",
       "blog.recent_posted",
       "maintenance.list_active",
-      "digest.run",
+      "billing.create_supporter_checkout_session",
     ]
   ) {
     assertEquals(requiredAuthLevel(action), "public");
   }
+});
+
+Deno.test("digest.run は user レベルへ降格 (public から削除)", () => {
+  assertEquals(requiredAuthLevel("digest.run"), "user");
+  assertEquals(PUBLIC_ACTIONS.includes("digest.run"), false);
+  assertEquals(SERVICE_ROLE_ONLY_ACTIONS.includes("digest.run"), false);
 });
 
 Deno.test("未知 / user 向け action は user JWT 必須", () => {
