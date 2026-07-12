@@ -21,6 +21,51 @@ enum AiImageGenerationQuality {
   }
 }
 
+class AiImageStructuredPrompt {
+  const AiImageStructuredPrompt({
+    required this.sceneAndSubject,
+    required this.detailsAndStyle,
+    required this.constraints,
+    required this.imageText,
+  });
+
+  final String sceneAndSubject;
+  final String detailsAndStyle;
+  final String constraints;
+  final String imageText;
+
+  bool get hasInput =>
+      sceneAndSubject.trim().isNotEmpty ||
+      detailsAndStyle.trim().isNotEmpty ||
+      constraints.trim().isNotEmpty ||
+      imageText.trim().isNotEmpty;
+
+  String buildPrompt() {
+    final parts = <String>[];
+    final scene = sceneAndSubject.trim();
+    final details = detailsAndStyle.trim();
+    final constraintText = constraints.trim();
+    final typographyText = imageText.trim();
+
+    if (scene.isNotEmpty) {
+      parts.add('Scene and subject:\n$scene');
+    }
+    if (details.isNotEmpty) {
+      parts.add('Details and style:\n$details');
+    }
+    if (constraintText.isNotEmpty) {
+      parts.add('Constraints to preserve or avoid:\n$constraintText');
+    }
+    if (typographyText.isNotEmpty) {
+      parts.add(
+        'Image text:\n"${typographyText.toUpperCase()}" in clean, readable typography.',
+      );
+    }
+
+    return parts.join('\n\n');
+  }
+}
+
 Map<String, Object> buildAiImageGenerateBody({
   required String prompt,
   required String size,

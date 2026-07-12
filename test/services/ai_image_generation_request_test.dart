@@ -23,4 +23,25 @@ void main() {
       AiImageGenerationQuality.medium,
     );
   });
+
+  test('builds a structured prompt in a stable labeled order', () {
+    final prompt = const AiImageStructuredPrompt(
+      sceneAndSubject: 'a small robot arranging notebooks',
+      detailsAndStyle: 'flat editorial illustration, teal and coral',
+      constraints: 'preserve the desk layout, avoid extra fingers',
+      imageText: 'daily reset',
+    ).buildPrompt();
+
+    expect(
+      prompt,
+      'Scene and subject:\n'
+      'a small robot arranging notebooks\n\n'
+      'Details and style:\n'
+      'flat editorial illustration, teal and coral\n\n'
+      'Constraints to preserve or avoid:\n'
+      'preserve the desk layout, avoid extra fingers\n\n'
+      'Image text:\n'
+      '"DAILY RESET" in clean, readable typography.',
+    );
+  });
 }
