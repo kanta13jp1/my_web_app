@@ -112,12 +112,10 @@ void main() {
 
     test('updated_at が読めない場合は null', () {
       expect(blogEngagementFreshnessLabel([], now), isNull);
-      expect(
-        blogEngagementFreshnessLabel([
-          {'updated_at': 'bad'},
-        ], now),
-        isNull,
-      );
+      final badRows = [
+        {'updated_at': 'bad'},
+      ];
+      expect(blogEngagementFreshnessLabel(badRows, now), isNull);
     });
   });
 
