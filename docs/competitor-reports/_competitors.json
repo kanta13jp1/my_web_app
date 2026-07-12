@@ -875,6 +875,17 @@
       "skipped_candidates": [
         "OpenAI ChatGPT Work (= 7/9 発表の企業向け agent スイート / 次サイクル第1候補メモ)"
       ]
+    },
+    {
+      "date": "2026-07-13",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ。新シグナル = (1) Work OS 軸確立: OpenAI ChatGPT Work (7/9 launch, GPT-5.6, 数時間自律→sheets/slides/docs/web apps, workspace agents を ChatGPT/Slack で scheduled) + MoneyForward AI Cowork (今月=2026-07 提供開始+先行受付, 請求/支払/消込/資金繰り予測 multi-agent + orchestrator + My Agents + MCP 不要); (2) 部署メタファー製品化: Motion が『AI Employee SuperApp』へ再ポジション (名前付き社員 Alfred/Chip/Millie/Suki + custom builder) = 自社 6 部署の正面 productization; (3) [7/12 action#1 決着] Antigravity soft-deprecation は誤り (Google は 2.0 desktop+CLI+SDK+IDE へ拡張) だが実クレームは週次クォータ大幅削減 (Gemini3.0Flash削除/5h cooldown/Ultra 影響) = L1 レーン運用リスクは『廃止』でなく『クォータ逼迫』。novel candidate は次サイクル (7/17) 保留。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT Work (= 次サイクル discovery 第1候補 / 7-09 launch / Work OS 代表)",
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / 7-10 skip 候補から昇格級)",
+        "OpenCode (= 8 サイクル queue 済 / coding tool 偏り懸念で継続保留 / signal 層)"
+      ]
     }
   ],
   "_schema_notes": {
