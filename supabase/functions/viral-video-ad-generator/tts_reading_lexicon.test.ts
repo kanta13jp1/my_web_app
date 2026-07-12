@@ -35,6 +35,13 @@ Deno.test("漏洩 is read ろうえい (observed misread ろうけつ / 2026-07-
   );
 });
 
+Deno.test("厳重 is read げんじゅう (observed misread えんじゅう / 2026-07-12)", () => {
+  assertEquals(
+    applyTtsReadings("機密情報を厳重に管理する必要があります。", "ja"),
+    "機密情報をげんじゅうに管理する必要があります。",
+  );
+});
+
 Deno.test("compound words containing lexicon entries stay readable", () => {
   assertEquals(
     applyTtsReadings("資産負債のバランスと固定費・変動費を確認。", "ja"),
