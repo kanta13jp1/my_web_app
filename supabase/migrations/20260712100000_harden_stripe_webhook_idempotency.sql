@@ -50,7 +50,7 @@ BEGIN
     RETURN true;
   END IF;
 
-  UPDATE public.stripe_webhook_events
+  UPDATE stripe_webhook_events
   SET
     event_type = trim(p_event_type),
     status = 'processing',
@@ -77,7 +77,7 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
-  UPDATE public.stripe_webhook_events
+  UPDATE stripe_webhook_events
   SET
     status = 'processed',
     processed_at = now(),
@@ -96,7 +96,7 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
-  UPDATE public.stripe_webhook_events
+  UPDATE stripe_webhook_events
   SET
     status = 'failed',
     last_error = left(coalesce(p_error, 'unknown error'), 4000),
