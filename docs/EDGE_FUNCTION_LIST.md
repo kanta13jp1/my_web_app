@@ -8,7 +8,7 @@
 | Function | 用途 |
 | --- | --- |
 | `core-hub` | コアUI・メモ・通知統合。公開メモ AI 向け API `memo.public.view` / `memo.public.list` / `memo.public.search` / `memo.public.related` (= 認証不要 GET・HEAD・POST / format=html\|json\|md / JSON は summary・markdown・tags 付き / SPA を読めない ChatGPT 等の AI・クローラー向け / 日次回帰 = public-memo-smoke.yml) |
-| `tools-hub` | 個人生産性ツール統合 (= WBS / Issue / digest / agent_tool_policy 等) |
+| `tools-hub` | 個人生産性ツール統合 (= WBS / Issue / digest / agent_tool_policy 等) + **自分API** (= Notion Developer Platform 対抗 / part 133 WEB版 2026-07-12): 管理系 `jibunapi.key.create\|list\|revoke` / `jibunapi.worker.register\|list\|update\|delete` (Supabase JWT 認証) + 外部公開系 `api.me` / `api.notes.list\|create` / `api.tasks.list` / `api.achievements.list` / `api.workers.list\|invoke` (= `jibun_sk_` API キー Bearer 認証 / sha256 保存・スコープ制・rate limit 60分2000日・SSRF ガード・HMAC署名 Worker 呼び出し / user_api_keys・user_agent_workers・user_api_audit_log テーブル) |
 | `schedule-hub` (`digest.run`) | Schedule 用日次メトリクス API + blog auto_publish + blog.recent_posted (= part 124) + blog.backfill_from_apis |
 | `growth-hub` | グロース指標 / share track / command analyze (= part 112 EF 移行) |
 | `admin-hub` | 競合可用性チェック (`competitor.check`) ほか管理者向け統合 |

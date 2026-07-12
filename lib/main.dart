@@ -256,6 +256,7 @@ import 'package:my_web_app/pages/personal_dashboard_page.dart';
 import 'package:my_web_app/pages/my_skills_page.dart';
 import 'package:my_web_app/pages/goal_tracker_page.dart';
 import 'package:my_web_app/pages/bookmark_sync_page.dart';
+import 'package:my_web_app/pages/jibun_api_page.dart';
 import 'package:my_web_app/pages/ui_design_status_page.dart';
 import 'package:my_web_app/pages/ai_summarizer_page.dart';
 import 'package:my_web_app/pages/revenue_forecaster_page.dart';
@@ -1440,6 +1441,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             );
           case '/bookmark-sync':
             return MaterialPageRoute(builder: (_) => const BookmarkSyncPage());
+          case '/jibun-api':
+            return MaterialPageRoute(
+              builder: (_) => const JibunApiPage(),
+              settings: RouteSettings(name: settings.name),
+            );
           case '/ui-design-status':
             return MaterialPageRoute(
               builder: (_) => const UiDesignStatusPage(),

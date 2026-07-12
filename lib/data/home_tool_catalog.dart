@@ -169,6 +169,7 @@ import '../pages/code_playground_page.dart';
 import '../pages/real_estate_tracker_page.dart';
 import '../pages/goal_tracker_page.dart';
 import '../pages/bookmark_sync_page.dart';
+import '../pages/jibun_api_page.dart';
 import '../pages/ui_design_status_page.dart';
 import '../pages/ai_summarizer_page.dart';
 import '../pages/revenue_forecaster_page.dart';
@@ -2520,6 +2521,33 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ウェブクリップ',
       ],
       onOpen: (context) => _pushPage(context, const BookmarkSyncPage()),
+    ),
+    HomeToolEntry(
+      id: 'jibun-api',
+      sectionId: 'ai',
+      title: '自分API',
+      subtitle: 'Notion Developer Platform対抗。APIキー発行・外部AI連携・自作Agentツール(Worker)登録',
+      icon: Icons.api,
+      color: const Color(0xFF3D5AFE),
+      keywords: const <String>[
+        'API',
+        '自分API',
+        'APIキー',
+        'developer',
+        'デベロッパー',
+        'Worker',
+        'ワーカー',
+        'Agent',
+        'エージェント',
+        '外部連携',
+        'ChatGPT',
+        'Claude',
+        'integration',
+        'webhook',
+        'token',
+        'トークン',
+      ],
+      onOpen: (context) => _pushPage(context, const JibunApiPage()),
     ),
     HomeToolEntry(
       id: 'ai-summarizer',

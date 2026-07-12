@@ -32610,3 +32610,33 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 主要実装: 誠実性欠陥の修正 (捏造値の除去 = 「測っていないものを測ったように見せない」)。
 - 該当原則: 8 (KPI=昨日の自分: 正しい数字を出す) / 5 (商品=価値: ユーザーに見せる残高・履歴の信頼性) / 7 (資産負債: 純ロジックを再利用可能な asset として抽出)。
 - 整合性スコア: **3/9** (単一ページのバグ修正 + テスト)。
+
+---
+
+## セッション記録: 自分API v1 実装 (Notion Developer Platform 対抗 / 2026-07-12 WEB版)
+
+**背景**: 同日の daily-report で検出した Notion 3.6 Developer Platform (★★★★★ 脅威 / Worker 公開 API + 外部 Agent 連携) への対抗として「自分API」を実装。上記「AI 行動提案 1」を即着手。
+
+**実装 (tools-hub EF 拡張 + 新テーブル + Flutter UI)**:
+- **DB** (`20260712013000_create_jibun_api_platform.sql`): `user_api_keys` (sha256 保存・スコープ・失効・有効期限) / `user_agent_workers` (ユーザー自作 Agent ツール = https + HMAC 署名) / `user_api_audit_log` (90日保持 + rate limit 窓)。全て RLS service_role 限定 (EF 経由アクセスのみ)。
+- **EF** (`tools-hub/jibun_api.ts`): 管理系 `jibunapi.key.*` / `jibunapi.worker.*` (Supabase JWT) + 外部公開系 `api.me` / `api.notes.list|create` / `api.tasks.list` / `api.achievements.list` / `api.workers.list|invoke` (`jibun_sk_` キー Bearer 認証)。
+- **UI** (`lib/pages/jibun_api_page.dart` + `/jibun-api` ルート + home_tool_catalog): APIキー発行 (平文1回表示) / 失効 + Worker 登録 (署名シークレット1回表示) / 削除。
+- **テスト** (`jibun_api_test.ts`): 認証・スコープ・rate limit・SSRF・HMAC 署名・Worker 呼び出しの 20+ Deno.test (store 注入方式)。
+
+**AI_DEV 7原則 準拠**: ①Auth (キーは sha256 のみ / 平文非保持) ②Deny-by-default (キー必須 + スコープ必須 + 未知 action 404) ③Observability (trace_id + duration_ms + 5秒超 warn + audit log) ④Circuit breaker (rate limit 60/分・2000/日・Worker 10/分) ⑦Quality gate (SSRF ガード + HMAC 署名)。
+
+**アドバーサリアル review (36 エージェント / 5 次元 × verify) で検出・修正した確定欠陥**:
+- **SSRF (high×2)**: `isPrivateHost` が DNS 未解決 → invoke 時に `Deno.resolveDns` で実 IP 検査追加 (DNS rebinding 対策) / IPv4-mapped IPv6 hex (`::ffff:7f00:1`) バイパスを塞いだ。
+- **PostgREST `.or()` インジェクション (medium)**: `notes.list` 検索語を `sanitizeSearchQuery` でフィルタ文法メタ文字除去。
+- **inet キャスト失敗 (medium)**: `request_ip` を `parseInetOrNull` で検証 → 不正値で audit insert 失敗 → rate limit 静的バイパスを防止。
+- **メモリ枯渇 (low)**: Worker レスポンスを `readBoundedBody` で 64KB ストリーム打ち切り。
+- **Dart CI ブロッカー**: `_revokeKey`/`_deleteWorker` の context-after-await (use_build_context_synchronously) + `require_trailing_commas` 違反 9 箇所を修正。
+
+**残課題 (低優先 / doc 記録)**: Worker invocation_count の非アトミック加算 (usage カウンタのみ影響) / 10キー×per-key rate limit の集約上限なし (意図的 fail-open)。次回 AI 行動提案 2 (XLSX/DOCX インポート) / 3 (構造化タスク管理) へ。
+
+### Philosophy Alignment (自分API v1 / 2026-07-12)
+
+- 主要実装: ユーザーが自分のデータへ外部 AI から安全にアクセスできる公開 API + 自作 Agent ツール登録基盤。
+- 該当原則: 5 (商品=ユーザー価値: 外部 AI 連携でユーザーのデータ主権を拡張) / 6 (資本=時間: エコシステム化で複利成長) / 7 (資産負債: Notion 対抗の moat 構築) / 2 (ミッション: 21社競合を上回るプラットフォーム化)。
+- 整合性スコア: **8/9 ✅** (原則 4 人事のみ非該当)。
+- MCP_AUTH_SECURITY 準拠: 本 API はユーザースコープ REST (MCP 非公開レーン)。deny-by-default / audit / rate limit / kill switch (revoke) / scope 最小化を実装。将来 MCP 公開時は 10/10 ゲート + WorkOS 認証を別途要件化。

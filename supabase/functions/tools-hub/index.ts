@@ -43,6 +43,10 @@ import {
   mcpRequestedScopes,
 } from "../_shared/mcp_my_web_app_tools.ts";
 import {
+  createSupabaseJibunApiStore,
+  handleJibunApiAction,
+} from "./jibun_api.ts";
+import {
   dedupeWbsTasksById,
   normalizeWbsListPagination,
   paginateWbsTasks,
@@ -5536,6 +5540,24 @@ serve(async (req) => {
 
     const mcpResponse = await handleMcpFacade(req, action, body, admin);
     if (mcpResponse) return mcpResponse;
+
+    // ── 自分API (Notion Developer Platform 対抗 / 2026-07-12 WEB版) ─────────
+    // jibunapi.* = 管理系 (Supabase JWT) / api.* = 外部公開系 (jibun_sk_ キー)。
+    // GET 呼び出し (AI エージェント / curl) 向けに query params も body へマージする。
+    if (action.startsWith("jibunapi.") || action.startsWith("api.")) {
+      const merged: Record<string, unknown> = {
+        ...Object.fromEntries(url.searchParams),
+        ...body,
+      };
+      const jibunResponse = await handleJibunApiAction({
+        req,
+        action,
+        body: merged,
+        store: createSupabaseJibunApiStore(admin),
+        getUserId: () => getUserId(req),
+      });
+      if (jibunResponse) return jibunResponse;
+    }
 
     // ── Stateless utilities (no auth needed) ────────────────────────────────
     if (action === "generate_password") {
