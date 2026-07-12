@@ -205,10 +205,11 @@ class UniversalXTrendTopic {
 class UniversalXShareService {
   // X Premium(認証済みアカウント)は最大25,000字の長文ポストが可能。280字で切らない。
   static const int maxTweetLength = 25000;
-  // LLM ドラフトのリード文の妥当上限。プロンプト仕様は 400-900 字(2 倍超の
-  // ヘッドルーム)。これを超える「リード」は JSON ダンプや暴走テキストの兆候
+  // LLM ドラフトのリード文の妥当上限。プロンプト仕様は通常 400-900 字、
+  // データレポート型の日のみ内訳込みで最大 1500 字(いずれも 2 倍のヘッド
+  // ルーム)。これを超える「リード」は JSON ダンプや暴走テキストの兆候
   // なので不採用にして retry/fallback へ回す。
-  static const int maxLeadDraftLength = 2000;
+  static const int maxLeadDraftLength = 3000;
   static const String defaultHedraStartImageUrl =
       'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
   static const String firstUserGrowthCampaign = 'first_user_growth';
@@ -401,6 +402,9 @@ class UniversalXShareService {
   ) async {
     final trends = await _fetchXTrendTopics();
     final performanceContext = await _fetchXPerformanceContext();
+    // R24: データレポート型(実測の勝ちアーキタイプ)へ実数を供給する自社実データ。
+    // 取得失敗/未ログインは '' で、プロンプト側の数字源(d)が自動無効化される。
+    final projectStatsContext = await _fetchProjectStatsContext();
     final shareContent = _recommendedShareContent(trends, performanceContext);
     final fallback = buildFallbackDraft(context, trendTopics: trends);
     final shareUrl = acquisitionUrlFor(context, content: shareContent);
@@ -432,6 +436,7 @@ class UniversalXShareService {
                 fallback,
                 trendTopics: trends,
                 performanceContext: performanceContext,
+                projectStatsContext: projectStatsContext,
                 shareUrlOverride: shareUrl,
               ),
             )
@@ -854,6 +859,119 @@ class UniversalXShareService {
     }
     return 'No X performance data is available yet. Start with Daily Briefing vs question-post A/B tests, then collect metrics after posting.';
   }
+
+  /// R24: growth-hub roadmap.progress の自社実データ(実ユーザー数・出荷済み
+  /// 達成件数・計画の進捗/期日)を、データレポート型リードの数字源(d)となる
+  /// "Own project data" ブロックへ整形して返す。失敗・未ログイン・実数不足は
+  /// '' を返し、プロンプト側で数字源(d)が DISABLED と明示される
+  /// (= 実データは共有を良くするためで、下書き生成を絶対に止めない)。
+  Future<String> _fetchProjectStatsContext() async {
+    try {
+      final data = await _invoke('growth-hub', {'action': 'roadmap.progress'});
+      if (data['success'] == true) {
+        return buildProjectStatsContext(data);
+      }
+    } catch (_) {
+      // Real-data enrichment must never block drafting.
+    }
+    return '';
+  }
+
+  /// roadmap.progress 応答を "Own project data" ブロックへ整形する純関数。
+  /// 実測 97K ポスト(集計ヘッダ→差分→残り→期日カウントダウン)の数字骨格を、
+  /// 実在する自社データだけで再現するための供給源。差分・残り・あとN日 は
+  /// LLM に計算させず、ここで確定した値のみをプロンプトへ渡す(捏造/計算ミス
+  /// 防止)。公開可能な実数が 2 つ未満の日は '' を返し、データレポート型を
+  /// 自動無効化する(数字の乏しい日に無理に集計風を作らせない)。
+  static String buildProjectStatsContext(
+    Map<String, dynamic> progress, {
+    DateTime? nowJst,
+  }) {
+    final now = nowJst ?? DateTime.now().toUtc().add(const Duration(hours: 9));
+    var realNumbers = 0;
+    final lines = <String>[];
+
+    final statParts = <String>[];
+    final userCount = progress['userCount'];
+    if (userCount is num && userCount >= 0) {
+      statParts.add('users=${userCount.toInt()}');
+      realNumbers += 1;
+    }
+    final achievementsCount = progress['achievementsCount'];
+    if (achievementsCount is num && achievementsCount >= 0) {
+      statParts.add('shipped-achievements(total)=${achievementsCount.toInt()}');
+      realNumbers += 1;
+    }
+    if (statParts.isNotEmpty) {
+      lines.add('- ${statParts.join(', ')}');
+    }
+
+    final plans = progress['plans'];
+    if (plans is List) {
+      for (final raw in plans.take(3)) {
+        if (raw is! Map) continue;
+        final label = raw['label']?.toString().trim() ?? '';
+        if (label.isEmpty) continue;
+        final parts = <String>[];
+        final done = raw['features_done'];
+        final total = raw['features_total'];
+        if (done is num && total is num && total > 0) {
+          final doneInt = done.toInt();
+          final totalInt = total.toInt();
+          final remaining = (totalInt - doneInt) < 0 ? 0 : totalInt - doneInt;
+          parts.add('features $doneInt/$totalInt done, 残り$remaining件');
+          realNumbers += 2;
+        }
+        final target = raw['target'];
+        if (target is num && target > 0) {
+          parts.add('目標ユーザー ${target.toInt()}人');
+          realNumbers += 1;
+        }
+        final deadline = raw['deadline']?.toString().trim() ?? '';
+        if (deadline.isNotEmpty) {
+          final daysLeft = _daysUntilDeadline(deadline, now);
+          if (daysLeft == null) {
+            parts.add('期日 $deadline');
+          } else {
+            parts.add('期日 $deadline = あと$daysLeft日');
+            realNumbers += 1;
+          }
+        }
+        if (parts.isEmpty) continue;
+        lines.add('- Goal gap ($label): ${parts.join('; ')}');
+      }
+    }
+
+    if (realNumbers < 2 || lines.isEmpty) return '';
+    final stamp = '${now.year}-${_pad2(now.month)}-${_pad2(now.day)} '
+        '${_pad2(now.hour)}:${_pad2(now.minute)} JST';
+    return [
+      'Own project data (取得日時 $stamp — REAL numbers you MAY publish '
+          'first-person as build-in-public stats):',
+      ...lines,
+    ].join('\n');
+  }
+
+  /// 'yyyy年M月d日' か ISO 'yyyy-MM-dd' の期日を JST 今日からの残日数に変換
+  /// する(期日超過は 0 に丸め、負のカウントダウンを投稿させない)。未知形式は
+  /// null(期日は文字列のまま渡し、日数は出さない)。
+  static int? _daysUntilDeadline(String deadline, DateTime nowJst) {
+    final jp = RegExp(r'^(\d{4})年(\d{1,2})月(\d{1,2})日$').firstMatch(deadline);
+    final date = jp != null
+        ? DateTime(
+            int.parse(jp.group(1)!),
+            int.parse(jp.group(2)!),
+            int.parse(jp.group(3)!),
+          )
+        : DateTime.tryParse(deadline);
+    if (date == null) return null;
+    final today = DateTime(nowJst.year, nowJst.month, nowJst.day);
+    final due = DateTime(date.year, date.month, date.day);
+    final days = due.difference(today).inDays;
+    return days < 0 ? 0 : days;
+  }
+
+  static String _pad2(int value) => value.toString().padLeft(2, '0');
 
   static String buildXPostFailureMessage(Map<String, dynamic> data) {
     final error = data['error']?.toString().trim();
@@ -1816,6 +1934,7 @@ $url''';
     UniversalXShareDraft fallback, {
     List<UniversalXTrendTopic> trendTopics = const [],
     String performanceContext = '',
+    String projectStatsContext = '',
     String? shareUrlOverride,
   }) {
     final shareUrl = shareUrlOverride ?? acquisitionUrlFor(context);
@@ -1853,6 +1972,9 @@ $trendContext
 Recent X analytics and A/B test feedback:
 ${performanceContext.trim().isEmpty ? 'No measured performance context yet.' : performanceContext}
 
+Own project data (real, fetched now; publishable first-person numbers):
+${projectStatsContext.trim().isEmpty ? 'No project stats available today. Number source (d) below is DISABLED — do not invent user counts, shipped totals, goal gaps, or deadline countdowns.' : projectStatsContext}
+
 App の実在する具体機能 (今日の見出しに最も直結する 1 つを名前で挙げ、それが何を数値/画面/具体で解決するかを書く。アプリを一般名詞「ウェブアプリ」「ツール」「強力なツール」で呼ぶな):
 $featureFacts
 
@@ -1875,29 +1997,31 @@ Rules:
 - アプリに触れるときはリードで今日の見出しに最も直結する1機能を主役にしつつ、リプでは他の機能も名前を挙げて具体で出す。いずれも上の「App の実在する具体機能」から選び、それが何を数値/画面/具体で解決するかを書く。一般名詞で濁すな。
 - 機能カバレッジ配分: 同じ機能名とその成果アンカー(例: 給料日サイクル/二重控除)を、スレッド全体で3投稿以上の主眼にするな(リード=1投稿と数える)。スレッドが5投稿以上のときは、上の実在機能リストから異なる機能を最低2つ、それぞれ少なくとも1つのリプの主眼にせよ。ただし今日の見出しに本当に直結する機能が1つしかないなら、無関係な機能を無理に挿入するより、その1機能の別々の具体面(別の画面/別の数字/別の一次体験)を各リプで扱え。substanceを軸で散らせ: (1)数字/実測 (2)リードとは別の機能 (3)その機能が内部でどう動く仕組み1点 (4)このアプリが今できない/やらないことを正直に1つ(「まだ○○は無い」の形)。同じ軸を2連続で使うな。
 - 例(リプの実質・BAD→GOOD、この差を真似て今日の内容で書け): BAD「AI技術の競争がますます激化しています。今後、業界全体に影響を及ぼすでしょう。」 GOOD「今日の見出しは3分でこのアプリの検索できる判断メモに放り込んだ。自分は毎朝これで前日の見出しを整理してる。」 / BAD「私たちの新しいウェブアプリは情報整理を強力にサポートします。」 GOOD「給料日サイクル機能を実装した狙いはこれ: 窓を給料日起点に切ると、月初にまたぐ支払いが二重計上されず支出が実額になる。」
-- Target 10K impressions. The numbered analysis REPLIES keep the Daily Briefing structure when trend context is strong (numbered items, headline, why it matters, outlook), but the LEAD's shape follows the measured archetype guidance above: data-report style (real numbers first) when the 3 allowed number sources supply enough real numbers, news-hook style otherwise. The briefing style is NOT the measured winner for the lead (news-briefing measured 517 vs data-report 3.2K on 2026-07-12).
+- Target 10K impressions. The numbered analysis REPLIES keep the Daily Briefing structure when trend context is strong (numbered items, headline, why it matters, outlook), but the LEAD's shape follows the measured archetype guidance above: data-report style (real numbers first) when the allowed number sources supply enough real numbers, news-hook style otherwise. The briefing style is NOT the measured winner for the lead (news-briefing measured 517 vs data-report 3.2K on 2026-07-12).
 - Use the measured performance context above. Prefer winning variants and avoid losing hook styles.
 - Treat the "Variant ranking", "Structural lift", "Media lift", and "Top hook to emulate" lines (when present) as authoritative measured data: adopt the winning structure (media choice, link placement, thread length, hook shape) but never copy winning wording verbatim.
 - If a "Media lift (by type)" line recommends a winning media type (動画/画像/テキスト) with enough samples, invest the strongest hook in that media: when video wins, front-load the first ~3 seconds of videoPrompt with the day's concrete hook; when image wins, make imagePrompt carry the single sharpest visual. If it says samples are insufficient, do NOT change media strategy — keep今日の既定(動画優先)。
 - $kDataReportArchetypeLesson
-- 上の教訓の実行形: 使ってよい実数が2つ以上あるなら、リードを「データレポート型」で構成せよ=冒頭1行目に今日の具体的な実数を1つ置き、差分→内訳→次の節目 の順に短行で並べる。使ってよい数字は3系統のみ: (a)上の見出しに実際に書かれている数字 (b)上の "Own measured data" 行の実測値(このアカウント自身の実測インプレッションなので、一人称の build-in-public 実数として公開してよい) (c)機能の仕組みが定義する数(例: 給料日起点で支出の窓を切る)。それ以外の数字・集計値を作るな。3系統の実数が足りない日はデータレポート型を無理に作らず、ニュースフック型のリードに落とせ。
+- 上の教訓の実行形: 使ってよい実数が2つ以上あるなら、リードを「データレポート型」で構成せよ=冒頭1行目に今日の具体的な実数を1つ置き、差分→内訳→次の節目 の順に短行で並べる。使ってよい数字は次の系統のみ: (a)上の見出しに実際に書かれている数字 (b)上の "Own measured data" 行の実測値(このアカウント自身の実測インプレッションなので、一人称の build-in-public 実数として公開してよい) (c)機能の仕組みが定義する数(例: 給料日起点で支出の窓を切る) (d)上の "Own project data" ブロックに実際に書かれている実数(ユーザー数・出荷済み達成件数・残り件数・あとN日。ブロックが DISABLED の日は (d) を使うな)。それ以外の数字・集計値を作るな。差分・残り・残日数も payload に書かれた値だけを使い、自分で計算・再集計するな。実数が足りない日はデータレポート型を無理に作らず、ニュースフック型のリードに落とせ。
+- データレポート型の日の骨格(97K実測ポストの構造): 集計ヘッダ(実数入り)→取得日時→基準/目標との差分→残り・あとN日→内訳の短行リスト→アラート。内訳の列挙はリードでは上位5行までにとどめ、続きや全量は threadReplies 側で出せ。
 - Treat the "Archetype lift (by content archetype)" line (when present) as authoritative measured data too: when data_report is winning with enough samples, structure the lead as a data report (dense real numbers, deltas, named specifics); when it says samples are insufficient, do not force an archetype.
 - A/B test only one major variable at a time: hook style, link placement, media/no-media, or thread length.
 - If past results say a link in the first post underperforms, put the product URL in the final reply.
 - Put information value first and product CTA last. Avoid looking like an ad in the lead post.
 - The headline list above is REAL, sourced news (verbatim from NHK / ITmedia RSS). You MAY quote or paraphrase a headline as today's news. Do NOT add facts beyond the headline wording, and do NOT invent numbers, quotes, or outcomes.
+- データレポート型のリードには出典明示として「取得日時」行を1行入れよ。使ってよい日時は "Own project data" ブロックの取得日時と Today's real date のみ(日時の捏造禁止)。固有名詞の列挙は payload(見出し・Own project data・実在機能リスト)に実名で書かれているものだけ。payload に無い人名・企業名・製品名のリスト化を禁止する。
 - 見出しの使い方(関連性ゲート): まず注入した見出しの中に、このアプリのドメイン(家計・資産・給与・負債・支出・節約・投資・AIによる仕事効率化/情報整理)と《具体的な因果でつながる》見出しが1つでもあるか判定せよ。(A)ある場合のみ、その見出しをフックにし1文でドメインへ橋を架ける。橋は必ず同じ1文の中で因果を通す=「(見出しの事象)→お金/仕事にこう効く→だから(FEATURE-FACT)でこう対処」の形。(B)真につながる見出しが1つも無い日は、見出しに一切触れず、上の『App の実在する具体機能』の1つから始まる運営者の実体験ストーリーをリードにせよ(一般名詞のアプリ紹介は禁止=必ず固有機能名で始める)。無関係なトレンド語(モデル名・製品名)をフックとして貼り付けることを禁止する。
 - 橋渡しの禁止形: 話題名を出すだけで内容的に捨てる逆接ブリッジ(「◯◯が気になる方も多いですが、私の△△機能は」「◯◯の話題ですが、それはさておき」「◯◯が話題ですが、」)を禁止する。1文で自然に因果が書けないなら、その見出しとアプリは本当につながっていない→別の見出し/角度を選ぶか、上記(B)へ切り替えて見出しに触れず書け。BAD「Fable 5が気になる方も多いですが、給料日サイクル機能は…」 GOOD「AIの月額サブスクが乱立する今、固定費が見えにくい。給料日サイクルで見ると、月初をまたぐ引き落としが二重計上されずに実額で出る。」
-- The FIRST line (before the X "Show more" fold) must be a concrete curiosity/value/news hook that stops the scroll. Do NOT start with a label or date such as "デイリーブリーフィング — …朝"; do not prefix the post with the date. If you mention any date, use exactly today's real date (JST) given above and never invent another year (e.g. never write 2024).
-- Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template.
+- The FIRST line (before the X "Show more" fold) must be a concrete curiosity/value/news hook that stops the scroll. Do NOT start with a label or date such as "デイリーブリーフィング — …朝"; do not prefix the post with the date. If you mention any date, use exactly today's real date (JST) given above and never invent another year (e.g. never write 2024). 例外(データレポート型の日のみ): 1行目を「<シリーズ名> <主要実数1つ> (YYYY/MM/DD時点)」形式の集計ヘッダにしてよい(97K実測ポストの型。実数を必ず1行目に含める。日付は Today's real date のみ)。実数を含まないラベル/日付だけの1行目は引き続き禁止。「デイリーブリーフィング」をシリーズ名に使うな(実測の負けラベル)。
+- Every day's post must read as fresh and specific: pick a different concrete headline or angle rather than repeating yesterday's template. 例外: 同名シリーズの集計ヘッダ+当日日付+更新された実数の組は「昨日のテンプレの繰り返し」とみなさない(数字の更新こそがシリーズ物の価値=読者が差分を追える)。ただしヘッダと数字以外の本文文言は毎日書き替えろ。
 - Keep the LEAD post strictly hashtag-free (the news hook must stay above the fold). Append 2-3 natural Japanese discovery hashtags on a trailing line of exactly ONE mid-thread reply (never the lead, never every reply), chosen from {#AI活用, #個人開発, #buildinpublic} plus at most one topic-specific tag — 3 tags max total, no stuffing.
-- This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars. On data-report days (see the archetype rules above), structure it as 実数→差分→内訳→次の節目; otherwise as a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
+- This X account has X Premium, so the lead post is NOT limited to 280 chars. Write a rich long-form lead of roughly 400-900 chars. On data-report days (see the archetype rules above), structure it as 実数→差分→内訳→次の節目, and when the lead includes a short-line breakdown list you may extend it to 900-1500 chars (long dense data = dwell time; never pad with prose to reach length); otherwise as a headline, 2-4 concrete news points with brief analysis, and a low-friction CTA. Do not compress it into one short sentence.
 - Provide a FULL briefing thread: 5-8 substantive threadReplies that each add real analysis (状況/背景/なぜ重要か/仕事への活かし方/次の一手), not one-liners.
 - Make the thread SAVE-worthy: turn the LAST analysis reply (the one just before the final URL/CTA reply) into a self-contained "保存版まとめ" — a numbered 3-4 point 使えるチェックリスト that stands alone as a single screenshot. This IS the bookmark anchor. Write it fresh each day (never templated), at most once, and NEVER put it on the final URL/CTA reply. Do NOT add any other separate "保存を" save cue — this まとめ is the single save mechanism per thread.
 - 保存版まとめの各行は「動詞で始まる、アプリ無しでも即実行できる具体手順」にせよ。今日のニュースから得た固有の学び(数字・固有名詞・具体行動のいずれか)を最低1つ含める。「理解する」「認識する」「意識する」「重要性を〜」等の内省・抽象動詞をポイントの主眼にするのを禁止(そういう行は無効=具体的にやることへ置換)。悪い例(禁止): 1.AI技術の進化を理解する 2.情報整理の重要性を認識する 3.フィードバックを提供する / 良い例(この型を真似て今日の内容で作り直す): 1.今日の注目ニュースの要点だけ3行で自分のメモに残す(所要3分) 2.『事実』と『自分の考え』を1行ずつ分けて書く=後で判断材料に引ける 3.週末に今週保存したメモを見返し、仕事で使える1件だけタグ付けする
 - Format for scannability: break the lead and each reply into short one-idea lines with a blank line between meaning-chunks (no wall-of-text paragraph). Put labels (なぜ重要か / 見通し / 次の一手 など) at the start of a line and continue the explanation on the next line, so a reader can skim in 2 seconds.
 - The multi-line formatting above applies to the RENDERED post; inside the JSON string values you must still encode every line break as the two characters \\n, never a real newline.
-- Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical.
+- Cap emoji at 1-2 per post and do NOT decorate every line (emoji spam and full-line decoration trigger spam down-ranking). Number only replies 2 onward. Optionally add ONE short, non-templated thread-continuation cue (e.g. "🧵つづく") just before the lead's CTA/URL, varying the wording day to day so it is never identical. 例外(データレポート型の日のみ): アラート行の行頭に置く 🔴/🟡 の重要度マーカーは装飾と数えない(97K実測ポストの走査性の要。最大5行まで。アラート行以外の装飾は引き続き禁止、他の絵文字は従来通り1-2個まで)。
 - The FIRST reply must stand alone as its own scroll-stopping hook: one sharp claim + why it matters + a reply-provoking question, fully readable with zero context from the lead post. Do NOT repeat the lead hook verbatim, do NOT phrase it as "1つ目/item 1 of N", and do NOT begin it with a number or list marker (never start with "1."). Replies 2 onward then form the numbered briefing.
 - Native poll (impressions booster): when the thread's subject supports a crisp either/or, ranking, or first-person current-state question, include a "poll" object with a short Japanese "question" and 3-4 "options" (prefer 4 when each option is genuinely distinct; never pad with filler; each <=25 chars). X natively boosts impressions and early engagement on poll tweets.
 - 投票の選択肢は、回答者が1秒で自分を位置づけられる一人称の《現在の状態/行動》を3-4個にせよ(意見や関心度の度合いではなく、既に取っている状態)。良い例(家計): 給料日基準で支出を見ている / 月初〜月末で見ている / 支出は把握していない / 見直したい。フラットな二択(興味がある/ない・賛成/反対)は不可(票が集まらず低品質に読まれる)。

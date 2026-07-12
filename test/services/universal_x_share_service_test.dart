@@ -699,6 +699,195 @@ void main() {
     expect(capturedPrompt, contains('それ以外の数字・集計値を作るな'));
   });
 
+  group('R24 project stats context (data-report number source (d))', () {
+    final fixture = <String, dynamic>{
+      'success': true,
+      'userCount': 1234,
+      'achievementsCount': 567,
+      'plans': [
+        {
+          'label': '短期計画',
+          'deadline': '2026年08月01日',
+          'target': 100,
+          'features_done': 12,
+          'features_total': 20,
+        },
+      ],
+    };
+    final nowJst = DateTime(2026, 7, 12, 9, 30);
+
+    test('buildProjectStatsContext formats real numbers with countdown', () {
+      final block = UniversalXShareService.buildProjectStatsContext(
+        fixture,
+        nowJst: nowJst,
+      );
+      expect(block, contains('Own project data'));
+      expect(block, contains('取得日時 2026-07-12 09:30 JST'));
+      expect(block, contains('users=1234'));
+      expect(block, contains('shipped-achievements(total)=567'));
+      expect(block, contains('features 12/20 done, 残り8件'));
+      expect(block, contains('目標ユーザー 100人'));
+      // 残日数は Dart 側で確定させる(2026-07-12 → 2026-08-01 = 20日)。
+      expect(block, contains('あと20日'));
+    });
+
+    test('degrades line by line when plan fields are missing', () {
+      final block = UniversalXShareService.buildProjectStatsContext(
+        {'userCount': 1234, 'achievementsCount': 567},
+        nowJst: nowJst,
+      );
+      expect(block, contains('users=1234'));
+      expect(block, isNot(contains('Goal gap')));
+    });
+
+    test('returns empty when fewer than 2 real numbers exist', () {
+      expect(
+        UniversalXShareService.buildProjectStatsContext(
+          {'userCount': 3},
+          nowJst: nowJst,
+        ),
+        isEmpty,
+      );
+      expect(
+        UniversalXShareService.buildProjectStatsContext(
+          const {},
+          nowJst: nowJst,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('clamps past deadlines to あと0日 (never negative)', () {
+      final block = UniversalXShareService.buildProjectStatsContext(
+        {
+          'userCount': 10,
+          'achievementsCount': 20,
+          'plans': [
+            {
+              'label': '短期計画',
+              'deadline': '2026年07月01日',
+              'features_done': 1,
+              'features_total': 2,
+            },
+          ],
+        },
+        nowJst: nowJst,
+      );
+      expect(block, contains('あと0日'));
+      expect(block, isNot(contains('あと-')));
+    });
+
+    test('stats block and a sample digest lead stay slop-clean (R22)', () {
+      final block = UniversalXShareService.buildProjectStatsContext(
+        fixture,
+        nowJst: nowJst,
+      );
+      expect(detectSlop('', block), isEmpty);
+      // 97K 実測ポスト構造(集計ヘッダ+🔴🟡アラート+内訳短行)のサンプルリードも
+      // R22 の禁止トークン警告を踏まないこと(数字密度はスロップではない)。
+      const sampleDigestLead = '自分株式会社 開発集計 出荷済み567件 (2026/07/12時点)\n'
+          '取得日時 2026-07-12 09:30 JST\n'
+          'ユーザー 1234人\n'
+          '短期計画: 12/20 完了、残り8件、期日まであと20日\n'
+          '🔴 未着手 2件\n'
+          '🟡 要注意 3件\n'
+          'https://example.com/app';
+      expect(detectSlop(sampleDigestLead, ''), isEmpty);
+    });
+
+    test('draft prompt wires the block and the (d) number source', () async {
+      String? capturedPrompt;
+      final chat = AiHubChatService(
+        invoker: (body) async {
+          capturedPrompt = body['message']?.toString();
+          return {
+            'success': true,
+            'provider': 'groq',
+            'text': '{"text": "x ${page.url}", "hashtags": ["#buildinpublic"]}',
+          };
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async {
+          if (body['action'] == 'roadmap.progress') {
+            return {'success': true, ...fixture};
+          }
+          return {'success': true};
+        },
+      );
+
+      await service.generateDraft(page);
+
+      final prompt = capturedPrompt ?? '';
+      expect(prompt, contains('users=1234'));
+      expect(prompt, contains('"Own project data"'));
+      // 例外ルールはすべて「データレポート型の日のみ」に条件付けされている。
+      expect(prompt, contains('例外(データレポート型の日のみ)'));
+      // 97K 実測ポストの骨格(集計ヘッダ/取得日時/アラート)が指示に含まれる。
+      expect(prompt, contains('集計ヘッダ'));
+      expect(prompt, contains('取得日時'));
+      expect(prompt, contains('デイリーブリーフィング」をシリーズ名に使うな'));
+      // 既存ピン(R23)の非回帰。
+      expect(prompt, contains(kDataReportArchetypeLesson));
+      expect(prompt, contains('それ以外の数字・集計値を作るな'));
+    });
+
+    test('prompt disables source (d) when project stats are unavailable',
+        () async {
+      String? capturedPrompt;
+      final chat = AiHubChatService(
+        invoker: (body) async {
+          capturedPrompt = body['message']?.toString();
+          return {
+            'success': true,
+            'provider': 'groq',
+            'text': '{"text": "x ${page.url}", "hashtags": ["#buildinpublic"]}',
+          };
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async {
+          if (body['action'] == 'roadmap.progress') {
+            throw Exception('unauthenticated');
+          }
+          return {'success': true};
+        },
+      );
+
+      final draft = await service.generateDraft(page);
+
+      // 実データ取得の失敗は下書き生成を止めない(fail-open)。
+      expect(draft.fallbackUsed, isFalse);
+      expect(
+        capturedPrompt,
+        contains('Number source (d) below is DISABLED'),
+      );
+    });
+
+    test('accepts a long data-report lead within the raised cap', () async {
+      // データレポート型の内訳込みリード(プロンプト上限 1500 字 + 2 倍の
+      // ヘッドルーム=3000)が JSON ダンプ扱いで捨てられないこと。
+      final longLead =
+          '開発集計 567件 (2026/07/12時点)\\n${'内訳の行です。' * 300}\\n${page.url}';
+      final chat = AiHubChatService(
+        invoker: (body) async => {
+          'success': true,
+          'provider': 'groq',
+          'text': '{"text": "$longLead", "hashtags": ["#buildinpublic"]}',
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async => {'success': true},
+      );
+      final draft = await service.generateDraft(page);
+      expect(draft.fallbackUsed, isFalse);
+      expect(draft.text.length, greaterThan(2000));
+    });
+  });
+
   test('generateDraft recovers a poll leaked inside threadReplies', () async {
     // 実障害: LLM が poll をトップレベルでなく threadReplies の要素(オブジェクト)
     // に入れ、Map.toString() の生テキスト `{text: , poll: {...}}` がそのまま
