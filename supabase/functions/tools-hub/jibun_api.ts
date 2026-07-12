@@ -72,7 +72,10 @@ export function normalizeScopes(input: unknown): JibunApiScope[] | null {
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
   for (const b of bytes) binary += String.fromCharCode(b);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(
+    /=+$/,
+    "",
+  );
 }
 
 export function generateApiKey(): { key: string; prefix: string } {
@@ -431,7 +434,9 @@ export function createSupabaseJibunApiStore(
         .from("user_api_keys")
         .update({ last_used_at: new Date().toISOString() })
         .eq("id", keyId);
-      if (error) console.warn(`jibun-api touchKeyLastUsed skipped: ${error.message}`);
+      if (error) {
+        console.warn(`jibun-api touchKeyLastUsed skipped: ${error.message}`);
+      }
     },
     async countWorkers(userId) {
       const { count, error } = await admin
@@ -516,7 +521,9 @@ export function createSupabaseJibunApiStore(
     },
     async insertAuditLog(row) {
       const { error } = await admin.from("user_api_audit_log").insert(row);
-      if (error) console.warn(`jibun-api audit insert skipped: ${error.message}`);
+      if (error) {
+        console.warn(`jibun-api audit insert skipped: ${error.message}`);
+      }
     },
     async countAuditSince(apiKeyId, sinceIso, actionPrefix) {
       let query = admin
@@ -760,7 +767,8 @@ async function handleManagementAction(
       const activeKeys = await store.countKeys(userId);
       if (activeKeys >= MAX_KEYS_PER_USER) {
         return json({
-          error: `key limit reached (max ${MAX_KEYS_PER_USER}). Revoke an existing key first.`,
+          error:
+            `key limit reached (max ${MAX_KEYS_PER_USER}). Revoke an existing key first.`,
         }, 409);
       }
       let expiresAt: string | null = null;
@@ -1209,7 +1217,10 @@ async function dispatchExternalApiAction(
       );
       if (dnsError) {
         return {
-          response: json({ error: `worker endpoint rejected: ${dnsError}` }, 400),
+          response: json(
+            { error: `worker endpoint rejected: ${dnsError}` },
+            400,
+          ),
           workerId: worker.id,
         };
       }

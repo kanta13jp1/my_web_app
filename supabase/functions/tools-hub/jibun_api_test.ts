@@ -20,9 +20,9 @@ import {
   JIBUN_API_SCOPES,
   type JibunApiStore,
   MAX_KEYS_PER_USER,
-  type NoteRow,
   normalizeScopes,
   normalizeWorkerSlug,
+  type NoteRow,
   parseInetOrNull,
   resolveHostToPrivateError,
   sanitizeSearchQuery,
@@ -161,7 +161,7 @@ Deno.test("sanitizeSearchQuery strips PostgREST filter metacharacters", () => {
     sanitizeSearchQuery("foo,id.gt.0(bar)"),
     "foo id.gt.0 bar",
   );
-  assertEquals(sanitizeSearchQuery('a"b\'c\\d'), "a b c d");
+  assertEquals(sanitizeSearchQuery("a\"b'c\\d"), "a b c d");
   assertEquals(sanitizeSearchQuery("100%_off*"), "100 off");
   assertEquals(sanitizeSearchQuery(42), "");
   assertEquals(sanitizeSearchQuery("  hello  "), "hello");
@@ -181,8 +181,7 @@ Deno.test("resolveHostToPrivateError flags hosts resolving to private IPs", asyn
   // A レコードが内部 IP を指すホスト名を検出する (DNS rebinding 対策)
   const rebind = await resolveHostToPrivateError(
     "evil.example.com",
-    (_host, type) =>
-      Promise.resolve(type === "A" ? ["169.254.169.254"] : []),
+    (_host, type) => Promise.resolve(type === "A" ? ["169.254.169.254"] : []),
   );
   assert(rebind !== null);
   assertStringIncludes(rebind ?? "", "169.254.169.254");
@@ -346,12 +345,10 @@ class FakeJibunApiStore implements JibunApiStore {
     options: { limit: number; query: string },
   ): Promise<NoteRow[]> {
     void userId;
-    const filtered = options.query === ""
-      ? this.notes
-      : this.notes.filter(
-        (n) =>
-          n.title.includes(options.query) || n.content.includes(options.query),
-      );
+    const filtered = options.query === "" ? this.notes : this.notes.filter(
+      (n) =>
+        n.title.includes(options.query) || n.content.includes(options.query),
+    );
     return Promise.resolve(filtered.slice(0, options.limit));
   }
   createNote(

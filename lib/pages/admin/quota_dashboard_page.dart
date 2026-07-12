@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'quota_dashboard_signals.dart';
+
 class QuotaDashboardPage extends StatefulWidget {
   final SupabaseClient? supabaseClient;
   const QuotaDashboardPage({super.key, this.supabaseClient});
@@ -17,6 +19,10 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
   List<Map<String, dynamic>> _history = [];
   bool _isLoading = true;
   bool _historyLoading = false;
+  // R21: 取得失敗を無音で握りつぶすと「データなし(未計測)」と描画上区別
+  // できない(読めていないのに計測してないと誤診させない)。
+  String? _loadError;
+  String? _historyError;
 
   static const _bg = Color(0xFF0A0A0A);
   static const _card = Color(0xFF1A1A2E);
@@ -59,24 +65,51 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
 
   Future<void> _loadLatest() async {
     if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _loadError = '未ログインのためクォータ情報を取得できません。ログイン後に更新してください。';
+      });
       return;
     }
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final res = await _supabase.functions.invoke(
         'admin-hub',
         body: {'action': 'quota.latest'},
       );
       final data = res.data as Map<String, dynamic>?;
+      if (!mounted) return;
       if (data != null && data['success'] == true) {
         final rows = data['data'] as List<dynamic>? ?? [];
         setState(() {
           _latest = rows.cast<Map<String, dynamic>>();
         });
+      } else {
+        setState(() {
+          _loadError = 'クォータ情報の取得に失敗しました'
+              '(${data?['error'] ?? 'admin-hub 応答が不正'})。更新ボタンで再試行してください。';
+        });
+      }
+    } on FunctionException catch (e) {
+      debugPrint('quota.latest error: $e');
+      if (mounted) {
+        setState(() {
+          // 401/403 は再試行しても直らない — 権限系の案内に分ける。
+          _loadError = e.status == 401 || e.status == 403
+              ? 'クォータ情報を閲覧する権限がありません。管理者アカウントで再ログインしてください。'
+              : 'クォータ情報の取得に失敗しました (HTTP ${e.status})。更新ボタンで再試行してください。';
+        });
       }
     } catch (e) {
       debugPrint('quota.latest error: $e');
+      if (mounted) {
+        setState(() {
+          _loadError = 'クォータ情報の取得に失敗しました。更新ボタンで再試行してください。';
+        });
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -87,21 +120,31 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
       setState(() => _isLoading = false);
       return;
     }
-    setState(() => _historyLoading = true);
+    setState(() {
+      _historyLoading = true;
+      _historyError = null;
+    });
     try {
       final res = await _supabase.functions.invoke(
         'admin-hub',
         body: {'action': 'quota.list', 'days': 30},
       );
       final data = res.data as Map<String, dynamic>?;
+      if (!mounted) return;
       if (data != null && data['success'] == true) {
         final rows = data['data'] as List<dynamic>? ?? [];
         setState(() {
           _history = rows.cast<Map<String, dynamic>>();
         });
+      } else {
+        // R21: 取得失敗を「データなし」に見せない(_loadLatest と同じ規律)。
+        setState(() => _historyError = '履歴の取得に失敗しました。開き直して再試行してください。');
       }
     } catch (e) {
       debugPrint('quota.list error: $e');
+      if (mounted) {
+        setState(() => _historyError = '履歴の取得に失敗しました。開き直して再試行してください。');
+      }
     } finally {
       if (mounted) setState(() => _historyLoading = false);
     }
@@ -157,6 +200,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (_loadError != null) _buildLoadErrorBanner(),
+                    if (_loadError != null) const SizedBox(height: 16),
                     if (_hasAlert) _buildAlertBanner(),
                     if (_hasAlert) const SizedBox(height: 16),
                     _buildToolCards(),
@@ -170,7 +215,44 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
     );
   }
 
+  Widget _buildLoadErrorBanner() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _orange.withAlpha(30),
+        border: Border.all(color: _orange, width: 1.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off, color: _orange, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _loadError ?? '',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAlertBanner() {
+    // R21: どのツールのアラートでも「Claude MAX レート制限到達」と決め打ち
+    // していた捏造原因を、実際にアラート中のツール名に置き換える。コーディング
+    // 用フォールバック表は Claude のアラート時のみ意味を持つ。
+    final alertTools = _latest
+        .where((r) => r['alert'] == true)
+        .map((r) => _toolNames[r['tool']] ?? (r['tool'] ?? '').toString())
+        .toList();
+    final hasAnthropicAlert = _latest.any(
+      (r) => r['tool'] == 'anthropic' && r['alert'] == true,
+    );
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -186,7 +268,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
               Icon(Icons.warning_amber_rounded, color: _alertRed, size: 20),
               SizedBox(width: 8),
               Text(
-                '⚠️ フォールバック推奨',
+                '⚠️ クォータアラート',
                 style: TextStyle(
                   color: _alertRed,
                   fontWeight: FontWeight.bold,
@@ -197,16 +279,28 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Claude MAX レート制限到達。ファイル種別に応じて代替AIを使用してください:',
-            style: TextStyle(
+          Text(
+            '${alertTools.join(' / ')} のクォータが閾値を超えています。'
+            '該当カードの詳細を確認してください。',
+            style: const TextStyle(
               color: Colors.white70,
               fontSize: 13,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 8),
-          _buildFallbackTable(),
+          if (hasAnthropicAlert) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Claude はファイル種別に応じて代替AIへフォールバック:',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildFallbackTable(),
+          ],
         ],
       ),
     );
@@ -264,13 +358,34 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
   }
 
   Widget _buildToolCard(String tool, Map<String, dynamic>? row) {
-    final isAlert = row?['alert'] == true;
-    final statusColor = isAlert ? _alertRed : _okGreen;
+    final checkedAt = row?['checked_at'] as String?;
+    // R21: 未計測(行なし)/計測停止(古い checked_at)を「正常」と捏造しない
+    // 3+1状態バッジ(未計測/アラート/計測停止?/正常)。
+    final status = resolveQuotaToolStatus(
+      hasRow: row != null,
+      alert: row?['alert'] == true,
+      checkedAt: checkedAt,
+      now: DateTime.now(),
+    );
+    final isAlert = status == QuotaToolStatus.alert;
+    final statusColor = switch (status) {
+      QuotaToolStatus.alert => _alertRed,
+      QuotaToolStatus.ok => _okGreen,
+      QuotaToolStatus.stale => _orange,
+      QuotaToolStatus.unmeasured => Colors.white38,
+    };
+    final statusIcon = switch (status) {
+      QuotaToolStatus.alert => Icons.error_outline,
+      QuotaToolStatus.ok => Icons.check_circle_outline,
+      QuotaToolStatus.stale => Icons.history_toggle_off,
+      QuotaToolStatus.unmeasured => Icons.help_outline,
+    };
     final displayName = _toolNames[tool] ?? tool;
     final icon = _toolIcons[tool] ?? Icons.smart_toy;
 
     final usageJson = row?['usage_json'] as Map<String, dynamic>? ?? {};
-    final costUsd = (usageJson['cost_usd'] as num?)?.toDouble() ?? 0.0;
+    // R21: cost_usd 欠落時は $0.00 を捏造せず「コスト未取得」を表示する。
+    final costUsd = quotaCostUsd(usageJson);
     final tokens = (usageJson['tokens'] as num?)?.toInt();
     final remainingCredits = (usageJson['remaining'] as num?)?.toInt();
     final usedCredits = (usageJson['used'] as num?)?.toInt();
@@ -278,9 +393,11 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
     final creditThreshold = (usageJson['threshold'] as num?)?.toInt();
     final severity = usageJson['severity']?.toString();
     final errorMessage = usageJson['error']?.toString();
-    final checkedAt = row?['checked_at'] as String?;
     final limit = _toolLimits[tool] ?? 0.0;
-    final progress = (limit > 0) ? (costUsd / limit).clamp(0.0, 1.0) : 0.0;
+    final progress = (limit > 0 && costUsd != null)
+        ? (costUsd / limit).clamp(0.0, 1.0)
+        : 0.0;
+    final checkedAgeDays = quotaCheckedAgeDays(checkedAt, DateTime.now());
 
     return Card(
       color: _card,
@@ -323,15 +440,13 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isAlert
-                            ? Icons.error_outline
-                            : Icons.check_circle_outline,
+                        statusIcon,
                         color: statusColor,
                         size: 14,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        isAlert ? 'アラート' : '正常',
+                        quotaStatusBadgeLabel(status),
                         style: TextStyle(
                           color: statusColor,
                           fontSize: 12,
@@ -347,7 +462,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
             if (row == null) ...[
               const SizedBox(height: 12),
               const Text(
-                'データなし',
+                '計測データなし。quota-monitor がこのツールを記録していません'
+                '(APIキー未設定 or 計測ステップ失敗)。',
                 style: TextStyle(
                   color: Colors.white38,
                   fontSize: 13,
@@ -377,7 +493,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                  ] else if (costUsd > 0 || limit > 0) ...[
+                  ] else if (costUsd != null) ...[
                     Text(
                       '\$${costUsd.toStringAsFixed(2)}',
                       style: TextStyle(
@@ -397,6 +513,17 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                         ),
                       ),
                     ],
+                    const SizedBox(width: 16),
+                  ] else ...[
+                    // R21: cost_usd 未取得のとき $0.00 を捏造しない。
+                    const Text(
+                      'コスト未取得',
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
                     const SizedBox(width: 16),
                   ],
                   if (tokens != null)
@@ -440,7 +567,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                   ),
                 ),
               ],
-              if (limit > 0) ...[
+              // R21: cost 未取得時は 0% 使用バーを捏造しない。
+              if (limit > 0 && costUsd != null) ...[
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -466,7 +594,10 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
               if (checkedAt != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  '最終確認: $checkedAt',
+                  // R21: 古い計測を今の状態に見せない(2日以上前は経過日数を明示)。
+                  checkedAgeDays != null && checkedAgeDays >= 2
+                      ? '最終確認: $checkedAt ($checkedAgeDays日前・計測停止の可能性)'
+                      : '最終確認: $checkedAt',
                   style: const TextStyle(
                     color: Colors.white38,
                     fontSize: 11,
@@ -505,6 +636,17 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
             const Padding(
               padding: EdgeInsets.all(24),
               child: CircularProgressIndicator(color: _orange),
+            )
+          else if (_historyError != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                _historyError!,
+                style: const TextStyle(
+                  color: _orange,
+                  height: 1.5,
+                ),
+              ),
             )
           else if (_history.isEmpty)
             const Padding(
