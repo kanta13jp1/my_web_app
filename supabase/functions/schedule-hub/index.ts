@@ -22,6 +22,10 @@ import {
 } from "../_shared/external_fetch.ts";
 import { buildOwnSiteBlogPostUrl } from "./blog_canonical.ts";
 import {
+  isQiitaAccessEnabled,
+  resolveBlogPublishPlatforms,
+} from "./blog_publish_policy.ts";
+import {
   allPlatformsFailed,
   type BlogUpstreamApi,
   buildUpstreamErrorPayload,
@@ -1040,6 +1044,19 @@ async function qiitaFetch(
   init: RequestInit = {},
   traceId = "schedule-hub.qiita",
 ): Promise<Response> {
+  // 2026-07-12: account suspension kill switch. A token alone must never
+  // reactivate traffic; operations must explicitly set QIITA_ACCESS_ENABLED=true.
+  if (!isQiitaAccessEnabled(Deno.env.get("QIITA_ACCESS_ENABLED"))) {
+    return new Response(
+      JSON.stringify({
+        message: "Qiita access disabled by QIITA_ACCESS_ENABLED",
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
   const url = path.startsWith("http")
     ? path
     : `https://qiita.com/api/v2${path}`;
@@ -2350,9 +2367,17 @@ serve(async (req: Request) => {
             : (body.tags as string[]) ?? [];
         const ppTargetPlatforms = (post as Record<string, unknown>)
           .target_platforms;
-        const ppPlatforms: string[] = Array.isArray(ppTargetPlatforms)
-          ? ppTargetPlatforms
-          : ["qiita", "devto"];
+        const ppPlatformResolution = resolveBlogPublishPlatforms(
+          ppTargetPlatforms,
+          body.platforms,
+        );
+        if (ppPlatformResolution.error) {
+          return json({
+            error: ppPlatformResolution.error,
+            error_code: "invalid_platform_override",
+          }, 400);
+        }
+        const ppPlatforms = ppPlatformResolution.platforms;
         const ppResults: Record<string, unknown> = {};
 
         if (ppPlatforms.includes("qiita") && qiitaToken) {
