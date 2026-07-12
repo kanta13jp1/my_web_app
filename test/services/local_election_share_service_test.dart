@@ -316,6 +316,83 @@ void main() {
     expect(shareText, contains('https://example.com/public-memo?id=10'));
   });
 
+  test('buildXPostLongText carries the full post-A tally within the cap', () {
+    // R24: API 投稿(growth-hub x.post)経路の本文。集計ノート全文=実測 3.2K
+    // のポストA構造がそのまま入り、末尾に公開ノート URL が付く。
+    final snapshot = buildSnapshot();
+    final text = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: 'https://example.com/public-memo?id=10',
+    );
+
+    expect(text, contains('国民民主党 地方議員集計 2026/03/28'));
+    expect(text, contains('取得日時:'));
+    expect(text, contains('公式地方議員数: 333人'));
+    expect(text, contains('700まで残り: 367人'));
+    expect(text, contains('現職地方議員名簿'));
+    expect(text, contains('全都道府県の内訳と現職名簿の公開ノート:'));
+    expect(text, contains('https://example.com/public-memo?id=10'));
+    // 上限は X 実測の加重文字数(CJK=2)で守る(code unit 数ではない)。
+    expect(
+      LocalElectionShareService.xWeightedLength(text),
+      lessThanOrEqualTo(24000),
+    );
+  });
+
+  test('xWeightedLength doubles CJK per twitter-text weighting', () {
+    expect(LocalElectionShareService.xWeightedLength('abc'), 3);
+    expect(LocalElectionShareService.xWeightedLength('あいう'), 6);
+    expect(LocalElectionShareService.xWeightedLength('a議員1人'), 8);
+  });
+
+  test(
+      'buildXPostLongText truncates at a roster section boundary when over cap',
+      () {
+    final snapshot = buildSnapshot();
+    final full = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: '',
+    );
+    final fullWeighted = LocalElectionShareService.xWeightedLength(full);
+    final capped = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: 'https://example.com/public-memo?id=10',
+      maxWeightedChars: fullWeighted - 50,
+    );
+
+    expect(
+      LocalElectionShareService.xWeightedLength(capped),
+      lessThanOrEqualTo(fullWeighted - 50),
+    );
+    expect(capped, contains('(文字数上限のため名簿の続きは公開ノートへ)'));
+    expect(capped, contains('https://example.com/public-memo?id=10'));
+    // 冒頭のデータレポート骨格は必ず残る。
+    expect(capped, contains('公式地方議員数: 333人'));
+  });
+
+  test('buildXPostLongText omits the note-link cue when no public URL exists',
+      () {
+    final snapshot = buildSnapshot();
+    final full = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: '',
+    );
+    final capped = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: '',
+      maxWeightedChars: LocalElectionShareService.xWeightedLength(full) - 50,
+    );
+
+    // URL の無い投稿に「続きは公開ノートへ」というリンク無し誘導を残さない。
+    expect(capped, isNot(contains('公開ノートへ')));
+    expect(capped, contains('(文字数上限のため名簿は途中まで)'));
+  });
+
   test('buildXShareIntentUri separates the body text and shared URL', () {
     final snapshot = buildSnapshot();
     final uri = service.buildXShareIntentUri(

@@ -225,3 +225,29 @@ Deno.test("extractPostedTexts: tolerates missing/odd metadata shapes", () => {
   ];
   assertEquals(extractPostedTexts(rows, 10), []);
 });
+
+Deno.test("contentSimilarity: long-form posts stay fast via edit-distance clamp", () => {
+  // R24: 選挙集計等の長文(10k-24k字)が x.post を通るようになり、全文
+  // Levenshtein は O(n*m) で edge CPU 予算超過(実測 18k×18k ≈ 3.1s)。
+  // 先頭スライス近似でも「ほぼ同一の長文テンプレ」は依然 duplicate 検出される
+  // こと+完走時間が桁で縮むことを固定する。
+  const base = "国民民主党 地方議員集計 2026/07/10 公式地方議員数378人\n"
+    .repeat(700);
+  const refreshed = base.replaceAll("378人", "381人");
+  const start = Date.now();
+  const similar = contentSimilarity(base, refreshed);
+  const elapsed = Date.now() - start;
+  if (!(similar >= 0.9)) {
+    throw new Error(`expected near-duplicate, got ${similar}`);
+  }
+  if (!(elapsed < 1500)) {
+    throw new Error(`edit-distance clamp did not keep it fast: ${elapsed}ms`);
+  }
+  // 別内容の長文は duplicate にならない(clamp が false-positive を作らない)。
+  const other =
+    "全く別の話題。家計の負債トレンドを月次で検出して翌月の行動を出す。\n"
+      .repeat(600);
+  if (!(contentSimilarity(base, other) < 0.9)) {
+    throw new Error("unrelated long posts must not match");
+  }
+});
