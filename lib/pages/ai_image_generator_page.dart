@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/ai_image_generation_request.dart';
+
 /// AI 画像生成ページ
 /// media-hub Edge Function と連携して AI 画像を生成・管理
 class AiImageGeneratorPage extends StatefulWidget {
@@ -19,6 +21,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
   String? _errorMessage;
   String _selectedSize = '1024x1024';
   String _selectedStyle = 'vivid';
+  AiImageGenerationQuality _selectedQuality = AiImageGenerationQuality.medium;
   List<_GeneratedImage> _images = [];
 
   bool get _isBusy => _isFetching || _isGenerating;
@@ -69,9 +72,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
       final images = rows
           .whereType<Map>()
           .map(
-            (row) => _GeneratedImage.fromHubRow(
-              Map<String, dynamic>.from(row),
-            ),
+            (row) => _GeneratedImage.fromHubRow(Map<String, dynamic>.from(row)),
           )
           .where((image) => image.imageUrl.isNotEmpty)
           .toList();
@@ -95,12 +96,12 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
     try {
       final response = await _supabase.functions.invoke(
         'media-hub',
-        body: {
-          'action': 'image.generate',
-          'prompt': prompt,
-          'size': _selectedSize,
-          'style': _selectedStyle,
-        },
+        body: buildAiImageGenerateBody(
+          prompt: prompt,
+          size: _selectedSize,
+          style: _selectedStyle,
+          quality: _selectedQuality,
+        ),
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['error'] != null) {
@@ -182,6 +183,31 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
                   : (selection) =>
                       setState(() => _selectedStyle = selection.first),
             ),
+            const SizedBox(height: 8),
+            SegmentedButton<AiImageGenerationQuality>(
+              segments: AiImageGenerationQuality.values
+                  .map(
+                    (quality) => ButtonSegment<AiImageGenerationQuality>(
+                      value: quality,
+                      label: Text(quality.label),
+                      tooltip: quality.description,
+                      icon: Icon(
+                        switch (quality) {
+                          AiImageGenerationQuality.low => Icons.flash_on,
+                          AiImageGenerationQuality.medium =>
+                            Icons.balance_outlined,
+                          AiImageGenerationQuality.high => Icons.high_quality,
+                        },
+                      ),
+                    ),
+                  )
+                  .toList(),
+              selected: {_selectedQuality},
+              onSelectionChanged: _isBusy
+                  ? null
+                  : (selection) =>
+                      setState(() => _selectedQuality = selection.first),
+            ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: _isBusy ? null : _generate,
@@ -197,10 +223,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(
-                  color: Color(0xFFE53935),
-                  height: 1.5,
-                ),
+                style: const TextStyle(color: Color(0xFFE53935), height: 1.5),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -275,9 +298,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
                 ),
               ),
             ] else
-              const Expanded(
-                child: Center(child: Text('生成済み画像はありません')),
-              ),
+              const Expanded(child: Center(child: Text('生成済み画像はありません'))),
           ],
         ),
       ),
@@ -291,6 +312,7 @@ class _GeneratedImage {
     required this.imageUrl,
     required this.size,
     required this.style,
+    required this.quality,
     required this.createdAt,
   });
 
@@ -298,6 +320,7 @@ class _GeneratedImage {
   final String imageUrl;
   final String size;
   final String style;
+  final String quality;
   final String createdAt;
 
   factory _GeneratedImage.fromHubRow(Map<String, dynamic> row) {
@@ -312,6 +335,7 @@ class _GeneratedImage {
           '',
       size: metadata['size']?.toString() ?? '',
       style: metadata['style']?.toString() ?? '',
+      quality: metadata['quality']?.toString() ?? '',
       createdAt: row['created_at']?.toString() ??
           row['createdAt']?.toString() ??
           metadata['created_at']?.toString() ??
@@ -323,6 +347,7 @@ class _GeneratedImage {
     final parts = [
       if (size.isNotEmpty) size,
       if (style.isNotEmpty) styleLabels[style] ?? style,
+      if (quality.isNotEmpty) AiImageGenerationQuality.fromValue(quality).label,
       if (createdAt.isNotEmpty) createdAt,
     ];
     return parts.join(' / ');
