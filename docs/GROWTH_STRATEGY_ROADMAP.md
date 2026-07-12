@@ -32640,3 +32640,31 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 5 (商品=ユーザー価値: 外部 AI 連携でユーザーのデータ主権を拡張) / 6 (資本=時間: エコシステム化で複利成長) / 7 (資産負債: Notion 対抗の moat 構築) / 2 (ミッション: 21社競合を上回るプラットフォーム化)。
 - 整合性スコア: **8/9 ✅** (原則 4 人事のみ非該当)。
 - MCP_AUTH_SECURITY 準拠: 本 API はユーザースコープ REST (MCP 非公開レーン)。deny-by-default / audit / rate limit / kill switch (revoke) / scope 最小化を実装。将来 MCP 公開時は 10/10 ゲート + WorkOS 認証を別途要件化。
+
+---
+
+## セッション記録: XLSX/DOCXインポート + 構造化タスク管理 (2026-07-12 WEB版)
+
+**背景**: 自分API v1 に続き、同日 daily-report の AI 行動提案 2・3 を実装。
+
+**AI 行動提案 2 — XLSX/DOCX インポート (Notion移行0ステップ強化)**:
+- `lib/services/office_document_parser.dart` 新設: OOXML (ZIP+XML) を `archive`/`xml` で解析する純関数。XLSX は `xl/sharedStrings.xml` + 先頭シートを解決してセル2次元配列化、DOCX は `word/document.xml` の段落 (w:p/w:t/w:tab/w:br) をテキスト化。名前空間非依存に localName 照合。
+- `ImportService`: `parseXlsxBytes` (Title/Content/Tags 列検出、無ければ行単位) / `parseDocxBytes` (段落結合1ノート・先頭行タイトル)。XLSX/DOCX はバイナリのため EF を経由せず直接ローカル解析。
+- `import_page.dart`: Excel/Word の取り込みカード + 拡張子マッピング。
+- `pubspec.yaml`: `archive`/`xml` を transitive → direct 昇格。VM テスト (office_document_parser_test) 追加。
+
+**AI 行動提案 3 — 構造化タスク管理 (GitHub Issue Fields 相当)**:
+- migration: `feature_requests` に priority (p0-p3) / effort (xs-xl) / target_date、`growth_plans` に priority / effort を追加 (NULL 許容 + CHECK)。
+- `lib/widgets/structured_field_chips.dart` 新設: 優先度・工数・期日のラベル/色/チップを両画面で共有。
+- `feature_requests_page.dart`: 公開ページで優先度・工数・期日をチップ表示。
+- `admin_analytics_page.dart`: 「⚙ 設定」ダイアログで priority/effort/target_date を管理者設定。
+- `growth-hub` roadmap.progress: priority/effort を返却。
+
+**設計判断**: import EF (`growth-hub` import.preview) は実質スタブ (`_asMap(data['preview'])` が throw → ローカル解析へフォールバック) と判明。XLSX/DOCX はこのローカル解析経路に統合。archive 4.x / xml 6.x の API は GitHub ソースで実在確認済 (ZipDecoder.decodeBytes / ArchiveFile.content / XmlElement.localName 等)。
+
+### Philosophy Alignment (WEB版 2026-07-12 / 提案2・3)
+
+- 主要実装: 競合 (Notion 3.6) の 2 機能に追随 — Agent 向けファイル形式拡充 (XLSX/DOCX) + Issue Fields 相当の構造化。
+- 該当原則: 5 (商品=ユーザー価値: 移行障壁を下げる + 要望の優先度可視化) / 6 (資本=時間: 純関数抽出 + テストで資産化) / 8 (KPI=昨日の自分: 競合追随の継続)。
+- 整合性スコア: **7/9** (原則 4 人事・9 IPO は非該当)。
+- 懸念: XLSX の複雑書式 (複数シート/結合セル/数式) は先頭シート・プレーン値のみ対応 (MVP)。将来 `excel` パッケージ導入で高精度化余地。
