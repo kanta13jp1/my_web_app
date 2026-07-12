@@ -56,7 +56,9 @@ jobs:
               "signal_limit": signal_limit,
               "force": force,
               "external_brain": True,
-              "target_platforms": ["note", "qiita", "devto"],
+              # 2026-07-12: Qiita アカウント利用停止につき新規ドラフトの
+              # 投稿先から qiita を除外 (停止解除まで戻さないこと)
+              "target_platforms": ["note", "devto"],
               "tags": ["AI", "ニュース", "自動化", "外部脳"],
           }
           print(json.dumps(payload, ensure_ascii=False, indent=2))

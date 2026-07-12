@@ -14,9 +14,11 @@ on:
         required: false
         default: ''
       platforms:
-        description: '投稿先プラットフォーム (qiita, devto, 両方: qiita,devto)'
+        # ⚠️ 2026-07-12: Qiita アカウント利用停止につき既定から qiita を除外。
+        # 停止解除まで qiita を指定しないこと。
+        description: '投稿先プラットフォーム (通常は devto のみ / qiita は停止中)'
         required: false
-        default: 'qiita,devto'
+        default: 'devto'
       dry_run:
         description: 'ドライラン (true=投稿しない, false=実投稿)'
         required: false
@@ -272,9 +274,10 @@ jobs:
           DRAFT_PATH="$DRAFT_PATH_VAR"
           TITLE="$ARTICLE_TITLE"
           # Scheduled実行の場合は自動投稿 (dry_run=false), 手動実行の場合は入力値を使用
+          # 2026-07-12: Qiita アカウント利用停止につき schedule は devto のみ
           if [ "${{ github.event_name }}" = "schedule" ]; then
             DRY_RUN="false"
-            PLATFORMS="qiita,devto"
+            PLATFORMS="devto"
           else
             DRY_RUN="${{ github.event.inputs.dry_run }}"
             PLATFORMS="${{ github.event.inputs.platforms }}"
