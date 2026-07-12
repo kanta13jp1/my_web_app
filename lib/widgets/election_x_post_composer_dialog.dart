@@ -351,6 +351,44 @@ class _ElectionXPostComposerDialogState
     );
   }
 
+  bool _apiPosting = false;
+
+  /// R24: growth-hub x.post 経由の直接投稿。手動コピー/intent と違い x_post_log に
+  /// 記録され、variant=local_election_tracker / archetype=data_report として
+  /// 学習ループ(variant ranking / Archetype lift)の計測対象になる。
+  Future<void> _postViaApi() async {
+    if (_apiPosting) return;
+    final tweets = _controllers
+        .map((c) => c.text.trim())
+        .where((t) => t.isNotEmpty)
+        .toList(growable: false);
+    if (tweets.isEmpty) return;
+    setState(() => _apiPosting = true);
+    try {
+      final result = await widget.shareService.postThreadToXViaApi(tweets);
+      if (!mounted) return;
+      final posted = result['posted'] == true;
+      final tweetId = result['tweetId']?.toString() ?? '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            posted
+                ? '選挙集計をAPI投稿しました（計測対象・variant=local_election_tracker）'
+                    '${tweetId.isNotEmpty ? ' https://x.com/i/status/$tweetId' : ''}'
+                : 'API投稿に失敗しました: ${result['error'] ?? result['code'] ?? '不明'}',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('API投稿に失敗しました: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _apiPosting = false);
+    }
+  }
+
   Widget _buildFooter() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
@@ -375,6 +413,21 @@ class _ElectionXPostComposerDialogState
               icon: const Icon(Icons.send, size: 15),
               label: const Text('1つ目を投稿'),
               onPressed: _controllers.isNotEmpty ? () => _openXIntent(0) : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: FilledButton.icon(
+              icon: _apiPosting
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.bolt, size: 15),
+              label: const Text('API投稿（計測対象）'),
+              onPressed:
+                  _controllers.isNotEmpty && !_apiPosting ? _postViaApi : null,
             ),
           ),
         ],

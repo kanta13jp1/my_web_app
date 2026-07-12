@@ -184,3 +184,38 @@ String formatAgeAwareDate(String? iso, DateTime now, {int staleDays = 30}) {
   final stale = dt.year != now.year || now.difference(dt).inDays > staleDays;
   return stale ? '${dt.year}/$m/$d' : '$m/$d';
 }
+
+/// R24: perf-context 行(各 {archetype, score})から「Archetype lift」表示行を作る。
+/// #3953 で全投稿に content_archetype が記録され perf-context の rows に載る。
+/// n>=1 のバケットを平均スコア降順で並べ、行が1つも無ければ null(非表示)。
+/// ラベルは日本語(データレポート/ニュース要約/製品プロモ/不明)。
+String? xGrowthArchetypeLiftLine(List<dynamic>? rows) {
+  if (rows == null || rows.isEmpty) return null;
+  const labels = {
+    'data_report': 'データレポート',
+    'news_summary': 'ニュース要約',
+    'product_promo': '製品プロモ',
+  };
+  final buckets = <String, List<num>>{};
+  for (final row in rows) {
+    if (row is! Map) continue;
+    final raw = (row['archetype'] ?? '').toString().trim();
+    final key = labels.containsKey(raw) ? raw : 'unknown';
+    final score = row['score'];
+    if (score is! num) continue;
+    buckets.putIfAbsent(key, () => []).add(score);
+  }
+  if (buckets.isEmpty) return null;
+  final parts = buckets.entries
+      .map(
+        (e) => (
+          label: labels[e.key] ?? '不明',
+          avg: (e.value.reduce((a, b) => a + b) / e.value.length).round(),
+          n: e.value.length,
+        ),
+      )
+      .toList()
+    ..sort((a, b) => b.avg.compareTo(a.avg));
+  final body = parts.map((p) => '${p.label} 平均${p.avg} (n=${p.n})').join(' / ');
+  return '型別リフト: $body';
+}

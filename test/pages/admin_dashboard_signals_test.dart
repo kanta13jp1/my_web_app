@@ -262,4 +262,30 @@ void main() {
       expect(formatAgeAwareDate('n/a', now), 'n/a');
     });
   });
+
+  group('R24 xGrowthArchetypeLiftLine', () {
+    test('buckets by archetype, sorted by avg desc, JP labels', () {
+      final rows = [
+        {'archetype': 'data_report', 'score': 8000},
+        {'archetype': 'news_summary', 'score': 791},
+        {'archetype': 'product_promo', 'score': 31},
+        {'archetype': 'product_promo', 'score': 29},
+      ];
+      final line = xGrowthArchetypeLiftLine(rows);
+      expect(line, isNotNull);
+      expect(line, contains('データレポート 平均8000 (n=1)'));
+      expect(line, contains('ニュース要約 平均791 (n=1)'));
+      expect(line, contains('製品プロモ 平均30 (n=2)'));
+      expect(line!.indexOf('データレポート'), lessThan(line.indexOf('製品プロモ')));
+    });
+
+    test('unknown archetype rows bucket as 不明; empty rows → null', () {
+      expect(xGrowthArchetypeLiftLine(null), isNull);
+      expect(xGrowthArchetypeLiftLine([]), isNull);
+      final line = xGrowthArchetypeLiftLine([
+        {'archetype': '', 'score': 10},
+      ]);
+      expect(line, contains('不明 平均10 (n=1)'));
+    });
+  });
 }
