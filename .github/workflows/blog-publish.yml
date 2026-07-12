@@ -425,9 +425,21 @@ jobs:
           echo "qiita_url=$QIITA_URL" >> $GITHUB_OUTPUT
           echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
 
+          # Fail closed: a requested publish that produced no platform URL must
+          # never advance the DB/frontmatter to a published state. This is
+          # especially important for scheduled dev.to-only runs, where an
+          # English draft may not exist.
+          if [ -z "$QIITA_URL" ] && [ -z "$DEVTO_URL" ]; then
+            echo "::error::No platform publish succeeded; leaving the draft unpublished"
+            exit 1
+          fi
+
       # ── Step 4.5: blog_posts.status を 'posted' に更新 (UI反映) ────────
       - name: Step 4.5 - Update blog_posts status
-        if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
+        if: >-
+          steps.auto_select.outputs.has_draft == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          (steps.publish.outputs.qiita_url != '' || steps.publish.outputs.devto_url != '')
         continue-on-error: true
         env:
           SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
@@ -454,7 +466,10 @@ jobs:
       # Branch-protection safe: always push a status branch, then auto-merge when BLOG_PAT can.
       # If auto-merge fails, the branch/PR remains as the manual fallback.
       - name: Step 5 - Mark draft as published
-        if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
+        if: >-
+          steps.auto_select.outputs.has_draft == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          (steps.publish.outputs.qiita_url != '' || steps.publish.outputs.devto_url != '')
         env:
           GH_TOKEN: ${{ secrets.BLOG_PAT || secrets.GH_PAT_BLOG_MERGE || secrets.BYPASS_RULES || github.token }}
           BLOG_PAT: ${{ secrets.BLOG_PAT }}
@@ -477,6 +492,11 @@ jobs:
         run: |
           DRY_RUN="${{ github.event.inputs.dry_run }}"
           STATUS="success"
+          if [ "${{ steps.auto_select.outputs.has_draft }}" = "true" ] && \
+             [ "$DRY_RUN" != "true" ] && \
+             [ -z "$QIITA_URL" ] && [ -z "$DEVTO_URL" ]; then
+            STATUS="failure"
+          fi
           SUMMARY="blog-publish: $ARTICLE_TITLE | dry_run=$DRY_RUN | qiita=$QIITA_URL | devto=$DEVTO_URL"
           curl -s -o /dev/null \
             -X POST \

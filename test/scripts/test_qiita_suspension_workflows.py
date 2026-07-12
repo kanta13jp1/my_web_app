@@ -34,3 +34,16 @@ def test_scheduled_publish_is_devto_only_and_ready_queue_fails_closed() -> None:
     assert 'PLATFORMS="qiita,devto"' not in publish
     assert publish.count('PLATFORMS="devto"') >= 2
     assert '"platforms": ["devto"]' in publish
+
+
+def test_publish_status_only_advances_after_a_platform_returns_a_url() -> None:
+    publish = workflow("blog-publish.yml")
+
+    assert 'if [ -z "$QIITA_URL" ] && [ -z "$DEVTO_URL" ]; then' in publish
+    assert "No platform publish succeeded; leaving the draft unpublished" in publish
+    success_gate = (
+        "(steps.publish.outputs.qiita_url != '' || "
+        "steps.publish.outputs.devto_url != '')"
+    )
+    assert publish.count(success_gate) == 2
+    assert 'STATUS="failure"' in publish
