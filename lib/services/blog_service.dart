@@ -1,5 +1,8 @@
 // lib/services/blog_service.dart
 // schedule-hub の blog.* actions への薄い Flutter wrapper
+// 利用元は blog_draft_editor_page / news_rss_aggregator_page のみ。
+// 管理ページ (blog_management_page) は schedule-hub を直接 invoke する
+// 独自実装を持つため、ここに wrapper を足しても配線されない (PR #3958 参照)。
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -69,44 +72,10 @@ class BlogService {
     await _invokeBlogAction('blog.update_post', params);
   }
 
-  Future<void> deletePost(String id) async {
-    await _invokeBlogAction('blog.delete_post', {'id': id});
-  }
-
   // ── 公開 ────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> publishPost(String id) async {
     return _invokeBlogAction('blog.publish_post', {'id': id});
-  }
-
-  // ── Engagement 同期 ──────────────────────────────────────────────
-
-  Future<Map<String, dynamic>> syncEngagement() async {
-    return _invokeBlogAction('blog.sync_engagement', {});
-  }
-
-  // ── Qiita コメント返信 (item_id = Qiita 記事 ID) ──────────────
-  Future<void> qiitaCommentPost({
-    required String articleId,
-    required String body,
-  }) async {
-    await _invokeBlogAction('blog.qiita_comment_post', {
-      'item_id': articleId,
-      'body': body,
-    });
-  }
-
-  // ── 訂正承認 ────────────────────────────────────────────────────
-  Future<void> qiitaUpdate({
-    required String articleId,
-    required String title,
-    required String body,
-  }) async {
-    await _invokeBlogAction('blog.qiita_update', {
-      'item_id': articleId,
-      'title': title,
-      'body': body,
-    });
   }
 
   // ── blog_posts 単件取得 (エディタ用) ─────────────────────────────
@@ -120,63 +89,5 @@ class BlogService {
         .eq('id', id)
         .maybeSingle();
     return res;
-  }
-
-  // ── blog_posts slug 単件取得 (公開記事閲覧用) ─────────────────────
-
-  Future<Map<String, dynamic>?> fetchPostBySlug(String slug) async {
-    final res = await _client
-        .from('blog_posts')
-        .select(
-          'id, slug, title, content, excerpt, tags, posted_at, published_at, target_platforms, url, cover_image_url',
-        )
-        .eq('slug', slug)
-        .eq('status', 'posted')
-        .maybeSingle();
-    return res;
-  }
-
-  // ── 訂正 pending 一覧 ────────────────────────────────────────────
-
-  Future<List<Map<String, dynamic>>> fetchPendingCorrections() async {
-    final res = await _client
-        .from('blog_corrections')
-        .select(
-          'id, platform, article_id, title, url, confidence, errors_json, detected_at',
-        )
-        .eq('approved', false)
-        .isFilter('applied_at', null)
-        .order('detected_at', ascending: false)
-        .limit(50);
-    return List<Map<String, dynamic>>.from(res as List);
-  }
-
-  Future<void> approveCorrection({
-    required String correctionId,
-    required String articleId,
-    required String title,
-    required String body,
-  }) async {
-    await qiitaUpdate(articleId: articleId, title: title, body: body);
-    await _client.from('blog_corrections').update({
-      'approved': true,
-      'approved_at': DateTime.now().toIso8601String(),
-      'applied_at': DateTime.now().toIso8601String(),
-    }).eq('id', correctionId);
-  }
-
-  Future<void> rejectCorrection(String correctionId) async {
-    await _client
-        .from('blog_corrections')
-        .update({'approved': false}).eq('id', correctionId);
-  }
-
-  // ── Draft health check ───────────────────────────────────────────
-
-  Future<List<Map<String, dynamic>>> fetchStaleDrafts() async {
-    return _invokeBlogAction(
-      'blog.draft_health_check',
-      {},
-    ).then((r) => List<Map<String, dynamic>>.from(r['stale'] as List? ?? []));
   }
 }
