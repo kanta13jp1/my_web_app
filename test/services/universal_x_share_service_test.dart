@@ -124,9 +124,7 @@ void main() {
     // AI・テック トレンド → 一人称・現在状態 poll。
     final ai = UniversalXShareService.buildGrowthDraft(
       page,
-      trendTopics: const [
-        UniversalXTrendTopic(name: 'ChatGPTの新機能が話題'),
-      ],
+      trendTopics: const [UniversalXTrendTopic(name: 'ChatGPTの新機能が話題')],
     );
     expect(ai.poll, isNotNull);
     // 汎用の関心度 stem / 選択肢は復活しない(R12 準拠)。
@@ -143,9 +141,7 @@ void main() {
     // 経済・市場 トレンド → 家計の現在状態 poll(主題がアプリと一致)。
     final money = UniversalXShareService.buildGrowthDraft(
       page,
-      trendTopics: const [
-        UniversalXTrendTopic(name: '円安が加速し日経平均が急落'),
-      ],
+      trendTopics: const [UniversalXTrendTopic(name: '円安が加速し日経平均が急落')],
     );
     expect(money.poll, isNotNull);
     expect(money.poll!.question, isNot(contains('今日の注目「')));
@@ -154,9 +150,7 @@ void main() {
     // アプリ中核の家計トレンド(物価/給料 等)も poll を発火させる(旧 false-negative)。
     final prices = UniversalXShareService.buildGrowthDraft(
       page,
-      trendTopics: const [
-        UniversalXTrendTopic(name: '物価高で家計が悲鳴'),
-      ],
+      trendTopics: const [UniversalXTrendTopic(name: '物価高で家計が悲鳴')],
     );
     expect(prices.poll, isNotNull);
     expect(prices.poll!.options, isNot(contains('関係なし')));
@@ -165,18 +159,14 @@ void main() {
     // 家計 poll を貼らず、非関連として poll を省略すること。
     final idol = UniversalXShareService.buildGrowthDraft(
       page,
-      trendTopics: const [
-        UniversalXTrendTopic(name: 'アイドルグループが解散を発表'),
-      ],
+      trendTopics: const [UniversalXTrendTopic(name: 'アイドルグループが解散を発表')],
     );
     expect(idol.poll, isNull);
 
     // カテゴリ特定不能な汎用トレンド → poll を省略(本文主題ズレ/0票を回避)。
     final generic = UniversalXShareService.buildGrowthDraft(
       page,
-      trendTopics: const [
-        UniversalXTrendTopic(name: 'カルピスの誕生日'),
-      ],
+      trendTopics: const [UniversalXTrendTopic(name: 'カルピスの誕生日')],
     );
     expect(generic.poll, isNull);
 
@@ -359,29 +349,31 @@ void main() {
     expect(open.blocked, isFalse);
   });
 
-  test('generateDraft repairs LLM JSON with raw newlines inside strings',
-      () async {
-    // 実障害(2026-07-06): 文字列値内の生改行で decode 失敗→生 JSON がリード
-    // 本文に漏出。修復パスで正しく decode され、日本語コピーが採用されること。
-    final chat = AiHubChatService(
-      invoker: (body) async => {
-        'success': true,
-        'provider': 'groq',
-        // 文字列値の中に「生の改行」を含む不正 JSON(実事故と同形)。
-        'text':
-            '{\n  "text": "目が不自由な人の歩行をAIが音声で支援\nこれは新たな可能性です。\n${page.url}",\n  "imagePrompt": "16:9 image",\n  "videoPrompt": "video",\n  "hashtags": ["#buildinpublic"],\n  "threadReplies": ["解説その1です。"]\n}',
-      },
-    );
-    final service = UniversalXShareService(
-      chatService: chat,
-      functionInvoker: (functionName, body) async => {'success': true},
-    );
-    final draft = await service.generateDraft(page);
-    expect(draft.fallbackUsed, isFalse);
-    expect(draft.text, contains('目が不自由な人の歩行'));
-    expect(draft.text.trim(), isNot(startsWith('{')));
-    expect(draft.threadReplies, contains('解説その1です。'));
-  });
+  test(
+    'generateDraft repairs LLM JSON with raw newlines inside strings',
+    () async {
+      // 実障害(2026-07-06): 文字列値内の生改行で decode 失敗→生 JSON がリード
+      // 本文に漏出。修復パスで正しく decode され、日本語コピーが採用されること。
+      final chat = AiHubChatService(
+        invoker: (body) async => {
+          'success': true,
+          'provider': 'groq',
+          // 文字列値の中に「生の改行」を含む不正 JSON(実事故と同形)。
+          'text':
+              '{\n  "text": "目が不自由な人の歩行をAIが音声で支援\nこれは新たな可能性です。\n${page.url}",\n  "imagePrompt": "16:9 image",\n  "videoPrompt": "video",\n  "hashtags": ["#buildinpublic"],\n  "threadReplies": ["解説その1です。"]\n}',
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async => {'success': true},
+      );
+      final draft = await service.generateDraft(page);
+      expect(draft.fallbackUsed, isFalse);
+      expect(draft.text, contains('目が不自由な人の歩行'));
+      expect(draft.text.trim(), isNot(startsWith('{')));
+      expect(draft.threadReplies, contains('解説その1です。'));
+    },
+  );
 
   test(
     'generateDraft never posts a JSON dump and falls back after retries',
@@ -523,22 +515,24 @@ void main() {
     expect(draft.imagePrompt, contains('product screenshot style hero image'));
   });
 
-  test('fallback draft (no URL, finance) weaves date into finance imagePrompt',
-      () {
-    const emptyUrlFinance = UniversalSharePageContext(
-      routePath: '/asset-management',
-      title: 'Asset Management',
-      url: '',
-    );
+  test(
+    'fallback draft (no URL, finance) weaves date into finance imagePrompt',
+    () {
+      const emptyUrlFinance = UniversalSharePageContext(
+        routePath: '/asset-management',
+        title: 'Asset Management',
+        url: '',
+      );
 
-    final draft = UniversalXShareService.buildFallbackDraft(emptyUrlFinance);
+      final draft = UniversalXShareService.buildFallbackDraft(emptyUrlFinance);
 
-    final now = DateTime.now().toUtc().add(const Duration(hours: 9));
-    final date =
-        '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}';
-    expect(draft.imagePrompt, contains('My Finance'));
-    expect(draft.imagePrompt, contains('Daily edition $date'));
-  });
+      final now = DateTime.now().toUtc().add(const Duration(hours: 9));
+      final date =
+          '${now.year}/${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}';
+      expect(draft.imagePrompt, contains('My Finance'));
+      expect(draft.imagePrompt, contains('Daily edition $date'));
+    },
+  );
 
   test('acquisitionUrlFor preserves existing query and strips fragments', () {
     const pageWithQuery = UniversalSharePageContext(
@@ -699,6 +693,310 @@ void main() {
     expect(capturedPrompt, contains('それ以外の数字・集計値を作るな'));
   });
 
+  group('R26 verified project stats context (data-report source (d))', () {
+    const projectPage = UniversalSharePageContext(
+      routePath: '/growth-command-center',
+      title: 'Growth Command Center',
+      url: 'https://my-web-app-b67f4.web.app/growth-command-center',
+    );
+    final fixture = <String, dynamic>{
+      'success': true,
+      'verified': true,
+      'source': 'roadmap.share_stats',
+      'userCount': 1234,
+      'achievementsCount': 567,
+      'plans': [
+        {
+          'label': 'vs Internal Competitor',
+          'deadline': '2026年07月15日',
+          'target': 9999,
+          'features_done': 1,
+          'features_total': 99,
+        },
+        {
+          'label': '短期計画',
+          'deadline': '2026年08月01日',
+          'target': 100,
+          'features_done': 12,
+          'features_total': 20,
+        },
+      ],
+    };
+    final nowJst = DateTime(2026, 7, 12, 9, 30);
+
+    test('buildProjectStatsContext formats real numbers with countdown', () {
+      final block = UniversalXShareService.buildProjectStatsContext(
+        fixture,
+        nowJst: nowJst,
+      );
+      expect(block, contains('Own project data'));
+      expect(block, contains('source=growth-hub roadmap.share_stats'));
+      expect(block, contains('取得日時 2026-07-12 09:30 JST'));
+      expect(block, contains('registered-accounts(total)=1234'));
+      expect(block, contains('development-log-entries(total)=567'));
+      expect(block, contains('development-log threshold 12/20, 閾値まで残り8件'));
+      expect(block, contains('登録アカウント目標 100件'));
+      expect(block, contains('目標達成 +1134件'));
+      // 残日数は Dart 側で確定させる(2026-07-12 → 2026-08-01 = 20日)。
+      expect(block, contains('あと20日'));
+      expect(block, contains('🟡 Goal gap (短期計画)'));
+      // 公開 allowlist 外の内部/競合計画を prompt へ出さない。
+      expect(block, isNot(contains('Internal Competitor')));
+    });
+
+    test('degrades line by line when plan fields are missing', () {
+      final block = UniversalXShareService.buildProjectStatsContext(
+        {
+          'verified': true,
+          'source': 'roadmap.share_stats',
+          'userCount': 1234,
+          'achievementsCount': 567,
+        },
+        nowJst: nowJst,
+      );
+      expect(block, contains('registered-accounts(total)=1234'));
+      expect(block, isNot(contains('Goal gap')));
+    });
+
+    test(
+      'allowlists and orders short, medium, long plans deterministically',
+      () {
+        Map<String, dynamic> plan(String label) => {
+              'label': label,
+              'deadline': '2027年08月01日',
+              'target': 2000,
+              'features_done': 1,
+              'features_total': 2,
+            };
+        final block = UniversalXShareService.buildProjectStatsContext(
+          {
+            'verified': true,
+            'source': 'roadmap.share_stats',
+            'userCount': 1234,
+            'achievementsCount': 567,
+            'plans': [
+              plan('長期計画'),
+              plan('vs Internal Competitor'),
+              plan('短期計画'),
+              plan('中期計画'),
+            ],
+          },
+          nowJst: nowJst,
+        );
+        final shortIndex = block.indexOf('Goal gap (短期計画)');
+        final mediumIndex = block.indexOf('Goal gap (中期計画)');
+        final longIndex = block.indexOf('Goal gap (長期計画)');
+        expect(shortIndex, greaterThanOrEqualTo(0));
+        expect(mediumIndex, greaterThan(shortIndex));
+        expect(longIndex, greaterThan(mediumIndex));
+        expect(block, isNot(contains('Internal Competitor')));
+      },
+    );
+
+    test('rejects unverified responses and fewer than 2 real numbers', () {
+      expect(
+        UniversalXShareService.buildProjectStatsContext(
+          {
+            'userCount': 3,
+            'achievementsCount': 4,
+          },
+          nowJst: nowJst,
+        ),
+        isEmpty,
+      );
+      expect(
+        UniversalXShareService.buildProjectStatsContext(
+          {
+            'verified': true,
+            'source': 'roadmap.share_stats',
+            'userCount': 3,
+          },
+          nowJst: nowJst,
+        ),
+        isEmpty,
+      );
+      expect(
+        UniversalXShareService.buildProjectStatsContext(
+          const {
+            'verified': true,
+            'source': 'roadmap.share_stats',
+          },
+          nowJst: nowJst,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('marks overdue gaps as red and never publishes fake あと0日', () {
+      final block = UniversalXShareService.buildProjectStatsContext(
+        {
+          'verified': true,
+          'source': 'roadmap.share_stats',
+          'userCount': 10,
+          'achievementsCount': 20,
+          'plans': [
+            {
+              'label': '短期計画',
+              'deadline': '2026年07月01日',
+              'target': 100,
+              'features_done': 1,
+              'features_total': 2,
+            },
+          ],
+        },
+        nowJst: nowJst,
+      );
+      expect(block, contains('終了・更新必要'));
+      expect(block, contains('🔴 Goal gap (短期計画)'));
+      expect(block, contains('登録アカウント目標 100件'));
+      expect(block, contains('目標まで残り90件'));
+      expect(block, isNot(contains('あと0日')));
+      expect(block, isNot(contains('あと-')));
+    });
+
+    test('stats block and a sample digest lead stay slop-clean (R22)', () {
+      final block = UniversalXShareService.buildProjectStatsContext(
+        fixture,
+        nowJst: nowJst,
+      );
+      expect(detectSlop('', block), isEmpty);
+      // 97K 実測ポスト構造(集計ヘッダ+🔴🟡アラート+内訳短行)のサンプルリードも
+      // R22 の禁止トークン警告を踏まないこと(数字密度はスロップではない)。
+      const sampleDigestLead = '自分株式会社 開発集計 開発ログ567件 (2026/07/12時点)\n'
+          '取得日時 2026-07-12 09:30 JST\n'
+          '登録アカウント 1234件\n'
+          '短期計画: 開発ログ閾値12/20、残り8件、期日まであと20日\n'
+          '🔴 未着手 2件\n'
+          '🟡 要注意 3件\n'
+          'https://example.com/app';
+      expect(detectSlop(sampleDigestLead, ''), isEmpty);
+    });
+
+    test('draft prompt wires the block and the (d) number source', () async {
+      String? capturedPrompt;
+      final chat = AiHubChatService(
+        invoker: (body) async {
+          capturedPrompt = body['message']?.toString();
+          return {
+            'success': true,
+            'provider': 'groq',
+            'text':
+                '{"text": "x ${projectPage.url}", "hashtags": ["#buildinpublic"]}',
+          };
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async {
+          if (body['action'] == 'roadmap.share_stats') {
+            return {'success': true, ...fixture};
+          }
+          return {'success': true};
+        },
+      );
+
+      await service.generateDraft(projectPage);
+
+      final prompt = capturedPrompt ?? '';
+      expect(prompt, contains('registered-accounts(total)=1234'));
+      expect(prompt, contains('"Own project data"'));
+      // 例外ルールはすべて「データレポート型の日のみ」に条件付けされている。
+      expect(prompt, contains('例外(データレポート型の日のみ)'));
+      // 97K 実測ポストの骨格(集計ヘッダ/取得日時/アラート)が指示に含まれる。
+      expect(prompt, contains('集計ヘッダ'));
+      expect(prompt, contains('取得日時'));
+      expect(prompt, contains('デイリーブリーフィング」をシリーズ名に使うな'));
+      // 既存ピン(R23)の非回帰。
+      expect(prompt, contains(kDataReportArchetypeLesson));
+      expect(prompt, contains('それ以外の数字・集計値を作るな'));
+      expect(prompt, contains('900-1500 chars'));
+      expect(prompt, contains('STRATEGY EVIDENCE ONLY'));
+      expect(prompt, contains('roadmap.share_stats'));
+    });
+
+    test(
+      'prompt disables source (d) when project stats are unavailable',
+      () async {
+        String? capturedPrompt;
+        final chat = AiHubChatService(
+          invoker: (body) async {
+            capturedPrompt = body['message']?.toString();
+            return {
+              'success': true,
+              'provider': 'groq',
+              'text':
+                  '{"text": "x ${projectPage.url}", "hashtags": ["#buildinpublic"]}',
+            };
+          },
+        );
+        final service = UniversalXShareService(
+          chatService: chat,
+          functionInvoker: (functionName, body) async {
+            if (body['action'] == 'roadmap.share_stats') {
+              throw Exception('unauthenticated');
+            }
+            return {'success': true};
+          },
+        );
+
+        final draft = await service.generateDraft(projectPage);
+
+        // 実データ取得の失敗は下書き生成を止めない(fail-open)。
+        expect(draft.fallbackUsed, isFalse);
+        expect(capturedPrompt, contains('Number source (d) below is DISABLED'));
+      },
+    );
+
+    test('does not fetch global project stats for an unrelated page', () async {
+      var projectStatsCalls = 0;
+      String? capturedPrompt;
+      final chat = AiHubChatService(
+        invoker: (body) async {
+          capturedPrompt = body['message']?.toString();
+          return {
+            'success': true,
+            'provider': 'groq',
+            'text': '{"text": "x ${page.url}", "hashtags": ["#buildinpublic"]}',
+          };
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async {
+          if (body['action'] == 'roadmap.share_stats') projectStatsCalls += 1;
+          return {'success': true, ...fixture};
+        },
+      );
+
+      await service.generateDraft(page);
+
+      expect(UniversalXShareService.supportsProjectStatsContext(page), isFalse);
+      expect(projectStatsCalls, 0);
+      expect(capturedPrompt, contains('Number source (d) below is DISABLED'));
+    });
+
+    test('accepts a long data-report lead within the raised cap', () async {
+      // データレポート型の内訳込みリード(プロンプト上限 1500 字 + 2 倍の
+      // ヘッドルーム=3000)が JSON ダンプ扱いで捨てられないこと。
+      final longLead =
+          '開発集計 567件 (2026/07/12時点)\\n${'内訳の行です。' * 300}\\n${page.url}';
+      final chat = AiHubChatService(
+        invoker: (body) async => {
+          'success': true,
+          'provider': 'groq',
+          'text': '{"text": "$longLead", "hashtags": ["#buildinpublic"]}',
+        },
+      );
+      final service = UniversalXShareService(
+        chatService: chat,
+        functionInvoker: (functionName, body) async => {'success': true},
+      );
+      final draft = await service.generateDraft(page);
+      expect(draft.fallbackUsed, isFalse);
+      expect(draft.text.length, greaterThan(2000));
+    });
+  });
+
   test('generateDraft recovers a poll leaked inside threadReplies', () async {
     // 実障害: LLM が poll をトップレベルでなく threadReplies の要素(オブジェクト)
     // に入れ、Map.toString() の生テキスト `{text: , poll: {...}}` がそのまま
@@ -774,28 +1072,27 @@ void main() {
     }
   });
 
-  test('buildManualShareParts keeps the product URL only on the final reply',
-      () {
-    // LLM が自リプへ製品 URL を含めると OG カードが複数リプで重複表示される
-    // (実機で同一カードが2連続)。linkInReply ではリプ本文から URL を剥がし、
-    // URL は最終 CTA リプライだけに載せる。
-    final parts = UniversalXShareService.buildManualShareParts(
-      context: page,
-      text: 'リード本文\n${page.url}',
-      threadReplies: <String>[
-        'ポイント解説です。',
-        '締めです。詳しくは ${page.url} を見てください。',
-      ],
-      linkInReply: true,
-    );
+  test(
+    'buildManualShareParts keeps the product URL only on the final reply',
+    () {
+      // LLM が自リプへ製品 URL を含めると OG カードが複数リプで重複表示される
+      // (実機で同一カードが2連続)。linkInReply ではリプ本文から URL を剥がし、
+      // URL は最終 CTA リプライだけに載せる。
+      final parts = UniversalXShareService.buildManualShareParts(
+        context: page,
+        text: 'リード本文\n${page.url}',
+        threadReplies: <String>['ポイント解説です。', '締めです。詳しくは ${page.url} を見てください。'],
+        linkInReply: true,
+      );
 
-    expect(parts.replyTexts.length, 3);
-    // 中間リプに URL が残らない(重複 OG カード防止)。
-    expect(parts.replyTexts[0], isNot(contains('my-web-app')));
-    expect(parts.replyTexts[1], isNot(contains('my-web-app')));
-    // URL は最終 CTA リプライのみ。
-    expect(parts.replyTexts.last, contains(parts.textUrl));
-  });
+      expect(parts.replyTexts.length, 3);
+      // 中間リプに URL が残らない(重複 OG カード防止)。
+      expect(parts.replyTexts[0], isNot(contains('my-web-app')));
+      expect(parts.replyTexts[1], isNot(contains('my-web-app')));
+      // URL は最終 CTA リプライのみ。
+      expect(parts.replyTexts.last, contains(parts.textUrl));
+    },
+  );
 
   test('assembleReplyTexts keeps the URL CTA when poll+replies exceed 8', () {
     // growth-hub は replyTexts を slice(0,8) で切る。poll 質問(+1)と最終
@@ -891,28 +1188,30 @@ void main() {
     expect(capturedBody?.containsKey('poll'), isFalse);
   });
 
-  test('postToX stays poll-free (byte-identical) when no poll is given',
-      () async {
-    Map<String, dynamic>? capturedBody;
-    final service = UniversalXShareService(
-      functionInvoker: (functionName, body) async {
-        capturedBody = body;
-        return {'success': true, 'posted': true};
-      },
-    );
+  test(
+    'postToX stays poll-free (byte-identical) when no poll is given',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {'success': true, 'posted': true};
+        },
+      );
 
-    await service.postToX(
-      context: page,
-      text: 'リード投稿\n${page.url}',
-      threadReplies: const ['1. 【AI】本文\nなぜ重要か: 変わる。'],
-      linkInReply: true,
-    );
+      await service.postToX(
+        context: page,
+        text: 'リード投稿\n${page.url}',
+        threadReplies: const ['1. 【AI】本文\nなぜ重要か: 変わる。'],
+        linkInReply: true,
+      );
 
-    expect(capturedBody?.containsKey('poll'), isFalse);
-    final replies = capturedBody?['replyTexts'] as List;
-    // 先頭は投票質問ではなく従来どおりスレッド本文で始まる。
-    expect(replies.first.toString(), contains('本文'));
-  });
+      expect(capturedBody?.containsKey('poll'), isFalse);
+      final replies = capturedBody?['replyTexts'] as List;
+      // 先頭は投票質問ではなく従来どおりスレッド本文で始まる。
+      expect(replies.first.toString(), contains('本文'));
+    },
+  );
 
   test('postToX attaches a native poll to a prepended first reply', () async {
     Map<String, dynamic>? capturedBody;
@@ -1032,34 +1331,38 @@ void main() {
     expect(parts.replyTexts.last, contains(page.url));
   });
 
-  test('buildManualShareParts keeps the URL inline when not linking in reply',
-      () {
-    final parts = UniversalXShareService.buildManualShareParts(
-      context: page,
-      text: 'ふつうの投稿\n${page.url}',
-    );
-
-    expect(parts.leadText, contains(page.url));
-    expect(parts.replyTexts, isEmpty);
-  });
-
-  test('final-reply CTA rotates across posts to avoid duplicate suppression',
-      () {
-    final seenCtas = <String>{};
-    for (final body in const ['a', 'bb', 'ccc', 'dddd', 'eeeee', 'ffffff']) {
+  test(
+    'buildManualShareParts keeps the URL inline when not linking in reply',
+    () {
       final parts = UniversalXShareService.buildManualShareParts(
         context: page,
-        text: '$body\n${page.url}',
-        linkInReply: true,
+        text: 'ふつうの投稿\n${page.url}',
       );
-      final cta = parts.replyTexts.last;
-      // URL は最終リプライに載る(リードには載らない)。
-      expect(cta, contains(parts.textUrl));
-      seenCtas.add(cta.split('\n').first);
-    }
-    // 固定文の近似重複でなく、プールから複数バリアントが出る。
-    expect(seenCtas.length, greaterThanOrEqualTo(2));
-  });
+
+      expect(parts.leadText, contains(page.url));
+      expect(parts.replyTexts, isEmpty);
+    },
+  );
+
+  test(
+    'final-reply CTA rotates across posts to avoid duplicate suppression',
+    () {
+      final seenCtas = <String>{};
+      for (final body in const ['a', 'bb', 'ccc', 'dddd', 'eeeee', 'ffffff']) {
+        final parts = UniversalXShareService.buildManualShareParts(
+          context: page,
+          text: '$body\n${page.url}',
+          linkInReply: true,
+        );
+        final cta = parts.replyTexts.last;
+        // URL は最終リプライに載る(リードには載らない)。
+        expect(cta, contains(parts.textUrl));
+        seenCtas.add(cta.split('\n').first);
+      }
+      // 固定文の近似重複でなく、プールから複数バリアントが出る。
+      expect(seenCtas.length, greaterThanOrEqualTo(2));
+    },
+  );
 
   test('final-reply CTA pool includes a save/bookmark cue', () {
     // ブックマーク(保存)は 2026 のリーチ品質シグナル。ローテプールに保存促しの
@@ -1279,38 +1582,41 @@ void main() {
     },
   );
 
-  test('video narration reflects today news and drops the fixed tour',
-      () async {
-    Map<String, dynamic>? capturedBody;
-    final service = UniversalXShareService(
-      functionInvoker: (functionName, body) async {
-        capturedBody = body;
-        return {'success': true, 'status': 'fallback_text'};
-      },
-    );
+  test(
+    'video narration reflects today news and drops the fixed tour',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {'success': true, 'status': 'fallback_text'};
+        },
+      );
 
-    final draft = UniversalXShareService.buildGrowthDraft(
-      page,
-      trendTopics: const [
-        UniversalXTrendTopic(name: '九州北部で非常に激しい雨'),
-        UniversalXTrendTopic(name: 'OpenAIが新モデルを発表'),
-      ],
-    );
-    await service.generateVideo(
-      context: page,
-      draft: draft,
-      imageUrl: 'https://example.com/secretary.png',
-    );
+      final draft = UniversalXShareService.buildGrowthDraft(
+        page,
+        trendTopics: const [
+          UniversalXTrendTopic(name: '九州北部で非常に激しい雨'),
+          UniversalXTrendTopic(name: 'OpenAIが新モデルを発表'),
+        ],
+      );
+      await service.generateVideo(
+        context: page,
+        draft: draft,
+        imageUrl: 'https://example.com/secretary.png',
+      );
 
-    final scriptLines = (capturedBody?['customScript'] as List).cast<String>();
-    final script = scriptLines.join('\n');
-    // 当日ニュース(トレンド)が動画ナレーションに載ること。
-    expect(script, contains('九州北部で非常に激しい雨'));
-    // 固定のツアー定型文ではないこと。
-    expect(script, isNot(contains('AI大学では主要AI企業')));
-    expect(scriptLines.length, greaterThanOrEqualTo(3));
-    expect(script, isNot(contains('https://')));
-  });
+      final scriptLines =
+          (capturedBody?['customScript'] as List).cast<String>();
+      final script = scriptLines.join('\n');
+      // 当日ニュース(トレンド)が動画ナレーションに載ること。
+      expect(script, contains('九州北部で非常に激しい雨'));
+      // 固定のツアー定型文ではないこと。
+      expect(script, isNot(contains('AI大学では主要AI企業')));
+      expect(scriptLines.length, greaterThanOrEqualTo(3));
+      expect(script, isNot(contains('https://')));
+    },
+  );
 
   test(
     'generateVideo can poll an existing Hedra generation and use download URL',
@@ -1417,16 +1723,22 @@ void main() {
     },
   );
 
-  test('cinematic prompt falls back to page title when draft prompt is empty',
-      () {
-    final draft = UniversalXShareService.buildFallbackDraft(page)
-        .copyWith(videoPrompt: '');
+  test(
+    'cinematic prompt falls back to page title when draft prompt is empty',
+    () {
+      final draft = UniversalXShareService.buildFallbackDraft(
+        page,
+      ).copyWith(videoPrompt: '');
 
-    final prompt = UniversalXShareService.cinematicVideoPromptFor(page, draft);
+      final prompt = UniversalXShareService.cinematicVideoPromptFor(
+        page,
+        draft,
+      );
 
-    expect(prompt, contains('Gemini University'));
-    expect(prompt, contains('paper-craft'));
-  });
+      expect(prompt, contains('Gemini University'));
+      expect(prompt, contains('paper-craft'));
+    },
+  );
 
   test('generateVideo prefers durable Supabase stored video URL', () async {
     final service = UniversalXShareService(
@@ -1507,93 +1819,99 @@ void main() {
     );
   });
 
-  test('generateVideo matches narration voice gender+tone to the presenter',
-      () async {
-    Map<String, dynamic>? capturedBody;
-    final service = UniversalXShareService(
-      functionInvoker: (functionName, body) async {
-        capturedBody = body;
-        return {'success': true, 'status': 'fallback_text'};
-      },
-    );
+  test(
+    'generateVideo matches narration voice gender+tone to the presenter',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {'success': true, 'status': 'fallback_text'};
+        },
+      );
 
-    final baseDraft = UniversalXShareService.buildGrowthDraft(page);
-    final observedLabels = <String>{};
-    var sawMaleVoice = false;
-    var sawFemaleVoice = false;
+      final baseDraft = UniversalXShareService.buildGrowthDraft(page);
+      final observedLabels = <String>{};
+      var sawMaleVoice = false;
+      var sawFemaleVoice = false;
 
-    // 多数の異なる seed(= 当日ニュース違い)で presenter が男女両方へ振れることを
-    // 確認しつつ、毎回 presenter の性別と音声ラベルの性別が一致すること(男性キャラに
-    // 女性声、女性キャラに男性声が付かない)を保証する。
-    for (var i = 0; i < 120; i += 1) {
-      final draft = baseDraft.copyWith(text: 'x-share-seed-$i ${page.url}');
+      // 多数の異なる seed(= 当日ニュース違い)で presenter が男女両方へ振れることを
+      // 確認しつつ、毎回 presenter の性別と音声ラベルの性別が一致すること(男性キャラに
+      // 女性声、女性キャラに男性声が付かない)を保証する。
+      for (var i = 0; i < 120; i += 1) {
+        final draft = baseDraft.copyWith(text: 'x-share-seed-$i ${page.url}');
+        await service.generateVideo(
+          context: page,
+          draft: draft,
+          imageUrl: 'https://example.com/secretary.png',
+        );
+        final voice = capturedBody?['voice'] as String;
+        final prompt = capturedBody?['customPrompt'] as String;
+        expect(voice, isIn(_kVoiceLabels));
+        final presenterIsFemale = prompt.contains('female') ||
+            prompt.contains('woman') ||
+            prompt.contains('lady');
+        final voiceIsFemale = voice.contains('female');
+        expect(
+          voiceIsFemale,
+          presenterIsFemale,
+          reason:
+              'voice "$voice" gender must match presenter in prompt: $prompt',
+        );
+        observedLabels.add(voice);
+        sawMaleVoice = sawMaleVoice || !voiceIsFemale;
+        sawFemaleVoice = sawFemaleVoice || voiceIsFemale;
+      }
+
+      // ローテの結果、男女両方の声が実際に選ばれること。
+      expect(sawMaleVoice, isTrue);
+      expect(sawFemaleVoice, isTrue);
+      // トーン別ラベルへローテするため、中庸 narrator 以外の声も現れること。
+      expect(observedLabels.length, greaterThanOrEqualTo(2));
+      final sawTonedVoice = observedLabels.any(
+        (label) => label.startsWith('energetic_') || label.startsWith('calm_'),
+      );
+      expect(sawTonedVoice, isTrue);
+    },
+  );
+
+  test(
+    'video narration is capped to a Hedra-safe length for long news drafts',
+    () async {
+      Map<String, dynamic>? capturedBody;
+      final service = UniversalXShareService(
+        functionInvoker: (functionName, body) async {
+          capturedBody = body;
+          return {'success': true, 'status': 'fallback_text'};
+        },
+      );
+
+      // 1 行が 800 字超になる病的な長文 draft(=実測で processing 滞留→静止画に
+      // なった 685 字を大きく超える)。台本(customScript)が確実に短縮されること。
+      final longLine = 'とても長いニュース解説の一文です。' * 60;
+      final draft = UniversalXShareDraft(
+        text: '$longLine\n$longLine',
+        imagePrompt: 'x',
+        videoPrompt: 'y',
+        hashtags: const ['#AI'],
+        threadReplies: <String>['1. $longLine', '2. $longLine', '3. $longLine'],
+        fallbackUsed: false,
+        source: 'test',
+      );
+
       await service.generateVideo(
         context: page,
         draft: draft,
         imageUrl: 'https://example.com/secretary.png',
       );
-      final voice = capturedBody?['voice'] as String;
-      final prompt = capturedBody?['customPrompt'] as String;
-      expect(voice, isIn(_kVoiceLabels));
-      final presenterIsFemale = prompt.contains('female') ||
-          prompt.contains('woman') ||
-          prompt.contains('lady');
-      final voiceIsFemale = voice.contains('female');
-      expect(
-        voiceIsFemale,
-        presenterIsFemale,
-        reason: 'voice "$voice" gender must match presenter in prompt: $prompt',
-      );
-      observedLabels.add(voice);
-      sawMaleVoice = sawMaleVoice || !voiceIsFemale;
-      sawFemaleVoice = sawFemaleVoice || voiceIsFemale;
-    }
 
-    // ローテの結果、男女両方の声が実際に選ばれること。
-    expect(sawMaleVoice, isTrue);
-    expect(sawFemaleVoice, isTrue);
-    // トーン別ラベルへローテするため、中庸 narrator 以外の声も現れること。
-    expect(observedLabels.length, greaterThanOrEqualTo(2));
-    final sawTonedVoice = observedLabels.any(
-      (label) => label.startsWith('energetic_') || label.startsWith('calm_'),
-    );
-    expect(sawTonedVoice, isTrue);
-  });
-
-  test('video narration is capped to a Hedra-safe length for long news drafts',
-      () async {
-    Map<String, dynamic>? capturedBody;
-    final service = UniversalXShareService(
-      functionInvoker: (functionName, body) async {
-        capturedBody = body;
-        return {'success': true, 'status': 'fallback_text'};
-      },
-    );
-
-    // 1 行が 800 字超になる病的な長文 draft(=実測で processing 滞留→静止画に
-    // なった 685 字を大きく超える)。台本(customScript)が確実に短縮されること。
-    final longLine = 'とても長いニュース解説の一文です。' * 60;
-    final draft = UniversalXShareDraft(
-      text: '$longLine\n$longLine',
-      imagePrompt: 'x',
-      videoPrompt: 'y',
-      hashtags: const ['#AI'],
-      threadReplies: <String>['1. $longLine', '2. $longLine', '3. $longLine'],
-      fallbackUsed: false,
-      source: 'test',
-    );
-
-    await service.generateVideo(
-      context: page,
-      draft: draft,
-      imageUrl: 'https://example.com/secretary.png',
-    );
-
-    final scriptLines = (capturedBody?['customScript'] as List).cast<String>();
-    expect(scriptLines, isNotEmpty);
-    // 総ナレーションは 450 字(+省略記号の余白)以内に収まる。
-    expect(scriptLines.join().runes.length, lessThanOrEqualTo(460));
-  });
+      final scriptLines =
+          (capturedBody?['customScript'] as List).cast<String>();
+      expect(scriptLines, isNotEmpty);
+      // 総ナレーションは 450 字(+省略記号の余白)以内に収まる。
+      expect(scriptLines.join().runes.length, lessThanOrEqualTo(460));
+    },
+  );
 
   test('finance video narration is capped even with a long AI draft', () async {
     Map<String, dynamic>? capturedBody;
