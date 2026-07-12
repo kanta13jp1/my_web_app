@@ -87,7 +87,7 @@ void main() {
             variant: 'household_tracker',
             archetype: 'data_report',
             text: 'x',
-            replyCount: 0,
+            replyTexts: const [],
             generatedAt: null,
           );
       final filtered = actionableCandidates([
@@ -105,6 +105,66 @@ void main() {
       );
       expect(withStatus('publish_failed').statusLabel, contains('再試行可'));
       expect(withStatus('posted').isActionable, isFalse);
+    });
+  });
+
+  group('R26 review-fix helpers (F0/F2/F3)', () {
+    XPostCandidateSummary make({
+      required String id,
+      String status = 'pending_approval',
+      List<String> replies = const [],
+      String? generatedAt,
+    }) =>
+        XPostCandidateSummary(
+          id: id,
+          status: status,
+          candidateType: 't',
+          variant: 'household_tracker',
+          archetype: 'data_report',
+          text: 'リード本文',
+          replyTexts: replies,
+          generatedAt:
+              generatedAt == null ? null : DateTime.tryParse(generatedAt),
+        );
+
+    test('candidateFullReviewText carries EVERY reply body (HITL guarantee)',
+        () {
+      final full = candidateFullReviewText(
+        make(id: 'a', replies: ['リプ1本文', 'リプ2本文']),
+      );
+      expect(full, contains('リード本文'));
+      expect(full, contains('━━ リプライ1/2 ━━'));
+      expect(full, contains('リプ1本文'));
+      expect(full, contains('━━ リプライ2/2 ━━'));
+      expect(full, contains('リプ2本文'));
+      // リプ無しはリードのみ(区切りを出さない)。
+      expect(candidateFullReviewText(make(id: 'b')), 'リード本文');
+    });
+
+    test('mergeCandidateSummaries dedupes by id and sorts newest first', () {
+      final merged = mergeCandidateSummaries([
+        [make(id: 'old', generatedAt: '2026-07-01T00:00:00Z')],
+        [
+          make(id: 'new', generatedAt: '2026-07-12T00:00:00Z'),
+          make(id: 'old', generatedAt: '2026-07-01T00:00:00Z'),
+        ],
+      ]);
+      expect(merged.map((c) => c.id).toList(), ['new', 'old']);
+    });
+
+    test('candidateQueueHeaderLabel separates pending from retry counts', () {
+      expect(
+        candidateQueueHeaderLabel([
+          make(id: 'a'),
+          make(id: 'b'),
+          make(id: 'c', status: 'publish_failed'),
+        ]),
+        '承認待ち 2件・再試行 1件',
+      );
+      expect(
+        candidateQueueHeaderLabel([make(id: 'a')]),
+        '承認待ち 1件',
+      );
     });
   });
 

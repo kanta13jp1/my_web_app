@@ -37,7 +37,9 @@ String xTrackerSeriesLabel(String variant) {
   return key;
 }
 
-/// hub_data 候補行の表示用サマリ。
+/// hub_data 候補行の表示用サマリ。reply_texts は件数でなく**本文ごと**保持する
+/// — HITL の保証は「人間が投稿される全文を見た」ことなので、リード+全リプを
+/// レビュー面に出せなければ承認 UI として成立しない(レビュー F0)。
 class XPostCandidateSummary {
   final String id;
   final String status;
@@ -45,7 +47,7 @@ class XPostCandidateSummary {
   final String variant;
   final String archetype;
   final String text;
-  final int replyCount;
+  final List<String> replyTexts;
   final DateTime? generatedAt;
 
   const XPostCandidateSummary({
@@ -55,9 +57,11 @@ class XPostCandidateSummary {
     required this.variant,
     required this.archetype,
     required this.text,
-    required this.replyCount,
+    required this.replyTexts,
     required this.generatedAt,
   });
+
+  int get replyCount => replyTexts.length;
 
   String get seriesLabel => xTrackerSeriesLabel(variant);
 
@@ -114,7 +118,13 @@ List<XPostCandidateSummary> parseXPostCandidates(dynamic rows) {
     if (id.isEmpty || metadata is! Map) continue;
     final text = (metadata['text'] ?? '').toString();
     if (text.trim().isEmpty) continue;
-    final replyTexts = metadata['reply_texts'];
+    final rawReplies = metadata['reply_texts'];
+    final replyTexts = rawReplies is List
+        ? rawReplies
+            .map((entry) => (entry ?? '').toString())
+            .where((entry) => entry.trim().isNotEmpty)
+            .toList(growable: false)
+        : const <String>[];
     final generatedRaw =
         (metadata['generated_at'] ?? row['created_at'] ?? '').toString();
     result.add(
@@ -125,7 +135,7 @@ List<XPostCandidateSummary> parseXPostCandidates(dynamic rows) {
         variant: (metadata['variant'] ?? '').toString(),
         archetype: (metadata['content_archetype'] ?? '').toString(),
         text: text,
-        replyCount: replyTexts is List ? replyTexts.length : 0,
+        replyTexts: replyTexts,
         generatedAt: DateTime.tryParse(generatedRaw),
       ),
     );
@@ -136,6 +146,50 @@ List<XPostCandidateSummary> parseXPostCandidates(dynamic rows) {
     return bt.compareTo(at);
   });
   return result;
+}
+
+/// 承認ダイアログに出す「投稿される全文」。リードだけでなく全リプライ本文を
+/// 番号付きで連結する — 承認者が見ていない文字列は 1 文字も投稿されないこと
+/// が HITL の成立条件(レビュー F0: 従来はリプライが件数表示のみで未レビュー
+/// のまま公開されていた)。
+String candidateFullReviewText(XPostCandidateSummary candidate) {
+  final buffer = StringBuffer(candidate.text.trim());
+  for (var i = 0; i < candidate.replyTexts.length; i++) {
+    buffer
+      ..write('\n\n━━ リプライ${i + 1}/${candidate.replyTexts.length} ━━\n')
+      ..write(candidate.replyTexts[i].trim());
+  }
+  return buffer.toString();
+}
+
+/// 複数 status クエリの結果を id で重複排除し新しい順に統合する。status 無指定
+/// の単一クエリは finalized 行(posted 等)が新しい順の window を埋め、古い
+/// 承認待ちを黙って押し出す(レビュー F2)ため、status 別クエリ+統合が正。
+List<XPostCandidateSummary> mergeCandidateSummaries(
+  List<List<XPostCandidateSummary>> lists,
+) {
+  final seen = <String>{};
+  final merged = <XPostCandidateSummary>[];
+  for (final list in lists) {
+    for (final candidate in list) {
+      if (seen.add(candidate.id)) merged.add(candidate);
+    }
+  }
+  merged.sort((a, b) {
+    final at = a.generatedAt?.millisecondsSinceEpoch ?? 0;
+    final bt = b.generatedAt?.millisecondsSinceEpoch ?? 0;
+    return bt.compareTo(at);
+  });
+  return merged;
+}
+
+/// panel ヘッダの内訳ラベル。「承認待ち」に再試行行を混ぜて数えない
+/// (n=0 捏造を排した R17 以降のカウンタ誠実性規律 / レビュー F3)。
+String candidateQueueHeaderLabel(List<XPostCandidateSummary> candidates) {
+  final pending = candidates.where((c) => c.isPendingApproval).length;
+  final retry = candidates.length - pending;
+  if (retry <= 0) return '承認待ち $pending件';
+  return '承認待ち $pending件・再試行 $retry件';
 }
 
 /// 一覧カードの本文プレビュー(1行化+切り詰め)。

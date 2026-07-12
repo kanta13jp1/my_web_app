@@ -359,28 +359,36 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return null;
   }
 
-  /// R26: X投稿候補キューを fail-safe に取得する。status フィルタを付けず
-  /// 直近分を取り、操作可能な3状態(承認待ち/承認済み・投稿未完/投稿失敗)へ
-  /// クライアント側で絞る=「approve 成功→投稿失敗」の候補も再試行面に残す。
+  /// R26: X投稿候補キューを fail-safe に取得する。操作可能な3状態(承認待ち/
+  /// 承認済み・投稿未完/投稿失敗)を **status 別クエリ**で取り統合する —
+  /// status 無指定の単一クエリだと finalized 行(posted 等)が created_at 降順
+  /// window を埋め、古い承認待ちを黙って押し出す(レビュー F2)。
   /// X operator 権限が無いと edge が 403 を返すため、例外/非成功は空リストに
   /// degrade して panel ごと消す(ダッシュボードは必ず描画する)。
   Future<List<XPostCandidateSummary>> _loadXCandidateQueue() async {
-    try {
-      final res = await _supabase.functions.invoke(
-        'growth-hub',
-        body: {
-          'action': 'x.candidate.list',
-          'limit': 30,
-        },
-      );
-      final data = res.data;
-      if (data is Map && data['success'] == true) {
-        return actionableCandidates(parseXPostCandidates(data['candidates']));
-      }
-    } catch (error) {
-      debugPrint('x.candidate.list unavailable: $error');
-    }
-    return const [];
+    const statuses = ['pending_approval', 'approved', 'publish_failed'];
+    final lists = await Future.wait(
+      statuses.map((status) async {
+        try {
+          final res = await _supabase.functions.invoke(
+            'growth-hub',
+            body: {
+              'action': 'x.candidate.list',
+              'status': status,
+              'limit': 10,
+            },
+          );
+          final data = res.data;
+          if (data is Map && data['success'] == true) {
+            return parseXPostCandidates(data['candidates']);
+          }
+        } catch (error) {
+          debugPrint('x.candidate.list($status) unavailable: $error');
+        }
+        return const <XPostCandidateSummary>[];
+      }),
+    );
+    return mergeCandidateSummaries(lists);
   }
 
   /// R26: 候補を承認→投稿→確定する HITL フロー。無審査自動投稿はしない
@@ -399,15 +407,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '全${candidate.text.length}字'
-                '${candidate.replyCount > 0 ? ' + リプライ${candidate.replyCount}件' : ''}'
+                'リード全${candidate.text.length}字'
+                '${candidate.replyCount > 0 ? ' + リプライ${candidate.replyCount}件(下に全文)' : ''}'
                 'を実投稿します(取り消し不可)。',
               ),
               const SizedBox(height: 8),
               Flexible(
                 child: SingleChildScrollView(
+                  // リード+全リプライ本文。承認者が見ていない文字列は 1 文字も
+                  // 投稿されない(レビュー F0: 件数表示のみだとスレッド本文が
+                  // 未レビューのまま公開される)。
                   child: Text(
-                    candidate.text,
+                    candidateFullReviewText(candidate),
                     style: Theme.of(dialogContext).textTheme.bodySmall,
                   ),
                 ),
@@ -430,16 +441,33 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (confirmed != true || !mounted) return;
     setState(() => _xCandidatePublishing.add(candidate.id));
     try {
-      final approveRes = await _supabase.functions.invoke(
-        'growth-hub',
-        body: {
-          'action': 'x.candidate.approve',
-          'candidateId': candidate.id,
-        },
-      );
-      final approveData = approveRes.data is Map
-          ? Map<String, dynamic>.from(approveRes.data as Map)
-          : <String, dynamic>{};
+      // approve 段は独立に捕捉する: edge は承認失敗を全て非2xx(404/409 等)で
+      // 返し functions_client は非2xx で throw するため、外側 catch に落とすと
+      // 「投稿処理でエラー」と誤誘導になる(レビュー F1: この段では何も投稿
+      // されていない)。
+      Map<String, dynamic> approveData;
+      try {
+        final approveRes = await _supabase.functions.invoke(
+          'growth-hub',
+          body: {
+            'action': 'x.candidate.approve',
+            'candidateId': candidate.id,
+          },
+        );
+        approveData = approveRes.data is Map
+            ? Map<String, dynamic>.from(approveRes.data as Map)
+            : <String, dynamic>{};
+      } catch (approveError) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '承認に失敗しました(投稿は行われていません): $approveError',
+            ),
+          ),
+        );
+        return;
+      }
       if (approveData['success'] != true ||
           approveData['postPayload'] is! Map) {
         if (!mounted) return;
@@ -6306,7 +6334,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'X投稿候補キュー（承認待ち ${_xCandidates.length}件）',
+                      'X投稿候補キュー（${candidateQueueHeaderLabel(_xCandidates)}）',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
