@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/ai_share_button_preferences_service.dart';
 import 'package:my_web_app/services/universal_x_share_service.dart';
+import 'package:my_web_app/services/x_copy_guardrails.dart';
 
 // 非 finance の presenter 動画で使う音声ラベル一覧(エッジ側 voice_labels.ts と対応)。
 // 中庸の male/female_narrator に加え、トーン別 energetic_* / calm_* を含む。
@@ -664,6 +665,38 @@ void main() {
     expect(capturedPrompt, contains('GOOD'));
     // (5) 保存版まとめの内省・抽象動詞禁止(理解する/認識する)。
     expect(capturedPrompt, contains('内省・抽象動詞'));
+  });
+
+  test('draft prompt injects R23 data-report archetype guidance', () async {
+    // R23 実測(2026-07-12 同日3連投): 独自集計データのレポート型 3.2K vs
+    // ニュース要約 517 vs ニュース→製品転換 28。教訓(共有定数)と、measured
+    // "Archetype lift" / "Own measured data" 行の消費ルール+数字の出所3系統
+    // 限定(捏造ガード)がプロンプトへ確実に注入されることを固定する。
+    String? capturedPrompt;
+    final chat = AiHubChatService(
+      invoker: (body) async {
+        capturedPrompt = body['message']?.toString();
+        return {
+          'success': true,
+          'provider': 'groq',
+          'text': '{"text": "x ${page.url}", "hashtags": ["#buildinpublic"]}',
+        };
+      },
+    );
+    final service = UniversalXShareService(
+      chatService: chat,
+      functionInvoker: (functionName, body) async => {'success': true},
+    );
+
+    await service.generateDraft(page);
+
+    // (1) 実測教訓は共有定数(x_copy_guardrails)から丸ごと注入される。
+    expect(capturedPrompt, contains(kDataReportArchetypeLesson));
+    // (2) perf context の Archetype lift 行を測定事実として扱うルール。
+    expect(capturedPrompt, contains('Archetype lift (by content archetype)'));
+    // (3) データレポート型の数字は3系統限定(Own measured data を含む)。
+    expect(capturedPrompt, contains('Own measured data'));
+    expect(capturedPrompt, contains('それ以外の数字・集計値を作るな'));
   });
 
   test('generateDraft recovers a poll leaked inside threadReplies', () async {

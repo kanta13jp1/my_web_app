@@ -1879,6 +1879,9 @@ Rules:
 - Use the measured performance context above. Prefer winning variants and avoid losing hook styles.
 - Treat the "Variant ranking", "Structural lift", "Media lift", and "Top hook to emulate" lines (when present) as authoritative measured data: adopt the winning structure (media choice, link placement, thread length, hook shape) but never copy winning wording verbatim.
 - If a "Media lift (by type)" line recommends a winning media type (動画/画像/テキスト) with enough samples, invest the strongest hook in that media: when video wins, front-load the first ~3 seconds of videoPrompt with the day's concrete hook; when image wins, make imagePrompt carry the single sharpest visual. If it says samples are insufficient, do NOT change media strategy — keep今日の既定(動画優先)。
+- $kDataReportArchetypeLesson
+- Treat the "Archetype lift (by content archetype)" line (when present) as authoritative measured data too: when data_report is winning with enough samples, structure the lead as a data report (dense real numbers, deltas, named specifics); when it says samples are insufficient, do not force an archetype.
+- データレポート型で使ってよい数字は3系統のみ: (a)上の見出しに実際に書かれている数字 (b)上の "Own measured data" 行の実測値(このアカウント自身の実測インプレッションなので、一人称の build-in-public 実数として公開してよい) (c)機能の仕組みが定義する数(例: 給料日起点で支出の窓を切る)。それ以外の数字・集計値を作るな(実数が足りない日は数字の少ない構成に落とせ)。
 - A/B test only one major variable at a time: hook style, link placement, media/no-media, or thread length.
 - If past results say a link in the first post underperforms, put the product URL in the final reply.
 - Put information value first and product CTA last. Avoid looking like an ad in the lead post.
