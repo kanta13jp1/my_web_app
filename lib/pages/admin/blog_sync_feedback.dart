@@ -12,8 +12,10 @@ String composeBlogSyncErrorMessage({
   String? fallback,
 }) {
   var detail = '';
+  var hint = '';
   if (details is Map) {
     detail = (details['error'] ?? '').toString();
+    hint = (details['hint'] ?? '').toString();
     // error キーを持たない Map でも情報を全損させない。
     if (detail.isEmpty && details.isNotEmpty) {
       detail = details.toString();
@@ -22,6 +24,13 @@ String composeBlogSyncErrorMessage({
     detail = details.toString();
   }
   final probe = detail.isNotEmpty ? detail : (fallback ?? '');
+
+  // schedule-hub (upstream_error.ts) が是正手順 hint を同梱する場合は、
+  // サーバー側の正本(正確な rotate コマンド入り)を最優先で表示する。
+  if (hint.isNotEmpty) {
+    final head = status != null ? '同期に失敗しました (HTTP $status)' : '同期に失敗しました';
+    return probe.isEmpty ? '$head。$hint' : '$head: $probe\n$hint';
+  }
 
   if (RegExp('qiita', caseSensitive: false).hasMatch(probe) &&
       probe.contains('401')) {

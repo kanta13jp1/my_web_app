@@ -62,6 +62,22 @@ void main() {
       );
       expect(message, contains('unexpected'));
     });
+
+    test('サーバー同梱 hint (upstream_error.ts) を最優先で表示する', () {
+      final message = composeBlogSyncErrorMessage(
+        status: 502,
+        details: {
+          'ok': false,
+          'error': 'Qiita API error 401',
+          'error_code': 'upstream_auth_error',
+          'upstream_status': 401,
+          'hint': 'QIITA_ACCESS_TOKEN が失効/権限不足の可能性。再発行して更新してください。',
+        },
+      );
+      expect(message, contains('HTTP 502'));
+      expect(message, contains('Qiita API error 401'));
+      expect(message, contains('再発行して更新してください'));
+    });
   });
 
   group('composeBlogSyncSuccessLine', () {
