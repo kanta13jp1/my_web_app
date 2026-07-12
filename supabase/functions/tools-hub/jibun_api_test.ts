@@ -748,7 +748,7 @@ Deno.test("worker invoke: disabled worker / unknown slug / missing scope", async
   await handleJibunApiAction({
     req: makeRequest(),
     action: "jibunapi.worker.register",
-    body: { name: "W", endpoint_url: "https://example.com/hook" },
+    body: { name: "Worker A", endpoint_url: "https://example.com/hook" },
     store,
     getUserId: () => Promise.resolve("user-1"),
   });
@@ -762,10 +762,11 @@ Deno.test("worker invoke: disabled worker / unknown slug / missing scope", async
   });
   assertEquals(missing!.status, 404);
 
+  // スコープ不足は slug 検証より先に 403 を返す
   const scopeDenied = await handleJibunApiAction({
     req: makeRequest({ bearer: noScope }),
     action: "api.workers.invoke",
-    body: { slug: "w" },
+    body: { slug: "worker-a" },
     store,
     getUserId: () => Promise.resolve(null),
   });
@@ -775,7 +776,7 @@ Deno.test("worker invoke: disabled worker / unknown slug / missing scope", async
   const disabled = await handleJibunApiAction({
     req: makeRequest({ bearer: key }),
     action: "api.workers.invoke",
-    body: { slug: "w" },
+    body: { slug: "worker-a" },
     store,
     getUserId: () => Promise.resolve(null),
   });
@@ -840,7 +841,7 @@ Deno.test("worker invoke rate limit (10/min) returns 429", async () => {
   await handleJibunApiAction({
     req: makeRequest(),
     action: "jibunapi.worker.register",
-    body: { name: "W", endpoint_url: "https://example.com/hook" },
+    body: { name: "Worker A", endpoint_url: "https://example.com/hook" },
     store,
     getUserId: () => Promise.resolve("user-1"),
   });
@@ -848,7 +849,7 @@ Deno.test("worker invoke rate limit (10/min) returns 429", async () => {
   const response = await handleJibunApiAction({
     req: makeRequest({ bearer: key }),
     action: "api.workers.invoke",
-    body: { slug: "w" },
+    body: { slug: "worker-a" },
     store,
     getUserId: () => Promise.resolve(null),
   });
