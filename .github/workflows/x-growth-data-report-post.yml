@@ -7,8 +7,10 @@ name: X Growth Data Report Post
 
 on:
   schedule:
-    # Every Saturday 22:00 UTC (= Sunday 07:00 JST)
-    - cron: "0 22 * * 6"
+    # Every Saturday 21:00 UTC (= Sunday 06:00 JST)。daily briefing の
+    # `0 22 * * *` と同時刻に重ねない(同一アカウント2スレッド同時投下は
+    # ゴールデンアワーの自己共食い+burst 信号 / レビュー指摘)。
+    - cron: "0 21 * * 6"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -158,7 +160,22 @@ jobs:
             exit 1
           fi
           success=$(jq -r '.success' /tmp/x_report_result.json)
+          posted=$(jq -r '.posted // false' /tmp/x_report_result.json)
+          code=$(jq -r '.code // empty' /tmp/x_report_result.json)
+          # 統計が横ばいの週は近似重複ガードが前週レポートと判定して拒否する。
+          # 同内容の再投稿はスパム=投稿しないのが正しい挙動なので、失敗では
+          # なく「変化なし週スキップ」として正常終了する(レビュー指摘の設計化)。
+          if [ "${code}" = "duplicate_content" ]; then
+            echo "::warning::Weekly report skipped: near-duplicate of a recent post (stats unchanged week-over-week)."
+            exit 0
+          fi
           if [ "${success}" != "true" ]; then
-            echo "::error::x.post reported failure (duplicate guard or billing preflight?)"
+            echo "::error::x.post reported failure (billing preflight?)"
+            exit 1
+          fi
+          # posted 検証: credentials_missing 等は success:true + posted:false で
+          # 返る。scheduled 実行の無言グリーン化を防ぐ(daily briefing と同じ守り)。
+          if [ "${DRY_RUN}" != "true" ] && [ "${posted}" != "true" ]; then
+            echo "::error::Scheduled weekly report did not post (X credentials missing or rotated?)"
             exit 1
           fi

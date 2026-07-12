@@ -57,9 +57,20 @@ export function buildGrowthDataReport(
     return Number.isFinite(created) && created >= weekAgoMs;
   }).length;
 
+  // 実測上位(リードの可変トークン+リプの内訳で使う)。
+  const top = rows
+    .filter((row) => typeof row.impressions === "number")
+    .sort((a, b) => (b.impressions ?? 0) - (a.impressions ?? 0))
+    .slice(0, 3);
+
   // リード: ポストAと同じ「取得日時→主要実数→基準との差分→残り」の骨格。
   // 「基準10,000との差分」の語形は classifyPostArchetype の強シグナルと一致
   // させ、このレポート自身が data_report に分類されることを保証する。
+  // 「今週の実測トップ」行はリード唯一の自由テキスト=週替わりの可変トークン。
+  // 固定テンプレ+数字だけだと前週リードとの正規化類似度が近似重複ガードの
+  // 閾値(0.9)を超え得る(レビュー実測 0.93-0.95)。それでも統計が完全に
+  // 横ばいの週はガードに拒否させ、workflow 側で「変化なし週はスキップ」として
+  // 正常終了する(重複投稿しないのが正しい挙動)。
   const gap = IMPRESSION_TARGET - facts.best;
   const lead = [
     `自分株式会社 X運用実測レポート ${jstDateLabel(now)}`,
@@ -71,6 +82,13 @@ export function buildGrowthDataReport(
     `基準10,000との差分: ${gap > 0 ? `-${gap}` : `+${-gap}`}`,
     `10,000まで残り: ${Math.max(0, gap)}`,
     `直近7日の計測対象: ${recent7}件`,
+    ...(top.length > 0
+      ? [
+        `今週の実測トップ: ${top[0].impressions} — 「${
+          compactHook(top[0].text)
+        }」`,
+      ]
+      : []),
     "",
     "数字は全て自分のX投稿ログの実測値。集計はアプリが自動生成しています。",
   ].join("\n");
@@ -108,10 +126,6 @@ export function buildGrowthDataReport(
   }
 
   // 実測上位(増加履歴に相当)。impressions のある行だけを上位3件。
-  const top = rows
-    .filter((row) => typeof row.impressions === "number")
-    .sort((a, b) => (b.impressions ?? 0) - (a.impressions ?? 0))
-    .slice(0, 3);
   if (top.length > 0) {
     replies.push(
       [
@@ -135,9 +149,8 @@ export function buildGrowthDataReport(
   if (thinBuckets.length > 0) {
     alerts.push(`🟡 実測不足の型: ${thinBuckets.join("、")}`);
   }
-  const fallbackCount = rows.filter((row) =>
-    row.variant.endsWith("_fallback")
-  ).length;
+  const fallbackCount =
+    rows.filter((row) => row.variant.endsWith("_fallback")).length;
   if (rows.length > 0 && fallbackCount * 2 >= rows.length) {
     alerts.push(
       `🟡 定型文フォールバック比率が高い: ${fallbackCount}/${rows.length}件`,

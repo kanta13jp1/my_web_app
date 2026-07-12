@@ -75,6 +75,12 @@ Deno.test("buildGrowthDataReport composes a post-A style lead from real numbers"
   assert(report!.text.includes("基準10,000との差分: -6800"));
   assert(report!.text.includes("10,000まで残り: 6800"));
   assert(report!.text.includes("直近7日の計測対象: 3件"));
+  // 週替わり可変トークン: リード唯一の自由テキスト(近似重複ガード対策)。
+  assert(
+    report!.text.includes(
+      "今週の実測トップ: 3200 — 「国民民主党 地方議員集計 2026/07/10」",
+    ),
+  );
   // JST 日付ラベル(UTC 03:00 = JST 12:00 同日)。
   assert(report!.text.includes("X運用実測レポート 2026/7/12"));
   assertEquals(report!.measuredCount, 3);
@@ -120,7 +126,9 @@ Deno.test("buildGrowthDataReport raises alerts for stale weeks and fallback floo
   const report = buildGrowthDataReport(staleRows, NOW, URL);
   assert(report !== null);
   assert(report!.text.includes("直近7日の計測対象: 0件"));
-  const alerts = report!.replyTexts.find((entry) => entry.includes("アラート"))!;
+  const alerts = report!.replyTexts.find((entry) =>
+    entry.includes("アラート")
+  )!;
   assert(alerts.includes("🔴 直近7日の計測対象が0件"));
   assert(alerts.includes("🟡 定型文フォールバック比率が高い: 3/3件"));
 });
