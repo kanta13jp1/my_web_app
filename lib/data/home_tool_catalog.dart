@@ -2526,7 +2526,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       id: 'jibun-api',
       sectionId: 'ai',
       title: '自分API',
-      subtitle: 'Notion Developer Platform対抗。APIキー発行・外部AI連携・自作Agentツール(Worker)登録',
+      subtitle: 'Notion対抗。APIキー発行・外部AI連携・自作Agent(Worker)登録',
       icon: Icons.api,
       color: const Color(0xFF3D5AFE),
       keywords: const <String>[
