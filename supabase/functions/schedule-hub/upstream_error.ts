@@ -27,8 +27,12 @@ const API_LABELS: Record<BlogUpstreamApi, string> = {
   "dev.to": "dev.to",
 };
 
+// 2026-07-12: 実際に 401 の原因がアカウント利用停止だった実績があるため、
+// トークン再発行より先に停止の可能性を案内する。
 export const QIITA_TOKEN_ROTATE_HINT =
-  "QIITA_ACCESS_TOKEN が失効/権限不足の可能性。Qiita 設定 → アプリケーション → " +
+  "Qiita が認可エラーを返却。①アカウント利用停止の可能性 — qiita.com のプロフィールが " +
+  "suspended 表示ならトークン再発行では復旧せず、停止解除(異議申立て)が先。" +
+  "②停止でなければ QIITA_ACCESS_TOKEN の失効/権限不足 — Qiita 設定 → アプリケーション → " +
   "個人用アクセストークンを再発行し `supabase secrets set QIITA_ACCESS_TOKEN=<新トークン> " +
   "--project-ref smmkxxavexumewbfaqpy` で更新してください。";
 
