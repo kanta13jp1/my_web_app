@@ -37,6 +37,20 @@ void main() {
       expect(xPrompt, contains('hashtags'));
     });
 
+    test('R23: carries the measured data-report archetype lesson', () {
+      // 2026-07-12 同日3連投の実測(データレポート型 3.2K vs ニュース要約 517
+      // vs 製品転換 28)を両生成経路が共有定数経由で受け取ることを固定する。
+      expect(xPrompt, contains(kDataReportArchetypeLesson));
+      expect(kDataReportArchetypeLesson, contains('データレポート型'));
+      expect(kDataReportArchetypeLesson, contains('3.2K'));
+      expect(kDataReportArchetypeLesson, contains('捏造は禁止'));
+      // CmoPage 経路には実数の供給源が無い(見出しも実測データも渡さない)ため、
+      // 教訓は「冒頭に実数」命令を含まず、数字の新規生成を明示的に禁止する
+      // ガードと併記される(レビュー F3/F4 の捏造圧力対策)。
+      expect(kDataReportArchetypeLesson, isNot(contains('冒頭1行目に')));
+      expect(xPrompt, contains('新しい数字を作るな'));
+    });
+
     test('preserves per-channel length spec (facebook 220-420 not overridden)',
         () {
       final fbPrompt = buildCmoDraftPrompt(

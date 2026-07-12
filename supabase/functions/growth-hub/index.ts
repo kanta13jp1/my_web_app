@@ -36,6 +36,13 @@ import {
 import { decideXPostPreflight } from "./x_post_preflight.ts";
 import { computeTodayStatus } from "./x_today_status.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
+import {
+  buildArchetypeLiftLine,
+  buildOwnDataFactsLine,
+  classifyPostArchetype,
+  normalizeArchetypeBucket,
+  resolveLoggedArchetype,
+} from "./x_post_archetype.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -635,6 +642,12 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
         source: firstString(latest.source, metadata.source),
         hasMedia: Boolean(latest.has_media ?? metadata.media_url),
         mediaType: firstString(metadata.media_type, latest.media_type),
+        // R23: 保存済みアーキタイプ優先、旧行は本文から best-effort 分類。
+        archetype: resolveLoggedArchetype(
+          firstString(metadata.content_archetype),
+          firstString(metadata.text, latest.text),
+          Array.isArray(metadata.reply_texts) ? metadata.reply_texts : [],
+        ),
         linkInReply: latest.link_in_reply === true ||
           metadata.link_in_reply === true,
         threadReplyCount: firstNumber(
@@ -715,6 +728,15 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     (row) => row.score,
   );
   if (mediaLine) structuralLines.push(mediaLine);
+  // R23: 内容アーキタイプ別 lift。実測(2026-07-12 同日3連投: データレポート型
+  // 3.2K vs ニュース要約 517 vs ニュース→製品転換 28)を恒常的な A/B 次元へ
+  // 昇格。n>=2 のバケットのみ表示(データ希薄時は沈黙 / 実質 default-off)。
+  const archetypeLine = buildArchetypeLiftLine(
+    rows,
+    (row) => row.archetype,
+    (row) => row.score,
+  );
+  if (archetypeLine) structuralLines.push(archetypeLine);
   const linkReply = rows.filter((r) => r.linkInReply);
   const linkLead = rows.filter((r) => !r.linkInReply);
   if (linkReply.length >= 2 && linkLead.length >= 2) {
@@ -779,6 +801,9 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       ).join(", ")
     }.`
     : "";
+  // R23: データレポート型投稿の「捏造せず公開できる実数」をアカウント自身の
+  // 実測インプレから供給する(実測 3 件未満は沈黙)。
+  const ownDataLine = buildOwnDataFactsLine(rows, (row) => row.impressions);
   const promptContext = rows.length === 0
     ? [
       "No measured X performance has been collected yet.",
@@ -800,6 +825,7 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       ),
       ...(rankingLine ? [rankingLine] : []),
       ...structuralLines,
+      ...(ownDataLine ? [ownDataLine] : []),
       ...(winners[0]
         ? [
           `Top hook to emulate (copy the structure, not the words): "${
@@ -1912,6 +1938,16 @@ serve(async (req: Request) => {
           }, 400);
         }
 
+        // R23: 内容アーキタイプ(data_report/news_briefing/product_promo)を
+        // 第1級 A/B 次元として全投稿で記録する。クライアントの明示指定は意味値
+        // のみ受理し、無ければリード+リプライ連結から決定的に分類する。
+        const archetypeHint = normalizeArchetypeBucket(
+          firstString(body.contentArchetype, body.content_archetype),
+        );
+        const contentArchetype = archetypeHint !== "unknown"
+          ? archetypeHint
+          : classifyPostArchetype([text, ...replyTexts].join("\n"));
+
         const baseLog = {
           text,
           reply_text: replyTexts[0] ?? null,
@@ -1922,6 +1958,7 @@ serve(async (req: Request) => {
           // R13: media 軸 A/B の一次データ。全投稿で video/image/text を必ず記録。
           // 実投稿時は下の posted 分岐が uploadMediaFromUrl の実 MIME で上書きする。
           media_type: classifyPostMediaType(mediaUrl, mediaType),
+          content_archetype: contentArchetype,
           route: body.route ?? null,
           experiment_key: body.experimentKey ?? body.experiment_key ??
             "x_first_user_growth_10k",
