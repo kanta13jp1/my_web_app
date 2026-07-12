@@ -34,8 +34,12 @@ String composeBlogSyncErrorMessage({
 
   if (RegExp('qiita', caseSensitive: false).hasMatch(probe) &&
       probe.contains('401')) {
-    return 'Qiitaトークンが失効しています(401)。Qiitaで新しいアクセストークンを発行し、'
-        'Supabase secrets の QIITA_ACCESS_TOKEN を更新してから再同期してください。';
+    // 2026-07-12: 401 の実原因がアカウント利用停止だった実績があるため、
+    // トークン再発行より先に停止の可能性を案内する。
+    return 'Qiitaが認可エラー(401)を返しました。アカウントが利用停止されている'
+        '可能性があります(qiita.com のプロフィールで確認 — 停止中はトークン'
+        '再発行では復旧しません)。停止でなければ QIITA_ACCESS_TOKEN の失効です。'
+        '新しいトークンを発行し Supabase secrets を更新してから再同期してください。';
   }
   if (probe.contains('QIITA_ACCESS_TOKEN')) {
     return 'QIITA_ACCESS_TOKEN が未設定です。Supabase secrets に設定してください。';

@@ -7,12 +7,12 @@ import 'package:my_web_app/pages/admin/blog_sync_feedback.dart';
 
 void main() {
   group('composeBlogSyncErrorMessage', () {
-    test('Qiita 401 はトークン失効+是正手順を名指しする(本番実ペイロード)', () {
+    test('Qiita 401 は利用停止の可能性+是正手順を名指しする(本番実ペイロード)', () {
       final message = composeBlogSyncErrorMessage(
         status: 502,
         details: {'error': 'Qiita list: 401'},
       );
-      expect(message, contains('Qiitaトークンが失効'));
+      expect(message, contains('利用停止'));
       expect(message, contains('QIITA_ACCESS_TOKEN'));
       expect(message, isNot(contains('FunctionException')));
     });
@@ -48,7 +48,7 @@ void main() {
             'FunctionException(status: 502, details: {error: Qiita list: 401},'
             ' reasonPhrase: )',
       );
-      expect(message, contains('Qiitaトークンが失効'));
+      expect(message, contains('利用停止'));
     });
 
     test('情報ゼロでも文として成立する', () {
