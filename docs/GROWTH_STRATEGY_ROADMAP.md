@@ -32586,3 +32586,57 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を knowledge asset として蓄積) / 8 (KPI=昨日の自分: 競合追跡の継続) / 2 (ミッション: 21社競合を上回る戦略情報の常時把握)。
 - 整合性スコア: **2/9** (情報収集のみ / コード実装なし)。
 - 懸念: Supabase egress policy 制約により schedule-daily-digest / viral-growth-engine が到達不可。日次レポートの二重生成防止が正常に機能している (GH Actions 先行実行 → WEB版は補完のみ)。
+
+## セッション記録: ロイヤリティポイント 誠実性欠陥修正 (2026-07-12 / Win Claude daily-development)
+
+**背景**: ダッシュボード磨き (R16-R20) は収穫逓減という前回の結論を受け、成長レバー / 実バグ潰しへ移行。ダミーデータ・捏造表示の棚卸しを実施。
+
+**発見した実バグ** (`/loyalty-points` = ロイヤリティポイントページ):
+- `social-commerce-hub` の `loyalty.balance` は `{balance, history}` を返し、履歴各行は `metadata.amount` / `metadata.reason` に値を持つ。
+- しかし UI は存在しない `item['points']` / `item['type']` / `item['description']` を読んでおり、**全履歴行が「ポイント N / +0 pt」の捏造表示**になっていた。
+- さらに **残高合計 (`balance`) を fetch していたのに UI へ一切表示していなかった**。
+- いずれも R17-R20 で潰してきた「UI が誤ったキーを読んで捏造値を出す」型と同型の誠実性欠陥。
+
+**対応** ([PR #3948](https://github.com/kanta13jp1/my_web_app/pull/3948) / Dart のみ / merged):
+- 純データモデル `LoyaltyPointsSummary` を `lib/models/` に抽出し nested `metadata` の正しいキーから解析 (Flutter 依存ゼロ → VM 単体テスト可能)。
+- 残高合計カードを追加。履歴行は `amount` の正負で付与/交換を判定し記号・色・アイコンを出し分け。
+- `balance:0` は正当値として保持、生 List 応答は履歴から残高を算出。ログイン前は専用メッセージ。
+- VM 単体テスト 12 件追加 (捏造 +0pt 回帰テスト含む)。`flutter analyze` 0 / `dart format` 差分なし / CI 全緑。
+
+**教訓**: 「一覧ページが全行同じ捏造値を出す」時は表示バグでなく **UI とバックエンド応答契約のキー不一致** をまず疑う (nested `metadata` vs flat)。fetch しているのに描画していないフィールド (balance) も棚卸し対象。
+
+### Philosophy Alignment (Win Claude 2026-07-12)
+
+- 主要実装: 誠実性欠陥の修正 (捏造値の除去 = 「測っていないものを測ったように見せない」)。
+- 該当原則: 8 (KPI=昨日の自分: 正しい数字を出す) / 5 (商品=価値: ユーザーに見せる残高・履歴の信頼性) / 7 (資産負債: 純ロジックを再利用可能な asset として抽出)。
+- 整合性スコア: **3/9** (単一ページのバグ修正 + テスト)。
+
+---
+
+## セッション記録: 自分API v1 実装 (Notion Developer Platform 対抗 / 2026-07-12 WEB版)
+
+**背景**: 同日の daily-report で検出した Notion 3.6 Developer Platform (★★★★★ 脅威 / Worker 公開 API + 外部 Agent 連携) への対抗として「自分API」を実装。上記「AI 行動提案 1」を即着手。
+
+**実装 (tools-hub EF 拡張 + 新テーブル + Flutter UI)**:
+- **DB** (`20260712013000_create_jibun_api_platform.sql`): `user_api_keys` (sha256 保存・スコープ・失効・有効期限) / `user_agent_workers` (ユーザー自作 Agent ツール = https + HMAC 署名) / `user_api_audit_log` (90日保持 + rate limit 窓)。全て RLS service_role 限定 (EF 経由アクセスのみ)。
+- **EF** (`tools-hub/jibun_api.ts`): 管理系 `jibunapi.key.*` / `jibunapi.worker.*` (Supabase JWT) + 外部公開系 `api.me` / `api.notes.list|create` / `api.tasks.list` / `api.achievements.list` / `api.workers.list|invoke` (`jibun_sk_` キー Bearer 認証)。
+- **UI** (`lib/pages/jibun_api_page.dart` + `/jibun-api` ルート + home_tool_catalog): APIキー発行 (平文1回表示) / 失効 + Worker 登録 (署名シークレット1回表示) / 削除。
+- **テスト** (`jibun_api_test.ts`): 認証・スコープ・rate limit・SSRF・HMAC 署名・Worker 呼び出しの 20+ Deno.test (store 注入方式)。
+
+**AI_DEV 7原則 準拠**: ①Auth (キーは sha256 のみ / 平文非保持) ②Deny-by-default (キー必須 + スコープ必須 + 未知 action 404) ③Observability (trace_id + duration_ms + 5秒超 warn + audit log) ④Circuit breaker (rate limit 60/分・2000/日・Worker 10/分) ⑦Quality gate (SSRF ガード + HMAC 署名)。
+
+**アドバーサリアル review (36 エージェント / 5 次元 × verify) で検出・修正した確定欠陥**:
+- **SSRF (high×2)**: `isPrivateHost` が DNS 未解決 → invoke 時に `Deno.resolveDns` で実 IP 検査追加 (DNS rebinding 対策) / IPv4-mapped IPv6 hex (`::ffff:7f00:1`) バイパスを塞いだ。
+- **PostgREST `.or()` インジェクション (medium)**: `notes.list` 検索語を `sanitizeSearchQuery` でフィルタ文法メタ文字除去。
+- **inet キャスト失敗 (medium)**: `request_ip` を `parseInetOrNull` で検証 → 不正値で audit insert 失敗 → rate limit 静的バイパスを防止。
+- **メモリ枯渇 (low)**: Worker レスポンスを `readBoundedBody` で 64KB ストリーム打ち切り。
+- **Dart CI ブロッカー**: `_revokeKey`/`_deleteWorker` の context-after-await (use_build_context_synchronously) + `require_trailing_commas` 違反 9 箇所を修正。
+
+**残課題 (低優先 / doc 記録)**: Worker invocation_count の非アトミック加算 (usage カウンタのみ影響) / 10キー×per-key rate limit の集約上限なし (意図的 fail-open)。次回 AI 行動提案 2 (XLSX/DOCX インポート) / 3 (構造化タスク管理) へ。
+
+### Philosophy Alignment (自分API v1 / 2026-07-12)
+
+- 主要実装: ユーザーが自分のデータへ外部 AI から安全にアクセスできる公開 API + 自作 Agent ツール登録基盤。
+- 該当原則: 5 (商品=ユーザー価値: 外部 AI 連携でユーザーのデータ主権を拡張) / 6 (資本=時間: エコシステム化で複利成長) / 7 (資産負債: Notion 対抗の moat 構築) / 2 (ミッション: 21社競合を上回るプラットフォーム化)。
+- 整合性スコア: **8/9 ✅** (原則 4 人事のみ非該当)。
+- MCP_AUTH_SECURITY 準拠: 本 API はユーザースコープ REST (MCP 非公開レーン)。deny-by-default / audit / rate limit / kill switch (revoke) / scope 最小化を実装。将来 MCP 公開時は 10/10 ゲート + WorkOS 認証を別途要件化。
