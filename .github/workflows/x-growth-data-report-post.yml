@@ -1,0 +1,164 @@
+name: X Growth Data Report Post
+
+# R24: ポストA型「独自データ資産」の週次 build-in-public 実測レポート。
+# 2026-07-12 実測(データレポート型 3.2K vs ニュース要約 517 vs 製品転換 28)を
+# 受け、勝ちアーキタイプの投稿を毎週自動生成する。数値は growth-hub が
+# x_post_log の実測から合成する(LLM 非使用=捏造が構造的に不可能)。
+
+on:
+  schedule:
+    # Every Saturday 22:00 UTC (= Sunday 07:00 JST)
+    - cron: "0 22 * * 6"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run without posting"
+        type: boolean
+        default: true
+      force:
+        description: "Post even if this week's report already exists"
+        type: boolean
+        default: false
+
+concurrency:
+  group: x-growth-data-report-post
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SOURCE: x-growth-data-report-post.yml
+      EXPERIMENT_KEY: x_first_user_growth_10k
+      VARIANT: weekly_data_report
+      TARGET_URL: https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=weekly_data_report
+    steps:
+      - name: Validate secrets
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY}" || {
+            echo "SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Resolve run mode
+        id: mode
+        shell: bash
+        run: |
+          dry_run="${{ github.event.inputs.dry_run }}"
+          force="${{ github.event.inputs.force }}"
+          if [ -z "${dry_run}" ]; then
+            dry_run="false"
+          fi
+          if [ -z "${force}" ]; then
+            force="false"
+          fi
+          echo "dry_run=${dry_run}" >> "${GITHUB_OUTPUT}"
+          echo "force=${force}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check existing report for this week
+        id: duplicate
+        shell: bash
+        run: |
+          week_start=$(node -e 'console.log(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString())')
+          http_code=$(curl --get --silent --show-error --output /tmp/x_report_existing.json --write-out "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/hub_data" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --data-urlencode "source=eq.x_post_log" \
+            --data-urlencode "created_at=gte.${week_start}" \
+            --data-urlencode "metadata->>source=eq.${SOURCE}" \
+            --data-urlencode "metadata->>status=eq.posted" \
+            --data-urlencode "select=id" \
+            --data-urlencode "limit=1")
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::Duplicate guard returned HTTP ${http_code}; continuing so growth-hub duplicate guard can decide."
+            echo "already_posted=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          count=$(jq 'length' /tmp/x_report_existing.json)
+          if [ "${count}" -gt 0 ]; then
+            echo "already_posted=true" >> "${GITHUB_OUTPUT}"
+            echo "Weekly growth data report already posted within 6 days."
+          else
+            echo "already_posted=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Compose data report from measured logs
+        id: compose
+        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_growth_report.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data "{\"action\":\"x.growth_data_report\",\"limit\":100,\"targetUrl\":\"${TARGET_URL}\"}")
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::x.growth_data_report returned HTTP ${http_code}"
+            cat /tmp/x_growth_report.json || true
+            exit 1
+          fi
+          available=$(jq -r '.available' /tmp/x_growth_report.json)
+          echo "available=${available}" >> "${GITHUB_OUTPUT}"
+          if [ "${available}" != "true" ]; then
+            echo "Not enough measured rows for an honest report — skipping this week."
+            jq . /tmp/x_growth_report.json
+          fi
+
+      - name: Post data report to X
+        if: steps.compose.outputs.available == 'true' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
+        shell: bash
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('/tmp/x_growth_report.json', 'utf8'));
+          const payload = {
+            action: 'x.post',
+            text: report.text,
+            replyTexts: report.replyTexts,
+            source: process.env.SOURCE,
+            route: 'growth/weekly-data-report',
+            experimentKey: process.env.EXPERIMENT_KEY,
+            variant: process.env.VARIANT,
+            utmContent: process.env.VARIANT,
+            promptProfile: 'workflow_weekly_data_report_v1_deterministic',
+            contentKind: 'data_report_thread',
+            contentArchetype: 'data_report',
+            linkInReply: true,
+            dryRun: process.env.DRY_RUN === 'true',
+          };
+          fs.writeFileSync('/tmp/x_report_payload.json', JSON.stringify(payload));
+          console.log(JSON.stringify({
+            lead: payload.text.split('\n')[0],
+            replyCount: payload.replyTexts.length,
+            dryRun: payload.dryRun,
+          }, null, 2));
+          NODE
+          http_code=$(curl --silent --show-error --output /tmp/x_report_result.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_report_payload.json)
+          jq . /tmp/x_report_result.json || cat /tmp/x_report_result.json
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::x.post returned HTTP ${http_code}"
+            exit 1
+          fi
+          success=$(jq -r '.success' /tmp/x_report_result.json)
+          if [ "${success}" != "true" ]; then
+            echo "::error::x.post reported failure (duplicate guard or billing preflight?)"
+            exit 1
+          fi

@@ -43,6 +43,10 @@ import {
   normalizeArchetypeBucket,
   resolveLoggedArchetype,
 } from "./x_post_archetype.ts";
+import {
+  buildGrowthDataReport,
+  type GrowthReportRow,
+} from "./x_growth_data_report.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1819,6 +1823,35 @@ serve(async (req: Request) => {
 
       case "x.performance_context": {
         return json(await buildXPerformanceContext(admin, userId!, body.limit));
+      }
+
+      case "x.growth_data_report": {
+        // R24: ポストA型の週次 build-in-public 実測レポートを合成する
+        // (read-only / LLM 非使用 / 数値は全て x_post_log 実測)。実測 3 件
+        // 未満は available:false で投稿見送りを指示する。
+        const perf = await buildXPerformanceContext(
+          admin,
+          userId!,
+          body.limit ?? 100,
+        );
+        const targetUrl = firstString(
+          body.targetUrl,
+          body.target_url,
+          "https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=weekly_data_report",
+        );
+        const report = buildGrowthDataReport(
+          perf.rows as GrowthReportRow[],
+          new Date(),
+          targetUrl,
+        );
+        if (report === null) {
+          return json({
+            success: true,
+            available: false,
+            reason: "measured impressions rows < 3",
+          });
+        }
+        return json({ success: true, available: true, ...report });
       }
 
       case "x.post_preflight": {
