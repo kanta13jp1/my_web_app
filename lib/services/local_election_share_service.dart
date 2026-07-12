@@ -316,36 +316,67 @@ class LocalElectionShareService {
     );
   }
 
+  /// X の投稿長制限(25,000)は twitter-text の加重文字数で数えられる:
+  /// CJK/全角=2、半角(Latin 等)=1、URL=一律23。日本語主体の集計本文を Dart の
+  /// code unit 数で測ると実重みのほぼ半分にしか見えず、上限超過を素通しする
+  /// (レビュー指摘)。ここでは全文字を範囲判定で加重する近似を使う(ASCII の
+  /// URL を 1/字で数える=実際の 23/URL より過大評価で安全側)。
+  static int xWeightedLength(String text) {
+    var weighted = 0;
+    for (final rune in text.runes) {
+      weighted += rune < 0x1100 ? 1 : 2;
+    }
+    return weighted;
+  }
+
   /// R24: 地方議員集計を growth-hub x.post(API 投稿)へ載せるための長文本文。
   /// intent 投稿は x_post_log の外=Archetype lift 計測に入らないため、実測
   /// 3.2K インプレッションのポストA(集計ノート全文)を API 経由の第一級経路に
-  /// する。X Premium 上限(25,000字)に対し [maxChars] で安全側に収め、超過時は
-  /// 名簿セクション境界(\n\n◽️)で切り詰めて公開ノートへ誘導する。
+  /// する。X Premium 上限(25,000 weighted)に対し [maxWeightedChars] で安全側に
+  /// 収め、超過時は名簿セクション境界(\n\n◽️)で切り詰めて公開ノートへ誘導する。
   String buildXPostLongText({
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionLegislatorProfile> members,
     LocalElectionPlanDashboard? plan,
     String publicUrl = '',
-    int maxChars = 24000,
+    int maxWeightedChars = 24000,
   }) {
     final draft = buildDraft(snapshot: snapshot, members: members, plan: plan);
     final suffix =
         publicUrl.isEmpty ? '' : '\n\n全都道府県の内訳と現職名簿の公開ノート:\n$publicUrl';
     final body = draft.content.trim();
-    if (body.length + suffix.length <= maxChars) {
+    if (xWeightedLength(body) + xWeightedLength(suffix) <= maxWeightedChars) {
       return '$body$suffix';
     }
-    const truncationNote = '\n\n(文字数上限のため名簿の続きは公開ノートへ)';
-    final budget = maxChars - suffix.length - truncationNote.length;
+    // 公開ノート URL が無いときは「続きは公開ノートへ」と書かない(リンクの
+    // 無い誘導文が公開されたまま残る事故を防ぐ。呼び出し側でも memo 発行失敗
+    // 時は投稿自体を中止する)。
+    final truncationNote = publicUrl.isEmpty
+        ? '\n\n(文字数上限のため名簿は途中まで)'
+        : '\n\n(文字数上限のため名簿の続きは公開ノートへ)';
+    final budget = maxWeightedChars -
+        xWeightedLength(suffix) -
+        xWeightedLength(truncationNote);
     if (budget <= 0) {
       return buildXShareText(snapshot: snapshot, publicUrl: publicUrl);
     }
-    var cut = body.lastIndexOf('\n\n◽️', budget);
+    // weighted budget 内に収まる最大の code-unit 位置を前方走査で求める。
+    var weighted = 0;
+    var cutLimit = 0;
+    for (final rune in body.runes) {
+      final w = rune < 0x1100 ? 1 : 2;
+      if (weighted + w > budget) {
+        break;
+      }
+      weighted += w;
+      cutLimit += rune > 0xFFFF ? 2 : 1;
+    }
+    var cut = body.lastIndexOf('\n\n◽️', cutLimit);
     if (cut < 0) {
-      cut = body.lastIndexOf('\n\n', budget);
+      cut = body.lastIndexOf('\n\n', cutLimit);
     }
     if (cut <= 0) {
-      cut = budget;
+      cut = cutLimit;
     }
     return '${body.substring(0, cut).trimRight()}$truncationNote$suffix';
   }

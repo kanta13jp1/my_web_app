@@ -894,8 +894,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (!mounted) {
       return;
     }
-    final publicUrl =
-        memo == null ? '' : PublicMemoService.buildPublicMemoUrl(memo.id);
+    if (memo == null) {
+      // 公開ノートが無いまま投稿すると「続きは公開ノートへ」型の誘導だけが
+      // リンク無しで公開されて取り消せない(レビュー指摘)。発行失敗の
+      // snackbar は _publishSnapshotMemo が表示済みなのでここで中止する。
+      return;
+    }
+    final publicUrl = PublicMemoService.buildPublicMemoUrl(memo.id);
     final text = _shareService.buildXPostLongText(
       snapshot: snapshot,
       members: snapshot.members,
@@ -970,6 +975,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('地方議員集計をXへ投稿しました(計測ループに記録済み)'),
+          ),
+        );
+      } else if (data['code'] == 'duplicate_content') {
+        // このルートは集計データからの決定的テンプレなので「文面を変えて再生成」
+        // は実行不能。数値が動くまで再投稿を見送るのが正しい対処と案内する。
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '直近の投稿と内容がほぼ同じため見送りました。集計数値が動いてから再投稿してください。',
+            ),
           ),
         );
       } else {

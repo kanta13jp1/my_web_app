@@ -333,7 +333,17 @@ void main() {
     expect(text, contains('現職地方議員名簿'));
     expect(text, contains('全都道府県の内訳と現職名簿の公開ノート:'));
     expect(text, contains('https://example.com/public-memo?id=10'));
-    expect(text.length, lessThanOrEqualTo(24000));
+    // 上限は X 実測の加重文字数(CJK=2)で守る(code unit 数ではない)。
+    expect(
+      LocalElectionShareService.xWeightedLength(text),
+      lessThanOrEqualTo(24000),
+    );
+  });
+
+  test('xWeightedLength doubles CJK per twitter-text weighting', () {
+    expect(LocalElectionShareService.xWeightedLength('abc'), 3);
+    expect(LocalElectionShareService.xWeightedLength('あいう'), 6);
+    expect(LocalElectionShareService.xWeightedLength('a議員1人'), 8);
   });
 
   test(
@@ -345,18 +355,42 @@ void main() {
       members: snapshot.members,
       publicUrl: '',
     );
+    final fullWeighted = LocalElectionShareService.xWeightedLength(full);
     final capped = service.buildXPostLongText(
       snapshot: snapshot,
       members: snapshot.members,
       publicUrl: 'https://example.com/public-memo?id=10',
-      maxChars: full.length - 50,
+      maxWeightedChars: fullWeighted - 50,
     );
 
-    expect(capped.length, lessThanOrEqualTo(full.length - 50));
+    expect(
+      LocalElectionShareService.xWeightedLength(capped),
+      lessThanOrEqualTo(fullWeighted - 50),
+    );
     expect(capped, contains('(文字数上限のため名簿の続きは公開ノートへ)'));
     expect(capped, contains('https://example.com/public-memo?id=10'));
     // 冒頭のデータレポート骨格は必ず残る。
     expect(capped, contains('公式地方議員数: 333人'));
+  });
+
+  test('buildXPostLongText omits the note-link cue when no public URL exists',
+      () {
+    final snapshot = buildSnapshot();
+    final full = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: '',
+    );
+    final capped = service.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      publicUrl: '',
+      maxWeightedChars: LocalElectionShareService.xWeightedLength(full) - 50,
+    );
+
+    // URL の無い投稿に「続きは公開ノートへ」というリンク無し誘導を残さない。
+    expect(capped, isNot(contains('公開ノートへ')));
+    expect(capped, contains('(文字数上限のため名簿は途中まで)'));
   });
 
   test('buildXShareIntentUri separates the body text and shared URL', () {
