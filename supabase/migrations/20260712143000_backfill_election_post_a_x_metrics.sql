@@ -53,7 +53,7 @@ begin
   -- Repair an existing partial log as well as inserting a missing one. Existing
   -- official metrics win over the 8K seed, while the required lineage tags are
   -- normalized on every run.
-  update public.hub_data existing
+  update only public.hub_data as existing
      set metadata = existing.metadata
        || base_metadata
        || jsonb_build_object(
