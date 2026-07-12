@@ -56,6 +56,24 @@ Deno.test("classifyPostArchetype detects the measured A/B/C archetypes", () => {
   assertEquals(classifyPostArchetype("今日は良い天気でした。"), "general");
 });
 
+Deno.test("classifyPostArchetype does not misfile briefings as data_report", () => {
+  // レビュー F1 の実反例: ニュース常用語「集計(速報)」+数値矢印を含む
+  // ラベル付きブリーフィングは news_briefing のまま(ラベル最優先)。
+  const labeledWithWeakSignals = [
+    "デイリーブリーフィング — 2026年7月13日朝",
+    "1. 【政治】参院選の集計速報、投票率は前回比で上昇",
+    "2. 【市場】日経平均 39,500 → 40,120 と続伸",
+  ].join("\n");
+  assertEquals(classifyPostArchetype(labeledWithWeakSignals), "news_briefing");
+  // ラベル無しでも弱シグナル 2 つ(集計+「あとN日」)では閾値 3 に届かず、
+  // 番号付きダイジェスト構造で news_briefing に落ちる。
+  const unlabeledElectionNews = [
+    "1. 【政治】参院選の集計速報が各局で始まる",
+    "2. 【選挙】投開票まであと3日、期日前投票は増加",
+  ].join("\n");
+  assertEquals(classifyPostArchetype(unlabeledElectionNews), "news_briefing");
+});
+
 Deno.test("classifyPostArchetype resolves hybrids by payload precedence", () => {
   // データ密度が高ければ製品名が混ざっても data_report(独自データ軸を最優先)。
   const hybridData = DATA_REPORT_SAMPLE + "\n給料日サイクルでも同じ形式で見る。";
@@ -105,6 +123,9 @@ Deno.test("buildArchetypeLiftLine shows n>=2 buckets and recommends the winner",
     (row) => row.score,
   );
   assert(line !== null);
+  // Dart 側プロンプトルール(universal_x_share_service)が verbatim 参照する
+  // 行ラベルの exact prefix を固定する(クロス言語契約 / レビュー F6)。
+  assert(line!.startsWith("Archetype lift (by content archetype): "));
   assert(line!.includes("data_report avg=3000 (n=2)"));
   assert(line!.includes("news_briefing avg=273 (n=2)"));
   assert(!line!.includes("product_promo"));
@@ -157,6 +178,8 @@ Deno.test("buildOwnDataFactsLine publishes median/best only with >=3 samples", (
     impressionsOf,
   );
   assert(odd !== null);
+  // Dart 側プロンプトルールが verbatim 参照する行ラベルの exact prefix を固定。
+  assert(odd!.startsWith("Own measured data ("));
   assert(odd!.includes("measured posts=3"));
   assert(odd!.includes("median impressions=517"));
   assert(odd!.includes("best impressions=3200"));

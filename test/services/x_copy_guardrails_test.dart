@@ -44,6 +44,11 @@ void main() {
       expect(kDataReportArchetypeLesson, contains('データレポート型'));
       expect(kDataReportArchetypeLesson, contains('3.2K'));
       expect(kDataReportArchetypeLesson, contains('捏造は禁止'));
+      // CmoPage 経路には実数の供給源が無い(見出しも実測データも渡さない)ため、
+      // 教訓は「冒頭に実数」命令を含まず、数字の新規生成を明示的に禁止する
+      // ガードと併記される(レビュー F3/F4 の捏造圧力対策)。
+      expect(kDataReportArchetypeLesson, isNot(contains('冒頭1行目に')));
+      expect(xPrompt, contains('新しい数字を作るな'));
     });
 
     test('preserves per-channel length spec (facebook 220-420 not overridden)',

@@ -8,7 +8,8 @@
 // 同じ抽出パターン)。
 //
 // 分類は情報ペイロードの優先順で決定的に解決する:
-// data_report > news_briefing > product_promo > general。
+// news_briefing(明示ラベル) > data_report > news_briefing(構造) >
+// product_promo > general。
 // universal 経路の投稿は設計上ほぼ全て機能名+URL を含む(ハイブリッド)ため、
 // 「ニュース要約 vs 製品プロモ」の分離は既存の variant / fallback_used 軸が担い、
 // この軸の主目的は data_report(独自データ)の lift を測ることに置く。
@@ -48,29 +49,33 @@ function countMatches(text: string, pattern: RegExp): number {
 }
 
 /// 投稿本文(リード+リプライ連結)から内容アーキタイプを決定的に分類する。
-/// data_report: 独自集計データの密度シグナル(取得日時/集計・差分矢印・
-/// 🔴🟡アラート・「残りN」・数値+単位の高密度)が 2 つ以上。
-/// news_briefing: ブリーフィング構造(ラベル・【…】見出し 2 件以上・番号付き
-/// ダイジェスト行 2 件以上)のいずれか。
+/// news_briefing(ラベル付き): 「デイリーブリーフィング」ラベルは自前の定型
+/// テンプレ由来なので定義上ニュース要約=最優先で解決する(「集計速報」等の
+/// ニュース常用語+数値矢印だけで data_report に誤爆した実反例への対策)。
+/// data_report: レポート固有の強シグナル(取得日時/現職名簿/基準Nとの差分 =
+/// +2)とニュースにも現れる弱シグナル(集計・差分矢印・🔴🟡アラート・
+/// 「残りN」・数値+単位の高密度 = 各+1)の加重合計が 3 以上。
+/// news_briefing(構造): 【…】見出し 2 件以上・番号付きダイジェスト行 2 件以上。
 /// product_promo: ニュース構造なしで製品シグナル(機能名/自分株式会社/本番 URL)。
 export function classifyPostArchetype(
   text: string,
 ): "data_report" | "news_briefing" | "product_promo" | "general" {
   const body = text ?? "";
-  let dataSignals = 0;
-  if (/取得日時|集計|現職名簿/.test(body)) dataSignals += 1;
-  if (/\d[\d,.]*\s*→\s*\d/.test(body)) dataSignals += 1;
-  if (/[🔴🟡]/u.test(body)) dataSignals += 1;
-  if (/残り\s*[:：]?\s*\d|あと\s*\d+\s*(日|人|件)/.test(body)) dataSignals += 1;
+  if (body.includes("デイリーブリーフィング")) return "news_briefing";
+  let dataScore = 0;
+  if (/取得日時|現職名簿|基準\s*\d[\d,]*\s*との差分/.test(body)) dataScore += 2;
+  if (/集計/.test(body)) dataScore += 1;
+  if (/\d[\d,.]*\s*→\s*\d/.test(body)) dataScore += 1;
+  if (/[🔴🟡]/u.test(body)) dataScore += 1;
+  if (/残り\s*[:：]?\s*\d|あと\s*\d+\s*(日|人|件)/.test(body)) dataScore += 1;
   if (countMatches(body, /\d[\d,.]*\s*(人|件|県|円|票|pt)/g) >= 8) {
-    dataSignals += 1;
+    dataScore += 1;
   }
-  if (dataSignals >= 2) return "data_report";
+  if (dataScore >= 3) return "data_report";
 
-  const briefingLabel = body.includes("デイリーブリーフィング");
   const bracketHeadlines = countMatches(body, /【[^】]+】/g) >= 2;
   const numberedDigest = countMatches(body, /^\s*\d+[.．]\s/gm) >= 2;
-  if (briefingLabel || bracketHeadlines || numberedDigest) {
+  if (bracketHeadlines || numberedDigest) {
     return "news_briefing";
   }
 
