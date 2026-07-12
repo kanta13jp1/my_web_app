@@ -1,9 +1,9 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-07-11",
+    "date": "2026-07-12",
     "users": {
-      "total": 44
+      "total": 48
     },
     "featureRequests": {
       "newToday": 0,
@@ -34,27 +34,27 @@
     },
     "recentAchievements": [
       {
+        "title": "自分API v1 (Notion Developer Platform 対抗)",
+        "completed_at": "2026-07-12T00:00:00+00:00"
+      },
+      {
+        "title": "XLSX/DOCXインポート対応 (Notion移行0ステップ強化)",
+        "completed_at": "2026-07-12T00:00:00+00:00"
+      },
+      {
+        "title": "構造化タスク管理 (GitHub Issue Fields相当)",
+        "completed_at": "2026-07-12T00:00:00+00:00"
+      },
+      {
         "title": "AI大学 FinTech/Trading AI 掲載コンテンツの日本語化",
         "completed_at": "2026-06-21T00:00:00+00:00"
       },
       {
         "title": "AI大学「英語速読カリキュラム」導入",
         "completed_at": "2026-06-20T00:00:00+00:00"
-      },
-      {
-        "title": "CI Setup Deno の deno.land 一時503耐性化 (retry+backoff)",
-        "completed_at": "2026-06-10T18:24:04.736707+00:00"
-      },
-      {
-        "title": "dependabot pub group 週次CI失敗の恒久解消 (flutter_native_splash ignore)",
-        "completed_at": "2026-06-10T18:03:21.222368+00:00"
-      },
-      {
-        "title": "GitHub Actions Node.js 20 廃止対応完了 (actions/cache v5 化)",
-        "completed_at": "2026-06-10T13:45:31.202955+00:00"
       }
     ]
   },
-  "fetched_at": "2026-07-12T08:28:28+09:00",
-  "report_date": "2026-07-12"
+  "fetched_at": "2026-07-13T08:27:41+09:00",
+  "report_date": "2026-07-13"
 }
