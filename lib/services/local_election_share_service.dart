@@ -232,6 +232,40 @@ class LocalElectionShareService {
     );
   }
 
+  /// R24: 選挙集計スレッドを growth-hub x.post へ渡す payload(純関数・VMテスト可)。
+  /// variant と content_archetype を明示し、8K 実測級の投稿を学習ループ
+  /// (variant ranking / Archetype lift) の計測対象にする。
+  static Map<String, dynamic> buildElectionXPostPayload(List<String> tweets) {
+    final cleaned = tweets
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList(growable: false);
+    if (cleaned.isEmpty) return const {};
+    return {
+      'action': 'x.post',
+      'text': cleaned.first,
+      if (cleaned.length > 1) 'replyTexts': cleaned.sublist(1),
+      'source': 'local_election_tracker',
+      'variant': 'local_election_tracker',
+      'contentArchetype': 'data_report',
+      'experimentKey': 'x_first_user_growth_10k',
+    };
+  }
+
+  /// R24: composer のスレッドを growth-hub x.post 経由で直接投稿する。従来は
+  /// コピー/X intent の手動投稿のみで x_post_log に残らず、データレポート型
+  /// (実測 8K インプ)の勝ちが学習ループから不可視だった。
+  Future<Map<String, dynamic>> postThreadToXViaApi(List<String> tweets) async {
+    final payload = buildElectionXPostPayload(tweets);
+    if (payload.isEmpty) {
+      return {'success': false, 'error': '投稿できるテキストがありません'};
+    }
+    final res = await _supabase.functions.invoke('growth-hub', body: payload);
+    final data = res.data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return {'success': false, 'error': '不明な応答形式'};
+  }
+
   String buildXShareText({
     required LocalElectionRealitySnapshot snapshot,
     required String publicUrl,

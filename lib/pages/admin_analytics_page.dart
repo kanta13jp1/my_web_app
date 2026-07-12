@@ -51,10 +51,6 @@ class _GrowthActionPlan {
   // R16: 非 null のとき、ボタンはページ遷移ではなくこの URL を外部起動する
   // (投稿を開く / console.x.com で上限確認 等)。
   final String? launchUrl;
-  // R21: カード本文(statusText)に出す短い状態文。detail はサブカード側にだけ
-  // 表示されるため、これが無いと postedTodayActive 時に detail 全文が本文と
-  // サブカードへ二重表示される。
-  final String? statusLine;
 
   const _GrowthActionPlan({
     required this.bottleneckLabel,
@@ -64,7 +60,6 @@ class _GrowthActionPlan {
     required this.buttonLabel,
     required this.isAcquisitionAction,
     this.launchUrl,
-    this.statusLine,
   });
 }
 
@@ -383,7 +378,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           buttonLabel: 'console.x.com で上限を確認',
           isAcquisitionAction: false,
           launchUrl: 'https://console.x.com/',
-          statusLine: 'X APIの支出上限に到達中のため自動投稿は停止中です。',
         );
       case AdminXPostedTodayCta.goldenHour:
       case AdminXPostedTodayCta.measuring:
@@ -404,7 +398,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             buttonLabel: tweetUrl != null ? '投稿を開く' : '反応を確認',
             isAcquisitionAction: false,
             launchUrl: tweetUrl,
-            statusLine: '本日$postedCount件投稿済み。投稿直後30分の反応対応が最優先です。',
           );
         }
         return _GrowthActionPlan(
@@ -417,7 +410,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           buttonLabel: tweetUrl != null ? '投稿を開いて確認' : '成長プレイブックを見る',
           isAcquisitionAction: false,
           launchUrl: tweetUrl,
-          statusLine: '本日$postedCount件投稿済み（$imprText）。初速の計測待ちです。',
         );
     }
   }
@@ -860,84 +852,61 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (session == null) throw Exception('Not authenticated');
 
       final headers = _adminAuthHeaders(session.accessToken);
-      // R21: Future.wait で束ねると片方の失敗で両方の結果を破棄し、raw exception
-      // 文字列がそのまま画面に出ていた。個別に握って部分成功を保持し、失敗側
-      // だけ人間語のエラーにする。
-      Map<String, dynamic>? digest;
-      List<Map<String, dynamic>>? tickets;
-      final errors = <String>[];
-
-      await Future.wait<void>([
-        () async {
-          try {
-            final res = await _supabase.functions.invoke(
-              'schedule-hub',
-              headers: headers,
-              body: const {
-                'action': 'digest.run',
-                'source': 'admin_manual_check',
-              },
-            );
-            final data = res.data as Map<String, dynamic>?;
-            if (data?['success'] != true) {
-              throw Exception('${data?['error'] ?? 'digest load failed'}');
-            }
-            final rawDigest = data?['digest'];
-            digest = rawDigest is Map
-                ? Map<String, dynamic>.from(rawDigest)
-                : <String, dynamic>{};
-          } catch (e) {
-            debugPrint('automation digest load error: $e');
-            errors.add('日次ダイジェストの取得に失敗しました');
-          }
-        }(),
-        () async {
-          try {
-            final res = await _supabase.functions.invoke(
-              'admin-hub',
-              headers: headers,
-              body: const {
-                'action': 'support.list',
-                'source': 'admin_manual_check',
-              },
-            );
-            final data = res.data as Map<String, dynamic>?;
-            if (data?['success'] != true) {
-              throw Exception(
-                data?['error']?.toString() ?? 'support ticket load failed',
-              );
-            }
-            final rawTickets = data?['tickets'];
-            final parsed = <Map<String, dynamic>>[];
-            if (rawTickets is List) {
-              for (final item in rawTickets.whereType<Map>()) {
-                parsed.add(Map<String, dynamic>.from(item));
-              }
-            }
-            tickets = parsed;
-          } catch (e) {
-            debugPrint('automation support load error: $e');
-            errors.add('サポートチケットの取得に失敗しました');
-          }
-        }(),
+      final results = await Future.wait<FunctionResponse>([
+        _supabase.functions.invoke(
+          'schedule-hub',
+          headers: headers,
+          body: const {'action': 'digest.run', 'source': 'admin_manual_check'},
+        ),
+        _supabase.functions.invoke(
+          'admin-hub',
+          headers: headers,
+          body: const {
+            'action': 'support.list',
+            'source': 'admin_manual_check',
+          },
+        ),
       ]);
 
-      final loadedDigest = digest;
-      final loadedTickets = tickets;
+      final digestResult = results[0].data as Map<String, dynamic>?;
+      final supportResult = results[1].data as Map<String, dynamic>?;
+      if (digestResult?['success'] != true) {
+        throw Exception(
+          '${digestResult?['error'] ?? 'digest load failed'}',
+        );
+      }
+      if (supportResult?['success'] != true) {
+        throw Exception(
+          supportResult?['error']?.toString() ?? 'support ticket load failed',
+        );
+      }
+
+      final rawTickets = supportResult?['tickets'];
+      final tickets = <Map<String, dynamic>>[];
+      if (rawTickets is List) {
+        for (final item in rawTickets.whereType<Map>()) {
+          tickets.add(Map<String, dynamic>.from(item));
+        }
+      }
+
+      final rawDigest = digestResult?['digest'];
+      final digest = rawDigest is Map
+          ? Map<String, dynamic>.from(rawDigest)
+          : <String, dynamic>{};
+
       if (!mounted) return;
       setState(() {
-        if (loadedDigest != null) _automationDigest = loadedDigest;
-        if (loadedTickets != null) _automationSupportTickets = loadedTickets;
+        _automationDigest = digest;
+        _automationSupportTickets = tickets;
         _automationLoading = false;
-        _automationError =
-            errors.isEmpty ? null : '${errors.join(' / ')}。更新ボタンで再試行してください。';
+        _automationError = null;
       });
     } catch (e) {
       debugPrint('automation ops load error: $e');
       if (!mounted) return;
       setState(() {
         _automationLoading = false;
-        _automationError = '管理者セッションの確認に失敗しました。再ログイン後に更新してください。';
+        _automationError = e.toString();
       });
     }
   }
@@ -2013,10 +1982,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final actionButtonLabel = achieved ? null : growthAction.buttonLabel;
     final statusText = achieved
         ? '今日の登録目標は達成済みです。次は流入改善で上振れを狙う。'
-        // R21: detail はサブカード側に表示されるため、本文には短い statusLine を
-        // 使う(同一文の二重表示を防ぐ)。
         : postedTodayActive
-            ? (growthAction.statusLine ?? growthAction.detail)
+            ? growthAction.detail
             : todayViews == 0
                 ? '今日の流入がありません。まずは露出導線を1つ増やして、訪問者を作ってください。'
                 : todayFunnel.trialRuns == 0
@@ -2156,9 +2123,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   color: const Color(0xFFFF6B35),
                 ),
               _buildMiniKpiChip(
-                // R21: 値は率ではなく診断ラベル(ゴールデンアワー/体験未実行 等)
-                // なので、ラベルも「診断」にする(率は隣の「今日のCVR」が担う)。
-                label: '診断',
+                label: '登録率',
                 value: diagnosisLabel,
                 color: diagnosisColor,
               ),
@@ -5909,6 +5874,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         break;
       case XGrowthLoopState.hidden:
         break;
+    }
+
+    // R24: 投稿アーキタイプ別の平均インプレ(実測 8K vs 31 の型差を可視化)。
+    final archetypeLine = xGrowthArchetypeLiftLine(rows);
+    if (archetypeLine != null) {
+      lines.add(
+        _growthLoopLine(
+          Icons.category_outlined,
+          const Color(0xFF0D9488),
+          archetypeLine,
+        ),
+      );
     }
 
     return Padding(
