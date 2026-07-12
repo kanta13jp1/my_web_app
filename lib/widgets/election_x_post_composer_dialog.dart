@@ -18,6 +18,7 @@ class ElectionXPostComposerDialog extends StatefulWidget {
   final LocalElectionRealitySnapshot snapshot;
   final PublicMemo? publishedMemo;
   final LocalElectionShareService shareService;
+  final bool canApiPost;
 
   /// Optional window index to pre-select (0 = 今週末, 1 = 2週後 …).
   /// When null the dialog auto-selects the first window that has elections.
@@ -27,6 +28,7 @@ class ElectionXPostComposerDialog extends StatefulWidget {
     super.key,
     required this.snapshot,
     required this.shareService,
+    this.canApiPost = false,
     this.publishedMemo,
     this.initialWindowIndex,
   });
@@ -37,12 +39,14 @@ class ElectionXPostComposerDialog extends StatefulWidget {
     required LocalElectionShareService shareService,
     PublicMemo? publishedMemo,
     int? initialWindowIndex,
+    bool canApiPost = false,
   }) {
     return showDialog<void>(
       context: context,
       builder: (_) => ElectionXPostComposerDialog(
         snapshot: snapshot,
         shareService: shareService,
+        canApiPost: canApiPost,
         publishedMemo: publishedMemo,
         initialWindowIndex: initialWindowIndex,
       ),
@@ -358,11 +362,49 @@ class _ElectionXPostComposerDialogState
   /// 学習ループ(variant ranking / Archetype lift)の計測対象になる。
   Future<void> _postViaApi() async {
     if (_apiPosting) return;
+    if (!widget.canApiPost) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('X API投稿は管理者のみ実行できます')),
+      );
+      return;
+    }
     final tweets = _controllers
         .map((c) => c.text.trim())
         .where((t) => t.isNotEmpty)
         .toList(growable: false);
     if (tweets.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('選挙集計をX APIで投稿'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${tweets.length}件のスレッドを実投稿します（取り消し不可）。'),
+              const SizedBox(height: 8),
+              SelectableText(
+                tweets.first.length > 500
+                    ? '${tweets.first.substring(0, 500)}…'
+                    : tweets.first,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Xへ投稿する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     setState(() => _apiPosting = true);
     try {
       final result = await widget.shareService.postThreadToXViaApi(tweets);
@@ -373,7 +415,7 @@ class _ElectionXPostComposerDialogState
         SnackBar(
           content: Text(
             posted
-                ? '選挙集計をAPI投稿しました（計測対象・variant=local_election_tracker）'
+                ? '選挙集計をAPI投稿しました（投稿ログ記録済み・実測待ち）'
                     '${tweetId.isNotEmpty ? ' https://x.com/i/status/$tweetId' : ''}'
                 : 'API投稿に失敗しました: ${result['error'] ?? result['code'] ?? '不明'}',
           ),
@@ -415,21 +457,24 @@ class _ElectionXPostComposerDialogState
               onPressed: _controllers.isNotEmpty ? () => _openXIntent(0) : null,
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: FilledButton.icon(
-              icon: _apiPosting
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.bolt, size: 15),
-              label: const Text('API投稿（計測対象）'),
-              onPressed:
-                  _controllers.isNotEmpty && !_apiPosting ? _postViaApi : null,
+          if (widget.canApiPost) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilledButton.icon(
+                icon: _apiPosting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.bolt, size: 15),
+                label: const Text('API投稿（投稿後に実測）'),
+                onPressed: _controllers.isNotEmpty && !_apiPosting
+                    ? _postViaApi
+                    : null,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

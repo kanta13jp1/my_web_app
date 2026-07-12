@@ -5802,20 +5802,31 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final perf = _xPerformanceContext;
     if (perf == null) return const SizedBox.shrink();
     final rows = perf['rows'] is List ? perf['rows'] as List : const [];
+    final comparableRows = rows.where((row) {
+      return row is! Map || row['learningCohort'] != 'historical_benchmark';
+    }).toList();
     final variants = perf['variants'] is List ? perf['variants'] as List : null;
+    final historicalBenchmarks = perf['historicalBenchmarks'] is List
+        ? perf['historicalBenchmarks'] as List
+        : const [];
+    final comparisonSampleCount = perf.containsKey('comparisonSampleCount')
+        ? _toInt(perf['comparisonSampleCount'])
+        : comparableRows.length;
     final loop = resolveXGrowthLoop(
-      measuredCount: rows.length,
+      measuredCount: comparisonSampleCount,
       distinctVariantCount: distinctMeasuredVariants(variants),
       postedTodayCount: _toInt(_xTodayStatus?['postedTodayCount']),
     );
-    if (loop.state == XGrowthLoopState.hidden) return const SizedBox.shrink();
+    if (loop.state == XGrowthLoopState.hidden && historicalBenchmarks.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     final theme = Theme.of(context);
     // R20: 鮮度はパネル自身のデータ(perf-context 行)から出す。旧実装は今日の投稿の
     // 計測時刻を読み、12件計測済みでも今日未投稿だと「計測待ち」と矛盾していた。
     final freshness = resolveXGrowthLoopFreshness(
-      measuredCount: rows.length,
-      newestMeasuredAt: newestMeasuredCreatedAt(rows),
+      measuredCount: comparisonSampleCount,
+      newestMeasuredAt: newestMeasuredCreatedAt(comparableRows),
       now: DateTime.now(),
     );
     final lines = <Widget>[];
@@ -5888,7 +5899,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           Icons.emoji_events,
           const Color(0xFF0EA5E9),
           '勝ちアーキタイプ: ${archetypeWinner.label}'
-          '（平均${archetypeWinner.averageScore}）— 次の投稿はこの型で',
+          '（72時間経過後の平均${archetypeWinner.averageImpressions} imp）'
+          '— 次の投稿はこの型で',
         ),
       );
     }
@@ -5901,6 +5913,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           archetypeSummary,
         ),
       );
+    }
+    if (historicalBenchmarks.isNotEmpty && historicalBenchmarks.first is Map) {
+      final benchmark = historicalBenchmarks.first as Map;
+      final impressions = _toInt(benchmark['historicalBenchmarkImpressions']);
+      final archetype = (benchmark['archetype'] ?? 'unknown').toString();
+      final label = kArchetypeLiftLabels[archetype] ?? archetype;
+      if (impressions > 0) {
+        lines.add(
+          _growthLoopLine(
+            Icons.history,
+            const Color(0xFF64748B),
+            '参考ベンチマーク（累積実測・I72比較外）: $label '
+            '${NumberFormat.decimalPattern('ja_JP').format(impressions)} imp',
+          ),
+        );
+      }
     }
 
     return Padding(

@@ -33,6 +33,14 @@ import {
   filterCurrentStrategyLogs,
   filterRecentLogs,
 } from "./metrics_window.ts";
+import {
+  metricWindowLabel,
+  type NormalizedXPostMetrics,
+  normalizeXMetricWindows,
+  selectXMetricComparisonWindow,
+  X_METRIC_LEARNING_SELECTION_RULE,
+  X_METRIC_WINDOW_SELECTION_RULE,
+} from "./x_metric_windows.ts";
 import { decideXPostPreflight } from "./x_post_preflight.ts";
 import { computeTodayStatus } from "./x_today_status.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
@@ -47,6 +55,13 @@ import {
   buildGrowthDataReport,
   type GrowthReportRow,
 } from "./x_growth_data_report.ts";
+import {
+  buildHouseholdTrackerReport,
+  HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY,
+  HOUSEHOLD_TRACKER_MIRROR_KEY,
+  parseHouseholdTrackerConsent,
+} from "./x_household_tracker.ts";
+import { isUuid, resolveXLogOwnerUserId } from "./x_operator_auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -164,6 +179,30 @@ async function getUserId(req: Request): Promise<string | null> {
   return user?.id ?? null;
 }
 
+/// 共有X資格情報を使う操作は service role または user_profiles.is_admin のみ。
+/// 認証済みであることと、運営アカウントへ投稿できることを分離する。
+async function isXOperator(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  if (userId === "service_role") return true;
+  if (!isUuid(userId)) return false;
+  const { data, error } = await admin
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) return false;
+  return data?.is_admin === true;
+}
+
+async function xReadScopeUserId(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<string> {
+  return await isXOperator(admin, userId) ? "service_role" : userId;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -224,6 +263,66 @@ async function listXPostLogs(
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+async function listXHistoricalBenchmarkLogs(
+  admin: SupabaseClient,
+  userId: string,
+  limit = 10,
+) {
+  let query = admin
+    .from("hub_data")
+    .select("id, metadata, created_at")
+    .eq("source", "x_post_log")
+    .filter("metadata->>learning_cohort", "eq", "historical_benchmark")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (userId !== "service_role") {
+    query = query.filter("metadata->>user_id", "eq", userId);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+async function listXMetricSnapshots(
+  admin: SupabaseClient,
+  userId: string,
+  sourceLogIds: readonly string[],
+) {
+  if (sourceLogIds.length === 0) return [];
+  const rows: Array<{
+    id: string;
+    metadata: Record<string, unknown>;
+    created_at: string;
+  }> = [];
+  // PostgREST/Supabase projects commonly cap a response at 1,000 rows. Fetch
+  // snapshots in source-log batches and pages so a 7-day, 3-hour collector does
+  // not silently lose the early windows of an otherwise valid post.
+  const batchSize = 50;
+  const pageSize = 1000;
+  const maxPagesPerBatch = 10;
+  for (let offset = 0; offset < sourceLogIds.length; offset += batchSize) {
+    const ids = sourceLogIds.slice(offset, offset + batchSize);
+    for (let page = 0; page < maxPagesPerBatch; page += 1) {
+      let query = admin
+        .from("hub_data")
+        .select("id, metadata, created_at")
+        .eq("source", "x_post_metric_snapshot")
+        .in("metadata->>source_log_id", ids)
+        .order("created_at", { ascending: true })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      if (userId !== "service_role") {
+        query = query.filter("metadata->>user_id", "eq", userId);
+      }
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      const pageRows = (data ?? []) as typeof rows;
+      rows.push(...pageRows);
+      if (pageRows.length < pageSize) break;
+    }
+  }
+  return rows;
 }
 
 async function addItem(
@@ -557,6 +656,7 @@ async function collectXPostMetrics(
       latest_metrics: leadSnapshot,
       latest_reply_metrics: replySnapshots,
       metrics_checked_at: checkedAt,
+      metric_provenance: "x_api",
       impressions: leadMetric?.impressions ?? firstNumber(
         leadSnapshot.impressions,
       ),
@@ -585,13 +685,66 @@ async function collectXPostMetrics(
   };
 }
 
+async function loadNormalizedXMetricWindows(
+  admin: SupabaseClient,
+  userId: string,
+  logs: readonly XPostLogItem[],
+  nowMs = Date.now(),
+): Promise<NormalizedXPostMetrics[]> {
+  const sourceLogIds = logs.map((log) => String(log.id)).filter((id) =>
+    id !== ""
+  );
+  const snapshots = await listXMetricSnapshots(admin, userId, sourceLogIds);
+  return normalizeXMetricWindows(logs, snapshots, nowMs);
+}
+
+async function buildNormalizedXMetricReport(
+  admin: SupabaseClient,
+  userId: string,
+  rawLimit: unknown,
+) {
+  const limit = Math.max(
+    10,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const rows = await loadNormalizedXMetricWindows(admin, userId, logs);
+  const comparisonWindow = selectXMetricComparisonWindow(rows);
+  const comparisonSampleCount = comparisonWindow
+    ? rows.filter((row) => row[comparisonWindow] !== null).length
+    : 0;
+  return {
+    success: true,
+    selectionRule: `${X_METRIC_WINDOW_SELECTION_RULE}; ` +
+      X_METRIC_LEARNING_SELECTION_RULE,
+    snapshotSelectionRule: X_METRIC_WINDOW_SELECTION_RULE,
+    learningSelectionRule: X_METRIC_LEARNING_SELECTION_RULE,
+    comparisonWindow,
+    comparisonLabel: comparisonWindow
+      ? metricWindowLabel(comparisonWindow)
+      : null,
+    comparisonSampleCount,
+    sampleCount: comparisonSampleCount,
+    coverage: {
+      logs: rows.length,
+      i3h: rows.filter((row) => row.i3h !== null).length,
+      i24h: rows.filter((row) => row.i24h !== null).length,
+      i72h: rows.filter((row) => row.i72h !== null).length,
+    },
+    rows,
+  };
+}
+
 function compactPostText(value: unknown): string {
   return firstString(value)
     .replace(/\s+/g, " ")
     .slice(0, 120);
 }
 
-function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
+function buildXPerformanceContextFromLogs(
+  logs: XPostLogItem[],
+  normalizedMetrics: readonly NormalizedXPostMetrics[] = [],
+) {
   // R18: 学習(勝ち型/winner exemplar/生成プロンプトの Top hook)を「現行コピー
   // 戦略」の投稿だけで測る。旧フォーマット(誤年 2024 の「デイリーブリーフィング —
   // 日付 朝」)の高スコア旧投稿が勝ち型を占拠し廃止スタイルを再教育する実障害
@@ -611,14 +764,32 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     },
     Date.now(),
   );
-  const effectiveLogs = strategyLogs.length > 0 ? strategyLogs : logs;
-  const rows = effectiveLogs
+  const currentLogs = strategyLogs.length > 0 ? strategyLogs : logs;
+  const historicalLogs = logs.filter((item) =>
+    firstString(asRecord(item.metadata).learning_cohort) ===
+      "historical_benchmark"
+  );
+  const effectiveLogs = [
+    ...currentLogs,
+    ...historicalLogs.filter((historical) =>
+      !currentLogs.some((current) =>
+        String(current.id) === String(historical.id)
+      )
+    ),
+  ];
+  const normalizedByLogId = new Map(
+    normalizedMetrics.map((row) => [row.sourceLogId, row]),
+  );
+  const baseRows = effectiveLogs
     .map((item) => {
       const metadata = asRecord(item.metadata);
       const latest = asRecord(metadata.latest_metrics);
+      const normalized = normalizedByLogId.get(String(item.id));
       const impressions = firstNumber(latest.impressions, metadata.impressions);
       const score = firstNumber(latest.score, metadata.engagement_score);
-      if (impressions == null && score == null) return null;
+      if (impressions == null && score == null && normalized == null) {
+        return null;
+      }
       return {
         id: item.id,
         tweetId: firstString(metadata.tweet_id),
@@ -667,20 +838,82 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
         bookmarkCount: firstNumber(latest.bookmark_count) ?? 0,
         urlClicks: firstNumber(latest.url_clicks) ?? 0,
         profileClicks: firstNumber(latest.profile_clicks) ?? 0,
-        score: score ?? impressions ?? 0,
+        score: score ?? impressions ?? normalized?.i24h ?? normalized?.i72h ??
+          normalized?.i3h ?? 0,
+        postedAt: firstString(metadata.posted_at, item.created_at),
         createdAt: firstString(item.created_at),
+        observedAt: firstString(metadata.observed_at),
+        learningCohort: firstString(metadata.learning_cohort),
+        historicalBenchmarkImpressions: firstNumber(
+          metadata.historical_benchmark_impressions,
+        ),
+        i3h: normalized?.i3h ?? null,
+        i24h: normalized?.i24h ?? null,
+        i72h: normalized?.i72h ?? null,
+        normalizedWindows: normalized?.windows ?? null,
       };
     })
-    .filter((row): row is NonNullable<typeof row> => row !== null)
-    .sort((left, right) => right.score - left.score);
+    .filter((row): row is NonNullable<typeof row> => row !== null);
 
-  const winners = rows.slice(0, 5);
-  const underperformers = rows.slice(-5).reverse();
+  // Use one shared post-age window for the whole learning cohort. This keeps a
+  // mature post's 72-hour cumulative count from competing with a fresh post's
+  // 3-hour count. I24 is the primary decision metric; I72 and I3 are fallbacks.
+  const comparisonWindow = selectXMetricComparisonWindow(
+    baseRows.map((row) => normalizedByLogId.get(String(row.id)))
+      .filter((row): row is NormalizedXPostMetrics => row !== undefined),
+  );
+  const comparisonLabel = comparisonWindow
+    ? metricWindowLabel(comparisonWindow)
+    : "latest cumulative";
+  const rows = baseRows
+    .map((row) => {
+      const sample = comparisonWindow
+        ? row.normalizedWindows?.[comparisonWindow] ?? null
+        : null;
+      const normalizedValue = comparisonWindow ? row[comparisonWindow] : null;
+      const rankingEligible = comparisonWindow === null ||
+        normalizedValue !== null;
+      return {
+        ...row,
+        rankingEligible,
+        rankingMetric: comparisonWindow
+          ? (rankingEligible ? metricWindowLabel(comparisonWindow) : "unranked")
+          : "latest_cumulative",
+        rankingImpressions: comparisonWindow
+          ? normalizedValue
+          : row.impressions ?? row.score,
+        rankingEngagementRate: sample?.engagementRate ?? null,
+        rankingBookmarkRate: sample?.bookmarkRate ?? null,
+        rankingProfileClickRate: sample?.profileClickRate ?? null,
+        rankingUrlClickRate: sample?.urlClickRate ?? null,
+      };
+    })
+    .sort((left, right) =>
+      Number(right.rankingEligible) - Number(left.rankingEligible) ||
+      (right.rankingImpressions ?? -1) - (left.rankingImpressions ?? -1) ||
+      right.score - left.score
+    );
+
+  const postAgeComparableRows = rows.filter((row) =>
+    row.learningCohort !== "historical_benchmark"
+  );
+  const learningRows = comparisonWindow
+    ? postAgeComparableRows.filter((row) => row.rankingEligible)
+    : postAgeComparableRows;
+  const historicalBenchmarks = rows
+    .filter((row) => row.historicalBenchmarkImpressions !== null)
+    .sort((left, right) =>
+      (right.historicalBenchmarkImpressions ?? 0) -
+      (left.historicalBenchmarkImpressions ?? 0)
+    );
+
+  const winners = learningRows.slice(0, 5);
+  const underperformers = learningRows.slice(-5).reverse();
   const byVariant = new Map<
     string,
     { variant: string; count: number; totalScore: number; maxScore: number }
   >();
-  for (const row of rows) {
+  for (const row of learningRows) {
     const key = row.variant || "unknown";
     const current = byVariant.get(key) ?? {
       variant: key,
@@ -689,8 +922,9 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       maxScore: 0,
     };
     current.count += 1;
-    current.totalScore += row.score;
-    current.maxScore = Math.max(current.maxScore, row.score);
+    const rankingScore = row.rankingImpressions ?? row.score;
+    current.totalScore += rankingScore;
+    current.maxScore = Math.max(current.maxScore, rankingScore);
     byVariant.set(key, current);
   }
   const variants = [...byVariant.values()]
@@ -707,12 +941,22 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   // 投稿が貯まるほど自動的に有効化される)。従来は top-1 variant と逸話的な
   // winner 行のみで、集計済みの variants ランキングが未提示だった。
   const avgScore = (list: typeof rows): number =>
-    list.length === 0
-      ? 0
-      : Math.round(list.reduce((sum, r) => sum + r.score, 0) / list.length);
+    list.length === 0 ? 0 : Math.round(
+      list.reduce(
+        (sum, row) => sum + (row.rankingImpressions ?? row.score),
+        0,
+      ) / list.length,
+    );
   const structuralLines: string[] = [];
-  const withMedia = rows.filter((r) => r.hasMedia);
-  const withoutMedia = rows.filter((r) => !r.hasMedia);
+  if (comparisonWindow) {
+    structuralLines.push(
+      `Normalized comparison cohort: ${comparisonLabel} ` +
+        `(n=${learningRows.length}); ${X_METRIC_WINDOW_SELECTION_RULE}; ` +
+        `${X_METRIC_LEARNING_SELECTION_RULE}.`,
+    );
+  }
+  const withMedia = learningRows.filter((r) => r.hasMedia);
+  const withoutMedia = learningRows.filter((r) => !r.hasMedia);
   if (withMedia.length >= 2 && withoutMedia.length >= 2) {
     structuralLines.push(
       `Structural lift (media): avg score with media=${
@@ -727,22 +971,27 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   // 以上で勝ちメディア recommendation を付す・判定不能な既存行は unknown で保持。
   // media_type が貯まるまでは null(=データ希薄時は自動的に沈黙 / 実質 default-off)。
   const mediaLine = buildMediaLiftLine(
-    rows,
+    learningRows,
     (row) => row.mediaType,
-    (row) => row.score,
+    (row) => row.rankingImpressions ?? row.score,
   );
   if (mediaLine) structuralLines.push(mediaLine);
   // R23: 内容アーキタイプ別 lift。実測(2026-07-12 同日3連投: データレポート型
   // 3.2K vs ニュース要約 517 vs ニュース→製品転換 28)を恒常的な A/B 次元へ
   // 昇格。n>=2 のバケットのみ表示(データ希薄時は沈黙 / 実質 default-off)。
+  // Archetype lift is a strict I72 cohort. Historical/lifetime observations
+  // remain useful benchmarks but must not masquerade as a 72-hour sample.
+  const matureArchetypeRows = rows.filter((row) =>
+    row.learningCohort !== "historical_benchmark" && row.i72h !== null
+  );
   const archetypeLine = buildArchetypeLiftLine(
-    rows,
+    matureArchetypeRows,
     (row) => row.archetype,
-    (row) => row.score,
+    (row) => row.i72h ?? Number.NaN,
   );
   if (archetypeLine) structuralLines.push(archetypeLine);
-  const linkReply = rows.filter((r) => r.linkInReply);
-  const linkLead = rows.filter((r) => !r.linkInReply);
+  const linkReply = learningRows.filter((r) => r.linkInReply);
+  const linkLead = learningRows.filter((r) => !r.linkInReply);
   if (linkReply.length >= 2 && linkLead.length >= 2) {
     structuralLines.push(
       `Structural lift (link placement): avg score link-in-reply=${
@@ -752,14 +1001,16 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       } (n=${linkLead.length}).`,
     );
   }
-  if (rows.length >= 3) {
+  if (learningRows.length >= 3) {
     const buckets = [
-      ["0 replies", rows.filter((r) => r.threadReplyCount === 0)],
+      ["0 replies", learningRows.filter((r) => r.threadReplyCount === 0)],
       [
         "1-4 replies",
-        rows.filter((r) => r.threadReplyCount >= 1 && r.threadReplyCount <= 4),
+        learningRows.filter((r) =>
+          r.threadReplyCount >= 1 && r.threadReplyCount <= 4
+        ),
       ],
-      ["5-8 replies", rows.filter((r) => r.threadReplyCount >= 5)],
+      ["5-8 replies", learningRows.filter((r) => r.threadReplyCount >= 5)],
     ].filter(([, list]) => (list as typeof rows).length > 0) as Array<
       [string, typeof rows]
     >;
@@ -775,7 +1026,7 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   }
   // 保存性/プロフィール変換のリーダーを露出(アカウント成長レバーの判定材料)。
   // どちらも >=2 サンプルかつ非ゼロ合計のときだけ出す(データ希薄時は沈黙)。
-  const bookmarkRows = rows.filter((r) => r.bookmarkCount > 0);
+  const bookmarkRows = learningRows.filter((r) => r.bookmarkCount > 0);
   if (bookmarkRows.length >= 2) {
     const top = [...bookmarkRows]
       .sort((a, b) => b.bookmarkCount - a.bookmarkCount)
@@ -786,7 +1037,26 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       }. Emulate what made these save-worthy (checklist/まとめ structure).`,
     );
   }
-  const profileRows = rows.filter((r) => r.profileClicks > 0);
+  const normalizedSaveRows = learningRows.filter((row) =>
+    row.rankingBookmarkRate !== null
+  );
+  if (normalizedSaveRows.length >= 2) {
+    const top = [...normalizedSaveRows]
+      .sort((left, right) =>
+        (right.rankingBookmarkRate ?? 0) -
+        (left.rankingBookmarkRate ?? 0)
+      )
+      .slice(0, 2);
+    structuralLines.push(
+      `Normalized save-rate leaders (${comparisonLabel}): ${
+        top.map((row) =>
+          `${((row.rankingBookmarkRate ?? 0) * 100).toFixed(3)}% ` +
+          `(${row.bookmarkCount} latest bookmarks) - "${row.text}"`
+        ).join(" | ")
+      }.`,
+    );
+  }
+  const profileRows = learningRows.filter((r) => r.profileClicks > 0);
   if (profileRows.length >= 2) {
     const top = [...profileRows]
       .sort((a, b) => b.profileClicks - a.profileClicks)
@@ -799,7 +1069,7 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   }
   const distinctVariants = variants.filter((v) => v.variant !== "unknown");
   const rankingLine = distinctVariants.length >= 2
-    ? `Variant ranking (avg score, n): ${
+    ? `Variant ranking (avg ${comparisonLabel} impressions, n): ${
       distinctVariants.slice(0, 5).map((v) =>
         `${v.variant}=${v.averageScore} (n=${v.count})`
       ).join(", ")
@@ -807,7 +1077,19 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     : "";
   // R23: データレポート型投稿の「捏造せず公開できる実数」をアカウント自身の
   // 実測インプレから供給する(実測 3 件未満は沈黙)。
-  const ownDataLine = buildOwnDataFactsLine(rows, (row) => row.impressions);
+  const ownDataLine = buildOwnDataFactsLine(
+    learningRows,
+    (row) => row.impressions,
+  );
+  const historicalBenchmarkLine = historicalBenchmarks.length === 0
+    ? ""
+    : `Historical lifetime benchmark (not post-age comparable; excluded from winner ranking): ${
+      historicalBenchmarks.slice(0, 3).map((row) =>
+        `variant=${row.variant}, archetype=${row.archetype}, ` +
+        `impressions=${row.historicalBenchmarkImpressions}, ` +
+        `observedAt=${row.observedAt || "unknown"}`
+      ).join(" | ")
+    }.`;
   const promptContext = rows.length === 0
     ? [
       "No measured X performance has been collected yet.",
@@ -816,18 +1098,43 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     ].join("\n")
     : [
       "Measured X performance context for the next post:",
-      `Target: 10K impressions. Current best variant: ${bestVariant}.`,
+      variants.length > 0
+        ? `Target: 10K impressions. Current best variant: ${bestVariant}.`
+        : "Target: 10K impressions. No post-age comparable winner yet.",
+      `Ranking basis: ${comparisonLabel} impressions ` +
+      `(comparable n=${learningRows.length}; total measured n=${rows.length}).`,
       ...winners.map((row, index) =>
         `Winner ${index + 1}: variant=${row.variant}, impressions=${
           row.impressions ?? "unknown"
-        }, score=${row.score}, bookmarks=${row.bookmarkCount}, profileClicks=${row.profileClicks}, urlClicks=${row.urlClicks}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
+        }, comparison=${row.rankingMetric}:${
+          row.rankingImpressions ?? "unknown"
+        }, score=${row.score}, bookmarks=${row.bookmarkCount}, saveRate=${
+          row.rankingBookmarkRate === null
+            ? "unknown"
+            : `${(row.rankingBookmarkRate * 100).toFixed(3)}%`
+        }, engagementRate=${
+          row.rankingEngagementRate === null
+            ? "unknown"
+            : `${(row.rankingEngagementRate * 100).toFixed(3)}%`
+        }, profileClicks=${row.profileClicks}, profileClickRate=${
+          row.rankingProfileClickRate === null
+            ? "unknown"
+            : `${(row.rankingProfileClickRate * 100).toFixed(3)}%`
+        }, urlClicks=${row.urlClicks}, urlClickRate=${
+          row.rankingUrlClickRate === null
+            ? "unknown"
+            : `${(row.rankingUrlClickRate * 100).toFixed(3)}%`
+        }, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
       ...underperformers.slice(0, 3).map((row, index) =>
         `Avoid ${
           index + 1
-        }: variant=${row.variant}, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
+        }: variant=${row.variant}, comparison=${row.rankingMetric}:${
+          row.rankingImpressions ?? "unknown"
+        }, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
       ...(rankingLine ? [rankingLine] : []),
+      ...(historicalBenchmarkLine ? [historicalBenchmarkLine] : []),
       ...structuralLines,
       ...(ownDataLine ? [ownDataLine] : []),
       ...(winners[0]
@@ -837,7 +1144,9 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
           }"`,
         ]
         : []),
-      "Use the winning structure, test one variable at a time, and keep the first post useful before adding the product CTA.",
+      winners.length > 0
+        ? "Use the winning structure, test one variable at a time, and keep the first post useful before adding the product CTA."
+        : "Keep collecting post-age comparable metrics; do not declare a winning structure yet.",
     ].join("\n");
 
   return {
@@ -847,6 +1156,12 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     underperformers,
     variants,
     bestVariant,
+    comparisonWindow,
+    comparisonLabel,
+    comparisonSampleCount: learningRows.length,
+    historicalBenchmarks,
+    metricWindowSelectionRule: X_METRIC_WINDOW_SELECTION_RULE,
+    metricLearningSelectionRule: X_METRIC_LEARNING_SELECTION_RULE,
     promptContext,
   };
 }
@@ -860,8 +1175,105 @@ async function buildXPerformanceContext(
     10,
     Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
   );
-  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
-  return buildXPerformanceContextFromLogs(logs);
+  const [recentLogs, benchmarkLogs] = await Promise.all([
+    listXPostLogs(admin, userId, limit),
+    listXHistoricalBenchmarkLogs(admin, userId),
+  ]);
+  const logs = [
+    ...recentLogs,
+    ...benchmarkLogs.filter((benchmark) =>
+      !recentLogs.some((recent) => String(recent.id) === String(benchmark.id))
+    ),
+  ] as XPostLogItem[];
+  const normalized = await loadNormalizedXMetricWindows(admin, userId, logs);
+  return buildXPerformanceContextFromLogs(logs, normalized);
+}
+
+async function buildScheduledHouseholdTrackerReport(
+  admin: SupabaseClient,
+  actorUserId: string,
+  rawMaxAgeDays: unknown,
+) {
+  if (!await isXOperator(admin, actorUserId)) {
+    return { available: false, reason: "forbidden", status: 403 };
+  }
+  const maxAgeRaw = firstNumber(rawMaxAgeDays) ?? 8;
+  const maxAgeDays = Math.max(1, Math.min(14, Math.trunc(maxAgeRaw)));
+
+  let targetUserIds: string[];
+  if (actorUserId === "service_role") {
+    const { data: profiles, error: profileError } = await admin
+      .from("user_profiles")
+      .select("user_id")
+      .eq("is_admin", true)
+      .limit(20);
+    if (profileError) throw new Error(profileError.message);
+    targetUserIds = (profiles ?? [])
+      .map((row) => firstString(row.user_id))
+      .filter((id) => id !== "");
+  } else {
+    targetUserIds = [actorUserId];
+  }
+  if (targetUserIds.length === 0) {
+    return { available: false, reason: "no_admin_profile" };
+  }
+
+  const { data: rows, error } = await admin
+    .from("asset_pref_mirror")
+    .select("user_id,pref_key,value,updated_at")
+    .in("pref_key", [
+      HOUSEHOLD_TRACKER_MIRROR_KEY,
+      HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY,
+    ])
+    .in("user_id", targetUserIds);
+  if (error) throw new Error(error.message);
+  const enabledUserIds = targetUserIds.filter((targetUserId) => {
+    const consent = (rows ?? []).find((row) =>
+      firstString(row.user_id) === targetUserId &&
+      firstString(row.pref_key) === HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY
+    );
+    return consent !== undefined &&
+      parseHouseholdTrackerConsent(consent.value) === true;
+  });
+  if (enabledUserIds.length === 0) {
+    return { available: false, reason: "no_enabled_snapshot" };
+  }
+  if (enabledUserIds.length > 1) {
+    return {
+      available: false,
+      reason: "ambiguous_enabled_snapshots",
+      enabledCount: enabledUserIds.length,
+    };
+  }
+
+  const row = (rows ?? []).find((candidate) =>
+    firstString(candidate.user_id) === enabledUserIds[0] &&
+    firstString(candidate.pref_key) === HOUSEHOLD_TRACKER_MIRROR_KEY
+  );
+  if (!row) {
+    return { available: false, reason: "enabled_snapshot_missing" };
+  }
+  const report = buildHouseholdTrackerReport(row.value, new Date(), maxAgeDays);
+  return {
+    ...report,
+    ownerUserId: firstString(row.user_id),
+    snapshotUpdatedAt: firstString(row.updated_at),
+  };
+}
+
+async function hasEnabledHouseholdTrackerConsent(
+  admin: SupabaseClient,
+  ownerUserId: string,
+): Promise<boolean> {
+  if (!isUuid(ownerUserId)) return false;
+  const { data, error } = await admin
+    .from("asset_pref_mirror")
+    .select("value")
+    .eq("user_id", ownerUserId)
+    .eq("pref_key", HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data !== null && parseHouseholdTrackerConsent(data.value) === true;
 }
 
 async function buildRevenueFunnelReport(
@@ -874,7 +1286,8 @@ async function buildRevenueFunnelReport(
     Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
   );
   const xLogs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
-  const performance = buildXPerformanceContextFromLogs(xLogs);
+  const normalized = await loadNormalizedXMetricWindows(admin, userId, xLogs);
+  const performance = buildXPerformanceContextFromLogs(xLogs, normalized);
   const { data: payments, error } = await admin
     .from("hub_data")
     .select("id, metadata, created_at")
@@ -1793,8 +2206,13 @@ serve(async (req: Request) => {
       }
 
       case "x.metrics_collect": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
         try {
-          return json(await collectXPostMetrics(admin, userId!, body.limit));
+          return json(
+            await collectXPostMetrics(admin, "service_role", body.limit),
+          );
         } catch (error) {
           const xPayload = isXApiError(error) ? error.payload : null;
           // X API クレジット枯渇/spend cap は次の請求サイクルまで自然復旧
@@ -1821,17 +2239,28 @@ serve(async (req: Request) => {
         }
       }
 
+      case "x.metrics_normalized": {
+        const scopeUserId = await xReadScopeUserId(admin, userId!);
+        return json(
+          await buildNormalizedXMetricReport(admin, scopeUserId, body.limit),
+        );
+      }
+
       case "x.performance_context": {
-        return json(await buildXPerformanceContext(admin, userId!, body.limit));
+        const scopeUserId = await xReadScopeUserId(admin, userId!);
+        return json(
+          await buildXPerformanceContext(admin, scopeUserId, body.limit),
+        );
       }
 
       case "x.growth_data_report": {
         // R24: ポストA型の週次 build-in-public 実測レポートを合成する
         // (read-only / LLM 非使用 / 数値は全て x_post_log 実測)。実測 3 件
         // 未満は available:false で投稿見送りを指示する。
+        const scopeUserId = await xReadScopeUserId(admin, userId!);
         const perf = await buildXPerformanceContext(
           admin,
-          userId!,
+          scopeUserId,
           body.limit ?? 100,
         );
         const targetUrl = firstString(
@@ -1839,8 +2268,10 @@ serve(async (req: Request) => {
           body.target_url,
           "https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=weekly_data_report",
         );
+        const growthReportRows = (perf.rows as Array<Record<string, unknown>>)
+          .filter((row) => row.learningCohort !== "historical_benchmark");
         const report = buildGrowthDataReport(
-          perf.rows as GrowthReportRow[],
+          growthReportRows as GrowthReportRow[],
           new Date(),
           targetUrl,
         );
@@ -1854,12 +2285,23 @@ serve(async (req: Request) => {
         return json({ success: true, available: true, ...report });
       }
 
+      case "x.household_tracker_report": {
+        const report = await buildScheduledHouseholdTrackerReport(
+          admin,
+          userId!,
+          body.maxAgeDays ?? body.max_age_days,
+        );
+        const status = firstNumber(report.status) ?? 200;
+        return json({ success: status < 400, ...report }, status);
+      }
+
       case "x.post_preflight": {
         // R15: spend cap 到達中に高価な創作パイプライン(GPT image + TTS +
         // Hedra)を燃やす前に、直近ログから「投稿しても billing で確定失敗
         // するか」を返す read-only チェック。X API は一切呼ばない(ゼロコスト)。
+        const scopeUserId = await xReadScopeUserId(admin, userId!);
         const logs =
-          (await listXPostLogs(admin, userId!, 20)) as XPostLogItem[];
+          (await listXPostLogs(admin, scopeUserId, 20)) as XPostLogItem[];
         const rows = logs.map((item) => ({
           created_at: item.created_at,
           metadata: asRecord(item.metadata),
@@ -1876,8 +2318,9 @@ serve(async (req: Request) => {
         // 呼出・ゼロコスト)。どんな例外でも 200 {available:false} を返し、
         // ダッシュボードが必ず degrade(現行文言に戻る)できることを保証する。
         try {
+          const scopeUserId = await xReadScopeUserId(admin, userId!);
           const logs =
-            (await listXPostLogs(admin, userId!, 20)) as XPostLogItem[];
+            (await listXPostLogs(admin, scopeUserId, 20)) as XPostLogItem[];
           const rows = logs.map((item) => ({
             created_at: item.created_at,
             metadata: asRecord(item.metadata),
@@ -1902,6 +2345,19 @@ serve(async (req: Request) => {
       }
 
       case "x.post": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        const requestedOwnerUserId = firstString(
+          body.ownerUserId,
+          body.owner_user_id,
+        );
+        const logUserId = resolveXLogOwnerUserId(
+          userId!,
+          requestedOwnerUserId,
+        );
+        const scheduledHouseholdPost = firstString(body.source) ===
+          "x-household-tracker-post.yml";
         const text = String(body.text ?? "").trim();
         const replyText = String(body.replyText ?? body.reply_text ?? "")
           .trim();
@@ -2007,7 +2463,7 @@ serve(async (req: Request) => {
         };
 
         if (dryRun || !isXConfigured()) {
-          const log = await addItem(admin, "x_post_log", userId!, {
+          const log = await addItem(admin, "x_post_log", logUserId, {
             ...baseLog,
             status: dryRun ? "dry_run" : "credentials_missing",
           });
@@ -2040,7 +2496,11 @@ serve(async (req: Request) => {
             50,
             Math.max(dupConfig.recentCount * 4, dupConfig.recentCount),
           );
-          const recentLogs = await listXPostLogs(admin, userId!, scanLimit);
+          const recentLogs = await listXPostLogs(
+            admin,
+            "service_role",
+            scanLimit,
+          );
           const recentPosts = extractPostedTexts(
             recentLogs as XPostLogRowLike[],
             dupConfig.recentCount,
@@ -2057,7 +2517,12 @@ serve(async (req: Request) => {
             };
             let log: unknown = null;
             try {
-              log = await addItem(admin, "x_post_log", userId!, rejectionLog);
+              log = await addItem(
+                admin,
+                "x_post_log",
+                logUserId,
+                rejectionLog,
+              );
             } catch (_logError) {
               log = rejectionLog;
             }
@@ -2074,6 +2539,20 @@ serve(async (req: Request) => {
               log,
             });
           }
+        }
+
+        // Re-read consent immediately before the irreversible API call. The
+        // compose action may have run minutes earlier, and opt-out must win.
+        if (
+          scheduledHouseholdPost &&
+          !await hasEnabledHouseholdTrackerConsent(admin, logUserId)
+        ) {
+          return json({
+            success: false,
+            posted: false,
+            code: "household_consent_revoked",
+            error: "Household tracker consent is no longer enabled",
+          }, 409);
         }
 
         try {
@@ -2106,7 +2585,7 @@ serve(async (req: Request) => {
           const replyTweetIds = replyResults
             .map((replyResult) => replyResult.tweetId)
             .filter((tweetId): tweetId is string => Boolean(tweetId));
-          const log = await addItem(admin, "x_post_log", userId!, {
+          const log = await addItem(admin, "x_post_log", logUserId, {
             ...baseLog,
             status: "posted",
             tweet_id: result.tweetId,
@@ -2153,7 +2632,7 @@ serve(async (req: Request) => {
           };
           let log: unknown = null;
           try {
-            log = await addItem(admin, "x_post_log", userId!, failureLog);
+            log = await addItem(admin, "x_post_log", logUserId, failureLog);
           } catch (_logError) {
             log = failureLog;
           }

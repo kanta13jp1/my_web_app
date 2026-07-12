@@ -337,6 +337,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 給料日(資産管理の月次サイクル基準日 / 設定で変更可 / clamp 1-28)。
   // AssetSalaryDayStore で永続化 + asset_pref_mirror(salary_day)で端末間同期。
   int _salaryDay = AssetSalaryDayStore.defaultSalaryDay;
+  bool _salaryDayConfigured = false;
   // 想定給料額(手取りの目安 / 任意 / null=未登録)。登録すると給料振込の自動検知が
   // heuristicFloor 依存から精密判定へ切り替わる。AssetSalaryAmountStore で永続化 +
   // asset_pref_mirror(salary_amount)で端末間同期。
@@ -984,6 +985,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadDisplayMode();
     _loadMainAccount();
     unawaited(_loadSalaryDay());
+    unawaited(_loadHouseholdTrackerPublishing());
     unawaited(_loadSalaryAmount());
     unawaited(_loadSalaryResetMarker());
     unawaited(_loadRevolvingConfigs());
@@ -8526,9 +8528,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 給料日(月次サイクル基準日)を起動時にローカルから読み、サーバミラーで上書きする。
   Future<void> _loadSalaryDay() async {
     try {
-      final day = await _salaryDayStore.load();
-      if (mounted && day != _salaryDay) {
-        setState(() => _salaryDay = day);
+      final results = await Future.wait<Object>([
+        _salaryDayStore.load(),
+        _salaryDayStore.isConfigured(),
+      ]);
+      final day = results[0] as int;
+      final configured = results[1] as bool;
+      if (mounted &&
+          (day != _salaryDay || configured != _salaryDayConfigured)) {
+        setState(() {
+          _salaryDay = day;
+          _salaryDayConfigured = configured;
+        });
       }
     } catch (e) {
       debugPrint('Error loading salary day: $e');
@@ -8550,10 +8561,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       final restored = AssetSalaryDayStore.decodeMirrorValue(
         rows.first['value'],
       );
-      if (!mounted || restored == _salaryDay) {
+      if (!mounted) {
         return;
       }
-      setState(() => _salaryDay = restored);
+      if (restored != _salaryDay || !_salaryDayConfigured) {
+        setState(() {
+          _salaryDay = restored;
+          _salaryDayConfigured = true;
+        });
+      }
       _persistInBackground(
         _salaryDayStore.save(restored),
         'salary day restore save',
@@ -8920,10 +8936,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 給料日を更新して永続化 + ミラー + 月次state再読込(サイクル基準が変わる)。
   Future<void> _setSalaryDay(int day) async {
     final clamped = AssetSalaryDayStore.clampDay(day);
-    if (clamped == _salaryDay) {
+    if (clamped == _salaryDay && _salaryDayConfigured) {
       return;
     }
-    setState(() => _salaryDay = clamped);
+    setState(() {
+      _salaryDay = clamped;
+      _salaryDayConfigured = true;
+    });
     _persistInBackground(_salaryDayStore.save(clamped), 'salary day save');
     unawaited(_mirrorSalaryDay());
     unawaited(_loadAssetLiabilityMonthlyState());
@@ -18857,10 +18876,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementEmergencyAdviceList(report.emergencyAdvices),
             const SizedBox(height: 12),
           ],
-          if (report.debtTrendInsights.isNotEmpty) ...[
-            _buildAssetManagementMonthlyDebtTrendList(report.debtTrendInsights),
-            const SizedBox(height: 12),
-          ],
+          _buildAssetManagementMonthlyDebtTrendList(report.debtTrendInsights),
+          const SizedBox(height: 12),
           if (report.disciplineReport?.isRelevant ?? false) ...[
             _buildAssetManagementDisciplineCard(report.disciplineReport!),
             const SizedBox(height: 12),
@@ -19954,6 +19971,237 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   /// 今月の負債の問題点と「翌月こうしなさい」を、計算済みの具体額つきで描画する。
   bool _householdTrackerPosting = false;
+  bool _householdTrackerScheduleAllowed = false;
+  bool _householdTrackerAutoPostEnabled = false;
+  bool _householdTrackerScheduleSaving = false;
+  String? _householdTrackerSnapshotSyncSignature;
+  Future<void> _householdTrackerMirrorWriteQueue = Future<void>.value();
+
+  HouseholdTrackerSnapshot _householdTrackerSnapshot(
+    List<AssetDebtTrendInsight> insights, {
+    DateTime? now,
+  }) {
+    return householdSnapshotFromInsights(
+      insights,
+      salaryDay: _salaryDay,
+      salaryDayConfigured: _salaryDayConfigured,
+      now: now ?? DateTime.now(),
+    );
+  }
+
+  /// 定期投稿は共有X資格情報を使うため、管理者だけに設定UIを出す。
+  Future<void> _loadHouseholdTrackerPublishing() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final profile = await _supabase
+          .from('user_profiles')
+          .select('is_admin')
+          .eq('user_id', userId)
+          .maybeSingle();
+      if (_supabase.auth.currentUser?.id != userId) return;
+      final allowed = profile?['is_admin'] == true;
+      if (!allowed) {
+        if (mounted) {
+          setState(() {
+            _householdTrackerScheduleAllowed = false;
+            _householdTrackerAutoPostEnabled = false;
+          });
+        }
+        return;
+      }
+      final rows = await _bootSelectPrefMirror(
+        householdTrackerPublishConsentMirrorKey,
+      );
+      final enabled = rows.isEmpty
+          ? null
+          : decodeHouseholdTrackerPublishConsent(rows.first['value']);
+      if (!mounted || _supabase.auth.currentUser?.id != userId) return;
+      setState(() {
+        _householdTrackerScheduleAllowed = true;
+        _householdTrackerAutoPostEnabled = enabled == true;
+      });
+    } catch (error) {
+      debugPrint('household tracker publishing load failed: $error');
+    }
+  }
+
+  Future<void> _saveHouseholdTrackerPublishMirror(
+    HouseholdTrackerSnapshot snapshot, {
+    required String userId,
+  }) async {
+    await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+      'user_id': userId,
+      'pref_key': householdTrackerPublishMirrorKey,
+      'value': encodeHouseholdTrackerPublishMirror(snapshot),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+  }
+
+  Future<void> _saveHouseholdTrackerPublishConsent(
+    bool enabled, {
+    required String userId,
+  }) async {
+    if (_supabase.auth.currentUser?.id != userId) {
+      throw StateError('ユーザーが切り替わったため設定変更を中止しました');
+    }
+    await _supabase.from('asset_pref_mirror').upsert(<String, dynamic>{
+      'user_id': userId,
+      'pref_key': householdTrackerPublishConsentMirrorKey,
+      'value': encodeHouseholdTrackerPublishConsent(enabled),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+  }
+
+  /// スナップショット更新を順序どおりDBへ反映する。投稿同意は別キーのため、
+  /// この待ち行列が遅延してもopt-out状態を変更できない。
+  Future<void> _queueHouseholdTrackerPublishMirror(
+    HouseholdTrackerSnapshot snapshot,
+  ) {
+    final queuedUserId = _supabase.auth.currentUser?.id;
+    if (queuedUserId == null) {
+      return Future<void>.error(StateError('ログインが必要です'));
+    }
+    final queued = _householdTrackerMirrorWriteQueue.then<void>(
+      (_) {
+        if (_supabase.auth.currentUser?.id != queuedUserId) {
+          throw StateError('ユーザーが切り替わったため同期を中止しました');
+        }
+        return _saveHouseholdTrackerPublishMirror(
+          snapshot,
+          userId: queuedUserId,
+        );
+      },
+    );
+    _householdTrackerMirrorWriteQueue = queued.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    return queued;
+  }
+
+  /// 有効化中は画面で再計算した匿名数値だけを1日1回/値変更時に更新する。
+  void _scheduleHouseholdTrackerSnapshotSync(
+    List<AssetDebtTrendInsight> insights,
+  ) {
+    if (!_householdTrackerScheduleAllowed ||
+        !_householdTrackerAutoPostEnabled ||
+        _householdTrackerScheduleSaving ||
+        !_salaryDayConfigured) {
+      return;
+    }
+    final snapshot = _householdTrackerSnapshot(insights);
+    final day = DateFormat('yyyy-MM-dd').format(snapshot.now);
+    final signature = [
+      day,
+      snapshot.monitoredAccounts,
+      snapshot.balanceIncreasing,
+      snapshot.negativeAmortization,
+      snapshot.slowPayoff,
+      snapshot.criticalCount,
+      snapshot.warningCount,
+      snapshot.salaryDay,
+    ].join('|');
+    if (_householdTrackerSnapshotSyncSignature == signature) return;
+    _householdTrackerSnapshotSyncSignature = signature;
+    unawaited(
+      _queueHouseholdTrackerPublishMirror(snapshot).catchError(
+        (Object error) {
+          if (_householdTrackerSnapshotSyncSignature == signature) {
+            _householdTrackerSnapshotSyncSignature = null;
+          }
+          debugPrint('household tracker snapshot sync failed: $error');
+        },
+      ),
+    );
+  }
+
+  Future<void> _toggleHouseholdTrackerSchedule(
+    List<AssetDebtTrendInsight> insights,
+  ) async {
+    if (_householdTrackerScheduleSaving) return;
+    if (!_householdTrackerScheduleAllowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('週次投稿の設定は管理者のみ変更できます')),
+      );
+      return;
+    }
+    if (!_salaryDayConfigured) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('先に給料日を保存してください（既定値のままでは投稿しません）')),
+      );
+      return;
+    }
+
+    final nextEnabled = !_householdTrackerAutoPostEnabled;
+    final snapshot = _householdTrackerSnapshot(insights);
+    if (nextEnabled) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('匿名家計トラッカーの週次投稿を有効化'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '毎週、8日以内に更新された匿名集計だけをXへ投稿します。'
+                  '金額・口座名は投稿用スナップショットに保存しません。給料日はサイクル計算にだけ使い、絶対日は公開しません。',
+                ),
+                const SizedBox(height: 12),
+                SelectableText(buildHouseholdTrackerText(snapshot)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('週次投稿を有効化'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
+    setState(() => _householdTrackerScheduleSaving = true);
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw StateError('ログインが必要です');
+      if (nextEnabled) {
+        // 最新snapshotを先に保存し、成功後にだけ投稿同意を有効化する。
+        await _queueHouseholdTrackerPublishMirror(snapshot);
+      }
+      await _saveHouseholdTrackerPublishConsent(
+        nextEnabled,
+        userId: userId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _householdTrackerAutoPostEnabled = nextEnabled;
+        _householdTrackerSnapshotSyncSignature = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            nextEnabled ? '匿名家計トラッカーの週次投稿を有効にしました' : '週次投稿を停止しました',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('週次投稿の設定を保存できませんでした: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _householdTrackerScheduleSaving = false);
+    }
+  }
 
   /// R24b: 負債トレンドの実データ(件数・日数・方向のみ/金額なし)を post A 同型の
   /// データレポート型スコアボードとして X へ投稿し、variant=household_tracker で
@@ -19962,13 +20210,41 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     List<AssetDebtTrendInsight> insights,
   ) async {
     if (_householdTrackerPosting) return;
+    if (!_householdTrackerScheduleAllowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('X API投稿は管理者のみ実行できます')),
+      );
+      return;
+    }
+    if (!_salaryDayConfigured) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('先に給料日を保存してください（既定値は実測として投稿しません）')),
+      );
+      return;
+    }
+    final snapshot = _householdTrackerSnapshot(insights);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('匿名家計トラッカーをXへ投稿'),
+        content: SingleChildScrollView(
+          child: SelectableText(buildHouseholdTrackerText(snapshot)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Xへ投稿する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     setState(() => _householdTrackerPosting = true);
     try {
-      final snapshot = householdSnapshotFromInsights(
-        insights,
-        salaryDay: _salaryDay,
-        now: DateTime.now(),
-      );
       final res = await _supabase.functions.invoke(
         'growth-hub',
         body: buildHouseholdTrackerPostPayload(snapshot),
@@ -20001,11 +20277,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Widget _buildAssetManagementMonthlyDebtTrendList(
     List<AssetDebtTrendInsight> insights,
   ) {
+    _scheduleHouseholdTrackerSnapshotSync(insights);
     final hasCritical = insights.any(
       (insight) => insight.severity == AssetDebtTrendSeverity.critical,
     );
-    final headerColor =
-        hasCritical ? const Color(0xFFB91C1C) : const Color(0xFFD97706);
+    final headerColor = insights.isEmpty
+        ? const Color(0xFF0F766E)
+        : hasCritical
+            ? const Color(0xFFB91C1C)
+            : const Color(0xFFD97706);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(10),
@@ -20023,7 +20303,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '今月の問題点と翌月の改善（負債トレンド）',
+                  '家計トラッカー（給料日サイクル / 負債トレンド）',
                   style: TextStyle(
                     color: headerColor,
                     fontWeight: FontWeight.bold,
@@ -20031,25 +20311,53 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
               ),
-              IconButton(
-                tooltip: '家計トラッカーを投稿（計測対象・金額非公開）',
-                icon: _householdTrackerPosting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(Icons.ios_share, color: headerColor, size: 18),
-                onPressed: _householdTrackerPosting
-                    ? null
-                    : () => _postHouseholdTracker(insights),
-              ),
+              if (_householdTrackerScheduleAllowed)
+                IconButton(
+                  key: const Key('household_tracker_schedule_toggle'),
+                  tooltip: _householdTrackerAutoPostEnabled
+                      ? '匿名家計トラッカーの週次投稿を停止'
+                      : '匿名家計トラッカーの週次投稿を有効化',
+                  icon: _householdTrackerScheduleSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          _householdTrackerAutoPostEnabled
+                              ? Icons.event_available
+                              : Icons.event_repeat,
+                          color: _householdTrackerAutoPostEnabled
+                              ? const Color(0xFF0F766E)
+                              : headerColor,
+                          size: 18,
+                        ),
+                  onPressed: _householdTrackerScheduleSaving
+                      ? null
+                      : () => _toggleHouseholdTrackerSchedule(insights),
+                ),
+              if (_householdTrackerScheduleAllowed)
+                IconButton(
+                  tooltip: '匿名家計トラッカーを今すぐ投稿',
+                  icon: _householdTrackerPosting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(Icons.ios_share, color: headerColor, size: 18),
+                  onPressed: _householdTrackerPosting
+                      ? null
+                      : () => _postHouseholdTracker(insights),
+                ),
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
-            'リボ払いで返済が利息に負けている／先月より残高が増えた負債を検出し、翌月の具体的な返済額を提示します。',
-            style: TextStyle(fontSize: 12, height: 1.5),
+          Text(
+            insights.isEmpty
+                ? '今月の負債トレンドアラートはありません。給料日サイクルは匿名の局面だけを公開します。'
+                : 'リボ払いで返済が利息に負けている／先月より残高が増えた負債を検出し、翌月の具体的な返済額を提示します。',
+            style: const TextStyle(fontSize: 12, height: 1.5),
           ),
           const SizedBox(height: 8),
           for (final insight in insights.take(5))

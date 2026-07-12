@@ -6,6 +6,7 @@ import {
   buildArchetypeLiftLine,
   buildOwnDataFactsLine,
   classifyPostArchetype,
+  filterMatureImpressionRows,
   normalizeArchetypeBucket,
   resolveLoggedArchetype,
 } from "./x_post_archetype.ts";
@@ -90,7 +91,8 @@ Deno.test("classifyPostArchetype does not misfile briefings as data_report", () 
 
 Deno.test("classifyPostArchetype resolves hybrids by payload precedence", () => {
   // データ密度が高ければ製品名が混ざっても data_report(独自データ軸を最優先)。
-  const hybridData = DATA_REPORT_SAMPLE + "\n給料日サイクルでも同じ形式で見る。";
+  const hybridData = DATA_REPORT_SAMPLE +
+    "\n給料日サイクルでも同じ形式で見る。";
   assertEquals(classifyPostArchetype(hybridData), "data_report");
   // universal 経路のニュース→製品転換型(C)はニュース構造が立つ限り
   // news_briefing に寄せる(B/C の分離は variant / fallback_used 軸が担う)。
@@ -143,7 +145,9 @@ Deno.test("buildArchetypeLiftLine shows n>=2 buckets and recommends the winner",
   assert(line!.includes("data_report avg=3000 (n=2)"));
   assert(line!.includes("news_briefing avg=273 (n=2)"));
   assert(!line!.includes("product_promo"));
-  assert(line!.includes("Recommendation: structure the next post as data_report"));
+  assert(
+    line!.includes("Recommendation: structure the next post as data_report"),
+  );
 });
 
 Deno.test("buildArchetypeLiftLine stays silent or hedged on sparse data", () => {
@@ -167,6 +171,22 @@ Deno.test("buildArchetypeLiftLine stays silent or hedged on sparse data", () => 
   );
   assert(single !== null);
   assert(single!.includes("insufficient archetype samples"));
+});
+
+Deno.test("buildArchetypeLiftLine does not declare a winner on a tie", () => {
+  const tied = buildArchetypeLiftLine(
+    [
+      { archetype: "data_report", score: 100 },
+      { archetype: "data_report", score: 200 },
+      { archetype: "news_briefing", score: 150 },
+      { archetype: "news_briefing", score: 150 },
+    ] as LiftRow[],
+    (row) => row.archetype,
+    (row) => row.score,
+  );
+  assert(tied !== null);
+  assert(tied!.includes("leaders are tied"));
+  assert(!tied!.includes("structure the next post as"));
 });
 
 type FactRow = { impressions: number | null };
@@ -209,4 +229,27 @@ Deno.test("buildOwnDataFactsLine publishes median/best only with >=3 samples", (
   );
   assert(even !== null);
   assert(even!.includes("median impressions=26"));
+});
+
+type MatureRow = {
+  impressions: number | null;
+  postedAt: string;
+};
+
+Deno.test("Archetype lift admits only 72h-mature impression rows", () => {
+  const now = Date.parse("2026-07-12T12:00:00Z");
+  const rows: MatureRow[] = [
+    { impressions: 8000, postedAt: "2026-04-13T04:01:54Z" },
+    { impressions: 517, postedAt: "2026-07-09T12:00:00Z" },
+    { impressions: 100, postedAt: "2026-07-11T12:00:00Z" },
+    { impressions: null, postedAt: "2026-07-01T12:00:00Z" },
+    { impressions: 50, postedAt: "invalid" },
+  ];
+  const mature = filterMatureImpressionRows(
+    rows,
+    (row) => row.impressions,
+    (row) => row.postedAt,
+    now,
+  );
+  assertEquals(mature, rows.slice(0, 2));
 });

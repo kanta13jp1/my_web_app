@@ -28,6 +28,11 @@ class HouseholdTrackerSnapshot {
   /// 給料日設定(毎月 N 日)。
   final int salaryDay;
 
+  /// 給料日が既定値ではなく、本人の保存済み設定から取得できたか。
+  ///
+  /// false のスナップショットは「実運用データ」として定期投稿しない。
+  final bool salaryDayConfigured;
+
   /// 集計時刻(JST 前提の DateTime を渡す)。
   final DateTime now;
 
@@ -39,6 +44,7 @@ class HouseholdTrackerSnapshot {
     required this.criticalCount,
     required this.warningCount,
     required this.salaryDay,
+    required this.salaryDayConfigured,
     required this.now,
   });
 
@@ -59,27 +65,51 @@ int daysUntilSalaryDay(DateTime now, int salaryDay) {
 
 String _two(int v) => v.toString().padLeft(2, '0');
 
+/// すべての件数を同じ幅へ丸め、合計と内訳の引き算でも小セルを復元できない
+/// ようにする。
+///
+/// 単一世帯の公開投稿では、金額・口座名を除くだけでは再識別リスクが残る。
+/// 0件だけは「該当なし」として公開し、正の値は一律のレンジで公開する。
+String anonymizedHouseholdCount(int value) {
+  final safe = value < 0 ? 0 : value;
+  if (safe == 0) return '0件';
+  if (safe < 3) return '1〜2件';
+  if (safe < 6) return '3〜5件';
+  if (safe < 11) return '6〜10件';
+  return '11件以上';
+}
+
+/// 給料日の絶対日を公開せず、現在のサイクル局面だけを返す。
+String salaryCyclePhase(DateTime now, int salaryDay) {
+  final remaining = daysUntilSalaryDay(now, salaryDay);
+  if (remaining <= 3) return '給料日まで3日以内';
+  if (remaining <= 7) return '給料日まで1週間以内';
+  if (remaining <= 14) return '給料日まで1〜2週間';
+  return '給料日まで2週間超';
+}
+
 /// スコアボード形式の投稿本文を決定的に合成する(post A と同型: 取得日時/主要
 /// 数値/内訳/アラート/カウントダウン)。金額は一切含まない。
 String buildHouseholdTrackerText(HouseholdTrackerSnapshot s) {
   final d = s.now;
   final dateLabel = '${d.year}/${_two(d.month)}/${_two(d.day)}';
-  final timestamp = '$dateLabel ${_two(d.hour)}:${_two(d.minute)}';
-  final remaining = daysUntilSalaryDay(s.now, s.salaryDay);
   final lines = <String>[
-    '家計トラッカー $dateLabel（自分株式会社・実運用データ）',
+    '家計トラッカー $dateLabel（自分株式会社・匿名集計）',
     '',
-    '取得日時: $timestamp',
-    'トレンド検出口座: ${s.monitoredAccounts}',
-    '負債トレンド検出: ${s.totalFindings}件',
-    '内訳: 残高増加 ${s.balanceIncreasing} / 利息超過 ${s.negativeAmortization} / 長期化 ${s.slowPayoff}',
+    '集計日: $dateLabel',
+    'トレンド検出口座: ${anonymizedHouseholdCount(s.monitoredAccounts)}',
+    '負債トレンド検出: ${anonymizedHouseholdCount(s.totalFindings)}',
+    '内訳: 残高増加 ${anonymizedHouseholdCount(s.balanceIncreasing)} / '
+        '利息超過 ${anonymizedHouseholdCount(s.negativeAmortization)} / '
+        '長期化 ${anonymizedHouseholdCount(s.slowPayoff)}',
     if (s.criticalCount > 0 || s.warningCount > 0)
-      'アラート: 🔴${s.criticalCount}件 / 🟡${s.warningCount}件'
+      'アラート: 🔴${anonymizedHouseholdCount(s.criticalCount)} / '
+          '🟡${anonymizedHouseholdCount(s.warningCount)}'
     else
       'アラート: なし',
-    '給料日まで: あと$remaining日（毎月${s.salaryDay}日起点）',
+    '給料日サイクル: ${s.salaryDayConfigured ? salaryCyclePhase(s.now, s.salaryDay) : '未設定'}',
     '',
-    '※公開は件数・日数・方向のみ（金額は非公開）',
+    '※金額・口座名・給料日の絶対日は非公開。件数は幅表示。',
   ];
   return lines.join('\n');
 }
@@ -95,9 +125,109 @@ Map<String, dynamic> buildHouseholdTrackerPostPayload(
     'text': buildHouseholdTrackerText(snapshot),
     'source': 'household_tracker',
     'variant': 'household_tracker',
+    'utmContent': 'household_tracker',
+    'route': '/asset-management',
+    'promptProfile': 'household_tracker_scoreboard_v2',
+    'contentKind': 'data_report',
     'contentArchetype': 'data_report',
     'experimentKey': 'x_first_user_growth_10k',
+    'linkInReply': false,
   };
+}
+
+/// `asset_pref_mirror` に保存する公開候補スナップショットのキー。
+/// 保存対象は投稿本文の allowlist 数値だけで、金額・口座名は入らない。
+const String householdTrackerPublishMirrorKey =
+    'household_tracker_publish_snapshot';
+const String householdTrackerPublishConsentMirrorKey =
+    'household_tracker_publish_consent';
+
+class HouseholdTrackerPublishMirror {
+  final HouseholdTrackerSnapshot snapshot;
+
+  const HouseholdTrackerPublishMirror({
+    required this.snapshot,
+  });
+}
+
+Map<String, dynamic> encodeHouseholdTrackerPublishMirror(
+  HouseholdTrackerSnapshot snapshot,
+) {
+  return <String, dynamic>{
+    'schema_version': 1,
+    'observed_at': snapshot.now.toUtc().toIso8601String(),
+    'monitored_accounts': snapshot.monitoredAccounts,
+    'balance_increasing': snapshot.balanceIncreasing,
+    'negative_amortization': snapshot.negativeAmortization,
+    'slow_payoff': snapshot.slowPayoff,
+    'critical_count': snapshot.criticalCount,
+    'warning_count': snapshot.warningCount,
+    'salary_day': snapshot.salaryDay,
+    'salary_day_configured': snapshot.salaryDayConfigured,
+  };
+}
+
+/// 不正な/旧形式の公開候補は fail-closed で null にする。
+HouseholdTrackerPublishMirror? decodeHouseholdTrackerPublishMirror(
+  dynamic value,
+) {
+  if (value is! Map || value['schema_version'] != 1) return null;
+
+  int? nonNegative(String key) {
+    final raw = value[key];
+    if (raw is! num) return null;
+    final parsed = raw.toInt();
+    return parsed >= 0 && parsed <= 999 ? parsed : null;
+  }
+
+  final observedAt = DateTime.tryParse('${value['observed_at'] ?? ''}');
+  final monitoredAccounts = nonNegative('monitored_accounts');
+  final balanceIncreasing = nonNegative('balance_increasing');
+  final negativeAmortization = nonNegative('negative_amortization');
+  final slowPayoff = nonNegative('slow_payoff');
+  final criticalCount = nonNegative('critical_count');
+  final warningCount = nonNegative('warning_count');
+  final salaryDayRaw = value['salary_day'];
+  if (observedAt == null ||
+      monitoredAccounts == null ||
+      balanceIncreasing == null ||
+      negativeAmortization == null ||
+      slowPayoff == null ||
+      criticalCount == null ||
+      warningCount == null ||
+      salaryDayRaw is! num) {
+    return null;
+  }
+  final salaryDay = salaryDayRaw.toInt();
+  if (salaryDay < 1 || salaryDay > 28) return null;
+
+  return HouseholdTrackerPublishMirror(
+    snapshot: HouseholdTrackerSnapshot(
+      monitoredAccounts: monitoredAccounts,
+      balanceIncreasing: balanceIncreasing,
+      negativeAmortization: negativeAmortization,
+      slowPayoff: slowPayoff,
+      criticalCount: criticalCount,
+      warningCount: warningCount,
+      salaryDay: salaryDay,
+      salaryDayConfigured: value['salary_day_configured'] == true,
+      now: observedAt,
+    ),
+  );
+}
+
+/// 投稿同意はスナップショットと別キーに保存する。古い集計の遅延同期が停止操作を
+/// enabled=true へ戻せないようにするため、背景同期はこの値へ触れない。
+Map<String, dynamic> encodeHouseholdTrackerPublishConsent(bool enabled) =>
+    <String, dynamic>{
+      'schema_version': 1,
+      'enabled': enabled,
+    };
+
+bool? decodeHouseholdTrackerPublishConsent(dynamic value) {
+  if (value is! Map || value['schema_version'] != 1) return null;
+  if (value['enabled'] is! bool) return null;
+  return value['enabled'] as bool;
 }
 
 /// 負債トレンド insights から Snapshot を組み立てる純ヘルパ(金額は一切読まない)。
@@ -105,6 +235,7 @@ Map<String, dynamic> buildHouseholdTrackerPostPayload(
 HouseholdTrackerSnapshot householdSnapshotFromInsights(
   List<AssetDebtTrendInsight> insights, {
   required int salaryDay,
+  required bool salaryDayConfigured,
   required DateTime now,
 }) {
   int countBy(AssetDebtTrendCategory c) =>
@@ -119,6 +250,7 @@ HouseholdTrackerSnapshot householdSnapshotFromInsights(
     criticalCount: severity(AssetDebtTrendSeverity.critical),
     warningCount: severity(AssetDebtTrendSeverity.warning),
     salaryDay: salaryDay,
+    salaryDayConfigured: salaryDayConfigured,
     now: now,
   );
 }

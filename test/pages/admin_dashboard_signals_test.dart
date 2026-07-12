@@ -268,13 +268,39 @@ void main() {
     // 誤記しニュース要約行が全て「分類前」へ落ちる契約バグがあった。本実装は
     // edge x_post_archetype.ts の ArchetypeBucket と同一キーで固定する。
     List<Map<String, dynamic>> rows() => [
-          {'archetype': 'data_report', 'score': 3200},
-          {'archetype': 'data_report', 'score': 2800},
-          {'archetype': 'news_briefing', 'score': 517},
-          {'archetype': 'news_briefing', 'score': 28},
-          {'archetype': 'product_promo', 'score': 10},
+          {
+            'archetype': 'data_report',
+            'i72h': 3200,
+          },
+          {
+            'archetype': 'data_report',
+            'i72h': 2800,
+          },
+          {
+            'archetype': 'news_briefing',
+            'i72h': 517,
+          },
+          {
+            'archetype': 'news_briefing',
+            'i72h': 28,
+          },
+          {
+            'archetype': 'product_promo',
+            'i72h': 10,
+          },
+          {
+            'archetype': 'product_promo',
+            'i72h': null,
+          },
           // 旧ログ(archetype 欠落)は unknown 保持。
-          {'score': 99},
+          {'i72h': 99},
+          // 累積8Kは学習用ベンチマークだが、I72 liftには混ぜない。
+          {
+            'archetype': 'data_report',
+            'impressions': 8000,
+            'i72h': null,
+            'learningCohort': 'historical_benchmark',
+          },
         ];
 
     test('groups by archetype, measured first, unknown always last', () {
@@ -285,48 +311,77 @@ void main() {
         'product_promo',
         'unknown',
       ]);
-      expect(entries[0].averageScore, 3000);
+      expect(entries[0].averageImpressions, 3000);
       expect(entries[0].measured, isTrue);
-      expect(entries[1].averageScore, 273);
+      expect(entries[1].averageImpressions, 273);
       // n=1 は実測扱いしない。
       expect(entries[2].measured, isFalse);
+      expect(entries[2].pendingCount, 1);
     });
 
     test('edge contract: news_briefing rows carry the JP label (not 分類前)', () {
-      final line = archetypeLiftSummaryLine(resolveArchetypeLift(rows()));
-      expect(line, contains('ニュース要約型 平均273 (2件)'));
+      final line = archetypeLiftSummaryLine(
+        resolveArchetypeLift(rows()),
+      );
+      expect(line, contains('ニュース要約型 平均273 imp (2件)'));
       expect(line, isNot(contains('news_briefing')));
     });
 
-    test('winner needs >=2 measured buckets (honesty gate)', () {
+    test('winner needs >=2 mature buckets and a strict lead', () {
       expect(
         archetypeLiftWinner(resolveArchetypeLift(rows()))?.archetype,
         'data_report',
       );
       // 実測バケット1種では勝ち型を主張しない。
       final single = resolveArchetypeLift([
-        {'archetype': 'news_briefing', 'score': 517},
-        {'archetype': 'news_briefing', 'score': 28},
-        {'archetype': 'product_promo', 'score': 10},
+        {
+          'archetype': 'news_briefing',
+          'i72h': 517,
+        },
+        {
+          'archetype': 'news_briefing',
+          'i72h': 28,
+        },
+        {
+          'archetype': 'product_promo',
+          'i72h': 10,
+        },
       ]);
       expect(archetypeLiftWinner(single), isNull);
       // unknown だけが n>=2 でも勝ち型にしない。
       final unknownOnly = resolveArchetypeLift([
-        {'score': 1},
-        {'score': 2},
-        {'archetype': 'general', 'score': 3},
-        {'archetype': 'general', 'score': 4},
+        {'i72h': 1},
+        {'i72h': 2},
+        {'archetype': 'general', 'i72h': 3},
+        {'archetype': 'general', 'i72h': 4},
       ]);
       expect(archetypeLiftWinner(unknownOnly), isNull);
+
+      final tied = resolveArchetypeLift([
+        {'archetype': 'data_report', 'i72h': 100},
+        {'archetype': 'data_report', 'i72h': 100},
+        {'archetype': 'general', 'i72h': 100},
+        {'archetype': 'general', 'i72h': 100},
+      ]);
+      expect(archetypeLiftWinner(tied), isNull);
     });
 
     test('summary line labels measured vs 実測不足, null when empty', () {
-      final line = archetypeLiftSummaryLine(resolveArchetypeLift(rows()));
-      expect(line, contains('データレポート型 平均3000 (2件)'));
-      expect(line, contains('製品紹介型 実測不足 (1件)'));
+      final line = archetypeLiftSummaryLine(
+        resolveArchetypeLift(rows()),
+      );
+      expect(line, contains('投稿72時間後・imp'));
+      expect(line, contains('データレポート型 平均3000 imp (2件)'));
+      expect(line, contains('製品紹介型 実測不足 (1件・計測中1件)'));
       expect(line, contains('分類前(旧ログ)'));
-      expect(archetypeLiftSummaryLine(resolveArchetypeLift(null)), isNull);
-      expect(archetypeLiftSummaryLine(resolveArchetypeLift(const [])), isNull);
+      expect(
+        archetypeLiftSummaryLine(resolveArchetypeLift(null)),
+        isNull,
+      );
+      expect(
+        archetypeLiftSummaryLine(resolveArchetypeLift(const [])),
+        isNull,
+      );
     });
   });
 }
