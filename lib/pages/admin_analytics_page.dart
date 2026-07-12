@@ -6312,7 +6312,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildXCandidateQueueSection() {
     if (_xCandidates.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
-    final now = DateTime.now();
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Card(
