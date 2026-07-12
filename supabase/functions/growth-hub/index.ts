@@ -33,6 +33,14 @@ import {
   filterCurrentStrategyLogs,
   filterRecentLogs,
 } from "./metrics_window.ts";
+import {
+  metricWindowLabel,
+  type NormalizedXPostMetrics,
+  normalizeXMetricWindows,
+  selectXMetricComparisonWindow,
+  X_METRIC_LEARNING_SELECTION_RULE,
+  X_METRIC_WINDOW_SELECTION_RULE,
+} from "./x_metric_windows.ts";
 import { decideXPostPreflight } from "./x_post_preflight.ts";
 import { computeTodayStatus } from "./x_today_status.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
@@ -47,6 +55,12 @@ import {
   buildGrowthDataReport,
   type GrowthReportRow,
 } from "./x_growth_data_report.ts";
+import {
+  approveXPostCandidateMetadata,
+  buildXPostCandidateMetadata,
+  finalizeXPostCandidateMetadata,
+  X_POST_CANDIDATE_SOURCE,
+} from "./x_post_candidate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -164,6 +178,28 @@ async function getUserId(req: Request): Promise<string | null> {
   return user?.id ?? null;
 }
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(value);
+}
+
+// Shared X-account candidate operations are restricted to the service role or
+// an authenticated app administrator. This intentionally leaves x.post's
+// existing authorization behavior unchanged.
+async function isXOperator(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  if (userId === "service_role") return true;
+  if (!isUuid(userId)) return false;
+  const { data, error } = await admin
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return error === null && data?.is_admin === true;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -224,6 +260,45 @@ async function listXPostLogs(
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+async function listXMetricSnapshots(
+  admin: SupabaseClient,
+  userId: string,
+  sourceLogIds: readonly string[],
+) {
+  if (sourceLogIds.length === 0) return [];
+  const rows: Array<{
+    id: string;
+    metadata: Record<string, unknown>;
+    created_at: string;
+  }> = [];
+  // Snapshot volume can exceed PostgREST's usual 1,000-row response limit.
+  // Page by bounded source-log batches so early post-age windows are retained.
+  const batchSize = 50;
+  const pageSize = 1000;
+  const maxPagesPerBatch = 10;
+  for (let offset = 0; offset < sourceLogIds.length; offset += batchSize) {
+    const ids = sourceLogIds.slice(offset, offset + batchSize);
+    for (let page = 0; page < maxPagesPerBatch; page += 1) {
+      let query = admin
+        .from("hub_data")
+        .select("id, metadata, created_at")
+        .eq("source", "x_post_metric_snapshot")
+        .in("metadata->>source_log_id", ids)
+        .order("created_at", { ascending: true })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      if (userId !== "service_role") {
+        query = query.filter("metadata->>user_id", "eq", userId);
+      }
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      const pageRows = (data ?? []) as typeof rows;
+      rows.push(...pageRows);
+      if (pageRows.length < pageSize) break;
+    }
+  }
+  return rows;
 }
 
 async function addItem(
@@ -585,13 +660,70 @@ async function collectXPostMetrics(
   };
 }
 
+async function loadNormalizedXMetricWindows(
+  admin: SupabaseClient,
+  userId: string,
+  logs: readonly XPostLogItem[],
+  nowMs = Date.now(),
+): Promise<NormalizedXPostMetrics[]> {
+  const sourceLogIds = logs
+    .map((log) => String(log.id))
+    .filter((id) => id !== "");
+  const snapshots = await listXMetricSnapshots(
+    admin,
+    userId,
+    sourceLogIds,
+  );
+  return normalizeXMetricWindows(logs, snapshots, nowMs);
+}
+
+async function buildNormalizedXMetricReport(
+  admin: SupabaseClient,
+  userId: string,
+  rawLimit: unknown,
+) {
+  const limit = Math.max(
+    10,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const rows = await loadNormalizedXMetricWindows(admin, userId, logs);
+  const comparisonWindow = selectXMetricComparisonWindow(rows);
+  const comparisonSampleCount = comparisonWindow
+    ? rows.filter((row) => row[comparisonWindow] !== null).length
+    : 0;
+  return {
+    success: true,
+    selectionRule: `${X_METRIC_WINDOW_SELECTION_RULE}; ` +
+      X_METRIC_LEARNING_SELECTION_RULE,
+    snapshotSelectionRule: X_METRIC_WINDOW_SELECTION_RULE,
+    learningSelectionRule: X_METRIC_LEARNING_SELECTION_RULE,
+    comparisonWindow,
+    comparisonLabel: comparisonWindow
+      ? metricWindowLabel(comparisonWindow)
+      : null,
+    comparisonSampleCount,
+    sampleCount: comparisonSampleCount,
+    coverage: {
+      logs: rows.length,
+      i3h: rows.filter((row) => row.i3h !== null).length,
+      i24h: rows.filter((row) => row.i24h !== null).length,
+      i72h: rows.filter((row) => row.i72h !== null).length,
+    },
+    rows,
+  };
+}
+
 function compactPostText(value: unknown): string {
   return firstString(value)
     .replace(/\s+/g, " ")
     .slice(0, 120);
 }
 
-function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
+function buildXPerformanceContextFromLogs(
+  logs: XPostLogItem[],
+  normalizedMetrics: readonly NormalizedXPostMetrics[] = [],
+) {
   // R18: 学習(勝ち型/winner exemplar/生成プロンプトの Top hook)を「現行コピー
   // 戦略」の投稿だけで測る。旧フォーマット(誤年 2024 の「デイリーブリーフィング —
   // 日付 朝」)の高スコア旧投稿が勝ち型を占拠し廃止スタイルを再教育する実障害
@@ -612,13 +744,19 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     Date.now(),
   );
   const effectiveLogs = strategyLogs.length > 0 ? strategyLogs : logs;
-  const rows = effectiveLogs
+  const normalizedByLogId = new Map(
+    normalizedMetrics.map((row) => [row.sourceLogId, row]),
+  );
+  const baseRows = effectiveLogs
     .map((item) => {
       const metadata = asRecord(item.metadata);
       const latest = asRecord(metadata.latest_metrics);
+      const normalized = normalizedByLogId.get(String(item.id));
       const impressions = firstNumber(latest.impressions, metadata.impressions);
       const score = firstNumber(latest.score, metadata.engagement_score);
-      if (impressions == null && score == null) return null;
+      if (impressions == null && score == null && normalized == null) {
+        return null;
+      }
       return {
         id: item.id,
         tweetId: firstString(metadata.tweet_id),
@@ -667,20 +805,69 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
         bookmarkCount: firstNumber(latest.bookmark_count) ?? 0,
         urlClicks: firstNumber(latest.url_clicks) ?? 0,
         profileClicks: firstNumber(latest.profile_clicks) ?? 0,
-        score: score ?? impressions ?? 0,
+        score: score ?? impressions ?? normalized?.i24h ?? normalized?.i72h ??
+          normalized?.i3h ?? 0,
         createdAt: firstString(item.created_at),
+        i3h: normalized?.i3h ?? null,
+        i24h: normalized?.i24h ?? null,
+        i72h: normalized?.i72h ?? null,
+        normalizedWindows: normalized?.windows ?? null,
       };
     })
-    .filter((row): row is NonNullable<typeof row> => row !== null)
-    .sort((left, right) => right.score - left.score);
+    .filter((row): row is NonNullable<typeof row> => row !== null);
 
-  const winners = rows.slice(0, 5);
-  const underperformers = rows.slice(-5).reverse();
+  // Rank every post against one shared age window. This prevents a mature
+  // post's cumulative 72-hour count from competing with a fresh post's 3-hour
+  // count. I24h is preferred, with I72h/I3h fallbacks when at least three rows
+  // share that window; sparse cohorts retain the legacy cumulative behavior.
+  const comparisonWindow = selectXMetricComparisonWindow(
+    baseRows
+      .map((row) => normalizedByLogId.get(String(row.id)))
+      .filter((row): row is NormalizedXPostMetrics => row !== undefined),
+  );
+  const comparisonLabel = comparisonWindow
+    ? metricWindowLabel(comparisonWindow)
+    : "latest cumulative";
+  const rows = baseRows
+    .map((row) => {
+      const sample = comparisonWindow
+        ? row.normalizedWindows?.[comparisonWindow] ?? null
+        : null;
+      const normalizedValue = comparisonWindow ? row[comparisonWindow] : null;
+      const rankingEligible = comparisonWindow === null ||
+        normalizedValue !== null;
+      return {
+        ...row,
+        rankingEligible,
+        rankingMetric: comparisonWindow
+          ? (rankingEligible ? comparisonLabel : "unranked")
+          : "latest_cumulative",
+        rankingImpressions: comparisonWindow
+          ? normalizedValue
+          : row.impressions ?? row.score,
+        rankingEngagementRate: sample?.engagementRate ?? null,
+        rankingBookmarkRate: sample?.bookmarkRate ?? null,
+        rankingProfileClickRate: sample?.profileClickRate ?? null,
+        rankingUrlClickRate: sample?.urlClickRate ?? null,
+      };
+    })
+    .sort((left, right) =>
+      Number(right.rankingEligible) - Number(left.rankingEligible) ||
+      (right.rankingImpressions ?? -1) -
+        (left.rankingImpressions ?? -1) ||
+      right.score - left.score
+    );
+  const learningRows = comparisonWindow
+    ? rows.filter((row) => row.rankingEligible)
+    : rows;
+
+  const winners = learningRows.slice(0, 5);
+  const underperformers = learningRows.slice(-5).reverse();
   const byVariant = new Map<
     string,
     { variant: string; count: number; totalScore: number; maxScore: number }
   >();
-  for (const row of rows) {
+  for (const row of learningRows) {
     const key = row.variant || "unknown";
     const current = byVariant.get(key) ?? {
       variant: key,
@@ -689,8 +876,9 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       maxScore: 0,
     };
     current.count += 1;
-    current.totalScore += row.score;
-    current.maxScore = Math.max(current.maxScore, row.score);
+    const rankingScore = row.rankingImpressions ?? row.score;
+    current.totalScore += rankingScore;
+    current.maxScore = Math.max(current.maxScore, rankingScore);
     byVariant.set(key, current);
   }
   const variants = [...byVariant.values()]
@@ -707,12 +895,22 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   // 投稿が貯まるほど自動的に有効化される)。従来は top-1 variant と逸話的な
   // winner 行のみで、集計済みの variants ランキングが未提示だった。
   const avgScore = (list: typeof rows): number =>
-    list.length === 0
-      ? 0
-      : Math.round(list.reduce((sum, r) => sum + r.score, 0) / list.length);
+    list.length === 0 ? 0 : Math.round(
+      list.reduce(
+        (sum, row) => sum + (row.rankingImpressions ?? row.score),
+        0,
+      ) / list.length,
+    );
   const structuralLines: string[] = [];
-  const withMedia = rows.filter((r) => r.hasMedia);
-  const withoutMedia = rows.filter((r) => !r.hasMedia);
+  if (comparisonWindow) {
+    structuralLines.push(
+      `Normalized comparison cohort: ${comparisonLabel} ` +
+        `(n=${learningRows.length}); ${X_METRIC_WINDOW_SELECTION_RULE}; ` +
+        `${X_METRIC_LEARNING_SELECTION_RULE}.`,
+    );
+  }
+  const withMedia = learningRows.filter((r) => r.hasMedia);
+  const withoutMedia = learningRows.filter((r) => !r.hasMedia);
   if (withMedia.length >= 2 && withoutMedia.length >= 2) {
     structuralLines.push(
       `Structural lift (media): avg score with media=${
@@ -727,22 +925,22 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   // 以上で勝ちメディア recommendation を付す・判定不能な既存行は unknown で保持。
   // media_type が貯まるまでは null(=データ希薄時は自動的に沈黙 / 実質 default-off)。
   const mediaLine = buildMediaLiftLine(
-    rows,
+    learningRows,
     (row) => row.mediaType,
-    (row) => row.score,
+    (row) => row.rankingImpressions ?? row.score,
   );
   if (mediaLine) structuralLines.push(mediaLine);
   // R23: 内容アーキタイプ別 lift。実測(2026-07-12 同日3連投: データレポート型
   // 3.2K vs ニュース要約 517 vs ニュース→製品転換 28)を恒常的な A/B 次元へ
   // 昇格。n>=2 のバケットのみ表示(データ希薄時は沈黙 / 実質 default-off)。
   const archetypeLine = buildArchetypeLiftLine(
-    rows,
+    learningRows,
     (row) => row.archetype,
-    (row) => row.score,
+    (row) => row.rankingImpressions ?? row.score,
   );
   if (archetypeLine) structuralLines.push(archetypeLine);
-  const linkReply = rows.filter((r) => r.linkInReply);
-  const linkLead = rows.filter((r) => !r.linkInReply);
+  const linkReply = learningRows.filter((r) => r.linkInReply);
+  const linkLead = learningRows.filter((r) => !r.linkInReply);
   if (linkReply.length >= 2 && linkLead.length >= 2) {
     structuralLines.push(
       `Structural lift (link placement): avg score link-in-reply=${
@@ -752,14 +950,22 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       } (n=${linkLead.length}).`,
     );
   }
-  if (rows.length >= 3) {
+  if (learningRows.length >= 3) {
     const buckets = [
-      ["0 replies", rows.filter((r) => r.threadReplyCount === 0)],
+      [
+        "0 replies",
+        learningRows.filter((r) => r.threadReplyCount === 0),
+      ],
       [
         "1-4 replies",
-        rows.filter((r) => r.threadReplyCount >= 1 && r.threadReplyCount <= 4),
+        learningRows.filter((r) =>
+          r.threadReplyCount >= 1 && r.threadReplyCount <= 4
+        ),
       ],
-      ["5-8 replies", rows.filter((r) => r.threadReplyCount >= 5)],
+      [
+        "5-8 replies",
+        learningRows.filter((r) => r.threadReplyCount >= 5),
+      ],
     ].filter(([, list]) => (list as typeof rows).length > 0) as Array<
       [string, typeof rows]
     >;
@@ -775,7 +981,7 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   }
   // 保存性/プロフィール変換のリーダーを露出(アカウント成長レバーの判定材料)。
   // どちらも >=2 サンプルかつ非ゼロ合計のときだけ出す(データ希薄時は沈黙)。
-  const bookmarkRows = rows.filter((r) => r.bookmarkCount > 0);
+  const bookmarkRows = learningRows.filter((r) => r.bookmarkCount > 0);
   if (bookmarkRows.length >= 2) {
     const top = [...bookmarkRows]
       .sort((a, b) => b.bookmarkCount - a.bookmarkCount)
@@ -786,7 +992,26 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       }. Emulate what made these save-worthy (checklist/まとめ structure).`,
     );
   }
-  const profileRows = rows.filter((r) => r.profileClicks > 0);
+  const normalizedSaveRows = learningRows.filter((row) =>
+    row.rankingBookmarkRate !== null
+  );
+  if (normalizedSaveRows.length >= 2) {
+    const top = [...normalizedSaveRows]
+      .sort((left, right) =>
+        (right.rankingBookmarkRate ?? 0) -
+        (left.rankingBookmarkRate ?? 0)
+      )
+      .slice(0, 2);
+    structuralLines.push(
+      `Normalized save-rate leaders (${comparisonLabel}): ${
+        top.map((row) =>
+          `${((row.rankingBookmarkRate ?? 0) * 100).toFixed(3)}% ` +
+          `- "${row.text}"`
+        ).join(" | ")
+      }.`,
+    );
+  }
+  const profileRows = learningRows.filter((r) => r.profileClicks > 0);
   if (profileRows.length >= 2) {
     const top = [...profileRows]
       .sort((a, b) => b.profileClicks - a.profileClicks)
@@ -799,7 +1024,7 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
   }
   const distinctVariants = variants.filter((v) => v.variant !== "unknown");
   const rankingLine = distinctVariants.length >= 2
-    ? `Variant ranking (avg score, n): ${
+    ? `Variant ranking (avg ${comparisonLabel} impressions, n): ${
       distinctVariants.slice(0, 5).map((v) =>
         `${v.variant}=${v.averageScore} (n=${v.count})`
       ).join(", ")
@@ -807,8 +1032,11 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     : "";
   // R23: データレポート型投稿の「捏造せず公開できる実数」をアカウント自身の
   // 実測インプレから供給する(実測 3 件未満は沈黙)。
-  const ownDataLine = buildOwnDataFactsLine(rows, (row) => row.impressions);
-  const promptContext = rows.length === 0
+  const ownDataLine = buildOwnDataFactsLine(
+    learningRows,
+    (row) => row.rankingImpressions,
+  );
+  const promptContext = learningRows.length === 0
     ? [
       "No measured X performance has been collected yet.",
       "Run A/B test: daily_briefing vs question_post vs useful_reply.",
@@ -818,14 +1046,24 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
       "Measured X performance context for the next post:",
       `Target: 10K impressions. Current best variant: ${bestVariant}.`,
       ...winners.map((row, index) =>
-        `Winner ${index + 1}: variant=${row.variant}, impressions=${
-          row.impressions ?? "unknown"
-        }, score=${row.score}, bookmarks=${row.bookmarkCount}, profileClicks=${row.profileClicks}, urlClicks=${row.urlClicks}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
+        `Winner ${
+          index + 1
+        }: variant=${row.variant}, metric=${row.rankingMetric}, impressions=${
+          row.rankingImpressions ?? "unknown"
+        }, engagementRate=${
+          row.rankingEngagementRate ?? "unknown"
+        }, bookmarkRate=${
+          row.rankingBookmarkRate ?? "unknown"
+        }, profileClickRate=${
+          row.rankingProfileClickRate ?? "unknown"
+        }, urlClickRate=${
+          row.rankingUrlClickRate ?? "unknown"
+        }, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
       ...underperformers.slice(0, 3).map((row, index) =>
         `Avoid ${
           index + 1
-        }: variant=${row.variant}, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
+        }: variant=${row.variant}, metric=${row.rankingMetric}, impressions=${row.rankingImpressions}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
       ...(rankingLine ? [rankingLine] : []),
       ...structuralLines,
@@ -847,6 +1085,12 @@ function buildXPerformanceContextFromLogs(logs: XPostLogItem[]) {
     underperformers,
     variants,
     bestVariant,
+    comparisonWindow,
+    comparisonLabel,
+    comparisonSampleCount: learningRows.length,
+    selectionRule: comparisonWindow
+      ? X_METRIC_LEARNING_SELECTION_RULE
+      : "latest cumulative fallback because no normalized cohort has 3 posts",
     promptContext,
   };
 }
@@ -861,7 +1105,8 @@ async function buildXPerformanceContext(
     Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
   );
   const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
-  return buildXPerformanceContextFromLogs(logs);
+  const normalized = await loadNormalizedXMetricWindows(admin, userId, logs);
+  return buildXPerformanceContextFromLogs(logs, normalized);
 }
 
 async function buildRevenueFunnelReport(
@@ -874,7 +1119,8 @@ async function buildRevenueFunnelReport(
     Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
   );
   const xLogs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
-  const performance = buildXPerformanceContextFromLogs(xLogs);
+  const normalized = await loadNormalizedXMetricWindows(admin, userId, xLogs);
+  const performance = buildXPerformanceContextFromLogs(xLogs, normalized);
   const { data: payments, error } = await admin
     .from("hub_data")
     .select("id, metadata, created_at")
@@ -909,8 +1155,13 @@ async function buildRevenueFunnelReport(
     id: string;
     variant: string;
     impressions?: number | null;
+    rankingEligible: boolean;
+    rankingImpressions: number | null;
     score: number;
   }>;
+  const learningXRows = performance.comparisonWindow
+    ? xRows.filter((row) => row.rankingEligible)
+    : xRows;
   const byVariant = new Map<
     string,
     {
@@ -922,7 +1173,7 @@ async function buildRevenueFunnelReport(
       revenueJpy: number;
     }
   >();
-  for (const row of xRows) {
+  for (const row of learningXRows) {
     const key = row.variant || "unknown";
     const current = byVariant.get(key) ?? {
       variant: key,
@@ -933,8 +1184,8 @@ async function buildRevenueFunnelReport(
       revenueJpy: 0,
     };
     current.posts += 1;
-    current.impressions += firstNumber(row.impressions) ?? 0;
-    current.score += row.score;
+    current.impressions += firstNumber(row.rankingImpressions) ?? 0;
+    current.score += firstNumber(row.rankingImpressions) ?? row.score;
     byVariant.set(key, current);
   }
   for (const payment of paidPayments) {
@@ -966,7 +1217,10 @@ async function buildRevenueFunnelReport(
     },
     summary: {
       xPostLogs: xLogs.length,
-      measuredXPosts: xRows.length,
+      measuredXPosts: learningXRows.length,
+      comparisonWindow: performance.comparisonWindow,
+      comparisonLabel: performance.comparisonLabel,
+      comparisonSampleCount: performance.comparisonSampleCount,
       latestPaidSupporters: paidPayments.length,
       revenueJpy: paidPayments.reduce(
         (sum, payment) => sum + payment.amountJpy,
@@ -1821,6 +2075,16 @@ serve(async (req: Request) => {
         }
       }
 
+      case "x.metrics_normalized": {
+        return json(
+          await buildNormalizedXMetricReport(
+            admin,
+            userId!,
+            body.limit,
+          ),
+        );
+      }
+
       case "x.performance_context": {
         return json(await buildXPerformanceContext(admin, userId!, body.limit));
       }
@@ -1839,8 +2103,20 @@ serve(async (req: Request) => {
           body.target_url,
           "https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=weekly_data_report",
         );
+        const growthReportRows = (perf.rows as Array<
+          GrowthReportRow & {
+            rankingEligible: boolean;
+            rankingImpressions: number | null;
+          }
+        >)
+          .filter((row) => !perf.comparisonWindow || row.rankingEligible)
+          .map((row) => ({
+            ...row,
+            impressions: row.rankingImpressions,
+            score: row.rankingImpressions ?? row.score,
+          }));
         const report = buildGrowthDataReport(
-          perf.rows as GrowthReportRow[],
+          growthReportRows,
           new Date(),
           targetUrl,
         );
@@ -1899,6 +2175,271 @@ serve(async (req: Request) => {
         return json(
           await buildRevenueFunnelReport(admin, userId!, body.limit),
         );
+      }
+
+      case "x.candidate.list": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        const limit = Math.max(
+          1,
+          Math.min(100, Math.trunc(firstNumber(body.limit) ?? 50)),
+        );
+        const requestedStatus = firstString(body.status);
+        let query = admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (requestedStatus) {
+          query = query.filter(
+            "metadata->>status",
+            "eq",
+            requestedStatus,
+          );
+        }
+        const { data, error } = await query;
+        if (error) throw new Error(error.message);
+        return json({ success: true, candidates: data ?? [] });
+      }
+
+      case "x.candidate.create": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        let candidateMetadata: Record<string, unknown>;
+        try {
+          candidateMetadata = buildXPostCandidateMetadata(
+            body.postPayload ?? body.post_payload ?? body,
+            {
+              candidateKey: body.candidateKey ?? body.candidate_key ??
+                body.idempotencyKey ?? body.idempotency_key,
+              candidateType: body.candidateType ?? body.candidate_type,
+              sourceKind: body.sourceKind ?? body.source_kind,
+              sourceUrls: body.sourceUrls ?? body.source_urls,
+              createdBy: body.createdBy ?? body.created_by,
+              context: body.context ?? body.generationContext ??
+                body.generation_context,
+            },
+          );
+        } catch (error) {
+          return json({ success: false, error: errorMessage(error) }, 400);
+        }
+
+        const candidateKey = firstString(candidateMetadata.candidate_key);
+        if (!candidateKey) {
+          return json({ success: false, error: "candidateKey required" }, 400);
+        }
+        if (body.dryRun === true || body.dry_run === true) {
+          return json({
+            success: true,
+            dryRun: true,
+            candidateCreated: false,
+            candidateId: null,
+            status: "pending_approval",
+            preview: candidateMetadata,
+          });
+        }
+
+        const candidateOwnerUserId = userId!;
+        const findExistingCandidate = async () => {
+          const { data, error } = await admin
+            .from("hub_data")
+            .select("id, metadata, created_at")
+            .eq("source", X_POST_CANDIDATE_SOURCE)
+            .filter(
+              "metadata->>user_id",
+              "eq",
+              candidateOwnerUserId,
+            )
+            .filter("metadata->>candidate_key", "eq", candidateKey)
+            .limit(1)
+            .maybeSingle();
+          if (error) throw new Error(error.message);
+          return data;
+        };
+        const existing = await findExistingCandidate();
+        if (existing) {
+          return json({
+            success: true,
+            dryRun: false,
+            candidateCreated: false,
+            idempotent: true,
+            candidateId: existing.id,
+            status: asRecord(existing.metadata).status ?? "pending_approval",
+            candidate: existing,
+          });
+        }
+
+        let candidate;
+        try {
+          candidate = await addItem(
+            admin,
+            X_POST_CANDIDATE_SOURCE,
+            candidateOwnerUserId,
+            candidateMetadata,
+          );
+        } catch (error) {
+          // The partial unique index closes the read/insert race. Treat a
+          // concurrent creator winning that race as an idempotent success.
+          const racedCandidate = await findExistingCandidate();
+          if (!racedCandidate) throw error;
+          return json({
+            success: true,
+            dryRun: false,
+            candidateCreated: false,
+            idempotent: true,
+            candidateId: racedCandidate.id,
+            status: asRecord(racedCandidate.metadata).status ??
+              "pending_approval",
+            candidate: racedCandidate,
+          });
+        }
+        return json({
+          success: true,
+          dryRun: false,
+          candidateCreated: true,
+          idempotent: false,
+          candidateId: candidate.id,
+          status: asRecord(candidate.metadata).status ?? "pending_approval",
+          candidate,
+        });
+      }
+
+      case "x.candidate.approve": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        const candidateId = firstString(body.candidateId, body.candidate_id);
+        if (!isUuid(candidateId)) {
+          return json(
+            { success: false, error: "valid candidateId required" },
+            400,
+          );
+        }
+        const { data: candidate, error: candidateError } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("id", candidateId)
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .maybeSingle();
+        if (candidateError) throw new Error(candidateError.message);
+        if (!candidate) {
+          return json({ success: false, error: "candidate not found" }, 404);
+        }
+        const candidateMeta = asRecord(candidate.metadata);
+        const expectedCandidateType = firstString(
+          body.expectedCandidateType,
+          body.expected_candidate_type,
+        );
+        const expectedSourceKind = firstString(
+          body.expectedSourceKind,
+          body.expected_source_kind,
+        );
+        if (
+          expectedCandidateType &&
+          firstString(candidateMeta.candidate_type) !== expectedCandidateType
+        ) {
+          return json({
+            success: false,
+            error: "candidate type does not match approval workflow",
+          }, 409);
+        }
+        if (
+          expectedSourceKind &&
+          firstString(candidateMeta.source_kind) !== expectedSourceKind
+        ) {
+          return json({
+            success: false,
+            error: "candidate source does not match approval workflow",
+          }, 409);
+        }
+
+        const approvedBy = userId === "service_role"
+          ? firstString(body.approvedBy, body.approved_by, "service_role")
+          : userId!;
+        const approvalChannel = userId === "service_role"
+          ? firstString(
+            body.approvalChannel,
+            body.approval_channel,
+            "service_role",
+          )
+          : "admin_ui";
+        let approved;
+        try {
+          approved = approveXPostCandidateMetadata(candidateMeta, {
+            actorUserId: userId!,
+            approvedBy,
+            channel: approvalChannel,
+            context: body.approvalContext ?? body.approval_context,
+          });
+        } catch (error) {
+          return json({ success: false, error: errorMessage(error) }, 409);
+        }
+        const { data: updated, error: updateError } = await admin
+          .from("hub_data")
+          .update({ metadata: approved.metadata })
+          .eq("id", candidateId)
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .select("id, metadata, created_at")
+          .single();
+        if (updateError) throw new Error(updateError.message);
+        return json({
+          success: true,
+          candidateId,
+          status: "approved",
+          candidate: updated,
+          // x.post persists candidateId as provenance. All other fields are
+          // the exact whitelisted payload reviewed by the operator.
+          postPayload: { ...approved.postPayload, candidateId },
+        });
+      }
+
+      case "x.candidate.finalize": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        const candidateId = firstString(body.candidateId, body.candidate_id);
+        if (!isUuid(candidateId)) {
+          return json(
+            { success: false, error: "valid candidateId required" },
+            400,
+          );
+        }
+        const { data: candidate, error: candidateError } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("id", candidateId)
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .maybeSingle();
+        if (candidateError) throw new Error(candidateError.message);
+        if (!candidate) {
+          return json({ success: false, error: "candidate not found" }, 404);
+        }
+        let finalizedMetadata;
+        try {
+          finalizedMetadata = finalizeXPostCandidateMetadata(
+            candidate.metadata,
+            body.result ?? body.postResult ?? body.post_result,
+          );
+        } catch (error) {
+          return json({ success: false, error: errorMessage(error) }, 409);
+        }
+        const { data: updated, error: updateError } = await admin
+          .from("hub_data")
+          .update({ metadata: finalizedMetadata })
+          .eq("id", candidateId)
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .select("id, metadata, created_at")
+          .single();
+        if (updateError) throw new Error(updateError.message);
+        return json({
+          success: true,
+          candidateId,
+          status: asRecord(updated.metadata).status,
+          candidate: updated,
+        });
       }
 
       case "x.post": {
@@ -2004,6 +2545,8 @@ serve(async (req: Request) => {
           content_kind: body.contentKind ?? body.content_kind ?? null,
           link_in_reply: body.linkInReply === true ||
             body.link_in_reply === true,
+          candidate_id: firstString(body.candidateId, body.candidate_id) ||
+            null,
         };
 
         if (dryRun || !isXConfigured()) {
