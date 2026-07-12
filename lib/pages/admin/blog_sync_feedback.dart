@@ -14,6 +14,10 @@ String composeBlogSyncErrorMessage({
   var detail = '';
   if (details is Map) {
     detail = (details['error'] ?? '').toString();
+    // error キーを持たない Map でも情報を全損させない。
+    if (detail.isEmpty && details.isNotEmpty) {
+      detail = details.toString();
+    }
   } else if (details != null) {
     detail = details.toString();
   }
@@ -55,6 +59,11 @@ String? blogEngagementFreshnessLabel(
   List<Map<String, dynamic>> rows,
   DateTime now,
 ) {
+  final age = _freshnessAge(rows, now);
+  return age == null ? null : '最終同期: $age';
+}
+
+String? _freshnessAge(List<Map<String, dynamic>> rows, DateTime now) {
   DateTime? newest;
   for (final row in rows) {
     final dt = DateTime.tryParse((row['updated_at'] ?? '').toString());
@@ -63,8 +72,53 @@ String? blogEngagementFreshnessLabel(
   }
   if (newest == null) return null;
   final diff = now.difference(newest);
-  if (diff.isNegative) return '最終同期: 1時間以内';
-  if (diff.inDays >= 1) return '最終同期: ${diff.inDays}日前';
-  if (diff.inHours >= 1) return '最終同期: ${diff.inHours}時間前';
-  return '最終同期: 1時間以内';
+  if (diff.isNegative) return '1時間以内';
+  if (diff.inDays >= 1) return '${diff.inDays}日前';
+  if (diff.inHours >= 1) return '${diff.inHours}時間前';
+  return '1時間以内';
+}
+
+String _platformDisplayName(String platform) {
+  switch (platform) {
+    case 'qiita':
+      return 'Qiita';
+    case 'devto':
+      return 'dev.to';
+    default:
+      return platform;
+  }
+}
+
+/// platform 別の鮮度ラベル(例:「最終同期 — Qiita: 3日前 / dev.to: 1時間以内」)。
+/// Qiita と dev.to は独立に同期されるため全体 max では「片方だけ数日凍結」が
+/// 新鮮側に隠れる — platform ごとに出して凍結を可視化する。platform 列が
+/// 無い行しか無ければ全体ラベルへフォールバック。
+String? blogEngagementFreshnessByPlatform(
+  List<Map<String, dynamic>> rows,
+  DateTime now,
+) {
+  final platforms = <String>[];
+  for (final row in rows) {
+    final platform = (row['platform'] ?? '').toString();
+    if (platform.isNotEmpty && !platforms.contains(platform)) {
+      platforms.add(platform);
+    }
+  }
+  if (platforms.isEmpty) return blogEngagementFreshnessLabel(rows, now);
+  if (platforms.length == 1) {
+    return blogEngagementFreshnessLabel(rows, now);
+  }
+
+  final parts = <String>[];
+  for (final platform in platforms) {
+    final subset = rows
+        .where((row) => (row['platform'] ?? '').toString() == platform)
+        .toList();
+    final age = _freshnessAge(subset, now);
+    if (age != null) {
+      parts.add('${_platformDisplayName(platform)}: $age');
+    }
+  }
+  if (parts.isEmpty) return null;
+  return '最終同期 — ${parts.join(' / ')}';
 }

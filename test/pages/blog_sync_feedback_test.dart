@@ -54,6 +54,14 @@ void main() {
     test('情報ゼロでも文として成立する', () {
       expect(composeBlogSyncErrorMessage(), '同期に失敗しました。');
     });
+
+    test('error キーの無い Map details でも情報を全損させない', () {
+      final message = composeBlogSyncErrorMessage(
+        status: 500,
+        details: {'message': 'unexpected'},
+      );
+      expect(message, contains('unexpected'));
+    });
   });
 
   group('composeBlogSyncSuccessLine', () {
@@ -109,6 +117,41 @@ void main() {
           {'updated_at': 'bad'},
         ], now),
         isNull,
+      );
+    });
+  });
+
+  group('blogEngagementFreshnessByPlatform', () {
+    final now = DateTime.utc(2026, 7, 12, 11, 0);
+
+    test('複数 platform は個別表示(Qiita凍結が dev.to の新鮮さに隠れない)', () {
+      final rows = [
+        {'platform': 'qiita', 'updated_at': '2026-07-09T10:00:00Z'},
+        {'platform': 'devto', 'updated_at': '2026-07-12T10:30:00Z'},
+      ];
+      expect(
+        blogEngagementFreshnessByPlatform(rows, now),
+        '最終同期 — Qiita: 3日前 / dev.to: 1時間以内',
+      );
+    });
+
+    test('単一 platform は従来形式', () {
+      final rows = [
+        {'platform': 'qiita', 'updated_at': '2026-07-12T09:30:00Z'},
+      ];
+      expect(
+        blogEngagementFreshnessByPlatform(rows, now),
+        '最終同期: 1時間前',
+      );
+    });
+
+    test('platform 列が無ければ全体ラベルへフォールバック', () {
+      final rows = [
+        {'updated_at': '2026-07-11T10:00:00Z'},
+      ];
+      expect(
+        blogEngagementFreshnessByPlatform(rows, now),
+        '最終同期: 1日前',
       );
     });
   });

@@ -22,6 +22,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
   // R21: 取得失敗を無音で握りつぶすと「データなし(未計測)」と描画上区別
   // できない(読めていないのに計測してないと誤診させない)。
   String? _loadError;
+  String? _historyError;
 
   static const _bg = Color(0xFF0A0A0A);
   static const _card = Color(0xFF1A1A2E);
@@ -80,6 +81,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
         body: {'action': 'quota.latest'},
       );
       final data = res.data as Map<String, dynamic>?;
+      if (!mounted) return;
       if (data != null && data['success'] == true) {
         final rows = data['data'] as List<dynamic>? ?? [];
         setState(() {
@@ -89,6 +91,16 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
         setState(() {
           _loadError = 'クォータ情報の取得に失敗しました'
               '(${data?['error'] ?? 'admin-hub 応答が不正'})。更新ボタンで再試行してください。';
+        });
+      }
+    } on FunctionException catch (e) {
+      debugPrint('quota.latest error: $e');
+      if (mounted) {
+        setState(() {
+          // 401/403 は再試行しても直らない — 権限系の案内に分ける。
+          _loadError = e.status == 401 || e.status == 403
+              ? 'クォータ情報を閲覧する権限がありません。管理者アカウントで再ログインしてください。'
+              : 'クォータ情報の取得に失敗しました (HTTP ${e.status})。更新ボタンで再試行してください。';
         });
       }
     } catch (e) {
@@ -108,21 +120,31 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
       setState(() => _isLoading = false);
       return;
     }
-    setState(() => _historyLoading = true);
+    setState(() {
+      _historyLoading = true;
+      _historyError = null;
+    });
     try {
       final res = await _supabase.functions.invoke(
         'admin-hub',
         body: {'action': 'quota.list', 'days': 30},
       );
       final data = res.data as Map<String, dynamic>?;
+      if (!mounted) return;
       if (data != null && data['success'] == true) {
         final rows = data['data'] as List<dynamic>? ?? [];
         setState(() {
           _history = rows.cast<Map<String, dynamic>>();
         });
+      } else {
+        // R21: 取得失敗を「データなし」に見せない(_loadLatest と同じ規律)。
+        setState(() => _historyError = '履歴の取得に失敗しました。開き直して再試行してください。');
       }
     } catch (e) {
       debugPrint('quota.list error: $e');
+      if (mounted) {
+        setState(() => _historyError = '履歴の取得に失敗しました。開き直して再試行してください。');
+      }
     } finally {
       if (mounted) setState(() => _historyLoading = false);
     }
@@ -614,6 +636,17 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
             const Padding(
               padding: EdgeInsets.all(24),
               child: CircularProgressIndicator(color: _orange),
+            )
+          else if (_historyError != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                _historyError!,
+                style: const TextStyle(
+                  color: _orange,
+                  height: 1.5,
+                ),
+              ),
             )
           else if (_history.isEmpty)
             const Padding(

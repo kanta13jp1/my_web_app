@@ -1298,8 +1298,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     }
 
     // R21: 表示中の数値がいつの同期かを明示する(同期失敗中の凍結値を
-    // 今の数値に見せない)。直近同期が失敗していれば警告も添える。
-    final freshness = blogEngagementFreshnessLabel(_engagement, DateTime.now());
+    // 今の数値に見せない)。フィルタ後の行を platform 別に評価する — 独立同期
+    // 化により「Qiita だけ凍結・dev.to は新鮮」が全体 max に隠れるのを防ぐ。
+    // 直近同期が失敗していれば警告も添える。
+    final freshness = blogEngagementFreshnessByPlatform(items, DateTime.now());
     return [
       if (freshness != null)
         SliverToBoxAdapter(
