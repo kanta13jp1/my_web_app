@@ -2,6 +2,38 @@
 -- are separate gates. The goal remains open until an external buyer's payment
 -- is recorded and at least JPY 1 reaches the configured bank account.
 
+INSERT INTO public.wbs_milestones (
+  code,
+  name,
+  target_date,
+  goal_users,
+  description,
+  color
+)
+VALUES
+  (
+    'first-yen-webhook-hardening',
+    'Stripe webhook revenue integrity',
+    DATE '2026-07-12',
+    0,
+    'Deploy the paid-session guard and event-id ledger before accepting the first external payment.',
+    '#DC2626'
+  ),
+  (
+    'first-yen-revenue',
+    'First external-buyer bank deposit',
+    DATE '2026-07-20',
+    1,
+    'Verify one external buyer, a paid Stripe event, a payout, and at least JPY 1 in the configured bank account.',
+    '#16A34A'
+  )
+ON CONFLICT (code) DO UPDATE SET
+  name = EXCLUDED.name,
+  target_date = EXCLUDED.target_date,
+  goal_users = EXCLUDED.goal_users,
+  description = EXCLUDED.description,
+  color = EXCLUDED.color;
+
 INSERT INTO public.wbs_tasks (
   category,
   category_icon,
