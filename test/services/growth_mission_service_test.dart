@@ -9,46 +9,48 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('GrowthMissionService command center fallback', () {
-    test('returns cross-functional brief when Supabase is unavailable',
-        () async {
-      const service = GrowthMissionService();
-      final dashboard = GrowthMissionDashboard(
-        totalRegisteredUsers: 2,
-        todayRegistrations: 0,
-        activeUsersToday: 1,
-        liveRegisteredUsers: 1,
-        liveGuestViewers: 1,
-        todayLandingViews: 5,
-        monthLandingViews: 18,
-        totalLandingViews: 18,
-        todayShares: 0,
-        referralSnapshot: const ReferralGrowthSnapshot.empty(),
-        acquisitionSnapshot: GrowthAcquisitionSnapshot.empty(),
-        refreshedAt: DateTime(2026, 3, 23, 10),
-      );
+    test(
+      'returns cross-functional brief when Supabase is unavailable',
+      () async {
+        const service = GrowthMissionService();
+        final dashboard = GrowthMissionDashboard(
+          totalRegisteredUsers: 2,
+          todayRegistrations: 0,
+          activeUsersToday: 1,
+          liveRegisteredUsers: 1,
+          liveGuestViewers: 1,
+          todayLandingViews: 5,
+          monthLandingViews: 18,
+          totalLandingViews: 18,
+          todayShares: 0,
+          referralSnapshot: const ReferralGrowthSnapshot.empty(),
+          acquisitionSnapshot: GrowthAcquisitionSnapshot.empty(),
+          refreshedAt: DateTime(2026, 3, 23, 10),
+        );
 
-      final brief = await service.loadCommandCenterBrief(dashboard);
+        final brief = await service.loadCommandCenterBrief(dashboard);
 
-      expect(brief.stageLabel, 'Pre-PMF');
-      expect(brief.focusTags, contains('public-memo-seo'));
-      expect(brief.focusTags, contains('registration-bottleneck'));
-      expect(brief.departments, hasLength(10));
-      expect(
-        brief.departments.map((department) => department.id),
-        containsAll(<String>[
-          'development',
-          'product',
-          'advertising',
-          'pr',
-          'sales',
-          'marketing',
-          'hr',
-          'finance',
-          'procurement',
-          'business-planning',
-        ]),
-      );
-    });
+        expect(brief.stageLabel, 'Pre-PMF');
+        expect(brief.focusTags, contains('public-memo-seo'));
+        expect(brief.focusTags, contains('registration-bottleneck'));
+        expect(brief.departments, hasLength(10));
+        expect(
+          brief.departments.map((department) => department.id),
+          containsAll(<String>[
+            'development',
+            'product',
+            'advertising',
+            'pr',
+            'sales',
+            'marketing',
+            'hr',
+            'finance',
+            'procurement',
+            'business-planning',
+          ]),
+        );
+      },
+    );
 
     test('moves to scale-up stage for larger user counts', () async {
       const service = GrowthMissionService();
@@ -70,10 +72,7 @@ void main() {
       final brief = await service.loadCommandCenterBrief(dashboard);
 
       expect(brief.stageLabel, 'Scale-up');
-      expect(
-        brief.stageReason,
-        contains('process'),
-      );
+      expect(brief.stageReason, contains('process'));
     });
 
     test('buildInviteUrlForCode uses referral route and tracking params', () {
@@ -88,31 +87,50 @@ void main() {
       expect(uri.queryParameters['v'], 'test2025');
     });
 
-    test('parses edge touchpoint report response shape', () {
-      final snapshot = GrowthAcquisitionSnapshot.fromJson(
-        <String, dynamic>{
-          'windowDays': 14,
-          'startDate': '2026-04-15',
-          'endDate': '2026-04-28',
-          'touchpoints': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'id': 'landing',
-              'touchpoint': 'Landing',
-              'touches': 12,
-              'signups': 3,
-            },
-          ],
-          'importPreviews': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'id': 'notion',
-              'label': 'Notion previews',
-              'previewCount': 5,
-            },
-          ],
-          'importSignupCtaCount': 2,
-          'publicMemoSignupCtaCount': 1,
-        },
+    test('referral snapshot exposes free to Pro conversion rate', () {
+      const snapshot = ReferralGrowthSnapshot(
+        myReferralCode: null,
+        totalReferrals: 5,
+        successfulReferrals: 2,
+        billingConvertedReferrals: 1,
+        billingChannels: <ReferralBillingChannelSnapshot>[
+          ReferralBillingChannelSnapshot(
+            id: 'referral',
+            label: 'Referral',
+            totalReferrals: 5,
+            proConversions: 1,
+          ),
+        ],
+        pendingReferralCode: null,
       );
+
+      expect(snapshot.freeToProConversionRate, 0.2);
+      expect(snapshot.billingChannels.single.freeToProConversionRate, 0.2);
+    });
+
+    test('parses edge touchpoint report response shape', () {
+      final snapshot = GrowthAcquisitionSnapshot.fromJson(<String, dynamic>{
+        'windowDays': 14,
+        'startDate': '2026-04-15',
+        'endDate': '2026-04-28',
+        'touchpoints': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'landing',
+            'touchpoint': 'Landing',
+            'touches': 12,
+            'signups': 3,
+          },
+        ],
+        'importPreviews': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 'notion',
+            'label': 'Notion previews',
+            'previewCount': 5,
+          },
+        ],
+        'importSignupCtaCount': 2,
+        'publicMemoSignupCtaCount': 1,
+      });
 
       expect(snapshot.windowDays, 14);
       expect(snapshot.touchpoints.single.label, 'Landing');
@@ -123,30 +141,32 @@ void main() {
   });
 
   group('GrowthPresenceNavigatorObserver', () {
-    test('suppresses duplicate immediate presence syncs for the same route',
-        () async {
-      final syncCompleter = Completer<void>();
-      final service = _FakePresenceService(syncCompleter.future);
-      final observer = GrowthPresenceNavigatorObserver(
-        service: service,
-        acquisitionService: const _NoopGrowthAcquisitionService(),
-      );
-      addTearDown(observer.dispose);
+    test(
+      'suppresses duplicate immediate presence syncs for the same route',
+      () async {
+        final syncCompleter = Completer<void>();
+        final service = _FakePresenceService(syncCompleter.future);
+        final observer = GrowthPresenceNavigatorObserver(
+          service: service,
+          acquisitionService: const _NoopGrowthAcquisitionService(),
+        );
+        addTearDown(observer.dispose);
 
-      final route = MaterialPageRoute<void>(
-        settings: const RouteSettings(name: '/asset-management'),
-        builder: (_) => const SizedBox.shrink(),
-      );
+        final route = MaterialPageRoute<void>(
+          settings: const RouteSettings(name: '/asset-management'),
+          builder: (_) => const SizedBox.shrink(),
+        );
 
-      observer.didPush(route, null);
-      observer.didPush(route, null);
+        observer.didPush(route, null);
+        observer.didPush(route, null);
 
-      expect(service.syncPresenceCalls, 1);
-      expect(service.syncedPagePaths, <String>['/asset-management']);
+        expect(service.syncPresenceCalls, 1);
+        expect(service.syncedPagePaths, <String>['/asset-management']);
 
-      syncCompleter.complete();
-      await Future<void>.delayed(Duration.zero);
-    });
+        syncCompleter.complete();
+        await Future<void>.delayed(Duration.zero);
+      },
+    );
   });
 }
 

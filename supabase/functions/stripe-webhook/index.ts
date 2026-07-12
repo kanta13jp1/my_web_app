@@ -274,6 +274,7 @@ async function handleCheckoutCompleted(
     metadata: {
       stripe_event_source: "checkout.session.completed",
       stripe_checkout_session_id: asString(session.id),
+      stripe_checkout_metadata: metadata,
     },
   }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);

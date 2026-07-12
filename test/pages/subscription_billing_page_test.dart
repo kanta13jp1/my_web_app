@@ -85,6 +85,7 @@ class _FakeBillingGateway implements BillingGateway {
   Future<BillingCheckoutSession> createCheckoutSession({
     required String tier,
     required String returnUrl,
+    BillingCheckoutAttribution attribution = const BillingCheckoutAttribution(),
   }) async {
     return const BillingCheckoutSession(url: 'https://stripe.example.test');
   }

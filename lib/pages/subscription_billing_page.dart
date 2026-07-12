@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/billing_service.dart';
+import '../services/growth_acquisition_service.dart';
 import '../widgets/paddle_approval_readiness_card.dart';
 
 class SubscriptionBillingPage extends StatefulWidget {
-  const SubscriptionBillingPage({super.key, this.service, this.initialUri});
+  const SubscriptionBillingPage({
+    super.key,
+    this.service,
+    this.initialUri,
+    this.acquisitionService = const GrowthAcquisitionService(),
+  });
 
   final BillingGateway? service;
   final Uri? initialUri;
+  final GrowthAcquisitionService acquisitionService;
 
   @override
   State<SubscriptionBillingPage> createState() =>
@@ -50,10 +57,15 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
 
   Future<void> _openCheckout(String tier) async {
     await _openStripeSession(() {
-      return _service.createCheckoutSession(
-        tier: tier,
-        returnUrl: _currentReturnUrl,
-      );
+      return widget.acquisitionService.loadLatestTouchpoint().then(
+            (latestTouchpoint) => _service.createCheckoutSession(
+              tier: tier,
+              returnUrl: _currentReturnUrl,
+              attribution: BillingCheckoutAttribution.fromLatestTouchpoint(
+                latestTouchpoint,
+              ),
+            ),
+          );
     });
   }
 
