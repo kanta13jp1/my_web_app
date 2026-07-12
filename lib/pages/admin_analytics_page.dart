@@ -5876,14 +5876,29 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         break;
     }
 
-    // R24: 投稿アーキタイプ別の平均インプレ(実測 8K vs 31 の型差を可視化)。
-    final archetypeLine = xGrowthArchetypeLiftLine(rows);
-    if (archetypeLine != null) {
+    // R25: 内容アーキタイプ別実測(R23 Archetype lift)。sampling 中でも型別の
+    // 実測は意思決定材料になるため state に依らず rows から出す。勝ち型は
+    // 実測バケット(n>=2・unknown 除く)が2種以上のときだけ主張する(edge と
+    // 同じ誠実性閾値)。
+    final archetypeEntries = resolveArchetypeLift(rows);
+    final archetypeWinner = archetypeLiftWinner(archetypeEntries);
+    if (archetypeWinner != null) {
+      lines.add(
+        _growthLoopLine(
+          Icons.emoji_events,
+          const Color(0xFF0EA5E9),
+          '勝ちアーキタイプ: ${archetypeWinner.label}'
+          '（平均${archetypeWinner.averageScore}）— 次の投稿はこの型で',
+        ),
+      );
+    }
+    final archetypeSummary = archetypeLiftSummaryLine(archetypeEntries);
+    if (archetypeSummary != null) {
       lines.add(
         _growthLoopLine(
           Icons.category_outlined,
-          const Color(0xFF0D9488),
-          archetypeLine,
+          const Color(0xFF0EA5E9),
+          archetypeSummary,
         ),
       );
     }
