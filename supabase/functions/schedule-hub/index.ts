@@ -21,6 +21,12 @@ import {
   isExternalFetchError,
 } from "../_shared/external_fetch.ts";
 import { buildOwnSiteBlogPostUrl } from "./blog_canonical.ts";
+import {
+  allPlatformsFailed,
+  type BlogUpstreamApi,
+  buildUpstreamErrorPayload,
+  summarizePlatformFailures,
+} from "./upstream_error.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1063,6 +1069,21 @@ async function devtoFetch(
       headers: mergeHeaders({ "api-key": apiKey }, init.headers),
     },
     { traceId },
+  );
+}
+
+// 上流 4xx/5xx を統一 502 応答へ (単一 upstream action 用 / 方針は upstream_error.ts)
+async function upstreamErrorJson(
+  targetApi: BlogUpstreamApi,
+  res: Response,
+): Promise<Response> {
+  const detail = await res.text().catch(() => "");
+  return json(
+    {
+      success: false,
+      ...buildUpstreamErrorPayload({ targetApi, status: res.status, detail }),
+    },
+    502,
   );
 }
 
@@ -2159,8 +2180,11 @@ serve(async (req: Request) => {
               const qd = await qr.json() as { url: string; id: string };
               results.qiita = { ok: true, url: qd.url };
             } else {
-              const errText = await qr.text();
-              results.qiita = { ok: false, error: `${qr.status}: ${errText}` };
+              results.qiita = buildUpstreamErrorPayload({
+                targetApi: "qiita",
+                status: qr.status,
+                detail: await qr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             results.qiita = isExternalFetchError(e)
@@ -2194,8 +2218,11 @@ serve(async (req: Request) => {
               const dd = await dr.json() as { url: string; id: number };
               results.devto = { ok: true, url: dd.url };
             } else {
-              const errText = await dr.text();
-              results.devto = { ok: false, error: `${dr.status}: ${errText}` };
+              results.devto = buildUpstreamErrorPayload({
+                targetApi: "dev.to",
+                status: dr.status,
+                detail: await dr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             results.devto = isExternalFetchError(e)
@@ -2273,6 +2300,15 @@ serve(async (req: Request) => {
           console.error("blog.auto_publish DB write failed:", dbErr);
         }
 
+        // 部分成功は 200 (成功済み platform への再投稿リトライ防止) / 全滅のみ 502
+        if (allPlatformsFailed(results)) {
+          return json({
+            success: false,
+            error: summarizePlatformFailures(results),
+            error_code: "all_platforms_failed",
+            results,
+          }, 502);
+        }
         return json({ success: true, results });
       }
 
@@ -2343,16 +2379,19 @@ serve(async (req: Request) => {
               const qd = await qr.json() as { url: string; id: string };
               ppResults.qiita = { ok: true, url: qd.url };
             } else {
-              ppResults.qiita = {
-                ok: false,
-                error: `${qr.status}: ${await qr.text()}`,
-              };
+              ppResults.qiita = buildUpstreamErrorPayload({
+                targetApi: "qiita",
+                status: qr.status,
+                detail: await qr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             ppResults.qiita = isExternalFetchError(e)
               ? externalFetchErrorPayload(e)
               : { ok: false, error: String(e) };
           }
+        } else if (ppPlatforms.includes("qiita")) {
+          ppResults.qiita = { ok: false, error: "QIITA_ACCESS_TOKEN not set" };
         }
 
         if (ppPlatforms.includes("devto") && devtoKey) {
@@ -2386,16 +2425,19 @@ serve(async (req: Request) => {
               const dd = await dr.json() as { url: string; id: number };
               ppResults.devto = { ok: true, url: dd.url };
             } else {
-              ppResults.devto = {
-                ok: false,
-                error: `${dr.status}: ${await dr.text()}`,
-              };
+              ppResults.devto = buildUpstreamErrorPayload({
+                targetApi: "dev.to",
+                status: dr.status,
+                detail: await dr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             ppResults.devto = isExternalFetchError(e)
               ? externalFetchErrorPayload(e)
               : { ok: false, error: String(e) };
           }
+        } else if (ppPlatforms.includes("devto")) {
+          ppResults.devto = { ok: false, error: "DEVTO_API_KEY not set" };
         }
 
         const successUrls = (
@@ -2416,6 +2458,15 @@ serve(async (req: Request) => {
             .eq("id", postId);
         }
 
+        // 部分成功は 200 (成功済み platform への再投稿リトライ防止) / 全滅のみ 502
+        if (allPlatformsFailed(ppResults)) {
+          return json({
+            success: false,
+            error: summarizePlatformFailures(ppResults),
+            error_code: "all_platforms_failed",
+            results: ppResults,
+          }, 502);
+        }
         return json({ success: true, results: ppResults });
       }
 
@@ -2667,6 +2718,8 @@ serve(async (req: Request) => {
           skipped_dup: 0,
           skipped_old: 0,
         };
+        // source ごとの取得失敗を記録 (黙殺すると 0 件と区別できない)
+        const backfillErrors: Record<string, unknown> = {};
 
         // ── Qiita 取得 ──────────────────────────────────────────────────
         if (qiitaToken) {
@@ -2712,9 +2765,18 @@ serve(async (req: Request) => {
                 });
                 existingUrls.add(a.url);
               }
+            } else {
+              backfillErrors.qiita = buildUpstreamErrorPayload({
+                targetApi: "qiita",
+                status: qr.status,
+                detail: await qr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             console.error("qiita backfill fetch failed:", e);
+            backfillErrors.qiita = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
         }
 
@@ -2763,10 +2825,37 @@ serve(async (req: Request) => {
                 });
                 existingUrls.add(a.url);
               }
+            } else {
+              backfillErrors.devto = buildUpstreamErrorPayload({
+                targetApi: "dev.to",
+                status: dr.status,
+                detail: await dr.text().catch(() => ""),
+              });
             }
           } catch (e) {
             console.error("devto backfill fetch failed:", e);
+            backfillErrors.devto = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
+        }
+
+        // 全 source 失敗時のみ 502 (部分成功は 200 + errors で継続)
+        const attemptedSources = [
+          qiitaToken ? "qiita" : "",
+          devtoKey ? "devto" : "",
+        ].filter(Boolean);
+        if (
+          attemptedSources.length > 0 &&
+          attemptedSources.every((s) => backfillErrors[s] !== undefined)
+        ) {
+          return json({
+            success: false,
+            error: summarizePlatformFailures(backfillErrors),
+            error_code: "all_sources_failed",
+            errors: backfillErrors,
+            summary,
+          }, 502);
         }
 
         // ── 一括 insert ─────────────────────────────────────────────────
@@ -2784,7 +2873,13 @@ serve(async (req: Request) => {
           summary.inserted = inserts.length;
         }
 
-        return json({ success: true, summary });
+        return json({
+          success: true,
+          summary,
+          ...(Object.keys(backfillErrors).length > 0
+            ? { errors: backfillErrors }
+            : {}),
+        });
       }
 
       // Win版#132 part 124: tech-blog-tracker page 用 public read action.
@@ -2837,9 +2932,7 @@ serve(async (req: Request) => {
           {},
           "schedule-hub.blog.qiita_list",
         );
-        if (!qr.ok) {
-          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
-        }
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const articles = await qr.json() as Array<{
           id: string;
           title: string;
@@ -2866,7 +2959,7 @@ serve(async (req: Request) => {
           {},
           "schedule-hub.blog.qiita_comments",
         );
-        if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const comments = await qr.json() as Array<{
           id: string;
           body: string;
@@ -2895,9 +2988,7 @@ serve(async (req: Request) => {
           },
           body: JSON.stringify({ item_id: itemId, body: replyBody }),
         }, "schedule-hub.blog.qiita_comment_post");
-        if (!qr.ok) {
-          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
-        }
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const comment = await qr.json();
         return json({ success: true, comment });
       }
@@ -2916,7 +3007,7 @@ serve(async (req: Request) => {
           {},
           "schedule-hub.blog.qiita_likers",
         );
-        if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const likers = await qr.json() as Array<
           { user: { id: string; name: string; profile_image_url: string } }
         >;
@@ -2937,9 +3028,9 @@ serve(async (req: Request) => {
           { method: "PUT" },
           "schedule-hub.blog.qiita_follow",
         );
-        // 204 No Content = success
-        const ok = qr.status === 204 || qr.ok;
-        return json({ success: ok, status: qr.status, user_id: userId });
+        // 204 No Content = success (Response.ok は 2xx 全体を含む)
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
+        return json({ success: true, status: qr.status, user_id: userId });
       }
 
       // blog.qiita_delete — 記事を削除
@@ -2956,11 +3047,8 @@ serve(async (req: Request) => {
           { method: "DELETE" },
           "schedule-hub.blog.qiita_delete",
         );
-        return json({
-          success: qr.status === 204,
-          status: qr.status,
-          item_id: itemId,
-        });
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
+        return json({ success: true, status: qr.status, item_id: itemId });
       }
 
       // blog.qiita_update — 記事を更新 (内容訂正)
@@ -2991,9 +3079,7 @@ serve(async (req: Request) => {
           },
           "schedule-hub.blog.qiita_update",
         );
-        if (!qr.ok) {
-          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
-        }
+        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
         const updated = await qr.json() as {
           id: string;
           url: string;
@@ -3017,12 +3103,7 @@ serve(async (req: Request) => {
           {},
           "schedule-hub.blog.devto_list",
         );
-        if (!dr.ok) {
-          return json(
-            { error: `dev.to ${dr.status}: ${await dr.text()}` },
-            502,
-          );
-        }
+        if (!dr.ok) return await upstreamErrorJson("dev.to", dr);
         const articles = await dr.json() as Array<{
           id: number;
           title: string;
@@ -3043,12 +3124,7 @@ serve(async (req: Request) => {
           `https://dev.to/api/articles/me/published?per_page=${perPage}`,
           { headers: { "api-key": devtoKey } },
         );
-        if (!dr.ok) {
-          return json(
-            { error: `dev.to ${dr.status}: ${await dr.text()}` },
-            502,
-          );
-        }
+        if (!dr.ok) return await upstreamErrorJson("dev.to", dr);
         const articles = await dr.json() as Array<{
           id: number;
           title: string;
@@ -3098,7 +3174,7 @@ serve(async (req: Request) => {
           "schedule-hub.blog.sync_engagement.articles",
         );
         if (!articlesRes.ok) {
-          return json({ error: `Qiita list: ${articlesRes.status}` }, 502);
+          return await upstreamErrorJson("qiita", articlesRes);
         }
         const articles = await articlesRes.json() as Array<{
           id: string;
@@ -3282,8 +3358,9 @@ serve(async (req: Request) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ article: { published: false } }),
         }, "schedule-hub.blog.devto_delete");
+        if (!dr.ok) return await upstreamErrorJson("dev.to", dr);
         return json({
-          success: dr.ok,
+          success: true,
           status: dr.status,
           article_id: articleId,
         });
