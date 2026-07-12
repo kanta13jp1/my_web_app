@@ -125,6 +125,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   bool _isLoading = true;
   bool _isRealityLoading = false;
   bool _isPublishingSnapshotMemo = false;
+  bool _isPostingSnapshotToX = false;
   bool _isPublishingKpiMemo = false;
   bool _isGeminiLoading = false;
   String? _realityError;
@@ -868,6 +869,134 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  /// R24: 地方議員集計(ポストA型=実測 3.2K のデータレポート)を growth-hub
+  /// x.post で API 投稿する。intent 投稿は x_post_log の外で Archetype lift
+  /// 計測に入らないため、この経路が計測ループへの正式ルート。実投稿の前に
+  /// 必ず確認ダイアログを挟む。
+  Future<void> _postSnapshotToXViaApi() async {
+    final snapshot = _realitySnapshot;
+    if (snapshot == null || !snapshot.hasData) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('最新の実データ取得後にX API投稿できます')),
+      );
+      return;
+    }
+    if (Supabase.instance.client.auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('X API投稿にはログインが必要です')),
+      );
+      return;
+    }
+    if (_isPostingSnapshotToX) {
+      return;
+    }
+    final memo = _publishedSnapshotMemo ?? await _publishSnapshotMemo();
+    if (!mounted) {
+      return;
+    }
+    final publicUrl =
+        memo == null ? '' : PublicMemoService.buildPublicMemoUrl(memo.id);
+    final text = _shareService.buildXPostLongText(
+      snapshot: snapshot,
+      members: snapshot.members,
+      plan: _plan,
+      publicUrl: publicUrl,
+    );
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('地方議員集計をXへ投稿'),
+        content: SizedBox(
+          width: 480,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('全${text.length}字の長文ポストとして実投稿されます(取り消し不可)。'),
+              const SizedBox(height: 8),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Text(
+                    text.length > 600 ? '${text.substring(0, 600)}…' : text,
+                    style: Theme.of(dialogContext).textTheme.bodySmall,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Xへ投稿する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    setState(() {
+      _isPostingSnapshotToX = true;
+    });
+    try {
+      final resp = await Supabase.instance.client.functions.invoke(
+        'growth-hub',
+        body: {
+          'action': 'x.post',
+          'text': text,
+          'source': 'local_election_share',
+          'route': '/election-victory',
+          'experimentKey': 'x_first_user_growth_10k',
+          'variant': 'local_election_tally',
+          'utmContent': 'local_election_tally',
+          'promptProfile': 'local_election_tally_template_v1',
+          'contentKind': 'data_report',
+          'contentArchetype': 'data_report',
+          'linkInReply': false,
+        },
+      );
+      final data = resp.data is Map
+          ? Map<String, dynamic>.from(resp.data as Map)
+          : <String, dynamic>{};
+      if (!mounted) {
+        return;
+      }
+      if (data['success'] == true && data['posted'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('地方議員集計をXへ投稿しました(計測ループに記録済み)'),
+          ),
+        );
+      } else {
+        final guidance = data['actionRequired']?.toString() ??
+            data['warning']?.toString() ??
+            data['error']?.toString() ??
+            '投稿に失敗しました';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('X投稿できませんでした: $guidance')),
+        );
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('X投稿エラー: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPostingSnapshotToX = false;
+        });
+      }
+    }
+  }
+
   Future<void> _openElectionXPostComposer() async {
     final snapshot = _realitySnapshot;
     if (snapshot == null || !snapshot.hasData) {
@@ -1280,6 +1409,23 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       onPressed: _isPublishingKpiMemo ? null : _shareKpiMemoOnX,
                       icon: const Icon(Icons.alternate_email),
                       label: const Text('X共有'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _isPostingSnapshotToX ||
+                              _isPublishingSnapshotMemo ||
+                              realitySnapshot == null
+                          ? null
+                          : _postSnapshotToXViaApi,
+                      icon: _isPostingSnapshotToX
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send),
+                      label: Text(
+                        _isPostingSnapshotToX ? 'X投稿中' : '集計をX投稿(API)',
+                      ),
                     ),
                     FilledButton.tonalIcon(
                       onPressed: _isRealityLoading

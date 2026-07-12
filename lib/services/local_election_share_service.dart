@@ -316,6 +316,40 @@ class LocalElectionShareService {
     );
   }
 
+  /// R24: 地方議員集計を growth-hub x.post(API 投稿)へ載せるための長文本文。
+  /// intent 投稿は x_post_log の外=Archetype lift 計測に入らないため、実測
+  /// 3.2K インプレッションのポストA(集計ノート全文)を API 経由の第一級経路に
+  /// する。X Premium 上限(25,000字)に対し [maxChars] で安全側に収め、超過時は
+  /// 名簿セクション境界(\n\n◽️)で切り詰めて公開ノートへ誘導する。
+  String buildXPostLongText({
+    required LocalElectionRealitySnapshot snapshot,
+    required List<LocalElectionLegislatorProfile> members,
+    LocalElectionPlanDashboard? plan,
+    String publicUrl = '',
+    int maxChars = 24000,
+  }) {
+    final draft = buildDraft(snapshot: snapshot, members: members, plan: plan);
+    final suffix =
+        publicUrl.isEmpty ? '' : '\n\n全都道府県の内訳と現職名簿の公開ノート:\n$publicUrl';
+    final body = draft.content.trim();
+    if (body.length + suffix.length <= maxChars) {
+      return '$body$suffix';
+    }
+    const truncationNote = '\n\n(文字数上限のため名簿の続きは公開ノートへ)';
+    final budget = maxChars - suffix.length - truncationNote.length;
+    if (budget <= 0) {
+      return buildXShareText(snapshot: snapshot, publicUrl: publicUrl);
+    }
+    var cut = body.lastIndexOf('\n\n◽️', budget);
+    if (cut < 0) {
+      cut = body.lastIndexOf('\n\n', budget);
+    }
+    if (cut <= 0) {
+      cut = budget;
+    }
+    return '${body.substring(0, cut).trimRight()}$truncationNote$suffix';
+  }
+
   Uri buildXShareIntentUri({
     required LocalElectionRealitySnapshot snapshot,
     required String publicUrl,
