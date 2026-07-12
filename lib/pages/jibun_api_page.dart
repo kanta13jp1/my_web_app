@@ -478,11 +478,11 @@ class _JibunApiPageState extends State<JibunApiPage> {
   Widget _buildIntroCard() {
     return Card(
       color: _indigo.withValues(alpha: 0.08),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: const Padding(
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text(
               '自分APIで外部AIとつながる',
               style: TextStyle(
