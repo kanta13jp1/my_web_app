@@ -111,8 +111,8 @@ class OfficeDocumentParser {
   List<int>? _fileBytes(Archive archive, String path) {
     for (final file in archive.files) {
       if (file.isFile && file.name == path) {
-        final content = file.content;
-        if (content is List<int>) return content;
+        // ArchiveFile.content は Uint8List (List<int>) を返す。
+        return file.content;
       }
     }
     return null;
@@ -159,8 +159,7 @@ class OfficeDocumentParser {
     }
     if (sheets.isEmpty) return null;
     sheets.sort((a, b) => a.key.compareTo(b.key));
-    final content = sheets.first.value.content;
-    return content is List<int> ? content : null;
+    return sheets.first.value.content;
   }
 
   String _cellValue(XmlElement cell, List<String> sharedStrings) {

@@ -448,15 +448,16 @@ class ImportService {
     required String source,
     required String fallbackTitle,
   }) {
-    final nonEmpty = rows
-        .where((row) => row.any((cell) => cell.trim().isNotEmpty))
-        .toList();
+    final nonEmpty = <List<String>>[
+      for (final row in rows)
+        if (row.any((cell) => cell.trim().isNotEmpty)) row,
+    ];
     if (nonEmpty.isEmpty) {
       return const <ImportedNoteDraft>[];
     }
 
-    final header = nonEmpty.first.map((cell) => cell.trim().toLowerCase())
-        .toList();
+    final header =
+        nonEmpty.first.map((cell) => cell.trim().toLowerCase()).toList();
     final titleIndex = _findColumnIndex(
       header,
       const <String>['title', 'name', 'note', 'ページ', 'タイトル', '件名'],

@@ -85,8 +85,10 @@ void main() {
     });
 
     test('returns empty list for non-zip bytes', () {
-      expect(parser.parseXlsxToRows(Uint8List.fromList(<int>[1, 2, 3])),
-          isEmpty);
+      expect(
+        parser.parseXlsxToRows(Uint8List.fromList(<int>[1, 2, 3])),
+        isEmpty,
+      );
     });
   });
 
