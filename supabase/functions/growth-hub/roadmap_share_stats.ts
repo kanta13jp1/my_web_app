@@ -9,6 +9,8 @@ export type RoadmapPlan = {
   features_done: number;
   features_total: number;
   sort_order?: number;
+  priority?: string | null;
+  effort?: string | null;
 };
 
 export const SHAREABLE_ROADMAP_PLAN_LABELS = [

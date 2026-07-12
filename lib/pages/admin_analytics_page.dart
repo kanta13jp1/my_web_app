@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/growth_mission_service.dart';
+import '../widgets/structured_field_chips.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
 import '../widgets/self_devin_control_tower_card.dart';
@@ -769,7 +770,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final data = await _supabase
           .from('feature_requests')
           .select(
-            'id, title, description, email, votes, status, created_at, admin_reply, admin_replied_at',
+            'id, title, description, email, votes, status, created_at, admin_reply, admin_replied_at, priority, effort, target_date',
           )
           .order('votes', ascending: false)
           .limit(50);
@@ -933,6 +934,154 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     } catch (e) {
       debugPrint('feature request status update error: $e');
     }
+  }
+
+  /// 優先度・工数・期日 (GitHub Issue Fields 相当) を管理者が設定する。
+  Future<void> _showFeatureFieldsDialog(Map<String, dynamic> req) async {
+    final id = '${req['id'] ?? ''}';
+    if (id.isEmpty) return;
+    String? priority = _nullableString(req['priority']);
+    String? effort = _nullableString(req['effort']);
+    DateTime? targetDate = DateTime.tryParse('${req['target_date'] ?? ''}');
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('優先度・工数・期日'),
+              content: SizedBox(
+                width: 360,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String?>(
+                      initialValue: priority,
+                      decoration: const InputDecoration(labelText: '優先度'),
+                      items: <DropdownMenuItem<String?>>[
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('未設定'),
+                        ),
+                        ...kPriorityValues.map(
+                          (v) => DropdownMenuItem<String?>(
+                            value: v,
+                            child: Text(priorityLabel(v)),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) => setDialogState(() => priority = v),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String?>(
+                      initialValue: effort,
+                      decoration: const InputDecoration(labelText: '工数'),
+                      items: <DropdownMenuItem<String?>>[
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('未設定'),
+                        ),
+                        ...kEffortValues.map(
+                          (v) => DropdownMenuItem<String?>(
+                            value: v,
+                            child: Text(effortLabel(v)),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) => setDialogState(() => effort = v),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            targetDate == null
+                                ? '期日: 未設定'
+                                : '期日: ${DateFormat('yyyy-MM-dd').format(targetDate!)}',
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: dialogContext,
+                              initialDate: targetDate ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setDialogState(() => targetDate = picked);
+                            }
+                          },
+                          child: const Text('選択'),
+                        ),
+                        if (targetDate != null)
+                          IconButton(
+                            tooltip: '期日をクリア',
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () =>
+                                setDialogState(() => targetDate = null),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('キャンセル'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: const Text('保存'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (saved != true) return;
+    await _updateFeatureRequestFields(
+      id,
+      priority: priority,
+      effort: effort,
+      targetDate: targetDate,
+    );
+  }
+
+  Future<void> _updateFeatureRequestFields(
+    String id, {
+    required String? priority,
+    required String? effort,
+    required DateTime? targetDate,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _supabase.from('feature_requests').update(<String, dynamic>{
+        'priority': priority,
+        'effort': effort,
+        'target_date': targetDate == null
+            ? null
+            : DateFormat('yyyy-MM-dd').format(targetDate),
+      }).eq('id', id);
+      await _loadFeatureRequests();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('優先度・工数・期日を更新しました')),
+      );
+    } catch (e) {
+      debugPrint('feature request fields update error: $e');
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('更新に失敗: $e')));
+    }
+  }
+
+  String? _nullableString(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
   }
 
   Future<void> _replySupportRequest({
@@ -4841,6 +4990,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                     : Icons.edit_note_outlined,
                                 size: 18,
                                 color: const Color(0xFF4338CA),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: '優先度・工数・期日を設定',
+                              onPressed: () => _showFeatureFieldsDialog(req),
+                              icon: const Icon(
+                                Icons.tune,
+                                size: 18,
+                                color: Color(0xFF3D5AFE),
                               ),
                             ),
                             PopupMenuButton<String>(

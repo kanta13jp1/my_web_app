@@ -27,17 +27,21 @@ Deno.test("verified source counts preserve legitimate zero and reject defaults",
 });
 
 Deno.test("shareable plans are allowlisted and deterministically ordered", () => {
-  const plan = (label: string): RoadmapPlan => ({
+  const plan = (
+    label: string,
+    fields: Partial<RoadmapPlan> = {},
+  ): RoadmapPlan => ({
     label,
     deadline: "2026年08月01日",
     target: 100,
     features_done: 10,
     features_total: 20,
+    ...fields,
   });
   const selected = selectShareableRoadmapPlans([
     plan("vs Internal Competitor"),
     plan("長期計画"),
-    plan("短期計画"),
+    plan("短期計画", { priority: "p0", effort: "m" }),
     plan("中期計画"),
   ]);
   assertEquals(selected.map((entry) => entry.label), [
@@ -45,4 +49,6 @@ Deno.test("shareable plans are allowlisted and deterministically ordered", () =>
     "中期計画",
     "長期計画",
   ]);
+  assertEquals(selected[0].priority, "p0");
+  assertEquals(selected[0].effort, "m");
 });

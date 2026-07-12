@@ -1772,7 +1772,7 @@ async function loadRoadmapProgress(
     admin
       .from("growth_plans")
       .select(
-        "label, deadline, target, features_done, features_total, sort_order",
+        "label, deadline, target, features_done, features_total, sort_order, priority, effort",
       )
       .order("sort_order", { ascending: true })
       .order("target", { ascending: true }),
