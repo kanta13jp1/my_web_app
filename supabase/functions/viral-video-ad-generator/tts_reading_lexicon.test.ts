@@ -25,6 +25,16 @@ Deno.test("月初め takes the longest match つきはじめ, not げっしょ�
   );
 });
 
+Deno.test("漏洩 is read ろうえい (observed misread ろうけつ / 2026-07-12)", () => {
+  assertEquals(
+    applyTtsReadings(
+      "機密情報の漏洩があると指摘。情報漏えい対策も課題。",
+      "ja",
+    ),
+    "機密情報のろうえいがあると指摘。情報ろうえい対策も課題。",
+  );
+});
+
 Deno.test("compound words containing lexicon entries stay readable", () => {
   assertEquals(
     applyTtsReadings("資産負債のバランスと固定費・変動費を確認。", "ja"),
