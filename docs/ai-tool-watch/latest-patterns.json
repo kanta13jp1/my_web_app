@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-11T22:09:23Z",
+  "generated_at": "2026-07-12T22:08:49Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -27,7 +27,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
@@ -77,7 +77,7 @@
           "latest_signal": "2.1.207 / July 11, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "849bef4718af2c5418d4eb8e9454a0bb1b6e9f187e44e12cbae6d68b83fa7718",
+          "previous_hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
@@ -268,10 +268,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
+          "hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -286,7 +286,6 @@
             "hooks": [
               "hook",
               "hooks",
-              "PostToolUse",
               "Stop"
             ],
             "integration": [
@@ -298,7 +297,6 @@
               "IDE extension"
             ],
             "quality-cost": [
-              "OpenTelemetry",
               "cost",
               "quota",
               "rate limit",
@@ -550,10 +548,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
+          "hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
           "keyword_groups": {
             "hooks": [
               "Stop"

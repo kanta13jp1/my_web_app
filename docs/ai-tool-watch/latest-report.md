@@ -1,12 +1,13 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-11T22:09:19Z`
-- Previous check: `2026-07-10T22:17:54Z`
-- Changed/new official sources: `1`
+- Checked at: `2026-07-12T22:08:46Z`
+- Previous check: `2026-07-11T22:09:19Z`
+- Changed/new official sources: `2`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.207 / July 11, 2026
+- `changed` Codex changelog: 2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a
+- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.87.0 / June 19, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
