@@ -62,6 +62,12 @@ import {
   parseHouseholdTrackerConsent,
 } from "./x_household_tracker.ts";
 import { isUuid, resolveXLogOwnerUserId } from "./x_operator_auth.ts";
+import {
+  approveXPostCandidateMetadata,
+  buildXPostCandidateMetadata,
+  finalizeXPostCandidateMetadata,
+  X_POST_CANDIDATE_SOURCE,
+} from "./x_post_candidate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -296,9 +302,8 @@ async function listXMetricSnapshots(
     metadata: Record<string, unknown>;
     created_at: string;
   }> = [];
-  // PostgREST/Supabase projects commonly cap a response at 1,000 rows. Fetch
-  // snapshots in source-log batches and pages so a 7-day, 3-hour collector does
-  // not silently lose the early windows of an otherwise valid post.
+  // Snapshot volume can exceed PostgREST's usual 1,000-row response limit.
+  // Page by bounded source-log batches so early post-age windows are retained.
   const batchSize = 50;
   const pageSize = 1000;
   const maxPagesPerBatch = 10;
@@ -691,10 +696,14 @@ async function loadNormalizedXMetricWindows(
   logs: readonly XPostLogItem[],
   nowMs = Date.now(),
 ): Promise<NormalizedXPostMetrics[]> {
-  const sourceLogIds = logs.map((log) => String(log.id)).filter((id) =>
-    id !== ""
+  const sourceLogIds = logs
+    .map((log) => String(log.id))
+    .filter((id) => id !== "");
+  const snapshots = await listXMetricSnapshots(
+    admin,
+    userId,
+    sourceLogIds,
   );
-  const snapshots = await listXMetricSnapshots(admin, userId, sourceLogIds);
   return normalizeXMetricWindows(logs, snapshots, nowMs);
 }
 
@@ -855,11 +864,13 @@ function buildXPerformanceContextFromLogs(
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
 
-  // Use one shared post-age window for the whole learning cohort. This keeps a
-  // mature post's 72-hour cumulative count from competing with a fresh post's
-  // 3-hour count. I24 is the primary decision metric; I72 and I3 are fallbacks.
+  // Rank every post against one shared age window. This prevents a mature
+  // post's cumulative 72-hour count from competing with a fresh post's 3-hour
+  // count. I24h is preferred, with I72h/I3h fallbacks when at least three rows
+  // share that window; sparse cohorts retain the legacy cumulative behavior.
   const comparisonWindow = selectXMetricComparisonWindow(
-    baseRows.map((row) => normalizedByLogId.get(String(row.id)))
+    baseRows
+      .map((row) => normalizedByLogId.get(String(row.id)))
       .filter((row): row is NormalizedXPostMetrics => row !== undefined),
   );
   const comparisonLabel = comparisonWindow
@@ -877,7 +888,7 @@ function buildXPerformanceContextFromLogs(
         ...row,
         rankingEligible,
         rankingMetric: comparisonWindow
-          ? (rankingEligible ? metricWindowLabel(comparisonWindow) : "unranked")
+          ? (rankingEligible ? comparisonLabel : "unranked")
           : "latest_cumulative",
         rankingImpressions: comparisonWindow
           ? normalizedValue
@@ -890,7 +901,8 @@ function buildXPerformanceContextFromLogs(
     })
     .sort((left, right) =>
       Number(right.rankingEligible) - Number(left.rankingEligible) ||
-      (right.rankingImpressions ?? -1) - (left.rankingImpressions ?? -1) ||
+      (right.rankingImpressions ?? -1) -
+        (left.rankingImpressions ?? -1) ||
       right.score - left.score
     );
 
@@ -1003,14 +1015,20 @@ function buildXPerformanceContextFromLogs(
   }
   if (learningRows.length >= 3) {
     const buckets = [
-      ["0 replies", learningRows.filter((r) => r.threadReplyCount === 0)],
+      [
+        "0 replies",
+        learningRows.filter((r) => r.threadReplyCount === 0),
+      ],
       [
         "1-4 replies",
         learningRows.filter((r) =>
           r.threadReplyCount >= 1 && r.threadReplyCount <= 4
         ),
       ],
-      ["5-8 replies", learningRows.filter((r) => r.threadReplyCount >= 5)],
+      [
+        "5-8 replies",
+        learningRows.filter((r) => r.threadReplyCount >= 5),
+      ],
     ].filter(([, list]) => (list as typeof rows).length > 0) as Array<
       [string, typeof rows]
     >;
@@ -1079,7 +1097,7 @@ function buildXPerformanceContextFromLogs(
   // 実測インプレから供給する(実測 3 件未満は沈黙)。
   const ownDataLine = buildOwnDataFactsLine(
     learningRows,
-    (row) => row.impressions,
+    (row) => row.rankingImpressions,
   );
   const historicalBenchmarkLine = historicalBenchmarks.length === 0
     ? ""
@@ -1162,6 +1180,9 @@ function buildXPerformanceContextFromLogs(
     historicalBenchmarks,
     metricWindowSelectionRule: X_METRIC_WINDOW_SELECTION_RULE,
     metricLearningSelectionRule: X_METRIC_LEARNING_SELECTION_RULE,
+    selectionRule: comparisonWindow
+      ? X_METRIC_LEARNING_SELECTION_RULE
+      : "latest cumulative fallback because no normalized cohort has 3 posts",
     promptContext,
   };
 }
@@ -1321,9 +1342,18 @@ async function buildRevenueFunnelReport(
   const xRows = performance.rows as Array<{
     id: string;
     variant: string;
+    learningCohort: string;
     impressions?: number | null;
+    rankingEligible: boolean;
+    rankingImpressions: number | null;
     score: number;
   }>;
+  const comparableXRows = xRows.filter((row) =>
+    row.learningCohort !== "historical_benchmark"
+  );
+  const learningXRows = performance.comparisonWindow
+    ? comparableXRows.filter((row) => row.rankingEligible)
+    : comparableXRows;
   const byVariant = new Map<
     string,
     {
@@ -1335,7 +1365,7 @@ async function buildRevenueFunnelReport(
       revenueJpy: number;
     }
   >();
-  for (const row of xRows) {
+  for (const row of learningXRows) {
     const key = row.variant || "unknown";
     const current = byVariant.get(key) ?? {
       variant: key,
@@ -1346,8 +1376,8 @@ async function buildRevenueFunnelReport(
       revenueJpy: 0,
     };
     current.posts += 1;
-    current.impressions += firstNumber(row.impressions) ?? 0;
-    current.score += row.score;
+    current.impressions += firstNumber(row.rankingImpressions) ?? 0;
+    current.score += firstNumber(row.rankingImpressions) ?? row.score;
     byVariant.set(key, current);
   }
   for (const payment of paidPayments) {
@@ -1379,7 +1409,10 @@ async function buildRevenueFunnelReport(
     },
     summary: {
       xPostLogs: xLogs.length,
-      measuredXPosts: xRows.length,
+      measuredXPosts: learningXRows.length,
+      comparisonWindow: performance.comparisonWindow,
+      comparisonLabel: performance.comparisonLabel,
+      comparisonSampleCount: performance.comparisonSampleCount,
       latestPaidSupporters: paidPayments.length,
       revenueJpy: paidPayments.reduce(
         (sum, payment) => sum + payment.amountJpy,
@@ -2268,10 +2301,24 @@ serve(async (req: Request) => {
           body.target_url,
           "https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=weekly_data_report",
         );
-        const growthReportRows = (perf.rows as Array<Record<string, unknown>>)
-          .filter((row) => row.learningCohort !== "historical_benchmark");
+        const growthReportRows = (perf.rows as Array<
+          GrowthReportRow & {
+            learningCohort: string;
+            rankingEligible: boolean;
+            rankingImpressions: number | null;
+          }
+        >)
+          .filter((row) =>
+            row.learningCohort !== "historical_benchmark" &&
+            (!perf.comparisonWindow || row.rankingEligible)
+          )
+          .map((row) => ({
+            ...row,
+            impressions: row.rankingImpressions,
+            score: row.rankingImpressions ?? row.score,
+          }));
         const report = buildGrowthDataReport(
-          growthReportRows as GrowthReportRow[],
+          growthReportRows,
           new Date(),
           targetUrl,
         );
@@ -2342,6 +2389,271 @@ serve(async (req: Request) => {
         return json(
           await buildRevenueFunnelReport(admin, userId!, body.limit),
         );
+      }
+
+      case "x.candidate.list": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        const limit = Math.max(
+          1,
+          Math.min(100, Math.trunc(firstNumber(body.limit) ?? 50)),
+        );
+        const requestedStatus = firstString(body.status);
+        let query = admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (requestedStatus) {
+          query = query.filter(
+            "metadata->>status",
+            "eq",
+            requestedStatus,
+          );
+        }
+        const { data, error } = await query;
+        if (error) throw new Error(error.message);
+        return json({ success: true, candidates: data ?? [] });
+      }
+
+      case "x.candidate.create": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        let candidateMetadata: Record<string, unknown>;
+        try {
+          candidateMetadata = buildXPostCandidateMetadata(
+            body.postPayload ?? body.post_payload ?? body,
+            {
+              candidateKey: body.candidateKey ?? body.candidate_key ??
+                body.idempotencyKey ?? body.idempotency_key,
+              candidateType: body.candidateType ?? body.candidate_type,
+              sourceKind: body.sourceKind ?? body.source_kind,
+              sourceUrls: body.sourceUrls ?? body.source_urls,
+              createdBy: body.createdBy ?? body.created_by,
+              context: body.context ?? body.generationContext ??
+                body.generation_context,
+            },
+          );
+        } catch (error) {
+          return json({ success: false, error: errorMessage(error) }, 400);
+        }
+
+        const candidateKey = firstString(candidateMetadata.candidate_key);
+        if (!candidateKey) {
+          return json({ success: false, error: "candidateKey required" }, 400);
+        }
+        if (body.dryRun === true || body.dry_run === true) {
+          return json({
+            success: true,
+            dryRun: true,
+            candidateCreated: false,
+            candidateId: null,
+            status: "pending_approval",
+            preview: candidateMetadata,
+          });
+        }
+
+        const candidateOwnerUserId = userId!;
+        const findExistingCandidate = async () => {
+          const { data, error } = await admin
+            .from("hub_data")
+            .select("id, metadata, created_at")
+            .eq("source", X_POST_CANDIDATE_SOURCE)
+            .filter(
+              "metadata->>user_id",
+              "eq",
+              candidateOwnerUserId,
+            )
+            .filter("metadata->>candidate_key", "eq", candidateKey)
+            .limit(1)
+            .maybeSingle();
+          if (error) throw new Error(error.message);
+          return data;
+        };
+        const existing = await findExistingCandidate();
+        if (existing) {
+          return json({
+            success: true,
+            dryRun: false,
+            candidateCreated: false,
+            idempotent: true,
+            candidateId: existing.id,
+            status: asRecord(existing.metadata).status ?? "pending_approval",
+            candidate: existing,
+          });
+        }
+
+        let candidate;
+        try {
+          candidate = await addItem(
+            admin,
+            X_POST_CANDIDATE_SOURCE,
+            candidateOwnerUserId,
+            candidateMetadata,
+          );
+        } catch (error) {
+          // The partial unique index closes the read/insert race. Treat a
+          // concurrent creator winning that race as an idempotent success.
+          const racedCandidate = await findExistingCandidate();
+          if (!racedCandidate) throw error;
+          return json({
+            success: true,
+            dryRun: false,
+            candidateCreated: false,
+            idempotent: true,
+            candidateId: racedCandidate.id,
+            status: asRecord(racedCandidate.metadata).status ??
+              "pending_approval",
+            candidate: racedCandidate,
+          });
+        }
+        return json({
+          success: true,
+          dryRun: false,
+          candidateCreated: true,
+          idempotent: false,
+          candidateId: candidate.id,
+          status: asRecord(candidate.metadata).status ?? "pending_approval",
+          candidate,
+        });
+      }
+
+      case "x.candidate.approve": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        const candidateId = firstString(body.candidateId, body.candidate_id);
+        if (!isUuid(candidateId)) {
+          return json(
+            { success: false, error: "valid candidateId required" },
+            400,
+          );
+        }
+        const { data: candidate, error: candidateError } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("id", candidateId)
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .maybeSingle();
+        if (candidateError) throw new Error(candidateError.message);
+        if (!candidate) {
+          return json({ success: false, error: "candidate not found" }, 404);
+        }
+        const candidateMeta = asRecord(candidate.metadata);
+        const expectedCandidateType = firstString(
+          body.expectedCandidateType,
+          body.expected_candidate_type,
+        );
+        const expectedSourceKind = firstString(
+          body.expectedSourceKind,
+          body.expected_source_kind,
+        );
+        if (
+          expectedCandidateType &&
+          firstString(candidateMeta.candidate_type) !== expectedCandidateType
+        ) {
+          return json({
+            success: false,
+            error: "candidate type does not match approval workflow",
+          }, 409);
+        }
+        if (
+          expectedSourceKind &&
+          firstString(candidateMeta.source_kind) !== expectedSourceKind
+        ) {
+          return json({
+            success: false,
+            error: "candidate source does not match approval workflow",
+          }, 409);
+        }
+
+        const approvedBy = userId === "service_role"
+          ? firstString(body.approvedBy, body.approved_by, "service_role")
+          : userId!;
+        const approvalChannel = userId === "service_role"
+          ? firstString(
+            body.approvalChannel,
+            body.approval_channel,
+            "service_role",
+          )
+          : "admin_ui";
+        let approved;
+        try {
+          approved = approveXPostCandidateMetadata(candidateMeta, {
+            actorUserId: userId!,
+            approvedBy,
+            channel: approvalChannel,
+            context: body.approvalContext ?? body.approval_context,
+          });
+        } catch (error) {
+          return json({ success: false, error: errorMessage(error) }, 409);
+        }
+        const { data: updated, error: updateError } = await admin
+          .from("hub_data")
+          .update({ metadata: approved.metadata })
+          .eq("id", candidateId)
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .select("id, metadata, created_at")
+          .single();
+        if (updateError) throw new Error(updateError.message);
+        return json({
+          success: true,
+          candidateId,
+          status: "approved",
+          candidate: updated,
+          // x.post persists candidateId as provenance. All other fields are
+          // the exact whitelisted payload reviewed by the operator.
+          postPayload: { ...approved.postPayload, candidateId },
+        });
+      }
+
+      case "x.candidate.finalize": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        const candidateId = firstString(body.candidateId, body.candidate_id);
+        if (!isUuid(candidateId)) {
+          return json(
+            { success: false, error: "valid candidateId required" },
+            400,
+          );
+        }
+        const { data: candidate, error: candidateError } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("id", candidateId)
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .maybeSingle();
+        if (candidateError) throw new Error(candidateError.message);
+        if (!candidate) {
+          return json({ success: false, error: "candidate not found" }, 404);
+        }
+        let finalizedMetadata;
+        try {
+          finalizedMetadata = finalizeXPostCandidateMetadata(
+            candidate.metadata,
+            body.result ?? body.postResult ?? body.post_result,
+          );
+        } catch (error) {
+          return json({ success: false, error: errorMessage(error) }, 409);
+        }
+        const { data: updated, error: updateError } = await admin
+          .from("hub_data")
+          .update({ metadata: finalizedMetadata })
+          .eq("id", candidateId)
+          .eq("source", X_POST_CANDIDATE_SOURCE)
+          .select("id, metadata, created_at")
+          .single();
+        if (updateError) throw new Error(updateError.message);
+        return json({
+          success: true,
+          candidateId,
+          status: asRecord(updated.metadata).status,
+          candidate: updated,
+        });
       }
 
       case "x.post": {
@@ -2460,6 +2772,8 @@ serve(async (req: Request) => {
           content_kind: body.contentKind ?? body.content_kind ?? null,
           link_in_reply: body.linkInReply === true ||
             body.link_in_reply === true,
+          candidate_id: firstString(body.candidateId, body.candidate_id) ||
+            null,
         };
 
         if (dryRun || !isXConfigured()) {

@@ -1,4 +1,4 @@
-name: X Daily Briefing Post
+name: X Candidate Draft & Approval
 
 on:
   schedule:
@@ -6,12 +6,35 @@ on:
     - cron: "0 22 * * *"
   workflow_dispatch:
     inputs:
+      operation:
+        description: "Create a candidate or publish an already reviewed candidate"
+        type: choice
+        options:
+          - create_draft
+          - publish_approved_draft
+        default: create_draft
+      candidate_id:
+        description: "Existing x_post_candidate UUID (publish operation only)"
+        type: string
+        required: false
+      expected_candidate_type:
+        description: "Optional reviewed candidate_type assertion before publish"
+        type: string
+        required: false
+      expected_source_kind:
+        description: "Optional reviewed source_kind assertion before publish"
+        type: string
+        required: false
+      confirm_publish:
+        description: "I reviewed this candidate and explicitly approve publishing it"
+        type: boolean
+        default: false
       dry_run:
-        description: "Dry run without posting"
+        description: "Preview only; do not save a candidate or publish"
         type: boolean
         default: true
       force:
-        description: "Post even if today's daily briefing already exists"
+        description: "Create another candidate even if today's post already exists"
         type: boolean
         default: false
 
@@ -23,7 +46,7 @@ permissions:
   contents: read
 
 jobs:
-  post:
+  candidate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -46,16 +69,59 @@ jobs:
         id: mode
         shell: bash
         run: |
-          dry_run="${{ github.event.inputs.dry_run }}"
-          force="${{ github.event.inputs.force }}"
+          event_name="${EVENT_NAME}"
+          operation="${INPUT_OPERATION}"
+          candidate_id="${INPUT_CANDIDATE_ID}"
+          confirm_publish="${INPUT_CONFIRM_PUBLISH}"
+          dry_run="${INPUT_DRY_RUN}"
+          force="${INPUT_FORCE}"
+          if [ -z "${operation}" ]; then
+            operation="create_draft"
+          fi
+          if [ -z "${confirm_publish}" ]; then
+            confirm_publish="false"
+          fi
           if [ -z "${dry_run}" ]; then
             dry_run="false"
           fi
           if [ -z "${force}" ]; then
             force="false"
           fi
+          publish_requested="false"
+          if [ "${operation}" = "publish_approved_draft" ]; then
+            if [ "${event_name}" != "workflow_dispatch" ]; then
+              echo "::error::Publishing is only available from workflow_dispatch."
+              exit 1
+            fi
+            if [ "${confirm_publish}" != "true" ]; then
+              echo "::error::confirm_publish=true is required to publish."
+              exit 1
+            fi
+            if [ "${dry_run}" = "true" ]; then
+              echo "::error::Set dry_run=false after reviewing the stored candidate."
+              exit 1
+            fi
+            if ! [[ "${candidate_id}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+              echo "::error::A valid candidate_id is required to publish."
+              exit 1
+            fi
+            publish_requested="true"
+          elif [ "${operation}" != "create_draft" ]; then
+            echo "::error::Unsupported operation: ${operation}"
+            exit 1
+          fi
+          echo "operation=${operation}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_id=${candidate_id}" >> "${GITHUB_OUTPUT}"
+          echo "publish_requested=${publish_requested}" >> "${GITHUB_OUTPUT}"
           echo "dry_run=${dry_run}" >> "${GITHUB_OUTPUT}"
           echo "force=${force}" >> "${GITHUB_OUTPUT}"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_OPERATION: ${{ github.event.inputs.operation }}
+          INPUT_CANDIDATE_ID: ${{ github.event.inputs.candidate_id }}
+          INPUT_CONFIRM_PUBLISH: ${{ github.event.inputs.confirm_publish }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
+          INPUT_FORCE: ${{ github.event.inputs.force }}
 
       - name: Resolve JST day
         id: day
@@ -75,6 +141,7 @@ jobs:
 
       - name: Check existing post for today
         id: duplicate
+        if: steps.mode.outputs.operation == 'create_draft'
         shell: bash
         run: |
           http_code=$(curl --get --silent --show-error --output /tmp/x_daily_existing.json --write-out "%{http_code}" \
@@ -101,7 +168,7 @@ jobs:
           fi
 
       - name: Fetch trend context
-        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+        if: steps.mode.outputs.operation == 'create_draft' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
         shell: bash
         run: |
           http_code=$(curl --silent --show-error --output /tmp/x_trends.json --write-out "%{http_code}" \
@@ -118,7 +185,7 @@ jobs:
           cat /tmp/x_trends.json
 
       - name: Fetch performance context
-        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+        if: steps.mode.outputs.operation == 'create_draft' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
         shell: bash
         run: |
           http_code=$(curl --silent --show-error --output /tmp/x_performance_context.json --write-out "%{http_code}" \
@@ -135,7 +202,7 @@ jobs:
           cat /tmp/x_performance_context.json
 
       - name: Build daily briefing payload
-        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+        if: steps.mode.outputs.operation == 'create_draft' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
         shell: bash
         run: |
           node <<'NODE'
@@ -165,6 +232,14 @@ jobs:
               })
               .map(clean)
               .filter(Boolean)
+            : [];
+          const trendSourceUrls = Array.isArray(raw.trends)
+            ? [...new Set(raw.trends
+              .map((trend) => typeof trend === 'object' && trend !== null
+                ? String(trend.url ?? trend.sourceUrl ?? trend.source_url ?? '').trim()
+                : '')
+              .filter((url) => /^https:\/\//i.test(url)))]
+              .slice(0, 19)
             : [];
 
           const topics = [...new Set([...names, ...fallbackTopics])].slice(0, 5);
@@ -311,8 +386,7 @@ jobs:
             ].join('\n'),
           ];
 
-          const payload = {
-            action: 'x.post',
+          const postPayload = {
             text: lead,
             replyTexts: replies,
             poll: {
@@ -326,14 +400,45 @@ jobs:
             utmContent: selectedVariant,
             promptProfile: 'workflow_daily_briefing_v3_performance_context',
             contentKind: 'daily_briefing_thread',
+            contentArchetype: 'news_briefing',
             linkInReply: true,
+          };
+          const baseCandidateKey = `daily-briefing:${String(jstLabel).replace(/\D/g, '-')}`;
+          const candidateKey = process.env.FORCE === 'true'
+            ? `${baseCandidateKey}:${process.env.GITHUB_RUN_ID}:${process.env.GITHUB_RUN_ATTEMPT}`
+            : baseCandidateKey;
+          const payload = {
+            action: 'x.candidate.create',
+            candidateKey,
+            candidateType: 'daily_briefing_thread',
+            sourceKind: 'trend_daily_briefing',
+            sourceUrls: [...trendSourceUrls, targetUrlWithVariant],
+            createdBy: `github-actions:${process.env.SOURCE}`,
+            postPayload,
+            context: {
+              workflow: process.env.SOURCE,
+              workflow_run_id: process.env.GITHUB_RUN_ID,
+              workflow_run_attempt: process.env.GITHUB_RUN_ATTEMPT,
+              event: process.env.GITHUB_EVENT_NAME,
+              actor: process.env.GITHUB_ACTOR,
+              ref: process.env.GITHUB_REF,
+              sha: process.env.GITHUB_SHA,
+              jst_day: jstLabel,
+              topics,
+              trend_source: raw.source ?? 'unknown',
+              selected_variant: selectedVariant,
+              performance_rows: rows.length,
+              best_variant: bestVariant || '',
+              target_url: targetUrlWithVariant,
+            },
             dryRun: process.env.DRY_RUN === 'true',
           };
 
-          fs.writeFileSync('/tmp/x_daily_payload.json', JSON.stringify(payload, null, 2));
+          fs.writeFileSync('/tmp/x_daily_candidate_request.json', JSON.stringify(payload, null, 2));
           console.log(JSON.stringify({
-            text: payload.text,
-            replyCount: payload.replyTexts.length,
+            candidateKey,
+            text: postPayload.text,
+            replyCount: postPayload.replyTexts.length,
             dryRun: payload.dryRun,
             topics,
             trendSource: raw.source ?? null,
@@ -346,29 +451,32 @@ jobs:
           NODE
         env:
           DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          FORCE: ${{ steps.mode.outputs.force }}
           JST_LABEL: ${{ steps.day.outputs.jst_label }}
 
-      - name: Post daily briefing thread
-        id: post
-        if: steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true'
+      - name: Save approval-pending candidate
+        id: save_candidate
+        if: steps.mode.outputs.operation == 'create_draft' && (steps.duplicate.outputs.already_posted != 'true' || steps.mode.outputs.force == 'true' || steps.mode.outputs.dry_run == 'true')
         shell: bash
         run: |
-          http_code=$(curl --silent --show-error --output /tmp/x_daily_response.json --write-out "%{http_code}" \
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_candidate_response.json --write-out "%{http_code}" \
             --request POST \
             "${SUPABASE_URL}/functions/v1/growth-hub" \
             --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
             --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             --header "Content-Type: application/json" \
-            --data @/tmp/x_daily_payload.json)
-          response=$(cat /tmp/x_daily_response.json)
+            --data @/tmp/x_daily_candidate_request.json)
+          response=$(cat /tmp/x_daily_candidate_response.json)
           echo "HTTP ${http_code}"
           echo "${response}"
-          posted=$(jq -r '.posted // false' /tmp/x_daily_response.json)
-          success=$(jq -r '.success // false' /tmp/x_daily_response.json)
-          tweet_id=$(jq -r '.tweetId // ""' /tmp/x_daily_response.json)
-          echo "posted=${posted}" >> "${GITHUB_OUTPUT}"
+          success=$(jq -r '.success // false' /tmp/x_daily_candidate_response.json)
+          candidate_id=$(jq -r '.candidateId // ""' /tmp/x_daily_candidate_response.json)
+          candidate_created=$(jq -r '.candidateCreated // false' /tmp/x_daily_candidate_response.json)
+          candidate_status=$(jq -r '.status // ""' /tmp/x_daily_candidate_response.json)
           echo "success=${success}" >> "${GITHUB_OUTPUT}"
-          echo "tweet_id=${tweet_id}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_id=${candidate_id}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_created=${candidate_created}" >> "${GITHUB_OUTPUT}"
+          echo "candidate_status=${candidate_status}" >> "${GITHUB_OUTPUT}"
 
           if [ "${http_code}" != "200" ]; then
             echo "::error::growth-hub returned HTTP ${http_code}"
@@ -378,26 +486,172 @@ jobs:
             echo "::error::growth-hub returned success=false"
             exit 1
           fi
-          if [ "${{ steps.mode.outputs.dry_run }}" != "true" ] && [ "${posted}" != "true" ]; then
-            echo "::error::Scheduled daily briefing did not post."
+          if [ "${{ steps.mode.outputs.dry_run }}" != "true" ] && [ -z "${candidate_id}" ]; then
+            echo "::error::Candidate persistence returned no candidateId."
             exit 1
           fi
+
+      - name: Approve selected candidate
+        id: approve
+        if: steps.mode.outputs.publish_requested == 'true'
+        shell: bash
+        run: |
+          jq -n \
+            --arg candidateId "${CANDIDATE_ID}" \
+            --arg expectedCandidateType "${EXPECTED_CANDIDATE_TYPE}" \
+            --arg expectedSourceKind "${EXPECTED_SOURCE_KIND}" \
+            --arg approvedBy "github:${GITHUB_ACTOR}" \
+            --arg runId "${GITHUB_RUN_ID}" \
+            --arg runAttempt "${GITHUB_RUN_ATTEMPT}" \
+            --arg event "${GITHUB_EVENT_NAME}" \
+            --arg actor "${GITHUB_ACTOR}" \
+            --arg ref "${GITHUB_REF}" \
+            --arg sha "${GITHUB_SHA}" \
+            '{
+              action: "x.candidate.approve",
+              candidateId: $candidateId,
+              expectedCandidateType: $expectedCandidateType,
+              expectedSourceKind: $expectedSourceKind,
+              approvedBy: $approvedBy,
+              approvalChannel: "github_actions_workflow_dispatch",
+              approvalContext: {
+                workflow: "x-daily-briefing-post.yml",
+                workflow_run_id: $runId,
+                workflow_run_attempt: $runAttempt,
+                event: $event,
+                actor: $actor,
+                ref: $ref,
+                sha: $sha
+              }
+            }' > /tmp/x_daily_approval_request.json
+
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_approval_response.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_daily_approval_request.json)
+          cat /tmp/x_daily_approval_response.json
+          success=$(jq -r '.success // false' /tmp/x_daily_approval_response.json)
+          echo "success=${success}" >> "${GITHUB_OUTPUT}"
+          if [ "${http_code}" != "200" ] || [ "${success}" != "true" ]; then
+            echo "::error::Candidate approval failed (HTTP ${http_code})."
+            exit 1
+          fi
+          jq -e '.postPayload | select(.action == "x.post")' \
+            /tmp/x_daily_approval_response.json > /tmp/x_daily_payload.json
+        env:
+          CANDIDATE_ID: ${{ steps.mode.outputs.candidate_id }}
+          EXPECTED_CANDIDATE_TYPE: ${{ github.event.inputs.expected_candidate_type }}
+          EXPECTED_SOURCE_KIND: ${{ github.event.inputs.expected_source_kind }}
+
+      - name: Post explicitly approved X candidate
+        id: post
+        if: steps.mode.outputs.publish_requested == 'true'
+        shell: bash
+        run: |
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_post_response.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_daily_payload.json)
+          cat /tmp/x_daily_post_response.json
+          posted=$(jq -r '.posted // false' /tmp/x_daily_post_response.json)
+          success=$(jq -r '.success // false' /tmp/x_daily_post_response.json)
+          tweet_id=$(jq -r '.tweetId // ""' /tmp/x_daily_post_response.json)
+          echo "http_code=${http_code}" >> "${GITHUB_OUTPUT}"
+          echo "posted=${posted}" >> "${GITHUB_OUTPUT}"
+          echo "success=${success}" >> "${GITHUB_OUTPUT}"
+          echo "tweet_id=${tweet_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Finalize candidate audit record
+        id: finalize
+        if: always() && steps.mode.outputs.publish_requested == 'true' && steps.approve.outputs.success == 'true'
+        shell: bash
+        run: |
+          if ! jq empty /tmp/x_daily_post_response.json >/dev/null 2>&1; then
+            printf '{"success":false,"posted":false,"code":"workflow_post_response_missing","error":"No valid x.post response was captured."}' > /tmp/x_daily_post_response.json
+          fi
+          jq -n \
+            --arg candidateId "${{ steps.mode.outputs.candidate_id }}" \
+            --slurpfile result /tmp/x_daily_post_response.json \
+            '{action:"x.candidate.finalize", candidateId:$candidateId, result:$result[0]}' \
+            > /tmp/x_daily_finalize_request.json
+          http_code=$(curl --silent --show-error --output /tmp/x_daily_finalize_response.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_daily_finalize_request.json)
+          cat /tmp/x_daily_finalize_response.json
+          success=$(jq -r '.success // false' /tmp/x_daily_finalize_response.json)
+          status=$(jq -r '.status // ""' /tmp/x_daily_finalize_response.json)
+          echo "success=${success}" >> "${GITHUB_OUTPUT}"
+          echo "status=${status}" >> "${GITHUB_OUTPUT}"
+          if [ "${http_code}" != "200" ] || [ "${success}" != "true" ]; then
+            echo "::error::Candidate audit finalization failed (HTTP ${http_code})."
+            exit 1
+          fi
+
+      - name: Validate approved publish result
+        if: always() && steps.mode.outputs.publish_requested == 'true'
+        shell: bash
+        run: |
+          test "${{ steps.approve.outputs.success }}" = "true" || {
+            echo "::error::Candidate was not approved."
+            exit 1
+          }
+          test "${{ steps.post.outputs.http_code }}" = "200" || {
+            echo "::error::x.post returned HTTP ${{ steps.post.outputs.http_code }}."
+            exit 1
+          }
+          test "${{ steps.post.outputs.success }}" = "true" || {
+            echo "::error::x.post returned success=false."
+            exit 1
+          }
+          test "${{ steps.post.outputs.posted }}" = "true" || {
+            echo "::error::The approved candidate was not posted."
+            exit 1
+          }
+          test "${{ steps.finalize.outputs.success }}" = "true" || {
+            echo "::error::The candidate audit record was not finalized."
+            exit 1
+          }
 
       - name: Write summary
         if: always()
         shell: bash
         run: |
           selected_variant="${VARIANT}"
+          candidate_id="${{ steps.mode.outputs.candidate_id }}"
+          candidate_status="${{ steps.finalize.outputs.status }}"
+          if [ -f /tmp/x_daily_candidate_request.json ]; then
+            selected_variant=$(jq -r '.postPayload.variant // env.VARIANT' /tmp/x_daily_candidate_request.json)
+          fi
           if [ -f /tmp/x_daily_payload.json ]; then
             selected_variant=$(jq -r '.variant // env.VARIANT' /tmp/x_daily_payload.json)
           fi
+          if [ -n "${{ steps.save_candidate.outputs.candidate_id }}" ]; then
+            candidate_id="${{ steps.save_candidate.outputs.candidate_id }}"
+          fi
+          if [ -z "${candidate_status}" ]; then
+            candidate_status="${{ steps.save_candidate.outputs.candidate_status }}"
+          fi
           {
-            echo "## X Daily Briefing Post"
+            echo "## X Candidate Draft & Approval"
             echo ""
             echo "- JST day: ${{ steps.day.outputs.jst_label }}"
+            echo "- Operation: ${{ steps.mode.outputs.operation }}"
             echo "- Dry run: ${{ steps.mode.outputs.dry_run }}"
             echo "- Force: ${{ steps.mode.outputs.force }}"
             echo "- Existing posted today: ${{ steps.duplicate.outputs.already_posted }}"
+            echo "- Candidate ID: ${candidate_id}"
+            echo "- Candidate status: ${candidate_status}"
+            echo "- Candidate created: ${{ steps.save_candidate.outputs.candidate_created }}"
             echo "- Posted: ${{ steps.post.outputs.posted }}"
             echo "- Tweet ID: ${{ steps.post.outputs.tweet_id }}"
             echo "- Source: ${SOURCE}"
