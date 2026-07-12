@@ -389,15 +389,13 @@ class _ImportPageState extends State<ImportPage> {
               _sourceCard(
                 sourceType: 'xlsx',
                 title: 'Excel (XLSX)',
-                subtitle:
-                    'Notionの表エクスポート等を行ごと・列見出し対応でノート化。',
+                subtitle: 'Notionの表エクスポート等を行ごと・列見出し対応でノート化。',
                 icon: Icons.grid_on,
               ),
               _sourceCard(
                 sourceType: 'docx',
                 title: 'Word (DOCX)',
-                subtitle:
-                    'Word文書の段落を1つのノートとして取り込みます。',
+                subtitle: 'Word文書の段落を1つのノートとして取り込みます。',
                 icon: Icons.article_outlined,
               ),
             ],

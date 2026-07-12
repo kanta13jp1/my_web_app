@@ -15,10 +15,8 @@ Uint8List _zip(Map<String, String> files) {
   return ZipEncoder().encodeBytes(archive);
 }
 
-String _esc(String s) => s
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+String _esc(String s) =>
+    s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 Uint8List _xlsx({
   required List<String> shared,
