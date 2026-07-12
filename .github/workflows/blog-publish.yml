@@ -148,7 +148,13 @@ jobs:
               pid = p["id"]
               title = p["title"]
               print(f"[trace={trace}] Publishing DB post: {pid} — {title}")
-              payload = json.dumps({"action": "blog.publish_post", "id": pid}).encode()
+              # Scheduled ready-post publishing is dev.to-only while Qiita is suspended.
+              # schedule-hub intersects this allowlist with the stored targets.
+              payload = json.dumps({
+                  "action": "blog.publish_post",
+                  "id": pid,
+                  "platforms": ["devto"],
+              }).encode()
               req = urllib.request.Request(
                   f"{url}/functions/v1/schedule-hub",
                   data=payload,
@@ -330,10 +336,10 @@ jobs:
           TITLE="$ARTICLE_TITLE"
           TAGS="$TAGS_VAR"
           
-          # Scheduled実行の場合は自動投稿 (dry_run=false, platforms=qiita,devto)
+          # 2026-07-12: Qiita アカウント利用停止につき schedule は devto のみ
           if [ "${{ github.event_name }}" = "schedule" ]; then
             DRY_RUN="false"
-            PLATFORMS="qiita,devto"
+            PLATFORMS="devto"
           else
             DRY_RUN="${{ github.event.inputs.dry_run }}"
             PLATFORMS="${{ github.event.inputs.platforms }}"
