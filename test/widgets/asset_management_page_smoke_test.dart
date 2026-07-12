@@ -1379,7 +1379,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(
-        find.textContaining('今月の問題点と翌月の改善（負債トレンド）'),
+        find.textContaining('家計トラッカー（給料日サイクル / 負債トレンド）'),
         findsOneWidget,
       );
       expect(find.textContaining('残高が先月より増加'), findsWidgets);

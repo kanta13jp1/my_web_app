@@ -331,7 +331,8 @@ class LocalElectionShareService {
 
   /// R24: 地方議員集計を growth-hub x.post(API 投稿)へ載せるための長文本文。
   /// intent 投稿は x_post_log の外=Archetype lift 計測に入らないため、実測
-  /// 3.2K インプレッションのポストA(集計ノート全文)を API 経由の第一級経路に
+  /// 累積8Kの既存ポストA（後続A/B実測3.2K）と同じ集計ノート全文を、
+  /// API 経由の第一級経路に
   /// する。X Premium 上限(25,000 weighted)に対し [maxWeightedChars] で安全側に
   /// 収め、超過時は名簿セクション境界(\n\n◽️)で切り詰めて公開ノートへ誘導する。
   String buildXPostLongText({

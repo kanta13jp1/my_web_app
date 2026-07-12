@@ -126,6 +126,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   bool _isRealityLoading = false;
   bool _isPublishingSnapshotMemo = false;
   bool _isPostingSnapshotToX = false;
+  bool _canPostToXApi = false;
   bool _isPublishingKpiMemo = false;
   bool _isGeminiLoading = false;
   String? _realityError;
@@ -156,6 +157,27 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   void initState() {
     super.initState();
     _loadInitialState();
+    unawaited(_loadXOperatorPermission());
+  }
+
+  Future<void> _loadXOperatorPermission() async {
+    final client = Supabase.instance.client;
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final profile = await client
+          .from('user_profiles')
+          .select('is_admin')
+          .eq('user_id', userId)
+          .maybeSingle();
+      if (!mounted || client.auth.currentUser?.id != userId) return;
+      setState(() => _canPostToXApi = profile?['is_admin'] == true);
+    } catch (_) {
+      // Fail closed: intent/copy posting remains available to non-operators.
+      if (mounted && client.auth.currentUser?.id == userId) {
+        setState(() => _canPostToXApi = false);
+      }
+    }
   }
 
   @override
@@ -869,11 +891,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  /// R24: 地方議員集計(ポストA型=実測 3.2K のデータレポート)を growth-hub
+  /// R24: 地方議員集計(ポストA型=累積8Kベンチマークのデータレポート)を growth-hub
   /// x.post で API 投稿する。intent 投稿は x_post_log の外で Archetype lift
   /// 計測に入らないため、この経路が計測ループへの正式ルート。実投稿の前に
   /// 必ず確認ダイアログを挟む。
   Future<void> _postSnapshotToXViaApi() async {
+    if (!_canPostToXApi) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('X API投稿は管理者のみ実行できます')),
+      );
+      return;
+    }
     final snapshot = _realitySnapshot;
     if (snapshot == null || !snapshot.hasData) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -974,7 +1002,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (data['success'] == true && data['posted'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('地方議員集計をXへ投稿しました(計測ループに記録済み)'),
+            content: Text('地方議員集計をXへ投稿しました（投稿ログ記録済み・実測待ち）'),
           ),
         );
       } else if (data['code'] == 'duplicate_content') {
@@ -1032,6 +1060,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       shareService: _shareService,
       publishedMemo: _publishedSnapshotMemo,
       initialWindowIndex: _filterToWindowIndex(_selectedScheduleFilter),
+      canApiPost: _canPostToXApi,
     );
   }
 
@@ -1425,23 +1454,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       icon: const Icon(Icons.alternate_email),
                       label: const Text('X共有'),
                     ),
-                    FilledButton.icon(
-                      onPressed: _isPostingSnapshotToX ||
-                              _isPublishingSnapshotMemo ||
-                              realitySnapshot == null
-                          ? null
-                          : _postSnapshotToXViaApi,
-                      icon: _isPostingSnapshotToX
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send),
-                      label: Text(
-                        _isPostingSnapshotToX ? 'X投稿中' : '集計をX投稿(API)',
+                    if (_canPostToXApi)
+                      FilledButton.icon(
+                        onPressed: _isPostingSnapshotToX ||
+                                _isPublishingSnapshotMemo ||
+                                realitySnapshot == null
+                            ? null
+                            : _postSnapshotToXViaApi,
+                        icon: _isPostingSnapshotToX
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.send),
+                        label: Text(
+                          _isPostingSnapshotToX ? 'X投稿中' : '集計をX投稿(API)',
+                        ),
                       ),
-                    ),
                     FilledButton.tonalIcon(
                       onPressed: _isRealityLoading
                           ? null

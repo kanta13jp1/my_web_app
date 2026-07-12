@@ -186,8 +186,9 @@ String formatAgeAwareDate(String? iso, DateTime now, {int staleDays = 30}) {
 }
 
 // R25: R23 の内容アーキタイプ別実測(Archetype lift)を X成長ループ panel へ
-// 露出する純ロジック。perf-context rows(各 {archetype, score})から型別平均を
-// 出す。n>=2 のみ「実測」とみなし、n<2 は実測不足として勝ち型を主張しない
+// 露出する純ロジック。perf-context rows の正規化済み I72h impressions
+// 同士だけで型別平均を出す。n>=2 のみ「実測」とみなし、n<2 は実測不足として
+// 勝ち型を主張しない。累積の歴史ベンチマークは比較母集団へ混ぜない
 // (edge の buildArchetypeLiftLine と同じ閾値)。旧ログ(archetype 欠落)は
 // unknown として保持しデータを捨てない。
 // 注: 初版(#3965 の xGrowthArchetypeLiftLine)は edge の実バケット値
@@ -208,13 +209,15 @@ const Map<String, String> kArchetypeLiftLabels = <String, String>{
 
 class ArchetypeLiftEntry {
   final String archetype;
-  final int averageScore;
+  final int averageImpressions;
   final int count;
+  final int pendingCount;
 
   const ArchetypeLiftEntry({
     required this.archetype,
-    required this.averageScore,
+    required this.averageImpressions,
     required this.count,
+    this.pendingCount = 0,
   });
 
   /// n>=2 のときだけ平均を実測として扱う(1件平均は勝ち型に見せない)。
@@ -223,30 +226,41 @@ class ArchetypeLiftEntry {
   String get label => kArchetypeLiftLabels[archetype] ?? archetype;
 }
 
-/// perf-context rows から型別の平均スコアを集計する。実測(n>=2)を平均降順で
+/// perf-context rows から型別の平均 impressions を集計する。実測(n>=2)を平均降順で
 /// 先に、実測不足を後に並べ、unknown は常に最後(分類前の旧ログが勝ち型の
 /// 位置に見えないように)。
 List<ArchetypeLiftEntry> resolveArchetypeLift(List<dynamic>? rows) {
   if (rows == null) return const [];
   final totals = <String, double>{};
   final counts = <String, int>{};
+  final pendingCounts = <String, int>{};
   for (final row in rows) {
     if (row is! Map) continue;
+    if (row['learningCohort'] == 'historical_benchmark') continue;
     var key = (row['archetype'] ?? '').toString().trim();
     if (key.isEmpty) key = 'unknown';
-    final rawScore = row['score'];
-    final score = rawScore is num
-        ? rawScore.toDouble()
-        : double.tryParse('$rawScore') ?? 0;
-    totals[key] = (totals[key] ?? 0) + score;
+    final rawImpressions = row['i72h'];
+    final impressions = rawImpressions is num
+        ? rawImpressions.toDouble()
+        : double.tryParse('$rawImpressions');
+    final mature =
+        impressions != null && impressions.isFinite && impressions >= 0;
+    if (!mature) {
+      pendingCounts[key] = (pendingCounts[key] ?? 0) + 1;
+      continue;
+    }
+    totals[key] = (totals[key] ?? 0) + impressions;
     counts[key] = (counts[key] ?? 0) + 1;
   }
-  final entries = counts.keys
+  final keys = <String>{...counts.keys, ...pendingCounts.keys};
+  final entries = keys
       .map(
         (key) => ArchetypeLiftEntry(
           archetype: key,
-          averageScore: (totals[key]! / counts[key]!).round(),
-          count: counts[key]!,
+          averageImpressions:
+              counts[key] == null ? 0 : (totals[key]! / counts[key]!).round(),
+          count: counts[key] ?? 0,
+          pendingCount: pendingCounts[key] ?? 0,
         ),
       )
       .toList();
@@ -258,7 +272,7 @@ List<ArchetypeLiftEntry> resolveArchetypeLift(List<dynamic>? rows) {
   entries.sort((a, b) {
     final byRank = rank(a).compareTo(rank(b));
     if (byRank != 0) return byRank;
-    return b.averageScore.compareTo(a.averageScore);
+    return b.averageImpressions.compareTo(a.averageImpressions);
   });
   return entries;
 }
@@ -269,16 +283,21 @@ ArchetypeLiftEntry? archetypeLiftWinner(List<ArchetypeLiftEntry> entries) {
   final measured =
       entries.where((e) => e.measured && e.archetype != 'unknown').toList();
   if (measured.length < 2) return null;
+  if (measured[0].averageImpressions <= measured[1].averageImpressions) {
+    return null;
+  }
   return measured.first;
 }
 
 /// panel 表示用の1行サマリ。空データは null(行自体を出さない)。
 String? archetypeLiftSummaryLine(List<ArchetypeLiftEntry> entries) {
   if (entries.isEmpty) return null;
-  final parts = entries.map(
-    (e) => e.measured
-        ? '${e.label} 平均${e.averageScore} (${e.count}件)'
-        : '${e.label} 実測不足 (${e.count}件)',
-  );
-  return '型別実測: ${parts.join(' / ')}';
+  final parts = entries.map((e) {
+    final pending = e.pendingCount > 0 ? '・計測中${e.pendingCount}件' : '';
+    return e.measured
+        ? '${e.label} 平均${e.averageImpressions} imp '
+            '(${e.count}件$pending)'
+        : '${e.label} 実測不足 (${e.count}件$pending)';
+  });
+  return '型別実測（投稿72時間後・imp）: ${parts.join(' / ')}';
 }

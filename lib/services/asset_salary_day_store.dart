@@ -26,6 +26,12 @@ class AssetSalaryDayStore {
     return clampDay(raw);
   }
 
+  /// 既定値の暗黙利用ではなく、本人が一度でも給料日を保存したか。
+  Future<bool> isConfigured({SharedPreferences? prefs}) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    return store.containsKey(prefsKey);
+  }
+
   Future<void> save(int day, {SharedPreferences? prefs}) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     await store.setInt(prefsKey, clampDay(day));

@@ -56,6 +56,13 @@ import {
   type GrowthReportRow,
 } from "./x_growth_data_report.ts";
 import {
+  buildHouseholdTrackerReport,
+  HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY,
+  HOUSEHOLD_TRACKER_MIRROR_KEY,
+  parseHouseholdTrackerConsent,
+} from "./x_household_tracker.ts";
+import { isUuid, resolveXLogOwnerUserId } from "./x_operator_auth.ts";
+import {
   approveXPostCandidateMetadata,
   buildXPostCandidateMetadata,
   finalizeXPostCandidateMetadata,
@@ -178,14 +185,8 @@ async function getUserId(req: Request): Promise<string | null> {
   return user?.id ?? null;
 }
 
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    .test(value);
-}
-
-// Shared X-account candidate operations are restricted to the service role or
-// an authenticated app administrator. This intentionally leaves x.post's
-// existing authorization behavior unchanged.
+/// 共有X資格情報を使う操作は service role または user_profiles.is_admin のみ。
+/// 認証済みであることと、運営アカウントへ投稿できることを分離する。
 async function isXOperator(
   admin: SupabaseClient,
   userId: string,
@@ -197,7 +198,15 @@ async function isXOperator(
     .select("is_admin")
     .eq("user_id", userId)
     .maybeSingle();
-  return error === null && data?.is_admin === true;
+  if (error) return false;
+  return data?.is_admin === true;
+}
+
+async function xReadScopeUserId(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<string> {
+  return await isXOperator(admin, userId) ? "service_role" : userId;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -252,6 +261,26 @@ async function listXPostLogs(
     .from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", "x_post_log")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (userId !== "service_role") {
+    query = query.filter("metadata->>user_id", "eq", userId);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+async function listXHistoricalBenchmarkLogs(
+  admin: SupabaseClient,
+  userId: string,
+  limit = 10,
+) {
+  let query = admin
+    .from("hub_data")
+    .select("id, metadata, created_at")
+    .eq("source", "x_post_log")
+    .filter("metadata->>learning_cohort", "eq", "historical_benchmark")
     .order("created_at", { ascending: false })
     .limit(limit);
   if (userId !== "service_role") {
@@ -632,6 +661,7 @@ async function collectXPostMetrics(
       latest_metrics: leadSnapshot,
       latest_reply_metrics: replySnapshots,
       metrics_checked_at: checkedAt,
+      metric_provenance: "x_api",
       impressions: leadMetric?.impressions ?? firstNumber(
         leadSnapshot.impressions,
       ),
@@ -743,7 +773,19 @@ function buildXPerformanceContextFromLogs(
     },
     Date.now(),
   );
-  const effectiveLogs = strategyLogs.length > 0 ? strategyLogs : logs;
+  const currentLogs = strategyLogs.length > 0 ? strategyLogs : logs;
+  const historicalLogs = logs.filter((item) =>
+    firstString(asRecord(item.metadata).learning_cohort) ===
+      "historical_benchmark"
+  );
+  const effectiveLogs = [
+    ...currentLogs,
+    ...historicalLogs.filter((historical) =>
+      !currentLogs.some((current) =>
+        String(current.id) === String(historical.id)
+      )
+    ),
+  ];
   const normalizedByLogId = new Map(
     normalizedMetrics.map((row) => [row.sourceLogId, row]),
   );
@@ -807,7 +849,13 @@ function buildXPerformanceContextFromLogs(
         profileClicks: firstNumber(latest.profile_clicks) ?? 0,
         score: score ?? impressions ?? normalized?.i24h ?? normalized?.i72h ??
           normalized?.i3h ?? 0,
+        postedAt: firstString(metadata.posted_at, item.created_at),
         createdAt: firstString(item.created_at),
+        observedAt: firstString(metadata.observed_at),
+        learningCohort: firstString(metadata.learning_cohort),
+        historicalBenchmarkImpressions: firstNumber(
+          metadata.historical_benchmark_impressions,
+        ),
         i3h: normalized?.i3h ?? null,
         i24h: normalized?.i24h ?? null,
         i72h: normalized?.i72h ?? null,
@@ -857,9 +905,19 @@ function buildXPerformanceContextFromLogs(
         (left.rankingImpressions ?? -1) ||
       right.score - left.score
     );
+
+  const postAgeComparableRows = rows.filter((row) =>
+    row.learningCohort !== "historical_benchmark"
+  );
   const learningRows = comparisonWindow
-    ? rows.filter((row) => row.rankingEligible)
-    : rows;
+    ? postAgeComparableRows.filter((row) => row.rankingEligible)
+    : postAgeComparableRows;
+  const historicalBenchmarks = rows
+    .filter((row) => row.historicalBenchmarkImpressions !== null)
+    .sort((left, right) =>
+      (right.historicalBenchmarkImpressions ?? 0) -
+      (left.historicalBenchmarkImpressions ?? 0)
+    );
 
   const winners = learningRows.slice(0, 5);
   const underperformers = learningRows.slice(-5).reverse();
@@ -933,10 +991,15 @@ function buildXPerformanceContextFromLogs(
   // R23: 内容アーキタイプ別 lift。実測(2026-07-12 同日3連投: データレポート型
   // 3.2K vs ニュース要約 517 vs ニュース→製品転換 28)を恒常的な A/B 次元へ
   // 昇格。n>=2 のバケットのみ表示(データ希薄時は沈黙 / 実質 default-off)。
+  // Archetype lift is a strict I72 cohort. Historical/lifetime observations
+  // remain useful benchmarks but must not masquerade as a 72-hour sample.
+  const matureArchetypeRows = rows.filter((row) =>
+    row.learningCohort !== "historical_benchmark" && row.i72h !== null
+  );
   const archetypeLine = buildArchetypeLiftLine(
-    learningRows,
+    matureArchetypeRows,
     (row) => row.archetype,
-    (row) => row.rankingImpressions ?? row.score,
+    (row) => row.i72h ?? Number.NaN,
   );
   if (archetypeLine) structuralLines.push(archetypeLine);
   const linkReply = learningRows.filter((r) => r.linkInReply);
@@ -1006,7 +1069,7 @@ function buildXPerformanceContextFromLogs(
       `Normalized save-rate leaders (${comparisonLabel}): ${
         top.map((row) =>
           `${((row.rankingBookmarkRate ?? 0) * 100).toFixed(3)}% ` +
-          `- "${row.text}"`
+          `(${row.bookmarkCount} latest bookmarks) - "${row.text}"`
         ).join(" | ")
       }.`,
     );
@@ -1036,7 +1099,16 @@ function buildXPerformanceContextFromLogs(
     learningRows,
     (row) => row.rankingImpressions,
   );
-  const promptContext = learningRows.length === 0
+  const historicalBenchmarkLine = historicalBenchmarks.length === 0
+    ? ""
+    : `Historical lifetime benchmark (not post-age comparable; excluded from winner ranking): ${
+      historicalBenchmarks.slice(0, 3).map((row) =>
+        `variant=${row.variant}, archetype=${row.archetype}, ` +
+        `impressions=${row.historicalBenchmarkImpressions}, ` +
+        `observedAt=${row.observedAt || "unknown"}`
+      ).join(" | ")
+    }.`;
+  const promptContext = rows.length === 0
     ? [
       "No measured X performance has been collected yet.",
       "Run A/B test: daily_briefing vs question_post vs useful_reply.",
@@ -1044,28 +1116,43 @@ function buildXPerformanceContextFromLogs(
     ].join("\n")
     : [
       "Measured X performance context for the next post:",
-      `Target: 10K impressions. Current best variant: ${bestVariant}.`,
+      variants.length > 0
+        ? `Target: 10K impressions. Current best variant: ${bestVariant}.`
+        : "Target: 10K impressions. No post-age comparable winner yet.",
+      `Ranking basis: ${comparisonLabel} impressions ` +
+      `(comparable n=${learningRows.length}; total measured n=${rows.length}).`,
       ...winners.map((row, index) =>
-        `Winner ${
-          index + 1
-        }: variant=${row.variant}, metric=${row.rankingMetric}, impressions=${
+        `Winner ${index + 1}: variant=${row.variant}, impressions=${
+          row.impressions ?? "unknown"
+        }, comparison=${row.rankingMetric}:${
           row.rankingImpressions ?? "unknown"
+        }, score=${row.score}, bookmarks=${row.bookmarkCount}, saveRate=${
+          row.rankingBookmarkRate === null
+            ? "unknown"
+            : `${(row.rankingBookmarkRate * 100).toFixed(3)}%`
         }, engagementRate=${
-          row.rankingEngagementRate ?? "unknown"
-        }, bookmarkRate=${
-          row.rankingBookmarkRate ?? "unknown"
-        }, profileClickRate=${
-          row.rankingProfileClickRate ?? "unknown"
-        }, urlClickRate=${
-          row.rankingUrlClickRate ?? "unknown"
+          row.rankingEngagementRate === null
+            ? "unknown"
+            : `${(row.rankingEngagementRate * 100).toFixed(3)}%`
+        }, profileClicks=${row.profileClicks}, profileClickRate=${
+          row.rankingProfileClickRate === null
+            ? "unknown"
+            : `${(row.rankingProfileClickRate * 100).toFixed(3)}%`
+        }, urlClicks=${row.urlClicks}, urlClickRate=${
+          row.rankingUrlClickRate === null
+            ? "unknown"
+            : `${(row.rankingUrlClickRate * 100).toFixed(3)}%`
         }, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
       ...underperformers.slice(0, 3).map((row, index) =>
         `Avoid ${
           index + 1
-        }: variant=${row.variant}, metric=${row.rankingMetric}, impressions=${row.rankingImpressions}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
+        }: variant=${row.variant}, comparison=${row.rankingMetric}:${
+          row.rankingImpressions ?? "unknown"
+        }, score=${row.score}, media=${row.hasMedia}, linkInReply=${row.linkInReply}, replies=${row.threadReplyCount}, hook="${row.text}"`
       ),
       ...(rankingLine ? [rankingLine] : []),
+      ...(historicalBenchmarkLine ? [historicalBenchmarkLine] : []),
       ...structuralLines,
       ...(ownDataLine ? [ownDataLine] : []),
       ...(winners[0]
@@ -1075,7 +1162,9 @@ function buildXPerformanceContextFromLogs(
           }"`,
         ]
         : []),
-      "Use the winning structure, test one variable at a time, and keep the first post useful before adding the product CTA.",
+      winners.length > 0
+        ? "Use the winning structure, test one variable at a time, and keep the first post useful before adding the product CTA."
+        : "Keep collecting post-age comparable metrics; do not declare a winning structure yet.",
     ].join("\n");
 
   return {
@@ -1088,6 +1177,9 @@ function buildXPerformanceContextFromLogs(
     comparisonWindow,
     comparisonLabel,
     comparisonSampleCount: learningRows.length,
+    historicalBenchmarks,
+    metricWindowSelectionRule: X_METRIC_WINDOW_SELECTION_RULE,
+    metricLearningSelectionRule: X_METRIC_LEARNING_SELECTION_RULE,
     selectionRule: comparisonWindow
       ? X_METRIC_LEARNING_SELECTION_RULE
       : "latest cumulative fallback because no normalized cohort has 3 posts",
@@ -1104,9 +1196,105 @@ async function buildXPerformanceContext(
     10,
     Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
   );
-  const logs = (await listXPostLogs(admin, userId, limit)) as XPostLogItem[];
+  const [recentLogs, benchmarkLogs] = await Promise.all([
+    listXPostLogs(admin, userId, limit),
+    listXHistoricalBenchmarkLogs(admin, userId),
+  ]);
+  const logs = [
+    ...recentLogs,
+    ...benchmarkLogs.filter((benchmark) =>
+      !recentLogs.some((recent) => String(recent.id) === String(benchmark.id))
+    ),
+  ] as XPostLogItem[];
   const normalized = await loadNormalizedXMetricWindows(admin, userId, logs);
   return buildXPerformanceContextFromLogs(logs, normalized);
+}
+
+async function buildScheduledHouseholdTrackerReport(
+  admin: SupabaseClient,
+  actorUserId: string,
+  rawMaxAgeDays: unknown,
+) {
+  if (!await isXOperator(admin, actorUserId)) {
+    return { available: false, reason: "forbidden", status: 403 };
+  }
+  const maxAgeRaw = firstNumber(rawMaxAgeDays) ?? 8;
+  const maxAgeDays = Math.max(1, Math.min(14, Math.trunc(maxAgeRaw)));
+
+  let targetUserIds: string[];
+  if (actorUserId === "service_role") {
+    const { data: profiles, error: profileError } = await admin
+      .from("user_profiles")
+      .select("user_id")
+      .eq("is_admin", true)
+      .limit(20);
+    if (profileError) throw new Error(profileError.message);
+    targetUserIds = (profiles ?? [])
+      .map((row) => firstString(row.user_id))
+      .filter((id) => id !== "");
+  } else {
+    targetUserIds = [actorUserId];
+  }
+  if (targetUserIds.length === 0) {
+    return { available: false, reason: "no_admin_profile" };
+  }
+
+  const { data: rows, error } = await admin
+    .from("asset_pref_mirror")
+    .select("user_id,pref_key,value,updated_at")
+    .in("pref_key", [
+      HOUSEHOLD_TRACKER_MIRROR_KEY,
+      HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY,
+    ])
+    .in("user_id", targetUserIds);
+  if (error) throw new Error(error.message);
+  const enabledUserIds = targetUserIds.filter((targetUserId) => {
+    const consent = (rows ?? []).find((row) =>
+      firstString(row.user_id) === targetUserId &&
+      firstString(row.pref_key) === HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY
+    );
+    return consent !== undefined &&
+      parseHouseholdTrackerConsent(consent.value) === true;
+  });
+  if (enabledUserIds.length === 0) {
+    return { available: false, reason: "no_enabled_snapshot" };
+  }
+  if (enabledUserIds.length > 1) {
+    return {
+      available: false,
+      reason: "ambiguous_enabled_snapshots",
+      enabledCount: enabledUserIds.length,
+    };
+  }
+
+  const row = (rows ?? []).find((candidate) =>
+    firstString(candidate.user_id) === enabledUserIds[0] &&
+    firstString(candidate.pref_key) === HOUSEHOLD_TRACKER_MIRROR_KEY
+  );
+  if (!row) {
+    return { available: false, reason: "enabled_snapshot_missing" };
+  }
+  const report = buildHouseholdTrackerReport(row.value, new Date(), maxAgeDays);
+  return {
+    ...report,
+    ownerUserId: firstString(row.user_id),
+    snapshotUpdatedAt: firstString(row.updated_at),
+  };
+}
+
+async function hasEnabledHouseholdTrackerConsent(
+  admin: SupabaseClient,
+  ownerUserId: string,
+): Promise<boolean> {
+  if (!isUuid(ownerUserId)) return false;
+  const { data, error } = await admin
+    .from("asset_pref_mirror")
+    .select("value")
+    .eq("user_id", ownerUserId)
+    .eq("pref_key", HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data !== null && parseHouseholdTrackerConsent(data.value) === true;
 }
 
 async function buildRevenueFunnelReport(
@@ -1154,14 +1342,18 @@ async function buildRevenueFunnelReport(
   const xRows = performance.rows as Array<{
     id: string;
     variant: string;
+    learningCohort: string;
     impressions?: number | null;
     rankingEligible: boolean;
     rankingImpressions: number | null;
     score: number;
   }>;
+  const comparableXRows = xRows.filter((row) =>
+    row.learningCohort !== "historical_benchmark"
+  );
   const learningXRows = performance.comparisonWindow
-    ? xRows.filter((row) => row.rankingEligible)
-    : xRows;
+    ? comparableXRows.filter((row) => row.rankingEligible)
+    : comparableXRows;
   const byVariant = new Map<
     string,
     {
@@ -2047,8 +2239,13 @@ serve(async (req: Request) => {
       }
 
       case "x.metrics_collect": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
         try {
-          return json(await collectXPostMetrics(admin, userId!, body.limit));
+          return json(
+            await collectXPostMetrics(admin, "service_role", body.limit),
+          );
         } catch (error) {
           const xPayload = isXApiError(error) ? error.payload : null;
           // X API クレジット枯渇/spend cap は次の請求サイクルまで自然復旧
@@ -2076,26 +2273,27 @@ serve(async (req: Request) => {
       }
 
       case "x.metrics_normalized": {
+        const scopeUserId = await xReadScopeUserId(admin, userId!);
         return json(
-          await buildNormalizedXMetricReport(
-            admin,
-            userId!,
-            body.limit,
-          ),
+          await buildNormalizedXMetricReport(admin, scopeUserId, body.limit),
         );
       }
 
       case "x.performance_context": {
-        return json(await buildXPerformanceContext(admin, userId!, body.limit));
+        const scopeUserId = await xReadScopeUserId(admin, userId!);
+        return json(
+          await buildXPerformanceContext(admin, scopeUserId, body.limit),
+        );
       }
 
       case "x.growth_data_report": {
         // R24: ポストA型の週次 build-in-public 実測レポートを合成する
         // (read-only / LLM 非使用 / 数値は全て x_post_log 実測)。実測 3 件
         // 未満は available:false で投稿見送りを指示する。
+        const scopeUserId = await xReadScopeUserId(admin, userId!);
         const perf = await buildXPerformanceContext(
           admin,
-          userId!,
+          scopeUserId,
           body.limit ?? 100,
         );
         const targetUrl = firstString(
@@ -2105,11 +2303,15 @@ serve(async (req: Request) => {
         );
         const growthReportRows = (perf.rows as Array<
           GrowthReportRow & {
+            learningCohort: string;
             rankingEligible: boolean;
             rankingImpressions: number | null;
           }
         >)
-          .filter((row) => !perf.comparisonWindow || row.rankingEligible)
+          .filter((row) =>
+            row.learningCohort !== "historical_benchmark" &&
+            (!perf.comparisonWindow || row.rankingEligible)
+          )
           .map((row) => ({
             ...row,
             impressions: row.rankingImpressions,
@@ -2130,12 +2332,23 @@ serve(async (req: Request) => {
         return json({ success: true, available: true, ...report });
       }
 
+      case "x.household_tracker_report": {
+        const report = await buildScheduledHouseholdTrackerReport(
+          admin,
+          userId!,
+          body.maxAgeDays ?? body.max_age_days,
+        );
+        const status = firstNumber(report.status) ?? 200;
+        return json({ success: status < 400, ...report }, status);
+      }
+
       case "x.post_preflight": {
         // R15: spend cap 到達中に高価な創作パイプライン(GPT image + TTS +
         // Hedra)を燃やす前に、直近ログから「投稿しても billing で確定失敗
         // するか」を返す read-only チェック。X API は一切呼ばない(ゼロコスト)。
+        const scopeUserId = await xReadScopeUserId(admin, userId!);
         const logs =
-          (await listXPostLogs(admin, userId!, 20)) as XPostLogItem[];
+          (await listXPostLogs(admin, scopeUserId, 20)) as XPostLogItem[];
         const rows = logs.map((item) => ({
           created_at: item.created_at,
           metadata: asRecord(item.metadata),
@@ -2152,8 +2365,9 @@ serve(async (req: Request) => {
         // 呼出・ゼロコスト)。どんな例外でも 200 {available:false} を返し、
         // ダッシュボードが必ず degrade(現行文言に戻る)できることを保証する。
         try {
+          const scopeUserId = await xReadScopeUserId(admin, userId!);
           const logs =
-            (await listXPostLogs(admin, userId!, 20)) as XPostLogItem[];
+            (await listXPostLogs(admin, scopeUserId, 20)) as XPostLogItem[];
           const rows = logs.map((item) => ({
             created_at: item.created_at,
             metadata: asRecord(item.metadata),
@@ -2443,6 +2657,19 @@ serve(async (req: Request) => {
       }
 
       case "x.post": {
+        if (!await isXOperator(admin, userId!)) {
+          return json({ error: "Forbidden: X operator role required" }, 403);
+        }
+        const requestedOwnerUserId = firstString(
+          body.ownerUserId,
+          body.owner_user_id,
+        );
+        const logUserId = resolveXLogOwnerUserId(
+          userId!,
+          requestedOwnerUserId,
+        );
+        const scheduledHouseholdPost = firstString(body.source) ===
+          "x-household-tracker-post.yml";
         const text = String(body.text ?? "").trim();
         const replyText = String(body.replyText ?? body.reply_text ?? "")
           .trim();
@@ -2550,7 +2777,7 @@ serve(async (req: Request) => {
         };
 
         if (dryRun || !isXConfigured()) {
-          const log = await addItem(admin, "x_post_log", userId!, {
+          const log = await addItem(admin, "x_post_log", logUserId, {
             ...baseLog,
             status: dryRun ? "dry_run" : "credentials_missing",
           });
@@ -2583,7 +2810,11 @@ serve(async (req: Request) => {
             50,
             Math.max(dupConfig.recentCount * 4, dupConfig.recentCount),
           );
-          const recentLogs = await listXPostLogs(admin, userId!, scanLimit);
+          const recentLogs = await listXPostLogs(
+            admin,
+            "service_role",
+            scanLimit,
+          );
           const recentPosts = extractPostedTexts(
             recentLogs as XPostLogRowLike[],
             dupConfig.recentCount,
@@ -2600,7 +2831,12 @@ serve(async (req: Request) => {
             };
             let log: unknown = null;
             try {
-              log = await addItem(admin, "x_post_log", userId!, rejectionLog);
+              log = await addItem(
+                admin,
+                "x_post_log",
+                logUserId,
+                rejectionLog,
+              );
             } catch (_logError) {
               log = rejectionLog;
             }
@@ -2617,6 +2853,20 @@ serve(async (req: Request) => {
               log,
             });
           }
+        }
+
+        // Re-read consent immediately before the irreversible API call. The
+        // compose action may have run minutes earlier, and opt-out must win.
+        if (
+          scheduledHouseholdPost &&
+          !await hasEnabledHouseholdTrackerConsent(admin, logUserId)
+        ) {
+          return json({
+            success: false,
+            posted: false,
+            code: "household_consent_revoked",
+            error: "Household tracker consent is no longer enabled",
+          }, 409);
         }
 
         try {
@@ -2649,7 +2899,7 @@ serve(async (req: Request) => {
           const replyTweetIds = replyResults
             .map((replyResult) => replyResult.tweetId)
             .filter((tweetId): tweetId is string => Boolean(tweetId));
-          const log = await addItem(admin, "x_post_log", userId!, {
+          const log = await addItem(admin, "x_post_log", logUserId, {
             ...baseLog,
             status: "posted",
             tweet_id: result.tweetId,
@@ -2696,7 +2946,7 @@ serve(async (req: Request) => {
           };
           let log: unknown = null;
           try {
-            log = await addItem(admin, "x_post_log", userId!, failureLog);
+            log = await addItem(admin, "x_post_log", logUserId, failureLog);
           } catch (_logError) {
             log = failureLog;
           }

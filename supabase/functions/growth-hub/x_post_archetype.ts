@@ -84,9 +84,8 @@ export function classifyPostArchetype(
     return "news_briefing";
   }
 
-  const productSignal = FEATURE_NAME_MARKERS.some((name) =>
-    body.includes(name)
-  ) ||
+  const productSignal =
+    FEATURE_NAME_MARKERS.some((name) => body.includes(name)) ||
     body.includes("自分株式会社") ||
     body.includes("my-web-app-b67f4.web.app");
   if (productSignal) return "product_promo";
@@ -123,6 +122,8 @@ export function buildArchetypeLiftLine<T>(
 ): string | null {
   const buckets = new Map<ArchetypeBucket, T[]>();
   for (const row of rows) {
+    const score = scoreOf(row);
+    if (!Number.isFinite(score) || score < 0) continue;
     const bucket = normalizeArchetypeBucket(archetypeOf(row));
     const list = buckets.get(bucket) ?? [];
     list.push(row);
@@ -151,17 +152,46 @@ export function buildArchetypeLiftLine<T>(
   let line = `Archetype lift (by content archetype): ${parts.join(", ")}.`;
   const comparable = shown.filter(([bucket]) => bucket !== "unknown");
   if (comparable.length >= 2) {
-    const winner = [...comparable]
-      .sort((left, right) => avg(right[1]) - avg(left[1]))[0][0];
-    line += ` Recommendation: structure the next post as ${winner}` +
-      (winner === "data_report"
-        ? " (dense original numbers, deltas, named specifics, alerts)."
-        : ".");
+    const ranked = [...comparable]
+      .sort((left, right) => avg(right[1]) - avg(left[1]));
+    const winner = ranked[0][0];
+    if (avg(ranked[0][1]) > avg(ranked[1][1])) {
+      line += ` Recommendation: structure the next post as ${winner}` +
+        (winner === "data_report"
+          ? " (dense original numbers, deltas, named specifics, alerts)."
+          : ".");
+    } else {
+      line += " Recommendation: archetype leaders are tied — do not force" +
+        " an archetype yet.";
+    }
   } else {
     line += " Recommendation: insufficient archetype samples — do not force" +
       " an archetype yet.";
   }
   return line;
+}
+
+/// Archetype lift は同じ単位の成熟済み impressions だけを比較する。
+/// 投稿後72時間未満・投稿時刻不明・impressions欠損は勝者判定から除外する。
+export function filterMatureImpressionRows<T>(
+  rows: readonly T[],
+  impressionsOf: (row: T) => number | null,
+  postedAtOf: (row: T) => string,
+  nowMs: number,
+  minAgeHours = 72,
+): T[] {
+  const minAgeMs = Math.max(0, minAgeHours) * 3_600_000;
+  return rows.filter((row) => {
+    const impressions = impressionsOf(row);
+    if (
+      impressions === null || !Number.isFinite(impressions) || impressions < 0
+    ) {
+      return false;
+    }
+    const postedMs = Date.parse(postedAtOf(row));
+    if (!Number.isFinite(postedMs)) return false;
+    return nowMs - postedMs >= minAgeMs;
+  });
 }
 
 /// 実測インプレッションの要約統計(数値版)。実測行(impressions 非 null)が
