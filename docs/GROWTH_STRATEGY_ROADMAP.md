@@ -32586,3 +32586,27 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を knowledge asset として蓄積) / 8 (KPI=昨日の自分: 競合追跡の継続) / 2 (ミッション: 21社競合を上回る戦略情報の常時把握)。
 - 整合性スコア: **2/9** (情報収集のみ / コード実装なし)。
 - 懸念: Supabase egress policy 制約により schedule-daily-digest / viral-growth-engine が到達不可。日次レポートの二重生成防止が正常に機能している (GH Actions 先行実行 → WEB版は補完のみ)。
+
+## セッション記録: ロイヤリティポイント 誠実性欠陥修正 (2026-07-12 / Win Claude daily-development)
+
+**背景**: ダッシュボード磨き (R16-R20) は収穫逓減という前回の結論を受け、成長レバー / 実バグ潰しへ移行。ダミーデータ・捏造表示の棚卸しを実施。
+
+**発見した実バグ** (`/loyalty-points` = ロイヤリティポイントページ):
+- `social-commerce-hub` の `loyalty.balance` は `{balance, history}` を返し、履歴各行は `metadata.amount` / `metadata.reason` に値を持つ。
+- しかし UI は存在しない `item['points']` / `item['type']` / `item['description']` を読んでおり、**全履歴行が「ポイント N / +0 pt」の捏造表示**になっていた。
+- さらに **残高合計 (`balance`) を fetch していたのに UI へ一切表示していなかった**。
+- いずれも R17-R20 で潰してきた「UI が誤ったキーを読んで捏造値を出す」型と同型の誠実性欠陥。
+
+**対応** ([PR #3948](https://github.com/kanta13jp1/my_web_app/pull/3948) / Dart のみ / merged):
+- 純データモデル `LoyaltyPointsSummary` を `lib/models/` に抽出し nested `metadata` の正しいキーから解析 (Flutter 依存ゼロ → VM 単体テスト可能)。
+- 残高合計カードを追加。履歴行は `amount` の正負で付与/交換を判定し記号・色・アイコンを出し分け。
+- `balance:0` は正当値として保持、生 List 応答は履歴から残高を算出。ログイン前は専用メッセージ。
+- VM 単体テスト 12 件追加 (捏造 +0pt 回帰テスト含む)。`flutter analyze` 0 / `dart format` 差分なし / CI 全緑。
+
+**教訓**: 「一覧ページが全行同じ捏造値を出す」時は表示バグでなく **UI とバックエンド応答契約のキー不一致** をまず疑う (nested `metadata` vs flat)。fetch しているのに描画していないフィールド (balance) も棚卸し対象。
+
+### Philosophy Alignment (Win Claude 2026-07-12)
+
+- 主要実装: 誠実性欠陥の修正 (捏造値の除去 = 「測っていないものを測ったように見せない」)。
+- 該当原則: 8 (KPI=昨日の自分: 正しい数字を出す) / 5 (商品=価値: ユーザーに見せる残高・履歴の信頼性) / 7 (資産負債: 純ロジックを再利用可能な asset として抽出)。
+- 整合性スコア: **3/9** (単一ページのバグ修正 + テスト)。
