@@ -65,7 +65,7 @@ jobs:
           echo "force=${force}" >> "${GITHUB_OUTPUT}"
 
       - name: Checkout report data
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             docs/ai-tool-watch
