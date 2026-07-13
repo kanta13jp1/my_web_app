@@ -393,7 +393,10 @@ class FakeJibunApiStore implements JibunApiStore {
     );
   }
   insertWebhook(
-    row: Omit<WebhookRow, "id" | "created_at" | "delivery_count" | "last_delivered_at">,
+    row: Omit<
+      WebhookRow,
+      "id" | "created_at" | "delivery_count" | "last_delivered_at"
+    >,
   ): Promise<WebhookRow> {
     const full: WebhookRow = {
       ...row,
@@ -408,7 +411,10 @@ class FakeJibunApiStore implements JibunApiStore {
   listWebhooks(userId: string): Promise<WebhookRow[]> {
     return Promise.resolve(this.webhooks.filter((w) => w.user_id === userId));
   }
-  findWebhookById(userId: string, webhookId: string): Promise<WebhookRow | null> {
+  findWebhookById(
+    userId: string,
+    webhookId: string,
+  ): Promise<WebhookRow | null> {
     return Promise.resolve(
       this.webhooks.find((w) => w.id === webhookId && w.user_id === userId) ??
         null,
@@ -965,7 +971,10 @@ Deno.test("scope catalog is stable (docs contract)", () => {
 
 Deno.test("api.notes.update patches title and content", async () => {
   const store = new FakeJibunApiStore();
-  const note = await store.createNote("user-1", { title: "original", content: "body" });
+  const note = await store.createNote("user-1", {
+    title: "original",
+    content: "body",
+  });
   const key = await issueKey(store, "user-1", ["notes.write"]);
   const response = await handleJibunApiAction({
     req: makeRequest({ bearer: key }),

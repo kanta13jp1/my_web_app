@@ -1173,7 +1173,8 @@ async function handleMcpFacade(
       .limit(limit);
     if (q !== "") {
       // Simple sanitize: strip PostgREST metacharacters before embedding in ilike
-      const safe = q.replace(/[,()"'\\%_*]/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+      const safe = q.replace(/[,()"'\\%_*]/g, " ").replace(/\s+/g, " ").trim()
+        .slice(0, 100);
       if (safe !== "") {
         query = query.or(`title.ilike.%${safe}%,content.ilike.%${safe}%`);
       }
@@ -1193,7 +1194,13 @@ async function handleMcpFacade(
   if (toolName === "notes.create") {
     const payloadResult = buildMcpNotePayload(args);
     if (!payloadResult.ok) {
-      await logMcpInvocation(auth.ctx, toolName, args, payloadResult.status, req);
+      await logMcpInvocation(
+        auth.ctx,
+        toolName,
+        args,
+        payloadResult.status,
+        req,
+      );
       return mcpToolResponse(body, {
         success: false,
         error: payloadResult.error,
@@ -1259,10 +1266,10 @@ async function handleMcpBatch(
       const c = call as Record<string, unknown>;
       const toolName = String(c.tool_name ?? "");
       const callArgs = (
-        c.arguments !== null &&
+          c.arguments !== null &&
           typeof c.arguments === "object" &&
           !Array.isArray(c.arguments)
-      )
+        )
         ? c.arguments as Record<string, unknown>
         : {};
       const subBody: Record<string, unknown> = {
@@ -1272,7 +1279,12 @@ async function handleMcpBatch(
       try {
         const res = await handleMcpFacade(req, "mcp.tool.call", subBody, admin);
         if (!res) {
-          return { index: idx, tool: toolName, success: false, error: "unknown_tool" };
+          return {
+            index: idx,
+            tool: toolName,
+            success: false,
+            error: "unknown_tool",
+          };
         }
         const data = await res.clone().json().catch(() => null);
         return { index: idx, tool: toolName, success: res.ok, data };
