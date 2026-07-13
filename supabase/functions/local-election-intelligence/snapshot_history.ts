@@ -2,6 +2,7 @@ import {
   buildXPostCandidateMetadata,
   X_POST_CANDIDATE_SOURCE,
 } from "../growth-hub/x_post_candidate.ts";
+import { buildPartyGapCandidateMetadata } from "./party_gap_ranking.ts";
 
 export const LOCAL_ELECTION_DATASET = "kokumin_local_election_intelligence";
 export const LOCAL_ELECTION_DATASET_SOURCE = "local-election-intelligence";
@@ -1064,6 +1065,20 @@ export function buildLocalElectionPostCandidates(
       },
     ));
   }
+
+  // R28: 週次の両党地力差ランキング(diff 非依存の定点観測系列)。日次 cron
+  // から毎回呼ばれるが candidate_key が ISO 週キーなので insertPostCandidate
+  // の冪等性により週1回だけ候補が作られる。生成不能条件(立憲参考未同期等)
+  // は composer 側で null。
+  const partyGap = buildPartyGapCandidateMetadata(snapshot, {
+    snapshotObservationId,
+    snapshotHash,
+    datasetVersion,
+    observedAt,
+    datasetSource: LOCAL_ELECTION_DATASET_SOURCE,
+    dataset: LOCAL_ELECTION_DATASET,
+  });
+  if (partyGap !== null) rows.push(partyGap);
 
   return rows;
 }

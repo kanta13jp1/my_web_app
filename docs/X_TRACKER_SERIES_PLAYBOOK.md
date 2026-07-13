@@ -33,6 +33,7 @@
 | 家計トラッカー | `household_tracker` | 資産管理ページ ([#3968](https://github.com/kanta13jp1/my_web_app/pull/3968)) | 週次トグル | スコアボード投稿(円金額禁止=件数/日数/方向のみ) |
 | デイリーブリーフィング | `daily_briefing_v2_*` | `x-daily-briefing-post.yml` (日次 22:00 UTC) | 日次 | 候補作成→publish op |
 | AIツール定点観測 | `ai_tool_tracker` | `x-ai-tool-tracker-queue.yml` (日次 21:45 UTC / R27) | 更新検知日のみ | 候補キュー(HITL) |
+| 選挙: 両党地力差 | `party_gap_ranking` | `local-election-snapshot-queue.yml` 内 (ISO週キー冪等 / R28) | 週次(日次cronから週1生成) | 候補キュー(HITL) |
 
 ラベルの表示用対応は `lib/pages/admin_x_candidate_queue.dart` の
 `kXTrackerSeriesLabels`(系列追加時にここも更新)。
