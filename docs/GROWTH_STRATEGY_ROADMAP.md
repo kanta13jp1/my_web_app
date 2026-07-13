@@ -32694,3 +32694,27 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 1. `自分API v1` を Webhook trigger + Worker hosting 相当に拡張 (Notion Developer Platform 対抗)
 2. MCP サーバのバッチ化・キャッシュ化で token コスト 50%+ 削減 (Notion 91%削減 追従)
 3. 構造化タスク管理を「個人 CEO の優先度管理」として LP に GitHub Issue Fields との差別化を明記
+## セッション記録: Win Claude part 334 (2026-07-13) — schedule-hub PUBLIC_ACTIONS 最終ロックダウン
+
+**契機**: part 333 ([PR #3975](https://github.com/kanta13jp1/my_web_app/pull/3975)) の残タスク task_2ecc200a — PUBLIC_ACTIONS に残る書き込み系 9 action の全数監査。
+
+**実施** ([PR #3992](https://github.com/kanta13jp1/my_web_app/pull/3992) merged + deploy-prod 自動デプロイ + 本番実証):
+
+- service_role 化 (7): notion.sync_wbs / notion.preflight_wbs / notion.sync_roadmap / notion.sync_memory_index / notion.fix_wbs_all_instances / wbs.unblock_dependents / reminders.study — 呼び出し元は GHA workflow / release_readiness_gate.py のみ (全て SERVICE_ROLE_KEY 実測)
+- user レベル化 (1): digest.run — daily-report.yml (SR) + admin_analytics_page (session 必須 user JWT) の 2 系統のみ
+- public 据え置き (1): billing.create_supporter_checkout_session — 非ログイン支援者導線 / handler は userId 不使用 / 金額サーバ側 env 固定
+- workflow 同時修正: notion-sync.yml の `ANON‖SR` fallback → SR 直指定 (3 箇所) / wbs-ai-review.yml の unblock curl に Authorization+apikey 追加
+
+**実穴 closed**: wbs.unblock_dependents は `--no-verify-jwt` デプロイ + allowlist public のため**認証ヘッダなしで誰でも wbs_tasks の status を書き換え可能**だった (呼び出し元 workflow 自体もヘッダなしだった)。
+
+**本番実証**: anon key → 8 action すべて 401 (digest.run は 200→401 の before/after 実測) / ヘッダなし unblock 401 / public read 3 種 200 (regression なし) / notion-sync workflow_dispatch 実走で sync_wbs/sync_roadmap/sync_memory_index 全緑 (SR 経路 e2e 証明)。
+
+これで schedule-hub の PUBLIC_ACTIONS は read-only 3 (health.check / blog.recent_posted / maintenance.list_active) + 意図的 public の billing supporter 1 のみ。
+
+### Philosophy Alignment (Win part334)
+
+- 主要実装: schedule-hub 認可 allowlist 最終ロックダウン + GHA workflow 認証ヘッダ修正
+- 該当原則: 5 (商品=ユーザー価値: wbs_tasks 無認証書換穴の封鎖 = 信頼性) / 7 (資産負債: part333 から持ち越したセキュリティ負債の返済完了) / 8 (KPI=昨日の自分: 前日の残タスクを翌日完結)
+- 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
+- 理念的貢献: deny-by-default (AI_DEV_PRINCIPLES 原則 2) を schedule-hub 全 action で達成
+- 懸念: なし (billing supporter の public 据え置きは収益導線の意図的判断として action_auth.ts コメント + PR に文書化済み)
