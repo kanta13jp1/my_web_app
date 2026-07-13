@@ -55,6 +55,7 @@ import {
   buildGrowthDataReport,
   type GrowthReportRow,
 } from "./x_growth_data_report.ts";
+import { buildAiToolTrackerPost } from "./x_ai_tool_tracker.ts";
 import {
   buildHouseholdTrackerReport,
   HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY,
@@ -2376,6 +2377,27 @@ serve(async (req: Request) => {
           });
         }
         return json({ success: true, available: true, ...report });
+      }
+
+      case "x.ai_tool_tracker_compose": {
+        // R27: AIツール動向トラッカー系列の read-only 合成(playbook step 2)。
+        // レポート(docs/ai-tool-watch/latest-report.json)は呼び出し元 cron が
+        // body.report で渡す。変化 0 件/データ薄は available:false = 候補を
+        // 作らない(投稿は x.candidate.create → HITL 承認経由のみ)。
+        const targetUrl = firstString(
+          body.targetUrl,
+          body.target_url,
+          "https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=ai_tool_tracker",
+        );
+        const post = buildAiToolTrackerPost(body.report, targetUrl);
+        if (post === null) {
+          return json({
+            success: true,
+            available: false,
+            reason: "no changed sources, thin data, or invalid checked_at",
+          });
+        }
+        return json({ success: true, available: true, ...post });
       }
 
       case "x.household_tracker_report": {

@@ -23,6 +23,7 @@ const Map<String, String> kXTrackerSeriesLabels = <String, String>{
   'local_election_schedule_delta': '選挙: 選挙予定更新',
   'weekly_data_report': 'X運用実測',
   'household_tracker': '家計トラッカー',
+  'ai_tool_tracker': 'AIツール定点観測',
 };
 
 /// variant から系列ラベルを解決する。daily_briefing 系はバリアント名が
