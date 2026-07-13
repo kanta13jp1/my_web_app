@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/social_feed_post.dart';
+
 /// ソーシャルフィードページ
 /// social-feed Edge Function と連携してユーザーの投稿フィードを表示
 class SocialFeedPage extends StatefulWidget {
@@ -14,7 +16,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
-  List<dynamic> _posts = [];
+  List<SocialFeedPost> _posts = [];
   String _feedType = 'public';
 
   @override
@@ -37,12 +39,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
         'social-commerce-hub',
         body: {'action': 'feed.timeline', 'type': _feedType, 'limit': 30},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['posts'] is List) {
-        setState(() => _posts = data['posts'] as List);
-      } else if (data is List) {
-        setState(() => _posts = data);
-      }
+      setState(() => _posts = SocialFeedPost.listFromResponse(response.data));
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'フィード取得に失敗しました: $e');
@@ -113,7 +110,10 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 8),
                             itemBuilder: (context, i) {
-                              final post = _posts[i] as Map<String, dynamic>;
+                              final post = _posts[i];
+                              final createdLabel = post.createdAt.length >= 10
+                                  ? post.createdAt.substring(0, 10)
+                                  : post.createdAt;
                               return Card(
                                 child: Padding(
                                   padding: const EdgeInsets.all(12),
@@ -128,37 +128,24 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                             backgroundColor:
                                                 const Color(0xFF009688)
                                                     .withAlpha(30),
-                                            child: Text(
-                                              (post['username']
-                                                          ?.toString()
-                                                          .isNotEmpty ==
-                                                      true
-                                                  ? post['username']
-                                                      .toString()[0]
-                                                      .toUpperCase()
-                                                  : '?'),
-                                              style: const TextStyle(
-                                                color: Color(0xFF009688),
-                                                fontWeight: FontWeight.bold,
-                                                height: 1.5,
-                                              ),
+                                            child: const Icon(
+                                              Icons.person,
+                                              size: 18,
+                                              color: Color(0xFF009688),
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          Text(
-                                            post['username']?.toString() ??
-                                                '匿名',
-                                            style: const TextStyle(
+                                          const Text(
+                                            '自分の投稿',
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w600,
                                               height: 1.5,
                                             ),
                                           ),
                                           const Spacer(),
-                                          if (post['created_at'] != null)
+                                          if (createdLabel.isNotEmpty)
                                             Text(
-                                              post['created_at']
-                                                  .toString()
-                                                  .substring(0, 10),
+                                              createdLabel,
                                               style: const TextStyle(
                                                 fontSize: 11,
                                                 color: Color(0xFF9CA3AF),
@@ -168,50 +155,41 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                         ],
                                       ),
                                       const SizedBox(height: 8),
-                                      Text(
-                                        post['content']?.toString() ?? '',
+                                      Text(post.content),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.favorite_border,
+                                            size: 14,
+                                            color: Color(0xFF9CA3AF),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            post.likes.toString(),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF9CA3AF),
+                                              height: 1.5,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Icon(
+                                            Icons.comment_outlined,
+                                            size: 14,
+                                            color: Color(0xFF9CA3AF),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            post.comments.toString(),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF9CA3AF),
+                                              height: 1.5,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      if (post['likes'] != null ||
-                                          post['comments'] != null) ...[
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            if (post['likes'] != null) ...[
-                                              const Icon(
-                                                Icons.favorite_border,
-                                                size: 14,
-                                                color: Color(0xFF9CA3AF),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                post['likes'].toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color(0xFF9CA3AF),
-                                                  height: 1.5,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                            ],
-                                            if (post['comments'] != null) ...[
-                                              const Icon(
-                                                Icons.comment_outlined,
-                                                size: 14,
-                                                color: Color(0xFF9CA3AF),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                post['comments'].toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color(0xFF9CA3AF),
-                                                  height: 1.5,
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ],
                                     ],
                                   ),
                                 ),

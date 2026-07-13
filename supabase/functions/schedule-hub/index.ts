@@ -32,6 +32,10 @@ import {
   summarizePlatformFailures,
 } from "./upstream_error.ts";
 import { requiredAuthLevel } from "./action_auth.ts";
+import {
+  billingAllowedHosts,
+  resolveBillingReturnUrl,
+} from "./billing_return_url.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -256,21 +260,16 @@ function currentBillingPeriodStart(): string {
 }
 
 function billingReturnUrl(value: unknown, fallbackPath: string): string {
-  const raw = asString(value);
-  if (raw) {
-    try {
-      const url = new URL(raw);
-      if (url.protocol === "http:" || url.protocol === "https:") {
-        return url.toString();
-      }
-    } catch {
-      // Fall through to the deployment fallback.
-    }
-  }
   const base = (Deno.env.get("PUBLIC_SITE_URL") ??
     Deno.env.get("SITE_URL") ??
     "https://my-web-app-b67f4.web.app").trim();
-  return new URL(fallbackPath, base).toString();
+  // open-redirect 対策: return_url は host allowlist で検証する。
+  // billing.create_supporter_checkout_session は非ログイン公開 action のため、
+  // 無検証だと攻撃者が checkout 後に任意の外部サイトへ誘導できる。
+  const extraHosts = (Deno.env.get("BILLING_RETURN_URL_ALLOWED_HOSTS") ?? "")
+    .split(",");
+  const allowedHosts = billingAllowedHosts(base, extraHosts);
+  return resolveBillingReturnUrl(value, fallbackPath, { base, allowedHosts });
 }
 
 function withBillingParam(url: string, value: string): string {
