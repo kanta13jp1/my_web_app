@@ -401,10 +401,16 @@ export interface JibunApiStore {
   // Webhooks
   countWebhooks(userId: string): Promise<number>;
   insertWebhook(
-    row: Omit<WebhookRow, "id" | "created_at" | "delivery_count" | "last_delivered_at">,
+    row: Omit<
+      WebhookRow,
+      "id" | "created_at" | "delivery_count" | "last_delivered_at"
+    >,
   ): Promise<WebhookRow>;
   listWebhooks(userId: string): Promise<WebhookRow[]>;
-  findWebhookById(userId: string, webhookId: string): Promise<WebhookRow | null>;
+  findWebhookById(
+    userId: string,
+    webhookId: string,
+  ): Promise<WebhookRow | null>;
   deleteWebhook(userId: string, webhookId: string): Promise<boolean>;
   listActiveWebhooks(userId: string, event: string): Promise<WebhookRow[]>;
   touchWebhookDelivery(webhookId: string): Promise<void>;
@@ -1436,7 +1442,13 @@ async function dispatchExternalApiAction(
         };
       }
       const note = await store.createNote(userId, { title, content });
-      fireWebhooks(store, userId, "note.created", { note, trace_id: traceId }, deps.workerFetch);
+      fireWebhooks(
+        store,
+        userId,
+        "note.created",
+        { note, trace_id: traceId },
+        deps.workerFetch,
+      );
       return {
         response: json(
           { success: true, note, trace_id: traceId },
@@ -1493,9 +1505,15 @@ async function dispatchExternalApiAction(
       }
       const updated = await store.updateNote(userId, noteId, patch);
       if (!updated) {
-        return { response: json({ error: "note not found" }, 404), workerId: null };
+        return {
+          response: json({ error: "note not found" }, 404),
+          workerId: null,
+        };
       }
-      fireWebhooks(store, userId, "note.updated", { note: updated, trace_id: traceId }, deps.workerFetch);
+      fireWebhooks(store, userId, "note.updated", {
+        note: updated,
+        trace_id: traceId,
+      }, deps.workerFetch);
       return {
         response: json({ success: true, note: updated, trace_id: traceId }),
         workerId: null,
@@ -1513,9 +1531,15 @@ async function dispatchExternalApiAction(
       }
       const deleted = await store.deleteNote(userId, noteId);
       if (!deleted) {
-        return { response: json({ error: "note not found" }, 404), workerId: null };
+        return {
+          response: json({ error: "note not found" }, 404),
+          workerId: null,
+        };
       }
-      fireWebhooks(store, userId, "note.deleted", { note_id: noteId, trace_id: traceId }, deps.workerFetch);
+      fireWebhooks(store, userId, "note.deleted", {
+        note_id: noteId,
+        trace_id: traceId,
+      }, deps.workerFetch);
       return {
         response: json(
           { success: true, deleted: true, note_id: noteId, trace_id: traceId },

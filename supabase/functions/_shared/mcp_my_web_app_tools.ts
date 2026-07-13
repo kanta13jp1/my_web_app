@@ -198,7 +198,9 @@ export type McpPayloadResult<T = Record<string, unknown>> =
   | { ok: false; status: number; error: string };
 
 export type McpFeatureRequestPayloadResult = McpPayloadResult;
-export type McpNotePayloadResult = McpPayloadResult<{ title: string; content: string }>;
+export type McpNotePayloadResult = McpPayloadResult<
+  { title: string; content: string }
+>;
 
 export function buildMcpFeatureRequestPayload(
   body: Record<string, unknown>,
