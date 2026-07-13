@@ -11,102 +11,55 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
+      "hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
       "keyword_groups": {
         "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "model picker",
-          "in-app browser",
-          "browser use",
-          "computer use",
           "worktree",
           "subagents"
         ],
         "hooks": [
           "hook",
           "hooks",
-          "Stop"
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
         ],
         "integration": [
           "MCP",
           "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
+          "GitHub"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
-          "quota",
           "rate limit",
-          "sandbox",
           "permission",
           "review",
           "CI"
         ],
         "schedule": [
-          "automation",
-          "automations",
           "schedule",
-          "GitHub Actions",
+          "cron",
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
-      "name": "Codex changelog",
-      "owner": "Codex",
-      "previous_hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
-      "slug": "codex-changelog",
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
+      "slug": "claude-code-hooks",
       "snippets": [
-        "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
-        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
       ],
       "status": 200,
-      "url": "https://developers.openai.com/codex/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
-      "keyword_groups": {
-        "hooks": [
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "GitHub",
-          "IDE extension",
-          "VSCode"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "workflow"
-        ]
-      },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
-      "name": "Gemini Code Assist release notes",
-      "owner": "Gemini Code Assist",
-      "previous_hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
-      "slug": "gemini-code-assist-release-notes",
-      "snippets": [
-        "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
-        "Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...",
-        "April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues."
-      ],
-      "status": 200,
-      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
+      "url": "https://code.claude.com/docs/en/hooks"
     }
   ],
-  "checked_at": "2026-07-12T22:08:46Z",
+  "checked_at": "2026-07-13T22:12:18Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -158,7 +111,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-11T22:09:19Z",
+  "previous_checked_at": "2026-07-12T22:08:46Z",
   "sources": [
     {
       "changed": false,
@@ -222,10 +175,10 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
+      "hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -321,7 +274,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
@@ -369,7 +322,7 @@
       "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
+      "previous_hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
       "slug": "codex-changelog",
       "snippets": [
         "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -492,7 +445,7 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
@@ -520,7 +473,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
+      "previous_hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
