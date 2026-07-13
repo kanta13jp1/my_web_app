@@ -32718,3 +32718,34 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
 - 理念的貢献: deny-by-default (AI_DEV_PRINCIPLES 原則 2) を schedule-hub 全 action で達成
 - 懸念: なし (billing supporter の public 据え置きは収益導線の意図的判断として action_auth.ts コメント + PR に文書化済み)
+
+## セッション記録: Win Claude part 333 (2026-07-12→14) — schedule-hub publicActions 書き込み系 lockdown (PR #3975)
+
+**契機**: publicActions に認証不要で公開されていた書き込み系 4 action — Web アプリ同梱の anon key (= 実質公開) だけで第三者がオーナーの Qiita/dev.to/X 資格情報での投稿・hub_data への system 書き込みが可能だった。
+
+**実施** ([PR #3975](https://github.com/kanta13jp1/my_web_app/pull/3975) merged + deploy-prod 自動デプロイ + 本番実証):
+
+- blog.auto_publish / blog.create / blog.backfill_from_apis / x.post_with_media を SERVICE_ROLE_ONLY 化 (ログイン user JWT・匿名 signup JWT でも 401)
+- 純ロジック `action_auth.ts` に `requiredAuthLevel()` を集約 + deno test 4 件 (part331 `upstream_error.ts` と同型パターン)
+- caller 全数監査: blog-publish.yml / blog-batch-publish.yml→batch_publish.py / blog-backfill-from-apis.yml / post-x-with-media.yml — 全て SERVICE_ROLE_KEY Bearer → GHA 経路挙動不変 (blog-draft-register.yml はコメント stale で実装は REST 直叩き・影響なし)
+- 本番実証: anon key → 4 action 401 / public read (health.check / blog.recent_posted) 200 / EF 側 SERVICE_ROLE_KEY env 一致は「同ゲートを既に通る非 public action の緑 cron」(blog-engagement の devto_sync_engagement) で証明 — workflow 手動実行 (X 投稿/Qiita 接触の副作用) を避ける検証手法として確立
+
+**残課題ハンドオフ**: spawn_task (task_2ecc200a) → 並行セッションが part334 ([PR #3992](https://github.com/kanta13jp1/my_web_app/pull/3992)) で完遂。本セッション側でも独立 caller 棚卸し + 本番抜き打ち (401×4 / health.check 200 / notion-sync・wbs-ai-review cron 緑) で全件一致を確認。並行稼働中の重複実装は feedback_spawned_task_duplicate_pr_race に従い回避。
+
+### Philosophy Alignment (Win part333)
+
+- 主要実装: schedule-hub publicActions 書き込み系 4 action の service-role 必須化 + part334 完遂の独立検証
+- 該当原則: 5 (商品=ユーザー価値: オーナー資格情報の悪用経路封鎖 = 信頼性) / 6 (資本=時間: 並行セッションとの重複実装回避) / 7 (資産負債: セキュリティ負債の返済) / 8 (KPI=昨日の自分: part331/332 純ロジック+テストパターン踏襲)
+- 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
+- 理念的貢献: deny-by-default (AI_DEV_PRINCIPLES 原則 2) への前進 — part334 と合わせ schedule-hub 全 action で完結
+- 懸念: なし
+
+### 次回タスク候補 (part333 wrap-up / 2026-07-14 時点)
+
+| 優先度 | タスク | 規模 |
+|--------|--------|------|
+| 🔴 | [PR #4014](https://github.com/kanta13jp1/my_web_app/pull/4014) の状態確定 — #4021 (10ページ batch merged) と重複疑い → 差分照合し close or rebase | S |
+| 🟡 | Qiita 異議申し立て送信 (ユーザー本人 / project_20260713_qiita_appeal_draft) | S |
+| 🟡 | dependabot 4 PR (#3998/#3997/#3996/#3986) + CI 最適化 PR (#3983/#3938/#3929) の週次棚卸し | M |
+| 🟢 | codex PR レビュー: #4020 (asset tax export) / #4031 (x-report perf 第3弾) 着地確認 | M |
+| 🟢 | T-1 記事: schedule-hub lockdown 3部作 (part331→334) を dev.to build-in-public 記事化 | M |
