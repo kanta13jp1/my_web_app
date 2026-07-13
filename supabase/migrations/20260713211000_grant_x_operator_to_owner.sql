@@ -11,6 +11,11 @@
 -- service_role / postgres からしか変更できない(自己昇格防止)。migration は
 -- postgres 権限で適用されるため、ここが正規の付与経路になる。
 -- email が auth.users に存在しない環境(ローカル/プレビュー)では no-op。
+--
+-- nocheck: time-relative
+-- (S78 ガードは user_profiles の updated_at=NOW() 系トリガーで機械的に警告
+--  するが、この UPDATE は boolean の is_admin のみで日付制約と無関係。
+--  CURRENT_DATE 比較の CHECK/トリガーに触れないためリプレイ安全。)
 
 -- 既存プロフィール行があるオーナーへ付与
 UPDATE public.user_profiles
