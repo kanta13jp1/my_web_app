@@ -35,6 +35,7 @@ import {
 } from "../_shared/saas_human_approval.ts";
 import {
   buildMcpFeatureRequestPayload,
+  buildMcpNotePayload,
   buildMcpToolCatalog,
   hasMcpWriteConfirmation,
   mcpActionToToolName,
@@ -956,15 +957,29 @@ async function handleMcpFacade(
           "mcp.wbs.list",
           "mcp.feature_request.create",
           "mcp.user_tasks.list",
+          "mcp.notes.list",
+          "mcp.notes.create",
         ],
         generic_action: "mcp.tool.call",
+        batch_action: "mcp.batch.call",
         generic_arguments_shape: {
           action: "mcp.tool.call",
           tool_name: "wbs.tasks.list",
           arguments: { instance: "codex", limit: 10 },
         },
+        batch_arguments_shape: {
+          action: "mcp.batch.call",
+          calls: [
+            { tool_name: "wbs.tasks.list", arguments: { limit: 5 } },
+            { tool_name: "notes.list", arguments: { limit: 10 } },
+          ],
+        },
       },
     });
+  }
+
+  if (action === "mcp.batch.call") {
+    return await handleMcpBatch(req, body, admin);
   }
 
   const toolName = mcpActionToToolName(action, body);
@@ -1146,7 +1161,136 @@ async function handleMcpFacade(
     }, 201);
   }
 
+  // ── notes.list (MCP) ─────────────────────────────────────────────────────
+  if (toolName === "notes.list") {
+    const limit = Math.min(Math.max(Number(args.limit ?? 20), 1), 50);
+    const q = typeof args.q === "string" ? args.q.trim() : "";
+    let query = admin
+      .from("notes")
+      .select("id, title, content, created_at, updated_at")
+      .eq("user_id", auth.ctx.sub)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (q !== "") {
+      // Simple sanitize: strip PostgREST metacharacters before embedding in ilike
+      const safe = q.replace(/[,()"'\\%_*]/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+      if (safe !== "") {
+        query = query.or(`title.ilike.%${safe}%,content.ilike.%${safe}%`);
+      }
+    }
+    const { data: notes, error: notesErr } = await query;
+    if (notesErr) throw new Error(notesErr.message);
+    await logMcpInvocation(auth.ctx, toolName, args, 200, req);
+    return mcpToolResponse(body, {
+      success: true,
+      tool: toolName,
+      structuredContent: { count: (notes ?? []).length, notes: notes ?? [] },
+      content: mcpTextResult(`Found ${(notes ?? []).length} note(s).`),
+    });
+  }
+
+  // ── notes.create (MCP) ───────────────────────────────────────────────────
+  if (toolName === "notes.create") {
+    const payloadResult = buildMcpNotePayload(args);
+    if (!payloadResult.ok) {
+      await logMcpInvocation(auth.ctx, toolName, args, payloadResult.status, req);
+      return mcpToolResponse(body, {
+        success: false,
+        error: payloadResult.error,
+        tool: toolName,
+      }, payloadResult.status);
+    }
+    if (!hasMcpWriteConfirmation(toolName, args)) {
+      const phrase = mcpConfirmationPhrase(toolName);
+      await logMcpInvocation(auth.ctx, toolName, args, 409, req);
+      return mcpToolResponse(body, {
+        success: false,
+        error: "confirmation_required",
+        tool: toolName,
+        confirmation: { confirm: true, confirmation_phrase: phrase },
+        proposed_note: payloadResult.payload,
+        content: mcpTextResult(
+          `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
+        ),
+      }, 409);
+    }
+    const { data: note, error: noteErr } = await admin
+      .from("notes")
+      .insert({ user_id: auth.ctx.sub, ...payloadResult.payload })
+      .select("id, title, content, created_at, updated_at")
+      .single();
+    if (noteErr) throw new Error(noteErr.message);
+    await logMcpInvocation(auth.ctx, toolName, args, 201, req);
+    return mcpToolResponse(body, {
+      success: true,
+      tool: toolName,
+      structuredContent: { note },
+      content: mcpTextResult(`Created note: ${note.title}`),
+    }, 201);
+  }
+
   return null;
+}
+
+// ── MCP Batch (token最適化 / Notion MCP 91%削減 対抗) ────────────────────────
+// 複数 MCP ツール呼び出しを 1 HTTP リクエストに束ねることで、往復オーバーヘッドと
+// 認証ハンドシェイクを削減する。最大 5 呼び出しを並列処理。
+async function handleMcpBatch(
+  req: Request,
+  body: Record<string, unknown>,
+  admin: SupabaseClient,
+): Promise<Response | null> {
+  const rawCalls = Array.isArray(body.calls) ? body.calls : null;
+  if (!rawCalls) {
+    return json({
+      error: "calls must be an array",
+      example: [{ tool_name: "notes.list", arguments: { limit: 10 } }],
+    }, 400);
+  }
+  const calls = rawCalls.slice(0, 5);
+  if (calls.length === 0) {
+    return json({ error: "calls must be a non-empty array (max 5)" }, 400);
+  }
+  const results = await Promise.all(
+    calls.map(async (call: unknown, idx: number) => {
+      if (call === null || typeof call !== "object" || Array.isArray(call)) {
+        return { index: idx, success: false, error: "invalid call object" };
+      }
+      const c = call as Record<string, unknown>;
+      const toolName = String(c.tool_name ?? "");
+      const callArgs = (
+        c.arguments !== null &&
+          typeof c.arguments === "object" &&
+          !Array.isArray(c.arguments)
+      )
+        ? c.arguments as Record<string, unknown>
+        : {};
+      const subBody: Record<string, unknown> = {
+        tool_name: toolName,
+        arguments: callArgs,
+      };
+      try {
+        const res = await handleMcpFacade(req, "mcp.tool.call", subBody, admin);
+        if (!res) {
+          return { index: idx, tool: toolName, success: false, error: "unknown_tool" };
+        }
+        const data = await res.clone().json().catch(() => null);
+        return { index: idx, tool: toolName, success: res.ok, data };
+      } catch (err) {
+        return {
+          index: idx,
+          tool: toolName,
+          success: false,
+          error: String(err).slice(0, 200),
+        };
+      }
+    }),
+  );
+  return json({
+    success: true,
+    count: results.length,
+    results,
+  });
 }
 
 function parseGithubIssueNumber(value: unknown): number | null {
@@ -10316,10 +10460,13 @@ ${reportText ? `> ${reportText}` : ""}`,
             "wbs.submit_user_task_report",
             "mcp.tools.list",
             "mcp.tool.call",
+            "mcp.batch.call",
             "mcp.auth.register",
             "mcp.wbs.list",
             "mcp.feature_request.create",
             "mcp.user_tasks.list",
+            "mcp.notes.list",
+            "mcp.notes.create",
             "legal.harvey.complete",
             "legal-assistant.harvey.complete",
             "legal-assistant.review",

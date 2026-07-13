@@ -2,6 +2,8 @@ export const MCP_MY_WEB_APP_TOOL_NAMES = [
   "wbs.tasks.list",
   "feature_request.create",
   "user_tasks.list",
+  "notes.list",
+  "notes.create",
 ] as const;
 
 export type McpMyWebAppToolName = typeof MCP_MY_WEB_APP_TOOL_NAMES[number];
@@ -20,6 +22,8 @@ const MCP_ACTION_TO_TOOL: Record<string, McpMyWebAppToolName> = {
   "mcp.wbs.list": "wbs.tasks.list",
   "mcp.feature_request.create": "feature_request.create",
   "mcp.user_tasks.list": "user_tasks.list",
+  "mcp.notes.list": "notes.list",
+  "mcp.notes.create": "notes.create",
 };
 
 function recordValue(value: unknown): Record<string, unknown> | null {
@@ -50,17 +54,20 @@ export function isMcpMyWebAppToolName(
 }
 
 export function isMcpWriteTool(toolName: McpMyWebAppToolName): boolean {
-  return toolName === "feature_request.create";
+  return toolName === "feature_request.create" || toolName === "notes.create";
 }
 
 export function mcpRequestedScopes(toolName: McpMyWebAppToolName): string[] {
+  if (toolName === "notes.create") return ["create"];
   return isMcpWriteTool(toolName) ? ["create"] : ["read"];
 }
 
 export function mcpConfirmationPhrase(
   toolName: McpMyWebAppToolName,
 ): string | null {
-  return isMcpWriteTool(toolName) ? "create_feature_request" : null;
+  if (toolName === "feature_request.create") return "create_feature_request";
+  if (toolName === "notes.create") return "create_note";
+  return null;
 }
 
 export function hasMcpWriteConfirmation(
@@ -145,12 +152,53 @@ export function buildMcpToolCatalog(): McpToolDefinition[] {
         },
       },
     },
+    {
+      name: "notes.list",
+      title: "List Notes",
+      description:
+        "Read the user's notes with optional full-text search. Returns id, title, content, created_at, updated_at.",
+      requested_scopes: ["read"],
+      write_confirmation_required: false,
+      invoke_action: "mcp.notes.list",
+      input_schema: {
+        type: "object",
+        properties: {
+          q: {
+            type: "string",
+            description: "Full-text search query (title and content).",
+          },
+          limit: { type: "integer", minimum: 1, maximum: 50, default: 20 },
+        },
+      },
+    },
+    {
+      name: "notes.create",
+      title: "Create Note",
+      description:
+        "Create a new note. Requires explicit confirmation to prevent accidental writes.",
+      requested_scopes: ["create"],
+      write_confirmation_required: true,
+      invoke_action: "mcp.notes.create",
+      input_schema: {
+        type: "object",
+        required: ["title", "confirm", "confirmation_phrase"],
+        properties: {
+          title: { type: "string", minLength: 1, maxLength: 200 },
+          content: { type: "string", maxLength: 100000, default: "" },
+          confirm: { type: "boolean", const: true },
+          confirmation_phrase: { type: "string", const: "create_note" },
+        },
+      },
+    },
   ];
 }
 
-export type McpFeatureRequestPayloadResult =
-  | { ok: true; payload: Record<string, unknown> }
+export type McpPayloadResult<T = Record<string, unknown>> =
+  | { ok: true; payload: T }
   | { ok: false; status: number; error: string };
+
+export type McpFeatureRequestPayloadResult = McpPayloadResult;
+export type McpNotePayloadResult = McpPayloadResult<{ title: string; content: string }>;
 
 export function buildMcpFeatureRequestPayload(
   body: Record<string, unknown>,
@@ -192,4 +240,18 @@ export function buildMcpFeatureRequestPayload(
       milestone_code: body.milestone_code ?? null,
     },
   };
+}
+
+export function buildMcpNotePayload(
+  body: Record<string, unknown>,
+): McpNotePayloadResult {
+  const title = String(body.title ?? "").trim();
+  if (title.length === 0 || title.length > 200) {
+    return { ok: false, status: 400, error: "title is required (1-200 chars)" };
+  }
+  const content = String(body.content ?? "");
+  if (content.length > 100_000) {
+    return { ok: false, status: 400, error: "content exceeds 100000 chars" };
+  }
+  return { ok: true, payload: { title, content } };
 }

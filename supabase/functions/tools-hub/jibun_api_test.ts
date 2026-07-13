@@ -20,6 +20,7 @@ import {
   JIBUN_API_SCOPES,
   type JibunApiStore,
   MAX_KEYS_PER_USER,
+  MAX_WEBHOOKS_PER_USER,
   normalizeScopes,
   normalizeWorkerSlug,
   type NoteRow,
@@ -29,6 +30,7 @@ import {
   sha256Hex,
   slugFromName,
   validateWorkerEndpoint,
+  type WebhookRow,
   WORKER_INVOKE_LIMIT_PER_MINUTE,
   type WorkerRow,
 } from "./jibun_api.ts";
@@ -207,6 +209,7 @@ class FakeJibunApiStore implements JibunApiStore {
   workers: WorkerRow[] = [];
   auditLog: AuditLogRow[] = [];
   notes: NoteRow[] = [];
+  webhooks: WebhookRow[] = [];
   rateLimitCounts: Record<string, number> = {};
   nextId = 1;
 
@@ -364,6 +367,74 @@ class FakeJibunApiStore implements JibunApiStore {
     };
     this.notes.push(row);
     return Promise.resolve(row);
+  }
+  updateNote(
+    userId: string,
+    noteId: number,
+    patch: { title?: string; content?: string },
+  ): Promise<NoteRow | null> {
+    const note = this.notes.find((n) => n.id === noteId);
+    if (!note) return Promise.resolve(null);
+    void userId;
+    if (patch.title !== undefined) note.title = patch.title;
+    if (patch.content !== undefined) note.content = patch.content;
+    note.updated_at = new Date().toISOString();
+    return Promise.resolve({ ...note });
+  }
+  deleteNote(userId: string, noteId: number): Promise<boolean> {
+    void userId;
+    const before = this.notes.length;
+    this.notes = this.notes.filter((n) => n.id !== noteId);
+    return Promise.resolve(this.notes.length < before);
+  }
+  countWebhooks(userId: string): Promise<number> {
+    return Promise.resolve(
+      this.webhooks.filter((w) => w.user_id === userId).length,
+    );
+  }
+  insertWebhook(
+    row: Omit<WebhookRow, "id" | "created_at" | "delivery_count" | "last_delivered_at">,
+  ): Promise<WebhookRow> {
+    const full: WebhookRow = {
+      ...row,
+      id: `wh-${this.nextId++}`,
+      delivery_count: 0,
+      last_delivered_at: null,
+      created_at: new Date().toISOString(),
+    };
+    this.webhooks.push(full);
+    return Promise.resolve(full);
+  }
+  listWebhooks(userId: string): Promise<WebhookRow[]> {
+    return Promise.resolve(this.webhooks.filter((w) => w.user_id === userId));
+  }
+  findWebhookById(userId: string, webhookId: string): Promise<WebhookRow | null> {
+    return Promise.resolve(
+      this.webhooks.find((w) => w.id === webhookId && w.user_id === userId) ??
+        null,
+    );
+  }
+  deleteWebhook(userId: string, webhookId: string): Promise<boolean> {
+    const before = this.webhooks.length;
+    this.webhooks = this.webhooks.filter(
+      (w) => !(w.id === webhookId && w.user_id === userId),
+    );
+    return Promise.resolve(this.webhooks.length < before);
+  }
+  listActiveWebhooks(userId: string, event: string): Promise<WebhookRow[]> {
+    return Promise.resolve(
+      this.webhooks.filter(
+        (w) => w.user_id === userId && w.enabled && w.events.includes(event),
+      ),
+    );
+  }
+  touchWebhookDelivery(webhookId: string): Promise<void> {
+    const wh = this.webhooks.find((w) => w.id === webhookId);
+    if (wh) {
+      wh.delivery_count += 1;
+      wh.last_delivered_at = new Date().toISOString();
+    }
+    return Promise.resolve();
   }
   listUserTasks(limit: number): Promise<Record<string, unknown>[]> {
     return Promise.resolve(
@@ -888,4 +959,249 @@ Deno.test("scope catalog is stable (docs contract)", () => {
     "achievements.read",
     "workers.invoke",
   ]);
+});
+
+// ── Notes CRUD (api.notes.update / api.notes.delete) ─────────────────────────
+
+Deno.test("api.notes.update patches title and content", async () => {
+  const store = new FakeJibunApiStore();
+  const note = await store.createNote("user-1", { title: "original", content: "body" });
+  const key = await issueKey(store, "user-1", ["notes.write"]);
+  const response = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.update",
+    body: { id: note.id, title: "updated" },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(response!.status, 200);
+  const data = await response!.json();
+  assertEquals(data.note.title, "updated");
+  assertEquals(data.note.content, "body");
+  assert(data.note.updated_at !== null);
+});
+
+Deno.test("api.notes.update requires notes.write scope", async () => {
+  const store = new FakeJibunApiStore();
+  const note = await store.createNote("user-1", { title: "t", content: "" });
+  const key = await issueKey(store, "user-1", ["notes.read"]);
+  const response = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.update",
+    body: { id: note.id, title: "x" },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(response!.status, 403);
+});
+
+Deno.test("api.notes.update returns 404 for missing note", async () => {
+  const store = new FakeJibunApiStore();
+  const key = await issueKey(store, "user-1", ["notes.write"]);
+  const response = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.update",
+    body: { id: 9999, title: "x" },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(response!.status, 404);
+});
+
+Deno.test("api.notes.update rejects missing id", async () => {
+  const store = new FakeJibunApiStore();
+  const key = await issueKey(store, "user-1", ["notes.write"]);
+  const response = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.update",
+    body: { title: "x" },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(response!.status, 400);
+});
+
+Deno.test("api.notes.delete removes note", async () => {
+  const store = new FakeJibunApiStore();
+  const note = await store.createNote("user-1", { title: "bye", content: "" });
+  const key = await issueKey(store, "user-1", ["notes.write"]);
+  const response = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.delete",
+    body: { id: note.id },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(response!.status, 200);
+  assertEquals(store.notes.length, 0);
+});
+
+Deno.test("api.notes.delete returns 404 for missing note", async () => {
+  const store = new FakeJibunApiStore();
+  const key = await issueKey(store, "user-1", ["notes.write"]);
+  const response = await handleJibunApiAction({
+    req: makeRequest({ bearer: key }),
+    action: "api.notes.delete",
+    body: { id: 9999 },
+    store,
+    getUserId: () => Promise.resolve(null),
+  });
+  assertEquals(response!.status, 404);
+});
+
+// ── Webhook management (jibunapi.webhook.*) ──────────────────────────────────
+
+Deno.test("webhook.create registers webhook and returns signing_secret once", async () => {
+  const store = new FakeJibunApiStore();
+  const response = await handleJibunApiAction({
+    req: makeRequest(),
+    action: "jibunapi.webhook.create",
+    body: {
+      name: "my hook",
+      endpoint_url: "https://hooks.example.com/jibun",
+      events: ["note.created"],
+    },
+    store,
+    getUserId: () => Promise.resolve("user-1"),
+  });
+  assertEquals(response!.status, 201);
+  const data = await response!.json();
+  assert(typeof data.signing_secret === "string");
+  assert(data.signing_secret.startsWith("jibun_whsec_"));
+  assertEquals(data.webhook.name, "my hook");
+  assertEquals(data.webhook.events, ["note.created"]);
+  // signing_secret は webhook オブジェクト内には含まれない (once-only)
+  assertEquals(data.webhook.signing_secret, undefined);
+  assertEquals(store.webhooks.length, 1);
+});
+
+Deno.test("webhook.create rejects invalid event", async () => {
+  const store = new FakeJibunApiStore();
+  const response = await handleJibunApiAction({
+    req: makeRequest(),
+    action: "jibunapi.webhook.create",
+    body: {
+      name: "bad",
+      endpoint_url: "https://hooks.example.com/",
+      events: ["unknown.event"],
+    },
+    store,
+    getUserId: () => Promise.resolve("user-1"),
+  });
+  assertEquals(response!.status, 400);
+});
+
+Deno.test("webhook.create rejects private endpoint (SSRF guard)", async () => {
+  const store = new FakeJibunApiStore();
+  const response = await handleJibunApiAction({
+    req: makeRequest(),
+    action: "jibunapi.webhook.create",
+    body: {
+      name: "ssrf",
+      endpoint_url: "https://192.168.1.1/hook",
+      events: ["note.created"],
+    },
+    store,
+    getUserId: () => Promise.resolve("user-1"),
+  });
+  assertEquals(response!.status, 400);
+});
+
+Deno.test("webhook.create enforces MAX_WEBHOOKS_PER_USER", async () => {
+  const store = new FakeJibunApiStore();
+  for (let i = 0; i < MAX_WEBHOOKS_PER_USER; i++) {
+    await store.insertWebhook({
+      user_id: "user-1",
+      name: `hook-${i}`,
+      endpoint_url: "https://hooks.example.com/",
+      signing_secret: "jibun_whsec_x",
+      events: ["note.created"],
+      enabled: true,
+    });
+  }
+  const response = await handleJibunApiAction({
+    req: makeRequest(),
+    action: "jibunapi.webhook.create",
+    body: {
+      name: "overflow",
+      endpoint_url: "https://hooks.example.com/overflow",
+      events: ["note.created"],
+    },
+    store,
+    getUserId: () => Promise.resolve("user-1"),
+  });
+  assertEquals(response!.status, 409);
+});
+
+Deno.test("webhook.list returns only user's webhooks (no secret)", async () => {
+  const store = new FakeJibunApiStore();
+  await store.insertWebhook({
+    user_id: "user-1",
+    name: "h1",
+    endpoint_url: "https://a.example.com/",
+    signing_secret: "jibun_whsec_secret",
+    events: ["note.created"],
+    enabled: true,
+  });
+  await store.insertWebhook({
+    user_id: "user-2",
+    name: "h2",
+    endpoint_url: "https://b.example.com/",
+    signing_secret: "jibun_whsec_other",
+    events: ["note.deleted"],
+    enabled: true,
+  });
+  const response = await handleJibunApiAction({
+    req: makeRequest(),
+    action: "jibunapi.webhook.list",
+    body: {},
+    store,
+    getUserId: () => Promise.resolve("user-1"),
+  });
+  assertEquals(response!.status, 200);
+  const data = await response!.json();
+  assertEquals(data.webhooks.length, 1);
+  assertEquals(data.webhooks[0].name, "h1");
+  assertEquals(data.webhooks[0].signing_secret, undefined);
+});
+
+Deno.test("webhook.delete removes own webhook", async () => {
+  const store = new FakeJibunApiStore();
+  const wh = await store.insertWebhook({
+    user_id: "user-1",
+    name: "gone",
+    endpoint_url: "https://hooks.example.com/",
+    signing_secret: "jibun_whsec_x",
+    events: ["note.created"],
+    enabled: true,
+  });
+  const response = await handleJibunApiAction({
+    req: makeRequest(),
+    action: "jibunapi.webhook.delete",
+    body: { id: wh.id },
+    store,
+    getUserId: () => Promise.resolve("user-1"),
+  });
+  assertEquals(response!.status, 200);
+  assertEquals(store.webhooks.length, 0);
+});
+
+Deno.test("webhook.delete returns 404 for missing / other-user webhook", async () => {
+  const store = new FakeJibunApiStore();
+  await store.insertWebhook({
+    user_id: "user-2",
+    name: "other",
+    endpoint_url: "https://hooks.example.com/",
+    signing_secret: "jibun_whsec_x",
+    events: ["note.created"],
+    enabled: true,
+  });
+  const response = await handleJibunApiAction({
+    req: makeRequest(),
+    action: "jibunapi.webhook.delete",
+    body: { id: store.webhooks[0].id },
+    store,
+    getUserId: () => Promise.resolve("user-1"),
+  });
+  assertEquals(response!.status, 404);
 });
