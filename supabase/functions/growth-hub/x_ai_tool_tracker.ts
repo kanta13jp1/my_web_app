@@ -33,7 +33,11 @@ export type AiToolWatchSourceView = {
   firstSeen: boolean;
   hasError: boolean;
   keywords: string[];
+  latestSignal: string;
 };
+
+/// 生成側 (scripts/ai_tool_watch.py) が signal 抽出に失敗した時のプレースホルダ。
+const NO_SIGNAL_PLACEHOLDER = "No title detected";
 
 export function parseAiToolWatchSources(
   rawSources: unknown,
@@ -48,6 +52,7 @@ export function parseAiToolWatchSources(
         if (clean !== "" && !keywords.includes(clean)) keywords.push(clean);
       }
     }
+    const rawSignal = text(record.latest_signal);
     return {
       name: text(record.name),
       url: text(record.url),
@@ -56,6 +61,7 @@ export function parseAiToolWatchSources(
       hasError: record.error !== null && record.error !== undefined &&
         text(record.error) !== "",
       keywords,
+      latestSignal: rawSignal === NO_SIGNAL_PLACEHOLDER ? "" : rawSignal,
     };
   }).filter((source) => source.name !== "");
 }
@@ -71,6 +77,14 @@ export type AiToolTrackerPost = {
 
 const MIN_SOURCES = 3;
 const MAX_KEYWORDS_PER_SOURCE = 8;
+const MAX_SIGNAL_CHARS = 70;
+
+function compactSignal(signal: string): string {
+  const clean = signal.replace(/\s+/g, " ").trim();
+  return clean.length <= MAX_SIGNAL_CHARS
+    ? clean
+    : `${clean.slice(0, MAX_SIGNAL_CHARS - 1)}…`;
+}
 
 function jstDateLabel(iso: string): { label: string; key: string } | null {
   const parsed = Date.parse(iso);
@@ -94,7 +108,13 @@ export function buildAiToolTrackerPost(
   const report = asRecord(rawReport);
   const sources = parseAiToolWatchSources(report.sources);
   if (sources.length < MIN_SOURCES) return null;
-  const changed = sources.filter((source) => source.changed);
+  // 取得エラーのソースを「更新検知」に数えない(レビュー F1): 生成側は
+  // fetch 失敗時もエラーページ本文の hash 変化で changed=true を立てるため、
+  // 403/timeout の遷移日に偽の検知件数が載る。「実測値」を掲げる系列で
+  // 捏造相当の数値を出さないための除外(エラー自体はアラートに出す)。
+  const changed = sources.filter(
+    (source) => source.changed && !source.hasError,
+  );
   if (changed.length === 0) return null;
   const checkedAt = text(report.checked_at);
   const day = jstDateLabel(checkedAt);
@@ -121,10 +141,19 @@ export function buildAiToolTrackerPost(
     }`,
     "",
     "更新を検知した公式ソース",
-    ...changed.map((source) => {
+    // 検知シグナル(生成側が実本文から抽出した見出し)を必ず併記する:
+    // (a) 「何が変わったか」の実データで情報価値を上げる (b) リード唯一の
+    // 日替わり自由テキスト=連日同一ソースが更新されるリリース週でも前日
+    // リードとの類似度を下げ、承認後の近似重複拒否を防ぐ(レビュー F2:
+    // シグナル無しだと類似度 0.99 で threshold 0.9 を踏む実測)。
+    ...changed.flatMap((source) => {
       const keywords = source.keywords.slice(0, MAX_KEYWORDS_PER_SOURCE);
       const suffix = keywords.length > 0 ? `: ${keywords.join(" / ")}` : "";
-      return `・${source.name}${suffix}`;
+      const lines = [`・${source.name}${suffix}`];
+      if (source.latestSignal !== "") {
+        lines.push(`　└「${compactSignal(source.latestSignal)}」`);
+      }
+      return lines;
     }),
     "",
     `公式changelog・リリースノート${sources.length}件を毎日自動巡回して集計した実測値です。`,
@@ -138,7 +167,9 @@ export function buildAiToolTrackerPost(
       "監視対象の全ソース",
       "",
       ...sources.map((source) =>
-        source.changed ? `🔄 ${source.name}(24hで更新)` : `・${source.name}`
+        source.changed && !source.hasError
+          ? `🔄 ${source.name}(24hで更新)`
+          : `・${source.name}`
       ),
     ].join("\n"),
   );

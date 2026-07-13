@@ -141,13 +141,14 @@ jobs:
               contentArchetype: 'data_report',
               linkInReply: true,
             },
+            // 注: context は normalizeXPostCandidateContext の whitelist キー
+            // のみ永続化される。数値カウント等は whitelist 外で黙って落ちる
+            // (レビュー F3)ため送らない — 件数は投稿本文と Actions ログにある。
             context: {
               workflow: process.env.SOURCE,
               workflow_run_id: process.env.GITHUB_RUN_ID,
               workflow_run_attempt: process.env.GITHUB_RUN_ATTEMPT,
               event: process.env.GITHUB_EVENT_NAME,
-              changed_count: compose.changedCount,
-              source_count: compose.sourceCount,
             },
             dryRun: process.env.DRY_RUN === 'true',
           };

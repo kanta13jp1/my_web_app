@@ -7,6 +7,7 @@ import {
   parseAiToolWatchSources,
 } from "./x_ai_tool_tracker.ts";
 import { classifyPostArchetype } from "./x_post_archetype.ts";
+import { contentSimilarity } from "./x_duplicate_content.ts";
 
 const URL =
   "https://my-web-app-b67f4.web.app/?utm_source=x&utm_content=ai_tool_tracker";
@@ -33,6 +34,8 @@ function report(overrides: Record<string, unknown> = {}): unknown {
         changed: true,
         first_seen: false,
         error: null,
+        latest_signal:
+          "2026-07-09 / Codex joins the ChatGPT desktop app on macOS",
         keyword_groups: {
           "codex-runtime": ["GPT-5.5", "model picker", "worktree"],
           "hooks": ["hook"],
@@ -135,6 +138,77 @@ Deno.test("buildAiToolTrackerPost output self-classifies as data_report", () => 
   assert(post !== null);
   const full = [post!.text, ...post!.replyTexts].join("\n");
   assertEquals(classifyPostArchetype(full), "data_report");
+});
+
+Deno.test("buildAiToolTrackerPost excludes fetch-error sources from 更新検知 (F1)", () => {
+  // 生成側は fetch 失敗(403/timeout)でもエラーページ本文の hash 変化で
+  // changed=true を立てる。「実測値」を掲げる系列で偽の検知件数を出さない。
+  const base = report() as Record<string, unknown>;
+  const sources = (base.sources as Record<string, unknown>[]).map((source) =>
+    source.name === "Codex changelog"
+      ? { ...source, error: "HTTP 403" }
+      : source
+  );
+  const post = buildAiToolTrackerPost(report({ sources }), URL);
+  assert(post !== null);
+  // エラー行は検知件数・リード列挙・🔄マークから外れ、アラートには出る。
+  assert(post!.text.includes("24hで更新検知: 1件"));
+  assert(!post!.text.includes("・Codex changelog"));
+  assertEquals(post!.changedCount, 1);
+  const roster = post!.replyTexts[0];
+  assert(!roster.includes("🔄 Codex changelog"));
+  assert(roster.includes("・Codex changelog"));
+  const alerts = post!.replyTexts.find((entry) => entry.includes("アラート"))!;
+  assert(alerts.includes("🟡 Codex changelog: 取得エラー"));
+  // エラー行しか changed が無い日は候補を作らない。
+  const onlyErrored = (base.sources as Record<string, unknown>[]).map(
+    (source) =>
+      source.name === "Codex changelog"
+        ? { ...source, error: "HTTP 403" }
+        : { ...source, changed: false },
+  );
+  assertEquals(
+    buildAiToolTrackerPost(report({ sources: onlyErrored }), URL),
+    null,
+  );
+});
+
+Deno.test("consecutive-day leads with fresh signals stay under the dup threshold (F2)", () => {
+  // リリース週に同一ソース集合が連日更新されるケース: 検知シグナル(実本文
+  // 由来の日替わりデータ)がリードの類似度を近似重複ガード閾値(0.9)未満に
+  // 下げることを実測で固定する(シグナル無し時代は 0.99 で拒否されていた)。
+  const day1 = buildAiToolTrackerPost(report(), URL);
+  const day2Sources = (report() as Record<string, unknown>)
+    .sources as Record<string, unknown>[];
+  const day2 = buildAiToolTrackerPost(
+    report({
+      checked_at: "2026-07-13T22:08:46Z",
+      sources: day2Sources.map((source) =>
+        source.name === "Codex changelog"
+          ? {
+            ...source,
+            latest_signal:
+              "2026-07-13 / Codex adds parallel worktree execution for large refactors",
+          }
+          : source.name === "Gemini Code Assist release notes"
+          ? {
+            ...source,
+            latest_signal: "VS Code Gemini Code Assist 2.88.0 / July 13, 2026",
+          }
+          : source
+      ),
+    }),
+    URL,
+  );
+  assert(day1 !== null && day2 !== null);
+  // シグナルがリードに載っている(情報価値+日替わり可変トークン)。
+  assert(day1!.text.includes("Codex joins the ChatGPT desktop app"));
+  assert(day2!.text.includes("parallel worktree execution"));
+  const similarity = contentSimilarity(day1!.text, day2!.text);
+  assert(
+    similarity < 0.9,
+    `expected < 0.9 (dup guard threshold), got ${similarity}`,
+  );
 });
 
 Deno.test("parseAiToolWatchSources tolerates junk shapes", () => {
