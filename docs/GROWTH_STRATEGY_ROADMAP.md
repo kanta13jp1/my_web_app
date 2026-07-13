@@ -32749,3 +32749,29 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 | 🟡 | dependabot 4 PR (#3998/#3997/#3996/#3986) + CI 最適化 PR (#3983/#3938/#3929) の週次棚卸し | M |
 | 🟢 | codex PR レビュー: #4020 (asset tax export) / #4031 (x-report perf 第3弾) 着地確認 | M |
 | 🟢 | T-1 記事: schedule-hub lockdown 3部作 (part331→334) を dev.to build-in-public 記事化 | M |
+
+## セッション記録: Win Claude part 329 (2026-07-12〜13) — Xデータレポート型の学習ループ化と量産基盤 (R23-R28)
+
+**契機**: ユーザー実測の同日3連投で **データレポート型 17.2K imp vs ニュース要約 1.2K vs 製品転換 40**(最終計測)の 430 倍差。「情報ペイロードの型がコピー品質より支配的」を恒常的な学習ループと量産基盤へ。
+
+**実施** (6 PR merged + 本番デプロイ):
+
+- [PR #3953](https://github.com/kanta13jp1/my_web_app/pull/3953) **R23**: 全 x.post に `content_archetype` 記録 + perf-context へ "Archetype lift" / "Own measured data" 行 + 共有教訓 `kDataReportArchetypeLesson` を両生成経路へ注入(実行命令は実数供給源のある universal 経路のみ = CmoPage 捏造圧力の回避)
+- [PR #3964](https://github.com/kanta13jp1/my_web_app/pull/3964) **R24**: 週次 build-in-public 実測レポート cron(LLM 不使用・実測3件未満/横ばい週は自動見送り)
+- [PR #3966](https://github.com/kanta13jp1/my_web_app/pull/3966): 選挙集計全文の x.post 化(**CJK=2 加重文字数**基準 + 重複ガード編集距離の 2000cp クランプ = edge CPU 爆発防止)
+- [PR #3967](https://github.com/kanta13jp1/my_web_app/pull/3967) **R25**: Archetype lift を admin X成長ループ panel へ(並行 #3965 の `news_summary` 誤キー契約バグを置換・誠実性ゲート付き)
+- [PR #3989](https://github.com/kanta13jp1/my_web_app/pull/3989) **R26**: X投稿候補キュー HITL 承認 panel(全文レビュー=リード+全リプ/status別3クエリ/再試行3状態)+ `docs/X_TRACKER_SERIES_PLAYBOOK.md` 正本化(系列レジストリ+追加5手順+撤退基準)
+- [PR #4017](https://github.com/kanta13jp1/my_web_app/pull/4017) **R27**: 水平展開第1号「AIツール定点観測」(ai-tool-watch 既存資産流用・fetchエラー偽検知除外・検知シグナル併記で連日重複回避)
+- [PR #4025](https://github.com/kanta13jp1/my_web_app/pull/4025) **R28**: 水平展開第2号「国民民主×立憲 地力差ランキング」(既存 snapshot 相乗り・ISO週キー冪等・レビューが本番 DOA=EF の cdpLocalMembers=0 ハードコードを検出し CDP asset の EF fetch+県名名寄せで修正)
+
+**運用の完成形**: 系列別ジェネレータ(決定的合成)→ HITL 候補キュー → 承認投稿 → Archetype lift 計測 → 伸縮判断。10 系列(政治5/AI開発1/家計1/build-in-public1/ニュース1/選挙予定1)。参政党等の全政党展開は JS 描画サイトのため [Issue #4026](https://github.com/kanta13jp1/my_web_app/issues/4026) にスコープ記録。
+
+**教訓**: フィクスチャが実値を捏造するとテスト全緑のまま DOA(本番の書き込み側コードを読む+レビューに本番データ経路レンズ)/ 並行セッション時代の worktree はオーバーレイで汚れる(`git log origin/main..HEAD` でコミット純度確認)/ 日本語 X 投稿の文字数は CJK=2 加重。
+
+### Philosophy Alignment (Win part329)
+
+- 主要実装: X データレポート型の計測ループ(R23-R25)+ HITL 量産基盤(R26)+ 系列水平展開×2(R27-R28)
+- 該当原則: 2 (ミッション駆動: 実測 430 倍差という事実から学習ループを設計) / 5 (商品=ユーザー価値: 捏造構造的不可能な実測レポートのみ公開) / 7 (資産負債: データ資産を投稿系列という収益資産へ転換) / 8 (KPI=昨日の自分: Archetype lift で投稿型ごとの前週比較を常設)
+- 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
+- 理念的貢献: 「独自データ資産 × 誠実な実測」を成長エンジンの中核に据え、Qiita 停止事件の教訓(無審査自動化の禁止)を HITL 必須として制度化
+- 懸念: なし(政治系列は事実の集計のみで意見表明を含まない設計を維持すること)
