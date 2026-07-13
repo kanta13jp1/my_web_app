@@ -9,15 +9,22 @@ import {
   mcpRequestedScopes,
 } from "./mcp_my_web_app_tools.ts";
 
-Deno.test("MCP tool catalog exposes the three Issue 793 prototype tools", () => {
+Deno.test("MCP tool catalog exposes the prototype + notes CRUD tools", () => {
+  // Issue 793 の 3 プロトタイプツール + 自分API v2 (2d38e1b) の notes CRUD。
+  // 2d38e1b がカタログへ notes.list/notes.create を追加した際にこのピンの
+  // 更新が漏れ、deno test が main ごと壊れていた (2026-07-13) ため追随する。
   const tools = buildMcpToolCatalog();
 
   assertEquals(tools.map((tool) => tool.name), [
     "wbs.tasks.list",
     "feature_request.create",
     "user_tasks.list",
+    "notes.list",
+    "notes.create",
   ]);
   assertEquals(tools[1].write_confirmation_required, true);
+  // 書き込み系 (notes.create) も confirmation 必須のまま公開される。
+  assertEquals(tools[4].write_confirmation_required, true);
 });
 
 Deno.test("MCP action names map to tool scopes", () => {
