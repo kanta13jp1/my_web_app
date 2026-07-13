@@ -32,6 +32,7 @@
 | X運用実測 | `weekly_data_report` | `x-growth-data-report-post.yml` ([#3964](https://github.com/kanta13jp1/my_web_app/pull/3964)) | 週次(土 21:00 UTC) | 直接投稿(実測3件未満/横ばい週は自動見送り) |
 | 家計トラッカー | `household_tracker` | 資産管理ページ ([#3968](https://github.com/kanta13jp1/my_web_app/pull/3968)) | 週次トグル | スコアボード投稿(円金額禁止=件数/日数/方向のみ) |
 | デイリーブリーフィング | `daily_briefing_v2_*` | `x-daily-briefing-post.yml` (日次 22:00 UTC) | 日次 | 候補作成→publish op |
+| AIツール定点観測 | `ai_tool_tracker` | `x-ai-tool-tracker-queue.yml` (日次 21:45 UTC / R27) | 更新検知日のみ | 候補キュー(HITL) |
 
 ラベルの表示用対応は `lib/pages/admin_x_candidate_queue.dart` の
 `kXTrackerSeriesLabels`(系列追加時にここも更新)。
