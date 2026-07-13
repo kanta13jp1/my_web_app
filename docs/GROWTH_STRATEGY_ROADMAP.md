@@ -32718,3 +32718,24 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
 - 理念的貢献: deny-by-default (AI_DEV_PRINCIPLES 原則 2) を schedule-hub 全 action で達成
 - 懸念: なし (billing supporter の public 据え置きは収益導線の意図的判断として action_auth.ts コメント + PR に文書化済み)
+
+## セッション記録: WEB版 (2026-07-13) — AIシェア動画エンジン二択化 + 97Kデータダイジェスト移植 + X operator 403 修復
+
+**契機**: ユーザー依頼 3 連鎖 — ① Arcads 比較動画品質の cinematic 動画対応 ② 過去 3 ヶ月インプレッション上位 (97K/79K/13K = 集計シリーズ) の分析と AIシェアへの移植 ③ 本番 403 (X operator role required) の修復。
+
+**実施** (PR 4 本すべて merged):
+
+- [PR #3935](https://github.com/kanta13jp1/my_web_app/pull/3935): viral-video-ad-generator に type=cinematic_video (fal.ai queue API / FAL_TEXT_TO_VIDEO_MODEL で Veo/Kling/Seedance 差替可)。AiShareVideoEngine 設定 (presenter=Hedra 既定 / cinematic) + 設定パネル切替 UI + fal_video.ts 純関数分離。レビュー指摘「終端失敗時 7.5 分ポーリング」を processing 限定 falRequestId 返却で解消
+- [PR #3947](https://github.com/kanta13jp1/my_web_app/pull/3947): TTS 読み辞書に 厳重→げんじゅう (実観測誤読)
+- [PR #4002](https://github.com/kanta13jp1/my_web_app/pull/4002): R24/R26 (並行フロー先行マージ分) の残存プロンプト矛盾 5 件解消 — (d) ブロック不在日の骨格要求矛盾 (捏造圧力 high)、関連性ゲート(B) 優先順位、鮮度例外ゲート、🔴🟡 スコープ、DISABLED ヘッダ折畳み。4 観点レビュー→敵対的検証 (confirmed 8/12) の残反映分
+- [PR #4008](https://github.com/kanta13jp1/my_web_app/pull/4008): オーナーへ X operator (user_profiles.is_admin) 付与 migration — x.post が R系ハードニング (07-12) で operator 限定化された一方オーナー未付与で本番 403。トリガーガード (20260712144000) の正規経路 = migration (postgres 権限) で付与。あわせて 2d38e1b が壊した MCP カタログ deno test を追随修正し main 緑化
+
+**次回優先**: 本番デプロイ後の AIシェア投稿 実機再試行 (403→成功確認) → データレポート型リードの初回実測 (Archetype lift n>=2 蓄積)。
+
+### Philosophy Alignment (WEB 2026-07-13)
+
+- 主要実装: AIシェア動画エンジン二択化 + 97K 実測構造のプロンプト移植 + X operator 認可修復
+- 該当原則: 5 (商品=ユーザー価値: 実測 114 倍差の勝ち型をプロダクトへ) / 8 (KPI=昨日の自分: 自アカウントの実測インプレッションを唯一の裁定者に) / 7 (資産負債: main 壊れテスト・認可付与漏れという負債を即返済)
+- 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
+- 理念的貢献: 「数字は実在するもののみ」の捏造ガードを保ったまま実データ供給を拡張 (AI_DEV_PRINCIPLES: deny-by-default と整合)
+- 懸念: なし (アーキタイプ採否は実測リフト行 n>=2 ゲートに委譲済み)
