@@ -21,6 +21,49 @@ const MIN_PREFECTURES = 40;
 const EVEN_GAP_THRESHOLD = 2;
 const TOP_LINES = 5;
 
+/// assets/data/cdp_local_members.json (週次 update_cdp_benchmark.mjs が正本)
+/// を EF 側で使える形へ正規化する。snapshot の cdpLocalMembers は EF では
+/// 常に 0 ハードコード(index.ts のコメント参照)のため、この asset が本番で
+/// 唯一の立憲実数源(レビュー F1: これ無しでは系列が一度も生成されない)。
+/// 形式: { prefectures: { "北海道": 57, "青森": 25, ... } } — キーは
+/// 都府県サフィックス無し(北海道のみ「道」付き)。
+export function normalizeCdpBenchmark(
+  raw: unknown,
+): Record<string, number> | null {
+  const record = raw as JsonRecord | null;
+  const prefectures = record && typeof record === "object"
+    ? (record as JsonRecord).prefectures
+    : null;
+  if (
+    typeof prefectures !== "object" || prefectures === null ||
+    Array.isArray(prefectures)
+  ) {
+    return null;
+  }
+  const result: Record<string, number> = {};
+  for (const [name, value] of Object.entries(prefectures as JsonRecord)) {
+    const count = typeof value === "number" && Number.isFinite(value)
+      ? Math.max(0, Math.trunc(value))
+      : null;
+    if (name.trim() === "" || count === null) continue;
+    result[name.trim()] = count;
+  }
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+/// snapshot の県名(東京都/京都府/香川県)を asset キー(東京/京都/香川)へ
+/// 名寄せする。北海道は「道」がクラス外なのでそのまま一致する。
+function cdpBenchmarkFor(
+  cdpByPrefecture: Record<string, number>,
+  prefectureName: string,
+): number | null {
+  const direct = cdpByPrefecture[prefectureName];
+  if (typeof direct === "number") return direct;
+  const stripped = prefectureName.replace(/[都府県]$/, "");
+  const bySuffix = cdpByPrefecture[stripped];
+  return typeof bySuffix === "number" ? bySuffix : null;
+}
+
 /// ISO 週キー (例: 2026-W28)。週次冪等の candidate_key に使う。
 export function isoWeekKey(observedAtIso: string): string | null {
   const parsed = Date.parse(observedAtIso);
@@ -75,6 +118,10 @@ export function buildPartyGapCandidateMetadata(
     datasetSource: string;
     dataset: string;
     targetUrl?: string;
+    /// EF 側の立憲実数源(normalizeCdpBenchmark の結果)。未指定/null 時は
+    /// snapshot の cdpLocalMembers へフォールバックする(EF snapshot では
+    /// 常に 0 のため cdpTotal ゲートで自然に見送りになる)。
+    cdpByPrefecture?: Record<string, number> | null;
   },
 ): JsonRecord | null {
   const prefectures: CanonicalPrefecture[] = snapshot.prefectures ?? [];
@@ -83,12 +130,18 @@ export function buildPartyGapCandidateMetadata(
   const dayLabel = jstDateLabel(options.observedAt);
   if (weekKey === null || dayLabel === null) return null;
 
-  const rows: GapRow[] = prefectures.map((prefecture) => ({
-    prefecture: prefecture.prefecture,
-    kokumin: prefecture.currentMembers,
-    cdp: prefecture.cdpLocalMembers,
-    gap: prefecture.currentMembers - prefecture.cdpLocalMembers,
-  }));
+  const cdpByPrefecture = options.cdpByPrefecture ?? null;
+  const rows: GapRow[] = prefectures.map((prefecture) => {
+    const cdp = cdpByPrefecture !== null
+      ? cdpBenchmarkFor(cdpByPrefecture, prefecture.prefecture) ?? 0
+      : prefecture.cdpLocalMembers;
+    return {
+      prefecture: prefecture.prefecture,
+      kokumin: prefecture.currentMembers,
+      cdp,
+      gap: prefecture.currentMembers - cdp,
+    };
+  });
   const cdpTotal = rows.reduce((sum, row) => sum + row.cdp, 0);
   // 立憲参考が全県 0 = 参考データ未同期の日。比較レポートとして成立しない
   // ので候補を作らない(0 との比較は「実測」を名乗れない)。
@@ -99,9 +152,14 @@ export function buildPartyGapCandidateMetadata(
   const cdpLead = rows.filter((row) => row.gap < -EVEN_GAP_THRESHOLD);
   const even = rows.length - kokuminLead.length - cdpLead.length;
   const byGapDesc = [...rows].sort((left, right) => right.gap - left.gap);
-  const topKokumin = byGapDesc.slice(0, TOP_LINES).filter((row) => row.gap > 0);
+  // 「リード上位」の掲載条件はサマリ行のリード定義(|gap| > EVEN_GAP_THRESHOLD)
+  // と同一にする。gap>0 で拾うとサマリ「リード0県」の直後に互角圏(+1/+2)の
+  // 県が「リード上位」として並ぶ自己矛盾レポートになる(レビュー F2)。
+  const topKokumin = byGapDesc.slice(0, TOP_LINES).filter((row) =>
+    row.gap > EVEN_GAP_THRESHOLD
+  );
   const topCdp = [...byGapDesc].reverse().slice(0, TOP_LINES).filter((row) =>
-    row.gap < 0
+    row.gap < -EVEN_GAP_THRESHOLD
   );
 
   const lead = [

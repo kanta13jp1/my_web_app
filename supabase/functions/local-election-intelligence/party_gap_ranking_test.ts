@@ -5,11 +5,14 @@ import {
 import {
   buildPartyGapCandidateMetadata,
   isoWeekKey,
+  normalizeCdpBenchmark,
   PARTY_GAP_VARIANT,
 } from "./party_gap_ranking.ts";
-import type {
-  CanonicalLocalElectionSnapshot,
-  CanonicalPrefecture,
+import {
+  buildLocalElectionPostCandidates,
+  type CanonicalLocalElectionSnapshot,
+  type CanonicalPrefecture,
+  computeLocalElectionDiff,
 } from "./snapshot_history.ts";
 import { classifyPostArchetype } from "../growth-hub/x_post_archetype.ts";
 
@@ -179,6 +182,98 @@ Deno.test("gap ranking replies carry all-47 table, alerts, and final URL", () =>
   assert(alerts.includes("🔴 国民民主 議員不在 1県: 鳥取県"));
   assert(cta.includes("utm_content=party_gap_ranking"));
   assert(!String(metadata!.text).includes("https://my-web-app"));
+});
+
+Deno.test("normalizeCdpBenchmark parses the repo asset shape", () => {
+  // assets/data/cdp_local_members.json の実形(県サフィックス無しキー)。
+  const map = normalizeCdpBenchmark({
+    source: "https://cdp-japan.jp/members/prefecture/",
+    prefectures: { "北海道": 57, "東京": 56, "香川": 23, "junk": "x" },
+  });
+  assert(map !== null);
+  assertEquals(map!["東京"], 56);
+  assertEquals(map!["junk"], undefined);
+  assertEquals(normalizeCdpBenchmark(null), null);
+  assertEquals(normalizeCdpBenchmark({ prefectures: {} }), null);
+  assertEquals(normalizeCdpBenchmark({ prefectures: [] }), null);
+});
+
+Deno.test("cdpByPrefecture map overrides the hardcoded-zero snapshot cdp (F1)", () => {
+  // 本番 EF snapshot は cdpLocalMembers=0 ハードコード。asset 由来マップが
+  // 唯一の立憲実数源で、県名は「東京都↔東京」のサフィックス名寄せで一致する。
+  const zeroCdp = snapshot().prefectures.map((entry) => ({
+    ...entry,
+    cdpLocalMembers: 0,
+  }));
+  const cdpMap: Record<string, number> = {
+    "香川": 23,
+    "茨城": 14,
+    "北海道": 57,
+    "千葉": 57,
+    "神奈川": 59,
+    "鳥取": 18,
+  };
+  for (let index = 7; index <= 47; index++) cdpMap[`県${index}`] = 3;
+  const metadata = buildPartyGapCandidateMetadata(snapshot(zeroCdp), {
+    ...OPTIONS,
+    cdpByPrefecture: cdpMap,
+  });
+  assert(metadata !== null);
+  const text = String(metadata!.text);
+  assert(text.includes("香川県 +3（26 vs 23）"));
+  assert(text.includes("北海道 -52（5 vs 57）"));
+  // マップ未指定なら snapshot の 0 へフォールバック=ゲートで見送り。
+  assertEquals(
+    buildPartyGapCandidateMetadata(snapshot(zeroCdp), OPTIONS),
+    null,
+  );
+});
+
+Deno.test("リード上位 respects the same threshold as the summary counts (F2)", () => {
+  // 全県が互角圏(gap -2..+2)の週: サマリ「リード0県」と矛盾する
+  // 「リード上位」リストを出さない(自己矛盾レポート防止)。
+  const evenPrefectures = Array.from(
+    { length: 47 },
+    (_, index) => prefecture(`県${index + 1}`, 3 + (index % 3), 3),
+  ); // gap は 0/+1/+2 のみ
+  const metadata = buildPartyGapCandidateMetadata(
+    snapshot(evenPrefectures),
+    OPTIONS,
+  );
+  assert(metadata !== null);
+  const text = String(metadata!.text);
+  assert(text.includes("国民民主リード(差+3人以上): 0県"));
+  assert(text.includes("(リード県なし)"));
+  assert(text.includes("(該当なし)"));
+});
+
+Deno.test("weekly key uses wall-clock queueObservedAt on unchanged-data weeks (F3)", () => {
+  // isConsecutiveRetry 経路では snapshot 行の observed_at が前週のまま止まる。
+  // 週キーは wall-clock(queueObservedAt)から採らないと、データ無変化週に
+  // 候補が一度も作られない。buildLocalElectionPostCandidates の配線ごと固定。
+  const snap = snapshot();
+  const emptyDiff = computeLocalElectionDiff(snap, snap);
+  assertEquals(emptyDiff.significantKinds.length, 0);
+  const rows = buildLocalElectionPostCandidates(
+    snap,
+    emptyDiff,
+    "obs-1",
+    "hash-1",
+    "prev-id",
+    "prev-hash",
+    "v1",
+    "2026-07-06T21:00:00Z", // stale = 前週 W28
+    {
+      queueObservedAt: "2026-07-13T21:00:00Z", // wall clock = W29
+      cdpByPrefecture: null,
+    },
+  );
+  // diff 無しでも定点観測系列は生成され、週キーは wall clock の W29。
+  assertEquals(rows.length, 1);
+  assertEquals(
+    rows[0].candidate_key,
+    "local-election:party-gap:2026-W29",
+  );
 });
 
 Deno.test("gap ranking self-classifies as data_report", () => {
