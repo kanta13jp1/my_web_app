@@ -22391,6 +22391,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final billingRows = workbook.billingConfirmationPendingRows;
     final sourceRows = workbook.paymentSourceMissingRows;
     final consultationRows = _paymentConsultationRows(workbook);
+    final showAllBillingRows =
+        _debtMasterReviewFilter == _DebtMasterReviewFilter.billingConfirmation;
+    final showAllSourceRows =
+        _debtMasterReviewFilter == _DebtMasterReviewFilter.paymentSource;
+    final visibleBillingRows = showAllBillingRows
+        ? billingRows
+        : billingRows.take(5).toList(growable: false);
+    final visibleSourceRows = showAllSourceRows
+        ? sourceRows
+        : sourceRows.take(5).toList(growable: false);
     final hasReviewTargets = billingRows.isNotEmpty ||
         sourceRows.isNotEmpty ||
         consultationRows.isNotEmpty;
@@ -22561,9 +22571,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
             ),
             const SizedBox(height: 6),
-            for (final row in billingRows.take(5))
+            for (final row in visibleBillingRows)
               _buildBillingConfirmationReviewRow(row),
-            if (billingRows.length > 5)
+            if (!showAllBillingRows && billingRows.length > 5)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
@@ -22582,9 +22592,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
             ),
             const SizedBox(height: 6),
-            for (final row in sourceRows.take(5))
+            for (final row in visibleSourceRows)
               _buildMissingPaymentSourceReviewRow(row, workbook),
-            if (sourceRows.length > 5)
+            if (!showAllSourceRows && sourceRows.length > 5)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
