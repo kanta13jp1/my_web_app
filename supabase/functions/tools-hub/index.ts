@@ -1168,7 +1168,7 @@ async function handleMcpFacade(
     let query = admin
       .from("notes")
       .select("id, title, content, created_at, updated_at")
-      .eq("user_id", auth.ctx.sub)
+      .eq("user_id", auth.ctx.subject)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (q !== "") {
@@ -1216,7 +1216,7 @@ async function handleMcpFacade(
     }
     const { data: note, error: noteErr } = await admin
       .from("notes")
-      .insert({ user_id: auth.ctx.sub, ...payloadResult.payload })
+      .insert({ user_id: auth.ctx.subject, ...payloadResult.payload })
       .select("id, title, content, created_at, updated_at")
       .single();
     if (noteErr) throw new Error(noteErr.message);
