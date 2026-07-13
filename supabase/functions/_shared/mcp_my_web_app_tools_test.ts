@@ -9,15 +9,25 @@ import {
   mcpRequestedScopes,
 } from "./mcp_my_web_app_tools.ts";
 
-Deno.test("MCP tool catalog exposes the three Issue 793 prototype tools", () => {
+Deno.test("MCP tool catalog exposes the Issue 793 prototype tools + 自分API v2 notes tools", () => {
   const tools = buildMcpToolCatalog();
 
   assertEquals(tools.map((tool) => tool.name), [
     "wbs.tasks.list",
     "feature_request.create",
     "user_tasks.list",
+    "notes.list",
+    "notes.create",
   ]);
   assertEquals(tools[1].write_confirmation_required, true);
+});
+
+Deno.test("notes.create is a write tool with its own confirmation phrase", () => {
+  assertEquals(isMcpWriteTool("notes.create"), true);
+  assertEquals(isMcpWriteTool("notes.list"), false);
+  assertEquals(mcpRequestedScopes("notes.create"), ["create"]);
+  assertEquals(mcpConfirmationPhrase("notes.create"), "create_note");
+  assertEquals(mcpActionToToolName("mcp.notes.list"), "notes.list");
 });
 
 Deno.test("MCP action names map to tool scopes", () => {
