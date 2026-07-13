@@ -8376,6 +8376,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         title: const Text('資産管理闘争'),
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
+        actions: [
+          // R24d: 家計トラッカー投稿の常設入口。従来は AI 分析レポート内の
+          // 負債トレンドカードにしか無く投稿手段が見つからなかった。検出0件
+          // でも「アラート: なし+給料日カウントダウン」の正直なスコアボードを
+          // 投稿できる(金額は一切含まない)。
+          if (_householdTrackerScheduleAllowed)
+            IconButton(
+              tooltip: '家計トラッカーをXへ投稿（計測対象・金額非公開）',
+              icon: _householdTrackerPosting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.ios_share),
+              onPressed: _householdTrackerPosting
+                  ? null
+                  : () => _postHouseholdTrackerNow(assetLiabilityWorkbook),
+            ),
+        ],
       ),
       backgroundColor: const Color(0xFF64748B),
       body: SingleChildScrollView(
@@ -20456,6 +20476,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } finally {
       if (mounted) setState(() => _householdTrackerScheduleSaving = false);
     }
+  }
+
+  /// R24d: AppBar 常設ボタン用。現在の workbook から負債トレンド insights を
+  /// その場で算出して投稿する(AI 分析レポートカードの表示を待たない)。
+  Future<void> _postHouseholdTrackerNow(
+    AssetLiabilityWorkbook? workbook,
+  ) async {
+    if (workbook == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('資産データの読込中です。少し待ってからお試しください')),
+      );
+      return;
+    }
+    final currentMonthKey =
+        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    // キャッシュ済み前月残高が当月のものでない間は渡さない(取り違え防止)。
+    final priorMonthAccountBalances =
+        _assetDebtTrendPriorBalancesMonth == currentMonthKey
+            ? _assetDebtTrendPriorBalances
+            : const <String, double>{};
+    final report = _assetManagementInsightService.buildReport(
+      workbook: workbook,
+      userProfile: _assetManagementUserProfile,
+      mainAccountId: _assetManagementMainAccountId,
+      priorMonthAccountBalances: priorMonthAccountBalances,
+    );
+    await _postHouseholdTracker(report.debtTrendInsights);
   }
 
   /// R24b: 負債トレンドの実データ(件数・日数・方向のみ/金額なし)を post A 同型の
