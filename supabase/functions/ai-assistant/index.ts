@@ -66,7 +66,8 @@ const MODEL_CATALOG = [
   {
     name: "deepseek-v4-pro",
     provider: "DeepSeek",
-    description: "推論特化の DeepSeek V4 Pro (旧 deepseek-reasoner / 2026-07-24移行)",
+    description:
+      "推論特化の DeepSeek V4 Pro (旧 deepseek-reasoner / 2026-07-24移行)",
     score: 780,
   },
   {
