@@ -32668,3 +32668,29 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 5 (商品=ユーザー価値: 移行障壁を下げる + 要望の優先度可視化) / 6 (資本=時間: 純関数抽出 + テストで資産化) / 8 (KPI=昨日の自分: 競合追随の継続)。
 - 整合性スコア: **7/9** (原則 4 人事・9 IPO は非該当)。
 - 懸念: XLSX の複雑書式 (複数シート/結合セル/数式) は先頭シート・プレーン値のみ対応 (MVP)。将来 `excel` パッケージ導入で高精度化余地。
+
+## セッション記録: Claude Schedule daily-report (2026-07-13 00:02 UTC / WEB版)
+
+**本日の主要競合インテリジェンス (WEB版 Schedule Agent WebSearch)**:
+
+### Notion 3.6 — Developer Platform 全貌確定 (🔴🔴 最高脅威)
+- External Agents API (Alpha): Claude/Codex/カスタム agent を Notion に招く
+- Notion Developer Platform: Worker = hosted function as agent tool (08-11以降 credits課金)
+- Notion MCP 91% token削減 — 自社 MCP コスト設計への影響
+- Notion CLI + Agent SDK + Webhook triggers
+- XLSX/DOCX/PPTX agent 入出力 (自社 07-12 XLSX/DOCX インポートと同週)
+- **対策**: 自分API v1 を Webhook trigger 対応に拡張、MCP バッチ化でコスト最適化
+
+### GitHub Issue Fields GA (2026-07-02) — 自社先行実装を確認
+- 全 org で priority/effort/date/custom fields が GA
+- 自社の構造化タスク管理 (07-12実装) と同型機能 → **差別化: 個人CEO文脈 + 日本語**
+
+### 運用メモ
+- Supabase Edge Functions (schedule-daily-digest / viral-growth-engine / post-x-update / check-competitor-updates) は **ネットワークポリシーでブロック** (proxy 403)。GHA ジョブは正常 (同エンドポイントは GHA からのみアクセス可)。
+- 本セッションの WebSearch によるインテリジェンスを `docs/competitor-reports/2026-07-13.md` に追記。
+- 本日の `docs/daily-reports/2026-07-13.md` は GHA で先行生成済み (48 users / 119 未対応 requests)。
+
+### AI 行動提案
+1. `自分API v1` を Webhook trigger + Worker hosting 相当に拡張 (Notion Developer Platform 対抗)
+2. MCP サーバのバッチ化・キャッシュ化で token コスト 50%+ 削減 (Notion 91%削減 追従)
+3. 構造化タスク管理を「個人 CEO の優先度管理」として LP に GitHub Issue Fields との差別化を明記
