@@ -3024,23 +3024,15 @@ serve(async (req: Request) => {
         return json({ success: true, likers, item_id: itemId });
       }
 
-      // blog.qiita_follow — ユーザーをフォロー
+      // blog.qiita_follow は恒久廃止 (2026-07-13): 他ユーザーへの自動フォローは
+      // Qiita アカウント停止 (2026-07-12 / ToS 違反) の最有力原因。
+      // 対他者自動アクションは再実装禁止 — 410 Gone で明示する。
       case "blog.qiita_follow": {
-        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) {
-          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
-        }
-        const userId = String(body.user_id ?? "");
-        if (!userId) return json({ error: "user_id required" }, 400);
-        const qr = await qiitaFetch(
-          `/users/${userId}/following`,
-          qiitaToken,
-          { method: "PUT" },
-          "schedule-hub.blog.qiita_follow",
-        );
-        // 204 No Content = success (Response.ok は 2xx 全体を含む)
-        if (!qr.ok) return await upstreamErrorJson("qiita", qr);
-        return json({ success: true, status: qr.status, user_id: userId });
+        return json({
+          success: false,
+          error:
+            "blog.qiita_follow is permanently removed (auto-follow caused the 2026-07-12 Qiita account suspension)",
+        }, 410);
       }
 
       // blog.qiita_delete — 記事を削除
@@ -3163,18 +3155,14 @@ serve(async (req: Request) => {
       }
 
       // blog.sync_engagement — Qiita 全記事の likes/comments/likers を DB に同期
-      // body: { auto_reply?: bool, auto_follow?: bool, reply_template?: string }
+      // (read-only 同期のみ)。auto_reply / auto_follow は恒久廃止 (2026-07-13):
+      // 対他者自動アクションは Qiita アカウント停止 (2026-07-12 / ToS 違反) の
+      // 最有力原因のため再実装禁止。
       case "blog.sync_engagement": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
         if (!qiitaToken) {
           return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
         }
-        const autoReply = Boolean(body.auto_reply);
-        const autoFollow = Boolean(body.auto_follow);
-        const replyTemplate = String(
-          body.reply_template ??
-            "コメントありがとうございます！参考になれば幸いです。",
-        );
 
         // 1. 全記事取得
         const articlesRes = await qiitaFetch(
@@ -3210,8 +3198,8 @@ serve(async (req: Request) => {
           onConflict: "platform,article_id",
         });
 
-        let totalComments = 0, repliedCount = 0;
-        let totalLikers = 0, followedCount = 0;
+        let totalComments = 0;
+        let totalLikers = 0;
 
         // 3. 各記事のコメント・ライカーを取得
         for (const article of articles) {
@@ -3255,31 +3243,6 @@ serve(async (req: Request) => {
                   onConflict: "platform,comment_id",
                   ignoreDuplicates: true,
                 });
-
-                // auto-reply
-                if (autoReply && !alreadyReplied) {
-                  const rr = await qiitaFetch("/comments", qiitaToken, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      item_id: article.id,
-                      body: replyTemplate,
-                    }),
-                  }, "schedule-hub.blog.sync_engagement.reply");
-                  if (rr.ok) {
-                    await admin.from("blog_comments")
-                      .update({
-                        replied: true,
-                        reply_text: replyTemplate,
-                        replied_at: new Date().toISOString(),
-                      })
-                      .eq("platform", "qiita")
-                      .eq("comment_id", c.id);
-                    repliedCount++;
-                  }
-                }
               }
             }
           }
@@ -3319,26 +3282,6 @@ serve(async (req: Request) => {
                   onConflict: "article_id,qiita_user_id",
                   ignoreDuplicates: true,
                 });
-
-                // auto-follow
-                if (autoFollow && !alreadyFollowed) {
-                  const fr = await qiitaFetch(
-                    `/users/${uid}/following`,
-                    qiitaToken,
-                    { method: "PUT" },
-                    "schedule-hub.blog.sync_engagement.follow",
-                  );
-                  if (fr.status === 204 || fr.ok) {
-                    await admin.from("blog_likers")
-                      .update({
-                        followed: true,
-                        followed_at: new Date().toISOString(),
-                      })
-                      .eq("article_id", article.id)
-                      .eq("qiita_user_id", uid);
-                    followedCount++;
-                  }
-                }
               }
             }
           }
@@ -3348,11 +3291,7 @@ serve(async (req: Request) => {
           success: true,
           articles_synced: articles.length,
           total_comments: totalComments,
-          replied: repliedCount,
           total_likers: totalLikers,
-          followed: followedCount,
-          auto_reply: autoReply,
-          auto_follow: autoFollow,
         });
       }
 
