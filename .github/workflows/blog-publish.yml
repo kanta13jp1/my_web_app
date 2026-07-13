@@ -356,9 +356,11 @@ jobs:
 
           QIITA_URL=""
           DEVTO_URL=""
+          PUBLISH_ATTEMPTED="false"
 
           # Qiita: 日本語コンテンツ
           if echo "$PLATFORMS" | grep -q "qiita"; then
+            PUBLISH_ATTEMPTED="true"
             echo "📤 Qiita に日本語記事を投稿..."
             POST_ID="${{ steps.register.outputs.post_id }}"
             PAYLOAD=$(jq -n \
@@ -385,6 +387,7 @@ jobs:
           # dev.to: 英語コンテンツ (draft_path_en が指定されている場合のみ)
           if echo "$PLATFORMS" | grep -q "devto"; then
             if [ -n "$DRAFT_PATH_EN" ] && [ -f "$DRAFT_PATH_EN" ]; then
+              PUBLISH_ATTEMPTED="true"
               echo "📤 dev.to に英語記事を投稿..."
               CONTENT_EN=$(cat "$DRAFT_PATH_EN")
               # 英語ドラフトのタイトルを抽出
@@ -425,11 +428,10 @@ jobs:
           echo "qiita_url=$QIITA_URL" >> $GITHUB_OUTPUT
           echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
 
-          # Fail closed: a requested publish that produced no platform URL must
-          # never advance the DB/frontmatter to a published state. This is
-          # especially important for scheduled dev.to-only runs, where an
-          # English draft may not exist.
-          if [ -z "$QIITA_URL" ] && [ -z "$DEVTO_URL" ]; then
+          # Fail closed: only when a publish was actually attempted (not skipped)
+          # and no platform URL was produced. Skipping (e.g. no English draft for
+          # scheduled devto-only runs) exits 0 to avoid spurious workflow-failure issues.
+          if [ "$PUBLISH_ATTEMPTED" = "true" ] && [ -z "$QIITA_URL" ] && [ -z "$DEVTO_URL" ]; then
             echo "::error::No platform publish succeeded; leaving the draft unpublished"
             exit 1
           fi
