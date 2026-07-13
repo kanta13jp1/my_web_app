@@ -317,11 +317,19 @@ async function listXMetricSnapshots(
   for (let offset = 0; offset < sourceLogIds.length; offset += batchSize) {
     const ids = sourceLogIds.slice(offset, offset + batchSize);
     for (let page = 0; page < maxPagesPerBatch; page += 1) {
+      // ORDER は (source_log_id, created_at) — partial index
+      // idx_hub_data_x_metric_snapshot_log_created (#4030) と一致させ、
+      // source_log_id IN(...) を index 走査 + merge-append で返す (sort 回避)。
+      // created_at 単独 order だと index を order に使えず大量行 sort →
+      // service_role (cron) 経路で statement timeout していた。
+      // normalizeXMetricWindows は source_log_id 毎に snapshot を突合するため
+      // post 跨ぎの並び順には非依存。
       let query = admin
         .from("hub_data")
         .select("id, metadata, created_at")
         .eq("source", "x_post_metric_snapshot")
         .in("metadata->>source_log_id", ids)
+        .order("metadata->>source_log_id", { ascending: true })
         .order("created_at", { ascending: true })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       if (userId !== "service_role") {
