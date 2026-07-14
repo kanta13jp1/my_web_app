@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/elearning_course.dart';
+
 /// eラーニングコース管理ページ
 /// コース一覧・学習進捗・クイズ・証明書。
 /// elearning-course-manager Edge Function と連携。
@@ -19,8 +21,8 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
 
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _courses = [];
-  List<Map<String, dynamic>> _inProgress = [];
+  List<ELearningCourse> _courses = [];
+  List<ELearningCourse> _inProgress = [];
   List<Map<String, dynamic>> _certificates = [];
 
   @override
@@ -59,9 +61,11 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
         body: {'action': 'course.certificates'},
       );
 
+      final courses = ELearningCourse.listFromResponse(coursesRes.data);
+      final progressById = ELearningCourse.progressByCourseId(progressRes.data);
       setState(() {
-        _courses = _extractList(coursesRes.data, 'courses');
-        _inProgress = _extractList(progressRes.data, 'courses');
+        _courses = courses;
+        _inProgress = ELearningCourse.inProgress(courses, progressById);
         _certificates = _extractList(certRes.data, 'certificates');
       });
     } catch (e) {
@@ -130,7 +134,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
   }
 
   Widget _buildCoursesTab(
-    List<Map<String, dynamic>> courses, {
+    List<ELearningCourse> courses, {
     bool showProgress = false,
   }) {
     if (courses.isEmpty) {
@@ -156,14 +160,11 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
       itemCount: courses.length,
       itemBuilder: (ctx, i) {
         final c = courses[i];
-        final title = c['title'] as String? ?? 'コース ${i + 1}';
-        final instructor = c['instructor'] as String? ?? '';
-        final duration = c['durationHours'] as int? ?? 0;
-        final level = c['level'] as String? ?? '';
-        final progress = (c['progress'] as num?)?.toDouble() ?? 0;
-        final enrolled = c['enrolled'] as bool? ?? false;
-        final rating = (c['rating'] as num?)?.toDouble() ?? 0;
-        final emoji = c['emoji'] as String? ?? '📚';
+        final title = c.title.isNotEmpty ? c.title : 'コース ${i + 1}';
+        final language = c.language;
+        final level = c.level;
+        final progress = c.progress.toDouble();
+        final enrolled = c.progress > 0;
 
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
@@ -174,9 +175,9 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                 leading: CircleAvatar(
                   backgroundColor:
                       Theme.of(context).colorScheme.primaryContainer,
-                  child: Text(
-                    emoji,
-                    style: const TextStyle(
+                  child: const Text(
+                    '📚',
+                    style: TextStyle(
                       fontSize: 20,
                       height: 1.5,
                     ),
@@ -189,9 +190,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                     height: 1.5,
                   ),
                 ),
-                subtitle: Text(
-                  '${instructor.isNotEmpty ? "$instructor · " : ""}${duration > 0 ? "$duration時間" : ""}',
-                ),
+                subtitle: language.isNotEmpty ? Text('言語: $language') : null,
                 trailing: level.isNotEmpty
                     ? Chip(
                         label: Text(
@@ -227,49 +226,34 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                     ],
                   ),
                 ),
-              if (rating > 0 || enrolled)
+              if (!enrolled)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: Row(
                     children: [
-                      if (rating > 0) ...[
-                        const Icon(
-                          Icons.star,
-                          size: 14,
-                          color: Color(0xFFFFC107),
-                        ),
-                        Text(
-                          ' $rating',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
                       const Spacer(),
-                      if (!enrolled)
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            try {
-                              await _supabase.functions.invoke(
-                                'social-commerce-hub',
-                                body: {
-                                  'action': 'course.enroll',
-                                  'courseId': c['id'],
-                                },
-                              );
-                              await _fetchData();
-                            } catch (_) {}
-                          },
-                          icon: const Icon(Icons.add, size: 14),
-                          label: const Text('受講する'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          try {
+                            await _supabase.functions.invoke(
+                              'social-commerce-hub',
+                              body: {
+                                'action': 'course.enroll',
+                                'course_id': c.id,
+                              },
+                            );
+                            await _fetchData();
+                          } catch (_) {}
+                        },
+                        icon: const Icon(Icons.add, size: 14),
+                        label: const Text('受講する'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                         ),
+                      ),
                     ],
                   ),
                 ),

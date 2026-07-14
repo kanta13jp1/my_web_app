@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/language_deck.dart';
+
 /// 語学学習ページ
 /// language-learning Edge Function と連携
 /// Duolingo / Anki 競合
@@ -17,14 +19,13 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
   late final TabController _tabController;
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _decks = [];
-  Map<String, dynamic>? _selectedDeck;
-  List<Map<String, dynamic>> _cards = [];
-  List<Map<String, dynamic>> _reviewCards = [];
+  List<LanguageDeck> _decks = [];
+  LanguageDeck? _selectedDeck;
+  List<Flashcard> _cards = [];
+  List<Flashcard> _reviewCards = [];
   int _reviewIndex = 0;
   bool _showAnswer = false;
-  Map<String, dynamic> _streak = {};
-  Map<String, dynamic> _stats = {};
+  LanguageStats _langStats = const LanguageStats(streakDays: 0, totalCards: 0);
 
   final _deckTitleCtrl = TextEditingController();
   final _deckDescCtrl = TextEditingController();
@@ -55,7 +56,6 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _fetchDecks();
-    _fetchStreak();
     _fetchStats();
   }
 
@@ -84,14 +84,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         'social-commerce-hub',
         body: {'action': 'lang.list_decks'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['decks'] is List) {
-        setState(() {
-          _decks = (data['decks'] as List).cast<Map<String, dynamic>>();
-        });
-      } else {
-        setState(() => _decks = []);
-      }
+      setState(() => _decks = LanguageDeck.listFromResponse(response.data));
     } catch (e) {
       if (mounted) setState(() => _errorMessage = '単語帳の取得に失敗しました: $e');
     } finally {
@@ -105,12 +98,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         'social-commerce-hub',
         body: {'action': 'lang.list_cards', 'deck_id': deckId},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['cards'] is List) {
-        setState(() {
-          _cards = (data['cards'] as List).cast<Map<String, dynamic>>();
-        });
-      }
+      setState(() => _cards = Flashcard.listFromResponse(response.data));
     } catch (_) {}
   }
 
@@ -120,45 +108,34 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         'social-commerce-hub',
         body: {'action': 'lang.review_session', 'deck_id': deckId},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['dueCards'] is List) {
-        setState(() {
-          _reviewCards =
-              (data['dueCards'] as List).cast<Map<String, dynamic>>();
-          _reviewIndex = 0;
-          _showAnswer = false;
-        });
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _fetchStreak() async {
-    try {
-      final response = await _supabase.functions.invoke(
-        'social-commerce-hub',
-        body: {'action': 'lang.streak'},
-      );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['streak'] is Map) {
-        setState(
-          () => _streak = Map<String, dynamic>.from(data['streak'] as Map),
-        );
-      }
+      // EF は review_session でも `cards` キーで返す (旧実装の `dueCards` は
+      // 常に空だった)。
+      setState(() {
+        _reviewCards = Flashcard.listFromResponse(response.data);
+        _reviewIndex = 0;
+        _showAnswer = false;
+      });
     } catch (_) {}
   }
 
   Future<void> _fetchStats() async {
     try {
-      final response = await _supabase.functions.invoke(
+      final streakRes = await _supabase.functions.invoke(
+        'social-commerce-hub',
+        body: {'action': 'lang.streak'},
+      );
+      final statsRes = await _supabase.functions.invoke(
         'social-commerce-hub',
         body: {'action': 'lang.stats'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['stats'] is Map) {
-        setState(
-          () => _stats = Map<String, dynamic>.from(data['stats'] as Map),
-        );
-      }
+      // EF は `{streak_days}` / `{total_cards, decks}` を top-level で返す
+      // (旧実装の `{streak:{...}}` / `{stats:{...}}` 期待は常に空だった)。
+      setState(
+        () => _langStats = LanguageStats.fromResponses(
+          streakRes.data,
+          statsRes.data,
+        ),
+      );
     } catch (_) {}
   }
 
@@ -200,7 +177,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         'social-commerce-hub',
         body: {
           'action': 'lang.add_card',
-          'deck_id': deck['deck_id'] as String? ?? '',
+          // EF は `deck` キーで受ける (旧実装の `deck_id` は無視され default 化)。
+          'deck': deck.id,
+          'deck_id': deck.id,
           'front': _cardFrontCtrl.text.trim(),
           'back': _cardBackCtrl.text.trim(),
           'example': _cardExampleCtrl.text.trim(),
@@ -210,7 +189,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
       _cardBackCtrl.clear();
       _cardExampleCtrl.clear();
       if (mounted) Navigator.of(context).pop();
-      await _fetchCards(deck['deck_id'] as String? ?? '');
+      await _fetchCards(deck.id);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -228,7 +207,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         'social-commerce-hub',
         body: {
           'action': 'lang.review_card',
-          'card_id': card['card_id'] as String? ?? '',
+          // EF は `id` キーで更新する (旧実装の `card_id` では no-op だった)。
+          'id': card.id,
           'correct': correct,
           'quality': correct ? 4 : 1,
         },
@@ -243,7 +223,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
           _showAnswer = false;
         }
       });
-      await _fetchStreak();
+      await _fetchStats();
     } catch (_) {}
   }
 
@@ -442,7 +422,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
     return Column(
       children: [
         // Streak banner
-        if (_streak.isNotEmpty)
+        if (_langStats.streakDays > 0)
           Container(
             color: Theme.of(context).brightness == Brightness.dark
                 ? const Color(0xFF2A1F0A)
@@ -459,7 +439,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${_streak['current'] ?? 0}日連続学習中',
+                  '${_langStats.streakDays}日連続学習中',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFFF6B35),
@@ -468,7 +448,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 ),
                 const Spacer(),
                 Text(
-                  '最長: ${_streak['longest'] ?? 0}日',
+                  'カード ${_langStats.totalCards}枚',
                   style: const TextStyle(
                     color: Color(0xFF9CA3AF),
                     height: 1.5,
@@ -484,18 +464,19 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, i) {
               final deck = _decks[i];
-              final fromLang = deck['language_from'] as String? ?? '';
-              final toLang = deck['language_to'] as String? ?? '';
-              final cardCount = deck['card_count'] ?? 0;
-              final isSelected = _selectedDeck?['deck_id'] == deck['deck_id'];
+              final lang = deck.language;
+              final isSelected = _selectedDeck?.id == deck.id;
               return Card(
                 elevation: isSelected ? 4 : 1,
                 color: isSelected ? const Color(0xFFFFF3E0) : null,
                 child: ListTile(
                   leading: const Icon(Icons.book, color: Color(0xFFFF6B35)),
-                  title: Text(deck['title'] as String? ?? ''),
+                  title: Text(deck.name),
                   subtitle: Text(
-                    '${_langLabels[fromLang] ?? fromLang} → ${_langLabels[toLang] ?? toLang} | $cardCount 枚',
+                    [
+                      if (lang.isNotEmpty) _langLabels[lang] ?? lang,
+                      if (deck.description.isNotEmpty) deck.description,
+                    ].join(' | '),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -517,9 +498,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         tooltip: 'レビュー開始',
                         onPressed: () async {
                           setState(() => _selectedDeck = deck);
-                          await _fetchReviewCards(
-                            deck['deck_id'] as String? ?? '',
-                          );
+                          await _fetchReviewCards(deck.id);
                           _tabController.animateTo(1);
                         },
                       ),
@@ -527,7 +506,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                   ),
                   onTap: () async {
                     setState(() => _selectedDeck = deck);
-                    await _fetchCards(deck['deck_id'] as String? ?? '');
+                    await _fetchCards(deck.id);
                   },
                 ),
               );
@@ -550,7 +529,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 Padding(
                   padding: const EdgeInsets.all(8),
                   child: Text(
-                    '「${_selectedDeck!['title']}」のカード (${_cards.length}枚)',
+                    '「${_selectedDeck!.name}」のカード (${_cards.length}枚)',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       height: 1.5,
@@ -565,8 +544,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                       final card = _cards[i];
                       return ListTile(
                         dense: true,
-                        title: Text(card['front'] as String? ?? ''),
-                        trailing: Text(card['back'] as String? ?? ''),
+                        title: Text(card.front),
+                        trailing: Text(card.back),
                       );
                     },
                   ),
@@ -627,8 +606,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () =>
-                  _fetchReviewCards(_selectedDeck!['deck_id'] as String? ?? ''),
+              onPressed: () => _fetchReviewCards(_selectedDeck!.id),
               icon: const Icon(Icons.refresh),
               label: const Text('再チェック'),
             ),
@@ -699,7 +677,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          card['front'] as String? ?? '',
+                          card.front,
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
@@ -726,7 +704,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          card['back'] as String? ?? '',
+                          card.back,
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -735,13 +713,12 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        if (card['example'] != null &&
-                            (card['example'] as String).isNotEmpty) ...[
+                        if (card.example.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Text(
-                              '例: ${card['example']}',
+                              '例: ${card.example}',
                               style: TextStyle(
                                 color: Theme.of(context)
                                     .colorScheme
@@ -819,16 +796,11 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
   }
 
   Widget _buildStatsTab() {
-    final totalCards = _stats['totalCards'] ?? 0;
-    final totalReviews = _stats['totalReviews'] ?? 0;
-    final correctRate = _stats['correctRate'] ?? 0;
-    final deckCount = _stats['deckCount'] ?? _decks.length;
+    final totalCards = _langStats.totalCards;
+    final deckCount = _decks.length;
 
     return RefreshIndicator(
-      onRefresh: () async {
-        await _fetchStats();
-        await _fetchStreak();
-      },
+      onRefresh: _fetchStats,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -853,7 +825,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${_streak['current'] ?? 0}日連続',
+                        '${_langStats.streakDays}日連続',
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -862,7 +834,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         ),
                       ),
                       Text(
-                        '最長: ${_streak['longest'] ?? 0}日',
+                        'カード ${_langStats.totalCards}枚',
                         style: const TextStyle(
                           color: Color(0xFF9CA3AF),
                           height: 1.5,
@@ -897,16 +869,10 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 const Color(0xFFFF6B35),
               ),
               _buildStatCard(
-                '総レビュー',
-                '$totalReviews',
-                Icons.history,
+                '連続学習',
+                '${_langStats.streakDays}日',
+                Icons.local_fire_department,
                 const Color(0xFF4CAF50),
-              ),
-              _buildStatCard(
-                '正解率',
-                '$correctRate%',
-                Icons.percent,
-                const Color(0xFF3D5AFE),
               ),
             ],
           ),

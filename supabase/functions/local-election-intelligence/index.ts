@@ -12,6 +12,7 @@ import {
   type ScheduleSourceFetchHealth,
   X_POST_CANDIDATE_HUB_SOURCE,
 } from "./snapshot_history.ts";
+import { normalizeCdpBenchmark } from "./party_gap_ranking.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +34,9 @@ const OFFICIAL_2023_SECOND_HALF_URL =
 const ELECTION_SCHEDULE_URL = "https://go2senkyo.com/schedule";
 const CDP_LOCAL_AUTHORITIES_URL =
   "https://cdp-japan.jp/members/house/local_authorities";
+// R28: 立憲実数の repo asset(週次 update_cdp_benchmark.mjs が正本)。
+const CDP_BENCHMARK_ASSET_URL =
+  "https://raw.githubusercontent.com/kanta13jp1/my_web_app/main/assets/data/cdp_local_members.json";
 const NEW_KOKUMIN_ELECTIONS_URL =
   "https://local-elections.new-kokumin.jp/electionslist/";
 const NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL =
@@ -760,10 +764,28 @@ serve(async (req) => {
         }`,
       );
     }
+    // R28: 立憲実数(週次 update_cdp_benchmark.mjs が正本の repo asset)を
+    // EF 側で取得して地力差系列へ渡す。この EF の snapshot は cdpLocalMembers
+    // を 0 ハードコードするため、これが本番で唯一の立憲実数源(レビュー F1:
+    // これ無しでは系列が一度も候補を生成しない)。取得失敗は null → composer
+    // 側の cdpTotal ゲートで自然に見送り(その週の候補を作らないだけで、
+    // snapshot 永続化と delta 系列には影響しない)。
+    let cdpByPrefecture: Record<string, number> | null = null;
+    if (parsedRequest.action === "snapshotAndQueue") {
+      try {
+        cdpByPrefecture = normalizeCdpBenchmark(
+          JSON.parse(await fetchText(CDP_BENCHMARK_ASSET_URL)),
+        );
+      } catch (_error) {
+        cdpByPrefecture = null;
+      }
+    }
     const persistence = parsedRequest.action === "snapshotAndQueue"
       ? await persistLocalElectionSnapshot(
         createLocalElectionHubStore(),
         snapshot,
+        new Date().toISOString(),
+        { cdpByPrefecture },
       )
       : null;
 
