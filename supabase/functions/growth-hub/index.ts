@@ -62,7 +62,7 @@ import {
   HOUSEHOLD_TRACKER_MIRROR_KEY,
   parseHouseholdTrackerConsent,
 } from "./x_household_tracker.ts";
-import { isUuid, resolveXLogOwnerUserId } from "./x_operator_auth.ts";
+import { isUuid, resolveXPostLogOwner } from "./x_operator_auth.ts";
 import {
   approveXPostCandidateMetadata,
   buildXPostCandidateMetadata,
@@ -2740,9 +2740,14 @@ serve(async (req: Request) => {
           body.ownerUserId,
           body.owner_user_id,
         );
-        const logUserId = resolveXLogOwnerUserId(
+        // この地点は operator 確定(上の 403 ガードを通過している)。人間 operator の
+        // 投稿は共有グロースアカウント(service_role スコープ)へ束ね、metrics cron /
+        // performance_context の読み取りスコープと対称化する。service_role actor の
+        // per-user 束ね(家計トラッカー consent)は resolveXPostLogOwner が尊重する。
+        const logUserId = resolveXPostLogOwner(
           userId!,
           requestedOwnerUserId,
+          true,
         );
         const scheduledHouseholdPost = firstString(body.source) ===
           "x-household-tracker-post.yml";
