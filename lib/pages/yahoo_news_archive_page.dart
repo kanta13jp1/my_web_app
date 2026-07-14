@@ -392,7 +392,7 @@ class _YahooNewsArchivePageState extends State<YahooNewsArchivePage>
             '著作権保護のため、保存されるのは見出し・リンク・配信日時のみです。'
             '保存時に Internet Archive (Wayback Machine) へスナップショット作成を依頼し、'
             '元記事の公開終了後は archive.org 上のスナップショットで閲覧します。',
-            style: const TextStyle(fontSize: 12, color: _muted, height: 1.5),
+            style: TextStyle(fontSize: 12, color: _muted, height: 1.5),
           ),
           if (_lastFetchedAt != null) ...[
             const SizedBox(height: 4),
