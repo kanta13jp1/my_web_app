@@ -21,7 +21,7 @@ permissions:
 
 concurrency:
   group: ai-tool-watch
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-14 ci-audit: 手動dispatch×schedule重複時の旧run即キャンセル
 
 jobs:
   watch:
