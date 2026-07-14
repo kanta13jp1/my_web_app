@@ -2,6 +2,7 @@ import {
   buildXPostCandidateMetadata,
   X_POST_CANDIDATE_SOURCE,
 } from "../growth-hub/x_post_candidate.ts";
+import { buildPartyGapCandidateMetadata } from "./party_gap_ranking.ts";
 
 export const LOCAL_ELECTION_DATASET = "kokumin_local_election_intelligence";
 export const LOCAL_ELECTION_DATASET_SOURCE = "local-election-intelligence";
@@ -892,6 +893,13 @@ export function buildLocalElectionPostCandidates(
   previousSnapshotHash: string,
   datasetVersion: string,
   observedAt: string,
+  partyGapOptions?: {
+    /// wall-clock の今回実行時刻。isConsecutiveRetry 経路の observedAt は
+    /// 「hash が最初に現れた時刻」で stale のため、週次系列の ISO 週キーに
+    /// そのまま使うとデータ無変化週に候補が一度も作られない(レビュー F3)。
+    queueObservedAt?: string;
+    cdpByPrefecture?: Record<string, number> | null;
+  },
 ): JsonRecord[] {
   const rows: JsonRecord[] = [];
 
@@ -1065,6 +1073,23 @@ export function buildLocalElectionPostCandidates(
     ));
   }
 
+  // R28: 週次の両党地力差ランキング(diff 非依存の定点観測系列)。日次 cron
+  // から毎回呼ばれるが candidate_key が ISO 週キーなので insertPostCandidate
+  // の冪等性により週1回だけ候補が作られる。生成不能条件(立憲実数源の欠落等)
+  // は composer 側で null。observedAt は wall-clock(queueObservedAt)を使う:
+  // snapshot 行の observed_at はデータ無変化週に前週のまま止まり、週キーが
+  // 過去週で冪等スキップされ続ける(レビュー F3)。
+  const partyGap = buildPartyGapCandidateMetadata(snapshot, {
+    snapshotObservationId,
+    snapshotHash,
+    datasetVersion,
+    observedAt: partyGapOptions?.queueObservedAt ?? observedAt,
+    datasetSource: LOCAL_ELECTION_DATASET_SOURCE,
+    dataset: LOCAL_ELECTION_DATASET,
+    cdpByPrefecture: partyGapOptions?.cdpByPrefecture ?? null,
+  });
+  if (partyGap !== null) rows.push(partyGap);
+
   return rows;
 }
 
@@ -1092,6 +1117,9 @@ export async function persistLocalElectionSnapshot(
   store: LocalElectionHubStore,
   rawSnapshot: unknown,
   observedAt = new Date().toISOString(),
+  partyGapOptions?: {
+    cdpByPrefecture?: Record<string, number> | null;
+  },
 ): Promise<PersistSnapshotResult> {
   const snapshot = canonicalizeLocalElectionSnapshot(rawSnapshot);
   if (!snapshot.collectionQuality.complete) {
@@ -1203,6 +1231,10 @@ export async function persistLocalElectionSnapshot(
     previousSnapshotHash,
     datasetVersion,
     asString(snapshotRow.metadata.observed_at) || observedAt,
+    {
+      queueObservedAt: observedAt,
+      cdpByPrefecture: partyGapOptions?.cdpByPrefecture ?? null,
+    },
   );
   const insertions: HubInsertResult[] = [];
   for (const metadata of candidateMetadata) {

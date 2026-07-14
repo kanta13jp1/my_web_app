@@ -900,8 +900,18 @@ void main() {
       final prompt = capturedPrompt ?? '';
       expect(prompt, contains('registered-accounts(total)=1234'));
       expect(prompt, contains('"Own project data"'));
-      // 例外ルールはすべて「データレポート型の日のみ」に条件付けされている。
+      // 例外ルールはすべて「データレポート型の日のみ」に条件付けされている
+      // (鮮度例外も含む=ゲート無し「例外:」への回帰を検出する)。
       expect(prompt, contains('例外(データレポート型の日のみ)'));
+      expect(prompt, contains('例外(データレポート型の日のみ): 同名シリーズ'));
+      // 数字源(d)は "Own project data" ブロックの実数に限定列挙で束縛される。
+      expect(
+        prompt,
+        contains('(d)上の "Own project data" ブロックに実際に書かれている実数'),
+      );
+      // 骨格の取得日時/差分/アラート要素はブロックがある日だけ許可される
+      // ((d) DISABLED 日に必須要素が埋められない矛盾=捏造圧力の回帰を検出)。
+      expect(prompt, contains('ブロックが DISABLED の日はこれらの要素を省き'));
       // 97K 実測ポストの骨格(集計ヘッダ/取得日時/アラート)が指示に含まれる。
       expect(prompt, contains('集計ヘッダ'));
       expect(prompt, contains('取得日時'));

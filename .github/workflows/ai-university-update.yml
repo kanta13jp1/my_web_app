@@ -58,6 +58,8 @@ jobs:
       - name: Step 2 - Fetch and upsert AI provider news
         if: steps.quota_check.outputs.anthropic_available == 'true'
         id: update
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         run: |
           TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
           SUCCESS_COUNT=0

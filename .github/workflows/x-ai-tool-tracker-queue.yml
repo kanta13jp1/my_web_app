@@ -1,0 +1,179 @@
+name: X AI Tool Tracker Queue
+
+# R27: AIツール動向トラッカー系列 (docs/X_TRACKER_SERIES_PLAYBOOK.md step 3)。
+# ai-tool-watch.yml (日次 21:15 UTC) が生成する latest-report.json から
+# ポストA構造のデータレポート候補を合成し、候補キュー(HITL 承認面)へ載せる。
+# 直接投稿はしない=公開の最終判断は admin「X投稿候補キュー」panel の人間。
+# 変化が無い日は候補を作らない(compose が available:false を返す)。
+
+on:
+  schedule:
+    # Daily 21:45 UTC (= 06:45 JST)。ai-tool-watch (21:15) の後、
+    # daily briefing (22:00)・週次実測レポート (土 21:00) と重ねない。
+    - cron: "45 21 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run without creating a candidate"
+        type: boolean
+        default: true
+      force:
+        description: "Create a candidate even if one already exists today"
+        type: boolean
+        default: false
+
+concurrency:
+  group: x-ai-tool-tracker-queue
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SOURCE: x-ai-tool-tracker-queue.yml
+      EXPERIMENT_KEY: x_first_user_growth_10k
+      VARIANT: ai_tool_tracker
+      TARGET_URL: https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=ai_tool_tracker
+    steps:
+      - name: Validate secrets
+        shell: bash
+        run: |
+          test -n "${SUPABASE_SERVICE_ROLE_KEY}" || {
+            echo "SUPABASE_SERVICE_ROLE_KEY is required."
+            exit 1
+          }
+
+      - name: Resolve run mode
+        id: mode
+        shell: bash
+        run: |
+          dry_run="${{ github.event.inputs.dry_run }}"
+          force="${{ github.event.inputs.force }}"
+          if [ -z "${dry_run}" ]; then
+            dry_run="false"
+          fi
+          if [ -z "${force}" ]; then
+            force="false"
+          fi
+          echo "dry_run=${dry_run}" >> "${GITHUB_OUTPUT}"
+          echo "force=${force}" >> "${GITHUB_OUTPUT}"
+
+      - name: Checkout report data
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            docs/ai-tool-watch
+          sparse-checkout-cone-mode: true
+
+      - name: Compose tracker candidate from measured report
+        id: compose
+        shell: bash
+        run: |
+          if [ ! -f docs/ai-tool-watch/latest-report.json ]; then
+            echo "::warning::latest-report.json not found; skipping."
+            echo "available=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          jq -n \
+            --arg action "x.ai_tool_tracker_compose" \
+            --arg targetUrl "${TARGET_URL}" \
+            --slurpfile report docs/ai-tool-watch/latest-report.json \
+            '{action: $action, targetUrl: $targetUrl, report: $report[0]}' \
+            > /tmp/x_ai_tool_compose_request.json
+          http_code=$(curl --silent --show-error --output /tmp/x_ai_tool_compose.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_ai_tool_compose_request.json)
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::x.ai_tool_tracker_compose returned HTTP ${http_code}"
+            cat /tmp/x_ai_tool_compose.json || true
+            exit 1
+          fi
+          available=$(jq -r '.available' /tmp/x_ai_tool_compose.json)
+          echo "available=${available}" >> "${GITHUB_OUTPUT}"
+          if [ "${available}" != "true" ]; then
+            echo "No changed sources today — no candidate created (correct skip)."
+            jq '{available, reason}' /tmp/x_ai_tool_compose.json
+          else
+            jq '{candidateKey, changedCount, sourceCount, lead: (.text | split("\n")[0])}' /tmp/x_ai_tool_compose.json
+          fi
+
+      - name: Create HITL candidate
+        if: steps.compose.outputs.available == 'true'
+        shell: bash
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          FORCE: ${{ steps.mode.outputs.force }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const compose = JSON.parse(fs.readFileSync('/tmp/x_ai_tool_compose.json', 'utf8'));
+          const baseCandidateKey = compose.candidateKey;
+          const candidateKey = process.env.FORCE === 'true'
+            ? `${baseCandidateKey}:${process.env.GITHUB_RUN_ID}:${process.env.GITHUB_RUN_ATTEMPT}`
+            : baseCandidateKey;
+          const payload = {
+            action: 'x.candidate.create',
+            candidateKey,
+            candidateType: 'ai_tool_tracker',
+            sourceKind: 'ai_tool_watch',
+            sourceUrls: compose.sourceUrls ?? [],
+            createdBy: `github-actions:${process.env.SOURCE}`,
+            postPayload: {
+              text: compose.text,
+              replyTexts: compose.replyTexts ?? [],
+              source: process.env.SOURCE,
+              route: 'growth/ai-tool-tracker',
+              experimentKey: process.env.EXPERIMENT_KEY,
+              variant: process.env.VARIANT,
+              utmContent: process.env.VARIANT,
+              promptProfile: 'workflow_ai_tool_tracker_v1_deterministic',
+              contentKind: 'data_report_thread',
+              contentArchetype: 'data_report',
+              linkInReply: true,
+            },
+            // 注: context は normalizeXPostCandidateContext の whitelist キー
+            // のみ永続化される。数値カウント等は whitelist 外で黙って落ちる
+            // (レビュー F3)ため送らない — 件数は投稿本文と Actions ログにある。
+            context: {
+              workflow: process.env.SOURCE,
+              workflow_run_id: process.env.GITHUB_RUN_ID,
+              workflow_run_attempt: process.env.GITHUB_RUN_ATTEMPT,
+              event: process.env.GITHUB_EVENT_NAME,
+            },
+            dryRun: process.env.DRY_RUN === 'true',
+          };
+          fs.writeFileSync('/tmp/x_ai_tool_candidate_request.json', JSON.stringify(payload));
+          console.log(JSON.stringify({
+            candidateKey,
+            lead: payload.postPayload.text.split('\n')[0],
+            replyCount: payload.postPayload.replyTexts.length,
+            dryRun: payload.dryRun,
+          }, null, 2));
+          NODE
+          http_code=$(curl --silent --show-error --output /tmp/x_ai_tool_candidate.json --write-out "%{http_code}" \
+            --request POST \
+            "${SUPABASE_URL}/functions/v1/growth-hub" \
+            --header "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data @/tmp/x_ai_tool_candidate_request.json)
+          jq . /tmp/x_ai_tool_candidate.json || cat /tmp/x_ai_tool_candidate.json
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::x.candidate.create returned HTTP ${http_code}"
+            exit 1
+          fi
+          success=$(jq -r '.success' /tmp/x_ai_tool_candidate.json)
+          if [ "${success}" != "true" ]; then
+            echo "::error::candidate creation reported failure"
+            exit 1
+          fi

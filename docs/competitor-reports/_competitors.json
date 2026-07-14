@@ -886,6 +886,17 @@
         "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / 7-10 skip 候補から昇格級)",
         "OpenCode (= 8 サイクル queue 済 / coding tool 偏り懸念で継続保留 / signal 層)"
       ]
+    },
+    {
+      "date": "2026-07-14",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ。新シグナル = (1) 基盤直撃: Anthropic Claude Cowork を web/mobile へ展開 + リモートセッション (端末跨ぎ同期 + スケジュールタスクは端末オフラインでも実行 / Max 先行 / 上限 8-5 まで倍化) = 自社 Schedule cron の技術的独自性を基盤側が消費者向けに productize → platform-eating-app リスク顕在化; (2) Anthropic 生産性層進出: Claude が Microsoft 365 write ツール (メール/カレンダー/OneDrive/SharePoint) + Claude for Government (FedRAMP High) + Notion External Agents 第1号が Claude+Cursor; (3) Work OS コモディティ化継続 (差分詳細のみ): MF AI Cowork=『6つのバックオフィス業務』枠+エージェントハーネス制御基盤, ChatGPT Work=Codex app を ChatGPT desktop へ統合; (4) マクロ=Vertical AI Agents Eating Horizontal SaaS (Gartner: 2026末に enterprise app の 40% が agent 内蔵)。次サイクル (7/17) 第1候補 = ChatGPT Work 継続保持。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT Work (= 次サイクル discovery 第1候補 / 7-09 launch / Work OS 代表 / Codex 統合で dev+agent 窓口一本化)",
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / $60M Series C @ $550M valuation)",
+        "Claude Cowork consumer 化 (= 既存対象 / discovery でなく既存脅威度引き上げ / 基盤差別化平準化リスク)"
+      ]
     }
   ],
   "_schema_notes": {
