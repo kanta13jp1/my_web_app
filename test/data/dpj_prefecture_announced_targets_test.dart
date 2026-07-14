@@ -21,9 +21,8 @@ void main() {
   });
 
   test('定義確認済みは6県で、種別が正しく区別されている', () {
-    final verified = dpjPrefectureAnnouncedTargets
-        .where((item) => item.verified)
-        .toList();
+    final verified =
+        dpjPrefectureAnnouncedTargets.where((item) => item.verified).toList();
     expect(verified, hasLength(6));
     expect(dpjAnnouncedTargetVerifiedCount, 6);
 
