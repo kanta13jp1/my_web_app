@@ -226,9 +226,8 @@ class _YahooNewsArchivePageState extends State<YahooNewsArchivePage>
         throw Exception('HTTP ${response.status}: ${response.data}');
       }
       await _loadArchive();
-      final refreshed = _archivedItems
-          .where((row) => row.id == item.id)
-          .toList();
+      final refreshed =
+          _archivedItems.where((row) => row.id == item.id).toList();
       final saved = refreshed.isNotEmpty && refreshed.first.waybackUrl != null;
       _showSnack(
         saved ? 'スナップショットを確認しました' : 'スナップショットはまだ生成中です。時間をおいて再確認してください',
@@ -389,11 +388,11 @@ class _YahooNewsArchivePageState extends State<YahooNewsArchivePage>
             ],
           ),
           const SizedBox(height: 4),
-          Text(
+          const Text(
             '著作権保護のため、保存されるのは見出し・リンク・配信日時のみです。'
             '保存時に Internet Archive (Wayback Machine) へスナップショット作成を依頼し、'
             '元記事の公開終了後は archive.org 上のスナップショットで閲覧します。',
-            style: const TextStyle(fontSize: 12, color: _muted, height: 1.5),
+            style: TextStyle(fontSize: 12, color: _muted, height: 1.5),
           ),
           if (_lastFetchedAt != null) ...[
             const SizedBox(height: 4),
@@ -739,7 +738,11 @@ class _WaybackStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color, background) = switch (status) {
-      'saved' => ('スナップショット済', const Color(0xFF166534), const Color(0xFFDCFCE7)),
+      'saved' => (
+          'スナップショット済',
+          const Color(0xFF166534),
+          const Color(0xFFDCFCE7)
+        ),
       'requested' => (
           'スナップショット生成中',
           const Color(0xFF92400E),
@@ -827,15 +830,12 @@ class _ArchivedItem {
       source: meta['source']?.toString() ?? 'Yahoo!ニュース',
       category: meta['category']?.toString() ?? '総合',
       waybackStatus: meta['wayback_status']?.toString() ?? 'pending',
-      waybackUrl:
-          (waybackUrl != null && waybackUrl.startsWith('http'))
-              ? waybackUrl
-              : null,
+      waybackUrl: (waybackUrl != null && waybackUrl.startsWith('http'))
+          ? waybackUrl
+          : null,
       publishedAt: DateTime.tryParse(meta['published_at']?.toString() ?? ''),
       archivedAt: DateTime.tryParse(
-        meta['archived_at']?.toString() ??
-            row['created_at']?.toString() ??
-            '',
+        meta['archived_at']?.toString() ?? row['created_at']?.toString() ?? '',
       ),
     );
   }
