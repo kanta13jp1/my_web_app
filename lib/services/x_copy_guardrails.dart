@@ -84,14 +84,43 @@ const String kDataReportArchetypeLesson =
 /// テキスト(FEATURE-FACT / 一人称 persona / 禁止語 / 具体性要求 / BAD→GOOD)を
 /// 追加し、既存の per-channel spec(長さ/tone)と {title,body,hashtags} 契約は
 /// 一切上書きしない(facebook も同プロンプトを共有するため長さは spec のまま)。
+/// performance_context の promptContext 文字列から "Own measured data" 行を
+/// 抽出する純関数(CmoPage が実測供給源として使う / R23 F3 恒久解)。
+/// この行はこのアカウント自身の実測インプレッションで、一人称の build-in-public
+/// 実数として公開してよい唯一の恒常データ源(growth-hub buildOwnDataFactsLine)。
+/// 見つからない/薄いデータ時は null(呼び出し側は捏造禁止ガードへ落とす)。
+String? extractOwnMeasuredDataLine(String? performanceContext) {
+  final source = (performanceContext ?? '').trim();
+  if (source.isEmpty) return null;
+  for (final rawLine in source.split('\n')) {
+    final line = rawLine.trim();
+    if (line.startsWith('Own measured data')) {
+      return line.isEmpty ? null : line;
+    }
+  }
+  return null;
+}
+
 String buildCmoDraftPrompt({
   required String channelKey,
   required String channelLabel,
   required Map<String, String> spec,
   required List<String> hashtags,
+  String? measuredDataLine,
 }) {
   final facts = kAppFeatureFacts.map((fact) => '- $fact').join('\n');
   final banned = kSlopBannedTokens.map((token) => '「$token」').join(' / ');
+  // R23 F3 恒久解: 実測データ行があれば「実数を使ってよい」経路(universal 経路と
+  // 対称)。無ければ従来どおり数字の新規生成を明示禁止する(供給源の無い経路へ
+  // 「冒頭に実数」命令だけ注入すると捏造圧力になる)。
+  final measured = (measuredDataLine ?? '').trim();
+  final dataRule = measured.isNotEmpty
+      ? '$kDataReportArchetypeLesson '
+          '実測データ(このアカウント自身のX投稿の実測値。一人称の build-in-public 実数として公開してよい): '
+          '$measured '
+          'データレポート型で書くなら冒頭1行目にこの実測値を1つ置け。ただしこの実測行と上の実在機能リストに無い数字は作るな。'
+      : '$kDataReportArchetypeLesson '
+          'このプロンプトには実数の供給源(当日見出し・実測データ)を渡していないので、新しい数字を作るな。使ってよい数字は上の実在機能リストの仕組みが定義する数のみ。';
   return '''
 あなたは「自分株式会社」という一人会社を運営する開発者本人です。$channelLabel 向けの日本語コピーを、build-in-public の一人称で書いてください。三人称のブランド口調(「私たち」「弊社」「本サービスは」「私たちの新しいウェブアプリは」)を禁止します。
 
@@ -106,7 +135,7 @@ $facts
 - 本文に上の実在機能を最低1つ名前で挙げる(固有機能名を必ず含める)。
 - 禁止フレーズ(これらを含む文は必ず書き直せ): $banned。
 - 誇張副詞(劇的に/大幅に/格段に/飛躍的に)で改善を主張するな。改善の大きさは具体的な数字か仕組み(何がどう動いて何が消えるか)でのみ語れ。
-- $kDataReportArchetypeLesson このプロンプトには実数の供給源(当日見出し・実測データ)を渡していないので、新しい数字を作るな。使ってよい数字は上の実在機能リストの仕組みが定義する数のみ。
+- $dataRule
 
 例(実質・BAD→GOOD、この差を真似て今日の内容で書け):
 - BAD: 「あなたの価値、埋もれていませんか？埋もれた才能を最大限にアピールし、社会で輝くための自分集客力を構築。」
