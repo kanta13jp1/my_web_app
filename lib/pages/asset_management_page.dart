@@ -41,6 +41,8 @@ import 'package:my_web_app/services/asset_account_balance_history_store.dart';
 import 'package:my_web_app/services/asset_pref_mirror_prefetch.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_debt_trend_analyzer.dart';
+import 'package:my_web_app/services/asset_advisory_briefing_service.dart';
+import 'package:my_web_app/services/advisory_briefing_share_service.dart';
 import 'package:my_web_app/services/household_tracker_share_service.dart';
 import 'package:my_web_app/services/asset_management_main_account_store.dart';
 import 'package:my_web_app/services/asset_revolving_credit_config_store.dart';
@@ -8374,6 +8376,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         title: const Text('資産管理闘争'),
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
+        actions: [
+          // R24d: 家計トラッカー投稿の常設入口。従来は AI 分析レポート内の
+          // 負債トレンドカードにしか無く投稿手段が見つからなかった。検出0件
+          // でも「アラート: なし+給料日カウントダウン」の正直なスコアボードを
+          // 投稿できる(金額は一切含まない)。
+          if (_householdTrackerScheduleAllowed)
+            IconButton(
+              tooltip: '家計トラッカーをXへ投稿（計測対象・金額非公開）',
+              icon: _householdTrackerPosting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.ios_share),
+              onPressed: _householdTrackerPosting
+                  ? null
+                  : () => _postHouseholdTrackerNow(assetLiabilityWorkbook),
+            ),
+        ],
       ),
       backgroundColor: const Color(0xFF64748B),
       body: SingleChildScrollView(
@@ -18882,6 +18904,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildAssetManagementDisciplineCard(report.disciplineReport!),
             const SizedBox(height: 12),
           ],
+          _buildAssetManagementAdvisoryBriefingCard(report),
+          const SizedBox(height: 12),
           _buildAssetManagementAssistantActionList(
             report.actionItems,
             report.workbook.debtMasterRows.map((row) => row.id).toSet(),
@@ -19976,6 +20000,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _householdTrackerScheduleSaving = false;
   String? _householdTrackerSnapshotSyncSignature;
   Future<void> _householdTrackerMirrorWriteQueue = Future<void>.value();
+  bool _advisoryBriefingPosting = false;
 
   HouseholdTrackerSnapshot _householdTrackerSnapshot(
     List<AssetDebtTrendInsight> insights, {
@@ -19987,6 +20012,256 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       salaryDayConfigured: _salaryDayConfigured,
       now: now ?? DateTime.now(),
     );
+  }
+
+  /// 参謀室ブリーフィング用の前方キャッシュフロー予測を組み立てる
+  /// (_buildCashflowForecastCard と同じ入力導出。純サービスに委譲)。
+  AssetCashflowForecast? _advisoryCashflowForecast(
+    AssetLiabilityWorkbook? workbook,
+  ) {
+    if (workbook == null) return null;
+    final inputs = AssetCashflowForecastInputs.fromAssetData(
+      accounts: workbook.accounts,
+      debtRows: workbook.debtMasterRows,
+      recurringIncomeTemplates: _recurringIncomeTemplates,
+      inflowRules: _expectedInflowRules,
+      oneTimeInflows: _expectedInflows,
+      subscriptions: _subscriptions,
+    );
+    if (!inputs.hasData) return null;
+    return AssetCashflowForecastService.project(
+      asOf: DateTime.now(),
+      startingBalance: inputs.startingBalance,
+      horizonMonths: _forecastHorizonMonths,
+      recurringIncome: inputs.recurringIncome,
+      recurringOutflow: inputs.recurringOutflow,
+      oneTimeIncome: inputs.oneTimeIncome,
+      safetyMargin: _assetForecastSafetyMargin,
+    );
+  }
+
+  Color _advisorySeverityColor(AdvisorySeverity severity) {
+    switch (severity) {
+      case AdvisorySeverity.critical:
+        return const Color(0xFFB91C1C);
+      case AdvisorySeverity.warning:
+        return const Color(0xFFD97706);
+      case AdvisorySeverity.info:
+        return const Color(0xFF0F766E);
+    }
+  }
+
+  /// 資金繰り予測・負債トレンド・規律を 1 つの状況として束ね、部署横断の参謀
+  /// アクションへ決定的に分解して描画する(MF AI Cowork / Motion 対抗の統合レイヤ)。
+  Widget _buildAssetManagementAdvisoryBriefingCard(
+    AssetManagementInsightReport report,
+  ) {
+    final forecast = _advisoryCashflowForecast(report.workbook);
+    final briefing = const AssetAdvisoryBriefingService().build(
+      now: DateTime.now(),
+      forecast: forecast,
+      debtInsights: report.debtTrendInsights,
+      disciplineReport: report.disciplineReport,
+    );
+    if (briefing.isEmpty) return const SizedBox.shrink();
+    final headerColor = _advisorySeverityColor(briefing.topSeverity);
+    return Container(
+      key: const Key('asset_advisory_briefing_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: headerColor.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.meeting_room_outlined, color: headerColor, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'AI参謀室ブリーフィング（資金繰り予測 × 部署横断）',
+                  style: TextStyle(
+                    color: headerColor,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              if (_householdTrackerScheduleAllowed)
+                IconButton(
+                  key: const Key('advisory_briefing_share'),
+                  tooltip: '参謀室ブリーフィングを匿名でXへ投稿',
+                  icon: _advisoryBriefingPosting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(Icons.ios_share, color: headerColor, size: 18),
+                  onPressed: _advisoryBriefingPosting
+                      ? null
+                      : () => _postAdvisoryBriefing(
+                            briefing,
+                            firstShortfallDate: forecast?.firstShortfallDate,
+                          ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            briefing.headline,
+            style: TextStyle(
+              color: headerColor,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '同じ状況をCFO・CMO・CHO・CHRO・CEO室が1つの会議として裁定し、部署別の'
+            '次アクションを提示します（金額はこの画面だけ・X投稿は匿名の件数のみ）。',
+            style: TextStyle(fontSize: 11.5, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          for (final action in briefing.actions)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildAdvisoryActionTile(action),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdvisoryActionTile(AdvisoryAction action) {
+    final color = _advisorySeverityColor(action.severity);
+    final profile = action.profile;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  profile.displayName,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  action.headline,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            action.detail,
+            style: const TextStyle(fontSize: 12, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 参謀室ブリーフィングを匿名スコアボードとして X へ投稿する
+  /// (household_tracker と同型。金額・具体日・口座名は載せない)。
+  Future<void> _postAdvisoryBriefing(
+    AdvisoryBriefing briefing, {
+    DateTime? firstShortfallDate,
+  }) async {
+    if (_advisoryBriefingPosting) return;
+    if (!_householdTrackerScheduleAllowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('X API投稿は管理者のみ実行できます')),
+      );
+      return;
+    }
+    final snapshot = advisoryBriefingSnapshotFrom(
+      briefing,
+      firstShortfallDate: firstShortfallDate,
+      now: DateTime.now(),
+    );
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('参謀室ブリーフィングをXへ投稿'),
+        content: SingleChildScrollView(
+          child: SelectableText(buildAdvisoryBriefingText(snapshot)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Xへ投稿する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _advisoryBriefingPosting = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'growth-hub',
+        body: buildAdvisoryBriefingPostPayload(snapshot),
+      );
+      if (!mounted) return;
+      final data = res.data is Map
+          ? Map<String, dynamic>.from(res.data as Map)
+          : <String, dynamic>{};
+      final posted = data['posted'] == true;
+      final tweetId = data['tweetId']?.toString() ?? '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            posted
+                ? '参謀室ブリーフィングを投稿しました（計測対象・金額非公開）'
+                    '${tweetId.isNotEmpty ? ' https://x.com/i/status/$tweetId' : ''}'
+                : '投稿に失敗しました: ${data['error'] ?? data['code'] ?? '不明'}',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('投稿に失敗しました: $error')));
+    } finally {
+      if (mounted) setState(() => _advisoryBriefingPosting = false);
+    }
   }
 
   /// 定期投稿は共有X資格情報を使うため、管理者だけに設定UIを出す。
@@ -20201,6 +20476,33 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } finally {
       if (mounted) setState(() => _householdTrackerScheduleSaving = false);
     }
+  }
+
+  /// R24d: AppBar 常設ボタン用。現在の workbook から負債トレンド insights を
+  /// その場で算出して投稿する(AI 分析レポートカードの表示を待たない)。
+  Future<void> _postHouseholdTrackerNow(
+    AssetLiabilityWorkbook? workbook,
+  ) async {
+    if (workbook == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('資産データの読込中です。少し待ってからお試しください')),
+      );
+      return;
+    }
+    final currentMonthKey =
+        AssetAccountBalanceHistoryStore.formatMonthKey(workbook.baseDate);
+    // キャッシュ済み前月残高が当月のものでない間は渡さない(取り違え防止)。
+    final priorMonthAccountBalances =
+        _assetDebtTrendPriorBalancesMonth == currentMonthKey
+            ? _assetDebtTrendPriorBalances
+            : const <String, double>{};
+    final report = _assetManagementInsightService.buildReport(
+      workbook: workbook,
+      userProfile: _assetManagementUserProfile,
+      mainAccountId: _assetManagementMainAccountId,
+      priorMonthAccountBalances: priorMonthAccountBalances,
+    );
+    await _postHouseholdTracker(report.debtTrendInsights);
   }
 
   /// R24b: 負債トレンドの実データ(件数・日数・方向のみ/金額なし)を post A 同型の
@@ -22089,6 +22391,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final billingRows = workbook.billingConfirmationPendingRows;
     final sourceRows = workbook.paymentSourceMissingRows;
     final consultationRows = _paymentConsultationRows(workbook);
+    final showAllBillingRows =
+        _debtMasterReviewFilter == _DebtMasterReviewFilter.billingConfirmation;
+    final showAllSourceRows =
+        _debtMasterReviewFilter == _DebtMasterReviewFilter.paymentSource;
+    final visibleBillingRows = showAllBillingRows
+        ? billingRows
+        : billingRows.take(5).toList(growable: false);
+    final visibleSourceRows = showAllSourceRows
+        ? sourceRows
+        : sourceRows.take(5).toList(growable: false);
     final hasReviewTargets = billingRows.isNotEmpty ||
         sourceRows.isNotEmpty ||
         consultationRows.isNotEmpty;
@@ -22259,9 +22571,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
             ),
             const SizedBox(height: 6),
-            for (final row in billingRows.take(5))
+            for (final row in visibleBillingRows)
               _buildBillingConfirmationReviewRow(row),
-            if (billingRows.length > 5)
+            if (!showAllBillingRows && billingRows.length > 5)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
@@ -22280,9 +22592,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               style: TextStyle(fontWeight: FontWeight.w700, height: 1.4),
             ),
             const SizedBox(height: 6),
-            for (final row in sourceRows.take(5))
+            for (final row in visibleSourceRows)
               _buildMissingPaymentSourceReviewRow(row, workbook),
-            if (sourceRows.length > 5)
+            if (!showAllSourceRows && sourceRows.length > 5)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(

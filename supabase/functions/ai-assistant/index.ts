@@ -23,7 +23,7 @@ const FALLBACK_MODELS = [
   { provider: "openai", model: "gpt-4o-mini" },
   { provider: "anthropic", model: "claude-haiku-4-5-20251001" },
   { provider: "gemini", model: "gemini-2.5-flash" },
-  { provider: "deepseek", model: "deepseek-chat" },
+  { provider: "deepseek", model: "deepseek-v4-flash" },
 ];
 
 const MODEL_CATALOG = [
@@ -64,15 +64,16 @@ const MODEL_CATALOG = [
     score: 820,
   },
   {
-    name: "deepseek-reasoner",
+    name: "deepseek-v4-pro",
     provider: "DeepSeek",
-    description: "推論特化の DeepSeek モデル",
+    description:
+      "推論特化の DeepSeek V4 Pro (旧 deepseek-reasoner / 2026-07-24移行)",
     score: 780,
   },
   {
-    name: "deepseek-chat",
+    name: "deepseek-v4-flash",
     provider: "DeepSeek",
-    description: "高速な DeepSeek チャットモデル",
+    description: "高速な DeepSeek V4 Flash (旧 deepseek-chat / 2026-07-24移行)",
     score: 760,
   },
 ];
@@ -1235,7 +1236,7 @@ function buildMagiSynthesisFighters(requestData: AIRequest): Fighter[] {
   addFighter(requestData.casperModel || DEFAULT_CASPER_MODEL);
   addFighter(requestData.melchiorModel || DEFAULT_MELCHIOR_MODEL);
   addFighter(requestData.balthasarModel || DEFAULT_BALTHASAR_MODEL);
-  addFighter("deepseek-chat");
+  addFighter("deepseek-v4-flash");
 
   return fighters;
 }

@@ -55,6 +55,7 @@ import {
   buildGrowthDataReport,
   type GrowthReportRow,
 } from "./x_growth_data_report.ts";
+import { buildAiToolTrackerPost } from "./x_ai_tool_tracker.ts";
 import {
   buildHouseholdTrackerReport,
   HOUSEHOLD_TRACKER_CONSENT_MIRROR_KEY,
@@ -316,11 +317,19 @@ async function listXMetricSnapshots(
   for (let offset = 0; offset < sourceLogIds.length; offset += batchSize) {
     const ids = sourceLogIds.slice(offset, offset + batchSize);
     for (let page = 0; page < maxPagesPerBatch; page += 1) {
+      // ORDER は (source_log_id, created_at) — partial index
+      // idx_hub_data_x_metric_snapshot_log_created (#4030) と一致させ、
+      // source_log_id IN(...) を index 走査 + merge-append で返す (sort 回避)。
+      // created_at 単独 order だと index を order に使えず大量行 sort →
+      // service_role (cron) 経路で statement timeout していた。
+      // normalizeXMetricWindows は source_log_id 毎に snapshot を突合するため
+      // post 跨ぎの並び順には非依存。
       let query = admin
         .from("hub_data")
         .select("id, metadata, created_at")
         .eq("source", "x_post_metric_snapshot")
         .in("metadata->>source_log_id", ids)
+        .order("metadata->>source_log_id", { ascending: true })
         .order("created_at", { ascending: true })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       if (userId !== "service_role") {
@@ -2376,6 +2385,27 @@ serve(async (req: Request) => {
           });
         }
         return json({ success: true, available: true, ...report });
+      }
+
+      case "x.ai_tool_tracker_compose": {
+        // R27: AIツール動向トラッカー系列の read-only 合成(playbook step 2)。
+        // レポート(docs/ai-tool-watch/latest-report.json)は呼び出し元 cron が
+        // body.report で渡す。変化 0 件/データ薄は available:false = 候補を
+        // 作らない(投稿は x.candidate.create → HITL 承認経由のみ)。
+        const targetUrl = firstString(
+          body.targetUrl,
+          body.target_url,
+          "https://my-web-app-b67f4.web.app/?utm_source=x&utm_medium=data_report&utm_campaign=first_user_growth&utm_content=ai_tool_tracker",
+        );
+        const post = buildAiToolTrackerPost(body.report, targetUrl);
+        if (post === null) {
+          return json({
+            success: true,
+            available: false,
+            reason: "no changed sources, thin data, or invalid checked_at",
+          });
+        }
+        return json({ success: true, available: true, ...post });
       }
 
       case "x.household_tracker_report": {

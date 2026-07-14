@@ -38,6 +38,13 @@ export const WORKER_RESPONSE_MAX_BYTES = 64 * 1024;
 export const NOTE_TITLE_MAX_LENGTH = 200;
 export const NOTE_CONTENT_MAX_LENGTH = 100_000;
 const SLOW_REQUEST_THRESHOLD_MS = 5_000;
+export const JIBUN_API_WEBHOOK_EVENTS = [
+  "note.created",
+  "note.updated",
+  "note.deleted",
+] as const;
+export type JibunApiWebhookEvent = (typeof JIBUN_API_WEBHOOK_EVENTS)[number];
+export const MAX_WEBHOOKS_PER_USER = 10;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -321,6 +328,19 @@ export interface NoteRow {
   updated_at: string | null;
 }
 
+export interface WebhookRow {
+  id: string;
+  user_id: string;
+  name: string;
+  endpoint_url: string;
+  signing_secret: string;
+  events: string[];
+  enabled: boolean;
+  delivery_count: number;
+  last_delivered_at: string | null;
+  created_at: string;
+}
+
 export interface JibunApiStore {
   countKeys(userId: string): Promise<number>;
   insertKey(
@@ -371,6 +391,29 @@ export interface JibunApiStore {
   ): Promise<NoteRow>;
   listUserTasks(limit: number): Promise<Record<string, unknown>[]>;
   listAchievements(limit: number): Promise<Record<string, unknown>[]>;
+  // Notes CRUD
+  updateNote(
+    userId: string,
+    noteId: number,
+    patch: { title?: string; content?: string },
+  ): Promise<NoteRow | null>;
+  deleteNote(userId: string, noteId: number): Promise<boolean>;
+  // Webhooks
+  countWebhooks(userId: string): Promise<number>;
+  insertWebhook(
+    row: Omit<
+      WebhookRow,
+      "id" | "created_at" | "delivery_count" | "last_delivered_at"
+    >,
+  ): Promise<WebhookRow>;
+  listWebhooks(userId: string): Promise<WebhookRow[]>;
+  findWebhookById(
+    userId: string,
+    webhookId: string,
+  ): Promise<WebhookRow | null>;
+  deleteWebhook(userId: string, webhookId: string): Promise<boolean>;
+  listActiveWebhooks(userId: string, event: string): Promise<WebhookRow[]>;
+  touchWebhookDelivery(webhookId: string): Promise<void>;
 }
 
 export function createSupabaseJibunApiStore(
@@ -601,6 +644,120 @@ export function createSupabaseJibunApiStore(
       if (error) throw new Error(error.message);
       return (data ?? []) as Record<string, unknown>[];
     },
+    async updateNote(userId, noteId, patch) {
+      const updates: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (patch.title !== undefined) updates.title = patch.title;
+      if (patch.content !== undefined) updates.content = patch.content;
+      const { data, error } = await admin
+        .from("notes")
+        .update(updates)
+        .eq("id", noteId)
+        .eq("user_id", userId)
+        .select("id, title, content, created_at, updated_at")
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return (data as NoteRow | null) ?? null;
+    },
+    async deleteNote(userId, noteId) {
+      const { data, error } = await admin
+        .from("notes")
+        .delete()
+        .eq("id", noteId)
+        .eq("user_id", userId)
+        .select("id");
+      if (error) throw new Error(error.message);
+      return (data ?? []).length > 0;
+    },
+    async countWebhooks(userId) {
+      const { count, error } = await admin
+        .from("user_api_webhooks")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("enabled", true);
+      if (error) throw new Error(error.message);
+      return count ?? 0;
+    },
+    async insertWebhook(row) {
+      const { data, error } = await admin
+        .from("user_api_webhooks")
+        .insert(row)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data as WebhookRow;
+    },
+    async listWebhooks(userId) {
+      const { data, error } = await admin
+        .from("user_api_webhooks")
+        .select(
+          "id, user_id, name, endpoint_url, signing_secret, events, enabled, delivery_count, last_delivered_at, created_at",
+        )
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as WebhookRow[];
+    },
+    async findWebhookById(userId, webhookId) {
+      const { data, error } = await admin
+        .from("user_api_webhooks")
+        .select(
+          "id, user_id, name, endpoint_url, signing_secret, events, enabled, delivery_count, last_delivered_at, created_at",
+        )
+        .eq("user_id", userId)
+        .eq("id", webhookId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return (data as WebhookRow | null) ?? null;
+    },
+    async deleteWebhook(userId, webhookId) {
+      const { data, error } = await admin
+        .from("user_api_webhooks")
+        .delete()
+        .eq("id", webhookId)
+        .eq("user_id", userId)
+        .select("id");
+      if (error) throw new Error(error.message);
+      return (data ?? []).length > 0;
+    },
+    async listActiveWebhooks(userId, event) {
+      const { data, error } = await admin
+        .from("user_api_webhooks")
+        .select("id, endpoint_url, signing_secret, events")
+        .eq("user_id", userId)
+        .eq("enabled", true)
+        .contains("events", [event])
+        .limit(10);
+      if (error) {
+        console.warn(`jibun-api listActiveWebhooks skipped: ${error.message}`);
+        return [];
+      }
+      return (data ?? []) as WebhookRow[];
+    },
+    async touchWebhookDelivery(webhookId) {
+      const { data } = await admin
+        .from("user_api_webhooks")
+        .select("delivery_count")
+        .eq("id", webhookId)
+        .maybeSingle();
+      const current = Number(
+        (data as Record<string, unknown> | null)?.delivery_count ?? 0,
+      );
+      const { error } = await admin
+        .from("user_api_webhooks")
+        .update({
+          delivery_count: current + 1,
+          last_delivered_at: new Date().toISOString(),
+        })
+        .eq("id", webhookId);
+      if (error) {
+        console.warn(
+          `jibun-api touchWebhookDelivery skipped: ${error.message}`,
+        );
+      }
+    },
   };
 }
 
@@ -646,6 +803,68 @@ function workerToSafeJson(row: WorkerRow): Record<string, unknown> {
     last_invoked_at: row.last_invoked_at,
     created_at: row.created_at,
   };
+}
+
+function webhookToSafeJson(row: WebhookRow): Record<string, unknown> {
+  return {
+    id: row.id,
+    name: row.name,
+    endpoint_url: row.endpoint_url,
+    events: row.events,
+    enabled: row.enabled,
+    delivery_count: row.delivery_count,
+    last_delivered_at: row.last_delivered_at,
+    created_at: row.created_at,
+  };
+}
+
+// Outbound webhook dispatch — fire-and-forget / best-effort.
+// 呼び出し側は await しない。Supabase Edge Functions では Response 返却後に
+// バックグラウンド Promise が完了するか保証されないが、MVP では best-effort とする。
+function fireWebhooks(
+  store: JibunApiStore,
+  userId: string,
+  event: JibunApiWebhookEvent,
+  payload: Record<string, unknown>,
+  fetcher?: (input: string, init: RequestInit) => Promise<Response>,
+): void {
+  void (async () => {
+    let webhooks: WebhookRow[];
+    try {
+      webhooks = await store.listActiveWebhooks(userId, event);
+    } catch {
+      return;
+    }
+    for (const wh of webhooks) {
+      const body = JSON.stringify({
+        event,
+        data: payload,
+        delivered_at: new Date().toISOString(),
+      });
+      const sig = await hmacSha256Hex(wh.signing_secret, body);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5_000);
+      try {
+        await (fetcher ?? fetch)(wh.endpoint_url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Jibun-Webhook-Event": event,
+            "X-Jibun-Webhook-Signature": `sha256=${sig}`,
+            "User-Agent": "jibun-webhook/1.0",
+          },
+          body,
+          signal: controller.signal,
+          redirect: "error",
+        });
+        await store.touchWebhookDelivery(wh.id);
+      } catch {
+        // best-effort: delivery failures are silent
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  })();
 }
 
 function clampLimit(raw: unknown, fallback: number, max: number): number {
@@ -919,6 +1138,104 @@ async function handleManagementAction(
       const entries = await store.listAuditForUser(userId, limit);
       return json({ success: true, usage: entries });
     }
+    // ── Webhook 管理 (Supabase JWT 認証 / アウトバウンド Notion Webhook triggers 対抗) ──
+    case "jibunapi.webhook.create": {
+      const name = String(body.name ?? "").trim();
+      if (name === "" || name.length > 100) {
+        return json({ error: "name is required (1-100 chars)" }, 400);
+      }
+      const endpointError = validateWorkerEndpoint(body.endpoint_url);
+      if (endpointError) return json({ error: endpointError }, 400);
+      const rawEvents = Array.isArray(body.events) ? body.events : [];
+      const validSet = new Set<string>(JIBUN_API_WEBHOOK_EVENTS);
+      const events: string[] = rawEvents.filter(
+        (e) => typeof e === "string" && validSet.has(e),
+      );
+      if (events.length === 0) {
+        return json({
+          error: "events must be a non-empty array of valid event types",
+          allowed_events: JIBUN_API_WEBHOOK_EVENTS,
+        }, 400);
+      }
+      const webhookCount = await store.countWebhooks(userId);
+      if (webhookCount >= MAX_WEBHOOKS_PER_USER) {
+        return json({
+          error:
+            `webhook limit reached (max ${MAX_WEBHOOKS_PER_USER}). Delete an existing webhook first.`,
+        }, 409);
+      }
+      const signingSecret = generateSigningSecret();
+      const row = await store.insertWebhook({
+        user_id: userId,
+        name,
+        endpoint_url: String(body.endpoint_url).trim(),
+        signing_secret: signingSecret,
+        events,
+        enabled: true,
+      });
+      await audit({}, 201);
+      return json({
+        success: true,
+        webhook: webhookToSafeJson(row),
+        // 署名シークレットはこのレスポンスでのみ返却する。
+        signing_secret: signingSecret,
+        warning:
+          "signing_secret は今回のみ表示されます。Webhook 受信側の署名検証 (X-Jibun-Webhook-Signature) に使用してください。",
+      }, 201);
+    }
+    case "jibunapi.webhook.list": {
+      const webhooks = await store.listWebhooks(userId);
+      return json({ success: true, webhooks: webhooks.map(webhookToSafeJson) });
+    }
+    case "jibunapi.webhook.delete": {
+      const webhookId = String(body.id ?? "").trim();
+      if (webhookId === "") return json({ error: "id is required" }, 400);
+      const deleted = await store.deleteWebhook(userId, webhookId);
+      if (!deleted) return json({ error: "webhook not found" }, 404);
+      await audit({}, 200);
+      return json({ success: true });
+    }
+    case "jibunapi.webhook.test": {
+      const webhookId = String(body.id ?? "").trim();
+      if (webhookId === "") return json({ error: "id is required" }, 400);
+      const wh = await store.findWebhookById(userId, webhookId);
+      if (!wh) return json({ error: "webhook not found" }, 404);
+      const testPayload = JSON.stringify({
+        event: "webhook.test",
+        data: { message: "自分API からのテスト ping です。" },
+        delivered_at: new Date().toISOString(),
+      });
+      const sig = await hmacSha256Hex(wh.signing_secret, testPayload);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5_000);
+      let httpOk = false;
+      let httpStatus = 0;
+      try {
+        const res = await (deps.workerFetch ?? fetch)(wh.endpoint_url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Jibun-Webhook-Event": "webhook.test",
+            "X-Jibun-Webhook-Signature": `sha256=${sig}`,
+            "User-Agent": "jibun-webhook/1.0",
+          },
+          body: testPayload,
+          signal: controller.signal,
+          redirect: "error",
+        });
+        httpOk = res.ok;
+        httpStatus = res.status;
+      } catch (error) {
+        const msg = controller.signal.aborted
+          ? "timeout after 5s"
+          : String(error).slice(0, 100);
+        return json({ success: false, error: `delivery failed: ${msg}` }, 502);
+      } finally {
+        clearTimeout(timer);
+      }
+      await audit({}, 200);
+      return json({ success: httpOk, webhook_response_status: httpStatus });
+    }
     default:
       return json({ error: `Unknown action: ${action}` }, 400);
   }
@@ -1125,10 +1442,107 @@ async function dispatchExternalApiAction(
         };
       }
       const note = await store.createNote(userId, { title, content });
+      fireWebhooks(
+        store,
+        userId,
+        "note.created",
+        { note, trace_id: traceId },
+        deps.workerFetch,
+      );
       return {
         response: json(
           { success: true, note, trace_id: traceId },
           201,
+        ),
+        workerId: null,
+      };
+    }
+    case "api.notes.update": {
+      const denied = requireApiScope(ctx, "notes.write");
+      if (denied) return { response: denied, workerId: null };
+      const noteId = Math.floor(Number(body.id ?? 0));
+      if (!Number.isFinite(noteId) || noteId <= 0) {
+        return {
+          response: json({ error: "id is required (positive integer)" }, 400),
+          workerId: null,
+        };
+      }
+      const patch: { title?: string; content?: string } = {};
+      if (body.title !== undefined) {
+        const title = String(body.title).trim();
+        if (title === "" || title.length > NOTE_TITLE_MAX_LENGTH) {
+          return {
+            response: json(
+              { error: `title must be 1-${NOTE_TITLE_MAX_LENGTH} chars` },
+              400,
+            ),
+            workerId: null,
+          };
+        }
+        patch.title = title;
+      }
+      if (body.content !== undefined) {
+        const content = String(body.content);
+        if (content.length > NOTE_CONTENT_MAX_LENGTH) {
+          return {
+            response: json(
+              { error: `content exceeds ${NOTE_CONTENT_MAX_LENGTH} chars` },
+              400,
+            ),
+            workerId: null,
+          };
+        }
+        patch.content = content;
+      }
+      if (Object.keys(patch).length === 0) {
+        return {
+          response: json(
+            { error: "no updatable fields provided (title, content)" },
+            400,
+          ),
+          workerId: null,
+        };
+      }
+      const updated = await store.updateNote(userId, noteId, patch);
+      if (!updated) {
+        return {
+          response: json({ error: "note not found" }, 404),
+          workerId: null,
+        };
+      }
+      fireWebhooks(store, userId, "note.updated", {
+        note: updated,
+        trace_id: traceId,
+      }, deps.workerFetch);
+      return {
+        response: json({ success: true, note: updated, trace_id: traceId }),
+        workerId: null,
+      };
+    }
+    case "api.notes.delete": {
+      const denied = requireApiScope(ctx, "notes.write");
+      if (denied) return { response: denied, workerId: null };
+      const noteId = Math.floor(Number(body.id ?? 0));
+      if (!Number.isFinite(noteId) || noteId <= 0) {
+        return {
+          response: json({ error: "id is required (positive integer)" }, 400),
+          workerId: null,
+        };
+      }
+      const deleted = await store.deleteNote(userId, noteId);
+      if (!deleted) {
+        return {
+          response: json({ error: "note not found" }, 404),
+          workerId: null,
+        };
+      }
+      fireWebhooks(store, userId, "note.deleted", {
+        note_id: noteId,
+        trace_id: traceId,
+      }, deps.workerFetch);
+      return {
+        response: json(
+          { success: true, deleted: true, note_id: noteId, trace_id: traceId },
         ),
         workerId: null,
       };
@@ -1298,6 +1712,8 @@ async function dispatchExternalApiAction(
             "api.me",
             "api.notes.list",
             "api.notes.create",
+            "api.notes.update",
+            "api.notes.delete",
             "api.tasks.list",
             "api.achievements.list",
             "api.workers.list",

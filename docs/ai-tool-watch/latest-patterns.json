@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-12T22:08:49Z",
+  "generated_at": "2026-07-13T22:12:23Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -115,10 +115,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
+          "hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -268,7 +268,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
@@ -316,7 +316,7 @@
           "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
+          "previous_hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
           "slug": "codex-changelog",
           "snippets": [
             "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -548,7 +548,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
@@ -576,7 +576,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
+          "previous_hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",

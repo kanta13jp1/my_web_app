@@ -215,7 +215,7 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     displayName: "DeepSeek",
     envKey: "DEEPSEEK_API_KEY",
     chatUrl: "https://api.deepseek.com/v1/chat/completions",
-    defaultModel: "deepseek-chat",
+    defaultModel: "deepseek-v4-flash",
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
