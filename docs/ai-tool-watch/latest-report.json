@@ -11,7 +11,68 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
+      "hash": "b82837b3435d61ebb20092fa2b0042efa07c550b1265b04cd3a1a44273ee811b",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure",
+          "ultrareview"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2.1.209 / July 14, 2026",
+      "name": "Claude Code changelog",
+      "owner": "Claude Code",
+      "previous_hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
+      "slug": "claude-code-changelog",
+      "snippets": [
+        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
+        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "Added vimInsertModeRemaps setting: map two-key insert-mode sequences like jj to Escape in vim mode Added CLAUDE_CODE_PROCESS_WRAPPER : agent view and the background service now..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "b9d1761324d15257fc5b43692f35ae30f6db1b156b9b721d27aebe1d74450baf",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -48,7 +109,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
+      "previous_hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -57,9 +118,70 @@
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "55b64e254cf2dffe353e77bfc0879d19d63abf79826ba43697c9c30f3dc0ab0c",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "model picker",
+          "in-app browser",
+          "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "PostToolUse",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-07-14 / Codex CLI 0.144.4 pre",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
+      "slug": "codex-changelog",
+      "snippets": [
+        "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...",
+        "All posts Recent Mastering remote engineering work from your phone Making private MCP servers reachable without making them public How Perplexity Brought Voice Search to..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
     }
   ],
-  "checked_at": "2026-07-13T22:12:18Z",
+  "checked_at": "2026-07-14T22:14:43Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -111,13 +233,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-12T22:08:46Z",
+  "previous_checked_at": "2026-07-13T22:12:18Z",
   "sources": [
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
+      "hash": "b82837b3435d61ebb20092fa2b0042efa07c550b1265b04cd3a1a44273ee811b",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -161,7 +283,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.207 / July 11, 2026",
+      "latest_signal": "2.1.209 / July 14, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
       "previous_hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
@@ -169,7 +291,7 @@
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.207 July 11, 2026 Auto mode is now available without CLAUDE_CODE_ENABLE_AUTO_MODE opt-in on Bedrock, Vertex AI, and Foundry; disable via disableAutoMode in settings Fixed..."
+        "Added vimInsertModeRemaps setting: map two-key insert-mode sequences like jj to Escape in vim mode Added CLAUDE_CODE_PROCESS_WRAPPER : agent view and the background service now..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -178,7 +300,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
+      "hash": "b9d1761324d15257fc5b43692f35ae30f6db1b156b9b721d27aebe1d74450baf",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -215,7 +337,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
+      "previous_hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -274,10 +396,10 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
+      "hash": "55b64e254cf2dffe353e77bfc0879d19d63abf79826ba43697c9c30f3dc0ab0c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -292,6 +414,7 @@
         "hooks": [
           "hook",
           "hooks",
+          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -303,6 +426,7 @@
           "IDE extension"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -319,7 +443,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
+      "latest_signal": "2026-07-14 / Codex CLI 0.144.4 pre",
       "name": "Codex changelog",
       "owner": "Codex",
       "previous_hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
