@@ -2390,6 +2390,49 @@ async function fetchLatestNewsItems(body: Record<string, unknown>): Promise<{
   };
 }
 
+// ===== News Archive (Wayback Machine 連携) =====
+// 著作権保護のため記事本文はこのシステムには一切保存しない。扱うのは
+// 見出し・リンク等のメタデータと Internet Archive のスナップショット URL のみ。
+// 公開終了後の本文閲覧は archive.org 側のスナップショットに委ねる。
+
+const WAYBACK_TIMEOUT_MS = 8000;
+
+async function requestWaybackSnapshot(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(`https://web.archive.org/save/${url}`, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(WAYBACK_TIMEOUT_MS),
+    });
+    return res.status < 400;
+  } catch {
+    // Save Page Now はリクエスト受理後に非同期処理されるため、
+    // timeout でもスナップショットが後から生成されることがある。
+    return false;
+  }
+}
+
+async function lookupWaybackSnapshot(
+  url: string,
+): Promise<{ snapshot_url: string; snapshot_at: string } | null> {
+  try {
+    const res = await fetch(
+      `https://archive.org/wayback/available?url=${encodeURIComponent(url)}`,
+      { signal: AbortSignal.timeout(WAYBACK_TIMEOUT_MS) },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const closest = asRecord(asRecord(data)?.archived_snapshots)?.closest;
+    const snapshot = asRecord(closest);
+    if (!snapshot?.available || !snapshot?.url) return null;
+    return {
+      snapshot_url: String(snapshot.url).replace(/^http:/, "https:"),
+      snapshot_at: String(snapshot.timestamp ?? ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
 const MARKET_INTEL_DISCLAIMER =
   "This is market research support, not investment advice. It never places trades, never recommends buy/sell orders, and requires human review before any decision.";
 
@@ -9917,6 +9960,94 @@ ${reportText ? `> ${reportText}` : ""}`,
         return json({ success: true, content: text.slice(0, 5000) });
       }
 
+      // ── News Archive (メタデータ + Wayback スナップショット / 本文は複製しない) ──
+      case "news_archive.list":
+        return json({
+          success: true,
+          items: await listItems(admin, "news_archive_item", userId, 200),
+        });
+      case "news_archive.save": {
+        const url = String(body.url ?? "").trim();
+        if (!/^https?:\/\//.test(url)) {
+          return json({ error: "Invalid article url" }, 400);
+        }
+        const existing = await listItems(
+          admin,
+          "news_archive_item",
+          userId,
+          200,
+        );
+        const duplicate = existing.find((row) =>
+          String(
+            (row.metadata as Record<string, unknown> | null)?.url ?? "",
+          ) === url
+        );
+        if (duplicate) {
+          return json({ success: true, item: duplicate, duplicated: true });
+        }
+        const requested = await requestWaybackSnapshot(url);
+        const snapshot = await lookupWaybackSnapshot(url);
+        const item = await addItem(admin, "news_archive_item", userId, {
+          url,
+          title: String(body.title ?? "").slice(0, 300),
+          source: String(body.source ?? "Yahoo!ニュース"),
+          category: String(body.category ?? "総合"),
+          published_at: body.published_at ?? null,
+          memo: String(body.memo ?? "").slice(0, 2000),
+          wayback_url: snapshot?.snapshot_url ?? null,
+          wayback_snapshot_at: snapshot?.snapshot_at ?? null,
+          wayback_status: snapshot
+            ? "saved"
+            : (requested ? "requested" : "pending"),
+          archived_at: new Date().toISOString(),
+        });
+        return json({ success: true, item });
+      }
+      case "news_archive.refresh_wayback": {
+        const id = String(body.id ?? "").trim();
+        if (!id) return json({ error: "Missing item id" }, 400);
+        const { data: row } = await admin.from("hub_data")
+          .select("id, metadata")
+          .eq("id", id)
+          .eq("source", "news_archive_item")
+          .filter("metadata->>user_id", "eq", userId)
+          .maybeSingle();
+        if (!row) return json({ error: "not found" }, 404);
+        const meta = row.metadata as Record<string, unknown>;
+        const itemUrl = String(meta.url ?? "");
+        const snapshot = await lookupWaybackSnapshot(itemUrl);
+        const requested = snapshot
+          ? false
+          : await requestWaybackSnapshot(itemUrl);
+        const updatedMeta = {
+          ...meta,
+          wayback_url: snapshot?.snapshot_url ?? meta.wayback_url ?? null,
+          wayback_snapshot_at: snapshot?.snapshot_at ??
+            meta.wayback_snapshot_at ?? null,
+          wayback_status: snapshot
+            ? "saved"
+            : (requested
+              ? "requested"
+              : String(meta.wayback_status ?? "pending")),
+          wayback_checked_at: new Date().toISOString(),
+        };
+        const { error: updateError } = await admin.from("hub_data")
+          .update({ metadata: updatedMeta })
+          .eq("id", id)
+          .eq("source", "news_archive_item");
+        if (updateError) throw new Error(updateError.message);
+        return json({ success: true, item: { id, metadata: updatedMeta } });
+      }
+      case "news_archive.delete": {
+        await deleteItem(
+          admin,
+          "news_archive_item",
+          userId,
+          String(body.id ?? ""),
+        );
+        return json({ success: true });
+      }
+
       // ── Changelog ────────────────────────────────────────────────────────────
       case "changelog.list":
         return json({
@@ -10423,6 +10554,10 @@ ${reportText ? `> ${reportText}` : ""}`,
             "rss.fetch",
             "rss.fetch_latest",
             "news.signal_rank",
+            "news_archive.list",
+            "news_archive.save",
+            "news_archive.refresh_wayback",
+            "news_archive.delete",
             "market_intel.analyze",
             "changelog.list",
             "changelog.create",

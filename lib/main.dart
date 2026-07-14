@@ -155,6 +155,7 @@ import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
+import 'package:my_web_app/pages/yahoo_news_archive_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
@@ -1083,6 +1084,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           case '/news-rss':
             return MaterialPageRoute(
               builder: (_) => const NewsRssAggregatorPage(),
+            );
+          case '/yahoo-news-archive':
+            return MaterialPageRoute(
+              builder: (_) => const YahooNewsArchivePage(),
             );
           case '/market-intelligence':
             return MaterialPageRoute(

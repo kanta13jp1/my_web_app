@@ -143,6 +143,7 @@ import '../pages/market_intelligence_page.dart';
 import '../pages/meeting_manager_page.dart';
 import '../pages/mindmap_diagram_page.dart';
 import '../pages/news_rss_aggregator_page.dart';
+import '../pages/yahoo_news_archive_page.dart';
 import '../pages/parking_reservation_page.dart';
 import '../pages/qr_code_generator_page.dart';
 import '../pages/reading_list_page.dart';
@@ -1951,6 +1952,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFFEF6C00),
       keywords: const <String>['ニュース', 'RSS', 'フィード', 'ブログ', 'news', '購読'],
       onOpen: (context) => _pushPage(context, const NewsRssAggregatorPage()),
+    ),
+    HomeToolEntry(
+      id: 'yahoo-news-archive',
+      sectionId: 'knowledge',
+      title: 'Yahoo!ニュース アーカイブ',
+      subtitle: 'トピックス見出しを保存 + Wayback Machineスナップショット連携',
+      icon: Icons.archive_outlined,
+      color: const Color(0xFF7B1FA2),
+      keywords: const <String>[
+        'ニュース',
+        'Yahoo',
+        'アーカイブ',
+        'Wayback',
+        'archive',
+        'スナップショット',
+      ],
+      onOpen: (context) => _pushPage(context, const YahooNewsArchivePage()),
     ),
     HomeToolEntry(
       id: 'market-intelligence',
