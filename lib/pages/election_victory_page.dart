@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../data/dpj_prefecture_announced_targets.dart';
 import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
@@ -1122,6 +1123,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     const SizedBox(height: 16),
                   ],
                   _buildHeroCard(plan),
+                  const SizedBox(height: 16),
+                  _buildAnnouncedTargetSection(),
                   const SizedBox(height: 16),
                   _buildRealitySection(plan),
                   const SizedBox(height: 16),
@@ -4468,6 +4471,172 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Color _announcedTargetKindColor(DpjAnnouncedTargetKind kind) {
+    switch (kind) {
+      case DpjAnnouncedTargetKind.candidateFielding:
+        return const Color(0xFF2563EB);
+      case DpjAnnouncedTargetKind.totalLocalMembers:
+        return const Color(0xFF0F766E);
+      case DpjAnnouncedTargetKind.allLocalElectionsFielding:
+        return const Color(0xFF7C3AED);
+      case DpjAnnouncedTargetKind.unconfirmed:
+        return const Color(0xFF64748B);
+    }
+  }
+
+  Widget _buildAnnouncedTargetSection() {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          leading: const Icon(Icons.flag_outlined),
+          title: Text(
+            dpjAnnouncedTargetSectionTitle,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _buildMiniStatChip(
+                  '掲載',
+                  dpjPrefectureAnnouncedTargets.length,
+                  suffix: '県',
+                  color: const Color(0xFF2563EB),
+                ),
+                _buildMiniStatChip(
+                  '定義確認済み',
+                  dpjAnnouncedTargetVerifiedCount,
+                  suffix: '県',
+                  color: const Color(0xFF0F766E),
+                ),
+                _buildMiniStatChip(
+                  '種別未確認',
+                  dpjAnnouncedTargetUnconfirmedCount,
+                  suffix: '県',
+                  color: const Color(0xFF64748B),
+                ),
+              ],
+            ),
+          ),
+          children: [
+            _buildInlineNotice(
+              dpjAnnouncedTargetCaveat,
+              color: const Color(0xFFB45309),
+              icon: Icons.warning_amber_rounded,
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final kind in DpjAnnouncedTargetKind.values)
+                    _buildStatusChip(
+                      dpjAnnouncedTargetKindLabel(kind),
+                      color: _announcedTargetKindColor(kind),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final item in dpjPrefectureAnnouncedTargets)
+                    _buildAnnouncedTargetPill(item),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '党全体の正式目標は、2027年春の統一地方選までに地方議員を'
+              '約340人から700人へ倍増させる「Road to 700」です。'
+              '種別未確認の県の数字は、県連公式発表・報道で定義を確認でき次第、'
+              '擁立目標・所属議員総数目標などへ更新します。',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnnouncedTargetPill(DpjPrefectureAnnouncedTarget item) {
+    final color = _announcedTargetKindColor(item.kind);
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 148, maxWidth: 320),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                item.prefecture,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
+                ),
+              ),
+              if (item.verified) ...[
+                const SizedBox(width: 4),
+                Icon(Icons.verified_outlined, size: 14, color: color),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${item.countLabel} (${item.kindLabel})',
+            style: TextStyle(
+              color: color.withValues(alpha: 0.95),
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          if (item.note.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              item.note,
+              style: TextStyle(
+                color: color.withValues(alpha: 0.95),
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

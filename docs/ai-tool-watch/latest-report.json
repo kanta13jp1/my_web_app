@@ -11,7 +11,119 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
+      "hash": "b82837b3435d61ebb20092fa2b0042efa07c550b1265b04cd3a1a44273ee811b",
+      "keyword_groups": {
+        "codex-runtime": [
+          "model picker",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure",
+          "ultrareview"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension",
+          "VSCode",
+          "Visual Studio Code"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2.1.209 / July 14, 2026",
+      "name": "Claude Code changelog",
+      "owner": "Claude Code",
+      "previous_hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
+      "slug": "claude-code-changelog",
+      "snippets": [
+        "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
+        "Copy page This page is generated from the CHANGELOG.md on GitHub .",
+        "Added vimInsertModeRemaps setting: map two-key insert-mode sequences like jj to Escape in vim mode Added CLAUDE_CODE_PROCESS_WRAPPER : agent view and the background service now..."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "b9d1761324d15257fc5b43692f35ae30f6db1b156b9b721d27aebe1d74450baf",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "cost",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "cron",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "Copy page For a quickstart guide with examples, see Automate actions with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "55b64e254cf2dffe353e77bfc0879d19d63abf79826ba43697c9c30f3dc0ab0c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -26,6 +138,7 @@
         "hooks": [
           "hook",
           "hooks",
+          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -37,6 +150,7 @@
           "IDE extension"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -53,10 +167,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
+      "latest_signal": "2026-07-14 / Codex CLI 0.144.4 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
+      "previous_hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
       "slug": "codex-changelog",
       "snippets": [
         "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -65,48 +179,9 @@
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
-      "keyword_groups": {
-        "hooks": [
-          "Stop"
-        ],
-        "integration": [
-          "MCP",
-          "GitHub",
-          "IDE extension",
-          "VSCode"
-        ],
-        "quality-cost": [
-          "cost",
-          "quota",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "workflow"
-        ]
-      },
-      "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
-      "name": "Gemini Code Assist release notes",
-      "owner": "Gemini Code Assist",
-      "previous_hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
-      "slug": "gemini-code-assist-release-notes",
-      "snippets": [
-        "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
-        "Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...",
-        "April 13, 2026 VS Code Gemini Code Assist 2.77.3 Fixed Quota issues fixed in VS Code Various bug fixes related to quota issues."
-      ],
-      "status": 200,
-      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   ],
-  "checked_at": "2026-07-12T22:08:46Z",
+  "checked_at": "2026-07-14T22:14:43Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -158,13 +233,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-07-11T22:09:19Z",
+  "previous_checked_at": "2026-07-13T22:12:18Z",
   "sources": [
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
+      "hash": "b82837b3435d61ebb20092fa2b0042efa07c550b1265b04cd3a1a44273ee811b",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -208,7 +283,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.207 / July 11, 2026",
+      "latest_signal": "2.1.209 / July 14, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
       "previous_hash": "bff9f142171b1532396ac3a61a6836cca49507b4c64fd8401dc904cc4bb3f762",
@@ -216,16 +291,16 @@
       "snippets": [
         "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
         "Copy page This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.207 July 11, 2026 Auto mode is now available without CLAUDE_CODE_ENABLE_AUTO_MODE opt-in on Bedrock, Vertex AI, and Foundry; disable via disableAutoMode in settings Fixed..."
+        "Added vimInsertModeRemaps setting: map two-key insert-mode sequences like jj to Escape in vim mode Added CLAUDE_CODE_PROCESS_WRAPPER : agent view and the background service now..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
+      "hash": "b9d1761324d15257fc5b43692f35ae30f6db1b156b9b721d27aebe1d74450baf",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -262,7 +337,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "cc0f4c7ff3f82cc9f7953d9b04081ae54530bd1f2790d09cca35df8cba9db12e",
+      "previous_hash": "cdbde8fac27b3e05fb53ec0b0b773fda341371471cb3ef66476339ab5c8c925e",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -324,7 +399,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
+      "hash": "55b64e254cf2dffe353e77bfc0879d19d63abf79826ba43697c9c30f3dc0ab0c",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -339,6 +414,7 @@
         "hooks": [
           "hook",
           "hooks",
+          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -350,6 +426,7 @@
           "IDE extension"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
           "quota",
           "rate limit",
@@ -366,10 +443,10 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-07-09 / Codex joins the ChatGPT desktop app Codex is now part of the ChatGPT desktop app on macOS a",
+      "latest_signal": "2026-07-14 / Codex CLI 0.144.4 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "1e370c6507fb5f707139fcf71e39cd205e7cfa1871e68742ea4401d023a5bf2c",
+      "previous_hash": "2fdf72fefb204569ff6ff1ee90d813d60efd8e647fca95ad6145e2852aa0232c",
       "slug": "codex-changelog",
       "snippets": [
         "Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -492,7 +569,7 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
@@ -520,7 +597,7 @@
       "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
-      "previous_hash": "6ba17af4b7b1e3247571880c20d68c4c9015a921d11eda341f67087042859094",
+      "previous_hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
       "slug": "gemini-code-assist-release-notes",
       "snippets": [
         "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",

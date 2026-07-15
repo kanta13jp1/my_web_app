@@ -133,18 +133,42 @@ class _CmoPageState extends State<CmoPage> {
     }
   }
 
-  String _buildDraftPrompt(String channelKey) {
+  String _buildDraftPrompt(String channelKey, {String? measuredDataLine}) {
     // R21: 旧実装は goal/tone だけの一般プロンプトで、ダッシュボードの「X投稿を
     // 作る」CTA がここへ飛んだ結果、R11-R15 で潰した旧世代スロップ(「あなたの
     // 価値、埋もれていませんか？…自分集客力」)を再生産していた。アンチスロップ
     // 装置(実在機能事実/一人称persona/禁止語/具体性/BAD→GOOD)を共有ガードレール
     // から注入する。per-channel の長さ/tone spec と {title,body,hashtags} 契約は不変。
+    // R23 F3 恒久解: 実測データ行(あれば)を渡すと「実数を使ってよい」経路になる。
     return buildCmoDraftPrompt(
       channelKey: channelKey,
       channelLabel: _channelLabel(channelKey),
       spec: _channelPromptSpec(channelKey),
       hashtags: _defaultHashtags(channelKey),
+      measuredDataLine: measuredDataLine,
     );
+  }
+
+  /// R23 F3 恒久解: このアカウント自身の実測インプレッション行(build-in-public
+  /// 実数として公開してよい唯一の恒常データ源)を best-effort で取得する。
+  /// operator 以外は 403 / データ薄は null で返り、その場合 CmoPage は従来の
+  /// 捏造禁止ガードに落ちる(投稿導線は必ず描画する = 失敗しても妨げない)。
+  Future<String?> _fetchMeasuredDataLine() async {
+    try {
+      final response = await supabase.functions.invoke(
+        'growth-hub',
+        body: const <String, dynamic>{
+          'action': 'x.performance_context',
+          'limit': 80,
+        },
+      );
+      if (response.status != 200) return null;
+      final data = _normalizeInvokePayload(response.data);
+      if (data['success'] != true) return null;
+      return extractOwnMeasuredDataLine(data['promptContext']?.toString());
+    } catch (_) {
+      return null;
+    }
   }
 
   String? _extractFirstJsonObject(String text) {
@@ -293,10 +317,16 @@ class _CmoPageState extends State<CmoPage> {
 
     setState(() => _isLoading = true);
     try {
+      // R23 F3: 実測データ行を先に取得(best-effort)。あれば実数を使える経路、
+      // 無ければ従来の捏造禁止ガードで生成する。
+      final measuredDataLine = await _fetchMeasuredDataLine();
       final payload = await _magiSettingsService.buildAiAssistantPayload(
         baseBody: <String, dynamic>{
           'action': 'improve',
-          'text': _buildDraftPrompt(channelKey),
+          'text': _buildDraftPrompt(
+            channelKey,
+            measuredDataLine: measuredDataLine,
+          ),
         },
       );
       final response = await supabase.functions.invoke(
