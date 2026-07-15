@@ -2399,7 +2399,9 @@ const WAYBACK_TIMEOUT_MS = 8000;
 
 async function requestWaybackSnapshot(url: string): Promise<boolean> {
   try {
-    const res = await fetch(`https://web.archive.org/save/${url}`, {
+    // encodeURI で構造文字 (:/?#) を保ったまま空白・制御文字のみ除去し、
+    // 常に web.archive.org へのリクエストになるよう固定 (SSRF ガード)。
+    const res = await fetch(`https://web.archive.org/save/${encodeURI(url)}`, {
       redirect: "manual",
       signal: AbortSignal.timeout(WAYBACK_TIMEOUT_MS),
     });
