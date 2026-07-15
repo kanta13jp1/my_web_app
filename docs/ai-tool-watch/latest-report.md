@@ -1,14 +1,15 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-14T22:14:43Z`
-- Previous check: `2026-07-13T22:12:18Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-07-15T22:15:10Z`
+- Previous check: `2026-07-14T22:14:43Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.209 / July 14, 2026
+- `changed` Claude Code changelog: 2.1.210 / July 14, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
 - `changed` Codex changelog: 2026-07-14 / Codex CLI 0.144.4 pre
+- `changed` Codex use cases: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -20,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.209 / July 14, 2026
+  - Latest signal: 2.1.210 / July 14, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -40,13 +41,13 @@
   - URL: https://developers.openai.com/codex/changelog
   - Latest signal: 2026-07-14 / Codex CLI 0.144.4 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: Codex changelog | ChatGPT Learn ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
+  - Short signal: Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...
   - Short signal: Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
-  - Latest signal: ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API referenc
+  - Latest signal: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: ChatGPT use cases ChatGPT Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs...
+  - Short signal: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or Codex Docs Use...
   - Short signal: Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...
 - **Codex overview** (HTTP 403)
   - URL: https://openai.com/codex/
