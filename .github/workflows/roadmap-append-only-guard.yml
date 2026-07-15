@@ -24,7 +24,7 @@ permissions:
 
 concurrency:
   group: roadmap-append-only-guard-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-15 ci-audit: 最新 commit のみチェックで十分 (guard は全量チェックのため安全)
 
 jobs:
   guard:

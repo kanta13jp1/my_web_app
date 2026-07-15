@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: mcp-container-isolation-smoke-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2026-07-15 ci-audit: PR smoke test は最新 run のみで十分
 
 jobs:
   smoke:
