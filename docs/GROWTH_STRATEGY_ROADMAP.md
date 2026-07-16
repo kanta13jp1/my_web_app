@@ -32882,3 +32882,5 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — GHA 生成済みコンテンツで補完
+
+<!-- session 2026-07-16 WEB remote: WBS 誠実バーンダウン — #1287 close / #1239+資産 core 着地 / 資産 12 Issue close・WBS 19 行 completed・#4059 集約 / NotebookLM flood 352 件 triage strategy (branch claude/wbs-incomplete-tasks-05moye, 12 commit). 次回優先: #2967 relevance-gate 再定義 + NotebookLM drain first batch. -->

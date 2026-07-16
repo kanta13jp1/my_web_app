@@ -3,6 +3,29 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-07-16 (WEB版 remote — WBS 誠実バーンダウン)
+
+- `feedback_success_20260716_wbs_burndown.md` — WBS 削減 5 段 (stale 修復→実装済み verify close→近重複集約→検証可能 core→供給 throttle) / Dart/Deno 不在の JS ミラー+Node 検証 / parallel Explore agents で 29k 行監査。
+- `feedback_correction_20260716_wbs_burndown.md` — AskUserQuestion 失敗→text 選択 / gawk 3-arg match 非対応→Python block split / commit Unverified は署名鍵不在の環境制約 / deno.land proxy 403。
+- `project_20260716_wbs_burndown.md` — WBS guard 挙動 + stale row / 資産管理クラスタ実装状況 (残は #3443 のみ) / NotebookLM flood 352 件の構造 (#2967 は throttle 再定義すべき)。
+
+<!-- wrap-up 20260716
+未完了: 0 件 (本セッション着手分は全て commit・push 済み / 承認待ちの実行系のみ残)
+
+本セッション成果 (branch claude/wbs-incomplete-tasks-05moye / 12 commit):
+- #1287 Notion payload builder 実装+テスト+close / #1239 CSV core 60%
+- 資産管理: 12 Issue close (stale 5 + 実装済 2 + 重複 5) / WBS 19 行 completed / #4059 集約
+- 資産管理 core 着地: #3329/#3326/#3349 (照合) + #3291 (gate) → 残は #3443 のみ
+- NotebookLM flood triage strategy (352 件 / drain+throttle 方針) doc 化
+
+次回優先候補 (要ユーザー承認の実行系):
+- 🔴 #2967 を relevance-gate 付き復旧に再定義 (NotebookLM 供給を止める / 根本解決)
+- 🔴 NotebookLM drain first batch: 承認テーマ 20 件を canonical epic + duplicate close
+- 🟡 資産管理 Codex 実装: #3329/#3326/#3349/#3291 の UI (core 着地済) + #3443 自動実行の安全設計
+- 🟡 #1239 CSV 一括登録の file picker UI + Supabase upsert wiring (core 着地済)
+- 🟢 NotebookLM A(off-topic)/B(実装済み) の本格 drain スクリプト設計
+-->
+
 ## 2026-07-11 (WEB版 — SEO 監査 H7 完了 + 監査 doc 化)
 
 - `feedback_success_20260711_web_seo_h7.md` — 既存 SSR 再利用 / 高リスク path の独立ヘルパー抽出 test 化 / 実測 honest pushback (H8 Skip) / 会話監査の doc 正本化。
