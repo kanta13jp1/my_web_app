@@ -20402,10 +20402,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     if (!_salaryDayConfigured) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('先に給料日を保存してください（既定値のままでは投稿しません）')),
-      );
-      return;
+      // R24e: 行き止まりにせず、その場で給料日設定ダイアログを開いて続行する。
+      await _showSalaryDayDialog();
+      if (!mounted) return;
+      if (!_salaryDayConfigured) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('給料日を保存すると週次投稿を有効化できます（既定値では投稿しません）')),
+        );
+        return;
+      }
     }
 
     final nextEnabled = !_householdTrackerAutoPostEnabled;
@@ -20519,10 +20524,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return;
     }
     if (!_salaryDayConfigured) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('先に給料日を保存してください（既定値は実測として投稿しません）')),
-      );
-      return;
+      // R24e: 行き止まりにせず、その場で給料日設定ダイアログを開いて続行する。
+      await _showSalaryDayDialog();
+      if (!mounted) return;
+      if (!_salaryDayConfigured) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('給料日を保存すると投稿できます（既定値は実測として投稿しません）')),
+        );
+        return;
+      }
     }
     final snapshot = _householdTrackerSnapshot(insights);
     final confirmed = await showDialog<bool>(
