@@ -133,3 +133,15 @@ canonical/duplicate を揃えると WBS 行数がさらに縮む。
   7 Issue × 2 行 = **14 WBS 行**を completed 化 (`github_issue_state=CLOSED` + `ai_review_status=manual_override`)。
 - ① の stale 5 行 (`20260716130000`) と合わせ、資産管理クラスタで **19 WBS 行**を completed 化。
 - ④⑤ の 5 件 (#3326 #3329 #3291 #3349 #3443) は open 継続 → Codex 実装レーン (残スコープは本書の通り)。
+
+### 追加: ④⑤ の検証可能コア着地 (2026-07-16 / #3443 以外を前進)
+
+open 継続の 5 件のうち **4 件は決定論コアを実装・検証**し、残作業を UI/永続化/QA のみに縮小 (完了は未主張 / Issue は open):
+
+- **#3329 / #3326 / #3349**(カード照合): 共有コア `lib/services/card_statement_reconciliation_planner.dart`
+  (差分 / `previewAdjustment` / `suggestedBalancingAmount` / 仮内訳 official 除外+promote)。11 テスト・JS ミラー検証。
+  migration `20260716150000` で 6 行を 50%。commit `2ad3a7d`。
+- **#3291**(入金 gate): コア `lib/services/payment_confirmation_gate.dart`
+  (未登録バナー可視 + 支払確定確認 + severity)。7 テスト・JS ミラー検証。migration `20260716160000` で 2 行を 50%。
+- **#3443**(自動実行): 唯一 core 未着手。auto-create + `PaymentFundingRule` + auto-exec toggle が必要で、
+  「ユーザー承認なし自動実行」という性質上、慎重な設計判断(安全上限・通知・監査)を要するため据え置き。
