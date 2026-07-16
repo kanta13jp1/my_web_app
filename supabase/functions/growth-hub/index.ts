@@ -274,7 +274,7 @@ async function listXPostLogs(
     query = query.filter("metadata->>user_id", "eq", userId);
   }
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(`x_post_logs: ${error.message}`);
   return data ?? [];
 }
 
@@ -294,7 +294,7 @@ async function listXHistoricalBenchmarkLogs(
     query = query.filter("metadata->>user_id", "eq", userId);
   }
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(`x_historical_benchmarks: ${error.message}`);
   return data ?? [];
 }
 
@@ -311,7 +311,10 @@ async function listXMetricSnapshots(
   }> = [];
   // Snapshot volume can exceed PostgREST's usual 1,000-row response limit.
   // Page by bounded source-log batches so early post-age windows are retained.
-  const batchSize = 50;
+  // Metrics collection stops after seven days. Ten posts therefore fit in a
+  // single 1,000-row page under the normal three-hour collection cadence, and
+  // keep each PostgREST statement small enough for the production timeout.
+  const batchSize = 10;
   const pageSize = 1000;
   const maxPagesPerBatch = 10;
   for (let offset = 0; offset < sourceLogIds.length; offset += batchSize) {
@@ -336,7 +339,13 @@ async function listXMetricSnapshots(
         query = query.filter("metadata->>user_id", "eq", userId);
       }
       const { data, error } = await query;
-      if (error) throw new Error(error.message);
+      if (error) {
+        throw new Error(
+          `x_metric_snapshots(batch=${
+            Math.trunc(offset / batchSize)
+          },page=${page}): ${error.message}`,
+        );
+      }
       const pageRows = (data ?? []) as typeof rows;
       rows.push(...pageRows);
       if (pageRows.length < pageSize) break;
@@ -1223,6 +1232,31 @@ async function buildXPerformanceContext(
   ] as XPostLogItem[];
   const normalized = await loadNormalizedXMetricWindows(admin, userId, logs);
   return buildXPerformanceContextFromLogs(logs, normalized);
+}
+
+async function buildXGrowthDataReportContext(
+  admin: SupabaseClient,
+  userId: string,
+  rawLimit: unknown,
+) {
+  const limit = Math.max(
+    10,
+    Math.min(100, Math.trunc(firstNumber(rawLimit) ?? 50)),
+  );
+  // The weekly report excludes historical benchmark rows before composing its
+  // copy. Loading them through the generic performance context made the cron
+  // scan old x_post_log rows for data it immediately discarded.
+  const recentLogs = (await listXPostLogs(
+    admin,
+    userId,
+    limit,
+  )) as XPostLogItem[];
+  const normalized = await loadNormalizedXMetricWindows(
+    admin,
+    userId,
+    recentLogs,
+  );
+  return buildXPerformanceContextFromLogs(recentLogs, normalized);
 }
 
 async function buildScheduledHouseholdTrackerReport(
@@ -2346,7 +2380,7 @@ serve(async (req: Request) => {
         // (read-only / LLM 非使用 / 数値は全て x_post_log 実測)。実測 3 件
         // 未満は available:false で投稿見送りを指示する。
         const scopeUserId = await xReadScopeUserId(admin, userId!);
-        const perf = await buildXPerformanceContext(
+        const perf = await buildXGrowthDataReportContext(
           admin,
           scopeUserId,
           body.limit ?? 100,
