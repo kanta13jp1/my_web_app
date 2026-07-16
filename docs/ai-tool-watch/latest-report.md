@@ -1,15 +1,16 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-15T22:15:10Z`
-- Previous check: `2026-07-14T22:14:43Z`
-- Changed/new official sources: `4`
+- Checked at: `2026-07-16T22:16:18Z`
+- Previous check: `2026-07-15T22:15:10Z`
+- Changed/new official sources: `5`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.210 / July 14, 2026
+- `changed` Claude Code changelog: 2.1.211 / July 15, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
-- `changed` Codex changelog: 2026-07-14 / Codex CLI 0.144.4 pre
-- `changed` Codex use cases: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
+- `changed` Codex changelog: 2026-07-16 / Codex CLI 0.144.5 pre
+- `changed` Devin release notes: July 15, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -21,10 +22,10 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.210 / July 14, 2026
+  - Latest signal: 2.1.211 / July 15, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
-  - Short signal: Copy page This page is generated from the CHANGELOG.md on GitHub .
+  - Short signal: Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .
 - **Claude Code hooks reference** (HTTP 200)
   - URL: https://code.claude.com/docs/en/hooks
   - Latest signal: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
@@ -39,7 +40,7 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-07-14 / Codex CLI 0.144.4 pre
+  - Latest signal: 2026-07-16 / Codex CLI 0.144.5 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...
   - Short signal: Home Quickstart Core Concepts MCP Apps in ChatGPT MCP Server UX principles UI guidelines Plan Research use cases Define tools Design components Build Set up your server Build...
@@ -67,7 +68,7 @@
   - Short signal: Starting June 18, 2026, Gemini Code Assist IDE Extensions and Gemini CLI stopped serving requests for the Gemini Code Assist for individuals, Google AI Pro, and Google AI Ultra...
 - **Devin release notes** (HTTP 200)
   - URL: https://docs.devin.ai/release-notes
-  - Latest signal: July 3, 2026
+  - Latest signal: July 15, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...
   - Short signal: Onboarding Devin Environment configuration Index a Repository VPN Configuration Knowledge Onboarding AGENTS.md Working with Devin Devin Review Devin Session Tools Computer Use...
