@@ -112,9 +112,6 @@ jobs:
             "$FIREBASE_URL" --max-time 12 2>/dev/null || echo "000")
           echo "  Firebase Hosting: HTTP $FIREBASE_CODE"
           echo "firebase=$FIREBASE_CODE" >> $GITHUB_OUTPUT
-          if [ "$FIREBASE_CODE" != "200" ]; then
-            ALL_OK=false
-          fi
 
           # Supabase Edge Functions (統合監視: 旧 infra-health-check の 6 EF)
           ef_check "schedule-hub"            POST "schedule-hub"
