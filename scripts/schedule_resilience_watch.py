@@ -42,7 +42,7 @@ TARGETS = (
     WorkflowTarget("daily-report", "daily-report.yml", 30),
     WorkflowTarget("cs-check", "cs-check.yml", 3),
     WorkflowTarget("competitor-monitoring", "competitor-monitoring.yml", 30),
-    WorkflowTarget("infra-health-check", "infra-health-check.yml", 3),
+    WorkflowTarget("health-monitor", "health-monitor.yml", 3),
 )
 
 

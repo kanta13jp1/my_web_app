@@ -24,7 +24,7 @@ owners or leave persistent local processes behind.
 | **Daily Report** | `daily-report.yml` | 毎日 07:30 JST / 手動 | 日次レポート生成 + X投稿 + 競合モニタリング + schedule_task_runs記録 + Job Summary |
 | **CS Check** | `cs-check.yml` | 毎時 07分 / 手動 | CS自動対応 + PR自動レビュー + schedule_task_runs記録 + Job Summary |
 | **Edge Function Audit** | `edge-function-audit.yml` | 毎時 47分 / 手動 | EF UI導線カバレッジチェック + schedule_task_runs記録 + Job Summary |
-| **Infra Health Check** | `infra-health-check.yml` | 毎時 37分 / 手動 | Firebase + 重要EF 6件監視 + schedule_task_runs記録 + Job Summary |
+| **Health Monitor (統合)** | `health-monitor.yml` | 2時間毎 00分 / 手動 | サポートチケット + Firebase + 重要EF 6件監視 (旧 infra-health-check.yml を 2026-07-17 統合) + health-status.json/infra-status.json 更新 + schedule_task_runs記録 + Job Summary |
 | **tools-hub MCP Smoke** | `tools-hub-mcp-smoke.yml` | 6時間毎 / 手動 | tools-hub MCP facade の metadata / tools/list / auth gate / optional AuthKit token smoke + schedule_task_runs記録 |
 | **NotebookLM Intake Gate** | `notebooklm-intake-gate.yml` | Daily 06:45 JST / manual | Normalize `notebooklm list --json`, deduplicate against Issues/docs, and update `docs/notebooklm-intake` for #1606 |
 | **Scheduled Analysis Batch** | `cron-batch.yml` | 毎日 00:00 UTC / 手動 | Python分析バッチ (Gemini連携) + schedule_task_runs記録 |
