@@ -185,6 +185,13 @@
       "category": "personal AI executive assistant / autonomous life-admin agent (consumer, mobile-first)",
       "added": "discovery",
       "added_date": "2026-07-10"
+    },
+    {
+      "name": "OpenAI ChatGPT",
+      "url": "https://chatgpt.com",
+      "category": "consumer AI / personal finance (個人B/S ダッシュボード) + Work OS (workspace agents) / 個人B/S + 6部署 direct competitor",
+      "added": "discovery",
+      "added_date": "2026-07-17"
     }
   ],
   "discovery_history": [
@@ -919,6 +926,19 @@
         "Motion (= 次点保持 / AI Employee SuperApp = 名前付き部署 AI [Alfred/Chip/Millie/Suki + カスタム社員ビルダー] = 自社 6 部署の正面 productization / $60M Series C @ $550M valuation / Pro AI $19・Business AI $29 per seat)",
         "Monarch / connected-account copilot 勢 (= Monarch Smart Goals 3月 + AI アシスタント/週次リキャップ 2025-12 / Copilot Money [Apple 特化・Android なし] / Cleo [会話型] / 7 月新規シグナルなし / 単機能寄り・share は ChatGPT 劣後で signal 層留置)",
         "MoneyForward ME × AI (= discovery 対象でなく **既存対象 MoneyForward の脅威度モニタ軸の再定義** / 7/8 暗号資産カテゴリ分離 = 個人 B/S 資産配分粒度の強化 / 監視は「AI Cowork の個人進出」→「ME の AI エージェント化」へ差替)"
+      ]
+    },
+    {
+      "date": "2026-07-17",
+      "name": "OpenAI ChatGPT",
+      "category": "consumer AI / personal finance (個人B/S) + Work OS (workspace agents)",
+      "reason": "7-day cooldown 明け解禁初日採択 (7-10 Lindy AI 採択 + 7-day / next unlock 2026-07-17 到達 / Lovable 5-17・Bolt.new 5-24・Qoder 6-9 の『解禁日初日に前日の第1候補を採択』pattern 踏襲)。26→27 社 / cap 50。採択理由 = 基準 a (差別化軸直接競合) と 基準 c (過去30日重大リリース) の両立。(1) 基準 a = OpenAI ChatGPT は自社コアの両軸を同時に直撃する唯一の候補: (a) パーソナルファイナンス (5-15 Pro preview → 6-25 Plus/Pro 米 GA / Plaid 経由 12,000+ 金融機関接続 → 残高・取引・投資・負債ダッシュボード + 財務文脈 Q&A / GPT-5.6) = 自社 個人 B/S コア (AssetAdvisoryBriefingService) と正面競合。しかも Plus $20/月 = 自社ターゲット価格帯と完全重複。(b) ChatGPT Work / workspace agents (7-9 launch / workspace agent 従量課金 7-6 GA = agent run ≈5-25 credit/run・input/cached/output メータ / Business は 8-6 まで無料) = 自社 6 部署 + fleet 運用 (GHA cron 30+ / Schedule cron) の Work OS 対抗 + 『監査可能な並列統治』ナラティブの競合側 GA 化。(2) 基準 c = ChatGPT Work workspace agent 従量課金 7-6 GA (採択日 -11 day / 30 日 window 内) + personal finance Plus 展開 6-25。(3) diversification 整合 = personal finance は dev-tool ではなく個人ライフ/家計ドメイン = 7-10 Lindy AI 是正方向 (coding tool 偏り緩和) と同方向。既存 OpenAI Codex (dev tool 軸) とは製品軸が異なり、Claude Code / Claude Cowork 同様の『同社・別製品』entry として妥当。[AI-TOOL-VERIFY] = personal finance / Work の日付・機能は OpenAI 公式 + OpenAI Help Center + TechCrunch 一次情報で裏取り済 (2 次メディア依拠ではない)。https://openai.com/index/personal-finance-chatgpt/ + https://openai.com/index/introducing-workspace-agents-in-chatgpt/",
+      "skipped_candidates": [
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI Alfred/Chip/Clide/Millie/Suki/Dot/Spec = 自社 6 部署の正面 productization で基準 a は強い。ただし [AI-TOOL-VERIFY] 訂正 = $60M Series C @ $550M valuation は 2025-12 で ~7ヶ月前 → 基準 c 不成立。加えて B2B per-seat ($19 Pro AI / $29 Business AI) で自社コンシューマ/個人層と顧客軸がズレる。次点保持・signal 層継続監視)",
+        "Visa AI Financial Assistant (= 7 月中旬発表 / 銀行アプリ埋込型の会話型パーソナルファイナンス AI [月次インサイト + 自然言語 Q&A + カード lock/alert + 類似ユーザ比較] / 8 月に US 金融機関で pilot = 自社 個人 B/S ドメインの distribution-layer 新規脅威。ただし pilot 前段階 = signal 層新規留置・次サイクル以降 昇格判断)",
+        "OpenCode (= 171-178K stars / OSS coding agent / 追加すると coding tool 偏りが再燃し基準 b 逆行 → 7-10 に続き見送り継続 / signal 層・将来 AI 振り分け matrix 候補)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 単機能寄り + share が ChatGPT に劣後 / signal 層留置で基準値作り継続)",
+        "Google Jules / Antigravity・Microsoft MAI-Code-1-Flash・Salesforce Agentforce Operations (= いずれも既採択済 = 重複対象外)"
       ]
     }
   ],
