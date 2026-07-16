@@ -2,7 +2,7 @@ name: AI Quota Monitor
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 毎日 09:00 JST (UTC 00:00)
+    - cron: '11 0 * * *'  # 毎日 09:11 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
     inputs:
       dry_run:

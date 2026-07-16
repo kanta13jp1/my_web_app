@@ -18,7 +18,7 @@ name: OGP Image Refresh (週次)
 
 on:
   schedule:
-    - cron: "0 0 * * 1"  # 毎週月曜 09:00 JST (UTC 00:00)
+    - cron: "43 0 * * 1"  # 毎週月曜 09:43 JST (2026-07-17 ci-audit: 00:00 UTC 8本集中を分散)
   workflow_dispatch:
     inputs:
       prompt_override:
