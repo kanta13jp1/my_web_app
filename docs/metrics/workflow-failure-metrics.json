@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-07-15T23:30:19.306850+00:00",
+  "generated_at": "2026-07-16T23:26:17.829868+00:00",
   "tracked_count": 200,
-  "open_count": 5,
-  "closed_count": 195,
-  "recovered_count": 195,
-  "avg_recovery_hours": 11.49,
+  "open_count": 7,
+  "closed_count": 193,
+  "recovered_count": 193,
+  "avg_recovery_hours": 11.6,
   "categories": {
     "deno-lint": 147,
     "generic-ci": 8,
