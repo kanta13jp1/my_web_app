@@ -5,8 +5,8 @@
   },
   "supabase": {
     "all_ok": true,
-    "results": "schedule-hub=400 tools-hub=401 admin-hub=400 guitar-recording-studio=200 get-home-dashboard=000000 health-check=200 "
+    "results": "schedule-hub=400 tools-hub=401 admin-hub=400 guitar-recording-studio=200 get-home-dashboard=200 health-check=200 "
   },
-  "fetched_at": "2026-07-16T07:03:31Z",
+  "fetched_at": "2026-07-16T10:29:14Z",
   "note": ""
 }
