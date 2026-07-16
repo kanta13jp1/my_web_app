@@ -36,6 +36,25 @@ import {
   billingAllowedHosts,
   resolveBillingReturnUrl,
 } from "./billing_return_url.ts";
+import {
+  buildNotionProperties,
+  extractNotionErrorDetail,
+  type NotionPropertyMapping as NotionBuilderMapping,
+} from "../_shared/notion_property_builder.ts";
+
+// WBS -> Notion データベースの列マッピング (Issue #1287)。
+// Notion は Title-type property の内部 ID を常に "title" に固定するため、
+// rich_text 列は "task_title" にリネーム済 (title 名の衝突回避)。
+// buildNotionProperties が型別の厳格ラップ + title 衝突検知を一元化する。
+const NOTION_WBS_PROPERTY_MAPPINGS: NotionBuilderMapping[] = [
+  { name: "id", type: "title" },
+  { name: "task_title", type: "rich_text" },
+  { name: "instance", type: "select" },
+  { name: "status", type: "select" },
+  { name: "progress", type: "number" },
+  { name: "deadline", type: "date" },
+  { name: "updated_at", type: "date" },
+];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -3664,21 +3683,25 @@ serve(async (req: Request) => {
           // → rich_text property は task_title にリネーム済 (user 手動)。
           //
           // null 値の property は omit (Notion API は `{date: null}` を受けるが
-          // 他の type では 400 になるため全て conditional 構築)
-          const properties: Record<string, unknown> = {
-            id: { title: [{ text: { content: String(t.id) } }] },
-            task_title: {
-              rich_text: [{ text: { content: String(t.title ?? "") } }],
-            },
-            instance: { select: { name: normalizeInstance(t.instance) } },
-            status: { select: { name: normalizeStatus(t.status) } },
-            progress: { number: Number(t.progress ?? 0) },
+          // 他の type では 400 になるため未設定値は skip)。
+          // buildNotionProperties が型別ラップ + title 衝突検知を一元化 (Issue #1287)。
+          const propertyValues: Record<string, unknown> = {
+            id: String(t.id),
+            task_title: String(t.title ?? ""),
+            instance: normalizeInstance(t.instance),
+            status: normalizeStatus(t.status),
+            progress: Number(t.progress ?? 0),
           };
-          if (t.end_date) {
-            properties.deadline = { date: { start: String(t.end_date) } };
-          }
-          if (t.updated_at) {
-            properties.updated_at = { date: { start: String(t.updated_at) } };
+          if (t.end_date) propertyValues.deadline = String(t.end_date);
+          if (t.updated_at) propertyValues.updated_at = String(t.updated_at);
+
+          const built = buildNotionProperties(
+            NOTION_WBS_PROPERTY_MAPPINGS,
+            propertyValues,
+          );
+          const properties = built.properties;
+          for (const warning of built.warnings) {
+            errors.push(`mapping ${t.id}: ${warning}`);
           }
 
           try {
@@ -3722,7 +3745,9 @@ serve(async (req: Request) => {
                 failed++;
                 const eb = await patchResp.text().catch(() => "");
                 errors.push(
-                  `patch ${t.id}: HTTP ${patchResp.status} ${eb.slice(0, 200)}`,
+                  `patch ${t.id}: ${
+                    extractNotionErrorDetail(patchResp.status, eb).detail
+                  }`,
                 );
               }
             } else {
@@ -3739,8 +3764,8 @@ serve(async (req: Request) => {
                 failed++;
                 const eb = await createResp.text().catch(() => "");
                 errors.push(
-                  `create ${t.id}: HTTP ${createResp.status} ${
-                    eb.slice(0, 200)
+                  `create ${t.id}: ${
+                    extractNotionErrorDetail(createResp.status, eb).detail
                   }`,
                 );
               }
@@ -4096,28 +4121,24 @@ serve(async (req: Request) => {
         for (const [taskId, pageId] of pageIdByTaskId.entries()) {
           const task = tasksById.get(taskId);
           if (!task) missing++;
-          const properties: Record<string, unknown> = {
-            instance: {
-              select: { name: normalizeInstance(task?.instance ?? "codex") },
-            },
+          // buildNotionProperties が型別ラップ + title 衝突検知を一元化 (Issue #1287)。
+          // id (title) は pageId 指定 patch のため values に含めず skip させる。
+          const propertyValues: Record<string, unknown> = {
+            instance: normalizeInstance(task?.instance ?? "codex"),
           };
           if (task) {
-            properties.task_title = {
-              rich_text: [{ text: { content: String(task.title ?? "") } }],
-            };
-            properties.status = {
-              select: { name: normalizeStatus(task.status) },
-            };
-            properties.progress = { number: Number(task.progress ?? 0) };
-            if (task.end_date) {
-              properties.deadline = { date: { start: String(task.end_date) } };
-            }
+            propertyValues.task_title = String(task.title ?? "");
+            propertyValues.status = normalizeStatus(task.status);
+            propertyValues.progress = Number(task.progress ?? 0);
+            if (task.end_date) propertyValues.deadline = String(task.end_date);
             if (task.updated_at) {
-              properties.updated_at = {
-                date: { start: String(task.updated_at) },
-              };
+              propertyValues.updated_at = String(task.updated_at);
             }
           }
+          const properties = buildNotionProperties(
+            NOTION_WBS_PROPERTY_MAPPINGS,
+            propertyValues,
+          ).properties;
 
           const patchResp = await externalFetch(
             "notion",
@@ -4135,7 +4156,9 @@ serve(async (req: Request) => {
             failed++;
             const text = await patchResp.text().catch(() => "");
             errors.push(
-              `patch ${taskId}: HTTP ${patchResp.status} ${text.slice(0, 180)}`,
+              `patch ${taskId}: ${
+                extractNotionErrorDetail(patchResp.status, text).detail
+              }`,
             );
           }
           await new Promise((r) => setTimeout(r, delayMs));
