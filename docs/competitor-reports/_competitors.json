@@ -886,6 +886,40 @@
         "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / 7-10 skip 候補から昇格級)",
         "OpenCode (= 8 サイクル queue 済 / coding tool 偏り懸念で継続保留 / signal 層)"
       ]
+    },
+    {
+      "date": "2026-07-14",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ。新シグナル = (1) 基盤直撃: Anthropic Claude Cowork を web/mobile へ展開 + リモートセッション (端末跨ぎ同期 + スケジュールタスクは端末オフラインでも実行 / Max 先行 / 上限 8-5 まで倍化) = 自社 Schedule cron の技術的独自性を基盤側が消費者向けに productize → platform-eating-app リスク顕在化; (2) Anthropic 生産性層進出: Claude が Microsoft 365 write ツール (メール/カレンダー/OneDrive/SharePoint) + Claude for Government (FedRAMP High) + Notion External Agents 第1号が Claude+Cursor; (3) Work OS コモディティ化継続 (差分詳細のみ): MF AI Cowork=『6つのバックオフィス業務』枠+エージェントハーネス制御基盤, ChatGPT Work=Codex app を ChatGPT desktop へ統合; (4) マクロ=Vertical AI Agents Eating Horizontal SaaS (Gartner: 2026末に enterprise app の 40% が agent 内蔵)。次サイクル (7/17) 第1候補 = ChatGPT Work 継続保持。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT Work (= 次サイクル discovery 第1候補 / 7-09 launch / Work OS 代表 / Codex 統合で dev+agent 窓口一本化)",
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / $60M Series C @ $550M valuation)",
+        "Claude Cowork consumer 化 (= 既存対象 / discovery でなく既存脅威度引き上げ / 基盤差別化平準化リスク)"
+      ]
+    },
+    {
+      "date": "2026-07-15",
+      "name": null,
+      "skipped": true,
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17. 26 社 / cap 50。本日は監視 WebSearch のみ。新シグナル = (1) [取りこぼし捕捉/最重要] OpenAI が ChatGPT に『パーソナルファイナンス体験』を出荷済 (6/25, Plus/Pro 米, 口座接続→支出ダッシュボード→文脈付き Q&A) = 自社 個人 B/S コア (AssetAdvisoryBriefingService) の正面競合を過去レポート未捕捉のまま3週間見落とし → 遡及計上。Monarch/WallyGPT も connected-account copilot へ収斂; (2) Anthropic『Claude for Teachers』(7/14, K-12 教師向け無料) = 週内で Government(7/13)→Science→Teachers と縦割り製品を連発 = platform-eating-app 補強 (自社 AI大学 隣接だが直接競合ではない); (3) MoneyForward AI Cowork は依然 法人専用・個人(家計)進出なし = 正面衝突トリガー未点火; (4) Antigravity soft-deprecation 疑惑は実証されず (4製品へ拡張中/廃止は旧 Gemini CLI→Antigravity CLI) = L1 レーン安全。次サイクル(7/17)第1候補 = OpenAI ChatGPT を基準b→基準a(直接競合)へ格上げ。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT (= 次サイクル discovery 第1候補 / Work agent(7/9) + パーソナルファイナンス体験(6/25) の両面で自社 個人B/S コアへ直接競合 → 基準b→基準a 格上げ)",
+        "Motion (= AI Employee SuperApp / 名前付き部署 AI = 自社6部署の正面 productization / $60M Series C @ $550M valuation)",
+        "Monarch / connected-account copilot 勢 (= パーソナルファイナンス AI カテゴリ代表 / 単機能寄り・share は ChatGPT 劣後で signal 層)"
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "name": null,
+      "category": "skip",
+      "reason": "cooldown / 7-day since 2026-07-10 (Lindy AI 採択) — next unlock 2026-07-17 (明日 = 解禁初日). 26 社 / cap 50。本日は監視 WebSearch のみ。本日の価値は新機能でなく **監視前提の是正 2 件** = (1) [事実訂正] ChatGPT パーソナルファイナンスの初回出荷は 6/25 でなく **5/15 (Pro/米/preview)**、6/25-6/30 は **Plus 拡大日** → 7/15 report の「6/25 提供開始」を訂正 / 見落とし期間は 3 週間でなく **約 2 ヶ月** / 現在 **Plus $20 帯で提供済** = 自社ターゲット価格帯と完全重複 (Plaid 12,000+ 機関 / Intuit coming soon); (2) [最重要] **MoneyForward *ME* (個人向け) 7/8 に「暗号資産」を独立カテゴリ化** (生活資金 vs 投資目的資産を分離 → アセットアロケーション比率明確化) → **ウォッチトリガーの誤設定が露呈**: 従来「AI Cowork(法人) が個人へ降りたら衝突」と設定し毎 run「未点火」と記録してきたが、**MF は ME で個人 B/S を既に押さえている** = 降りてくるのを待つ設定は的外れ。真の衝突点は「**ME が AI エージェント化する瞬間 (Cowork の Claude オーケストレータ基盤の ME 転用)**」→ 次 run から巡回クエリ差替; (3) MF AI Cowork = 法人専用据え置き・個人進出なし (差分なし / 優先度は相対低下); (4) ChatGPT Work 実体判明 = 7/6 で workspace agents 無料期間終了 → **token 従量課金** + **管理者の組織横断統治ビュー** (Agent ID/接続アプリ/メモリファイル/スケジュール/分析) = 自社 fleet 統治ナラティブの競合側 GA; (5) dev-tool クラスタ + connected-account copilot 勢 (Monarch/Copilot/Cleo) = 新規シグナルなし。[AI-TOOL-VERIFY] 検証で **Google Cloud Next 2026 (Gemini Enterprise/A2A/Mariner) は 4/22-24 開催 = 3 ヶ月前**と確定 → 新シグナルとして計上せず除外。教訓 = 本日 日付誤認が 2 件連続表面化 → シグナル計上前に一次情報で初出日を確定する運用へ。次サイクル (7/17 解禁初日) 第 1 候補 = **OpenAI ChatGPT を基準 a で採択推奨** (Work 7/9 + パーソナルファイナンス 5/15〜Plus 展開済 の両面で自社コア直撃)。",
+      "skipped_candidates": [
+        "OpenAI ChatGPT (= 7/17 解禁初日 discovery 第 1 候補 / 基準 a 直接競合 / Work agent(7/9) + パーソナルファイナンス(5/15 launch → 6/25-6/30 Plus 拡大 = 2 ヶ月稼働中) の両面で 個人B/S コア直撃 / 解禁日初日採択 pattern [Lovable 5/17 / Bolt.new 5/24 / Qoder 6/9] 踏襲推奨)",
+        "Motion (= 次点保持 / AI Employee SuperApp = 名前付き部署 AI [Alfred/Chip/Millie/Suki + カスタム社員ビルダー] = 自社 6 部署の正面 productization / $60M Series C @ $550M valuation / Pro AI $19・Business AI $29 per seat)",
+        "Monarch / connected-account copilot 勢 (= Monarch Smart Goals 3月 + AI アシスタント/週次リキャップ 2025-12 / Copilot Money [Apple 特化・Android なし] / Cleo [会話型] / 7 月新規シグナルなし / 単機能寄り・share は ChatGPT 劣後で signal 層留置)",
+        "MoneyForward ME × AI (= discovery 対象でなく **既存対象 MoneyForward の脅威度モニタ軸の再定義** / 7/8 暗号資産カテゴリ分離 = 個人 B/S 資産配分粒度の強化 / 監視は「AI Cowork の個人進出」→「ME の AI エージェント化」へ差替)"
+      ]
     }
   ],
   "_schema_notes": {

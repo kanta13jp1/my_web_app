@@ -8,7 +8,9 @@ import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 import '../widgets/agent_workspace_panel.dart';
+import '../widgets/cfo_cost_summary_card.dart';
 import '../widgets/display_mode_experiment_card.dart';
+import 'cfo_cost_ledger_page.dart';
 
 class CfoOfficePage extends StatefulWidget {
   const CfoOfficePage({super.key});
@@ -21,6 +23,7 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
   final AgentOrgService _agentOrgService = AgentOrgService();
   AgentWorkspaceSnapshot? _workspace;
   bool _isLoadingWorkspace = true;
+  int _summaryReloadToken = 0;
 
   @override
   void initState() {
@@ -46,24 +49,43 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
     }
   }
 
+  Future<void> _refreshAll() async {
+    await _loadWorkspace();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _summaryReloadToken += 1);
+  }
+
   Future<void> _processTask(AgentTask task, String status) async {
     try {
       await _agentOrgService.processTask(task: task, status: status);
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('CFOタスクを $status に更新しました。')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('CFOタスクを $status に更新しました。')));
       await _loadWorkspace();
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('CFOタスクの更新に失敗しました: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('CFOタスクの更新に失敗しました: $error')));
     }
+  }
+
+  Future<void> _openCostLedger() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CfoCostLedgerPage()),
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() => _summaryReloadToken += 1);
   }
 
   @override
@@ -75,10 +97,10 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(
-        onRefresh: _loadWorkspace,
+        onRefresh: _refreshAll,
         child: ListView(
           padding: const EdgeInsets.all(16),
-          children: [
+          children: <Widget>[
             AgentWorkspacePanel(
               officeLabel: 'CFO',
               accentColor: Colors.green,
@@ -88,6 +110,11 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
             ),
             const SizedBox(height: 16),
             const DisplayModeExperimentCard(),
+            const SizedBox(height: 16),
+            CfoCostSummaryCard(
+              key: ValueKey<int>(_summaryReloadToken),
+              onOpenLedger: _openCostLedger,
+            ),
             const SizedBox(height: 16),
             _buildMenuCard(
               context,
@@ -102,6 +129,13 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               '月次予算の設定・カテゴリ別支出入力・AI節約アドバイス・将来シミュレーション。',
               Icons.account_balance_wallet,
               const BudgetFinancialPlannerPage(),
+            ),
+            _buildMenuCard(
+              context,
+              'コスト入力台帳',
+              '固定費・変動費・月次予算差分を構造化して記録します。',
+              Icons.receipt_long,
+              const CfoCostLedgerPage(),
             ),
             _buildMenuCard(
               context,
@@ -148,18 +182,23 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            height: 1.5,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
         ),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: page != null
-            ? () =>
-                Navigator.push(context, MaterialPageRoute(builder: (_) => page))
-            : () => ScaffoldMessenger.of(context)
-                .showSnackBar(const SnackBar(content: Text('準備中です'))),
+            ? () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => page),
+                );
+                if (mounted && page is CfoCostLedgerPage) {
+                  setState(() => _summaryReloadToken += 1);
+                }
+              }
+            : () => ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('準備中です'))),
       ),
     );
   }
