@@ -1,7 +1,7 @@
 ---
 title: "その anon key、実質公開ですよ: Supabase Edge Function の publicActions に空いていた認可の穴を塞いだ話"
 tags: Supabase,セキュリティ,Deno,buildinpublic,個人開発
-published: false
+published: true
 ---
 
 # その anon key、実質公開ですよ: Supabase Edge Function の publicActions に空いていた認可の穴を塞いだ話
