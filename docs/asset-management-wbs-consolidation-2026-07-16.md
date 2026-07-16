@@ -120,3 +120,16 @@ canonical/duplicate を揃えると WBS 行数がさらに縮む。
 
 > 承認いただければ、②③ の GitHub Issue close + WBS 反映 migration + 差分 re-file を実行します
 > (close は reversible / 実装済のエビデンスは本書 `file:line` で追跡可能)。
+
+---
+
+## 実行ログ (2026-07-16 / ②③ 承認済み実行)
+
+- **③ 残差分の集約 Issue を新設**: **#4059**「集約後の残差分 5 点」— 5 項目のチェックリスト + `file:line`。
+- **② close (completed)**: #3343, #3384 — 実装エビデンス付きコメント + `state_reason=completed`。
+- **③ close (duplicate)**: #3595→dup #3343 / #3585→dup #3343 / #3328→dup #3343 / #3354→dup #2941 /
+  #3383→dup #2939 — 各コメントで親と残差分 (#4059) を明示。
+- **WBS 反映**: migration `20260716140000_wbs_complete_asset_consolidation_closures.sql` で
+  7 Issue × 2 行 = **14 WBS 行**を completed 化 (`github_issue_state=CLOSED` + `ai_review_status=manual_override`)。
+- ① の stale 5 行 (`20260716130000`) と合わせ、資産管理クラスタで **19 WBS 行**を completed 化。
+- ④⑤ の 5 件 (#3326 #3329 #3291 #3349 #3443) は open 継続 → Codex 実装レーン (残スコープは本書の通り)。
