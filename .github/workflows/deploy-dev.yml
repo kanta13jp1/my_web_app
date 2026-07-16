@@ -71,7 +71,7 @@ jobs:
 
       # Supabase Migration (Development)
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v2
+        uses: supabase/setup-cli@v3
         with:
           version: 2.84.2
 
@@ -219,7 +219,7 @@ jobs:
       - name: Notify Slack on success
         if: needs.deploy.result == 'success'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v3.0.3
+        uses: slackapi/slack-github-action@v3.0.5
         with:
           payload: |
             {
@@ -278,7 +278,7 @@ jobs:
       - name: Notify Slack on failure
         if: needs.deploy.result == 'failure'
         continue-on-error: true
-        uses: slackapi/slack-github-action@v3.0.3
+        uses: slackapi/slack-github-action@v3.0.5
         with:
           payload: |
             {
