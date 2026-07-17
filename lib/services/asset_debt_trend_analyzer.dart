@@ -171,7 +171,7 @@ class AssetDebtTrendAnalyzer {
     final delta = priorBalance == null ? null : balance - priorBalance;
 
     final breakEven = interest + 1;
-    final payoff24 = _paymentToClearIn(balance, monthlyRate, 24);
+    final payoff24 = paymentToClearIn(balance, monthlyRate, 24);
     final estimate = estimatePayoff(
       balance: balance,
       monthlyRate: monthlyRate,
@@ -411,7 +411,7 @@ class AssetDebtTrendAnalyzer {
   /// [targetMonths] ヶ月で完済するために必要な毎月返済額（年金現価式）。
   ///
   /// 月利 0 のときは単純に balance / months。100 円単位へ切り上げる。
-  double _paymentToClearIn(
+  static double paymentToClearIn(
     double balance,
     double monthlyRate,
     int targetMonths,

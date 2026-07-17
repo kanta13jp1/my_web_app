@@ -411,6 +411,20 @@ class AssetManagementInsightService {
     final actions = <AssetManagementInsightActionItem>[];
     final today = _dateOnly(workbook.baseDate);
     final upcomingLimit = today.add(Duration(days: upcomingPaymentWarningDays));
+    // 口座別見込み残高 (同口座の未払い・保留中の口座移動を合算済み)。
+    // 期限超過の支払可否判定と原資候補の順位付けは、口座別不足バナーと
+    // 同じこの数字に揃える (行単位の生残高比較は同一口座の兄弟未払いを
+    // 二重取りするため使わない)。cash-like 口座のみ含まれるので、
+    // じぶん銀行のように預金と負債が同一 id になる名前でも負債側を拾わない。
+    final summariesByAccountId = <String, AssetLiabilityAccountCashflowSummary>{
+      for (final summary in workbook.accountCashflowSummaries)
+        summary.accountId: summary,
+    };
+    // 原資未設定の負債に提示する引落口座候補。ページ上部バナーの候補一覧と
+    // 同じ順位付け (支払後見込み残高の大きい順) で最有力を 1 件だけ本文に載せる。
+    final paymentSourceCandidateSummaries = workbook.accountCashflowSummaries
+        .toList()
+      ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
 
     for (final row in workbook.debtMasterRows) {
       if (row.paymentAmountEstimated && row.isDirectCashflowTarget) {
@@ -459,16 +473,32 @@ class AssetManagementInsightService {
           !row.paid &&
           (row.paymentSourceAccountId == null ||
               row.paymentSourceAccountId!.trim().isEmpty)) {
+        // じぶん銀行のように預金と負債が同一 id になる名前があるため自分自身は除外。
+        AssetLiabilityAccountCashflowSummary? candidate;
+        for (final summary in paymentSourceCandidateSummaries) {
+          if (summary.accountId != row.id) {
+            candidate = summary;
+            break;
+          }
+        }
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.missingPaymentSource,
             severity: AssetManagementInsightSeverity.warning,
             title: '${row.name}の支払原資口座が未設定です',
-            description: 'どの口座から引き落とすか未設定のため、口座別資金繰りに反映しにくい状態です。',
+            description: 'どの口座から引き落とすか未設定のため、'
+                '今月予定${_formatYen(row.scheduledPaymentAmount)}が'
+                'どの口座の見込み残高からも差し引かれず、残高不足を先読みできない状態です。',
             relatedAccountId: row.id,
             dueDate: _paymentDateFor(row, workbook.baseDate),
             paymentDay: row.paymentDay,
-            suggestedAction: '通常使う引落口座をデフォルト、または今月だけ上書きで設定してください。',
+            suggestedAction: candidate == null
+                ? '残高のある現金・預金口座が見つかりません。入金後に'
+                    '「支払原資口座の未設定」一覧から引落口座を設定してください。'
+                : '候補: ${candidate.accountName}'
+                    '（残高 ${_formatYen(candidate.currentBalance)} / 支払後見込み '
+                    '${_formatYen(candidate.projectedBalance - row.scheduledPaymentAmount)}）。'
+                    '「支払原資口座の未設定」一覧から今月だけ上書き、または既定で設定してください。',
           ),
         );
       }
@@ -479,16 +509,54 @@ class AssetManagementInsightService {
         continue;
       }
       if (row.overdue) {
+        // 期限超過は「いくらを・どうやって」まで具体化する（金額は支払予定額。
+        // 残高を延滞額扱いしない、のプロンプト規約と揃える）。
+        final overdueDays = today.difference(_dateOnly(row.paymentDate)).inDays;
+        final sourceAccountId = row.paymentSourceAccountId?.trim() ?? '';
+        final sourceSummary = sourceAccountId.isEmpty
+            ? null
+            : summariesByAccountId[sourceAccountId];
+        final String suggestedAction;
+        if (sourceAccountId.isEmpty) {
+          suggestedAction = '支払原資口座が未設定です。引落口座を設定したうえで、'
+              '振込・口座振替・支払先への連絡のどれで支払うかを確認してください。'
+              '支払済みの場合は支払済みチェックを更新してください。';
+        } else if (sourceSummary == null) {
+          // id は設定済みだが残高一覧に現れない (残高0で除外・口座名変更・
+          // じぶん銀行のような負債側 id 等)。「未設定」と断定しない。
+          final sourceName = row.paymentSourceAccountName ?? sourceAccountId;
+          suggestedAction = '原資口座「$sourceName」の残高を今の資産一覧で確認できません'
+              '（残高0か口座名変更の可能性）。残高を入力し直すか、'
+              '残高のある口座へ原資設定を変更してから支払ってください。';
+        } else if (sourceSummary.projectedBalance >= 0) {
+          suggestedAction =
+              '${sourceSummary.accountName}の残高${_formatYen(sourceSummary.currentBalance)}で'
+              '支払可能です。引落状況を確認し、未処理なら'
+              '${_formatYen(row.paymentAmount)}を支払って支払済みチェックを更新してください。';
+        } else {
+          // 同一口座の未払い・保留中の口座移動を合算した見込み不足
+          // (口座別不足バナーと同じ数字) を提示する。
+          final shortage = sourceSummary.shortfall;
+          suggestedAction = '${sourceSummary.accountName}は同口座の未払い分を含めると見込み残高が'
+              '${_formatYen(shortage)}不足します。他口座から${_formatYen(shortage)}以上を'
+              '${sourceSummary.accountName}へ移動してから、'
+              '${_formatYen(row.paymentAmount)}を支払ってください。';
+        }
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.overduePayment,
             severity: AssetManagementInsightSeverity.critical,
             title: '${row.accountName}が期限超過です',
-            description: '支払日を過ぎた未払い予定があります。',
+            description: overdueDays <= 0
+                ? '本日${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                    '${_formatYen(row.paymentAmount)}が未払いです。'
+                : '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                    '${_formatYen(row.paymentAmount)}が未払いのまま'
+                    '$overdueDays日経過しています。',
             relatedAccountId: row.accountId,
             dueDate: row.paymentDate,
             paymentDay: row.paymentDay,
-            suggestedAction: '残高と引落状況を確認し、支払済みならチェックを更新してください。',
+            suggestedAction: suggestedAction,
           ),
         );
       } else if (!row.paymentDate.isBefore(today) &&
