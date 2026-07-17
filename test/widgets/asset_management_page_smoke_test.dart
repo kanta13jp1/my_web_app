@@ -1241,6 +1241,55 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('payment source missing banner lists unset payment sources', (
+      tester,
+    ) async {
+      // PayPay の支払原資口座が未設定 → 最上部バナーで件数・金額と、残高付きの
+      // 設定候補口座 + 原資未設定一覧へのジャンプ導線を出す。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 1000,
+                '三井住友銀行大塚支店': 500000,
+                'PayPay': -20000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_payment_source_missing_banner')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('支払原資口座が未設定の支払い'),
+        findsOneWidget,
+      );
+      // 残高最大の三井住友大塚支店が候補として提示される (現在残高付き)。
+      // 本番経路ではデフォルト固定費 (家賃等) も原資未設定になるため複数行出る。
+      expect(
+        find.textContaining('候補: 三井住友銀行大塚支店（現在 ¥500,000'),
+        findsWidgets,
+      );
+      expect(
+        find.byKey(const Key('asset_payment_source_missing_jump')),
+        findsOneWidget,
+      );
+
+      await _unmount(tester);
+    });
+
     testWidgets('card reconciliation shows fix actions for mismatches', (
       tester,
     ) async {

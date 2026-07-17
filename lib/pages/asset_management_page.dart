@@ -393,6 +393,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyCardStatementReconciliation = GlobalKey();
   // 口座間移動の提案セクションへのスクロール用 (残高不足バナーからのジャンプ)。
   final _keyTransferSuggestionSection = GlobalKey();
+  // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
+  final _keyDebtControlReviewSection = GlobalKey();
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
@@ -1143,6 +1145,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   void _jumpToTransferSuggestionSection() {
     _scrollTo(_keyTransferSuggestionSection);
+  }
+
+  void _jumpToDebtControlReviewSection() {
+    _scrollTo(_keyDebtControlReviewSection);
   }
 
   List<String> _paymentSourceCandidates() {
@@ -8418,6 +8424,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildSyncStatusBanner(),
             _buildUnsyncedBadgeRow(),
             _buildAccountShortfallAlertBanner(assetLiabilityWorkbook),
+            _buildPaymentSourceMissingBanner(assetLiabilityWorkbook),
             _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
             _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
@@ -13246,6 +13253,133 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 支払原資口座が未設定の支払いをページ最上部で警告する。
+  /// 原資未設定の支払いはどの口座の見込み残高からも差し引かれず、
+  /// 残高不足バナー（口座別先読み）が働かない盲点になるため、
+  /// 件数・金額・残高付きの設定候補と設定導線をセットで出す。
+  Widget _buildPaymentSourceMissingBanner(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || !workbook.hasPaymentSourceMissingRows) {
+      return const SizedBox.shrink();
+    }
+    final rows = workbook.paymentSourceMissingRows
+      ..sort(
+        (a, b) => b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount),
+      );
+    return Container(
+      key: const Key('asset_payment_source_missing_banner'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8, bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 16,
+                color: Color(0xFFB45309),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '支払原資口座が未設定の支払い'
+                  '（${rows.length}件 / 合計 ${_formatManagementYen(workbook.paymentSourceMissingTotal)}）',
+                  // 背景が固定の淡黄のため、ダークテーマの onSurface(白)だと
+                  // 読めなくなる。文字色も固定の濃橙系にする。
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB45309),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final row in rows.take(3))
+            _buildPaymentSourceMissingBannerRow(row, workbook),
+          if (rows.length > 3)
+            Text(
+              'ほか${rows.length - 3}件の支払いで原資口座が未設定です。',
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF92400E),
+                height: 1.5,
+              ),
+            ),
+          // ジャンプ先の原資未設定一覧は workbookBoard 内にあり、表示モード次第で
+          // 非描画になる。その場合スクロールが silent no-op になるため出さない。
+          if (_isSectionShown(AssetManagementSectionId.workbookBoard))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_payment_source_missing_jump'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB45309),
+                ),
+                onPressed: _jumpToDebtControlReviewSection,
+                icon: const Icon(Icons.arrow_downward, size: 16),
+                label: const Text('原資未設定の一覧へ移動'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSourceMissingBannerRow(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    // じぶん銀行のように預金と負債が同一 id になる名前があるため自分自身は除外。
+    _PaymentSourceCandidate? candidate;
+    for (final entry in _paymentSourceCandidatesForRow(row, workbook)) {
+      if (entry.account.id != row.id) {
+        candidate = entry;
+        break;
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '「${row.name}」支払日 ${row.paymentDay ?? '-'}日 / '
+            '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFB45309),
+              height: 1.5,
+            ),
+          ),
+          Text(
+            candidate == null
+                ? '残高のある現金・預金口座が見つかりません。入金後に原資口座を設定してください。'
+                : '候補: ${candidate.account.name}'
+                    '（現在 ${_formatManagementYen(candidate.currentBalance)} / '
+                    '支払後見込み ${_formatManagementYen(candidate.projectedAfterPayment)}）',
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF92400E),
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
@@ -18062,7 +18196,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 12),
             _buildAssetWorkbookWarning(workbook),
             const SizedBox(height: 16),
-            _buildDebtControlReviewSection(workbook),
+            KeyedSubtree(
+              key: _keyDebtControlReviewSection,
+              child: _buildDebtControlReviewSection(workbook),
+            ),
             const SizedBox(height: 16),
             _buildAssetPaymentReminderPanel(workbook),
             const SizedBox(height: 16),
@@ -20087,8 +20224,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 4),
           Text(
             violation.problem,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            // 背景が固定の白のため、ダークテーマの onSurfaceVariant(淡色)だと
+            // 読めなくなる。文字色も固定の濃スレート系にする。
+            style: const TextStyle(
+              color: Color(0xFF475569),
               fontSize: 12,
               height: 1.5,
             ),
@@ -20109,7 +20248,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Expanded(
                   child: Text(
                     violation.action,
-                    style: const TextStyle(fontSize: 12, height: 1.5),
+                    // 固定白タイル上のためテーマ色でなく固定の濃色にする。
+                    style: const TextStyle(
+                      color: Color(0xFF1F2937),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -20130,6 +20274,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 value: _formatManagementYen(violation.currentBalance),
                 color: const Color(0xFF6B7280),
               ),
+              if (violation.hasEscapePlan)
+                _buildAssetLiabilitySyncChip(
+                  label: '${violation.escapeMonths}ヶ月脱却の月額',
+                  value: _formatManagementYen(violation.escapeMonthlyPayment!),
+                  color: const Color(0xFF0D9488),
+                ),
+              if (violation.currentPlanPayoffMonths case final months?)
+                _buildAssetLiabilitySyncChip(
+                  label: '現状ペース完済',
+                  value: '約$monthsヶ月',
+                  color: const Color(0xFF6B7280),
+                ),
             ],
           ),
         ],
