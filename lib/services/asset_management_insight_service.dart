@@ -15,6 +15,7 @@ enum AssetManagementInsightActionType {
   emergencyLivingExpense,
   cardBillingConfiguration,
   doubleCountingRisk,
+  accountShortfallRisk,
 }
 
 enum AssetManagementInsightSeverity { info, warning, critical }
@@ -85,6 +86,33 @@ class AssetManagementMovementSuggestion {
     required this.neededBy,
     required this.reason,
   });
+}
+
+/// 口座別見込み残高が不足する口座への先読み警告。全体の使用可能額が黒字でも
+/// 支払原資口座の割り当て次第で引き落とし失敗が起きるため、不足口座と
+/// 「どこからいくら動かせば解消するか」(移動提案) をセットで UI へ渡す。
+class AssetManagementAccountShortfallAlert {
+  final String accountId;
+  final String accountName;
+
+  /// 今後の支払予定・入金予定・保留中の口座移動を反映した見込み残高（負値）。
+  final double projectedBalance;
+
+  /// 不足額（正値）。
+  final double shortfallAmount;
+
+  /// 不足を解消できる口座移動提案。移動元候補が無い場合は null。
+  final AssetManagementMovementSuggestion? transferSuggestion;
+
+  const AssetManagementAccountShortfallAlert({
+    required this.accountId,
+    required this.accountName,
+    required this.projectedBalance,
+    required this.shortfallAmount,
+    this.transferSuggestion,
+  });
+
+  bool get hasTransferSuggestion => transferSuggestion != null;
 }
 
 class AssetManagementDeveloperRequest {
@@ -223,6 +251,9 @@ class AssetManagementInsightReport {
   final AssetManagementAvailableMoneyInsight weekAvailable;
   final AssetManagementAvailableMoneyInsight monthAvailable;
   final List<AssetManagementMovementSuggestion> movementSuggestions;
+
+  /// 口座別見込み残高が不足する口座の先読み警告（不足額の大きい順）。
+  final List<AssetManagementAccountShortfallAlert> accountShortfallAlerts;
   final List<AssetManagementEmergencyAdvice> emergencyAdvices;
   final List<AssetManagementDeveloperRequest> developerRequests;
   final List<AssetManagementImplementationContext> implementationContexts;
@@ -241,6 +272,8 @@ class AssetManagementInsightReport {
     required this.weekAvailable,
     required this.monthAvailable,
     required this.movementSuggestions,
+    this.accountShortfallAlerts =
+        const <AssetManagementAccountShortfallAlert>[],
     required this.emergencyAdvices,
     required this.developerRequests,
     this.implementationContexts =
@@ -248,6 +281,8 @@ class AssetManagementInsightReport {
     this.debtTrendInsights = const <AssetDebtTrendInsight>[],
     this.disciplineReport,
   });
+
+  bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
 
   bool get hasDebtTrendInsights => debtTrendInsights.isNotEmpty;
 
@@ -324,12 +359,17 @@ class AssetManagementInsightService {
       windows: <AssetManagementAvailableMoneyInsight>[today, week, month],
       minimumSafetyBalance: minimumSafetyBalance,
     );
+    final accountShortfallAlerts = _buildAccountShortfallAlerts(
+      workbook: workbook,
+      movementSuggestions: movementSuggestions,
+    );
     final emergencyAdvices = _buildEmergencyAdvices(
       workbook: workbook,
       today: today,
       week: week,
       month: month,
       movementSuggestions: movementSuggestions,
+      accountShortfallAlerts: accountShortfallAlerts,
     );
     final developerRequests = _buildDeveloperRequests(
       workbook: workbook,
@@ -353,6 +393,7 @@ class AssetManagementInsightService {
       weekAvailable: week,
       monthAvailable: month,
       movementSuggestions: movementSuggestions,
+      accountShortfallAlerts: accountShortfallAlerts,
       emergencyAdvices: emergencyAdvices,
       developerRequests: developerRequests,
       implementationContexts: implementationContexts,
@@ -494,6 +535,26 @@ class AssetManagementInsightService {
           paymentDay: today.day,
           suggestedAction:
               '支払いを実行する前に、今日の食費・移動費・医療など最低限の生活費を先に確保し、払えない支払いは支払先へ猶予または分割相談をしてください。',
+        ),
+      );
+    }
+
+    // 口座別見込み残高の不足は、使用可能額(全体)が黒字でも支払原資口座の
+    // 割り当て次第で発生する（例: 現金口座だけが引き落とし分に足りない）。
+    for (final summary in workbook.shortAccountSummaries) {
+      actions.add(
+        AssetManagementInsightActionItem(
+          type: AssetManagementInsightActionType.accountShortfallRisk,
+          severity: AssetManagementInsightSeverity.critical,
+          title: '${summary.accountName}の見込み残高が不足します',
+          description: '今後の支払予定を差し引いた見込み残高が'
+              '${_formatYen(summary.projectedBalance)}となり、'
+              '${_formatYen(summary.shortfall)}不足します。',
+          relatedAccountId: null,
+          dueDate: null,
+          paymentDay: null,
+          suggestedAction:
+              '「口座間移動の提案」から${summary.accountName}への移動タスクを作成し、支払い前に実行してください。',
         ),
       );
     }
@@ -668,19 +729,48 @@ class AssetManagementInsightService {
     required AssetManagementAvailableMoneyInsight week,
     required AssetManagementAvailableMoneyInsight month,
     required List<AssetManagementMovementSuggestion> movementSuggestions,
+    required List<AssetManagementAccountShortfallAlert> accountShortfallAlerts,
   }) {
+    final advices = <AssetManagementEmergencyAdvice>[];
+
+    // 口座別の見込み残高不足は全体ウィンドウが黒字でも起きるため、
+    // ウィンドウ不足の有無に関わらず先頭で警告する。
+    for (final alert in accountShortfallAlerts.take(3)) {
+      final suggestion = alert.transferSuggestion;
+      // 期限は提案の neededBy がある場合のみ断言する（無い期限を捏造しない）。
+      final deadline = suggestion?.neededBy == null
+          ? 'できるだけ早く、'
+          : '${_formatDate(suggestion!.neededBy!)}までに';
+      advices.add(
+        AssetManagementEmergencyAdvice(
+          severity: AssetManagementInsightSeverity.critical,
+          title: '${alert.accountName}の残高不足を先に解消してください',
+          description: '支払予定を差し引くと${alert.accountName}の見込み残高は'
+              '${_formatYen(alert.projectedBalance)}'
+              '（${_formatYen(alert.shortfallAmount)}不足）です。'
+              'このままでは引き落としに失敗します。',
+          suggestedAction: suggestion == null
+              ? '入金予定の登録または他口座からの移動で'
+                  '${_formatYen(alert.shortfallAmount)}以上を確保してから支払いを実行してください。'
+              : '$deadline${suggestion.fromAccountName}から${alert.accountName}へ'
+                  '${_formatYen(suggestion.amount)}を移動してください。'
+                  '「口座間移動の提案」からタスク化すると見込み残高に反映されます。',
+          amount: alert.shortfallAmount,
+        ),
+      );
+    }
+
     final windows = <AssetManagementAvailableMoneyInsight>[today, week, month]
       ..sort((a, b) => a.availableAmount.compareTo(b.availableAmount));
     final worst = windows.first;
     final hasShortage = windows.any((window) => window.availableAmount < 0);
     if (!hasShortage) {
-      return const <AssetManagementEmergencyAdvice>[];
+      return advices;
     }
 
     final nextIncome = _nextIncomePlan(workbook);
     final shortfall =
         worst.availableAmount < 0 ? worst.availableAmount.abs() : 0.0;
-    final advices = <AssetManagementEmergencyAdvice>[];
 
     if (today.availableAmount < 0) {
       advices.add(
@@ -762,6 +852,41 @@ class AssetManagementInsightService {
     );
 
     return advices;
+  }
+
+  /// 口座別見込み残高が不足する口座を不足額の大きい順に並べ、その口座を
+  /// 移動先とする口座移動提案（あれば）を紐付けて返す。
+  List<AssetManagementAccountShortfallAlert> _buildAccountShortfallAlerts({
+    required AssetLiabilityWorkbook workbook,
+    required List<AssetManagementMovementSuggestion> movementSuggestions,
+  }) {
+    final summaries = workbook.shortAccountSummaries
+      ..sort((a, b) => b.shortfall.compareTo(a.shortfall));
+    return <AssetManagementAccountShortfallAlert>[
+      for (final summary in summaries)
+        AssetManagementAccountShortfallAlert(
+          accountId: summary.accountId,
+          accountName: summary.accountName,
+          projectedBalance: summary.projectedBalance,
+          shortfallAmount: summary.shortfall,
+          transferSuggestion: _firstSuggestionForAccount(
+            summary.accountId,
+            movementSuggestions,
+          ),
+        ),
+    ];
+  }
+
+  AssetManagementMovementSuggestion? _firstSuggestionForAccount(
+    String accountId,
+    List<AssetManagementMovementSuggestion> suggestions,
+  ) {
+    for (final suggestion in suggestions) {
+      if (suggestion.toAccountId == accountId) {
+        return suggestion;
+      }
+    }
+    return null;
   }
 
   AssetLiabilityIncomePlan? _nextIncomePlan(AssetLiabilityWorkbook workbook) {
@@ -1742,6 +1867,7 @@ class AssetManagementInsightPromptBuilder {
       AssetManagementInsightActionType.emergencyLivingExpense => '生活費の不足',
       AssetManagementInsightActionType.cardBillingConfiguration => 'カード請求設定の確認',
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
+      AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
     };
   }
 

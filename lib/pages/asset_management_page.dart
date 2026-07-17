@@ -391,6 +391,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   int _forecastHorizonMonths = 6;
   // カード明細取り込み・照合パネルへのスクロール用 (AIコメントからのジャンプ)。
   final _keyCardStatementReconciliation = GlobalKey();
+  // 口座間移動の提案セクションへのスクロール用 (残高不足バナーからのジャンプ)。
+  final _keyTransferSuggestionSection = GlobalKey();
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
@@ -1137,6 +1139,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   void _jumpToCardStatementReconciliation() {
     _scrollTo(_keyCardStatementReconciliation);
+  }
+
+  void _jumpToTransferSuggestionSection() {
+    _scrollTo(_keyTransferSuggestionSection);
   }
 
   List<String> _paymentSourceCandidates() {
@@ -8411,6 +8417,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
             _buildSyncStatusBanner(),
             _buildUnsyncedBadgeRow(),
+            _buildAccountShortfallAlertBanner(assetLiabilityWorkbook),
             _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
             _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
@@ -13093,6 +13100,148 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// 支払原資口座の見込み残高不足を先読みしてページ最上部に警告する。
+  /// 全体の使用可能額が黒字でも口座割り当て次第で引き落とし失敗が起きるため、
+  /// 不足口座・不足額・解消のための口座移動提案とタスク化導線をセットで出す。
+  Widget _buildAccountShortfallAlertBanner(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || !workbook.hasAccountShortage) {
+      return const SizedBox.shrink();
+    }
+    final summaries = workbook.shortAccountSummaries
+      ..sort((a, b) => b.shortfall.compareTo(a.shortfall));
+    // 不足口座を移動先とする提案を紐付ける（同一移動先は先勝ち）。
+    final suggestionsByAccountId = <String, AssetLiabilityTransferSuggestion>{};
+    for (final suggestion in workbook.transferSuggestions) {
+      suggestionsByAccountId.putIfAbsent(
+        suggestion.toAccountId,
+        () => suggestion,
+      );
+    }
+    return Container(
+      key: const Key('asset_account_shortfall_banner'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8, bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                size: 16,
+                color: Color(0xFFB91C1C),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '支払原資口座の残高不足見込み（${summaries.length}口座）',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB91C1C),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final summary in summaries.take(3)) ...[
+            Text(
+              '「${summary.accountName}」が${_formatManagementYen(summary.shortfall)}不足'
+              '（支払後見込み ${_formatManagementYen(summary.projectedBalance)}）',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFB91C1C),
+                height: 1.5,
+              ),
+            ),
+            if (suggestionsByAccountId[summary.accountId]
+                case final suggestion?)
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    '${suggestion.fromAccountName} → ${summary.accountName} '
+                    '${_formatManagementYen(suggestion.amount)}'
+                    '${suggestion.neededBy == null ? '' : '（${DateFormat('M月d日').format(suggestion.neededBy!)}まで）'}',
+                    // 背景が固定の淡赤のため、ダークテーマの onSurface(白)だと
+                    // 読めなくなる。文字色も固定の濃赤系にする。
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF7F1D1D),
+                      height: 1.5,
+                    ),
+                  ),
+                  TextButton.icon(
+                    key: Key(
+                      'asset_account_shortfall_create_task_${summary.accountId}',
+                    ),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      foregroundColor: const Color(0xFFB91C1C),
+                    ),
+                    onPressed: () =>
+                        _createTransferTaskFromSuggestion(suggestion),
+                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                    label: const Text('移動タスクを作成'),
+                  ),
+                ],
+              )
+            else
+              Text(
+                '移動元の候補が見つかりません。入金予定の登録または他口座からの出金で'
+                '${_formatManagementYen(summary.shortfall)}以上を確保してください。',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF7F1D1D),
+                  height: 1.5,
+                ),
+              ),
+            const SizedBox(height: 4),
+          ],
+          if (summaries.length > 3)
+            Text(
+              'ほか${summaries.length - 3}口座で不足見込みがあります。口座別資金繰りを確認してください。',
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF7F1D1D),
+                height: 1.5,
+              ),
+            ),
+          // ジャンプ先の口座間移動セクションは workbookBoard 内にあり、表示
+          // モード次第で非描画になる。その場合スクロールが silent no-op に
+          // なるため、ボタン自体を出さない（タスク化ボタンは常に使える）。
+          if (_isSectionShown(AssetManagementSectionId.workbookBoard))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_account_shortfall_jump'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                ),
+                onPressed: _jumpToTransferSuggestionSection,
+                icon: const Icon(Icons.arrow_downward, size: 16),
+                label: const Text('口座間移動の提案へ移動'),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -17929,7 +18078,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 16),
             _buildMonthlyReportSection(),
             const SizedBox(height: 16),
-            _buildTransferSuggestionSection(workbook),
+            KeyedSubtree(
+              key: _keyTransferSuggestionSection,
+              child: _buildTransferSuggestionSection(workbook),
+            ),
             const SizedBox(height: 16),
             _buildAssetWorkbookDebtTable(workbook),
             const SizedBox(height: 16),
@@ -21374,6 +21526,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         Icons.credit_card_off_outlined,
       AssetManagementInsightActionType.doubleCountingRisk =>
         Icons.difference_outlined,
+      AssetManagementInsightActionType.accountShortfallRisk =>
+        Icons.account_balance_wallet_outlined,
     };
   }
 
@@ -22088,7 +22242,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     AssetLiabilityWorkbook workbook,
   ) {
     final reconciliation = workbook.cardStatementReconciliation;
-    final cardOptions = _cardBillingAccountOptions(workbook);
+    // 照合グループのホストは shoppingDebt も正当（planning service の
+    // isCardBillingHostKind と同じ集合）。creditCard 限定だと解消アクション
+    // からの選択がサイレントに別カードへフォールバックし誤取込を招く。
+    final cardOptions =
+        _cardBillingAccountOptions(workbook, includeShoppingDebt: true);
     final selected = _selectedCardStatementBillingAccountId;
     final validSelected = selected != null &&
         cardOptions.any((account) => account.id == selected);
@@ -22205,9 +22363,106 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ],
           const SizedBox(height: 10),
           _buildCardStatementReconciliationTable(reconciliation),
+          _buildCardStatementFixActionList(reconciliation, cardOptions),
         ],
       ),
     );
+  }
+
+  /// 照合アラートを「次に何をすればよいか」へ変換した解消アクション一覧。
+  /// 明細取り込みは請求先カードを選択して同パネルの取り込み欄へ、内訳修正は
+  /// 負債マスタの該当カード行へ誘導する。
+  Widget _buildCardStatementFixActionList(
+    AssetLiabilityCardStatementReconciliationData reconciliation,
+    List<AssetLiabilityAccount> cardOptions,
+  ) {
+    final groups = reconciliation.groups
+        .where((group) => group.hasFixActions)
+        .toList(growable: false);
+    if (groups.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final selectableCardIds = <String>{
+      for (final account in cardOptions) account.id,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        const Text(
+          '差分の解消アクション',
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.4),
+        ),
+        const SizedBox(height: 4),
+        for (final group in groups) ...[
+          Text(
+            group.billingAccountName,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.6,
+            ),
+          ),
+          for (final action in group.fixActions) ...[
+            Text(
+              action.description,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            if (_cardStatementFixActionHandler(group, action, selectableCardIds)
+                case final onPressed?)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: Key(
+                    'asset_card_recon_fix_${action.kind.name}_${group.billingAccountId}',
+                  ),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    foregroundColor: const Color(0xFFD97706),
+                  ),
+                  onPressed: onPressed,
+                  icon: const Icon(Icons.build_circle_outlined, size: 16),
+                  label: Text(action.title),
+                ),
+              ),
+          ],
+          const SizedBox(height: 4),
+        ],
+      ],
+    );
+  }
+
+  /// 修正アクション種別ごとの実行ハンドラ。導線を用意できない種別は null
+  /// (説明文のみ表示)。
+  VoidCallback? _cardStatementFixActionHandler(
+    AssetLiabilityCardStatementReconciliationGroup group,
+    AssetLiabilityCardStatementFixAction action,
+    Set<String> selectableCardIds,
+  ) {
+    return switch (action.kind) {
+      // 取り込み欄の請求先カードを該当カードへ切り替え、貼り付けを促す。
+      // ドロップダウン候補に無いホストはサイレントに先頭カードへフォール
+      // バックして誤取込を招くため、ボタン自体を出さない。
+      AssetLiabilityCardStatementFixActionKind.importStatement
+          when selectableCardIds.contains(group.billingAccountId) =>
+        () {
+          setState(() {
+            _selectedCardStatementBillingAccountId = group.billingAccountId;
+            _cardStatementImportMessage =
+                '${group.billingAccountName}を選択しました。カード明細を貼り付けて「明細を取り込む」を押してください。';
+          });
+        },
+      AssetLiabilityCardStatementFixActionKind.importStatement => null,
+      AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown =>
+        () => _jumpToDebtMasterCard(group.billingAccountId),
+      AssetLiabilityCardStatementFixActionKind.reviewStatementLines => null,
+      AssetLiabilityCardStatementFixActionKind.assignBillingAccount => null,
+    };
   }
 
   /// 照合行の「確認事項」表示文。リボ払いカードは不一致アラートの代わりに
@@ -22264,7 +22519,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 DataCell(Text(_formatManagementYen(group.billedAmount))),
                 DataCell(Text(_formatManagementYen(group.statementLineTotal))),
                 DataCell(
-                  Text(_formatManagementYen(group.configuredDetailTotal)),
+                  Text(
+                    _formatManagementYen(group.configuredDetailTotal),
+                    // 設定内訳のずれ（設定差分）は差額列(明細合計基準)に出ない
+                    // ため、セル自体を強調して気付けるようにする。
+                    style: group.hasConfiguredMismatchFix
+                        ? const TextStyle(
+                            color: Color(0xFFD97706),
+                            fontWeight: FontWeight.bold,
+                          )
+                        : null,
+                  ),
                 ),
                 DataCell(
                   group.isRevolving

@@ -255,6 +255,171 @@ void main() {
       );
     });
 
+    test('flags account shortfall with matched transfer suggestion', () {
+      // 全体では黒字(三井住友 500000)でも、支払原資に割り当てた現金だけが
+      // 不足するケース。口座別見込みの先読み警告と移動提案の紐付けを検証する。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          '三井住友銀行大塚支店': 500000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+
+      // 全体の使用可能額は黒字のまま。
+      expect(report.monthAvailable.availableAmount, greaterThan(0));
+
+      // 口座別では現金が 1000 − 5000 = -4000 で不足する。
+      expect(report.accountShortfallAlerts.length, 1);
+      final alert = report.accountShortfallAlerts.first;
+      expect(alert.accountId, 'wallet_cash');
+      expect(alert.projectedBalance, -4000);
+      expect(alert.shortfallAmount, 4000);
+
+      // 三井住友からの不足額ちょうどの移動提案が紐付く。
+      expect(alert.hasTransferSuggestion, true);
+      expect(alert.transferSuggestion!.fromAccountId, 'smbc_otsuka_branch');
+      expect(alert.transferSuggestion!.toAccountId, 'wallet_cash');
+      expect(alert.transferSuggestion!.amount, 4000);
+    });
+
+    test(
+        'account shortfall emits critical action item and emergency advice '
+        'even when windows are positive', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          '三井住友銀行大塚支店': 500000,
+          'モビット': -45000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 5000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+      final cashName = workbook.accounts
+          .firstWhere((account) => account.id == 'wallet_cash')
+          .name;
+      final donorName = workbook.accounts
+          .firstWhere((account) => account.id == 'smbc_otsuka_branch')
+          .name;
+
+      final shortfallActions = report.actionItems.where(
+        (item) =>
+            item.type == AssetManagementInsightActionType.accountShortfallRisk,
+      );
+      expect(shortfallActions.length, 1);
+      expect(
+        shortfallActions.first.severity,
+        AssetManagementInsightSeverity.critical,
+      );
+      expect(shortfallActions.first.title, contains(cashName));
+
+      // ウィンドウ黒字でも口座別不足の緊急アドバイスが先頭に出る。
+      expect(report.emergencyAdvices.isNotEmpty, true);
+      final advice = report.emergencyAdvices.first;
+      expect(advice.severity, AssetManagementInsightSeverity.critical);
+      expect(advice.title, contains(cashName));
+      expect(advice.suggestedAction, contains(donorName));
+      expect(advice.amount, 4000);
+    });
+
+    test(
+        'no-donor account shortfall advice precedes living-expense advice '
+        'under combined shortage', () {
+      // 移動元候補が無く(現金のみ)、全体ウィンドウも赤字のケース。
+      // 口座別不足アドバイスが生活費アドバイスより先頭に来ることと、
+      // 提案なし文言(確保してから)へのフォールバックを検証する。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          'モビット': -300000,
+        },
+        baseDate: DateTime(2026, 5, 28),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 200000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(
+        workbook: workbook,
+        minimumSafetyBalance: 10000,
+      );
+
+      expect(report.todayAvailable.availableAmount, lessThan(0));
+      expect(report.accountShortfallAlerts.length, 1);
+      expect(report.accountShortfallAlerts.first.hasTransferSuggestion, false);
+
+      expect(report.emergencyAdvices.first.title, contains('残高不足を先に解消'));
+      expect(report.emergencyAdvices.first.suggestedAction, contains('確保してから'));
+      expect(
+        report.emergencyAdvices.any(
+          (advice) => advice.title.contains('今日の食費'),
+        ),
+        true,
+      );
+    });
+
+    test('orders account shortfall alerts by shortfall descending', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 1000,
+          '三井住友銀行大塚支店': 2000,
+          'モビット': -45000,
+          'auPayカード': -30000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'mobit': 5000,
+          'aupay_card': 12000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'wallet_cash',
+          'aupay_card': 'smbc_otsuka_branch',
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      // 三井住友(不足10000) → 現金(不足4000) の降順。
+      expect(report.accountShortfallAlerts.length, 2);
+      expect(report.accountShortfallAlerts[0].accountId, 'smbc_otsuka_branch');
+      expect(report.accountShortfallAlerts[0].shortfallAmount, 10000);
+      expect(report.accountShortfallAlerts[1].accountId, 'wallet_cash');
+      expect(report.accountShortfallAlerts[1].shortfallAmount, 4000);
+    });
+
+    test('no account shortfall artifacts when projections stay positive', () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 50000},
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(report.accountShortfallAlerts, isEmpty);
+      expect(report.hasAccountShortfallAlerts, false);
+      expect(
+        report.actionItems.any(
+          (item) =>
+              item.type ==
+              AssetManagementInsightActionType.accountShortfallRisk,
+        ),
+        false,
+      );
+    });
+
     test('generates developer improvement requests', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},
