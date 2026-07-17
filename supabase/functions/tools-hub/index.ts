@@ -27,6 +27,7 @@ import {
 import {
   buildSaasApprovalStatus,
   externalSaasGateReason,
+  isPendingSaasApprovalStatus,
   normalizeSaasApprovalDecision,
   normalizeSaasConnectorSettings,
   SAAS_APPROVAL_REQUEST_SOURCE,
@@ -37,6 +38,7 @@ import {
   type EvalAutomationCalendarEvent,
   type EvalAutomationTask,
   executeEvalApprovalAutomation,
+  selectEvalApprovalAutomationPayload,
 } from "./eval_approval_automation.ts";
 import {
   buildMcpFeatureRequestPayload,
@@ -71,6 +73,13 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+
+class ToolsHubRequestError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+    this.name = "ToolsHubRequestError";
+  }
+}
 
 function json(
   data: unknown,
@@ -1946,23 +1955,19 @@ async function createSaasApprovalRequest(
   return publicSaasApprovalRequest(item as Record<string, unknown>);
 }
 
-async function evalAutomationItemExists(
+async function addEvalAutomationItem(
   admin: SupabaseClient,
   userId: string,
   source: "team_task" | "calendar_event",
-  requestId: string,
-  itemKey: string,
+  metadata: Record<string, unknown>,
 ): Promise<boolean> {
-  const { data, error } = await admin.from("hub_data")
-    .select("id")
-    .eq("source", source)
-    .filter("metadata->>user_id", "eq", userId)
-    .filter("metadata->>approval_request_id", "eq", requestId)
-    .filter("metadata->>automation_item_key", "eq", itemKey)
-    .limit(1)
-    .maybeSingle();
+  const { error } = await admin.from("hub_data").insert({
+    source,
+    metadata: { ...metadata, user_id: userId },
+  });
+  if (error?.code === "23505") return false;
   if (error) throw new Error(error.message);
-  return data !== null;
+  return true;
 }
 
 async function executeApprovedEvalAutomation(
@@ -1981,16 +1986,7 @@ async function executeApprovedEvalAutomation(
   }
   return await executeEvalApprovalAutomation(payload, {
     createTask: async (task: EvalAutomationTask, itemKey: string) => {
-      if (
-        await evalAutomationItemExists(
-          admin,
-          userId,
-          "team_task",
-          requestId,
-          itemKey,
-        )
-      ) return false;
-      await addItem(admin, "team_task", userId, {
+      return await addEvalAutomationItem(admin, userId, "team_task", {
         title: task.title,
         description: task.description,
         assignee: task.assignee ?? userId,
@@ -2001,22 +1997,12 @@ async function executeApprovedEvalAutomation(
         approval_request_id: requestId,
         automation_item_key: itemKey,
       });
-      return true;
     },
     createCalendarEvent: async (
       event: EvalAutomationCalendarEvent,
       itemKey: string,
     ) => {
-      if (
-        await evalAutomationItemExists(
-          admin,
-          userId,
-          "calendar_event",
-          requestId,
-          itemKey,
-        )
-      ) return false;
-      await addItem(admin, "calendar_event", userId, {
+      return await addEvalAutomationItem(admin, userId, "calendar_event", {
         title: event.title,
         description: event.description,
         start_at: event.startAt,
@@ -2031,7 +2017,6 @@ async function executeApprovedEvalAutomation(
         approval_request_id: requestId,
         automation_item_key: itemKey,
       });
-      return true;
     },
   }, selectedOptionId);
 }
@@ -2111,6 +2096,27 @@ async function decideSaasApprovalRequest(
   if (!data) return null;
 
   const metadata = asRecord(data.metadata) ?? {};
+  if (!isPendingSaasApprovalStatus(metadata.status)) {
+    throw new ToolsHubRequestError(
+      409,
+      `approval request is already ${normalizeText(metadata.status)}`,
+    );
+  }
+  const provider = normalizeText(metadata.provider);
+  const payload = asRecord(input.revisedPayload ?? metadata.payload) ?? {};
+  if (
+    decision === "approved" && input.execute &&
+    (provider === "internal" || provider === "eval_automation")
+  ) {
+    try {
+      selectEvalApprovalAutomationPayload(payload, input.selectedOptionId);
+    } catch (error) {
+      throw new ToolsHubRequestError(
+        400,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
   const now = new Date().toISOString();
   const nextMetadata: Record<string, unknown> = {
     ...metadata,
@@ -10596,6 +10602,9 @@ ${reportText ? `> ${reportText}` : ""}`,
         }, 400);
     }
   } catch (e) {
+    if (e instanceof ToolsHubRequestError) {
+      return json({ error: e.message }, e.status);
+    }
     return json({ error: String(e) }, 500);
   }
 });

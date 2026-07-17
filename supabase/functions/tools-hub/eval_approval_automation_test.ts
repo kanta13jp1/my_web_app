@@ -108,6 +108,19 @@ Deno.test("rejects an unknown selected option before executing", async () => {
   assertEquals(message, "selected option not found: unknown");
 });
 
+Deno.test("requires a selected option when option automation is present", () => {
+  let message = "";
+  try {
+    selectEvalApprovalAutomationPayload({ options: [{ id: "known" }] }, "");
+  } catch (error) {
+    message = error instanceof Error ? error.message : String(error);
+  }
+  assertEquals(
+    message,
+    "selected_option_id is required for option automation",
+  );
+});
+
 Deno.test("empty automation is a successful no-op", async () => {
   const result = await executeEvalApprovalAutomation({}, {
     createTask: () => Promise.resolve(true),
