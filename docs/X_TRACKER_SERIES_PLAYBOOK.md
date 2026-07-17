@@ -33,6 +33,7 @@
 | 家計トラッカー | `household_tracker` | 資産管理ページ ([#3968](https://github.com/kanta13jp1/my_web_app/pull/3968)) | 週次トグル | スコアボード投稿(円金額禁止=件数/日数/方向のみ) |
 | デイリーブリーフィング | `daily_briefing_v2_*` | `x-daily-briefing-post.yml` (日次 22:00 UTC) | 日次 | 候補作成→publish op |
 | AIツール定点観測 | `ai_tool_tracker` | `x-ai-tool-tracker-queue.yml` (日次 21:45 UTC / R27) | 更新検知日のみ | 候補キュー(HITL) |
+| 選挙: 両党地力差 | `party_gap_ranking` | `local-election-snapshot-queue.yml` 内 (ISO週キー冪等 / R28) | 週次(日次cronから週1生成) | 候補キュー(HITL) |
 
 ラベルの表示用対応は `lib/pages/admin_x_candidate_queue.dart` の
 `kXTrackerSeriesLabels`(系列追加時にここも更新)。
@@ -65,6 +66,44 @@
 - 承認面: admin ダッシュボード「X投稿候補キュー」panel(R26)。
   `x.candidate.approve` は X operator 権限必須+approve が返す whitelist 済み
   postPayload のみを投稿する(レビューした本文以外は送信され得ない)。
+
+## 日次/週次 運用ルーチン (R26 候補キュー承認オペ)
+
+系列の自動生成が動く一方、公開の最終判断は人間(HITL)。以下を習慣化して
+「候補が溜まるだけで投稿されない」死蔵を防ぐ。承認面 = `/admin` ダッシュボードの
+**「X投稿候補キュー」panel**(R26)。
+
+### 毎朝 (5分・ゴールデンアワー JST 07:00 前後)
+
+1. `/admin` を開き「X投稿候補キュー」panel を確認(承認待ち N件・再試行 M件)。
+2. 各候補を **全文レビュー**(リード+全リプライ本文)。data_report 型は実数が
+   payload 由来か・固有名詞密度が高いかを見る。誇張/スロップ/捏造数字が無いか確認。
+3. 良ければ「承認して投稿」。近似重複で拒否されたら見送り(数値が動くまで再投稿しない)。
+4. 1日1スレッドを上限目安(バースト投稿は spam 信号・アカウント凍結リスク)。
+   複数候補がある日は最も情報価値の高い1本を選び、残りは翌日以降へ。
+
+### 系列別の期待頻度(候補が出る日)
+
+| 系列 | 出現契機 |
+|---|---|
+| 選挙 delta (member/candidate/schedule) | 公式データに有意差分が出た日のみ |
+| 両党地力差 (party_gap_ranking) | 週1(ISO週キーで週1候補) |
+| AIツール定点観測 (ai_tool_tracker) | 公式changelog更新検知日のみ |
+| デイリーブリーフィング | 毎日 |
+| X運用実測 / 家計トラッカー | 週次(直接投稿=候補キュー経由でない) |
+
+### 毎週日曜 (10分・撤退判断)
+
+1. admin「X成長ループ」panel の **Archetype lift(型別実測)** と **variant ランキング** を確認。
+2. 撤退基準: 系列平均が 4 投稿連続でアカウント中央値未満 → その系列の候補生成 cron を停止検討。
+3. テコ入れ基準: 固有名詞密度を上げる / 「基準・残り」の追える指標を明示する。
+4. 判断は最低 **2 週間の実測**が貯まってから(サンプル薄で撤退しない)。
+
+### 計測の前提(2026-07-14 確認済み)
+
+- x.metrics 収集 cron は `service_role` スコープで **全 x_post_log 行を無フィルタ読み取り**する
+  ため、operator(admin panel / 選挙ページ)経由の投稿も含め**全系列が計測対象**。
+  variant / content_archetype 別に自動集計され Archetype lift / variant ランキングへ載る。
 
 ## 計測と撤退基準
 

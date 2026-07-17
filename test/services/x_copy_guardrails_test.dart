@@ -68,6 +68,54 @@ void main() {
         expect(xPrompt, contains('80-140'));
       },
     );
+
+    test('R23 F3: measured data line unlocks the real-number path', () {
+      // 実測供給源が無いとき(既定): 捏造禁止ガード。
+      expect(xPrompt, contains('新しい数字を作るな'));
+      expect(xPrompt, isNot(contains('冒頭1行目にこの実測値')));
+
+      // 実測データ行があるとき: 実数を使ってよい経路+この行に無い数字は禁止。
+      const line =
+          'Own measured data (REAL numbers you MAY publish first-person as '
+          'build-in-public stats): measured posts=12, median impressions=517, '
+          'best impressions=17200.';
+      final measuredPrompt = buildCmoDraftPrompt(
+        channelKey: 'x_share',
+        channelLabel: 'X (Twitter)',
+        spec: xSpec,
+        hashtags: const ['#自分株式会社'],
+        measuredDataLine: line,
+      );
+      expect(measuredPrompt, contains('best impressions=17200'));
+      expect(measuredPrompt, contains('冒頭1行目にこの実測値を1つ置け'));
+      expect(measuredPrompt, contains('この実測行と上の実在機能リストに無い数字は作るな'));
+      // 供給源がある日は「新しい数字を作るな(供給源なし)」ガードは出さない。
+      expect(measuredPrompt, isNot(contains('渡していないので、新しい数字を作るな')));
+    });
+  });
+
+  group('extractOwnMeasuredDataLine', () {
+    test('pulls the Own measured data line from performance context', () {
+      const context = 'Measured X performance context for the next post:\n'
+          'Target: 10K impressions. Current best variant: daily_briefing.\n'
+          'Own measured data (REAL numbers you MAY publish first-person as '
+          'build-in-public stats): measured posts=12, median impressions=517, '
+          'best impressions=17200.\n'
+          'Use the winning structure, test one variable at a time.';
+      final line = extractOwnMeasuredDataLine(context);
+      expect(line, isNotNull);
+      expect(line, startsWith('Own measured data'));
+      expect(line, contains('best impressions=17200'));
+    });
+
+    test('returns null when absent, empty, or null', () {
+      expect(extractOwnMeasuredDataLine(null), isNull);
+      expect(extractOwnMeasuredDataLine(''), isNull);
+      expect(
+        extractOwnMeasuredDataLine('No measured X performance yet.'),
+        isNull,
+      );
+    });
   });
 
   group('detectSlop / hasFeatureAnchor', () {

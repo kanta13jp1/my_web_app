@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/customer_feedback_entry.dart';
+
 /// カスタマーフィードバックページ
-/// customer-feedback Edge Function と連携してフィードバックを収集・管理
+/// social-commerce-hub Edge Function (feedback.list) と連携してフィードバックを収集・管理
 class CustomerFeedbackPage extends StatefulWidget {
   const CustomerFeedbackPage({super.key});
 
@@ -16,7 +18,7 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
   bool _isLoading = false;
   bool _isSubmitting = false;
   String? _errorMessage;
-  List<dynamic> _feedbacks = [];
+  List<CustomerFeedbackEntry> _feedbacks = [];
 
   @override
   void initState() {
@@ -44,14 +46,8 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
         'social-commerce-hub',
         body: {'action': 'feedback.list'},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['feedbacks'] is List) {
-        setState(() => _feedbacks = data['feedbacks'] as List);
-      } else if (data is List) {
-        setState(() => _feedbacks = data);
-      } else {
-        setState(() => _feedbacks = []);
-      }
+      final feedbacks = parseCustomerFeedback(response.data);
+      if (mounted) setState(() => _feedbacks = feedbacks);
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'フィードバックの取得に失敗しました: $e');
@@ -88,6 +84,10 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
+
+  /// ISO タイムスタンプの日付部分 (yyyy-MM-dd) を返す。
+  String _shortDate(String raw) =>
+      raw.length >= 10 ? raw.substring(0, 10) : raw;
 
   @override
   Widget build(BuildContext context) {
@@ -155,22 +155,18 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
                           itemCount: _feedbacks.length,
                           itemBuilder: (context, index) {
                             final item = _feedbacks[index];
-                            final text = item is Map
-                                ? (item['feedback'] ??
-                                    item['text'] ??
-                                    item['content'] ??
-                                    item.toString())
-                                : item.toString();
-                            final createdAt =
-                                item is Map ? (item['created_at'] ?? '') : '';
+                            final meta = [
+                              if (item.type.isNotEmpty) item.type,
+                              if (item.rating != null) '★${item.rating}',
+                              if (item.createdAt.isNotEmpty)
+                                _shortDate(item.createdAt),
+                            ].join(' · ');
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               child: ListTile(
                                 leading: const Icon(Icons.feedback_outlined),
-                                title: Text(text.toString()),
-                                subtitle: createdAt.toString().isNotEmpty
-                                    ? Text(createdAt.toString())
-                                    : null,
+                                title: Text(item.displayText),
+                                subtitle: meta.isNotEmpty ? Text(meta) : null,
                               ),
                             );
                           },

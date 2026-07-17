@@ -13,6 +13,8 @@ void main() {
       expect(xTrackerSeriesLabel('weekly_data_report'), 'X運用実測');
       // R27: AIツール動向トラッカー系列(playbook step 4 のラベル登録)。
       expect(xTrackerSeriesLabel('ai_tool_tracker'), 'AIツール定点観測');
+      // R28: 両党地力差ランキング系列(playbook step 4)。
+      expect(xTrackerSeriesLabel('party_gap_ranking'), '選挙: 両党地力差');
     });
 
     test('collapses daily_briefing variants and passes unknown through', () {

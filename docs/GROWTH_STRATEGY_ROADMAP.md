@@ -32669,6 +32669,33 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 整合性スコア: **7/9** (原則 4 人事・9 IPO は非該当)。
 - 懸念: XLSX の複雑書式 (複数シート/結合セル/数式) は先頭シート・プレーン値のみ対応 (MVP)。将来 `excel` パッケージ導入で高精度化余地。
 
+## セッション記録: Claude Schedule daily-report (2026-07-14 09:02 JST / WEB版)
+
+**概要**: Schedule Agent による日次レポート第2回実行 (GHA 第1回 08:26 JST 生成済み)。
+
+### 実行結果
+- Supabase Edge Functions: proxy ブロック (既知制約) — GHA 経由ジョブは正常稼働
+- GitHub auto-review issues: 0件 (対象なし)
+- Schedule Health: 直近24h コミット正常 (CS チェック 2026-07-13-18:00)
+
+### 主要競合インテリジェンス (WebSearch 2026-07-14 09:02 JST)
+
+**Notion 3.6 (7/1)** — HTMLブロック (AI → インタラクティブコンテンツ変換) / Gmail統合メール / AI アドオン → ビジネスプラン標準搭載化 / MCP 非同期ページ作成。自社対策: 公開メモへの HTML ブロック追加を中期候補に追加。
+
+**Slack (7月)** — IDP グループ可視化 / Tableau Next MCP / AI エージェント DM → プライベートチャネル自動変換 (@claude/@codex 起動)。自社参考: エージェント起点の会話フロー設計。
+
+**GitHub (7月)** — Code Quality GA (7/20) / Codex JetBrains agent preview / Inline Chat GA / Customizations で Hooks + MCP サポート / PR ダッシュボード GA。自社 AI 大学コンテンツ更新候補。
+
+### Philosophy Alignment (WEB版 Schedule 2026-07-14)
+- 該当原則: 8 (KPI=昨日の自分: 競合動向の継続追跡) / 5 (商品=ユーザー価値: 競合差分を自社機能改善に転換)
+- 整合性スコア: 6/9 (レポート生成専用セッション)
+- 懸念: Supabase EF proxy ブロックは既知制約。X投稿は GHA 経由で正常稼働。
+
+### 次回タスク候補
+1. Notion 3.6 HTMLブロック相当機能を公開メモに追加 (中期)
+2. AI大学「GitHub Inline Chat GA / Copilot 比較」コンテンツ更新 (短期)
+3. 7/17 cooldown 明け discovery = ChatGPT Work を第1候補で採択
+
 ## セッション記録: Claude Schedule daily-report (2026-07-13 00:02 UTC / WEB版)
 
 **本日の主要競合インテリジェンス (WEB版 Schedule Agent WebSearch)**:
@@ -32718,3 +32745,140 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
 - 理念的貢献: deny-by-default (AI_DEV_PRINCIPLES 原則 2) を schedule-hub 全 action で達成
 - 懸念: なし (billing supporter の public 据え置きは収益導線の意図的判断として action_auth.ts コメント + PR に文書化済み)
+
+## セッション記録: Win Claude part 333 (2026-07-12→14) — schedule-hub publicActions 書き込み系 lockdown (PR #3975)
+
+**契機**: publicActions に認証不要で公開されていた書き込み系 4 action — Web アプリ同梱の anon key (= 実質公開) だけで第三者がオーナーの Qiita/dev.to/X 資格情報での投稿・hub_data への system 書き込みが可能だった。
+
+**実施** ([PR #3975](https://github.com/kanta13jp1/my_web_app/pull/3975) merged + deploy-prod 自動デプロイ + 本番実証):
+
+- blog.auto_publish / blog.create / blog.backfill_from_apis / x.post_with_media を SERVICE_ROLE_ONLY 化 (ログイン user JWT・匿名 signup JWT でも 401)
+- 純ロジック `action_auth.ts` に `requiredAuthLevel()` を集約 + deno test 4 件 (part331 `upstream_error.ts` と同型パターン)
+- caller 全数監査: blog-publish.yml / blog-batch-publish.yml→batch_publish.py / blog-backfill-from-apis.yml / post-x-with-media.yml — 全て SERVICE_ROLE_KEY Bearer → GHA 経路挙動不変 (blog-draft-register.yml はコメント stale で実装は REST 直叩き・影響なし)
+- 本番実証: anon key → 4 action 401 / public read (health.check / blog.recent_posted) 200 / EF 側 SERVICE_ROLE_KEY env 一致は「同ゲートを既に通る非 public action の緑 cron」(blog-engagement の devto_sync_engagement) で証明 — workflow 手動実行 (X 投稿/Qiita 接触の副作用) を避ける検証手法として確立
+
+**残課題ハンドオフ**: spawn_task (task_2ecc200a) → 並行セッションが part334 ([PR #3992](https://github.com/kanta13jp1/my_web_app/pull/3992)) で完遂。本セッション側でも独立 caller 棚卸し + 本番抜き打ち (401×4 / health.check 200 / notion-sync・wbs-ai-review cron 緑) で全件一致を確認。並行稼働中の重複実装は feedback_spawned_task_duplicate_pr_race に従い回避。
+
+### Philosophy Alignment (Win part333)
+
+- 主要実装: schedule-hub publicActions 書き込み系 4 action の service-role 必須化 + part334 完遂の独立検証
+- 該当原則: 5 (商品=ユーザー価値: オーナー資格情報の悪用経路封鎖 = 信頼性) / 6 (資本=時間: 並行セッションとの重複実装回避) / 7 (資産負債: セキュリティ負債の返済) / 8 (KPI=昨日の自分: part331/332 純ロジック+テストパターン踏襲)
+- 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
+- 理念的貢献: deny-by-default (AI_DEV_PRINCIPLES 原則 2) への前進 — part334 と合わせ schedule-hub 全 action で完結
+- 懸念: なし
+
+### 次回タスク候補 (part333 wrap-up / 2026-07-14 時点)
+
+| 優先度 | タスク | 規模 |
+|--------|--------|------|
+| 🔴 | [PR #4014](https://github.com/kanta13jp1/my_web_app/pull/4014) の状態確定 — #4021 (10ページ batch merged) と重複疑い → 差分照合し close or rebase | S |
+| 🟡 | Qiita 異議申し立て送信 (ユーザー本人 / project_20260713_qiita_appeal_draft) | S |
+| 🟡 | dependabot 4 PR (#3998/#3997/#3996/#3986) + CI 最適化 PR (#3983/#3938/#3929) の週次棚卸し | M |
+| 🟢 | codex PR レビュー: #4020 (asset tax export) / #4031 (x-report perf 第3弾) 着地確認 | M |
+| 🟢 | T-1 記事: schedule-hub lockdown 3部作 (part331→334) を dev.to build-in-public 記事化 | M |
+
+## セッション記録: Win Claude part 329 (2026-07-12〜13) — Xデータレポート型の学習ループ化と量産基盤 (R23-R28)
+
+**契機**: ユーザー実測の同日3連投で **データレポート型 17.2K imp vs ニュース要約 1.2K vs 製品転換 40**(最終計測)の 430 倍差。「情報ペイロードの型がコピー品質より支配的」を恒常的な学習ループと量産基盤へ。
+
+**実施** (6 PR merged + 本番デプロイ):
+
+- [PR #3953](https://github.com/kanta13jp1/my_web_app/pull/3953) **R23**: 全 x.post に `content_archetype` 記録 + perf-context へ "Archetype lift" / "Own measured data" 行 + 共有教訓 `kDataReportArchetypeLesson` を両生成経路へ注入(実行命令は実数供給源のある universal 経路のみ = CmoPage 捏造圧力の回避)
+- [PR #3964](https://github.com/kanta13jp1/my_web_app/pull/3964) **R24**: 週次 build-in-public 実測レポート cron(LLM 不使用・実測3件未満/横ばい週は自動見送り)
+- [PR #3966](https://github.com/kanta13jp1/my_web_app/pull/3966): 選挙集計全文の x.post 化(**CJK=2 加重文字数**基準 + 重複ガード編集距離の 2000cp クランプ = edge CPU 爆発防止)
+- [PR #3967](https://github.com/kanta13jp1/my_web_app/pull/3967) **R25**: Archetype lift を admin X成長ループ panel へ(並行 #3965 の `news_summary` 誤キー契約バグを置換・誠実性ゲート付き)
+- [PR #3989](https://github.com/kanta13jp1/my_web_app/pull/3989) **R26**: X投稿候補キュー HITL 承認 panel(全文レビュー=リード+全リプ/status別3クエリ/再試行3状態)+ `docs/X_TRACKER_SERIES_PLAYBOOK.md` 正本化(系列レジストリ+追加5手順+撤退基準)
+- [PR #4017](https://github.com/kanta13jp1/my_web_app/pull/4017) **R27**: 水平展開第1号「AIツール定点観測」(ai-tool-watch 既存資産流用・fetchエラー偽検知除外・検知シグナル併記で連日重複回避)
+- [PR #4025](https://github.com/kanta13jp1/my_web_app/pull/4025) **R28**: 水平展開第2号「国民民主×立憲 地力差ランキング」(既存 snapshot 相乗り・ISO週キー冪等・レビューが本番 DOA=EF の cdpLocalMembers=0 ハードコードを検出し CDP asset の EF fetch+県名名寄せで修正)
+
+**運用の完成形**: 系列別ジェネレータ(決定的合成)→ HITL 候補キュー → 承認投稿 → Archetype lift 計測 → 伸縮判断。10 系列(政治5/AI開発1/家計1/build-in-public1/ニュース1/選挙予定1)。参政党等の全政党展開は JS 描画サイトのため [Issue #4026](https://github.com/kanta13jp1/my_web_app/issues/4026) にスコープ記録。
+
+**教訓**: フィクスチャが実値を捏造するとテスト全緑のまま DOA(本番の書き込み側コードを読む+レビューに本番データ経路レンズ)/ 並行セッション時代の worktree はオーバーレイで汚れる(`git log origin/main..HEAD` でコミット純度確認)/ 日本語 X 投稿の文字数は CJK=2 加重。
+
+### Philosophy Alignment (Win part329)
+
+- 主要実装: X データレポート型の計測ループ(R23-R25)+ HITL 量産基盤(R26)+ 系列水平展開×2(R27-R28)
+- 該当原則: 2 (ミッション駆動: 実測 430 倍差という事実から学習ループを設計) / 5 (商品=ユーザー価値: 捏造構造的不可能な実測レポートのみ公開) / 7 (資産負債: データ資産を投稿系列という収益資産へ転換) / 8 (KPI=昨日の自分: Archetype lift で投稿型ごとの前週比較を常設)
+- 整合性スコア: 7/9 ✅ (4 人事・9 IPO は非該当)
+- 理念的貢献: 「独自データ資産 × 誠実な実測」を成長エンジンの中核に据え、Qiita 停止事件の教訓(無審査自動化の禁止)を HITL 必須として制度化
+- 懸念: なし(政治系列は事実の集計のみで意見表明を含まない設計を維持すること)
+
+## セッション記録: WEB版 Claude (2026-07-14) — 国民民主党 統一地方選 都道府県別目標一覧を選挙必勝ページへ追加
+
+**契機**: ユーザーから統一地方選の各県目標一覧の反映依頼。ただしユーザー自身の検証で「目標当選人数」という表題は不正確と判明 — 県によって「候補者擁立数」「所属地方議員総数」「統一地方選以外も含む擁立数」が混在しており、「○人擁立」を「○人当選」と読み替えると意味が大きく変わる。
+
+**実施**:
+
+- `lib/data/dpj_prefecture_announced_targets.dart` 新規: 27県の公表・報道ベース目標を静的データ化。表題は「Road to 700　都道府県別の地方議員増加・候補者擁立目標」を採用し、種別を enum (擁立目標 / 所属議員総数目標 / 地方選全体の擁立目標 / 種別未確認) で区別
+- 定義確認済み6県 (神奈川50擁立 / 静岡29所属総数 / 大阪35擁立 / 香川56所属総数 / 福岡30擁立 / 宮崎25地方選全体擁立) と、裏づけ未確認21県 (種別未確認の参考値) を明確に分離
+- `election_victory_page` にヒーロー直下の新セクション: 読み替え禁止の注意書き + 種別凡例 + 県別ピル + 定義確認済みバッジ
+- `test/data/dpj_prefecture_announced_targets_test.dart`: 表題に「当選」を含まないことを含む整合性テスト7件
+
+**教訓**: 出典の異なる数値一覧は「数字そのもの」より「数字の定義」が先。定義未確認の数値を確定扱いで表示しない (verified フラグと種別未確認カテゴリをデータモデルに組み込み、UI で常時注記)。
+
+### Philosophy Alignment (WEB版 2026-07-14)
+
+- 主要実装: 統一地方選 都道府県別目標一覧 (定義区別付き静的データ + 選挙必勝ページ新セクション)
+- 該当原則: 5 (商品=ユーザー価値: 未検証数値を確定扱いしない誠実な表示) / 8 (KPI: Road to 700 の県別ブレークダウンを可視化)
+- 整合性スコア: 2/9 ✅ (小規模データ追加のため他原則は非該当)
+- 懸念: 政治系コンテンツだが事実 (公表・報道された目標数値) の整理のみで意見表明を含まない設計を維持
+
+## セッション記録: Claude Schedule daily-report (2026-07-15 00:02 UTC / WEB版)
+
+**実行内容**: 日次レポート Schedule タスク (自動)
+
+**実行ステータス**:
+- Supabase API (schedule-daily-digest / viral-growth-engine / check-competitor-updates): プロキシ制限 (CONNECT tunnel 403) のため直接呼び出し不可 — GHA生成済みデータを参照・補足
+- GitHub auto-review Issues: 0件 (open なし)
+- 競合WebSearch (Notion/Slack/GitHub 2026年): 完了
+
+**競合トレンド要約**:
+- Notion: カスタムエージェント正式リリース / Developer Platform クレジット制移行 (8/11) / モバイルAI強化
+- Slack: MCP GA + 30+ 新機能 / Slackbot AIエージェント化 / Salesforce直接連携
+- GitHub: Copilot Desktop App (Win11/Mac/Linux) / Copilot SDK GA / Actions OIDC拡張GA
+
+**更新ドキュメント**:
+- `docs/daily-reports/2026-07-15.md`: スケジュール実行ステータス + 競合WebSearch + AIアクション提案 3件追記
+- `docs/competitor-reports/2026-07-15.md`: Notion/Slack/GitHub WebSearch 補足セクション追記
+
+**AIアクション提案**:
+1. OpenAI ChatGPTパーソナルファイナンス (6/25) への対抗: 日本語・日本金融文脈での「経営判断支援」moatを具体的実装計画に落とす
+2. Notion Agentとの差別化LPを強化: 「個人CEO 6部署経営」固有ワークフローを訴求
+3. AI大学コンテンツ: GitHub Copilot SDK / Slack MCP / Notion Agent 最新動向を反映しエンジニア流入増
+
+### Philosophy Alignment (Schedule 2026-07-15)
+
+- 主要実施: 競合WebSearch補足 + レポート更新 + ロードマップ追記
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+
+## セッション記録: Claude Schedule daily-report (2026-07-16 00:02 UTC / WEB版)
+
+**実行内容**: 日次レポート Schedule タスク (自動)
+
+**実行ステータス**:
+- Supabase API (schedule-daily-digest / viral-growth-engine / check-competitor-updates / schedule_task_runs INSERT): プロキシ制限 (network policy CONNECT 403) のため全 Supabase 直接呼び出し不可 — GHA 生成済みデータを参照・補足
+- GitHub auto-review Issues: 0件 (open なし) — Step 5 完了 (fix 対象なし)
+- 競合 WebSearch (Notion/Slack/GitHub 2026年7月): 完了 → `docs/competitor-reports/2026-07-16.md` に WebSearch 補足セクション追記
+- 日次レポート `docs/daily-reports/2026-07-16.md`: GHA 生成済み (総ユーザー50人 / 未対応119件) — 更新不要
+- Schedule Health: git log 直近24h = 38コミット (Claude Schedule + GHA 正常稼働確認)
+
+**競合トレンド要約**:
+- Notion 3.6 (7/1): External Agents (Claude + Cursor) + HTML ブロック / Custom Agents が Slack Enterprise Grid 全社 + プライベートチャンネルへ対応 / MCP トークン有効期限 1h→8h
+- Slack (7月): IDP グループ表示 GA / Tableau Next MCP / AI エージェントメンション → DM→プライベートチャンネル自動変換 / チャンネルマネージャーコントロール (Enterprise)
+- GitHub (7月〜): Code Quality GA (7/20, $10/committer/月) / Copilot security-review コマンド (public preview) / Agentic ブラウザツール GA / PR ダッシュボード刷新 GA / Copilot CLI 音声・Canvas・サブエージェント強化
+
+**更新ドキュメント**:
+- `docs/competitor-reports/2026-07-16.md`: WebSearch 補足セクション (Notion/Slack/GitHub) 追記
+
+**AIアクション提案**:
+1. Notion External Agents × Slack 全社展開: 「エージェント統治 UI をプロダクト内に持つ」競合に対し、自社の moat = 「個人 CEO 経営メタファー + 6 部署 KPI + B/S ナラティブ」を LP・差別化ページに明示する
+2. GitHub Code Quality GA ($10/committer): dev-tool 層のコモディティ化が加速 — 自社の競合軸は「ツール」ではなく「個人の経営 OS」であることを開発実績・Zenn 記事で強調
+3. MoneyForward ME × AI エージェント化の Watch を強化: 7/16 競合レポート記載の通り ME が AI アドバイス層を載せた瞬間が最大脅威 — ME 関連クエリの自動巡回を次回 discovery サイクルから実装
+
+### Philosophy Alignment (Schedule 2026-07-16)
+
+- 主要実施: 競合 WebSearch 補足 (Notion/Slack/GitHub) + 競合レポート更新 + ロードマップ追記
+- 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
+- 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
+- 特記: Supabase 全エンドポイントがプロキシ policy により 403 — GHA 生成済みコンテンツで補完
