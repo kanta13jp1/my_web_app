@@ -153,6 +153,94 @@ void main() {
       expect(overdue.first.severity, AssetManagementInsightSeverity.critical);
     });
 
+    test('overdue payment action names amount and flags unset payment source',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 50000,
+          'モビット': -300000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final overdue = report.actionItems.firstWhere(
+        (item) => item.type == AssetManagementInsightActionType.overduePayment,
+      );
+      // 金額は支払予定額 (残高を延滞額扱いしない)。
+      expect(overdue.description.contains('37,000円'), true);
+      expect(overdue.suggestedAction.contains('支払原資口座が未設定'), true);
+    });
+
+    test('overdue payment action computes transfer shortage from source balance',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 3000,
+          'モビット': -300000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final overdue = report.actionItems.firstWhere(
+        (item) => item.type == AssetManagementInsightActionType.overduePayment,
+      );
+      // 不足額 = 37,000 − 3,000 = 34,000。
+      expect(overdue.suggestedAction.contains('34,000円'), true);
+      expect(overdue.suggestedAction.contains('財布'), true);
+      expect(overdue.suggestedAction.contains('移動'), true);
+    });
+
+    test('overdue payment action confirms payable when source balance covers it',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 50000,
+          'モビット': -300000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
+        paymentSourceAccountIds: const <String, String>{'mobit': 'wallet_cash'},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final overdue = report.actionItems.firstWhere(
+        (item) => item.type == AssetManagementInsightActionType.overduePayment,
+      );
+      expect(overdue.suggestedAction.contains('支払可能'), true);
+      expect(overdue.suggestedAction.contains('支払済みチェック'), true);
+    });
+
+    test('missing payment source action suggests the largest cash-like account',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 1000,
+          '三井住友銀行大塚支店': 500000,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{'paypay_card': 20000},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final missing = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.missingPaymentSource,
+      );
+      expect(missing.description.contains('20,000円'), true);
+      expect(missing.suggestedAction.contains('候補: 三井住友銀行大塚支店'), true);
+      expect(missing.suggestedAction.contains('500,000円'), true);
+    });
+
     test('calculates today, week, and month available amounts', () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{'bank': 50000, 'PayPay': -20000},

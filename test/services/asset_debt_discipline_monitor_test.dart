@@ -111,6 +111,54 @@ void main() {
       expect(report.newBorrowingViolations, isEmpty);
     });
 
+    test('revolving violation carries a concrete escape plan', () {
+      // 残高10万・返済1万 → 繰越9万でリボ違反。脱却プランを具体化する。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: baseDate,
+        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 10000},
+      );
+
+      final report = monitor.evaluate(workbook: workbook);
+
+      final violation = report.revolvingCardViolations.single;
+      expect(violation.hasEscapePlan, isTrue);
+      expect(
+        violation.escapeMonths,
+        AssetDebtDisciplineMonitor.escapeTargetMonths,
+      );
+      // 12ヶ月完済の月額は単純割 (100,000/12 ≒ 8,334円) より利息分だけ大きい。
+      expect(violation.escapeMonthlyPayment! >= 100000 / 12, isTrue);
+      expect(violation.action.contains('リボ状態から脱却'), isTrue);
+      // 月1万円は利息を上回る → 現状ペースの完済見込みも提示できる。
+      expect(violation.currentPlanPayoffMonths, isNotNull);
+      expect(violation.currentPlanTotalInterest, isNotNull);
+      expect(violation.action.contains('完済まで約'), isTrue);
+    });
+
+    test('revolving violation warns when payment never clears the balance', () {
+      // 月1,000円は初月利息 (年利15%なら1,250円) 以下 → 元金が減らない。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -100000,
+        },
+        baseDate: baseDate,
+        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 1000},
+      );
+
+      final report = monitor.evaluate(workbook: workbook);
+
+      final violation = report.revolvingCardViolations.single;
+      expect(violation.hasEscapePlan, isTrue);
+      expect(violation.currentPlanPayoffMonths, isNull);
+      expect(violation.currentPlanTotalInterest, isNull);
+      expect(violation.action.contains('完済の見込みが立ちません'), isTrue);
+    });
+
     test('does NOT flag a credit card paid in full this month', () {
       // 残高10万を全額返済 → 一括 → 違反なし。
       final workbook = planner.buildWorkbook(

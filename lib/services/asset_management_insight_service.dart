@@ -411,6 +411,20 @@ class AssetManagementInsightService {
     final actions = <AssetManagementInsightActionItem>[];
     final today = _dateOnly(workbook.baseDate);
     final upcomingLimit = today.add(Duration(days: upcomingPaymentWarningDays));
+    final accountsById = <String, AssetLiabilityAccount>{
+      for (final account in workbook.accounts) account.id: account,
+    };
+    // 原資未設定の負債に提示する引落口座候補（ページ側の候補一覧と同じ
+    // 現金/預金・残高ありの条件）。残高降順で最有力を 1 件だけ本文に載せる。
+    final paymentSourceCandidates = workbook.accounts
+        .where(
+          (account) =>
+              account.balance > 0 &&
+              (account.kind == AssetLiabilityAccountKind.cash ||
+                  account.kind == AssetLiabilityAccountKind.deposit),
+        )
+        .toList()
+      ..sort((a, b) => b.balance.compareTo(a.balance));
 
     for (final row in workbook.debtMasterRows) {
       if (row.paymentAmountEstimated && row.isDirectCashflowTarget) {
@@ -459,16 +473,30 @@ class AssetManagementInsightService {
           !row.paid &&
           (row.paymentSourceAccountId == null ||
               row.paymentSourceAccountId!.trim().isEmpty)) {
+        // じぶん銀行のように預金と負債が同一 id になる名前があるため自分自身は除外。
+        AssetLiabilityAccount? candidate;
+        for (final account in paymentSourceCandidates) {
+          if (account.id != row.id) {
+            candidate = account;
+            break;
+          }
+        }
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.missingPaymentSource,
             severity: AssetManagementInsightSeverity.warning,
             title: '${row.name}の支払原資口座が未設定です',
-            description: 'どの口座から引き落とすか未設定のため、口座別資金繰りに反映しにくい状態です。',
+            description: 'どの口座から引き落とすか未設定のため、'
+                '今月予定${_formatYen(row.scheduledPaymentAmount)}が'
+                'どの口座の見込み残高からも差し引かれず、残高不足を先読みできない状態です。',
             relatedAccountId: row.id,
             dueDate: _paymentDateFor(row, workbook.baseDate),
             paymentDay: row.paymentDay,
-            suggestedAction: '通常使う引落口座をデフォルト、または今月だけ上書きで設定してください。',
+            suggestedAction: candidate == null
+                ? '残高のある現金・預金口座が見つかりません。入金後に'
+                    '「支払原資口座の未設定」一覧から引落口座を設定してください。'
+                : '候補: ${candidate.name}（残高 ${_formatYen(candidate.balance)}）。'
+                    '「支払原資口座の未設定」一覧から今月だけ上書き、または既定で設定してください。',
           ),
         );
       }
@@ -479,16 +507,44 @@ class AssetManagementInsightService {
         continue;
       }
       if (row.overdue) {
+        // 期限超過は「いくらを・どうやって」まで具体化する（金額は支払予定額。
+        // 残高を延滞額扱いしない、のプロンプト規約と揃える）。
+        final overdueDays = today.difference(_dateOnly(row.paymentDate)).inDays;
+        final sourceAccountId = row.paymentSourceAccountId?.trim() ?? '';
+        final sourceAccount =
+            sourceAccountId.isEmpty ? null : accountsById[sourceAccountId];
+        final String suggestedAction;
+        if (sourceAccount == null) {
+          suggestedAction = '支払原資口座が未設定です。引落口座を設定したうえで、'
+              '振込・口座振替・支払先への連絡のどれで支払うかを確認してください。'
+              '支払済みの場合は支払済みチェックを更新してください。';
+        } else if (sourceAccount.balance >= row.paymentAmount) {
+          suggestedAction =
+              '${sourceAccount.name}の残高${_formatYen(sourceAccount.balance)}で'
+              '支払可能です。引落状況を確認し、未処理なら'
+              '${_formatYen(row.paymentAmount)}を支払って支払済みチェックを更新してください。';
+        } else {
+          final shortage = row.paymentAmount - sourceAccount.balance;
+          suggestedAction =
+              '${sourceAccount.name}の残高が${_formatYen(shortage)}不足しています。'
+              '他口座から${_formatYen(shortage)}以上を${sourceAccount.name}へ移動してから、'
+              '${_formatYen(row.paymentAmount)}を支払ってください。';
+        }
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.overduePayment,
             severity: AssetManagementInsightSeverity.critical,
             title: '${row.accountName}が期限超過です',
-            description: '支払日を過ぎた未払い予定があります。',
+            description: overdueDays <= 0
+                ? '本日${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                    '${_formatYen(row.paymentAmount)}が未払いです。'
+                : '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                    '${_formatYen(row.paymentAmount)}が未払いのまま'
+                    '$overdueDays日経過しています。',
             relatedAccountId: row.accountId,
             dueDate: row.paymentDate,
             paymentDay: row.paymentDay,
-            suggestedAction: '残高と引落状況を確認し、支払済みならチェックを更新してください。',
+            suggestedAction: suggestedAction,
           ),
         );
       } else if (!row.paymentDate.isBefore(today) &&
