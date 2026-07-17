@@ -33,6 +33,7 @@ import 'package:my_web_app/pages/growth_mission_page.dart';
 import 'package:my_web_app/pages/site_guide_chat_page.dart';
 import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
+import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/memory_drill_page.dart';
@@ -532,6 +533,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       navigatorObservers: <NavigatorObserver>[
         _growthPresenceObserver,
         universalAiShareRouteObserver,
+        // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
+        // LP View 計測を可視化まで遅延させる (可視化ゲート)。
+        deepLinkVisibilityRouteObserver,
         if (MyApp._sentryNavigatorObserver != null)
           MyApp._sentryNavigatorObserver!,
       ],
