@@ -139,6 +139,28 @@ void main() {
       expect(violation.action.contains('完済まで約'), isTrue);
     });
 
+    test('revolving violation reports 50+ years when payoff exceeds the cap',
+        () {
+      // 月12,505円は初月利息 (100万×月利1.25% = 12,500円) を僅かに上回るが、
+      // 完済まで約630ヶ月 (>600ヶ月キャップ) かかる →
+      // 「利息に追いつかず」ではなく50年以上と説明する。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'ファミペイ': -1000000,
+        },
+        baseDate: baseDate,
+        monthlyPaymentOverrides: const <String, double>{'ファミペイ': 12505},
+      );
+
+      final report = monitor.evaluate(workbook: workbook);
+
+      final violation = report.revolvingCardViolations.single;
+      expect(violation.currentPlanPayoffMonths, isNull);
+      expect(violation.action.contains('50年以上'), isTrue);
+      expect(violation.action.contains('利息に追いつかず'), isFalse);
+    });
+
     test('revolving violation warns when payment never clears the balance', () {
       // 月1,000円は初月利息 (年利15%なら1,250円) 以下 → 元金が減らない。
       final workbook = planner.buildWorkbook(

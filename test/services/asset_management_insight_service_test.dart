@@ -218,6 +218,97 @@ void main() {
       expect(overdue.suggestedAction.contains('支払済みチェック'), true);
     });
 
+    test('overdue actions on a shared source use the account-level shortfall',
+        () {
+      // 同一原資口座 (財布 40,000) に期限超過が2件 (30,000×2)。行単位の
+      // 生残高比較だと両方「支払可能」になるが、口座別見込み (40,000−60,000
+      // = −20,000) で判定し、不足バナーと同じ 20,000円不足を両方に出す。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 40000,
+          'モビット': -300000,
+          'auPayカード': -200000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        monthlyPaymentOverrides: const <String, double>{
+          'mobit': 30000,
+          AssetLiabilityPlanningService.auPayCardAccountId: 30000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'wallet_cash',
+          AssetLiabilityPlanningService.auPayCardAccountId: 'wallet_cash',
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final overdueActions = report.actionItems
+          .where(
+            (item) =>
+                item.type == AssetManagementInsightActionType.overduePayment,
+          )
+          .toList();
+      expect(overdueActions.length, 2);
+      for (final action in overdueActions) {
+        expect(action.suggestedAction.contains('20,000円'), true);
+        expect(action.suggestedAction.contains('支払可能'), false);
+      }
+    });
+
+    test('overdue action does not claim unset when source id is unresolvable',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布': 50000,
+          'モビット': -300000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'ghost_account',
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final overdue = report.actionItems.firstWhere(
+        (item) => item.type == AssetManagementInsightActionType.overduePayment,
+      );
+      expect(overdue.suggestedAction.contains('確認できません'), true);
+      expect(overdue.suggestedAction.contains('支払原資口座が未設定'), false);
+    });
+
+    test('missing payment source candidate is ranked by projected balance', () {
+      // 三井住友は残高最大 (500,000) だがモビットの支払 480,000 が割当済みで
+      // 見込み 20,000。財布 (100,000・割当なし) が候補になるべき —
+      // ページ上部バナーの候補順位 (支払後見込み降順) と一致させる。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '三井住友銀行大塚支店': 500000,
+          '財布': 100000,
+          'モビット': -600000,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'mobit': 480000,
+          'paypay_card': 20000,
+        },
+        paymentSourceAccountIds: const <String, String>{
+          'mobit': 'smbc_otsuka_branch',
+        },
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      final missing = report.actionItems.firstWhere(
+        (item) =>
+            item.type == AssetManagementInsightActionType.missingPaymentSource,
+      );
+      expect(missing.suggestedAction.contains('候補: 財布'), true);
+      expect(missing.suggestedAction.contains('候補: 三井住友銀行大塚支店'), false);
+    });
+
     test('missing payment source action suggests the largest cash-like account',
         () {
       final workbook = planner.buildWorkbook(

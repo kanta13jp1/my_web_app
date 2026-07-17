@@ -233,9 +233,13 @@ class AssetDebtDisciplineMonitor {
             currentPlanText =
                 '現在の予定額 月${_yen(payment)}のままでは完済まで約$currentPlanMonthsヶ月・'
                 '利息総額 約${_yen(currentPlan!.totalInterest)}かかります。';
-          } else {
+          } else if (payment <= balance * monthlyRate + _epsilon) {
             currentPlanText =
                 '現在の予定額 月${_yen(payment)}では利息に追いつかず、完済の見込みが立ちません。';
+          } else {
+            // 利息は上回るがシミュレーション上限 (600ヶ月) 内に完済しない。
+            currentPlanText =
+                '現在の予定額 月${_yen(payment)}では完済まで50年以上かかる見込みです。';
           }
           revolving.add(
             AssetDebtDisciplineViolation(

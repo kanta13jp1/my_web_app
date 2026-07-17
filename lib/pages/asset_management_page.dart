@@ -20224,8 +20224,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 4),
           Text(
             violation.problem,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            // 背景が固定の白のため、ダークテーマの onSurfaceVariant(淡色)だと
+            // 読めなくなる。文字色も固定の濃スレート系にする。
+            style: const TextStyle(
+              color: Color(0xFF475569),
               fontSize: 12,
               height: 1.5,
             ),
@@ -20246,7 +20248,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Expanded(
                   child: Text(
                     violation.action,
-                    style: const TextStyle(fontSize: 12, height: 1.5),
+                    // 固定白タイル上のためテーマ色でなく固定の濃色にする。
+                    style: const TextStyle(
+                      color: Color(0xFF1F2937),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
