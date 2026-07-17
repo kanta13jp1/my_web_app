@@ -13167,7 +13167,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 height: 1.5,
               ),
             ),
-            if (suggestionsByAccountId[summary.accountId] case final suggestion?)
+            if (suggestionsByAccountId[summary.accountId]
+                case final suggestion?)
               Wrap(
                 spacing: 8,
                 runSpacing: 4,
