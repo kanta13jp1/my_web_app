@@ -86,6 +86,8 @@ class _LandingPageState extends State<LandingPage> {
     unawaited(_bootstrapReferralInvite());
     unawaited(_loadAchievementCount());
     unawaited(_loadSocialProofStats());
+    // LP View 計測 (今日の登録ファネルの最上段)。失敗は adapter 側で握る。
+    unawaited(widget.adapter.recordLpView());
   }
 
   @override

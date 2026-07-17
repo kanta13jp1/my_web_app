@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'growth_acquisition_service.dart';
+
 class BillingServiceException implements Exception {
   BillingServiceException(this.message, {this.statusCode});
 
@@ -55,6 +57,51 @@ class BillingCheckoutSession {
       throw BillingServiceException('Stripe Checkout URL が返されませんでした');
     }
     return BillingCheckoutSession(url: url, id: json['id']?.toString());
+  }
+}
+
+class BillingCheckoutAttribution {
+  const BillingCheckoutAttribution({
+    this.latestTouchpoint,
+    this.signupSignal,
+    this.referralChannel,
+  });
+
+  final String? latestTouchpoint;
+  final String? signupSignal;
+  final String? referralChannel;
+
+  factory BillingCheckoutAttribution.fromLatestTouchpoint(
+    String? latestTouchpoint,
+  ) {
+    final normalized = latestTouchpoint?.trim();
+    final touchpoint =
+        normalized == null || normalized.isEmpty ? null : normalized;
+    final signupSignal = GrowthAcquisitionService.resolveSignupSubmitSignal(
+      touchpoint,
+    );
+    final isReferral = touchpoint == GrowthAcquisitionService.touchReferral ||
+        signupSignal == GrowthAcquisitionService.signupSubmitReferral;
+    return BillingCheckoutAttribution(
+      latestTouchpoint: touchpoint,
+      signupSignal: signupSignal,
+      referralChannel: isReferral ? 'referral' : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final json = <String, dynamic>{};
+    void add(String key, String? value) {
+      final normalized = value?.trim();
+      if (normalized == null || normalized.isEmpty) return;
+      json[key] =
+          normalized.length > 160 ? normalized.substring(0, 160) : normalized;
+    }
+
+    add('latest_touchpoint', latestTouchpoint);
+    add('signup_signal', signupSignal);
+    add('referral_channel', referralChannel);
+    return json;
   }
 }
 
@@ -138,6 +185,7 @@ abstract class BillingGateway {
   Future<BillingCheckoutSession> createCheckoutSession({
     required String tier,
     required String returnUrl,
+    BillingCheckoutAttribution attribution = const BillingCheckoutAttribution(),
   });
 
   Future<BillingCheckoutSession> createSupporterCheckoutSession({
@@ -165,10 +213,12 @@ class BillingService implements BillingGateway {
   Future<BillingCheckoutSession> createCheckoutSession({
     required String tier,
     required String returnUrl,
+    BillingCheckoutAttribution attribution = const BillingCheckoutAttribution(),
   }) async {
     final data = await _invokeBillingAction('billing.create_checkout_session', {
       'tier': tier,
       'return_url': returnUrl,
+      ...attribution.toJson(),
     });
     return BillingCheckoutSession.fromJson(data);
   }
