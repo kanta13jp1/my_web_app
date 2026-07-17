@@ -1,6 +1,8 @@
 -- Complete activation-gated referrals only after a paid subscription checkout.
 -- The counter refresh lives in the same transaction so webhook retries remain
 -- idempotent and the referral dashboard cannot drift from referral row state.
+-- nocheck: time-relative -- UPDATE statements are inside this runtime RPC and
+-- do not execute while the migration is replayed.
 
 create or replace function public.complete_referral_activation(
   p_referred_user_id uuid,
