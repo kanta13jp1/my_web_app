@@ -89,6 +89,68 @@ void main() {
       expect(csv, contains('"includes comma, quote "" and memo"'));
     });
 
+    test('neutralizes spreadsheet formula prefixes in CSV cells', () {
+      final preview = service.buildPreview(
+        taxYear: 2026,
+        generatedAt: DateTime.utc(2026, 7, 13),
+        records: <AssetTaxRecord>[
+          AssetTaxRecord(
+            id: '\r=record-id',
+            occurredOn: DateTime(2026, 7, 1),
+            kind: AssetTaxRecordKind.income,
+            category: AssetTaxRecordCategory.miscIncome,
+            amount: 12345,
+            title: '=SUM(A1:A2)',
+            counterparty: '+HYPERLINK("https://example.com")',
+            invoiceNumber: '-1+2',
+            memo: '@SUM(A1:A2)',
+            source: '\t=external',
+          ),
+        ],
+      );
+
+      final csv = service.buildCsv(preview);
+
+      expect(csv, contains("'=SUM(A1:A2)"));
+      expect(csv, contains("'+HYPERLINK("));
+      expect(csv, contains("'-1+2"));
+      expect(csv, contains("'@SUM(A1:A2)"));
+      expect(csv, contains("'\t=external"));
+      expect(csv, contains("'\r=record-id"));
+    });
+
+    test('uses JST consistently for tax-year filtering and CSV dates', () {
+      final bundle = service.buildExportBundle(
+        taxYear: 2026,
+        generatedAt: DateTime.utc(2026, 1, 1),
+        records: <AssetTaxRecord>[
+          AssetTaxRecord(
+            id: 'jst-new-year',
+            occurredOn: DateTime.utc(2025, 12, 31, 15),
+            kind: AssetTaxRecordKind.income,
+            category: AssetTaxRecordCategory.miscIncome,
+            amount: 1000,
+            title: 'JST new year',
+          ),
+          AssetTaxRecord(
+            id: 'jst-next-year',
+            occurredOn: DateTime.utc(2026, 12, 31, 15),
+            kind: AssetTaxRecordKind.income,
+            category: AssetTaxRecordCategory.miscIncome,
+            amount: 2000,
+            title: 'JST next year',
+          ),
+        ],
+      );
+
+      expect(bundle.preview.records.map((record) => record.id), <String>[
+        'jst-new-year',
+      ]);
+      expect(bundle.preview.ignoredRecordCount, 1);
+      expect(bundle.csv, contains('2026,2026-01-01,income,miscIncome'));
+      expect(bundle.csv, isNot(contains('jst-next-year')));
+    });
+
     test('exports e-Tax XML skeleton grouped by category', () {
       final preview = service.buildPreview(
         taxYear: 2026,

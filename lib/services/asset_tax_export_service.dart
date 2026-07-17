@@ -94,6 +94,9 @@ class AssetTaxExportBundle {
 }
 
 class AssetTaxExportService {
+  static const Duration _jstOffset = Duration(hours: 9);
+  static const String _spreadsheetFormulaPrefixes = '=+-@\t\r\n';
+
   const AssetTaxExportService();
 
   AssetTaxExportBundle buildExportBundle({
@@ -118,13 +121,14 @@ class AssetTaxExportService {
     required List<AssetTaxRecord> records,
     DateTime? generatedAt,
   }) {
-    final inYear =
-        records.where((record) => record.occurredOn.year == taxYear).toList()
-          ..sort((a, b) {
-            final byDate = a.occurredOn.compareTo(b.occurredOn);
-            if (byDate != 0) return byDate;
-            return a.id.compareTo(b.id);
-          });
+    final inYear = records
+        .where((record) => _jstDate(record.occurredOn).year == taxYear)
+        .toList()
+      ..sort((a, b) {
+        final byDate = a.occurredOn.compareTo(b.occurredOn);
+        if (byDate != 0) return byDate;
+        return a.id.compareTo(b.id);
+      });
     final warnings = <String>[];
     final ignored = records.length - inYear.length;
     if (ignored > 0) {
@@ -171,6 +175,7 @@ class AssetTaxExportService {
       }
     }
     final netBeforeSpecialRules = totalIncome - totalExpense - totalDeduction;
+    // Inject generatedAt when byte-for-byte reproducibility is required.
     final timestamp = generatedAt ?? DateTime.now().toUtc();
     final confirmation = AssetTaxExportConfirmation(
       title: 'Tax export preview for $taxYear',
@@ -322,23 +327,34 @@ class AssetTaxExportService {
 
   static String _csvCell(Object? value) {
     final text = value?.toString() ?? '';
-    if (text.contains(',') ||
-        text.contains('"') ||
-        text.contains('\n') ||
-        text.contains('\r')) {
-      return '"${text.replaceAll('"', '""')}"';
+    final guarded = text.isNotEmpty &&
+            _spreadsheetFormulaPrefixes.contains(text.substring(0, 1))
+        ? "'$text"
+        : text;
+    if (guarded.contains(',') ||
+        guarded.contains('"') ||
+        guarded.contains('\n') ||
+        guarded.contains('\r')) {
+      return '"${guarded.replaceAll('"', '""')}"';
     }
-    return text;
+    return guarded;
   }
 
   static String _date(DateTime value) {
-    final utc = DateTime.utc(value.year, value.month, value.day);
-    return utc.toIso8601String().substring(0, 10);
+    final jst = _jstDate(value);
+    return DateTime.utc(
+      jst.year,
+      jst.month,
+      jst.day,
+    ).toIso8601String().substring(0, 10);
   }
+
+  static DateTime _jstDate(DateTime value) => value.toUtc().add(_jstOffset);
 
   static String _amount(double value) {
     if (value.isNaN || value.isInfinite) return '0';
     final normalized = value.abs() < 0.000001 ? 0.0 : value;
+    // Japanese tax exports use whole-yen amounts; sub-yen precision is omitted.
     return normalized.toStringAsFixed(0);
   }
 

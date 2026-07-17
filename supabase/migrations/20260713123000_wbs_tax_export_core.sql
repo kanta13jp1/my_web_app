@@ -1,10 +1,9 @@
 -- Codex #4 active label / Codex #1 execution lane / 2026-07-13.
 -- Issue #2492: tax export deterministic core.
 -- nocheck: time-relative
--- This migration intentionally records WBS progress. Disable row triggers only
--- for that bookkeeping UPDATE so replay is not date-dependent.
+-- This migration intentionally records WBS progress. Keep normal trigger and
+-- constraint behavior so it runs with the standard Supabase migration role.
 
-set session_replication_role = replica;
 update public.wbs_tasks
 set status = 'in_progress',
     progress = greatest(progress, 55),
@@ -17,7 +16,6 @@ set status = 'in_progress',
     description = coalesce(description, '') ||
       E'\n\n[Codex #4 2026-07-13] Issue #2492 advanced: added deterministic AssetTaxExportService for tax_records-style inputs. It produces CSV, e-Tax XML skeleton grouped by misc/business/real-estate/furusato categories, and a pre-export confirmation preview with warnings. UI/DB wiring remains open.'
 where github_issue_number = 2492;
-set session_replication_role = default;
 
 insert into public.development_achievements (title, description, completed_at)
 select
