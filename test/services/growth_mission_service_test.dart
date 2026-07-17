@@ -147,8 +147,79 @@ void main() {
       syncCompleter.complete();
       await Future<void>.delayed(Duration.zero);
     });
+
+    test('global cooldown suppresses immediate sync across different routes',
+        () async {
+      final service = _FakePresenceService(Future<void>.value());
+      final observer = GrowthPresenceNavigatorObserver(
+        service: service,
+        acquisitionService: const _NoopGrowthAcquisitionService(),
+      );
+      addTearDown(observer.dispose);
+
+      observer.didPush(_namedRoute('/a'), null);
+      await Future<void>.delayed(Duration.zero);
+      // 45秒のグローバル cooldown 内なので、別ページへの遷移でも
+      // 即時 sync は走らない (次の heartbeat が正しい path を書く)。
+      observer.didPush(_namedRoute('/b'), null);
+
+      expect(service.syncPresenceCalls, 1);
+      expect(service.syncedPagePaths, <String>['/a']);
+    });
+
+    test(
+        'first route "/" (root entry) still records touchpoint and referral '
+        'hooks despite matching the initial page path', () async {
+      final service = _FakePresenceService(Future<void>.value());
+      final acquisition = _RecordingAcquisitionService();
+      final observer = GrowthPresenceNavigatorObserver(
+        service: service,
+        acquisitionService: acquisition,
+      );
+      addTearDown(observer.dispose);
+
+      // _currentPagePath の初期値 '/' と初回ルート '/' が一致しても、
+      // 初回は必ず track する (root 直行流入の獲得計測が沈黙する回帰の防止)。
+      observer.didPush(_namedRoute('/'), null);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(service.syncPresenceCalls, 1);
+      expect(acquisition.recordedPagePaths, <String>['/']);
+
+      // 2回目以降の同一 path は skip される。
+      observer.didPush(_namedRoute('/'), null);
+      expect(acquisition.recordedPagePaths, <String>['/']);
+    });
+
+    test('unnamed routes (dialogs) do not trigger presence writes', () async {
+      final service = _FakePresenceService(Future<void>.value());
+      final observer = GrowthPresenceNavigatorObserver(
+        service: service,
+        acquisitionService: const _NoopGrowthAcquisitionService(),
+      );
+      addTearDown(observer.dispose);
+
+      observer.didPush(_namedRoute('/a'), null);
+      await Future<void>.delayed(Duration.zero);
+      // ダイアログ等の無名ルートは「直前ページに滞在中」として扱い、
+      // presence 書き込みを発生させない。
+      observer.didPush(_unnamedRoute(), null);
+      observer.didPop(_unnamedRoute(), _namedRoute('/a'));
+
+      expect(service.syncPresenceCalls, 1);
+      expect(service.syncedPagePaths, <String>['/a']);
+    });
   });
 }
+
+MaterialPageRoute<void> _namedRoute(String name) => MaterialPageRoute<void>(
+      settings: RouteSettings(name: name),
+      builder: (_) => const SizedBox.shrink(),
+    );
+
+MaterialPageRoute<void> _unnamedRoute() => MaterialPageRoute<void>(
+      builder: (_) => const SizedBox.shrink(),
+    );
 
 class _FakePresenceService extends GrowthMissionService {
   _FakePresenceService(this._syncFuture);
@@ -182,4 +253,16 @@ class _NoopGrowthAcquisitionService extends GrowthAcquisitionService {
     String pagePath, {
     Uri? currentUri,
   }) async {}
+}
+
+class _RecordingAcquisitionService extends GrowthAcquisitionService {
+  final List<String> recordedPagePaths = <String>[];
+
+  @override
+  Future<void> recordTouchpointForPagePath(
+    String pagePath, {
+    Uri? currentUri,
+  }) async {
+    recordedPagePaths.add(pagePath);
+  }
 }
