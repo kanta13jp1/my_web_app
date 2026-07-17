@@ -6305,8 +6305,7 @@ abstinence_slip_details: $slipDetailsText
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           width: 44,
           height: 44,

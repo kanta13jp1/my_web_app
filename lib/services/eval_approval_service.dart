@@ -99,14 +99,13 @@ class EvalApprovalRequest {
 
   factory EvalApprovalRequest.fromJson(Map<String, dynamic> json) {
     final preview = _map(json['preview']);
-    final rawOptions = preview['options'] is List
-        ? preview['options'] as List
-        : const [];
+    final rawOptions =
+        preview['options'] is List ? preview['options'] as List : const [];
     final rawSteps = preview['background_steps'] is List
         ? preview['background_steps'] as List
         : json['background_steps'] is List
-        ? json['background_steps'] as List
-        : const [];
+            ? json['background_steps'] as List
+            : const [];
     final executionMap = _map(json['execution']);
     return EvalApprovalRequest(
       id: _text(json['id']),
@@ -152,7 +151,7 @@ abstract class EvalApprovalGateway {
 
 class EvalApprovalService implements EvalApprovalGateway {
   EvalApprovalService({SupabaseClient? supabaseClient})
-    : _supabase = supabaseClient ?? Supabase.instance.client;
+      : _supabase = supabaseClient ?? Supabase.instance.client;
 
   final SupabaseClient _supabase;
 
@@ -164,9 +163,8 @@ class EvalApprovalService implements EvalApprovalGateway {
     );
     final data = _map(response.data);
     if (data['error'] != null) throw StateError(data['error'].toString());
-    final raw = data['approvals'] is List
-        ? data['approvals'] as List
-        : const [];
+    final raw =
+        data['approvals'] is List ? data['approvals'] as List : const [];
     final requests = raw
         .whereType<Map>()
         .map((item) => EvalApprovalRequest.fromJson(_map(item)))
