@@ -422,9 +422,9 @@ class AssetManagementInsightService {
     };
     // 原資未設定の負債に提示する引落口座候補。ページ上部バナーの候補一覧と
     // 同じ順位付け (支払後見込み残高の大きい順) で最有力を 1 件だけ本文に載せる。
-    final paymentSourceCandidateSummaries =
-        workbook.accountCashflowSummaries.toList()
-          ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
+    final paymentSourceCandidateSummaries = workbook.accountCashflowSummaries
+        .toList()
+      ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
 
     for (final row in workbook.debtMasterRows) {
       if (row.paymentAmountEstimated && row.isDirectCashflowTarget) {
@@ -537,8 +537,7 @@ class AssetManagementInsightService {
           // 同一口座の未払い・保留中の口座移動を合算した見込み不足
           // (口座別不足バナーと同じ数字) を提示する。
           final shortage = sourceSummary.shortfall;
-          suggestedAction =
-              '${sourceSummary.accountName}は同口座の未払い分を含めると見込み残高が'
+          suggestedAction = '${sourceSummary.accountName}は同口座の未払い分を含めると見込み残高が'
               '${_formatYen(shortage)}不足します。他口座から${_formatYen(shortage)}以上を'
               '${sourceSummary.accountName}へ移動してから、'
               '${_formatYen(row.paymentAmount)}を支払ってください。';

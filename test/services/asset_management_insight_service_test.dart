@@ -174,7 +174,8 @@ void main() {
       expect(overdue.suggestedAction.contains('支払原資口座が未設定'), true);
     });
 
-    test('overdue payment action computes transfer shortage from source balance',
+    test(
+        'overdue payment action computes transfer shortage from source balance',
         () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
@@ -197,7 +198,8 @@ void main() {
       expect(overdue.suggestedAction.contains('移動'), true);
     });
 
-    test('overdue payment action confirms payable when source balance covers it',
+    test(
+        'overdue payment action confirms payable when source balance covers it',
         () {
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
