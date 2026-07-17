@@ -389,6 +389,14 @@ type ReferralRow = {
   status: string | null;
   completed_at: string | null;
   created_at: string;
+  metadata?: Record<string, unknown> | null;
+};
+
+type BillingSubscriptionRow = {
+  user_id: string;
+  tier: string | null;
+  status: string | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 const TOUCHPOINT_DEFS = [
@@ -1655,8 +1663,14 @@ async function applyPendingReferral(
     referred_user_id: referredUserId,
     referral_code: pendingCode,
     bonus_points: 500,
-    status: "completed",
-    completed_at: new Date().toISOString(),
+    status: "pending_activation",
+    completed_at: null,
+    metadata: {
+      channel: "referral",
+      signup_signal: "signup_submit_referral",
+      activation_gate: "billing_or_manual_activation",
+      gated_at: new Date().toISOString(),
+    },
   });
   if (insertError && !String(insertError.message).includes("duplicate")) {
     throw new Error(insertError.message);
@@ -1690,6 +1704,69 @@ async function applyPendingReferral(
   return true;
 }
 
+function isPaidReferralSubscription(row: BillingSubscriptionRow): boolean {
+  const tier = firstString(row.tier).toLowerCase();
+  const status = firstString(row.status).toLowerCase();
+  return (tier === "pro" || tier === "team") &&
+    (status === "active" || status === "trialing");
+}
+
+async function buildReferralBillingAttribution(
+  admin: SupabaseClient,
+  rows: ReferralRow[],
+) {
+  const referredUserIds = Array.from(
+    new Set(
+      rows
+        .map((row) => firstString(row.referred_user_id))
+        .filter(Boolean),
+    ),
+  );
+  if (referredUserIds.length === 0) {
+    return {
+      billingConvertedReferrals: 0,
+      referralFreeToProCvr: 0,
+      billingChannels: [{
+        id: "referral",
+        label: "Referral",
+        totalReferrals: 0,
+        proConversions: 0,
+        freeToProCvr: 0,
+      }],
+    };
+  }
+
+  const { data, error } = await admin
+    .from("billing_subscriptions")
+    .select("user_id, tier, status, metadata")
+    .in("user_id", referredUserIds);
+  if (error) throw new Error(error.message);
+
+  const paidUserIds = new Set(
+    ((data ?? []) as BillingSubscriptionRow[])
+      .filter(isPaidReferralSubscription)
+      .map((row) => firstString(row.user_id))
+      .filter(Boolean),
+  );
+  const proConversions =
+    rows.filter((row) => paidUserIds.has(firstString(row.referred_user_id)))
+      .length;
+  const freeToProCvr = rows.length > 0
+    ? Math.round((proConversions / rows.length) * 1000) / 10
+    : 0;
+  return {
+    billingConvertedReferrals: proConversions,
+    referralFreeToProCvr: freeToProCvr,
+    billingChannels: [{
+      id: "referral",
+      label: "Referral",
+      totalReferrals: rows.length,
+      proConversions,
+      freeToProCvr,
+    }],
+  };
+}
+
 async function buildReferralPayload(
   admin: SupabaseClient,
   userId: string,
@@ -1704,7 +1781,7 @@ async function buildReferralPayload(
   const { data: referrals, error } = await admin
     .from("referrals")
     .select(
-      "id, referrer_user_id, referred_user_id, referral_code, bonus_points, status, completed_at, created_at",
+      "id, referrer_user_id, referred_user_id, referral_code, bonus_points, status, completed_at, created_at, metadata",
     )
     .eq("referrer_user_id", userId)
     .order("created_at", { ascending: false });
@@ -1713,6 +1790,10 @@ async function buildReferralPayload(
   const rows = (referrals ?? []) as ReferralRow[];
   const successfulReferrals =
     rows.filter((row) => row.status === "completed").length;
+  const billingAttribution = await buildReferralBillingAttribution(
+    admin,
+    rows,
+  );
   return {
     success: true,
     referralCode,
@@ -1726,10 +1807,17 @@ async function buildReferralPayload(
         status: row.status,
         bonus_points: row.bonus_points,
         completed_at: row.completed_at,
+        channel: firstString(row.metadata?.channel, "referral"),
+        signup_signal: firstString(
+          row.metadata?.signup_signal,
+          "signup_submit_referral",
+        ),
       },
     })),
     totalReferrals: rows.length,
     successfulReferrals,
+    activationQualifiedReferrals: successfulReferrals,
+    ...billingAttribution,
     clearPendingCode,
   };
 }
@@ -1954,8 +2042,12 @@ serve(async (req: Request) => {
           page: 1,
           perPage: 1,
         });
-        const totalUsers =
-          (totalUsersResponse.data as { total?: number } | null)?.total ?? null;
+        const totalUsersData = totalUsersResponse.data as
+          | { total?: number }
+          | null;
+        const totalUsers = typeof totalUsersData?.total === "number"
+          ? totalUsersData.total
+          : null;
         const payload = buildSignupSlackPayload({
           totalUsers,
           signalKey: body.signalKey,

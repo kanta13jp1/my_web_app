@@ -311,6 +311,24 @@ function supporterAttributionParams(
   return params;
 }
 
+function checkoutAttributionParams(
+  body: Record<string, unknown>,
+): Record<string, string> {
+  const fields = [
+    "latest_touchpoint",
+    "signup_signal",
+    "referral_channel",
+  ];
+  const params: Record<string, string> = {};
+  for (const field of fields) {
+    const value = stripeMetadataValue(body[field]);
+    if (!value) continue;
+    params[`metadata[${field}]`] = value;
+    params[`subscription_data[metadata][${field}]`] = value;
+  }
+  return params;
+}
+
 async function stripePostForm(
   path: string,
   params: Record<string, string>,
@@ -1705,6 +1723,7 @@ serve(async (req: Request) => {
           "metadata[tier]": tier,
           "subscription_data[metadata][user_id]": userId!,
           "subscription_data[metadata][tier]": tier,
+          ...checkoutAttributionParams(body),
         });
         return json({
           success: true,

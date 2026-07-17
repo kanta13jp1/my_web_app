@@ -99,8 +99,9 @@ class _GrowthMissionPageState extends State<GrowthMissionPage> {
     ]);
     final dashboard = results[0] as GrowthMissionDashboard;
     final digest = results[1] as WeeklyDigestSnapshot;
-    final commandCenter =
-        await widget.growthService.loadCommandCenterBrief(dashboard);
+    final commandCenter = await widget.growthService.loadCommandCenterBrief(
+      dashboard,
+    );
     if (!mounted) {
       return;
     }
@@ -178,11 +179,9 @@ docs/GROWTH_STRATEGY_ROADMAP.md
   }
 
   void _openLandingPage() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const LandingPage(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const LandingPage()));
   }
 
   Future<void> _handleDepartmentAction(String departmentId) async {
@@ -205,11 +204,9 @@ docs/GROWTH_STRATEGY_ROADMAP.md
         return;
       case 'finance':
       case 'procurement':
-        await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const AdminAnalyticsPage(),
-          ),
-        );
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const AdminAnalyticsPage()));
         return;
       case 'hr':
       case 'business-planning':
@@ -252,9 +249,9 @@ docs/GROWTH_STRATEGY_ROADMAP.md
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   double _progress(double value) {
@@ -267,6 +264,8 @@ docs/GROWTH_STRATEGY_ROADMAP.md
     final referralCode =
         _dashboard.referralSnapshot.referralCode ?? 'Sign in to generate one';
     final inviteUrl = _dashboard.referralSnapshot.inviteUrl ?? '--';
+    final referralFreeToProCvr =
+        _dashboard.referralSnapshot.freeToProConversionRate * 100;
 
     return Scaffold(
       appBar: AppBar(
@@ -561,8 +560,9 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                         child: _acquisitionTouchpointRow(
                           label: touchpoint.label,
                           touches: numberFormat.format(touchpoint.touchCount),
-                          signupSubmits:
-                              numberFormat.format(touchpoint.signupSubmitCount),
+                          signupSubmits: numberFormat.format(
+                            touchpoint.signupSubmitCount,
+                          ),
                           rate: touchpoint.signupSubmitRate,
                         ),
                       ),
@@ -602,7 +602,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Keep the invitation loop simple: generate a personal code, copy a ready-made invite, and measure how many completed registrations came from it.',
+                      'Keep the invitation loop simple: generate a personal code, copy a ready-made invite, and measure activation-gated registrations plus referral-driven Pro upgrades.',
                     ),
                     const SizedBox(height: 16),
                     SelectableText(
@@ -633,8 +633,36 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                           ),
                           icon: Icons.verified,
                         ),
+                        _statTile(
+                          label: 'Referred Pro upgrades',
+                          value: numberFormat.format(
+                            _dashboard
+                                .referralSnapshot.billingConvertedReferrals,
+                          ),
+                          icon: Icons.workspace_premium_outlined,
+                        ),
+                        _statTile(
+                          label: 'Referral free-to-Pro CVR',
+                          value: '${referralFreeToProCvr.toStringAsFixed(1)}%',
+                          icon: Icons.query_stats,
+                        ),
                       ],
                     ),
+                    if (_dashboard
+                        .referralSnapshot.billingChannels.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      ..._dashboard.referralSnapshot.billingChannels.map(
+                        (channel) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            '${channel.label}: '
+                            '${numberFormat.format(channel.proConversions)} / '
+                            '${numberFormat.format(channel.totalReferrals)} '
+                            'Pro (${(channel.freeToProConversionRate * 100).toStringAsFixed(1)}%)',
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 12,
@@ -807,9 +835,9 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(_weeklyDigest.brief),
@@ -895,10 +923,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            height: 1.5,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w700, height: 1.5),
         ),
         const SizedBox(height: 6),
         LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
@@ -919,10 +944,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
             width: 110,
             child: Text(
               channel.label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
             ),
           ),
           Expanded(
@@ -930,10 +952,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
               'touches: ${channel.touches} ($deltaSign${channel.touchesDelta})  '
               'sign-ups: ${channel.signupSubmits} ($submitDeltaSign${channel.signupSubmitsDelta})  '
               'CVR: ${channel.cvr}%',
-              style: const TextStyle(
-                fontSize: 13,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontSize: 13, height: 1.5),
             ),
           ),
         ],
@@ -958,10 +977,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              height: 1.5,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w800, height: 1.5),
           ),
           const SizedBox(height: 8),
           Text('Touches: $touches'),
@@ -969,9 +985,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
           const SizedBox(height: 8),
           LinearProgressIndicator(value: rate.clamp(0.0, 1.0)),
           const SizedBox(height: 6),
-          Text(
-            'Touch-to-submit rate: ${(rate * 100).toStringAsFixed(1)}%',
-          ),
+          Text('Touch-to-submit rate: ${(rate * 100).toStringAsFixed(1)}%'),
         ],
       ),
     );
@@ -1072,10 +1086,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
           children: [
             Text(
               channel.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w800, height: 1.5),
             ),
             const SizedBox(height: 6),
             Text('Audience: ${channel.audience}'),
@@ -1086,10 +1097,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
             const SizedBox(height: 8),
             Text(
               'CTA: ${channel.cta}',
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
             ),
             const SizedBox(height: 12),
             FilledButton.tonalIcon(
