@@ -27,12 +27,19 @@ import {
 import {
   buildSaasApprovalStatus,
   externalSaasGateReason,
+  isPendingSaasApprovalStatus,
   normalizeSaasApprovalDecision,
   normalizeSaasConnectorSettings,
   SAAS_APPROVAL_REQUEST_SOURCE,
   SAAS_APPROVAL_SETTINGS_SOURCE,
   type SaasApprovalDecision,
 } from "../_shared/saas_human_approval.ts";
+import {
+  type EvalAutomationCalendarEvent,
+  type EvalAutomationTask,
+  executeEvalApprovalAutomation,
+  selectEvalApprovalAutomationPayload,
+} from "./eval_approval_automation.ts";
 import {
   buildMcpFeatureRequestPayload,
   buildMcpNotePayload,
@@ -67,6 +74,13 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+
+class ToolsHubRequestError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+    this.name = "ToolsHubRequestError";
+  }
+}
 
 function json(
   data: unknown,
@@ -1942,6 +1956,72 @@ async function createSaasApprovalRequest(
   return publicSaasApprovalRequest(item as Record<string, unknown>);
 }
 
+async function addEvalAutomationItem(
+  admin: SupabaseClient,
+  userId: string,
+  source: "team_task" | "calendar_event",
+  metadata: Record<string, unknown>,
+): Promise<boolean> {
+  const { error } = await admin.from("hub_data").insert({
+    source,
+    metadata: { ...metadata, user_id: userId },
+  });
+  if (error?.code === "23505") return false;
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+async function executeApprovedEvalAutomation(
+  admin: SupabaseClient,
+  userId: string,
+  requestId: string,
+  payload: Record<string, unknown>,
+  selectedOptionId: string,
+) {
+  if (!requestId) {
+    return {
+      success: false,
+      status: "failed",
+      error: "approval request id is required for internal automation",
+    };
+  }
+  return await executeEvalApprovalAutomation(payload, {
+    createTask: async (task: EvalAutomationTask, itemKey: string) => {
+      return await addEvalAutomationItem(admin, userId, "team_task", {
+        title: task.title,
+        description: task.description,
+        assignee: task.assignee ?? userId,
+        due_date: task.dueDate,
+        status: "pending",
+        priority: task.priority,
+        source: "eval_approval",
+        approval_request_id: requestId,
+        automation_item_key: itemKey,
+      });
+    },
+    createCalendarEvent: async (
+      event: EvalAutomationCalendarEvent,
+      itemKey: string,
+    ) => {
+      return await addEvalAutomationItem(admin, userId, "calendar_event", {
+        title: event.title,
+        description: event.description,
+        start_at: event.startAt,
+        end_at: event.endAt,
+        all_day: event.allDay,
+        color: event.color,
+        reminder_min: event.reminderMinutes,
+        calendar_id: event.calendarId,
+        rrule: null,
+        timezone: null,
+        source: "eval_approval",
+        approval_request_id: requestId,
+        automation_item_key: itemKey,
+      });
+    },
+  }, selectedOptionId);
+}
+
 async function executeApprovedSaasAction(
   admin: SupabaseClient,
   userId: string,
@@ -1949,6 +2029,15 @@ async function executeApprovedSaasAction(
 ) {
   const provider = normalizeText(metadata.provider);
   const payload = asRecord(metadata.payload) ?? {};
+  if (provider === "internal" || provider === "eval_automation") {
+    return await executeApprovedEvalAutomation(
+      admin,
+      userId,
+      normalizeText(metadata.request_id),
+      payload,
+      normalizeText(metadata.selected_option_id),
+    );
+  }
   if (provider !== "slack") {
     return {
       success: false,
@@ -1995,6 +2084,7 @@ async function decideSaasApprovalRequest(
     reviewNote: string;
     revisedPayload: Record<string, unknown> | null;
     execute: boolean;
+    selectedOptionId: string;
   },
 ) {
   const { data, error } = await admin.from("hub_data")
@@ -2007,6 +2097,27 @@ async function decideSaasApprovalRequest(
   if (!data) return null;
 
   const metadata = asRecord(data.metadata) ?? {};
+  if (!isPendingSaasApprovalStatus(metadata.status)) {
+    throw new ToolsHubRequestError(
+      409,
+      `approval request is already ${normalizeText(metadata.status)}`,
+    );
+  }
+  const provider = normalizeText(metadata.provider);
+  const payload = asRecord(input.revisedPayload ?? metadata.payload) ?? {};
+  if (
+    decision === "approved" && input.execute &&
+    (provider === "internal" || provider === "eval_automation")
+  ) {
+    try {
+      selectEvalApprovalAutomationPayload(payload, input.selectedOptionId);
+    } catch (error) {
+      throw new ToolsHubRequestError(
+        400,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
   const now = new Date().toISOString();
   const nextMetadata: Record<string, unknown> = {
     ...metadata,
@@ -2015,7 +2126,9 @@ async function decideSaasApprovalRequest(
     decided_by: userId,
     decided_at: now,
     review_note: input.reviewNote,
+    selected_option_id: input.selectedOptionId || null,
     updated_at: now,
+    request_id: requestId,
   };
   if (decision === "revision_requested") {
     nextMetadata.status = "pending";
@@ -2033,7 +2146,9 @@ async function decideSaasApprovalRequest(
       nextMetadata,
     );
     nextMetadata.execution = execution;
-    nextMetadata.execution_status = execution.success ? "sent" : "failed";
+    nextMetadata.execution_status = execution.success
+      ? normalizeText(execution.status, "sent")
+      : "failed";
     nextMetadata.executed_at = now;
   }
 
@@ -10338,6 +10453,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             reviewNote: normalizeText(body.review_note),
             revisedPayload: asRecord(body.revised_payload),
             execute: body.execute === true,
+            selectedOptionId: normalizeText(body.selected_option_id),
           },
         );
         if (!approval) {
@@ -10487,6 +10603,9 @@ ${reportText ? `> ${reportText}` : ""}`,
         }, 400);
     }
   } catch (e) {
+    if (e instanceof ToolsHubRequestError) {
+      return json({ error: e.message }, e.status);
+    }
     return json({ error: String(e) }, 500);
   }
 });
