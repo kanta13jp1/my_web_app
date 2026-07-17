@@ -30,6 +30,22 @@ class AssetDebtDisciplineViolation {
   /// 画面・プロンプトに出す「どうすべきか」一文。
   final String action;
 
+  /// revolvingCard: リボ状態から脱却する目標月数（現状は
+  /// [AssetDebtDisciplineMonitor.escapeTargetMonths]）。newBorrowing は null。
+  final int? escapeMonths;
+
+  /// revolvingCard: [escapeMonths] ヶ月で残高を完済するために必要な
+  /// 毎月返済額（年利込み・100円単位切り上げ）。newBorrowing は null。
+  final double? escapeMonthlyPayment;
+
+  /// revolvingCard: 今月の返済予定額を続けた場合の完済見込み月数。
+  /// 完済できない（返済が利息以下）か返済予定 0 の場合は null。
+  final int? currentPlanPayoffMonths;
+
+  /// revolvingCard: 今月の返済予定額を続けた場合の利息総額見込み。
+  /// [currentPlanPayoffMonths] が null のときは null。
+  final double? currentPlanTotalInterest;
+
   const AssetDebtDisciplineViolation({
     required this.type,
     required this.severity,
@@ -40,7 +56,15 @@ class AssetDebtDisciplineViolation {
     required this.currentBalance,
     required this.problem,
     required this.action,
+    this.escapeMonths,
+    this.escapeMonthlyPayment,
+    this.currentPlanPayoffMonths,
+    this.currentPlanTotalInterest,
   });
+
+  /// 具体的な脱却プラン（月額×期間）を提示できるか。
+  bool get hasEscapePlan =>
+      escapeMonths != null && escapeMonthlyPayment != null;
 }
 
 /// 「借金しない宣言」モニターの月次評価結果。
@@ -101,6 +125,9 @@ class AssetDebtDisciplineMonitor {
 
   /// 「新規利用が発生した」と見なす最小額（円）。推定誤差のノイズを問題化しない。
   final double newBorrowingThreshold;
+
+  /// リボ/分割違反に提示する脱却プランの目標月数。
+  static const int escapeTargetMonths = 12;
 
   static const double _epsilon = 1;
 
@@ -181,6 +208,39 @@ class AssetDebtDisciplineMonitor {
         final interestBearing = row.annualRate > 0;
         if (carriedOver > _epsilon && interestBearing) {
           totalCarried += carriedOver;
+          // 「いつまでに・いくら返せば脱却できるか」を Dart 側で確定させる。
+          // AI は説明のみ（calculation_owner: dart_service）。
+          final monthlyRate = row.annualRate / 12;
+          final escapePayment = AssetDebtTrendAnalyzer.paymentToClearIn(
+            balance,
+            monthlyRate,
+            escapeTargetMonths,
+          );
+          final currentPlan = payment > 0
+              ? AssetDebtTrendAnalyzer.estimatePayoff(
+                  balance: balance,
+                  monthlyRate: monthlyRate,
+                  monthlyPayment: payment,
+                )
+              : null;
+          final currentPlanMonths =
+              (currentPlan != null && currentPlan.everPaysOff)
+                  ? currentPlan.months
+                  : null;
+          final String currentPlanText;
+          if (payment <= 0) {
+            currentPlanText = '今月の返済予定が未入力のため、現状ペースの完済見込みを出せません。';
+          } else if (currentPlanMonths != null) {
+            currentPlanText =
+                '現在の予定額 月${_yen(payment)}のままでは完済まで約$currentPlanMonthsヶ月・'
+                '利息総額 約${_yen(currentPlan!.totalInterest)}かかります。';
+          } else if (payment <= balance * monthlyRate + _epsilon) {
+            currentPlanText =
+                '現在の予定額 月${_yen(payment)}では利息に追いつかず、完済の見込みが立ちません。';
+          } else {
+            // 利息は上回るがシミュレーション上限 (600ヶ月) 内に完済しない。
+            currentPlanText = '現在の予定額 月${_yen(payment)}では完済まで50年以上かかる見込みです。';
+          }
           revolving.add(
             AssetDebtDisciplineViolation(
               type: AssetDebtDisciplineViolationType.revolvingCard,
@@ -194,8 +254,16 @@ class AssetDebtDisciplineMonitor {
                   '${row.name}は残高${_yen(balance)}に対し今月の返済予定が${_yen(payment)}で、'
                   '${_yen(carriedOver)}が翌月へ繰り越され利息が発生します（＝リボ/分割の状態）。'
                   '「カードは必ず一括返済」誓約に反しています。',
-              action: 'リボ/分割の設定を解除し、残高${_yen(balance)}を一括返済してください。'
+              action: 'リボ/分割の設定を解除し、残高${_yen(balance)}の一括返済が最優先です。'
+                  '一括が難しい場合も、月${_yen(escapePayment)}以上の返済を続ければ'
+                  '約$escapeTargetMonthsヶ月でリボ状態から脱却できます。'
+                  '$currentPlanText'
                   '今後カードを使うときは必ず一括（1回払い）に設定し、残高を翌月へ繰り越さないでください。',
+              escapeMonths: escapeTargetMonths,
+              escapeMonthlyPayment: escapePayment,
+              currentPlanPayoffMonths: currentPlanMonths,
+              currentPlanTotalInterest:
+                  currentPlanMonths == null ? null : currentPlan!.totalInterest,
             ),
           );
         }

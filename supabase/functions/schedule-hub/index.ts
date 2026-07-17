@@ -41,6 +41,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -307,6 +308,24 @@ function supporterAttributionParams(
     if (!value) continue;
     params[`metadata[${field}]`] = value;
     params[`payment_intent_data[metadata][${field}]`] = value;
+  }
+  return params;
+}
+
+function checkoutAttributionParams(
+  body: Record<string, unknown>,
+): Record<string, string> {
+  const fields = [
+    "latest_touchpoint",
+    "signup_signal",
+    "referral_channel",
+  ];
+  const params: Record<string, string> = {};
+  for (const field of fields) {
+    const value = stripeMetadataValue(body[field]);
+    if (!value) continue;
+    params[`metadata[${field}]`] = value;
+    params[`subscription_data[metadata][${field}]`] = value;
   }
   return params;
 }
@@ -1705,6 +1724,7 @@ serve(async (req: Request) => {
           "metadata[tier]": tier,
           "subscription_data[metadata][user_id]": userId!,
           "subscription_data[metadata][tier]": tier,
+          ...checkoutAttributionParams(body),
         });
         return json({
           success: true,

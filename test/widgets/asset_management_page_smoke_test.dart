@@ -1186,6 +1186,174 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets(
+        'account shortfall banner links a transfer task and clears on create',
+        (tester) async {
+      // 全体では黒字(三井住友 500000)でも、モビットの支払原資に割り当てた
+      // 現金だけが不足する。先読みバナー→移動タスク作成→見込み残高へ即時
+      // 反映されてバナーが解消するまでを検証する。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetLiabilityMonthlyStateStore.defaultPaymentSourcePrefsKey:
+            jsonEncode(<String, String>{'mobit': 'wallet_cash'}),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 1000,
+                '三井住友銀行大塚支店': 500000,
+                'モビット': -45000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_account_shortfall_banner')),
+        findsOneWidget,
+      );
+
+      // 三井住友→現金の移動提案がタスク化ボタン付きで表示される。
+      final createButton = find.byKey(
+        const Key('asset_account_shortfall_create_task_wallet_cash'),
+      );
+      expect(createButton, findsOneWidget);
+
+      await tester.tap(createButton);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('Transfer task created.'), findsOneWidget);
+      // 保留中の口座移動が見込み残高に反映され、バナーが解消される。
+      expect(
+        find.byKey(const Key('asset_account_shortfall_banner')),
+        findsNothing,
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets('payment source missing banner lists unset payment sources', (
+      tester,
+    ) async {
+      // PayPay の支払原資口座が未設定 → 最上部バナーで件数・金額と、残高付きの
+      // 設定候補口座 + 原資未設定一覧へのジャンプ導線を出す。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 1000,
+                '三井住友銀行大塚支店': 500000,
+                'PayPay': -20000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_payment_source_missing_banner')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('支払原資口座が未設定の支払い'),
+        findsOneWidget,
+      );
+      // 残高最大の三井住友大塚支店が候補として提示される (現在残高付き)。
+      // 本番経路ではデフォルト固定費 (家賃等) も原資未設定になるため複数行出る。
+      expect(
+        find.textContaining('候補: 三井住友銀行大塚支店（現在 ¥500,000'),
+        findsWidgets,
+      );
+      expect(
+        find.byKey(const Key('asset_payment_source_missing_jump')),
+        findsOneWidget,
+      );
+
+      await _unmount(tester);
+    });
+
+    testWidgets('card reconciliation shows fix actions for mismatches', (
+      tester,
+    ) async {
+      // KDDI(5764) を PayPay カード請求に含めるが、PayPay の請求額は 20000 →
+      // 設定内訳の不一致と明細未取込の両方の解消アクションが出る。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetLiabilityMonthlyStateStore.defaultCardBillingPrefsKey: jsonEncode(
+          <String, String>{'kddi_provider': 'paypay_card'},
+        ),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'KDDI': -5764,
+                'PayPay': -20000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final breakdownFix = find.byKey(
+        const Key(
+          'asset_card_recon_fix_adjustConfiguredBreakdown_paypay_card',
+        ),
+      );
+      await tester.ensureVisible(breakdownFix);
+      expect(breakdownFix, findsOneWidget);
+
+      final importFix = find.byKey(
+        const Key('asset_card_recon_fix_importStatement_paypay_card'),
+      );
+      expect(importFix, findsOneWidget);
+
+      // 設定内訳合計(KDDI 5,764)のセルは不一致ハイライト(琥珀色)になる。
+      final configuredCells = tester.widgetList<Text>(find.text('¥5,764'));
+      expect(
+        configuredCells.any(
+          (text) => text.style?.color == const Color(0xFFD97706),
+        ),
+        isTrue,
+      );
+
+      // 取り込みアクションのタップで初めて選択案内メッセージが出る
+      // (説明文の常時表示と区別するため、タップ前は無いことを先に確認)。
+      expect(find.textContaining('を選択しました'), findsNothing);
+      await tester.ensureVisible(importFix);
+      await tester.tap(importFix);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.textContaining('を選択しました'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
     testWidgets('salary inflow suggestion registers a monthly rule in one tap',
         (tester) async {
       // 給与明細/salary_incomes でのみ給料を管理していると入金予定ルールが

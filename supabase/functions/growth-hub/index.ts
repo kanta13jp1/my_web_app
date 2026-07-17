@@ -24,6 +24,7 @@ import {
   resolveDuplicateGuardConfig,
   type XPostLogRowLike,
 } from "./x_duplicate_content.ts";
+import { hasNamedVariant, pickBestVariant } from "./x_best_variant.ts";
 import {
   buildSignupSlackPayload,
   isRecentSignupCreatedAt,
@@ -81,6 +82,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -390,6 +392,14 @@ type ReferralRow = {
   status: string | null;
   completed_at: string | null;
   created_at: string;
+  metadata?: Record<string, unknown> | null;
+};
+
+type BillingSubscriptionRow = {
+  user_id: string;
+  tier: string | null;
+  status: string | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 const TOUCHPOINT_DEFS = [
@@ -970,7 +980,11 @@ function buildXPerformanceContextFromLogs(
     }))
     .sort((left, right) => right.averageScore - left.averageScore);
 
-  const bestVariant = variants[0]?.variant ?? "daily_briefing";
+  // 「unknown」は variant タグ無し投稿の受け皿バケットで勝ち型ではない。
+  // 他の全消費箇所 (variant ランキング表示 / distinctVariants 計数) と同じく
+  // 除外して選ぶ (除外漏れでダッシュボードと投稿生成プロンプトの両方に
+  // 「勝ち型: unknown」が流れていた)。
+  const bestVariant = pickBestVariant(variants);
   // 集計ロールアップ (guarded): 両バケットに十分なサンプルがあるときだけ、
   // 変動要因(メディア有無/リンク位置/スレッド長)ごとの平均スコア差を測定事実と
   // して LLM へ渡す。データが薄い間は行自体を出さない(=実質 default-off で、
@@ -1140,7 +1154,9 @@ function buildXPerformanceContextFromLogs(
     ].join("\n")
     : [
       "Measured X performance context for the next post:",
-      variants.length > 0
+      // 実測 variant (unknown 以外) が無いとき fallback 名を実測済みの勝ち型
+      // かのように主張しない。
+      hasNamedVariant(variants)
         ? `Target: 10K impressions. Current best variant: ${bestVariant}.`
         : "Target: 10K impressions. No post-age comparable winner yet.",
       `Ranking basis: ${comparisonLabel} impressions ` +
@@ -1655,8 +1671,14 @@ async function applyPendingReferral(
     referred_user_id: referredUserId,
     referral_code: pendingCode,
     bonus_points: 500,
-    status: "completed",
-    completed_at: new Date().toISOString(),
+    status: "pending_activation",
+    completed_at: null,
+    metadata: {
+      channel: "referral",
+      signup_signal: "signup_submit_referral",
+      activation_gate: "billing_or_manual_activation",
+      gated_at: new Date().toISOString(),
+    },
   });
   if (insertError && !String(insertError.message).includes("duplicate")) {
     throw new Error(insertError.message);
@@ -1690,6 +1712,69 @@ async function applyPendingReferral(
   return true;
 }
 
+function isPaidReferralSubscription(row: BillingSubscriptionRow): boolean {
+  const tier = firstString(row.tier).toLowerCase();
+  const status = firstString(row.status).toLowerCase();
+  return (tier === "pro" || tier === "team") &&
+    (status === "active" || status === "trialing");
+}
+
+async function buildReferralBillingAttribution(
+  admin: SupabaseClient,
+  rows: ReferralRow[],
+) {
+  const referredUserIds = Array.from(
+    new Set(
+      rows
+        .map((row) => firstString(row.referred_user_id))
+        .filter(Boolean),
+    ),
+  );
+  if (referredUserIds.length === 0) {
+    return {
+      billingConvertedReferrals: 0,
+      referralFreeToProCvr: 0,
+      billingChannels: [{
+        id: "referral",
+        label: "Referral",
+        totalReferrals: 0,
+        proConversions: 0,
+        freeToProCvr: 0,
+      }],
+    };
+  }
+
+  const { data, error } = await admin
+    .from("billing_subscriptions")
+    .select("user_id, tier, status, metadata")
+    .in("user_id", referredUserIds);
+  if (error) throw new Error(error.message);
+
+  const paidUserIds = new Set(
+    ((data ?? []) as BillingSubscriptionRow[])
+      .filter(isPaidReferralSubscription)
+      .map((row) => firstString(row.user_id))
+      .filter(Boolean),
+  );
+  const proConversions =
+    rows.filter((row) => paidUserIds.has(firstString(row.referred_user_id)))
+      .length;
+  const freeToProCvr = rows.length > 0
+    ? Math.round((proConversions / rows.length) * 1000) / 10
+    : 0;
+  return {
+    billingConvertedReferrals: proConversions,
+    referralFreeToProCvr: freeToProCvr,
+    billingChannels: [{
+      id: "referral",
+      label: "Referral",
+      totalReferrals: rows.length,
+      proConversions,
+      freeToProCvr,
+    }],
+  };
+}
+
 async function buildReferralPayload(
   admin: SupabaseClient,
   userId: string,
@@ -1704,7 +1789,7 @@ async function buildReferralPayload(
   const { data: referrals, error } = await admin
     .from("referrals")
     .select(
-      "id, referrer_user_id, referred_user_id, referral_code, bonus_points, status, completed_at, created_at",
+      "id, referrer_user_id, referred_user_id, referral_code, bonus_points, status, completed_at, created_at, metadata",
     )
     .eq("referrer_user_id", userId)
     .order("created_at", { ascending: false });
@@ -1713,6 +1798,10 @@ async function buildReferralPayload(
   const rows = (referrals ?? []) as ReferralRow[];
   const successfulReferrals =
     rows.filter((row) => row.status === "completed").length;
+  const billingAttribution = await buildReferralBillingAttribution(
+    admin,
+    rows,
+  );
   return {
     success: true,
     referralCode,
@@ -1726,10 +1815,17 @@ async function buildReferralPayload(
         status: row.status,
         bonus_points: row.bonus_points,
         completed_at: row.completed_at,
+        channel: firstString(row.metadata?.channel, "referral"),
+        signup_signal: firstString(
+          row.metadata?.signup_signal,
+          "signup_submit_referral",
+        ),
       },
     })),
     totalReferrals: rows.length,
     successfulReferrals,
+    activationQualifiedReferrals: successfulReferrals,
+    ...billingAttribution,
     clearPendingCode,
   };
 }
@@ -1954,8 +2050,12 @@ serve(async (req: Request) => {
           page: 1,
           perPage: 1,
         });
-        const totalUsers =
-          (totalUsersResponse.data as { total?: number } | null)?.total ?? null;
+        const totalUsersData = totalUsersResponse.data as
+          | { total?: number }
+          | null;
+        const totalUsers = typeof totalUsersData?.total === "number"
+          ? totalUsersData.total
+          : null;
         const payload = buildSignupSlackPayload({
           totalUsers,
           signalKey: body.signalKey,

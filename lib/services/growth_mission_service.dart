@@ -22,12 +22,16 @@ class ReferralGrowthSnapshot {
   final ReferralCode? myReferralCode;
   final int totalReferrals;
   final int successfulReferrals;
+  final int billingConvertedReferrals;
+  final List<ReferralBillingChannelSnapshot> billingChannels;
   final String? pendingReferralCode;
 
   const ReferralGrowthSnapshot({
     required this.myReferralCode,
     required this.totalReferrals,
     required this.successfulReferrals,
+    this.billingConvertedReferrals = 0,
+    this.billingChannels = const <ReferralBillingChannelSnapshot>[],
     required this.pendingReferralCode,
   });
 
@@ -35,6 +39,8 @@ class ReferralGrowthSnapshot {
       : myReferralCode = null,
         totalReferrals = 0,
         successfulReferrals = 0,
+        billingConvertedReferrals = 0,
+        billingChannels = const <ReferralBillingChannelSnapshot>[],
         pendingReferralCode = null;
 
   String? get referralCode => myReferralCode?.referralCode;
@@ -45,6 +51,47 @@ class ReferralGrowthSnapshot {
       return null;
     }
     return GrowthMissionService.buildInviteUrlForCode(code);
+  }
+
+  double get freeToProConversionRate {
+    if (totalReferrals <= 0) {
+      return 0;
+    }
+    return billingConvertedReferrals / totalReferrals;
+  }
+}
+
+class ReferralBillingChannelSnapshot {
+  final String id;
+  final String label;
+  final int totalReferrals;
+  final int proConversions;
+
+  const ReferralBillingChannelSnapshot({
+    required this.id,
+    required this.label,
+    required this.totalReferrals,
+    required this.proConversions,
+  });
+
+  factory ReferralBillingChannelSnapshot.fromJson(Map<String, dynamic> json) {
+    return ReferralBillingChannelSnapshot(
+      id: json['id']?.toString() ?? 'referral',
+      label: json['label']?.toString() ?? 'Referral',
+      totalReferrals: GrowthAcquisitionTouchpointSnapshot._toInt(
+        json['totalReferrals'],
+      ),
+      proConversions: GrowthAcquisitionTouchpointSnapshot._toInt(
+        json['proConversions'],
+      ),
+    );
+  }
+
+  double get freeToProConversionRate {
+    if (totalReferrals <= 0) {
+      return 0;
+    }
+    return proConversions / totalReferrals;
   }
 }
 
@@ -68,9 +115,7 @@ class GrowthAcquisitionTouchpointSnapshot {
       id: json['id']?.toString() ?? 'touchpoint',
       label: (json['label'] ?? json['touchpoint'])?.toString() ?? 'Touchpoint',
       touchCount: _toInt(json['touchCount'] ?? json['touches']),
-      signupSubmitCount: _toInt(
-        json['signupSubmitCount'] ?? json['signups'],
-      ),
+      signupSubmitCount: _toInt(json['signupSubmitCount'] ?? json['signups']),
     );
   }
 
@@ -136,9 +181,7 @@ class GrowthAcquisitionSnapshot {
     required this.publicMemoSignupCtaCount,
   });
 
-  factory GrowthAcquisitionSnapshot.empty({
-    int windowDays = 30,
-  }) {
+  factory GrowthAcquisitionSnapshot.empty({int windowDays = 30}) {
     final now = DateTime.now();
     final startDate = now.subtract(Duration(days: math.max(0, windowDays - 1)));
     return GrowthAcquisitionSnapshot(
@@ -229,15 +272,11 @@ class GrowthAcquisitionSnapshot {
     );
   }
 
-  int get totalTouches => touchpoints.fold<int>(
-        0,
-        (sum, item) => sum + item.touchCount,
-      );
+  int get totalTouches =>
+      touchpoints.fold<int>(0, (sum, item) => sum + item.touchCount);
 
-  int get totalSignupSubmits => touchpoints.fold<int>(
-        0,
-        (sum, item) => sum + item.signupSubmitCount,
-      );
+  int get totalSignupSubmits =>
+      touchpoints.fold<int>(0, (sum, item) => sum + item.signupSubmitCount);
 }
 
 class GrowthMissionDashboard {
@@ -498,9 +537,8 @@ class GrowthMissionService {
 
   final SupabaseClient? _clientOverride;
 
-  const GrowthMissionService({
-    SupabaseClient? clientOverride,
-  }) : _clientOverride = clientOverride;
+  const GrowthMissionService({SupabaseClient? clientOverride})
+      : _clientOverride = clientOverride;
 
   SupabaseClient? get _client {
     if (_clientOverride != null) {
@@ -523,10 +561,7 @@ class GrowthMissionService {
       ..['utm_medium'] = 'invite'
       ..['utm_campaign'] = 'growth_mission';
     return baseUri
-        .replace(
-          path: '/referral',
-          queryParameters: nextQuery,
-        )
+        .replace(path: '/referral', queryParameters: nextQuery)
         .toString();
   }
 
@@ -559,9 +594,7 @@ $inviteUrl
 ''';
   }
 
-  Future<void> capturePendingReferralFromUri({
-    Uri? currentUri,
-  }) async {
+  Future<void> capturePendingReferralFromUri({Uri? currentUri}) async {
     final uri = currentUri ?? Uri.base;
     final refCode = (uri.queryParameters['ref'] ?? uri.queryParameters['code'])
         ?.trim()
@@ -601,9 +634,7 @@ $inviteUrl
     return created;
   }
 
-  Future<void> syncPresence({
-    required String pagePath,
-  }) async {
+  Future<void> syncPresence({required String pagePath}) async {
     final client = _client;
     if (client == null) {
       return;
@@ -706,9 +737,7 @@ $inviteUrl
     try {
       final response = await client.functions.invoke(
         'growth-hub',
-        body: const <String, dynamic>{
-          'action': 'referral.list',
-        },
+        body: const <String, dynamic>{'action': 'referral.list'},
       );
       final data = _toMapValue(response.data);
       if (data['success'] == true) {
@@ -843,6 +872,7 @@ $inviteUrl
         myReferralCode: null,
         totalReferrals: 0,
         successfulReferrals: 0,
+        billingConvertedReferrals: 0,
         pendingReferralCode: pendingCode,
       );
     }
@@ -850,9 +880,7 @@ $inviteUrl
     try {
       final response = await client.functions.invoke(
         'growth-hub',
-        body: const <String, dynamic>{
-          'action': 'referral.list',
-        },
+        body: const <String, dynamic>{'action': 'referral.list'},
       );
       final data = _toMapValue(response.data);
       if (data['success'] == true) {
@@ -863,6 +891,18 @@ $inviteUrl
               : ReferralCode.fromJson(referralCodeRow),
           totalReferrals: _toIntValue(data['totalReferrals']),
           successfulReferrals: _toIntValue(data['successfulReferrals']),
+          billingConvertedReferrals: _toIntValue(
+            data['billingConvertedReferrals'],
+          ),
+          billingChannels:
+              (data['billingChannels'] as List<dynamic>? ?? const <dynamic>[])
+                  .whereType<Map>()
+                  .map(
+                    (row) => ReferralBillingChannelSnapshot.fromJson(
+                      Map<String, dynamic>.from(row),
+                    ),
+                  )
+                  .toList(),
           pendingReferralCode: pendingCode,
         );
       }
@@ -874,17 +914,44 @@ $inviteUrl
     try {
       final rows = await client
           .from('referrals')
-          .select('status')
+          .select('referred_user_id, status')
           .eq('referrer_user_id', user.id);
       final referralRows = rows;
       final successful = referralRows.where((row) {
         return row['status']?.toString() == 'completed';
       }).length;
+      final referredUserIds = referralRows
+          .map((row) => row['referred_user_id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+      var billingConverted = 0;
+      if (referredUserIds.isNotEmpty) {
+        final billingRows = await client
+            .from('billing_subscriptions')
+            .select('user_id, tier, status')
+            .inFilter('user_id', referredUserIds);
+        billingConverted = billingRows.where((row) {
+          final tier = row['tier']?.toString();
+          final status = row['status']?.toString();
+          return (tier == 'pro' || tier == 'team') &&
+              (status == 'active' || status == 'trialing');
+        }).length;
+      }
 
       return ReferralGrowthSnapshot(
         myReferralCode: myCode,
         totalReferrals: referralRows.length,
         successfulReferrals: successful,
+        billingConvertedReferrals: billingConverted,
+        billingChannels: [
+          ReferralBillingChannelSnapshot(
+            id: 'referral',
+            label: 'Referral',
+            totalReferrals: referralRows.length,
+            proConversions: billingConverted,
+          ),
+        ],
         pendingReferralCode: pendingCode,
       );
     } catch (error) {
@@ -893,6 +960,7 @@ $inviteUrl
         myReferralCode: myCode,
         totalReferrals: 0,
         successfulReferrals: 0,
+        billingConvertedReferrals: 0,
         pendingReferralCode: pendingCode,
       );
     }
@@ -1073,9 +1141,7 @@ $inviteUrl
         );
       }
 
-      return GrowthCommandCenterBrief.fromJson(
-        _toMapValue(data['brief']),
-      );
+      return GrowthCommandCenterBrief.fromJson(_toMapValue(data['brief']));
     } catch (error) {
       debugPrint('Growth command center fallback: $error');
       return _buildLocalCommandCenterBrief(dashboard);
@@ -1096,9 +1162,7 @@ $inviteUrl
 
       final data = _toMapValue(response.data);
       if (data['success'] != true) {
-        throw Exception(
-          data['error']?.toString() ?? 'Weekly digest failed.',
-        );
+        throw Exception(data['error']?.toString() ?? 'Weekly digest failed.');
       }
 
       return WeeklyDigestSnapshot.fromJson(data);
@@ -1491,10 +1555,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
   }
 
   @override
-  void didReplace({
-    Route<dynamic>? newRoute,
-    Route<dynamic>? oldRoute,
-  }) {
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
     if (newRoute != null) {
       _trackRoute(newRoute);

@@ -4,6 +4,7 @@ import {
   checkoutPaymentDecision,
   processStripeWebhookEventOnce,
 } from "./event_processing.ts";
+import { activateReferralForPaidCheckout } from "./referral_activation.ts";
 
 // .trim(): Supabase secret に紛れ込んだ前後の空白/改行を吸収 (署名検証や
 // Stripe API 呼び出しがコピペ事故で失敗しないよう防御)。
@@ -274,6 +275,7 @@ async function handleCheckoutCompleted(
     metadata: {
       stripe_event_source: "checkout.session.completed",
       stripe_checkout_session_id: asString(session.id),
+      stripe_checkout_metadata: metadata,
     },
   }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);
@@ -282,6 +284,12 @@ async function handleCheckoutCompleted(
     const subscription = await stripeGet(`/subscriptions/${subscriptionId}`);
     await upsertSubscriptionFromStripe(admin, subscription, userId);
   }
+
+  await activateReferralForPaidCheckout(
+    admin,
+    userId,
+    asString(session.id),
+  );
 }
 
 async function markPastDue(
