@@ -32913,3 +32913,54 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 該当原則: 7 (資産負債: 競合情報を構造化資産として蓄積) / 8 (KPI: 競合動向を定点観測しギャップを可視化)
 - 整合性スコア: 2/9 ✅ (定常モニタリングタスクのため他原則は非該当)
 - 特記: Supabase 全エンドポイントがプロキシ policy により 403 — GHA 生成済みコンテンツ + WebSearch で補完 (2日連続同一制約)
+
+
+## セッション記録: 経営分析ダッシュボード 10仮説検証→8修正 (2026-07-17 / Win版 part337)
+
+**実行内容**: ユーザー指示「10の仮説をたててすべて検証」方式でダッシュボード改善 → PR #4079 マージ・本番反映 (build 4829)
+
+**検証**: Workflow 46 agent (検証10 + 敵対2レンズ×10 + 実装後レビュー16) + 本番 API 実測。10/10 仮説生存 (confirmed 5 / partially 5)。
+
+**確定した重要ファクト**:
+- LP View 計測は 2026-03-28 (7b92a33d6) に配線ごと削除され累計89で凍結 → recordLpView() で復旧 (登録ファネル最上段の復活)
+- wbs_tasks 3599行が PostgREST 1000行キャップで切断 → lane 統計約90%過小だった
+- quota-monitor: Gemini は secret 参照名 mismatch / Anthropic「正常$0」は silent failure の捏造値 / cost_report amount はセント単位 (/100 必須)
+- version.json 過剰発火の真因はフォーカス復帰毎の checkNow() (Timer 多重化ではない)
+- dev.to コメントは blog_engagement.py で日次同期 (「未返信=全件Qiita」説は敵対レビューが棄却)
+
+**着地**: PR #4079 (17 files +778/-136) = H1 並列化 / H2 presence 抑制 / H3 cooldown / H4 blog -84% / H5 wbs 全量集計+一本化 / H6 quota 3プロバイダ誠実化 / H8 LP View 復旧 / H9 鮮度ゲート / H10 Qiita停止UI+未返信導線。CI 12/12 PASS → squash merge → deploy-prod 成功 → 本番 unicode-escape grep で新文言5種+increment_lp_view 実測確認。
+
+**Follow-up Issues**: #4080 (EF バッチ+CORS Max-Age+候補却下) / #4081 (presence pg_cron 化) / #4082 (H7 6955行ページ分割) / #4083 (wbs_tasks anon 全行読取 RLS)
+
+**ユーザー作業残**: OPENAI_API_KEY (Admin) / HEDRA_API_KEY / Anthropic Admin キー登録で計測有効化 (任意)
+
+### Philosophy Alignment (Win#137 part337)
+
+- 主要実装: 経営分析ダッシュボードの計測正確性回復 (LP View 凍結復旧 / lane 統計90%過小修正 / quota 捏造値排除) + 性能改善
+- 該当原則: 1 (CEO感: 経営判断の計器盤を信頼できる数値に) / 7 (資産負債: 計測データ=資産の毀損を修復) / 8 (KPI=昨日の自分: ファネル/クォータの定点観測を再稼働)
+- 整合性スコア: 7/9 ✅
+- 理念的貢献: 「計器が嘘をつく経営」から脱却 — 凍結・切断・捏造の3種の計測不全を実測で特定し修復
+- 懸念: なし (機能追加ではなく計測の誠実性回復のため理念ずれリスク低)
+
+## セッション記録: Win版 part337-B AIレポート開発者提案2件実装 (2026-07-17 / Windowsアプリ版)
+
+**実行内容**: 細木数子ペルソナ資産管理AIレポート「7. 開発者向け改善提案」2件の実装 → PR #4075 merge
+
+**成果**:
+- **提案① 支払原資口座の残高不足先読み**: `AssetManagementInsightService.accountShortfallAlerts` 新設 (口座別見込み残高不足×口座移動提案の紐付け / 不足額降順)。ページ最上部固定バナー `asset_account_shortfall_banner` (不足口座・不足額・移動提案・「移動タスクを作成」・セクションジャンプ)。タスク化→`pendingTransferIn` 即時反映でバナー解消を widget テストで実証。緊急生活防衛アドバイスは全体黒字でも口座別不足を critical 先頭表示。アクションアイテム新種別 `accountShortfallRisk`。
+- **提案② カード明細照合の解消アクション**: `AssetLiabilityPlanningService` が照合アラートと同時に構造化 `fixActions` (明細取り込み/設定内訳修正=差分金額付き/取込明細確認/請求先再設定) を算出 (リボ・請求先欠落は対象外)。照合パネルに「差分の解消アクション」+設定内訳合計セルの不一致強調。照合ドロップダウンを `includeShoppingDebt: true` 化。
+- **品質**: Ultracode workflow (understand 5 readers → 実装 → 敵対レビュー 4 レンズ×検証 25 agents / confirmed 19 → 13 反映)。major 検出例: 解消アクション→候補外ホスト選択→サイレントフォールバックで**別カードへ明細誤取込**の経路を着地前に遮断。サービステスト 82 + widget smoke 57 全緑 / analyze `No issues found!`。
+- **教訓 (memory 保存済)**: fix-action ボタンの対象集合=操作先コントロールの候補集合と一致必須 / 固定淡色背景に theme 文字色禁止 / Win flutter test は pubspec.lock+generated を汚す→commit 前 checkout --。
+
+**次回優先**:
+- 据え置き指摘の解消 (緊急パネル多重表示の tone 調整 / reviewStatementLines UI 経路 widget テスト)
+- X週次レポ cron timeout の EXPLAIN 診断 (part335 積み残し)
+- Qiita 異議申し立て送信 (ユーザー本人アクション / リマインド)
+
+### Philosophy Alignment (Win#part337-B)
+
+- 主要実装: 支払原資口座の不足先読みバナー + カード明細照合の解消アクション (PR #4075)
+- 該当原則: 5 (商品=ユーザー価値: 引き落とし失敗の先回り防止) / 7 (資産負債バランスシート: 口座別 B/S 精度向上) / 8 (KPI: 照合差分の可視化と解消導線) / 3 (優しい mentor: 「次に何をすればよいか」提示)
+- 整合性スコア: 4/9 ✅
+- 理念的貢献: AI レポートの開発者提案を同日実装するセルフループ (レポート→実装→本番) を確立。負債管理の実害 (引き落とし失敗・明細誤取込) を予防する守りの価値
+- 懸念: なし

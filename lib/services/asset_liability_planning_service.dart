@@ -86,6 +86,10 @@ class AssetLiabilityPlanningService {
       '設定済みカード内訳合計が請求額と一致しません';
   static const String cardStatementImportedConfiguredMismatchAlert =
       '取り込み明細合計が設定済み内訳合計と一致しません';
+  static const String cardStatementFixImportLabel = 'カード明細を取り込む';
+  static const String cardStatementFixAdjustBreakdownLabel = '設定内訳を修正する';
+  static const String cardStatementFixReviewLinesLabel = '取込明細を確認する';
+  static const String cardStatementFixAssignBillingLabel = '請求先カードを再設定する';
   static const String auCardBillingNotice =
       'auはauPayカード払いのため、資金繰りではauPayカード請求に含めて扱います。';
   static const String kddiProviderAccountId = 'kddi_provider';
@@ -1172,23 +1176,71 @@ class AssetLiabilityPlanningService {
       final revolvingBilling = billingRow?.revolvingBilling;
       final isRevolving = revolvingBilling != null;
       final alerts = <String>[];
+      // アラートは「何がずれているか」しか伝えないため、対応する修正
+      // アクション（何をすれば解消するか＋差分金額）を同時に算出する。
+      final fixActions = <AssetLiabilityCardStatementFixAction>[];
 
       if (billingRow == null) {
         alerts.add(cardStatementBillingAccountMissingAlert);
+        fixActions.add(
+          const AssetLiabilityCardStatementFixAction(
+            kind: AssetLiabilityCardStatementFixActionKind.assignBillingAccount,
+            title: cardStatementFixAssignBillingLabel,
+            description: '請求先カード口座が見つかりません。負債マスタで請求先カードを選び直してください。',
+          ),
+        );
       }
       if (!isRevolving && lines.isEmpty && group != null) {
         alerts.add(cardStatementMissingImportAlert);
+        // 請求先カード口座が無い(billingRow == null)場合、請求額はプレース
+        // ホルダ0のため取り込みより先に請求先の再設定(assignBillingAccount)
+        // を促す。取り込みアクションは請求額が実在するときだけ出す。
+        if (billingRow != null) {
+          fixActions.add(
+            AssetLiabilityCardStatementFixAction(
+              kind: AssetLiabilityCardStatementFixActionKind.importStatement,
+              title: cardStatementFixImportLabel,
+              description: 'カード明細を貼り付けて取り込むと、'
+                  '請求額${_formatFixActionAbsoluteYen(billedAmount)}と内訳の照合ができます。',
+            ),
+          );
+        }
       }
       if (!isRevolving &&
           lines.isNotEmpty &&
           _moneyDiffers(statementLineTotal, billedAmount)) {
         alerts.add(cardStatementAmountMismatchAlert);
+        if (billingRow != null) {
+          fixActions.add(
+            AssetLiabilityCardStatementFixAction(
+              kind:
+                  AssetLiabilityCardStatementFixActionKind.reviewStatementLines,
+              title: cardStatementFixReviewLinesLabel,
+              description: '取込明細合計が請求額と'
+                  '${_formatFixActionYen(statementLineTotal - billedAmount)}'
+                  'ずれています。取り込み漏れ・重複行・対象月違いの明細を確認してください。',
+              amount: statementLineTotal - billedAmount,
+            ),
+          );
+        }
       }
       if (!isRevolving &&
           group != null &&
           billingRow != null &&
           _moneyDiffers(configuredDetailTotal, billedAmount)) {
         alerts.add(cardStatementConfiguredMismatchAlert);
+        fixActions.add(
+          AssetLiabilityCardStatementFixAction(
+            kind: AssetLiabilityCardStatementFixActionKind
+                .adjustConfiguredBreakdown,
+            title: cardStatementFixAdjustBreakdownLabel,
+            description: '設定済みカード内訳合計が請求額と'
+                '${_formatFixActionYen(configuredDetailTotal - billedAmount)}'
+                'ずれています。負債マスタの「支払い方式」で内訳の追加・除外、'
+                '各行の今月支払予定額、またはカード側の請求額を見直してください。',
+            amount: configuredDetailTotal - billedAmount,
+          ),
+        );
       }
       if (!isRevolving &&
           lines.isNotEmpty &&
@@ -1208,6 +1260,7 @@ class AssetLiabilityPlanningService {
               group?.items ?? const <AssetLiabilityCardBillingReviewItem>[],
           statementLines: lines,
           alerts: alerts,
+          fixActions: fixActions,
           revolvingBilling: revolvingBilling,
         ),
       );
@@ -1220,6 +1273,25 @@ class AssetLiabilityPlanningService {
   }
 
   bool _moneyDiffers(double a, double b) => (a - b).abs() >= 0.5;
+
+  /// 修正アクションの説明文に使う符号付き差分円表記（例: +1,853円 / -947円）。
+  String _formatFixActionYen(double value) {
+    return '${value.round() < 0 ? '-' : '+'}'
+        '${_formatFixActionAbsoluteYen(value)}';
+  }
+
+  /// 修正アクションの説明文に使う絶対額の円表記（例: 20,000円）。
+  String _formatFixActionAbsoluteYen(double value) {
+    final digits = value.round().abs().toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(digits[i]);
+    }
+    return '$buffer円';
+  }
 
   int _compareCardStatementLines(
     AssetLiabilityCardStatementLine a,

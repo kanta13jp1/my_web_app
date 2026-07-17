@@ -1047,6 +1047,41 @@ class AssetLiabilityCardStatementImportResult {
   bool get hasRejectedRows => rejectedRows.isNotEmpty;
 }
 
+/// 明細照合の差分をユーザーがその場で解消するための修正アクション種別。
+enum AssetLiabilityCardStatementFixActionKind {
+  /// カード明細を貼り付けて取り込む（明細未取込）。
+  importStatement,
+
+  /// 設定済みカード内訳（支払い方式・今月支払予定額）を見直す。
+  adjustConfiguredBreakdown,
+
+  /// 取込済み明細と請求額の差分行を確認する。
+  reviewStatementLines,
+
+  /// 請求先カード口座が見つからないため再設定する。
+  assignBillingAccount,
+}
+
+/// 明細照合アラートに対応する具体的な修正アクション。
+/// アラート文字列だけでは「次に何をすればよいか」が分からないため、
+/// 差分金額と操作内容をセットで planning service が算出する。
+class AssetLiabilityCardStatementFixAction {
+  final AssetLiabilityCardStatementFixActionKind kind;
+  final String title;
+  final String description;
+
+  /// 解消すべき差分金額（+は請求額超過 / −は不足）。差分が定義できない
+  /// アクション（明細未取込など）は null。
+  final double? amount;
+
+  const AssetLiabilityCardStatementFixAction({
+    required this.kind,
+    required this.title,
+    required this.description,
+    this.amount,
+  });
+}
+
 class AssetLiabilityCardStatementReconciliationGroup {
   final String billingAccountId;
   final String billingAccountName;
@@ -1056,6 +1091,9 @@ class AssetLiabilityCardStatementReconciliationGroup {
   final List<AssetLiabilityCardBillingReviewItem> configuredItems;
   final List<AssetLiabilityCardStatementLine> statementLines;
   final List<String> alerts;
+
+  /// アラートを解消するための修正アクション（planning service が算出）。
+  final List<AssetLiabilityCardStatementFixAction> fixActions;
 
   /// リボ払いカードの場合の今月請求内訳。null なら通常の一括払いカード。
   /// リボ払いでは 請求額 ≠ 明細合計 が正常なため、不一致アラートは抑止する。
@@ -1070,6 +1108,7 @@ class AssetLiabilityCardStatementReconciliationGroup {
     required this.configuredItems,
     required this.statementLines,
     required this.alerts,
+    this.fixActions = const <AssetLiabilityCardStatementFixAction>[],
     this.revolvingBilling,
   });
 
@@ -1077,6 +1116,14 @@ class AssetLiabilityCardStatementReconciliationGroup {
   double get configuredDifference => configuredDetailTotal - billedAmount;
   bool get hasStatementLines => statementLines.isNotEmpty;
   bool get needsReview => alerts.isNotEmpty;
+  bool get hasFixActions => fixActions.isNotEmpty;
+
+  /// 設定済み内訳合計が請求額とずれているか（＝内訳の修正が必要か）。
+  bool get hasConfiguredMismatchFix => fixActions.any(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
+      );
 
   /// リボ払いカードか。
   bool get isRevolving => revolvingBilling != null;
