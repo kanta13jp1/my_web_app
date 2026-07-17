@@ -21,6 +21,10 @@ DEFAULT_REQUIRED_CHECKS = (
     "Security Check",
 )
 
+TRANSIENT_HTTP_STATUSES = {500, 502, 503, 504}
+FETCH_RETRY_ATTEMPTS = 5
+FETCH_RETRY_BASE_SECONDS = 2.0
+
 CI_IGNORED_PATTERNS = (
     "docs/**",
     ".github/*.md",
@@ -107,6 +111,32 @@ def result_from_run(name: str, run: dict[str, Any]) -> CheckResult:
     )
 
 
+def fetch_github_json(
+    request: urllib.request.Request,
+) -> tuple[dict[str, Any], str]:
+    last_error: BaseException | None = None
+    for attempt in range(1, FETCH_RETRY_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+                if not isinstance(payload, dict):
+                    raise json.JSONDecodeError("GitHub response is not an object", "", 0)
+                return payload, response.headers.get("Link", "")
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            if exc.code not in TRANSIENT_HTTP_STATUSES:
+                raise
+        except (urllib.error.URLError, TimeoutError) as exc:
+            last_error = exc
+
+        if attempt >= FETCH_RETRY_ATTEMPTS:
+            break
+        time.sleep(FETCH_RETRY_BASE_SECONDS * attempt)
+
+    assert last_error is not None
+    raise last_error
+
+
 def evaluate_check_runs(check_runs: list[dict[str, Any]], required_checks: list[str]) -> Evaluation:
     latest = latest_check_runs_by_name(check_runs)
     passed: list[CheckResult] = []
@@ -156,12 +186,11 @@ def fetch_check_runs(repo: str, sha: str, token: str) -> list[dict[str, Any]]:
                 "User-Agent": "my-web-app-deterministic-ci-gate",
             },
         )
-        with urllib.request.urlopen(request, timeout=20) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-            runs = payload.get("check_runs", [])
-            if isinstance(runs, list):
-                results.extend(item for item in runs if isinstance(item, dict))
-            url = next_link(response.headers.get("Link", ""))
+        payload, link_header = fetch_github_json(request)
+        runs = payload.get("check_runs", [])
+        if isinstance(runs, list):
+            results.extend(item for item in runs if isinstance(item, dict))
+        url = next_link(link_header)
     return results
 
 
