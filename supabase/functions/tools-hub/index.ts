@@ -34,6 +34,11 @@ import {
   type SaasApprovalDecision,
 } from "../_shared/saas_human_approval.ts";
 import {
+  type EvalAutomationCalendarEvent,
+  type EvalAutomationTask,
+  executeEvalApprovalAutomation,
+} from "./eval_approval_automation.ts";
+import {
   buildMcpFeatureRequestPayload,
   buildMcpNotePayload,
   buildMcpToolCatalog,
@@ -1941,6 +1946,96 @@ async function createSaasApprovalRequest(
   return publicSaasApprovalRequest(item as Record<string, unknown>);
 }
 
+async function evalAutomationItemExists(
+  admin: SupabaseClient,
+  userId: string,
+  source: "team_task" | "calendar_event",
+  requestId: string,
+  itemKey: string,
+): Promise<boolean> {
+  const { data, error } = await admin.from("hub_data")
+    .select("id")
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .filter("metadata->>approval_request_id", "eq", requestId)
+    .filter("metadata->>automation_item_key", "eq", itemKey)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data !== null;
+}
+
+async function executeApprovedEvalAutomation(
+  admin: SupabaseClient,
+  userId: string,
+  requestId: string,
+  payload: Record<string, unknown>,
+  selectedOptionId: string,
+) {
+  if (!requestId) {
+    return {
+      success: false,
+      status: "failed",
+      error: "approval request id is required for internal automation",
+    };
+  }
+  return await executeEvalApprovalAutomation(payload, {
+    createTask: async (task: EvalAutomationTask, itemKey: string) => {
+      if (
+        await evalAutomationItemExists(
+          admin,
+          userId,
+          "team_task",
+          requestId,
+          itemKey,
+        )
+      ) return false;
+      await addItem(admin, "team_task", userId, {
+        title: task.title,
+        description: task.description,
+        assignee: task.assignee ?? userId,
+        due_date: task.dueDate,
+        status: "pending",
+        priority: task.priority,
+        source: "eval_approval",
+        approval_request_id: requestId,
+        automation_item_key: itemKey,
+      });
+      return true;
+    },
+    createCalendarEvent: async (
+      event: EvalAutomationCalendarEvent,
+      itemKey: string,
+    ) => {
+      if (
+        await evalAutomationItemExists(
+          admin,
+          userId,
+          "calendar_event",
+          requestId,
+          itemKey,
+        )
+      ) return false;
+      await addItem(admin, "calendar_event", userId, {
+        title: event.title,
+        description: event.description,
+        start_at: event.startAt,
+        end_at: event.endAt,
+        all_day: event.allDay,
+        color: event.color,
+        reminder_min: event.reminderMinutes,
+        calendar_id: event.calendarId,
+        rrule: null,
+        timezone: null,
+        source: "eval_approval",
+        approval_request_id: requestId,
+        automation_item_key: itemKey,
+      });
+      return true;
+    },
+  }, selectedOptionId);
+}
+
 async function executeApprovedSaasAction(
   admin: SupabaseClient,
   userId: string,
@@ -1948,6 +2043,15 @@ async function executeApprovedSaasAction(
 ) {
   const provider = normalizeText(metadata.provider);
   const payload = asRecord(metadata.payload) ?? {};
+  if (provider === "internal" || provider === "eval_automation") {
+    return await executeApprovedEvalAutomation(
+      admin,
+      userId,
+      normalizeText(metadata.request_id),
+      payload,
+      normalizeText(metadata.selected_option_id),
+    );
+  }
   if (provider !== "slack") {
     return {
       success: false,
@@ -1994,6 +2098,7 @@ async function decideSaasApprovalRequest(
     reviewNote: string;
     revisedPayload: Record<string, unknown> | null;
     execute: boolean;
+    selectedOptionId: string;
   },
 ) {
   const { data, error } = await admin.from("hub_data")
@@ -2014,7 +2119,9 @@ async function decideSaasApprovalRequest(
     decided_by: userId,
     decided_at: now,
     review_note: input.reviewNote,
+    selected_option_id: input.selectedOptionId || null,
     updated_at: now,
+    request_id: requestId,
   };
   if (decision === "revision_requested") {
     nextMetadata.status = "pending";
@@ -2032,7 +2139,9 @@ async function decideSaasApprovalRequest(
       nextMetadata,
     );
     nextMetadata.execution = execution;
-    nextMetadata.execution_status = execution.success ? "sent" : "failed";
+    nextMetadata.execution_status = execution.success
+      ? normalizeText(execution.status, "sent")
+      : "failed";
     nextMetadata.executed_at = now;
   }
 
@@ -10337,6 +10446,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             reviewNote: normalizeText(body.review_note),
             revisedPayload: asRecord(body.revised_payload),
             execute: body.execute === true,
+            selectedOptionId: normalizeText(body.selected_option_id),
           },
         );
         if (!approval) {

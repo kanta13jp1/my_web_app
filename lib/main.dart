@@ -74,6 +74,7 @@ import 'package:my_web_app/pages/career_monthly_kpi_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
+import 'package:my_web_app/pages/eval_approval_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
 import 'package:my_web_app/pages/ai_observability_page.dart';
@@ -855,6 +856,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             );
           case '/decision-check':
             return MaterialPageRoute(builder: (_) => const DecisionCheckPage());
+          case '/eval-approval':
+            return MaterialPageRoute(builder: (_) => const EvalApprovalPage());
           case '/purchase-log':
             return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
           case '/price-tracker':
