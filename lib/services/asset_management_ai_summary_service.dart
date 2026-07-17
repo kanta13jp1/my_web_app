@@ -787,7 +787,7 @@ class AssetManagementAiSummaryService {
     List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses,
   ) {
     final usefulAnalyses = previousAnalyses
-        .where((entry) => entry.summaryText.trim().isNotEmpty)
+        .where((entry) => entry.hasSummaryText)
         .take(5)
         .toList(growable: false);
     return <String, dynamic>{

@@ -2,6 +2,9 @@ export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  // Max-Age 無しだと preflight キャッシュは既定 5 秒しか効かず、hub への
+  // 全 POST に OPTIONS 往復 (~200ms) が毎回付く。Chromium は 7200 秒に丸める。
+  "Access-Control-Max-Age": "86400",
 };
 
 export function jsonResponse(payload: unknown, status = 200): Response {

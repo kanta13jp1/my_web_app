@@ -22,7 +22,8 @@ class MaintenanceShell extends StatefulWidget {
   State<MaintenanceShell> createState() => _MaintenanceShellState();
 }
 
-class _MaintenanceShellState extends State<MaintenanceShell> {
+class _MaintenanceShellState extends State<MaintenanceShell>
+    with WidgetsBindingObserver {
   late final MaintenanceService _service;
   Timer? _timer;
   MaintenanceSnapshot _snapshot = MaintenanceSnapshot(
@@ -34,15 +35,36 @@ class _MaintenanceShellState extends State<MaintenanceShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _service = widget.service ?? MaintenanceService();
     _refresh(force: true);
-    _timer = Timer.periodic(MaintenanceService.cacheTtl, (_) {
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer ??= Timer.periodic(MaintenanceService.cacheTtl, (_) {
       _refresh(force: true);
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 非表示タブ/バックグラウンドでの schedule-hub 定期ポーリングを止める。
+    // 復帰時は即時 refresh してからタイマーを再開する。
+    if (state == AppLifecycleState.resumed) {
+      _startTimer();
+      _refresh(force: true);
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      _timer?.cancel();
+      _timer = null;
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }
