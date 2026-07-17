@@ -872,8 +872,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     // 未ログイン時はノート発行を試みず (ログイン要求 snackbar を出さず)、
     // 公開ダッシュボードURLで直接 X intent を開く。
     final canPublishMemo = Supabase.instance.client.auth.currentUser != null;
-    final memo = _publishedKpiMemo ??
-        (canPublishMemo ? await _publishKpiMemo() : null);
+    final memo =
+        _publishedKpiMemo ?? (canPublishMemo ? await _publishKpiMemo() : null);
     final publicUrl = memo == null
         ? _publicLocalElectionDashboardUrl
         : PublicMemoService.buildPublicMemoUrl(memo.id);
@@ -1445,9 +1445,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                               )
                             : const Icon(Icons.summarize_outlined),
                         label: Text(
-                          _isPublishingSnapshotMemo
-                              ? '集計ノート作成中'
-                              : '地方議員集計ノート化',
+                          _isPublishingSnapshotMemo ? '集計ノート作成中' : '地方議員集計ノート化',
                         ),
                       ),
                       FilledButton.tonalIcon(
