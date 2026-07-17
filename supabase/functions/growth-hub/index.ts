@@ -24,6 +24,7 @@ import {
   resolveDuplicateGuardConfig,
   type XPostLogRowLike,
 } from "./x_duplicate_content.ts";
+import { hasNamedVariant, pickBestVariant } from "./x_best_variant.ts";
 import {
   buildSignupSlackPayload,
   isRecentSignupCreatedAt,
@@ -41,6 +42,7 @@ import {
   X_METRIC_LEARNING_SELECTION_RULE,
   X_METRIC_WINDOW_SELECTION_RULE,
 } from "./x_metric_windows.ts";
+import { compactXMetricSnapshotMedia } from "./x_metric_snapshot.ts";
 import { decideXPostPreflight } from "./x_post_preflight.ts";
 import { computeTodayStatus } from "./x_today_status.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
@@ -80,6 +82,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -585,8 +588,7 @@ function metricSnapshotForLog(
       metadata.experiment_key,
       "x_first_user_growth_10k",
     ),
-    has_media: Boolean(metadata.media_url),
-    media_url: firstString(metadata.media_url) || null,
+    ...compactXMetricSnapshotMedia(metadata),
     // 動画 vs 画像の構造 lift 判定用(1:1 アスペクト実験のトリガーデータ)。
     media_type: firstString(metadata.media_type) || null,
     link_in_reply: metadata.link_in_reply === true,
@@ -978,7 +980,11 @@ function buildXPerformanceContextFromLogs(
     }))
     .sort((left, right) => right.averageScore - left.averageScore);
 
-  const bestVariant = variants[0]?.variant ?? "daily_briefing";
+  // 「unknown」は variant タグ無し投稿の受け皿バケットで勝ち型ではない。
+  // 他の全消費箇所 (variant ランキング表示 / distinctVariants 計数) と同じく
+  // 除外して選ぶ (除外漏れでダッシュボードと投稿生成プロンプトの両方に
+  // 「勝ち型: unknown」が流れていた)。
+  const bestVariant = pickBestVariant(variants);
   // 集計ロールアップ (guarded): 両バケットに十分なサンプルがあるときだけ、
   // 変動要因(メディア有無/リンク位置/スレッド長)ごとの平均スコア差を測定事実と
   // して LLM へ渡す。データが薄い間は行自体を出さない(=実質 default-off で、
@@ -1148,7 +1154,9 @@ function buildXPerformanceContextFromLogs(
     ].join("\n")
     : [
       "Measured X performance context for the next post:",
-      variants.length > 0
+      // 実測 variant (unknown 以外) が無いとき fallback 名を実測済みの勝ち型
+      // かのように主張しない。
+      hasNamedVariant(variants)
         ? `Target: 10K impressions. Current best variant: ${bestVariant}.`
         : "Target: 10K impressions. No post-age comparable winner yet.",
       `Ranking basis: ${comparisonLabel} impressions ` +

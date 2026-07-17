@@ -393,6 +393,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final _keyCardStatementReconciliation = GlobalKey();
   // 口座間移動の提案セクションへのスクロール用 (残高不足バナーからのジャンプ)。
   final _keyTransferSuggestionSection = GlobalKey();
+  // 負債コントロールレビュー (原資未設定一覧) へのスクロール用 (原資未設定バナーからのジャンプ)。
+  final _keyDebtControlReviewSection = GlobalKey();
 
   Timer? _deadlineTimer;
   DateTime _now = DateTime.now();
@@ -1143,6 +1145,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   void _jumpToTransferSuggestionSection() {
     _scrollTo(_keyTransferSuggestionSection);
+  }
+
+  void _jumpToDebtControlReviewSection() {
+    _scrollTo(_keyDebtControlReviewSection);
   }
 
   List<String> _paymentSourceCandidates() {
@@ -6309,6 +6315,102 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 前回残高があり本日未更新 (= 同額で簡易更新できる) 口座の一覧。
+  List<String> _staleQuickUpdatableTypes() {
+    final today = _todayDateKey();
+    return _assetTypes.where((type) {
+      final lastDate = _lastUpdatedDates[type];
+      if (lastDate == null || lastDate == today) return false;
+      return _assetData[lastDate]?[type] != null;
+    }).toList(growable: false);
+  }
+
+  /// 本日未更新の全口座を「前回と同額」で一括記録する。
+  /// 金額が変わらないため減少検知 (使途不明金の自動追加) は対象外で、
+  /// cfo_assets への insert は 1 リクエストに、当日クロージング再取得も
+  /// 1 回にまとめる (1 口座ずつの 同額 連打で N 往復になるのを避ける)。
+  Future<void> _quickUpdateAllStaleAssets() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+    final today = _todayDateKey();
+    final amounts = <String, double>{};
+    for (final type in _staleQuickUpdatableTypes()) {
+      final lastDate = _lastUpdatedDates[type];
+      final amount = lastDate == null ? null : _assetData[lastDate]?[type];
+      if (amount != null) {
+        amounts[type] = amount;
+      }
+    }
+    if (amounts.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('同額で記録できる未更新口座はありません')),
+      );
+      return;
+    }
+
+    final summaryLines = amounts.entries
+        .map((entry) => '・${entry.key}: ${_formatYen(entry.value)}')
+        .join('\n');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('未更新${amounts.length}口座を前回と同額で記録'),
+        content: SingleChildScrollView(
+          child: Text('以下を本日の残高として記録します。\n\n$summaryLines'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('一括記録'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final nowIso = DateTime.now().toIso8601String();
+    try {
+      await _supabase.from('cfo_assets').insert([
+        for (final entry in amounts.entries)
+          {
+            'user_id': userId,
+            'title': entry.key,
+            'amount': entry.value,
+            'created_at': nowIso,
+          },
+      ]);
+
+      setState(() {
+        final todayMap =
+            _assetData.putIfAbsent(today, () => <String, double>{});
+        amounts.forEach((type, amount) => todayMap[type] = amount);
+        _updateLastUpdatedDates();
+        _sortAssetTypes();
+        _updateChartData();
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ ${amounts.length}口座を前回と同額で一括記録しました'),
+          backgroundColor: const Color(0xFF047857),
+        ),
+      );
+      await _fetchTodayClosing();
+    } catch (e) {
+      debugPrint('Error bulk quick update: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('一括記録に失敗しました。時間をおいて再試行してください')),
+      );
+    }
+  }
+
   Future<void> _saveSingleAssetData(String type) async {
     final controller = _controllers[type];
     if (controller == null || controller.text.isEmpty) {
@@ -8418,6 +8520,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildSyncStatusBanner(),
             _buildUnsyncedBadgeRow(),
             _buildAccountShortfallAlertBanner(assetLiabilityWorkbook),
+            _buildPaymentSourceMissingBanner(assetLiabilityWorkbook),
             _buildAutoDebitConfirmationCard(assetLiabilityWorkbook),
             _buildSalaryDepositNudgeCard(assetLiabilityWorkbook),
             const SizedBox(height: 12),
@@ -13246,6 +13349,133 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 支払原資口座が未設定の支払いをページ最上部で警告する。
+  /// 原資未設定の支払いはどの口座の見込み残高からも差し引かれず、
+  /// 残高不足バナー（口座別先読み）が働かない盲点になるため、
+  /// 件数・金額・残高付きの設定候補と設定導線をセットで出す。
+  Widget _buildPaymentSourceMissingBanner(AssetLiabilityWorkbook? workbook) {
+    if (workbook == null || !workbook.hasPaymentSourceMissingRows) {
+      return const SizedBox.shrink();
+    }
+    final rows = workbook.paymentSourceMissingRows
+      ..sort(
+        (a, b) => b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount),
+      );
+    return Container(
+      key: const Key('asset_payment_source_missing_banner'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8, bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 16,
+                color: Color(0xFFB45309),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '支払原資口座が未設定の支払い'
+                  '（${rows.length}件 / 合計 ${_formatManagementYen(workbook.paymentSourceMissingTotal)}）',
+                  // 背景が固定の淡黄のため、ダークテーマの onSurface(白)だと
+                  // 読めなくなる。文字色も固定の濃橙系にする。
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB45309),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final row in rows.take(3))
+            _buildPaymentSourceMissingBannerRow(row, workbook),
+          if (rows.length > 3)
+            Text(
+              'ほか${rows.length - 3}件の支払いで原資口座が未設定です。',
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF92400E),
+                height: 1.5,
+              ),
+            ),
+          // ジャンプ先の原資未設定一覧は workbookBoard 内にあり、表示モード次第で
+          // 非描画になる。その場合スクロールが silent no-op になるため出さない。
+          if (_isSectionShown(AssetManagementSectionId.workbookBoard))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_payment_source_missing_jump'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB45309),
+                ),
+                onPressed: _jumpToDebtControlReviewSection,
+                icon: const Icon(Icons.arrow_downward, size: 16),
+                label: const Text('原資未設定の一覧へ移動'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSourceMissingBannerRow(
+    AssetLiabilityDebtRow row,
+    AssetLiabilityWorkbook workbook,
+  ) {
+    // じぶん銀行のように預金と負債が同一 id になる名前があるため自分自身は除外。
+    _PaymentSourceCandidate? candidate;
+    for (final entry in _paymentSourceCandidatesForRow(row, workbook)) {
+      if (entry.account.id != row.id) {
+        candidate = entry;
+        break;
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '「${row.name}」支払日 ${row.paymentDay ?? '-'}日 / '
+            '予定 ${_formatManagementYen(row.scheduledPaymentAmount)}',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFB45309),
+              height: 1.5,
+            ),
+          ),
+          Text(
+            candidate == null
+                ? '残高のある現金・預金口座が見つかりません。入金後に原資口座を設定してください。'
+                : '候補: ${candidate.account.name}'
+                    '（現在 ${_formatManagementYen(candidate.currentBalance)} / '
+                    '支払後見込み ${_formatManagementYen(candidate.projectedAfterPayment)}）',
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF92400E),
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
     if (workbook == null) {
       return const SizedBox.shrink();
@@ -18062,7 +18292,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 12),
             _buildAssetWorkbookWarning(workbook),
             const SizedBox(height: 16),
-            _buildDebtControlReviewSection(workbook),
+            KeyedSubtree(
+              key: _keyDebtControlReviewSection,
+              child: _buildDebtControlReviewSection(workbook),
+            ),
             const SizedBox(height: 16),
             _buildAssetPaymentReminderPanel(workbook),
             const SizedBox(height: 16),
@@ -19316,6 +19549,42 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = key;
       _assetManagementAiSummaryRequestKey = key;
     });
+    // 同一フィンガープリント (= 基準日単位で回転) の分析が既に保存済みなら
+    // それを再利用し、高価な ai-hub 生成 (直列 4 プロバイダ / 1分超) を
+    // スキップする。手動の「AI要約を更新」(force) は常に再生成する。
+    if (!force) {
+      AssetManagementAiAnalysisHistoryEntry? reusable;
+      try {
+        reusable = await _assetManagementAiAnalysisHistoryService
+            .loadReusableResult(requestFingerprint: key);
+      } catch (_) {
+        reusable = null;
+      }
+      if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+        return;
+      }
+      if (reusable != null) {
+        final cached = reusable;
+        setState(() {
+          _assetManagementAiSummaryResult = AssetManagementAiSummaryResult(
+            status: AssetManagementAiSummaryStatus.aiGenerated,
+            text: cached.summaryText,
+            source: cached.source,
+            errorMessage: null,
+            generatedAt: cached.generatedAt,
+            payload: const <String, dynamic>{},
+            providerRoute:
+                cached.providerRoute.isEmpty ? null : cached.providerRoute,
+            providerChoiceReason: cached.providerChoiceReason,
+          );
+          _assetManagementAiSummaryResultKey = key;
+          _isGeneratingAssetManagementAiSummary = false;
+          _assetManagementAiSummaryInFlightKey = null;
+          _assetManagementAiSummaryRequestKey = key;
+        });
+        return;
+      }
+    }
     var previousAnalyses = const <AssetManagementAiAnalysisHistoryEntry>[];
     try {
       previousAnalyses =
@@ -20087,8 +20356,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 4),
           Text(
             violation.problem,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            // 背景が固定の白のため、ダークテーマの onSurfaceVariant(淡色)だと
+            // 読めなくなる。文字色も固定の濃スレート系にする。
+            style: const TextStyle(
+              color: Color(0xFF475569),
               fontSize: 12,
               height: 1.5,
             ),
@@ -20109,7 +20380,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 Expanded(
                   child: Text(
                     violation.action,
-                    style: const TextStyle(fontSize: 12, height: 1.5),
+                    // 固定白タイル上のためテーマ色でなく固定の濃色にする。
+                    style: const TextStyle(
+                      color: Color(0xFF1F2937),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -20130,6 +20406,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 value: _formatManagementYen(violation.currentBalance),
                 color: const Color(0xFF6B7280),
               ),
+              if (violation.hasEscapePlan)
+                _buildAssetLiabilitySyncChip(
+                  label: '${violation.escapeMonths}ヶ月脱却の月額',
+                  value: _formatManagementYen(violation.escapeMonthlyPayment!),
+                  color: const Color(0xFF0D9488),
+                ),
+              if (violation.currentPlanPayoffMonths case final months?)
+                _buildAssetLiabilitySyncChip(
+                  label: '現状ペース完済',
+                  value: '約$monthsヶ月',
+                  color: const Color(0xFF6B7280),
+                ),
             ],
           ),
         ],
@@ -26923,6 +27211,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
               ),
             ),
+            if (_staleQuickUpdatableTypes().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _quickUpdateAllStaleAssets,
+                  icon: const Icon(Icons.history_toggle_off),
+                  label: Text(
+                    '未更新${_staleQuickUpdatableTypes().length}口座を前回と同額で一括記録',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF065F46),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             _buildLegendCard(), // 内訳表示
           ],
@@ -27474,6 +27779,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 最終更新日キー (yyyy-MM-dd) から経過日数を返す。未記録・本日更新・
+  /// パース不能は 0 扱い。
+  int _staleDaysForDateKey(String? dateKey, String todayStr) {
+    if (dateKey == null || dateKey == todayStr) return 0;
+    final last = DateTime.tryParse(dateKey);
+    final today = DateTime.tryParse(todayStr);
+    if (last == null || today == null) return 0;
+    final days = today.difference(last).inDays;
+    return days < 0 ? 0 : days;
+  }
+
   Widget _buildAssetInputRow(String type) {
     final todayStr = _todayDateKey();
     final isUpdatedToday = _lastUpdatedDates[type] == todayStr;
@@ -27491,11 +27807,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
     final accentColor =
         isLiability ? const Color(0xFFDC2626) : const Color(0xFF0D9488);
+    final staleDays = _staleDaysForDateKey(lastDate, todayStr);
     final statusLabel = lastAmount == null
         ? '未記録'
         : lastDate == todayStr
             ? '本日更新'
-            : '最終更新 $lastDate';
+            : '最終更新 $lastDate ($staleDays日前)';
+    // 放置日数に応じて段階的に警告色へ (7日以上: 琥珀 / 30日以上: 赤)。
+    // 1日遅れと1ヶ月放置が同じグレーに見えると更新漏れに気づけないため。
+    final staleColor = staleDays >= 30
+        ? const Color(0xFFDC2626)
+        : staleDays >= 7
+            ? const Color(0xFFB45309)
+            : const Color(0xFF64748B);
 
     final titleBlock = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -27543,11 +27867,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   _buildAssetStatusPill(
                     icon: isUpdatedToday
                         ? Icons.check_circle
-                        : Icons.history_toggle_off,
+                        : staleDays >= 30
+                            ? Icons.warning_amber_rounded
+                            : Icons.history_toggle_off,
                     label: statusLabel,
-                    color: isUpdatedToday
-                        ? const Color(0xFF047857)
-                        : const Color(0xFF64748B),
+                    color:
+                        isUpdatedToday ? const Color(0xFF047857) : staleColor,
                   ),
                 ],
               ),
@@ -27568,9 +27893,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         hintText: '負債はマイナス(-)をつける',
         prefixIcon: const Icon(Icons.edit_outlined, size: 18),
         suffixIcon: IconButton(
-          tooltip: '符号切替',
+          tooltip: '符号切替 (資産⇔負債)',
           onPressed: () => _toggleMinusForType(type),
-          icon: const Icon(Icons.exposure_neg_1),
+          // exposure_neg_1 (「-1」) は文字カウンタの残数表示に見えて
+          // 誤解を招いたため ± アイコンにする。
+          icon: const Icon(Icons.exposure),
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
