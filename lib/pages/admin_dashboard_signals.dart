@@ -172,6 +172,45 @@ String resolveXGrowthLoopFreshness({
   return '最新サンプル: 1時間以内';
 }
 
+/// R27: 鮮度が閾値(既定3日)を超えたときだけ返る警告文。従来は unlocked に
+/// なった時点で cron 停止系の警告経路が消え、「最新サンプル: 3日前」が灰色
+/// フッターに埋もれて計測停止に気づけなかった。createdAt は投稿時刻なので
+/// 「投稿が止まった」「計測 cron が止まった」のどちらも有り得る旨を両論併記
+/// する(どちらか断定はデータ上できない)。
+String? xGrowthLoopStalenessWarning({
+  required int measuredCount,
+  required DateTime? newestMeasuredAt,
+  required DateTime now,
+  int staleAfterDays = 3,
+}) {
+  if (measuredCount <= 0 || newestMeasuredAt == null) return null;
+  final diff = now.difference(newestMeasuredAt);
+  if (diff.isNegative || diff.inDays < staleAfterDays) return null;
+  return '計測サンプルが${diff.inDays}日間増えていません。投稿が止まっているか、'
+      'metrics 収集 cron / spend-cap を確認してください。';
+}
+
+/// R27: サーバの bestVariant が「unknown」(variant タグ無し投稿の受け皿
+/// バケット)のとき、variants ランキング(平均スコア降順)から unknown を除いた
+/// 先頭を勝ち型として返す。有効な variant が無ければ null(勝ち型行を出さ
+/// ない)。growth-hub 側の除外漏れ(index.ts の bestVariant)への防御で、
+/// サーバ修正後も古いレスポンス/キャッシュに対して安全側に働く。
+String? resolveDisplayBestVariant(
+  String? bestVariant,
+  List<dynamic>? variants,
+) {
+  final trimmed = (bestVariant ?? '').trim();
+  if (trimmed.isNotEmpty && trimmed != 'unknown') return trimmed;
+  if (variants == null) return null;
+  for (final entry in variants) {
+    if (entry is! Map) continue;
+    final name = (entry['variant'] ?? '').toString().trim();
+    if (name.isEmpty || name == 'unknown') continue;
+    return name;
+  }
+  return null;
+}
+
 /// R20: 年なし MM/dd は 3か月前の機能リクエストや 2か月前のツール実行ログを
 /// 「今月」に見せてしまう。別年、もしくは staleDays(既定30日=1か月超)超は
 /// yyyy/MM/dd を返して年齢を明示する(パース不能は raw をそのまま返す)。

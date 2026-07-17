@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/growth_mission_service.dart';
 import '../services/landing_page_adapter.dart';
+import '../services/route_visibility_observer.dart';
 import '../widgets/live_growth_banner.dart';
 
 class LandingPage extends StatefulWidget {
@@ -26,7 +27,7 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> {
+class _LandingPageState extends State<LandingPage> with RouteAware {
   static const bool _googleLoginFeatureEnabled = bool.fromEnvironment(
     'LANDING_GOOGLE_LOGIN_ENABLED',
     defaultValue: false,
@@ -72,6 +73,13 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
+  // 可視化ゲート: 公開メモ等の deep link を直接開くと初期ルート展開で LP が
+  // 不可視のまま下に積まれる。その状態で LP View を計上すると「見ていない LP」
+  // が今日の登録ファネル最上段に混入するため、可視になるまで計測・表示用
+  // fetch を遅延する。referral 取り込みは URL 依存 (Uri.base) なので従来どおり
+  // initState で即時に行う。
+  bool _visibleBootstrapDone = false;
+
   @override
   void initState() {
     super.initState();
@@ -84,6 +92,30 @@ class _LandingPageState extends State<LandingPage> {
       }
     });
     unawaited(_bootstrapReferralInvite());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      deepLinkVisibilityRouteObserver.subscribe(this, route);
+    }
+    // route が取れない (テスト直 pump 等) 場合は従来どおり即時計測する。
+    if (route == null || route.isCurrent) {
+      _startVisibleBootstrapOnce();
+    }
+  }
+
+  @override
+  void didPopNext() {
+    // 上のルートが pop され LP が初めて実際に表示された。
+    _startVisibleBootstrapOnce();
+  }
+
+  void _startVisibleBootstrapOnce() {
+    if (_visibleBootstrapDone) return;
+    _visibleBootstrapDone = true;
     unawaited(_loadAchievementCount());
     unawaited(_loadSocialProofStats());
     // LP View 計測 (今日の登録ファネルの最上段)。失敗は adapter 側で握る。
@@ -92,6 +124,7 @@ class _LandingPageState extends State<LandingPage> {
 
   @override
   void dispose() {
+    deepLinkVisibilityRouteObserver.unsubscribe(this);
     _authSubscription?.cancel();
     _magicLinkCooldownTimer?.cancel();
     _emailController.dispose();

@@ -28,24 +28,79 @@ class AssetManagementAiAnalysisHistoryService {
       return const <AssetManagementAiAnalysisHistoryEntry>[];
     }
 
+    // プロンプト文脈で実際に使うのは metrics_snapshot 相当の数値だけなので、
+    // 巨大な input_payload 全体と summary_text 本文は取得しない
+    // (5行で ~158KB → 数KB)。本文の存在は summary_text <> '' の
+    // server-side filter で保証する。
     final rawRows = await client
         .from(tableName)
         .select(
-          'id, request_fingerprint, summary_text, status, source, '
+          'id, request_fingerprint, status, source, '
           'generated_at, created_at, report_base_date, provider_choice_reason, '
-          'provider_route, input_payload',
+          'provider_route, '
+          'payload_totals:input_payload->workbook->totals, '
+          'payload_available_money:input_payload->available_money',
         )
         .eq('user_id', userId)
         .eq('status', AssetManagementAiSummaryStatus.aiGenerated.name)
+        .neq('summary_text', '')
         .order('generated_at', ascending: false)
         .limit(limit);
 
     return rawRows
         .map(_rowToMap)
         .where((row) => row.isNotEmpty)
+        .map(_narrowRowToEntryJson)
+        .map(AssetManagementAiAnalysisHistoryEntry.fromJson)
+        .toList(growable: false);
+  }
+
+  /// 直近の保存済み分析のうち、リクエスト指紋が一致するものを 1 件返す。
+  /// フィンガープリントは基準日を含む日付単位で回転するため、同日内の
+  /// リロードではこの結果を再利用でき、高価な ai-hub 生成をスキップできる。
+  Future<AssetManagementAiAnalysisHistoryEntry?> loadReusableResult({
+    required String requestFingerprint,
+  }) async {
+    final client = _resolveClient();
+    final userId = _resolveUserId(client);
+    if (client == null || userId == null) {
+      return null;
+    }
+
+    final rawRows = await client
+        .from(tableName)
+        .select(
+          'id, request_fingerprint, summary_text, status, source, '
+          'generated_at, created_at, report_base_date, provider_choice_reason, '
+          'provider_route',
+        )
+        .eq('user_id', userId)
+        .eq('status', AssetManagementAiSummaryStatus.aiGenerated.name)
+        .eq('request_fingerprint', _safeRequestFingerprint(requestFingerprint))
+        .neq('summary_text', '')
+        .order('generated_at', ascending: false)
+        .limit(1);
+
+    final entries = rawRows
+        .map(_rowToMap)
+        .where((row) => row.isNotEmpty)
         .map(AssetManagementAiAnalysisHistoryEntry.fromJson)
         .where((entry) => entry.summaryText.trim().isNotEmpty)
         .toList(growable: false);
+    return entries.isEmpty ? null : entries.first;
+  }
+
+  /// 縮小 projection の行を、モデルが期待する input_payload 形へ組み直す。
+  /// summary_text キーは意図的に持たせない (= summaryTextOmitted として扱う)。
+  Map<String, dynamic> _narrowRowToEntryJson(Map<String, dynamic> row) {
+    final json = Map<String, dynamic>.from(row)
+      ..remove('payload_totals')
+      ..remove('payload_available_money');
+    json['input_payload'] = <String, dynamic>{
+      'workbook': <String, dynamic>{'totals': row['payload_totals']},
+      'available_money': row['payload_available_money'],
+    };
+    return json;
   }
 
   Future<void> saveResult({
