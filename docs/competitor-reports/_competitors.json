@@ -940,6 +940,18 @@
         "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 単機能寄り + share が ChatGPT に劣後 / signal 層留置で基準値作り継続)",
         "Google Jules / Antigravity・Microsoft MAI-Code-1-Flash・Salesforce Agentforce Operations (= いずれも既採択済 = 重複対象外)"
       ]
+    },
+    {
+      "date": "2026-07-18",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 1 day 経過 / cooldown 残 6 day / 次回 unlock 2026-07-24). 本日 7-17→7-18 の主眼は自社コア (個人 B/S) の distribution-layer 候補 Visa AI Financial Assistant の一次確認による深掘り で、cooldown + 昨日採択直後のため新規 discovery 採択には至らず。Visa = 2026-07-14 発表 (Visa 公式 investor newsroom) / 300B+ 年間トランザクション network + 各金融機関の自社ブランドで white-label 提供 (no custom development required) / secure banking 環境内で稼働 / US pilot 8 月 → その後 global rollout。含意 = ChatGPT (ユーザー能動接続) と違い 『既に信頼する銀行アプリの内側』に AI 家計アシスタントを流し込む distribution-layer 脅威 = 獲得 friction ゼロ。現時点は金融機関向け pilot 前段階のため signal 層維持、consumer GA / 消費者到達確認で 2026-07-24 unlock 時の第1候補として昇格判断。既存 27 社は WebSearch 巡回で戦略級 delta なし = (a) OpenAI ChatGPT personal finance は Plus GA 6-25 / Plaid 12,000+ 機関 / Intuit soon で差分なし・状態監視のみ / (b) MoneyForward ME の AI エージェント化トリガー未点火 (7-7 暗号資産カテゴリ既報 / AI Cowork は法人専用据え置き) / (c) Anthropic Reflect (月次 recap dashboard) 7-9・Cowork web/mobile 7-7 は Second Brain/KPI に隣接するが個人 B/S 直接競合ではなく signal 層 / (d) Monarch・Copilot Money・Cleo は 7 月新規調達/機能なしで基準 c 不成立。[AI-TOOL-VERIFY] = Visa の日付・機能・pilot 時期は Visa 公式 investor newsroom + PYMNTS + American Banker の一次/信頼メディアで裏取り済。",
+      "skipped_candidates": [
+        "Visa AI Financial Assistant (= 第1候補 / 2026-07-14 発表確定 + 300B+ tx network + bank-branded white-label + 8 月 US pilot / consumer GA・消費者到達で 2026-07-24 unlock 時 昇格判断 / 基準 a + b)",
+        "Motion (= named-employee 系 / 基準 c 不成立: Series C は 2025-12 (~7 ヶ月前) / 30 日内の新エージェント・個人向け展開・大型調達で再評価)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)",
+        "OpenCode (= coding tool 偏り (基準 b 逆行) のため signal 層留置)"
+      ]
     }
   ],
   "_schema_notes": {
