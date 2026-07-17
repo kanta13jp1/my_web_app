@@ -225,6 +225,47 @@ void main() {
       );
     });
 
+    test('R27 staleness warning: 3日以上でのみ警告文を返す', () {
+      String? warn(int days) => xGrowthLoopStalenessWarning(
+            measuredCount: 12,
+            newestMeasuredAt: now.subtract(Duration(days: days)),
+            now: now,
+          );
+      expect(warn(0), isNull);
+      expect(warn(2), isNull);
+      expect(warn(3), contains('3日間増えていません'));
+      expect(warn(7), contains('7日間増えていません'));
+      // 断定できないので投稿停止/cron 停止の両論併記であること。
+      expect(warn(3), contains('cron'));
+    });
+
+    test('R27 staleness warning: 計測0件 / 日付不明 / 未来時刻は警告しない', () {
+      expect(
+        xGrowthLoopStalenessWarning(
+          measuredCount: 0,
+          newestMeasuredAt: now.subtract(const Duration(days: 10)),
+          now: now,
+        ),
+        isNull,
+      );
+      expect(
+        xGrowthLoopStalenessWarning(
+          measuredCount: 12,
+          newestMeasuredAt: null,
+          now: now,
+        ),
+        isNull,
+      );
+      expect(
+        xGrowthLoopStalenessWarning(
+          measuredCount: 12,
+          newestMeasuredAt: now.add(const Duration(days: 1)),
+          now: now,
+        ),
+        isNull,
+      );
+    });
+
     test('newestMeasuredCreatedAt: max across rows (rows are score-sorted)',
         () {
       // rows[0] は高スコアの古い投稿、後続に新しい投稿 → 最新を返すこと。
@@ -382,6 +423,41 @@ void main() {
         archetypeLiftSummaryLine(resolveArchetypeLift(const [])),
         isNull,
       );
+    });
+  });
+
+  group('R27 resolveDisplayBestVariant (server unknown 除外漏れへの防御)', () {
+    test('named な bestVariant はそのまま返す', () {
+      expect(
+        resolveDisplayBestVariant('daily_briefing', const []),
+        'daily_briefing',
+      );
+    });
+
+    test('unknown のとき variants の unknown 以外の先頭へフォールバック', () {
+      final variants = [
+        {'variant': 'unknown', 'averageScore': 122, 'count': 16},
+        {'variant': 'daily_briefing_fallback', 'averageScore': 89, 'count': 1},
+        {'variant': 'daily_briefing', 'averageScore': 76, 'count': 7},
+      ];
+      expect(
+        resolveDisplayBestVariant('unknown', variants),
+        'daily_briefing_fallback',
+      );
+    });
+
+    test('unknown かつ named variant 無し → null (勝ち型行を出さない)', () {
+      expect(resolveDisplayBestVariant('unknown', null), isNull);
+      expect(
+        resolveDisplayBestVariant('unknown', [
+          {'variant': 'unknown'},
+          {'variant': ''},
+          'not-a-map',
+        ]),
+        isNull,
+      );
+      expect(resolveDisplayBestVariant('', const []), isNull);
+      expect(resolveDisplayBestVariant(null, null), isNull);
     });
   });
 }

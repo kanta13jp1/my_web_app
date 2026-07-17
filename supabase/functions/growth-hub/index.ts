@@ -24,6 +24,7 @@ import {
   resolveDuplicateGuardConfig,
   type XPostLogRowLike,
 } from "./x_duplicate_content.ts";
+import { hasNamedVariant, pickBestVariant } from "./x_best_variant.ts";
 import {
   buildSignupSlackPayload,
   isRecentSignupCreatedAt,
@@ -978,7 +979,11 @@ function buildXPerformanceContextFromLogs(
     }))
     .sort((left, right) => right.averageScore - left.averageScore);
 
-  const bestVariant = variants[0]?.variant ?? "daily_briefing";
+  // 「unknown」は variant タグ無し投稿の受け皿バケットで勝ち型ではない。
+  // 他の全消費箇所 (variant ランキング表示 / distinctVariants 計数) と同じく
+  // 除外して選ぶ (除外漏れでダッシュボードと投稿生成プロンプトの両方に
+  // 「勝ち型: unknown」が流れていた)。
+  const bestVariant = pickBestVariant(variants);
   // 集計ロールアップ (guarded): 両バケットに十分なサンプルがあるときだけ、
   // 変動要因(メディア有無/リンク位置/スレッド長)ごとの平均スコア差を測定事実と
   // して LLM へ渡す。データが薄い間は行自体を出さない(=実質 default-off で、
@@ -1148,7 +1153,9 @@ function buildXPerformanceContextFromLogs(
     ].join("\n")
     : [
       "Measured X performance context for the next post:",
-      variants.length > 0
+      // 実測 variant (unknown 以外) が無いとき fallback 名を実測済みの勝ち型
+      // かのように主張しない。
+      hasNamedVariant(variants)
         ? `Target: 10K impressions. Current best variant: ${bestVariant}.`
         : "Target: 10K impressions. No post-age comparable winner yet.",
       `Ranking basis: ${comparisonLabel} impressions ` +
