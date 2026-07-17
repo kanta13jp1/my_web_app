@@ -247,4 +247,99 @@ void main() {
       );
     });
   });
+
+  group('candidate freshness (stale queue guard)', () {
+    final now = DateTime.utc(2026, 7, 17, 0, 0);
+
+    XPostCandidateSummary make({
+      String archetype = 'data_report',
+      String variant = 'household_tracker',
+      DateTime? generatedAt,
+    }) =>
+        XPostCandidateSummary(
+          id: 'id',
+          status: 'pending_approval',
+          candidateType: 't',
+          variant: variant,
+          archetype: archetype,
+          text: 'x',
+          replyTexts: const [],
+          generatedAt: generatedAt,
+        );
+
+    test('news_briefing expires after 24h', () {
+      final fresh = make(
+        archetype: 'news_briefing',
+        generatedAt: now.subtract(const Duration(hours: 23)),
+      );
+      final stale = make(
+        archetype: 'news_briefing',
+        generatedAt: now.subtract(const Duration(hours: 25)),
+      );
+      expect(isCandidateExpired(fresh, now), isFalse);
+      expect(isCandidateExpired(stale, now), isTrue);
+    });
+
+    test('data_report expires after 72h', () {
+      final fresh = make(
+        generatedAt: now.subtract(const Duration(hours: 71)),
+      );
+      final stale = make(
+        generatedAt: now.subtract(const Duration(days: 4)),
+      );
+      expect(isCandidateExpired(fresh, now), isFalse);
+      expect(isCandidateExpired(stale, now), isTrue);
+    });
+
+    test('election variants get the 72h window even without archetype', () {
+      final stale = make(
+        archetype: '',
+        variant: 'local_election_schedule_delta',
+        generatedAt: now.subtract(const Duration(days: 4)),
+      );
+      expect(isCandidateExpired(stale, now), isTrue);
+      expect(
+        candidateFreshnessWindow(stale),
+        const Duration(hours: 72),
+      );
+    });
+
+    test(
+        'unknown series falls back to 7 days and null generatedAt never '
+        'expires', () {
+      final unknown = make(
+        archetype: 'product_intro',
+        variant: 'brand_new_series',
+        generatedAt: now.subtract(const Duration(days: 6)),
+      );
+      expect(isCandidateExpired(unknown, now), isFalse);
+      expect(
+        isCandidateExpired(
+          make(
+            archetype: 'product_intro',
+            variant: 'brand_new_series',
+            generatedAt: now.subtract(const Duration(days: 8)),
+          ),
+          now,
+        ),
+        isTrue,
+      );
+      expect(isCandidateExpired(make(generatedAt: null), now), isFalse);
+    });
+
+    test('rejected status label is defined for the upcoming reject action', () {
+      const rejected = XPostCandidateSummary(
+        id: 'r',
+        status: 'rejected',
+        candidateType: 't',
+        variant: 'household_tracker',
+        archetype: 'data_report',
+        text: 'x',
+        replyTexts: [],
+        generatedAt: null,
+      );
+      expect(rejected.statusLabel, '却下済み');
+      expect(rejected.isActionable, isFalse);
+    });
+  });
 }

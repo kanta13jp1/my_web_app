@@ -21,6 +21,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class _FakeLandingPageAdapter implements LandingPageAdapter {
   int loadShareSnapshotCallCount = 0;
   int loadLpViewStatsCallCount = 0;
+  int recordLpViewCallCount = 0;
   final List<String> sharedChannels = <String>[];
 
   LandingShareSnapshot shareSnapshot = const LandingShareSnapshot(
@@ -56,6 +57,11 @@ class _FakeLandingPageAdapter implements LandingPageAdapter {
   Future<LandingPageViewStats> loadLpViewStats() async {
     loadLpViewStatsCallCount += 1;
     return lpViewStats;
+  }
+
+  @override
+  Future<void> recordLpView() async {
+    recordLpViewCallCount += 1;
   }
 
   @override
@@ -614,6 +620,8 @@ void main() {
     expect(find.byKey(const Key('landing_comparison_links')), findsOneWidget);
     expect(adapter.loadShareSnapshotCallCount, 0);
     expect(adapter.loadLpViewStatsCallCount, 0);
+    // LP View 計測 (increment_lp_view + 流入元帰属) は初期表示で1回だけ走る。
+    expect(adapter.recordLpViewCallCount, 1);
   });
 
   testWidgets(
