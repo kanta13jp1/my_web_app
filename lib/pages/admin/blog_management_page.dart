@@ -663,8 +663,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       ...['qiita', 'devto', 'qiita,devto'].map(
                         (p) {
                           // Qiita 停止中は Qiita を含む投稿先を選ばせない。
-                          final disabled = kQiitaAccountSuspended &&
-                              p.contains('qiita');
+                          final disabled =
+                              kQiitaAccountSuspended && p.contains('qiita');
                           return Padding(
                             padding: const EdgeInsets.only(left: 8),
                             child: ChoiceChip(

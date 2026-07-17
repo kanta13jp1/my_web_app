@@ -304,7 +304,8 @@ void main() {
       );
     });
 
-    test('unknown series falls back to 7 days and null generatedAt never '
+    test(
+        'unknown series falls back to 7 days and null generatedAt never '
         'expires', () {
       final unknown = make(
         archetype: 'product_intro',
@@ -326,8 +327,7 @@ void main() {
       expect(isCandidateExpired(make(generatedAt: null), now), isFalse);
     });
 
-    test('rejected status label is defined for the upcoming reject action',
-        () {
+    test('rejected status label is defined for the upcoming reject action', () {
       const rejected = XPostCandidateSummary(
         id: 'r',
         status: 'rejected',
