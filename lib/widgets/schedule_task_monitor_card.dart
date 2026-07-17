@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../services/schedule_task_runs_repository.dart';
 
 class ScheduleTaskMonitorCard extends StatefulWidget {
   const ScheduleTaskMonitorCard({super.key});
@@ -138,20 +139,15 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
     _loadTaskStatus();
   }
 
-  Future<void> _loadTaskStatus() async {
+  Future<void> _loadTaskStatus({bool force = false}) async {
     setState(() => _loading = true);
     try {
-      final SupabaseClient supabase = Supabase.instance.client;
       List<Map<String, dynamic>> runs = <Map<String, dynamic>>[];
       try {
-        final dynamic data = await supabase
-            .from('schedule_task_runs')
-            .select(
-              'task_id, status, started_at, finished_at, summary, error_message',
-            )
-            .order('started_at', ascending: false)
-            .limit(120);
-        runs = List<Map<String, dynamic>>.from(data as List<dynamic>);
+        // SelfDevinControlTowerCard と同一データのため共有リポジトリ経由で
+        // 取得し、初期表示での二重リクエストを避ける。手動 Refresh は
+        // force でキャッシュを飛ばす。
+        runs = await ScheduleTaskRunsRepository.fetch(force: force);
       } catch (_) {
         runs = <Map<String, dynamic>>[];
       }
@@ -240,7 +236,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 20),
-                  onPressed: _loadTaskStatus,
+                  onPressed: () => _loadTaskStatus(force: true),
                   tooltip: 'Refresh',
                 ),
               ],

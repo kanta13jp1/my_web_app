@@ -1729,10 +1729,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ? Map<String, dynamic>.from(lpStatsResponse)
           : <String, dynamic>{};
       final hasLpViewStats = lpStats.isNotEmpty;
-      final paidConversionMetrics = await _loadPaidConversionMetrics();
-      final xTodayStatus = await _loadXTodayStatus();
-      final xPerformanceContext = await _loadXPerformanceContext();
-      final xCandidates = await _loadXCandidateQueue();
+      // 相互依存の無い4ローダーを並列化 (旧: 直列 await でスピナー時間が
+      // 4リクエスト分加算されていた)。
+      final paidConversionFuture = _loadPaidConversionMetrics();
+      final xTodayStatusFuture = _loadXTodayStatus();
+      final xPerformanceContextFuture = _loadXPerformanceContext();
+      final xCandidatesFuture = _loadXCandidateQueue();
+      final paidConversionMetrics = await paidConversionFuture;
+      final xTodayStatus = await xTodayStatusFuture;
+      final xPerformanceContext = await xPerformanceContextFuture;
+      final xCandidates = await xCandidatesFuture;
 
       final toolExecutionLogs = <Map<String, dynamic>>[];
       final blockedReasonCounts = <String, int>{};
@@ -6361,7 +6367,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildXCandidateRow(XPostCandidateSummary candidate) {
     final theme = Theme.of(context);
     final publishing = _xCandidatePublishing.contains(candidate.id);
-    final age = candidateAgeLabel(candidate.generatedAt, DateTime.now());
+    final now = DateTime.now();
+    final age = candidateAgeLabel(candidate.generatedAt, now);
+    // 鮮度切れ (news_briefing 24h / data_report 72h / 既定7日) の候補は
+    // 承認ボタンを無効化し、古いニュースの誤投稿を防ぐ。
+    final expired = isCandidateExpired(candidate, now);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -6419,6 +6429,27 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           color: Color(0xFF9CA3AF),
                         ),
                       ),
+                    if (expired)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withValues(
+                            alpha: 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          '鮮度切れ',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFB91C1C),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -6431,7 +6462,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           const SizedBox(width: 8),
           FilledButton.tonal(
-            onPressed: publishing || !candidate.isActionable
+            onPressed: publishing || !candidate.isActionable || expired
                 ? null
                 : () => _publishXCandidate(candidate),
             child: publishing
@@ -6440,7 +6471,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     height: 14,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('承認して投稿'),
+                : Text(expired ? '鮮度切れ' : '承認して投稿'),
           ),
         ],
       ),

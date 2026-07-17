@@ -92,10 +92,50 @@ class XPostCandidateSummary {
         return '投稿済み';
       case 'rejected_duplicate':
         return '近似重複で見送り';
+      case 'rejected':
+        return '却下済み';
       default:
         return status;
     }
   }
+}
+
+/// content_archetype → 鮮度ウィンドウ。ニュース系は鮮度が命なので短い。
+/// ここに無い archetype は選挙系 variant の個別判定を経て既定7日に落ちる。
+const Map<String, Duration> kCandidateFreshnessWindows = <String, Duration>{
+  'news_briefing': Duration(hours: 24),
+  'data_report': Duration(hours: 72),
+  'data_report_thread': Duration(hours: 72),
+};
+
+/// 鮮度ウィンドウの既定値 (エバーグリーン寄りの系列)。
+const Duration kCandidateDefaultFreshnessWindow = Duration(days: 7);
+
+/// 候補の鮮度ウィンドウを解決する。archetype 優先、次に選挙系 variant
+/// (diff/速報系のため 72h)、最後に既定7日。
+Duration candidateFreshnessWindow(XPostCandidateSummary candidate) {
+  final byArchetype = kCandidateFreshnessWindows[candidate.archetype.trim()];
+  if (byArchetype != null) return byArchetype;
+  final variant = candidate.variant.trim();
+  if (variant.startsWith('local_election') ||
+      variant == 'member_delta_national_progress' ||
+      variant == 'scheduled_candidate_delta' ||
+      variant == 'party_gap_ranking') {
+    return const Duration(hours: 72);
+  }
+  return kCandidateDefaultFreshnessWindow;
+}
+
+/// 鮮度切れ判定。生成時刻不明の候補は判定しない (誤ブロックより見せる方を
+/// 選ぶ — 未知系列の追い漏れに気づける)。鮮度切れ候補は「承認して投稿」を
+/// 無効化し、誤って古いニュースを公開する事故を防ぐ (Qiita 停止事件の教訓 =
+/// 公開系の安全側デフォルト)。
+bool isCandidateExpired(XPostCandidateSummary candidate, DateTime now) {
+  final generatedAt = candidate.generatedAt;
+  if (generatedAt == null) return false;
+  final age = now.difference(generatedAt);
+  if (age.isNegative) return false;
+  return age > candidateFreshnessWindow(candidate);
 }
 
 /// 一覧から操作対象(actionable)だけを残す。posted / rejected_duplicate は

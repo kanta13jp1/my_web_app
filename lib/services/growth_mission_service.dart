@@ -1412,10 +1412,13 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
   Timer? _heartbeatTimer;
   Timer? _metricsTimer;
   Future<void>? _immediatePresenceSyncInFlight;
-  String? _immediatePresenceSyncInFlightPagePath;
   DateTime? _lastImmediatePresenceSyncAt;
-  String? _lastImmediatePresenceSyncPagePath;
   String _currentPagePath = '/';
+
+  /// まだ 1 ルートも track していない状態の区別。初期値 _currentPagePath='/'
+  /// と初回ルート '/' (root 直行 = 最多の入口) が一致して同一 path skip に
+  /// 入ると、touchpoint/referral 記録が丸ごと消えるため。
+  bool _hasTrackedRoute = false;
 
   GrowthPresenceNavigatorObserver({
     GrowthMissionService service = const GrowthMissionService(),
@@ -1428,33 +1431,44 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
 
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _heartbeatTimer?.cancel();
-    _metricsTimer?.cancel();
+    _cancelTimers();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
-      _heartbeatTimer?.cancel();
-      _metricsTimer?.cancel();
+      _cancelTimers();
     } else if (state == AppLifecycleState.resumed) {
-      _restartTimers();
+      // バックグラウンド復帰時はタイマーを作り直し、即時 sync も試みる
+      // (グローバル cooldown 内なら書き込みはスキップされる)。
+      _cancelTimers();
+      _startTimersIfNeeded(syncNow: true);
     }
   }
 
-  void _restartTimers() {
+  void _cancelTimers() {
     _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
     _metricsTimer?.cancel();
+    _metricsTimer = null;
+  }
+
+  /// タイマーが未生成のときだけ生成する。ルート遷移のたびに周期を
+  /// リセットしていた旧実装と違い、2分 heartbeat / 5分 metrics の周期を
+  /// 遷移頻度と無関係に保つ。
+  void _startTimersIfNeeded({required bool syncNow}) {
     if (!_service.isPresenceTrackingAvailable) return;
-    _syncPresenceImmediately();
-    _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
+    if (syncNow) {
+      _syncPresenceImmediately();
+    }
+    _heartbeatTimer ??= Timer.periodic(const Duration(minutes: 2), (_) {
       _runSafely(
         _service.syncPresence(pagePath: _currentPagePath),
         'syncPresence heartbeat',
       );
     });
-    _metricsTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+    _metricsTimer ??= Timer.periodic(const Duration(minutes: 5), (_) {
       _runSafely(
         _service.refreshAggregateMetrics(),
         'refreshAggregateMetrics',
@@ -1488,7 +1502,17 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
   }
 
   void _trackRoute(Route<dynamic> route) {
-    _currentPagePath = _resolvePagePath(route);
+    final resolved = _resolvePagePath(route);
+    if (resolved == null ||
+        (_hasTrackedRoute && resolved == _currentPagePath)) {
+      // ダイアログ等の無名ルートや同一ページへの出入りでは presence 書き込み
+      // もタッチポイント記録も行わない (直前ページに滞在している扱い)。
+      // アプリ起動直後の初回ルートでまだタイマーが無い場合のみ起動する。
+      _startTimersIfNeeded(syncNow: _heartbeatTimer == null);
+      return;
+    }
+    _hasTrackedRoute = true;
+    _currentPagePath = resolved;
     _runSafely(
       _acquisitionService.recordTouchpointForPagePath(_currentPagePath),
       'recordTouchpointForPagePath',
@@ -1501,35 +1525,31 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       _service.applyPendingReferralIfPossible(),
       'applyPendingReferralIfPossible',
     );
-    _restartTimers();
+    _syncPresenceImmediately();
+    _startTimersIfNeeded(syncNow: false);
   }
 
   void _syncPresenceImmediately() {
-    final pagePath = _currentPagePath;
-    final inFlight = _immediatePresenceSyncInFlight;
-    if (inFlight != null &&
-        _immediatePresenceSyncInFlightPagePath == pagePath) {
+    if (_immediatePresenceSyncInFlight != null) {
       return;
     }
 
+    // cooldown は pagePath 非依存 (グローバル)。cooldown 中の遷移は
+    // _currentPagePath の更新だけ行い、書き込みは次の heartbeat に委ねる。
     final lastSyncedAt = _lastImmediatePresenceSyncAt;
-    if (_lastImmediatePresenceSyncPagePath == pagePath &&
-        lastSyncedAt != null &&
+    if (lastSyncedAt != null &&
         DateTime.now().difference(lastSyncedAt) < _immediatePresenceCooldown) {
       return;
     }
 
-    final syncFuture = _service.syncPresence(pagePath: pagePath);
+    final syncFuture = _service.syncPresence(pagePath: _currentPagePath);
     _immediatePresenceSyncInFlight = syncFuture;
-    _immediatePresenceSyncInFlightPagePath = pagePath;
     _lastImmediatePresenceSyncAt = DateTime.now();
-    _lastImmediatePresenceSyncPagePath = pagePath;
 
     _runSafely(
       syncFuture.whenComplete(() {
         if (identical(_immediatePresenceSyncInFlight, syncFuture)) {
           _immediatePresenceSyncInFlight = null;
-          _immediatePresenceSyncInFlightPagePath = null;
         }
       }),
       'syncPresence',
@@ -1545,7 +1565,11 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
     );
   }
 
-  String _resolvePagePath(Route<dynamic> route) {
+  /// ルート名から page_path を解決する。ダイアログ等の無名ルートは null を
+  /// 返し、呼び出し側で「直前ページに滞在中」として扱う (旧実装の
+  /// runtimeType 文字列は 'minified:yL<dynamic>' のようなゴミ行を
+  /// user_presence に量産していた)。
+  String? _resolvePagePath(Route<dynamic> route) {
     final name = route.settings.name;
     if (name != null && name.trim().isNotEmpty) {
       final uri = Uri.tryParse(name);
@@ -1554,6 +1578,6 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       }
       return name;
     }
-    return route.runtimeType.toString();
+    return null;
   }
 }
