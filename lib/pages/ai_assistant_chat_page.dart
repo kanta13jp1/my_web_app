@@ -882,9 +882,9 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                     onPressed: _isLoading
                         ? null
                         : () => setState(() {
-                            _contextIds = const <String>[];
-                            _contextTitles = const <String>[];
-                          }),
+                              _contextIds = const <String>[];
+                              _contextTitles = const <String>[];
+                            }),
                     tooltip: '外部ファイルを解除',
                     icon: const Icon(
                       Icons.close,

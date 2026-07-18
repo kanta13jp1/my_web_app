@@ -1013,13 +1013,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             final arguments = settings.arguments is Map
                 ? Map<String, dynamic>.from(settings.arguments! as Map)
                 : const <String, dynamic>{};
-            final contextIds =
-                (arguments['context_file_ids'] as List?)
+            final contextIds = (arguments['context_file_ids'] as List?)
                     ?.map((item) => item.toString())
                     .toList(growable: false) ??
                 const <String>[];
-            final contextTitles =
-                (arguments['context_titles'] as List?)
+            final contextTitles = (arguments['context_titles'] as List?)
                     ?.map((item) => item.toString())
                     .toList(growable: false) ??
                 const <String>[];

@@ -171,7 +171,7 @@ class _McpFileSearchPageState extends State<McpFileSearchPage> {
                     onChanged: _searching
                         ? null
                         : (value) =>
-                              setState(() => _selectedConnectorId = value),
+                            setState(() => _selectedConnectorId = value),
                   );
                   final queryField = TextField(
                     key: const Key('mcp_file_query'),
@@ -285,7 +285,7 @@ class _McpFileSearchPageState extends State<McpFileSearchPage> {
     final dateLabel = modified == null
         ? ''
         : '${modified.year}/${modified.month.toString().padLeft(2, '0')}/'
-              '${modified.day.toString().padLeft(2, '0')}';
+            '${modified.day.toString().padLeft(2, '0')}';
     return Card(
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -334,8 +334,8 @@ class _McpFileSearchPageState extends State<McpFileSearchPage> {
                   tooltip: attached
                       ? '追加済み'
                       : result.contextEligible
-                      ? 'AIコンテキストに追加'
-                      : '追加できません',
+                          ? 'AIコンテキストに追加'
+                          : '追加できません',
                   icon: Icon(attached ? Icons.check_circle : Icons.add_link),
                 ),
         ),

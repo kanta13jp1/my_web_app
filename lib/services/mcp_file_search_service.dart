@@ -116,7 +116,7 @@ abstract class McpFileSearchGateway {
 
 class McpFileSearchService implements McpFileSearchGateway {
   McpFileSearchService({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
