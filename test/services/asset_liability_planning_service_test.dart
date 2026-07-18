@@ -2101,5 +2101,31 @@ void main() {
       );
       expect(otherMobit.paymentSourceAccountId, 'smbc_otsuka');
     });
+
+    test('treats a cardLoan payment source as unset', () {
+      // 振替元がカードローン (現金借入 = mobit) を指す設定は不正扱いで未設定に
+      // 正規化する。cardLoan はどのセレクタにも候補として出ないのに legacy 移行の
+      // 名前衝突で保存され得る。非 null のままだと「原資未設定」レビューに出ず、
+      // 現金系口座の見込み残高からも静かに消えるため。
+      final loanSourced = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: <String, String>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 'mobit',
+        },
+      );
+      final acom = loanSourced.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムショッピング',
+      );
+      expect(acom.paymentSourceAccountId, isNull);
+      expect(acom.paymentSourceAccountName, isNull);
+      // 未設定へ倒れることで原資未設定レビュー (修正導線) の対象になる。
+      expect(
+        loanSourced.paymentSourceMissingRows.any(
+          (row) => row.name == 'アコムショッピング',
+        ),
+        isTrue,
+      );
+    });
   });
 }

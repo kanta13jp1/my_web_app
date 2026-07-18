@@ -1241,6 +1241,44 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('triage guide card shows staged first steps in crisis', (
+      tester,
+    ) async {
+      // 現金1,000円 + 負債 → 「まず、これだけ」カードが生活費確保を最優先で出す。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 1000,
+                '三井住友銀行大塚支店': 500000,
+                'モビット': -3200000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_triage_guide_card')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('まず、これだけ'), findsWidgets);
+      expect(find.textContaining('食費・移動費を確保する'), findsOneWidget);
+      // 負債 320万 ≥ 300万 → 専門窓口の案内も出る。
+      expect(find.textContaining('一人で抱えないでください'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
     testWidgets('payment source missing banner lists unset payment sources', (
       tester,
     ) async {

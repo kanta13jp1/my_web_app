@@ -311,6 +311,36 @@ void main() {
       expect(missing.suggestedAction.contains('候補: 三井住友銀行大塚支店'), false);
     });
 
+    test('report carries a triage plan and the prompt includes the section',
+        () {
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 4817,
+          '三井住友銀行大塚支店': 400000,
+          'モビット': -3200000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 37000},
+      );
+
+      final report = service.buildReport(workbook: workbook);
+
+      expect(report.triagePlan, isNotNull);
+      expect(report.triagePlan!.hasContent, isTrue);
+      expect(
+        report.triagePlan!.todaySteps.first.detail.contains('三井住友銀行大塚支店'),
+        isTrue,
+      );
+
+      final prompt =
+          const AssetManagementInsightPromptBuilder().buildDetailedAdvicePrompt(
+        report,
+      );
+      expect(prompt.contains('今日やることトリアージ'), isTrue);
+      expect(prompt.contains('食費・移動費を確保する'), isTrue);
+      expect(prompt.contains('法テラス'), isTrue);
+    });
+
     test('missing payment source action suggests the largest cash-like account',
         () {
       final workbook = planner.buildWorkbook(
