@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/asset_liability_workbook.dart';
 import 'package:my_web_app/models/user_profile.dart';
 import 'package:my_web_app/services/asset_debt_discipline_monitor.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
@@ -11,20 +12,25 @@ void main() {
 
   group('AssetTriageGuideService', () {
     test('crisis state produces at most 3 ordered today steps', () {
-      // 現金4,817円 + 本日期日のモビット + ファミペイのリボ/新規利用。
+      // 現金4,817円 + 本日期日のモビット + 期限超過のauPay + ファミペイのリボ/新規利用。
       final workbook = planner.buildWorkbook(
         latestSnapshot: const <String, double>{
           '財布(現金)': 4817,
           '三井住友銀行大塚支店': 400000,
           'ファミペイ': -3200000,
           'モビット': -100000,
+          'auPayカード': -200000,
         },
         baseDate: DateTime(2026, 5, 15),
         monthlyPaymentOverrides: const <String, double>{
           'ファミペイ': 3000,
           'mobit': 10000,
+          'aupay_card': 20000,
         },
-        paymentDayOverrides: const <String, int>{'モビット': 15},
+        paymentDayOverrides: const <String, int>{
+          'モビット': 15,
+          'auPayカード': 10,
+        },
       );
       final famipayId = workbook.debtMasterRows
           .firstWhere((row) => row.name == 'ファミペイ')
@@ -52,7 +58,8 @@ void main() {
       // ③ 止血 (カード新規利用停止)。
       expect(plan.todaySteps[2].kind, AssetTriageStepKind.stopNewCardUsage);
       expect(plan.todaySteps[2].detail.contains('ファミペイ'), isTrue);
-      // 今週: 期限超過処理 + リボ解除電話。
+      // 今週: 期限超過処理 + リボ解除電話。期限超過は昨日以前の支払のみ
+      // (本日期日のモビット10,000円は②に載せ、④へは二重計上しない)。
       expect(
         plan.weekSteps.map((step) => step.kind),
         containsAll(<AssetTriageStepKind>[
@@ -60,6 +67,11 @@ void main() {
           AssetTriageStepKind.disableRevolving,
         ]),
       );
+      final overdueStep = plan.weekSteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.processOverdue,
+      );
+      expect(overdueStep.detail.contains('1件'), isTrue);
+      expect(overdueStep.detail.contains('20,000円'), isTrue);
       // 今月: 脱却プランに基づく返済ペース。
       expect(
         plan.monthSteps.any(
@@ -72,6 +84,116 @@ void main() {
       expect(plan.consultationNote, isNotNull);
       expect(plan.consultationNote!.contains('法テラス'), isTrue);
       expect(plan.consultationNote!.contains('188'), isTrue);
+    });
+
+    test('overdue step ignores unreceived income and due-today payments', () {
+      // 未受領の給料 (期日超過で overdue フラグが立つ) と本日期日の支払は
+      // 「期限超過」ステップに数えない。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 50000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 5, 15),
+        monthlyPaymentOverrides: const <String, double>{'mobit': 10000},
+        paymentDayOverrides: const <String, int>{'モビット': 15},
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary',
+            date: DateTime(2026, 5, 10),
+            name: '給料',
+            amount: 200000,
+            destinationAccountId: null,
+            destinationAccountName: null,
+            received: false,
+          ),
+        ],
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      expect(
+        plan.weekSteps.where(
+          (step) => step.kind == AssetTriageStepKind.processOverdue,
+        ),
+        isEmpty,
+      );
+      expect(
+        plan.todaySteps.any(
+          (step) => step.kind == AssetTriageStepKind.dueTodayPayment,
+        ),
+        isTrue,
+      );
+    });
+
+    test('no fake cash crisis for users without a cash account', () {
+      // 現金口座を記録していないだけの健全ユーザーには生活費ステップを出さない。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 500000},
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+        todayAvailableAmount: 100000,
+      );
+
+      expect(
+        plan.todaySteps.where(
+          (step) => step.kind == AssetTriageStepKind.secureLivingExpense,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('consultation threshold counts only borrowing-kind debt', () {
+      // 家賃 (毎月全額払いの固定費) は借入合計に含めない → 閾値未満で案内なし。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          '家賃': -80000,
+          'モビット': -2950000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      expect(plan.showConsultation, isFalse);
+    });
+
+    test('repayment pace example picks the highest annual rate card', () {
+      // PayPay (繰越額最大・年利15%) より ファミペイ (年利18%) を例示する。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'PayPay': -800000,
+          'ファミペイ': -100000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          'paypay_card': 10000,
+          'ファミペイ': 10000,
+        },
+        annualRateOverrides: const <String, double>{'famipay_card': 0.18},
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final pace = plan.monthSteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.reviewRepaymentPace,
+      );
+      expect(pace.detail.contains('例: ファミペイ'), isTrue);
     });
 
     test('calm state has no content', () {

@@ -116,39 +116,62 @@ class AssetTriageGuideService {
     final weekSteps = <AssetTriageStep>[];
     final monthSteps = <AssetTriageStep>[];
 
-    // ① 生活費確保 (健康を削らない)。
-    final cashOnHand = workbook.accounts
-        .where(
-          (account) =>
-              account.kind == AssetLiabilityAccountKind.cash &&
-              account.balance > 0,
-        )
+    // ① 生活費確保 (健康を削らない)。現金口座を登録していないだけの利用者に
+    // 「現金0円」の偽危機を出さないため、現金口座がある場合の残高不足か、
+    // 本日使用可能額のマイナスのどちらかでのみ発火する。
+    final cashAccounts = workbook.accounts
+        .where((account) => account.kind == AssetLiabilityAccountKind.cash)
+        .toList();
+    final cashOnHand = cashAccounts
+        .where((account) => account.balance > 0)
         .fold<double>(0, (sum, account) => sum + account.balance);
-    if (cashOnHand < livingExpenseCashThreshold || todayAvailableAmount < 0) {
-      AssetLiabilityAccount? largestDeposit;
+    final lowCash =
+        cashAccounts.isNotEmpty && cashOnHand < livingExpenseCashThreshold;
+    if (lowCash || todayAvailableAmount < 0) {
+      // 引出元は生残高でなく「引落予定を除いた見込み残高」最大の預金を選ぶ
+      // (残高最大口座が引落原資だと、下ろした結果引き落とし不能になるため)。
+      final summariesById = <String, AssetLiabilityAccountCashflowSummary>{
+        for (final summary in workbook.accountCashflowSummaries)
+          summary.accountId: summary,
+      };
+      AssetLiabilityAccount? source;
+      var sourceProjected = 0.0;
       for (final account in workbook.accounts) {
         if (account.kind != AssetLiabilityAccountKind.deposit ||
             account.balance <= 0) {
           continue;
         }
-        if (largestDeposit == null ||
-            account.balance > largestDeposit.balance) {
-          largestDeposit = account;
+        final projected =
+            summariesById[account.id]?.projectedBalance ?? account.balance;
+        if (source == null || projected > sourceProjected) {
+          source = account;
+          sourceProjected = projected;
         }
       }
-      final reason = cashOnHand < livingExpenseCashThreshold
+      final reason = lowCash
           ? '手元現金が${_yen(cashOnHand)}しかありません。'
           : '本日の使用可能額が${_yen(todayAvailableAmount)}です。';
+      final String detail;
+      if (source == null || sourceProjected <= 0) {
+        detail = '$reason現金・預金として登録された口座に余力が見つかりません。'
+            '他に使える資産がないか確認し、無ければ今日の食費は家族・自治体・'
+            'フードバンク等への相談も選択肢にしてください。食事を抜く判断はしないでください。';
+      } else if (sourceProjected >= 20000) {
+        detail = '$reason${source.name}（残高 ${_yen(source.balance)} / '
+            '引落予定を除いた余力 ${_yen(sourceProjected)}）から'
+            '1〜2万円を下ろして今日の食費・移動費を確保してください。'
+            '食事を抜く判断はしないでください。';
+      } else {
+        detail = '$reason${source.name}の引落予定を除いた余力は'
+            '${_yen(sourceProjected)}です。引き落としに影響しないよう、'
+            'この範囲で今日の食費・移動費を確保してください。'
+            '食事を抜く判断はしないでください。';
+      }
       todaySteps.add(
         AssetTriageStep(
           kind: AssetTriageStepKind.secureLivingExpense,
           title: '食費・移動費を確保する',
-          detail: largestDeposit == null
-              ? '$reason現金・預金に余力がないため、今日の食費は家族・自治体・'
-                  'フードバンク等への相談も選択肢にしてください。食事を抜く判断はしないでください。'
-              : '$reason${largestDeposit.name}（残高 ${_yen(largestDeposit.balance)}）から'
-                  '1〜2万円を下ろして今日の食費・移動費を確保してください。'
-                  '食事を抜く判断はしないでください。',
+          detail: detail,
         ),
       );
     }
@@ -206,7 +229,19 @@ class AssetTriageGuideService {
     final cappedToday = todaySteps.take(maxTodaySteps).toList();
 
     // ④ 期限超過の処理 (放置だけが最悪)。
-    final overdueRows = workbook.overdueCashflowRows;
+    // overdueCashflowRows は未受領の収入行も含み、本日期日 (=ステップ②) も
+    // overdue 扱いのため、「支払 かつ 昨日以前」に絞る (収入を延滞額扱いしない・
+    // 本日期日を②と二重計上しない)。
+    final overdueRows = workbook.cashflowRows
+        .where(
+          (row) =>
+              row.isPayment &&
+              row.isDirectCashflowTarget &&
+              !row.paid &&
+              row.overdue &&
+              _dateOnly(row.paymentDate).isBefore(today),
+        )
+        .toList();
     if (overdueRows.isNotEmpty) {
       final total = overdueRows.fold<double>(
         0,
@@ -236,16 +271,24 @@ class AssetTriageGuideService {
           kind: AssetTriageStepKind.disableRevolving,
           title: 'リボ/分割の設定解除を電話する',
           detail: '$namesに電話し、今後の利用分の支払い方式を一括（1回払い）に'
-              '変更してください。残高を今すぐ全額返す必要はありません。'
-              '「これ以上リボが増えない設定」にすることが目的です。',
+              '変更してください。理想は残高の一括返済ですが、難しい場合でも'
+              'まず「これ以上リボが増えない設定」へ変えることが目的です。',
         ),
       );
     }
 
-    // ⑥ 返済ペースを脱却プランで決める (金利の高い順)。
+    // ⑥ 返済ペースを脱却プランで決める。例示カードも本文どおり
+    // 「金利の高い順」で選ぶ (違反リスト自体は繰越額順のため並べ直す)。
+    final annualRateById = <String, double>{
+      for (final row in workbook.debtMasterRows) row.id: row.annualRate,
+    };
     final planned = revolving
         .where((violation) => violation.hasEscapePlan)
-        .toList();
+        .toList()
+      ..sort(
+        (a, b) => (annualRateById[b.accountId] ?? 0)
+            .compareTo(annualRateById[a.accountId] ?? 0),
+      );
     if (planned.isNotEmpty) {
       final top = planned.first;
       monthSteps.add(
@@ -280,22 +323,35 @@ class AssetTriageGuideService {
       }
     }
 
-    // 専門窓口の案内 (負債が絶対額または年収比の閾値を超えたら)。
-    final totalDebt = workbook.debtMasterRows.fold<double>(
-      0,
-      (sum, row) => sum + row.balance.abs(),
-    );
+    // 専門窓口の案内 (借入が絶対額または年収比の閾値を超えたら)。
+    // 家賃・通信費など毎月全額払いの固定費は「借金」ではないため、
+    // 規律モニターと同じ基準 (isBorrowingKind + 非固定費) で合算する。
+    final totalDebt = workbook.debtMasterRows
+        .where(
+          (row) =>
+              !row.fullPaymentEstimate &&
+              AssetDebtDisciplineMonitor.isBorrowingKind(row.kind),
+        )
+        .fold<double>(0, (sum, row) => sum + row.balance.abs());
     final showConsultation = totalDebt >= consultationDebtThreshold ||
         (annualIncome != null &&
             annualIncome > 0 &&
             totalDebt >= annualIncome * consultationDebtIncomeRatio);
     String? consultationNote;
     if (showConsultation) {
-      final incomeNote = (annualIncome != null && annualIncome > 0)
-          ? '年収${_yen(annualIncome)}の収入があるので、増やすのを止めて計画を立て直せば'
-              '十分立て直せる数字です。'
-          : '';
-      consultationNote = '負債合計 約${_yen(totalDebt)}は、任意整理などで利息を'
+      // 「立て直せる」の断言は借入が年収1.5倍以内のときだけ。それ以上は
+      // 結果を請け合わず、専門家との計画づくりへ誘導する。
+      final String incomeNote;
+      if (annualIncome == null || annualIncome <= 0) {
+        incomeNote = '';
+      } else if (totalDebt <= annualIncome * 1.5) {
+        incomeNote = '年収${_yen(annualIncome)}の収入があるので、増やすのを止めて'
+            '計画を立て直せば十分立て直せる数字です。';
+      } else {
+        incomeNote = '年収${_yen(annualIncome)}の収入があることは大きな強みです。'
+            'どの手続きが合うかも含めて、専門家と一緒に現実的な計画を立てましょう。';
+      }
+      consultationNote = '借入合計 約${_yen(totalDebt)}は、任意整理などで利息を'
           '止められる可能性がある水準です。無料で相談できます: '
           '法テラス 0570-078374（収入基準を満たせば弁護士相談が無料）/ '
           '消費者ホットライン 188（最寄りの消費生活センター）/ '

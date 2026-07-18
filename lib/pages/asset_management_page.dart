@@ -20217,7 +20217,6 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     };
   }
 
-  /// 「借金しない宣言」の遵守状況（達成は緑で称賛、違反は赤で具体指摘）を描画する。
   /// 「まず、これだけ」段階別トリアージカード。数字の洪水で混乱している
   /// 利用者向けに、今日 (最大3件)→今週→今月の順で絞って提示する。
   /// 背景が固定の淡ティールのため、文字色も固定の濃ティール系にする。
@@ -20366,6 +20365,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     );
   }
 
+  /// 「借金しない宣言」の遵守状況（達成は緑で称賛、違反は赤で具体指摘）を描画する。
   Widget _buildAssetManagementDisciplineCard(
     AssetDebtDisciplineReport report,
   ) {
