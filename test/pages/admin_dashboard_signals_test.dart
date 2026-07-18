@@ -426,38 +426,81 @@ void main() {
     });
   });
 
-  group('R27 resolveDisplayBestVariant (server unknown 除外漏れへの防御)', () {
-    test('named な bestVariant はそのまま返す', () {
-      expect(
-        resolveDisplayBestVariant('daily_briefing', const []),
+  group('R28 foldVariantsForDisplay + 勝ち型/ランキングの畳み込み', () {
+    // 本番観測: fallback(平均89 n=1) が本命(平均76 n=7)を抑えて勝ち型昇格。
+    final observed = [
+      {'variant': 'unknown', 'averageScore': 122, 'count': 16},
+      {'variant': 'daily_briefing_fallback', 'averageScore': 89, 'count': 1},
+      {'variant': 'daily_briefing', 'averageScore': 76, 'count': 7},
+      {'variant': 'daily_briefing_v2_numbers', 'averageScore': 27, 'count': 1},
+    ];
+
+    test('foldVariants: _fallback を base へ畳み unknown を除外', () {
+      final folded = foldVariantsForDisplay(observed);
+      expect(folded.map((e) => e.variant), [
         'daily_briefing',
-      );
+        'daily_briefing_v2_numbers',
+      ]);
+      // (89*1 + 76*7)/8 = 77.6 → 78, n=8
+      expect(folded.first.averageScore, 78);
+      expect(folded.first.count, 8);
     });
 
-    test('unknown のとき variants の unknown 以外の先頭へフォールバック', () {
-      final variants = [
-        {'variant': 'unknown', 'averageScore': 122, 'count': 16},
-        {'variant': 'daily_briefing_fallback', 'averageScore': 89, 'count': 1},
-        {'variant': 'daily_briefing', 'averageScore': 76, 'count': 7},
+    test('勝ち型は畳み込み後 n>=2 の最上位 (fallback 単独 n=1 は昇格させない)', () {
+      // 旧バグは daily_briefing_fallback を返していた。
+      expect(resolveDisplayBestVariant('unknown', observed), 'daily_briefing');
+    });
+
+    test('全 variant が n=1 → 勝ち型 null (断定しない)', () {
+      final allSingle = [
+        {'variant': 'daily_briefing', 'averageScore': 90, 'count': 1},
+        {'variant': 'question_post', 'averageScore': 10, 'count': 1},
       ];
-      expect(
-        resolveDisplayBestVariant('unknown', variants),
-        'daily_briefing_fallback',
-      );
+      expect(resolveDisplayBestVariant('daily_briefing', allSingle), isNull);
     });
 
-    test('unknown かつ named variant 無し → null (勝ち型行を出さない)', () {
-      expect(resolveDisplayBestVariant('unknown', null), isNull);
+    test('サーバ bestVariant が名前でも実測が薄ければ信用しない', () {
+      // bestVariant='daily_briefing' でも variants 空 → 実測無し → null。
+      expect(resolveDisplayBestVariant('daily_briefing', const []), isNull);
+      expect(resolveDisplayBestVariant('daily_briefing', null), isNull);
+    });
+
+    test('不正要素は無視', () {
       expect(
         resolveDisplayBestVariant('unknown', [
-          {'variant': 'unknown'},
+          {'variant': 'unknown', 'count': 9},
           {'variant': ''},
           'not-a-map',
         ]),
         isNull,
       );
-      expect(resolveDisplayBestVariant('', const []), isNull);
-      expect(resolveDisplayBestVariant(null, null), isNull);
+    });
+  });
+
+  group('R28 archetypeLiftSummaryLine: 実測0件バケットは計測中のみ表示', () {
+    test('count=0 & pending>0 → 「実測不足 (0件…)」でなく「計測中N件」', () {
+      final line = archetypeLiftSummaryLine(
+        resolveArchetypeLift([
+          {'archetype': 'product_promo', 'i72h': 119},
+          {'archetype': 'product_promo', 'i72h': 118},
+          {'archetype': 'data_report', 'i72h': null},
+        ]),
+      );
+      expect(line, contains('データレポート型 計測中1件'));
+      expect(line, isNot(contains('データレポート型 実測不足')));
+      expect(line, isNot(contains('0件')));
+    });
+
+    test('count>=1 だが n<2 は従来どおり「実測不足 (N件…)」', () {
+      final line = archetypeLiftSummaryLine(
+        resolveArchetypeLift([
+          {'archetype': 'news_briefing', 'i72h': 100},
+          {'archetype': 'news_briefing', 'i72h': 90},
+          {'archetype': 'product_promo', 'i72h': 10},
+          {'archetype': 'product_promo', 'i72h': null},
+        ]),
+      );
+      expect(line, contains('製品紹介型 実測不足 (1件・計測中1件)'));
     });
   });
 }

@@ -190,23 +190,79 @@ String? xGrowthLoopStalenessWarning({
       'metrics 収集 cron / spend-cap を確認してください。';
 }
 
-/// R27: サーバの bestVariant が「unknown」(variant タグ無し投稿の受け皿
-/// バケット)のとき、variants ランキング(平均スコア降順)から unknown を除いた
-/// 先頭を勝ち型として返す。有効な variant が無ければ null(勝ち型行を出さ
-/// ない)。growth-hub 側の除外漏れ(index.ts の bestVariant)への防御で、
-/// サーバ修正後も古いレスポンス/キャッシュに対して安全側に働く。
-String? resolveDisplayBestVariant(
-  String? bestVariant,
-  List<dynamic>? variants,
-) {
-  final trimmed = (bestVariant ?? '').trim();
-  if (trimmed.isNotEmpty && trimmed != 'unknown') return trimmed;
-  if (variants == null) return null;
+/// 畳み込み済み variant 実測。edge の x_best_variant.ts FoldedVariant と対の
+/// クライアント表現。
+class FoldedVariant {
+  final String variant;
+  final int averageScore;
+  final int count;
+
+  const FoldedVariant({
+    required this.variant,
+    required this.averageScore,
+    required this.count,
+  });
+}
+
+/// R28: variants(各 {variant, averageScore, count})を unknown 除外 + `_fallback`
+/// を base へ畳んで再集計する。edge の x_best_variant.ts foldVariants と同じ戦略
+/// 同一視。クライアントには totalScore が無いため averageScore*count で近似
+/// (edge は exact totalScore を持つ)。平均降順・同点は件数降順。
+List<FoldedVariant> foldVariantsForDisplay(List<dynamic>? variants) {
+  if (variants == null) return const [];
+  final totals = <String, num>{};
+  final counts = <String, int>{};
   for (final entry in variants) {
     if (entry is! Map) continue;
-    final name = (entry['variant'] ?? '').toString().trim();
+    var name = (entry['variant'] ?? '').toString().trim();
     if (name.isEmpty || name == 'unknown') continue;
-    return name;
+    if (name.endsWith('_fallback')) {
+      name = name.substring(0, name.length - '_fallback'.length);
+    }
+    if (name.isEmpty) continue;
+    final count = _toIntSignal(entry['count']);
+    final effectiveCount = count <= 0 ? 1 : count;
+    final avg = _toIntSignal(entry['averageScore']);
+    totals[name] = (totals[name] ?? 0) + avg * effectiveCount;
+    counts[name] = (counts[name] ?? 0) + effectiveCount;
+  }
+  final folded = counts.keys
+      .map(
+        (name) => FoldedVariant(
+          variant: name,
+          averageScore: (totals[name]! / counts[name]!).round(),
+          count: counts[name]!,
+        ),
+      )
+      .toList()
+    ..sort((a, b) {
+      final byAvg = b.averageScore.compareTo(a.averageScore);
+      if (byAvg != 0) return byAvg;
+      return b.count.compareTo(a.count);
+    });
+  return folded;
+}
+
+int _toIntSignal(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+/// R28: 勝ち型は畳み込み後 count>=minSample の最上位のみ。n=1 の外れ値や
+/// `_fallback` 単独 (part338 で unknown 除外を入れた副作用で 1 サンプルの
+/// daily_briefing_fallback が n=7 の daily_briefing を抑えて昇格していた) を
+/// 勝ち型に断定しない。該当が無ければ null(勝ち型行を出さない)。第1引数
+/// bestVariant はサーバ計算値だが、畳み込み前の生値なので信用せず variants
+/// から再判定する(古いレスポンス/キャッシュにも安全側)。
+String? resolveDisplayBestVariant(
+  String? bestVariant,
+  List<dynamic>? variants, {
+  int minSample = 2,
+}) {
+  for (final folded in foldVariantsForDisplay(variants)) {
+    if (folded.count >= minSample) return folded.variant;
   }
   return null;
 }
@@ -333,10 +389,15 @@ String? archetypeLiftSummaryLine(List<ArchetypeLiftEntry> entries) {
   if (entries.isEmpty) return null;
   final parts = entries.map((e) {
     final pending = e.pendingCount > 0 ? '・計測中${e.pendingCount}件' : '';
-    return e.measured
-        ? '${e.label} 平均${e.averageImpressions} imp '
-            '(${e.count}件$pending)'
-        : '${e.label} 実測不足 (${e.count}件$pending)';
+    if (e.measured) {
+      return '${e.label} 平均${e.averageImpressions} imp (${e.count}件$pending)';
+    }
+    // R28: 実測 0 件のバケット(全て計測中)は「実測不足 (0件・計測中N件)」だと
+    // 「0件」が二重に不自然。計測中のみ簡潔に出す。
+    if (e.count == 0) {
+      return '${e.label} 計測中${e.pendingCount}件';
+    }
+    return '${e.label} 実測不足 (${e.count}件$pending)';
   });
   return '型別実測（投稿72時間後・imp）: ${parts.join(' / ')}';
 }
