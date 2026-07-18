@@ -1,7 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef NoteSemanticSearchInvoker =
-    Future<Object?> Function(Map<String, dynamic> body);
+typedef NoteSemanticSearchInvoker = Future<Object?> Function(
+  Map<String, dynamic> body,
+);
 
 abstract interface class NoteSemanticSearchDataSource {
   Future<NoteSemanticSearchResponse> search(String query, {int limit = 20});
@@ -18,10 +19,10 @@ abstract interface class NoteSemanticSearchDataSource {
 
 class NoteSemanticSearchService implements NoteSemanticSearchDataSource {
   NoteSemanticSearchService(SupabaseClient client)
-    : _invoke = ((body) async {
-        final response = await client.functions.invoke('ai-hub', body: body);
-        return response.data;
-      });
+      : _invoke = ((body) async {
+          final response = await client.functions.invoke('ai-hub', body: body);
+          return response.data;
+        });
 
   const NoteSemanticSearchService.withInvoker(this._invoke);
 
@@ -99,13 +100,13 @@ class NoteSemanticSearchResponse {
     final rawResults = json['results'];
     final results = rawResults is List
         ? rawResults
-              .whereType<Map>()
-              .map(
-                (item) =>
-                    NoteSearchResult.fromJson(Map<String, dynamic>.from(item)),
-              )
-              .where((item) => item.id.isNotEmpty)
-              .toList(growable: false)
+            .whereType<Map>()
+            .map(
+              (item) =>
+                  NoteSearchResult.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .where((item) => item.id.isNotEmpty)
+            .toList(growable: false)
         : const <NoteSearchResult>[];
     return NoteSemanticSearchResponse(
       results: results,

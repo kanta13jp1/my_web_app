@@ -215,8 +215,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _aiService = widget.aiService ?? AIService(_supabase);
     _noteCommentsService = SupabaseNoteCommentsService(_supabase);
-    _semanticSearchService = widget.semanticSearchService ??
-        NoteSemanticSearchService(_supabase);
+    _semanticSearchService =
+        widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
     _currentNoteId = widget.noteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =

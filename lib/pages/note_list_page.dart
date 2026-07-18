@@ -80,8 +80,8 @@ class _NoteListPageState extends State<NoteListPage> {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _publicMemoService = PublicMemoService(_supabase);
-    _semanticSearchService = widget.semanticSearchService ??
-        NoteSemanticSearchService(_supabase);
+    _semanticSearchService =
+        widget.semanticSearchService ?? NoteSemanticSearchService(_supabase);
     _fetchNotes();
   }
 
@@ -1185,9 +1185,8 @@ class _NoteListPageState extends State<NoteListPage> {
             .where((note) => !shareCandidateIds.contains(_noteId(note)))
             .toList()
         : reminderExcludedNotes;
-    final hasAnyEntries =
-        (_searchQuery.isEmpty && _draftEntries.isNotEmpty) ||
-            visibleNotes.isNotEmpty;
+    final hasAnyEntries = (_searchQuery.isEmpty && _draftEntries.isNotEmpty) ||
+        visibleNotes.isNotEmpty;
     final pageTitle =
         _showFavoritesOnly ? 'CKO OFFICE (お気に入り)' : 'CKO OFFICE (メモ一覧)';
 
