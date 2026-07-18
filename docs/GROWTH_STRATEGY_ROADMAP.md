@@ -32964,3 +32964,30 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - 整合性スコア: 4/9 ✅
 - 理念的貢献: AI レポートの開発者提案を同日実装するセルフループ (レポート→実装→本番) を確立。負債管理の実害 (引き落とし失敗・明細誤取込) を予防する守りの価値
 - 懸念: なし
+
+## セッション記録: daily-development cron — AI大学 レジストリ重複 id 修正 + 回帰ガード (2026-07-17→18 / Win Claude 自動)
+
+**実行内容**: 日次自動開発 cron。メイン checkout が foreign codex WIP ブランチ (`codex/issue-1215-hitl` / origin/main より 1954 behind・260 未コミット変更) に居たため、そのブランチには一切触れず、origin/main 由来の隔離 worktree で実作業を実施 (memory 教訓: scheduled task on foreign WIP → 非干渉 / origin/main 正本)。
+
+**成果 (実データ品質の修正)**:
+- **AI大学 プロバイダーレジストリの重複 id 2 件を修正**: `lib/models/ai_provider_registry.dart` の `const List<AiProviderEntry> kAiProviderRegistry` (223 エントリ) に `baseten` と `scale_ai` が各 2 回定義されていた (総数 223 / ユニーク 221)。Dart は Map リテラルの重複キーは analyzer (`equal_keys_in_map`) で弾くが、**List の重複要素は合法で素通り**するため発生。実害は `firstWhere` の先勝ちで、後から URL・資金調達メモを足したリッチな新エントリが表示されない状態だった。
+- **削除ではなく「正典へのマージ」で修正**: セクション分類と `tier` を持つ先頭の正典エントリに、重複側の URL (`baseten.co` / `scale.com`) とリッチな note をマージし、後から一括追加された重複 2 件を削除。情報量とセクション構成を両立。
+- **回帰ガード新設**: `test/models/ai_provider_registry_test.dart` に `Set.add` ベースの id 一意性テスト + id/displayName 非空テストを追加 (2 tests 全緑)。言語が保証しない不変条件をテストで固定。
+- **検証**: `flutter analyze` = `No issues found!` (2 files) / `flutter test` 全緑。
+- **技術ブログ下書き**: `docs/blog-drafts/2026-07-18-dart-const-list-duplicate-guard.md` に「Map なら CI が弾くのに List は素通りする静かなバグ」を一般則 (const リストの一意性はテストで固定) として整理。
+- **開発実績 seed**: `supabase/migrations/20260718010000_seed_achievements_ai_provider_registry_dedup.sql` (idempotent INSERT / development_achievements)。
+
+**教訓**: (1) id で引く `const List` は言語が一意性を守らない → `sort | uniq -d` で監査 + テストで固定。(2) 重複修正は削除ではなくマージで情報を守る。(3) foreign codex WIP ブランチに parked された checkout では隔離 worktree で作業し当該ブランチに非干渉。
+
+**次回優先**:
+- X週次レポ cron timeout の EXPLAIN 診断 (part335 積み残し)
+- Qiita 異議申し立て送信 (ユーザー本人アクション / リマインド)
+- 他の `const List` マスターデータ (競合比較表等) の重複 id 一括監査
+
+### Philosophy Alignment (daily 2026-07-18)
+
+- 主要実装: AI大学 レジストリの重複 id 修正 + 一意性回帰ガード + 静かなバグ一般則の blog 化
+- 該当原則: 7 (資産負債: マスターデータ=資産の品質毀損を修復) / 8 (KPI: 定期監査可能な形で一意性を固定) / 4 (6部署: 品質ゲートの自動化) / 9 (責任ある自動化: bounded scope で foreign WIP 非干渉)
+- 整合性スコア: 4/9 ✅
+- 理念的貢献: 「コンパイラが守る範囲」と「運用前提」のギャップに薄い assertion を 1 枚挟む文化を、実データ修正 + テスト + blog の三点セットで定着
+- 懸念: なし
