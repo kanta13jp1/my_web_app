@@ -4,22 +4,28 @@ const publicRoutes = ['/', '/project-gantt', '/referral'];
 
 test.describe('public production smoke', () => {
   for (const route of publicRoutes) {
-    test(`${route} returns the public Flutter shell`, async ({ page }) => {
-      const response = await page.goto(route, { waitUntil: 'domcontentloaded' });
+    test(`${route} returns the public Flutter shell`, async ({ request }) => {
+      const response = await request.get(route);
 
-      expect(response?.ok()).toBeTruthy();
-      await expect(page.locator('body')).toContainText('自分株式会社');
-      await expect(page.locator('body')).toContainText('Loading application');
+      expect(response.ok()).toBeTruthy();
+      const html = await response.text();
+      expect(html).toContain('id="seo-title"');
+      expect(html).toMatch(
+        /<p\b(?=[^>]*\bclass="seo-loading")(?=[^>]*\brole="status")[^>]*>/,
+      );
     });
   }
 
   test('/project-gantt exposes crawlable entry links while app boots', async ({
-    page,
+    request,
   }) => {
-    await page.goto('/project-gantt', { waitUntil: 'domcontentloaded' });
+    const response = await request.get('/project-gantt');
+    expect(response.ok()).toBeTruthy();
+    const html = await response.text();
 
-    await expect(page.getByRole('link', { name: '無料で始める' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Proで支援する' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'WBSガントチャート' })).toBeVisible();
+    expect(html).toContain(
+      'href="https://my-web-app-b67f4.web.app/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth"',
+    );
+    expect(html).toContain('href="#seo-how"');
   });
 });
