@@ -1369,6 +1369,59 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('escape-plan button hidden when already paying above the plan',
+        (
+      tester,
+    ) async {
+      // ファミペイ残高10万を月9万返済 → 繰越1万でリボ違反だが、脱却月額
+      // (12ヶ月・約9千) より現状の返済が多い → 反映(減額)ボタンは出さない。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      // 支払予定額は給与サイクル月キーでネストされる。
+      final monthKey =
+          AssetLiabilityMonthlyStateStore.formatSalaryCycleMonthKey(
+        DateTime(2026, 7, 10),
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        AssetLiabilityMonthlyStateStore.paymentPrefsKey: jsonEncode(
+          <String, Map<String, double>>{
+            monthKey: <String, double>{'famipay_card': 90000},
+          },
+        ),
+      });
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 200000,
+                'ファミペイ': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // 違反バッジ自体は出る (繰越1万) が、増額導線ボタンは出ない。
+      expect(
+        find.byKey(const Key('asset_discipline_violation_badge')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const Key('asset_discipline_apply_escape_famipay_card'),
+        ),
+        findsNothing,
+      );
+
+      await _unmount(tester);
+    });
+
     testWidgets('triage guide card shows staged first steps in crisis', (
       tester,
     ) async {

@@ -20811,9 +20811,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
             ],
           ),
+          // 脱却月額が現在の返済予定より大きい(=増額提案)ときだけ反映導線を出す。
+          // 既に脱却額以上を返している人にボタンを出すと、押した瞬間に返済額を
+          // 引き下げてしまい利息を増やす逆効果になるため。
           if (violation.type ==
                   AssetDebtDisciplineViolationType.revolvingCard &&
-              violation.hasEscapePlan) ...[
+              violation.hasEscapePlan &&
+              violation.escapeMonthlyPayment! >
+                  (violation.currentBalance - violation.amount)) ...[
             const SizedBox(height: 4),
             Align(
               alignment: Alignment.centerLeft,
@@ -20830,7 +20835,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     unawaited(_confirmApplyEscapePlanPayment(violation)),
                 icon: const Icon(Icons.playlist_add_check_rounded, size: 16),
                 label: Text(
-                  '脱却月額 ${_formatManagementYen(violation.escapeMonthlyPayment!)} を今月予定に反映',
+                  '脱却月額 ${_formatManagementYen(violation.escapeMonthlyPayment!)} へ増額（今月予定に反映）',
                 ),
               ),
             ),
