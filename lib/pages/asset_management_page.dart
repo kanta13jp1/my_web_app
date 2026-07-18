@@ -412,6 +412,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 「AI要約を更新」(force) を使う。
   static const Duration _assetManagementAiSummaryAutoRefreshCooldown =
       Duration(minutes: 60);
+
+  /// 直近の AI 要約「生成試行」時刻を端末に残す pref キー (基準日|ISO)。
+  /// 成功分析は履歴テーブルに保存され再利用できるが、ai-hub の 500 等で失敗した
+  /// 試行は保存されない。これが無いと AI 障害中はロード/編集 (=指紋変化) の
+  /// たびに 4 プロバイダ直列生成 (1 分超) が毎回走る。失敗も含めて試行時刻を
+  /// 記録し、クールダウン内は生成を見送って定型要約でしのぐ。
+  static const String _assetManagementAiSummaryLastAttemptPrefKey =
+      'asset_ai_summary_last_attempt_v1';
   Timer? _existingDeveloperIssueLookupDebounce;
 
   /// 起動時の `asset_pref_mirror` 個別読み取り (~20 箇所) を 1 回のバッチ取得へ
@@ -19806,6 +19814,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         });
         return;
       }
+      // 成功再利用が無くても、直近の試行 (失敗含む) からクールダウン内なら生成を
+      // 見送る。500 等の失敗は履歴に保存されないため、これが無いと AI 障害中は
+      // 毎ロード/編集で 1 分超の直列生成が走り続ける。見送り時は結果を空のままに
+      // し、パネルは定型要約 (buildWaitingForAiResult) を表示する。
+      final sinceLastAttempt = await _sinceLastAssetManagementAiSummaryAttempt(
+        report.workbook.baseDate,
+      );
+      if (!mounted || _assetManagementAiSummaryInFlightKey != key) {
+        return;
+      }
+      if (AssetManagementAiSummaryRefresh.shouldThrottleFailedRetry(
+        force: force,
+        sinceLastAttempt: sinceLastAttempt,
+        cooldown: _assetManagementAiSummaryAutoRefreshCooldown,
+      )) {
+        setState(() {
+          _isGeneratingAssetManagementAiSummary = false;
+          _assetManagementAiSummaryInFlightKey = null;
+          // requestKey は key のままにして同一指紋の再スケジュールを防ぐ。
+        });
+        return;
+      }
     }
     var previousAnalyses = const <AssetManagementAiAnalysisHistoryEntry>[];
     try {
@@ -19835,6 +19865,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         );
       }
     }
+    // 生成試行を (成功/失敗を問わず) 記録する。失敗しても履歴には残らないため、
+    // この時刻が次回以降のクールダウン判定の唯一の手掛かりになる。
+    unawaited(_recordAssetManagementAiSummaryAttempt(report.workbook.baseDate));
     final result = await _assetManagementAiSummaryService.generateSummary(
       report: report,
       previousAnalyses: previousAnalyses,
@@ -19865,6 +19898,54 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = null;
       _assetManagementAiSummaryRequestKey = key;
     });
+  }
+
+  /// 直近の AI 要約生成試行からの経過時間。基準日が変われば null を返し
+  /// (別日は再試行可)、記録が無い場合も null。端末ローカルの best-effort。
+  Future<Duration?> _sinceLastAssetManagementAiSummaryAttempt(
+    DateTime baseDate,
+  ) async {
+    try {
+      final store = await SharedPreferences.getInstance();
+      final raw = store.getString(_assetManagementAiSummaryLastAttemptPrefKey);
+      if (raw == null) {
+        return null;
+      }
+      final sep = raw.indexOf('|');
+      if (sep <= 0) {
+        return null;
+      }
+      final storedBaseKey = raw.substring(0, sep);
+      final currentBaseKey =
+          AssetManagementAiAnalysisHistoryService.reportBaseDateKey(baseDate);
+      if (storedBaseKey != currentBaseKey) {
+        return null;
+      }
+      final at = DateTime.tryParse(raw.substring(sep + 1));
+      if (at == null) {
+        return null;
+      }
+      final delta = DateTime.now().difference(at);
+      return delta.isNegative ? Duration.zero : delta;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _recordAssetManagementAiSummaryAttempt(
+    DateTime baseDate,
+  ) async {
+    try {
+      final store = await SharedPreferences.getInstance();
+      final baseKey =
+          AssetManagementAiAnalysisHistoryService.reportBaseDateKey(baseDate);
+      await store.setString(
+        _assetManagementAiSummaryLastAttemptPrefKey,
+        '$baseKey|${DateTime.now().toIso8601String()}',
+      );
+    } catch (_) {
+      // best-effort のスロットリング用途のため、永続化失敗は致命ではない。
+    }
   }
 
   void _requestAssetManagementAiSummaryIfNeeded(
