@@ -70,4 +70,40 @@ void main() {
       expect(metrics['today_available_amount'], isNull);
     });
   });
+
+  group('AssetManagementAiAnalysisHistoryEntry.hasSummaryText', () {
+    Map<String, dynamic> baseJson() => <String, dynamic>{
+          'id': 'history-1',
+          'request_fingerprint': 'fp-1',
+          'status': 'ai_generated',
+          'source': 'ai-hub provider.chat / openai',
+          'generated_at': '2026-06-16T12:00:00Z',
+          'created_at': '2026-06-16T12:00:00Z',
+        };
+
+    test('summary_text 列を取得した行は本文の有無で判定する', () {
+      final withText = AssetManagementAiAnalysisHistoryEntry.fromJson(
+        <String, dynamic>{...baseJson(), 'summary_text': '本文あり'},
+      );
+      final emptyText = AssetManagementAiAnalysisHistoryEntry.fromJson(
+        <String, dynamic>{...baseJson(), 'summary_text': '  '},
+      );
+
+      expect(withText.summaryTextOmitted, isFalse);
+      expect(withText.hasSummaryText, isTrue);
+      expect(emptyText.summaryTextOmitted, isFalse);
+      expect(emptyText.hasSummaryText, isFalse);
+    });
+
+    test('縮小 projection (summary_text 列なし) は存在保証済みとして扱う', () {
+      // loadRecent は summary_text <> '' を server-side filter で保証した上で
+      // 列自体を取得しない。この行が prompt 文脈から脱落しないこと。
+      final omitted =
+          AssetManagementAiAnalysisHistoryEntry.fromJson(baseJson());
+
+      expect(omitted.summaryText, isEmpty);
+      expect(omitted.summaryTextOmitted, isTrue);
+      expect(omitted.hasSummaryText, isTrue);
+    });
+  });
 }

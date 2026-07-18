@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T22:16:21Z",
+  "generated_at": "2026-07-17T22:08:03Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -19,9 +19,9 @@
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-5577430cfbe3",
+        "entry_id": "nf-500746e2e597",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.211 / July 15, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.211 July 15, 2026 Added --forward-subagent-text flag and CLAUDE_CODE_FORWARD_SUBAGENT_TEXT environment variable to include subagent text and thinking in stream-json output...",
+        "text": "Claude Code changelog 2.1.212 / July 17, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.212 July 17, 2026 /fork now copies your conversation into a new background session (its own row in claude agents ) while you keep working; the in-session subagent it used...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +30,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5dd4097a344520555e63caa98ad01ba59d242b250fe19e72c5a225833c952bc8",
+          "hash": "04cd39bac5ae0a69f74d94c8a0662b28b7806127abc763823fa41fe7dc87b3fe",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,22 +74,22 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.211 / July 15, 2026",
+          "latest_signal": "2.1.212 / July 17, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "1a3d1c844ae05298f515fd58a6640b296c0ef912dbaee4b520dec75acdeb4aef",
+          "previous_hash": "5dd4097a344520555e63caa98ad01ba59d242b250fe19e72c5a225833c952bc8",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.211 July 15, 2026 Added --forward-subagent-text flag and CLAUDE_CODE_FORWARD_SUBAGENT_TEXT environment variable to include subagent text and thinking in stream-json output..."
+            "​ 2.1.212 July 17, 2026 /fork now copies your conversation into a new background session (its own row in claude agents ) while you keep working; the in-session subagent it used..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-5577430cfbe3",
+        "entry_id": "nf-500746e2e597",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
@@ -118,7 +118,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "b4d8cb90106ed0571727aad4ed9bf0128ed251c8380155e7d7d7582cd12fa9db",
+          "hash": "616681544f062c2af42f1d6fc30d0952b6dc82de3a18cfb9779dd067e1991dc8",
           "keyword_groups": {
             "codex-runtime": [
               "worktree",
@@ -156,7 +156,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "b31f88835be335e333de5507dc39a4a1cf422d52c54d2496b7b11d56b6148d50",
+          "previous_hash": "b4d8cb90106ed0571727aad4ed9bf0128ed251c8380155e7d7d7582cd12fa9db",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -197,7 +197,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "5c8a327a58be3a1a6e49066a810b4d5285bd4d73d8eeca9fd180a76b67066d00",
+          "hash": "7fdf55012b8d33420d5efc836a4aff8e210da2946759e28e347c0780af66c3a8",
           "keyword_groups": {
             "codex-runtime": [
               "computer use"
@@ -231,7 +231,7 @@
           "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume",
           "name": "Claude Code GitHub Actions",
           "owner": "Claude Code",
-          "previous_hash": "d50ff352ac5d607c37b9c65a72f48db6b28dacfdeb9b48f7fb4a5a74561203a5",
+          "previous_hash": "5c8a327a58be3a1a6e49066a810b4d5285bd4d73d8eeca9fd180a76b67066d00",
           "slug": "claude-code-github-actions",
           "snippets": [
             "Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before...",
@@ -272,7 +272,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "0a5a88342bb08ffde49f7aec2a704ab946ba2da4d1b5e00d5f0dd4abc3d06f47",
+          "hash": "e5cd2677edc1f04d52e4a79793193678c50e033a470936134fab03c7620b58e5",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.5",
@@ -319,7 +319,7 @@
           "latest_signal": "2026-07-16 / Codex CLI 0.144.5 pre",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "ce70fd8486dfd379ec42d97604b80b7f94aab4573c25ddcfdf19b09db32771f4",
+          "previous_hash": "0a5a88342bb08ffde49f7aec2a704ab946ba2da4d1b5e00d5f0dd4abc3d06f47",
           "slug": "codex-changelog",
           "snippets": [
             "Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...",
@@ -357,10 +357,10 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "968257c5a1b28848f4b1068a44052682e7d477909981aff2abcccac6249d13a5",
+          "hash": "7b0ed9e1f51103d91424cda85fd8f640fbe81958c1d9126c3e2bd98be2add8eb",
           "keyword_groups": {
             "codex-runtime": [
               "GPT-5.4",
@@ -472,21 +472,20 @@
     },
     {
       "entry": {
-        "entry_id": "nf-7ccbc55659b2",
+        "entry_id": "nf-70d11cef4eb4",
         "title": "Cursor changelog",
-        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources... Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running. You can now stay in the picker for workflows that used to send you elsewhere.",
+        "text": "Cursor changelog 3.11 / Jul 10, 2026 What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Composer Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing... We also refined how Cursor's responses look in Slack. # Multi-repo environment support From Slack, Cursor can now start in a named multi-repo environment instead of a single default repository.",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": false,
+          "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "8e341f92cadee96206da07a719cbfa0e1963f77895f44e7e637dae08927e224e",
+          "hash": "0ebba67d37dcf310d50764128ab3d7904dffad45cf005efd9b1a89c9708ca08e",
           "keyword_groups": {
             "codex-runtime": [
-              "computer use",
               "subagents"
             ],
             "hooks": [
@@ -506,7 +505,6 @@
             "schedule": [
               "automation",
               "automations",
-              "GitHub Actions",
               "workflow"
             ]
           },
@@ -516,16 +514,16 @@
           "previous_hash": "8e341f92cadee96206da07a719cbfa0e1963f77895f44e7e637dae08927e224e",
           "slug": "cursor-changelog",
           "snippets": [
-            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...",
-            "Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running.",
-            "You can now stay in the picker for workflows that used to send you elsewhere."
+            "What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Composer Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing...",
+            "We also refined how Cursor's responses look in Slack.",
+            "# Multi-repo environment support From Slack, Cursor can now start in a named multi-repo environment instead of a single default repository."
           ],
           "status": 200,
           "url": "https://cursor.com/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-7ccbc55659b2",
+        "entry_id": "nf-70d11cef4eb4",
         "title": "Cursor changelog",
         "url": "https://cursor.com/changelog",
         "source": "Cursor",
@@ -617,7 +615,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "0988a919b106dd0839fb386330b00ba2ae97ce54315ec053f5bc79eb9a069b5f",
@@ -655,7 +653,7 @@
           "latest_signal": "July 15, 2026",
           "name": "Devin release notes",
           "owner": "Devin",
-          "previous_hash": "b12e3e431693d45f38e97379bcb18ceee8d347cfb1350f47c422ebbe51e67c34",
+          "previous_hash": "0988a919b106dd0839fb386330b00ba2ae97ce54315ec053f5bc79eb9a069b5f",
           "slug": "devin-release-notes",
           "snippets": [
             "Navigation Release Notes Recent Updates Cloud CLI Desktop Enterprise Use Cases API Federal Get Started Introducing Devin Your First Session Tutorial Library Essential Guidelines...",

@@ -126,6 +126,12 @@ class AssetAutoDebitConfirmationService {
   /// 特定する。振替元が未設定、または該当口座がスナップショットに無い場合は残高を
   /// null とし、引落失敗の判定は行わない (= 警告を出さない安全側)。
   /// 並び順は [pendingConfirmations] と同じ (金額の大きい順)。
+  ///
+  /// 同一口座から複数の確認待ちがある場合、`sourceAccountBalance` は
+  /// 「その行の引落前の見込み残高」= 現在残高から、引落日が先で **成功し得る**
+  /// 引落だけを順次差し引いた値になる (残高不足で弾かれる引落は実際には残高を
+  /// 減らさないため差し引かない)。行単位で生残高と独立比較すると
+  /// 「個別には足りるが合計では足りない」ケースを取りこぼすため (part338 教訓)。
   List<AssetAutoDebitConfirmation> pendingConfirmationDetails(
     AssetLiabilityWorkbook workbook,
   ) {
@@ -138,13 +144,21 @@ class AssetAutoDebitConfirmationService {
         if (debt.revolvingBilling != null)
           debt.id: debt.revolvingBilling!.creditLimit,
     };
-    final details = pendingConfirmations(workbook).map((row) {
+    final rows = pendingConfirmations(workbook);
+    final effectiveBalanceByRowId = _effectiveSourceBalances(
+      rows: rows,
+      accountById: accountById,
+      creditLimitByAccountId: creditLimitByAccountId,
+    );
+    final details = rows.map((row) {
       final sourceAccountId = row.paymentSourceAccountId;
       final source =
           sourceAccountId == null ? null : accountById[sourceAccountId];
       return AssetAutoDebitConfirmation(
         row: row,
-        sourceAccountBalance: source?.balance,
+        sourceAccountBalance: effectiveBalanceByRowId.containsKey(row.accountId)
+            ? effectiveBalanceByRowId[row.accountId]
+            : source?.balance,
         sourceAccountKind: source?.kind,
         sourceAccountCreditLimit: sourceAccountId == null
             ? null
@@ -152,6 +166,56 @@ class AssetAutoDebitConfirmationService {
       );
     }).toList();
     return List<AssetAutoDebitConfirmation>.unmodifiable(details);
+  }
+
+  /// 口座毎に引落日昇順で「成功し得る引落」を残高から順次差し引き、
+  /// 各行の「引落前の見込み残高」を row.accountId → 残高 で返す
+  /// (確認待ちは 1 口座 1 行なので accountId で一意)。
+  ///
+  /// - 資産口座: 見込み残高 >= 支払額 の引落だけ残高から差し引く
+  ///   (不足で弾かれる引落は残高を減らさない)。
+  /// - 与信枠: 同様に、限度額内に収まる引落だけ利用額へ積む
+  ///   (見込み残高はマイナスの利用額としてそのまま表現できる)。
+  /// 振替元口座がスナップショットに無い行は対象外 (raw 値のまま)。
+  Map<String, double> _effectiveSourceBalances({
+    required List<AssetLiabilityCashflowRow> rows,
+    required Map<String, AssetLiabilityAccount> accountById,
+    required Map<String, double> creditLimitByAccountId,
+  }) {
+    final rowsBySource = <String, List<AssetLiabilityCashflowRow>>{};
+    for (final row in rows) {
+      final sourceAccountId = row.paymentSourceAccountId;
+      if (sourceAccountId == null) continue;
+      final source = accountById[sourceAccountId];
+      if (source == null) continue;
+      rowsBySource.putIfAbsent(sourceAccountId, () => []).add(row);
+    }
+
+    final effective = <String, double>{};
+    rowsBySource.forEach((sourceAccountId, sourceRows) {
+      final source = accountById[sourceAccountId]!;
+      final creditLimit = creditLimitByAccountId[sourceAccountId];
+      // 引落は日付順に口座へ到達する。表示順 (金額降順) とは独立に計算する。
+      final ordered = [...sourceRows]..sort((a, b) {
+          final byDate = a.paymentDate.compareTo(b.paymentDate);
+          if (byDate != 0) return byDate;
+          return b.paymentAmount.compareTo(a.paymentAmount);
+        });
+      var remaining = source.balance;
+      for (final row in ordered) {
+        effective[row.accountId] = remaining;
+        final wouldSucceed = !autoDebitSourceInsufficient(
+          balance: remaining,
+          kind: source.kind,
+          creditLimit: creditLimit,
+          paymentAmount: row.paymentAmount,
+        );
+        if (wouldSucceed) {
+          remaining -= row.paymentAmount;
+        }
+      }
+    });
+    return effective;
   }
 
   /// 振替元残高が支払額を下回っている (= 引落が失敗している可能性がある) 確認待ちの件数。
