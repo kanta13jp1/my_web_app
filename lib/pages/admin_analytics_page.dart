@@ -6539,15 +6539,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   /// variants(平均スコア降順)から上位3種を「{variant} 平均{score} (n={count})」に。
   List<String> _xGrowthVariantRankingLines(List<dynamic>? variants) {
-    if (variants == null) return const [];
+    // R28: 勝ち型と同じ畳み込み (unknown 除外 + `_fallback` を base へ) 済みの
+    // ランキングを出す。畳まないと「勝ち型: daily_briefing」なのに直下の
+    // ランキング先頭が「daily_briefing_fallback 平均89」という矛盾表示になる。
+    final folded = foldVariantsForDisplay(variants);
     final lines = <String>[];
-    for (final entry in variants) {
-      if (entry is! Map) continue;
-      final name = (entry['variant'] ?? '').toString().trim();
-      if (name.isEmpty || name == 'unknown') continue;
-      final score = _toInt(entry['averageScore']);
-      final count = _toInt(entry['count']);
-      lines.add('$name 平均$score (n=$count)');
+    for (final entry in folded) {
+      lines.add('${entry.variant} 平均${entry.averageScore} (n=${entry.count})');
       if (lines.length >= 3) break;
     }
     return lines;
