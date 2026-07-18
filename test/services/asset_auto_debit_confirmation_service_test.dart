@@ -68,6 +68,37 @@ void main() {
       );
       expect(service.pendingTotal(workbook), 0);
     });
+
+    test('excludes overdue payments whose payment source is unset', () {
+      // 家賃 (支払日25 / 既定では振替元未設定) は 6/26 時点で期日超過だが、
+      // 振替元が未設定なので確認待ちから除外する (原資未設定バナー側で修正)。
+      // ガス (支払日12 / 振替元=三井住友大塚) は従来どおり確認待ちに残る。
+      final workbook = planning.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+        baseDate: DateTime(2026, 6, 26),
+        includeDefaultFixedPayments: true,
+      );
+      final ids = service
+          .pendingConfirmations(workbook)
+          .map((row) => row.accountId)
+          .toSet();
+
+      // 家賃行が実際に振替元未設定であることを確認 (テスト前提の健全性)。
+      final rent = workbook.cashflowRows.firstWhere(
+        (row) => row.accountId == AssetLiabilityPlanningService.rentAccountId,
+      );
+      expect(
+        rent.paymentSourceAccountId == null ||
+            rent.paymentSourceAccountId!.trim().isEmpty,
+        isTrue,
+      );
+
+      expect(
+        ids,
+        isNot(contains(AssetLiabilityPlanningService.rentAccountId)),
+      );
+      expect(ids, contains(AssetLiabilityPlanningService.gasBillAccountId));
+    });
   });
 
   group('AssetAutoDebitConfirmationService source balance', () {
@@ -100,6 +131,61 @@ void main() {
       expect(gas.sourceAccountBalance, 3000);
       expect(gas.sourceBalanceInsufficient, isTrue);
       expect(service.insufficientSourceCount(workbook), 1);
+    });
+
+    test('flags later debit when earlier successful debit depletes the balance',
+        () {
+      // 6/26 時点、残高 5,000。ガス 4,500 (12日) は成功見込み → 残 500。
+      // 水道 2,400 (22日) は生残高 5,000 では足りて見えるが、見込み残 500 では
+      // 不足 → 警告。行単位の独立比較では取りこぼすケース。
+      final workbook = planning.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 5000},
+        baseDate: DateTime(2026, 6, 26),
+        includeDefaultFixedPayments: true,
+      );
+      final details = service.pendingConfirmationDetails(workbook);
+      final gas = details.firstWhere(
+        (detail) =>
+            detail.row.accountId ==
+            AssetLiabilityPlanningService.gasBillAccountId,
+      );
+      final water = details.firstWhere(
+        (detail) =>
+            detail.row.accountId ==
+            AssetLiabilityPlanningService.waterBillAccountId,
+      );
+
+      expect(gas.sourceAccountBalance, 5000);
+      expect(gas.sourceBalanceInsufficient, isFalse);
+      expect(water.sourceAccountBalance, 500);
+      expect(water.sourceBalanceInsufficient, isTrue);
+    });
+
+    test('failed (insufficient) debit does not deplete the running balance',
+        () {
+      // 残高 3,000: ガス 4,500 (12日) は不足で弾かれる想定 → 残高は減らず、
+      // 水道 2,400 (22日) は 3,000 のまま判定 → 警告なし。
+      final workbook = planning.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 3000},
+        baseDate: DateTime(2026, 6, 26),
+        includeDefaultFixedPayments: true,
+      );
+      final details = service.pendingConfirmationDetails(workbook);
+      final gas = details.firstWhere(
+        (detail) =>
+            detail.row.accountId ==
+            AssetLiabilityPlanningService.gasBillAccountId,
+      );
+      final water = details.firstWhere(
+        (detail) =>
+            detail.row.accountId ==
+            AssetLiabilityPlanningService.waterBillAccountId,
+      );
+
+      expect(gas.sourceAccountBalance, 3000);
+      expect(gas.sourceBalanceInsufficient, isTrue);
+      expect(water.sourceAccountBalance, 3000);
+      expect(water.sourceBalanceInsufficient, isFalse);
     });
 
     test('does not flag when source balance covers the amount', () {

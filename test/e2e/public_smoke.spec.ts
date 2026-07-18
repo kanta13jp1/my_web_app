@@ -9,17 +9,26 @@ test.describe('public production smoke', () => {
 
       expect(response?.ok()).toBeTruthy();
       await expect(page.locator('body')).toContainText('自分株式会社');
-      await expect(page.locator('body')).toContainText('Loading application');
+      // クロール用のプリブート SEO シェルが配信されていることを検証する。
+      // (#4122 で 'Loading application' プレースホルダは #seo-shell 構造へ刷新。
+      //  Flutter 起動後は live DOM が置換され消えるため、配信 HTML 本文で確認する。)
+      const servedHtml = (await response?.text()) ?? '';
+      expect(servedHtml).toContain('seo-shell');
     });
   }
 
-  test('/project-gantt exposes crawlable entry links while app boots', async ({
+  test('/project-gantt exposes crawlable entry content while app boots', async ({
     page,
   }) => {
-    await page.goto('/project-gantt', { waitUntil: 'domcontentloaded' });
+    // クロール用の導線は Flutter 起動前の配信 HTML に含まれる。起動後は live DOM が
+    // 置換されるため、配信 HTML 本文で主要導線とルート固有キーワードを検証する。
+    // (#4122 でシェルの CTA は '5分だけ無料で試す' 等へ刷新された。)
+    const response = await page.goto('/project-gantt', {
+      waitUntil: 'domcontentloaded',
+    });
 
-    await expect(page.getByRole('link', { name: '無料で始める' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Proで支援する' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'WBSガントチャート' })).toBeVisible();
+    const servedHtml = (await response?.text()) ?? '';
+    expect(servedHtml).toContain('5分だけ無料で試す');
+    expect(servedHtml).toContain('WBSガントチャート');
   });
 });

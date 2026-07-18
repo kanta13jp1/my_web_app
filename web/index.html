@@ -176,16 +176,57 @@
   }
   </script>
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://my-web-app-b67f4.web.app/#organization",
+        "name": "自分株式会社",
+        "alternateName": "Jibun Inc.",
+        "url": "https://my-web-app-b67f4.web.app/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png",
+          "width": 1200,
+          "height": 630
+        },
+        "sameAs": [
+          "https://x.com/kanta13jp1",
+          "https://github.com/kanta13jp1"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://my-web-app-b67f4.web.app/#website",
+        "url": "https://my-web-app-b67f4.web.app/",
+        "name": "自分株式会社",
+        "alternateName": "Jibun Inc.",
+        "inLanguage": "ja",
+        "publisher": { "@id": "https://my-web-app-b67f4.web.app/#organization" }
+      }
+    ]
+  }
+  </script>
+
   <style>
     :root {
       color-scheme: light;
       font-family: "Noto Sans JP", "Noto Sans", sans-serif;
     }
 
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 76%);
+      background: #f5f7fa;
       color: #111827;
+      overflow-x: hidden;
     }
 
     #seo-shell {
@@ -193,73 +234,65 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding: 58px 24px 32px;
-      box-sizing: border-box;
+      padding: 56px 24px 32px;
     }
 
     .seo-card {
-      width: min(1180px, 100%);
-      padding: 0;
-      border-radius: 10px;
-      background:
-        linear-gradient(176deg, rgba(255, 255, 255, 0) 0 38%, rgba(234, 244, 255, 0.86) 39% 100%),
-        #f8fbff;
-      border: 0;
-      box-shadow: none;
+      width: 100%;
+      max-width: 1080px;
+      min-width: 0;
       text-align: center;
     }
 
     .seo-badge {
-      margin: 0 0 12px;
+      margin: 0 0 16px;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
+      padding: 7px 12px;
       border-radius: 999px;
-      background: #e0e7ff;
-      color: #4338ca;
+      background: #e9f8ef;
+      color: #17663a;
       font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+      letter-spacing: 0;
     }
 
     .seo-card h1 {
       margin: 0;
       font-family: "Noto Sans JP", "Noto Sans", sans-serif;
-      font-size: clamp(42px, 5vw, 56px);
-      line-height: 1.12;
+      font-size: 54px;
+      line-height: 1.18;
       letter-spacing: 0;
     }
 
-    .seo-card p {
-      max-width: 760px;
-      margin: 16px auto 0;
-      font-size: 16px;
-      line-height: 1.75;
+    .seo-lead {
+      max-width: 700px;
+      margin: 22px auto 0;
+      font-size: 17px;
+      line-height: 1.8;
       color: #374151;
+      overflow-wrap: anywhere;
     }
 
-    .seo-card p[lang="en"] {
-      margin-top: 10px;
-      color: #4b5563;
-    }
-
-    .seo-tags {
+    .seo-trust {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 10px;
-      margin-top: 18px;
+      gap: 8px;
+      margin-top: 20px;
     }
 
-    .seo-tag {
-      padding: 8px 12px;
+    .seo-trust span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 11px;
       border-radius: 999px;
-      background: #f3f4f6;
-      color: #374151;
+      background: #ffffff;
+      border: 1px solid #d9e0e8;
+      color: #26364a;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .seo-links {
@@ -267,15 +300,16 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 12px;
-      margin-top: 24px;
+      margin-top: 26px;
     }
 
     .seo-links a {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 46px;
-      padding: 0 16px;
+      min-height: 50px;
+      max-width: 100%;
+      padding: 0 22px;
       border-radius: 6px;
       text-decoration: none;
       font-weight: 700;
@@ -283,101 +317,75 @@
     }
 
     .seo-links a.primary {
-      background: #1f7ae0;
+      background: #1769d2;
       color: #ffffff;
-      min-width: 160px;
+      min-width: 220px;
     }
 
     .seo-links a.secondary {
       background: #ffffff;
       color: #172033;
-      border: 1px solid #d8e2ee;
+      border: 1px solid #cbd5e1;
     }
 
-    .seo-product-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      margin-top: 42px;
-      border: 1px solid #dce7f2;
-      border-radius: 8px;
-      overflow: hidden;
-      text-align: left;
-      background: rgba(255, 255, 255, 0.92);
-    }
-
-    .seo-product-card {
-      min-height: 214px;
-      padding: 30px;
-      border-right: 1px solid #dce7f2;
-    }
-
-    .seo-product-card:last-child {
-      border-right: 0;
-    }
-
-    .seo-product-card h2 {
-      margin: 0;
-      color: #245078;
-      font-size: 21px;
-      line-height: 1.25;
-    }
-
-    .seo-product-card p {
-      margin: 12px 0 0;
-      color: #4b5a6a;
-      font-size: 14px;
-      line-height: 1.55;
-    }
-
-    .seo-mock {
-      margin-top: 24px;
-      min-height: 76px;
-      padding: 16px;
-      border: 1px solid #e3eaf4;
-      border-radius: 6px;
-      background: white;
-      box-shadow: 0 10px 18px rgba(30, 58, 95, 0.08);
-      color: #172033;
+    .seo-note {
+      margin: 12px auto 0;
+      color: #5b6573;
       font-size: 13px;
+      line-height: 1.6;
     }
 
-    .seo-bars {
-      display: flex;
-      align-items: end;
-      gap: 8px;
-      height: 72px;
+    .seo-flow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: stretch;
+      gap: 14px;
+      margin-top: 52px;
+      padding: 28px 0;
+      border-top: 1px solid #d8e0e9;
+      border-bottom: 1px solid #d8e0e9;
+      text-align: left;
     }
 
-    .seo-bars span {
-      width: 14px;
-      border-radius: 3px 3px 0 0;
-      background: #2f9ded;
+    .seo-flow-step {
+      min-width: 0;
+      padding: 4px 12px;
     }
 
-    .seo-bars span:nth-child(2n) {
-      background: #ffb547;
+    .seo-flow-step strong {
+      display: block;
+      color: #1769d2;
+      font-size: 13px;
+      line-height: 1.4;
     }
 
-    .seo-bars span:nth-child(3n) {
-      background: #43c77d;
-    }
-
-    .seo-new {
-      margin-top: 34px;
-      padding: 24px;
-      background: rgba(255, 255, 255, 0.9);
-    }
-
-    .seo-new h2 {
-      margin: 0;
+    .seo-flow-step h2 {
+      margin: 8px 0 0;
       color: #172033;
-      font-size: 28px;
+      font-size: 19px;
+      line-height: 1.45;
+      letter-spacing: 0;
+    }
+
+    .seo-flow-step p {
+      margin: 8px 0 0;
+      color: #526071;
+      font-size: 14px;
+      line-height: 1.65;
+      overflow-wrap: anywhere;
+    }
+
+    .seo-flow-arrow {
+      align-self: center;
+      color: #d97818;
+      font-size: 24px;
+      font-weight: 700;
     }
 
     .seo-loading {
-      margin-top: 18px;
+      margin: 20px auto 0;
       font-size: 13px;
-      color: #6b7280;
+      color: #4b5563;
     }
 
     noscript {
@@ -390,32 +398,44 @@
 
     @media (max-width: 640px) {
       #seo-shell {
-        padding: 16px;
+        padding: 32px 16px 24px;
       }
 
       .seo-card {
-        border-radius: 0;
+        width: 100%;
+        max-width: 100%;
       }
 
-      .seo-card p {
+      .seo-card h1 {
+        font-size: 34px;
+        line-height: 1.25;
+      }
+
+      .seo-lead {
+        margin-top: 18px;
         font-size: 15px;
+        line-height: 1.75;
       }
 
       .seo-links a {
         width: 100%;
+        min-width: 0;
       }
 
-      .seo-product-grid {
+      .seo-flow {
         grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 38px;
+        padding: 24px 0;
       }
 
-      .seo-product-card {
-        border-right: 0;
-        border-bottom: 1px solid #dce7f2;
+      .seo-flow-step {
+        padding: 0;
+        text-align: center;
       }
 
-      .seo-product-card:last-child {
-        border-bottom: 0;
+      .seo-flow-arrow {
+        transform: rotate(90deg);
       }
     }
   </style>
@@ -423,67 +443,50 @@
 <body>
   <div id="seo-shell">
     <main class="seo-card" aria-labelledby="seo-title">
-      <p class="seo-badge">AI Life Management App</p>
-      <h1 id="seo-title">自分株式会社</h1>
-      <p lang="ja">
-        Notion・Evernote・MoneyForward・Slack・X の機能を1つに統合したAI統合プラットフォーム。
-        AIが今日の最優先タスクを1件に絞り、資産管理・習慣化・チームコラボまで一元管理。
-        無料体験で価値を確認したあと、提案を保存して明日も続きから再開できます。
+      <p class="seo-badge">無料コア・カード不要</p>
+      <h1 id="seo-title">今日やるべき1件を、<br>AIが決める。</h1>
+      <p class="seo-lead" lang="ja">
+        予定・メモ・資産・学習が散らばって、次に何をするか迷っていませんか。
+        自分株式会社は、いま困っていることをAIが整理し、理由つきの具体的な一手に変えます。
+        まず登録なしで1回試し、残したいと思ったときだけ30秒で保存できます。
       </p>
-      <p lang="en">
-        All-in-one alternative to Notion, Evernote, MoneyForward, Slack, X, Google Workspace,
-        Microsoft 365, Discord, LINE, Facebook, GitHub and more.
-        AI picks your single most important action today, explains why it matters,
-        and unifies task, finance, habit, and team management in one free app.
-      </p>
-      <div class="seo-tags" aria-label="主要機能">
-        <span class="seo-tag">Notion代替</span>
-        <span class="seo-tag">Evernote代替</span>
-        <span class="seo-tag">MoneyForward代替</span>
-        <span class="seo-tag">Slack代替</span>
-        <span class="seo-tag">Google代替</span>
-        <span class="seo-tag">Microsoft代替</span>
-        <span class="seo-tag">LINE代替</span>
-        <span class="seo-tag">GitHub代替</span>
-        <span class="seo-tag">AI task prioritization</span>
-        <span class="seo-tag">MAGI strategy support</span>
+      <div class="seo-trust" aria-label="安心して試せる理由">
+        <span>✓ 登録前に体験</span>
+        <span>✓ クレジットカード不要</span>
+        <span>✓ データは本人だけに表示</span>
       </div>
-      <nav class="seo-links" aria-label="公開ページ">
-        <a class="primary" href="https://my-web-app-b67f4.web.app/">無料で始める</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/subscription-billing">Proで支援する</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/project-gantt">WBSガントチャート</a>
+      <nav class="seo-links" aria-label="体験を始める">
+        <a class="primary" href="https://my-web-app-b67f4.web.app/?lp_intent=trial&amp;utm_source=seo_shell&amp;utm_medium=landing&amp;utm_campaign=first_user_growth">5分だけ無料で試す</a>
+        <a class="secondary" href="#seo-how">使い方を見る</a>
       </nav>
-      <section class="seo-product-grid" aria-label="主要機能">
-        <article class="seo-product-card">
-          <h2>Task Automations</h2>
-          <p>迷ったタスクを、次の一手まで自動整理。</p>
-          <div class="seo-mock">
-            <strong>When</strong> WBS task is blocked<br>
-            <strong>Then</strong> Split into next actions
-          </div>
+      <p class="seo-note">基本機能は無料。いつでも停止できます。</p>
+
+      <section class="seo-flow" id="seo-how" aria-label="利用の流れ">
+        <article class="seo-flow-step">
+          <strong>STEP 1</strong>
+          <h2>困っていることを書く</h2>
+          <p>仕事・学習・お金の悩みを、短い言葉で入力します。</p>
         </article>
-        <article class="seo-product-card">
-          <h2>Time Tracking</h2>
-          <p>集中時間と習慣を、内蔵タイマーで記録。</p>
-          <div class="seo-mock" style="text-align:center;font-size:28px;letter-spacing:1px;">
-            02:17:45
-          </div>
+        <span class="seo-flow-arrow" aria-hidden="true">→</span>
+        <article class="seo-flow-step">
+          <strong>STEP 2</strong>
+          <h2>AIが次の一手を提案</h2>
+          <p>最優先の1件と、なぜ今やるべきかを具体化します。</p>
         </article>
-        <article class="seo-product-card">
-          <h2>Advanced Reporting</h2>
-          <p>WBS・成長・習慣をレポートで俯瞰。</p>
-          <div class="seo-mock seo-bars" aria-hidden="true">
-            <span style="height:45px"></span><span style="height:64px"></span><span style="height:38px"></span>
-            <span style="height:55px"></span><span style="height:32px"></span><span style="height:70px"></span>
-            <span style="height:48px"></span><span style="height:62px"></span>
-          </div>
+        <span class="seo-flow-arrow" aria-hidden="true">→</span>
+        <article class="seo-flow-step">
+          <strong>STEP 3</strong>
+          <h2>保存して明日も続ける</h2>
+          <p>役立つと分かってから無料登録し、提案を残せます。</p>
         </article>
       </section>
-      <section class="seo-new" aria-label="新機能">
-        <h2>What's New?</h2>
-        <p>Smart Automations・Time Tracking・Detailed Reports を公開中。</p>
-      </section>
-      <p class="seo-loading">Loading application...</p>
+      <p class="seo-loading" role="status">無料体験を準備しています...</p>
+      <nav class="seo-links" aria-label="運営者情報" style="margin-top:20px">
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/philosophy">経営哲学</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/tokusho">特定商取引法に基づく表記</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/terms">利用規約</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/privacy">プライバシーポリシー</a>
+      </nav>
       <noscript>
         JavaScript is required to use the full app. Search engines and preview crawlers
         can still read this summary and the public links above.
@@ -941,9 +944,52 @@
         );
         setMeta('og:url', window.location.href);
         setMeta('twitter:url', window.location.href);
+        setCanonical(window.location.href);
+      }
+
+      if (path === '/blog/post' || path.endsWith('/blog/post')) {
+        // 公開ブログ記事: URL クエリ id から自己参照 canonical + meta を設定し
+        // クローラーにインデックスさせる (SEO 監査 H7)。
+        var blogId = params.get('id');
+        if (blogId) {
+          setCanonical(
+            'https://my-web-app-b67f4.web.app/blog/post?id=' +
+              encodeURIComponent(blogId)
+          );
+          fetch(
+            SUPABASE_FUNC_BASE +
+              '/core-hub?action=blog.public.view&id=' +
+              encodeURIComponent(blogId) + '&format=json'
+          )
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+              if (!data || !data.success || !data.post) return;
+              var p = data.post;
+              if (p.title) {
+                document.title = p.title + ' | 自分株式会社';
+                setMeta('og:title', p.title);
+                setMeta('twitter:title', p.title);
+              }
+              if (p.excerpt) {
+                setMeta('description', p.excerpt);
+                setMeta('og:description', p.excerpt);
+                setMeta('twitter:description', p.excerpt);
+              }
+              setMeta('og:type', 'article');
+              setMeta('og:url', p.appUrl);
+              setMeta('twitter:url', p.appUrl);
+            })
+            .catch(function () { /* ignore, keep default */ });
+        }
       }
 
       if ((path === '/public-memo' || path.endsWith('/public-memo')) && memoId) {
+        // 公開メモは一意な公開コンテンツ。canonical をトップ固定のままにすると
+        // 重複としてトップへ集約され独立インデックスされないため自URLへ。
+        setCanonical(
+          'https://my-web-app-b67f4.web.app/public-memo?id=' +
+            encodeURIComponent(memoId)
+        );
         fetch(SUPABASE_FUNC_BASE + '/get-public-memo-preview?id=' + encodeURIComponent(memoId))
           .then(function (res) { return res.json(); })
           .then(function (data) {

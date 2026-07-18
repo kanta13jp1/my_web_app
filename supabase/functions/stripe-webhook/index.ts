@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  checkoutPaymentDecision,
+  processStripeWebhookEventOnce,
+} from "./event_processing.ts";
+import { activateReferralForPaidCheckout } from "./referral_activation.ts";
 
 // .trim(): Supabase secret に紛れ込んだ前後の空白/改行を吸収 (署名検証や
 // Stripe API 呼び出しがコピペ事故で失敗しないよう防御)。
@@ -270,6 +275,7 @@ async function handleCheckoutCompleted(
     metadata: {
       stripe_event_source: "checkout.session.completed",
       stripe_checkout_session_id: asString(session.id),
+      stripe_checkout_metadata: metadata,
     },
   }, { onConflict: "user_id" });
   if (error) throw new Error(error.message);
@@ -278,6 +284,12 @@ async function handleCheckoutCompleted(
     const subscription = await stripeGet(`/subscriptions/${subscriptionId}`);
     await upsertSubscriptionFromStripe(admin, subscription, userId);
   }
+
+  await activateReferralForPaidCheckout(
+    admin,
+    userId,
+    asString(session.id),
+  );
 }
 
 async function markPastDue(
@@ -311,26 +323,55 @@ serve(async (req: Request) => {
     if (!signature) return json({ error: "missing stripe-signature" }, 400);
     const rawBody = await req.text();
     const event = await verifyStripeEvent(rawBody, signature);
+    const eventId = asString(event.id);
     const type = asString(event.type);
+    if (!eventId || !type) throw new Error("invalid Stripe event envelope");
     const data = asRecord(asRecord(event.data)?.object) ?? {};
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    if (type === "checkout.session.completed") {
-      await handleCheckoutCompleted(admin, data);
-    } else if (
-      type === "customer.subscription.created" ||
-      type === "customer.subscription.updated" ||
-      type === "customer.subscription.deleted"
-    ) {
-      await upsertSubscriptionFromStripe(admin, data);
-    } else if (type === "invoice.payment_failed") {
-      await markPastDue(admin, data);
-    }
+    const processed = await processStripeWebhookEventOnce(
+      admin,
+      eventId,
+      type,
+      async () => {
+        let result: Record<string, unknown> = {};
 
-    return json({ received: true });
+        if (
+          type === "checkout.session.completed" ||
+          type === "checkout.session.async_payment_succeeded"
+        ) {
+          const decision = checkoutPaymentDecision(data);
+          if (decision.shouldFulfill) {
+            await handleCheckoutCompleted(admin, data);
+          } else {
+            result = {
+              skipped: true,
+              reason: decision.reason,
+              payment_status: decision.paymentStatus,
+            };
+          }
+        } else if (
+          type === "customer.subscription.created" ||
+          type === "customer.subscription.updated" ||
+          type === "customer.subscription.deleted"
+        ) {
+          await upsertSubscriptionFromStripe(admin, data);
+        } else if (type === "invoice.payment_failed") {
+          await markPastDue(admin, data);
+        }
+
+        return result;
+      },
+    );
+
+    if (processed.duplicate) {
+      return json({ received: true, duplicate: true, event_id: eventId });
+    }
+    return json({ received: true, event_id: eventId, ...processed.value });
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return json({
-      error: error instanceof Error ? error.message : String(error),
+      error: message,
     }, 400);
   }
 });

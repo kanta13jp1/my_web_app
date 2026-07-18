@@ -892,6 +892,173 @@ void main() {
       );
     });
 
+    test('明細照合の差分に対して修正アクションを提案する', () {
+      // 設定内訳(KDDI 5764) ≠ 請求額(20000) かつ明細未取込 →
+      // 「内訳を修正する」「明細を取り込む」の両アクションが出る。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'paypay_card',
+      );
+      expect(group.hasFixActions, isTrue);
+      expect(group.hasConfiguredMismatchFix, isTrue);
+
+      final importFix = group.fixActions.singleWhere(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.importStatement,
+      );
+      expect(
+        importFix.title,
+        AssetLiabilityPlanningService.cardStatementFixImportLabel,
+      );
+
+      final breakdownFix = group.fixActions.singleWhere(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
+      );
+      expect(
+        breakdownFix.title,
+        AssetLiabilityPlanningService.cardStatementFixAdjustBreakdownLabel,
+      );
+      // 差分金額 = 設定内訳 5764 − 請求額 20000 = -14236 が案内文に入る。
+      expect(breakdownFix.amount, 5764 - 20000);
+      expect(breakdownFix.description, contains('-14,236円'));
+    });
+
+    test('取込明細と請求額の差分は取込明細確認アクションを提案する', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'KDDI': -5764,
+          'PayPay': -20000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+          'paypay_card': 20000,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'paypay_card',
+        },
+        cardStatementLines: const <AssetLiabilityCardStatementLine>[
+          AssetLiabilityCardStatementLine(
+            id: 'line_kddi',
+            billingAccountId: 'paypay_card',
+            billingAccountName: 'PayPay',
+            postedAt: null,
+            description: 'KDDI',
+            amount: 5764,
+          ),
+        ],
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'paypay_card',
+      );
+      final reviewFix = group.fixActions.singleWhere(
+        (action) =>
+            action.kind ==
+            AssetLiabilityCardStatementFixActionKind.reviewStatementLines,
+      );
+      expect(reviewFix.amount, 5764 - 20000);
+      // 明細取込済みなので取り込みアクションは出ない。
+      expect(
+        group.fixActions.any(
+          (action) =>
+              action.kind ==
+              AssetLiabilityCardStatementFixActionKind.importStatement,
+        ),
+        isFalse,
+      );
+    });
+
+    test('請求先カード口座が無いホストには請求先再設定アクションのみ出す', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{'cash': 50000, 'KDDI': -5764},
+        baseDate: DateTime(2026, 5, 1),
+        monthlyPaymentOverrides: const <String, double>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 5764,
+        },
+        cardBillingAccountIds: const <String, String>{
+          AssetLiabilityPlanningService.kddiProviderAccountId: 'missing_card',
+        },
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'missing_card',
+      );
+      expect(
+        group.alerts,
+        contains(
+          AssetLiabilityPlanningService.cardStatementBillingAccountMissingAlert,
+        ),
+      );
+      final kinds =
+          group.fixActions.map((action) => action.kind).toList(growable: false);
+      expect(
+        kinds,
+        contains(
+          AssetLiabilityCardStatementFixActionKind.assignBillingAccount,
+        ),
+      );
+      // 請求額がプレースホルダ0のため、取り込み・内訳修正は提案しない。
+      expect(
+        kinds,
+        isNot(
+          contains(AssetLiabilityCardStatementFixActionKind.importStatement),
+        ),
+      );
+      expect(
+        kinds,
+        isNot(
+          contains(
+            AssetLiabilityCardStatementFixActionKind.adjustConfiguredBreakdown,
+          ),
+        ),
+      );
+    });
+
+    test('リボ払いカードには修正アクションを出さない', () {
+      final workbook = service.buildWorkbook(
+        latestSnapshot: <String, double>{
+          'cash': 50000,
+          'auPayカード': -530163,
+          'au': -32152,
+        },
+        baseDate: DateTime(2026, 6, 1),
+        revolvingConfigs: const <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+        cardBillingAccountIds: const <String, String>{'au': 'aupay_card'},
+      );
+
+      final group = workbook.cardStatementReconciliation.groups.singleWhere(
+        (group) => group.billingAccountId == 'aupay_card',
+      );
+      // リボ払いは請求額 ≠ 内訳/明細合計が正常のため修正アクション対象外。
+      expect(group.fixActions, isEmpty);
+      expect(group.hasConfiguredMismatchFix, isFalse);
+    });
+
     test(
       'marks monthly and default setting sources in card billing review',
       () {
@@ -1933,6 +2100,32 @@ void main() {
         (row) => row.name == 'モビット',
       );
       expect(otherMobit.paymentSourceAccountId, 'smbc_otsuka');
+    });
+
+    test('treats a cardLoan payment source as unset', () {
+      // 振替元がカードローン (現金借入 = mobit) を指す設定は不正扱いで未設定に
+      // 正規化する。cardLoan はどのセレクタにも候補として出ないのに legacy 移行の
+      // 名前衝突で保存され得る。非 null のままだと「原資未設定」レビューに出ず、
+      // 現金系口座の見込み残高からも静かに消えるため。
+      final loanSourced = service.buildWorkbook(
+        latestSnapshot: snapshot,
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: <String, String>{
+          AssetLiabilityPlanningService.acomShoppingAccountId: 'mobit',
+        },
+      );
+      final acom = loanSourced.debtMasterRows.firstWhere(
+        (row) => row.name == 'アコムショッピング',
+      );
+      expect(acom.paymentSourceAccountId, isNull);
+      expect(acom.paymentSourceAccountName, isNull);
+      // 未設定へ倒れることで原資未設定レビュー (修正導線) の対象になる。
+      expect(
+        loanSourced.paymentSourceMissingRows.any(
+          (row) => row.name == 'アコムショッピング',
+        ),
+        isTrue,
+      );
     });
   });
 }

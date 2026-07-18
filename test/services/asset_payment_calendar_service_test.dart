@@ -402,4 +402,247 @@ void main() {
       expect(minimal, isNull);
     });
   });
+
+  group('AssetPaymentCalendarService.buildRange (給料日サイクル窓)', () {
+    test('cycle window spans two months and resolves payment days', () {
+      final calendar = AssetPaymentCalendarService.buildRange(
+        start: DateTime(2026, 6, 25),
+        endExclusive: DateTime(2026, 7, 25),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            id: 'late',
+            name: '給料日直後',
+            balance: -100000,
+            paymentDay: 27,
+            scheduledPaymentAmount: 8000,
+          ),
+          AssetCalendarDebtInput(
+            id: 'early',
+            name: '月前半',
+            balance: -100000,
+            paymentDay: 10,
+            scheduledPaymentAmount: 7000,
+          ),
+        ],
+        salaryDay: 25,
+      );
+
+      expect(calendar.rangeStart, DateTime(2026, 6, 25));
+      expect(calendar.rangeEndExclusive, DateTime(2026, 7, 25));
+      expect(calendar.days.first.date, DateTime(2026, 6, 25));
+      expect(calendar.days.last.date, DateTime(2026, 7, 24));
+      expect(calendar.days, hasLength(30));
+
+      // 支払日は窓内に落ちる暦月へ解決される (27→6/27 / 10→7/10)。
+      expect(calendar.dayFor(DateTime(2026, 6, 27))!.hasDebtPayment, isTrue);
+      expect(calendar.dayFor(DateTime(2026, 7, 10))!.hasDebtPayment, isTrue);
+      expect(calendar.scheduledDebtPaymentTotal, 15000);
+
+      // 給料日マーカーはサイクル開始日のみ (7/25 は窓外)。
+      expect(calendar.dayFor(DateTime(2026, 6, 25))!.hasSalary, isTrue);
+      expect(
+        calendar.days.where((day) => day.hasSalary).toList(),
+        hasLength(1),
+      );
+
+      // 週グリッドは開始日の曜日で先頭を空ける (2026-06-25 は木曜)。
+      expect(calendar.weeks.first[4]!.date, DateTime(2026, 6, 25));
+      for (var i = 0; i < 4; i++) {
+        expect(calendar.weeks.first[i], isNull);
+      }
+    });
+
+    test('asOf excludes already-passed scheduled items from the projection',
+        () {
+      final calendar = AssetPaymentCalendarService.buildRange(
+        start: DateTime(2026, 6, 25),
+        endExclusive: DateTime(2026, 7, 25),
+        asOf: DateTime(2026, 7, 10),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'service_name': '過去の家賃',
+            'price': 65000,
+            'due_date': '2026-06-27T00:00:00',
+          },
+          <String, dynamic>{
+            'service_name': 'サブスク',
+            'price': 980,
+            'due_date': '2026-07-20T00:00:00',
+          },
+        ],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            id: 'past',
+            name: '支払済み側',
+            balance: -100000,
+            paymentDay: 27,
+            scheduledPaymentAmount: 8000,
+          ),
+          AssetCalendarDebtInput(
+            id: 'future',
+            name: 'これから',
+            balance: -100000,
+            paymentDay: 15,
+            scheduledPaymentAmount: 7000,
+          ),
+        ],
+        salaryDay: 25,
+        startingCashBalance: 10000,
+      );
+
+      // 6/27 の返済・家賃は今日(7/10)より前 → 予定に計上しない
+      // (現在残高に織り込み済みとみなす)。
+      expect(calendar.dayFor(DateTime(2026, 6, 27))!.hasDebtPayment, isFalse);
+      expect(calendar.dayFor(DateTime(2026, 6, 27))!.hasSubscription, isFalse);
+      expect(calendar.scheduledDebtPaymentTotal, 7000);
+      expect(calendar.subscriptionTotal, 980);
+
+      // 見込み残高は今日以降の予定だけを差し引く: 7/15 に 10000-7000=3000。
+      expect(
+        calendar.dayFor(DateTime(2026, 7, 15))!.projectedBalance,
+        3000,
+      );
+      expect(calendar.firstShortfallDate, isNull);
+    });
+
+    test('moving a payment to just after payday defers it to the next cycle',
+        () {
+      AssetPaymentCalendarMonth build(int paymentDay) {
+        return AssetPaymentCalendarService.buildRange(
+          start: DateTime(2026, 6, 25),
+          endExclusive: DateTime(2026, 7, 25),
+          asOf: DateTime(2026, 7, 10),
+          flows: const <Map<String, dynamic>>[],
+          subscriptions: const <Map<String, dynamic>>[],
+          debts: <AssetCalendarDebtInput>[
+            AssetCalendarDebtInput(
+              id: 'mobit',
+              name: 'モビット',
+              balance: -300000,
+              paymentDay: paymentDay,
+              scheduledPaymentAmount: 15000,
+            ),
+          ],
+          salaryDay: 25,
+          startingCashBalance: 10000,
+        );
+      }
+
+      // 15日のままだと 7/15 にショート。
+      expect(build(15).firstShortfallDate, DateTime(2026, 7, 15));
+
+      // 26日へ移すと次回は 7/26 = 窓外(次サイクル=給料日後)→ 当サイクルの
+      // 支払が消えショートも消える(「26日へ移動」提案の根拠)。
+      final shifted = build(26);
+      expect(shifted.firstShortfallDate, isNull);
+      expect(shifted.scheduledDebtPaymentTotal, 0);
+    });
+
+    test('February cycle clamps day-30 payments into the short month', () {
+      final calendar = AssetPaymentCalendarService.buildRange(
+        start: DateTime(2026, 2, 25),
+        endExclusive: DateTime(2026, 3, 25),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[
+          AssetCalendarDebtInput(
+            id: 'd30',
+            name: '30日払い',
+            balance: -100000,
+            paymentDay: 30,
+            scheduledPaymentAmount: 5000,
+          ),
+        ],
+        salaryDay: 25,
+      );
+
+      // 2月は28日まで → 2/28 へ丸め、3/30 は窓外なので1回だけ。
+      expect(calendar.dayFor(DateTime(2026, 2, 28))!.hasDebtPayment, isTrue);
+      expect(
+        calendar.days.where((day) => day.hasDebtPayment).toList(),
+        hasLength(1),
+      );
+      expect(calendar.scheduledDebtPaymentTotal, 5000);
+    });
+
+    test('flows aggregate across the month boundary within the window', () {
+      final calendar = AssetPaymentCalendarService.buildRange(
+        start: DateTime(2026, 6, 25),
+        endExclusive: DateTime(2026, 7, 25),
+        flows: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'occurred_at': '2026-06-20T03:00:00',
+            'amount': 999,
+            'action_type': 'expense',
+            'description': '窓より前',
+          },
+          <String, dynamic>{
+            'occurred_at': '2026-06-26T03:00:00',
+            'amount': 580,
+            'action_type': 'expense',
+            'description': '前半月',
+          },
+          <String, dynamic>{
+            'occurred_at': '2026-07-10T03:00:00',
+            'amount': 200,
+            'action_type': 'expense',
+            'description': '後半月',
+          },
+          <String, dynamic>{
+            'occurred_at': '2026-07-25T03:00:00',
+            'amount': 999,
+            'action_type': 'expense',
+            'description': '窓より後',
+          },
+        ],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: const <AssetCalendarDebtInput>[],
+      );
+
+      expect(calendar.dayFor(DateTime(2026, 6, 20)), isNull);
+      expect(calendar.dayFor(DateTime(2026, 6, 26))!.expenseTotal, 580);
+      expect(calendar.dayFor(DateTime(2026, 7, 10))!.expenseTotal, 200);
+      expect(calendar.dayFor(DateTime(2026, 7, 25)), isNull);
+    });
+
+    test('findMinimalShiftSet honors the cycle window and asOf', () {
+      const debts = <AssetCalendarDebtInput>[
+        AssetCalendarDebtInput(
+          id: 'a',
+          name: 'A',
+          balance: -100000,
+          paymentDay: 15,
+          scheduledPaymentAmount: 8000,
+        ),
+        AssetCalendarDebtInput(
+          id: 'b',
+          name: 'B',
+          balance: -100000,
+          paymentDay: 18,
+          scheduledPaymentAmount: 7000,
+        ),
+      ];
+
+      final minimal = AssetPaymentCalendarService.findMinimalShiftSet(
+        month: DateTime(2026, 6, 25),
+        rangeStart: DateTime(2026, 6, 25),
+        rangeEndExclusive: DateTime(2026, 7, 25),
+        asOf: DateTime(2026, 7, 10),
+        flows: const <Map<String, dynamic>>[],
+        subscriptions: const <Map<String, dynamic>>[],
+        debts: debts,
+        candidateIds: const <String>['a', 'b'],
+        shiftToDay: 26,
+        salaryDay: 25,
+        startingCashBalance: 10000,
+      );
+
+      // 両方を26日へ移すと次回支払が 7/26(窓外) になりショート解消。
+      expect(minimal, isNotNull);
+      expect(minimal!.toSet(), <String>{'a', 'b'});
+    });
+  });
 }

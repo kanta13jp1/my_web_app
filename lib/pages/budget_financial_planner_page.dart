@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'asset_management_page.dart';
+import '../models/budget_entry.dart';
 import '../models/kgi_csf_kpi.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 
@@ -29,9 +30,9 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
   String _selectedMonth = DateFormat('yyyy-MM').format(DateTime.now());
 
   // Budget data
-  List<Map<String, dynamic>> _budgets = [];
-  List<Map<String, dynamic>> _expenses = [];
-  List<Map<String, dynamic>> _incomes = [];
+  List<BudgetEntry> _budgets = [];
+  List<BudgetEntry> _expenses = [];
+  List<BudgetEntry> _incomes = [];
 
   // AI advice
   String? _aiAdvice;
@@ -111,19 +112,20 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
           'social-commerce-hub',
           body: {'action': 'budget.summary', 'month': _selectedMonth},
         ),
-        _supabase.functions.invoke(
-          'social-commerce-hub',
-          body: {
-            'action': 'get',
-            'view': 'expenses',
-            'month': _selectedMonth,
-          },
-        ),
+        // 旧実装は無効 action 'get' (EF 400) で支出常に空だった。
         _supabase.functions.invoke(
           'social-commerce-hub',
           body: {
             'action': 'budget.expense_list',
-            'view': 'income',
+            'month': _selectedMonth,
+          },
+        ),
+        // 収入は budget.income_list (応答キーは単数 'income')。
+        // 旧実装は budget.expense_list を叩き 'incomes' を読んでいた。
+        _supabase.functions.invoke(
+          'social-commerce-hub',
+          body: {
+            'action': 'budget.income_list',
             'month': _selectedMonth,
           },
         ),
@@ -131,9 +133,9 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
 
       if (!mounted) return;
       setState(() {
-        _budgets = _extractList(results[0].data, 'budgets');
-        _expenses = _extractList(results[1].data, 'expenses');
-        _incomes = _extractList(results[2].data, 'incomes');
+        _budgets = BudgetEntry.listFromResponse(results[0].data, 'budgets');
+        _expenses = BudgetEntry.listFromResponse(results[1].data, 'expenses');
+        _incomes = BudgetEntry.listFromResponse(results[2].data, 'income');
       });
     } catch (e) {
       debugPrint('BudgetPage load error: $e');
@@ -142,34 +144,15 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
     }
   }
 
-  List<Map<String, dynamic>> _extractList(dynamic data, String key) {
-    if (data is Map<String, dynamic> && data[key] is List) {
-      return (data[key] as List).cast<Map<String, dynamic>>();
-    }
-    return [];
-  }
+  double _totalIncome() => BudgetEntry.total(_incomes).toDouble();
 
-  double _totalIncome() => _incomes.fold(
-        0,
-        (sum, e) => sum + ((e['amount'] as num?)?.toDouble() ?? 0),
-      );
+  double _totalExpenses() => BudgetEntry.total(_expenses).toDouble();
 
-  double _totalExpenses() => _expenses.fold(
-        0,
-        (sum, e) => sum + ((e['amount'] as num?)?.toDouble() ?? 0),
-      );
+  double _budgetForCategory(String cat) =>
+      BudgetEntry.sumForCategory(_budgets, cat).toDouble();
 
-  double _budgetForCategory(String cat) {
-    final b = _budgets.firstWhere(
-      (b) => b['category'] == cat,
-      orElse: () => {},
-    );
-    return (b['amount'] as num?)?.toDouble() ?? 0;
-  }
-
-  double _expenseForCategory(String cat) => _expenses
-      .where((e) => e['category'] == cat)
-      .fold(0, (sum, e) => sum + ((e['amount'] as num?)?.toDouble() ?? 0));
+  double _expenseForCategory(String cat) =>
+      BudgetEntry.sumForCategory(_expenses, cat).toDouble();
 
   Future<void> _addBudget(String category, double amount) async {
     try {
@@ -608,8 +591,8 @@ $breakdown
   List<Map<String, dynamic>> _topExpenses() {
     final map = <String, double>{};
     for (final e in _expenses) {
-      final cat = e['category'] as String? ?? 'other';
-      map[cat] = (map[cat] ?? 0) + ((e['amount'] as num?)?.toDouble() ?? 0);
+      final cat = e.category.isNotEmpty ? e.category : 'other';
+      map[cat] = (map[cat] ?? 0) + e.amount.toDouble();
     }
     final sorted = map.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));

@@ -33,6 +33,7 @@ import 'package:my_web_app/pages/growth_mission_page.dart';
 import 'package:my_web_app/pages/site_guide_chat_page.dart';
 import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
+import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/memory_drill_page.dart';
@@ -74,9 +75,12 @@ import 'package:my_web_app/pages/career_monthly_kpi_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
+import 'package:my_web_app/pages/eval_approval_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
 import 'package:my_web_app/pages/ai_observability_page.dart';
+import 'package:my_web_app/pages/ai_router_cost_dashboard_page.dart';
+import 'package:my_web_app/pages/task_budget_assistant_page.dart';
 import 'package:my_web_app/pages/agent_gpa_dashboard_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
@@ -153,6 +157,7 @@ import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
+import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
@@ -254,6 +259,7 @@ import 'package:my_web_app/pages/personal_dashboard_page.dart';
 import 'package:my_web_app/pages/my_skills_page.dart';
 import 'package:my_web_app/pages/goal_tracker_page.dart';
 import 'package:my_web_app/pages/bookmark_sync_page.dart';
+import 'package:my_web_app/pages/jibun_api_page.dart';
 import 'package:my_web_app/pages/ui_design_status_page.dart';
 import 'package:my_web_app/pages/ai_summarizer_page.dart';
 import 'package:my_web_app/pages/revenue_forecaster_page.dart';
@@ -529,6 +535,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       navigatorObservers: <NavigatorObserver>[
         _growthPresenceObserver,
         universalAiShareRouteObserver,
+        // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
+        // LP View 計測を可視化まで遅延させる (可視化ゲート)。
+        deepLinkVisibilityRouteObserver,
         if (MyApp._sentryNavigatorObserver != null)
           MyApp._sentryNavigatorObserver!,
       ],
@@ -852,6 +861,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             );
           case '/decision-check':
             return MaterialPageRoute(builder: (_) => const DecisionCheckPage());
+          case '/eval-approval':
+            return MaterialPageRoute(builder: (_) => const EvalApprovalPage());
           case '/purchase-log':
             return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
           case '/price-tracker':
@@ -859,6 +870,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           case '/ai-observability':
             return MaterialPageRoute(
               builder: (_) => const AiObservabilityPage(),
+            );
+          case '/ai-router-cost-dashboard':
+            return MaterialPageRoute(
+              builder: (_) => const AiRouterCostDashboardPage(),
+            );
+          case '/task-budget-assistant':
+            return MaterialPageRoute(
+              builder: (_) => const TaskBudgetAssistantPage(),
             );
           case '/agent-gpa-dashboard':
             return MaterialPageRoute(
@@ -991,8 +1010,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               builder: (_) => BlogDraftEditorPage(postId: postId),
             );
           case '/ai-assistant-chat':
+            final arguments = settings.arguments is Map
+                ? Map<String, dynamic>.from(settings.arguments! as Map)
+                : const <String, dynamic>{};
+            final contextIds = (arguments['context_file_ids'] as List?)
+                    ?.map((item) => item.toString())
+                    .toList(growable: false) ??
+                const <String>[];
+            final contextTitles = (arguments['context_titles'] as List?)
+                    ?.map((item) => item.toString())
+                    .toList(growable: false) ??
+                const <String>[];
             return MaterialPageRoute(
-              builder: (_) => const AiAssistantChatPage(),
+              builder: (_) => AiAssistantChatPage(
+                initialContextIds: contextIds,
+                initialContextTitles: contextTitles,
+              ),
             );
           case '/categories':
             return MaterialPageRoute(builder: (_) => const CategoriesPage());
@@ -1061,6 +1094,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return MaterialPageRoute(
               builder: (_) => const SemanticSearchPage(),
             );
+          case '/mcp-file-search':
+            return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
           case '/social-feed':
             return MaterialPageRoute(builder: (_) => const SocialFeedPage());
           case '/notifications':
@@ -1430,6 +1465,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             );
           case '/bookmark-sync':
             return MaterialPageRoute(builder: (_) => const BookmarkSyncPage());
+          case '/jibun-api':
+            return MaterialPageRoute(
+              builder: (_) => const JibunApiPage(),
+              settings: RouteSettings(name: settings.name),
+            );
           case '/ui-design-status':
             return MaterialPageRoute(
               builder: (_) => const UiDesignStatusPage(),

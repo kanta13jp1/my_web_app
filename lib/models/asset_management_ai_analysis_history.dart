@@ -2,6 +2,10 @@ class AssetManagementAiAnalysisHistoryEntry {
   final String id;
   final String requestFingerprint;
   final String summaryText;
+
+  /// true = クエリ側で summary_text 列を取得していない (非空は server-side
+  /// filter で保証済み)。summaryText の空文字を「本文なし」と誤判定しないための印。
+  final bool summaryTextOmitted;
   final String status;
   final String source;
   final DateTime generatedAt;
@@ -15,6 +19,7 @@ class AssetManagementAiAnalysisHistoryEntry {
     required this.id,
     required this.requestFingerprint,
     required this.summaryText,
+    this.summaryTextOmitted = false,
     required this.status,
     required this.source,
     required this.generatedAt,
@@ -25,6 +30,11 @@ class AssetManagementAiAnalysisHistoryEntry {
     required this.inputPayload,
   });
 
+  /// 過去分析の prose が存在するとみなせるか。列を取得していない場合は
+  /// server-side filter (summary_text <> '') により存在が保証されている。
+  bool get hasSummaryText =>
+      summaryTextOmitted || summaryText.trim().isNotEmpty;
+
   factory AssetManagementAiAnalysisHistoryEntry.fromJson(
     Map<String, dynamic> json,
   ) {
@@ -32,6 +42,7 @@ class AssetManagementAiAnalysisHistoryEntry {
       id: json['id']?.toString() ?? '',
       requestFingerprint: json['request_fingerprint']?.toString() ?? '',
       summaryText: json['summary_text']?.toString() ?? '',
+      summaryTextOmitted: !json.containsKey('summary_text'),
       status: json['status']?.toString() ?? '',
       source: json['source']?.toString() ?? '',
       generatedAt: _parseDateTime(json['generated_at']),

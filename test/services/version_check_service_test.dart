@@ -37,4 +37,27 @@ void main() {
       expect(service.isOutdated('1.0.1', '1.0.x'), isFalse);
     });
   });
+
+  group('VersionCheckService.shouldCheck (checkNow cooldown)', () {
+    test('first check (no previous timestamp) is allowed', () {
+      final s = VersionCheckService();
+      expect(s.shouldCheck(DateTime(2026, 7, 17, 9, 0)), isTrue);
+    });
+
+    test('check within 5 minutes of the previous one is suppressed', () {
+      final s = VersionCheckService();
+      s.debugSetLastCheckedAt(DateTime(2026, 7, 17, 9, 0));
+      // フォーカス往復相当: 数秒〜数分後の再チェックは抑制される。
+      expect(s.shouldCheck(DateTime(2026, 7, 17, 9, 0, 30)), isFalse);
+      expect(s.shouldCheck(DateTime(2026, 7, 17, 9, 4, 59)), isFalse);
+    });
+
+    test('check after the 5 minute gap is allowed again', () {
+      final s = VersionCheckService();
+      s.debugSetLastCheckedAt(DateTime(2026, 7, 17, 9, 0));
+      expect(s.shouldCheck(DateTime(2026, 7, 17, 9, 5)), isTrue);
+      // 30分ポーリングは常に gap より長いので影響を受けない。
+      expect(s.shouldCheck(DateTime(2026, 7, 17, 9, 30)), isTrue);
+    });
+  });
 }

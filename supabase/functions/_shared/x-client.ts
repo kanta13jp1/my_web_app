@@ -44,6 +44,9 @@ export interface XTweetMetrics {
   repostCount: number;
   quoteCount: number;
   bookmarkCount: number;
+  // 保存性/変換シグナル(既に計算済だが従来は返していなかった)。
+  urlClicks: number;
+  profileClicks: number;
   score: number;
   raw: Record<string, unknown>;
 }
@@ -57,6 +60,8 @@ export interface XApiErrorPayload {
   requiredEnrollment: string | null;
   registrationUrl: string | null;
   actionRequired: string;
+  // R15: spend cap 解除見込み日(ISO, 例 "2026-07-10")。billing 起因以外は null。
+  billingBlockedUntil?: string | null;
   raw: Record<string, unknown> | string;
 }
 
@@ -129,29 +134,42 @@ export async function fetchXTweetMetrics(
   tweetIds: string[],
 ): Promise<XTweetMetrics[]> {
   assertXConfigured();
-  const ids = [...new Set(tweetIds.map(asString).filter((id) => id !== ""))]
-    .slice(0, 100);
+  // X API v2 の /2/tweets は 1 リクエスト最大 100 id。従来は `.slice(0, 100)` で
+  // 101 件目以降を黙って切り捨てており、投稿数が増えるほど計測から漏れた
+  // (perf フィードバックループの入力欠損)。100 件ずつ順次バッチで全件取得する。
+  const ids = [...new Set(tweetIds.map(asString).filter((id) => id !== ""))];
   if (ids.length === 0) return [];
 
-  try {
-    return await fetchXTweetMetricsWithFields(ids, [
-      "created_at",
-      "text",
-      "public_metrics",
-      "non_public_metrics",
-      "organic_metrics",
-    ]);
-  } catch (error) {
-    const payload = isXApiError(error) ? error.payload : null;
-    if (payload && (payload.status === 400 || payload.status === 403)) {
-      return await fetchXTweetMetricsWithFields(ids, [
-        "created_at",
-        "text",
-        "public_metrics",
-      ]);
+  const results: XTweetMetrics[] = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const batch = ids.slice(i, i + 100);
+    try {
+      results.push(
+        ...await fetchXTweetMetricsWithFields(batch, [
+          "created_at",
+          "text",
+          "public_metrics",
+          "non_public_metrics",
+          "organic_metrics",
+        ]),
+      );
+    } catch (error) {
+      const payload = isXApiError(error) ? error.payload : null;
+      if (payload && (payload.status === 400 || payload.status === 403)) {
+        // 昇格フィールド非対応(未認可)時のダウングレードはバッチ単位で維持。
+        results.push(
+          ...await fetchXTweetMetricsWithFields(batch, [
+            "created_at",
+            "text",
+            "public_metrics",
+          ]),
+        );
+      } else {
+        throw error;
+      }
     }
-    throw error;
   }
+  return results;
 }
 
 async function fetchXTweetMetricsWithFields(
@@ -179,6 +197,7 @@ export async function uploadMediaFromUrl(
     fileName?: string;
     mediaType?: string;
     mediaCategory?: string;
+    altText?: string;
   } = {},
 ): Promise<UploadedXMedia> {
   assertXConfigured();
@@ -187,6 +206,7 @@ export async function uploadMediaFromUrl(
     fileName: options.fileName || inferFileName(mediaUrl, binary.mediaType),
     mediaType: options.mediaType || binary.mediaType,
     mediaCategory: options.mediaCategory,
+    altText: options.altText,
   });
 }
 
@@ -196,6 +216,7 @@ export async function uploadMediaBytes(
     fileName?: string;
     mediaType?: string;
     mediaCategory?: string;
+    altText?: string;
   } = {},
 ): Promise<UploadedXMedia> {
   assertXConfigured();
@@ -243,6 +264,21 @@ export async function uploadMediaBytes(
     mediaId,
     finalizeResponse,
   );
+
+  // アクセシビリティ用の alt text を付与 (= 到達を僅かに広げ、ペナルティ無し)。
+  // 失敗しても投稿を絶対にブロックしないよう log のみで飲み込む。
+  const altText = asString(options.altText);
+  if (altText !== "") {
+    try {
+      await setMediaAltText(mediaId, altText);
+    } catch (error) {
+      console.error(
+        `[x-client] setMediaAltText failed for media ${mediaId} (non-fatal):`,
+        error,
+      );
+    }
+  }
+
   return {
     mediaId,
     mediaKey: asString(finalizeResponse.media_key) || null,
@@ -252,18 +288,70 @@ export async function uploadMediaBytes(
   };
 }
 
-export async function postTweet(input: {
+/**
+ * media/metadata/create の JSON body を組み立てる純粋関数 (= test 可能に分離)。
+ * alt_text.text は X の上限 1000 字で切り詰める。
+ */
+export function buildMediaAltTextBody(
+  mediaId: string,
+  altText: string,
+): { media_id: string; alt_text: { text: string } } {
+  return {
+    media_id: mediaId,
+    alt_text: { text: altText.slice(0, 1000) },
+  };
+}
+
+/**
+ * アップロード済み media に alt text を付与する。
+ * JSON body なので requestParams は空 = postTweet と同じ署名パス。
+ * 呼び出し側 (uploadMediaBytes) が try/catch で飲み込むため、ここでは throw してよい。
+ */
+export async function setMediaAltText(
+  mediaId: string,
+  altText: string,
+): Promise<void> {
+  const url = "https://upload.twitter.com/1.1/media/metadata/create";
+  const oauthHeader = await buildOAuthHeader("POST", url);
+  await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: oauthHeader,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(buildMediaAltTextBody(mediaId, altText)),
+  });
+}
+
+export interface XTweetPoll {
+  options: string[];
+  durationMinutes: number;
+}
+
+export interface PostTweetInput {
   text: string;
   mediaIds?: string[];
   replyToTweetId?: string;
-}): Promise<XTweetResult> {
-  assertXConfigured();
+  // ネイティブ投票(H7 / impressions ブースター)。省略時は従来と完全に同一の
+  // payload になる(additive / default-off)。
+  poll?: XTweetPoll;
+}
+
+/**
+ * POST /2/tweets の request body を組み立てる純関数(ネットワーク非依存)。
+ * postTweet 本体から切り出して deno test 可能にしている。
+ * poll+media 同居ガードと 2 選択肢以上のゲートはここに集約する。
+ */
+export function buildTweetPayload(
+  input: PostTweetInput,
+): Record<string, unknown> {
   const text = asString(input.text);
   if (text === "") {
     throw new Error("text is required.");
   }
-  if (text.length > 280) {
-    throw new Error("text exceeds 280 characters.");
+  // X Premium(認証済みアカウント)は最大25,000字の長文ポストが可能。280字で弾かない。
+  if (text.length > 25000) {
+    throw new Error("text exceeds 25000 characters.");
   }
 
   const payload: Record<string, unknown> = { text };
@@ -279,6 +367,33 @@ export async function postTweet(input: {
   if (replyToTweetId !== "") {
     payload.reply = { in_reply_to_tweet_id: replyToTweetId };
   }
+
+  // X API v2 は POST /2/tweets に poll を直接受け付ける(新エンドポイント/scope 不要)。
+  // 各選択肢<=25字・2〜4個・期間5〜10080分。X は 1 ツイートに poll と media の同居を
+  // 禁止するため、poll は media を持たない text-only の最初のリプライにのみ載せる
+  // (media 付きのリード投稿には絶対に載せない)。
+  const pollOptions = (input.poll?.options ?? [])
+    .map((option) => asString(option))
+    .filter((option) => option !== "")
+    .slice(0, 4);
+  if (pollOptions.length >= 2) {
+    if (payload.media) {
+      throw new Error("poll and media cannot coexist on one tweet");
+    }
+    payload.poll = {
+      options: pollOptions,
+      duration_minutes: Math.max(
+        5,
+        Math.min(10080, Math.trunc(input.poll!.durationMinutes || 1440)),
+      ),
+    };
+  }
+  return payload;
+}
+
+export async function postTweet(input: PostTweetInput): Promise<XTweetResult> {
+  assertXConfigured();
+  const payload = buildTweetPayload(input);
 
   const tweetUrl = "https://api.twitter.com/2/tweets";
   const oauthHeader = await buildOAuthHeader("POST", tweetUrl);
@@ -530,7 +645,15 @@ export function buildXApiErrorPayload(
   const detail = asString(parsed.detail) || null;
   const registrationUrl = asString(parsed.registration_url) || null;
   const requiredEnrollment = asString(parsed.required_enrollment) || null;
-  const code = reason === "client-not-enrolled"
+  // 実障害(2026-07-06): X API のクレジット制プランで残高ゼロになると
+  // 402 "does not have any credits" で全投稿・計測がブロックされる。
+  // spend cap 到達由来の 403 も同じ課金起因なので単一コードへ正規化する。
+  const billingText = `${detail ?? ""} ${title ?? ""} ${rawText}`;
+  const isBillingBlocked = status === 402 ||
+    (status === 403 && /spend cap|billing cycle|credit/i.test(billingText));
+  const code = isBillingBlocked
+    ? "x_billing_blocked"
+    : reason === "client-not-enrolled"
     ? "x_client_not_enrolled"
     : status === 403
     ? "x_forbidden"
@@ -544,8 +667,21 @@ export function buildXApiErrorPayload(
     requiredEnrollment,
     registrationUrl,
     actionRequired: buildXActionRequired(code, requiredEnrollment),
+    // R15: spend cap 解除見込み日(ISO)。X の 402/403 エラーメッセージから
+    // 機械可読化し、preflight(生成前スキップ)と UI 表示の基盤にする。
+    billingBlockedUntil: isBillingBlocked
+      ? parseBillingBlockedUntil(billingText)
+      : null,
     raw: Object.keys(parsed).length > 0 ? parsed : rawText,
   };
+}
+
+/// X の spend-cap エラー文(例: "API requests will be blocked until the next
+/// cycle begins on 2026-07-10.")からリセット日を ISO 日付で抽出する純関数。
+/// 一致しなければ null(呼び出し側は TTL フォールバックへ degrade)。
+export function parseBillingBlockedUntil(text: string): string | null {
+  const match = /next cycle begins on (\d{4}-\d{2}-\d{2})/i.exec(text ?? "");
+  return match ? match[1] : null;
 }
 
 function normalizeXTrends(payload: unknown): XTrend[] {
@@ -624,6 +760,8 @@ function normalizeXTweetMetrics(payload: unknown): XTweetMetrics[] {
         repostCount,
         quoteCount,
         bookmarkCount,
+        urlClicks,
+        profileClicks,
         score,
         raw: tweet,
       };
@@ -657,6 +795,9 @@ function buildXActionRequired(
   if (code === "x_forbidden") {
     return "Check the X Developer App permissions, API access tier, and OAuth user-context access token.";
   }
+  if (code === "x_billing_blocked") {
+    return "X APIのクレジット不足/spend cap到達です。X Developer Portal (console.x.com) の該当プロジェクトでクレジット追加または上限引き上げをしてください。解除まで投稿・計測は失敗します。";
+  }
   return "Check the X API response, credentials, and endpoint permissions.";
 }
 
@@ -668,6 +809,14 @@ function buildXApiErrorMessage(payload: XApiErrorPayload): string {
       "Use keys and tokens from an X Developer App attached to a Project.",
       payload.actionRequired,
     ].join(" ");
+  }
+  if (payload.code === "x_billing_blocked") {
+    // 生 detail(リセット日を含む)はデバッグ/ログ永続用に保持。対処ガイダンスは
+    // actionRequired のみへ単一化(R15: 従来は error にも同文を埋め込んでおり、
+    // クライアントが error + actionRequired を連結して同じ段落が二重表示された)。
+    return `X APIのクレジットが不足しています（${
+      payload.detail ?? payload.status
+    }）。`;
   }
   return `X API error ${payload.status}: ${
     payload.detail || payload.title || JSON.stringify(payload.raw)

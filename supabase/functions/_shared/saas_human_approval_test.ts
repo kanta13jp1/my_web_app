@@ -2,6 +2,7 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   buildSaasApprovalStatus,
   externalSaasGateReason,
+  isPendingSaasApprovalStatus,
   normalizeSaasApprovalDecision,
   normalizeSaasConnectorSettings,
 } from "./saas_human_approval.ts";
@@ -45,4 +46,12 @@ Deno.test("decision aliases normalize to stored statuses", () => {
     "revision_requested",
   );
   assertEquals(normalizeSaasApprovalDecision("unknown"), null);
+});
+
+Deno.test("only pending or legacy blank approvals can be decided", () => {
+  assertEquals(isPendingSaasApprovalStatus("pending"), true);
+  assertEquals(isPendingSaasApprovalStatus(""), true);
+  assertEquals(isPendingSaasApprovalStatus("approved"), false);
+  assertEquals(isPendingSaasApprovalStatus("rejected"), false);
+  assertEquals(isPendingSaasApprovalStatus("revision_requested"), false);
 });

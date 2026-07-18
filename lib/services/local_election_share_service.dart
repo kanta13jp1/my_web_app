@@ -64,8 +64,17 @@ class LocalElectionShareService {
   static const int maxWeekendWindowCount = 60;
   static const int _syntheticNoteIdBase = 90000000000000;
   static const int _planDashboardNoteId = _syntheticNoteIdBase + 7002027;
+  // 統一地方選 2027 の仮日程 (官報告示前の推定 / 単一正本)。
+  // 告示日は公選法の告示日数ルールと 2023 実績 (前半: 知事選17日前 /
+  // 後半: 市区議・市区長7日前) に合わせる。確定後はここだけ更新する。
   static final DateTime nextUnifiedLocalElectionFirstHalfTargetDate =
       DateTime(2027, 4, 11);
+  static final DateTime nextUnifiedLocalElectionFirstHalfAnnouncementDate =
+      DateTime(2027, 3, 25);
+  static final DateTime nextUnifiedLocalElectionSecondHalfTargetDate =
+      DateTime(2027, 4, 25);
+  static final DateTime nextUnifiedLocalElectionSecondHalfAnnouncementDate =
+      DateTime(2027, 4, 18);
   static final List<LocalElectionShareWindow> availableWindows =
       List<LocalElectionShareWindow>.unmodifiable(
     List<LocalElectionShareWindow>.generate(
@@ -232,6 +241,40 @@ class LocalElectionShareService {
     );
   }
 
+  /// R24: 選挙集計スレッドを growth-hub x.post へ渡す payload(純関数・VMテスト可)。
+  /// variant と content_archetype を明示し、8K 実測級の投稿を学習ループ
+  /// (variant ranking / Archetype lift) の計測対象にする。
+  static Map<String, dynamic> buildElectionXPostPayload(List<String> tweets) {
+    final cleaned = tweets
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList(growable: false);
+    if (cleaned.isEmpty) return const {};
+    return {
+      'action': 'x.post',
+      'text': cleaned.first,
+      if (cleaned.length > 1) 'replyTexts': cleaned.sublist(1),
+      'source': 'local_election_tracker',
+      'variant': 'local_election_tracker',
+      'contentArchetype': 'data_report',
+      'experimentKey': 'x_first_user_growth_10k',
+    };
+  }
+
+  /// R24: composer のスレッドを growth-hub x.post 経由で直接投稿する。従来は
+  /// コピー/X intent の手動投稿のみで x_post_log に残らず、データレポート型
+  /// (実測 8K インプ)の勝ちが学習ループから不可視だった。
+  Future<Map<String, dynamic>> postThreadToXViaApi(List<String> tweets) async {
+    final payload = buildElectionXPostPayload(tweets);
+    if (payload.isEmpty) {
+      return {'success': false, 'error': '投稿できるテキストがありません'};
+    }
+    final res = await _supabase.functions.invoke('growth-hub', body: payload);
+    final data = res.data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return {'success': false, 'error': '不明な応答形式'};
+  }
+
   String buildXShareText({
     required LocalElectionRealitySnapshot snapshot,
     required String publicUrl,
@@ -280,6 +323,72 @@ class LocalElectionShareService {
       snapshot: snapshot,
       publicUrl: '',
     );
+  }
+
+  /// X の投稿長制限(25,000)は twitter-text の加重文字数で数えられる:
+  /// CJK/全角=2、半角(Latin 等)=1、URL=一律23。日本語主体の集計本文を Dart の
+  /// code unit 数で測ると実重みのほぼ半分にしか見えず、上限超過を素通しする
+  /// (レビュー指摘)。ここでは全文字を範囲判定で加重する近似を使う(ASCII の
+  /// URL を 1/字で数える=実際の 23/URL より過大評価で安全側)。
+  static int xWeightedLength(String text) {
+    var weighted = 0;
+    for (final rune in text.runes) {
+      weighted += rune < 0x1100 ? 1 : 2;
+    }
+    return weighted;
+  }
+
+  /// R24: 地方議員集計を growth-hub x.post(API 投稿)へ載せるための長文本文。
+  /// intent 投稿は x_post_log の外=Archetype lift 計測に入らないため、実測
+  /// 累積8Kの既存ポストA（後続A/B実測3.2K）と同じ集計ノート全文を、
+  /// API 経由の第一級経路に
+  /// する。X Premium 上限(25,000 weighted)に対し [maxWeightedChars] で安全側に
+  /// 収め、超過時は名簿セクション境界(\n\n◽️)で切り詰めて公開ノートへ誘導する。
+  String buildXPostLongText({
+    required LocalElectionRealitySnapshot snapshot,
+    required List<LocalElectionLegislatorProfile> members,
+    LocalElectionPlanDashboard? plan,
+    String publicUrl = '',
+    int maxWeightedChars = 24000,
+  }) {
+    final draft = buildDraft(snapshot: snapshot, members: members, plan: plan);
+    final suffix =
+        publicUrl.isEmpty ? '' : '\n\n全都道府県の内訳と現職名簿の公開ノート:\n$publicUrl';
+    final body = draft.content.trim();
+    if (xWeightedLength(body) + xWeightedLength(suffix) <= maxWeightedChars) {
+      return '$body$suffix';
+    }
+    // 公開ノート URL が無いときは「続きは公開ノートへ」と書かない(リンクの
+    // 無い誘導文が公開されたまま残る事故を防ぐ。呼び出し側でも memo 発行失敗
+    // 時は投稿自体を中止する)。
+    final truncationNote = publicUrl.isEmpty
+        ? '\n\n(文字数上限のため名簿は途中まで)'
+        : '\n\n(文字数上限のため名簿の続きは公開ノートへ)';
+    final budget = maxWeightedChars -
+        xWeightedLength(suffix) -
+        xWeightedLength(truncationNote);
+    if (budget <= 0) {
+      return buildXShareText(snapshot: snapshot, publicUrl: publicUrl);
+    }
+    // weighted budget 内に収まる最大の code-unit 位置を前方走査で求める。
+    var weighted = 0;
+    var cutLimit = 0;
+    for (final rune in body.runes) {
+      final w = rune < 0x1100 ? 1 : 2;
+      if (weighted + w > budget) {
+        break;
+      }
+      weighted += w;
+      cutLimit += rune > 0xFFFF ? 2 : 1;
+    }
+    var cut = body.lastIndexOf('\n\n◽️', cutLimit);
+    if (cut < 0) {
+      cut = body.lastIndexOf('\n\n', cutLimit);
+    }
+    if (cut <= 0) {
+      cut = cutLimit;
+    }
+    return '${body.substring(0, cut).trimRight()}$truncationNote$suffix';
   }
 
   Uri buildXShareIntentUri({
@@ -1056,9 +1165,10 @@ class LocalElectionShareService {
     return '同数';
   }
 
-  /// AI整理メモの注視ポイント。AI整理メモは includeCdpBenchmarks=false の snapshot を
-  /// 使うため立憲比較行が「取得していません」になる。週次cronでバッチ取得した立憲値
-  /// (plan に適用済み) から地力差を計算し、その行だけ差し替える。データが無ければ原文。
+  /// AI整理メモの注視ポイント。snapshot の edge function は立憲値を取得しない
+  /// (週次cronが正本) ため立憲比較行が「取得していません」になる。週次cronで
+  /// バッチ取得した立憲値 (plan に適用済み) から地力差を計算し、その行だけ差し替える。
+  /// データが無ければ原文。
   List<String> displayAiAlerts(
     LocalElectionRealitySnapshot snapshot,
     LocalElectionPlanDashboard? plan,
@@ -1108,7 +1218,7 @@ class LocalElectionShareService {
     };
   }
 
-  /// snapshot は includeCdpBenchmarks=false で立憲値が 0 のため、plan のバッチ値が
+  /// snapshot の立憲値は edge function が取得せず常に 0 のため、plan のバッチ値が
   /// あればそれを優先する (_describePlanPrefecture のマージと同型 / 0・欠損は据置)。
   int _resolveCdpLocalMembers(
     LocalElectionPrefectureReality reality,

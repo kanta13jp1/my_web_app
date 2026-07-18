@@ -35,6 +35,24 @@ class PublicMemoService {
     return buildPublicMemoAppUrl(memoId);
   }
 
+  /// ChatGPT 等の外部 AI・クローラー向けの bot 可読 URL。
+  ///
+  /// Flutter SPA の /public-memo は JS 実行後に本文を描画するため bot は
+  /// 内容を読めない。core-hub の匿名 action `memo.public.view` が同じメモを
+  /// サーバー描画済み HTML (format=json / md も可) で返す。
+  static String buildPublicMemoReaderUrl(int memoId, {String? format}) {
+    return Uri.parse(publicMemoReaderEndpoint).replace(
+      queryParameters: <String, String>{
+        'action': 'memo.public.view',
+        'id': memoId.toString(),
+        if (format != null) 'format': format,
+      },
+    ).toString();
+  }
+
+  static const String publicMemoReaderEndpoint =
+      'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub';
+
   static String buildShareMessage(PublicMemo memo) {
     final excerpt = _buildShareExcerpt(memo.content);
     final category = memo.category?.trim();

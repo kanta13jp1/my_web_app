@@ -8,6 +8,8 @@ exit non-zero. Otherwise a transient feed error would become user-facing content
 from __future__ import annotations
 
 import html as html_mod
+import json
+import os
 import re
 import sys
 import urllib.error
@@ -16,6 +18,42 @@ import urllib.request
 
 class FeedError(RuntimeError):
     """Raised when a feed cannot produce usable article content."""
+
+
+def _firecrawl_scrape(url: str) -> str | None:
+    """Return clean markdown for url via Firecrawl API, or None on any error.
+
+    Uses onlyCleanContent=true (strips nav/ads/cookie banners) and the
+    Question Format to extract a concise article summary.
+    Requires FIRECRAWL_API_KEY env var; falls back silently when absent.
+    """
+    api_key = os.environ.get("FIRECRAWL_API_KEY", "")
+    if not api_key:
+        return None
+    payload = json.dumps({
+        "url": url,
+        "formats": ["markdown"],
+        "onlyCleanContent": True,
+        "question": "この記事の内容を150字以内の日本語で要約してください。",
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.firecrawl.dev/v1/scrape",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            body = json.loads(response.read())
+        answer = (body.get("data") or {}).get("llm_extraction", {}).get("answer", "")
+        if not answer:
+            answer = (body.get("data") or {}).get("markdown", "")[:400]
+        return answer.strip() or None
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def strip_tags(value: str) -> str:
@@ -64,6 +102,10 @@ def extract_rss_desc(item: str) -> str:
 def fetch_meta_description(url: str) -> str:
     if not url:
         return ""
+    # Prefer Firecrawl (onlyCleanContent + Question Format) when API key is set.
+    fc = _firecrawl_scrape(url)
+    if fc:
+        return fc[:400]
     try:
         page = fetch_text(url)
     except FeedError:

@@ -1,14 +1,14 @@
 # News Pattern Detector Report
 
-- Generated at: `2026-06-27T21:39:39Z`
+- Generated at: `2026-07-17T22:08:03Z`
 - Sources: `docs/ai-tool-watch/latest-report.json`
 - Entries scanned: `9`
-- Patterns: `2`
-- Issue candidates: `1`
+- Patterns: `4`
+- Issue candidates: `2`
 
 ## Patterns
-- **multi-source / agentic-workflows**: 7 entries, confidence=0.961, risk=review
-  - Action: Hold for human review before creating issues or blog drafts.
+- **multi-source / agentic-workflows**: 5 entries, confidence=0.97, risk=normal
+  - Action: Review repeated signal for a scoped follow-up issue only if source confidence stays high.
   - Evidence: Claude Code changelog
   - Evidence: Claude Code hooks reference
   - Evidence: Claude Code GitHub Actions
@@ -17,6 +17,16 @@
   - Evidence: Claude Code changelog
   - Evidence: Claude Code hooks reference
   - Evidence: Claude Code GitHub Actions
+- **openai / mcp-integration**: 3 entries, confidence=0.89, risk=review
+  - Action: Hold for human review before creating issues or blog drafts.
+  - Evidence: Codex changelog
+  - Evidence: Codex use cases
+  - Evidence: Codex overview
+- **multi-source / mcp-integration**: 3 entries, confidence=0.89, risk=review
+  - Action: Hold for human review before creating issues or blog drafts.
+  - Evidence: Codex changelog
+  - Evidence: Codex use cases
+  - Evidence: Codex overview
 
 ## Filter Summary
 
@@ -29,7 +39,6 @@
     "drop": 0
   },
   "risk_flags": {
-    "sensational_language": 1,
     "source_http_problem": 1
   }
 }

@@ -1,0 +1,345 @@
+// public_memo_view.ts — 公開メモの bot / AI 可読ビュー
+//
+// Flutter SPA (/public-memo?id=X) は JS 実行後に Supabase から本文を取得する
+// ため、ChatGPT 等の外部 AI やクローラーは URL を開いても本文を読めない。
+// core-hub の匿名 action `memo.public.view` / `memo.public.list` が同じデータを
+// サーバー側で描画済みの HTML / JSON / Markdown として返すことで補完する
+// (hub 統合 Issue #607 で削除された public-memo-share / get-public-memo-ogp の後継)。
+
+export const PUBLIC_MEMO_SITE_NAME = "自分株式会社";
+export const PUBLIC_MEMO_APP_BASE_URL =
+  "https://my-web-app-b67f4.web.app/public-memo";
+
+export interface PublicMemoViewRow {
+  id: number;
+  title: string | null;
+  content: string | null;
+  category: string | null;
+  metadata?: unknown;
+  published_at: string | null;
+  updated_at: string | null;
+  view_count: number | null;
+  like_count: number | null;
+}
+
+export type PublicMemoViewFormat = "html" | "json" | "md" | "txt";
+
+export const PUBLIC_MEMO_VIEW_COLUMNS =
+  "id, title, content, category, metadata, published_at, updated_at, view_count, like_count";
+
+/// format param 明示が最優先。未指定時は GET/HEAD (ブラウザ / クローラー直
+/// アクセス。HEAD は AI フェッチャーのプリフライト) は HTML、POST (API
+/// クライアント) は JSON を既定とする。
+export function resolvePublicMemoViewFormat(
+  format: unknown,
+  method: string,
+): PublicMemoViewFormat {
+  const normalized = typeof format === "string"
+    ? format.trim().toLowerCase()
+    : "";
+  if (normalized === "json") return "json";
+  if (normalized === "md" || normalized === "markdown") return "md";
+  // 一部の AI フェッチャーは text/markdown・text/html を本文として扱えない
+  // ため、text/plain で返す txt を用意する (中身は Markdown と同一)。
+  if (normalized === "txt" || normalized === "text" || normalized === "plain") {
+    return "txt";
+  }
+  if (normalized === "html") return "html";
+  const upper = method.toUpperCase();
+  return upper === "GET" || upper === "HEAD" ? "html" : "json";
+}
+
+/// URL query を action body 相当へ変換する。レンダリング済みテキストから
+/// URL をコピーすると `&` が `&amp;` に化け、`amp;id=44` のようなキーで
+/// 届くことがある (ChatGPT の fetch で実測 400)。キー先頭の `amp;` を
+/// 除去して救済する。同名キーは先勝ち。
+export function searchParamsToActionBody(url: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of new URL(url).searchParams) {
+    const normalized = key.replace(/^(amp;)+/, "");
+    if (!(normalized in result)) {
+      result[normalized] = value;
+    }
+  }
+  return result;
+}
+
+export function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+export function buildPublicMemoPageUrl(memoId: number): string {
+  return `${PUBLIC_MEMO_APP_BASE_URL}?id=${memoId}`;
+}
+
+/// PublicMemoService._buildShareExcerpt (Dart) と同じ規則:
+/// 空白を単一スペースに正規化し、140 字を超えたら 137 字 + "..." に切り詰める。
+export function buildPublicMemoExcerpt(
+  content: string | null | undefined,
+  maxLength = 140,
+): string {
+  const normalized = (content ?? "").replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+  return `${normalized.slice(0, maxLength - 3)}...`;
+}
+
+/// category + metadata.tags (JSONB / OGP シェアカード用に既存) を合成した
+/// AI 向けタグ。文字列以外・空白・重複は除外する。
+export function extractPublicMemoTags(row: PublicMemoViewRow): string[] {
+  const tags: string[] = [];
+  const push = (value: unknown) => {
+    if (typeof value !== "string") return;
+    const trimmed = value.trim();
+    if (trimmed && !tags.includes(trimmed)) tags.push(trimmed);
+  };
+  push(row.category);
+  const metadata = row.metadata;
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
+    const raw = (metadata as Record<string, unknown>).tags;
+    if (Array.isArray(raw)) raw.forEach(push);
+  }
+  return tags;
+}
+
+export function publicMemoToPayload(
+  row: PublicMemoViewRow,
+): Record<string, unknown> {
+  return {
+    id: row.id,
+    title: row.title ?? "",
+    content: row.content ?? "",
+    summary: buildPublicMemoExcerpt(row.content),
+    markdown: renderPublicMemoMarkdown(row),
+    tags: extractPublicMemoTags(row),
+    category: row.category,
+    publishedAt: row.published_at,
+    updatedAt: row.updated_at,
+    viewCount: row.view_count ?? 0,
+    likeCount: row.like_count ?? 0,
+    appUrl: buildPublicMemoPageUrl(row.id),
+  };
+}
+
+export const PUBLIC_MEMO_SEARCH_MIN_QUERY_LENGTH = 2;
+export const PUBLIC_MEMO_SEARCH_MAX_QUERY_LENGTH = 100;
+
+/// 匿名検索の入力ガード (負荷対策)。PostgREST の or() 構文を壊す文字と
+/// ilike ワイルドカードを空白へ無害化し、最大長へ切り詰めた上で
+/// 最小長未満なら null (= 400 にする) を返す。
+export function normalizePublicMemoSearchQuery(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const sanitized = raw
+    .replace(/[,()%_\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, PUBLIC_MEMO_SEARCH_MAX_QUERY_LENGTH)
+    .trim();
+  if (sanitized.length < PUBLIC_MEMO_SEARCH_MIN_QUERY_LENGTH) {
+    return null;
+  }
+  return sanitized;
+}
+
+/// 匿名 action 共通の limit clamp。数値でなければ fallback、1..max に収める。
+export function clampPublicMemoLimit(
+  raw: unknown,
+  fallback: number,
+  max: number,
+): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(Math.trunc(n), 1), max);
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "";
+  return iso.slice(0, 10);
+}
+
+function memoMetaLine(row: PublicMemoViewRow): string {
+  const parts: string[] = [];
+  const category = row.category?.trim();
+  if (category) parts.push(`カテゴリ: ${category}`);
+  const published = formatDate(row.published_at);
+  if (published) parts.push(`公開日: ${published}`);
+  parts.push(`閲覧 ${row.view_count ?? 0}`);
+  parts.push(`いいね ${row.like_count ?? 0}`);
+  return parts.join(" / ");
+}
+
+function htmlDocument(options: {
+  title: string;
+  description: string;
+  canonicalUrl: string;
+  ogType: string;
+  body: string;
+}): string {
+  const title = escapeHtml(options.title);
+  const description = escapeHtml(options.description);
+  const canonical = escapeHtml(options.canonicalUrl);
+  return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title} | ${PUBLIC_MEMO_SITE_NAME}</title>
+<meta name="description" content="${description}">
+<link rel="canonical" href="${canonical}">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${description}">
+<meta property="og:url" content="${canonical}">
+<meta property="og:type" content="${options.ogType}">
+<meta property="og:site_name" content="${PUBLIC_MEMO_SITE_NAME}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${description}">
+</head>
+<body>
+<main style="max-width:720px;margin:0 auto;padding:24px;font-family:sans-serif;line-height:1.7">
+${options.body}
+</main>
+</body>
+</html>
+`;
+}
+
+/// Article 構造化データ (JSON-LD)。非JSクローラー / LLM / 検索エンジンに
+/// 公開メモを「記事」として認識させる。<script> ブレイクアウト防止のため
+/// `<` を < にエスケープする。
+export function renderPublicMemoArticleJsonLd(row: PublicMemoViewRow): string {
+  const title = row.title ?? `Public Memo #${row.id}`;
+  const appUrl = buildPublicMemoPageUrl(row.id);
+  const article: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description: buildPublicMemoExcerpt(row.content),
+    inLanguage: "ja",
+    mainEntityOfPage: appUrl,
+    url: appUrl,
+    author: { "@type": "Organization", name: PUBLIC_MEMO_SITE_NAME },
+    publisher: {
+      "@type": "Organization",
+      name: PUBLIC_MEMO_SITE_NAME,
+      logo: {
+        "@type": "ImageObject",
+        url: "https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png",
+      },
+    },
+  };
+  const tags = extractPublicMemoTags(row);
+  if (tags.length > 0) article.keywords = tags.join(", ");
+  if (row.published_at) article.datePublished = row.published_at;
+  if (row.updated_at) article.dateModified = row.updated_at;
+  const json = JSON.stringify(article).replaceAll("<", "\\u003c");
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
+export function renderPublicMemoHtml(row: PublicMemoViewRow): string {
+  const title = row.title ?? `Public Memo #${row.id}`;
+  const appUrl = buildPublicMemoPageUrl(row.id);
+  const jsonHref = escapeHtml(
+    `?action=memo.public.view&id=${row.id}&format=json`,
+  );
+  const body = `${renderPublicMemoArticleJsonLd(row)}
+<article>
+<h1>${escapeHtml(title)}</h1>
+<p>${escapeHtml(memoMetaLine(row))}</p>
+<div style="white-space:pre-wrap">${escapeHtml(row.content ?? "")}</div>
+</article>
+<footer style="margin-top:32px;font-size:0.9em">
+<p><a href="${escapeHtml(appUrl)}">アプリで開く (${
+    escapeHtml(PUBLIC_MEMO_SITE_NAME)
+  })</a> | <a href="${jsonHref}">JSON</a></p>
+</footer>`;
+  return htmlDocument({
+    title,
+    description: buildPublicMemoExcerpt(row.content),
+    canonicalUrl: appUrl,
+    ogType: "article",
+    body,
+  });
+}
+
+export function renderPublicMemoMarkdown(row: PublicMemoViewRow): string {
+  const title = row.title ?? `Public Memo #${row.id}`;
+  const lines = [
+    `# ${title}`,
+    "",
+    `- ${memoMetaLine(row)}`,
+    `- App URL: ${buildPublicMemoPageUrl(row.id)}`,
+    "",
+    row.content ?? "",
+    "",
+  ];
+  return lines.join("\n");
+}
+
+export function renderPublicMemoNotFoundHtml(memoId: number): string {
+  const body = `<h1>Public memo #${memoId} not found</h1>
+<p>このメモは存在しないか、非公開に変更されています。</p>
+<p><a href="${escapeHtml(PUBLIC_MEMO_APP_BASE_URL)}s">公開メモ一覧</a></p>`;
+  return htmlDocument({
+    title: `Public memo #${memoId} not found`,
+    description: "指定された公開メモは存在しないか、非公開に変更されています。",
+    canonicalUrl: buildPublicMemoPageUrl(memoId),
+    ogType: "website",
+    body,
+  });
+}
+
+export function renderPublicMemoListHtml(rows: PublicMemoViewRow[]): string {
+  const items = rows
+    .map((row) => {
+      const viewHref = escapeHtml(
+        `?action=memo.public.view&id=${row.id}`,
+      );
+      const title = escapeHtml(row.title ?? `Public Memo #${row.id}`);
+      const excerpt = escapeHtml(buildPublicMemoExcerpt(row.content, 100));
+      const published = escapeHtml(formatDate(row.published_at));
+      return `<li style="margin-bottom:16px">
+<a href="${viewHref}">${title}</a>
+<small> (${published})</small>
+<p style="margin:4px 0">${excerpt}</p>
+</li>`;
+    })
+    .join("\n");
+  const body = `<h1>公開メモ一覧 (${rows.length}件)</h1>
+<ol>
+${items}
+</ol>
+<footer style="margin-top:32px;font-size:0.9em">
+<p><a href="${escapeHtml(`${PUBLIC_MEMO_APP_BASE_URL}s`)}">アプリで開く (${
+    escapeHtml(PUBLIC_MEMO_SITE_NAME)
+  })</a> | <a href="${
+    escapeHtml("?action=memo.public.list&format=json")
+  }">JSON</a></p>
+</footer>`;
+  return htmlDocument({
+    title: "公開メモ一覧",
+    description: `${PUBLIC_MEMO_SITE_NAME}の公開メモ 最新${rows.length}件`,
+    canonicalUrl: `${PUBLIC_MEMO_APP_BASE_URL}s`,
+    ogType: "website",
+    body,
+  });
+}
+
+export function renderPublicMemoListMarkdown(
+  rows: PublicMemoViewRow[],
+): string {
+  const items = rows.map((row) => {
+    const title = row.title ?? `Public Memo #${row.id}`;
+    const published = formatDate(row.published_at);
+    return `- [#${row.id}] ${title} (${published}) — ${
+      buildPublicMemoExcerpt(row.content, 100)
+    }`;
+  });
+  return [`# 公開メモ一覧 (${rows.length}件)`, "", ...items, ""].join("\n");
+}

@@ -787,7 +787,7 @@ class AssetManagementAiSummaryService {
     List<AssetManagementAiAnalysisHistoryEntry> previousAnalyses,
   ) {
     final usefulAnalyses = previousAnalyses
-        .where((entry) => entry.summaryText.trim().isNotEmpty)
+        .where((entry) => entry.hasSummaryText)
         .take(5)
         .toList(growable: false);
     return <String, dynamic>{
@@ -1271,6 +1271,7 @@ class AssetManagementAiSummaryService {
       AssetManagementInsightActionType.emergencyLivingExpense => '生活費の不足',
       AssetManagementInsightActionType.cardBillingConfiguration => 'カード請求設定の確認',
       AssetManagementInsightActionType.doubleCountingRisk => '二重計上リスク',
+      AssetManagementInsightActionType.accountShortfallRisk => '口座別見込み残高の不足',
     };
   }
 

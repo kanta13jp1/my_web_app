@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app_share_service.dart';
+import 'landing_conversion_experiment_service.dart';
 
 class LandingShareSnapshot {
   final int todayCount;
@@ -375,7 +376,9 @@ $shareUrl
       case funnelInboxOpen:
         return true;
       default:
-        return false;
+        return LandingConversionExperimentService.isExperimentEventKey(
+          eventKey,
+        );
     }
   }
 }

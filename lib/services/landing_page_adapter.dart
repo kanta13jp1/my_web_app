@@ -49,6 +49,13 @@ abstract interface class LandingPageAdapter {
 
   Future<LandingPageViewStats> loadLpViewStats();
 
+  /// LP 表示を1回記録する (LP View カウンタ + 流入元帰属)。
+  ///
+  /// 2026-03-28 の LP 改修 (7b92a33d6) で loadLpViewStats ごと呼び出しが
+  /// 消えて以来カウンタが凍結していたため、書き込みを読み出しから分離して
+  /// LandingPage の initState から明示的に呼ぶ。
+  Future<void> recordLpView();
+
   Future<String> improveTrialPrompt({
     required String prompt,
   });
@@ -79,6 +86,8 @@ abstract interface class LandingPageAdapter {
   Future<void> recordSaveCta();
 
   Future<void> recordInboxOpen();
+
+  Future<void> recordConversionEvent({required String eventKey});
 }
 
 class SupabaseLandingPageAdapter implements LandingPageAdapter {
@@ -130,6 +139,21 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
   }
 
   @override
+  Future<void> recordLpView() async {
+    final client = _supabaseClientOrNull;
+    if (client == null) {
+      return;
+    }
+    try {
+      await client.rpc('increment_lp_view');
+      await LandingShareService.recordIncomingShareVisit(client: client);
+    } catch (error) {
+      // 計測失敗で LP 表示自体を妨げない。
+      debugPrint('LP view record failed: $error');
+    }
+  }
+
+  @override
   Future<LandingPageViewStats> loadLpViewStats() async {
     final client = _supabaseClientOrNull;
     if (client == null) {
@@ -137,8 +161,6 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
     }
 
     try {
-      await client.rpc('increment_lp_view');
-      await LandingShareService.recordIncomingShareVisit(client: client);
       final dynamic raw = await client.rpc('get_lp_view_stats');
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
@@ -271,6 +293,14 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
   Future<void> recordInboxOpen() {
     return LandingShareService.recordFunnelEvent(
       eventKey: LandingShareService.funnelInboxOpen,
+      client: _supabaseClientOrNull,
+    );
+  }
+
+  @override
+  Future<void> recordConversionEvent({required String eventKey}) {
+    return LandingShareService.recordFunnelEvent(
+      eventKey: eventKey,
       client: _supabaseClientOrNull,
     );
   }

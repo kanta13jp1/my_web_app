@@ -17,7 +17,7 @@ name: WBS AI Review (1h cron)
 
 on:
   schedule:
-    - cron: "20 */2 * * *"  # 2時間ごと 20 分
+    - cron: "20 */4 * * *"  # 4時間ごと 20 分 (2026-07-04 ci-audit: 2h→4h, 540min/月削減)
   workflow_dispatch:
     inputs:
       max_tasks:
@@ -232,9 +232,11 @@ jobs:
 
           curl -sf -X POST \
             "${SUPABASE_URL}/functions/v1/schedule-hub" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
             -d '{"action":"wbs.unblock_dependents"}' \
-            --max-time 30 || echo "::warning::wbs.unblock_dependents action not yet deployed (skip)"
+            --max-time 30 || echo "::warning::wbs.unblock_dependents call failed (skip)"
 
       # ── Step 5: skip log ─────────────────────────────
       - name: Step 5 - No-op log if skipped

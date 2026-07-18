@@ -148,6 +148,7 @@ import '../pages/qr_code_generator_page.dart';
 import '../pages/reading_list_page.dart';
 import '../pages/referral_program_page.dart';
 import '../pages/rewards_page.dart';
+import '../pages/mcp_file_search_page.dart';
 import '../pages/semantic_search_page.dart';
 import '../pages/smart_inbox_triage_page.dart';
 import '../pages/social_feed_page.dart';
@@ -169,6 +170,7 @@ import '../pages/code_playground_page.dart';
 import '../pages/real_estate_tracker_page.dart';
 import '../pages/goal_tracker_page.dart';
 import '../pages/bookmark_sync_page.dart';
+import '../pages/jibun_api_page.dart';
 import '../pages/ui_design_status_page.dart';
 import '../pages/ai_summarizer_page.dart';
 import '../pages/revenue_forecaster_page.dart';
@@ -1932,6 +1934,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const SemanticSearchPage()),
     ),
     HomeToolEntry(
+      id: 'mcp-file-search',
+      sectionId: 'knowledge',
+      title: '外部ファイル検索',
+      subtitle: '許可済みMCP接続先を横断検索しAIチャットへ追加',
+      icon: Icons.cloud_outlined,
+      color: const Color(0xFF00796B),
+      keywords: const <String>['外部ファイル', 'MCP', '検索', 'コンテキスト', 'file search'],
+      onOpen: (context) => _pushPage(context, const McpFileSearchPage()),
+    ),
+    HomeToolEntry(
       id: 'mindmap',
       sectionId: 'knowledge',
       title: 'マインドマップ',
@@ -2520,6 +2532,33 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ウェブクリップ',
       ],
       onOpen: (context) => _pushPage(context, const BookmarkSyncPage()),
+    ),
+    HomeToolEntry(
+      id: 'jibun-api',
+      sectionId: 'ai',
+      title: '自分API',
+      subtitle: 'Notion対抗。APIキー発行・外部AI連携・自作Agent(Worker)登録',
+      icon: Icons.api,
+      color: const Color(0xFF3D5AFE),
+      keywords: const <String>[
+        'API',
+        '自分API',
+        'APIキー',
+        'developer',
+        'デベロッパー',
+        'Worker',
+        'ワーカー',
+        'Agent',
+        'エージェント',
+        '外部連携',
+        'ChatGPT',
+        'Claude',
+        'integration',
+        'webhook',
+        'token',
+        'トークン',
+      ],
+      onOpen: (context) => _pushPage(context, const JibunApiPage()),
     ),
     HomeToolEntry(
       id: 'ai-summarizer',

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class GrowthAcquisitionService {
   static const String touchLanding = 'touch_landing';
+  static const String touchProfile = 'touch_profile';
   static const String touchImport = 'touch_import';
   static const String touchPublicMemo = 'touch_public_memo';
   static const String touchReferral = 'touch_referral';
@@ -17,6 +18,7 @@ class GrowthAcquisitionService {
   static const String publicMemoSignupCta = 'public_memo_signup_cta';
 
   static const String signupSubmitLanding = 'signup_submit_landing';
+  static const String signupSubmitProfile = 'signup_submit_profile';
   static const String signupSubmitImport = 'signup_submit_import';
   static const String signupSubmitPublicMemo = 'signup_submit_public_memo';
   static const String signupSubmitReferral = 'signup_submit_referral';
@@ -65,6 +67,24 @@ class GrowthAcquisitionService {
     }
   }
 
+  static bool isFirstUserGrowthUri(Uri uri) {
+    final params = uri.queryParameters;
+    return _lowerParam(params, 'utm_source') == 'x' &&
+        _lowerParam(params, 'utm_campaign') == 'first_user_growth';
+  }
+
+  static String? signalForIncomingUri(Uri uri) {
+    if (!isFirstUserGrowthUri(uri)) {
+      return null;
+    }
+    switch (_lowerParam(uri.queryParameters, 'utm_medium')) {
+      case 'profile':
+        return touchProfile;
+      default:
+        return null;
+    }
+  }
+
   static String? previewSignalForSourceType(String sourceType) {
     switch (sourceType) {
       case 'notion':
@@ -80,6 +100,8 @@ class GrowthAcquisitionService {
 
   static String resolveSignupSubmitSignal(String? latestTouchpoint) {
     switch (latestTouchpoint) {
+      case touchProfile:
+        return signupSubmitProfile;
       case touchImport:
         return signupSubmitImport;
       case touchPublicMemo:
@@ -107,8 +129,12 @@ class GrowthAcquisitionService {
     }
   }
 
-  Future<void> recordTouchpointForPagePath(String pagePath) async {
-    final signalKey = signalForPagePath(pagePath);
+  Future<void> recordTouchpointForPagePath(
+    String pagePath, {
+    Uri? currentUri,
+  }) async {
+    final signalKey = signalForIncomingUri(currentUri ?? Uri.base) ??
+        signalForPagePath(pagePath);
     if (signalKey == null) {
       return;
     }
@@ -151,6 +177,43 @@ class GrowthAcquisitionService {
   Future<void> recordLandingSignupSubmit() async {
     final latestTouchpoint = await loadLatestTouchpoint();
     await _recordSignal(resolveSignupSubmitSignal(latestTouchpoint));
+  }
+
+  Future<void> notifySignupSuccess({
+    required String? signupUserId,
+  }) async {
+    final userId = signupUserId?.trim();
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+    final client = _client;
+    if (client == null) {
+      return;
+    }
+
+    final latestTouchpoint = await loadLatestTouchpoint();
+    final signalKey = resolveSignupSubmitSignal(latestTouchpoint);
+    try {
+      final response = await client.functions.invoke(
+        'growth-hub',
+        body: <String, dynamic>{
+          'action': 'signup.notify',
+          'signupUserId': userId,
+          'signalKey': signalKey,
+          'latestTouchpoint': latestTouchpoint,
+        },
+      );
+      final payload = _asMap(response.data);
+      if (payload['success'] == true || payload['skipped'] == true) {
+        return;
+      }
+      debugPrint(
+        'Signup Slack notification returned an unexpected payload: $payload',
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Signup Slack notification failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<void> _persistLatestTouchpoint(String signalKey) async {
@@ -289,5 +352,9 @@ class GrowthAcquisitionService {
     final month = normalized.month.toString().padLeft(2, '0');
     final day = normalized.day.toString().padLeft(2, '0');
     return '${normalized.year}-$month-$day';
+  }
+
+  static String _lowerParam(Map<String, String> params, String key) {
+    return params[key]?.trim().toLowerCase() ?? '';
   }
 }
