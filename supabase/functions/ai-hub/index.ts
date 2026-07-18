@@ -14,6 +14,10 @@ import {
   prependCharacter,
 } from "../_shared/ai_character_preamble.ts";
 import {
+  buildExternalFileContextBlock,
+  MCP_FILE_CONTEXT_SOURCE,
+} from "../_shared/mcp_external_file.ts";
+import {
   type AgentToolApproval,
   type AgentToolPolicyDecision,
   evaluateAgentToolPolicy,
@@ -3485,12 +3489,41 @@ serve(async (req: Request) => {
           const m = h.metadata as Record<string, unknown>;
           return `User: ${m.message}\nAgent: ${m.response}`;
         }).join("\n");
+        const requestedContextIds = asStringArray(
+          body.context_file_ids ?? body.contextFileIds,
+        ).slice(0, 5);
+        let externalFileContext = "";
+        let attachedContextIds: string[] = [];
+        if (requestedContextIds.length > 0) {
+          const { data: contextRows, error: contextError } = await admin
+            .from("hub_data")
+            .select("id,metadata")
+            .eq("source", MCP_FILE_CONTEXT_SOURCE)
+            .filter("metadata->>user_id", "eq", userId!)
+            .filter("metadata->>security_status", "eq", "allowed")
+            .in("id", requestedContextIds);
+          if (contextError) throw new Error(contextError.message);
+          const rowsById = new Map(
+            (contextRows ?? []).map((row) => [String(row.id), row]),
+          );
+          const orderedRows: Record<string, unknown>[] = [];
+          for (const id of requestedContextIds) {
+            const row = rowsById.get(id);
+            if (row) orderedRows.push(row);
+          }
+          attachedContextIds = orderedRows.map((row) => String(row.id));
+          externalFileContext = buildExternalFileContextBlock(orderedRows);
+        }
         const imageInstruction = image
           ? "\n添付画像も確認し、見えている内容・文脈・ユーザーの質問に関係する示唆を含めて回答してください。"
           : "";
-        const prompt = `あなたは個人AIエージェントです。${
-          recentContext ? "履歴:\n" + recentContext + "\n\n" : ""
-        }ユーザーメッセージ: ${message}${imageInstruction}`;
+        const prompt = [
+          externalFileContext ? AI_CHARACTER_PREAMBLE : "",
+          "あなたは個人AIエージェントです。",
+          recentContext ? `履歴:\n${recentContext}` : "",
+          externalFileContext,
+          `ユーザーメッセージ: ${message}${imageInstruction}`,
+        ].filter(Boolean).join("\n\n");
         let response = "";
         let videoMetadata: Record<string, unknown> | null = null;
         let manusMetadata: Record<string, unknown> | null = null;
@@ -3574,6 +3607,7 @@ serve(async (req: Request) => {
           video_download_url: videoMetadata?.download_url ?? null,
           video_reason: videoMetadata?.reason ?? null,
           video_id: videoMetadata?.id ?? null,
+          context_file_ids: attachedContextIds,
         });
         return json({
           success: true,
@@ -3583,6 +3617,7 @@ serve(async (req: Request) => {
           provider: responseMode === "video" ? "hedra" : agentProvider,
           manus: manusMetadata,
           video: videoMetadata,
+          context_file_ids: attachedContextIds,
         });
       }
 

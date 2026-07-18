@@ -157,6 +157,7 @@ import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
+import 'package:my_web_app/pages/mcp_file_search_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
 import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
 import 'package:my_web_app/pages/social_feed_page.dart';
@@ -1009,8 +1010,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               builder: (_) => BlogDraftEditorPage(postId: postId),
             );
           case '/ai-assistant-chat':
+            final arguments = settings.arguments is Map
+                ? Map<String, dynamic>.from(settings.arguments! as Map)
+                : const <String, dynamic>{};
+            final contextIds = (arguments['context_file_ids'] as List?)
+                    ?.map((item) => item.toString())
+                    .toList(growable: false) ??
+                const <String>[];
+            final contextTitles = (arguments['context_titles'] as List?)
+                    ?.map((item) => item.toString())
+                    .toList(growable: false) ??
+                const <String>[];
             return MaterialPageRoute(
-              builder: (_) => const AiAssistantChatPage(),
+              builder: (_) => AiAssistantChatPage(
+                initialContextIds: contextIds,
+                initialContextTitles: contextTitles,
+              ),
             );
           case '/categories':
             return MaterialPageRoute(builder: (_) => const CategoriesPage());
@@ -1079,6 +1094,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return MaterialPageRoute(
               builder: (_) => const SemanticSearchPage(),
             );
+          case '/mcp-file-search':
+            return MaterialPageRoute(builder: (_) => const McpFileSearchPage());
           case '/social-feed':
             return MaterialPageRoute(builder: (_) => const SocialFeedPage());
           case '/notifications':
