@@ -60,6 +60,7 @@ import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_triage_guide_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
@@ -19279,6 +19280,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
           const SizedBox(height: 12),
+          if (report.triagePlan?.hasContent ?? false) ...[
+            _buildAssetTriageGuideCard(report.triagePlan!),
+            const SizedBox(height: 12),
+          ],
           if (report.emergencyAdvices.isNotEmpty) ...[
             _buildAssetManagementEmergencyAdviceList(report.emergencyAdvices),
             const SizedBox(height: 12),
@@ -20210,6 +20215,154 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
       AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括（リボ/分割）',
     };
+  }
+
+  /// 「まず、これだけ」段階別トリアージカード。数字の洪水で混乱している
+  /// 利用者向けに、今日 (最大3件)→今週→今月の順で絞って提示する。
+  /// 背景が固定の淡ティールのため、文字色も固定の濃ティール系にする。
+  Widget _buildAssetTriageGuideCard(AssetTriagePlan plan) {
+    var stepNumber = 0;
+    Widget buildStage(String label, List<AssetTriageStep> steps) {
+      if (steps.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F766E),
+              height: 1.4,
+            ),
+          ),
+          for (final step in steps) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${++stepNumber}. ${step.title}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF134E4A),
+                height: 1.4,
+              ),
+            ),
+            Text(
+              step.detail,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF115E59),
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
+    return Container(
+      key: const Key('asset_triage_guide_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDFA),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF99F6E4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.checklist_rounded,
+                size: 16,
+                color: Color(0xFF0F766E),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  plan.todaySteps.isEmpty
+                      ? 'まず、これだけ'
+                      : 'まず、これだけ（今日やること ${plan.todaySteps.length}つ）',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF134E4A),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            AssetTriagePlan.disclaimer,
+            style: TextStyle(
+              fontSize: 10,
+              color: Color(0xFF0F766E),
+              height: 1.4,
+            ),
+          ),
+          buildStage(
+            '今日やること（${plan.todaySteps.length}つだけ）',
+            plan.todaySteps,
+          ),
+          if (plan.todaySteps.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            const Text(
+              AssetTriagePlan.todayClosingNote,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F766E),
+                height: 1.4,
+              ),
+            ),
+          ],
+          buildStage('今週やること', plan.weekSteps),
+          buildStage('今月〜来月やること', plan.monthSteps),
+          if (plan.showConsultation && plan.consultationNote != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '一人で抱えないでください',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E3A8A),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    plan.consultationNote!,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF1E40AF),
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   /// 「借金しない宣言」の遵守状況（達成は緑で称賛、違反は赤で具体指摘）を描画する。
