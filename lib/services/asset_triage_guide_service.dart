@@ -7,11 +7,20 @@ enum AssetTriageStepKind {
   /// 今日: 食費・移動費など最低限の生活費を確保する。
   secureLivingExpense,
 
+  /// 今日: 期日を過ぎた入金予定（給料等）が着金したか確認する。
+  confirmIncomeArrival,
+
   /// 今日: 本日期日の支払いの原資を確認する。
   dueTodayPayment,
 
   /// 今日: カードの新規利用を止める（財布から抜く）。
   stopNewCardUsage,
+
+  /// 今週: 家賃・通信など生活の生命線となる固定費を優先確保する。
+  secureLifeline,
+
+  /// 今週: 高金利ローンの最低額を死守する。
+  protectHighInterestLoan,
 
   /// 今週: 期限超過の支払いを上から処理する。
   processOverdue,
@@ -105,6 +114,11 @@ class AssetTriageGuideService {
   /// 年収が分かる場合、負債が年収のこの割合を超えたら専門窓口案内を出す。
   static const double consultationDebtIncomeRatio = 0.5;
 
+  /// 「高金利ローン」と見なす年利の下限（この値以上を死守対象にする）。
+  /// 消費者金融 (年18%) だけでなく銀行カードローン (年14.5% 前後) も
+  /// 延滞は等しく重いため、10% を閾値にして cardLoan 種別を漏れなく拾う。
+  static const double highInterestRateThreshold = 0.10;
+
   AssetTriagePlan buildPlan({
     required AssetLiabilityWorkbook workbook,
     AssetDebtDisciplineReport? disciplineReport,
@@ -176,6 +190,33 @@ class AssetTriageGuideService {
       );
     }
 
+    // ①.5 期日を過ぎた入金予定（給料等）の着金確認。着金すれば口座が正常化する
+    // 最もレバレッジの高い1件のため、生活費の次・本日期日の前に置く。
+    final pendingIncome = workbook.incomePlans
+        .where(
+          (plan) => !plan.received && !_dateOnly(plan.date).isAfter(today),
+        )
+        .toList()
+      ..sort((a, b) => b.amount.compareTo(a.amount));
+    if (pendingIncome.isNotEmpty) {
+      final top = pendingIncome.first;
+      final others = pendingIncome.length - 1;
+      final destinationNote = top.destinationAccountName == null
+          ? ''
+          : '着金先は${top.destinationAccountName}の見込みです。';
+      todaySteps.add(
+        AssetTriageStep(
+          kind: AssetTriageStepKind.confirmIncomeArrival,
+          title: '入金予定が着金したか確認する',
+          detail: '${top.name} ${_yen(top.amount)}'
+              '${others > 0 ? ' ほか$others件' : ''}が'
+              '入金予定日を過ぎても「未受取」のままです。$destinationNote'
+              '着金していれば「受取済み」に更新してください。口座の見込み残高が'
+              '正常化し、以降の資金繰り判断が変わります。',
+        ),
+      );
+    }
+
     // ② 本日期日の支払い。
     final dueTodayRows = workbook.cashflowRows
         .where(
@@ -227,7 +268,84 @@ class AssetTriageGuideService {
     // 今日のステップは最大 3 件 (多いと動けなくなる)。溢れた分は翌日以降に回る。
     final cappedToday = todaySteps.take(maxTodaySteps).toList();
 
-    // ④ 期限超過の処理 (放置だけが最悪)。
+    // ④ 家賃・通信など生活の生命線を優先確保。fullPaymentEstimate は
+    // 「家賃・通信費など毎月全額を支払う固定費型」だが、サブスク区分の定期固定費も
+    // 同じ fullPaymentEstimate=true で計上される。サブスクは解約候補であって
+    // 「優先して払う生命線」ではないため、subscriptionFixedCostAccountIds を除外する
+    // (これを混ぜると困窮ユーザーに『サブスクを他の支払いより先に払え』と誤指示し、
+    // 同じ計画の固定費見直しステップとも矛盾する)。
+    // カード請求に内包される固定費 (例: auPay カード経由の通信費) は、口座から
+    // 直接引き落とされず、そのカードの請求行で支払われる。ここで「口座に先に
+    // 確保せよ」と出すとカード請求分と二重計上になるため、直接引落分のみを対象にする。
+    final subscriptionIds = workbook.subscriptionFixedCostAccountIds;
+    final lifelineRows = workbook.debtMasterRows
+        .where(
+          (row) =>
+              row.fullPaymentEstimate &&
+              !row.paid &&
+              row.scheduledPaymentAmount > 0 &&
+              !row.includedInBillingAccount &&
+              !subscriptionIds.contains(row.id),
+        )
+        .toList()
+      ..sort(
+        (a, b) => (a.paymentDay ?? 99).compareTo(b.paymentDay ?? 99),
+      );
+    if (lifelineRows.isNotEmpty) {
+      final total = lifelineRows.fold<double>(
+        0,
+        (sum, row) => sum + row.scheduledPaymentAmount,
+      );
+      final names = lifelineRows
+          .take(3)
+          .map(
+            (row) => '${row.name} ${_yen(row.scheduledPaymentAmount)}'
+                '${row.paymentDay == null ? '' : '（${row.paymentDay}日）'}',
+          )
+          .join(' / ');
+      weekSteps.add(
+        AssetTriageStep(
+          kind: AssetTriageStepKind.secureLifeline,
+          title: '家賃・通信など生命線を優先確保する',
+          detail: '住居・通信は生活の生命線です。$names'
+              '${lifelineRows.length > 3 ? ' ほか${lifelineRows.length - 3}件' : ''}'
+              '（合計 ${_yen(total)}）の引落分は、他の支払いより先に口座へ確保してください。',
+        ),
+      );
+    }
+
+    // ⑤ 高金利ローンの最低額を死守（利息が重いので他より優先して最低額を守る）。
+    final highInterestLoans = workbook.debtMasterRows
+        .where(
+          (row) =>
+              !row.fullPaymentEstimate &&
+              row.kind == AssetLiabilityAccountKind.cardLoan &&
+              row.annualRate >= highInterestRateThreshold &&
+              row.balance.abs() > 1 &&
+              !row.paid,
+        )
+        .toList()
+      ..sort((a, b) => b.annualRate.compareTo(a.annualRate));
+    if (highInterestLoans.isNotEmpty) {
+      final names = highInterestLoans
+          .take(3)
+          .map(
+            (row) => '${row.name}（年${_formatRate(row.annualRate)} / '
+                '最低 ${_yen(row.minimumPaymentEstimate)}）',
+          )
+          .join(' / ');
+      weekSteps.add(
+        AssetTriageStep(
+          kind: AssetTriageStepKind.protectHighInterestLoan,
+          title: '高金利ローンの最低額を死守する',
+          detail: '利息が重い高金利ローンは、延滞すると傷が深くなります。$names'
+              '${highInterestLoans.length > 3 ? ' ほか${highInterestLoans.length - 3}件' : ''}'
+              'は最低額を必ず確保し、余力があればここから多めに返してください。',
+        ),
+      );
+    }
+
+    // ⑥ 期限超過の処理 (放置だけが最悪)。
     // overdueCashflowRows は未受領の収入行も含み、本日期日 (=ステップ②) も
     // overdue 扱いのため、「支払 かつ 昨日以前」に絞る (収入を延滞額扱いしない・
     // 本日期日を②と二重計上しない)。
@@ -367,6 +485,15 @@ class AssetTriageGuideService {
 
   DateTime _dateOnly(DateTime value) =>
       DateTime(value.year, value.month, value.day);
+
+  /// 年利 (小数) を「18%」のような表示へ。整数割り切れ時は小数点を省く。
+  String _formatRate(double rate) {
+    final percent = rate * 100;
+    if ((percent - percent.roundToDouble()).abs() < 0.05) {
+      return '${percent.round()}%';
+    }
+    return '${percent.toStringAsFixed(1)}%';
+  }
 
   String _yen(double amount) {
     final sign = amount < 0 ? '-' : '';

@@ -245,6 +245,14 @@ class AssetLiabilityPlanningService {
       baseDate: baseDate,
       salaryDay: salaryDay,
     );
+    // 実際に注入されたサブスク区分の固定費口座 ID (dedup / 当月該当を反映済み)。
+    // トリアージの「生命線を優先確保」から除外する。名前の再解決ではなく実注入
+    // 口座 ID を使うことで、組み込み生命線 ID (rent/gas_bill 等) との部分一致衝突で
+    // 本物の生命線を過剰除外する事故を避ける。
+    final subscriptionFixedCostAccountIds = <String>{
+      for (final injected in injectedFixedCosts)
+        if (injected.isSubscription) injected.account.id,
+    };
     if (injectedFixedCosts.isNotEmpty) {
       accounts
         ..addAll(injectedFixedCosts.map((injected) => injected.account))
@@ -448,6 +456,7 @@ class AssetLiabilityPlanningService {
           liabilityTotal == 0 ? 0 : topFourDebtTotal / liabilityTotal.abs(),
       manualPaymentCount: manualPaymentCount,
       estimatedPaymentCount: estimatedPaymentCount,
+      subscriptionFixedCostAccountIds: subscriptionFixedCostAccountIds,
     );
   }
 
@@ -1996,8 +2005,12 @@ class AssetLiabilityPlanningService {
   /// 当月に該当する周期 (毎月/隔月) かつ金額>0 で、まだ同名/同IDの口座が無いものだけ
   /// を返す。`_liability` 経由で既定固定費 (水道/ガス) と同じ全額支払いの utility 負債
   /// として作る。振替元は呼び出し側で `effectivePaymentSourceAccountIds` に反映する。
-  List<({AssetLiabilityAccount account, String? sourceAccountId})>
-      _buildRecurringFixedCostInjections({
+  List<
+      ({
+        AssetLiabilityAccount account,
+        String? sourceAccountId,
+        bool isSubscription
+      })> _buildRecurringFixedCostInjections({
     required List<AssetRecurringFixedCost> recurringFixedCosts,
     required List<AssetLiabilityAccount> existingAccounts,
     required DateTime baseDate,
@@ -2006,14 +2019,18 @@ class AssetLiabilityPlanningService {
     if (recurringFixedCosts.isEmpty) {
       return const <({
         AssetLiabilityAccount account,
-        String? sourceAccountId
+        String? sourceAccountId,
+        bool isSubscription
       })>[];
     }
     final takenIds = existingAccounts.map((account) => account.id).toSet();
     final takenNames =
         existingAccounts.map((account) => _normalize(account.name)).toSet();
-    final result =
-        <({AssetLiabilityAccount account, String? sourceAccountId})>[];
+    final result = <({
+      AssetLiabilityAccount account,
+      String? sourceAccountId,
+      bool isSubscription
+    })>[];
     for (final cost in recurringFixedCosts) {
       if (cost.amount <= 0 ||
           !cost.appliesToMonth(
@@ -2037,7 +2054,14 @@ class AssetLiabilityPlanningService {
       }
       takenIds.add(account.id);
       takenNames.add(_normalize(account.name));
-      result.add((account: account, sourceAccountId: cost.sourceAccountId));
+      result.add(
+        (
+          account: account,
+          sourceAccountId: cost.sourceAccountId,
+          isSubscription:
+              cost.category == AssetRecurringFixedCostCategory.subscription,
+        ),
+      );
     }
     return result;
   }
