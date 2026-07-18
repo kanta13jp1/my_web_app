@@ -583,6 +583,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (!mounted) {
         return;
       }
+      // 初期ロード直後の refresh がキャッシュと同一 snapshot を返すケースでは
+      // 公開ノートの再ロードを省略する (page load ごとの public_memos 二重
+      // フェッチ対策)。fetchedAt が変わったときだけ再取得する。
+      final snapshotChanged = _realitySnapshot?.fetchedAt != snapshot.fetchedAt;
       setState(() {
         if (syncedPlan != null) {
           _plan = syncedPlan;
@@ -593,13 +597,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         _realitySnapshot = snapshot;
         _realityHistory = history;
         _realityError = null;
-        _publishedSnapshotMemo = null;
-        _publishedKpiMemo = null;
+        if (snapshotChanged) {
+          _publishedSnapshotMemo = null;
+          _publishedKpiMemo = null;
+        }
         _syncMemberSelection(snapshot);
         _syncScheduleSelection(snapshot);
       });
-      unawaited(_loadPublishedSnapshotMemo(snapshot));
-      unawaited(_loadPublishedKpiMemo());
+      if (snapshotChanged) {
+        unawaited(_loadPublishedSnapshotMemo(snapshot));
+        unawaited(_loadPublishedKpiMemo());
+      }
       if (showSnackBar) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1208,7 +1216,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ? snapshot!.actualNetIncreaseRequired
         : plan.requiredNetIncrease;
     final progressLabel = plan.targetLocalMembers > 0
-        ? '${(officialCount / plan.targetLocalMembers * 100).toStringAsFixed(1)}%'
+        ? '${(officialCount / plan.targetLocalMembers * 100).clamp(0, 100).toStringAsFixed(1)}%'
         : '-';
     final daysToElection = _shareService.daysUntilNextUnifiedLocalElection();
     final monthsToElection = (daysToElection / 30).ceil().clamp(1, 24);
@@ -1577,11 +1585,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
+                  // fresh 窓(2h)〜stale 閾値(12h) の間も鮮度が読めるよう、
+                  // 固定文言ではなく取得からの経過時間で3段階表示する。
                   _buildStatusChip(
-                    realitySnapshot.isStale ? 'キャッシュ表示中' : '最新取得済み',
-                    color: realitySnapshot.isStale
-                        ? const Color(0xFFFF6B35)
-                        : const Color(0xFF4CAF50),
+                    _snapshotFreshnessLabel(realitySnapshot),
+                    color: _snapshotFreshnessColor(realitySnapshot),
                   ),
                   _buildStatusChip(
                     '取得日時 ${_dateTimeFormat.format(realitySnapshot.fetchedAt.toLocal())}',
@@ -2421,6 +2429,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     final buffer = StringBuffer();
 
+    String row(List<String> cells) => cells.map(_csvCell).join(',');
+
     if (alertSchedules.isNotEmpty) {
       alertSchedules.sort((a, b) {
         final aDate = a.parsedVoteDate;
@@ -2431,42 +2441,56 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         return a.voteDate.compareTo(b.voteDate);
       });
       buffer.writeln('--- 未擁立・単騎の選挙 ---');
-      buffer.writeln('投票日,都道府県,自治体,選挙名,候補者数,候補者一覧,Xハンドル');
+      buffer.writeln(
+        row(['投票日', '都道府県', '自治体', '選挙名', '候補者数', '候補者一覧', 'Xハンドル']),
+      );
       for (final s in alertSchedules) {
-        final date = s.voteDate.replaceAll(',', '、');
-        final pref = s.prefecture.replaceAll(',', '、');
-        final muni = s.municipality.replaceAll(',', '、');
-        final name = s.electionName.replaceAll(',', '、');
-        final count = s.kokuminCandidateCount.toString();
-        final candidates =
-            _buildScheduleCandidateSummary(s).replaceAll(',', '、');
-        final handles = _candidateHandles(s)
-            .map((handle) => '@$handle')
-            .join(' / ')
-            .replaceAll(',', '、');
-        buffer.writeln('$date,$pref,$muni,$name,$count,$candidates,$handles');
+        final handles =
+            _candidateHandles(s).map((handle) => '@$handle').join(' / ');
+        buffer.writeln(
+          row([
+            s.voteDate,
+            s.prefecture,
+            s.municipality,
+            s.electionName,
+            s.kokuminCandidateCount.toString(),
+            _buildScheduleCandidateSummary(s),
+            handles,
+          ]),
+        );
       }
       buffer.writeln('');
     }
 
     if (pastResults.isNotEmpty) {
       buffer.writeln('--- 過去の選挙結果 ---');
-      buffer.writeln('投票日,場所,選挙名,候補者名,当落,得票数');
+      buffer.writeln(row(['投票日', '場所', '選挙名', '候補者名', '当落', '得票数']));
       for (final result in pastResults) {
-        final date = result.date.replaceAll(',', '、');
-        final location = result.location.replaceAll(',', '、');
-        final electionName = result.electionName.replaceAll(',', '、');
         final candidates = result.resolvedCandidates.toList();
 
         if (candidates.isEmpty) {
-          buffer.writeln('$date,$location,$electionName,候補者情報なし,N/A,0');
+          buffer.writeln(
+            row([
+              result.date,
+              result.location,
+              result.electionName,
+              '候補者情報なし',
+              'N/A',
+              '0',
+            ]),
+          );
         } else {
           for (final candidate in candidates) {
-            final name = candidate.name;
-            final status = candidate.status;
-            final votes = candidate.votes.toString();
-            buffer
-                .writeln('$date,$location,$electionName,$name,$status,$votes');
+            buffer.writeln(
+              row([
+                result.date,
+                result.location,
+                result.electionName,
+                candidate.name,
+                candidate.status,
+                candidate.votes.toString(),
+              ]),
+            );
           }
         }
       }
@@ -2489,11 +2513,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildUnifiedElectionCountdown() {
-    // 統一地方選挙 2027 暫定日程 (官報告示前の推定値)
-    const firstVoteDate = '2027-04-11';
-    const firstAnnouncementDate = '2027-03-25';
-    const secondVoteDate = '2027-04-25';
-    const secondAnnouncementDate = '2027-04-13';
+    // 統一地方選挙 2027 暫定日程は LocalElectionShareService の定数が単一正本
+    // (ヒーローのカウントダウンと同じ値を参照し、二重定義の乖離を防ぐ)。
+    final firstVoteDate =
+        LocalElectionShareService.nextUnifiedLocalElectionFirstHalfTargetDate;
+    final firstAnnouncementDate = LocalElectionShareService
+        .nextUnifiedLocalElectionFirstHalfAnnouncementDate;
+    final secondVoteDate =
+        LocalElectionShareService.nextUnifiedLocalElectionSecondHalfTargetDate;
+    final secondAnnouncementDate = LocalElectionShareService
+        .nextUnifiedLocalElectionSecondHalfAnnouncementDate;
 
     final today = DateTime(
       DateTime.now().year,
@@ -2501,15 +2530,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       DateTime.now().day,
     );
 
-    int daysUntil(String iso) {
-      final d = DateTime.tryParse(iso);
-      if (d == null) return 0;
-      return d.difference(today).inDays;
+    int daysUntil(DateTime date) {
+      return DateTime(date.year, date.month, date.day).difference(today).inDays;
     }
 
-    Widget countdownCell(String label, String iso) {
-      final days = daysUntil(iso);
-      final dateStr = iso.replaceAll('-', '/');
+    Widget countdownCell(String label, DateTime date) {
+      final days = daysUntil(date);
+      final dateStr = DateFormat('yyyy/MM/dd').format(date);
       final passed = days < 0;
       return Expanded(
         child: Container(
@@ -2616,7 +2643,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              countdownCell('公示日', firstAnnouncementDate),
+              countdownCell('告示日(知事選)', firstAnnouncementDate),
               const SizedBox(width: 8),
               countdownCell('投開票日', firstVoteDate),
             ],
@@ -2631,7 +2658,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              countdownCell('公示日', secondAnnouncementDate),
+              countdownCell('告示日(市区)', secondAnnouncementDate),
               const SizedBox(width: 8),
               countdownCell('投開票日', secondVoteDate),
             ],
@@ -2777,7 +2804,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: const Color(0xFFFF8F00),
             ),
             _buildStatusChip(
-              '過去1年 ${_formatInt(pastSchedules.length)} 件',
+              '直近結果 ${_formatInt(pastSchedules.length)} 件',
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ],
@@ -2906,7 +2933,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             children: [
               Expanded(
                 child: Text(
-                  '過去1年の結果 (${_formatInt(pastSchedules.length)} 件)',
+                  '直近に終了した選挙 (${_formatInt(pastSchedules.length)} 件)',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -2924,7 +2951,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 8),
           if (pastSchedules.isEmpty)
             _buildInlineNotice(
-              '過去1年分の結果データがありません。',
+              '直近に終了した選挙の結果データがありません。',
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               icon: Icons.history,
             )
@@ -4264,7 +4291,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         else
           _buildMemberRosterAccordion(
             visibleMembers: visibleMembers,
-            totalFilteredCount: filteredMembers.length,
+            filteredMembers: filteredMembers,
           ),
       ],
     );
@@ -4272,14 +4299,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Widget _buildMemberRosterAccordion({
     required List<LocalElectionLegislatorProfile> visibleMembers,
-    required int totalFilteredCount,
+    required List<LocalElectionLegislatorProfile> filteredMembers,
   }) {
     final grouped = <String, List<LocalElectionLegislatorProfile>>{};
     for (final member in visibleMembers) {
       grouped.putIfAbsent(member.prefecture, () => []).add(member);
     }
+    // 県別のフィルタ済み総数 (ページング前) を先に集計し、可視分が
+    // 県の途中で切れてもグループヘッダーが正しい総数を出せるようにする。
+    final totalByPrefecture = <String, int>{};
+    for (final member in filteredMembers) {
+      totalByPrefecture[member.prefecture] =
+          (totalByPrefecture[member.prefecture] ?? 0) + 1;
+    }
     final entries = grouped.entries.toList()
       ..sort((left, right) => left.key.compareTo(right.key));
+    final remaining = filteredMembers.length - visibleMembers.length;
 
     return Column(
       children: [
@@ -4287,17 +4322,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           _buildMemberRosterGroup(
             prefecture: entries[index].key,
             members: entries[index].value,
+            prefectureTotal: totalByPrefecture[entries[index].key] ??
+                entries[index].value.length,
             initiallyExpanded: entries.length <= 2 || index == 0,
           ),
-        if (totalFilteredCount > visibleMembers.length)
+        if (remaining > 0)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: OutlinedButton.icon(
               onPressed: _showMoreMembers,
               icon: const Icon(Icons.expand_more),
-              label: Text(
-                'さらに ${_formatInt((totalFilteredCount - visibleMembers.length).clamp(0, _memberPageSize))} 人表示',
-              ),
+              label: Text('さらに表示（残り ${_formatInt(remaining)} 人）'),
             ),
           ),
       ],
@@ -4307,12 +4342,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   Widget _buildMemberRosterGroup({
     required String prefecture,
     required List<LocalElectionLegislatorProfile> members,
+    required int prefectureTotal,
     required bool initiallyExpanded,
   }) {
     final prefecturalCount =
         members.where((item) => item.assemblyCategory == 'prefectural').length;
     final municipalCount =
         members.where((item) => item.assemblyCategory == 'municipal').length;
+    // 可視分がこの県の総数より少ない (ページ境界で途中まで) 場合は
+    // 「表示中/総数」を明示し、ヘッダー数が過少に見えないようにする。
+    final headerCount = members.length < prefectureTotal
+        ? '${_formatInt(members.length)}/${_formatInt(prefectureTotal)}人'
+        : '${_formatInt(members.length)}人';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -4331,7 +4372,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
             childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
             title: Text(
-              '$prefecture ${_formatInt(members.length)}人',
+              '$prefecture $headerCount',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -5143,6 +5184,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildMonthlySection(LocalElectionPlanDashboard plan) {
+    final currentMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -5174,8 +5216,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             rows: [
               for (final month in plan.monthlyCheckpoints)
                 DataRow(
+                  color: month.monthKey == currentMonthKey
+                      ? WidgetStatePropertyAll(
+                          Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.08),
+                        )
+                      : null,
                   cells: [
-                    DataCell(Text(month.label)),
+                    DataCell(
+                      Text(
+                        month.monthKey == currentMonthKey
+                            ? '${month.label} (今月)'
+                            : month.label,
+                        style: month.monthKey == currentMonthKey
+                            ? const TextStyle(fontWeight: FontWeight.w700)
+                            : null,
+                      ),
+                    ),
                     DataCell(
                       Text(
                         _formatInt(month.cumulativeIncumbentRetentionTarget),
@@ -5882,6 +5941,66 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (!launched || !mounted) {
       return;
     }
+  }
+
+  static const Duration _snapshotFreshWindow = Duration(hours: 2);
+  static const Duration _snapshotStaleThreshold = Duration(hours: 12);
+
+  Duration _snapshotAge(LocalElectionRealitySnapshot snapshot) {
+    final age = DateTime.now().difference(snapshot.fetchedAt.toLocal());
+    return age.isNegative ? Duration.zero : age;
+  }
+
+  String _snapshotAgeLabel(Duration age) {
+    if (age.inMinutes < 60) {
+      return '${age.inMinutes}分前';
+    }
+    if (age.inHours < 24) {
+      return '${age.inHours}時間前';
+    }
+    return '${age.inDays}日前';
+  }
+
+  String _snapshotFreshnessLabel(LocalElectionRealitySnapshot snapshot) {
+    final age = _snapshotAge(snapshot);
+    if (age <= _snapshotFreshWindow) {
+      return '最新取得済み (${_snapshotAgeLabel(age)})';
+    }
+    if (age <= _snapshotStaleThreshold) {
+      return 'キャッシュ表示中 (${_snapshotAgeLabel(age)}取得)';
+    }
+    return '要再取得 (${_snapshotAgeLabel(age)}取得)';
+  }
+
+  Color _snapshotFreshnessColor(LocalElectionRealitySnapshot snapshot) {
+    final age = _snapshotAge(snapshot);
+    if (age <= _snapshotFreshWindow) {
+      return const Color(0xFF4CAF50);
+    }
+    if (age <= _snapshotStaleThreshold) {
+      return const Color(0xFFFF8F00);
+    }
+    return const Color(0xFFFF6B35);
+  }
+
+  // CSV セル安全化: 先頭が式記号 (= + - @ タブ/改行) のセルは
+  // Excel/Sheets で数式として実行されうるため `'` を前置し、
+  // 区切り/引用符/改行を含むセルは RFC 4180 の二重引用符でクオートする。
+  // 候補者名・選挙名は外部スクレイプ由来の非信頼値なので必須。
+  static const String _csvFormulaPrefixes = '=+-@\t\r\n';
+
+  String _csvCell(String value) {
+    final guarded =
+        value.isNotEmpty && _csvFormulaPrefixes.contains(value.substring(0, 1))
+            ? "'$value"
+            : value;
+    if (guarded.contains(',') ||
+        guarded.contains('"') ||
+        guarded.contains('\n') ||
+        guarded.contains('\r')) {
+      return '"${guarded.replaceAll('"', '""')}"';
+    }
+    return guarded;
   }
 
   String _formatInt(int value) => _numberFormat.format(value);

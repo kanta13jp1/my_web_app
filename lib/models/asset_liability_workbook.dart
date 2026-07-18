@@ -1238,6 +1238,13 @@ class AssetLiabilityWorkbook {
   final int manualPaymentCount;
   final int estimatedPaymentCount;
 
+  /// サブスク区分 (AssetRecurringFixedCostCategory.subscription) として登録された
+  /// 定期固定費の口座 ID 集合。資金繰り上は utility 負債として計上され
+  /// fullPaymentEstimate=true になるため、家賃・光熱費などの「生命線」と
+  /// 区別できない。トリアージで「生命線を優先確保」から除外するために保持する
+  /// (サブスクは解約候補であって優先支払い対象ではない)。
+  final Set<String> subscriptionFixedCostAccountIds;
+
   const AssetLiabilityWorkbook({
     required this.baseDate,
     required this.accounts,
@@ -1268,6 +1275,7 @@ class AssetLiabilityWorkbook {
     required this.topFourDebtShare,
     required this.manualPaymentCount,
     required this.estimatedPaymentCount,
+    this.subscriptionFixedCostAccountIds = const <String>{},
   });
 
   List<AssetLiabilityCashflowRow> get overdueCashflowRows {

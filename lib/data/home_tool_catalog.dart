@@ -148,6 +148,7 @@ import '../pages/qr_code_generator_page.dart';
 import '../pages/reading_list_page.dart';
 import '../pages/referral_program_page.dart';
 import '../pages/rewards_page.dart';
+import '../pages/mcp_file_search_page.dart';
 import '../pages/semantic_search_page.dart';
 import '../pages/smart_inbox_triage_page.dart';
 import '../pages/social_feed_page.dart';
@@ -1931,6 +1932,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF1565C0),
       keywords: const <String>['検索', 'セマンティック', 'AI検索', '意味検索', 'semantic'],
       onOpen: (context) => _pushPage(context, const SemanticSearchPage()),
+    ),
+    HomeToolEntry(
+      id: 'mcp-file-search',
+      sectionId: 'knowledge',
+      title: '外部ファイル検索',
+      subtitle: '許可済みMCP接続先を横断検索しAIチャットへ追加',
+      icon: Icons.cloud_outlined,
+      color: const Color(0xFF00796B),
+      keywords: const <String>['外部ファイル', 'MCP', '検索', 'コンテキスト', 'file search'],
+      onOpen: (context) => _pushPage(context, const McpFileSearchPage()),
     ),
     HomeToolEntry(
       id: 'mindmap',

@@ -52,4 +52,54 @@ void main() {
       );
     });
   });
+
+  group('AssetManagementAiSummaryRefresh.shouldThrottleFailedRetry', () {
+    const cooldown = Duration(minutes: 60);
+
+    test('does not throttle when there is no recorded attempt', () {
+      // 初回 (試行履歴なし) は必ず生成する。
+      expect(
+        AssetManagementAiSummaryRefresh.shouldThrottleFailedRetry(
+          force: false,
+          sinceLastAttempt: null,
+          cooldown: cooldown,
+        ),
+        isFalse,
+      );
+    });
+
+    test('throttles a fresh retry within the cooldown window', () {
+      // 直近の試行 (500 で失敗し保存されなかった) から 5 分。再試行を抑える。
+      expect(
+        AssetManagementAiSummaryRefresh.shouldThrottleFailedRetry(
+          force: false,
+          sinceLastAttempt: const Duration(minutes: 5),
+          cooldown: cooldown,
+        ),
+        isTrue,
+      );
+    });
+
+    test('allows retry once the cooldown has elapsed', () {
+      expect(
+        AssetManagementAiSummaryRefresh.shouldThrottleFailedRetry(
+          force: false,
+          sinceLastAttempt: const Duration(minutes: 61),
+          cooldown: cooldown,
+        ),
+        isFalse,
+      );
+    });
+
+    test('never throttles a forced (manual) refresh', () {
+      expect(
+        AssetManagementAiSummaryRefresh.shouldThrottleFailedRetry(
+          force: true,
+          sinceLastAttempt: const Duration(minutes: 1),
+          cooldown: cooldown,
+        ),
+        isFalse,
+      );
+    });
+  });
 }
