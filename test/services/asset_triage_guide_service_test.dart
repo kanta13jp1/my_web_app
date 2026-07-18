@@ -128,6 +128,187 @@ void main() {
       );
     });
 
+    test('confirms unreceived past-due income as a today step', () {
+      // 期日を過ぎても未受取の給料は「着金確認」を今日ステップに出す。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          '財布(現金)': 50000,
+          'モビット': -100000,
+        },
+        baseDate: DateTime(2026, 5, 26),
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary',
+            date: DateTime(2026, 5, 25),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: 'smbc_otsuka_branch',
+            destinationAccountName: '三井住友銀行大塚支店',
+            received: false,
+          ),
+        ],
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final income = plan.todaySteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.confirmIncomeArrival,
+      );
+      expect(income.detail.contains('給料'), isTrue);
+      expect(income.detail.contains('450,000円'), isTrue);
+      expect(income.detail.contains('三井住友銀行大塚支店'), isTrue);
+    });
+
+    test('does not confirm income that is not yet due', () {
+      // 入金予定日が未来の場合は「着金確認」を出さない。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'財布(現金)': 50000},
+        baseDate: DateTime(2026, 5, 20),
+        incomePlans: <AssetLiabilityIncomePlan>[
+          AssetLiabilityIncomePlan(
+            id: 'salary',
+            date: DateTime(2026, 5, 25),
+            name: '給料',
+            amount: 450000,
+            destinationAccountId: null,
+            destinationAccountName: null,
+            received: false,
+          ),
+        ],
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      expect(
+        plan.todaySteps.where(
+          (step) => step.kind == AssetTriageStepKind.confirmIncomeArrival,
+        ),
+        isEmpty,
+      );
+    });
+
+    test(
+        'surfaces directly-debited rent as a lifeline but excludes '
+        'card-billed telecom', () {
+      // 家賃は口座直接引落の生命線→出す。au(通信)は auPay カード請求に内包され
+      // (includedInBillingAccount=true)、そのカードの請求行で支払われるため、
+      // 「口座に先に確保せよ」から除外する (二重計上防止)。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          '家賃': -63000,
+          'au': -28741,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final lifelineDebtRow = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'au',
+      );
+      // 前提: au はカード請求内包として分類されている。
+      expect(lifelineDebtRow.includedInBillingAccount, isTrue);
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final lifeline = plan.weekSteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.secureLifeline,
+      );
+      expect(lifeline.detail.contains('家賃'), isTrue);
+      expect(lifeline.detail.contains('生命線'), isTrue);
+      expect(lifeline.detail.contains('au'), isFalse);
+    });
+
+    test('lifeline step excludes subscriptions but keeps utilities', () {
+      // サブスク (ChatGPT Pro) は fullPaymentEstimate=true でも「生命線を優先確保」
+      // には出さない (解約候補であって優先支払い対象ではない)。光熱費は残す。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{'bank': 500000},
+        baseDate: DateTime(2026, 5, 1),
+        recurringFixedCosts: const <AssetRecurringFixedCost>[
+          AssetRecurringFixedCost(
+            id: 'chatgpt_pro',
+            name: 'ChatGPT Pro',
+            amount: 30000,
+            paymentDay: 3,
+            category: AssetRecurringFixedCostCategory.subscription,
+          ),
+          AssetRecurringFixedCost(
+            id: 'denki',
+            name: '電気代',
+            amount: 12000,
+            paymentDay: 20,
+            category: AssetRecurringFixedCostCategory.utility,
+          ),
+        ],
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final lifeline = plan.weekSteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.secureLifeline,
+      );
+      expect(lifeline.detail.contains('電気代'), isTrue);
+      expect(lifeline.detail.contains('ChatGPT'), isFalse);
+      // 合計にもサブスク額 (30,000) を含めない。
+      expect(lifeline.detail.contains('30,000円'), isFalse);
+    });
+
+    test('protects high-interest loans as a distinct week step', () {
+      // モビット (年18% cardLoan) は高金利ローンとして最低額死守ステップに出る。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'モビット': -1000000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final loan = plan.weekSteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.protectHighInterestLoan,
+      );
+      expect(loan.detail.contains('モビット'), isTrue);
+      expect(loan.detail.contains('18%'), isTrue);
+      expect(loan.detail.contains('最低'), isTrue);
+    });
+
+    test('high-interest step also covers 14.5% bank card loans', () {
+      // じぶん銀行カードローン (年14.5% cardLoan) も高金利として死守対象に含める。
+      final workbook = planner.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'bank': 500000,
+          'じぶん銀行カードローン': -800000,
+        },
+        baseDate: DateTime(2026, 5, 1),
+      );
+
+      final plan = triage.buildPlan(
+        workbook: workbook,
+        disciplineReport: monitor.evaluate(workbook: workbook),
+      );
+
+      final loan = plan.weekSteps.firstWhere(
+        (step) => step.kind == AssetTriageStepKind.protectHighInterestLoan,
+      );
+      expect(loan.detail.contains('じぶん'), isTrue);
+    });
+
     test('no fake cash crisis for users without a cash account', () {
       // 現金口座を記録していないだけの健全ユーザーには生活費ステップを出さない。
       final workbook = planner.buildWorkbook(
