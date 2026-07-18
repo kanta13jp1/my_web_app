@@ -68,6 +68,37 @@ void main() {
       );
       expect(service.pendingTotal(workbook), 0);
     });
+
+    test('excludes overdue payments whose payment source is unset', () {
+      // 家賃 (支払日25 / 既定では振替元未設定) は 6/26 時点で期日超過だが、
+      // 振替元が未設定なので確認待ちから除外する (原資未設定バナー側で修正)。
+      // ガス (支払日12 / 振替元=三井住友大塚) は従来どおり確認待ちに残る。
+      final workbook = planning.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
+        baseDate: DateTime(2026, 6, 26),
+        includeDefaultFixedPayments: true,
+      );
+      final ids = service
+          .pendingConfirmations(workbook)
+          .map((row) => row.accountId)
+          .toSet();
+
+      // 家賃行が実際に振替元未設定であることを確認 (テスト前提の健全性)。
+      final rent = workbook.cashflowRows.firstWhere(
+        (row) => row.accountId == AssetLiabilityPlanningService.rentAccountId,
+      );
+      expect(
+        rent.paymentSourceAccountId == null ||
+            rent.paymentSourceAccountId!.trim().isEmpty,
+        isTrue,
+      );
+
+      expect(
+        ids,
+        isNot(contains(AssetLiabilityPlanningService.rentAccountId)),
+      );
+      expect(ids, contains(AssetLiabilityPlanningService.gasBillAccountId));
+    });
   });
 
   group('AssetAutoDebitConfirmationService source balance', () {
