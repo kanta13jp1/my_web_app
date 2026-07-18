@@ -676,6 +676,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isRefreshingMonthlyReports = false;
   String? _monthlyReportMessage;
   String? _loadedAssetLiabilityMonthKey;
+  // 同一サイクル月の月次stateロードが並行して複数走らないよう束ねる in-flight
+  // ガード。起動時は eager ロードと給料日/リセットマーカーのミラー復元が相次いで
+  // _loadAssetLiabilityMonthlyState を呼び、同じ月を 2-3 回フル取得 (各 7 往復)
+  // していた。対象月が同じ間は先行の Future を返して重複バッチを避ける
+  // (給料日変更でサイクル月が変わる復元は月キーが異なるため従来どおり実行される)。
+  Future<void>? _assetLiabilityMonthlyStateInFlight;
+  String? _assetLiabilityMonthlyStateInFlightMonthKey;
   bool _isSavingAssetLiabilitySnapshot = false;
   bool _isRunningAssetLiabilitySync = false;
   bool _isPreviewingAssetLiabilitySync = false;
@@ -1858,7 +1865,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Map<String, double>.from(snapshot);
   }
 
-  Future<void> _loadAssetLiabilityMonthlyState() async {
+  /// 月次stateロードの入口。同一サイクル月のロードが進行中ならその Future を
+  /// 返して重複バッチ (各 7 往復) を抑える。対象月が異なる場合は新規に走らせる。
+  Future<void> _loadAssetLiabilityMonthlyState() {
+    final monthKey = _assetLiabilityStateMonthKey(_now);
+    final inFlight = _assetLiabilityMonthlyStateInFlight;
+    if (inFlight != null &&
+        _assetLiabilityMonthlyStateInFlightMonthKey == monthKey) {
+      return inFlight;
+    }
+    final future = _loadAssetLiabilityMonthlyStateInner();
+    _assetLiabilityMonthlyStateInFlight = future;
+    _assetLiabilityMonthlyStateInFlightMonthKey = monthKey;
+    return future.whenComplete(() {
+      // 自分が最新の in-flight であるときだけクリアする (対象月が変わって別の
+      // ロードに差し替わっている場合は触らない)。
+      if (identical(_assetLiabilityMonthlyStateInFlight, future)) {
+        _assetLiabilityMonthlyStateInFlight = null;
+        _assetLiabilityMonthlyStateInFlightMonthKey = null;
+      }
+    });
+  }
+
+  Future<void> _loadAssetLiabilityMonthlyStateInner() async {
     try {
       final targetMonth = _assetLiabilityStateMonth(_now);
       final monthKey = _assetLiabilityStateMonthKey(_now);
