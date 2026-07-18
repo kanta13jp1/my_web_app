@@ -3,7 +3,8 @@ import 'package:my_web_app/models/ai_provider_registry.dart';
 
 void main() {
   group('kAiProviderRegistry data integrity', () {
-    test('provider ids are unique (regression guard for duplicate entries)', () {
+    test('provider ids are unique (regression guard for duplicate entries)',
+        () {
       final ids = kAiProviderRegistry.map((e) => e.id).toList();
       final seen = <String>{};
       final duplicates = <String>{};
