@@ -1153,11 +1153,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             return MaterialPageRoute(builder: (_) => const AddressBookPage());
           case '/subscription-billing':
             return MaterialPageRoute(
-              builder: (_) => const SubscriptionBillingPage(),
+              builder: (_) => SubscriptionBillingPage(initialUri: uri),
             );
           case '/billing':
             return MaterialPageRoute(
-              builder: (_) => const SubscriptionBillingPage(),
+              builder: (_) => SubscriptionBillingPage(initialUri: uri),
             );
           case '/appointment-scheduler':
             return MaterialPageRoute(
