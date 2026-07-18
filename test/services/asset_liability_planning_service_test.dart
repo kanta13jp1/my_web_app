@@ -2127,5 +2127,83 @@ void main() {
         isTrue,
       );
     });
+
+    test('じぶん銀行(預金)とじぶん銀行カードローンを別IDに分離する', () {
+      // 名前に「じぶん」を含むだけで同一IDに潰れると、預金を振替元に選べない。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'じぶん銀行': 18918,
+          'じぶん銀行カードローン': -994562,
+        },
+        baseDate: DateTime(2026, 5, 12),
+      );
+      final deposit = workbook.accounts.firstWhere(
+        (account) => account.name == 'じぶん銀行',
+      );
+      final loan = workbook.accounts.firstWhere(
+        (account) => account.name == 'じぶん銀行カードローン',
+      );
+      expect(deposit.id, AssetLiabilityPlanningService.jibunBankAccountId);
+      expect(deposit.kind, AssetLiabilityAccountKind.deposit);
+      expect(
+        loan.id,
+        AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+      );
+      expect(loan.kind, AssetLiabilityAccountKind.cardLoan);
+      expect(deposit.id, isNot(loan.id));
+    });
+
+    test('じぶん銀行を振替元に選ぶと原資未設定に倒れない', () {
+      // 預金じぶん銀行を auPayカードの振替元に設定 → 未設定へ倒れず正しく解決。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'じぶん銀行': 18918,
+          'auPayカード': -36926,
+        },
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: <String, String>{
+          AssetLiabilityPlanningService.auPayCardAccountId:
+              AssetLiabilityPlanningService.jibunBankAccountId,
+        },
+      );
+      final aupay = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'auPayカード',
+      );
+      expect(
+        aupay.paymentSourceAccountId,
+        AssetLiabilityPlanningService.jibunBankAccountId,
+      );
+      expect(aupay.paymentSourceAccountName, 'じぶん銀行');
+      expect(
+        workbook.paymentSourceMissingRows.any(
+          (row) => row.name == 'auPayカード',
+        ),
+        isFalse,
+      );
+    });
+
+    test('旧衝突ID(カードローンID)の振替元をじぶん銀行(預金)へ移行する', () {
+      // 衝突していた頃に保存された振替元 = カードローンID。預金が存在すれば
+      // 預金へ読み替えて既存設定を自動回復する。
+      final workbook = service.buildWorkbook(
+        latestSnapshot: const <String, double>{
+          'じぶん銀行': 18918,
+          'auPayカード': -36926,
+        },
+        baseDate: DateTime(2026, 5, 12),
+        paymentSourceAccountIds: <String, String>{
+          AssetLiabilityPlanningService.auPayCardAccountId:
+              AssetLiabilityPlanningService.jibunBankCardLoanAccountId,
+        },
+      );
+      final aupay = workbook.debtMasterRows.firstWhere(
+        (row) => row.name == 'auPayカード',
+      );
+      expect(
+        aupay.paymentSourceAccountId,
+        AssetLiabilityPlanningService.jibunBankAccountId,
+      );
+      expect(aupay.paymentSourceAccountName, 'じぶん銀行');
+    });
   });
 }

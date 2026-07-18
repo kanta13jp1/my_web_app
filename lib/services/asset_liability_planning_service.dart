@@ -120,7 +120,15 @@ class AssetLiabilityPlanningService {
   static const int anthropicAcomShoppingPaymentDay = 26;
   static const double anthropicAcomShoppingPaymentAmount = 40000;
   static const String smbcOtsukaBranchAccountId = 'smbc_otsuka_branch';
-  static const String jibunBankAccountId = 'jibun_bank_card_loan';
+
+  /// じぶん銀行 (預金 = 資産)。振替元/請求先/主口座になり得る cash-like 口座。
+  static const String jibunBankAccountId = 'jibun_bank';
+
+  /// じぶん銀行カードローン / じぶんローン (現金借入 = カードローン負債)。
+  /// かつては [jibunBankAccountId] と同一 ID に潰れており、じぶん銀行(預金)を
+  /// 振替元に選んでも保存 ID がこのカードローンを指して「原資未設定」に倒れる
+  /// バグの原因だった (#part341)。両者は別 ID に分離する。
+  static const String jibunBankCardLoanAccountId = 'jibun_bank_card_loan';
   static const String auPayCardFundingTransferTaskId =
       'transfer_smbc_otsuka_to_jibun_aupay_card_funding';
   static const int auPayCardFundingTransferDay = 26;
@@ -277,8 +285,10 @@ class AssetLiabilityPlanningService {
         if (injected.sourceAccountId != null &&
             injected.sourceAccountId!.isNotEmpty)
           injected.account.id: injected.sourceAccountId!,
-      ...defaultPaymentSourceAccountIds,
-      ...paymentSourceAccountIds,
+      for (final e in defaultPaymentSourceAccountIds.entries)
+        e.key: _migrateCollidedJibunSourceId(e.value, accountsById),
+      for (final e in paymentSourceAccountIds.entries)
+        e.key: _migrateCollidedJibunSourceId(e.value, accountsById),
     };
 
     final positiveAssetTotal = accounts.fold<double>(
@@ -1891,6 +1901,23 @@ class AssetLiabilityPlanningService {
     return b.balance.abs().compareTo(a.balance.abs());
   }
 
+  /// 旧 ID 衝突の移行: じぶん銀行(預金)がカードローンと同一 ID だった名残で、
+  /// 振替元に旧衝突 ID (= 現在のカードローン ID) が保存されている場合、預金口座が
+  /// 存在すればそちらへ読み替える。カードローンは支払原資になり得ないため、
+  /// 保存値がカードローン ID を指すのは「じぶん銀行(預金)を選んだつもり」の
+  /// 名残と解釈できる (#part341)。預金が無ければ元の値のまま
+  /// (round-2 の cardLoan→未設定 正規化に委ねる)。
+  String _migrateCollidedJibunSourceId(
+    String sourceAccountId,
+    Map<String, AssetLiabilityAccount> accountsById,
+  ) {
+    if (sourceAccountId == jibunBankCardLoanAccountId &&
+        accountsById.containsKey(jibunBankAccountId)) {
+      return jibunBankAccountId;
+    }
+    return sourceAccountId;
+  }
+
   String _accountIdForName(String name) {
     final key = _normalize(name);
 
@@ -1904,7 +1931,13 @@ class AssetLiabilityPlanningService {
       return 'mobit';
     }
     if (_containsAny(key, const <String>['じぶん', 'jibun'])) {
-      return 'jibun_bank_card_loan';
+      // 「じぶん銀行」(預金) と「じぶん銀行カードローン/じぶんローン」(現金借入) は
+      // 別口座。ローン語を含むものだけカードローン ID、それ以外は預金 ID にする。
+      // 同一 ID だと accountsById で片方に潰れ、預金を振替元に選べない (#part341)。
+      if (_containsAny(key, const <String>['ローン', 'loan'])) {
+        return jibunBankCardLoanAccountId;
+      }
+      return jibunBankAccountId;
     }
     if (_containsAny(key, const <String>[
           'smbcカードローン',
