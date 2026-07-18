@@ -857,6 +857,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Map<String, DrinkRecordStatus> _drinkRecords = <String, DrinkRecordStatus>{};
   // 使用可能額の基準となるメインバンク口座ID。null は既定(最大預金口座)。
   String? _assetManagementMainAccountId;
+  // 使用可能額計算の安全残高(生活防衛費)。固定10,000円だと生活実態に合わず
+  // 可処分の誤解を招くため、ユーザー設定化 (1,000〜100,000円)。
+  static const String _minimumSafetyBalancePrefsKey =
+      'asset_minimum_safety_balance_v1';
+  static const double _minimumSafetyBalanceFloor = 1000;
+  static const double _minimumSafetyBalanceCeiling = 100000;
+  double _minimumSafetyBalance =
+      AssetManagementInsightService.defaultMinimumSafetyBalance;
+  late final TextEditingController _minimumSafetyBalanceController =
+      TextEditingController(text: _minimumSafetyBalance.round().toString());
   Map<AssetManagementSectionId, AssetManagementSectionVisibilityOverride>
       _sectionOverrides = {};
   // GC 設定をサーバ/ローカルから取得したら差し替えるため非 final (#part287/288)。
@@ -982,6 +992,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         AssetLiabilityRepositoryFactory.createDefault(
           supabaseClient: _supabase,
         );
+    unawaited(_loadMinimumSafetyBalance());
     // 起動時の asset_pref_mirror 個別読み取りを 1 回のバッチ取得へ集約する
     // (端末跨ぎ同期の多数 REST が ERR_INSUFFICIENT_RESOURCES を誘発するのを緩和)。
     // 起動バーストが収束したらキャッシュを失効させ、以降は最新を個別取得する。
@@ -1076,6 +1087,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _cardStatementImportController.dispose();
     _assetCsvRestoreController.dispose();
     _repaymentSimulationExtraPaymentController.dispose();
+    _minimumSafetyBalanceController.dispose();
     _flowMemoController.dispose();
     _flowAmountController.dispose();
     _deadlineTimer?.cancel();
@@ -2876,6 +2888,42 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       return percent.round().toString();
     }
     return percent.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+
+  Future<void> _loadMinimumSafetyBalance() async {
+    final store = await SharedPreferences.getInstance();
+    final saved = store.getDouble(_minimumSafetyBalancePrefsKey);
+    if (saved == null || !mounted) {
+      return;
+    }
+    final normalized = saved.clamp(
+      _minimumSafetyBalanceFloor,
+      _minimumSafetyBalanceCeiling,
+    );
+    setState(() {
+      _minimumSafetyBalance = normalized;
+      _minimumSafetyBalanceController.text = normalized.round().toString();
+    });
+  }
+
+  Future<void> _updateMinimumSafetyBalance(String rawValue) async {
+    final normalized = rawValue.replaceAll(',', '').trim();
+    final parsed = double.tryParse(normalized);
+    if (parsed == null) {
+      _minimumSafetyBalanceController.text =
+          _minimumSafetyBalance.round().toString();
+      return;
+    }
+    final clamped = parsed.clamp(
+      _minimumSafetyBalanceFloor,
+      _minimumSafetyBalanceCeiling,
+    );
+    setState(() {
+      _minimumSafetyBalance = clamped;
+      _minimumSafetyBalanceController.text = clamped.round().toString();
+    });
+    final store = await SharedPreferences.getInstance();
+    await store.setDouble(_minimumSafetyBalancePrefsKey, clamped);
   }
 
   void _updateMonthlyPaymentOverride(String accountId, String rawValue) {
@@ -18274,6 +18322,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
       mainAccountId: _assetManagementMainAccountId,
+      minimumSafetyBalance: _minimumSafetyBalance,
       priorMonthAccountBalances: priorMonthAccountBalances,
     );
     final warningColor = workbook.cashAfterScheduledPayments < 0
@@ -19386,6 +19435,45 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ],
           const SizedBox(height: 10),
           _buildMainAccountSelector(report.workbook),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Text(
+                '安全残高(生活防衛費):',
+                style: TextStyle(fontSize: 12, height: 1.4),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 110,
+                child: TextField(
+                  key: const Key('asset_safety_balance_field'),
+                  controller: _minimumSafetyBalanceController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 12),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    suffixText: '円',
+                    helperText: '1,000〜100,000円',
+                    helperStyle: TextStyle(fontSize: 10),
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                  ),
+                  onSubmitted: (value) =>
+                      unawaited(_updateMinimumSafetyBalance(value)),
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Tooltip(
+                message: '使用可能額の計算から常に確保しておく金額です。'
+                    '大きくしすぎると常に「不足」表示になります。',
+                triggerMode: TooltipTriggerMode.tap,
+                child: Icon(Icons.info_outline, size: 16),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -20532,6 +20620,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                 ),
               ),
+              if (!compliant)
+                Container(
+                  key: const Key('asset_discipline_violation_badge'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB91C1C),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '違反 ${report.allViolations.length}件',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -20702,7 +20811,92 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
             ],
           ),
+          // 脱却月額が現在の返済予定より大きい(=増額提案)ときだけ反映導線を出す。
+          // 既に脱却額以上を返している人にボタンを出すと、押した瞬間に返済額を
+          // 引き下げてしまい利息を増やす逆効果になるため。
+          if (violation.type ==
+                  AssetDebtDisciplineViolationType.revolvingCard &&
+              violation.hasEscapePlan &&
+              violation.escapeMonthlyPayment! >
+                  (violation.currentBalance - violation.amount)) ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: Key(
+                  'asset_discipline_apply_escape_${violation.accountId}',
+                ),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFF0D9488),
+                ),
+                onPressed: () =>
+                    unawaited(_confirmApplyEscapePlanPayment(violation)),
+                icon: const Icon(Icons.playlist_add_check_rounded, size: 16),
+                label: Text(
+                  '脱却月額 ${_formatManagementYen(violation.escapeMonthlyPayment!)} へ増額（今月予定に反映）',
+                ),
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  /// リボ違反の「◯ヶ月脱却の月額」を当月の支払予定額へ反映する。
+  /// 資金繰りが即座に変わるため、必ず確認ダイアログを挟む (part337 教訓:
+  /// 反映対象は違反元の口座のみ = 操作先コントロールと同一の id 空間)。
+  Future<void> _confirmApplyEscapePlanPayment(
+    AssetDebtDisciplineViolation violation,
+  ) async {
+    final escapePayment = violation.escapeMonthlyPayment;
+    if (escapePayment == null) {
+      return;
+    }
+    // 繰越額 = 残高 − 今月返済予定 なので、現在の予定額は差分から復元できる。
+    final currentPayment = violation.currentBalance - violation.amount;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('今月の支払予定に反映'),
+        content: Text(
+          '${violation.accountName}の今月支払予定額を'
+          '${_formatManagementYen(currentPayment)}から'
+          '${_formatManagementYen(escapePayment)}へ変更します'
+          '（約${violation.escapeMonths}ヶ月でリボ脱却の目安額）。\n'
+          '資金繰り・使用可能額に直ちに反映されます。よろしいですか？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            key: const Key('asset_discipline_apply_escape_confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('反映する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    final amount = escapePayment.round();
+    _monthlyPaymentControllers[violation.accountId]?.text = amount.toString();
+    setState(() {
+      _monthlyPaymentOverrides[violation.accountId] = amount.toDouble();
+      _billingConfirmedAccountIds.add(violation.accountId);
+    });
+    unawaited(_saveAssetLiabilityMonthlyState());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${violation.accountName}の今月支払予定を'
+          '${_formatManagementYen(amount)}に更新しました。',
+        ),
       ),
     );
   }
@@ -21227,6 +21421,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       workbook: workbook,
       userProfile: _assetManagementUserProfile,
       mainAccountId: _assetManagementMainAccountId,
+      minimumSafetyBalance: _minimumSafetyBalance,
       priorMonthAccountBalances: priorMonthAccountBalances,
     );
     await _postHouseholdTracker(report.debtTrendInsights);
@@ -26131,6 +26326,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             label: '支払元: ${row.paymentSourceAccountName}',
                             color: const Color(0xFF0F766E),
                           ),
+                        if (row.isRevolving)
+                          Tooltip(
+                            key: Key('asset_revolving_payoff_chip_${row.id}'),
+                            message: 'リボ払いの概算です（Dart計算値準拠）。'
+                                '請求額はリボ設定額＋限度超過分で確定し、明細合計と'
+                                '一致しないことがあります。'
+                                '今月の元金返済見込みは'
+                                '${_formatManagementYen(row.principalPaymentEstimate)}です。',
+                            triggerMode: TooltipTriggerMode.tap,
+                            child: _buildTextStatusChip(
+                              label: _revolvingPayoffChipLabel(row),
+                              color: const Color(0xFFD97706),
+                            ),
+                          ),
                       ],
                     ),
                   ],
@@ -26319,6 +26528,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('payment check ai guide failed: $e');
       return null;
     }
+  }
+
+  /// リボカード行の「概算脱却目安」ピル文言。現在の予定返済額を続けた
+  /// 場合の完済見込み ([AssetDebtTrendAnalyzer.estimateForRow])。
+  String _revolvingPayoffChipLabel(AssetLiabilityDebtRow row) {
+    final estimate = AssetDebtTrendAnalyzer.estimateForRow(row);
+    if (!estimate.everPaysOff || estimate.months == null) {
+      return 'リボ: 現ペースでは完済見込みなし';
+    }
+    return 'リボ: 概算残り${estimate.months}ヶ月';
   }
 
   Widget _buildDebtMasterMetric({

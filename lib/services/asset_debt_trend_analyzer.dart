@@ -360,6 +360,16 @@ class AssetDebtTrendAnalyzer {
     };
   }
 
+  /// 負債マスタ行の現在の予定返済額を続けた場合の完済シミュレーション。
+  /// UI のインライン表示 (リボの概算脱却目安) 用。計算は Dart が正。
+  static DebtPayoffEstimate estimateForRow(AssetLiabilityDebtRow row) {
+    return estimatePayoff(
+      balance: row.balance.abs(),
+      monthlyRate: max(0.0, row.annualRate) / 12,
+      monthlyPayment: max(0.0, row.scheduledPaymentAmount),
+    );
+  }
+
   /// 固定額返済を続けたときの完済シミュレーション。
   ///
   /// [monthlyPayment] が初月の利息以下なら元金が減らないため、
