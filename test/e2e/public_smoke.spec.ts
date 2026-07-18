@@ -9,7 +9,11 @@ test.describe('public production smoke', () => {
 
       expect(response?.ok()).toBeTruthy();
       await expect(page.locator('body')).toContainText('自分株式会社');
-      await expect(page.locator('body')).toContainText('Loading application');
+      // クロール用のプリブート SEO シェルが配信されていることを検証する。
+      // (#4122 で 'Loading application' プレースホルダは #seo-shell 構造へ刷新。
+      //  Flutter 起動後は live DOM が置換され消えるため、配信 HTML 本文で確認する。)
+      const servedHtml = (await response?.text()) ?? '';
+      expect(servedHtml).toContain('seo-shell');
     });
   }
 
