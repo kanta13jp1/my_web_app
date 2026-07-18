@@ -15,6 +15,7 @@ import '../services/local_election_cdp_benchmark.dart';
 import '../services/local_election_plan_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
+import '../services/prefecture_election_news_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
 import '../widgets/election_japan_map.dart';
@@ -98,6 +99,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
+  final PrefectureElectionNewsService _newsService =
+      const PrefectureElectionNewsService();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _historySectionKey = GlobalKey(debugLabel: 'realityHistory');
   final GlobalKey _scheduleSectionKey =
@@ -117,6 +120,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   LocalElectionPlanDashboard? _plan;
   LocalElectionRealitySnapshot? _realitySnapshot;
+  Map<String, List<Map<String, dynamic>>> _newsByPrefecture =
+      const <String, List<Map<String, dynamic>>>{};
   final Map<String, LocalElectionLegislatorProfile> _memberProfileOverrides =
       <String, LocalElectionLegislatorProfile>{};
   final Set<String> _memberProfileLoadingUrls = <String>{};
@@ -242,6 +247,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     unawaited(_loadPublishedSnapshotMemo(cachedSnapshot));
     unawaited(_loadPublishedKpiMemo());
     unawaited(_refreshRealityData(showSnackBar: false));
+    unawaited(_loadPrefectureNews());
+  }
+
+  Future<void> _loadPrefectureNews() async {
+    try {
+      final grouped = await _newsService.fetchActiveNewsByPrefecture();
+      if (!mounted) {
+        return;
+      }
+      setState(() => _newsByPrefecture = grouped);
+    } catch (_) {
+      // news は付加情報のため、取得失敗時はバッジ非表示のままにする。
+    }
   }
 
   Future<void> _loadPlan() async {
@@ -565,6 +583,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (!mounted) {
         return;
       }
+      // 初期ロード直後の refresh がキャッシュと同一 snapshot を返すケースでは
+      // 公開ノートの再ロードを省略する (page load ごとの public_memos 二重
+      // フェッチ対策)。fetchedAt が変わったときだけ再取得する。
+      final snapshotChanged = _realitySnapshot?.fetchedAt != snapshot.fetchedAt;
       setState(() {
         if (syncedPlan != null) {
           _plan = syncedPlan;
@@ -575,13 +597,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         _realitySnapshot = snapshot;
         _realityHistory = history;
         _realityError = null;
-        _publishedSnapshotMemo = null;
-        _publishedKpiMemo = null;
+        if (snapshotChanged) {
+          _publishedSnapshotMemo = null;
+          _publishedKpiMemo = null;
+        }
         _syncMemberSelection(snapshot);
         _syncScheduleSelection(snapshot);
       });
-      unawaited(_loadPublishedSnapshotMemo(snapshot));
-      unawaited(_loadPublishedKpiMemo());
+      if (snapshotChanged) {
+        unawaited(_loadPublishedSnapshotMemo(snapshot));
+        unawaited(_loadPublishedKpiMemo());
+      }
       if (showSnackBar) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1559,11 +1585,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
+                  // fresh 窓(2h)〜stale 閾値(12h) の間も鮮度が読めるよう、
+                  // 固定文言ではなく取得からの経過時間で3段階表示する。
                   _buildStatusChip(
-                    realitySnapshot.isStale ? 'キャッシュ表示中' : '最新取得済み',
-                    color: realitySnapshot.isStale
-                        ? const Color(0xFFFF6B35)
-                        : const Color(0xFF4CAF50),
+                    _snapshotFreshnessLabel(realitySnapshot),
+                    color: _snapshotFreshnessColor(realitySnapshot),
                   ),
                   _buildStatusChip(
                     '取得日時 ${_dateTimeFormat.format(realitySnapshot.fetchedAt.toLocal())}',
@@ -2471,11 +2497,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildUnifiedElectionCountdown() {
-    // 統一地方選挙 2027 暫定日程 (官報告示前の推定値)
-    const firstVoteDate = '2027-04-11';
-    const firstAnnouncementDate = '2027-03-25';
-    const secondVoteDate = '2027-04-25';
-    const secondAnnouncementDate = '2027-04-13';
+    // 統一地方選挙 2027 暫定日程は LocalElectionShareService の定数が単一正本
+    // (ヒーローのカウントダウンと同じ値を参照し、二重定義の乖離を防ぐ)。
+    final firstVoteDate =
+        LocalElectionShareService.nextUnifiedLocalElectionFirstHalfTargetDate;
+    final firstAnnouncementDate = LocalElectionShareService
+        .nextUnifiedLocalElectionFirstHalfAnnouncementDate;
+    final secondVoteDate =
+        LocalElectionShareService.nextUnifiedLocalElectionSecondHalfTargetDate;
+    final secondAnnouncementDate = LocalElectionShareService
+        .nextUnifiedLocalElectionSecondHalfAnnouncementDate;
 
     final today = DateTime(
       DateTime.now().year,
@@ -2483,15 +2514,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       DateTime.now().day,
     );
 
-    int daysUntil(String iso) {
-      final d = DateTime.tryParse(iso);
-      if (d == null) return 0;
-      return d.difference(today).inDays;
+    int daysUntil(DateTime date) {
+      return DateTime(date.year, date.month, date.day).difference(today).inDays;
     }
 
-    Widget countdownCell(String label, String iso) {
-      final days = daysUntil(iso);
-      final dateStr = iso.replaceAll('-', '/');
+    Widget countdownCell(String label, DateTime date) {
+      final days = daysUntil(date);
+      final dateStr = DateFormat('yyyy/MM/dd').format(date);
       final passed = days < 0;
       return Expanded(
         child: Container(
@@ -2598,7 +2627,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              countdownCell('公示日', firstAnnouncementDate),
+              countdownCell('告示日(知事選)', firstAnnouncementDate),
               const SizedBox(width: 8),
               countdownCell('投開票日', firstVoteDate),
             ],
@@ -2613,7 +2642,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              countdownCell('公示日', secondAnnouncementDate),
+              countdownCell('告示日(市区)', secondAnnouncementDate),
               const SizedBox(width: 8),
               countdownCell('投開票日', secondVoteDate),
             ],
@@ -2759,7 +2788,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: const Color(0xFFFF8F00),
             ),
             _buildStatusChip(
-              '過去1年 ${_formatInt(pastSchedules.length)} 件',
+              '直近結果 ${_formatInt(pastSchedules.length)} 件',
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ],
@@ -2888,7 +2917,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             children: [
               Expanded(
                 child: Text(
-                  '過去1年の結果 (${_formatInt(pastSchedules.length)} 件)',
+                  '直近に終了した選挙 (${_formatInt(pastSchedules.length)} 件)',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -2906,7 +2935,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 8),
           if (pastSchedules.isEmpty)
             _buildInlineNotice(
-              '過去1年分の結果データがありません。',
+              '直近に終了した選挙の結果データがありません。',
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               icon: Icons.history,
             )
@@ -5125,6 +5154,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildMonthlySection(LocalElectionPlanDashboard plan) {
+    final currentMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -5156,8 +5186,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             rows: [
               for (final month in plan.monthlyCheckpoints)
                 DataRow(
+                  color: month.monthKey == currentMonthKey
+                      ? WidgetStatePropertyAll(
+                          Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.08),
+                        )
+                      : null,
                   cells: [
-                    DataCell(Text(month.label)),
+                    DataCell(
+                      Text(
+                        month.monthKey == currentMonthKey
+                            ? '${month.label} (今月)'
+                            : month.label,
+                        style: month.monthKey == currentMonthKey
+                            ? const TextStyle(fontWeight: FontWeight.w700)
+                            : null,
+                      ),
+                    ),
                     DataCell(
                       Text(
                         _formatInt(month.cumulativeIncumbentRetentionTarget),
@@ -5459,7 +5506,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ],
             ),
             const SizedBox(height: 12),
-            ElectionNewsBadge(prefecture: plan.prefecture),
+            ElectionNewsBadge(
+              newsItems: _newsByPrefecture[
+                      PrefectureElectionNewsService.normalizePrefectureKey(
+                    plan.prefecture,
+                  )] ??
+                  const <Map<String, dynamic>>[],
+            ),
             _buildKgiCsfKpiPanel(plan),
             const SizedBox(height: 12),
             _buildPrefectureOfficerPanel(plan),
@@ -5858,6 +5911,46 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (!launched || !mounted) {
       return;
     }
+  }
+
+  static const Duration _snapshotFreshWindow = Duration(hours: 2);
+  static const Duration _snapshotStaleThreshold = Duration(hours: 12);
+
+  Duration _snapshotAge(LocalElectionRealitySnapshot snapshot) {
+    final age = DateTime.now().difference(snapshot.fetchedAt.toLocal());
+    return age.isNegative ? Duration.zero : age;
+  }
+
+  String _snapshotAgeLabel(Duration age) {
+    if (age.inMinutes < 60) {
+      return '${age.inMinutes}分前';
+    }
+    if (age.inHours < 24) {
+      return '${age.inHours}時間前';
+    }
+    return '${age.inDays}日前';
+  }
+
+  String _snapshotFreshnessLabel(LocalElectionRealitySnapshot snapshot) {
+    final age = _snapshotAge(snapshot);
+    if (age <= _snapshotFreshWindow) {
+      return '最新取得済み (${_snapshotAgeLabel(age)})';
+    }
+    if (age <= _snapshotStaleThreshold) {
+      return 'キャッシュ表示中 (${_snapshotAgeLabel(age)}取得)';
+    }
+    return '要再取得 (${_snapshotAgeLabel(age)}取得)';
+  }
+
+  Color _snapshotFreshnessColor(LocalElectionRealitySnapshot snapshot) {
+    final age = _snapshotAge(snapshot);
+    if (age <= _snapshotFreshWindow) {
+      return const Color(0xFF4CAF50);
+    }
+    if (age <= _snapshotStaleThreshold) {
+      return const Color(0xFFFF8F00);
+    }
+    return const Color(0xFFFF6B35);
   }
 
   String _formatInt(int value) => _numberFormat.format(value);

@@ -604,4 +604,23 @@ void main() {
     expect(weekends[1], DateTime(2026, 4, 18));
     expect(weekends[2], DateTime(2026, 4, 25));
   });
+
+  test('unified election 2027 provisional dates stay statute-consistent', () {
+    final firstVote =
+        LocalElectionShareService.nextUnifiedLocalElectionFirstHalfTargetDate;
+    final firstAnnouncement = LocalElectionShareService
+        .nextUnifiedLocalElectionFirstHalfAnnouncementDate;
+    final secondVote =
+        LocalElectionShareService.nextUnifiedLocalElectionSecondHalfTargetDate;
+    final secondAnnouncement = LocalElectionShareService
+        .nextUnifiedLocalElectionSecondHalfAnnouncementDate;
+
+    // 投票日は日曜、第二次は第一次の2週間後。
+    expect(firstVote.weekday, DateTime.sunday);
+    expect(secondVote.weekday, DateTime.sunday);
+    expect(secondVote.difference(firstVote).inDays, 14);
+    // 告示日数ルール: 前半=知事選17日前 / 後半=市区議・市区長7日前 (2023実績と同じ)。
+    expect(firstVote.difference(firstAnnouncement).inDays, 17);
+    expect(secondVote.difference(secondAnnouncement).inDays, 7);
+  });
 }
