@@ -1216,7 +1216,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ? snapshot!.actualNetIncreaseRequired
         : plan.requiredNetIncrease;
     final progressLabel = plan.targetLocalMembers > 0
-        ? '${(officialCount / plan.targetLocalMembers * 100).toStringAsFixed(1)}%'
+        ? '${(officialCount / plan.targetLocalMembers * 100).clamp(0, 100).toStringAsFixed(1)}%'
         : '-';
     final daysToElection = _shareService.daysUntilNextUnifiedLocalElection();
     final monthsToElection = (daysToElection / 30).ceil().clamp(1, 24);
@@ -2429,6 +2429,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     final buffer = StringBuffer();
 
+    String row(List<String> cells) => cells.map(_csvCell).join(',');
+
     if (alertSchedules.isNotEmpty) {
       alertSchedules.sort((a, b) {
         final aDate = a.parsedVoteDate;
@@ -2439,42 +2441,56 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         return a.voteDate.compareTo(b.voteDate);
       });
       buffer.writeln('--- 未擁立・単騎の選挙 ---');
-      buffer.writeln('投票日,都道府県,自治体,選挙名,候補者数,候補者一覧,Xハンドル');
+      buffer.writeln(
+        row(['投票日', '都道府県', '自治体', '選挙名', '候補者数', '候補者一覧', 'Xハンドル']),
+      );
       for (final s in alertSchedules) {
-        final date = s.voteDate.replaceAll(',', '、');
-        final pref = s.prefecture.replaceAll(',', '、');
-        final muni = s.municipality.replaceAll(',', '、');
-        final name = s.electionName.replaceAll(',', '、');
-        final count = s.kokuminCandidateCount.toString();
-        final candidates =
-            _buildScheduleCandidateSummary(s).replaceAll(',', '、');
-        final handles = _candidateHandles(s)
-            .map((handle) => '@$handle')
-            .join(' / ')
-            .replaceAll(',', '、');
-        buffer.writeln('$date,$pref,$muni,$name,$count,$candidates,$handles');
+        final handles =
+            _candidateHandles(s).map((handle) => '@$handle').join(' / ');
+        buffer.writeln(
+          row([
+            s.voteDate,
+            s.prefecture,
+            s.municipality,
+            s.electionName,
+            s.kokuminCandidateCount.toString(),
+            _buildScheduleCandidateSummary(s),
+            handles,
+          ]),
+        );
       }
       buffer.writeln('');
     }
 
     if (pastResults.isNotEmpty) {
       buffer.writeln('--- 過去の選挙結果 ---');
-      buffer.writeln('投票日,場所,選挙名,候補者名,当落,得票数');
+      buffer.writeln(row(['投票日', '場所', '選挙名', '候補者名', '当落', '得票数']));
       for (final result in pastResults) {
-        final date = result.date.replaceAll(',', '、');
-        final location = result.location.replaceAll(',', '、');
-        final electionName = result.electionName.replaceAll(',', '、');
         final candidates = result.resolvedCandidates.toList();
 
         if (candidates.isEmpty) {
-          buffer.writeln('$date,$location,$electionName,候補者情報なし,N/A,0');
+          buffer.writeln(
+            row([
+              result.date,
+              result.location,
+              result.electionName,
+              '候補者情報なし',
+              'N/A',
+              '0',
+            ]),
+          );
         } else {
           for (final candidate in candidates) {
-            final name = candidate.name;
-            final status = candidate.status;
-            final votes = candidate.votes.toString();
-            buffer
-                .writeln('$date,$location,$electionName,$name,$status,$votes');
+            buffer.writeln(
+              row([
+                result.date,
+                result.location,
+                result.electionName,
+                candidate.name,
+                candidate.status,
+                candidate.votes.toString(),
+              ]),
+            );
           }
         }
       }
@@ -4275,7 +4291,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         else
           _buildMemberRosterAccordion(
             visibleMembers: visibleMembers,
-            totalFilteredCount: filteredMembers.length,
+            filteredMembers: filteredMembers,
           ),
       ],
     );
@@ -4283,14 +4299,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Widget _buildMemberRosterAccordion({
     required List<LocalElectionLegislatorProfile> visibleMembers,
-    required int totalFilteredCount,
+    required List<LocalElectionLegislatorProfile> filteredMembers,
   }) {
     final grouped = <String, List<LocalElectionLegislatorProfile>>{};
     for (final member in visibleMembers) {
       grouped.putIfAbsent(member.prefecture, () => []).add(member);
     }
+    // 県別のフィルタ済み総数 (ページング前) を先に集計し、可視分が
+    // 県の途中で切れてもグループヘッダーが正しい総数を出せるようにする。
+    final totalByPrefecture = <String, int>{};
+    for (final member in filteredMembers) {
+      totalByPrefecture[member.prefecture] =
+          (totalByPrefecture[member.prefecture] ?? 0) + 1;
+    }
     final entries = grouped.entries.toList()
       ..sort((left, right) => left.key.compareTo(right.key));
+    final remaining = filteredMembers.length - visibleMembers.length;
 
     return Column(
       children: [
@@ -4298,17 +4322,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           _buildMemberRosterGroup(
             prefecture: entries[index].key,
             members: entries[index].value,
+            prefectureTotal: totalByPrefecture[entries[index].key] ??
+                entries[index].value.length,
             initiallyExpanded: entries.length <= 2 || index == 0,
           ),
-        if (totalFilteredCount > visibleMembers.length)
+        if (remaining > 0)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: OutlinedButton.icon(
               onPressed: _showMoreMembers,
               icon: const Icon(Icons.expand_more),
-              label: Text(
-                'さらに ${_formatInt((totalFilteredCount - visibleMembers.length).clamp(0, _memberPageSize))} 人表示',
-              ),
+              label: Text('さらに表示（残り ${_formatInt(remaining)} 人）'),
             ),
           ),
       ],
@@ -4318,12 +4342,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   Widget _buildMemberRosterGroup({
     required String prefecture,
     required List<LocalElectionLegislatorProfile> members,
+    required int prefectureTotal,
     required bool initiallyExpanded,
   }) {
     final prefecturalCount =
         members.where((item) => item.assemblyCategory == 'prefectural').length;
     final municipalCount =
         members.where((item) => item.assemblyCategory == 'municipal').length;
+    // 可視分がこの県の総数より少ない (ページ境界で途中まで) 場合は
+    // 「表示中/総数」を明示し、ヘッダー数が過少に見えないようにする。
+    final headerCount = members.length < prefectureTotal
+        ? '${_formatInt(members.length)}/${_formatInt(prefectureTotal)}人'
+        : '${_formatInt(members.length)}人';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -4342,7 +4372,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
             childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
             title: Text(
-              '$prefecture ${_formatInt(members.length)}人',
+              '$prefecture $headerCount',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -5951,6 +5981,26 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return const Color(0xFFFF8F00);
     }
     return const Color(0xFFFF6B35);
+  }
+
+  // CSV セル安全化: 先頭が式記号 (= + - @ タブ/改行) のセルは
+  // Excel/Sheets で数式として実行されうるため `'` を前置し、
+  // 区切り/引用符/改行を含むセルは RFC 4180 の二重引用符でクオートする。
+  // 候補者名・選挙名は外部スクレイプ由来の非信頼値なので必須。
+  static const String _csvFormulaPrefixes = '=+-@\t\r\n';
+
+  String _csvCell(String value) {
+    final guarded =
+        value.isNotEmpty && _csvFormulaPrefixes.contains(value.substring(0, 1))
+            ? "'$value"
+            : value;
+    if (guarded.contains(',') ||
+        guarded.contains('"') ||
+        guarded.contains('\n') ||
+        guarded.contains('\r')) {
+      return '"${guarded.replaceAll('"', '""')}"';
+    }
+    return guarded;
   }
 
   String _formatInt(int value) => _numberFormat.format(value);

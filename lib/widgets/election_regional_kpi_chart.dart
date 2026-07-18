@@ -710,7 +710,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   }
 
   void _showMonthlyDetailsDialog(BuildContext context, String month) {
-    final prefecturesInMonth = widget.prefectures
+    // 月次テーブルの件数は allPrefectures 集計なので、ドリルダウンの一覧も
+    // 全県連を母数にする (prefectures=重点上位部分集合で絞ると件数と乖離する)。
+    final prefecturesInMonth = widget.allPrefectures
         .where((p) => p.endorsementDeadlineMonth == month)
         .toList();
     // 未確定の県連が上に来るようにソート
