@@ -19681,8 +19681,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       try {
         final latest = await _assetManagementAiAnalysisHistoryService
             .loadLatestForBaseDate(
-          reportBaseDate: AssetManagementAiAnalysisHistoryService
-              .reportBaseDateKey(report.workbook.baseDate),
+          reportBaseDate:
+              AssetManagementAiAnalysisHistoryService.reportBaseDateKey(
+                  report.workbook.baseDate),
         );
         if (latest != null &&
             (latest.requestFingerprint == key ||

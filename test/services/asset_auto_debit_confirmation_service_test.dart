@@ -102,8 +102,7 @@ void main() {
       expect(service.insufficientSourceCount(workbook), 1);
     });
 
-    test(
-        'flags later debit when earlier successful debit depletes the balance',
+    test('flags later debit when earlier successful debit depletes the balance',
         () {
       // 6/26 時点、残高 5,000。ガス 4,500 (12日) は成功見込み → 残 500。
       // 水道 2,400 (22日) は生残高 5,000 では足りて見えるが、見込み残 500 では
