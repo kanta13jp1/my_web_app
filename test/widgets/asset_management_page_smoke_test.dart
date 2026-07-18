@@ -1087,6 +1087,66 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('bulk payment-source assign clears all missing sources', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      await tester.binding.setSurfaceSize(const Size(1200, 3200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // 預金1口座 + 原資未設定の負債2件 → 一括設定ボタンが出る。
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '三井住友銀行大塚支店': 500000,
+                'モビット': -300000,
+                'アコムカードローン': -200000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final bulkButton = find.byKey(
+        const Key('asset_payment_source_bulk_assign'),
+      );
+      expect(bulkButton, findsOneWidget);
+
+      await tester.ensureVisible(bulkButton);
+      await tester.tap(bulkButton);
+      // モーダルボトムシートの表示アニメーション (有限) を確実に完了させる。
+      // ページに常駐アニメーションがあり pumpAndSettle はタイムアウトするため固定 pump。
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // プレビューシート → 「今月だけ設定」で確定。
+      final applyMonthly = find.byKey(
+        const Key('asset_payment_source_bulk_apply_monthly'),
+      );
+      expect(applyMonthly, findsOneWidget);
+      await tester.tap(applyMonthly);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // 適用が実行されたことを SnackBar で確認。
+      expect(find.textContaining('原資口座を設定しました'), findsOneWidget);
+      // 適用後は全件原資が設定され、一括設定ボタンが消える。
+      expect(
+        find.byKey(const Key('asset_payment_source_bulk_assign')),
+        findsNothing,
+      );
+
+      // SnackBar の自動消滅タイマー (既定4秒) を drain してから unmount しないと、
+      // 保留タイマーが後続テストの FakeAsync zone へ漏れて "did not complete" になる。
+      await tester.pump(const Duration(seconds: 5));
+      await _unmount(tester);
+    });
+
     testWidgets('shortfall warning appears and clears via expected inflow', (
       tester,
     ) async {

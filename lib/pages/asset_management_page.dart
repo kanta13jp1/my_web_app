@@ -30,6 +30,7 @@ import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_report_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_payment_reminder_service.dart';
+import 'package:my_web_app/services/asset_bulk_payment_source_assigner.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -13541,6 +13542,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ..sort(
         (a, b) => b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount),
       );
+    final bulkPlan = const AssetBulkPaymentSourceAssigner().buildPlan(workbook);
     return Container(
       key: const Key('asset_payment_source_missing_banner'),
       width: double.infinity,
@@ -13588,6 +13590,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 fontSize: 11,
                 color: Color(0xFF92400E),
                 height: 1.5,
+              ),
+            ),
+          // 見込み残高が最大の口座へ一括で原資を割り当てる (プレビュー→確定)。
+          if (bulkPlan.hasAssignments)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_payment_source_bulk_assign'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB45309),
+                ),
+                onPressed: () =>
+                    _showBulkPaymentSourceAssignSheet(workbook, bulkPlan),
+                icon: const Icon(Icons.auto_fix_high, size: 16),
+                label: Text('原資を一括設定（${bulkPlan.assignments.length}件）'),
               ),
             ),
           // ジャンプ先の原資未設定一覧は workbookBoard 内にあり、表示モード次第で
@@ -13654,6 +13673,190 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  /// 原資未設定の支払いへ、見込み残高最大の口座を一括割当するプレビューシート。
+  /// プレビューはバナーの「候補」と同一ルールで、確定時のみ永続化する。
+  Future<void> _showBulkPaymentSourceAssignSheet(
+    AssetLiabilityWorkbook workbook,
+    AssetBulkPaymentSourcePlan plan,
+  ) async {
+    final scope = await showModalBottomSheet<_PaymentSourceSaveScope>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final scheme = Theme.of(sheetContext).colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '原資を一括設定',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: scheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '未設定の支払いに、支払後の見込み残高が最大の口座を割り当てます。'
+                  '設定後に各支払いで個別に変更できます。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final assignment in plan.assignments)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '「${assignment.row.name}」'
+                                  '${_formatManagementYen(assignment.row.scheduledPaymentAmount)}'
+                                  ' → ${assignment.account.name}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: scheme.onSurface,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                Text(
+                                  '支払後見込み '
+                                  '${_formatManagementYen(assignment.projectedAfterPayment)}'
+                                  '${assignment.projectedAfterPayment < AssetBulkPaymentSourceAssigner.safetyBalance ? '（残高が細くなります）' : ''}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    height: 1.4,
+                                    color: assignment.projectedAfterPayment < 0
+                                        ? scheme.error
+                                        : scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (plan.hasUnassignable) ...[
+                          const Divider(height: 16),
+                          Text(
+                            '割当先なし（残高のある現金・預金口座が見つかりません）',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: scheme.error,
+                              height: 1.4,
+                            ),
+                          ),
+                          for (final row in plan.unassignableRows)
+                            Text(
+                              '・${row.name} '
+                              '${_formatManagementYen(row.scheduledPaymentAmount)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          Text(
+                            '入金後にこれらの原資口座を設定してください。',
+                            style: TextStyle(
+                              fontSize: 11,
+                              height: 1.5,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        key: const Key(
+                            'asset_payment_source_bulk_apply_monthly'),
+                        onPressed: () => Navigator.of(sheetContext)
+                            .pop(_PaymentSourceSaveScope.monthlyOverride),
+                        child: const Text('今月だけ設定'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton(
+                        key: const Key(
+                            'asset_payment_source_bulk_apply_default'),
+                        onPressed: () => Navigator.of(sheetContext)
+                            .pop(_PaymentSourceSaveScope.defaultSetting),
+                        child: const Text('毎月の既定にする'),
+                      ),
+                    ),
+                  ],
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    child: const Text('キャンセル'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (scope != null) {
+      _applyBulkPaymentSourceAssignment(plan, scope);
+    }
+  }
+
+  /// [plan] の割当を一括で適用する。単一の setState + 単一の保存でまとめて反映し、
+  /// 個別 setter を N 回回すことによる保存レース (原資マップの書き込み取りこぼし)
+  /// を避ける。マップ操作の意味は [_savePaymentSourceReviewChoice] と同一。
+  void _applyBulkPaymentSourceAssignment(
+    AssetBulkPaymentSourcePlan plan,
+    _PaymentSourceSaveScope scope,
+  ) {
+    if (plan.assignments.isEmpty) {
+      return;
+    }
+    setState(() {
+      for (final assignment in plan.assignments) {
+        if (scope == _PaymentSourceSaveScope.defaultSetting) {
+          _defaultPaymentSourceAccountIds[assignment.row.id] =
+              assignment.account.id;
+          _paymentSourceAccountIds.remove(assignment.row.id);
+        } else {
+          _paymentSourceAccountIds[assignment.row.id] = assignment.account.id;
+        }
+      }
+    });
+    if (scope == _PaymentSourceSaveScope.defaultSetting) {
+      unawaited(_saveDefaultPaymentSources());
+    }
+    unawaited(_saveAssetLiabilityMonthlyState());
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${plan.assignments.length}件の支払いに原資口座を設定しました。'),
+        ),
+      );
+    }
   }
 
   Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
