@@ -764,9 +764,19 @@ class AssetLiabilityPlanningService {
     // 振替元が自分自身を指す設定は不正 (ローンを自分自身からは返済できない) なので
     // 未設定扱いにする。これにより「支払原資口座の未設定」セクションに表示され、正しい
     // 口座 (例: じぶん銀行) へ修正できるようになり、見込み残高の自己宛て誤ルーティングも防ぐ。
-    final paymentSourceAccountId = rawPaymentSourceAccountId == account.id
+    var paymentSourceAccountId = rawPaymentSourceAccountId == account.id
         ? null
         : rawPaymentSourceAccountId;
+    // 振替元がカードローン (現金借入) を指す設定も不正扱いで未設定に落とす。
+    // cardLoan はどの振替元セレクタにも候補として出ない (請求先になれない) のに、
+    // legacy キー移行の名前衝突 (じぶん銀行→じぶんローン等) で保存され得る。
+    // 非 null のままだと「原資未設定」レビューに出ず、現金系口座の見込み残高
+    // からも静かに消える盲点になるため、未設定へ倒して修正導線に乗せる。
+    if (paymentSourceAccountId != null &&
+        accountsById[paymentSourceAccountId]?.kind ==
+            AssetLiabilityAccountKind.cardLoan) {
+      paymentSourceAccountId = null;
+    }
     final paymentSourceAccountName = paymentSourceAccountId == null
         ? null
         : accountsById[paymentSourceAccountId]?.name;

@@ -55,11 +55,15 @@ class AssetManagementAiAnalysisHistoryService {
         .toList(growable: false);
   }
 
-  /// 直近の保存済み分析のうち、リクエスト指紋が一致するものを 1 件返す。
-  /// フィンガープリントは基準日を含む日付単位で回転するため、同日内の
-  /// リロードではこの結果を再利用でき、高価な ai-hub 生成をスキップできる。
-  Future<AssetManagementAiAnalysisHistoryEntry?> loadReusableResult({
-    required String requestFingerprint,
+  /// 指定基準日の保存済み分析のうち最新の 1 件を返す (本文込み)。
+  ///
+  /// フィンガープリントは基準日を含む日付単位で回転するため、指紋一致の
+  /// 再利用判定はこの「同日最新 1 行」を見れば足りる。加えて呼び出し側は
+  /// generated_at の鮮度 (自動再生成クールダウン) 判定にも同じ行を使える —
+  /// 引落済み等の編集毎に指紋が変わり、完全一致だけでは 1 セッションに
+  /// 何度も 1 分超のプレミアム生成が走ってしまうため。
+  Future<AssetManagementAiAnalysisHistoryEntry?> loadLatestForBaseDate({
+    required String reportBaseDate,
   }) async {
     final client = _resolveClient();
     final userId = _resolveUserId(client);
@@ -76,7 +80,7 @@ class AssetManagementAiAnalysisHistoryService {
         )
         .eq('user_id', userId)
         .eq('status', AssetManagementAiSummaryStatus.aiGenerated.name)
-        .eq('request_fingerprint', _safeRequestFingerprint(requestFingerprint))
+        .eq('report_base_date', reportBaseDate)
         .neq('summary_text', '')
         .order('generated_at', ascending: false)
         .limit(1);
@@ -177,9 +181,13 @@ class AssetManagementAiAnalysisHistoryService {
     return const <String, dynamic>{};
   }
 
-  String _dateOnly(DateTime value) {
+  /// report_base_date 列と同一形式 (yyyy-MM-dd) の基準日キー。
+  /// [loadLatestForBaseDate] へ渡す値もこれで作る。
+  static String reportBaseDateKey(DateTime value) {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');
     return '${value.year}-$month-$day';
   }
+
+  String _dateOnly(DateTime value) => reportBaseDateKey(value);
 }

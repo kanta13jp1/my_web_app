@@ -102,6 +102,62 @@ void main() {
       expect(service.insufficientSourceCount(workbook), 1);
     });
 
+    test(
+        'flags later debit when earlier successful debit depletes the balance',
+        () {
+      // 6/26 時点、残高 5,000。ガス 4,500 (12日) は成功見込み → 残 500。
+      // 水道 2,400 (22日) は生残高 5,000 では足りて見えるが、見込み残 500 では
+      // 不足 → 警告。行単位の独立比較では取りこぼすケース。
+      final workbook = planning.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 5000},
+        baseDate: DateTime(2026, 6, 26),
+        includeDefaultFixedPayments: true,
+      );
+      final details = service.pendingConfirmationDetails(workbook);
+      final gas = details.firstWhere(
+        (detail) =>
+            detail.row.accountId ==
+            AssetLiabilityPlanningService.gasBillAccountId,
+      );
+      final water = details.firstWhere(
+        (detail) =>
+            detail.row.accountId ==
+            AssetLiabilityPlanningService.waterBillAccountId,
+      );
+
+      expect(gas.sourceAccountBalance, 5000);
+      expect(gas.sourceBalanceInsufficient, isFalse);
+      expect(water.sourceAccountBalance, 500);
+      expect(water.sourceBalanceInsufficient, isTrue);
+    });
+
+    test('failed (insufficient) debit does not deplete the running balance',
+        () {
+      // 残高 3,000: ガス 4,500 (12日) は不足で弾かれる想定 → 残高は減らず、
+      // 水道 2,400 (22日) は 3,000 のまま判定 → 警告なし。
+      final workbook = planning.buildWorkbook(
+        latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 3000},
+        baseDate: DateTime(2026, 6, 26),
+        includeDefaultFixedPayments: true,
+      );
+      final details = service.pendingConfirmationDetails(workbook);
+      final gas = details.firstWhere(
+        (detail) =>
+            detail.row.accountId ==
+            AssetLiabilityPlanningService.gasBillAccountId,
+      );
+      final water = details.firstWhere(
+        (detail) =>
+            detail.row.accountId ==
+            AssetLiabilityPlanningService.waterBillAccountId,
+      );
+
+      expect(gas.sourceAccountBalance, 3000);
+      expect(gas.sourceBalanceInsufficient, isTrue);
+      expect(water.sourceAccountBalance, 3000);
+      expect(water.sourceBalanceInsufficient, isFalse);
+    });
+
     test('does not flag when source balance covers the amount', () {
       final workbook = planning.buildWorkbook(
         latestSnapshot: const <String, double>{'三井住友銀行大塚支店': 63539},
