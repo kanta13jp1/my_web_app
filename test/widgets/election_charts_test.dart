@@ -32,33 +32,45 @@ void main() {
       (
     tester,
   ) async {
+    const tokyo = LocalElectionPrefecturePlan(
+      prefecture: '東京',
+      region: '関東',
+      additionalSeatTarget: 12,
+      incumbentRetentionTarget: 9,
+      focusMunicipalityCount: 14,
+      newCandidateTarget: 15,
+      endorsementDeadlineMonth: '2026-09',
+      closeRaceSupportRounds: 18,
+    );
+    const aichi = LocalElectionPrefecturePlan(
+      prefecture: '愛知',
+      region: '中部',
+      additionalSeatTarget: 7,
+      incumbentRetentionTarget: 5,
+      focusMunicipalityCount: 9,
+      newCandidateTarget: 8,
+      endorsementDeadlineMonth: '2026-10',
+      closeRaceSupportRounds: 10,
+    );
+    const osaka = LocalElectionPrefecturePlan(
+      prefecture: '大阪',
+      region: '近畿',
+      additionalSeatTarget: 6,
+      incumbentRetentionTarget: 6,
+      focusMunicipalityCount: 8,
+      newCandidateTarget: 7,
+      endorsementDeadlineMonth: '2026-11',
+      closeRaceSupportRounds: 9,
+    );
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
             child: ElectionRegionalKpiChart(
-              prefectures: [
-                LocalElectionPrefecturePlan(
-                  prefecture: '東京',
-                  region: '関東',
-                  additionalSeatTarget: 12,
-                  incumbentRetentionTarget: 9,
-                  focusMunicipalityCount: 14,
-                  newCandidateTarget: 15,
-                  endorsementDeadlineMonth: '2026-09',
-                  closeRaceSupportRounds: 18,
-                ),
-                LocalElectionPrefecturePlan(
-                  prefecture: '愛知',
-                  region: '中部',
-                  additionalSeatTarget: 7,
-                  incumbentRetentionTarget: 5,
-                  focusMunicipalityCount: 9,
-                  newCandidateTarget: 8,
-                  endorsementDeadlineMonth: '2026-10',
-                  closeRaceSupportRounds: 10,
-                ),
-              ],
+              prefectures: [tokyo, aichi],
+              allPrefectures: [tokyo, aichi, osaka],
+              targetLocalMembers: 700,
+              requiredNetIncrease: 318,
             ),
           ),
         ),
@@ -73,6 +85,11 @@ void main() {
     expect(find.textContaining('新人擁立目標'), findsWidgets);
     expect(find.text('東京'), findsOneWidget);
     expect(find.text('愛知'), findsOneWidget);
+    // 合計・不足警告は棒グラフの部分集合ではなく全県連が母数になる。
+    // totalTarget = (9+15) + (5+8) + (6+7) = 50 → 700 - 50 = 650。
+    expect(find.textContaining('あと 650名 不足'), findsOneWidget);
+    expect(find.textContaining('重点上位2県連のみ表示'), findsOneWidget);
+    expect(find.textContaining('全3県連が母数'), findsOneWidget);
   });
 
   testWidgets('ElectionJapanMap renders national KGI/KPI map and detail panel',

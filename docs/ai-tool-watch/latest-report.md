@@ -1,16 +1,17 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-07-16T22:16:18Z`
-- Previous check: `2026-07-15T22:15:10Z`
-- Changed/new official sources: `5`
+- Checked at: `2026-07-17T22:07:58Z`
+- Previous check: `2026-07-16T22:16:18Z`
+- Changed/new official sources: `6`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.211 / July 15, 2026
+- `changed` Claude Code changelog: 2.1.212 / July 17, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind
 - `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Documentation Index Fetch the complete docume
 - `changed` Codex changelog: 2026-07-16 / Codex CLI 0.144.5 pre
-- `changed` Devin release notes: July 15, 2026
+- `changed` Codex use cases: ChatGPT use cases ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex
+- `changed` Cursor changelog: 3.11 / Jul 10, 2026
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -22,7 +23,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.211 / July 15, 2026
+  - Latest signal: 2.1.212 / July 17, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...
   - Short signal: Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .
@@ -58,8 +59,8 @@
   - URL: https://cursor.com/changelog
   - Latest signal: 3.11 / Jul 10, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
-  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud CLI Mobile Automations Review Tab Marketplace ↗ Enterprise Pricing Resources...
-  - Short signal: Use them to ask clarification questions, research alternatives without committing to a pivot, and sanity-check a decision while the main agent continues running.
+  - Short signal: What's New in Cursor — Latest Updates & Release Notes Skip to content Cursor Product ↓ Agents Cloud Composer Mobile Automations CLI Marketplace ↗ Review Enterprise Pricing...
+  - Short signal: We also refined how Cursor's responses look in Slack.
 - **Gemini Code Assist release notes** (HTTP 200)
   - URL: https://developers.google.com/gemini-code-assist/resources/release-notes
   - Latest signal: VS Code Gemini Code Assist 2.87.0 / June 19, 2026

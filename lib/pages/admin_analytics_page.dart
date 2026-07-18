@@ -1684,6 +1684,27 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     bodyCtrl.dispose();
   }
 
+  /// agent_tool_execution_logs を fail-safe に取得する (テーブル未整備でも
+  /// ダッシュボードは必ず描画する)。_loadStats の並列開始点から呼ぶ。
+  Future<List<Map<String, dynamic>>> _fetchToolExecutionLogsSafe() async {
+    try {
+      final dynamic rawToolLogs = await _supabase
+          .from('agent_tool_execution_logs')
+          .select('tool_name, allowed, blocked_reason, created_at')
+          .order('created_at', ascending: false)
+          .limit(80);
+      if (rawToolLogs is List) {
+        return [
+          for (final row in rawToolLogs.whereType<Map>())
+            Map<String, dynamic>.from(row),
+        ];
+      }
+    } catch (error) {
+      debugPrint('agent_tool_execution_logs is unavailable: $error');
+    }
+    return const [];
+  }
+
   Future<void> _loadStats() async {
     try {
       final today = _startOfDay(DateTime.now());
@@ -1691,7 +1712,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final startDateKey = _dateKey(startDate);
       final endDateKey = _dateKey(today);
 
-      final results = await Future.wait<dynamic>([
+      final statsFuture = Future.wait<dynamic>([
         _supabase
             .from('app_analytics')
             .select()
@@ -1708,7 +1729,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             .count(CountOption.exact),
         _supabase.rpc('get_lp_view_stats'),
       ]);
+      // 相互依存の無いローダーは DB 4本と同時に開始する。旧実装は
+      // 「DB 4本 → growth-hub 4本 → tool logs」の3段直列で、全画面スピナーが
+      // 3段の合計時間 (数秒) ブロックしていた。並列化で最遅1本ぶんに縮む。
+      final paidConversionFuture = _loadPaidConversionMetrics();
+      final xTodayStatusFuture = _loadXTodayStatus();
+      final xPerformanceContextFuture = _loadXPerformanceContext();
+      final xCandidatesFuture = _loadXCandidateQueue();
+      final toolLogsFuture = _fetchToolExecutionLogsSafe();
 
+      final results = await statsFuture;
       final statsResponse = results[0] as List<dynamic>;
       final profileResponse = results[1] as List<dynamic>;
       final userCountResponse = results[2];
@@ -1729,12 +1759,6 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ? Map<String, dynamic>.from(lpStatsResponse)
           : <String, dynamic>{};
       final hasLpViewStats = lpStats.isNotEmpty;
-      // 相互依存の無い4ローダーを並列化 (旧: 直列 await でスピナー時間が
-      // 4リクエスト分加算されていた)。
-      final paidConversionFuture = _loadPaidConversionMetrics();
-      final xTodayStatusFuture = _loadXTodayStatus();
-      final xPerformanceContextFuture = _loadXPerformanceContext();
-      final xCandidatesFuture = _loadXCandidateQueue();
       final paidConversionMetrics = await paidConversionFuture;
       final xTodayStatus = await xTodayStatusFuture;
       final xPerformanceContext = await xPerformanceContextFuture;
@@ -1745,35 +1769,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       var allowedExecutionCount = 0;
       var blockedExecutionCount = 0;
 
-      try {
-        final dynamic rawToolLogs = await _supabase
-            .from('agent_tool_execution_logs')
-            .select('tool_name, allowed, blocked_reason, created_at')
-            .order('created_at', ascending: false)
-            .limit(80);
-
-        if (rawToolLogs is List) {
-          for (final row in rawToolLogs.whereType<Map>()) {
-            final log = Map<String, dynamic>.from(row);
-            final allowed = _toBool(log['allowed']);
-            if (allowed) {
-              allowedExecutionCount += 1;
-            } else {
-              blockedExecutionCount += 1;
-              final rawReason = log['blocked_reason']?.toString().trim() ?? '';
-              final reason =
-                  rawReason.isEmpty ? 'Unknown blocked reason' : rawReason;
-              blockedReasonCounts.update(
-                reason,
-                (current) => current + 1,
-                ifAbsent: () => 1,
-              );
-            }
-            toolExecutionLogs.add(log);
-          }
+      for (final log in await toolLogsFuture) {
+        final allowed = _toBool(log['allowed']);
+        if (allowed) {
+          allowedExecutionCount += 1;
+        } else {
+          blockedExecutionCount += 1;
+          final rawReason = log['blocked_reason']?.toString().trim() ?? '';
+          final reason =
+              rawReason.isEmpty ? 'Unknown blocked reason' : rawReason;
+          blockedReasonCounts.update(
+            reason,
+            (current) => current + 1,
+            ifAbsent: () => 1,
+          );
         }
-      } catch (error) {
-        debugPrint('agent_tool_execution_logs is unavailable: $error');
+        toolExecutionLogs.add(log);
       }
 
       final sortedBlockedReasons = blockedReasonCounts.entries.toList()
@@ -2451,8 +2462,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   value: '${todayFunnel.magicLinkSends}',
                   color: const Color(0xFFFF6B35),
                 ),
+              // R27: 値は率ではなくボトルネック診断ラベル(体験未実行 等)なので、
+              // ラベルも「登録率」でなく「今日の診断」にする(label/value 不一致
+              // の解消。率は隣の「今日のCVR」チップが担う)。
               _buildMiniKpiChip(
-                label: '登録率',
+                label: '今日の診断',
                 value: diagnosisLabel,
                 color: diagnosisColor,
               ),
@@ -6162,12 +6176,29 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final theme = Theme.of(context);
     // R20: 鮮度はパネル自身のデータ(perf-context 行)から出す。旧実装は今日の投稿の
     // 計測時刻を読み、12件計測済みでも今日未投稿だと「計測待ち」と矛盾していた。
+    final newestMeasuredAt = newestMeasuredCreatedAt(comparableRows);
     final freshness = resolveXGrowthLoopFreshness(
       measuredCount: comparisonSampleCount,
-      newestMeasuredAt: newestMeasuredCreatedAt(comparableRows),
+      newestMeasuredAt: newestMeasuredAt,
+      now: DateTime.now(),
+    );
+    // R27: 鮮度が3日を超えたら灰色フッター任せにせず警告行で知らせる
+    // (unlocked 以降は awaitingMetrics の cron 警告経路が二度と出ないため)。
+    final stalenessWarning = xGrowthLoopStalenessWarning(
+      measuredCount: comparisonSampleCount,
+      newestMeasuredAt: newestMeasuredAt,
       now: DateTime.now(),
     );
     final lines = <Widget>[];
+    if (stalenessWarning != null) {
+      lines.add(
+        _growthLoopLine(
+          Icons.warning_amber_rounded,
+          const Color(0xFFF59E0B),
+          stalenessWarning,
+        ),
+      );
+    }
 
     switch (loop.state) {
       case XGrowthLoopState.awaitingMetrics:
@@ -6191,8 +6222,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         );
         break;
       case XGrowthLoopState.unlocked:
-        final bestVariant = perf['bestVariant']?.toString();
-        if (bestVariant != null && bestVariant.isNotEmpty) {
+        // R27: サーバが「unknown」(タグ無し投稿の受け皿バケット)を勝ち型として
+        // 返す除外漏れへの防御。variants から unknown 除外で勝ち型を再解決する。
+        final bestVariant = resolveDisplayBestVariant(
+          perf['bestVariant']?.toString(),
+          variants,
+        );
+        if (bestVariant != null) {
           lines.add(
             _growthLoopLine(
               Icons.emoji_events_outlined,
@@ -6503,15 +6539,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   /// variants(平均スコア降順)から上位3種を「{variant} 平均{score} (n={count})」に。
   List<String> _xGrowthVariantRankingLines(List<dynamic>? variants) {
-    if (variants == null) return const [];
+    // R28: 勝ち型と同じ畳み込み (unknown 除外 + `_fallback` を base へ) 済みの
+    // ランキングを出す。畳まないと「勝ち型: daily_briefing」なのに直下の
+    // ランキング先頭が「daily_briefing_fallback 平均89」という矛盾表示になる。
+    final folded = foldVariantsForDisplay(variants);
     final lines = <String>[];
-    for (final entry in variants) {
-      if (entry is! Map) continue;
-      final name = (entry['variant'] ?? '').toString().trim();
-      if (name.isEmpty || name == 'unknown') continue;
-      final score = _toInt(entry['averageScore']);
-      final count = _toInt(entry['count']);
-      lines.add('$name 平均$score (n=$count)');
+    for (final entry in folded) {
+      lines.add('${entry.variant} 平均${entry.averageScore} (n=${entry.count})');
       if (lines.length >= 3) break;
     }
     return lines;

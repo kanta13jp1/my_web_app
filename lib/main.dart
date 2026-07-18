@@ -33,6 +33,7 @@ import 'package:my_web_app/pages/growth_mission_page.dart';
 import 'package:my_web_app/pages/site_guide_chat_page.dart';
 import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
+import 'package:my_web_app/services/route_visibility_observer.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/memory_drill_page.dart';
@@ -74,6 +75,7 @@ import 'package:my_web_app/pages/career_monthly_kpi_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
+import 'package:my_web_app/pages/eval_approval_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
 import 'package:my_web_app/pages/ai_observability_page.dart';
@@ -532,6 +534,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       navigatorObservers: <NavigatorObserver>[
         _growthPresenceObserver,
         universalAiShareRouteObserver,
+        // deep link 直開き時に下へ積まれた HomePage / LandingPage の fetch・
+        // LP View 計測を可視化まで遅延させる (可視化ゲート)。
+        deepLinkVisibilityRouteObserver,
         if (MyApp._sentryNavigatorObserver != null)
           MyApp._sentryNavigatorObserver!,
       ],
@@ -855,6 +860,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             );
           case '/decision-check':
             return MaterialPageRoute(builder: (_) => const DecisionCheckPage());
+          case '/eval-approval':
+            return MaterialPageRoute(builder: (_) => const EvalApprovalPage());
           case '/purchase-log':
             return MaterialPageRoute(builder: (_) => const PurchaseLogPage());
           case '/price-tracker':

@@ -24,6 +24,7 @@ import {
   resolveDuplicateGuardConfig,
   type XPostLogRowLike,
 } from "./x_duplicate_content.ts";
+import { pickBestVariant, pickConfidentVariant } from "./x_best_variant.ts";
 import {
   buildSignupSlackPayload,
   isRecentSignupCreatedAt,
@@ -41,6 +42,7 @@ import {
   X_METRIC_LEARNING_SELECTION_RULE,
   X_METRIC_WINDOW_SELECTION_RULE,
 } from "./x_metric_windows.ts";
+import { compactXMetricSnapshotMedia } from "./x_metric_snapshot.ts";
 import { decideXPostPreflight } from "./x_post_preflight.ts";
 import { computeTodayStatus } from "./x_today_status.ts";
 import { buildMediaLiftLine, classifyPostMediaType } from "./x_media_type.ts";
@@ -80,6 +82,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Max-Age": "86400",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -585,8 +588,7 @@ function metricSnapshotForLog(
       metadata.experiment_key,
       "x_first_user_growth_10k",
     ),
-    has_media: Boolean(metadata.media_url),
-    media_url: firstString(metadata.media_url) || null,
+    ...compactXMetricSnapshotMedia(metadata),
     // 動画 vs 画像の構造 lift 判定用(1:1 アスペクト実験のトリガーデータ)。
     media_type: firstString(metadata.media_type) || null,
     link_in_reply: metadata.link_in_reply === true,
@@ -978,7 +980,13 @@ function buildXPerformanceContextFromLogs(
     }))
     .sort((left, right) => right.averageScore - left.averageScore);
 
-  const bestVariant = variants[0]?.variant ?? "daily_briefing";
+  // 勝ち型は unknown 除外 + `_fallback` を base へ畳む + 最小サンプル(n>=2)で
+  // 選ぶ (x_best_variant.ts)。畳まないと 1 サンプルの `daily_briefing_fallback`
+  // (平均89 n=1) が 7 サンプルの `daily_briefing` (平均76 n=7) を抑えて勝ち型に
+  // 昇格していた。bestVariant は保存/後方互換用、confidentBest は「実測で勝ちと
+  // 言える型」(無ければ null=断定しない)。
+  const bestVariant = pickBestVariant(variants);
+  const confidentBest = pickConfidentVariant(variants);
   // 集計ロールアップ (guarded): 両バケットに十分なサンプルがあるときだけ、
   // 変動要因(メディア有無/リンク位置/スレッド長)ごとの平均スコア差を測定事実と
   // して LLM へ渡す。データが薄い間は行自体を出さない(=実質 default-off で、
@@ -1148,8 +1156,10 @@ function buildXPerformanceContextFromLogs(
     ].join("\n")
     : [
       "Measured X performance context for the next post:",
-      variants.length > 0
-        ? `Target: 10K impressions. Current best variant: ${bestVariant}.`
+      // n>=2 で畳み込んだ勝ち型が無いとき、1 サンプルの外れ値や fallback 名を
+      // 実測済みの勝ち型かのように LLM へ主張しない。
+      confidentBest
+        ? `Target: 10K impressions. Current best variant: ${confidentBest.variant} (n=${confidentBest.count}).`
         : "Target: 10K impressions. No post-age comparable winner yet.",
       `Ranking basis: ${comparisonLabel} impressions ` +
       `(comparable n=${learningRows.length}; total measured n=${rows.length}).`,

@@ -3,6 +3,7 @@ import '../models/user_profile.dart';
 import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
+import 'asset_triage_guide_service.dart';
 
 enum AssetManagementInsightActionType {
   missingInput,
@@ -264,6 +265,9 @@ class AssetManagementInsightReport {
   /// 「借金しない宣言」モニターの月次評価（追加借入ゼロ／カード一括）。null=未評価。
   final AssetDebtDisciplineReport? disciplineReport;
 
+  /// 「まず、これだけ」段階別トリアージ (今日3件まで/今週/今月/専門窓口)。null=未評価。
+  final AssetTriagePlan? triagePlan;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -280,6 +284,7 @@ class AssetManagementInsightReport {
         const <AssetManagementImplementationContext>[],
     this.debtTrendInsights = const <AssetDebtTrendInsight>[],
     this.disciplineReport,
+    this.triagePlan,
   });
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
@@ -327,6 +332,8 @@ class AssetManagementInsightService {
     AssetDebtTrendAnalyzer debtTrendAnalyzer = const AssetDebtTrendAnalyzer(),
     AssetDebtDisciplineMonitor disciplineMonitor =
         const AssetDebtDisciplineMonitor(),
+    AssetTriageGuideService triageGuideService =
+        const AssetTriageGuideService(),
   }) {
     final breakdown = _availableMoneyBreakdown(
       workbook: workbook,
@@ -384,6 +391,12 @@ class AssetManagementInsightService {
       workbook: workbook,
       priorBalancesByAccountId: priorMonthAccountBalances,
     );
+    final triagePlan = triageGuideService.buildPlan(
+      workbook: workbook,
+      disciplineReport: disciplineReport,
+      todayAvailableAmount: today.availableAmount,
+      userProfile: userProfile,
+    );
 
     return AssetManagementInsightReport(
       workbook: workbook,
@@ -399,6 +412,7 @@ class AssetManagementInsightService {
       implementationContexts: implementationContexts,
       debtTrendInsights: debtTrendInsights,
       disciplineReport: disciplineReport,
+      triagePlan: triagePlan,
     );
   }
 
@@ -411,6 +425,20 @@ class AssetManagementInsightService {
     final actions = <AssetManagementInsightActionItem>[];
     final today = _dateOnly(workbook.baseDate);
     final upcomingLimit = today.add(Duration(days: upcomingPaymentWarningDays));
+    // 口座別見込み残高 (同口座の未払い・保留中の口座移動を合算済み)。
+    // 期限超過の支払可否判定と原資候補の順位付けは、口座別不足バナーと
+    // 同じこの数字に揃える (行単位の生残高比較は同一口座の兄弟未払いを
+    // 二重取りするため使わない)。cash-like 口座のみ含まれるので、
+    // じぶん銀行のように預金と負債が同一 id になる名前でも負債側を拾わない。
+    final summariesByAccountId = <String, AssetLiabilityAccountCashflowSummary>{
+      for (final summary in workbook.accountCashflowSummaries)
+        summary.accountId: summary,
+    };
+    // 原資未設定の負債に提示する引落口座候補。ページ上部バナーの候補一覧と
+    // 同じ順位付け (支払後見込み残高の大きい順) で最有力を 1 件だけ本文に載せる。
+    final paymentSourceCandidateSummaries = workbook.accountCashflowSummaries
+        .toList()
+      ..sort((a, b) => b.projectedBalance.compareTo(a.projectedBalance));
 
     for (final row in workbook.debtMasterRows) {
       if (row.paymentAmountEstimated && row.isDirectCashflowTarget) {
@@ -459,16 +487,32 @@ class AssetManagementInsightService {
           !row.paid &&
           (row.paymentSourceAccountId == null ||
               row.paymentSourceAccountId!.trim().isEmpty)) {
+        // じぶん銀行のように預金と負債が同一 id になる名前があるため自分自身は除外。
+        AssetLiabilityAccountCashflowSummary? candidate;
+        for (final summary in paymentSourceCandidateSummaries) {
+          if (summary.accountId != row.id) {
+            candidate = summary;
+            break;
+          }
+        }
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.missingPaymentSource,
             severity: AssetManagementInsightSeverity.warning,
             title: '${row.name}の支払原資口座が未設定です',
-            description: 'どの口座から引き落とすか未設定のため、口座別資金繰りに反映しにくい状態です。',
+            description: 'どの口座から引き落とすか未設定のため、'
+                '今月予定${_formatYen(row.scheduledPaymentAmount)}が'
+                'どの口座の見込み残高からも差し引かれず、残高不足を先読みできない状態です。',
             relatedAccountId: row.id,
             dueDate: _paymentDateFor(row, workbook.baseDate),
             paymentDay: row.paymentDay,
-            suggestedAction: '通常使う引落口座をデフォルト、または今月だけ上書きで設定してください。',
+            suggestedAction: candidate == null
+                ? '残高のある現金・預金口座が見つかりません。入金後に'
+                    '「支払原資口座の未設定」一覧から引落口座を設定してください。'
+                : '候補: ${candidate.accountName}'
+                    '（残高 ${_formatYen(candidate.currentBalance)} / 支払後見込み '
+                    '${_formatYen(candidate.projectedBalance - row.scheduledPaymentAmount)}）。'
+                    '「支払原資口座の未設定」一覧から今月だけ上書き、または既定で設定してください。',
           ),
         );
       }
@@ -479,16 +523,54 @@ class AssetManagementInsightService {
         continue;
       }
       if (row.overdue) {
+        // 期限超過は「いくらを・どうやって」まで具体化する（金額は支払予定額。
+        // 残高を延滞額扱いしない、のプロンプト規約と揃える）。
+        final overdueDays = today.difference(_dateOnly(row.paymentDate)).inDays;
+        final sourceAccountId = row.paymentSourceAccountId?.trim() ?? '';
+        final sourceSummary = sourceAccountId.isEmpty
+            ? null
+            : summariesByAccountId[sourceAccountId];
+        final String suggestedAction;
+        if (sourceAccountId.isEmpty) {
+          suggestedAction = '支払原資口座が未設定です。引落口座を設定したうえで、'
+              '振込・口座振替・支払先への連絡のどれで支払うかを確認してください。'
+              '支払済みの場合は支払済みチェックを更新してください。';
+        } else if (sourceSummary == null) {
+          // id は設定済みだが残高一覧に現れない (残高0で除外・口座名変更・
+          // じぶん銀行のような負債側 id 等)。「未設定」と断定しない。
+          final sourceName = row.paymentSourceAccountName ?? sourceAccountId;
+          suggestedAction = '原資口座「$sourceName」の残高を今の資産一覧で確認できません'
+              '（残高0か口座名変更の可能性）。残高を入力し直すか、'
+              '残高のある口座へ原資設定を変更してから支払ってください。';
+        } else if (sourceSummary.projectedBalance >= 0) {
+          suggestedAction =
+              '${sourceSummary.accountName}の残高${_formatYen(sourceSummary.currentBalance)}で'
+              '支払可能です。引落状況を確認し、未処理なら'
+              '${_formatYen(row.paymentAmount)}を支払って支払済みチェックを更新してください。';
+        } else {
+          // 同一口座の未払い・保留中の口座移動を合算した見込み不足
+          // (口座別不足バナーと同じ数字) を提示する。
+          final shortage = sourceSummary.shortfall;
+          suggestedAction = '${sourceSummary.accountName}は同口座の未払い分を含めると見込み残高が'
+              '${_formatYen(shortage)}不足します。他口座から${_formatYen(shortage)}以上を'
+              '${sourceSummary.accountName}へ移動してから、'
+              '${_formatYen(row.paymentAmount)}を支払ってください。';
+        }
         actions.add(
           AssetManagementInsightActionItem(
             type: AssetManagementInsightActionType.overduePayment,
             severity: AssetManagementInsightSeverity.critical,
             title: '${row.accountName}が期限超過です',
-            description: '支払日を過ぎた未払い予定があります。',
+            description: overdueDays <= 0
+                ? '本日${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                    '${_formatYen(row.paymentAmount)}が未払いです。'
+                : '${row.paymentDate.month}月${row.paymentDate.day}日支払予定の'
+                    '${_formatYen(row.paymentAmount)}が未払いのまま'
+                    '$overdueDays日経過しています。',
             relatedAccountId: row.accountId,
             dueDate: row.paymentDate,
             paymentDay: row.paymentDay,
-            suggestedAction: '残高と引落状況を確認し、支払済みならチェックを更新してください。',
+            suggestedAction: suggestedAction,
           ),
         );
       } else if (!row.paymentDate.isBefore(today) &&
@@ -1404,6 +1486,9 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('## 借金しない宣言モニター（追加借入ゼロ／カード一括）')
       ..write(_disciplineLines(report))
       ..writeln()
+      ..writeln('## 今日やることトリアージ（Dart計算・この順番のまま提示すること）')
+      ..write(_triageLines(report))
+      ..writeln()
       ..writeln('## アクション件数')
       ..writeln('- 合計: ${report.actionItems.length}')
       ..writeln('- 重要度別: ${_formatCounts(severityCounts)}')
@@ -1760,6 +1845,38 @@ class AssetManagementInsightPromptBuilder {
       AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
       AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括(リボ/分割)',
     };
+  }
+
+  /// 「まず、これだけ」トリアージを AI プロンプトへ渡す。
+  /// 混乱している利用者向けの提示順そのものが成果物なので、AI には
+  /// 順番の変更や項目の追加をさせない (言い換えのみ許可)。
+  String _triageLines(AssetManagementInsightReport report) {
+    final plan = report.triagePlan;
+    if (plan == null || !plan.hasContent) {
+      return '- 今日の緊急対応はありません。現状維持と入力精度の確認を優先してください。\n';
+    }
+    final buffer = StringBuffer()
+      ..writeln('- 免責（利用者にも明示すること）: ${AssetTriagePlan.disclaimer}');
+    void writeSteps(String stage, List<AssetTriageStep> steps) {
+      if (steps.isEmpty) {
+        return;
+      }
+      buffer.writeln('- $stage:');
+      for (var i = 0; i < steps.length; i++) {
+        buffer.writeln('  ${i + 1}. ${steps[i].title} — ${steps[i].detail}');
+      }
+    }
+
+    writeSteps('今日やること（最大3件・この件数以上を今日に割り当てない）', plan.todaySteps);
+    if (plan.todaySteps.isNotEmpty) {
+      buffer.writeln('  - 締めの一文: ${AssetTriagePlan.todayClosingNote}');
+    }
+    writeSteps('今週やること', plan.weekSteps);
+    writeSteps('今月〜来月やること', plan.monthSteps);
+    if (plan.showConsultation && plan.consultationNote != null) {
+      buffer.writeln('- 専門窓口（一人で抱えない）: ${plan.consultationNote}');
+    }
+    return buffer.toString();
   }
 
   String _redactedSituationCards(AssetManagementInsightReport report) {

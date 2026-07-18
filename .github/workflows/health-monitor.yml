@@ -1,14 +1,26 @@
 name: Health Monitor (統合ヘルスモニター)
 
 # Step 1 / Step 8/9 フォールバック用:
-#   docs/health-status.json を 30 分毎に更新する。
-#   WEB版 cs-check は curl の代わりにこのファイルを Read する。
+#   docs/health-status.json + docs/infra-status.json を 2 時間毎に更新する。
+#   WEB版 cs-check は curl の代わりにこれらのファイルを Read する。
 #
-# 書き出し先: docs/health-status.json
+# 2026-07-17 ci-audit (Issue #3841 Proposal #1): infra-health-check.yml を統合。
+#   同一 Firebase + EF 群を 37 分差で二重チェックしていた重複を解消 (360 runs/月削減)。
+#   旧 infra-health-check.yml の 6 EF 監視 + docs/infra-status.json 書き出し +
+#   schedule_task_runs (task_id=infra-health-check) 記録を本ワークフローが引き継ぐ。
+#
+# 書き出し先 1: docs/health-status.json
 # {
 #   fetched_at: string,
 #   tickets: { http_code, count, ok, data },
 #   infra: { firebase, get-home-dashboard, guitar-recording-studio, health-check }
+# }
+# 書き出し先 2: docs/infra-status.json (旧 infra-health-check.yml 互換スキーマ)
+# {
+#   firebase: { code, ok },
+#   supabase: { all_ok, results },
+#   fetched_at: string,
+#   note: string
 # }
 
 on:
@@ -67,12 +79,16 @@ jobs:
           echo "$BODY" > /tmp/tickets_clean.json
           echo "📋 チケット: count=$TICKET_COUNT HTTP=$HTTP_CODE"
 
-      # ── Step 8/9 相当: インフラ・ギタースタジオ ヘルスチェック ──
+      # ── Step 8/9 相当: インフラ・重要 EF 6 件 ヘルスチェック ──
+      #    (旧 infra-health-check.yml の監視対象を包含)
       - name: Check infrastructure
         id: infra
         env:
           SRK: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          ALL_OK=true
+          RESULTS=""
+
           ef_check() {
             local name="$1" method="$2" path="$3"
             local code
@@ -84,6 +100,10 @@ jobs:
               "$SUPABASE_URL/functions/v1/$path" \
               --max-time 12 2>/dev/null || echo "000")
             echo "$name=$code" >> $GITHUB_OUTPUT
+            RESULTS="${RESULTS}${name}=${code} "
+            if [ "$code" = "000" ] || [ "$code" -ge 500 ]; then
+              ALL_OK=false
+            fi
             echo "  $name: HTTP $code"
           }
 
@@ -93,10 +113,16 @@ jobs:
           echo "  Firebase Hosting: HTTP $FIREBASE_CODE"
           echo "firebase=$FIREBASE_CODE" >> $GITHUB_OUTPUT
 
-          # Supabase Edge Functions
-          ef_check "get-home-dashboard"      POST "get-home-dashboard"
+          # Supabase Edge Functions (統合監視: 旧 infra-health-check の 6 EF)
+          ef_check "schedule-hub"            POST "schedule-hub"
+          ef_check "tools-hub"               POST "tools-hub"
+          ef_check "admin-hub"               POST "admin-hub"
           ef_check "guitar-recording-studio" POST "guitar-recording-studio"
+          ef_check "get-home-dashboard"      POST "get-home-dashboard"
           ef_check "health-check"            GET  "health-check"
+
+          echo "all_ok=$ALL_OK" >> $GITHUB_OUTPUT
+          echo "results=$RESULTS" >> $GITHUB_OUTPUT
 
       # ── docs/health-status.json 書き出し ───────────────────────
       - name: Write health-status.json
@@ -112,7 +138,6 @@ jobs:
           GUITAR="${{ steps.infra.outputs.guitar-recording-studio }}"
           HEALTH_EF="${{ steps.infra.outputs.health-check }}"
 
-          mkdir -p docs
           jq -n \
             --arg fetched_at    "$FETCHED_AT" \
             --arg ticket_http   "$TICKET_HTTP" \
@@ -138,9 +163,39 @@ jobs:
               }
             }' > /tmp/health-status.json
 
-          cp /tmp/health-status.json docs/health-status.json
-          echo "✅ docs/health-status.json 書き出し完了:"
-          cat docs/health-status.json
+          echo "✅ /tmp/health-status.json 生成完了:"
+          cat /tmp/health-status.json
+
+      # ── docs/infra-status.json 書き出し (旧 infra-health-check 互換) ──
+      - name: Write infra-status.json
+        if: always()
+        run: |
+          FIREBASE_CODE="${{ steps.infra.outputs.firebase }}"
+          ALL_OK="${{ steps.infra.outputs.all_ok }}"
+          RESULTS="${{ steps.infra.outputs.results }}"
+          FETCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          # 403 = Network Restrictions ブロック → 異常扱いにしない (既知の制限)
+          if echo "$RESULTS" | grep -q "403"; then
+            NOTE="Supabase Network Restrictions により一部エンドポイントが 403。fix-supabase-network.yml (allow-all) で解除可能。"
+          else
+            NOTE=""
+          fi
+
+          jq -n \
+            --arg firebase "$FIREBASE_CODE" \
+            --arg supabase_all_ok "$ALL_OK" \
+            --arg results "$RESULTS" \
+            --arg fetched_at "$FETCHED_AT" \
+            --arg note "$NOTE" \
+            '{
+              firebase: {code: $firebase, ok: ($firebase == "200")},
+              supabase: {all_ok: ($supabase_all_ok == "true"), results: $results},
+              fetched_at: $fetched_at,
+              note: $note
+            }' > /tmp/infra-status.json
+
+          echo "✅ /tmp/infra-status.json 生成完了: Firebase=$FIREBASE_CODE supabase_ok=$ALL_OK"
 
       # ── git commit & push ───────────────────────────────────────
       - name: Commit and push
@@ -152,26 +207,30 @@ jobs:
           git checkout main --quiet
           git reset --hard origin/main --quiet
 
-          # git reset 後に再コピー (stale を上書き)
+          # git reset 後にコピー (stale を上書き / infra-health-check.yml ordering bug fix と同じ理由)
+          mkdir -p docs
           cp /tmp/health-status.json docs/health-status.json
+          cp /tmp/infra-status.json docs/infra-status.json
 
-          git add docs/health-status.json
+          git add docs/health-status.json docs/infra-status.json
           if git diff --cached --quiet; then
             echo "変更なし — スキップ"
             exit 0
           fi
 
           LABEL=$(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')
-          git commit -m "自動: ヘルスモニター ${LABEL}"
+          git commit -m "自動: ヘルスモニター (統合) ${LABEL}"
 
           PUSH_TOKEN="${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}"
           git remote set-url origin \
             "https://x-access-token:${PUSH_TOKEN}@github.com/kanta13jp1/my_web_app.git"
           git push origin main \
-            && echo "✅ health-status.json push 完了" \
+            && echo "✅ health-status.json + infra-status.json push 完了" \
             || echo "⚠️ push 失敗 (GH_PAT / BYPASS_RULES を確認)"
 
       # ── Supabase schedule_task_runs に記録 ─────────────────────
+      #    task_id=health-monitor と task_id=infra-health-check の両方を記録
+      #    (Flutter 側 schedule_task_monitor_card / control tower が両 id を参照)
       - name: Record to schedule_task_runs
         if: always()
         env:
@@ -181,22 +240,36 @@ jobs:
           FIREBASE="${{ steps.infra.outputs.firebase }}"
           GUITAR="${{ steps.infra.outputs.guitar-recording-studio }}"
           HOME_DASH="${{ steps.infra.outputs.get-home-dashboard }}"
+          ALL_OK="${{ steps.infra.outputs.all_ok }}"
+          RESULTS="${{ steps.infra.outputs.results }}"
 
-          ALL_OK=true
-          [ "$FIREBASE" != "200" ]  && ALL_OK=false
-          [ "$GUITAR"   != "200" ]  && ALL_OK=false
-          [ "$HOME_DASH"!= "200" ]  && ALL_OK=false
-          STATUS=$([ "$ALL_OK" = "true" ] && echo "success" || echo "partial")
+          record() {
+            local task_id="$1" status="$2" summary="$3"
+            curl -s -o /dev/null \
+              -X POST \
+              -H "apikey: $SRK" \
+              -H "Authorization: Bearer $SRK" \
+              -H "Content-Type: application/json" \
+              -H "Prefer: return=minimal" \
+              -d "{\"task_id\":\"$task_id\",\"status\":\"$status\",\"summary\":\"$summary\"}" \
+              "$SUPABASE_URL/rest/v1/schedule_task_runs" \
+              --max-time 10 || true
+          }
 
-          curl -s -o /dev/null \
-            -X POST \
-            -H "apikey: $SRK" \
-            -H "Authorization: Bearer $SRK" \
-            -H "Content-Type: application/json" \
-            -H "Prefer: return=minimal" \
-            -d "{\"task_id\":\"health-monitor\",\"status\":\"$STATUS\",\"summary\":\"tickets=${TICKET_COUNT} firebase=${FIREBASE} guitar=${GUITAR} home-dash=${HOME_DASH}\"}" \
-            "$SUPABASE_URL/rest/v1/schedule_task_runs" \
-            --max-time 10 || true
+          HM_OK=true
+          [ "$FIREBASE" != "200" ]  && HM_OK=false
+          [ "$GUITAR"   != "200" ]  && HM_OK=false
+          [ "$HOME_DASH"!= "200" ]  && HM_OK=false
+          HM_STATUS=$([ "$HM_OK" = "true" ] && echo "success" || echo "partial")
+          record "health-monitor" "$HM_STATUS" \
+            "tickets=${TICKET_COUNT} firebase=${FIREBASE} guitar=${GUITAR} home-dash=${HOME_DASH}"
+
+          IH_STATUS="success"
+          if [ "$FIREBASE" != "200" ] || [ "$ALL_OK" != "true" ]; then
+            IH_STATUS="error"
+          fi
+          record "infra-health-check" "$IH_STATUS" \
+            "(統合: health-monitor 実行) Firebase: HTTP ${FIREBASE} | EF: all_ok=${ALL_OK} | ${RESULTS}"
 
       # ── Job Summary ─────────────────────────────────────────────
       - name: Job Summary
@@ -205,22 +278,23 @@ jobs:
           TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
           TICKET_HTTP="${{ steps.tickets.outputs.http_code }}"
           FIREBASE="${{ steps.infra.outputs.firebase }}"
-          HOME_DASH="${{ steps.infra.outputs.get-home-dashboard }}"
-          GUITAR="${{ steps.infra.outputs.guitar-recording-studio }}"
-          HEALTH_EF="${{ steps.infra.outputs.health-check }}"
+          ALL_OK="${{ steps.infra.outputs.all_ok }}"
 
           icon() { [ "$1" = "200" ] && echo "✅" || echo "❌ ($1)"; }
+          EF_ICON=$([ "$ALL_OK" = "true" ] && echo "✅" || echo "❌")
 
           {
-            echo "## Health Monitor $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo "## Health Monitor (統合) $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
             echo ""
             echo "| 項目 | ステータス |"
             echo "|------|-----------|"
             echo "| サポートチケット | $(icon "$TICKET_HTTP") ${TICKET_COUNT}件 |"
             echo "| Firebase Hosting | $(icon "$FIREBASE") |"
-            echo "| get-home-dashboard | $(icon "$HOME_DASH") |"
-            echo "| guitar-recording-studio | $(icon "$GUITAR") |"
-            echo "| health-check EF | $(icon "$HEALTH_EF") |"
+            echo "| Supabase EF 6件 | $EF_ICON all_ok=$ALL_OK |"
             echo ""
-            echo "> \`docs/health-status.json\` を更新しました。WEB版 cs-check はこのファイルを Read してください。"
+            echo "\`\`\`"
+            echo "${{ steps.infra.outputs.results }}"
+            echo "\`\`\`"
+            echo ""
+            echo "> \`docs/health-status.json\` + \`docs/infra-status.json\` を更新しました。WEB版 cs-check はこれらのファイルを Read してください。"
           } >> $GITHUB_STEP_SUMMARY

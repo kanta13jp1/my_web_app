@@ -24,4 +24,27 @@ class AssetManagementAiSummaryRefresh {
     }
     return resultKey != currentKey;
   }
+
+  /// 直近の生成「試行」(成功/失敗を問わず) からクールダウン時間内なので、
+  /// 再生成を諦めて定型要約でしのぐべきか。
+  ///
+  /// 成功した分析は保存され `loadLatestForBaseDate` で再利用できるが、ai-hub の
+  /// 500 等で失敗した試行は保存されない。そのため成功再利用だけに頼ると、AI が
+  /// 落ちている間はロードや編集 (=指紋変化) のたびに 4 プロバイダ直列生成
+  /// (1 分超) が毎回走り続ける。試行時刻を端末に記録し、成功再利用が無くても
+  /// クールダウン内なら生成を見送ることで、失敗の連続試行を抑える。
+  /// [force] (手動更新) は常に生成する。
+  static bool shouldThrottleFailedRetry({
+    required bool force,
+    required Duration? sinceLastAttempt,
+    required Duration cooldown,
+  }) {
+    if (force) {
+      return false;
+    }
+    if (sinceLastAttempt == null) {
+      return false;
+    }
+    return sinceLastAttempt < cooldown;
+  }
 }
