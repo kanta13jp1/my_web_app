@@ -68,9 +68,8 @@ class InvestmentValuationService {
       acquisitionCostJpy: acquisitionCost,
       marketValueJpy: marketValue,
       unrealizedGainLossJpy: gainLoss,
-      unrealizedGainLossRate: acquisitionCost == 0
-          ? null
-          : gainLoss / acquisitionCost,
+      unrealizedGainLossRate:
+          acquisitionCost == 0 ? null : gainLoss / acquisitionCost,
     );
   }
 

@@ -23,7 +23,7 @@ abstract class InvestmentAssetRepository {
 
 class SupabaseInvestmentAssetRepository implements InvestmentAssetRepository {
   SupabaseInvestmentAssetRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   static const String tableName = 'investment_assets';
   static const String selectColumns =
