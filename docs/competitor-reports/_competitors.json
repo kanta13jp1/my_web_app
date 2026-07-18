@@ -952,6 +952,19 @@
         "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)",
         "OpenCode (= coding tool 偏り (基準 b 逆行) のため signal 層留置)"
       ]
+    },
+    {
+      "date": "2026-07-19",
+      "name": null,
+      "category": "skip",
+      "reason": "Cooldown (= 2026-07-17 OpenAI ChatGPT 採択 / 2 day 経過 / cooldown 残 5 day / 次回 unlock 2026-07-24). 本日 7-18→7-19 の主眼は、個人 B/S ドメインに narrative-layer の新規プレイヤー EdWealth『Ed』(2026-07-15 launch / GlobeNewswire 一次リリース裏取り) を捕捉し、7-24 unlock の採択候補を Visa と二本柱化したこと。Ed = agentic AI 家計コーチ / 『Financial Fitness』= 残高でなく『お金が望む生活のために働いているか』を 5 次元 (Control 月次を賄えるか / Safety ショック耐性 / Growth 資産形成 / Fluency 金融理解 / Peace 罪悪感なき支出) で計測 / Plaid 口座接続 + 書類スクショ upload + 自然言語 Q&A で cash flow・税・RSU・ETF・保険を横断 / $39.99 月 or $299.99 年 / US 中間層限定・edwealth.ai + App Store + Google Play / 創業 Allen Ng。含意 = 自社の『静的残高でなく B/S × 6 部署 KPI という経営ナラティブで計測』という差別化軸に、Ed は『静的残高でなく Financial Fitness という生活ナラティブで計測』の同型思想で正面から重なる (単なる家計簿より近い)。ただし英語・Plaid (US 機関)・US 限定ゆえ日本語金融文脈 moat は未接触。cooldown ゆえ本日採択せず 7-24 unlock の第 1 候補群 (Ed / Visa) に据える。既存 27 社は戦略級 delta なし = (a) dev-tool クラスタは Codex=GPT-5.6 (Sol/Terra/Luna) / Antigravity 2.0 + Gemini 3.5 Flash 等 同一 agentic blueprint 収斂で自社ナラティブと同方向 / (b) ChatGPT personal finance は Plus GA 6-25 から差分なし・ただし ChatGPT+Codex+Atlas の SuperApp 構想が別報道で再燃 → 監視継続 / (c) MoneyForward ME × AI トリガー未点火 (AI Cowork は法人専用) / (d) Lindy 7 月新シグナルなし。[AI-TOOL-VERIFY] = EdWealth の launch 日・5 次元・課金・プラットフォームは GlobeNewswire 一次 wire (Manila Times 転載) で裏取り済 / Visa は 8 月 pilot 据え置き + 消費者データ共有意欲 85% の追加データ点。",
+      "skipped_candidates": [
+        "EdWealth『Ed』(= 【新規 / 7-24 unlock 第 1 候補群】agentic AI 家計コーチ / Financial Fitness 5 次元計測 / 2026-07-15 launch / 基準 a = narrative 差別化軸に直接競合 + 基準 c = 30 日内リリース / 分岐点 = 日本語展開・会社 metaphor 接近の有無 / 現状 US 限定・英語・Plaid で日本語 moat 未接触ゆえ signal 層留置)",
+        "Visa AI Financial Assistant (= 第 1 候補群 / distribution-layer / 8 月 US 金融機関 pilot 据え置き + 消費者 85% がデータ共有意欲 / consumer 到達 or 日本の金融機関波及で 2026-07-24 unlock 時 昇格判断 / 基準 a + b)",
+        "Emergent『Wingman』(= $130M 調達で新ユニコーン 7-15 / personal AI agent だが対象は business worker 生産性 [スケジュール・to-do・議事録・メール] + 本体は vibe-coding/app builder で dev-tool クラスタ重複 / 基準 b 止まり・昇格根拠弱)",
+        "Motion (= named-employee 系 / 基準 c 不成立: Series C 2025-12 / 30 日内の新展開で再評価)",
+        "Monarch / Copilot Money / Cleo (= connected-account copilot 勢 / 7 月新規シグナルなし / signal 層で基準値作り継続)"
+      ]
     }
   ],
   "_schema_notes": {
