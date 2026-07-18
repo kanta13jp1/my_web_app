@@ -1241,6 +1241,134 @@ void main() {
       await _unmount(tester);
     });
 
+    testWidgets('revolving payoff chip appears on revolving debt cards', (
+      tester,
+    ) async {
+      // auPayカードにリボ設定 → 負債カード行に「概算残りXヶ月」ピルが出る。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      final mirrorValue = AssetRevolvingCreditConfigStore.encodeMirrorValue(
+        <String, AssetLiabilityRevolvingCreditConfig>{
+          'aupay_card': const AssetLiabilityRevolvingCreditConfig(
+            monthlyAmount: 10000,
+            creditLimit: 500000,
+          ),
+        },
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugRevolvingConfigsMirror: mirrorValue,
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'auPayカード': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const Key('asset_revolving_payoff_chip_aupay_card')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('リボ: 概算残り'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('safety balance setting persists and updates availability', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{'財布(現金)': 50000},
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final field = find.byKey(const Key('asset_safety_balance_field'));
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '30000');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final store = await SharedPreferences.getInstance();
+      expect(store.getDouble('asset_minimum_safety_balance_v1'), 30000);
+      // 使用可能額カードの安全余裕表示にも反映される。
+      expect(find.textContaining('安全余裕 ¥30,000'), findsWidgets);
+
+      await _unmount(tester);
+    });
+
+    testWidgets('discipline badge and escape-plan apply flow works', (
+      tester,
+    ) async {
+      // ファミペイ残高10万・最低返済のみ → リボ違反バッジ + 脱却月額の反映導線。
+      final now = DateTime.now();
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      await tester.binding.setSurfaceSize(const Size(1200, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AssetManagementPage(
+            debugCalendarNow: DateTime(2026, 7, 10),
+            debugInitialAssetData: <String, Map<String, double>>{
+              dateKey: const <String, double>{
+                '財布(現金)': 50000,
+                'ファミペイ': -100000,
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(
+        find.byKey(const Key('asset_discipline_violation_badge')),
+        findsOneWidget,
+      );
+
+      final applyButton = find.byKey(
+        const Key('asset_discipline_apply_escape_famipay_card'),
+      );
+      await tester.ensureVisible(applyButton);
+      await tester.tap(applyButton);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // 確認ダイアログを経由してから今月予定へ反映される。
+      expect(find.text('今月の支払予定に反映'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const Key('asset_discipline_apply_escape_confirm')),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.textContaining('今月支払予定を'), findsOneWidget);
+
+      await _unmount(tester);
+    });
+
     testWidgets('triage guide card shows staged first steps in crisis', (
       tester,
     ) async {
