@@ -2731,6 +2731,7 @@ function truncateForEmbedding(text: string, maxChars = 3500): string {
 async function embedTextsWithGemini(
   texts: string[],
   apiKey: string,
+  taskType: "RETRIEVAL_DOCUMENT" | "RETRIEVAL_QUERY" = "RETRIEVAL_DOCUMENT",
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
   const response = await fetchWithProviderTimeout(
@@ -2746,6 +2747,10 @@ async function embedTextsWithGemini(
           model: "models/gemini-embedding-001",
           content: {
             parts: [{ text }],
+          },
+          embedContentConfig: {
+            outputDimensionality: 768,
+            taskType,
           },
         })),
       }),
@@ -2780,15 +2785,19 @@ async function embedPendingNoteSearchRows(
   userId: string,
   apiKey: string,
   limit = 12,
+  noteId?: number,
 ): Promise<number> {
-  const { data, error } = await admin
+  const baseQuery = admin
     .from("note_search_index")
     .select("note_id, title, content, tags")
     .eq("user_id", userId)
-    .eq("is_archived", false)
-    .is("embedding", null)
-    .order("note_updated_at", { ascending: false })
-    .limit(limit);
+    .eq("is_archived", false);
+  const { data, error } = noteId == null
+    ? await baseQuery
+      .is("embedding", null)
+      .order("note_updated_at", { ascending: false })
+      .limit(limit)
+    : await baseQuery.eq("note_id", noteId).limit(1);
   if (error) throw new Error(`note_search_index load failed: ${error.message}`);
 
   const rows = (data ?? []) as Array<{
@@ -3223,6 +3232,58 @@ serve(async (req: Request) => {
         }
       }
 
+      case "search.index_note": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const noteId = Number(body.note_id ?? body.noteId);
+        if (!Number.isInteger(noteId) || noteId <= 0) {
+          return json({ error: "A valid note_id is required" }, 400);
+        }
+
+        const { data: ownedNote, error: noteError } = await admin
+          .from("notes")
+          .select("id")
+          .eq("id", noteId)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (noteError) {
+          return json(
+            { error: `Note lookup failed: ${noteError.message}` },
+            500,
+          );
+        }
+        if (!ownedNote) return json({ error: "Note not found" }, 404);
+
+        try {
+          await syncNoteSearchIndex(admin, userId);
+        } catch (error) {
+          return json({ error: asString(error) || "Index sync failed" }, 500);
+        }
+
+        let embeddingStatus = "not_configured";
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (geminiKey) {
+          try {
+            const indexed = await embedPendingNoteSearchRows(
+              admin,
+              userId,
+              geminiKey,
+              1,
+              noteId,
+            );
+            embeddingStatus = indexed > 0 ? "updated" : "unchanged";
+          } catch (error) {
+            embeddingStatus = "failed";
+            console.warn("search.index_note embedding failed", error);
+          }
+        }
+
+        return json({
+          success: true,
+          note_id: noteId,
+          embeddingStatus,
+        });
+      }
+
       case "search.query": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const query = String(body.query ?? "").trim();
@@ -3255,6 +3316,7 @@ serve(async (req: Request) => {
             const embeddings = await embedTextsWithGemini(
               [truncateForEmbedding(query, 1200)],
               geminiKey,
+              "RETRIEVAL_QUERY",
             );
             queryEmbedding = embeddings[0] ?? null;
             if (queryEmbedding && queryEmbedding.length > 0) {

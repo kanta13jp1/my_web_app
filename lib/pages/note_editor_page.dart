@@ -14,6 +14,7 @@ import '../services/attachment_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/note_comments_service.dart';
 import '../services/note_prompt_library_service.dart';
+import '../services/note_semantic_search_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
 import '../utils/note_image_clipboard.dart';
@@ -24,6 +25,7 @@ import '../widgets/markdown_preview.dart';
 import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
+import '../widgets/related_notes_strip.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final String? noteId;
@@ -31,6 +33,7 @@ class NoteEditorPage extends StatefulWidget {
   final String? initialContent;
   final SupabaseClient? supabaseClient;
   final AIService? aiService;
+  final NoteSemanticSearchDataSource? semanticSearchService;
   final AiModelPreferenceService modelPreferenceService;
   final NotePromptLibraryService promptLibraryService;
 
@@ -41,6 +44,7 @@ class NoteEditorPage extends StatefulWidget {
     this.initialContent,
     this.supabaseClient,
     this.aiService,
+    this.semanticSearchService,
     this.modelPreferenceService = const AiModelPreferenceService(),
     this.promptLibraryService = const NotePromptLibraryService(),
   });
@@ -143,6 +147,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   late final SupabaseClient _supabase;
   late final AIService _aiService;
   late final NoteCommentsService _noteCommentsService;
+  late final NoteSemanticSearchDataSource _semanticSearchService;
   NoteImagePasteRegistration? _imagePasteRegistration;
   StreamSubscription<void>? _commentSubscription;
 
@@ -161,6 +166,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   String? _selectedAiModel;
   List<NotePromptTemplate> _savedPromptTemplates = const <NotePromptTemplate>[];
   List<Attachment> _attachments = const <Attachment>[];
+  List<NoteSearchResult> _relatedNotes = const <NoteSearchResult>[];
+  bool _isLoadingRelatedNotes = false;
+  bool _relatedNotesHasError = false;
+  int _relatedNotesRequestId = 0;
   static const String _draftKeyPrefix = 'note_editor_draft_';
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const List<String> _slashCommandSuggestions = <String>[
@@ -206,6 +215,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _aiService = widget.aiService ?? AIService(_supabase);
     _noteCommentsService = SupabaseNoteCommentsService(_supabase);
+    _semanticSearchService = widget.semanticSearchService ??
+        NoteSemanticSearchService(_supabase);
     _currentNoteId = widget.noteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
@@ -234,6 +245,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       await _loadNote(_currentNoteId!);
       _startCommentCountSubscription();
       unawaited(_loadCommentCount());
+      unawaited(_loadRelatedNotes());
     }
     await _loadAttachments();
     await _restoreDraftFromLocal();
@@ -1228,6 +1240,72 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
+  Future<void> _loadRelatedNotes() async {
+    final noteId = _currentNoteId;
+    if (noteId == null || !mounted) return;
+    final requestId = ++_relatedNotesRequestId;
+
+    setState(() {
+      _isLoadingRelatedNotes = true;
+      _relatedNotesHasError = false;
+    });
+    try {
+      final notes = await _semanticSearchService.relatedNotes(
+        noteId: noteId,
+        title: _titleController.text,
+        content: _contentController.text,
+        limit: 5,
+      );
+      if (!mounted ||
+          requestId != _relatedNotesRequestId ||
+          noteId != _currentNoteId) {
+        return;
+      }
+      setState(() {
+        _relatedNotes = notes;
+        _isLoadingRelatedNotes = false;
+      });
+    } catch (_) {
+      if (!mounted ||
+          requestId != _relatedNotesRequestId ||
+          noteId != _currentNoteId) {
+        return;
+      }
+      setState(() {
+        _isLoadingRelatedNotes = false;
+        _relatedNotesHasError = true;
+      });
+    }
+  }
+
+  Future<void> _indexAndRefreshRelatedNotes() async {
+    final noteId = _currentNoteId;
+    if (noteId == null) return;
+    try {
+      await _semanticSearchService.indexNote(noteId);
+    } catch (_) {
+      // Related search still provides a text fallback when vector indexing fails.
+    }
+    if (mounted && noteId == _currentNoteId) {
+      await _loadRelatedNotes();
+    }
+  }
+
+  Future<void> _openRelatedNote(NoteSearchResult note) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NoteEditorPage(
+          noteId: note.id,
+          supabaseClient: _supabase,
+          semanticSearchService: _semanticSearchService,
+          modelPreferenceService: widget.modelPreferenceService,
+          promptLibraryService: widget.promptLibraryService,
+        ),
+      ),
+    );
+    if (mounted) unawaited(_loadRelatedNotes());
+  }
+
   Future<void> _saveNoteWithoutClosing() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
@@ -1274,6 +1352,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
     _autoSaveService.markAsSaved();
     await _clearDraftFromLocal();
+    unawaited(_indexAndRefreshRelatedNotes());
   }
 
   Future<void> _saveManually() async {
@@ -2033,7 +2112,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     );
   }
 
-  Widget _buildEditorBody() {
+  Widget _buildEditorSurface() {
     final theme = Theme.of(context);
     final isNarrow = MediaQuery.of(context).size.width < 600;
     final outerPadding =
@@ -2185,6 +2264,22 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             styleInstruction: _selectedAiStyle.instruction,
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildEditorBody() {
+    return Column(
+      children: [
+        Expanded(child: _buildEditorSurface()),
+        if (_currentNoteId != null)
+          RelatedNotesStrip(
+            notes: _relatedNotes,
+            isLoading: _isLoadingRelatedNotes,
+            hasError: _relatedNotesHasError,
+            onRetry: () => unawaited(_loadRelatedNotes()),
+            onNoteTap: (note) => unawaited(_openRelatedNote(note)),
+          ),
       ],
     );
   }

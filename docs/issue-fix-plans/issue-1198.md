@@ -50,7 +50,20 @@
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
 - [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] PR notes explain the change and the remaining risk
+
+## Implementation Status
+
+- Connected the memo list search field to the existing hybrid text + pgvector
+  search with a 350 ms debounce and stale-request protection.
+- Added automatic related-note suggestions to the editor, capped at five and
+  refreshed after saves.
+- Added targeted `search.index_note` indexing so a saved memo refreshes its
+  768-dimensional Gemini embedding without blocking the save UI.
+- Local validation completed: focused Flutter tests, Dart analysis, Deno lint,
+  and Deno type-check. Chrome execution of the browser-only note-list test is
+  left for CI because the local Chrome run exceeded five minutes without test
+  output.

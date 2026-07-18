@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
+import 'package:my_web_app/services/note_semantic_search_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -160,6 +161,35 @@ class _FakePostgrestMutationBuilder extends Fake
   }
 }
 
+class _FakeSemanticSearchService implements NoteSemanticSearchDataSource {
+  _FakeSemanticSearchService(this.response);
+
+  final NoteSemanticSearchResponse response;
+  String? lastQuery;
+
+  @override
+  Future<void> indexNote(String noteId) async {}
+
+  @override
+  Future<List<NoteSearchResult>> relatedNotes({
+    required String noteId,
+    required String title,
+    required String content,
+    int limit = 5,
+  }) async {
+    return const <NoteSearchResult>[];
+  }
+
+  @override
+  Future<NoteSemanticSearchResponse> search(
+    String query, {
+    int limit = 20,
+  }) async {
+    lastQuery = query;
+    return response;
+  }
+}
+
 Map<String, dynamic> _noteRow({
   required String id,
   required String title,
@@ -273,5 +303,52 @@ void main() {
 
     expect(rows.first['is_archived'], isTrue);
     expect(find.text('Delete me'), findsNothing);
+  });
+
+  testWidgets('uses semantic results for a natural-language query', (
+    WidgetTester tester,
+  ) async {
+    final client = _FakeSupabaseClient(
+      noteRows: <Map<String, dynamic>>[
+        _noteRow(id: 'decision', title: 'Project decision', isFavorite: false),
+        _noteRow(id: 'shopping', title: 'Shopping list', isFavorite: false),
+      ],
+    );
+    final semanticSearch = _FakeSemanticSearchService(
+      const NoteSemanticSearchResponse(
+        searchMode: 'ai',
+        results: <NoteSearchResult>[
+          NoteSearchResult(
+            id: 'decision',
+            title: 'Project decision',
+            content: 'Project decision body',
+            score: 0.9,
+            matchReason: 'vector',
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NoteListPage(
+          supabaseClient: client,
+          semanticSearchService: semanticSearch,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('note_list_page_search_field')),
+      'what did we decide last week',
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(semanticSearch.lastQuery, 'what did we decide last week');
+    expect(find.text('Project decision'), findsOneWidget);
+    expect(find.text('Shopping list'), findsNothing);
+    expect(find.textContaining('意味検索'), findsOneWidget);
   });
 }
