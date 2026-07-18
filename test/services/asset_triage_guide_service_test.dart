@@ -32,9 +32,8 @@ void main() {
           'auPayカード': 10,
         },
       );
-      final famipayId = workbook.debtMasterRows
-          .firstWhere((row) => row.name == 'ファミペイ')
-          .id;
+      final famipayId =
+          workbook.debtMasterRows.firstWhere((row) => row.name == 'ファミペイ').id;
       final discipline = monitor.evaluate(
         workbook: workbook,
         priorBalancesByAccountId: <String, double>{famipayId: 200000},

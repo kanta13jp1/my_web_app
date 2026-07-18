@@ -209,8 +209,7 @@ class AssetTriageGuideService {
     final discipline = disciplineReport;
     if (discipline != null && discipline.hasViolations) {
       final names = <String>{
-        for (final violation in discipline.allViolations)
-          violation.accountName,
+        for (final violation in discipline.allViolations) violation.accountName,
       }.take(3).join('・');
       final newBorrowingNote = discipline.totalNewBorrowing > 0
           ? '今月すでに約${_yen(discipline.totalNewBorrowing)}の新規利用があります。'
@@ -262,10 +261,8 @@ class AssetTriageGuideService {
     final revolving = discipline?.revolvingCardViolations ??
         const <AssetDebtDisciplineViolation>[];
     if (revolving.isNotEmpty) {
-      final names = revolving
-          .map((violation) => violation.accountName)
-          .take(4)
-          .join('・');
+      final names =
+          revolving.map((violation) => violation.accountName).take(4).join('・');
       weekSteps.add(
         AssetTriageStep(
           kind: AssetTriageStepKind.disableRevolving,
@@ -282,13 +279,12 @@ class AssetTriageGuideService {
     final annualRateById = <String, double>{
       for (final row in workbook.debtMasterRows) row.id: row.annualRate,
     };
-    final planned = revolving
-        .where((violation) => violation.hasEscapePlan)
-        .toList()
-      ..sort(
-        (a, b) => (annualRateById[b.accountId] ?? 0)
-            .compareTo(annualRateById[a.accountId] ?? 0),
-      );
+    final planned =
+        revolving.where((violation) => violation.hasEscapePlan).toList()
+          ..sort(
+            (a, b) => (annualRateById[b.accountId] ?? 0)
+                .compareTo(annualRateById[a.accountId] ?? 0),
+          );
     if (planned.isNotEmpty) {
       final top = planned.first;
       monthSteps.add(

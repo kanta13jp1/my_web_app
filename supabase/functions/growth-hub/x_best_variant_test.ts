@@ -1,6 +1,4 @@
-import {
-  assertEquals,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { hasNamedVariant, pickBestVariant } from "./x_best_variant.ts";
 
 Deno.test("pickBestVariant: unknown バケットが先頭でも除外して次点を返す", () => {
