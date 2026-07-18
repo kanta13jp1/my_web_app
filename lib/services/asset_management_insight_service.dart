@@ -3,6 +3,7 @@ import '../models/user_profile.dart';
 import 'asset_debt_discipline_monitor.dart';
 import 'asset_debt_trend_analyzer.dart';
 import 'asset_management_available_money.dart';
+import 'asset_triage_guide_service.dart';
 
 enum AssetManagementInsightActionType {
   missingInput,
@@ -264,6 +265,9 @@ class AssetManagementInsightReport {
   /// 「借金しない宣言」モニターの月次評価（追加借入ゼロ／カード一括）。null=未評価。
   final AssetDebtDisciplineReport? disciplineReport;
 
+  /// 「まず、これだけ」段階別トリアージ (今日3件まで/今週/今月/専門窓口)。null=未評価。
+  final AssetTriagePlan? triagePlan;
+
   const AssetManagementInsightReport({
     required this.workbook,
     this.userProfile,
@@ -280,6 +284,7 @@ class AssetManagementInsightReport {
         const <AssetManagementImplementationContext>[],
     this.debtTrendInsights = const <AssetDebtTrendInsight>[],
     this.disciplineReport,
+    this.triagePlan,
   });
 
   bool get hasAccountShortfallAlerts => accountShortfallAlerts.isNotEmpty;
@@ -327,6 +332,8 @@ class AssetManagementInsightService {
     AssetDebtTrendAnalyzer debtTrendAnalyzer = const AssetDebtTrendAnalyzer(),
     AssetDebtDisciplineMonitor disciplineMonitor =
         const AssetDebtDisciplineMonitor(),
+    AssetTriageGuideService triageGuideService =
+        const AssetTriageGuideService(),
   }) {
     final breakdown = _availableMoneyBreakdown(
       workbook: workbook,
@@ -384,6 +391,12 @@ class AssetManagementInsightService {
       workbook: workbook,
       priorBalancesByAccountId: priorMonthAccountBalances,
     );
+    final triagePlan = triageGuideService.buildPlan(
+      workbook: workbook,
+      disciplineReport: disciplineReport,
+      todayAvailableAmount: today.availableAmount,
+      userProfile: userProfile,
+    );
 
     return AssetManagementInsightReport(
       workbook: workbook,
@@ -399,6 +412,7 @@ class AssetManagementInsightService {
       implementationContexts: implementationContexts,
       debtTrendInsights: debtTrendInsights,
       disciplineReport: disciplineReport,
+      triagePlan: triagePlan,
     );
   }
 
@@ -1472,6 +1486,9 @@ class AssetManagementInsightPromptBuilder {
       ..writeln('## 借金しない宣言モニター（追加借入ゼロ／カード一括）')
       ..write(_disciplineLines(report))
       ..writeln()
+      ..writeln('## 今日やることトリアージ（Dart計算・この順番のまま提示すること）')
+      ..write(_triageLines(report))
+      ..writeln()
       ..writeln('## アクション件数')
       ..writeln('- 合計: ${report.actionItems.length}')
       ..writeln('- 重要度別: ${_formatCounts(severityCounts)}')
@@ -1828,6 +1845,38 @@ class AssetManagementInsightPromptBuilder {
       AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
       AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括(リボ/分割)',
     };
+  }
+
+  /// 「まず、これだけ」トリアージを AI プロンプトへ渡す。
+  /// 混乱している利用者向けの提示順そのものが成果物なので、AI には
+  /// 順番の変更や項目の追加をさせない (言い換えのみ許可)。
+  String _triageLines(AssetManagementInsightReport report) {
+    final plan = report.triagePlan;
+    if (plan == null || !plan.hasContent) {
+      return '- 今日の緊急対応はありません。現状維持と入力精度の確認を優先してください。\n';
+    }
+    final buffer = StringBuffer()
+      ..writeln('- 免責（利用者にも明示すること）: ${AssetTriagePlan.disclaimer}');
+    void writeSteps(String stage, List<AssetTriageStep> steps) {
+      if (steps.isEmpty) {
+        return;
+      }
+      buffer.writeln('- $stage:');
+      for (var i = 0; i < steps.length; i++) {
+        buffer.writeln('  ${i + 1}. ${steps[i].title} — ${steps[i].detail}');
+      }
+    }
+
+    writeSteps('今日やること（最大3件・この件数以上を今日に割り当てない）', plan.todaySteps);
+    if (plan.todaySteps.isNotEmpty) {
+      buffer.writeln('  - 締めの一文: ${AssetTriagePlan.todayClosingNote}');
+    }
+    writeSteps('今週やること', plan.weekSteps);
+    writeSteps('今月〜来月やること', plan.monthSteps);
+    if (plan.showConsultation && plan.consultationNote != null) {
+      buffer.writeln('- 専門窓口（一人で抱えない）: ${plan.consultationNote}');
+    }
+    return buffer.toString();
   }
 
   String _redactedSituationCards(AssetManagementInsightReport report) {

@@ -60,6 +60,7 @@ import 'package:my_web_app/services/asset_salary_deposit_detector.dart';
 import 'package:my_web_app/services/asset_salary_reset_marker_store.dart';
 import 'package:my_web_app/services/asset_recurring_transaction_detector.dart';
 import 'package:my_web_app/services/asset_management_insight_service.dart';
+import 'package:my_web_app/services/asset_triage_guide_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
@@ -403,6 +404,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   /// 初期化中の setState 連打 (workbook フィンガープリント変化) による多重発行から
   /// 守るためのデバウンス。リビルドが ~700ms 静止した最後の 1 回だけ発行する。
   Timer? _assetManagementAiSummaryDebounce;
+
+  /// AI要約の自動再生成クールダウン。引落済み・残高記録などの編集毎に
+  /// リクエスト指紋が変わるため、指紋一致キャッシュだけでは 1 セッションで
+  /// 何度も 1 分超のプレミアム生成 (直列 4 プロバイダ) が走る。この時間内は
+  /// 同日最新の保存済み分析を再利用し、即時反映したい場合のみ手動の
+  /// 「AI要約を更新」(force) を使う。
+  static const Duration _assetManagementAiSummaryAutoRefreshCooldown =
+      Duration(minutes: 60);
   Timer? _existingDeveloperIssueLookupDebounce;
 
   /// 起動時の `asset_pref_mirror` 個別読み取り (~20 箇所) を 1 回のバッチ取得へ
@@ -3228,6 +3237,92 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('支払済み状態を保存できませんでした。')));
+    }
+  }
+
+  /// 残高不足警告の無い確認待ちをまとめて引落済みにする。
+  /// 1 件ずつだと N 件 = N 回の全状態保存 + その都度 AI 再生成のトリガに
+  /// なるため、状態更新は 1 回の setState、永続化は 1 回にまとめる。
+  /// 警告付き (引落失敗の可能性) の行は対象外 = 従来どおり個別に判断させる。
+  Future<void> _confirmAllAutoDebitsWithoutWarning(
+    List<MapEntry<AssetAutoDebitConfirmation, AssetLiabilityDebtRow>> entries,
+  ) async {
+    final targets = entries
+        .where((entry) => !entry.key.sourceBalanceInsufficient)
+        .toList(growable: false);
+    if (targets.isEmpty) return;
+
+    final summaryLines = targets
+        .map(
+          (entry) => '・${entry.key.row.accountName}: '
+              '${_formatManagementYen(entry.key.row.paymentAmount)}',
+        )
+        .join('\n');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('警告のない${targets.length}件を引落済みにする'),
+        content: SingleChildScrollView(
+          child: Text(
+            '以下を引落済みとして記録します。実際に口座から引き落とされている'
+            'ことを確認してから実行してください。\n\n$summaryLines',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('まとめて引落済み'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final previousPaidAccountNames = Set<String>.from(_monthlyPaidAccountNames);
+    final previousBillingConfirmedAccountIds = Set<String>.from(
+      _billingConfirmedAccountIds,
+    );
+    final previousActualPaymentAmounts = Map<String, double>.from(
+      _actualPaymentAmounts,
+    );
+    setState(() {
+      for (final entry in targets) {
+        final row = entry.value;
+        _monthlyPaidAccountNames.add(row.id);
+        _billingConfirmedAccountIds.add(row.id);
+        _actualPaymentAmounts.putIfAbsent(
+          row.id,
+          () => row.scheduledPaymentAmount,
+        );
+        _actualPaymentControllers[row.id]?.text =
+            _actualPaymentAmounts[row.id]!.round().toString();
+      }
+    });
+    try {
+      await _persistAssetLiabilityMonthlyState();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ ${targets.length}件を引落済みにしました'),
+          backgroundColor: const Color(0xFF047857),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error saving bulk paid status: $e');
+      if (!mounted) return;
+      setState(() {
+        _monthlyPaidAccountNames = previousPaidAccountNames;
+        _billingConfirmedAccountIds = previousBillingConfirmedAccountIds;
+        _actualPaymentAmounts = previousActualPaymentAmounts;
+        _syncActualPaymentControllers();
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('引落済み状態を保存できませんでした。')));
     }
   }
 
@@ -13530,6 +13625,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   color: scheme.onTertiaryContainer,
                 ),
               ),
+              if (entries
+                      .where((e) => !e.key.sourceBalanceInsufficient)
+                      .length >=
+                  2) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () => unawaited(
+                      _confirmAllAutoDebitsWithoutWarning(entries),
+                    ),
+                    icon: const Icon(Icons.done_all, size: 16),
+                    label: Text(
+                      '警告のない'
+                      '${entries.where((e) => !e.key.sourceBalanceInsufficient).length}'
+                      '件をまとめて引落済み',
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               for (final entry in entries)
                 Padding(
@@ -13567,7 +13682,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        '振替元の残高'
+                                        // 残高は「この行の引落前の見込み」= 先行する
+                                        // 成功見込み引落を差し引いた値 (同一口座から
+                                        // 複数引落がある場合の合計不足も検出する)。
+                                        '振替元の残高見込み'
                                         '(${_formatManagementYen(entry.key.sourceAccountBalance!)})'
                                         'が支払額を下回っています。引落が失敗している'
                                         '可能性があるため、残高をご確認のうえ操作してください。',
@@ -19279,6 +19397,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ],
           ),
           const SizedBox(height: 12),
+          if (report.triagePlan?.hasContent ?? false) ...[
+            _buildAssetTriageGuideCard(report.triagePlan!),
+            const SizedBox(height: 12),
+          ],
           if (report.emergencyAdvices.isNotEmpty) ...[
             _buildAssetManagementEmergencyAdviceList(report.emergencyAdvices),
             const SizedBox(height: 12),
@@ -19549,14 +19671,26 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = key;
       _assetManagementAiSummaryRequestKey = key;
     });
-    // 同一フィンガープリント (= 基準日単位で回転) の分析が既に保存済みなら
-    // それを再利用し、高価な ai-hub 生成 (直列 4 プロバイダ / 1分超) を
-    // スキップする。手動の「AI要約を更新」(force) は常に再生成する。
+    // 保存済み分析の再利用判定。指紋は基準日単位で回転するため「同日最新の
+    // 1 行」だけ見れば足りる。再利用条件は (a) 指紋完全一致 (データ不変) か
+    // (b) 生成からクールダウン時間内 (引落済み等の編集毎に指紋が変わるため、
+    // 完全一致だけだと 1 セッションで何度も 1 分超のプレミアム生成が走る)。
+    // 手動の「AI要約を更新」(force) は常に再生成する。
     if (!force) {
       AssetManagementAiAnalysisHistoryEntry? reusable;
       try {
-        reusable = await _assetManagementAiAnalysisHistoryService
-            .loadReusableResult(requestFingerprint: key);
+        final latest = await _assetManagementAiAnalysisHistoryService
+            .loadLatestForBaseDate(
+          reportBaseDate:
+              AssetManagementAiAnalysisHistoryService.reportBaseDateKey(
+                  report.workbook.baseDate),
+        );
+        if (latest != null &&
+            (latest.requestFingerprint == key ||
+                DateTime.now().difference(latest.generatedAt) <
+                    _assetManagementAiSummaryAutoRefreshCooldown)) {
+          reusable = latest;
+        }
       } catch (_) {
         reusable = null;
       }
@@ -20210,6 +20344,154 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       AssetDebtDisciplineViolationType.newBorrowing => '追加借入の発生',
       AssetDebtDisciplineViolationType.revolvingCard => 'カード非一括（リボ/分割）',
     };
+  }
+
+  /// 「まず、これだけ」段階別トリアージカード。数字の洪水で混乱している
+  /// 利用者向けに、今日 (最大3件)→今週→今月の順で絞って提示する。
+  /// 背景が固定の淡ティールのため、文字色も固定の濃ティール系にする。
+  Widget _buildAssetTriageGuideCard(AssetTriagePlan plan) {
+    var stepNumber = 0;
+    Widget buildStage(String label, List<AssetTriageStep> steps) {
+      if (steps.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F766E),
+              height: 1.4,
+            ),
+          ),
+          for (final step in steps) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${++stepNumber}. ${step.title}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF134E4A),
+                height: 1.4,
+              ),
+            ),
+            Text(
+              step.detail,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF115E59),
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
+    return Container(
+      key: const Key('asset_triage_guide_card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDFA),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF99F6E4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.checklist_rounded,
+                size: 16,
+                color: Color(0xFF0F766E),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  plan.todaySteps.isEmpty
+                      ? 'まず、これだけ'
+                      : 'まず、これだけ（今日やること ${plan.todaySteps.length}つ）',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF134E4A),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            AssetTriagePlan.disclaimer,
+            style: TextStyle(
+              fontSize: 10,
+              color: Color(0xFF0F766E),
+              height: 1.4,
+            ),
+          ),
+          buildStage(
+            '今日やること（${plan.todaySteps.length}つだけ）',
+            plan.todaySteps,
+          ),
+          if (plan.todaySteps.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            const Text(
+              AssetTriagePlan.todayClosingNote,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F766E),
+                height: 1.4,
+              ),
+            ),
+          ],
+          buildStage('今週やること', plan.weekSteps),
+          buildStage('今月〜来月やること', plan.monthSteps),
+          if (plan.showConsultation && plan.consultationNote != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '一人で抱えないでください',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E3A8A),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    plan.consultationNote!,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF1E40AF),
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   /// 「借金しない宣言」の遵守状況（達成は緑で称賛、違反は赤で具体指摘）を描画する。

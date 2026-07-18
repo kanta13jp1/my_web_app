@@ -15,6 +15,7 @@ import '../services/local_election_cdp_benchmark.dart';
 import '../services/local_election_plan_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
+import '../services/prefecture_election_news_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
 import '../widgets/election_japan_map.dart';
@@ -98,6 +99,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
+  final PrefectureElectionNewsService _newsService =
+      const PrefectureElectionNewsService();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _historySectionKey = GlobalKey(debugLabel: 'realityHistory');
   final GlobalKey _scheduleSectionKey =
@@ -117,6 +120,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   LocalElectionPlanDashboard? _plan;
   LocalElectionRealitySnapshot? _realitySnapshot;
+  Map<String, List<Map<String, dynamic>>> _newsByPrefecture =
+      const <String, List<Map<String, dynamic>>>{};
   final Map<String, LocalElectionLegislatorProfile> _memberProfileOverrides =
       <String, LocalElectionLegislatorProfile>{};
   final Set<String> _memberProfileLoadingUrls = <String>{};
@@ -242,6 +247,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     unawaited(_loadPublishedSnapshotMemo(cachedSnapshot));
     unawaited(_loadPublishedKpiMemo());
     unawaited(_refreshRealityData(showSnackBar: false));
+    unawaited(_loadPrefectureNews());
+  }
+
+  Future<void> _loadPrefectureNews() async {
+    try {
+      final grouped = await _newsService.fetchActiveNewsByPrefecture();
+      if (!mounted) {
+        return;
+      }
+      setState(() => _newsByPrefecture = grouped);
+    } catch (_) {
+      // news は付加情報のため、取得失敗時はバッジ非表示のままにする。
+    }
   }
 
   Future<void> _loadPlan() async {
@@ -5459,7 +5477,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ],
             ),
             const SizedBox(height: 12),
-            ElectionNewsBadge(prefecture: plan.prefecture),
+            ElectionNewsBadge(
+              newsItems: _newsByPrefecture[
+                      PrefectureElectionNewsService.normalizePrefectureKey(
+                    plan.prefecture,
+                  )] ??
+                  const <Map<String, dynamic>>[],
+            ),
             _buildKgiCsfKpiPanel(plan),
             const SizedBox(height: 12),
             _buildPrefectureOfficerPanel(plan),

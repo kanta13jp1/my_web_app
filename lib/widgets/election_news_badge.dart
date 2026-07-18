@@ -1,65 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ElectionNewsBadge extends StatefulWidget {
-  final String prefecture;
+/// 県連カードに公式発表 news を表示するバッジ。
+///
+/// データ取得は行わない。ページ側が PrefectureElectionNewsService で
+/// 全県分を一括取得し、該当県の news を [newsItems] として渡す
+/// (旧実装は県ごとに個別 Supabase クエリを発行しており本番で
+/// 県数分の fetch + CORS preflight が発生していた)。
+class ElectionNewsBadge extends StatelessWidget {
+  final List<Map<String, dynamic>> newsItems;
 
-  const ElectionNewsBadge({super.key, required this.prefecture});
-
-  @override
-  State<ElectionNewsBadge> createState() => _ElectionNewsBadgeState();
-}
-
-class _ElectionNewsBadgeState extends State<ElectionNewsBadge> {
-  List<Map<String, dynamic>> _newsItems = [];
-  bool _loaded = false;
-
-  String get _prefCode => widget.prefecture.endsWith('県')
-      ? widget.prefecture.substring(0, widget.prefecture.length - 1)
-      : widget.prefecture;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetch();
-  }
-
-  @override
-  void didUpdateWidget(ElectionNewsBadge old) {
-    super.didUpdateWidget(old);
-    if (old.prefecture != widget.prefecture) {
-      setState(() {
-        _newsItems = [];
-        _loaded = false;
-      });
-      _fetch();
-    }
-  }
-
-  Future<void> _fetch() async {
-    try {
-      final rows = await Supabase.instance.client
-          .from('prefecture_election_news')
-          .select(
-            'news_title, news_summary, news_source_url, news_source_label, '
-            'announced_at, total_candidate_target, confirmed_candidate_count, '
-            'public_recruitment_count, representative_name',
-          )
-          .eq('prefecture', _prefCode)
-          .eq('is_active', true)
-          .order('announced_at', ascending: false)
-          .limit(3)
-          .timeout(const Duration(seconds: 5));
-      if (!mounted) return;
-      setState(() {
-        _newsItems = List<Map<String, dynamic>>.from(rows);
-        _loaded = true;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _loaded = true);
-    }
-  }
+  const ElectionNewsBadge({super.key, required this.newsItems});
 
   Future<void> _openUrl(String? url) async {
     if (url == null || url.isEmpty) return;
@@ -70,13 +21,13 @@ class _ElectionNewsBadgeState extends State<ElectionNewsBadge> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded || _newsItems.isEmpty) return const SizedBox.shrink();
+    if (newsItems.isEmpty) return const SizedBox.shrink();
 
     const accent = Color(0xFF4F46E5);
 
     return Column(
       children: [
-        for (final item in _newsItems) ...[
+        for (final item in newsItems) ...[
           _buildBadge(context, item, accent),
           const SizedBox(height: 8),
         ],

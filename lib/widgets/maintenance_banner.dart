@@ -50,10 +50,15 @@ class _MaintenanceShellState extends State<MaintenanceShell>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // 非表示タブ/バックグラウンドでの schedule-hub 定期ポーリングを止める。
-    // 復帰時は即時 refresh してからタイマーを再開する。
+    // 復帰時はタイマーを再開し、refresh は **force:false** にする。Flutter Web は
+    // フォーカス往復(DevTools/タブ切替)のたびに resumed を送るため、force:true だと
+    // その都度 schedule-hub maintenance.list_active を叩いていた(キャッシュ TTL
+    // 無視)。非force なら 5分キャッシュが新しい間は再取得せず、TTL 超過(=実際に
+    // 長時間離席)のときだけ再取得する。version_check_service の _minCheckGap と同じ
+    // 「resumed 連発抑制」規律 (part337 H3 / version.json と同型)。
     if (state == AppLifecycleState.resumed) {
       _startTimer();
-      _refresh(force: true);
+      _refresh();
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
