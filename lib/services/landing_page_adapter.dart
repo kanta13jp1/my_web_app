@@ -86,6 +86,8 @@ abstract interface class LandingPageAdapter {
   Future<void> recordSaveCta();
 
   Future<void> recordInboxOpen();
+
+  Future<void> recordConversionEvent({required String eventKey});
 }
 
 class SupabaseLandingPageAdapter implements LandingPageAdapter {
@@ -291,6 +293,14 @@ class SupabaseLandingPageAdapter implements LandingPageAdapter {
   Future<void> recordInboxOpen() {
     return LandingShareService.recordFunnelEvent(
       eventKey: LandingShareService.funnelInboxOpen,
+      client: _supabaseClientOrNull,
+    );
+  }
+
+  @override
+  Future<void> recordConversionEvent({required String eventKey}) {
+    return LandingShareService.recordFunnelEvent(
+      eventKey: eventKey,
       client: _supabaseClientOrNull,
     );
   }

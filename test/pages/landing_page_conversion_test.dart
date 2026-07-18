@@ -1,0 +1,257 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/pages/landing_page.dart';
+import 'package:my_web_app/services/landing_conversion_experiment_service.dart';
+import 'package:my_web_app/services/landing_page_adapter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class _LandingAdapter extends Fake implements LandingPageAdapter {
+  int lpViews = 0;
+  final List<String> conversionEvents = <String>[];
+
+  @override
+  Stream<AuthState> authStateChanges() => const Stream<AuthState>.empty();
+
+  @override
+  Future<void> recordLpView() async {
+    lpViews += 1;
+  }
+
+  @override
+  Future<void> recordConversionEvent({required String eventKey}) async {
+    conversionEvents.add(eventKey);
+  }
+
+  @override
+  Future<void> recordTrialRun() async {}
+
+  @override
+  Future<String> improveTrialPrompt({required String prompt}) async {
+    return 'ACTION: 重要な案件を1件選ぶ\nREASON: 最初の判断を減らすため';
+  }
+}
+
+LandingConversionHypothesis _hypothesis(String id) {
+  return LandingConversionExperimentService.hypotheses.firstWhere(
+    (hypothesis) => hypothesis.id == id,
+  );
+}
+
+LandingExperimentAssignment _assignment(
+  String id,
+  LandingExperimentVariant variant,
+) {
+  return LandingExperimentAssignment(
+    hypothesis: _hypothesis(id),
+    variant: variant,
+  );
+}
+
+void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
+  Future<_LandingAdapter> pumpLanding(
+    WidgetTester tester, {
+    required LandingExperimentAssignment assignment,
+    Size size = const Size(1200, 900),
+  }) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = size;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    final adapter = _LandingAdapter();
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/privacy': (_) => const Scaffold(body: Text('privacy')),
+        },
+        home: LandingPage(
+          key: ValueKey(
+            '${assignment.hypothesis.id}-${assignment.variant.name}-${size.width}',
+          ),
+          adapter: adapter,
+          experimentAssignment: assignment,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    return adapter;
+  }
+
+  testWidgets('treatment renders the complete conversion-first journey',
+      (tester) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h01', LandingExperimentVariant.treatment),
+    );
+
+    expect(find.byKey(const Key('landing_h01_outcome_offer')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h02_intent_selector')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('landing_h03_trial_before_auth')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('landing_h04_password_toggle')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('landing_password_field')), findsNothing);
+    expect(find.byKey(const Key('landing_h05_risk_reversal')), findsOneWidget);
+    expect(find.byKey(const Key('landing_h06_product_proof')), findsOneWidget);
+    expect(find.byKey(const Key('landing_social_proof_stats')), findsOneWidget);
+    expect(
+      find.byKey(const Key('landing_h08_privacy_assurance')),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('landing_trial_section'))).dy,
+      lessThan(
+        tester.getTopLeft(find.byKey(const Key('landing_auth_section'))).dy,
+      ),
+    );
+    expect(adapter.lpViews, 1);
+    expect(adapter.conversionEvents, contains('lp_exp_h01_treatment_view'));
+
+    await tester.ensureVisible(find.text('今日の最優先'));
+    await tester.tap(find.text('今日の最優先'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(
+      find.byKey(const Key('landing_h10_continuity_value')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('all ten control conditions remove only their tested mechanism',
+      (tester) async {
+    for (final id in <String>[
+      'h01',
+      'h02',
+      'h03',
+      'h04',
+      'h05',
+      'h06',
+      'h07',
+      'h08',
+      'h09',
+      'h10',
+    ]) {
+      await pumpLanding(
+        tester,
+        assignment: _assignment(id, LandingExperimentVariant.control),
+        size: id == 'h09' ? const Size(390, 844) : const Size(1200, 900),
+      );
+
+      switch (id) {
+        case 'h01':
+          expect(
+            find.byKey(const Key('landing_h01_control_offer')),
+            findsOneWidget,
+          );
+          break;
+        case 'h02':
+          expect(
+            find.byKey(const Key('landing_h02_intent_selector')),
+            findsNothing,
+          );
+          break;
+        case 'h03':
+          expect(
+            find.byKey(const Key('landing_h03_auth_before_trial')),
+            findsOneWidget,
+          );
+          expect(
+            tester.getTopLeft(find.byKey(const Key('landing_auth_section'))).dy,
+            lessThan(
+              tester
+                  .getTopLeft(find.byKey(const Key('landing_trial_section')))
+                  .dy,
+            ),
+          );
+          break;
+        case 'h04':
+          expect(
+            find.byKey(const Key('landing_password_field')),
+            findsOneWidget,
+          );
+          expect(
+            find.byKey(const Key('landing_h04_password_toggle')),
+            findsNothing,
+          );
+          break;
+        case 'h05':
+          expect(
+            find.byKey(const Key('landing_h05_risk_reversal')),
+            findsNothing,
+          );
+          break;
+        case 'h06':
+          expect(
+            find.byKey(const Key('landing_h06_product_proof')),
+            findsNothing,
+          );
+          break;
+        case 'h07':
+          expect(
+            tester
+                .getTopLeft(find.byKey(const Key('landing_social_proof_stats')))
+                .dy,
+            greaterThan(
+              tester
+                  .getTopLeft(find.byKey(const Key('landing_auth_section')))
+                  .dy,
+            ),
+          );
+          break;
+        case 'h08':
+          expect(
+            find.byKey(const Key('landing_h08_privacy_assurance')),
+            findsNothing,
+          );
+          break;
+        case 'h09':
+          expect(
+            find.byKey(const Key('landing_h09_mobile_sticky_cta')),
+            findsNothing,
+          );
+          break;
+        case 'h10':
+          await tester.ensureVisible(find.text('今日の最優先'));
+          await tester.tap(find.text('今日の最優先'));
+          await tester.pump(const Duration(milliseconds: 100));
+          expect(
+            find.byKey(const Key('landing_h10_continuity_value')),
+            findsNothing,
+          );
+          break;
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
+  });
+
+  testWidgets('mobile treatment exposes and measures the sticky signup CTA',
+      (tester) async {
+    final adapter = await pumpLanding(
+      tester,
+      assignment: _assignment('h09', LandingExperimentVariant.treatment),
+      size: const Size(390, 844),
+    );
+
+    final sticky = find.byKey(const Key('landing_h09_mobile_sticky_cta'));
+    expect(sticky, findsOneWidget);
+    await tester
+        .tap(find.descendant(of: sticky, matching: find.text('無料で始める')));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(
+      adapter.conversionEvents,
+      contains('lp_exp_h09_treatment_sticky_cta'),
+    );
+  });
+}
