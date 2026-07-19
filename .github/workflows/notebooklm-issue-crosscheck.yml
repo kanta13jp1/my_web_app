@@ -49,6 +49,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Cache pip (notebooklm-py)
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-notebooklm-py
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install notebooklm-py
         run: pip install --quiet notebooklm-py
 
