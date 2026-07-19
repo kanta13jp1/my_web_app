@@ -2,599 +2,897 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart';
+
+import '../services/activation_revenue_experiment_service.dart';
+import '../services/activation_revenue_tracker.dart';
+import '../services/onboarding_activation_gateway.dart';
 
 class OnboardingPage extends StatefulWidget {
-  const OnboardingPage({super.key});
+  const OnboardingPage({
+    super.key,
+    this.gateway = const SupabaseOnboardingActivationGateway(),
+    this.tracker = const SupabaseActivationRevenueEventTracker(),
+    this.experimentService = const ActivationRevenueExperimentService(),
+    this.assignment,
+    this.initialUri,
+  });
+
+  final OnboardingActivationGateway gateway;
+  final ActivationRevenueEventTracker tracker;
+  final ActivationRevenueExperimentService experimentService;
+  final ActivationRevenueAssignment? assignment;
+  final Uri? initialUri;
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
 }
 
 class _OnboardingPageState extends State<OnboardingPage> {
-  static const _progressKeyPrefix = 'onboarding_progress_page';
+  static const _draftKeyPrefix = 'activation_onboarding_draft_v1';
 
-  final PageController _pageController = PageController();
   final TextEditingController _nameController = TextEditingController();
-  int _currentPage = 0;
+  final TextEditingController _challengeController = TextEditingController();
+
+  ActivationRevenueAssignment? _assignment;
+  _ActivationIntent _intent = _ActivationIntent.work;
+  int _stage = 0;
   bool _isLoading = false;
-  bool _onboardingDone = false; // 就任承諾完了フラグ（4ページ目表示制御）
+  String? _firstAction;
+  String? _reason;
+  String? _tenMinuteStep;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_restoreSavedProgress());
-    });
+    unawaited(_initialize());
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
     _nameController.dispose();
+    _challengeController.dispose();
     super.dispose();
   }
 
-  Future<void> _finishOnboarding() async {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('署名（お名前）を入力してください')),
-      );
+  bool _enabled(String id) => _assignment?.enables(id) ?? true;
+
+  Future<void> _initialize() async {
+    final assignment = widget.assignment ??
+        await widget.experimentService.resolve(
+          uri: widget.initialUri ?? Uri.base,
+        );
+    await _restoreDraft();
+    if (!mounted) return;
+    setState(() => _assignment = assignment);
+    await _record('onboarding_view');
+  }
+
+  Future<void> _record(String stage) async {
+    final assignment = _assignment ?? widget.assignment;
+    if (assignment == null) return;
+    try {
+      await widget.tracker.record(assignment: assignment, stage: stage);
+    } catch (error) {
+      debugPrint('Activation revenue event failed: $error');
+    }
+  }
+
+  String get _draftKey {
+    final userId = widget.gateway.currentUser()?.id ?? 'anonymous';
+    return '${_draftKeyPrefix}_$userId';
+  }
+
+  Future<void> _restoreDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    final prefix = _draftKey;
+    final savedIntent = prefs.getString('${prefix}_intent');
+    final savedStage = prefs.getInt('${prefix}_stage') ?? 0;
+    final savedChallenge = prefs.getString('${prefix}_challenge') ?? '';
+    final savedName = prefs.getString('${prefix}_name') ?? '';
+    final savedAction = prefs.getString('${prefix}_first_action');
+    final savedReason = prefs.getString('${prefix}_reason');
+    final savedTenMinuteStep = prefs.getString('${prefix}_ten_minute_step');
+
+    _intent = _ActivationIntent.values.firstWhere(
+      (candidate) => candidate.name == savedIntent,
+      orElse: () => _ActivationIntent.work,
+    );
+    _stage = savedStage.clamp(0, 1).toInt();
+    _challengeController.text = savedChallenge;
+    _nameController.text = savedName;
+    _firstAction = savedAction;
+    _reason = savedReason;
+    _tenMinuteStep = savedTenMinuteStep;
+    if (_stage == 1 && _firstAction == null) {
+      _buildFirstAction();
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    final prefix = _draftKey;
+    await prefs.setString('${prefix}_intent', _intent.name);
+    await prefs.setInt('${prefix}_stage', _stage);
+    await prefs.setString('${prefix}_challenge', _challengeController.text);
+    await prefs.setString('${prefix}_name', _nameController.text);
+    if (_firstAction != null) {
+      await prefs.setString('${prefix}_first_action', _firstAction!);
+    }
+    if (_reason != null) await prefs.setString('${prefix}_reason', _reason!);
+    if (_tenMinuteStep != null) {
+      await prefs.setString('${prefix}_ten_minute_step', _tenMinuteStep!);
+    }
+  }
+
+  Future<void> _clearDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    final prefix = _draftKey;
+    for (final suffix in const [
+      'intent',
+      'stage',
+      'challenge',
+      'name',
+      'first_action',
+      'reason',
+      'ten_minute_step',
+    ]) {
+      await prefs.remove('${prefix}_$suffix');
+    }
+  }
+
+  void _selectIntent(_ActivationIntent intent) {
+    if (_intent == intent) return;
+    setState(() => _intent = intent);
+    unawaited(_saveDraft());
+    unawaited(_record('intent_selected'));
+  }
+
+  void _applyExample(String example) {
+    _challengeController.text = example;
+    _challengeController.selection = TextSelection.collapsed(
+      offset: example.length,
+    );
+    setState(() {});
+    unawaited(_saveDraft());
+  }
+
+  Future<void> _generateFirstAction() async {
+    final challenge = _challengeController.text.trim();
+    if (_enabled('a03') && challenge.isEmpty) {
+      _showMessage('いま一番困っていることを、短い言葉で入力してください。');
       return;
     }
 
     setState(() => _isLoading = true);
-
-    try {
-      final user = supabase.auth.currentUser;
-      if (user == null) return;
-
-      // 1. プロフィール（CEO名）を登録
-      await supabase.from('user_profiles').upsert({
-        'user_id': user.id,
-        'display_name': name,
-        'role': 'CEO', // 役職をCEOに設定
-        'updated_at': DateTime.now().toIso8601String(),
+    await _record('first_action_started');
+    _buildFirstAction();
+    if (mounted) {
+      setState(() {
+        _stage = 1;
+        _isLoading = false;
       });
+    }
+    await _saveDraft();
+    await _record('first_action_completed');
+  }
 
-      // 2. オンボーディング完了フラグを更新
-      await supabase.from('user_stats').upsert(
-        {
-          'user_id': user.id,
-          'metadata': {'onboarding_completed': true},
-          'updated_at': DateTime.now().toIso8601String(),
-        },
-        onConflict: 'user_id',
-      ); // 既存データがあればマージ更新される想定
-
-      try {
-        await supabase.from('user_stats').update({
-          'metadata': {'onboarding_completed': true},
-        }).eq('user_id', user.id);
-      } catch (_) {}
-
-      await _clearSavedProgress();
-
-      if (mounted) {
-        setState(() => _onboardingDone = true);
-        // 4ページ目（スタートガイド）へ
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('就任手続きが完了しました。経営コックピットへ案内します…')),
-        );
-        // 自動でホームへ遷移（短い遅延）
-        Future.delayed(const Duration(milliseconds: 1200), () {
-          if (!mounted) return;
-          Navigator.of(context).pushReplacementNamed('/home');
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('就任手続きに失敗しました: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+  void _buildFirstAction() {
+    final challenge = _challengeController.text.trim();
+    final personalized = _enabled('a05') && challenge.isNotEmpty;
+    switch (_intent) {
+      case _ActivationIntent.work:
+        _firstAction = personalized
+            ? '「$challenge」を、今日終える最小単位に1つだけ分解する'
+            : '今日終える仕事を1つだけ選び、完了条件を書く';
+        _reason = '優先順位を増やすより、完了条件を1つ固定した方が実行に移れます。';
+        _tenMinuteStep = '関係する資料を1か所に集め、最初の10分だけ着手する';
+        break;
+      case _ActivationIntent.learning:
+        _firstAction = personalized
+            ? '「$challenge」を25分で学べる問い1つに変える'
+            : '今日学ぶ問いを1つ決め、25分だけ集中する';
+        _reason = '広いテーマを問いに変えると、学習の終点と成果が明確になります。';
+        _tenMinuteStep = '知りたいことを3行で書き、最初の教材を1つ開く';
+        break;
+      case _ActivationIntent.money:
+        _firstAction = personalized
+            ? '「$challenge」に関係する直近7日分の数字を1つ確認する'
+            : '直近7日で一番大きい支出を1件確認する';
+        _reason = '将来予測の前に、いま動かせる数字を1つ特定すると判断が速くなります。';
+        _tenMinuteStep = '口座か明細を開き、金額・日付・次の判断を記録する';
+        break;
     }
   }
 
-  Future<String> _progressKey() async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null || userId.isEmpty) return _progressKeyPrefix;
-    return '${_progressKeyPrefix}_$userId';
+  Future<void> _completeOnboarding() async {
+    if (_firstAction == null) return;
+    final user = widget.gateway.currentUser();
+    if (user == null) {
+      _showMessage('ログイン情報を確認できませんでした。もう一度ログインしてください。');
+      return;
+    }
+
+    var displayName = _nameController.text.trim();
+    if (!_enabled('a06') && displayName.isEmpty) {
+      _showMessage('表示名を入力してください。');
+      return;
+    }
+    if (displayName.isEmpty) {
+      displayName = _nameFromEmail(user.email) ?? '新しいユーザー';
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await widget.gateway.complete(
+        OnboardingCompletion(
+          displayName: displayName,
+          intent: _intent.name,
+          challenge: _challengeController.text.trim(),
+          firstAction: _firstAction!,
+          saveAsDailyTask: _enabled('a08'),
+        ),
+      );
+      await _record('onboarding_completed');
+      await _record('value_recap_view');
+      await _clearDraft();
+      if (!mounted) return;
+      setState(() {
+        _stage = 2;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showMessage('保存に失敗しました。通信状態を確認して、もう一度お試しください。');
+      debugPrint('Onboarding completion failed: $error');
+    }
   }
 
-  Future<void> _restoreSavedProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedPage = prefs.getInt(await _progressKey());
-    if (!mounted || savedPage == null) return;
-
-    final page = savedPage.clamp(0, 2);
-    if (page == _currentPage) return;
-
-    setState(() => _currentPage = page);
-    _pageController.jumpToPage(page);
+  String? _nameFromEmail(String? email) {
+    final normalized = email?.trim();
+    if (normalized == null || normalized.isEmpty || !normalized.contains('@')) {
+      return null;
+    }
+    final local = normalized.split('@').first.trim();
+    return local.isEmpty ? null : local;
   }
 
-  Future<void> _saveProgress(int page) async {
-    if (page < 0 || page > 2) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(await _progressKey(), page);
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _clearSavedProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(await _progressKey());
+  void _continueFree() {
+    Navigator.of(context).pushReplacementNamed(_intent.destinationRoute);
   }
 
-  void _goToPreviousPage() {
-    if (_currentPage <= 0 || _isLoading) return;
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void _goToNextPage() {
-    if (_currentPage >= 2 || _isLoading) return;
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+  void _openBilling({required String offer}) {
+    final assignment = _assignment;
+    final params = <String, String>{
+      'entry': 'onboarding',
+      'offer': offer,
+      if (assignment != null) 'activation_hypothesis': assignment.hypothesis.id,
+      if (assignment != null) 'activation_variant': assignment.variant.name,
+    };
+    final route = Uri(
+      path: '/subscription-billing',
+      queryParameters: params,
+    ).toString();
+    Navigator.of(context).pushNamed(route);
   }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor:
-          Theme.of(context).colorScheme.surfaceContainerLow, // 高級感のあるオフホワイト
+      backgroundColor: scheme.surfaceContainerLowest,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                  unawaited(_saveProgress(index));
-                },
-                children: [
-                  _buildPhilosophyPage(),
-                  _buildBoardMemberPage(),
-                  _buildContractPage(),
-                  _buildFirstStepsPage(),
-                ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: constraints.maxWidth < 600 ? 20 : 32,
+                vertical: 24,
               ),
-            ),
-            _buildBottomControls(),
-          ],
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 760),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _BrandHeader(
+                        onExit: () {
+                          Navigator.of(context).pushReplacementNamed('/home');
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      if (_enabled('a07')) ...[
+                        _ActivationProgress(currentStage: _stage),
+                        const SizedBox(height: 28),
+                      ],
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        child: switch (_stage) {
+                          0 => _buildInputStage(),
+                          1 => _buildPlanStage(),
+                          _ => _buildValueRecapStage(),
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  // 1. 経営理念ページ
-  Widget _buildPhilosophyPage() {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.business_center,
-            size: 80,
-            color: Color(0xFF3D5AFE),
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'あなたの人生を\n「経営」する',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            '本日より「自分株式会社」が設立されました。\n\n資本は、あなたの「時間」「資産」「健康」。\n目的は、これらを最大化し、\n豊かな人生（利益）を生み出すことです。',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              height: 1.8,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 2. 経営体制（役員紹介）ページ
-  Widget _buildBoardMemberPage() {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            '最強の経営布陣',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'GPT・Claude・Geminiを統合したMAGIシステムが、\nあなたの専属役員として\n24時間365日、経営をサポートします。',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF9CA3AF),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 40),
+  Widget _buildInputStage() {
+    final examples = _intent.examples;
+    return Column(
+      key: const ValueKey('activation_input_stage'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _enabled('a01') ? '最短60秒で、今日やる1件を決めます' : '初期設定を始めます',
+          key: const Key('onboarding_headline'),
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                height: 1.35,
+              ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _enabled('a01')
+              ? '細かいプロフィール設定より先に、すぐ使える最初の実行プランを作ります。'
+              : '必要な情報を入力してください。',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.65),
+        ),
+        const SizedBox(height: 28),
+        if (_enabled('a02')) ...[
+          const _SectionLabel(number: '1', title: 'いま一番整えたいもの'),
+          const SizedBox(height: 12),
           Wrap(
-            spacing: 20,
-            runSpacing: 20,
-            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
             children: [
-              _buildRoleIcon(
-                Icons.psychology,
-                'CSO',
-                '戦略',
-                const Color(0xFF607D8B),
-              ),
-              _buildRoleIcon(
-                Icons.attach_money,
-                'CFO',
-                '財務',
-                const Color(0xFF009688),
-              ),
-              _buildRoleIcon(
-                Icons.health_and_safety,
-                'CHO',
-                '健康',
-                const Color(0xFF00695C),
-              ),
-              _buildRoleIcon(
-                Icons.diversity_3,
-                'CHRO',
-                '人事',
-                const Color(0xFFFF6B35),
-              ),
-              _buildRoleIcon(
-                Icons.campaign,
-                'CMO',
-                '広報',
-                const Color(0xFF3D5AFE),
-              ),
-              _buildRoleIcon(
-                Icons.school,
-                'CKO',
-                '知財',
-                const Color(0xFF3D5AFE),
-              ),
+              for (final intent in _ActivationIntent.values)
+                ChoiceChip(
+                  key: Key('intent_${intent.name}'),
+                  selected: _intent == intent,
+                  avatar: Icon(intent.icon, size: 18),
+                  label: Text(intent.label),
+                  onSelected: (_) => _selectIntent(intent),
+                ),
             ],
           ),
+          const SizedBox(height: 28),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRoleIcon(IconData icon, String role, String label, Color color) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: color.withValues(alpha: 0.1),
-          child: Icon(icon, color: color),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          role,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: color,
-            height: 1.5,
+        if (_enabled('a03')) ...[
+          const _SectionLabel(number: '2', title: 'いま困っていること'),
+          const SizedBox(height: 12),
+          TextField(
+            key: const Key('challenge_input'),
+            controller: _challengeController,
+            minLines: 2,
+            maxLines: 4,
+            maxLength: 160,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: _intent.hint,
+              border: const OutlineInputBorder(),
+            ),
+            onChanged: (_) => unawaited(_saveDraft()),
           ),
+          if (_enabled('a04')) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (var index = 0; index < examples.length; index++)
+                  ActionChip(
+                    key: Key('challenge_example_$index'),
+                    avatar: const Icon(Icons.add, size: 16),
+                    label: Text(examples[index]),
+                    onPressed: () => _applyExample(examples[index]),
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 28),
+        ],
+        _SectionLabel(
+          number: _enabled('a03') ? '3' : '2',
+          title: _enabled('a06') ? '表示名（任意）' : '表示名',
         ),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('display_name_input'),
+          controller: _nameController,
+          maxLength: 40,
+          decoration: InputDecoration(
+            hintText: _enabled('a06') ? '未入力ならメール名を使います' : '表示名を入力',
+            prefixIcon: const Icon(Icons.person_outline),
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: (_) => unawaited(_saveDraft()),
+        ),
+        const SizedBox(height: 12),
+        if (_enabled('a08'))
+          const _TrustLine(
+            icon: Icons.bookmark_outline,
+            text: '作った提案は保存され、次回も続きから再開できます。',
+          ),
+        const _TrustLine(
+          icon: Icons.lock_outline,
+          text: '入力内容はあなたのアカウント内だけに保存されます。',
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 52,
+          child: FilledButton.icon(
+            key: const Key('generate_first_action_button'),
+            onPressed: _isLoading ? null : _generateFirstAction,
+            icon: _isLoading
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_awesome),
+            label: const Text('最初の一手を作る'),
           ),
         ),
       ],
     );
   }
 
-  // 3. 就任承諾（署名）ページ
-  Widget _buildContractPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.history_edu,
-            size: 60,
-            color: Theme.of(context).colorScheme.onSurface,
+  Widget _buildPlanStage() {
+    return Column(
+      key: const ValueKey('activation_plan_stage'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _enabled('a05') ? 'あなた向けの最初の一手' : '最初に行うこと',
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 10),
+        const Text('全部を整える必要はありません。まず、この1件だけ始めます。'),
+        const SizedBox(height: 24),
+        Container(
+          key: const Key('first_action_plan_card'),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(8),
           ),
-          const SizedBox(height: 24),
-          const Text(
-            '代表取締役 就任承諾書',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Serif',
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            '私（下記署名人）は、自分株式会社の代表取締役（CEO）に就任し、以下のミッションを遂行することを誓います。',
-            style: TextStyle(height: 1.6),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
-              border: Border.all(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '最優先の1件',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
               ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('1. 昨日の自分より成長すること'),
-                SizedBox(height: 8),
-                Text('2. 不要なもの（負債）を断捨離すること'),
-                SizedBox(height: 8),
-                Text('3. 心身の健康（資本）を維持すること'),
-              ],
-            ),
+              const SizedBox(height: 8),
+              Text(
+                _firstAction ?? '',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      height: 1.45,
+                    ),
+              ),
+              const SizedBox(height: 20),
+              _PlanDetail(
+                icon: Icons.lightbulb_outline,
+                label: 'なぜ今やるか',
+                value: _reason ?? '',
+              ),
+              const SizedBox(height: 14),
+              _PlanDetail(
+                icon: Icons.timer_outlined,
+                label: '最初の10分',
+                value: _tenMinuteStep ?? '',
+              ),
+            ],
           ),
-          const SizedBox(height: 32),
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: '氏名（CEO名）を入力',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.edit),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'この名前はAI役員からの報告書に使用されます',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF9CA3AF),
-              height: 1.5,
-            ),
+        ),
+        if (_enabled('a08')) ...[
+          const SizedBox(height: 16),
+          const _TrustLine(
+            icon: Icons.cloud_done_outlined,
+            text: 'この提案を保存し、ホームからいつでも再開できます。',
           ),
         ],
-      ),
+        const SizedBox(height: 24),
+        SizedBox(
+          height: 52,
+          child: FilledButton.icon(
+            key: const Key('complete_onboarding_button'),
+            onPressed: _isLoading ? null : _completeOnboarding,
+            icon: _isLoading
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_circle_outline),
+            label: const Text('保存して始める'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: _isLoading ? null : () => setState(() => _stage = 0),
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('入力を直す'),
+        ),
+      ],
     );
   }
 
-  // 4. スタートガイドページ（就任完了後に表示）
-  Widget _buildFirstStepsPage() {
-    final steps = [
-      (
-        Icons.wb_sunny,
-        const Color(0xFFFFC107),
-        'モーニングブリーフィング',
-        '今日の最優先タスクをAIが提案します。\nホーム画面「CEO OFFICE」→「モーニングブリーフィング」'
-      ),
-      (
-        Icons.edit_note,
-        const Color(0xFF3D5AFE),
-        '最初のメモを書く',
-        '考えていることを何でも書いてみてください。\nホーム画面「CMO/CKO OFFICE」→「新規事業起案」'
-      ),
-      (
-        Icons.upload_file,
-        const Color(0xFF009688),
-        'Notionから移行する',
-        '既存のデータをそのままインポートできます。\nホーム画面「GROWTH / 成長導線」→「インポート」'
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.all(28.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.rocket_launch,
-            size: 64,
-            color: Color(0xFF3D5AFE),
+  Widget _buildValueRecapStage() {
+    final valueFraming = _enabled('a10');
+    return Column(
+      key: const ValueKey('activation_value_recap_stage'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(
+          Icons.check_circle,
+          size: 56,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '最初の一手を保存しました',
+          key: const Key('value_recap_title'),
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _firstAction ?? '',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 28),
+        SizedBox(
+          height: 52,
+          child: FilledButton.icon(
+            key: const Key('continue_free_button'),
+            onPressed: _continueFree,
+            icon: Icon(_intent.icon),
+            label: Text('${_intent.destinationLabel}を無料で始める'),
           ),
+        ),
+        if (_enabled('a09')) ...[
+          const SizedBox(height: 32),
+          const Divider(),
           const SizedBox(height: 20),
-          const Text(
-            '就任おめでとうございます！',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              height: 1.5,
-            ),
+          Text(
+            valueFraming ? '役に立ったら、続け方を選べます' : '料金プラン',
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
-            'まずこの3つから始めましょう',
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              height: 1.5,
-            ),
+            valueFraming
+                ? '無料のまま続けても大丈夫です。応援または利用量に合わせたProを選べます。'
+                : '料金ページでプランを確認できます。',
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 28),
-          ...steps.asMap().entries.map((entry) {
-            final i = entry.key;
-            final (icon, color, title, desc) = entry.value;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: color.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${i + 1}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: color,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
+          const SizedBox(height: 18),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final narrow = constraints.maxWidth < 560;
+              final cards = [
+                _PaidChoice(
+                  key: const Key('onboarding_supporter_choice'),
+                  icon: Icons.favorite_border,
+                  title: valueFraming ? '1回100円で応援' : 'サポーター',
+                  description:
+                      valueFraming ? '自動更新なし。無料機能はそのまま使えます。' : '支援ページを開きます。',
+                  buttonLabel: '100円支援を見る',
+                  onPressed: () => _openBilling(offer: 'supporter'),
+                ),
+                _PaidChoice(
+                  key: const Key('onboarding_pro_choice'),
+                  icon: Icons.workspace_premium_outlined,
+                  title: valueFraming ? 'ProでAI利用量を増やす' : 'Pro',
+                  description: valueFraming
+                      ? '月980円。AI質問枠と優先機能を増やします。'
+                      : 'Proプランを確認します。',
+                  buttonLabel: 'Proを見る',
+                  onPressed: () => _openBilling(offer: 'pro'),
+                ),
+              ];
+              return narrow
+                  ? Column(
+                      children: [
+                        cards[0],
+                        const SizedBox(height: 12),
+                        cards[1],
+                      ],
+                    )
+                  : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(icon, size: 15, color: color),
-                            const SizedBox(width: 4),
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: color,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          desc,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                        ),
+                        Expanded(child: cards[0]),
+                        const SizedBox(width: 12),
+                        Expanded(child: cards[1]),
                       ],
-                    ),
+                    );
+            },
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+enum _ActivationIntent { work, learning, money }
+
+extension on _ActivationIntent {
+  String get label => switch (this) {
+        _ActivationIntent.work => '仕事',
+        _ActivationIntent.learning => '学習',
+        _ActivationIntent.money => 'お金',
+      };
+
+  IconData get icon => switch (this) {
+        _ActivationIntent.work => Icons.task_alt_outlined,
+        _ActivationIntent.learning => Icons.school_outlined,
+        _ActivationIntent.money => Icons.account_balance_wallet_outlined,
+      };
+
+  String get hint => switch (this) {
+        _ActivationIntent.work => '例: タスクが多く、何から始めるか決められない',
+        _ActivationIntent.learning => '例: AIを学びたいが、教材を選べない',
+        _ActivationIntent.money => '例: 支出を減らしたいが、数字を把握できていない',
+      };
+
+  List<String> get examples => switch (this) {
+        _ActivationIntent.work => const [
+            '優先順位を決めたい',
+            '仕事ログを整理したい',
+            '今日の1件を終えたい',
+          ],
+        _ActivationIntent.learning => const [
+            'AIを体系的に学びたい',
+            '英語学習を続けたい',
+            'メモを知識に変えたい',
+          ],
+        _ActivationIntent.money => const ['支出を減らしたい', '資産を整理したい', '今月の収支を見たい'],
+      };
+
+  String get destinationRoute => switch (this) {
+        _ActivationIntent.work => '/morning-briefing',
+        _ActivationIntent.learning => '/ai-university',
+        _ActivationIntent.money => '/asset-management',
+      };
+
+  String get destinationLabel => switch (this) {
+        _ActivationIntent.work => '今日のブリーフィング',
+        _ActivationIntent.learning => 'AI大学',
+        _ActivationIntent.money => '資産管理',
+      };
+}
+
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader({required this.onExit});
+
+  final VoidCallback onExit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+        ),
+        const SizedBox(width: 10),
+        const Expanded(
+          child: Text(
+            '自分株式会社',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+        ),
+        IconButton(
+          tooltip: '後で設定する',
+          onPressed: onExit,
+          icon: const Icon(Icons.close),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActivationProgress extends StatelessWidget {
+  const _ActivationProgress({required this.currentStage});
+
+  final int currentStage;
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['目的', '最初の一手', '開始'];
+    return Row(
+      children: [
+        for (var index = 0; index < labels.length; index++) ...[
+          Expanded(
+            child: Column(
+              children: [
+                Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: index <= currentStage
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () =>
-                  Navigator.of(context).pushReplacementNamed('/home'),
-              icon: const Icon(Icons.business_center),
-              label: const Text(
-                '経営コックピットへ',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  height: 1.5,
                 ),
-              ),
+                const SizedBox(height: 6),
+                Text(
+                  labels[index],
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: index == currentStage
+                        ? FontWeight.w700
+                        : FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
           ),
+          if (index < labels.length - 1) const SizedBox(width: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.number, required this.title});
+
+  final String number;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 13,
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          child: Text(
+            number,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TrustLine extends StatelessWidget {
+  const _TrustLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
         ],
       ),
     );
   }
+}
 
-  Widget _buildBottomControls() {
-    // 4ページ目（スタートガイド）はボタンをページ内に持つため非表示
-    if (_onboardingDone) return const SizedBox.shrink();
+class _PlanDetail extends StatelessWidget {
+  const _PlanDetail({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // インジケーター（3ページ分のみ）
-          Row(
-            children: List.generate(3, (index) {
-              return Container(
-                margin: const EdgeInsets.only(right: 4),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _currentPage == index
-                      ? const Color(0xFF3D5AFE)
-                      : Theme.of(context).colorScheme.surfaceContainerHighest,
-                ),
-              );
-            }),
-          ),
-          // ボタン
-          Row(
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_currentPage > 0)
-                TextButton(
-                  onPressed: _isLoading ? null : _goToPreviousPage,
-                  child: const Text('戻る'),
-                ),
-              const SizedBox(width: 8),
-              if (_currentPage < 2)
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _goToNextPage,
-                  child: const Text('次へ'),
-                )
-              else
-                ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _finishOnboarding,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3D5AFE),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                  icon: _isLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.verified_user),
-                  label: const Text('就任を承諾して開始'),
-                ),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 3),
+              Text(value, style: const TextStyle(height: 1.5)),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaidChoice extends StatelessWidget {
+  const _PaidChoice({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.buttonLabel,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final String buttonLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 10),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          Text(description, style: const TextStyle(fontSize: 13, height: 1.5)),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: onPressed,
+              child: Text(buttonLabel),
+            ),
           ),
         ],
       ),

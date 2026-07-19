@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/pages/subscription_billing_page.dart';
+import 'package:my_web_app/services/activation_revenue_experiment_service.dart';
+import 'package:my_web_app/services/activation_revenue_tracker.dart';
 import 'package:my_web_app/services/billing_service.dart';
 
 void main() {
@@ -13,6 +15,8 @@ void main() {
       MaterialApp(
         home: SubscriptionBillingPage(
           service: billing,
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
           initialUri: Uri.parse(
             'https://example.com/subscription-billing?billing=success',
           ),
@@ -21,8 +25,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Checkout completed'), findsOneWidget);
-    expect(find.textContaining('latest billing status'), findsOneWidget);
+    expect(find.text('プランの決済を受け付けました'), findsOneWidget);
+    expect(find.textContaining('最新のプラン状態'), findsOneWidget);
     expect(billing.fetchStatusCount, 1);
   });
 
@@ -33,6 +37,8 @@ void main() {
       MaterialApp(
         home: SubscriptionBillingPage(
           service: billing,
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
           initialUri: Uri.parse(
             'https://example.com/subscription-billing?billing=cancel',
           ),
@@ -41,8 +47,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Checkout canceled'), findsOneWidget);
-    expect(find.textContaining('No subscription payment'), findsOneWidget);
+    expect(find.text('プランの決済をキャンセルしました'), findsOneWidget);
+    expect(find.textContaining('請求は発生していません'), findsOneWidget);
     expect(billing.fetchStatusCount, 1);
   });
 
@@ -53,6 +59,8 @@ void main() {
       MaterialApp(
         home: SubscriptionBillingPage(
           service: billing,
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
           initialUri: Uri.parse(
             'https://example.com/subscription-billing?billing=supporter_success',
           ),
@@ -61,11 +69,47 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Support received'), findsOneWidget);
-    expect(find.textContaining('first revenue evidence'), findsOneWidget);
+    expect(find.text('100円の応援を受け付けました'), findsOneWidget);
+    expect(find.textContaining('ありがとうございます'), findsOneWidget);
     expect(billing.fetchStatusCount, 1);
   });
+
+  testWidgets('shows value framing after onboarding on a narrow viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SubscriptionBillingPage(
+          service: _FakeBillingGateway(),
+          tracker: const NoopActivationRevenueEventTracker(),
+          assignment: _treatment,
+          initialUri: Uri.parse(
+            'https://example.com/subscription-billing?entry=onboarding',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('billing_onboarding_value_banner')),
+      findsOneWidget,
+    );
+    expect(find.text('役に立ったら、続け方を選べます'), findsOneWidget);
+    expect(find.textContaining('自動更新なし'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
 }
+
+final _treatment = ActivationRevenueAssignment(
+  hypothesis: ActivationRevenueExperimentService.hypotheses[9],
+  variant: ActivationRevenueVariant.treatment,
+);
 
 class _FakeBillingGateway implements BillingGateway {
   int fetchStatusCount = 0;

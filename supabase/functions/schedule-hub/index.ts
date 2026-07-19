@@ -1745,9 +1745,10 @@ serve(async (req: Request) => {
           success_url: withBillingParam(returnUrl, "supporter_success"),
           cancel_url: withBillingParam(returnUrl, "supporter_cancel"),
           "line_items[0][price_data][currency]": "jpy",
-          "line_items[0][price_data][product_data][name]": "Founding Supporter",
+          "line_items[0][price_data][product_data][name]":
+            "AI仕事OS 初期サポーター",
           "line_items[0][price_data][product_data][description]":
-            "One-time support for the first revenue proof.",
+            "役に立ったと感じた方のための、1回100円・自動更新なしの開発応援です。",
           "line_items[0][price_data][unit_amount]": String(amountJpy),
           "line_items[0][quantity]": "1",
           "metadata[offer]": "founding_supporter",

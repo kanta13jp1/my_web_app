@@ -276,7 +276,8 @@ jobs:
 
       - name: Run VM tests
         id: flutter_test
-        run: flutter test --coverage
+        # Keep coverage while bounding Dart VM workers on Windows-sized runners.
+        run: flutter test --coverage --concurrency=2
         continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
 
       - name: Run web import smoke tests

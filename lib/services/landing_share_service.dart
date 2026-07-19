@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'activation_revenue_experiment_service.dart';
 import 'app_share_service.dart';
 import 'landing_conversion_experiment_service.dart';
 
@@ -157,11 +158,7 @@ $shareUrl
     await store.setInt(perChannelKey, channelCount);
     await store.setString(_lastChannelKey, channel);
 
-    await _recordShareAnalytics(
-      client: client,
-      channel: channel,
-      now: now,
-    );
+    await _recordShareAnalytics(client: client, channel: channel, now: now);
 
     return _readSnapshot(store);
   }
@@ -198,11 +195,7 @@ $shareUrl
         'Unsupported funnel event',
       );
     }
-    await _incrementSourceDetail(
-      client: client,
-      sourceKey: eventKey,
-      now: now,
-    );
+    await _incrementSourceDetail(client: client, sourceKey: eventKey, now: now);
   }
 
   static String? resolveIncomingSource(Map<String, String> queryParameters) {
@@ -260,8 +253,10 @@ $shareUrl
     }
 
     final dateKey = _formatDate(now ?? DateTime.now());
-    final currentRow =
-        await _fetchAnalyticsRow(client: client, dateKey: dateKey);
+    final currentRow = await _fetchAnalyticsRow(
+      client: client,
+      dateKey: dateKey,
+    );
     final sourceDetails = _normalizeSourceDetails(currentRow?['source_details'])
       ..update(sourceKey, (count) => count + 1, ifAbsent: () => 1);
 
@@ -277,9 +272,12 @@ $shareUrl
         return;
       }
 
-      await client.from('app_analytics').update(<String, dynamic>{
-        'source_details': sourceDetails,
-      }).eq('date', dateKey);
+      await client
+          .from('app_analytics')
+          .update(<String, dynamic>{'source_details': sourceDetails}).eq(
+        'date',
+        dateKey,
+      );
     } catch (error) {
       debugPrint('Share analytics update failed: $error');
     }
@@ -377,8 +375,9 @@ $shareUrl
         return true;
       default:
         return LandingConversionExperimentService.isExperimentEventKey(
-          eventKey,
-        );
+              eventKey,
+            ) ||
+            ActivationRevenueExperimentService.isExperimentEventKey(eventKey);
     }
   }
 }
