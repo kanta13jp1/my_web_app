@@ -833,6 +833,15 @@ class AssetLiabilityMonthlySnapshot {
   final double monthlyPaymentDifferenceTotal;
   final int overduePaymentCount;
 
+  /// その月に受領済み (received=true) となった収入の合計。
+  ///
+  /// 収入は従来スナップショットに保存されておらず、旧データ / Supabase 同期分は
+  /// null (= 未追跡) になる。キャッシュフロー計算では null を「0 円の収入」と
+  /// 誤認すると全月が赤字に倒れるため、null の月は月次CF・黒字赤字カウントから
+  /// 除外する (= [AssetCashflowStatementService])。非 null の 0 は「収入 0 円」を
+  /// 意味し、追跡済みとして扱う。
+  final double? monthlyReceivedIncomeTotal;
+
   const AssetLiabilityMonthlySnapshot({
     required this.monthKey,
     required this.savedAt,
@@ -846,6 +855,7 @@ class AssetLiabilityMonthlySnapshot {
     this.monthlyActualPaymentTotal = 0,
     this.monthlyPaymentDifferenceTotal = 0,
     required this.overduePaymentCount,
+    this.monthlyReceivedIncomeTotal,
   });
 }
 
