@@ -2,8 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../data/satirical_print_library.dart';
 import '../models/campaign_video.dart';
 import '../theme/design_tokens.dart';
+
+/// Wikimedia Commons のファイル名から実画像 URL を組み立てる。
+/// Special:FilePath は最終的な upload URL へリダイレクトするため、ハッシュ
+/// パスを知らなくてもファイル名だけで参照できる。取得失敗時は動画フレーム側で
+/// グラデーションにフォールバックする。
+String _commonsImageUrl(String file) =>
+    'https://commons.wikimedia.org/wiki/Special:FilePath/$file?width=1024';
 
 /// 「酒・煙草・風俗をやめよう」応援キャンペーンの動画シェアページ。
 ///
@@ -37,7 +45,11 @@ class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
   @override
   void initState() {
     super.initState();
-    _all = CampaignVideo.seed();
+    // 今日の風刺画 (日替わりローテーション) を先頭に、応援クリップ seed を続ける。
+    _all = [
+      ...SatiricalPrintLibrary.dailyPicks(DateTime.now()),
+      ...CampaignVideo.seed(),
+    ];
   }
 
   @override
@@ -95,15 +107,16 @@ class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
   }
 
   Future<void> _play(CampaignVideo v) async {
-    final url = v.videoUrl;
+    final url = v.videoUrl ??
+        (v.imageFile != null ? _commonsImageUrl(v.imageFile!) : null);
     if (url == null || url.isEmpty) {
-      _snack('この応援クリップは再生リンク未設定です');
+      _snack('このクリップは再生リンク未設定です');
       return;
     }
     final uri = Uri.tryParse(url);
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) _snack('動画を開けませんでした');
+      if (mounted) _snack('リンクを開けませんでした');
     }
   }
 
@@ -161,6 +174,7 @@ class _SobrietyCampaignPageState extends State<SobrietyCampaignPage> {
                 if (_pageController.hasClients) _pageController.jumpToPage(0);
               },
             ),
+            const _DailyBanner(),
             Expanded(
               child: videos.isEmpty
                   ? const Center(
@@ -277,6 +291,36 @@ class _FilterChip extends StatelessWidget {
           color: selected ? DesignTokens.orange : DesignTokens.divider,
         ),
         onSelected: (_) => onTap(),
+      ),
+    );
+  }
+}
+
+class _DailyBanner extends StatelessWidget {
+  const _DailyBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: DesignTokens.orange.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+        border: Border.all(color: DesignTokens.orange.withValues(alpha: 0.4)),
+      ),
+      child: const Row(
+        children: [
+          Text('🎨', style: TextStyle(fontSize: 18)),
+          SizedBox(width: DesignTokens.space8),
+          Expanded(
+            child: Text(
+              '今日の風刺画 — 酒・煙草・風俗を断つ名画を毎日ランダムでお届け',
+              style: TextStyle(color: DesignTokens.textOnDark, fontSize: 13),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -417,13 +461,23 @@ class _VideoFrame extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // カテゴリ絵文字を薄く背景に。
-            Center(
-              child: Text(
-                video.category.emoji,
-                style: const TextStyle(fontSize: 120),
+            // 実際の風刺画 (取得失敗時は下のグラデ + 絵文字にフォールバック)。
+            if (video.imageFile != null)
+              Positioned.fill(
+                child: Image.network(
+                  _commonsImageUrl(video.imageFile!),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
               ),
-            ),
+            // 画像が無いカードはカテゴリ絵文字を薄く背景に。
+            if (video.imageFile == null)
+              Center(
+                child: Text(
+                  video.category.emoji,
+                  style: const TextStyle(fontSize: 120),
+                ),
+              ),
             // 下部グラデ + タイトル (スクショの黒帯テロップ再現)。
             Align(
               alignment: Alignment.bottomCenter,
@@ -496,6 +550,31 @@ class _VideoFrame extends StatelessWidget {
                 ),
               ),
             ),
+            // 右上「今日の風刺画」リボン (日替わりローテーション対象のみ)。
+            if (video.id.startsWith('print-'))
+              Positioned(
+                top: DesignTokens.space12,
+                right: DesignTokens.space12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DesignTokens.space12,
+                    vertical: DesignTokens.space4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: DesignTokens.orange,
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusCircle),
+                  ),
+                  child: const Text(
+                    '🎨 今日の風刺画',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

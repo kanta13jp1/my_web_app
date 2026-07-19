@@ -87,6 +87,7 @@ class CampaignVideo {
     required this.creatorName,
     required this.creatorHandle,
     this.videoUrl,
+    this.imageFile,
     this.verified = false,
     this.likes = 0,
     this.comments = 0,
@@ -107,6 +108,10 @@ class CampaignVideo {
 
   /// 共有 / 再生に使う URL。null の場合はローカル生成の応援メッセージのみ。
   final String? videoUrl;
+
+  /// Wikimedia Commons のファイル名 (例: `Gin_Lane.jpg`)。
+  /// 設定時は動画フレームに実際の風刺画を表示する (取得失敗時はグラデにフォールバック)。
+  final String? imageFile;
 
   final bool verified;
   final int likes;
@@ -137,6 +142,7 @@ class CampaignVideo {
       creatorName: creatorName,
       creatorHandle: creatorHandle,
       videoUrl: videoUrl,
+      imageFile: imageFile,
       verified: verified,
       likes: likes ?? this.likes,
       comments: comments,
