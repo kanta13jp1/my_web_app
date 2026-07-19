@@ -170,6 +170,37 @@ void main() {
         '承認待ち 1件',
       );
     });
+
+    test('R32 取得上限に達した status は「N件以上」と下限表示にする', () {
+      // pending が取得上限ちょうど = 本当はもっとあるかもしれない → 「以上」。
+      final pendingAtCap = List.generate(
+        kXCandidateStatusFetchLimit,
+        (i) => make(id: 'p$i'),
+      );
+      expect(
+        candidateQueueHeaderLabel(pendingAtCap),
+        '承認待ち $kXCandidateStatusFetchLimit件以上',
+      );
+
+      // 上限未満はそのまま断定してよい。
+      expect(
+        candidateQueueHeaderLabel([make(id: 'a'), make(id: 'b')]),
+        '承認待ち 2件',
+      );
+
+      // 再試行側 (approved / publish_failed) が上限に達した場合も下限表示。
+      final retryAtCap = <XPostCandidateSummary>[
+        make(id: 'p'),
+        ...List.generate(
+          kXCandidateStatusFetchLimit,
+          (i) => make(id: 'r$i', status: 'publish_failed'),
+        ),
+      ];
+      expect(
+        candidateQueueHeaderLabel(retryAtCap),
+        '承認待ち 1件・再試行 $kXCandidateStatusFetchLimit件以上',
+      );
+    });
   });
 
   group('R26 preview and age labels', () {
