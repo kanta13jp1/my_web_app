@@ -547,4 +547,22 @@ void main() {
       expect(autoErrorReportsHealthLabel(3), '自動エラー報告 3件');
     });
   });
+  group('R30 growthSummaryHasMetrics (捏造ゼロ防止)', () {
+    test('metric キーがあれば true', () {
+      expect(growthSummaryHasMetrics({'newUsers': 3, 'label': '今日'}), isTrue);
+      expect(growthSummaryHasMetrics({'totalUsersEver': 44}), isTrue);
+    });
+
+    test('achievement.list の {success, items} は false (集計未接続)', () {
+      expect(
+        growthSummaryHasMetrics({'success': true, 'items': <dynamic>[]}),
+        isFalse,
+      );
+    });
+
+    test('null / 空は false', () {
+      expect(growthSummaryHasMetrics(null), isFalse);
+      expect(growthSummaryHasMetrics(<String, dynamic>{}), isFalse);
+    });
+  });
 }

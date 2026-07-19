@@ -4341,9 +4341,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                               BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          isGoogle
-                                              ? 'Google'
-                                              : (isAnonymous ? '匿名' : 'Email'),
+                                          // R30: edge users.list は provider を
+                                          // 返さない → isGoogle は常に false で
+                                          // 全員 'Email' と誤表示していた。
+                                          // 判別不能なので中立の '登録済' にする。
+                                          isAnonymous ? '匿名' : '登録済',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -6126,9 +6128,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     final totalTouches = _comparisonTouches.values.fold(0, (a, b) => a + b);
-    final cvrPct = totalTouches > 0
-        ? (_comparisonSignups / totalTouches * 100).toStringAsFixed(1)
-        : '0.0';
+    // R30: 母数0で「0.0%」は計測した0%に見える捏造 → ダッシュボード共通の
+    // formatRatePercent(母数0=「—」)に揃える。到達0で登録>0の自己矛盾表示も回避。
+    final cvrLabel = formatRatePercent(_comparisonSignups, totalTouches);
 
     final sorted = _comparisonTouches.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -6185,7 +6187,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Color(0xFF059669),
               ),
               const SizedBox(width: 16),
-              _cvrStat('CVR', '$cvrPct%', const Color(0xFFFF6B35)),
+              _cvrStat('CVR', cvrLabel, const Color(0xFFFF6B35)),
             ],
           ),
           const SizedBox(height: 12),
@@ -6807,7 +6809,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 height: 1.6,
               ),
             )
-          else if (_growthSummary != null) ...[
+          // R30: 期待するメトリクスキーが無いレスポンス(achievement.list は
+          // items のみ返す)では捏造ゼロを出さず、集計未接続を正直に示す。
+          else if (!growthSummaryHasMetrics(_growthSummary) &&
+              !_growthSummaryLoading)
+            const Text(
+              '成長サマリーの集計はまだ接続されていません。'
+              '各カード(登録目標・累計登録・比較CVR等)で実数をご確認ください。',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF94A3B8),
+                height: 1.6,
+              ),
+            )
+          else if (growthSummaryHasMetrics(_growthSummary)) ...[
             Text(
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
               style: const TextStyle(
