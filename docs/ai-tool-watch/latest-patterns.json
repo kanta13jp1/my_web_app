@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-18T22:08:44Z",
+  "generated_at": "2026-07-19T22:10:30Z",
   "source_files": [
     "docs/ai-tool-watch/latest-report.json"
   ],
@@ -13,15 +13,16 @@
       "drop": 0
     },
     "risk_flags": {
+      "sensational_language": 1,
       "source_http_problem": 1
     }
   },
   "entries": [
     {
       "entry": {
-        "entry_id": "nf-168221002604",
+        "entry_id": "nf-354a7c9b2056",
         "title": "Claude Code changelog",
-        "text": "Claude Code changelog 2.1.214 / July 18, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.214 July 18, 2026 Fixed single-segment dir/** allow rules like Edit(src/**) auto-approving writes to nested dir/ directories anywhere in the tree instead of only <cwd>/dir...",
+        "text": "Claude Code changelog 2.1.215 / July 19, 2026 Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started... Copy page Copy page This page is generated from the CHANGELOG.md on GitHub . ​ 2.1.215 July 19, 2026 Claude no longer runs the /verify and /code-review skills on its own; invoke them with /verify or /code-review when you want them ​ 2.1.214 July 18, 2026...",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
@@ -30,7 +31,7 @@
           "changed": true,
           "error": null,
           "first_seen": false,
-          "hash": "a420573d0c64f1afdadf7ee4ef60068eb44177a83e7fb16a8aaa04afaa9fbf46",
+          "hash": "242f25bffd7decc5918d1cb0e639bf4f50f1651d627d25e5bbd13c564854acaf",
           "keyword_groups": {
             "codex-runtime": [
               "model picker",
@@ -74,33 +75,36 @@
               "workflow"
             ]
           },
-          "latest_signal": "2.1.214 / July 18, 2026",
+          "latest_signal": "2.1.215 / July 19, 2026",
           "name": "Claude Code changelog",
           "owner": "Claude Code",
-          "previous_hash": "04cd39bac5ae0a69f74d94c8a0662b28b7806127abc763823fa41fe7dc87b3fe",
+          "previous_hash": "a420573d0c64f1afdadf7ee4ef60068eb44177a83e7fb16a8aaa04afaa9fbf46",
           "slug": "claude-code-changelog",
           "snippets": [
             "Navigation Getting started Claude Code changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started...",
             "Copy page Copy page This page is generated from the CHANGELOG.md on GitHub .",
-            "​ 2.1.214 July 18, 2026 Fixed single-segment dir/** allow rules like Edit(src/**) auto-approving writes to nested dir/ directories anywhere in the tree instead of only <cwd>/dir..."
+            "​ 2.1.215 July 19, 2026 Claude no longer runs the /verify and /code-review skills on its own; invoke them with /verify or /code-review when you want them ​ 2.1.214 July 18, 2026..."
           ],
           "status": 200,
           "url": "https://code.claude.com/docs/en/changelog"
         }
       },
       "filter": {
-        "entry_id": "nf-168221002604",
+        "entry_id": "nf-354a7c9b2056",
         "title": "Claude Code changelog",
         "url": "https://code.claude.com/docs/en/changelog",
         "source": "Claude Code",
         "source_label": "ai-tool-watch",
-        "confidence": 0.97,
+        "confidence": 0.91,
         "verdict": "pass",
-        "risk_flags": [],
+        "risk_flags": [
+          "sensational_language"
+        ],
         "reasons": [
           "has source URL",
           "source domain is official or primary",
           "HTTP 200 reachable",
+          "sensational terms: kill",
           "has enough context for review"
         ]
       }
@@ -115,7 +119,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "5389ce017162904b5e02cdcfafb481657a8a25891fc1de77af0de46ea04df266",
@@ -156,7 +160,7 @@
           "latest_signal": "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation ind",
           "name": "Claude Code hooks reference",
           "owner": "Claude Code",
-          "previous_hash": "616681544f062c2af42f1d6fc30d0952b6dc82de3a18cfb9779dd067e1991dc8",
+          "previous_hash": "5389ce017162904b5e02cdcfafb481657a8a25891fc1de77af0de46ea04df266",
           "slug": "claude-code-hooks",
           "snippets": [
             "Hooks reference - Claude Code Docs Documentation Index Fetch the complete documentation index at: /docs/llms.txt Use this file to discover all available pages before exploring...",
@@ -269,7 +273,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "013523bc51529964bf3a0c9bd9425ac2093f7806f0cc4b2f0546d031a0ab4ee6",
@@ -319,7 +323,7 @@
           "latest_signal": "2026-07-18 / Codex CLI 0.144.6 pre",
           "name": "Codex changelog",
           "owner": "Codex",
-          "previous_hash": "e5cd2677edc1f04d52e4a79793193678c50e033a470936134fab03c7620b58e5",
+          "previous_hash": "013523bc51529964bf3a0c9bd9425ac2093f7806f0cc4b2f0546d031a0ab4ee6",
           "slug": "codex-changelog",
           "snippets": [
             "Codex changelog | ChatGPT Learn ChatGPT Home API Codex Docs Guides, concepts, and product docs for Codex Use cases Example workflows and tasks teams can take on with ChatGPT or...",
@@ -549,7 +553,7 @@
         "source_label": "ai-tool-watch",
         "status": 200,
         "raw": {
-          "changed": true,
+          "changed": false,
           "error": null,
           "first_seen": false,
           "hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
@@ -577,7 +581,7 @@
           "latest_signal": "VS Code Gemini Code Assist 2.87.0 / June 19, 2026",
           "name": "Gemini Code Assist release notes",
           "owner": "Gemini Code Assist",
-          "previous_hash": "a32ade1b96a4aaee19711b1b6afed7863bca916233c294dd256fb1a24b5cc6df",
+          "previous_hash": "3f7758f857bed0c704742a99fe63eb437295318d4a1383a691ec50a95dd593e0",
           "slug": "gemini-code-assist-release-notes",
           "snippets": [
             "Gemini Code Assist release notes | Gemini for Google Cloud | Google Cloud Documentation Skip to main content Technology areas close AI and ML Application development Application...",
@@ -688,9 +692,11 @@
       "company": "multi-source",
       "topic": "agentic-workflows",
       "entry_count": 5,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
+      "average_confidence": 0.958,
+      "risk_level": "review",
+      "risk_flags": [
+        "sensational_language"
+      ],
       "evidence_titles": [
         "Claude Code changelog",
         "Claude Code hooks reference",
@@ -698,22 +704,24 @@
         "Cursor changelog",
         "Devin release notes"
       ],
-      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
     {
       "id": "np-30487c423ada",
       "company": "anthropic",
       "topic": "agentic-workflows",
       "entry_count": 3,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
+      "average_confidence": 0.95,
+      "risk_level": "review",
+      "risk_flags": [
+        "sensational_language"
+      ],
       "evidence_titles": [
         "Claude Code changelog",
         "Claude Code hooks reference",
         "Claude Code GitHub Actions"
       ],
-      "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
+      "recommended_action": "Hold for human review before creating issues or blog drafts."
     },
     {
       "id": "np-18c8421689f5",
@@ -750,38 +758,5 @@
       "recommended_action": "Hold for human review before creating issues or blog drafts."
     }
   ],
-  "issue_candidates": [
-    {
-      "id": "np-b0b7fe2e83c2",
-      "company": "multi-source",
-      "topic": "agentic-workflows",
-      "entry_count": 5,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
-      "evidence_titles": [
-        "Claude Code changelog",
-        "Claude Code hooks reference",
-        "Claude Code GitHub Actions",
-        "Cursor changelog",
-        "Devin release notes"
-      ],
-      "recommended_action": "Review repeated signal for a scoped follow-up issue only if source confidence stays high."
-    },
-    {
-      "id": "np-30487c423ada",
-      "company": "anthropic",
-      "topic": "agentic-workflows",
-      "entry_count": 3,
-      "average_confidence": 0.97,
-      "risk_level": "normal",
-      "risk_flags": [],
-      "evidence_titles": [
-        "Claude Code changelog",
-        "Claude Code hooks reference",
-        "Claude Code GitHub Actions"
-      ],
-      "recommended_action": "Review anthropic movement for competitor-monitoring follow-up."
-    }
-  ]
+  "issue_candidates": []
 }
