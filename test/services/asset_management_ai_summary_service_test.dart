@@ -58,7 +58,8 @@ void main() {
       expect(result.text, 'AIが生成した日本語要約です。');
       expect(capturedBody?['action'], 'provider.chat_auto');
       expect(capturedBody?['tier'], 'performance');
-      expect(capturedBody?['max_tokens'], 24000);
+      // ai-hub 側で min(8192, ...) にクランプされるため実効値は 8192。
+      expect(capturedBody?['max_tokens'], 8192);
       expect(capturedBody?['trace_id'], 'asset-management-ai-summary');
       expect(
         capturedBody?['message'].toString().contains('AIに渡す詳細ペイロード'),
@@ -192,7 +193,8 @@ void main() {
         expect(calls.single['action'], 'provider.chat');
         expect(calls.single['provider'], 'anthropic');
         expect(calls.single['model'], 'claude-opus-4-7');
-        expect(calls.single['max_tokens'], 24000);
+        // ai-hub 側で min(8192, ...) にクランプされるため実効値は 8192。
+        expect(calls.single['max_tokens'], 8192);
         expect(calls.single['routing_use_case'], 'summary');
         expect(
           calls.single['provider_choice_reason'],
@@ -367,9 +369,13 @@ void main() {
 
       await service.generateSummary(report: _report());
 
-      // Gemini 3.1 Pro 等の thinking トークン + 長文要約に耐える予算であること。
+      // ai-hub の `normalizeMaxTokens` が min(8192, ...) にクランプするため、
+      // クライアントが 8192 超を送っても本番の実効値は 8192。ここでは
+      // 「実効上限いっぱいを要求している」ことを検証する (旧テストは 16000 以上を
+      // 期待していたが、その予算が本番で成立したことは一度も無かった)。
+      // 実測の本文は ~3,000-3,500 トークンなので 8192 で十分な余裕がある。
       expect(capturedMaxTokens, isNotNull);
-      expect(capturedMaxTokens! >= 16000, isTrue);
+      expect(capturedMaxTokens, 8192);
     });
 
     test('builds payload from calculated insights only', () {
