@@ -513,13 +513,23 @@ List<WbsTask> dedupeWbsTasksForDisplay(Iterable<WbsTask> tasks) {
   final indexByKey = <String, int>{};
 
   for (final task in tasks) {
-    final issueNumber = task.linkedGithubIssueNumber;
+    // 正規化タイトルを第一キーにする。`_normalizeWbsTitleDuplicateKey` は
+    // `[Issue #N] ` プレフィックスを除去するため、同じ要望が
+    //   - `[Issue #3367] <タイトル>` (Issue 起票後のミラー行 / completed)
+    //   - `<タイトル>`             (起票前の WBS 素の行 / pending)
+    // の 2 行に分かれていても同一キーになり collapse できる。
+    //
+    // 以前は issue 番号があれば `issue:N` を優先していたため、この 2 行が
+    // `issue:3367` と `title:...` に割れて **完了済みの作業が未完了として
+    // 二重計上**されていた (実測 3695 行中 68 件が幽霊)。
+    // 別 Issue でもタイトルが異なればキーが異なるので分離は保たれる。
+    final titleKey = task.linkedDuplicateTitleKey;
     String? displayKey;
-    if (issueNumber != null) {
-      displayKey = 'issue:$issueNumber';
+    if (titleKey != null) {
+      displayKey = 'title:$titleKey';
     } else {
-      final titleKey = task.linkedDuplicateTitleKey;
-      if (titleKey != null) displayKey = 'title:$titleKey';
+      final issueNumber = task.linkedGithubIssueNumber;
+      if (issueNumber != null) displayKey = 'issue:$issueNumber';
     }
     if (displayKey == null) {
       ordered.add(task);
