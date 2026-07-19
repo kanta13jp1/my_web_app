@@ -64,6 +64,7 @@ import 'package:my_web_app/services/asset_management_insight_service.dart';
 import 'package:my_web_app/services/asset_triage_guide_service.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_inputs.dart';
 import 'package:my_web_app/services/asset_cashflow_forecast_service.dart';
+import 'package:my_web_app/services/asset_cashflow_statement_service.dart';
 import 'package:my_web_app/services/asset_category_budget_service.dart';
 import 'package:my_web_app/services/asset_category_budget_store.dart';
 import 'package:my_web_app/services/asset_payment_calendar_service.dart';
@@ -91,6 +92,7 @@ import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/utils/note_image_clipboard.dart';
 import 'package:my_web_app/utils/web_image_downloader.dart';
 import 'package:my_web_app/widgets/asset_cashflow_forecast_card.dart';
+import 'package:my_web_app/widgets/asset_cashflow_statement_card.dart';
 import 'package:my_web_app/widgets/asset_category_budget_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_card.dart';
 import 'package:my_web_app/widgets/recurring_fixed_cost_editor_dialog.dart';
@@ -8727,6 +8729,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 16),
               _buildCashflowForecastCard(assetLiabilityWorkbook),
             ],
+            if (_isSectionShown(
+              AssetManagementSectionId.cashflowStatement,
+            )) ...[
+              _buildCashflowStatementCard(assetLiabilityWorkbook),
+            ],
             // 提案カード(定期取引/定期収入の自動検出)は給与内訳に相乗りせず専用
             // セクションへ。salaryBreakdown を隠しても提案だけ独立表示できる。
             if (_isSectionShown(AssetManagementSectionId.proposals)) ...[
@@ -14220,6 +14227,38 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         onHorizonChanged: (months) =>
             setState(() => _forecastHorizonMonths = months),
         onReviewPaymentDays: () => _scrollTo(_keyCalendar),
+      ),
+    );
+  }
+
+  /// 月次キャッシュフローパネル (Issue #2474)。履歴スナップショット + ライブの当月から
+  /// 「当月CF (月収 − 月支出)」「年初来累積CF」「直近12か月の黒字/赤字月数」を集計する。
+  /// 金額計算は純サービス [AssetCashflowStatementService] で deterministic に行う。
+  Widget _buildCashflowStatementCard(AssetLiabilityWorkbook? workbook) {
+    // ライブの当月スナップショットを履歴サービスで生成し、未保存でも当月CFを反映する。
+    AssetLiabilityMonthlySnapshot? currentMonthSnapshot;
+    if (workbook != null) {
+      final monthKey =
+          AssetLiabilityMonthlyStateStore.formatMonthKey(DateTime.now());
+      currentMonthSnapshot = _assetLiabilityHistoryService.buildSnapshot(
+        monthKey: monthKey,
+        workbook: workbook,
+        savedAt: DateTime.now(),
+      );
+    }
+    final statement = const AssetCashflowStatementService().build(
+      snapshots: _monthlySnapshots,
+      currentMonthSnapshot: currentMonthSnapshot,
+      asOf: DateTime.now(),
+    );
+    if (!statement.hasData) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AssetCashflowStatementCard(
+        statement: statement,
+        currencyFormatter: _formatYen,
       ),
     );
   }
