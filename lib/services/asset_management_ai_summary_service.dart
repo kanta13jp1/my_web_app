@@ -65,10 +65,15 @@ class AssetManagementAiProposalExtraction {
 class AssetManagementAiSummaryService {
   // GPT-5 の reasoning トークンや Gemini の thinking トークンも
   // この上限 (maxOutputTokens) を消費するため、本文 (約3,000-4,000トークン) に
-  // 思考分の余裕を大きく足す。3,200→8,000 でも Gemini 3.1 Pro が thinking で
-  // 食い切り、本文出力前に MAX_TOKENS (outputLengthLimited) で途中終了したため、
-  // 24,000 へ引き上げる (思考に約20,000確保しても本文が収まる)。
-  static const int _summaryMaxTokens = 24000;
+  // 思考分の余裕を足す。
+  //
+  // ⚠️ 実際の上限はサーバ側で決まる: ai-hub の `normalizeMaxTokens` が
+  // `min(8192, ...)` にクランプするため、ここに 8192 超を書いても本番では
+  // 8192 として扱われる (旧実装の 24000 は「思考に20,000確保」と書かれていたが
+  // 本番でそうなったことは一度も無い)。誤解を避けるため実効値の 8192 を明示する。
+  // 実測の本文は ~3,000-3,500 トークンなので 8192 でも十分な余裕がある。
+  // 上限を実際に引き上げたい場合は ai-hub 側の clamp から変更すること。
+  static const int _summaryMaxTokens = 8192;
 
   final bool _aiEnabled;
   final AiHubChatService _chatService;
@@ -701,8 +706,11 @@ class AssetManagementAiSummaryService {
       'debt_master_rows': workbook.debtMasterRows
           .map((row) => _debtRowToJson(row, workbook.baseDate))
           .toList(growable: false),
-      'repayment_priority_rows': workbook.repaymentPriorityRows
-          .map((row) => _debtRowToJson(row, workbook.baseDate))
+      // 返済優先順は `debt_master_rows` と同一の行を並べ替えただけなので、
+      // 28 フィールドの再シリアライズはやめて「順序」だけを渡す。明細は
+      // debt_master_rows を id で引けばよい (プロンプトの重複を削減)。
+      'repayment_priority_order': workbook.repaymentPriorityRows
+          .map((row) => <String, dynamic>{'id': row.id, 'name': row.name})
           .toList(growable: false),
       'payment_day_risks': workbook.paymentDayRisks
           .map(_paymentDayRiskToJson)

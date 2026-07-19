@@ -20041,6 +20041,44 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 value: _localizedAssetManagementAiSource(result.source),
                 color: color,
               ),
+              // 生成はページを止めずに裏で走り、完了時にカード本文が差し替わる。
+              // 何の予告もなく本文が変わると戸惑うため、生成中であることと
+              // 目安時間をカード内に明示する (ボタン内の小さなスピナーだけでは
+              // 気づけない / 本文は今もルールベース要約として読める旨も伝える)。
+              if (_isGeneratingAssetManagementAiSummary)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(color),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'AI分析を生成中… (1分ほど) 完了すると上の要約が更新されます',
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               if (_assetManagementAiSummaryReferencedHistory.isNotEmpty)
                 _buildAssetLiabilitySyncChip(
                   label: '履歴参照',
