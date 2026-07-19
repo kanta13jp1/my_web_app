@@ -630,9 +630,11 @@ class LocalElectionPlanDashboard {
     if (membersByPrefecture.isEmpty) {
       return this;
     }
+    final normalized = _normalizeBenchmarkKeys(membersByPrefecture);
     return copyWith(
       prefectures: prefectures.map((item) {
-        final fetched = membersByPrefecture[item.prefecture] ?? 0;
+        final fetched =
+            normalized[normalizePrefectureKey(item.prefecture)] ?? 0;
         if (fetched <= 0 || fetched == item.cdpLocalMembers) {
           return item;
         }
@@ -663,6 +665,40 @@ class LocalElectionPlanDashboard {
     return sorted;
   }
 
+  /// 都道府県名を照合キーへ正規化する (北海道以外の 都/府/県 を落とす)。
+  ///
+  /// ベンチマーク JSON は外部ソース由来で、総務省統計のように「青森県」
+  /// 「東京都」形式で再生成される可能性がある。素の名前で引くと北海道だけ
+  /// 一致して「掲載 1/47」が正しい値のように表示され (=沈黙した誤り)、
+  /// セクション非表示ガードもすり抜けるため、必ず正規化して突合する。
+  /// 「都」を一律に落とすと **京都 → 京** になり、`京都府` 側の正規化結果
+  /// (= 京都) と永久に一致しなくなる。東京都だけを明示的に畳み、
+  /// 一般則は 府/県 のみ落とす (plan_service._prefectureKey と同じ規則)。
+  static String normalizePrefectureKey(String value) {
+    final trimmed = value.trim();
+    if (trimmed == '北海道') {
+      return trimmed;
+    }
+    if (trimmed == '東京都') {
+      return '東京';
+    }
+    if (trimmed.endsWith('府') || trimmed.endsWith('県')) {
+      return trimmed.substring(0, trimmed.length - 1);
+    }
+    return trimmed;
+  }
+
+  static Map<String, int> _normalizeBenchmarkKeys(Map<String, int> source) {
+    final normalized = <String, int>{};
+    source.forEach((key, value) {
+      final name = normalizePrefectureKey(key);
+      if (name.isNotEmpty && value > 0) {
+        normalized[name] = value;
+      }
+    });
+    return normalized;
+  }
+
   /// Returns a copy with each prefecture's 自民 local member count replaced by
   /// the benchmark value when present and positive. Mirrors
   /// [withCdpLocalMembers]: a missing/non-positive entry keeps the seed value.
@@ -672,9 +708,11 @@ class LocalElectionPlanDashboard {
     if (membersByPrefecture.isEmpty) {
       return this;
     }
+    final normalized = _normalizeBenchmarkKeys(membersByPrefecture);
     return copyWith(
       prefectures: prefectures.map((item) {
-        final fetched = membersByPrefecture[item.prefecture] ?? 0;
+        final fetched =
+            normalized[normalizePrefectureKey(item.prefecture)] ?? 0;
         if (fetched <= 0 || fetched == item.ldpLocalMembers) {
           return item;
         }

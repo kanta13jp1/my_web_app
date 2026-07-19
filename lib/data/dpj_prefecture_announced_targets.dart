@@ -320,9 +320,12 @@ const String dpjLocalElectionOfficialListUrl =
 const String dpjLocalElectionOfficialListAsOf = '2026-07-08';
 
 /// 第1次公認を発表済みの都道府県(発表順ではなく掲載順)。
+///
+/// `totalCount == 0` のエントリは「発表済み」と数えない。数えると
+/// 「公認合計 0人」「第1次公認 0人」バッジが出て発表済みに見えてしまう。
 List<DpjPrefectureAnnouncedTarget> get dpjPrefecturesWithFirstEndorsement =>
     dpjPrefectureAnnouncedTargets
-        .where((item) => item.firstEndorsement != null)
+        .where((item) => (item.firstEndorsement?.totalCount ?? 0) > 0)
         .toList();
 
 /// 第1次公認を発表済みの都道府県数。
@@ -347,4 +350,15 @@ int get dpjFirstEndorsementNewcomerTotal =>
     dpjPrefectureAnnouncedTargets.fold<int>(
       0,
       (sum, item) => sum + (item.firstEndorsement?.newcomerCount ?? 0),
+    );
+
+/// 全国の第1次公認 うち元職合計。
+///
+/// 県別バッジは [DpjFirstEndorsement.breakdownLabel] で元職も出すため、
+/// サマリー側にも同じ区分を用意しないと 現職+新人 が総数に届かず
+/// 「チップの合計が公認合計と合わない」状態になる。
+int get dpjFirstEndorsementFormerTotal =>
+    dpjPrefectureAnnouncedTargets.fold<int>(
+      0,
+      (sum, item) => sum + (item.firstEndorsement?.formerCount ?? 0),
     );
