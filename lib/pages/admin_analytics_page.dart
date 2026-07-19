@@ -380,7 +380,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             body: {
               'action': 'x.candidate.list',
               'status': status,
-              'limit': 10,
+              // R32: ヘッダの「N件以上」判定と同じ定数を使う (両者が drift すると
+              // 上限到達を検出できず backlog を過小表示する)。
+              'limit': kXCandidateStatusFetchLimit,
             },
           );
           final data = res.data;
