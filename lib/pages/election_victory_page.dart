@@ -12,6 +12,7 @@ import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
 import '../services/local_election_cdp_benchmark.dart';
+import '../services/local_election_ldp_benchmark.dart';
 import '../services/local_election_plan_service.dart';
 import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
@@ -139,6 +140,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   String? _geminiAnalysisResult;
   bool _appliedInitialPrefectureFilter = false;
   Map<String, int> _cdpLocalMemberBenchmark = const <String, int>{};
+  LocalElectionLdpBenchmark _ldpBenchmark = LocalElectionLdpBenchmark.empty;
   String _selectedRegion = _allLabel;
   String _selectedMemberPrefecture = _allLabel;
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
@@ -207,14 +209,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _realityService.loadCachedSnapshot(),
       _realityService.loadSnapshotHistory(),
       LocalElectionCdpBenchmark.loadFromAsset(),
+      LocalElectionLdpBenchmark.loadFromAsset(),
     ]);
     if (!mounted) {
       return;
     }
 
     _cdpLocalMemberBenchmark = results[3] as Map<String, int>;
+    _ldpBenchmark = results[4] as LocalElectionLdpBenchmark;
     var plan = (results[0] as LocalElectionPlanDashboard)
-        .withCdpLocalMembers(_cdpLocalMemberBenchmark);
+        .withCdpLocalMembers(_cdpLocalMemberBenchmark)
+        .withLdpLocalMembers(_ldpBenchmark.membersByPrefecture);
     final cachedSnapshot = results[1] as LocalElectionRealitySnapshot?;
     final cachedHistory = results[2] as List<LocalElectionRealityHistoryPoint>;
 
@@ -264,7 +269,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Future<void> _loadPlan() async {
     final loadedPlan = await _service.loadPlan();
-    var plan = loadedPlan.withCdpLocalMembers(_cdpLocalMemberBenchmark);
+    var plan = loadedPlan
+        .withCdpLocalMembers(_cdpLocalMemberBenchmark)
+        .withLdpLocalMembers(_ldpBenchmark.membersByPrefecture);
     final snapshot = _realitySnapshot;
     if (snapshot != null && snapshot.hasData) {
       plan = await _syncPlanWithSnapshot(
@@ -1172,6 +1179,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   _buildRealitySection(plan),
                   const SizedBox(height: 16),
                   _buildCdpBenchmarkSection(plan),
+                  const SizedBox(height: 16),
+                  _buildLdpBenchmarkSection(plan),
                   const SizedBox(height: 16),
                   _buildChartSection(plan),
                   const SizedBox(height: 16),
@@ -5116,6 +5125,149 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 4),
           Text(
             '国民 ${_formatInt(plan.currentMembers)} / 立憲 ${_formatInt(plan.cdpLocalMembers)}',
+            style: TextStyle(
+              color: color.withValues(alpha: 0.95),
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: color.withValues(alpha: 0.95),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLdpBenchmarkSection(LocalElectionPlanDashboard plan) {
+    final comparedCount = plan.ldpComparisonPrefectureCount;
+    if (comparedCount == 0) {
+      return const SizedBox.shrink();
+    }
+
+    final allGaps = plan.allLdpGapPrefectures();
+    final asOf = _formatOfficialListAsOf(_ldpBenchmark.asOf);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: false,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          leading: const Icon(Icons.account_balance_outlined),
+          title: Text(
+            '自民地方議員ベンチマーク',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _buildMiniStatChip(
+                  '自民合計',
+                  plan.totalLdpLocalMembers,
+                  color: const Color(0xFF15803D),
+                ),
+                _buildMiniStatChip(
+                  '掲載',
+                  comparedCount,
+                  suffix: '/47',
+                  color: const Color(0xFF2563EB),
+                ),
+              ],
+            ),
+          ),
+          children: [
+            _buildInlineNotice(
+              '自民党は県別の地方議員一覧を自党で公開していないため、'
+              '${_ldpBenchmark.sourceLabel.isEmpty ? '総務省の公式統計' : _ldpBenchmark.sourceLabel}'
+              '($asOf現在)を出典としています。'
+              '${_ldpBenchmark.basis.isEmpty ? '' : '集計基準: ${_ldpBenchmark.basis}。'}'
+              '立憲(党サイトの自己掲載)とは集計方法が異なる点にご注意ください。',
+              color: const Color(0xFFB45309),
+              icon: Icons.info_outline,
+            ),
+            if (_ldpBenchmark.source.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () => _openUrl(_ldpBenchmark.source),
+                  icon: const Icon(Icons.open_in_new, size: 16),
+                  label: const Text('出典(総務省 所属党派別人員調)を開く'),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final item in allGaps) _buildLdpGapPill(item),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLdpGapPill(LocalElectionPrefecturePlan plan) {
+    final gap = plan.ldpMemberGap;
+    final color = gap > 0
+        ? const Color(0xFF15803D)
+        : gap == 0
+            ? const Color(0xFF64748B)
+            : const Color(0xFF0F766E);
+    final label = gap > 0
+        ? '自民+${_formatInt(gap)}'
+        : gap == 0
+            ? '同数'
+            : '国民+${_formatInt(-gap)}';
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 148),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            plan.prefecture,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '国民 ${_formatInt(plan.currentMembers)} / 自民 ${_formatInt(plan.ldpLocalMembers)}',
             style: TextStyle(
               color: color.withValues(alpha: 0.95),
               fontWeight: FontWeight.w600,
