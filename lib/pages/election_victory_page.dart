@@ -1435,9 +1435,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       hasSnapshot
                           ? '公式議員ページと2023年の公式選挙結果ページを取得して、'
                               'AIで各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新します。'
-                          : 'まだ最新データを取得できていません。'
-                              'ネット経由で公式ソースを再取得すると、'
-                              '計画値とのズレを把握できます。',
+                          : _isRealityLoading
+                              // 自動取得の実行中は「再取得を促す」文言だと
+                              // 矛盾するため、取得中である旨を出す。
+                              ? '公式ソースから最新の地方議員数を取得しています。'
+                                  '初回は20秒ほどかかることがあります。'
+                              : 'まだ最新データを取得できていません。'
+                                  'ネット経由で公式ソースを再取得すると、'
+                                  '計画値とのズレを把握できます。',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -1630,7 +1635,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ],
             const SizedBox(height: 16),
             if (realitySnapshot == null && _isRealityLoading)
-              const Center(child: CircularProgressIndicator())
+              _buildRealityLoadingState()
             else if (realitySnapshot == null)
               _buildEmptyRealityState()
             else ...[
@@ -1707,6 +1712,55 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  // 初回ロードは公式ソース巡回に 20 秒前後かかることがある。素の
+  // スピナーだけだと「固まった」と誤認されるため、何を待っているかと
+  // 目安時間を明示したローディング状態を出す。
+  Widget _buildRealityLoadingState() {
+    const accent = Color(0xFF0891B2);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2.5, color: accent),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '最新の公式データを取得中…',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '公式議員ページと2023年の選挙結果を巡回して集計しています。'
+                  '初回は20秒ほどかかることがあります。取得後、計画値とのズレ・'
+                  '上位県・AI要約がここに表示されます。',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2970,6 +3024,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final selectedEvents = _scheduleEventsForDay(snapshot, selectedDay);
     final firstDay = _scheduleCalendarFirstDay(snapshot, selectedDay);
     final lastDay = _scheduleCalendarLastDay(snapshot, selectedDay);
+    // TableCalendar は focusedDay が [firstDay, lastDay] 内であることを assert
+    // する。_scheduleFocusedDay は firstDay/lastDay と独立に決まり (全日程が
+    // 過去/未来に偏る・null 日付エントリ先頭ソート等で) 範囲外へ出ると
+    // クラッシュするため、描画直前に必ずクランプする。
+    final focusedDay = _scheduleFocusedDay.isBefore(firstDay)
+        ? firstDay
+        : (_scheduleFocusedDay.isAfter(lastDay)
+            ? lastDay
+            : _scheduleFocusedDay);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2988,7 +3051,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               locale: 'ja_JP',
               firstDay: firstDay,
               lastDay: lastDay,
-              focusedDay: _scheduleFocusedDay,
+              focusedDay: focusedDay,
               calendarFormat: _scheduleCalendarFormat,
               selectedDayPredicate: (day) => isSameDay(day, selectedDay),
               eventLoader: (day) =>
@@ -3512,8 +3575,26 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         .toList();
   }
 
+  static final RegExp _xUsernamePattern = RegExp(r'^[A-Za-z0-9_]{1,15}$');
+
+  /// スクレイプ由来の X ハンドルを正規化する。full URL / @ 前置 / 末尾スラッシュ
+  /// を取り除き、X ユーザー名規則 (英数字とアンダースコア 1〜15 文字) に
+  /// 合致しない値は空文字を返す。`https://x.com/$handle` へ埋め込むため、
+  /// `evil.com/path` や空白入りの不正値で壊れたリンク・誤表示が出るのを防ぐ。
   String _normalizeXHandle(String raw) {
-    return raw.trim().replaceFirst(RegExp(r'^@+'), '');
+    var value = raw.trim();
+    if (value.isEmpty) {
+      return '';
+    }
+    // full URL 形式ならパス末尾 (ユーザー名) を取り出す。
+    final lastSlash = value.lastIndexOf('/');
+    if (lastSlash >= 0) {
+      value = value.substring(lastSlash + 1);
+    }
+    value = value.replaceFirst(RegExp(r'^@+'), '').trim();
+    // クエリ/フラグメントが付いていれば切り落とす。
+    value = value.split(RegExp(r'[?#\s]')).first;
+    return _xUsernamePattern.hasMatch(value) ? value : '';
   }
 
   Color _scheduleCardBackgroundColor(

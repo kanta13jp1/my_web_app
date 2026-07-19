@@ -30,6 +30,7 @@ import 'package:my_web_app/services/asset_liability_history_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_report_service.dart';
 import 'package:my_web_app/services/asset_liability_monthly_state_store.dart';
 import 'package:my_web_app/services/asset_liability_payment_reminder_service.dart';
+import 'package:my_web_app/services/asset_bulk_payment_source_assigner.dart';
 import 'package:my_web_app/services/asset_liability_planning_service.dart';
 import 'package:my_web_app/services/asset_liability_repayment_simulation_service.dart';
 import 'package:my_web_app/services/asset_liability_repository.dart';
@@ -676,6 +677,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isRefreshingMonthlyReports = false;
   String? _monthlyReportMessage;
   String? _loadedAssetLiabilityMonthKey;
+  // 同一サイクル月の月次stateロードが並行して複数走らないよう束ねる in-flight
+  // ガード。起動時は eager ロードと給料日/リセットマーカーのミラー復元が相次いで
+  // _loadAssetLiabilityMonthlyState を呼び、同じ月を 2-3 回フル取得 (各 7 往復)
+  // していた。対象月が同じ間は先行の Future を返して重複バッチを避ける
+  // (給料日変更でサイクル月が変わる復元は月キーが異なるため従来どおり実行される)。
+  Future<void>? _assetLiabilityMonthlyStateInFlight;
+  String? _assetLiabilityMonthlyStateInFlightMonthKey;
   bool _isSavingAssetLiabilitySnapshot = false;
   bool _isRunningAssetLiabilitySync = false;
   bool _isPreviewingAssetLiabilitySync = false;
@@ -909,6 +917,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   List<AssetManagementAiAnalysisHistoryEntry>
       _assetManagementAiSummaryReferencedHistory =
       const <AssetManagementAiAnalysisHistoryEntry>[];
+  // 同日 (基準日) の「保存済み最新分析」を再利用判定に使うためのセッション内
+  // キャッシュ。プローブ (loadLatestForBaseDate) は指紋が変わる度 (残高編集・
+  // 引落確認など) に走るが、同一基準日では結果が保存されるまで不変なので、
+  // 端末内にキャッシュして毎回の DB 往復を省く。新規保存でキーを無効化し、
+  // 基準日が変われば別キーとして必ず取り直す。
+  String? _assetManagementLatestForBaseDateCacheKey;
+  AssetManagementAiAnalysisHistoryEntry? _assetManagementLatestForBaseDateCache;
+  bool _assetManagementLatestForBaseDateCacheLoaded = false;
   UserProfile? _assetManagementUserProfile;
   bool _isLoadingAssetManagementUserProfile = false;
   List<Map<String, dynamic>> _payslipRows = <Map<String, dynamic>>[];
@@ -1858,7 +1874,29 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Map<String, double>.from(snapshot);
   }
 
-  Future<void> _loadAssetLiabilityMonthlyState() async {
+  /// 月次stateロードの入口。同一サイクル月のロードが進行中ならその Future を
+  /// 返して重複バッチ (各 7 往復) を抑える。対象月が異なる場合は新規に走らせる。
+  Future<void> _loadAssetLiabilityMonthlyState() {
+    final monthKey = _assetLiabilityStateMonthKey(_now);
+    final inFlight = _assetLiabilityMonthlyStateInFlight;
+    if (inFlight != null &&
+        _assetLiabilityMonthlyStateInFlightMonthKey == monthKey) {
+      return inFlight;
+    }
+    final future = _loadAssetLiabilityMonthlyStateInner();
+    _assetLiabilityMonthlyStateInFlight = future;
+    _assetLiabilityMonthlyStateInFlightMonthKey = monthKey;
+    return future.whenComplete(() {
+      // 自分が最新の in-flight であるときだけクリアする (対象月が変わって別の
+      // ロードに差し替わっている場合は触らない)。
+      if (identical(_assetLiabilityMonthlyStateInFlight, future)) {
+        _assetLiabilityMonthlyStateInFlight = null;
+        _assetLiabilityMonthlyStateInFlightMonthKey = null;
+      }
+    });
+  }
+
+  Future<void> _loadAssetLiabilityMonthlyStateInner() async {
     try {
       final targetMonth = _assetLiabilityStateMonth(_now);
       final monthKey = _assetLiabilityStateMonthKey(_now);
@@ -13512,6 +13550,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ..sort(
         (a, b) => b.scheduledPaymentAmount.compareTo(a.scheduledPaymentAmount),
       );
+    final bulkPlan = const AssetBulkPaymentSourceAssigner().buildPlan(workbook);
     return Container(
       key: const Key('asset_payment_source_missing_banner'),
       width: double.infinity,
@@ -13559,6 +13598,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 fontSize: 11,
                 color: Color(0xFF92400E),
                 height: 1.5,
+              ),
+            ),
+          // 見込み残高が最大の口座へ一括で原資を割り当てる (プレビュー→確定)。
+          if (bulkPlan.hasAssignments)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('asset_payment_source_bulk_assign'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  foregroundColor: const Color(0xFFB45309),
+                ),
+                onPressed: () =>
+                    _showBulkPaymentSourceAssignSheet(workbook, bulkPlan),
+                icon: const Icon(Icons.auto_fix_high, size: 16),
+                label: Text('原資を一括設定（${bulkPlan.assignments.length}件）'),
               ),
             ),
           // ジャンプ先の原資未設定一覧は workbookBoard 内にあり、表示モード次第で
@@ -13625,6 +13681,190 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ],
       ),
     );
+  }
+
+  /// 原資未設定の支払いへ、見込み残高最大の口座を一括割当するプレビューシート。
+  /// プレビューはバナーの「候補」と同一ルールで、確定時のみ永続化する。
+  Future<void> _showBulkPaymentSourceAssignSheet(
+    AssetLiabilityWorkbook workbook,
+    AssetBulkPaymentSourcePlan plan,
+  ) async {
+    final scope = await showModalBottomSheet<_PaymentSourceSaveScope>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final scheme = Theme.of(sheetContext).colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '原資を一括設定',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: scheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '未設定の支払いに、支払後の見込み残高が最大の口座を割り当てます。'
+                  '設定後に各支払いで個別に変更できます。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final assignment in plan.assignments)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '「${assignment.row.name}」'
+                                  '${_formatManagementYen(assignment.row.scheduledPaymentAmount)}'
+                                  ' → ${assignment.account.name}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: scheme.onSurface,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                Text(
+                                  '支払後見込み '
+                                  '${_formatManagementYen(assignment.projectedAfterPayment)}'
+                                  '${assignment.projectedAfterPayment < AssetBulkPaymentSourceAssigner.safetyBalance ? '（残高が細くなります）' : ''}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    height: 1.4,
+                                    color: assignment.projectedAfterPayment < 0
+                                        ? scheme.error
+                                        : scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (plan.hasUnassignable) ...[
+                          const Divider(height: 16),
+                          Text(
+                            '割当先なし（残高のある現金・預金口座が見つかりません）',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: scheme.error,
+                              height: 1.4,
+                            ),
+                          ),
+                          for (final row in plan.unassignableRows)
+                            Text(
+                              '・${row.name} '
+                              '${_formatManagementYen(row.scheduledPaymentAmount)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          Text(
+                            '入金後にこれらの原資口座を設定してください。',
+                            style: TextStyle(
+                              fontSize: 11,
+                              height: 1.5,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        key: const Key(
+                            'asset_payment_source_bulk_apply_monthly'),
+                        onPressed: () => Navigator.of(sheetContext)
+                            .pop(_PaymentSourceSaveScope.monthlyOverride),
+                        child: const Text('今月だけ設定'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton(
+                        key: const Key(
+                            'asset_payment_source_bulk_apply_default'),
+                        onPressed: () => Navigator.of(sheetContext)
+                            .pop(_PaymentSourceSaveScope.defaultSetting),
+                        child: const Text('毎月の既定にする'),
+                      ),
+                    ),
+                  ],
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    child: const Text('キャンセル'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (scope != null) {
+      _applyBulkPaymentSourceAssignment(plan, scope);
+    }
+  }
+
+  /// [plan] の割当を一括で適用する。単一の setState + 単一の保存でまとめて反映し、
+  /// 個別 setter を N 回回すことによる保存レース (原資マップの書き込み取りこぼし)
+  /// を避ける。マップ操作の意味は [_savePaymentSourceReviewChoice] と同一。
+  void _applyBulkPaymentSourceAssignment(
+    AssetBulkPaymentSourcePlan plan,
+    _PaymentSourceSaveScope scope,
+  ) {
+    if (plan.assignments.isEmpty) {
+      return;
+    }
+    setState(() {
+      for (final assignment in plan.assignments) {
+        if (scope == _PaymentSourceSaveScope.defaultSetting) {
+          _defaultPaymentSourceAccountIds[assignment.row.id] =
+              assignment.account.id;
+          _paymentSourceAccountIds.remove(assignment.row.id);
+        } else {
+          _paymentSourceAccountIds[assignment.row.id] = assignment.account.id;
+        }
+      }
+    });
+    if (scope == _PaymentSourceSaveScope.defaultSetting) {
+      unawaited(_saveDefaultPaymentSources());
+    }
+    unawaited(_saveAssetLiabilityMonthlyState());
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${plan.assignments.length}件の支払いに原資口座を設定しました。'),
+        ),
+      );
+    }
   }
 
   Widget _buildAutoDebitConfirmationCard(AssetLiabilityWorkbook? workbook) {
@@ -19775,11 +20015,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (!force) {
       AssetManagementAiAnalysisHistoryEntry? reusable;
       try {
-        final latest = await _assetManagementAiAnalysisHistoryService
-            .loadLatestForBaseDate(
-          reportBaseDate:
-              AssetManagementAiAnalysisHistoryService.reportBaseDateKey(
-                  report.workbook.baseDate),
+        final latest = await _latestAssetManagementAiAnalysisForBaseDate(
+          report.workbook.baseDate,
         );
         if (latest != null &&
             (latest.requestFingerprint == key ||
@@ -19880,6 +20117,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           report: report,
           requestFingerprint: key,
         );
+        // 新しい分析を保存したので「同日最新」キャッシュを無効化する
+        // (次回プローブが最新行を取り直し、再利用/クールダウン判定に反映)。
+        _invalidateAssetManagementLatestForBaseDateCache();
       } catch (_) {
         // AI分析の表示を優先し、履歴保存失敗は次回の再試行に任せます。
       }
@@ -19898,6 +20138,31 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _assetManagementAiSummaryInFlightKey = null;
       _assetManagementAiSummaryRequestKey = key;
     });
+  }
+
+  /// 同一基準日の「保存済み最新分析」を返す (セッション内キャッシュ優先)。
+  /// 指紋が変わる度に呼ばれるが、同一基準日ではキャッシュを返して DB 往復を
+  /// 省く。キャッシュ未ロード or 基準日変化時のみ実フェッチする。
+  Future<AssetManagementAiAnalysisHistoryEntry?>
+      _latestAssetManagementAiAnalysisForBaseDate(DateTime baseDate) async {
+    final baseKey =
+        AssetManagementAiAnalysisHistoryService.reportBaseDateKey(baseDate);
+    if (_assetManagementLatestForBaseDateCacheLoaded &&
+        _assetManagementLatestForBaseDateCacheKey == baseKey) {
+      return _assetManagementLatestForBaseDateCache;
+    }
+    final latest = await _assetManagementAiAnalysisHistoryService
+        .loadLatestForBaseDate(reportBaseDate: baseKey);
+    _assetManagementLatestForBaseDateCacheKey = baseKey;
+    _assetManagementLatestForBaseDateCache = latest;
+    _assetManagementLatestForBaseDateCacheLoaded = true;
+    return latest;
+  }
+
+  void _invalidateAssetManagementLatestForBaseDateCache() {
+    _assetManagementLatestForBaseDateCacheLoaded = false;
+    _assetManagementLatestForBaseDateCache = null;
+    _assetManagementLatestForBaseDateCacheKey = null;
   }
 
   /// 直近の AI 要約生成試行からの経過時間。基準日が変われば null を返し
