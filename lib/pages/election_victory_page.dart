@@ -1179,8 +1179,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   _buildRealitySection(plan),
                   const SizedBox(height: 16),
                   _buildCdpBenchmarkSection(plan),
-                  const SizedBox(height: 16),
-                  _buildLdpBenchmarkSection(plan),
+                  // 自民セクションはデータ未取得時に非表示になるため、
+                  // 前後の余白を二重に出さないよう条件付きで挿入する。
+                  if (plan.ldpComparisonPrefectureCount > 0) ...[
+                    const SizedBox(height: 16),
+                    _buildLdpBenchmarkSection(plan),
+                  ],
                   const SizedBox(height: 16),
                   _buildChartSection(plan),
                   const SizedBox(height: 16),
@@ -4818,6 +4822,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     const accent = Color(0xFF2563EB);
     final incumbent = dpjFirstEndorsementIncumbentTotal;
     final newcomer = dpjFirstEndorsementNewcomerTotal;
+    final former = dpjFirstEndorsementFormerTotal;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -4866,10 +4871,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   newcomer,
                   color: const Color(0xFF7C3AED),
                 ),
+              if (former > 0)
+                _buildMiniStatChip(
+                  '元職',
+                  former,
+                  color: const Color(0xFFB45309),
+                ),
+              // 分母 (掲載県数) を併記しないと「発表済み1県」が全国1県だけ
+              // なのか掲載中の一部なのか読めないため /N を添える。
               _buildMiniStatChip(
                 '発表済み',
                 dpjFirstEndorsementPrefectureCount,
-                suffix: '県',
+                suffix: '/${dpjPrefectureAnnouncedTargets.length}県',
                 color: const Color(0xFF64748B),
               ),
             ],
@@ -4888,7 +4901,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               icon: const Icon(Icons.open_in_new, size: 16),
               label: Text(
                 '党公式の公認予定候補一覧を開く'
-                '(${_formatOfficialListAsOf(dpjLocalElectionOfficialListAsOf)}現在)',
+                '(${_formatAsOfDate(dpjLocalElectionOfficialListAsOf)}現在)',
               ),
             ),
           ),
@@ -4897,7 +4910,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  String _formatOfficialListAsOf(String iso) {
+  /// ISO 日付 (yyyy-MM-dd) を表示用に整形する。第1次公認の党公式一覧、
+  /// 自民ベンチマークの総務省統計など「基準日」表示で共用する。
+  String _formatAsOfDate(String iso) {
     final parsed = DateTime.tryParse(iso);
     if (parsed == null) {
       return iso;
@@ -4971,39 +4986,56 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     const badgeColor = Color(0xFF1D4ED8);
     final breakdown =
         endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
-    return InkWell(
-      onTap: endorsement.sourceUrl.isEmpty
-          ? null
-          : () => _openUrl(endorsement.sourceUrl),
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: badgeColor.withValues(alpha: 0.12),
+    final hasSource = endorsement.sourceUrl.isNotEmpty;
+    final label = '第1次公認 ${_formatInt(endorsement.totalCount)}人$breakdown';
+    // 出典を開く操作なので、タップ領域を Material 最小 48px 以上に広げ、
+    // スクリーンリーダー向けに link であることと出典先を読み上げさせる。
+    return Semantics(
+      label: hasSource ? '$label 出典を開く' : label,
+      link: hasSource,
+      button: hasSource,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: InkWell(
+          onTap: hasSource ? () => _openUrl(endorsement.sourceUrl) : null,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: badgeColor.withValues(alpha: 0.25)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.how_to_reg_outlined, size: 14, color: badgeColor),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                '第1次公認 ${_formatInt(endorsement.totalCount)}人$breakdown',
-                style: const TextStyle(
-                  color: badgeColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
-                ),
+          child: Center(
+            widthFactor: 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: badgeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: badgeColor.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.how_to_reg_outlined,
+                    size: 14,
+                    color: badgeColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: badgeColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                  if (hasSource) ...[
+                    const SizedBox(width: 4),
+                    const Icon(Icons.open_in_new, size: 12, color: badgeColor),
+                  ],
+                ],
               ),
             ),
-            if (endorsement.sourceUrl.isNotEmpty) ...[
-              const SizedBox(width: 4),
-              const Icon(Icons.open_in_new, size: 12, color: badgeColor),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -5153,7 +5185,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
 
     final allGaps = plan.allLdpGapPrefectures();
-    final asOf = _formatOfficialListAsOf(_ldpBenchmark.asOf);
+    final asOf = _formatAsOfDate(_ldpBenchmark.asOf);
 
     return Container(
       decoration: BoxDecoration(
@@ -5234,8 +5266,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Widget _buildLdpGapPill(LocalElectionPrefecturePlan plan) {
     final gap = plan.ldpMemberGap;
+    // 色の意味は立憲ベンチマークと揃える: 相手が先行 (gap>0) = 赤(警戒) /
+    // 同数 = 灰 / 国民が先行 = 緑。自民のシンボルカラー(緑)を使うと
+    // 「自民+173」という不利な状況が好調に見えてしまうため使わない。
     final color = gap > 0
-        ? const Color(0xFF15803D)
+        ? const Color(0xFFDC2626)
         : gap == 0
             ? const Color(0xFF64748B)
             : const Color(0xFF0F766E);
@@ -6228,18 +6263,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     return null;
   }
 
-  String _normalizePrefectureKey(String value) {
-    final trimmed = value.trim();
-    if (trimmed == '北海道') {
-      return trimmed;
-    }
-    if (trimmed.endsWith('都') ||
-        trimmed.endsWith('府') ||
-        trimmed.endsWith('県')) {
-      return trimmed.substring(0, trimmed.length - 1);
-    }
-    return trimmed;
-  }
+  /// 「都」を一律に落とすと **京都 → 京** となり、実データ側の `京都府`
+  /// (→ 京都) と永久に一致せず、京都だけ公式実数・県別ソースが紐付かない。
+  /// 東京都のみ明示的に畳み、一般則は 府/県 だけ落とす
+  /// (LocalElectionPlanDashboard.normalizePrefectureKey と同じ規則)。
+  String _normalizePrefectureKey(String value) =>
+      LocalElectionPlanDashboard.normalizePrefectureKey(value);
 
   String _buildClipboardSummary(LocalElectionPlanDashboard plan) {
     final base = StringBuffer(plan.buildClipboardSummary());
